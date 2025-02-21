@@ -1,0 +1,69 @@
+---
+description:
+globs: *
+---
+# General Guidelines for Homelab Development
+
+## Project Structure
+- Maintain a clear and logical directory structure
+- Group related components and configurations together
+- Keep configuration separate from application code
+- Store documentation in a dedicated `docs/` directory
+- Follow consistent naming conventions across the project
+
+## Security Best Practices
+- Never commit secrets or sensitive data to the repository
+- Use a secure secrets management solution
+- Follow the principle of least privilege
+- Implement proper access controls
+- Regularly audit security configurations
+- Keep all components up to date with security patches
+
+## Infrastructure Management
+- Use Infrastructure as Code (IaC) principles
+- Document infrastructure dependencies
+- Keep track of resource allocations
+- Implement proper backup strategies
+- Plan for system recovery scenarios
+
+## Documentation Standards
+- Maintain up-to-date README files
+- Document all configuration options and requirements
+- Include setup and installation guides
+- Provide troubleshooting documentation
+- Keep a changelog of major changes
+- Document architecture decisions
+- Record configuration changes and their purposes
+
+## Observability
+- Implement comprehensive monitoring
+- Establish logging standards
+- Define alerting criteria
+- Document metrics collection methods
+- Monitor resource usage and performance
+- Track system health indicators
+
+## Development Workflow
+- Use version control for all changes
+- Test changes before applying to live system
+- Write clear and descriptive commit messages
+- Document breaking changes
+- Keep track of dependencies and versions
+- Maintain a clean and organized codebase
+
+## Maintenance and Operations
+- Schedule regular system updates
+- Verify backup and restore procedures
+- Monitor system performance
+- Conduct periodic security reviews
+- Document operational procedures
+- Maintain system recovery plans
+- Keep inventory of hardware and software
+
+## Quality Assurance
+- Test changes in a safe manner
+- Validate configurations before deployment
+- Maintain consistent standards across the project
+- Document testing procedures
+- Verify changes meet requirements
+- Have rollback plans for changes

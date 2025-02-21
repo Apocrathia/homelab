@@ -1,0 +1,64 @@
+---
+description:
+globs: talos/*
+---
+# Talos Linux Configuration Rules
+
+## Official Documentation References
+
+The following documentation should be referenced when working with Talos Linux configurations:
+
+### Core Documentation
+- [Official Talos Documentation](mdc:https:/www.talos.dev/latest)
+- [Configuration Reference](mdc:https:/www.talos.dev/latest/reference/configuration)
+- [What is Talos?](mdc:https:/www.talos.dev/latest/introduction/what-is-talos)
+- [Getting Started Guide](mdc:https:/www.talos.dev/latest/introduction/getting-started)
+
+### Configuration Guides
+- [Configuration Patches](mdc:https:/www.talos.dev/latest/talos-guides/configuration/patches)
+- [Machine Configuration](mdc:https:/www.talos.dev/latest/talos-guides/configuration/editing-machine-configuration)
+- [Role-based Access Control](mdc:https:/www.talos.dev/latest/talos-guides/configuration/role-based-access-control)
+
+### Network Configuration
+- [Network Setup](mdc:https:/www.talos.dev/latest/talos-guides/network)
+- [KubeSpan](mdc:https:/www.talos.dev/latest/talos-guides/network/kubespan)
+- [Virtual IP](mdc:https:/www.talos.dev/latest/talos-guides/network/vip)
+
+### Security
+- [Disk Encryption](mdc:https:/www.talos.dev/latest/talos-guides/configuration/disk-encryption)
+- [Custom Certificate Authorities](mdc:https:/www.talos.dev/latest/talos-guides/configuration/custom-certificate-authorities)
+
+### System Management
+- [Disk Management](mdc:https:/www.talos.dev/latest/talos-guides/configuration/disk)
+- [System Extensions](mdc:https:/www.talos.dev/latest/talos-guides/configuration/system-extensions)
+- [Logging](mdc:https:/www.talos.dev/latest/talos-guides/configuration/logging)
+
+## Configuration Rules
+
+1. **Version Control**
+   - All Talos configurations should be version controlled
+   - Configuration changes must be documented with clear commit messages
+
+2. **Security Baseline**
+   - Disk encryption should be enabled for production environments
+   - Custom certificates must be properly managed and documented
+   - API access should be restricted using RBAC
+
+3. **Networking**
+   - Network configurations must be clearly documented
+   - KubeSpan settings should be reviewed for security
+   - Virtual IP configurations must be tested before deployment
+
+4. **System Resources**
+   - Disk partitioning must follow best practices
+   - System extensions should be minimized to reduce attack surface
+   - Resource limits should be properly configured
+
+5. **Maintenance**
+   - Regular backup procedures must be documented
+   - Upgrade paths should be clearly defined
+   - Logging configurations must be appropriate for the environment
+
+---
+
+*Note: This document will be updated with additional rules and best practices as they are defined.*

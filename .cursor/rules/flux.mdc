@@ -1,0 +1,92 @@
+---
+description:
+globs: flux/*
+---
+# Flux and Kustomize Deployment Guidelines
+
+## Directory Structure
+```
+kubernetes/
+├── apps/           # Application deployments
+│   ├── base/       # Base configurations
+│   └── overlays/   # Environment-specific overlays
+├── infrastructure/ # Core infrastructure components
+│   ├── base/
+│   └── overlays/
+└── clusters/       # Cluster-specific configurations
+    └── homelab/    # Our homelab cluster
+```
+
+## Flux Guidelines
+
+1. All Flux resources should be defined in YAML format
+2. Use Flux's GitOps Toolkit components:
+   - Source controllers for Git repositories
+   - Kustomize controllers for deployments
+   - Helm controllers for Helm releases
+   - Notification controllers for alerts
+
+3. Repository structure should follow:
+   - One Git repository per cluster
+   - Clear separation between infrastructure and applications
+   - Use 1Password Connect for secrets management
+   - Store sensitive configuration in 1Password vaults
+
+## Kustomize Guidelines
+
+1. Base configurations:
+   - Keep base configurations generic
+   - Include all mandatory resources
+   - Define resource limits and requests
+   - Set appropriate labels and annotations
+
+2. Overlays:
+   - Create overlays for different environments
+   - Override only necessary values
+   - Use patches sparingly
+   - Maintain clear documentation for overrides
+
+3. Common practices:
+   - Use namespaces for isolation
+   - Implement resource quotas
+   - Define network policies
+   - Set up monitoring and logging
+
+## Deployment Process
+
+1. Create or update manifests in the appropriate directory
+2. Test changes locally using `kubectl kustomize`
+3. Commit and push changes to the repository
+4. Flux will automatically reconcile changes
+
+## Security Considerations
+
+1. Secret Management:
+   - Deploy 1Password Connect Operator in the cluster
+   - Store all secrets in 1Password vaults
+   - Use 1Password Connect references in Kubernetes manifests
+   - Implement proper RBAC for 1Password Connect access
+2. Implement RBAC policies
+3. Regular security scanning of container images
+4. Network segmentation using network policies
+
+## Monitoring and Maintenance
+
+1. Set up monitoring for Flux controllers
+2. Regular reconciliation of Git state
+3. Implement backup solutions
+4. Monitor resource usage and scaling
+5. Monitor 1Password Connect operator health
+
+## Best Practices
+
+1. Version all deployments
+2. Use semantic versioning for images
+3. Implement progressive delivery
+4. Regular pruning of unused resources
+5. Maintain documentation
+6. Secret Management:
+   - Never commit raw secrets to Git
+   - Use 1Password Connect references (op://vault/item/field)
+   - Regularly rotate 1Password Connect tokens
+   - Maintain clear documentation of secret references
