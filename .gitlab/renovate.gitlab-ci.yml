@@ -17,7 +17,7 @@
   allow_failure: true
   timeout: 2h
 
-renovate-hourly:
+renovate:
   extends: .renovate
   variables:
     RENOVATE_SCHEDULE_NAME: "hourly"
