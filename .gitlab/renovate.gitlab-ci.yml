@@ -1,7 +1,7 @@
 ---
 .renovate:
   stage: renovate
-  image: renovate/renovate:37.440.7
+  image: renovate/renovate:39.179.1
   variables:
     RENOVATE_CONFIG_FILE: renovate.json
     RENOVATE_PLATFORM: gitlab
