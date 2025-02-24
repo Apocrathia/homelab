@@ -6,15 +6,13 @@ globs: flux/*
 
 ## Directory Structure
 ```
-kubernetes/
-├── apps/           # Application deployments
-│   ├── base/       # Base configurations
-│   └── overlays/   # Environment-specific overlays
-├── infrastructure/ # Core infrastructure components
-│   ├── base/
-│   └── overlays/
-└── clusters/       # Cluster-specific configurations
-    └── homelab/    # Our homelab cluster
+flux/
+├── manifests/
+│   ├── 01-bootstrap/
+│   ├── 02-infrastructure/
+│   ├── 03-services/
+│   ├── 04-apps/
+│   └── kustomization.yaml
 ```
 
 ## Flux Guidelines
