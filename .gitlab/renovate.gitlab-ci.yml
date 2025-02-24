@@ -1,0 +1,22 @@
+---
+.renovate:
+  stage: renovate
+  image: renovate/renovate:37.273.0
+  variables:
+    RENOVATE_CONFIG_FILE: renovate.json
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: https://gitlab.com/api/v4/
+    LOG_LEVEL: debug
+  script:
+    - renovate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - when: never
+  allow_failure: true
+  timeout: 2h
+
+renovate-hourly:
+  extends: .renovate
+  variables:
+    RENOVATE_SCHEDULE_NAME: "hourly"

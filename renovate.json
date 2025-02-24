@@ -1,0 +1,33 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "security:openssf-scorecard"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "flux": {
+    "enabled": true
+  },
+  "kubernetes": {
+    "fileMatch": ["flux/manifests/**/*.yaml"]
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
+  ],
+  "timezone": "America/Denver",
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
+  "rangeStrategy": "replace",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):"
+}
