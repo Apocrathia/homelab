@@ -29,5 +29,6 @@
   "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
   "rangeStrategy": "replace",
   "semanticCommits": "enabled",
-  "commitMessagePrefix": "chore(deps):"
+  "commitMessagePrefix": "chore(deps):",
+  "autodiscover": true
 }
