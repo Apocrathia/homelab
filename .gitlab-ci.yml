@@ -1,3 +1,6 @@
 ---
+stages:
+  - renovate
+
 include:
   - local: .gitlab/renovate.gitlab-ci.yml
