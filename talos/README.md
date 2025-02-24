@@ -54,7 +54,7 @@ While that's happening, let's make sure talosctl is configured to talk to the cl
 
 ```bash
 export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint 10.50.8.8
+talosctl config endpoint 10.50.8.10
 talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13
 cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
@@ -76,6 +76,16 @@ Verify the cluster is up.
 
 ```bash
 kubectl get nodes
+```
+
+Update the talosconfig to point to the VIP.
+
+```bash
+export TALOSCONFIG="rendered/talosconfig"
+talosctl config endpoint kubernetes.apocrathia.com
+talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13
+cp rendered/talosconfig ~/.talos/config
+export TALOSCONFIG="~/.talos/config"
 ```
 
 Now go deploy Flux
