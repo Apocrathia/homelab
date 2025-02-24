@@ -14,7 +14,21 @@ brew install fluxcd/tap/flux
 flux bootstrap gitlab \
   --owner=apocrathia \
   --repository=homelab \
-  --path=flux/manifests \
+  --path=flux/manifests/01-bootstrap/flux-system \
   --read-write-key \
   --force
+```
+
+## Deploy
+
+```bash
+kubectl apply -k flux/manifests
+```
+
+## Reconcile
+
+```bash
+flux reconcile source git flux-system
+flux reconcile kustomize flux-system
+flux reconcile kustomize home
 ```

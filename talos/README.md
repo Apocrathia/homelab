@@ -87,7 +87,7 @@ If you need to completely reset and rebuild the cluster, follow these steps:
 Remove Flux and its resources (if installed):
 
 ```bash
-kubectl delete ns flux-system
+flux uninstall
 ```
 
 Reset each node in the cluster:
