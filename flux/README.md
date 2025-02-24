@@ -14,9 +14,8 @@ brew install fluxcd/tap/flux
 flux bootstrap gitlab \
   --owner=apocrathia \
   --repository=homelab \
-  --path=flux/manifests/01-bootstrap/flux-system \
-  --read-write-key \
-  --force
+  --path=flux/manifests/01-bootstrap \
+  --read-write-key
 ```
 
 ## Deploy
