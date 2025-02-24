@@ -25,7 +25,7 @@ Generate VM configurations:
 talosctl gen config \
   --with-secrets secrets.yaml \
   --config-patch-control-plane @patches/vm-patch.yaml \
-  home "https://10.50.8.8:6443" \
+  home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/
 ```
 
@@ -35,13 +35,18 @@ This will generate the following files:
 - `talosconfig`: Client configuration for talosctl
 - `worker.yaml`: Worker configuration
 
-Now, we can bootstrap the control plane nodes.
+Now, we can bootstrap the control plane nodes. Each node gets its own specific configuration patch to set its hostname:
 
 ```bash
-for i in {10..13}; do
+# Apply configuration to each node with its specific patch
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((i + 9))
+  echo "Configuring talos-vm-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
   talosctl apply-config --insecure \
- --nodes 10.50.8.$i \
- --file rendered/controlplane.yaml
+    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --file rendered/controlplane.yaml \
+    --config-patch "@patches/vm-${NODE_NUM}-patch.yaml"
 done
 ```
 
@@ -49,21 +54,22 @@ While that's happening, let's make sure talosctl is configured to talk to the cl
 
 ```bash
 export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint 10.50.8.10
-talosctl config node 10.50.8.10
+talosctl config endpoint 10.50.8.8
+talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13
 cp rendered/talosconfig ~/.talos/config
+export TALOSCONFIG="~/.talos/config"
 ```
 
 Next, we bootstrap the first control plane node.
 
 ```bash
-talosctl bootstrap
+talosctl bootstrap --nodes 10.50.8.10
 ```
 
 Once the cluster is up, let's get the kubeconfig.
 
 ```bash
-talosctl kubeconfig ~/.kube/config
+talosctl kubeconfig ~/.kube/config -n 10.50.8.10
 ```
 
 Verify the cluster is up.
@@ -73,3 +79,32 @@ kubectl get nodes
 ```
 
 Now go deploy Flux
+
+## Cluster Teardown and Rebuild
+
+If you need to completely reset and rebuild the cluster, follow these steps:
+
+Remove Flux and its resources (if installed):
+
+```bash
+kubectl delete ns flux-system
+```
+
+Reset each node in the cluster:
+
+```bash
+# Reset all nodes (this will reboot them)
+for node in 10.50.8.{10..13}; do
+  echo "Resetting $node..."
+  talosctl reset --graceful=false --reboot --nodes $node || true
+done
+```
+
+Finally remove the talos and kube config files.
+
+```bash
+rm ~/.talos/config
+rm ~/.kube/config
+```
+
+Now, return to the bootstrapping steps and repeat.

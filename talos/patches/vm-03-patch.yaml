@@ -1,0 +1,10 @@
+---
+# yamllint disable-line rule:line-length
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.9.4/pkg/machinery/config/schemas/config.schema.json
+machine:
+  network:
+    hostname: talos-vm-03
+  certSANs:
+    - "10.50.8.12"
+    - "talos-vm-03.apocrathia.com"
+    - "127.0.0.1"
