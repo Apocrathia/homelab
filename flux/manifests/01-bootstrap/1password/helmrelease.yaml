@@ -1,0 +1,178 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.devbu.io/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: 1password-connect
+  namespace: 1password-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: connect
+      # renovate: datasource=helm registryUrl=https://1password.github.io/connect-helm-charts/ depName=connect
+      version: 1.17.0
+      sourceRef:
+        kind: HelmRepository
+        name: 1password
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    # Note: values.yaml files don't support templating out of the box, so that means
+    # that every value "{{ .Between.Curly.Braces }}" in this file needs to be
+    # explicitly interpolated on the template side by using the `tpl` function.
+
+    # global common labels, applied to all ressources
+    commonLabels: {}
+
+    # This section of values is for 1Password Connect API and Sync Configuration
+    connect:
+      # Denotes whether the 1Password Connect server will be deployed
+      create: true
+
+      # The number of replicas to run the 1Password Connect deployment
+      replicas: 2
+
+      # The 1Password Connect API Specific Values
+      api:
+        name: connect-api
+        # The 1Password Connect API repository
+        imageRepository: 1password/connect-api
+        resources: {}
+        httpPort: 8080
+        httpsPort: 8443
+        logLevel: info
+        # Prometheus Service Monitor
+        # ref: https://github.com/coreos/prometheus-operator
+        #
+        serviceMonitor:
+          # Create ServiceMonitor Resource for scraping metrics using PrometheusOperator
+          #
+          enabled: false
+          # Specify the interval at which metrics should be scraped
+          #
+          interval: 30s
+          # Define the path used by ServiceMonitor to scrape metrics
+          #
+          path: "/metrics"
+          # Define the HTTP URL parameters used by ServiceMonitor
+          #
+          params: {}
+          # Extra annotations for the ServiceMonitor
+          #
+          annotations: {}
+
+      # The 1Password Connect Sync Specific Values
+      sync:
+        name: connect-sync
+        imageRepository: 1password/connect-sync
+        resources: {}
+        httpPort: 8081
+        logLevel: info
+
+      # The name of 1Password Connect Application
+      applicationName: 1password-connect
+
+      # The name of 1Password Connect Host
+      host: 1password-connect
+
+      # The type of Service resource to create for the Connect API and sync services.
+      # See: https://kubernetes.io/docs/concepts/services-networking/service
+      # This by default is NodePort and can also be defined as LoadBalancer.
+      # If serviceType is LoadBalancer then loadBalancerSourceRanges and loadBalancerIP should be defined.
+      # See: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
+      serviceType: NodePort
+
+      # Additional annotations to be added to the service resource
+      serviceAnnotations: {}
+
+      # loadBalancerSourceRanges:
+      #   - 10.0.0.0/16
+      #   - 1.84.26.4/32
+
+      # loadBalancerIP:
+
+      # The name of Kubernetes Secret containing the 1Password Connect credentials
+      credentialsName: 1password-credentials
+
+      # The key for the 1Password Connect Credentials stored in the credentials secret
+      credentialsKey: 1password-credentials.json
+
+      # 1Password Connect volume shared between 1Password Connect Containers
+      dataVolume:
+        # The name of the shared volume used between 1Password Connect Containers
+        name: 1password-connect-data
+        # The type of the shared volume used between
+        # 1Password Connect Containers
+        type: emptyDir
+        # Desribes the fields and values for configuration of
+        # shared volume for 1Password Connect
+        values: {}
+
+      # Ingress allows ingress services to be created to allow external access
+      # from Kubernetes to access 1Password Connect pods.
+      # In order to expose the service, use the route section below
+      ingress:
+        enabled: false
+        labels:
+          {}
+          # traffic: external
+        annotations:
+          {}
+          # |
+          # kubernetes.io/ingress.class: nginx
+          # kubernetes.io/tls-acme: "true"
+          #   or
+          # kubernetes.io/ingress.class: nginx
+          # kubernetes.io/tls-acme: "true"
+
+        # Optionally use ingressClassName instead of deprecated annotation.
+        # See: https://kubernetes.io/docs/concepts/services-networking/ingress/#deprecated-annotation
+        ingressClassName: ""
+
+        # As of Kubernetes 1.19, all Ingress Paths must have a pathType configured. The default value below should be
+        # sufficient in most cases.
+        # See: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.
+        pathType: Prefix
+        hosts:
+          - host: 1password-connect.k8s.apocrathia.com
+            paths: []
+        # Extra paths to prepend to the host configuration.
+        # This is useful when working with annotation based services.
+        extraPaths: []
+        # - path: /*
+        #   backend:
+        #     service:
+        #       name: ssl-redirect
+        #       port:
+        #         number: use-annotation
+        tls: []
+        #  - secretName: chart-example-tls
+        #    hosts:
+        #      - chart-example.local
+
+    # This section of values is for 1Password Operator Configuration
+    operator:
+      # Denotes whether the 1Password Operator will be deployed
+      create: true
+
+      # Denotes whether the 1Password Operator will automatically restart deployments based on associated
+      # updated secrets.
+      autoRestart: true
+
+      # 1Password Operator Token Configuration
+      token:
+        # The name of Kubernetes Secret containing the 1Password Connect API token
+        name: 1password-token
+
+        # The key for the 1Password Connect token stored in the 1Password token secret
+        key: token
