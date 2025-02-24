@@ -15,10 +15,13 @@ kubeconfig
 *.pem
 secrets/
 credentials/
+talos/secrets.yaml
+talos/rendered/**
 
 # Build and dependency directories
 node_modules/
 dist/
+
 build/
 *.log
 

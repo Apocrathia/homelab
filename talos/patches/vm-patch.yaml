@@ -1,0 +1,47 @@
+---
+# yamllint disable-line rule:line-length
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.9.4/pkg/machinery/config/schemas/config.schema.json
+machine:
+  certSANs:
+    - "10.50.8.8"
+    - "kubernetes.apocrathia.com"
+    - "talos-vm-01.apocrathia.com"
+    - "talos-vm-02.apocrathia.com"
+    - "talos-vm-03.apocrathia.com"
+    - "talos-vm-04.apocrathia.com"
+  kubelet:
+    extraArgs:
+      rotate-server-certificates: "true"
+  network:
+    interfaces:
+      - interface: eth0
+        dhcp: true
+        vip:
+          ip: "10.50.8.8"
+  install:
+    disk: /dev/sda
+    wipe: true
+    image: ghcr.io/siderolabs/installer:v1.9.4
+    extensions:
+      - image: ghcr.io/siderolabs/qemu-guest-agent:9.2.0
+    extraKernelArgs:
+      # Predictable network interface names
+      - "net.ifnames=0"
+  time:
+    servers:
+      - pool.ntp.org
+cluster:
+  clusterName: home
+  allowSchedulingOnControlPlanes: true
+  network:
+    dnsDomain: cluster.k8s.apocrathia.com
+  controlPlane:
+    endpoint: https://10.50.8.8:6443
+  apiServer:
+    certSANs:
+      - "10.50.8.8"
+      - "kubernetes.apocrathia.com"
+      - "talos-vm-01.apocrathia.com"
+      - "talos-vm-02.apocrathia.com"
+      - "talos-vm-03.apocrathia.com"
+      - "talos-vm-04.apocrathia.com"
