@@ -17,3 +17,8 @@
     - when: never
   allow_failure: true
   timeout: 2h
+
+renovate:
+  extends: .renovate
+  variables:
+    RENOVATE_SCHEDULE_NAME: "hourly"
