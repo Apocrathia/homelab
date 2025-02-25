@@ -1,0 +1,42 @@
+---
+# Daily backup of all volumes
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: daily-backup
+  namespace: longhorn-system
+spec:
+  cron: "@daily"
+  task: "backup"
+  groups:
+    - default
+  retain: 3
+  concurrency: 2
+---
+# Hourly snapshot of all volumes
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: hourly-snapshot
+  namespace: longhorn-system
+spec:
+  cron: "@hourly"
+  task: "snapshot"
+  groups:
+    - default
+  retain: 3
+  concurrency: 2
+---
+# Weekly filesystem trim
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: weekly-trim
+  namespace: longhorn-system
+spec:
+  cron: "@weekly"
+  task: "filesystem-trim"
+  groups:
+    - default
+  retain: 3
+  concurrency: 2

@@ -10,4 +10,5 @@ kind: Kustomization
 # - monitoring stack
 
 # Will be populated as infrastructure components are added
-resources: []
+resources:
+  - longhorn

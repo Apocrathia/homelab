@@ -4,5 +4,6 @@ kind: Kustomization
 
 resources:
   - flux-system
+  # - crds
   - helm
   - 1password
