@@ -4,10 +4,11 @@
   image: renovate/renovate:39.179.1
   variables:
     RENOVATE_CONFIG_FILE: renovate.json
+    RENOVATE_AUTODISCOVER: "true"
+    RENOVATE_ONBOARDING: "false"
     RENOVATE_PLATFORM: gitlab
     RENOVATE_ENDPOINT: https://gitlab.com/api/v4/
-    LOG_LEVEL: debug
-    RENOVATE_AUTODISCOVER: "true"
+    LOG_LEVEL: info
   script:
     - renovate
   rules:
@@ -16,8 +17,3 @@
     - when: never
   allow_failure: true
   timeout: 2h
-
-renovate:
-  extends: .renovate
-  variables:
-    RENOVATE_SCHEDULE_NAME: "hourly"
