@@ -27,13 +27,27 @@ The cluster hardware is a combination of physical and virtual machines.
 What do I need to bootstrap the cluster?
 
 - Flux
+- 1Password Connect
+- Metrics exporter
+
+## Infrastructure
+
+What do we need to make everything work?
+
+- Longhorn
+- Cilium
+- CoreDNS on 10.50.8.53
 
 ## Services
 
-What services do I want to initially deploy to the cluster?
+What services do I need to initially deploy to the cluster?
 
-- Longhorn
-- 1Password Connect
-- Cilium
+- Elastic
 - GitLab Agent
 - GitLab Runner
+
+## Apps
+
+What do I actually want to do?
+
+-

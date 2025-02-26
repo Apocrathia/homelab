@@ -12,3 +12,4 @@ kind: Kustomization
 # Will be populated as infrastructure components are added
 resources:
   - longhorn
+  # - cilium
