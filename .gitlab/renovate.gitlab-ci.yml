@@ -1,7 +1,7 @@
 ---
 .renovate:
   stage: renovate
-  image: renovate/renovate:39.182.1
+  image: renovate/renovate:39.182.4
   variables:
     RENOVATE_CONFIG_FILE: renovate.json
     RENOVATE_AUTODISCOVER: "true"
