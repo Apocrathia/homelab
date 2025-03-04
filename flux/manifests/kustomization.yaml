@@ -4,6 +4,6 @@ kind: Kustomization
 
 resources:
   - 01-bootstrap
-  - 02-infrastructure
+  # - 02-infrastructure
   # - 03-services
   # - 04-apps
