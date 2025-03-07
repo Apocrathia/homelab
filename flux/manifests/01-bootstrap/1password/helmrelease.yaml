@@ -3,8 +3,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: 1password-connect
-  namespace: 1password-system
+  name: onepassword-connect
+  namespace: onepassword-system
 spec:
   interval: 30m
   chart:
@@ -80,10 +80,10 @@ spec:
         logLevel: info
 
       # The name of 1Password Connect Application
-      applicationName: 1password-connect
+      applicationName: onepassword-connect
 
       # The name of 1Password Connect Host
-      host: 1password-connect
+      host: onepassword-connect
 
       # The type of Service resource to create for the Connect API and sync services.
       # See: https://kubernetes.io/docs/concepts/services-networking/service
@@ -110,7 +110,7 @@ spec:
       # 1Password Connect volume shared between 1Password Connect Containers
       dataVolume:
         # The name of the shared volume used between 1Password Connect Containers
-        name: 1password-connect-data
+        name: onepassword-connect-data
         # The type of the shared volume used between
         # 1Password Connect Containers
         type: emptyDir
@@ -144,7 +144,7 @@ spec:
         # See: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.
         pathType: Prefix
         hosts:
-          - host: 1password-connect.k8s.apocrathia.com
+          - host: onepassword-connect.k8s.apocrathia.com
             paths: []
         # Extra paths to prepend to the host configuration.
         # This is useful when working with annotation based services.
