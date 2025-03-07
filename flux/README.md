@@ -15,13 +15,27 @@ flux bootstrap gitlab \
   --owner=apocrathia \
   --repository=homelab \
   --path=flux/manifests/01-bootstrap \
-  --read-write-key
+  --read-write-key \
+  --reconcile
 ```
 
 ## Deploy
 
+Through kubectl:
+
 ```bash
 kubectl apply -k flux/manifests
+```
+
+Through flux:
+
+```bash
+flux create kustomization manifests \
+  --depends-on=flux-system \
+  --source=GitRepository/flux-system \
+  --path="./manifests/" \
+  --prune=true \
+  --interval=5m
 ```
 
 ## Reconcile
