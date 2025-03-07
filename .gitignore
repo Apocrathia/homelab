@@ -54,3 +54,6 @@ vault.key
 tmp/
 temp/
 .cache/
+
+# Secrets
+secrets/
