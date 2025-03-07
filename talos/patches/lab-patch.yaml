@@ -9,23 +9,16 @@ machine:
     interfaces:
       - interface: eth0
         dhcp: true
-        vip:
-          ip: "10.50.8.8"
   install:
     disk: /dev/sda
     wipe: true
     # yamllint disable-line rule:line-length
-    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&secureboot=undefined&target=metal&version=1.9.4
-    image: factory.talos.dev/installer/f683308f6e49ec36d715bd41c90d800910552d8cbc015c8363ec350594535fa1:v1.9.4
+    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fi915&extensions=siderolabs%2Fintel-ice-firmware&extensions=siderolabs%2Fintel-ucode&extensions=siderolabs%2Fmei&platform=metal&secureboot=undefined&target=metal&version=1.9.4
+    image: factory.talos.dev/installer/f78a2ee8d0cb96f78ebc1cb78d6a9cb05e19ce31b3d106b1986550ff29de6b54:v1.9.4
   time:
     servers:
       - pool.ntp.org
 cluster:
   clusterName: home
-  allowSchedulingOnControlPlanes: true
   controlPlane:
     endpoint: https://kubernetes.apocrathia.com:6443
-  apiServer:
-    certSANs:
-      - "10.50.8.8"
-      - "kubernetes.apocrathia.com"

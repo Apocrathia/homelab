@@ -25,8 +25,10 @@ Generate VM configurations:
 talosctl gen config \
   --with-secrets secrets.yaml \
   --config-patch-control-plane @patches/vm-patch.yaml \
+  --config-patch-worker @patches/lab-patch.yaml \
   home "https://kubernetes.apocrathia.com:6443" \
-  -o rendered/
+  -o rendered/ \
+  --force
 ```
 
 This will generate the following files:
@@ -88,7 +90,42 @@ cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
 ```
 
-Now go deploy Flux
+## Adding Worker Nodes
+
+First, we'll need to update our talosconfig to add the new nodes.
+
+```bash
+export TALOSCONFIG="rendered/talosconfig"
+talosctl config endpoint kubernetes.apocrathia.com
+talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13 10.50.8.101 10.50.8.102 10.50.8.103
+cp rendered/talosconfig ~/.talos/config
+export TALOSCONFIG="~/.talos/config"
+```
+
+To add physical worker nodes (lab-01 through lab-03) to the cluster:
+
+```bash
+# Apply worker configuration to each physical node
+for i in {1..3}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((100 + i))
+  echo "Configuring lab-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
+  talosctl apply-config --insecure \
+    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --file rendered/worker.yaml \
+    --config-patch "@patches/lab-${NODE_NUM}-patch.yaml"
+done
+```
+
+Verify the new nodes join the cluster:
+
+```bash
+kubectl get nodes
+```
+
+## Deployments
+
+Now go deploy [Flux](../flux/README.md)
 
 ## Cluster Teardown and Rebuild
 
