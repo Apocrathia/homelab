@@ -28,8 +28,8 @@ The 1Password Connect Operator requires two main credentials:
 6. Create a Kubernetes secret with the encoded credentials:
    ```bash
    kubectl create secret generic 1password-credentials \
-     --namespace=1password-system \
-     --from-file=1password-credentials.json=1password-credentials.b64
+     --namespace=onepassword-system \
+     --from-file=1password-credentials.json=../secrets/1password-credentials.b64
    ```
 7. Securely store the original `1password-credentials.json` in 1Password and delete local copies
 
@@ -42,7 +42,7 @@ The 1Password Connect Operator requires two main credentials:
 5. Create a Kubernetes secret with the token:
    ```bash
    kubectl create secret generic 1password-token \
-     --namespace=1password-system \
+     --namespace=onepassword-system \
      --from-literal=token=YOUR_TOKEN_HERE
    ```
 
