@@ -110,6 +110,8 @@ for node in 10.50.8.{10..13}; do
 done
 ```
 
+Sometimes, this will fail on the first node. If that happens, go into the VM and reset it manually. When it boots from the talos image, select the reset option in the grub boot menu.
+
 Finally remove the talos and kube config files.
 
 ```bash
