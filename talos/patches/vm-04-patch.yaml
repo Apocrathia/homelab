@@ -7,4 +7,5 @@ machine:
   certSANs:
     - "10.50.8.13"
     - "talos-vm-04.apocrathia.com"
+    - "kubernetes.apocrathia.com"
     - "127.0.0.1"

@@ -7,6 +7,7 @@ machine:
   certSANs:
     - "10.50.8.103"
     - "lab-03.apocrathia.com"
+    - "kubernetes.apocrathia.com"
     - "127.0.0.1"
   install:
     disk: /dev/sda
