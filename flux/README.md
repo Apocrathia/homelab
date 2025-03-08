@@ -19,6 +19,10 @@ flux bootstrap gitlab \
   --reconcile
 ```
 
+You will be asked for the GitLab Personal Access Token.
+
+Note: 1password also needs to be manually configured with it's secret. See the 1password [README](./manifests/01-bootstrap/1password/README.md) for more details.
+
 ## Deploy
 
 Through kubectl:
