@@ -125,7 +125,46 @@ kubectl get nodes
 
 ## Deployments
 
-Now go deploy [Flux](../flux/README.md)
+Go deploy [Flux](../flux/README.md)
+
+## Updating Configurations
+
+To update the Talos configuration on existing nodes:
+
+```bash
+# Generate new configurations with any changes
+talosctl gen config \
+  --with-secrets secrets.yaml \
+  --config-patch-control-plane @patches/vm-patch.yaml \
+  --config-patch-worker @patches/lab-patch.yaml \
+  home "https://kubernetes.apocrathia.com:6443" \
+  -o rendered/ \
+  --force
+
+# Apply new control plane configurations
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((i + 9))
+  echo "Updating talos-vm-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
+  talosctl apply-config \
+    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --file rendered/controlplane.yaml \
+    --config-patch "@patches/vm-${NODE_NUM}-patch.yaml"
+done
+
+# Apply new worker configurations
+for i in {1..3}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((100 + i))
+  echo "Updating lab-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
+  talosctl apply-config \
+    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --file rendered/worker.yaml \
+    --config-patch "@patches/lab-${NODE_NUM}-patch.yaml"
+done
+```
+
+The nodes will automatically apply the new configuration and restart any necessary services.
 
 ## Cluster Teardown and Rebuild
 
