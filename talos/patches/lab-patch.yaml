@@ -2,6 +2,8 @@
 # yamllint disable-line rule:line-length
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.9.4/pkg/machinery/config/schemas/config.schema.json
 machine:
+  features:
+    rbac: true
   kubelet:
     extraArgs:
       rotate-server-certificates: "false"
