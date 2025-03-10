@@ -6,6 +6,7 @@ machine:
     hostname: talos-vm-04
   certSANs:
     - "10.50.8.13"
+    - "10.50.8.8"
     - "talos-vm-04.apocrathia.com"
     - "kubernetes.apocrathia.com"
     - "127.0.0.1"
