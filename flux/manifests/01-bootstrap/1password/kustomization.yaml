@@ -8,4 +8,4 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
-  - customresources.yaml
+  - secret.yaml
