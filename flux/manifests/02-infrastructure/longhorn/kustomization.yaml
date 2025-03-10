@@ -5,8 +5,6 @@ kind: Kustomization
 metadata:
   name: longhorn
 resources:
-  # renovate: datasource=github-releases depName=longhorn/longhorn versioning=semver
-  # - https://github.com/longhorn/longhorn/blob/v1.6.1/deploy/longhorn.yaml
   - namespace.yaml
   - secrets.yaml
   - helmrelease.yaml
