@@ -17,8 +17,8 @@ machine:
     disk: /dev/sda
     wipe: true
     # yamllint disable-line rule:line-length
-    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&secureboot=undefined&target=metal&version=1.9.4
-    image: factory.talos.dev/installer/f683308f6e49ec36d715bd41c90d800910552d8cbc015c8363ec350594535fa1:v1.9.4
+    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&secureboot=undefined&target=metal&version=1.9.4
+    image: factory.talos.dev/installer/dc2c29fc8374161b858245a14658779154bf11aa9c23a04813fa8f298fcd0bfc:v1.9.4
   time:
     servers:
       - pool.ntp.org
