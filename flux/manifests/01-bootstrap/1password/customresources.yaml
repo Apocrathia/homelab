@@ -11,11 +11,9 @@ spec:
   dependsOn:
     - name: onepassword
   wait: true
-  path: ./01-bootstrap/1password
+  path: ./01-bootstrap/1password/custom-resources
   prune: true
   sourceRef:
     kind: GitRepository
     name: homelab
   targetNamespace: kube-system
-  resources:
-    - secret.yaml
