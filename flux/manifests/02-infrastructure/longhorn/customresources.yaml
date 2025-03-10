@@ -16,5 +16,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: homelab
-resources:
-  - recurringjobs.yaml
+  targetNamespace: longhorn-system
+  resources:
+    - recurringjobs.yaml
