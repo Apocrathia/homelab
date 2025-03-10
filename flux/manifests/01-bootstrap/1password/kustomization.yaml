@@ -8,23 +8,4 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
----
-# yamllint disable-line rule:line-length
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: onepassword-crs
-  namespace: flux-system
-spec:
-  interval: 5m
-  dependsOn:
-    - name: onepassword
-  wait: true
-  path: ./flux/manifests/01-bootstrap/1password
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: homelab
-resources:
-  - secret.yaml
+  - customresources.yaml
