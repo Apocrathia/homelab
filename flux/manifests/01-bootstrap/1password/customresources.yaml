@@ -9,7 +9,8 @@ metadata:
 spec:
   interval: 5m
   dependsOn:
-    - name: onepassword
+    - name: onepassword-connect
+      namespace: onepassword-system
   wait: true
   path: ./01-bootstrap/1password/custom-resources
   prune: true
