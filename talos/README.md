@@ -191,10 +191,16 @@ flux uninstall
 Reset each node in the cluster:
 
 ```bash
-# Reset all nodes (this will reboot them)
+# Reset control plane nodes
 for node in 10.50.8.{10..13}; do
   echo "Resetting $node..."
-  talosctl reset --graceful=false --reboot --nodes $node || true
+  talosctl reset --graceful=false --reboot --nodes $node --wait=false || echo "Failed to reset $node"
+done
+
+# Reset worker nodes (lab nodes)
+for node in 10.50.8.{101..103}; do
+  echo "Resetting $node..."
+  talosctl reset --graceful=false --reboot --nodes $node --wait=false --endpoints $node || echo "Failed to reset $node"
 done
 ```
 
