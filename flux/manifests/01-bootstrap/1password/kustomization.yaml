@@ -17,6 +17,7 @@ metadata:
   name: onepassword-crs
   namespace: flux-system
 spec:
+  interval: 5m
   dependsOn:
     - name: onepassword
   wait: true

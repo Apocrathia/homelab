@@ -17,6 +17,7 @@ metadata:
   name: longhorn-crs
   namespace: flux-system
 spec:
+  interval: 5m
   dependsOn:
     - name: longhorn
   wait: true
