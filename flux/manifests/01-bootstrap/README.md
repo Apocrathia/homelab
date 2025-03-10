@@ -5,10 +5,8 @@ This directory contains the initial Flux configuration and core components neede
 ## Components
 
 - Flux system components
-- Source controllers
-- Kustomize controllers
-- Helm controllers
-- Notification controllers
+- Helm Repositories
+- 1password Operator
 
 ## Guidelines
 
