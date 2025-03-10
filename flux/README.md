@@ -46,6 +46,6 @@ flux create kustomization manifests \
 
 ```bash
 flux reconcile source git flux-system
-flux reconcile kustomize flux-system
-flux reconcile kustomize home
+flux reconcile kustomization flux-system
+flux reconcile kustomization manifests
 ```
