@@ -8,4 +8,4 @@ resources:
   - namespace.yaml
   - secrets.yaml
   - helmrelease.yaml
-  - customresources.yaml
+  - recurringjobs.yaml
