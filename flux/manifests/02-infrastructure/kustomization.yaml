@@ -15,3 +15,4 @@ metadata:
 resources:
   - longhorn
   # - cilium
+  # - kube-prometheus-stack
