@@ -4,6 +4,18 @@
 
 Talos is a modern Kubernetes distribution that is designed to be simple, secure, and reliable. It is a CNCF-certified Kubernetes distribution that is optimized for cloud-native applications.
 
+### Kubernetes Hosts
+
+| Hostname    | IP Address  | Role          | Hardware           |
+| ----------- | ----------- | ------------- | ------------------ |
+| talos-vm-01 | 10.50.8.10  | Control Plane | Virtual Machine    |
+| talos-vm-02 | 10.50.8.11  | Control Plane | Virtual Machine    |
+| talos-vm-03 | 10.50.8.12  | Control Plane | Virtual Machine    |
+| talos-vm-04 | 10.50.8.13  | Control Plane | Virtual Machine    |
+| lab-01      | 10.50.8.101 | Worker        | Dell Optiplex 7050 |
+| lab-02      | 10.50.8.102 | Worker        | Dell Optiplex 7050 |
+| lab-03      | 10.50.8.103 | Worker        | Dell Optiplex 7050 |
+
 ## Bootstrapping
 
 Start by generating the secrets for the cluster.
