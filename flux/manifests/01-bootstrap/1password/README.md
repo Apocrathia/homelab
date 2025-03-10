@@ -43,7 +43,7 @@ The 1Password Connect Operator requires two main credentials:
    ```bash
    kubectl create secret generic 1password-token \
      --namespace=onepassword-system \
-     --from-literal=token=YOUR_TOKEN_HERE
+     --from-literal=token=$(/bin/cat ../secrets/1password-token)
    ```
 
 ## Security Considerations
