@@ -22,7 +22,7 @@ The cluster hardware is a combination of physical and virtual machines.
 
 - 4x Proxmox VMs
 
-## Bootstrap
+### Bootstrap
 
 What do I need to bootstrap the cluster?
 
@@ -30,7 +30,7 @@ What do I need to bootstrap the cluster?
 - 1Password Connect
 - Metrics exporter
 
-## Infrastructure
+### Infrastructure
 
 What do we need to make everything work?
 
@@ -38,7 +38,7 @@ What do we need to make everything work?
 - Cilium
 - CoreDNS on 10.50.8.53
 
-## Services
+### Services
 
 What services do I need to initially deploy to the cluster?
 
@@ -46,8 +46,12 @@ What services do I need to initially deploy to the cluster?
 - GitLab Agent
 - GitLab Runner
 
-## Apps
+### Apps
 
 What do I actually want to do?
 
--
+- Create a test app
+
+## Getting Started
+
+Go to the [Talos](./talos/README.md) directory to bootstrap the cluster.

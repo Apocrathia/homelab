@@ -2,6 +2,8 @@
 
 Flux is a tool for managing Kubernetes resources. It is a GitOps tool that allows you to manage your Kubernetes resources in a Git repository.
 
+> **Navigation**: [← Back to Talos Cilium Installation](../talos/cilium-install.md) | [Next: 1Password Connect Setup →](./manifests/01-bootstrap/1password/README.md)
+
 ## Installation
 
 ```bash

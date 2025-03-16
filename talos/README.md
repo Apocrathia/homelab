@@ -1,5 +1,7 @@
 # Talos
 
+> **Navigation**: [Home](../README.md) | [Next: Cilium Installation →](./cilium-install.md)
+
 ## Overview
 
 Talos is a modern Kubernetes distribution that is designed to be simple, secure, and reliable. It is a CNCF-certified Kubernetes distribution that is optimized for cloud-native applications.
@@ -131,6 +133,12 @@ Verify the new nodes join the cluster:
 ```bash
 kubectl get nodes
 ```
+
+## Installing Cilium CNI
+
+After bootstrapping the cluster, you'll need to install a CNI. We use Cilium as our CNI provider.
+
+See [Cilium Installation Guide](./cilium-install.md) for detailed instructions on installing and configuring Cilium on Talos.
 
 ## Deployments
 

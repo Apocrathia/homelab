@@ -31,3 +31,6 @@ cluster:
     certSANs:
       - "10.50.8.8"
       - "kubernetes.apocrathia.com"
+  network:
+    cni:
+      name: none

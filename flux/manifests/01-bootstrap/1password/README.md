@@ -2,6 +2,8 @@
 
 This guide explains how to set up the required credentials for deploying the 1Password Connect Operator in your Kubernetes cluster.
 
+> **Navigation**: [← Back to Flux README](../../../README.md)
+
 ## Prerequisites
 
 - Access to your 1Password account with administrative privileges

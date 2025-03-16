@@ -1,0 +1,260 @@
+---
+# yamllint disable-line rule:line-length
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+  namespace: cilium-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: cilium
+      # renovate: datasource=helm registryUrl=https://helm.cilium.io depName=cilium
+      version: "1.17.2"
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: flux-system
+      interval: 30m
+  values:
+    namespaceOverride: cilium-system
+    # Migration from Flannel configuration
+    operator:
+      unmanagedPodWatcher:
+        restart: false # Don't restart unmigrated pods during migration
+      enabled: true
+      replicas: 1
+      # Keep Cilium Operator off control-plane nodes
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+      # Enable prometheus metrics
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+
+    # CNI configuration for migration and Talos compatibility
+    cni:
+      install: true
+      exclusive: true
+      chainingMode: none
+      customConf: false # Changed from true to false for Talos
+      uninstall: false # Don't remove CNI config on shutdown
+      confPath: /etc/cni/net.d
+      binPath: /opt/cni/bin
+
+    # BPF configuration
+    bpf:
+      masquerade: true
+      hostRouting: true # Enable BPF host routing for BBR to work
+      hostLegacyRouting: false # Disable legacy routing as we're using BPF host routing
+
+    # Disable policy enforcement during migration
+    policyEnforcementMode: "never"
+
+    # Enable Hubble with modern secure defaults
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+        # Keep Hubble Relay off control-plane nodes
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/control-plane
+                      operator: DoesNotExist
+      ui:
+        enabled: true
+        securityContext:
+          enabled: true
+        # Keep Hubble UI off control-plane nodes
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/control-plane
+                      operator: DoesNotExist
+      tls:
+        enabled: true
+        auto:
+          enabled: true
+          method: cronJob
+          # Keep certificate generation job off control-plane nodes
+          certGen:
+            affinity:
+              nodeAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  nodeSelectorTerms:
+                    - matchExpressions:
+                        - key: node-role.kubernetes.io/control-plane
+                          operator: DoesNotExist
+
+    # Enable built-in DNS proxy with NextDNS
+    dnsProxy:
+      enabled: true
+      # NextDNS upstream servers
+      upstream:
+        - 45.90.28.214
+        - 45.90.30.214
+
+    # Enable IPv4 and disable IPv6 for homelab setup
+    ipv4:
+      enabled: true
+    ipv6:
+      enabled: false
+
+    # Configure IPv4 native routing CIDR (required for native routing mode)
+    ipv4NativeRoutingCIDR: "10.42.0.0/16"
+
+    # Cluster mesh disabled for single cluster
+    clustermesh:
+      useAPIServer: false
+
+    # Configure monitoring with ServiceMonitor
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+    # Configure routing mode
+    routingMode: native
+    autoDirectNodeRoutes: true
+
+    # Resource configuration for cilium-agent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+    # Security context for agent pods - modified for Talos compatibility
+    securityContext:
+      privileged: false # Changed from true to false
+      capabilities:
+        ciliumAgent:
+          - CHOWN
+          - KILL
+          - NET_ADMIN
+          - NET_RAW
+          - IPC_LOCK
+          - SYS_ADMIN
+          - SYS_RESOURCE
+          - DAC_OVERRIDE
+          - FOWNER
+          - SETGID
+          - SETUID
+        cleanCiliumState:
+          - NET_ADMIN
+          - SYS_ADMIN
+          - SYS_RESOURCE
+
+    # Configure kubeproxy replacement - initially set to false to work with kube-proxy
+    kubeProxyReplacement: false
+    k8sServiceHost: "10.50.8.8" # Use VIP address
+    k8sServicePort: 6443 # Standard Kubernetes API port
+
+    # Enable bandwidth manager for better traffic control
+    bandwidthManager:
+      enabled: true
+      bbr: true
+
+    # Enable native routing CIDR for better performance
+    ipam:
+      mode: kubernetes
+      operator:
+        clusterPoolIPv4PodCIDR: "10.42.0.0/16"
+
+    # Enable load balancing mode
+    loadBalancer:
+      algorithm: maglev
+      mode: snat
+
+    # Enable metrics for better observability
+    metrics:
+      enabled:
+        - dns:query;ignoreAAAA
+        - drop
+        - tcp
+        - flow
+        - icmp
+        - http
+
+    # Enable BGP support if needed
+    bgp:
+      enabled: false
+
+    # Enable Envoy support
+    envoy:
+      enabled: true
+      # Keep Envoy proxy off control-plane nodes
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+
+    # Disable host firewall for Talos compatibility
+    hostFirewall:
+      enabled: false
+
+    # Disable IP masquerade agent as we're using BPF masquerade
+    enableIPMasqAgent: false
+
+    # Add cgroup configuration for Talos
+    cgroup:
+      autoMount:
+        enabled: false
+      hostRoot: /sys/fs/cgroup
+
+    # Talos-specific configuration to avoid CoreDNS issues
+    # See: https://www.talos.dev/v1.9/kubernetes-guides/network/deploying-cilium/#known-issues
+    enableXTSocketFallback: false
+    installNoConntrackIptablesRules: false
+
+    # Disable forwarding DNS to host to avoid CoreDNS issues
+    # See: https://www.talos.dev/v1.9/kubernetes-guides/network/deploying-cilium/#known-issues
+    k8s:
+      requireIPv4PodCIDR: true
+
+    # Enable socket LB for better performance
+    socketLB:
+      enabled: true
+
+    # Enable nodePort for external access
+    nodePort:
+      enabled: true
+
+    # Enable host services for better integration
+    hostServices:
+      enabled: true
+
+    # Enable external IPs support
+    externalIPs:
+      enabled: true
+
+    # Enable hostPort support
+    hostPort:
+      enabled: true
+
+    # Disable forwarding DNS to host to avoid CoreDNS issues with Talos
+    # See: https://www.talos.dev/v1.9/kubernetes-guides/network/deploying-cilium/#known-issues
+    forwardKubeDNSToHost: false

@@ -24,3 +24,6 @@ cluster:
   clusterName: home
   controlPlane:
     endpoint: https://kubernetes.apocrathia.com:6443
+  network:
+    cni:
+      name: none
