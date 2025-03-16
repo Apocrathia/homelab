@@ -6,7 +6,7 @@ metadata:
   name: root
 
 resources:
-  - 01-bootstrap
-  - 02-infrastructure
-  # - 03-services
-  # - 04-apps
+  - 01-bootstrap/flux-kustomization.yaml
+  - 02-infrastructure/flux-kustomization.yaml
+  # - 03-services/flux-kustomization.yaml
+  # - 04-apps/flux-kustomization.yaml
