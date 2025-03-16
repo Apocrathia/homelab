@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: crds
+
+resources:
+  # 1Password
+  - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
+  # Longhorn
+  - ./longhorn
+  # Cilium
+  - ./cilium
+  # Prometheus
+  - ./prometheus
