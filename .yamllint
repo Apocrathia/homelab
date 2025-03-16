@@ -8,6 +8,11 @@ rules:
     ignore: |
       flux/manifests/01-bootstrap/flux-system/*
 
+  # Adjust comments spacing rule to be compatible with prettier
+  comments:
+    min-spaces-from-content: 1  # Default is 2, but prettier uses 1
+    level: warning  # Keep as warning instead of disabling completely
+
   # Other rules remain at their default settings
   document-start: enable
   document-end: disable
