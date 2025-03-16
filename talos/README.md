@@ -40,6 +40,7 @@ talosctl gen config \
   home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/ \
   --force
+export TALOSCONFIG="rendered/talosconfig"
 ```
 
 This will generate the following files:
@@ -85,10 +86,10 @@ Once the cluster is up, let's get the kubeconfig.
 talosctl kubeconfig ~/.kube/config -n 10.50.8.10
 ```
 
-Verify the cluster is up.
+Wait for the cluster to become ready.
 
 ```bash
-kubectl get nodes
+watch -n 1 kubectl get nodes
 ```
 
 Update the talosconfig to point to the VIP.
