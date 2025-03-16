@@ -26,14 +26,13 @@ talosctl gen secrets -o secrets.yaml
 
 Next, create the configuration for the cluster. We'll set up:
 
-- 4 virtual machine nodes (talos-vm-01 through talos-vm-04)
-- All VMs will serve as control plane nodes and can run workloads
-- Physical hardware will be added later as worker-only nodes
+- 4 virtual machine nodes (talos-vm-01 through talos-vm-04) as control plane nodes only
+- Physical hardware (lab-01 through lab-03) as worker nodes
 
-Generate VM configurations:
+Generate configurations:
 
 ```bash
-# Generate virtual machine node configurations
+# Generate configurations
 talosctl gen config \
   --with-secrets secrets.yaml \
   --config-patch-control-plane @patches/vm-patch.yaml \
@@ -52,7 +51,7 @@ This will generate the following files:
 Now, we can bootstrap the control plane nodes. Each node gets its own specific configuration patch to set its hostname:
 
 ```bash
-# Apply configuration to each node with its specific patch
+# Apply configuration to each control plane node with its specific patch
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((i + 9))
@@ -104,19 +103,16 @@ export TALOSCONFIG="~/.talos/config"
 
 ## Adding Worker Nodes
 
-First, we'll need to update our talosconfig to add the new nodes.
+Now let's add the physical worker nodes (lab-01 through lab-03) to the cluster:
 
 ```bash
+# Update talosconfig to include worker nodes
 export TALOSCONFIG="rendered/talosconfig"
 talosctl config endpoint kubernetes.apocrathia.com
 talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13 10.50.8.101 10.50.8.102 10.50.8.103
 cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
-```
 
-To add physical worker nodes (lab-01 through lab-03) to the cluster:
-
-```bash
 # Apply worker configuration to each physical node
 for i in {1..3}; do
   NODE_NUM=$(printf "%02d" $i)
@@ -133,78 +129,6 @@ Verify the new nodes join the cluster:
 
 ```bash
 kubectl get nodes
-```
-
-## Disabling Workload Scheduling on Control Plane Nodes
-
-Once worker nodes have been added to the cluster, you can disable workload scheduling on the control plane nodes to ensure they only handle control plane functions:
-
-1. Edit the `patches/vm-patch.yaml` file using your preferred text editor:
-
-2. Locate the following line in the `cluster:` section:
-
-```yaml
-allowSchedulingOnControlPlanes: true
-```
-
-3. Change it to:
-
-```yaml
-allowSchedulingOnControlPlanes: false
-```
-
-4. Save the file and exit the editor.
-
-5. Regenerate and apply the updated configuration to all control plane nodes:
-
-```bash
-# Generate new configurations with updated vm-patch.yaml
-talosctl gen config \
-  --with-secrets secrets.yaml \
-  --config-patch-control-plane @patches/vm-patch.yaml \
-  --config-patch-worker @patches/lab-patch.yaml \
-  home "https://kubernetes.apocrathia.com:6443" \
-  -o rendered/ \
-  --force
-
-# Apply new control plane configurations
-for i in {1..4}; do
-  NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((i + 9))
-  echo "Updating talos-vm-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
-  talosctl apply-config \
-    --nodes "10.50.8.${IP_LAST_OCTET}" \
-    --file rendered/controlplane.yaml \
-    --config-patch "@patches/vm-${NODE_NUM}-patch.yaml"
-done
-```
-
-6. Verify that the control plane nodes are now marked with the NoSchedule taint:
-
-```bash
-kubectl describe nodes talos-vm-01 | grep Taints
-```
-
-You should see output similar to:
-
-```
-Taints:             node-role.kubernetes.io/control-plane:NoSchedule
-```
-
-7. Migrate any existing workloads from control plane nodes to worker nodes:
-
-```bash
-# List pods running on control plane nodes
-kubectl get pods -A -o wide | grep 'talos-vm-'
-```
-
-For critical system pods that need to run on control plane nodes, add tolerations to their deployments:
-
-```yaml
-tolerations:
-  - key: node-role.kubernetes.io/control-plane
-    operator: Exists
-    effect: NoSchedule
 ```
 
 ## Deployments

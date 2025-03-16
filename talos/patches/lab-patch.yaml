@@ -1,6 +1,6 @@
 ---
 # yamllint disable-line rule:line-length
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.9.4/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.9.5/pkg/machinery/config/schemas/config.schema.json
 machine:
   features:
     rbac: true
@@ -15,8 +15,8 @@ machine:
     disk: /dev/sda
     wipe: true
     # yamllint disable-line rule:line-length
-    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fi915&extensions=siderolabs%2Fintel-ice-firmware&extensions=siderolabs%2Fintel-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fmei&platform=metal&secureboot=undefined&target=metal&version=1.9.4
-    image: factory.talos.dev/installer/44564cf7390dda4670e9c42464cd58ca6d19a3a59a86a1ff53b9975c794986cb:v1.9.4
+    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Fi915&extensions=siderolabs%2Fintel-ice-firmware&extensions=siderolabs%2Fintel-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fmei&platform=metal&secureboot=undefined&target=metal&version=1.9.5
+    image: factory.talos.dev/installer/44564cf7390dda4670e9c42464cd58ca6d19a3a59a86a1ff53b9975c794986cb:v1.9.5
   time:
     servers:
       - pool.ntp.org
