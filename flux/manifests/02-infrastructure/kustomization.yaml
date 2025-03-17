@@ -14,5 +14,5 @@ metadata:
 # Will be populated as infrastructure components are added
 resources:
   - longhorn
-  # - cilium
-  # - kube-prometheus-stack
+  - cilium
+  - kube-prometheus-stack

@@ -1,17 +1,19 @@
 ---
 # yamllint disable-line rule:line-length
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2beta1.json
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: kube-prometheus-stack
-  namespace: monitoring
+  namespace: prometheus-system
 spec:
   interval: 5m
   chart:
     spec:
       chart: kube-prometheus-stack
-      version: "55.5.0"
+      # yamllint disable-line rule:line-length
+      # renovate: datasource=helm depName=kube-prometheus-stack registryUrl=https://prometheus-community.github.io/helm-charts
+      version: "70.0.2"
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
@@ -24,7 +26,58 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  # This is the longest values file I've ever seen.
+  # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
   values:
+    # Global namespace override
+    namespaceOverride: "prometheus-system"
+
+    # Global settings
+    defaultRules:
+      create: true
+      rules:
+        alertmanager: true
+        etcd: true
+        configReloaders: true
+        general: true
+        k8s: true
+        kubeApiserverAvailability: true
+        kubeApiserverBurnrate: true
+        kubeApiserverHistogram: true
+        kubeApiserverSlos: true
+        kubelet: true
+        kubeProxy: true
+        kubePrometheusGeneral: true
+        kubePrometheusNodeRecording: true
+        kubernetesApps: true
+        kubernetesResources: true
+        kubernetesStorage: true
+        kubernetesSystem: true
+        kubeScheduler: true
+        kubeStateMetrics: true
+        network: true
+        node: true
+        nodeExporterAlerting: true
+        nodeExporterRecording: true
+        prometheus: true
+        prometheusOperator: true
+
+    # Prometheus Operator configuration
+    prometheusOperator:
+      enabled: true
+      manageCrds: true
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      admissionWebhooks:
+        enabled: true
+        failurePolicy: Ignore
+
+    # Node Exporter configuration
     nodeExporter:
       enabled: true
       serviceMonitor:
@@ -35,18 +88,97 @@ spec:
             sourceLabels:
               - __meta_kubernetes_pod_node_name
             targetLabel: kubernetes_node
+      resources:
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
+
+    # Kube State Metrics configuration
     kubeStateMetrics:
       enabled: true
+      resources:
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
+
+    # Grafana configuration
     grafana:
       enabled: true
       ingress:
         enabled: false
       admin:
         existingSecret: local-account
-        existingSecretNamespace: kube-system
         userKey: username
         passwordKey: password
+      resources:
+        limits:
+          cpu: 200m
+          memory: 200Mi
+        requests:
+          cpu: 100m
+          memory: 100Mi
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 5Gi
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+            - name: "default"
+              orgId: 1
+              folder: ""
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/default
+      defaultDashboardsEnabled: true
+      sidecar:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          searchNamespace: ALL
+
+    # AlertManager configuration
+    alertmanager:
+      enabled: true
+      config:
+        global:
+          resolve_timeout: 5m
+        route:
+          group_by: ["job", "alertname", "severity"]
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 12h
+          receiver: "null"
+          routes:
+            - match:
+                alertname: Watchdog
+              receiver: "null"
+        receivers:
+          - name: "null"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        requests:
+          cpu: 50m
+          memory: 50Mi
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 1Gi
+
+    # Prometheus configuration
     prometheus:
+      enabled: true
       prometheusSpec:
         retention: 14d
         resources:
@@ -64,3 +196,14 @@ spec:
               resources:
                 requests:
                   storage: 10Gi
+        serviceMonitorSelector: {}
+        serviceMonitorNamespaceSelector: {}
+        podMonitorSelector: {}
+        podMonitorNamespaceSelector: {}
+        ruleSelector: {}
+        ruleNamespaceSelector: {}
+        enableAdminAPI: false
+        walCompression: true
+        scrapeInterval: "30s"
+        evaluationInterval: "30s"
+        enableRemoteWriteReceiver: false
