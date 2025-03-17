@@ -81,11 +81,40 @@ spec:
       secret: gitlab-runner-token
       config: |
         [[runners]]
+          executor = "kubernetes"
+          environment = ["FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY=1", "HOME=/home/gitlab-runner"]
           [runners.kubernetes]
             namespace = "{{.Release.Namespace}}"
-            image = "ubuntu:22.04"
-            privileged = true
+            image = "alpine:latest"
+            privileged = false
             service_account = "gitlab-runner"
             poll_timeout = 600
             resource_limits = ["cpu=1", "memory=1Gi"]
             resource_requests = ["cpu=250m", "memory=256Mi"]
+            helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.9.1"
+            helper_image_flavor = "alpine"
+            cpu_limit = "1"
+            memory_limit = "1Gi"
+            cpu_request = "250m"
+            memory_request = "256Mi"
+
+            [runners.kubernetes.pod_security_context]
+            run_as_non_root = true
+            run_as_user = 100
+            fs_group = 65533
+
+            [runners.kubernetes.container_security_context]
+            allow_privilege_escalation = false
+            privileged = false
+            read_only_root_filesystem = false
+
+            [runners.kubernetes.container_security_context.capabilities]
+            drop = ["ALL"]
+
+            [[runners.kubernetes.volumes.empty_dir]]
+              name = "git-config"
+              mount_path = "/home/gitlab-runner"
+              medium = "Memory"
+
+          [runners.custom_build_dir]
+            enabled = true
