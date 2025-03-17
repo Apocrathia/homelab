@@ -1,7 +1,7 @@
 ---
 ci_access:
   projects:
-    - id: ianyoung/homelab
+    - id: Apocrathia/homelab
 
 user_access:
   access_as:
