@@ -11,3 +11,4 @@ resources:
   - longhorn.yaml
   - metrics-server.yaml
   - prometheus-community.yaml
+  - gitlab.yaml

@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab-agent
+  labels:
+    app.kubernetes.io/name: gitlab-agent

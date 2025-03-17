@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
@@ -12,4 +13,5 @@ metadata:
 # - service mesh
 
 # Will be populated as services are added
-resources: []
+resources:
+  - gitlab
