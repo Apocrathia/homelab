@@ -1,0 +1,18 @@
+---
+ci_access:
+  projects:
+    - id: ianyoung/homelab
+# Optional: Configure GitOps for manifest deployments
+# gitops:
+#   manifest_projects:
+#     - id: ianyoung/homelab
+#       paths:
+#         - glob: 'manifests/**/*.yaml'
+
+# Optional: Configure access to the Kubernetes API
+# access:
+#   groups:
+#     - id: project_owners
+#       access:
+#         - resources: ["*"]
+#           verbs: ["*"]
