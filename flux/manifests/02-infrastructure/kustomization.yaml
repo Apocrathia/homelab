@@ -16,4 +16,5 @@ metadata:
 resources:
   - longhorn
   - cilium
+  - metrics-server
   - kube-prometheus-stack
