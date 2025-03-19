@@ -8,6 +8,7 @@ resources:
   - cilium.yaml
   - elastic.yaml
   - k8s-dashboard.yaml
+  - kyverno.yaml
   - longhorn.yaml
   - metrics-server.yaml
   - prometheus-community.yaml

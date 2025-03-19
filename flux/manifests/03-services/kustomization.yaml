@@ -14,3 +14,4 @@ metadata:
 resources:
   - gitlab
   - elastic
+  - kyverno
