@@ -1,0 +1,106 @@
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: elastic
+spec:
+  version: 8.17.3
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  config:
+    # Fleet core configuration
+    xpack.fleet:
+      enabled: true
+      enableDeleteUnenrolledAgents: true
+      # Agent configuration
+      agents:
+        enabled: true
+        elasticsearch.hosts: ["http://elasticsearch-es-http.elastic.svc:9200"]
+        kibana.hosts: ["http://kibana-kb-http.elastic.svc:5601"]
+        fleet_server.hosts: ["http://fleet-server-agent-http.elastic.svc:8220"]
+      # Package management
+      packages:
+        - name: system
+          version: latest
+        - name: kubernetes
+          version: latest
+        - name: elastic_agent
+          version: latest
+        - name: fleet_server
+          version: latest
+        - name: prometheus
+          version: latest
+      # Agent policies
+      agentPolicies:
+        # Fleet Server policy
+        - name: Fleet Server on ECK policy
+          id: eck-fleet-server
+          namespace: elastic
+          monitoring_enabled:
+            - logs
+            - metrics
+          unenroll_timeout: 900
+          is_managed: true
+          is_default_fleet_server: true
+          package_policies:
+            - name: fleet_server-1
+              id: fleet_server-1
+              package:
+                name: fleet_server
+        # Default agent policy
+        - name: Elastic Agent on ECK policy
+          id: eck-agent
+          namespace: elastic
+          monitoring_enabled:
+            - logs
+            - metrics
+          unenroll_timeout: 900
+          is_managed: true
+          is_default: true
+          package_policies:
+            - name: system-1
+              id: system-1
+              package:
+                name: system
+            - name: kubernetes-1
+              id: kubernetes-1
+              package:
+                name: kubernetes
+        # Prometheus metrics policy
+        - name: Prometheus Metrics Policy
+          id: prometheus-policy
+          namespace: elastic
+          monitoring_enabled:
+            - metrics
+          unenroll_timeout: 900
+          is_managed: true
+          package_policies:
+            - name: prometheus-1
+              id: prometheus-1
+              package:
+                name: prometheus
+    # SSL verification settings
+    elasticsearch.ssl.verificationMode: "none"
+    elasticsearch.requestTimeout: 60000
+    elasticsearch.pingTimeout: 60000
+    elasticsearch.compression: true
+    elasticsearch.idleSocketTimeout: 120s
+    # HTTP settings
+    server.compression.enabled: true
+    server.compression.referrerWhitelist: ["elastic.svc"]
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  podTemplate:
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 100m
+            limits:
+              memory: 1Gi

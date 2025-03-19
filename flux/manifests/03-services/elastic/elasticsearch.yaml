@@ -1,0 +1,73 @@
+---
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: elastic
+spec:
+  version: 8.17.3
+  auth:
+    fileRealm:
+      - secretName: local-account
+  volumeClaimDeletePolicy: DeleteOnScaledownOnly
+  nodeSets:
+    - name: master
+      count: 1
+      config:
+        node.roles: ["master"]
+        node.store.allow_mmap: false
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+            storageClassName: longhorn
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              env:
+                - name: ES_JAVA_OPTS
+                  value: "-Xms512m -Xmx512m"
+              resources:
+                requests:
+                  memory: 1Gi
+                  cpu: 100m
+                limits:
+                  memory: 1Gi
+    - name: data
+      count: 2
+      config:
+        node.roles: ["data", "ingest"]
+        node.store.allow_mmap: false
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Gi
+            storageClassName: longhorn
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              env:
+                - name: ES_JAVA_OPTS
+                  value: "-Xms1g -Xmx1g"
+              resources:
+                requests:
+                  memory: 2Gi
+                  cpu: 200m
+                limits:
+                  memory: 2Gi
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true

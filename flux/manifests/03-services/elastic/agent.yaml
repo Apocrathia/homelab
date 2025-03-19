@@ -1,0 +1,306 @@
+---
+apiVersion: agent.k8s.elastic.co/v1alpha1
+kind: Agent
+metadata:
+  name: fleet-server
+  namespace: elastic
+spec:
+  version: 8.17.3
+  elasticsearchRefs:
+    - name: elasticsearch
+      serviceName: elasticsearch-es-http
+  mode: fleet
+  fleetServerEnabled: true
+  kibanaRef:
+    name: kibana
+  policyID: eck-fleet-server
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  deployment:
+    replicas: 1
+    podTemplate:
+      spec:
+        serviceAccountName: elastic-agent
+        securityContext:
+          runAsUser: 0
+        containers:
+          - name: agent
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 100m
+              limits:
+                memory: 512Mi
+                cpu: 200m
+            env:
+              # Explicitly setting connection parameters that are recognized by fleet server
+              - name: ELASTICSEARCH_SSL_VERIFICATIONMODE
+                value: "none"
+              - name: FLEET_SERVER_ELASTICSEARCH_HOST
+                value: "http://elasticsearch-es-http.elastic.svc:9200"
+              - name: FLEET_SERVER_KIBANA_HOST
+                value: "http://kibana-kb-http.elastic.svc:5601"
+              # This is recognized by the elastic-agent binary to explicitly set Elasticsearch host
+              - name: ELASTICSEARCH_HOST
+                value: "http://elasticsearch-es-http.elastic.svc:9200"
+---
+apiVersion: agent.k8s.elastic.co/v1alpha1
+kind: Agent
+metadata:
+  name: elastic-agent
+  namespace: elastic
+spec:
+  version: 8.17.3
+  mode: fleet
+  fleetServerRef:
+    name: fleet-server
+  kibanaRef:
+    name: kibana
+  policyID: eck-agent
+  daemonSet:
+    podTemplate:
+      spec:
+        serviceAccountName: elastic-agent
+        securityContext:
+          runAsUser: 0
+        # Tolerations to run on control plane nodes
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            effect: NoSchedule
+            operator: Exists
+          - key: node-role.kubernetes.io/master
+            effect: NoSchedule
+            operator: Exists
+        # For node metrics/logs collection
+        hostNetwork: true
+        dnsPolicy: ClusterFirstWithHostNet
+        volumes:
+          - name: proc
+            hostPath:
+              path: /proc
+          - name: sys
+            hostPath:
+              path: /sys
+          - name: var-run
+            hostPath:
+              path: /var/run
+          - name: var-lib
+            hostPath:
+              path: /var/lib
+          - name: varlibdockercontainers
+            hostPath:
+              path: /var/lib/docker/containers
+          - name: varlog
+            hostPath:
+              path: /var/log
+          - name: etc-kubernetes
+            hostPath:
+              path: /etc/kubernetes
+          - name: var-lib-kubelet
+            hostPath:
+              path: /var/lib/kubelet
+          - name: service-account-token
+            projected:
+              sources:
+                - serviceAccountToken:
+                    path: token
+                    expirationSeconds: 3600
+                - configMap:
+                    name: kube-root-ca.crt
+                    items:
+                      - key: ca.crt
+                        path: ca.crt
+        containers:
+          - name: agent
+            resources:
+              requests:
+                memory: 512Mi
+                cpu: 100m
+              limits:
+                memory: 1Gi
+                cpu: 200m
+            volumeMounts:
+              - name: proc
+                mountPath: /hostfs/proc
+                readOnly: true
+              - name: sys
+                mountPath: /hostfs/sys
+                readOnly: true
+              - name: var-run
+                mountPath: /var/run
+              - name: var-lib
+                mountPath: /var/lib
+              - name: varlibdockercontainers
+                mountPath: /var/lib/docker/containers
+                readOnly: true
+              - name: varlog
+                mountPath: /var/log
+                readOnly: true
+              - name: etc-kubernetes
+                mountPath: /etc/kubernetes
+                readOnly: true
+              - name: var-lib-kubelet
+                mountPath: /var/lib/kubelet
+                readOnly: true
+              - name: service-account-token
+                mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+                readOnly: true
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              - name: HOSTNAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              # Explicitly setting connection parameters that are recognized by the agent
+              - name: ELASTICSEARCH_SSL_VERIFICATIONMODE
+                value: "none"
+              - name: FLEET_URL
+                value: "http://fleet-server-agent-http.elastic.svc:8220"
+              - name: KIBANA_HOST
+                value: "http://kibana-kb-http.elastic.svc:5601"
+              # Only valid Elastic Agent environment variables
+              - name: FLEET_INSECURE
+                value: "true"
+              - name: ELASTIC_AGENT_UNSAFE_HTTP
+                value: "true"
+---
+apiVersion: agent.k8s.elastic.co/v1alpha1
+kind: Agent
+metadata:
+  name: prometheus-agent
+  namespace: elastic
+spec:
+  version: 8.17.3
+  mode: fleet
+  fleetServerRef:
+    name: fleet-server
+  kibanaRef:
+    name: kibana
+  policyID: prometheus-policy
+  deployment:
+    replicas: 1
+    podTemplate:
+      spec:
+        serviceAccountName: elastic-agent
+        securityContext:
+          runAsUser: 0
+        containers:
+          - name: agent
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 100m
+              limits:
+                memory: 512Mi
+                cpu: 200m
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              - name: HOSTNAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              - name: ELASTICSEARCH_SSL_VERIFICATIONMODE
+                value: "none"
+              - name: FLEET_URL
+                value: "http://fleet-server-agent-http.elastic.svc:8220"
+              - name: KIBANA_HOST
+                value: "http://kibana-kb-http.elastic.svc:5601"
+              - name: FLEET_INSECURE
+                value: "true"
+              - name: ELASTIC_AGENT_UNSAFE_HTTP
+                value: "true"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: elastic-agent
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - nodes
+      - namespaces
+      - events
+      - services
+      - configmaps
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups: ["coordination.k8s.io"]
+    resources:
+      - leases
+    verbs:
+      - get
+      - create
+      - update
+  - apiGroups: ["extensions"]
+    resources:
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: ["apps"]
+    resources:
+      - statefulsets
+      - deployments
+      - replicasets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: [""]
+    resources:
+      - nodes/stats
+    verbs:
+      - get
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: ["batch"]
+    resources:
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elastic-agent
+  namespace: elastic
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: elastic-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: elastic-agent
+subjects:
+  - kind: ServiceAccount
+    name: elastic-agent
+    namespace: elastic
