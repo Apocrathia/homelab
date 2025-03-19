@@ -16,7 +16,7 @@
       when: always
     - when: never
   allow_failure: true
-  timeout: 2h
+  timeout: 30m
 
 renovate:
   extends: .renovate
