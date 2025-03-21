@@ -16,3 +16,4 @@ resources:
   - elastic
   - kyverno
   - cert-manager
+  - envoy-gateway
