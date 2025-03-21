@@ -23,4 +23,26 @@ spec:
   upgrade:
     remediation:
       retries: 3
-  values: {}
+  values:
+    extraArgs:
+      - --autogenInternals=false
+    rbac:
+      extraResources: &commonResources # Read access to all resources
+        - apiGroups: ["*"]
+          resources: ["*"]
+          verbs: ["get", "list", "watch"]
+        # Allow to modify cert-manager ClusterIssuers
+        - apiGroups: ["cert-manager.io"]
+          resources: ["ClusterIssuer"]
+          verbs: ["get", "list", "watch", "update", "patch"]
+      clusterRole:
+        extraResources: *commonResources
+      admissionController:
+        clusterRole:
+          extraResources: *commonResources
+      backgroundController:
+        clusterRole:
+          extraResources: *commonResources
+      reportsController:
+        clusterRole:
+          extraResources: *commonResources

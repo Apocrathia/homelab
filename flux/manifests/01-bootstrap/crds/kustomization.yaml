@@ -20,3 +20,5 @@ resources:
   - https://download.elastic.co/downloads/eck/2.16.1/crds.yaml
   # Kyverno
   - ./kyverno
+  # Cert Manager
+  - https://github.com/cert-manager/cert-manager/releases/download/v1.12.16/cert-manager.crds.yaml
