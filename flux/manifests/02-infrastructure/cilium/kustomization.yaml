@@ -9,3 +9,4 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - node-config.yaml
+  - httproute.yaml

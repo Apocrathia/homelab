@@ -9,4 +9,3 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - gateway.yaml
-  - http-redirect.yaml
