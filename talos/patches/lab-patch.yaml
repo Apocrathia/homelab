@@ -11,6 +11,8 @@ machine:
     interfaces:
       - interface: eth0
         dhcp: true
+  nodeLabels:
+    node-role.kubernetes.io/worker: ""
   install:
     disk: /dev/sda
     wipe: true

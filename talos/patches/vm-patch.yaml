@@ -13,6 +13,8 @@ machine:
         dhcp: true
         vip:
           ip: "10.50.8.8"
+  nodeLabels:
+    node-role.kubernetes.io/control-plane: ""
   install:
     disk: /dev/sda
     wipe: true
