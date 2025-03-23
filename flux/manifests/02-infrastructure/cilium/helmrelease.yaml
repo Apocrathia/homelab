@@ -165,9 +165,9 @@ spec:
           - SYS_ADMIN
           - SYS_RESOURCE
 
-    # Configure kubeproxy replacement - initially set to false to work with kube-proxy
-    kubeProxyReplacement: false
-    k8sServiceHost: "10.50.8.8" # Use VIP address
+    # Configure kubeproxy replacement
+    kubeProxyReplacement: true
+    k8sServiceHost: "kubernetes.apocrathia.com"
     k8sServicePort: 6443 # Standard Kubernetes API port
 
     # Enable bandwidth manager for better traffic control
