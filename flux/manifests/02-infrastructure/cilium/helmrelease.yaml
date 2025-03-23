@@ -258,3 +258,11 @@ spec:
     # Disable forwarding DNS to host to avoid CoreDNS issues with Talos
     # See: https://www.talos.dev/v1.9/kubernetes-guides/network/deploying-cilium/#known-issues
     forwardKubeDNSToHost: false
+
+    # Enable sidecar monitor for better observability
+    monitor:
+      enabled: true
+
+    # Enable L2 announcement for LoadBalancer services
+    l2announcements:
+      enabled: true
