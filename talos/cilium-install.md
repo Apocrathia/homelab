@@ -108,8 +108,8 @@ Once your cluster is up and running with Cilium and kube-proxy, you can migrate 
 
    ```yaml
    kubeProxyReplacement: true
-   k8sServiceHost: "localhost"
-   k8sServicePort: 7445
+   k8sServiceHost: "kubernetes.apocrathia.com"
+   k8sServicePort: 6443
    ```
 
 2. After Cilium is updated and stable, update your Talos machine configurations to disable kube-proxy:
