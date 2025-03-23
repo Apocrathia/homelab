@@ -1,0 +1,107 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kubernetes-resource-cleanup
+  namespace: kube-system
+spec:
+  schedule: "0 * * * *" # Run hourly
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          serviceAccountName: kubernetes-resource-cleaner
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl:1.32.3
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1001
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  #!/bin/sh
+                  set -e
+
+                  # Function to delete old resources
+                  delete_old_resources() {
+                    local resource_type=$1
+                    local age_threshold=$2
+
+                    # Find and delete resources older than the threshold
+                    kubectl get "$resource_type" --all-namespaces | \
+                      awk 'NR>1 {print $1, $2}' | \
+                      while read -r namespace name; do
+                        # Skip kube-system namespace
+                        if [ "$namespace" = "kube-system" ]; then
+                          continue
+                        fi
+
+                        # Check resource age
+                        age=$(kubectl get "$resource_type" "$name" -n "$namespace" \
+                              -o jsonpath='{.metadata.creationTimestamp}' | \
+                              xargs -I {} date -d {} +%s)
+                        now=$(date +%s)
+
+                        # Delete if older than threshold (default 1 hour = 3600 seconds)
+                        if [ $((now - age)) -gt "${age_threshold:-3600}" ]; then
+                          echo "Deleting $resource_type $name in namespace $namespace"
+                          kubectl delete "$resource_type" "$name" -n "$namespace" --ignore-not-found=true
+                        fi
+                      done
+                  }
+
+                  # Clean up completed and failed jobs
+                  delete_old_resources jobs 3600
+
+                  # Clean up completed and failed pods
+                  delete_old_resources pods 3600
+
+                  # Additional cleanup for completed persistent volume claims
+                  kubectl get pvc --all-namespaces | \
+                    awk 'NR>1 && $3 == "Released" {print $1, $2}' | \
+                    while read -r namespace name; do
+                      if [ "$namespace" != "kube-system" ]; then
+                        echo "Deleting released PVC $name in namespace $namespace"
+                        kubectl delete pvc "$name" -n "$namespace" --ignore-not-found=true
+                      fi
+                    done
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubernetes-resource-cleaner
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubernetes-resource-cleaner
+rules:
+  - apiGroups: ["batch", ""]
+    resources: ["jobs", "pods"]
+    verbs: ["delete", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-resource-cleaner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubernetes-resource-cleaner
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-resource-cleaner
+    namespace: kube-system
