@@ -91,19 +91,7 @@ spec:
                     - key: node-role.kubernetes.io/control-plane
                       operator: DoesNotExist
       tls:
-        enabled: true
-        auto:
-          enabled: true
-          method: cronJob
-          # Keep certificate generation job off control-plane nodes
-          certGen:
-            affinity:
-              nodeAffinity:
-                requiredDuringSchedulingIgnoredDuringExecution:
-                  nodeSelectorTerms:
-                    - matchExpressions:
-                        - key: node-role.kubernetes.io/control-plane
-                          operator: DoesNotExist
+        enabled: false
 
     # Enable built-in DNS proxy with NextDNS
     dnsProxy:
@@ -146,7 +134,7 @@ spec:
 
     # Security context for agent pods - modified for Talos compatibility
     securityContext:
-      privileged: false # Changed from true to false
+      privileged: false
       capabilities:
         ciliumAgent:
           - CHOWN
