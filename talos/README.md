@@ -179,6 +179,51 @@ for i in {1..3}; do
     --file rendered/worker.yaml \
     --config-patch "@patches/lab-${NODE_NUM}-patch.yaml"
 done
+
+# Perform a rolling restart of the control plane nodes
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((i + 9))
+  NODE_IP="10.50.8.${IP_LAST_OCTET}"
+  echo "Rebooting control plane node talos-vm-${NODE_NUM} (${NODE_IP})..."
+  # Cordon the node to prevent new workloads
+  kubectl cordon "talos-vm-${NODE_NUM}"
+  # Reboot the node
+  talosctl reboot --nodes "${NODE_IP}" --timeout=60s
+ # Wait for the node to come back online
+  while ! kubectl get node "talos-vm-${NODE_NUM}" | grep -q Ready; do
+    echo "Waiting for node talos-vm-${NODE_NUM} to become ready..."
+    sleep 10
+  done
+  # Uncordon the node to allow scheduling
+  kubectl uncordon "talos-vm-${NODE_NUM}"
+  # Wait a bit between reboots to allow cluster stabilization
+  sleep 30
+done
+
+# Perform a rolling restart of the worker nodes
+for i in {1..3}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((100 + i))
+  NODE_IP="10.50.8.${IP_LAST_OCTET}"
+  echo "Rebooting worker node lab-${NODE_NUM} (${NODE_IP})..."
+  # Cordon the node to prevent new workloads
+  kubectl cordon "lab-${NODE_NUM}"
+  # Reboot the node
+  talosctl reboot --nodes "${NODE_IP}" --timeout=60s
+  # Wait for the node to come back online
+  while ! kubectl get node "lab-${NODE_NUM}" | grep -q Ready; do
+    echo "Waiting for node lab-${NODE_NUM} to become ready..."
+    sleep 10
+  done
+  # Uncordon the node to allow scheduling
+  kubectl uncordon "lab-${NODE_NUM}"
+  # Wait a bit between reboots to allow cluster stabilization
+  sleep 30
+done
+
+# Verify cluster health after rolling reboot
+kubectl get nodes
 ```
 
 The nodes will automatically apply the new configuration and restart any necessary services.
