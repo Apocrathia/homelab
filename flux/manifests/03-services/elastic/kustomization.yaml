@@ -12,3 +12,4 @@ resources:
   - kibana.yaml
   - agent.yaml
   - helmrelease.yaml
+  - httproute.yaml
