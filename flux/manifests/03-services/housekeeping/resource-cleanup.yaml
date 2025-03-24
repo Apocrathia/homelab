@@ -48,6 +48,21 @@ spec:
                           continue
                         fi
 
+                        # For pods, only delete completed/failed ones
+                        if [ "$resource_type" = "pods" ]; then
+                          status=$(kubectl get pod "$name" -n "$namespace" -o jsonpath='{.status.phase}')
+                          if [ "$status" != "Succeeded" ] && [ "$status" != "Failed" ]; then
+                            continue
+                          fi
+
+                          # Skip pods that are part of deployments/statefulsets
+                          owner=$(kubectl get pod "$name" -n "$namespace" \
+                                -o jsonpath='{.metadata.ownerReferences[0].kind}')
+                          if [ "$owner" = "ReplicaSet" ] || [ "$owner" = "StatefulSet" ]; then
+                            continue
+                          fi
+                        fi
+
                         # Check resource age
                         age=$(kubectl get "$resource_type" "$name" -n "$namespace" \
                               -o jsonpath='{.metadata.creationTimestamp}' | \
@@ -91,7 +106,7 @@ metadata:
 rules:
   - apiGroups: ["batch", ""]
     resources: ["jobs", "pods"]
-    verbs: ["delete", "list"]
+    verbs: ["delete", "list", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
