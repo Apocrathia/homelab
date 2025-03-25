@@ -90,6 +90,7 @@ spec:
     # HTTP settings
     server.compression.enabled: true
     server.compression.referrerWhitelist: ["elastic.svc"]
+    server.publicBaseUrl: "https://kibana.k8s.apocrathia.com"
   http:
     tls:
       selfSignedCertificate:
