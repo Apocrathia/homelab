@@ -51,7 +51,7 @@ spec:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: wildcard-k8s-apocrathia-com-tls
+            name: wildcard-apocrathia-com-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:
