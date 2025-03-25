@@ -8,6 +8,7 @@ metadata:
 
 resources:
   - 1password.yaml
+  - bitnami.yaml
   - cert-manager.yaml
   - cilium.yaml
   - elastic.yaml
