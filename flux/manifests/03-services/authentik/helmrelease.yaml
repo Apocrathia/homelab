@@ -1,0 +1,57 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: authentik
+  namespace: authentik
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: authentik
+      version: "2025.2.2"
+      sourceRef:
+        kind: HelmRepository
+        name: authentik
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    authentik:
+      secret_key: file:///authentik-secrets/authentik-secret-key
+      postgresql.password: file:///authentik-secrets/postgres-password
+    postgresql:
+      enabled: true
+      auth:
+        username: authentik
+        existingSecret: authentik-secrets
+        secretKeys:
+          adminPasswordKey: postgres-password
+          userPasswordKey: postgres-password
+    redis:
+      enabled: true
+
+    server:
+      volumes:
+        - name: authentik-secrets
+          secret:
+            secretName: authentik-secrets
+      volumeMounts:
+        - name: authentik-secrets
+          mountPath: /authentik-secrets
+          readOnly: true
+
+    worker:
+      volumes:
+        - name: authentik-secrets
+          secret:
+            secretName: authentik-secrets
+      volumeMounts:
+        - name: authentik-secrets
+          mountPath: /authentik-secrets
+          readOnly: true
