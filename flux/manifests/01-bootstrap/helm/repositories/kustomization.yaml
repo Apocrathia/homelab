@@ -20,3 +20,4 @@ resources:
   - longhorn.yaml
   - metrics-server.yaml
   - prometheus-community.yaml
+  - stakater.yaml

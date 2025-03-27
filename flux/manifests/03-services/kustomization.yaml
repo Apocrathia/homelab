@@ -19,3 +19,4 @@ resources:
   - cert-manager
   - envoy-gateway
   - housekeeping
+  - reloader
