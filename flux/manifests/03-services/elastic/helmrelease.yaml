@@ -24,3 +24,9 @@ spec:
       retries: 3
   values:
     replicaCount: 2
+    elasticsearch:
+      podAnnotations:
+        reloader.stakater.com/auto: "true"
+      kibana:
+        podAnnotations:
+          reloader.stakater.com/auto: "true"

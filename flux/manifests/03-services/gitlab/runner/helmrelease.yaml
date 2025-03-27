@@ -76,6 +76,10 @@ spec:
         memory: 128Mi
         cpu: 100m
 
+    # Pod annotations
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+
     # Runner configuration
     runners:
       secret: gitlab-runner-token

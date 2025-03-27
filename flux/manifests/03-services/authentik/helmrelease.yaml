@@ -22,6 +22,9 @@ spec:
     remediation:
       retries: 3
   values:
+    global:
+      podAnnotations:
+        reloader.stakater.com/auto: "true"
     authentik:
       secret_key: file:///authentik-secrets/authentik-secret-key
       postgresql.password: file:///authentik-secrets/postgres-password
