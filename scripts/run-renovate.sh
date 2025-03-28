@@ -24,6 +24,7 @@ mkdir -p logs
 RENOVATE_CONFIG_FILE=renovate.json \
 RENOVATE_AUTODISCOVER=true \
 RENOVATE_ONBOARDING=false \
-RENOVATE_PLATFORM=local \
+RENOVATE_PLATFORM=gitlab \
+RENOVATE_ENDPOINT=https://gitlab.com/api/v4/ \
 LOG_LEVEL=debug \
-renovate 2>&1 | tee logs/renovate-$(date +%Y%m%d-%H%M%S).log
+renovate --autodiscover 2>&1 | tee logs/renovate-$(date +%Y%m%d-%H%M%S).log

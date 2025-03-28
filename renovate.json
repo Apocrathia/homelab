@@ -24,7 +24,9 @@
     {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
-      "automerge": true
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true
     },
     {
       "matchDatasources": ["helm"],
@@ -108,5 +110,7 @@
   "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
   "rangeStrategy": "replace",
   "semanticCommits": "enabled",
-  "commitMessagePrefix": "chore(deps):"
+  "commitMessagePrefix": "chore(deps):",
+  "platformAutomerge": true,
+  "automergeType": "branch"
 }
