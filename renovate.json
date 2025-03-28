@@ -17,6 +17,15 @@
   "kubernetes": {
     "fileMatch": ["^flux/manifests/.*\\.yaml$"]
   },
+  "regexManagers": [
+    {
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version: (?<currentValue>.*?)\\s"
+      ],
+      "datasourceTemplate": "helm"
+    }
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
