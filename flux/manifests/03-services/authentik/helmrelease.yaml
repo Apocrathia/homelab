@@ -8,6 +8,7 @@ spec:
   interval: 5m
   chart:
     spec:
+      # renovate: datasource=helm depName=authentik registryUrl=https://charts.goauthentik.io
       chart: authentik
       version: "2025.2.2"
       sourceRef:

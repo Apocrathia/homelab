@@ -17,20 +17,90 @@
   "kubernetes": {
     "fileMatch": ["^flux/manifests/.*\\.yaml$"]
   },
-  "regexManagers": [
-    {
-      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version: (?<currentValue>.*?)\\s"
-      ],
-      "datasourceTemplate": "helm"
-    }
-  ],
+  "helm-values": {
+    "fileMatch": ["^flux/manifests/.*\\.yaml$"]
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["connect"],
+      "registryUrls": ["https://1password.github.io/connect-helm-charts"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["longhorn"],
+      "registryUrls": ["https://charts.longhorn.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["gitlab-agent", "gitlab-runner"],
+      "registryUrls": ["https://charts.gitlab.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["cilium"],
+      "registryUrls": ["https://helm.cilium.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["kyverno"],
+      "registryUrls": ["https://kyverno.github.io/kyverno"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["kube-prometheus-stack"],
+      "registryUrls": ["https://prometheus-community.github.io/helm-charts"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["eck-operator"],
+      "registryUrls": ["https://helm.elastic.co"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["reloader"],
+      "registryUrls": ["https://stakater.github.io/stakater-charts"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["authentik"],
+      "registryUrls": ["https://charts.goauthentik.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["metrics-server"],
+      "registryUrls": ["https://charts.bitnami.com/bitnami"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["envoy-gateway"],
+      "registryUrls": ["oci://docker.io/envoyproxy"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["kubernetes-dashboard"],
+      "registryUrls": ["https://kubernetes.github.io/dashboard"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["cert-manager"],
+      "registryUrls": ["https://charts.jetstack.io"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s"
+      ],
+      "datasourceTemplate": "helm",
+      "versioningTemplate": "helm"
     }
   ],
   "timezone": "America/Denver",

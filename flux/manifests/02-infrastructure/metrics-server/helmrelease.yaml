@@ -8,6 +8,7 @@ spec:
   interval: 1h
   chart:
     spec:
+      # renovate: datasource=helm depName=metrics-server registryUrl=https://charts.bitnami.com/bitnami
       chart: metrics-server
       version: "3.12.2"
       sourceRef:
