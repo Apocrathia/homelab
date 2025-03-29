@@ -1,6 +1,6 @@
 ---
 # Daily backup of all volumes
-apiVersion: longhorn.io/v1beta1
+apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: daily-backup
@@ -14,7 +14,7 @@ spec:
   concurrency: 2
 ---
 # Hourly snapshot of all volumes
-apiVersion: longhorn.io/v1beta1
+apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: hourly-snapshot
@@ -28,7 +28,7 @@ spec:
   concurrency: 2
 ---
 # Weekly filesystem trim
-apiVersion: longhorn.io/v1beta1
+apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: weekly-trim
