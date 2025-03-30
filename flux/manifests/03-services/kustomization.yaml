@@ -14,7 +14,7 @@ metadata:
 resources:
   - authentik
   - gitlab
-  - elastic
+  # - elastic
   - kyverno
   - cert-manager
   - envoy-gateway
