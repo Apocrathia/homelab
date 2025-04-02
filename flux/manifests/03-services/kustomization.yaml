@@ -13,6 +13,7 @@ metadata:
 # Will be populated as services are added
 resources:
   - authentik
+  - dashboard
   - gitlab
   # - elastic
   - kyverno
