@@ -80,11 +80,6 @@
     },
     {
       "matchDatasources": ["helm"],
-      "matchPackageNames": ["envoy-gateway"],
-      "registryUrls": ["oci://docker.io/envoyproxy"]
-    },
-    {
-      "matchDatasources": ["helm"],
       "matchPackageNames": ["kubernetes-dashboard"],
       "registryUrls": ["https://kubernetes.github.io/dashboard"]
     },

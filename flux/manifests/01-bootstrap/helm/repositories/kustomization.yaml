@@ -13,7 +13,6 @@ resources:
   - cert-manager.yaml
   - cilium.yaml
   - elastic.yaml
-  - envoy-gateway.yaml
   - gitlab.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml

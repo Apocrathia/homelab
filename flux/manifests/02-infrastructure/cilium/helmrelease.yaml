@@ -254,3 +254,22 @@ spec:
     # Enable L2 announcement for LoadBalancer services
     l2announcements:
       enabled: true
+
+    # Enable Gateway API
+    gatewayAPI:
+      enabled: true
+      # Enable cross-namespace routing
+      enableCrossNamespaceRoutes: true
+      # Enable Gateway API parameters for ingress
+      enableIngressClassParameters: true
+      # Enable ExternalName service support
+      enableExternalNameService: true
+      # Enable secret selection across namespaces
+      enableSecretNamespaceSelection: true
+      # Enable TLS passthrough
+      enableTLSPassthrough: true
+      # Configure how traffic from external sources is routed
+      externalTrafficPolicy: Cluster
+      # Let Helm manage the GatewayClass
+      gatewayClass:
+        create: "true"
