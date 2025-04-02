@@ -1,4 +1,15 @@
 ---
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: authentik-postgresql-data
+  namespace: longhorn-system
+spec:
+  size: "21474836480" # 20Gi
+  numberOfReplicas: 3
+  staleReplicaTimeout: 30
+  frontend: blockdev
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -7,25 +18,14 @@ metadata:
 spec:
   capacity:
     storage: 20Gi
-  claimRef:
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    name: authentik-postgresql-data
-    namespace: authentik
+  volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: longhorn
-  # Add volume type here
-  volumeMode: Filesystem
-  # Add the appropriate volume type below
-  # For example, NFS volume type
   csi:
     driver: driver.longhorn.io
     fsType: ext4
-    volumeAttributes:
-      numberOfReplicas: "3"
-      staleReplicaTimeout: "2880"
     volumeHandle: authentik-postgresql-data
 ---
 apiVersion: v1
@@ -33,13 +33,14 @@ kind: PersistentVolumeClaim
 metadata:
   name: authentik-postgresql-data
   namespace: authentik
+  annotations:
+    longhorn.io/volume-name: "authentik-postgresql-data"
+    longhorn.io/backup: "true"
 spec:
   accessModes:
     - ReadWriteOnce
-  dataSource:
-    name: authentik-postgresql-data
-    kind: PersistentVolume
   resources:
     requests:
       storage: 20Gi
   storageClassName: longhorn
+  volumeName: authentik-postgresql-data
