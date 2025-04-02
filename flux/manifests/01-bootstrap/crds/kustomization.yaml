@@ -16,8 +16,6 @@ resources:
   - ./prometheus
   # Gateway API
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
-  # Elastic
-  - https://download.elastic.co/downloads/eck/2.16.1/crds.yaml
   # Kyverno
   - ./kyverno
   # Cert Manager
