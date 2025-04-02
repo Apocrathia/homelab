@@ -37,6 +37,21 @@ spec:
         secretKeys:
           adminPasswordKey: postgres-password
           userPasswordKey: postgres-password
+      primary:
+        persistence:
+          enabled: true
+          existingClaim: authentik-postgresql-data
+          storageClass: longhorn
+          size: 20Gi
+          annotations:
+            longhorn.io/volume-name: authentik-postgresql-data
+            longhorn.io/backup: "true"
+          labels:
+            app.kubernetes.io/name: authentik-postgresql
+            app.kubernetes.io/instance: authentik
+            app.kubernetes.io/component: database
+          accessModes:
+            - ReadWriteOnce
     redis:
       enabled: true
 
