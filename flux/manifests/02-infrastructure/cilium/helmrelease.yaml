@@ -265,6 +265,11 @@ spec:
     l2podannouncements:
       enabled: true
 
+    # Configure k8s client rate limits for L2 announcements
+    k8sClientRateLimit:
+      qps: 10
+      burst: 20
+
     # Enable Gateway API
     gatewayAPI:
       enabled: true

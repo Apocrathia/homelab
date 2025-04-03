@@ -33,6 +33,8 @@ kind: Gateway
 metadata:
   name: main-gateway
   namespace: cilium-system
+  annotations:
+    io.cilium/lb-ipam-ips: "10.50.8.50"
 spec:
   gatewayClassName: cilium
   addresses:
@@ -102,6 +104,10 @@ metadata:
     io.cilium/lb-ipam-ips: "10.50.8.50"
 spec:
   type: LoadBalancer
-  selector:
-    io.cilium.gateway/owning-gateway: main-gateway
-    io.cilium.gateway/owning-namespace: cilium-system
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      protocol: TCP
