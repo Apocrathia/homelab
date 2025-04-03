@@ -20,7 +20,9 @@ spec:
       interval: 30m
   values:
     namespaceOverride: cilium-system
-    # Migration from Flannel configuration
+
+    annotateK8sNode: true
+
     operator:
       unmanagedPodWatcher:
         restart: false # Don't restart unmigrated pods during migration
@@ -199,6 +201,12 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
 
     # Disable host firewall for Talos compatibility
     hostFirewall:
@@ -251,25 +259,17 @@ spec:
     monitor:
       enabled: true
 
-    # Enable L2 announcement for LoadBalancer services
+    # Enable L2 announcements for LoadBalancer services
     l2announcements:
+      enabled: true
+    l2podannouncements:
       enabled: true
 
     # Enable Gateway API
     gatewayAPI:
       enabled: true
-      # Enable cross-namespace routing
-      enableCrossNamespaceRoutes: true
-      # Enable Gateway API parameters for ingress
-      enableIngressClassParameters: true
-      # Enable ExternalName service support
-      enableExternalNameService: true
-      # Enable secret selection across namespaces
-      enableSecretNamespaceSelection: true
-      # Enable TLS passthrough
-      enableTLSPassthrough: true
-      # Configure how traffic from external sources is routed
-      externalTrafficPolicy: Cluster
-      # Let Helm manage the GatewayClass
-      gatewayClass:
-        create: "true"
+      hostNetwork:
+        enabled: true
+        nodes:
+          matchLabels:
+            node-role.kubernetes.io/worker: ""

@@ -6,5 +6,4 @@ metadata:
   name: envoy-gateway
 
 resources:
-  - namespace.yaml
   - gateway.yaml

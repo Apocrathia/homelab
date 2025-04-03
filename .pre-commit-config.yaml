@@ -33,3 +33,4 @@ repos:
     hooks:
       - id: kube-linter
         files: ^flux/.*\.(yaml|yml)$
+        args: ["--config", ".kube-linter.yaml"]
