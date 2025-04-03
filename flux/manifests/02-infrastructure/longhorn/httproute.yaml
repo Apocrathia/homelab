@@ -8,7 +8,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: gateway-system
+      namespace: cilium-system
       sectionName: https
   hostnames: ["longhorn.k8s.apocrathia.com"]
   rules:
@@ -30,7 +30,7 @@ spec:
   from:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      namespace: gateway-system
+      namespace: cilium-system
   to:
     - group: ""
       kind: Service
