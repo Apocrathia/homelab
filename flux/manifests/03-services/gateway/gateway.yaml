@@ -22,9 +22,6 @@ spec:
     matchLabels:
       io.cilium.gateway/owning-gateway: main-gateway
       io.cilium.gateway/owning-namespace: cilium-system
-  nodeSelector:
-    matchLabels:
-      node-role.kubernetes.io/worker: ""
   loadBalancerIPs: true
   externalIPs: true
 ---
@@ -35,6 +32,7 @@ metadata:
   namespace: cilium-system
   annotations:
     io.cilium/lb-ipam-ips: "10.50.8.50"
+    io.cilium.gateway/service-type: LoadBalancer
 spec:
   gatewayClassName: cilium
   addresses:
