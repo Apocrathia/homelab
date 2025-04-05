@@ -26,13 +26,19 @@ spec:
   externalIPs: true
 ---
 apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium
+spec:
+  controllerName: io.cilium/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: main-gateway
   namespace: cilium-system
   annotations:
     io.cilium/lb-ipam-ips: "10.50.8.50"
-    io.cilium.gateway/service-type: LoadBalancer
 spec:
   gatewayClassName: cilium
   addresses:
@@ -100,6 +106,7 @@ metadata:
     io.cilium.gateway/owning-namespace: cilium-system
   annotations:
     io.cilium/lb-ipam-ips: "10.50.8.50"
+    io.cilium.gateway/service-type: LoadBalancer
 spec:
   type: LoadBalancer
   ports:
