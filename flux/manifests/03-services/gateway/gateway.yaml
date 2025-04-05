@@ -23,7 +23,6 @@ spec:
       io.cilium.gateway/owning-gateway: main-gateway
       io.cilium.gateway/owning-namespace: cilium-system
   loadBalancerIPs: true
-  externalIPs: true
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
@@ -109,6 +108,8 @@ metadata:
     io.cilium.gateway/service-type: LoadBalancer
 spec:
   type: LoadBalancer
+  loadBalancerIP: "10.50.8.50"
+  loadBalancerClass: cilium
   ports:
     - name: http
       port: 80
