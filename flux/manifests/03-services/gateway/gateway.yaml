@@ -18,6 +18,10 @@ metadata:
 spec:
   interfaces:
     - eth0
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: DoesNotExist
   serviceSelector:
     matchLabels:
       io.cilium.gateway/owning-gateway: main-gateway
@@ -110,6 +114,7 @@ spec:
   type: LoadBalancer
   loadBalancerIP: "10.50.8.50"
   loadBalancerClass: cilium
+  externalTrafficPolicy: Local
   ports:
     - name: http
       port: 80

@@ -173,8 +173,11 @@ spec:
 
     # Enable load balancing mode
     loadBalancer:
+      standalone: true
       algorithm: maglev
-      mode: snat
+      mode: dsr
+      dsrDispatch: opt
+      experimental: true
 
     # Enable metrics for better observability
     metrics:
@@ -267,8 +270,6 @@ spec:
       leaseDuration: 15s
       leaseRenewDeadline: 5s
       leaseRetryPeriod: 2s
-    l2podannouncements:
-      enabled: true
 
     # Configure k8s client rate limits for L2 announcements
     k8sClientRateLimit:
