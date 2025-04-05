@@ -264,6 +264,9 @@ spec:
     # Enable L2 announcements for LoadBalancer services
     l2announcements:
       enabled: true
+      leaseDuration: 15s
+      leaseRenewDeadline: 5s
+      leaseRetryPeriod: 2s
     l2podannouncements:
       enabled: true
 
