@@ -12,11 +12,7 @@ I am going to use [Talos Linux](https://talos.dev/) as my base OS. I like the id
 
 ### Infrastructure
 
-The cluster hardware is a combination of physical and virtual machines.
-
-#### Physical Machines
-
-- 3x Dell Optiplex 7050 SFF
+The cluster hardware is entirely virtualized.
 
 #### Virtual Machines
 

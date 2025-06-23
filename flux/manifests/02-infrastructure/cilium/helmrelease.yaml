@@ -103,6 +103,11 @@ spec:
         - 45.90.28.214
         - 45.90.30.214
 
+    encryption:
+      enabled: true
+      type: wireguard
+      nodeEncryption: true
+
     # Enable IPv4 and disable IPv6 for homelab setup
     ipv4:
       enabled: true
@@ -115,6 +120,14 @@ spec:
     # Cluster mesh disabled for single cluster
     clustermesh:
       useAPIServer: false
+
+    # Enable node IPAM
+    nodeIPAM:
+      enabled: true
+
+    # Preflight checks for upgrades
+    preflight:
+      enabled: false
 
     # Configure monitoring with ServiceMonitor
     prometheus:
@@ -169,12 +182,13 @@ spec:
     ipam:
       mode: kubernetes
       operator:
-        clusterPoolIPv4PodCIDR: "10.42.0.0/16"
+        clusterPoolIPv4PodCIDRList: ["10.42.0.0/16"]
 
     # Enable load balancing mode
     loadBalancer:
       algorithm: maglev
-      mode: snat
+      mode: dsr
+      dsrDispatch: opt
 
     # Enable metrics for better observability
     metrics:
@@ -278,6 +292,8 @@ spec:
     # Enable Gateway API
     gatewayAPI:
       enabled: true
+      gatewayClass:
+        create: "true"
       hostNetwork:
         enabled: true
         nodes:

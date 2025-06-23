@@ -16,10 +16,10 @@ For the initial bootstrap, we'll use the following configuration:
 
 The Talos configuration has been updated in the following patch files:
 
-- `lab-patch.yaml` - For worker nodes
-- `vm-patch.yaml` - For control plane nodes
+- `unified-patch.yaml` - For all nodes (unified configuration)
+- `talos-01-patch.yaml` through `talos-04-patch.yaml` - Node-specific hostname and certSANs
 
-Both patches include:
+The unified patch includes:
 
 ```yaml
 cluster:
@@ -30,7 +30,7 @@ cluster:
 
 ### Bootstrap Process
 
-1. Generate the Talos configurations with the patches
+1. Generate the Talos configurations with the unified patch
 2. Apply the configurations to your nodes
 3. Bootstrap the cluster
 

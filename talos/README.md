@@ -8,15 +8,12 @@ Talos is a modern Kubernetes distribution that is designed to be simple, secure,
 
 ### Kubernetes Hosts
 
-| Hostname    | IP Address  | Role          | Hardware           |
-| ----------- | ----------- | ------------- | ------------------ |
-| talos-vm-01 | 10.50.8.10  | Control Plane | Virtual Machine    |
-| talos-vm-02 | 10.50.8.11  | Control Plane | Virtual Machine    |
-| talos-vm-03 | 10.50.8.12  | Control Plane | Virtual Machine    |
-| talos-vm-04 | 10.50.8.13  | Control Plane | Virtual Machine    |
-| lab-01      | 10.50.8.101 | Worker        | Dell Optiplex 7050 |
-| lab-02      | 10.50.8.102 | Worker        | Dell Optiplex 7050 |
-| lab-03      | 10.50.8.103 | Worker        | Dell Optiplex 7050 |
+| Hostname | IP Address  | Role          | Hardware        |
+| -------- | ----------- | ------------- | --------------- |
+| talos-01 | 10.100.1.80 | Control Plane | Virtual Machine |
+| talos-02 | 10.100.1.81 | Control Plane | Virtual Machine |
+| talos-03 | 10.100.1.82 | Control Plane | Virtual Machine |
+| talos-04 | 10.100.1.83 | Control Plane | Virtual Machine |
 
 ## Bootstrapping
 
@@ -26,10 +23,7 @@ Start by generating the secrets for the cluster.
 talosctl gen secrets -o secrets.yaml
 ```
 
-Next, create the configuration for the cluster. We'll set up:
-
-- 4 virtual machine nodes (talos-vm-01 through talos-vm-04) as control plane nodes only
-- Physical hardware (lab-01 through lab-03) as worker nodes
+Next, create the configuration for the cluster. We'll set up all nodes with a unified configuration:
 
 Generate configurations:
 
@@ -37,8 +31,7 @@ Generate configurations:
 # Generate configurations
 talosctl gen config \
   --with-secrets secrets.yaml \
-  --config-patch-control-plane @patches/vm-patch.yaml \
-  --config-patch-worker @patches/lab-patch.yaml \
+  --config-patch @patches/unified-patch.yaml \
   home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/ \
   --force
@@ -47,22 +40,24 @@ export TALOSCONFIG="rendered/talosconfig"
 
 This will generate the following files:
 
-- `controlplane.yaml`: Control plane configuration
+- `controlplane.yaml`: Control plane configuration (used for all nodes)
 - `talosconfig`: Client configuration for talosctl
-- `worker.yaml`: Worker configuration
+- `worker.yaml`: Worker configuration (not used)
+
+Note: We only use the `controlplane.yaml` configuration since all nodes are control plane nodes with `allowSchedulingOnControlPlanes: true` in our unified configuration.
 
 Now, we can bootstrap the control plane nodes. Each node gets its own specific configuration patch to set its hostname:
 
 ```bash
-# Apply configuration to each control plane node with its specific patch
+# Apply configuration to each node with its specific patch
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((i + 9))
-  echo "Configuring talos-vm-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
+  IP_LAST_OCTET=$((79 + i))
+  echo "Configuring talos-${NODE_NUM} (10.100.1.${IP_LAST_OCTET})..."
   talosctl apply-config --insecure \
-    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --nodes "10.100.1.${IP_LAST_OCTET}" \
     --file rendered/controlplane.yaml \
-    --config-patch "@patches/vm-${NODE_NUM}-patch.yaml"
+    --config-patch "@patches/talos-${NODE_NUM}-patch.yaml"
 done
 ```
 
@@ -70,8 +65,8 @@ While that's happening, let's make sure talosctl is configured to talk to the cl
 
 ```bash
 export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint 10.50.8.10
-talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13
+talosctl config endpoint 10.100.1.80
+talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
 ```
@@ -79,13 +74,13 @@ export TALOSCONFIG="~/.talos/config"
 Next, we bootstrap the first control plane node.
 
 ```bash
-talosctl bootstrap --nodes 10.50.8.10
+talosctl bootstrap --nodes 10.100.1.80
 ```
 
 Once the cluster is up, let's get the kubeconfig.
 
 ```bash
-talosctl kubeconfig ~/.kube/config -n 10.50.8.10
+talosctl kubeconfig ~/.kube/config -n 10.100.1.80
 ```
 
 Wait for the cluster to become ready.
@@ -99,39 +94,9 @@ Update the talosconfig to point to the VIP.
 ```bash
 export TALOSCONFIG="rendered/talosconfig"
 talosctl config endpoint kubernetes.apocrathia.com
-talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13
+talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
-```
-
-## Adding Worker Nodes
-
-Now let's add the physical worker nodes (lab-01 through lab-03) to the cluster:
-
-```bash
-# Update talosconfig to include worker nodes
-export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint kubernetes.apocrathia.com
-talosctl config node 10.50.8.10 10.50.8.11 10.50.8.12 10.50.8.13 10.50.8.101 10.50.8.102 10.50.8.103
-cp rendered/talosconfig ~/.talos/config
-export TALOSCONFIG="~/.talos/config"
-
-# Apply worker configuration to each physical node
-for i in {1..3}; do
-  NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((100 + i))
-  echo "Configuring lab-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
-  talosctl apply-config --insecure \
-    --nodes "10.50.8.${IP_LAST_OCTET}" \
-    --file rendered/worker.yaml \
-    --config-patch "@patches/lab-${NODE_NUM}-patch.yaml"
-done
-```
-
-Verify the new nodes join the cluster:
-
-```bash
-kubectl get nodes
 ```
 
 ## Installing Cilium CNI
@@ -152,81 +117,43 @@ To update the Talos configuration on existing nodes:
 # Generate new configurations with any changes
 talosctl gen config \
   --with-secrets secrets.yaml \
-  --config-patch-control-plane @patches/vm-patch.yaml \
-  --config-patch-worker @patches/lab-patch.yaml \
+  --config-patch @patches/unified-patch.yaml \
   home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/ \
   --force
 
-# Apply new control plane configurations
+# Apply new configurations to all nodes
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((i + 9))
-  echo "Updating talos-vm-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
+  IP_LAST_OCTET=$((79 + i))
+  echo "Updating talos-${NODE_NUM} (10.100.1.${IP_LAST_OCTET})..."
   talosctl apply-config \
-    --nodes "10.50.8.${IP_LAST_OCTET}" \
+    --nodes "10.100.1.${IP_LAST_OCTET}" \
     --file rendered/controlplane.yaml \
-    --config-patch "@patches/vm-${NODE_NUM}-patch.yaml"
+    --config-patch "@patches/talos-${NODE_NUM}-patch.yaml"
 done
 
-# Apply new worker configurations
-for i in {1..3}; do
-  NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((100 + i))
-  echo "Updating lab-${NODE_NUM} (10.50.8.${IP_LAST_OCTET})..."
-  talosctl apply-config \
-    --nodes "10.50.8.${IP_LAST_OCTET}" \
-    --file rendered/worker.yaml \
-    --config-patch "@patches/lab-${NODE_NUM}-patch.yaml"
-done
-
-# Perform a rolling restart of the control plane nodes
+# Perform a rolling restart of the nodes
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((i + 9))
-  NODE_IP="10.50.8.${IP_LAST_OCTET}"
-  echo "Rebooting control plane node talos-vm-${NODE_NUM} (${NODE_IP})..."
+  IP_LAST_OCTET=$((79 + i))
+  NODE_IP="10.100.1.${IP_LAST_OCTET}"
+  echo "Rebooting node talos-${NODE_NUM} (${NODE_IP})..."
   # Cordon the node to prevent new workloads
-  kubectl cordon "talos-vm-${NODE_NUM}"
-  # Reboot the node
-  talosctl reboot --nodes "${NODE_IP}" --timeout=60s
- # Wait for the node to come back online
-  while ! kubectl get node "talos-vm-${NODE_NUM}" | grep -q Ready; do
-    echo "Waiting for node talos-vm-${NODE_NUM} to become ready..."
-    sleep 10
-  done
-  # Uncordon the node to allow scheduling
-  kubectl uncordon "talos-vm-${NODE_NUM}"
-  # Wait a bit between reboots to allow cluster stabilization
-  sleep 30
-done
-
-# Perform a rolling restart of the worker nodes
-for i in {1..3}; do
-  NODE_NUM=$(printf "%02d" $i)
-  IP_LAST_OCTET=$((100 + i))
-  NODE_IP="10.50.8.${IP_LAST_OCTET}"
-  echo "Rebooting worker node lab-${NODE_NUM} (${NODE_IP})..."
-  # Cordon the node to prevent new workloads
-  kubectl cordon "lab-${NODE_NUM}"
+  kubectl cordon "talos-${NODE_NUM}"
   # Reboot the node
   talosctl reboot --nodes "${NODE_IP}" --timeout=60s
   # Wait for the node to come back online
-  while ! kubectl get node "lab-${NODE_NUM}" | grep -q Ready; do
-    echo "Waiting for node lab-${NODE_NUM} to become ready..."
+  while ! kubectl get node "talos-${NODE_NUM}" | grep -q Ready; do
+    echo "Waiting for node talos-${NODE_NUM} to become ready..."
     sleep 10
   done
   # Uncordon the node to allow scheduling
-  kubectl uncordon "lab-${NODE_NUM}"
+  kubectl uncordon "talos-${NODE_NUM}"
   # Wait a bit between reboots to allow cluster stabilization
   sleep 30
 done
-
-# Verify cluster health after rolling reboot
-kubectl get nodes
 ```
-
-The nodes will automatically apply the new configuration and restart any necessary services.
 
 ## Cluster Teardown and Rebuild
 
@@ -241,16 +168,10 @@ flux uninstall
 Reset each node in the cluster:
 
 ```bash
-# Reset control plane nodes
-for node in 10.50.8.{10..13}; do
+# Reset all nodes
+for node in 10.100.1.{80..83}; do
   echo "Resetting $node..."
   talosctl reset --graceful=false --reboot --nodes $node --wait=false || echo "Failed to reset $node"
-done
-
-# Reset worker nodes (lab nodes)
-for node in 10.50.8.{101..103}; do
-  echo "Resetting $node..."
-  talosctl reset --graceful=false --reboot --nodes $node --wait=false --endpoints $node || echo "Failed to reset $node"
 done
 ```
 

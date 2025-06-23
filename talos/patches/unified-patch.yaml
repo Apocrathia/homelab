@@ -1,0 +1,42 @@
+---
+# yamllint disable-line rule:line-length
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.10.4/pkg/machinery/config/schemas/config.schema.json
+machine:
+  features:
+    rbac: true
+  kubelet:
+    extraArgs:
+      rotate-server-certificates: "false"
+  network:
+    interfaces:
+      - interface: eth0
+        dhcp: true
+        vip:
+          ip: "10.100.1.8"
+  install:
+    disk: /dev/sda
+    wipe: true
+    # yamllint disable-line rule:line-length
+    # https://factory.talos.dev/?arch=amd64&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&target=metal&version=1.10.4
+    image: factory.talos.dev/metal-installer/696bb48d9c48e567596f393a4ff9bfd26d4dda5d92c16beb580e96fa68d6324c:v1.10.4
+  time:
+    servers:
+      - pool.ntp.org
+cluster:
+  clusterName: home
+  allowSchedulingOnControlPlanes: true
+  controlPlane:
+    endpoint: https://kubernetes.apocrathia.com:6443
+  apiServer:
+    certSANs:
+      - "10.100.1.8"
+      - "kubernetes.apocrathia.com"
+  network:
+    cni:
+      name: flannel
+    podSubnets:
+      - 10.42.0.0/16
+    serviceSubnets:
+      - 10.69.0.0/16
+  proxy:
+    disabled: false

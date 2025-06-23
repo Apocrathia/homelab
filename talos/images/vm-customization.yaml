@@ -5,3 +5,4 @@ customization:
   systemExtensions:
     officialExtensions:
       - siderolabs/qemu-guest-agent
+      - siderolabs/amd-ucode
