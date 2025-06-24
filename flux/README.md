@@ -39,7 +39,7 @@ Through flux:
 flux create kustomization manifests \
   --depends-on=flux-system \
   --source=GitRepository/flux-system \
-  --path="./manifests/" \
+  --path="flux/manifests/" \
   --prune=true \
   --interval=5m
 ```

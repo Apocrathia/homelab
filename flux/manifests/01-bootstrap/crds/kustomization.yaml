@@ -9,13 +9,13 @@ resources:
   # 1Password
   - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
   # Longhorn
-  - ./longhorn
+  # - ./longhorn
   # Cilium
-  - ./cilium
+  # - ./cilium
   # Prometheus
   - ./prometheus
   # Gateway API
-  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+  # - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
   # Kyverno
   - ./kyverno
   # Cert Manager

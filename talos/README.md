@@ -99,11 +99,9 @@ cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
 ```
 
-## Installing Cilium CNI
+## Bootstrapping
 
-After bootstrapping the cluster, you'll need to install a CNI. We use Cilium as our CNI provider.
-
-See [Cilium Installation Guide](./cilium-install.md) for detailed instructions on installing and configuring Cilium on Talos.
+We're using 1Password to store the secrets for the cluster. Please refer to the [1Password](../flux/manifests/01-bootstrap/1password/README.md) guide for instructions on how to manually initialize the 1Password Connect Operator.
 
 ## Deployments
 

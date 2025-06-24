@@ -65,13 +65,13 @@ To verify the credentials are working:
 
 ```bash
 # Check if secrets exist
-kubectl get secrets -n 1password op-credentials onepassword-token
+kubectl get secrets -n onepassword-system op-credentials onepassword-token
 
 # Check operator logs
-kubectl logs -n 1password deployment/onepassword-connect-operator
+kubectl logs -n onepassword-system deployment/onepassword-connect-operator
 
 # Check connect API logs
-kubectl logs -n 1password deployment/onepassword-connect
+kubectl logs -n onepassword-system deployment/onepassword-connect
 ```
 
 ## Troubleshooting
