@@ -7,6 +7,14 @@ machine:
   kubelet:
     extraArgs:
       rotate-server-certificates: "false"
+    extraMounts:
+      - destination: /var/mnt
+        type: bind
+        source: /var/mnt
+        options:
+          - bind
+          - rshared
+          - rw
   network:
     interfaces:
       - interface: eth0

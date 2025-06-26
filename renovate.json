@@ -35,18 +35,13 @@
     },
     {
       "matchDatasources": ["helm"],
-      "matchPackageNames": ["longhorn"],
-      "registryUrls": ["https://charts.longhorn.io"]
+      "matchPackageNames": ["local-path-provisioner"],
+      "registryUrls": ["https://charts.rancher.io"]
     },
     {
       "matchDatasources": ["helm"],
       "matchPackageNames": ["gitlab-agent", "gitlab-runner"],
       "registryUrls": ["https://charts.gitlab.io"]
-    },
-    {
-      "matchDatasources": ["helm"],
-      "matchPackageNames": ["cilium"],
-      "registryUrls": ["https://helm.cilium.io"]
     },
     {
       "matchDatasources": ["helm"],

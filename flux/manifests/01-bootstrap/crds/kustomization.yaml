@@ -8,10 +8,6 @@ metadata:
 resources:
   # 1Password
   - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
-  # Longhorn
-  # - ./longhorn
-  # Cilium
-  # - ./cilium
   # Prometheus
   - ./prometheus
   # Gateway API

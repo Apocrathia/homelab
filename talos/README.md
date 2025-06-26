@@ -120,6 +120,13 @@ talosctl gen config \
   -o rendered/ \
   --force
 
+# Update the talosconfig to point to the VIP
+export TALOSCONFIG="rendered/talosconfig"
+talosctl config endpoint kubernetes.apocrathia.com
+talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
+cp rendered/talosconfig ~/.talos/config
+export TALOSCONFIG="~/.talos/config"
+
 # Apply new configurations to all nodes
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
