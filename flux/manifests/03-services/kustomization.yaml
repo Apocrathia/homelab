@@ -14,9 +14,9 @@ metadata:
 resources:
   # - gateway
   - authentik
-  - gitlab
+  # - gitlab
   # - elastic
-  - kyverno
+  # - kyverno
   - cert-manager
-  - housekeeping
-  - reloader
+  # - housekeeping
+  # - reloader
