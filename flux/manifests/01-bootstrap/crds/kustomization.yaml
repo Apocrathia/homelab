@@ -10,6 +10,8 @@ resources:
   - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
   # Prometheus
   - ./prometheus
+  # Longhorn
+  - ./longhorn
   # Gateway API
   # - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
   # Kyverno
