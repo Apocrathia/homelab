@@ -8,5 +8,5 @@ metadata:
 resources:
   - 01-bootstrap/flux-kustomization.yaml
   - 02-infrastructure/flux-kustomization.yaml
-  # - 03-services/flux-kustomization.yaml
+  - 03-services/flux-kustomization.yaml
   # - 04-apps/flux-kustomization.yaml
