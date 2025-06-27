@@ -125,8 +125,15 @@ spec:
           memory: 100Mi
       persistence:
         enabled: true
-        storageClassName: local-path
+        storageClassName: longhorn
         size: 5Gi
+        metadata:
+          labels:
+            app: grafana
+            component: monitoring
+            storage: persistent
+          annotations:
+            description: "Grafana persistent storage"
       dashboardProviders:
         dashboardproviders.yaml:
           apiVersion: 1
@@ -173,8 +180,15 @@ spec:
           memory: 50Mi
       persistence:
         enabled: true
-        storageClassName: local-path
+        storageClassName: longhorn
         size: 1Gi
+        metadata:
+          labels:
+            app: alertmanager
+            component: monitoring
+            storage: persistent
+          annotations:
+            description: "AlertManager persistent storage"
 
     # Prometheus configuration
     prometheus:
@@ -190,8 +204,15 @@ spec:
             memory: 1Gi
         storageSpec:
           volumeClaimTemplate:
+            metadata:
+              labels:
+                app: prometheus
+                component: monitoring
+                storage: persistent
+              annotations:
+                description: "Prometheus persistent storage"
             spec:
-              storageClassName: local-path
+              storageClassName: longhorn
               accessModes: ["ReadWriteOnce"]
               resources:
                 requests:
