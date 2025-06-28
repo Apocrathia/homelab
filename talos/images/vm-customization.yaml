@@ -6,3 +6,4 @@ customization:
     officialExtensions:
       - siderolabs/qemu-guest-agent
       - siderolabs/amd-ucode
+      - siderolabs/iscsi-tools
