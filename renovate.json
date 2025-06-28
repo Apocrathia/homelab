@@ -82,6 +82,11 @@
       "matchDatasources": ["helm"],
       "matchPackageNames": ["cert-manager"],
       "registryUrls": ["https://charts.jetstack.io"]
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["gitlab-org/gitlab-runner/gitlab-runner-helper"],
+      "registryUrls": ["https://registry.gitlab.com"]
     }
   ],
   "customManagers": [
@@ -93,6 +98,15 @@
       ],
       "datasourceTemplate": "helm",
       "versioningTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?= \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],
   "timezone": "America/Denver",

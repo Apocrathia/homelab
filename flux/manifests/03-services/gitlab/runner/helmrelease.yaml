@@ -70,11 +70,11 @@ spec:
     # Resource limits and requests
     resources:
       limits:
-        memory: 256Mi
-        cpu: 200m
+        memory: 8Gi
+        cpu: 4
       requests:
-        memory: 128Mi
-        cpu: 100m
+        memory: 1Gi
+        cpu: 1
 
     # Pod annotations
     podAnnotations:
@@ -93,14 +93,15 @@ spec:
             privileged = false
             service_account = "gitlab-runner"
             poll_timeout = 600
-            resource_limits = ["cpu=1", "memory=1Gi"]
-            resource_requests = ["cpu=250m", "memory=256Mi"]
+            resource_limits = ["cpu=4", "memory=8Gi"]
+            resource_requests = ["cpu=1", "memory=1Gi"]
+            # renovate: datasource=docker registryUrl=registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
             helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.9.1"
             helper_image_flavor = "alpine"
-            cpu_limit = "1"
-            memory_limit = "1Gi"
-            cpu_request = "250m"
-            memory_request = "256Mi"
+            cpu_limit = "4"
+            memory_limit = "8Gi"
+            cpu_request = "1"
+            memory_request = "1Gi"
 
             [runners.kubernetes.pod_security_context]
             run_as_non_root = true
