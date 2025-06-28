@@ -9,7 +9,7 @@ alwaysApply: true
 - Maintain a clear and logical directory structure
 - Group related components and configurations together
 - Keep configuration separate from application code
-- Store documentation in a dedicated `docs/` directory
+- Store alongside components and backlink to other docs
 - Follow consistent naming conventions across the project
 
 ## Security Best Practices
