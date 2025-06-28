@@ -1,6 +1,6 @@
 # Talos
 
-> **Navigation**: [Home](../README.md) | [Next: Cilium Installation →](./cilium-install.md)
+> **Navigation**: [Home](../README.md) | [Next: Flux Setup →](../flux/README.md)
 
 ## Overview
 
