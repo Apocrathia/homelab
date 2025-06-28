@@ -30,15 +30,12 @@ What do I need to bootstrap the cluster?
 
 What do we need to make everything work?
 
-- Longhorn
-- Cilium
-- CoreDNS on 10.50.8.53
+- Local Path Provisioner
 
 ### Services
 
 What services do I need to initially deploy to the cluster?
 
-- Elastic
 - GitLab Agent
 - GitLab Runner
 
