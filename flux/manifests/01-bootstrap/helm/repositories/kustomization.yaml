@@ -12,10 +12,12 @@ resources:
   - bitnami.yaml
   - cert-manager.yaml
   - gitlab.yaml
+  - ingress-nginx.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml
   - local-path-provisioner.yaml
   - longhorn.yaml
+  - metallb.yaml
   - metrics-server.yaml
   - prometheus-community.yaml
   - stakater.yaml
