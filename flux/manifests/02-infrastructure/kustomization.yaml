@@ -14,7 +14,9 @@ metadata:
 
 # Will be populated as infrastructure components are added
 resources:
-  - local-path-provisioner
+  # - local-path-provisioner
+  # - metallb
+  - cilium
   - longhorn
   - metrics-server
   - kube-prometheus-stack
