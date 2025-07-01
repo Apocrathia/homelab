@@ -1,6 +1,6 @@
 # Talos
 
-> **Navigation**: [Home](../README.md) | [Next: Flux Setup →](../flux/README.md)
+> **Navigation**: [Home](../README.md) | [Next: Cilium Install →](./cilium-install.md) | [Flux Setup →](../flux/README.md)
 
 ## Overview
 
@@ -89,9 +89,31 @@ Wait for the cluster to become ready.
 watch -n 1 kubectl get nodes
 ```
 
-Update the talosconfig to point to the VIP.
+**Note**: At this point, your nodes will be in `NotReady` state because there's no CNI installed yet. You need to install Cilium to get the nodes ready.
+
+**Important**: Since we're using `proxy.disabled: true`, we need to use a direct node endpoint for the initial Cilium installation. The VIP endpoint won't work until Cilium's kube-proxy replacement is running.
 
 ```bash
+# Use direct node endpoint for initial Cilium installation
+talosctl kubeconfig ~/.kube/config -n 10.100.1.80
+```
+
+## Installing Cilium
+
+Before proceeding with Flux deployment, you need to install Cilium to get your nodes to `Ready` state. Follow the [Cilium Installation Guide](./cilium-install.md) for detailed instructions.
+
+The key steps are:
+
+1. Create the `cilium-system` namespace with privileged PodSecurity labels
+2. Install Cilium using the provided Helm command
+3. Verify that nodes become `Ready`
+
+## Deployments
+
+After Cilium is installed and running, you can switch back to the VIP endpoint:
+
+```bash
+# Switch back to VIP endpoint after Cilium is running
 export TALOSCONFIG="rendered/talosconfig"
 talosctl config endpoint kubernetes.apocrathia.com
 talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
@@ -99,13 +121,7 @@ cp rendered/talosconfig ~/.talos/config
 export TALOSCONFIG="~/.talos/config"
 ```
 
-## Bootstrapping
-
-We're using 1Password to store the secrets for the cluster. Please refer to the [1Password](../flux/manifests/01-bootstrap/1password/README.md) guide for instructions on how to manually initialize the 1Password Connect Operator.
-
-## Deployments
-
-Go deploy [Flux](../flux/README.md)
+Once Cilium is installed and nodes are ready, proceed to deploy [Flux](../flux/README.md).
 
 ## Updating Configurations
 

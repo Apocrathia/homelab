@@ -4,10 +4,11 @@ This directory contains essential services that support the cluster's functional
 
 ## Current Services
 
-- [Elastic Stack](elastic/README.md)
-  - Elasticsearch with multi-node deployment
-  - Kibana with Fleet integration
-  - System, Kubernetes, and Prometheus monitoring
+- [Gateway API](gateway/)
+  - Cilium-based Gateway API implementation
+  - Load balancer IP management
+  - HTTP/HTTPS traffic routing
+  - TLS termination support
 - GitLab
   - [Agent](gitlab/agent/README.md)
     - GitLab Agent for Kubernetes (KAS)
@@ -20,6 +21,10 @@ This directory contains essential services that support the cluster's functional
     - Supports up to 10 concurrent jobs
     - Docker-in-Docker support
     - Automated secret management via 1Password
+- Cert-Manager
+  - Automated certificate management
+  - Wildcard certificate generation
+  - Cluster-wide certificate issuer
 
 ## Suggested Services
 
