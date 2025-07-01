@@ -34,12 +34,8 @@ spec:
                   #!/bin/sh
                   set -e
 
-                  WORKER_NODES="lab-01 lab-02 lab-03"
-                  CONTROL_PLANE_NODES="talos-vm-01 talos-vm-02 talos-vm-03 talos-vm-04"
-
-                  for node in $WORKER_NODES; do
-                    kubectl label node "$node" node-role.kubernetes.io/worker= --overwrite
-                  done
+                  # Label all nodes as control-plane
+                  CONTROL_PLANE_NODES="talos-01 talos-02 talos-03 talos-04"
 
                   for node in $CONTROL_PLANE_NODES; do
                     kubectl label node "$node" node-role.kubernetes.io/control-plane= --overwrite
