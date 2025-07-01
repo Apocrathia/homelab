@@ -10,11 +10,15 @@ resources:
   - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
   # Prometheus
   - ./prometheus
+  # Cilium
+  - ./cilium
   # Longhorn
   - ./longhorn
   # Gateway API
-  # - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+  # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
   # Kyverno
   - ./kyverno
   # Cert Manager
+  # renovate: datasource=github-releases depName=cert-manager/cert-manager
   - https://github.com/cert-manager/cert-manager/releases/download/v1.12.16/cert-manager.crds.yaml
