@@ -12,4 +12,5 @@ metadata:
 # - user-facing services
 
 # Will be populated as applications are added
-resources: []
+resources:
+  - demo-app
