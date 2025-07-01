@@ -28,14 +28,8 @@ spec:
         restart: false # Don't restart unmigrated pods during migration
       enabled: true
       replicas: 1
-      # Keep Cilium Operator off control-plane nodes
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: DoesNotExist
+      # Allow Cilium Operator to run on any node
+      affinity: {}
       resources:
         requests:
           cpu: 100m
@@ -72,26 +66,14 @@ spec:
       enabled: true
       relay:
         enabled: true
-        # Keep Hubble Relay off control-plane nodes
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: node-role.kubernetes.io/control-plane
-                      operator: DoesNotExist
+        # Allow Hubble Relay to run on any node
+        affinity: {}
       ui:
         enabled: true
         securityContext:
           enabled: true
-        # Keep Hubble UI off control-plane nodes
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: node-role.kubernetes.io/control-plane
-                      operator: DoesNotExist
+        # Allow Hubble UI to run on any node
+        affinity: {}
       tls:
         enabled: false
 
@@ -193,14 +175,8 @@ spec:
     # Enable Envoy support
     envoy:
       enabled: true
-      # Keep Envoy proxy off control-plane nodes
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: DoesNotExist
+      # Allow Envoy proxy to run on any node
+      affinity: {}
       resources:
         requests:
           cpu: 100m
@@ -282,4 +258,4 @@ spec:
         enabled: true
         nodes:
           matchLabels:
-            node-role.kubernetes.io/worker: ""
+            node-role.kubernetes.io/control-plane: ""
