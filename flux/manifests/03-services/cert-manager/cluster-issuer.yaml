@@ -6,13 +6,13 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: ian@apocrathia.com
+    email: admin@apocrathia.com
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
       - dns01:
           cloudflare:
-            email: ian@apocrathia.com
+            email: admin@apocrathia.com
             apiTokenSecretRef:
               name: cloudflare-api-token-secret
               key: api-token
@@ -24,13 +24,13 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: ian@apocrathia.com
+    email: admin@apocrathia.com
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
       - dns01:
           cloudflare:
-            email: ian@apocrathia.com
+            email: admin@apocrathia.com
             apiTokenSecretRef:
               name: cloudflare-api-token-secret
               key: api-token
