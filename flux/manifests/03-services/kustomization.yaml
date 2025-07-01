@@ -12,11 +12,11 @@ metadata:
 
 # Will be populated as services are added
 resources:
-  # - gateway
+  # - ingress
+  - gateway
   # - authentik
   - gitlab
-  # - elastic
-  # - kyverno
-  # - cert-manager
-  # - housekeeping
-  # - reloader
+  - kyverno
+  - cert-manager
+  - housekeeping
+  - reloader
