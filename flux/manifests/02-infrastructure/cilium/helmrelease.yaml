@@ -12,7 +12,7 @@ spec:
     spec:
       chart: cilium
       # renovate: datasource=helm registryUrl=https://helm.cilium.io depName=cilium
-      version: "1.17.2"
+      version: "1.17.5"
       sourceRef:
         kind: HelmRepository
         name: cilium
@@ -184,7 +184,11 @@ spec:
         limits:
           memory: 256Mi
       rollOutPods: true
-      securityContext.capabilities.keepCapNetBindService: true
+      securityContext:
+        capabilities:
+          keepCapNetBindService: true
+          add:
+            - NET_BIND_SERVICE
 
     # Disable host firewall for Talos compatibility
     hostFirewall:
@@ -256,6 +260,3 @@ spec:
       enabled: true
       hostNetwork:
         enabled: true
-        nodes:
-          matchLabels:
-            node-role.kubernetes.io/control-plane: ""
