@@ -105,7 +105,7 @@ metadata:
     io.cilium.gateway/owning-namespace: cilium-system
   annotations:
     io.cilium/lb-ipam-ips: "10.100.1.99"
-    io.cilium.gateway/service-type: LoadBalancer
+    service.cilium.io/loadbalancer-mode: "hybrid"
 spec:
   type: LoadBalancer
   loadBalancerIP: "10.100.1.99"
