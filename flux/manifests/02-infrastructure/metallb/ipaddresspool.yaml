@@ -1,9 +1,0 @@
----
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: services
-  namespace: metallb-system
-spec:
-  addresses:
-    - 10.100.1.90-10.100.1.99
