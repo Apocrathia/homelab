@@ -48,11 +48,6 @@
     },
     {
       "matchDatasources": ["helm"],
-      "matchPackageNames": ["local-path-provisioner"],
-      "registryUrls": ["https://charts.rancher.io"]
-    },
-    {
-      "matchDatasources": ["helm"],
       "matchPackageNames": ["gitlab-agent", "gitlab-runner"],
       "registryUrls": ["https://charts.gitlab.io"]
     },
