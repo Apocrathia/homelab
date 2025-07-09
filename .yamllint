@@ -3,7 +3,7 @@ extends: default
 
 rules:
   line-length:
-    max: 128
+    max: 256
     level: warning
     ignore: |
       flux/manifests/01-bootstrap/flux-system/*
