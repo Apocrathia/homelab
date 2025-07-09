@@ -2,6 +2,10 @@
 # yamllint disable-line rule:line-length
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.10.4/pkg/machinery/config/schemas/config.schema.json
 machine:
+  nodeLabels:
+    # https://www.robert-jensen.dk/posts/2025-loadbalancer-not-working-on-single-node-talos-cluster/
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+    $patch: delete
   network:
     hostname: talos-01
     interfaces:
