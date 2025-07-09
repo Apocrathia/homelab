@@ -24,6 +24,17 @@ spec:
       io.cilium.gateway/owning-gateway: main-gateway
   loadBalancerIPs: true
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumgatewayclassconfigs.yaml
+apiVersion: cilium.io/v2alpha1
+kind: CiliumGatewayClassConfig
+metadata:
+  name: main-gateway-config
+  namespace: cilium-system
+spec:
+  service:
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
@@ -31,6 +42,11 @@ metadata:
   name: cilium
 spec:
   controllerName: io.cilium/gateway-controller
+  parametersRef:
+    group: cilium.io
+    kind: CiliumGatewayClassConfig
+    name: main-gateway-config
+    namespace: cilium-system
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml
 apiVersion: gateway.networking.k8s.io/v1

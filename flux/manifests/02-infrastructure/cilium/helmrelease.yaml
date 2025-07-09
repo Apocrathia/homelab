@@ -260,3 +260,7 @@ spec:
       enabled: true
       hostNetwork:
         enabled: true
+      secretsNamespace:
+        create: true
+        name: cilium-secrets
+        sync: true
