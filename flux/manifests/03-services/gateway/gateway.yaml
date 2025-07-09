@@ -11,7 +11,6 @@ spec:
   serviceSelector:
     matchLabels:
       io.cilium.gateway/owning-gateway: main-gateway
-      io.cilium.gateway/owning-namespace: cilium-system
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml
 apiVersion: "cilium.io/v2alpha1"
@@ -43,6 +42,7 @@ metadata:
   namespace: cilium-system
   annotations:
     io.cilium/lb-ipam-ips: "10.100.1.99"
+    service.cilium.io/loadbalancer-mode: "hybrid"
 spec:
   gatewayClassName: cilium
   addresses:
@@ -100,27 +100,3 @@ spec:
           requestRedirect:
             scheme: https
             statusCode: 301
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cilium-gateway-main-gateway
-  namespace: cilium-system
-  labels:
-    gateway.networking.k8s.io/gateway-name: main-gateway
-    io.cilium.gateway/owning-gateway: main-gateway
-    io.cilium.gateway/owning-namespace: cilium-system
-  annotations:
-    io.cilium/lb-ipam-ips: "10.100.1.99"
-    service.cilium.io/loadbalancer-mode: "hybrid"
-spec:
-  type: LoadBalancer
-  loadBalancerIP: "10.100.1.99"
-  loadBalancerClass: cilium
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-    - name: https
-      port: 443
-      protocol: TCP

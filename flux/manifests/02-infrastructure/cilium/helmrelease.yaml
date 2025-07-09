@@ -156,7 +156,7 @@ spec:
     # Enable load balancing mode
     loadBalancer:
       algorithm: maglev
-      mode: snat
+      mode: hybrid
 
     # Enable metrics for better observability
     metrics:
