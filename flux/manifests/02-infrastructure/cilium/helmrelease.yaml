@@ -259,7 +259,7 @@ spec:
     gatewayAPI:
       enabled: true
       hostNetwork:
-        enabled: true
+        enabled: false
       secretsNamespace:
         create: true
         name: cilium-secrets
