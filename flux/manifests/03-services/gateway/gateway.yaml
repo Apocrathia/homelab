@@ -1,9 +1,11 @@
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml
 apiVersion: "cilium.io/v2alpha1"
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: gateway-pool
 spec:
+  controllerName: io.cilium/gateway-controller
   blocks:
     - cidr: "10.100.1.99/32"
   serviceSelector:
@@ -11,6 +13,7 @@ spec:
       io.cilium.gateway/owning-gateway: main-gateway
       io.cilium.gateway/owning-namespace: cilium-system
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml
 apiVersion: "cilium.io/v2alpha1"
 kind: CiliumL2AnnouncementPolicy
 metadata:
@@ -24,6 +27,7 @@ spec:
       io.cilium.gateway/owning-namespace: cilium-system
   loadBalancerIPs: true
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
@@ -31,6 +35,7 @@ metadata:
 spec:
   controllerName: io.cilium/gateway-controller
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -63,6 +68,7 @@ spec:
         namespaces:
           from: All
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
@@ -77,6 +83,7 @@ spec:
     - group: ""
       kind: Secret
 ---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
