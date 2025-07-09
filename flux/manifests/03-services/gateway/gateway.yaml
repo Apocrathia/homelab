@@ -23,7 +23,6 @@ spec:
   serviceSelector:
     matchLabels:
       io.cilium.gateway/owning-gateway: main-gateway
-      io.cilium.gateway/owning-namespace: cilium-system
   loadBalancerIPs: true
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
