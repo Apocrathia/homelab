@@ -12,7 +12,6 @@ metadata:
 
 # Will be populated as services are added
 resources:
-  # - ingress
   - gateway
   # - authentik
   - gitlab
