@@ -33,6 +33,16 @@
     },
     {
       "matchDatasources": ["helm"],
+      "matchPackageNames": ["cilium"],
+      "registryUrls": ["https://helm.cilium.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["longhorn"],
+      "registryUrls": ["https://charts.longhorn.io"]
+    },
+    {
+      "matchDatasources": ["helm"],
       "matchPackageNames": ["connect"],
       "registryUrls": ["https://1password.github.io/connect-helm-charts"]
     },
