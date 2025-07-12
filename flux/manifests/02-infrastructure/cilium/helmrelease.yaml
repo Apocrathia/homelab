@@ -185,9 +185,6 @@ spec:
         limits:
           memory: 256Mi
       rollOutPods: true
-      securityContext:
-        capabilities:
-          keepCapNetBindService: true # Keep NET_BIND_SERVICE for host network mode
 
     # Disable host firewall for Talos compatibility
     hostFirewall:
@@ -259,7 +256,7 @@ spec:
       enabled: true
       externalTrafficPolicy: Local
       hostNetwork:
-        enabled: true
+        enabled: false
       secretsNamespace:
         create: true
         name: cilium-secrets
