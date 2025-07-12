@@ -254,7 +254,6 @@ spec:
     # Gateway API configuration
     gatewayAPI:
       enabled: true
-      externalTrafficPolicy: Local
       hostNetwork:
         enabled: false
       secretsNamespace:
