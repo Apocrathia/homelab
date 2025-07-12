@@ -41,7 +41,6 @@ metadata:
   annotations:
     io.cilium/lb-ipam-ips: "10.100.1.99"
     service.cilium.io/loadbalancer-mode: "hybrid"
-    io.cilium.service/type: "LoadBalancer"
 spec:
   gatewayClassName: cilium
   addresses:
