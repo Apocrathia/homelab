@@ -7,12 +7,3 @@ metadata:
 
 resources:
   - gateway.yaml
-
-patches:
-  - path: service-patch.yaml
-    target:
-      group: ""
-      version: v1
-      kind: Service
-      name: cilium-gateway-main-gateway
-      namespace: cilium-system

@@ -132,6 +132,7 @@ spec:
           - FOWNER
           - SETGID
           - SETUID
+          - NET_BIND_SERVICE # Added for embedded Envoy to bind to privileged ports
         cleanCiliumState:
           - NET_ADMIN
           - SYS_ADMIN
@@ -186,9 +187,7 @@ spec:
       rollOutPods: true
       securityContext:
         capabilities:
-          keepCapNetBindService: true
-          add:
-            - NET_BIND_SERVICE
+          keepCapNetBindService: true # Keep NET_BIND_SERVICE for host network mode
 
     # Disable host firewall for Talos compatibility
     hostFirewall:
@@ -255,11 +254,12 @@ spec:
       qps: 10
       burst: 20
 
-    # Enable Gateway API
+    # Gateway API configuration
     gatewayAPI:
       enabled: true
+      externalTrafficPolicy: Local
       hostNetwork:
-        enabled: false
+        enabled: true
       secretsNamespace:
         create: true
         name: cilium-secrets
