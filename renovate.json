@@ -123,9 +123,34 @@
       "customType": "regex",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "matchStrings": [
+        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/[^\\s]+"
+      ],
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/\\s]+)/[^\\s]+"
+      ],
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "matchStrings": [
         "# renovate: datasource=docker registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'][^:]+:(?<currentValue>[^\"'\\s]+)[\"']"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "matchStrings": [
+        "apiVersion: (?<depName>apiextensions\\.k8s\\.io)/(?<currentValue>v1beta1)"
+      ],
+      "datasourceTemplate": "kubernetes-api",
+      "depNameTemplate": "apiextensions.k8s.io"
     }
   ],
   "timezone": "America/Denver",
