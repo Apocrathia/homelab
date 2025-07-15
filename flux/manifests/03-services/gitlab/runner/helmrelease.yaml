@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: gitlab-runner
-      # renovate: datasource=helm registryUrl=https://charts.gitlab.io/ depName=gitlab-runner
+      # renovate: datasource=helm registryUrl=https://charts.gitlab.io depName=gitlab-runner
       version: 0.78.1
       sourceRef:
         kind: HelmRepository
@@ -95,7 +95,7 @@ spec:
             poll_timeout = 600
             resource_limits = ["cpu=4", "memory=8Gi"]
             resource_requests = ["cpu=1", "memory=1Gi"]
-            # renovate: datasource=docker registryUrl=registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
+            # renovate: datasource=docker registryUrl=https://registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
             helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.9.1"
             helper_image_flavor = "alpine"
             cpu_limit = "4"

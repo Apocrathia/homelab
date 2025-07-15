@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: gitlab-agent
-      # renovate: datasource=helm registryUrl=https://charts.gitlab.io/ depName=gitlab-agent
+      # renovate: datasource=helm registryUrl=https://charts.gitlab.io depName=gitlab-agent
       version: 2.16.1
       sourceRef:
         kind: HelmRepository

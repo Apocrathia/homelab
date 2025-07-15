@@ -11,7 +11,7 @@ spec:
   chart:
     spec:
       chart: connect
-      # renovate: datasource=helm registryUrl=https://1password.github.io/connect-helm-charts/ depName=connect
+      # renovate: datasource=helm registryUrl=https://1password.github.io/connect-helm-charts depName=connect
       version: 2.0.1
       sourceRef:
         kind: HelmRepository
