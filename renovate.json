@@ -107,28 +107,11 @@
       "customType": "regex",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s"
-      ],
-      "datasourceTemplate": "helm",
-      "versioningTemplate": "helm"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?= \"(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?= \"(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "github-releases"
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s",
+        "# renovate: datasource=(?<datasource>[a-z-.]+) depName=(?<depName>[^\\s]+)(?: (?:lookupName|packageName)=(?<packageName>[^\\s]+))?(?: versioning=(?<versioning>[^\\s]+))?(?: extractVersion=(?<extractVersion>[^\\s]+))? currentValue=(?<currentValue>[^\\s]+)\\s*",
+        "# renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?) depName=(?<depName>.*?)\\s.*?= \"[^:]+:(?<currentValue>[^\"]+)\"",
+        "# renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?) depName=(?<depName>.*?)\\s.*?= \"[^\"]*:(?<currentValue>[^\"]+)\""
+      ]
     }
   ],
   "timezone": "America/Denver",
