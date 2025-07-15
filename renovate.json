@@ -14,15 +14,6 @@
   "flux": {
     "enabled": true
   },
-  "kubernetes": {
-    "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
-  },
-  "helm-values": {
-    "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
-  },
-  "docker": {
-    "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
-  },
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
@@ -63,11 +54,6 @@
     },
     {
       "matchDatasources": ["helm"],
-      "matchPackageNames": ["eck-operator"],
-      "registryUrls": ["https://helm.elastic.co"]
-    },
-    {
-      "matchDatasources": ["helm"],
       "matchPackageNames": ["reloader"],
       "registryUrls": ["https://stakater.github.io/stakater-charts"]
     },
@@ -92,11 +78,6 @@
       "registryUrls": ["https://charts.jetstack.io"]
     },
     {
-      "matchDatasources": ["helm"],
-      "matchPackageNames": ["ingress-nginx"],
-      "registryUrls": ["https://kubernetes.github.io/ingress-nginx"]
-    },
-    {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["gitlab-org/gitlab-runner/gitlab-runner-helper"],
       "registryUrls": ["https://registry.gitlab.com"]
@@ -105,13 +86,40 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( registryUrl=(?<registryUrl>.*?))?\\s.*?version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?\\s",
-        "# renovate: datasource=(?<datasource>[a-z-.]+) depName=(?<depName>[^\\s]+)(?: (?:lookupName|packageName)=(?<packageName>[^\\s]+))?(?: versioning=(?<versioning>[^\\s]+))?(?: extractVersion=(?<extractVersion>[^\\s]+))? currentValue=(?<currentValue>[^\\s]+)\\s*",
-        "# renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?) depName=(?<depName>.*?)\\s.*?= \"[^:]+:(?<currentValue>[^\"]+)\"",
-        "# renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?) depName=(?<depName>.*?)\\s.*?= \"[^\"]*:(?<currentValue>[^\"]+)\""
+        "# renovate: datasource=(?<datasource>\\S+) registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n\\s*- https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/"
+      ],
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^flux/manifests/.*\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=docker registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'][^:]+:(?<currentValue>[^\"'\\s]+)[\"']"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "timezone": "America/Denver",
