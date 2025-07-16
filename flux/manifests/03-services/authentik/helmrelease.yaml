@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: authentik
-      # renovate: datasource=helm depName=authentik registryUrl=https://charts.goauthentik.io
+      # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
       version: "2025.6.3"
       sourceRef:
         kind: HelmRepository
