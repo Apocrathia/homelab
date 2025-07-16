@@ -18,7 +18,7 @@
     "enabled": true
   },
   "kubernetes": {
-    "enabled": true
+    "fileMatch": ["^flux/manifests/.*\\.yaml$"]
   },
   "packageRules": [
     {
