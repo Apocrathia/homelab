@@ -1,6 +1,8 @@
 ---
 stages:
+  - validate
   - renovate
 
 include:
   - local: .gitlab/renovate.gitlab-ci.yml
+  - local: .gitlab/k8s-validation.gitlab-ci.yml
