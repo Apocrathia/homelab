@@ -4,7 +4,7 @@
 
 .flux-validation:
   stage: validate
-  image: ubuntu:22.04
+  image: ubuntu:24.04
   environment:
     name: homelab
   variables:
