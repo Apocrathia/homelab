@@ -10,7 +10,7 @@ spec:
       namespace: cilium-system
       sectionName: https
   hostnames:
-    - demo.apocrathia.com
+    - demo.gateway.services.apocrathia.com
   rules:
     - matches:
         - path:

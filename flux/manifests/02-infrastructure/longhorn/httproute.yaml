@@ -10,7 +10,8 @@ spec:
     - name: main-gateway
       namespace: cilium-system
       sectionName: https
-  hostnames: ["longhorn.k8s.apocrathia.com"]
+  hostnames:
+    - longhorn.gateway.services.apocrathia.com
   rules:
     - matches:
         - path:
