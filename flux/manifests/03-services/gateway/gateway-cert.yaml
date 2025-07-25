@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-services-apocrathia-com
+  namespace: cert-manager
+spec:
+  commonName: "*.gateway.services.apocrathia.com"
+  dnsNames:
+    - "*.gateway.services.apocrathia.com"
+  duration: 2160h
+  renewBefore: 360h
+  secretName: gateway-services-apocrathia-com-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  subject:
+    organizations:
+      - Apocrathia

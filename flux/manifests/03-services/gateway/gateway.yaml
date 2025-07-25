@@ -73,7 +73,7 @@ spec:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: wildcard-apocrathia-com-tls
+            name: gateway-services-apocrathia-com-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:
