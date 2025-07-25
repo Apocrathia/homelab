@@ -9,4 +9,4 @@ resources:
   - secrets.yaml
   - helmrelease.yaml
   - recurringjobs.yaml
-  # - httproute.yaml
+  - httproute.yaml
