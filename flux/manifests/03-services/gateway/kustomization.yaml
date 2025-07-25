@@ -6,4 +6,5 @@ metadata:
   name: gateway
 
 resources:
+  - gateway-cert.yaml
   - gateway.yaml
