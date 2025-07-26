@@ -1,5 +1,4 @@
 ---
-# yamllint disable-line rule:line-length
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.10.4/pkg/machinery/config/schemas/config.schema.json
 machine:
   nodeLabels:

@@ -18,5 +18,4 @@ patches:
         name: any-name
       $patch: delete
     target:
-      # yamllint disable-line rule:line-length
       kind: (Service|Deployment|DaemonSet|StatefulSet|ConfigMap|Secret|ServiceAccount|Role|RoleBinding|ClusterRole|ClusterRoleBinding|PodSecurityPolicy|StorageClass|PersistentVolumeClaim|Namespace|PriorityClass)
