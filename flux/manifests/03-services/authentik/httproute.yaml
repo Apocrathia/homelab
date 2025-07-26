@@ -10,7 +10,7 @@ spec:
       namespace: cilium-system
       sectionName: https
   hostnames:
-    - "auth.k8s.apocrathia.com"
+    - "auth.gateway.services.apocrathia.com"
   rules:
     - matches:
         - path:
