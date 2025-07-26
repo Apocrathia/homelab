@@ -16,238 +16,38 @@
   },
   "kubernetes": {
     "managerFilePatterns": [
-      "/^flux/manifests/.*\\.yaml$/"
+      "/^flux/manifests/.*\\.yaml$/",
+      "/^talos/.*\\.yaml$/"
     ]
   },
   "packageRules": [
     {
-      "matchCategories": [
-        "docker"
-      ],
+      "matchCategories": ["docker"],
       "enabled": true
     },
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
+      "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
       "automergeType": "branch",
       "platformAutomerge": true
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "cilium"
-      ],
-      "registryUrls": [
-        "https://helm.cilium.io"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "longhorn"
-      ],
-      "registryUrls": [
-        "https://charts.longhorn.io"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "connect"
-      ],
-      "registryUrls": [
-        "https://1password.github.io/connect-helm-charts"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "gitlab-agent",
-        "gitlab-runner"
-      ],
-      "registryUrls": [
-        "https://charts.gitlab.io"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "kyverno"
-      ],
-      "registryUrls": [
-        "https://kyverno.github.io/kyverno"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "kube-prometheus-stack"
-      ],
-      "registryUrls": [
-        "https://prometheus-community.github.io/helm-charts"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "reloader"
-      ],
-      "registryUrls": [
-        "https://stakater.github.io/stakater-charts"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "authentik"
-      ],
-      "registryUrls": [
-        "https://charts.goauthentik.io"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "metrics-server"
-      ],
-      "registryUrls": [
-        "https://charts.bitnami.com/bitnami"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "kubernetes-dashboard"
-      ],
-      "registryUrls": [
-        "https://kubernetes.github.io/dashboard"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "helm"
-      ],
-      "matchPackageNames": [
-        "cert-manager"
-      ],
-      "registryUrls": [
-        "https://charts.jetstack.io"
-      ]
-    },
-    {
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "gitlab-org/gitlab-runner/gitlab-runner-helper"
-      ],
-      "registryUrls": [
-        "https://registry.gitlab.com"
-      ]
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
+        "/^flux/manifests/.*\\.yaml$/",
+        "/^talos/.*\\.yaml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ]
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ]
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ]
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n\\s*- https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/"
-      ],
-      "datasourceTemplate": "github-releases"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/[^\\s]+"
-      ],
-      "datasourceTemplate": "github-releases"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/\\s]+)/[^\\s]+"
-      ],
-      "datasourceTemplate": "github-tags"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=docker registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'][^:]+:(?<currentValue>[^\"'\\s]+)[\"']"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^flux/manifests/.*\\.yaml$/"
-      ],
-      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
+        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/[^\\s]*",
+        "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/\\s]+)/[^\\s]+",
+        "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?image: [^:]+:v(?<currentValue>[^\\s]+)",
+        "# renovate: datasource=docker registryUrl=(?<registryUrl>\\S+) depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'][^:]+:(?<currentValue>[^\"'\\s]+)[\"']",
         "apiVersion: (?<depName>apiextensions\\.k8s\\.io)/(?<currentValue>v1beta1)"
-      ],
-      "datasourceTemplate": "kubernetes-api",
-      "depNameTemplate": "apiextensions.k8s.io"
+      ]
     }
   ],
   "timezone": "America/Denver",
