@@ -13,7 +13,7 @@ metadata:
 # Will be populated as services are added
 resources:
   - gateway
-  # - authentik
+  - authentik
   - gitlab
   - kyverno
   - cert-manager
