@@ -18,3 +18,4 @@ resources:
   - longhorn
   - metrics-server
   - kube-prometheus-stack
+  - smb-csi-driver
