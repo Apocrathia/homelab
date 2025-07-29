@@ -15,10 +15,7 @@
     "enabled": true
   },
   "kubernetes": {
-    "managerFilePatterns": [
-      "/^flux/manifests/.*\\.yaml$/",
-      "/^talos/.*\\.yaml$/"
-    ]
+    "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
   },
   "packageRules": [
     {
