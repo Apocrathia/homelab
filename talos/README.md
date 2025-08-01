@@ -217,6 +217,8 @@ done
 
 ### Upgrade Process
 
+**Important**: We use the factory image URL instead of the generic installer image because our nodes require system extensions (iSCSI tools, QEMU guest agent, AMD microcode). The factory image includes these extensions pre-installed.
+
 **Recommended**: Follow the supported upgrade path by upgrading to the latest patch release of each intermediate minor version. For example, if upgrading from v1.9 to v1.11:
 
 - v1.9.x → v1.10.x → v1.11.x
@@ -238,10 +240,10 @@ for i in {1..4}; do
 
   echo "Upgrading talos-${NODE_NUM} (${NODE_IP}) to ${TARGET_VERSION}..."
 
-  # Upgrade the node
+  # Upgrade the node with factory image that includes extensions
   talosctl upgrade \
     --nodes "${NODE_IP}" \
-    --image "ghcr.io/siderolabs/installer:${TARGET_VERSION}" \
+    --image "factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:${TARGET_VERSION}" \
     --wait
 
   # Wait for the node to rejoin the cluster
@@ -267,7 +269,7 @@ echo "Staged upgrade to Talos version: $TARGET_VERSION"
 # Use staged upgrade for problematic nodes
 talosctl upgrade \
   --nodes 10.100.1.80 \
-  --image "ghcr.io/siderolabs/installer:${TARGET_VERSION}" \
+  --image "factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:${TARGET_VERSION}" \
   --stage
 ```
 
