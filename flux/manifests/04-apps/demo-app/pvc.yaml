@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-app-smb-pvc
+  namespace: demo-app
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: "" # Empty string to bind to specific PV
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: demo-app-smb-pv
