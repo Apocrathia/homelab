@@ -1,0 +1,9 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: csi-driver-smb
+  namespace: flux-system
+spec:
+  interval: 1h0m0s
+  url: https://kubernetes-csi.github.io/csi-driver-smb/charts
