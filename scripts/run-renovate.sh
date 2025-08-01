@@ -17,8 +17,15 @@ if [ -z "$GITHUB_TOKEN" ]; then
     exit 1
 fi
 
+# Check if renovate.json exists in the current directory
+if [ ! -f "renovate.json" ]; then
+    echo "Error: renovate.json file not found in the current directory."
+    echo "Please run this script from the directory containing renovate.json."
+    exit 1
+fi
+
 # Create logs directory if it doesn't exist
-mkdir -p logs
+mkdir -p scripts/logs
 
 # Run renovate with the same configuration as before and save logs
 RENOVATE_CONFIG_FILE=renovate.json \
@@ -27,4 +34,4 @@ RENOVATE_ONBOARDING=false \
 RENOVATE_PLATFORM=gitlab \
 RENOVATE_ENDPOINT=https://gitlab.com/api/v4/ \
 LOG_LEVEL=debug \
-renovate --autodiscover 2>&1 | tee logs/renovate-$(date +%Y%m%d-%H%M%S).log
+renovate --autodiscover 2>&1 | tee scripts/logs/renovate-$(date +%Y%m%d-%H%M%S).log
