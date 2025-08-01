@@ -176,6 +176,156 @@ for i in {1..4}; do
 done
 ```
 
+## Upgrading Talos Linux
+
+**Important**: Configuration updates alone do not upgrade the Talos Linux OS version. You must use the `talosctl upgrade` command to perform actual OS upgrades.
+
+### Prerequisites
+
+1. **Check Current Version**: Verify the current Talos version running on your nodes:
+
+   ```bash
+   talosctl version --nodes 10.100.1.80
+   ```
+
+2. **Update Configuration**: First, update your `unified-patch.yaml` with the new Talos version:
+
+   ```yaml
+   machine:
+     install:
+       # renovate: datasource=github-releases depName=siderolabs/talos
+       image: factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:v1.10.6
+   ```
+
+3. **Regenerate Configurations**: Generate new configurations with the updated version:
+
+   ```bash
+   talosctl gen config \
+     --with-secrets secrets.yaml \
+     --config-patch @patches/unified-patch.yaml \
+     home "https://kubernetes.apocrathia.com:6443" \
+     -o rendered/ \
+     --force
+   ```
+
+4. **Extract Target Version**: Extract the target version from the patch file:
+   ```bash
+   # Extract version from unified patch file
+   TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+   echo "Target Talos version: $TARGET_VERSION"
+   ```
+
+### Upgrade Process
+
+**Recommended**: Follow the supported upgrade path by upgrading to the latest patch release of each intermediate minor version. For example, if upgrading from v1.9 to v1.11:
+
+- v1.9.x → v1.10.x → v1.11.x
+
+#### Method 1: Rolling Upgrade (Recommended)
+
+Perform a rolling upgrade to minimize cluster downtime:
+
+```bash
+# Extract target version from patch file
+TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+echo "Upgrading to Talos version: $TARGET_VERSION"
+
+# Upgrade nodes one at a time
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((79 + i))
+  NODE_IP="10.100.1.${IP_LAST_OCTET}"
+
+  echo "Upgrading talos-${NODE_NUM} (${NODE_IP}) to ${TARGET_VERSION}..."
+
+  # Upgrade the node
+  talosctl upgrade \
+    --nodes "${NODE_IP}" \
+    --image "ghcr.io/siderolabs/installer:${TARGET_VERSION}" \
+    --wait
+
+  # Wait for the node to rejoin the cluster
+  while ! kubectl get node "talos-${NODE_NUM}" | grep -q Ready; do
+    echo "Waiting for node talos-${NODE_NUM} to become ready..."
+    sleep 10
+  done
+
+  echo "Node talos-${NODE_NUM} upgrade completed"
+  sleep 30  # Allow cluster stabilization
+done
+```
+
+#### Method 2: Staged Upgrade (For Troubleshooting)
+
+If you encounter issues with files being held open during upgrade:
+
+```bash
+# Extract target version from patch file
+TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+echo "Staged upgrade to Talos version: $TARGET_VERSION"
+
+# Use staged upgrade for problematic nodes
+talosctl upgrade \
+  --nodes 10.100.1.80 \
+  --image "ghcr.io/siderolabs/installer:${TARGET_VERSION}" \
+  --stage
+```
+
+### Post-Upgrade Verification
+
+1. **Verify Node Status**:
+
+   ```bash
+   kubectl get nodes
+   talosctl version --nodes 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
+   ```
+
+2. **Check Cluster Health**:
+
+   ```bash
+   kubectl get pods --all-namespaces
+   kubectl get componentstatuses
+   ```
+
+3. **Verify Cilium Status**:
+   ```bash
+   kubectl get pods -n cilium-system
+   cilium status
+   ```
+
+### Rollback (If Needed)
+
+If an upgrade fails or causes issues, you can rollback to the previous version:
+
+```bash
+# Rollback a specific node
+talosctl rollback --nodes 10.100.1.80
+
+# Or rollback all nodes
+for i in {1..4}; do
+  IP_LAST_OCTET=$((79 + i))
+  NODE_IP="10.100.1.${IP_LAST_OCTET}"
+  echo "Rolling back ${NODE_IP}..."
+  talosctl rollback --nodes "${NODE_IP}"
+done
+```
+
+### Important Notes
+
+- **Control Plane Protection**: Talos automatically protects etcd quorum during control plane upgrades
+- **Workload Drain**: Nodes are automatically cordoned and drained before upgrade
+- **A-B Image Scheme**: Talos uses an A-B image scheme for safe rollbacks
+- **Kubernetes Version**: Talos upgrades do not automatically upgrade Kubernetes - manage Kubernetes upgrades separately
+- **Monitoring**: Use `talosctl dmesg -f` to monitor upgrade progress
+- **Simultaneous Upgrades**: Avoid upgrading all nodes simultaneously to prevent cluster instability
+
+### Troubleshooting
+
+- **Upgrade Fails**: Check the installer image reference and network connectivity
+- **Node Won't Boot**: Talos will automatically rollback to the previous version
+- **Workload Issues**: Use `talosctl rollback` if workloads fail after upgrade
+- **File Lock Issues**: Use `--stage` flag for nodes with file access conflicts
+
 ## Cluster Teardown and Rebuild
 
 If you need to completely reset and rebuild the cluster, follow these steps:
