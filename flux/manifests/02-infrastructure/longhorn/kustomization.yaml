@@ -6,7 +6,7 @@ metadata:
   name: longhorn
 resources:
   - namespace.yaml
-  - secrets.yaml
+  - secret.yaml
   - helmrelease.yaml
   - recurringjobs.yaml
   - httproute.yaml
