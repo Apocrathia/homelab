@@ -3,14 +3,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
   name: apps
-
-# Application deployments like:
-# - web applications
-# - APIs
-# - background workers
-# - scheduled jobs
-# - user-facing services
-
-# Will be populated as applications are added
 resources:
   - demo-app
