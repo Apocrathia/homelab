@@ -7,6 +7,9 @@ metadata:
 
 resources:
   - namespace.yaml
+  - secret.yaml
+  - pv.yaml
+  - pvc.yaml
   - deployment.yaml
   - service.yaml
   - httproute.yaml

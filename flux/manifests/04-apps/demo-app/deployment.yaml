@@ -53,6 +53,9 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-run
               mountPath: /run
+            - name: smb-files
+              mountPath: /usr/share/nginx/html
+              readOnly: true
           resources:
             requests:
               cpu: 50m
@@ -65,3 +68,7 @@ spec:
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
+        - name: smb-files
+          persistentVolumeClaim:
+            claimName: demo-app-smb-pvc
+            readOnly: true
