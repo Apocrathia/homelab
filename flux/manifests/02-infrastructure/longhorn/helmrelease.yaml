@@ -27,9 +27,11 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    defaultSettings:
+    defaultBackupStore:
       backupTarget: cifs://storage.services.apocrathia.com/Backup
       backupTargetCredentialSecret: longhorn-backup-target-secret
+      pollInterval: 300
+    defaultSettings:
       restoreVolumeRecurringJobs: true
       backupCompressionMethod: gzip
       deletingConfirmationFlag: true
