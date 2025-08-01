@@ -8,5 +8,6 @@ resources:
   - namespace.yaml
   - secrets.yaml
   - helmrelease.yaml
+  - backup.yaml
   - recurringjobs.yaml
   - httproute.yaml
