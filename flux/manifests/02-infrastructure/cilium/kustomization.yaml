@@ -10,3 +10,4 @@ resources:
   - helmrelease.yaml
   - node-config.yaml
   - httproute.yaml
+  - authentik-blueprint.yaml

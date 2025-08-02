@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-hubble
+  namespace: cilium-system
+  labels:
+    authentik_blueprint: "true"
+data:
+  hubble.yaml: |
+    version: 1
+    metadata:
+      name: hubble-app
+    context: {}
+    entries:
+      # Forward Auth Provider for Hubble
+      - model: authentik_providers_proxy.proxyprovider
+        state: present
+        identifiers:
+          name: "hubble-forward-auth"
+        attrs:
+          name: "hubble-forward-auth"
+          authorization_flow: !Find [authentik_flows.flow, [slug, "default-authorization-flow"]]
+          mode: "forward_single"
+          external_host: "https://hubble.gateway.services.apocrathia.com"
+
+      # Application for Hubble
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "hubble"
+        attrs:
+          name: "Hubble Network Observability"
+          slug: "hubble"
+          provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
+          launch_url: "https://hubble.gateway.services.apocrathia.com"
+          open_in_new_tab: true
+          meta_launch_url: "https://raw.githubusercontent.com/cilium/hubble/9429bbf4b5b504a9b0f6752ccfbb16a2878bb51e/Documentation/images/hubble_logo.png"
+
+      # Outpost for Forward Auth
+      - model: authentik_outposts.outpost
+        state: present
+        identifiers:
+          name: "hubble-outpost"
+        attrs:
+          name: "hubble-outpost"
+          type: "proxy"
+          providers:
+            - !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
+          config:
+            authentik_host: "https://authentik.gateway.services.apocrathia.com"
+            authentik_host_insecure: false
+            authentik_host_browser: ""
+            log_level: "info"
+            object_naming_template: "ak-outpost-%(name)s"
+            docker_network: null
+            docker_map_ports: true
+            container_image: null
+            kubernetes_replicas: 1
+            kubernetes_namespace: "authentik"

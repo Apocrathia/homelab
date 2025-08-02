@@ -60,10 +60,37 @@ spec:
         - name: authentik-secrets
           secret:
             secretName: authentik-secrets
+        - name: blueprints-sidecar
+          emptyDir: {}
       volumeMounts:
         - name: authentik-secrets
           mountPath: /authentik-secrets
           readOnly: true
+        - name: blueprints-sidecar
+          mountPath: /blueprints
+          readOnly: true
+      extraContainers:
+        - name: sidecar-blueprints
+          # renovate: datasource=docker registryUrl=ghcr.io depName=kiwigrid/k8s-sidecar
+          image: "ghcr.io/kiwigrid/k8s-sidecar:1.30.7"
+          env:
+            - name: "LABEL"
+              value: "authentik_blueprint"
+            - name: "LABEL_VALUE"
+              value: "true"
+            - name: "NAMESPACE"
+              value: "ALL"
+            - name: "FOLDER"
+              value: "/blueprints"
+          volumeMounts:
+            - name: blueprints-sidecar
+              mountPath: /blueprints
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
 
     worker:
       volumes:
