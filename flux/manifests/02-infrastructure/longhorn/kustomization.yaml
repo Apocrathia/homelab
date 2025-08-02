@@ -10,3 +10,4 @@ resources:
   - helmrelease.yaml
   - recurringjobs.yaml
   - httproute.yaml
+  - authentik-blueprint.yaml

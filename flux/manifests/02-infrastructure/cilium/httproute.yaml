@@ -13,9 +13,9 @@ spec:
     - hubble.gateway.services.apocrathia.com
   rules:
     - backendRefs:
-        - name: hubble-ui
-          namespace: cilium-system
-          port: 80
+        - name: ak-outpost-hubble-outpost
+          namespace: authentik
+          port: 9000
       matches:
         - path:
             type: PathPrefix
