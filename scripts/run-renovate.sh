@@ -27,11 +27,9 @@ fi
 # Create logs directory if it doesn't exist
 mkdir -p scripts/logs
 
-# Run renovate with the same configuration as before and save logs
+# Run renovate against local files and save logs
 RENOVATE_CONFIG_FILE=renovate.json \
-RENOVATE_AUTODISCOVER=true \
-RENOVATE_ONBOARDING=false \
-RENOVATE_PLATFORM=gitlab \
-RENOVATE_ENDPOINT=https://gitlab.com/api/v4/ \
+RENOVATE_PLATFORM=local \
+RENOVATE_REPOSITORIES=null \
 LOG_LEVEL=debug \
-renovate --autodiscover 2>&1 | tee scripts/logs/renovate-$(date +%Y%m%d-%H%M%S).log
+renovate 2>&1 | tee scripts/logs/renovate-$(date +%Y%m%d-%H%M%S).log
