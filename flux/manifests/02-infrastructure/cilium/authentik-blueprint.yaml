@@ -8,9 +8,12 @@ metadata:
     authentik_blueprint: "true"
 data:
   hubble.yaml: |
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
     version: 1
     metadata:
       name: hubble-app
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
     context: {}
     entries:
       # Forward Auth Provider for Hubble
