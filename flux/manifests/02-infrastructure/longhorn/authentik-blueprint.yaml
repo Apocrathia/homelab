@@ -16,6 +16,8 @@ entries:
       name: "longhorn-forward-auth"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      # prettier-ignore
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       mode: "forward_single"
       external_host: "https://longhorn.gateway.services.apocrathia.com"
 
