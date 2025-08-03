@@ -1,63 +1,57 @@
 ---
-apiVersion: v1
-kind: ConfigMap
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
 metadata:
-  name: authentik-blueprint-longhorn
-  namespace: longhorn-system
+  name: longhorn-app
   labels:
-    authentik_blueprint: "true"
-data:
-  longhorn.yaml: |
-    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
-    version: 1
-    metadata:
-      name: longhorn-app
-      labels:
-        blueprints.goauthentik.io/instantiate: "true"
-    context: {}
-    entries:
-      # Forward Auth Provider for Longhorn
-      - model: authentik_providers_proxy.proxyprovider
-        state: present
-        identifiers:
-          name: "longhorn-forward-auth"
-        attrs:
-          name: "longhorn-forward-auth"
-          authorization_flow: !Find [authentik_flows.flow, [slug, "default-authorization-flow"]]
-          mode: "forward_single"
-          external_host: "https://longhorn.gateway.services.apocrathia.com"
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Forward Auth Provider for Longhorn
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "longhorn-forward-auth"
+    attrs:
+      name: "longhorn-forward-auth"
+      # prettier-ignore
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      mode: "forward_single"
+      external_host: "https://longhorn.gateway.services.apocrathia.com"
 
-      # Application for Longhorn
-      - model: authentik_core.application
-        state: present
-        identifiers:
-          slug: "longhorn"
-        attrs:
-          name: "Longhorn Storage"
-          slug: "longhorn"
-          provider: !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
-          launch_url: "https://longhorn.gateway.services.apocrathia.com"
-          open_in_new_tab: true
-          meta_launch_url: "https://longhorn.io/img/logos/longhorn-icon-color.png"
+  # Application for Longhorn
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "longhorn"
+    attrs:
+      name: "Longhorn Storage"
+      slug: "longhorn"
+      # prettier-ignore
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
+      launch_url: "https://longhorn.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      meta_launch_url: "https://longhorn.io/img/logos/longhorn-icon-color.png"
 
-      # Outpost for Forward Auth
-      - model: authentik_outposts.outpost
-        state: present
-        identifiers:
-          name: "longhorn-outpost"
-        attrs:
-          name: "longhorn-outpost"
-          type: "proxy"
-          providers:
-            - !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
-          config:
-            authentik_host: "https://authentik.gateway.services.apocrathia.com"
-            authentik_host_insecure: false
-            authentik_host_browser: ""
-            log_level: "info"
-            object_naming_template: "ak-outpost-%(name)s"
-            docker_network: null
-            docker_map_ports: true
-            container_image: null
-            kubernetes_replicas: 1
-            kubernetes_namespace: "authentik"
+  # Outpost for Forward Auth
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "longhorn-outpost"
+    attrs:
+      name: "longhorn-outpost"
+      type: "proxy"
+      providers:
+        # prettier-ignore
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
+      config:
+        authentik_host: "https://authentik.gateway.services.apocrathia.com"
+        authentik_host_insecure: false
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        docker_network: null
+        docker_map_ports: true
+        container_image: null
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
