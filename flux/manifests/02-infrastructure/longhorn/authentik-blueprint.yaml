@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
 version: 1
 metadata:
-  name: longhorn-app
+  name: longhorn
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
@@ -43,6 +43,11 @@ entries:
     attrs:
       name: "longhorn-outpost"
       type: "proxy"
+      service_connection:
+        !Find [
+          authentik_outposts.kubernetesserviceconnection,
+          [name, "Local Kubernetes Cluster"],
+        ]
       providers:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]

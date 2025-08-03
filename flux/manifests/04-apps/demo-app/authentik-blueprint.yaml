@@ -2,46 +2,46 @@
 # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
 version: 1
 metadata:
-  name: hubble
+  name: demo-app
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # Forward Auth Provider for Hubble
+  # Forward Auth Provider for Demo App
   - model: authentik_providers_proxy.proxyprovider
     state: present
     identifiers:
-      name: "hubble-forward-auth"
+      name: "demo-app-forward-auth"
     attrs:
-      name: "hubble-forward-auth"
+      name: "demo-app-forward-auth"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       mode: "forward_single"
-      external_host: "https://hubble.gateway.services.apocrathia.com"
+      external_host: "https://demo.gateway.services.apocrathia.com"
 
-  # Application for Hubble
+  # Application for Demo App
   - model: authentik_core.application
     state: present
     identifiers:
-      slug: "hubble"
+      slug: "demo-app"
     attrs:
-      name: "Hubble Network Observability"
-      slug: "hubble"
+      name: "Demo Application"
+      slug: "demo-app"
       # prettier-ignore
-      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
-      launch_url: "https://hubble.gateway.services.apocrathia.com"
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
+      launch_url: "https://demo.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      meta_icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
+      icon: "https://i.imgur.com/0gNsvyk.png"
 
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
     state: present
     identifiers:
-      name: "hubble-outpost"
+      name: "demo-app-outpost"
     attrs:
-      name: "hubble-outpost"
+      name: "demo-app-outpost"
       type: "proxy"
       service_connection:
         !Find [
@@ -50,7 +50,7 @@ entries:
         ]
       providers:
         # prettier-ignore
-        - !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
       config:
         authentik_host: "https://authentik.gateway.services.apocrathia.com"
         authentik_host_insecure: false
