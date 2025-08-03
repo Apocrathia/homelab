@@ -44,15 +44,13 @@ entries:
       name: "demo-app-outpost"
       type: "proxy"
       service_connection:
-        !Find [
-          authentik_outposts.kubernetesserviceconnection,
-          [name, "Local Kubernetes Cluster"],
-        ]
+        # prettier-ignore
+        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
       providers:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
       config:
-        authentik_host: "http://authentik-server.authentik.svc.cluster.local"
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
         authentik_host_insecure: false
         authentik_host_browser: ""
         log_level: "info"
