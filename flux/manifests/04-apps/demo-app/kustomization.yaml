@@ -13,3 +13,12 @@ resources:
   - deployment.yaml
   - service.yaml
   - httproute.yaml
+
+configMapGenerator:
+  - name: authentik-blueprint-demo-app
+    namespace: demo-app
+    files:
+      - demo-app.yaml=authentik-blueprint.yaml
+
+commonLabels:
+  authentik_blueprint: "true"

@@ -17,6 +17,6 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: demo-app
-          port: 80
+        - name: ak-outpost-demo-app-outpost
+          port: 9000
           weight: 1
