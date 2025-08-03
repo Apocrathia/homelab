@@ -10,4 +10,11 @@ resources:
   - helmrelease.yaml
   - recurringjobs.yaml
   - httproute.yaml
-  - authentik-blueprint.yaml
+
+configMapGenerator:
+  - name: authentik-blueprint-longhorn
+    files:
+      - longhorn.yaml=authentik-blueprint.yaml
+
+commonLabels:
+  authentik_blueprint: "true"

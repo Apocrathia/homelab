@@ -10,4 +10,11 @@ resources:
   - helmrelease.yaml
   - node-config.yaml
   - httproute.yaml
-  - authentik-blueprint.yaml
+
+configMapGenerator:
+  - name: authentik-blueprint-hubble
+    files:
+      - hubble.yaml=authentik-blueprint.yaml
+
+commonLabels:
+  authentik_blueprint: "true"
