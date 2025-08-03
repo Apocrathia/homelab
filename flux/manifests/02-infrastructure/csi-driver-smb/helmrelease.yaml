@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: csi-driver-smb
-      # renovate: datasource=helm registryUrl=https://github.com/kubernetes-csi/csi-driver-smb/tree/master/charts depName=csi-driver-smb
+      # renovate: datasource=github-releases depName=kubernetes-csi/csi-driver-smb
       version: v1.18.0
       sourceRef:
         kind: HelmRepository
