@@ -5,6 +5,10 @@ repos:
     hooks:
       - id: check-yaml
         args: [--allow-multiple-documents]
+        exclude: |
+          (?x)^(
+            flux/manifests/.*/authentik-blueprint\.yaml
+          )$
       - id: check-merge-conflict
       - id: detect-private-key
       - id: end-of-file-fixer
