@@ -52,7 +52,7 @@ entries:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
       config:
-        authentik_host: "https://authentik.gateway.services.apocrathia.com"
+        authentik_host: "http://authentik-server.authentik.svc.cluster.local"
         authentik_host_insecure: false
         authentik_host_browser: ""
         log_level: "info"
