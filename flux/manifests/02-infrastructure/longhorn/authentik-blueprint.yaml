@@ -33,7 +33,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
       launch_url: "https://longhorn.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      meta_launch_url: "https://longhorn.io/img/logos/longhorn-icon-color.png"
+      meta_icon: "https://longhorn.io/img/logos/longhorn-icon-color.png"
 
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
