@@ -18,3 +18,7 @@ rules:
   document-end: disable
   truthy:
     check-keys: false
+
+# Ignore authentik blueprint files with custom YAML tags
+ignore:
+  - 'flux/manifests/**/authentik-blueprint.yaml'
