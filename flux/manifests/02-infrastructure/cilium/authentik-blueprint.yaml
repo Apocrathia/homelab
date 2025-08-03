@@ -16,6 +16,8 @@ entries:
       name: "hubble-forward-auth"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      # prettier-ignore
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       mode: "forward_single"
       external_host: "https://hubble.gateway.services.apocrathia.com"
 
@@ -31,7 +33,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
       launch_url: "https://hubble.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      meta_launch_url: "https://raw.githubusercontent.com/cilium/hubble/9429bbf4b5b504a9b0f6752ccfbb16a2878bb51e/Documentation/images/hubble_logo.png"
+      meta_launch_url: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
 
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
