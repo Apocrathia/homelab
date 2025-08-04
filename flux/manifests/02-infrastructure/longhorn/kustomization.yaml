@@ -11,6 +11,9 @@ resources:
   - recurringjobs.yaml
   - httproute.yaml
 
+generatorOptions:
+  disableNameSuffixHash: true
+
 configMapGenerator:
   - name: authentik-blueprint-longhorn
     namespace: longhorn-system
