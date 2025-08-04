@@ -43,9 +43,8 @@ entries:
     attrs:
       name: "longhorn-outpost"
       type: "proxy"
-      service_connection:
-        # prettier-ignore
-        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      # prettier-ignore
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
       providers:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-forward-auth"]]
