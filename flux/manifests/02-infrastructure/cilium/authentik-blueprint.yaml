@@ -33,7 +33,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
       launch_url: "https://hubble.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      meta_icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
+      icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
 
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
