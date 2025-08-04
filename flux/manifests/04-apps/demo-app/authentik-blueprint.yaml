@@ -35,6 +35,15 @@ entries:
       open_in_new_tab: true
       icon: "https://i.imgur.com/0gNsvyk.png"
 
+  # Kubernetes Service Connection
+  - model: authentik_outposts.kubernetesserviceconnection
+    state: present
+    identifiers:
+      name: "demo-app"
+    attrs:
+      name: "demo-app"
+      local: true
+
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
     state: present
@@ -45,7 +54,7 @@ entries:
       type: "proxy"
       service_connection:
         # prettier-ignore
-        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "demo-app"]]
       providers:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
