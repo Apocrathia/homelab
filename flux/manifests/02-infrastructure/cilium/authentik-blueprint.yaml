@@ -35,15 +35,6 @@ entries:
       open_in_new_tab: true
       meta_icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
 
-  # Kubernetes Service Connection
-  - model: authentik_outposts.kubernetesserviceconnection
-    state: present
-    identifiers:
-      name: "hubble"
-    attrs:
-      name: "hubble"
-      local: true
-
   # Outpost for Forward Auth
   - model: authentik_outposts.outpost
     state: present
@@ -54,7 +45,7 @@ entries:
       type: "proxy"
       service_connection:
         # prettier-ignore
-        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "hubble"]]
+        - !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
       providers:
         # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
