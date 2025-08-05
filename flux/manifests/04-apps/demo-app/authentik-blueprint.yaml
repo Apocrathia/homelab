@@ -19,6 +19,7 @@ entries:
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       mode: "forward_single"
+      internal_host: "http://demo-app.demo-app.svc.cluster.local:80"
       external_host: "https://demo.gateway.services.apocrathia.com"
 
   # Application for Demo App
