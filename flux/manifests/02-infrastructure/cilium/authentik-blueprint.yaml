@@ -19,6 +19,7 @@ entries:
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       mode: "forward_single"
+      internal_host: "http://hubble-ui.cilium-system.svc.cluster.local:80"
       external_host: "https://hubble.gateway.services.apocrathia.com"
 
   # Application for Hubble
