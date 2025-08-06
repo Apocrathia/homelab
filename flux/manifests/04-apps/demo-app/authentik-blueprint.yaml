@@ -18,7 +18,7 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
-      mode: "forward_single"
+      mode: "proxy"
       internal_host: "http://demo-app.demo-app.svc.cluster.local:80"
       external_host: "https://demo.gateway.services.apocrathia.com"
 
@@ -55,8 +55,5 @@ entries:
         authentik_host_browser: ""
         log_level: "info"
         object_naming_template: "ak-outpost-%(name)s"
-        docker_network: null
-        docker_map_ports: true
-        container_image: null
         kubernetes_replicas: 1
         kubernetes_namespace: "authentik"
