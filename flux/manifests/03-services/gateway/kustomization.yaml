@@ -7,4 +7,5 @@ metadata:
 
 resources:
   - gateway-cert.yaml
+  - rbac.yaml
   - gateway.yaml

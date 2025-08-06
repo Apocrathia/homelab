@@ -1,0 +1,25 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: envoy-secret-access
+  namespace: cert-manager
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["gateway-services-apocrathia-com-tls"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: envoy-secret-access
+  namespace: cert-manager
+subjects:
+  - kind: ServiceAccount
+    name: cilium-envoy
+    namespace: cilium-system
+roleRef:
+  kind: Role
+  name: envoy-secret-access
+  apiGroup: rbac.authorization.k8s.io
