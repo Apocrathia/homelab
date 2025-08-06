@@ -11,7 +11,7 @@ resources:
   - smb.yaml
   - deployment.yaml
   - service.yaml
-  - httproute.yaml
+  # - httproute.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

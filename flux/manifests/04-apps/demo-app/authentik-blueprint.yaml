@@ -57,3 +57,7 @@ entries:
         object_naming_template: "ak-outpost-%(name)s"
         kubernetes_replicas: 1
         kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
