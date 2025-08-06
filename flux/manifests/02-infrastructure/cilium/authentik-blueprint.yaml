@@ -51,7 +51,7 @@ entries:
         - !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-forward-auth"]]
       config:
         authentik_host: "http://authentik-server.authentik.svc.cluster.local:80"
-        authentik_host_insecure: false
+        authentik_host_insecure: true
         authentik_host_browser: ""
         log_level: "info"
         object_naming_template: "ak-outpost-%(name)s"
