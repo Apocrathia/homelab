@@ -125,7 +125,8 @@ spec:
       persistence:
         enabled: true
         storageClassName: longhorn
-        size: 5Gi
+        size: 10Gi
+        claimName: grafana-storage
         metadata:
           labels:
             app: grafana
@@ -180,7 +181,8 @@ spec:
       persistence:
         enabled: true
         storageClassName: longhorn
-        size: 1Gi
+        size: 5Gi
+        claimName: alertmanager-storage
         metadata:
           labels:
             app: alertmanager
@@ -204,6 +206,7 @@ spec:
         storageSpec:
           volumeClaimTemplate:
             metadata:
+              name: prometheus-storage
               labels:
                 app: prometheus
                 component: monitoring
