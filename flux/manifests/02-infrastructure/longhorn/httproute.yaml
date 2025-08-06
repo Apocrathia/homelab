@@ -32,6 +32,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       namespace: cilium-system
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: authentik
   to:
     - group: ""
       kind: Service
