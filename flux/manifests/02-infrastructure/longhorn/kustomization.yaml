@@ -9,7 +9,7 @@ resources:
   - secret.yaml
   - helmrelease.yaml
   - recurringjobs.yaml
-  - httproute.yaml
+  # - httproute.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
