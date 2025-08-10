@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: gateway-services-apocrathia-com
-  namespace: cert-manager
+  namespace: cilium-secrets
 spec:
   commonName: "*.gateway.services.apocrathia.com"
   dnsNames:
