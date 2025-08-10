@@ -71,7 +71,7 @@ spec:
         certificateRefs:
           - kind: Secret
             name: gateway-services-apocrathia-com-tls
-            namespace: cert-manager
+            namespace: cilium-secrets
       allowedRoutes:
         namespaces:
           from: All
@@ -81,21 +81,6 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: cert-manager-secrets
-  namespace: cert-manager
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: cilium-system
-  to:
-    - group: ""
-      kind: Secret
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
 apiVersion: gateway.networking.k8s.io/v1
