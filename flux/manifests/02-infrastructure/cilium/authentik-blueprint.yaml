@@ -7,13 +7,13 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # Forward Auth Provider for Hubble
+  # Proxy Provider for Hubble
   - model: authentik_providers_proxy.proxyprovider
     state: present
     identifiers:
-      name: "hubble-forward-auth"
+      name: "hubble-proxy-provider"
     attrs:
-      name: "hubble-forward-auth"
+      name: "hubble-proxy-provider"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
