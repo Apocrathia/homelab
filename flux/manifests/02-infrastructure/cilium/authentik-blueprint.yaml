@@ -18,7 +18,10 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      # prettier-ignore
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
       mode: "proxy"
+      intercept_header_auth: false
       internal_host: "http://hubble-ui.cilium-system.svc.cluster.local:80"
       external_host: "https://hubble.gateway.services.apocrathia.com"
 
@@ -36,7 +39,7 @@ entries:
       open_in_new_tab: true
       icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
 
-  # Outpost for Forward Auth
+  # Outpost for Hubble
   - model: authentik_outposts.outpost
     state: present
     identifiers:
