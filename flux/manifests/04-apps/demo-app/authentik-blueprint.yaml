@@ -7,13 +7,13 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # Forward Auth Provider for Demo App
+  # Proxy Provider for Demo App
   - model: authentik_providers_proxy.proxyprovider
     state: present
     identifiers:
-      name: "demo-app-forward-auth"
+      name: "demo-app-proxy-provider"
     attrs:
-      name: "demo-app-forward-auth"
+      name: "demo-app-proxy-provider"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore

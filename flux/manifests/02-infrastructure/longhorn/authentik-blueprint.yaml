@@ -7,13 +7,13 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # Forward Auth Provider for Longhorn
+  # Proxy Provider for Longhorn
   - model: authentik_providers_proxy.proxyprovider
     state: present
     identifiers:
-      name: "longhorn-forward-auth"
+      name: "longhorn-proxy-provider"
     attrs:
-      name: "longhorn-forward-auth"
+      name: "longhorn-proxy-provider"
       # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
