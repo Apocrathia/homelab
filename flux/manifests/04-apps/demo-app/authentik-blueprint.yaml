@@ -18,7 +18,10 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      # prettier-ignore
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
       mode: "proxy"
+      intercept_header_auth: false
       internal_host: "http://demo-app.demo-app.svc.cluster.local:80"
       external_host: "https://demo.gateway.services.apocrathia.com"
 
@@ -36,7 +39,7 @@ entries:
       open_in_new_tab: true
       icon: "https://i.imgur.com/0gNsvyk.png"
 
-  # Outpost for Forward Auth
+  # Outpost for Demo App
   - model: authentik_outposts.outpost
     state: present
     identifiers:

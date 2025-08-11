@@ -18,7 +18,10 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
       # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      # prettier-ignore
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
       mode: "proxy"
+      intercept_header_auth: false
       internal_host: "http://longhorn-frontend.longhorn-system.svc.cluster.local:80"
       external_host: "https://longhorn.gateway.services.apocrathia.com"
 
@@ -36,7 +39,7 @@ entries:
       open_in_new_tab: true
       icon: "https://longhorn.io/img/logos/longhorn-icon-color.png"
 
-  # Outpost for Forward Auth
+  # Outpost for Longhorn
   - model: authentik_outposts.outpost
     state: present
     identifiers:
