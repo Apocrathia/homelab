@@ -31,7 +31,7 @@ entries:
       name: "Demo Application"
       slug: "demo-app"
       # prettier-ignore
-      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-forward-auth"]]
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "demo-app-proxy-provider"]]
       launch_url: "https://demo.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://i.imgur.com/0gNsvyk.png"
