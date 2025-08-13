@@ -15,7 +15,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: kubectl
-              image: bitnami/kubectl:1.33.3
+              image: bitnami/kubectl:1.33.4
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
