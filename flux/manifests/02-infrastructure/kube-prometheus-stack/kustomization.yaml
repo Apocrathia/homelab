@@ -6,4 +6,15 @@ resources:
   - namespace.yaml
   - secret.yaml
   - helmrelease.yaml
-  - httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-grafana
+    namespace: prometheus-system
+    files:
+      - grafana.yaml=authentik-blueprint.yaml
+
+commonLabels:
+  authentik_blueprint: "true"

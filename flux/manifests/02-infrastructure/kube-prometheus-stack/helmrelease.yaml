@@ -115,6 +115,41 @@ spec:
         existingSecret: local-account
         userKey: username
         passwordKey: password
+      # Configure for proxy authentication via grafana.ini
+      grafana.ini:
+        auth:
+          disable_login_form: true
+          disable_signout_menu: true
+          anonymous:
+            enabled: false
+          proxy:
+            enabled: true
+            header_name: "X-authentik-username"
+            header_property: "username"
+            auto_sign_up: true
+            enable_login_token: false
+            whitelist: "127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
+            headers: "Groups:X-authentik-groups"
+        security:
+          allow_embedding: true
+          cookie_secure: false
+          cookie_samesite: lax
+          strict_transport_security: false
+          content_security_policy: false
+        server:
+          root_url: "%(protocol)s://%(domain)s/"
+          serve_from_sub_path: false
+          cookie_samesite: lax
+          domain: grafana.gateway.services.apocrathia.com
+      # Environment variables for proxy authentication (more reliable than grafana.ini)
+      env:
+        GF_AUTH_PROXY_ENABLED: "true"
+        GF_AUTH_PROXY_HEADER_NAME: "X-authentik-username"
+        GF_AUTH_PROXY_HEADER_PROPERTY: "username"
+        GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+        GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "false"
+        GF_AUTH_PROXY_WHITELIST: "127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
+        GF_AUTH_PROXY_HEADERS: "Groups:X-authentik-groups"
       resources:
         limits:
           cpu: 200m
