@@ -264,4 +264,10 @@ spec:
         walCompression: true
         scrapeInterval: "30s"
         evaluationInterval: "30s"
-        enableRemoteWriteReceiver: false
+        enableRemoteWriteReceiver: true
+        remoteWrite:
+          - url: "http://mimir-nginx.mimir-system.svc:80/api/v1/push"
+            remoteTimeout: "30s"
+            writeRelabelConfigs:
+              - action: labeldrop
+                regex: "__meta_kubernetes_pod_label_(.+)"
