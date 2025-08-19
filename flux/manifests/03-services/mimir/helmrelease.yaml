@@ -1,0 +1,132 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mimir
+  namespace: mimir-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: mimir-distributed
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=mimir-distributed
+      version: "5.8.0-weekly.356"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+
+  # Pull values from 1Password secret
+  valuesFrom:
+    - kind: Secret
+      name: mimir-minio-credentials
+      valuesKey: root_user
+      targetPath: minio.rootUser
+    - kind: Secret
+      name: mimir-minio-credentials
+      valuesKey: root_password
+      targetPath: minio.rootPassword
+
+  values:
+    # Enable MinIO for object storage
+    minio:
+      enabled: true
+      mode: standalone
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 100Gi
+        accessMode: ReadWriteOnce
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Configure Mimir for distributed mode
+    global:
+      clusterDomain: cluster.local
+      dnsService: kube-dns
+      dnsNamespace: kube-system
+
+    # Note: The chart automatically configures S3 storage when MinIO is enabled
+    # No need to manually configure blocks_storage, ruler_storage, etc.
+    # The chart uses the MinIO credentials from the minio section above
+
+    # Resource configuration for Mimir components
+    ingester:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 50Gi
+
+    distributor:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+    querier:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+    store_gateway:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+    compactor:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+    # Enable nginx gateway
+    nginx:
+      enabled: true
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+    # Configure for remote write from Prometheus
+    serviceMonitor:
+      enabled: true
+      interval: 30s

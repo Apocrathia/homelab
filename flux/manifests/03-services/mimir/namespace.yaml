@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mimir-system
+  labels:
+    app: mimir
+    component: monitoring
+    storage: long-term

@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: mimir
+  namespace: mimir-system
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - helmrelease.yaml
+
+commonLabels:
+  app: mimir
+  component: monitoring
+  storage: long-term
