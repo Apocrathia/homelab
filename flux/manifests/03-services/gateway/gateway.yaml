@@ -81,6 +81,18 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: syslog-tcp
+      protocol: TCP
+      port: 514
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: syslog-udp
+      protocol: UDP
+      port: 514
+      allowedRoutes:
+        namespaces:
+          from: All
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
