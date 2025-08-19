@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-grafana-datasource
+  namespace: prometheus-system
+  labels:
+    app: kube-prometheus-stack-grafana
+    grafana_datasource: "1"
+data:
+  mimir-datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: "Mimir"
+      type: prometheus
+      uid: mimir
+      url: http://mimir-gateway.mimir-system.svc:80/prometheus/
+      access: proxy
+      isDefault: false
+      jsonData:
+        httpMethod: POST
+        timeInterval: 30s
+        queryTimeout: 60s
+        manageAlerts: false
+        alertmanagerUid: alertmanager
+        prometheusType: "Mimir"
+        prometheusVersion: "> 2.9.x"
+        cacheLevel: "low"
+        incrementalQueryOverlapWindow: false
+        disableRecordingRules: false
