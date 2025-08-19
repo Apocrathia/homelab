@@ -114,9 +114,10 @@ spec:
           cpu: 500m
           memory: 1Gi
 
-    # Enable nginx gateway
-    nginx:
+    # Enable the proper gateway (not just nginx)
+    gateway:
       enabled: true
+      enabledNonEnterprise: true # Enable gateway for non-enterprise
       replicas: 1
       resources:
         requests:
@@ -125,6 +126,10 @@ spec:
         limits:
           cpu: 200m
           memory: 256Mi
+
+    # Disable nginx since we're using the gateway
+    nginx:
+      enabled: false
 
     # Configure for remote write from Prometheus
     serviceMonitor:
