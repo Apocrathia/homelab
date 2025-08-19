@@ -14,10 +14,12 @@ resources:
   - cilium.yaml
   - csi-driver-smb.yaml
   - gitlab.yaml
+  - grafana.yaml
   - ingress-nginx.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml
   - longhorn.yaml
   - metrics-server.yaml
+  - minio.yaml
   - prometheus-community.yaml
   - stakater.yaml
