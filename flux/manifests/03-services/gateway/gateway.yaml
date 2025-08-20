@@ -87,22 +87,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-      # Route syslog TCP traffic to Alloy service
-      serviceSelector:
-        matchLabels:
-          app.kubernetes.io/name: alloy
-          app.kubernetes.io/instance: alloy
     - name: syslog-udp
       protocol: UDP
       port: 514
       allowedRoutes:
         namespaces:
           from: All
-      # Route syslog UDP traffic to Alloy service
-      serviceSelector:
-        matchLabels:
-          app.kubernetes.io/name: alloy
-          app.kubernetes.io/instance: alloy
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1
