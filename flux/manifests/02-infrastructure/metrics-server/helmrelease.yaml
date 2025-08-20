@@ -9,8 +9,8 @@ spec:
   chart:
     spec:
       chart: metrics-server
-      # renovate: datasource=helm registryUrl=https://charts.bitnami.com/bitnami depName=metrics-server
-      version: "7.4.12"
+      # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/metrics-server/ depName=metrics-server
+      version: "3.13.0"
       sourceRef:
         kind: HelmRepository
         name: metrics-server
