@@ -1,7 +1,12 @@
 ---
 stages:
-  - validate
+  - verify
   - renovate
+
+variables:
+  KUSTOMIZE_DIR: "flux/manifests"
 
 include:
   - local: .gitlab/renovate.gitlab-ci.yml
+  - local: .gitlab/kustomize-diff.gitlab-ci.yml
+  - local: .gitlab/kubeval.gitlab-ci.yml

@@ -1,84 +1,73 @@
-# GitLab CI/CD Kubernetes Validation
+# GitLab CI for Kustomize Diff and Kubeconform
 
-This directory contains GitLab CI/CD pipelines for validating Kubernetes manifests and Flux configurations.
+Self-contained CI jobs for previewing Kustomize changes and validating rendered manifests.
 
-## Jobs Overview
+## Pipeline layout
 
-### `flux-validate` (Automatic)
+- Root pipeline: `.gitlab-ci.yml`
+  - Defines stages and shared variables (e.g., `KUSTOMIZE_DIR`)
+  - Includes the two job files below
+- Jobs:
+  - `.gitlab/kustomize-diff.gitlab-ci.yml` → job `kustomize-diff`
+  - `.gitlab/kubeval.gitlab-ci.yml` → job `kubeval`
 
-- **Trigger**: Runs automatically on merge requests and manually on main branch
-- **Purpose**: Validates that all Flux kustomizations can build successfully
-- **Output**: Posts results as MR comments showing:
-  - ✅/❌ Build status for each layer
-  - 📋 Preview of changes that would be applied
-  - 🎉 Overall pass/fail status
+Stage: `verify`
 
-### `cluster-validate` (Manual)
+## Jobs overview
 
-- **Trigger**: Manual trigger only
-- **Purpose**: Tests manifests against the actual cluster using server-side dry-run
-- **Output**: Posts results as MR comments showing:
-  - ✅/❌ Server-side validation results
-  - ⚠️ Policy warnings from Kyverno or other admission controllers
-  - 🔍 Detailed validation logs
+### kustomize-diff (Kustomize diff)
 
-## Example MR Comments
+- Purpose: Show a unified diff between the base branch and the current change for each impacted Kustomize root
+- How it works:
+  - Finds changed files under `DIFF_INCLUDE` (defaults to `flux/manifests`)
+  - Walks up to the nearest directory containing `kustomization.yaml`
+  - Renders base from `origin/$CI_DEFAULT_BRANCH` in a temporary worktree
+  - Renders target from `HEAD`
+  - Diffs the two rendered outputs and prints the result in job logs
+  - Emits a dotenv artifact with `CHANGED_DIRS` (space-separated list of roots)
+- Rendering flags: `kustomize build --enable-helm --load-restrictor LoadRestrictionsNone`
 
-**Successful validation:**
+### kubeval (Kubeconform validation)
 
-```
-✅ **Kubernetes Validation Passed** 🎉
+- Purpose: Validate rendered manifests for all changed Kustomize roots
+- How it works:
+  - Consumes `CHANGED_DIRS` from the `kustomize-diff` job artifact
+  - Builds each root with Kustomize and pipes to `kubeconform`
+  - Flags set: `-strict -ignore-missing-schemas -summary`
+  - Optional: set `KUBECONFORM_SCHEMA_LOCATION` to point at custom schema URLs/paths
 
-✅ **Flux Validation Results**
+## Configuration knobs (CI variables)
 
-✅ **Main kustomization builds successfully**
-✅ **bootstrap layer**: builds successfully
-✅ **infrastructure layer**: builds successfully
-✅ **services layer**: builds successfully
-✅ **apps layer**: builds successfully
+- Global (in `.gitlab-ci.yml`):
+  - `KUSTOMIZE_DIR`: default path for validation when no changes are detected (default: `flux/manifests`)
+- kustomize-diff:
+  - `DIFF_TARGET_DIR`: fallback Kustomize root when no changes detected (default: `flux/manifests`)
+  - `DIFF_SCAN_PATH`: path filter for change detection (default: `flux/manifests`)
+  - `DIFF_EXCLUDE`: regex for excluding changed files from diff roots (default: empty)
+  - `DIFF_ENV_FILE`: name of the dotenv artifact file (default: `kustomize-diff.env`)
+- kubeval:
+  - `KUBECONFORM_FLAGS`: additional flags for kubeconform (default: `-strict -ignore-missing-schemas -summary`)
+  - `KUBECONFORM_SCHEMA_LOCATION`: custom schema base(s) (e.g., `-schema-location default -schema-location <url or path>`)
 
-📋 **Changes Preview**: No changes detected
-```
+Override any of these via GitLab CI/CD Variables at pipeline, project, or group scope.
 
-**Failed validation:**
+## Typical usage
 
-```
-❌ **Kubernetes Validation Failed** ⚠️
+1. Open a Merge Request
+2. Pipeline runs the `verify` stage
+3. Inspect `kustomize-diff` job logs for the rendered diff per Kustomize root
+4. Inspect `kubeval` job logs for schema validation results
 
-❌ **apps layer**: build failed
-```
+Note: These jobs do not post MR comments; results live in job logs. If you want MR comments, we can add a small helper job that posts the diff/summary as a comment.
 
-spec.template.spec.containers[0].image: Invalid value: "nginx:latest": using latest tag is not allowed
+## Notes and caveats
 
-```
-
-## Features
-
-- **GitOps-first**: Uses Flux CLI for validation, ensuring compatibility
-- **Rich feedback**: Detailed MR comments with emojis and formatting
-- **Secure**: Uses GitLab's built-in `CI_JOB_TOKEN` for API access
-- **Cluster-aware**: Optional server-side validation against real cluster policies
-- **Layered validation**: Tests each bootstrap layer independently
-
-## Configuration
-
-The validation jobs use your existing:
-- GitLab Agent for cluster access
-- Flux kustomization structure
-- Pre-commit hooks for basic linting
-
-No additional configuration needed!
-
-## Usage
-
-1. **Create a merge request** → `flux-validate` runs automatically
-2. **Check MR comments** → See validation results inline
-3. **Optional**: Click "Run" on `cluster-validate` for server-side testing
-4. **Merge when green** → All validations pass
+- Kustomize Helm support is enabled, but this repo primarily uses Flux `HelmRelease` CRDs. Those are treated as regular resources in the diff/validation (they are not rendered into chart output by CI).
+- `--load-restrictor LoadRestrictionsNone` is used to allow remote bases.
+- `kubeconform` runs with `-ignore-missing-schemas` to avoid failing on CRDs without published schemas. Provide schema locations and remove that flag if you want stricter validation.
 
 ## Troubleshooting
 
-- **No MR comments**: Check that the job has GitLab API access
-- **Build failures**: Review the detailed error logs in job output
-- **Cluster validation fails**: Ensure GitLab Agent has proper cluster access
-```
+- No changed roots detected: `kustomize-diff` falls back to `DIFF_TARGET_DIR`.
+- Remote bases fail to fetch: ensure network access in runners, or vendor remote bases locally.
+- Helm charts not rendering: only Kustomize-native helm rendering is supported. Flux `HelmRelease` is not rendered by these jobs.
