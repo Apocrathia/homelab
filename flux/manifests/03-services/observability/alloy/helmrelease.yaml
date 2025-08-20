@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2beta1.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: alloy
+  namespace: alloy-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: alloy
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=alloy
+      version: "1.2.1"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Alloy configuration for log collection
+    alloy:
+      configMap:
+        create: false
+        name: alloy-config
+        key: config.alloy
+
+      # Add syslog port exposure for external log collection
+      extraPorts:
+        - name: "syslog-tcp"
+          port: 514
+          targetPort: 514
+          protocol: "TCP"
+        - name: "syslog-udp"
+          port: 514
+          targetPort: 514
+          protocol: "UDP"
+
+    # RBAC configuration - minimal permissions for secure log collection via Kubernetes API
+    rbac:
+      create: true
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "pods/log"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["namespaces"]
+          verbs: ["get", "list"]
+        - apiGroups: [""]
+          resources: ["events"]
+          verbs: ["get", "list", "watch"]
+
+    # Service account configuration
+    serviceAccount:
+      create: true
+      annotations: {}
+
+    # Pod security context
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      fsGroup: 10001
+
+    # Container security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+
+    # Resources
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Node selector for all nodes
+    nodeSelector: {}
+
+    # Tolerations for all nodes
+    tolerations: []
+
+    # Affinity for all nodes
+    affinity: {}
