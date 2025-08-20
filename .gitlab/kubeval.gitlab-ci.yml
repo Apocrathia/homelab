@@ -1,7 +1,7 @@
 ---
 kubeval:
   stage: verify
-  image: ghcr.io/yannh/kubeconform:v0.7.0-alpine
+  image: cgr.dev/chainguard/wolfi-base:latest
   needs:
     - job: kustomize-diff
       artifacts: true
@@ -9,8 +9,29 @@ kubeval:
     CHANGED_DIRS: "$CHANGED_DIRS"
     KUBECONFORM_FLAGS: "-strict -ignore-missing-schemas -summary"
     KUBECONFORM_SCHEMA_LOCATION: ""
+    # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
+    KUSTOMIZE_VERSION: "v5.4.2"
+    # renovate: datasource=github-releases depName=yannh/kubeconform
+    KUBECONFORM_VERSION: "v0.7.0"
   before_script:
-    - apk add --no-cache curl bash git kustomize
+    - |
+      set -e
+      # fetch helper
+      fetch() { if command -v curl >/dev/null 2>&1; then curl -fsSL "$1" -o "$2"; else wget -q "$1" -O "$2"; fi }
+      # install kustomize
+      mkdir -p .ci/bin && export PATH="$PWD/.ci/bin:$PATH"
+      if ! command -v kustomize >/dev/null 2>&1; then
+        OS="linux"; ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] && ARCH=amd64; [ "$ARCH" = "aarch64" ] && ARCH=arm64
+        KVER="${KUSTOMIZE_VERSION}"; TARBALL="kustomize_${KVER}_${OS}_${ARCH}.tar.gz"
+        fetch "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KVER}/${TARBALL}" kustomize.tgz
+        tar -xzf kustomize.tgz -C .ci/bin kustomize && chmod +x .ci/bin/kustomize && rm -f kustomize.tgz
+      fi
+      # install kubeconform
+      if ! command -v kubeconform >/dev/null 2>&1; then
+        KCONF_VER="${KUBECONFORM_VERSION}"; TAR="kubeconform-${KCONF_VER}-linux-amd64.tar.gz"
+        fetch "https://github.com/yannh/kubeconform/releases/download/${KCONF_VER}/${TAR}" kubeconform.tgz
+        tar -xzf kubeconform.tgz -C .ci/bin kubeconform && chmod +x .ci/bin/kubeconform && rm -f kubeconform.tgz
+      fi
   script:
     - |
       set -e
