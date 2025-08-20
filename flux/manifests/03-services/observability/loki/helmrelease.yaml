@@ -1,0 +1,134 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2beta1.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki
+  namespace: loki-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: loki
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=loki
+      version: "6.36.1"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+
+  # Pull values from 1Password secret
+  valuesFrom:
+    - kind: Secret
+      name: loki-minio-credentials
+      valuesKey: access_key_id
+      targetPath: minio.rootUser
+    - kind: Secret
+      name: loki-minio-credentials
+      valuesKey: secret_access_key
+      targetPath: minio.rootPassword
+
+  values:
+    # Storage configuration (top level)
+    storage:
+      type: s3
+      s3:
+        endpoint: "http://loki-minio.loki-system.svc:9000"
+        insecure: true
+        s3ForcePathStyle: true
+        accessKeyId:
+          secretRef:
+            name: loki-minio-credentials
+            key: access_key_id
+        secretAccessKey:
+          secretRef:
+            name: loki-minio-credentials
+            key: secret_access_key
+
+    # Loki configuration
+    loki:
+      # Authentication configuration (disabled for homelab)
+      auth_enabled: false
+
+      # Schema configuration
+      schemaConfig:
+        configs:
+          - from: "2020-10-24"
+            store: tsdb
+            object_store: s3
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+
+      # Table manager for retention
+      tableManager:
+        retention_deletes_enabled: true
+        retention_period: 744h
+
+      # Limits configuration
+      limits_config:
+        allow_structured_metadata: false
+
+    # MinIO subchart configuration
+    minio:
+      enabled: true
+      replicas: 1
+      drivesPerNode: 2
+      buckets:
+        - name: chunks
+          policy: none
+          purge: false
+        - name: ruler
+          policy: none
+          purge: false
+        - name: admin
+          policy: none
+          purge: false
+      persistence:
+        size: 100Gi
+        storageClass: "longhorn"
+      resources:
+        limits:
+          cpu: 500m
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+
+    # Resources for Loki components
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 200m
+        memory: 512Mi
+
+    # Monitoring configuration
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
+      additionalLabels:
+        release: prometheus
+
+    # Security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      fsGroup: 10001
+
+    # Pod security context
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      fsGroup: 10001

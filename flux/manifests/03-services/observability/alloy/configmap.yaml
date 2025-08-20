@@ -1,0 +1,196 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: alloy-system
+data:
+  config.alloy: |
+    logging {
+      level    = "warn"
+      format   = "json"
+      write_to = [loki.write.default.receiver]
+    }
+
+    // discovery.kubernetes allows you to find scrape targets from Kubernetes resources.
+    // It watches cluster state and ensures targets are continually synced with what is currently running in your cluster
+    discovery.kubernetes "pod" {
+      role = "pod"
+    }
+
+    discovery.kubernetes "service" {
+      role = "service"
+    }
+
+    // discovery.relabel rewrites the label set of the input targets by applying one or more relabeling rules.
+    // If no rules are defined, then the input targets are exported as-is.
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pod.targets
+
+      // Label creation - "namespace" field from "__meta_kubernetes_namespace"
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        action = "replace"
+        target_label = "namespace"
+      }
+
+      // Label creation - "pod" field from "__meta_kubernetes_pod_name"
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        action = "replace"
+        target_label = "pod"
+      }
+
+      // Label creation - "container" field from "__meta_kubernetes_pod_container_name"
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        action = "replace"
+        target_label = "container"
+      }
+
+      // Label creation -  "app" field from "__meta_kubernetes_pod_label_app_kubernetes_io_name"
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+        action = "replace"
+        target_label = "app"
+      }
+
+      // Label creation -  "job" field from "__meta_kubernetes_namespace" and "__meta_kubernetes_pod_container_name"
+      // Concatenate values __meta_kubernetes_namespace/__meta_kubernetes_pod_container_name
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+        action = "replace"
+        target_label = "job"
+        separator = "/"
+        replacement = "$1"
+      }
+
+      // Label creation -  "container_runtime" field from "__meta_kubernetes_pod_container_id"
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_id"]
+        action = "replace"
+        target_label = "container_runtime"
+        regex = "^(\\S+):\\/\\/.+$"
+        replacement = "$1"
+      }
+    }
+
+    // loki.source.kubernetes tails logs from Kubernetes containers using the Kubernetes API.
+    // This approach avoids hostPath mounts and Pod Security Standard violations
+    loki.source.kubernetes "pod_logs" {
+      targets    = discovery.relabel.pod_logs.output
+      forward_to = [loki.process.pod_logs.receiver]
+    }
+
+    // loki.process receives log entries from other Loki components, applies one or more processing stages,
+    // and forwards the results to the list of receivers in the component's arguments.
+    loki.process "pod_logs" {
+      // Add static labels for better organization
+      stage.static_labels {
+          values = {
+            cluster = "kubernetes",
+            component = "alloy",
+          }
+      }
+
+      // Filter out extremely long log lines that might be garbage
+      stage.match {
+        selector = "{__path__=~\".*\"}"
+        stage.drop {
+          source = "log"
+          expression = "len(__entry__) > 10000"
+        }
+      }
+
+      // Extract useful metadata from log entries
+      stage.match {
+        selector = "{__path__=~\".*\"}"
+        stage.json {
+          expressions = {
+            level = "level",
+            msg = "message",
+            timestamp = "timestamp",
+          }
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    // loki.source.kubernetes_events tails events from the Kubernetes API and converts them
+    // into log lines to forward to other Loki components.
+    loki.source.kubernetes_events "cluster_events" {
+      job_name   = "integrations/kubernetes/eventhandler"
+      log_format = "logfmt"
+      forward_to = [
+        loki.process.cluster_events.receiver,
+      ]
+    }
+
+    // loki.process receives log entries from other loki components, applies one or more processing stages,
+    // and forwards the results to the list of receivers in the component's arguments.
+    loki.process "cluster_events" {
+      forward_to = [loki.write.default.receiver]
+
+      stage.static_labels {
+        values = {
+          cluster = "kubernetes",
+        }
+      }
+
+      stage.labels {
+        values = {
+          kubernetes_cluster_events = "job",
+        }
+      }
+    }
+
+    // loki.source.syslog receives external syslog messages from the gateway
+    // This allows external systems to send logs to 10.100.1.99:514
+    loki.source.syslog "external_syslog" {
+      listener {
+        address  = "0.0.0.0:514"
+        protocol = "udp"
+        labels   = {
+          job = "external-syslog",
+          source = "gateway",
+          protocol = "udp",
+          log_type = "syslog",
+        }
+      }
+
+      forward_to = [loki.process.external_syslog.receiver]
+    }
+
+    // Process external syslog messages for better structure and labeling
+    loki.process "external_syslog" {
+      stage.static_labels {
+        values = {
+          cluster = "kubernetes",
+          component = "alloy",
+          log_source = "external",
+        }
+      }
+
+      // Parse RFC5424 syslog format to extract structured fields
+      stage.regex {
+        expression = "^(?P<timestamp>\\S+ \\S+ \\d+ \\d+:\\d+:\\d+) (?P<hostname>\\S+) (?P<app>\\S+)\\[(?P<pid>\\d+)\\]: (?P<message>.*)$"
+      }
+
+      // Add additional labels for better querying
+      stage.labels {
+        values = {
+          hostname = "hostname",
+          app = "app",
+          pid = "pid",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = "http://loki-write.loki-system.svc:3100/loki/api/v1/push"
+      }
+    }

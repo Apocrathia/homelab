@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-grafana-datasource
+  namespace: prometheus-system
+  labels:
+    app: kube-prometheus-stack-grafana
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: "Loki"
+      type: loki
+      uid: loki
+      url: http://loki-read.loki-system.svc:3100
+      access: proxy
+      isDefault: false
+      jsonData:
+        maxLines: 1000
+        maxDataPoints: 1000
+        queryTimeout: 60s
+        httpMethod: POST
+        manageAlerts: false
+        cacheLevel: "low"

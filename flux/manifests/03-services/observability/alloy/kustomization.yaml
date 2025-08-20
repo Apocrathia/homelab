@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: alloy
+  namespace: alloy-system
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+  - configmap.yaml
+  - syslog.yaml
