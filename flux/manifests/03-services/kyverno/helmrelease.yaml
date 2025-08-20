@@ -26,6 +26,9 @@ spec:
   values:
     extraArgs:
       - --autogenInternals=false
+    global:
+      image:
+        registry: ghcr.io
     rbac:
       extraResources: &commonResources # Read access to all resources
         - apiGroups: ["*"]
