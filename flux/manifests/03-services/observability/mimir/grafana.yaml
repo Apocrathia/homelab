@@ -23,8 +23,3 @@ data:
         queryTimeout: 60s
         manageAlerts: false
         alertmanagerUid: alertmanager
-        prometheusType: "Mimir"
-        prometheusVersion: "> 2.9.x"
-        cacheLevel: "low"
-        incrementalQueryOverlapWindow: false
-        disableRecordingRules: false
