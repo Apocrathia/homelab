@@ -1,33 +1,16 @@
 ---
 kustomize-diff:
   stage: verify
-  image: alpine:latest
+  image: alpine:3.20
   variables:
     DIFF_REPORT_TITLE: "Homelab Kustomize Diff"
     DIFF_TARGET_DIR: "flux/manifests"
     DIFF_SCAN_PATH: "flux/manifests"
     DIFF_EXCLUDE: ""
     DIFF_ENV_FILE: "kustomize-diff.env"
-    # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
-    KUSTOMIZE_VERSION: "v5.4.2"
   before_script:
-    - apk add --no-cache curl tar git
-    - |
-      set -e
-      # simple fetch helper supporting curl or wget
-      fetch() { if command -v curl >/dev/null 2>&1; then curl -fsSL "$1" -o "$2"; else wget -q "$1" -O "$2"; fi }
-      # install kustomize locally
-      mkdir -p .ci/bin && export PATH="$PWD/.ci/bin:$PATH"
-      if ! command -v kustomize >/dev/null 2>&1; then
-        OS="linux"
-        ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] && ARCH=amd64; [ "$ARCH" = "aarch64" ] && ARCH=arm64
-        KVER="${KUSTOMIZE_VERSION}"
-        TARBALL="kustomize_${KVER}_${OS}_${ARCH}.tar.gz"
-        URL="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KVER}/${TARBALL}"
-        fetch "$URL" kustomize.tgz
-        tar -xzf kustomize.tgz -C .ci/bin kustomize && chmod +x .ci/bin/kustomize && rm -f kustomize.tgz
-      fi
-      git fetch origin $CI_DEFAULT_BRANCH
+    - apk add --no-cache git bash diffutils kustomize
+    - git fetch origin $CI_DEFAULT_BRANCH
   script:
     - |
       echo "Computing changed kustomize roots under $DIFF_SCAN_PATH..."
@@ -35,6 +18,7 @@ kustomize-diff:
       if [ -n "$DIFF_EXCLUDE" ]; then
         CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -v -E "$DIFF_EXCLUDE" || true)
       fi
+      ROOTS=()
       find_root() {
         local p="$1"
         while [ "$p" != "/" -a "$p" != "." -a -n "$p" ]; do
@@ -47,12 +31,18 @@ kustomize-diff:
         return 1
       }
       if [ -z "$CHANGED_FILES" ]; then
-        CHANGED_DIRS="$DIFF_TARGET_DIR"
+        ROOTS+=("$DIFF_TARGET_DIR")
       else
-        CHANGED_DIRS=$(echo "$CHANGED_FILES" | while read -r f; do dir=$(dirname "$f"); find_root "$dir"; done | sort -u | tr '\n' ' ')
+        for f in $CHANGED_FILES; do
+          dir=$(dirname "$f")
+          r=$(find_root "$dir") || true
+          if [ -n "$r" ]; then
+            ROOTS+=("$r")
+          fi
+        done
       fi
-      # fallback
-      [ -n "$CHANGED_DIRS" ] || CHANGED_DIRS="$DIFF_TARGET_DIR"
+      # dedupe
+      CHANGED_DIRS=$(printf "%s\n" "${ROOTS[@]}" | sort -u | tr '\n' ' ')
       echo "CHANGED_DIRS=$CHANGED_DIRS" | tee $DIFF_ENV_FILE
       echo "Changed roots: $CHANGED_DIRS"
     - |
