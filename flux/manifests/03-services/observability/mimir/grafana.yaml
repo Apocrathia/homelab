@@ -16,7 +16,7 @@ data:
       uid: mimir
       url: http://mimir-gateway.mimir-system.svc:80/prometheus/
       access: proxy
-      isDefault: false
+      isDefault: true
       jsonData:
         httpMethod: POST
         timeInterval: 30s
