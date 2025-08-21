@@ -53,6 +53,8 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-run
               mountPath: /run
+            - name: app-data
+              mountPath: /app
             - name: smb-files
               mountPath: /usr/share/nginx/html
               readOnly: true
@@ -68,6 +70,9 @@ spec:
           emptyDir: {}
         - name: nginx-run
           emptyDir: {}
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: demo-app-data
         - name: smb-files
           persistentVolumeClaim:
             claimName: demo-app-smb-pvc

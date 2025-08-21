@@ -9,6 +9,7 @@ resources:
   - namespace.yaml
   - secret.yaml
   - smb.yaml
+  - storage.yaml
   - deployment.yaml
   - service.yaml
   # - httproute.yaml
