@@ -16,7 +16,6 @@ resources:
   - csi-driver-smb.yaml
   - gitlab.yaml
   - grafana.yaml
-  - ingress-nginx.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml
   - longhorn.yaml
