@@ -1,47 +1,59 @@
-# Core Services
+# Services
 
-This directory contains essential services that support the cluster's functionality and other applications.
+This directory contains the deployment configuration for platform services that provide core functionality to the homelab cluster.
 
-## Current Services
+## Components
 
-- [Gateway API](gateway/)
-  - Cilium-based Gateway API implementation
-  - Load balancer IP management
-  - HTTP/HTTPS traffic routing
-  - TLS termination support
-- GitLab
-  - [Agent](gitlab/agent/README.md)
-    - GitLab Agent for Kubernetes (KAS)
-    - CI/CD integration with cluster
-    - Project-specific access control
-    - Automated secret management via 1Password
-  - [Runner](gitlab/runner/README.md)
-    - Kubernetes-based CI/CD runner
-    - 2 runner manager pods for high availability
-    - Supports up to 10 concurrent jobs
-    - Docker-in-Docker support
-    - Automated secret management via 1Password
-- Cert-Manager
-  - Automated certificate management
-  - Wildcard certificate generation
-  - Cluster-wide certificate issuer
+### Core Services
 
-## Suggested Services
+- [**Gateway**](gateway/README.md) - Gateway API implementation for traffic management
+- [**Authentik**](authentik/README.md) - Identity and access management with SSO
+- [**Cert Manager**](cert-manager/README.md) - Automated certificate management
+- [**Reloader**](reloader/README.md) - Configuration reloading automation
 
-_Typical services to consider adding:_
+### Monitoring and Observability
 
-- _DNS services_
-- _Authentication providers_
-- _CI/CD tools_
-- _Observability_
+- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir)
+  - [**Loki**](observability/loki/README.md) - Log aggregation and storage
+  - [**Mimir**](observability/mimir/README.md) - Long-term metrics storage
+  - [**Alloy**](observability/alloy/) - Log and metrics collection
 
-## Guidelines
+### Security and Compliance
 
-_Best practices to follow:_
+- [**Kyverno**](kyverno/README.md) - Policy management and enforcement
+- [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 
-- _Maintain service dependencies_
-- _Configure high availability where needed_
-- _Set up proper monitoring_
-- _Document service interactions_
-- _Follow security best practices_
-- _Use appropriate resource allocation_
+### Development and Operations
+
+- [**Dashboard**](dashboard/README.md) - Kubernetes web dashboard
+- [**GitLab Integration**](gitlab/) - GitLab Agent and Runner
+  - [**Agent**](gitlab/agent/README.md) - Kubernetes cluster agent
+  - [**Runner**](gitlab/runner/README.md) - CI/CD runner
+- [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
+
+## Architecture
+
+The services layer provides:
+
+- **Identity Management**: SSO and authentication through Authentik
+- **Traffic Management**: Gateway API for external access and routing
+- **Security**: Policy enforcement, scanning, and compliance
+- **Monitoring**: Comprehensive observability and alerting
+- **Development Tools**: CI/CD integration and development workflows
+- **Operations**: Automated maintenance and housekeeping tasks
+
+## Dependencies
+
+- **Infrastructure Layer**: Storage, networking, and monitoring infrastructure
+- **Bootstrap Layer**: Core Flux and 1Password components
+- **External Services**: GitLab, Cloudflare DNS, external monitoring
+
+## Security
+
+All services implement:
+
+- **RBAC**: Role-based access control
+- **Network Policies**: Traffic isolation and control
+- **Secret Management**: 1Password integration for sensitive data
+- **Audit Logging**: Comprehensive audit trails
+- **TLS Encryption**: End-to-end encryption for all communications
