@@ -11,81 +11,70 @@ The demo app is a **baseline template** that demonstrates:
 - **Application Deployment**: Basic application deployment patterns
 - **Authentik Integration**: SSO integration through Authentik outpost
 - **Gateway API Routing**: Traffic routing through Gateway API (handled by Authentik)
-- **Storage Integration**: SMB storage integration via CSI driver
+- **Storage Integration**: Both persistent (Longhorn) and shared (SMB) storage
 - **Monitoring**: Application monitoring and observability
 
-## Architecture
+## Storage Pattern
 
-### Application Components
+The demo app demonstrates a dual storage approach:
 
-#### Demo App Container
+- **Persistent Storage**: Longhorn volume for application data that needs to persist
+- **Shared Storage**: SMB mount for shared file access
 
-- **Web Application**: Simple web-based demo application
-- **Health Endpoints**: Health check and readiness endpoints
-- **Metrics Endpoints**: Prometheus metrics for monitoring
-- **Configuration**: Configurable application parameters
+### Storage Files
 
-#### Authentik Outpost
+- `persistent-storage.yaml` - Longhorn persistent storage (10Gi)
+- `smb.yaml` - SMB file share integration
+- `deployment.yaml` - Updated deployment using both storage types
 
-- **SSO Integration**: Single sign-on authentication
-- **Reverse Proxy**: Proxies requests to the demo application
-- **Session Management**: Handles user sessions and authentication
-- **Access Control**: Policy-based access control
-- **HTTPRoute Management**: **Automatically creates and manages HTTPRoute resources**
+## Accessing Persistent Storage
 
-#### Storage Integration
+To access and manage files on the persistent storage:
 
-- **SMB Mount**: SMB file share integration
-- **Persistent Storage**: Persistent volume for application data
-- **File Operations**: Read/write operations to SMB storage
-- **Backup Support**: Integration with backup systems
+```bash
+# Get a pod name
+kubectl get pods -n demo-app
 
-### Network Architecture
+# Access the persistent storage via exec
+kubectl exec -it <pod-name> -n demo-app -- /bin/sh
 
-#### Gateway API Routing
+# Inside the pod, navigate to the persistent storage
+cd /app
 
-- **External Access**: Gateway API for external traffic
-- **TLS Termination**: Automatic TLS certificate management
-- **Load Balancing**: Cilium-based load balancing
-- **Traffic Management**: Advanced traffic routing capabilities
-- **Authentik Management**: **HTTPRoute creation and management is now handled automatically by Authentik**
+# List files
+ls -la
 
-#### Internal Communication
+# Edit a file (if you have an editor)
+vi filename.txt
 
-- **Service Discovery**: Kubernetes service discovery
-- **Internal Routing**: Cluster-internal communication
-- **Network Policies**: Cilium network policy enforcement
-- **Security Groups**: Network security and isolation
+# Copy files
+cp source.txt destination.txt
 
-## Features
+# Create directories
+mkdir new-folder
 
-### Application Features
+# Check disk usage
+df -h /app
+```
 
-- **Web Interface**: User-friendly web-based interface
-- **Configuration Management**: Dynamic configuration updates
-- **Health Monitoring**: Built-in health check endpoints
-- **Metrics Collection**: Prometheus metrics for monitoring
+### File Operations from Host
 
-### Authentication Features
+You can also copy files to/from the persistent storage:
 
-- **SSO Integration**: Single sign-on through Authentik
-- **User Management**: User authentication and authorization
-- **Session Handling**: Secure session management
-- **Access Control**: Role-based access control
-- **Automatic Routing**: **Authentik automatically creates HTTPRoute resources**
+```bash
+# Copy file from host to pod
+kubectl cp local-file.txt <pod-name>:/app/ -n demo-app
 
-### Storage Features
+# Copy file from pod to host
+kubectl cp <pod-name>:/app/filename.txt ./ -n demo-app
 
-- **SMB Integration**: Windows file share compatibility
-- **Persistent Data**: Data persistence across pod restarts
-- **File Operations**: File read/write capabilities
-- **Backup Integration**: Integration with backup systems
+# Copy between pods
+kubectl cp <source-pod>:/app/file.txt <dest-pod>:/app/ -n demo-app
+```
 
 ## Configuration
 
-### Application Configuration
-
-#### Basic Deployment
+### Basic Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -110,100 +99,38 @@ spec:
             - containerPort: 80
 ```
 
-#### Authentik Integration
+### Storage Integration
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: authentik-blueprint
-  labels:
-    authentik_blueprint: "true"
-data:
-  blueprint.yaml: |
-    model: authentik_providers_oauth2.oauth2provider
-    attrs:
-      name: "Demo App"
-      client_id: "demo-app"
-      client_secret: "secret"
-      redirect_uris:
-        - "https://demo.gateway.services.apocrathia.com/auth/callback"
-```
-
-#### SMB Storage Integration
-
-```yaml
+# Persistent Storage (Longhorn)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: demo-app-storage
+  name: demo-app-data
   namespace: demo-app
 spec:
   accessModes:
-    - ReadWriteMany
-  storageClassName: smb
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# SMB Storage (Shared Content)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-app-smb-pvc
+  namespace: demo-app
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
   resources:
     requests:
       storage: 1Gi
 ```
-
-### Gateway Configuration
-
-#### HTTPRoute Example (Reference Only)
-
-> **Note**: The `httproute.yaml` file is kept as a **reference example** of how HTTPRoutes were previously configured manually. **Authentik now handles HTTPRoute creation automatically** when the outpost is deployed.
-
-```yaml
-# This is an example of manual HTTPRoute configuration (no longer needed)
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: demo-app
-  namespace: demo-app
-spec:
-  parentRefs:
-    - name: main-gateway
-      namespace: cilium-system
-      sectionName: https
-  hostnames:
-    - demo.gateway.services.apocrathia.com
-  rules:
-    - backendRefs:
-        - name: ak-outpost-demo-app-outpost
-          port: 9000
-```
-
-## Integration with Homelab
-
-### Authentik Integration
-
-- **SSO Setup**: Automatic SSO configuration through blueprints
-- **User Provisioning**: Automated user account creation
-- **Access Control**: Policy-based access control
-- **Audit Logging**: Comprehensive authentication audit trails
-- **HTTPRoute Management**: **Automatic HTTPRoute creation and management**
-
-### Gateway API Integration
-
-- **Traffic Routing**: Gateway API-based traffic routing
-- **TLS Management**: Automatic TLS certificate management
-- **Load Balancing**: Intelligent load balancing and failover
-- **Security Policies**: Network security policy enforcement
-- **Authentik Automation**: **No manual HTTPRoute configuration required**
-
-### Storage Integration
-
-- **SMB Mount**: SMB file share integration via CSI driver
-- **Persistent Storage**: Longhorn-based persistent storage
-- **Backup Integration**: Integration with backup systems
-- **Performance Monitoring**: Storage performance monitoring
-
-### Monitoring Integration
-
-- **Metrics Collection**: Prometheus metrics for application monitoring
-- **Dashboard Integration**: Grafana dashboards for visualization
-- **Alert Configuration**: Automated alerting for application issues
-- **Log Aggregation**: Centralized logging with Loki
 
 ## Access and Usage
 
@@ -212,43 +139,13 @@ spec:
 - **URL**: `https://demo.gateway.services.apocrathia.com`
 - **Authentication**: SSO through Authentik
 - **TLS**: Automatic TLS certificate management
-- **Load Balancing**: Intelligent load balancing
-- **Routing**: **Automatically managed by Authentik outpost**
 
 ### Internal Access
 
 - **Service**: `http://demo-app.demo-app.svc:80`
 - **Outpost**: `http://ak-outpost-demo-app-outpost.demo-app.svc:9000`
-- **Storage**: SMB mount at `/data`
-
-### Health Checks
-
-- **Readiness**: `/health/ready` endpoint
-- **Liveness**: `/health/live` endpoint
-- **Metrics**: `/metrics` endpoint for Prometheus
-
-## Security Considerations
-
-### Authentication Security
-
-- **SSO Integration**: Secure single sign-on through Authentik
-- **Session Management**: Secure session handling and management
-- **Access Control**: Role-based access control policies
-- **Audit Logging**: Comprehensive security audit trails
-
-### Network Security
-
-- **TLS Encryption**: End-to-end encryption for all traffic
-- **Network Policies**: Cilium network policy enforcement
-- **Service Isolation**: Namespace-based service isolation
-- **Traffic Control**: Controlled traffic flow and routing
-
-### Data Security
-
-- **Storage Encryption**: Data encryption at rest and in transit
-- **Access Control**: Controlled access to storage resources
-- **Backup Security**: Secure backup of application data
-- **Compliance**: Security and compliance monitoring
+- **Persistent Storage**: Longhorn volume at `/app`
+- **Shared Storage**: SMB mount at `/shared`
 
 ## Troubleshooting
 
@@ -262,66 +159,20 @@ spec:
 
    # Check service status
    kubectl get service -n demo-app
-
-   # Note: HTTPRoute is now managed by Authentik
-   # Check Authentik outpost status instead
-   kubectl get pods -n demo-app -l app=outpost
    ```
 
-2. **Authentication Issues**
+2. **Storage Issues**
 
    ```bash
-   # Check Authentik outpost
-   kubectl get pods -n demo-app -l app=outpost
-
-   # Check blueprint configuration
-   kubectl get configmap authentik-blueprint -n demo-app
-
-   # Check Authentik logs
-   kubectl logs -n demo-app deployment/ak-outpost-demo-app-outpost
-   ```
-
-3. **Storage Issues**
-
-   ```bash
-   # Check PVC status
+   # Check PVC status for both storage types
    kubectl get pvc -n demo-app
+
+   # Check Longhorn volumes
+   kubectl get volumes -n longhorn-system | grep demo-app
 
    # Check SMB mount
    kubectl exec -it <pod-name> -n demo-app -- df -h
-
-   # Check storage class
-   kubectl get storageclass smb
    ```
-
-### Health Checks
-
-```bash
-# Check application health
-kubectl get pods -n demo-app
-
-# Check service endpoints
-kubectl get endpoints -n demo-app
-
-# Check Authentik outpost (manages routing)
-kubectl get pods -n demo-app -l app=outpost
-
-# Check storage status
-kubectl get pvc -n demo-app
-```
-
-### Log Analysis
-
-```bash
-# Application logs
-kubectl logs -n demo-app deployment/demo-app
-
-# Outpost logs
-kubectl logs -n demo-app deployment/ak-outpost-demo-app-outpost
-
-# Gateway logs
-kubectl logs -n cilium-system deployment/cilium-operator
-```
 
 ## Best Practices
 
@@ -332,40 +183,19 @@ kubectl logs -n cilium-system deployment/cilium-operator
 3. **Documentation**: Document all configurable parameters
 4. **Testing**: Test template with different application types
 
-### Application Deployment
+### Storage Integration
 
-1. **Health Checks**: Implement proper health check endpoints
-2. **Metrics**: Expose Prometheus metrics for monitoring
-3. **Configuration**: Use ConfigMaps for configuration management
-4. **Security**: Follow security best practices for applications
-
-### Integration
-
-1. **SSO**: Integrate with Authentik for authentication
-2. **Storage**: Use appropriate storage classes for data persistence
-3. **Networking**: **Let Authentik handle HTTPRoute management**
-4. **Monitoring**: Integrate with monitoring stack for observability
+1. **Use Longhorn for persistent data** that needs to survive pod restarts
+2. **Use SMB for shared content** that multiple applications can access
+3. **Right-size storage** - start small and expand as needed
+4. **Enable backups** for critical data
 
 ## Resource Requirements
 
 - **Application**: 100m-500m CPU, 128Mi-512Mi memory
 - **Outpost**: 50m-200m CPU, 64Mi-256Mi memory
-- **Storage**: 1Gi persistent storage
-- **Network**: Minimal network overhead
-
-## Template Evolution Notes
-
-### Current State
-
-- **HTTPRoute Management**: **Automatically handled by Authentik outpost**
-- **Manual Configuration**: `httproute.yaml` kept as reference example
-- **Integration**: Full Authentik SSO, Gateway API, and storage integration
-
-### Future Helm Chart
-
-- **HTTPRoute Handling**: Will leverage Authentik's automatic management
-- **Configuration**: Focus on application-specific values, not routing
-- **Templates**: Include Authentik blueprint templates for SSO setup
+- **Persistent Storage**: 10Gi Longhorn volume
+- **Shared Storage**: 1Gi SMB mount
 
 ## External Resources
 
@@ -373,4 +203,4 @@ kubectl logs -n cilium-system deployment/cilium-operator
 - [Authentik Outpost Documentation](https://docs.goauthentik.io/docs/outposts/)
 - [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
 - [SMB CSI Driver](https://github.com/kubernetes-csi/csi-driver-smb)
-- [Prometheus Metrics](https://prometheus.io/docs/concepts/data_model/)
+- [Longhorn Storage](https://longhorn.io/docs/)

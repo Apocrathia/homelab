@@ -1,0 +1,51 @@
+---
+# Persistent Storage Configuration for Demo App
+# This file demonstrates the pattern for applications that need persistent storage
+
+# Longhorn-based Persistent Volume for application data
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: demo-app-data
+  namespace: longhorn-system
+  annotations:
+    longhorn.io/finalizer: "longhorn.io/volume"
+spec:
+  size: "10737418240" # 10Gi
+  numberOfReplicas: 3
+  staleReplicaTimeout: 30
+  frontend: blockdev
+---
+# Kubernetes Persistent Volume that references the Longhorn volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: demo-app-data
+  namespace: demo-app
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: longhorn
+  csi:
+    driver: driver.longhorn.io
+    fsType: ext4
+    volumeHandle: demo-app-data
+---
+# Persistent Volume Claim for the application
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-app-data
+  namespace: demo-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: longhorn
+  volumeName: demo-app-data
