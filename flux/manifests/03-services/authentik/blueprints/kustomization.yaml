@@ -14,5 +14,7 @@ configMapGenerator:
     files:
       - truenas.yaml=truenas.yaml
 
-commonLabels:
-  authentik_blueprint: "true"
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

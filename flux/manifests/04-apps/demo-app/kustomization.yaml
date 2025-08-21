@@ -22,5 +22,7 @@ configMapGenerator:
     files:
       - demo-app.yaml=authentik-blueprint.yaml
 
-commonLabels:
-  authentik_blueprint: "true"
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"
