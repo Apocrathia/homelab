@@ -17,6 +17,6 @@ entries:
       slug: "truenas"
       launch_url: "https://storage.management.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/webp/truenas.webp"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/truenas.png"
       meta_description: "TrueNAS storage management interface"
       meta_publisher: "iXsystems"
