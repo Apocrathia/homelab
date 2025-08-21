@@ -70,5 +70,5 @@
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
   "platformAutomerge": true,
-  "automergeType": "branch"
+  "automergeType": "pr"
 }

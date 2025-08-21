@@ -8,7 +8,7 @@
     RENOVATE_ONBOARDING: "false"
     RENOVATE_PLATFORM: gitlab
     RENOVATE_ENDPOINT: https://gitlab.com/api/v4/
-    LOG_LEVEL: info
+    LOG_LEVEL: debug
   script:
     - renovate
   rules:
