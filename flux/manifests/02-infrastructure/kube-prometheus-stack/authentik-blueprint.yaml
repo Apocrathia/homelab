@@ -37,7 +37,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "grafana-proxy-provider"]]
       launch_url: "https://grafana.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://upload.wikimedia.org/wikipedia/commons/a/a1/Grafana_logo.svg"
+      icon: "https://i.imgur.com/kFMoLCf.png"
 
   # Outpost for Grafana
   - model: authentik_outposts.outpost
