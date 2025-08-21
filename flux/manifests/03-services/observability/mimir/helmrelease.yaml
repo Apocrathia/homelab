@@ -62,7 +62,8 @@ spec:
 
     # Increase series limits to handle Prometheus data
     runtimeConfig:
-      ingester_limits:
+      overrides:
+        anonymous:
         max_global_series_per_user: 1000000
         max_global_series_per_metric: 500000
 
