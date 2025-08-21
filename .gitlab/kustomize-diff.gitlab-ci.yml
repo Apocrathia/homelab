@@ -1,7 +1,7 @@
 ---
 kustomize-diff:
   stage: verify
-  image: cgr.dev/chainguard/git:latest
+  image: alpine:latest
   variables:
     DIFF_REPORT_TITLE: "Homelab Kustomize Diff"
     DIFF_TARGET_DIR: "flux/manifests"
@@ -11,6 +11,7 @@ kustomize-diff:
     # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
     KUSTOMIZE_VERSION: "v5.4.2"
   before_script:
+    - apk add --no-cache curl tar git
     - |
       set -e
       # simple fetch helper supporting curl or wget
@@ -66,7 +67,9 @@ kustomize-diff:
         # Render base by checking out the base tree into a temp worktree
         BASE_DIR=$(mktemp -d)
         git worktree add --detach "$BASE_DIR" origin/$CI_DEFAULT_BRANCH
-        (cd "$BASE_DIR" && kustomize build $KUSTOMIZE_BUILD_FLAGS "$d" > "$BASE_RENDER" || true)
+        cd "$BASE_DIR"
+        kustomize build $KUSTOMIZE_BUILD_FLAGS "$d" > "$BASE_RENDER" || true
+        cd - > /dev/null
         git worktree remove --force "$BASE_DIR"
         diff -u "$BASE_RENDER" "$TARGET_RENDER" || true
       done
