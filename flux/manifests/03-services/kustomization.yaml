@@ -8,6 +8,7 @@ resources:
   - gateway
   - authentik
   - observability
+  - dashboard
   - gitlab
   - kyverno
   - cert-manager

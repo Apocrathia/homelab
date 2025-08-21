@@ -1,0 +1,24 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubernetes-dashboard-admin
+rules:
+  - apiGroups: ["*"] # don't do this
+    resources: ["*"] # seriously
+    verbs: ["*"] # holy shit this is dumb
+    # this is a bad idea. we should be more specific about what we need.
+    # but this is a homelab, so we're going to do it anyways.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubernetes-dashboard-admin
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-dashboard-api
+    namespace: kubernetes-dashboard

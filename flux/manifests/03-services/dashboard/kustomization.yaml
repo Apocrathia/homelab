@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+  - rbac.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-kubernetes-dashboard
+    namespace: kubernetes-dashboard
+    files:
+      - kubernetes-dashboard.yaml=authentik-blueprint.yaml
+
+commonLabels:
+  authentik_blueprint: "true"
