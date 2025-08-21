@@ -64,8 +64,7 @@ spec:
     runtimeConfig:
       overrides:
         anonymous:
-        max_global_series_per_user: 1000000
-        max_global_series_per_metric: 500000
+          max_global_series_per_user: 1000000
 
     # Note: The chart automatically configures S3 storage when MinIO is enabled
     # No need to manually configure blocks_storage, ruler_storage, etc.
