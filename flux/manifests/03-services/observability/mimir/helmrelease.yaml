@@ -77,6 +77,9 @@ spec:
         enabled: true
         storageClassName: longhorn
         size: 50Gi
+      # Increase series limits to handle Prometheus data
+      maxGlobalSeriesPerUser: 1000000
+      maxGlobalSeriesPerMetric: 500000
 
     distributor:
       resources:
@@ -135,9 +138,3 @@ spec:
     serviceMonitor:
       enabled: true
       interval: 30s
-
-    # Increase series limits to handle Prometheus data
-    mimir:
-      limits:
-        max_global_series_per_user: 1000000
-        max_global_series_per_metric: 500000
