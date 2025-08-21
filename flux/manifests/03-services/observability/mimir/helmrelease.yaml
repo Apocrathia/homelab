@@ -60,6 +60,12 @@ spec:
       dnsService: kube-dns
       dnsNamespace: kube-system
 
+    # Increase series limits to handle Prometheus data
+    runtimeConfig:
+      ingester_limits:
+        max_global_series_per_user: 1000000
+        max_global_series_per_metric: 500000
+
     # Note: The chart automatically configures S3 storage when MinIO is enabled
     # No need to manually configure blocks_storage, ruler_storage, etc.
     # The chart uses the MinIO credentials from the minio section above
@@ -77,9 +83,6 @@ spec:
         enabled: true
         storageClassName: longhorn
         size: 50Gi
-      # Increase series limits to handle Prometheus data
-      maxGlobalSeriesPerUser: 1000000
-      maxGlobalSeriesPerMetric: 500000
 
     distributor:
       resources:
