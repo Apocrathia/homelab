@@ -16,5 +16,7 @@ configMapGenerator:
     files:
       - grafana.yaml=authentik-blueprint.yaml
 
-commonLabels:
-  authentik_blueprint: "true"
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

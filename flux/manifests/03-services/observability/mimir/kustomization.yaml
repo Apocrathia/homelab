@@ -12,7 +12,9 @@ resources:
   - helmrelease.yaml
   - grafana.yaml
 
-commonLabels:
-  app: mimir
-  component: monitoring
-  storage: long-term
+labels:
+  - includeSelectors: true
+    pairs:
+      app: mimir
+      component: monitoring
+      storage: long-term
