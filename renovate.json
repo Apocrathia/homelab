@@ -52,15 +52,6 @@
         "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
         "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*image: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ]
-    },
-    {
-      "customType": "regex",
-      "description": "CI tool versions in .gitlab/*.yml",
-      "managerFilePatterns": ["/^\\.gitlab/.*\\.ya?ml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?\\bKUSTOMIZE_VERSION\\s*:\\s*\"?(?<currentValue>[^\"'\\s]+)\"?",
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?\\bKUBECONFORM_VERSION\\s*:\\s*\"?(?<currentValue>[^\"'\\s]+)\"?"
-      ]
     }
   ],
   "timezone": "America/Denver",
