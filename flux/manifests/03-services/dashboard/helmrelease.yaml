@@ -1,0 +1,64 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: kubernetes-dashboard
+      # renovate: datasource=helm depName=kubernetes-dashboard registryUrl=https://kubernetes.github.io/dashboard/
+      version: "7.13.0"
+      sourceRef:
+        kind: HelmRepository
+        name: kubernetes-dashboard
+        namespace: flux-system
+  values:
+    # Configure for proxy mode with authorization headers
+    web:
+      args:
+        - --auto-generate-certificates
+        - --insecure-port=8000
+        - --insecure-bind-address=0.0.0.0
+    # Configure API to work in proxy mode with authentik headers
+    api:
+      args:
+        - --apiserver-skip-tls-verify=true
+        - --insecure-port=8000
+        - --insecure-bind-address=0.0.0.0
+        - --act-as-proxy=true
+      env:
+        - name: KUBECONFIG
+          value: ""
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    # Configure for reverse proxy
+    app:
+      ingress:
+        enabled: false
+    # Service configuration for proxy
+    kong:
+      proxy:
+        type: ClusterIP
+        http:
+          enabled: true
+          port: 80
+          targetPort: 8000
+      dblessConfig:
+        configMap: kong-dbless-config
+    # Security settings
+    rbac:
+      create: true
+      clusterAdminRole: false
+    # Create service account for dashboard access
+    serviceAccount:
+      create: true
+      name: kubernetes-dashboard
+      annotations: {}

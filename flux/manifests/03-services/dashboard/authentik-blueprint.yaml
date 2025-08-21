@@ -1,0 +1,75 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: kubernetes-dashboard
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Proxy Provider for Kubernetes Dashboard
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "kubernetes-dashboard-proxy-provider"
+    attrs:
+      name: "kubernetes-dashboard-proxy-provider"
+      # prettier-ignore
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      # prettier-ignore
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      # prettier-ignore
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: true
+      internal_host: "http://kubernetes-dashboard-kong-proxy.kubernetes-dashboard.svc.cluster.local:80"
+      external_host: "https://dashboard.gateway.services.apocrathia.com"
+      # Configure additional headers for dashboard authentication
+      additional_headers:
+        X-authentik-username: "{{ user.username }}"
+        X-authentik-groups: "{{ user.ak_groups | join('|') }}"
+        X-authentik-email: "{{ user.email }}"
+        X-authentik-name: "{{ user.name }}"
+        X-authentik-uid: "{{ user.uid }}"
+        # Pass JWT token for Kong to validate
+        Authorization: "Bearer {{ token.access_token }}"
+
+  # Application for Kubernetes Dashboard
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "kubernetes-dashboard"
+    attrs:
+      name: "Kubernetes Dashboard"
+      slug: "kubernetes-dashboard"
+      # prettier-ignore
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
+      launch_url: "https://dashboard.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Kubernetes_logo_without_workmark.svg/617px-Kubernetes_logo_without_workmark.svg.png"
+
+  # Outpost for Kubernetes Dashboard
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "kubernetes-dashboard-outpost"
+    attrs:
+      name: "kubernetes-dashboard-outpost"
+      type: "proxy"
+      # prettier-ignore
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        # prettier-ignore
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
