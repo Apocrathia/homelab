@@ -15,7 +15,7 @@ We are using a regex manager to manage the versions of helm releases. This is a 
 To leverage the regex manager, you must use the following format:
 
 ```
-# renovate: datasource=helm depName=my-release registryUrl=https://my-registry.com
+# renovate: datasource=helm registryUrl=https://my-registry.com depName=my-release
 ```
 
 Your goal is to update the configuration to fix the issues and improve the configuration.
