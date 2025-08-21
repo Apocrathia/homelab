@@ -69,6 +69,7 @@
   "rangeStrategy": "replace",
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
+  "rebaseWhen": "behind-base-branch",
   "platformAutomerge": true,
   "automergeType": "pr"
 }
