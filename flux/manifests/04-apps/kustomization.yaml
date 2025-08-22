@@ -5,3 +5,4 @@ metadata:
   name: apps
 resources:
   - demo-app
+  - n8n

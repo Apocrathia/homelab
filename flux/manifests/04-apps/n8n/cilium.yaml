@@ -1,0 +1,22 @@
+---
+# Cilium Network Policy for n8n to PostgreSQL access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: n8n-postgres-access
+  namespace: n8n
+spec:
+  description: "Allow n8n application to access PostgreSQL cluster"
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: n8n-postgres
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: n8n
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP

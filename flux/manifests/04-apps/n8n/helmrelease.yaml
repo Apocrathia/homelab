@@ -1,0 +1,84 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: n8n
+      # renovate: datasource=helm registryUrl=https://community-charts.github.io/helm-charts depName=n8n
+      version: "1.14.3"
+      sourceRef:
+        kind: HelmRepository
+        name: community-charts
+        namespace: flux-system
+  # Pull PostgreSQL credentials from secret
+  valuesFrom:
+    - kind: Secret
+      name: n8n-secrets
+      valuesKey: username
+      targetPath: externalPostgresql.username
+    - kind: Secret
+      name: n8n-secrets
+      valuesKey: password
+      targetPath: externalPostgresql.password
+
+  values:
+    # Main node configuration
+    main:
+      count: 1
+
+      # Resources for the main container
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      # Enable persistence with Longhorn
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 20Gi
+
+      # Set external URL context so webhooks/redirects are correct behind TLS gateway
+      extraEnvVars:
+        N8N_HOST: n8n.gateway.services.apocrathia.com
+        N8N_PROTOCOL: http
+        N8N_PORT: "80"
+        WEBHOOK_URL: https://n8n.gateway.services.apocrathia.com/
+        N8N_BASIC_AUTH_ACTIVE: "false"
+        N8N_PROXY_HOPS: "1"
+
+    # Service configuration
+    service:
+      port: 80
+
+    # Database configuration - using external PostgreSQL
+    db:
+      type: postgresdb
+
+    # External PostgreSQL configuration
+    externalPostgresql:
+      host: n8n-postgres-rw.n8n.svc.cluster.local
+      port: 5432
+      database: n8n
+
+    # Security context for the main container
+    securityContext:
+      readOnlyRootFilesystem: true
+
+    # Additional volumes for cache directory
+    volumes:
+      - name: cache
+        emptyDir: {}
+
+    # Volume mounts for cache directory
+    volumeMounts:
+      - name: cache
+        mountPath: /home/node/.cache
