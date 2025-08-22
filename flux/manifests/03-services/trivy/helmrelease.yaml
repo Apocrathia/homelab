@@ -33,6 +33,19 @@ spec:
       metricsInfraAssessmentInfo: true
       metricsImageInfo: true
       metricsClusterComplianceInfo: true
+    # Configure node-collector to comply with Pod Security Standards
+    nodeCollector:
+      # Set security context for node-collector pods
+      scanJobPodTemplatePodSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      scanJobPodTemplateContainerSecurityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop: ["ALL"]
     resources:
       limits:
         memory: 512Mi
