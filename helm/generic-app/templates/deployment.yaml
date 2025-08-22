@@ -1,0 +1,89 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.app.name }}
+spec:
+  replicas: {{ .Values.app.replicas | default 2 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      {{- if .Values.app.podAntiAffinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ .Values.app.name }}
+                topologyKey: kubernetes.io/hostname
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
+        runAsGroup: {{ .Values.app.securityContext.runAsGroup | default 1000 }}
+        fsGroup: {{ .Values.app.securityContext.fsGroup | default 1000 }}
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: {{ .Values.app.container.name | default "main" }}
+          image: {{ .Values.app.image | default "nginx:alpine" }}
+          ports:
+            - containerPort: {{ .Values.app.container.port | default 80 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            {{- range .Values.app.volumes.emptyDir }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- if .Values.storage.longhorn.enabled }}
+            - name: app-data
+              mountPath: {{ .Values.storage.longhorn.mountPath | default "/app" }}
+            {{- end }}
+            {{- if .Values.storage.smb.enabled }}
+            - name: smb-files
+              mountPath: {{ .Values.storage.smb.mountPath | default "/usr/share/nginx/html" }}
+              readOnly: true
+            {{- end }}
+          resources:
+            requests:
+              cpu: {{ .Values.app.resources.requests.cpu | default "50m" }}
+              memory: {{ .Values.app.resources.requests.memory | default "64Mi" }}
+            limits:
+              cpu: {{ .Values.app.resources.limits.cpu | default "100m" }}
+              memory: {{ .Values.app.resources.limits.memory | default "128Mi" }}
+      volumes:
+        {{- range .Values.app.volumes.emptyDir }}
+        - name: {{ .name }}
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.storage.longhorn.enabled }}
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.app.name }}-data
+        {{- end }}
+        {{- if .Values.storage.smb.enabled }}
+        - name: smb-files
+          persistentVolumeClaim:
+            claimName: {{ .Values.app.name }}-smb-pvc
+            readOnly: true
+        {{- end }}

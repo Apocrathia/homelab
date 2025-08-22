@@ -1,0 +1,136 @@
+# Generic App Helm Chart
+
+A generic Helm chart for deploying applications in the homelab environment with common patterns for storage, secrets, and authentication.
+
+## Features
+
+- **Kubernetes Resources**: Namespace, Deployment, Service
+- **Storage Options**:
+  - Longhorn persistent storage for application data
+  - SMB storage for network file access
+- **Security**: 1Password Connect integration for secrets management
+- **Authentication**: Authentik SSO integration with automatic outpost deployment
+- **Networking**: Optional HTTPRoute for direct Gateway API access (when not using Authentik)
+
+## Values Configuration
+
+### Application Settings
+
+```yaml
+app:
+  name: my-app # Application name (used for namespace and resources)
+  # renovate: datasource=docker depName=nginx
+  image: nginx:alpine # Container image (single value for renovate compatibility)
+  volumes: # EmptyDir volumes (optional)
+    emptyDir:
+      - name: cache
+        mountPath: /tmp/cache
+```
+
+**Note**: Most settings like replicas, resources, security context use sensible defaults and don't need to be specified unless you need custom values.
+
+### Storage Configuration
+
+```yaml
+storage:
+  longhorn:
+    enabled: true # Enable Longhorn persistent storage
+    capacity: 10Gi # Capacity (size in bytes calculated automatically)
+    mountPath: /app # Mount path in container
+
+  smb:
+    enabled: true # Enable SMB storage
+    source: "//server/share" # SMB share path
+    subDir: "path/to/files" # Subdirectory within share
+    mountPath: /data # Mount path in container
+    credentialsPath: "vaults/Secrets/items/smb-creds" # 1Password path
+```
+
+### Authentication
+
+```yaml
+authentik:
+  enabled: true
+  displayName: "My Application"
+  externalHost: "https://my-app.domain.com"
+  icon: "https://example.com/icon.png"
+```
+
+### Secrets
+
+```yaml
+secrets:
+  enabled: true
+  itemPath: "vaults/Secrets/items/my-app-secrets"
+```
+
+## Usage Example
+
+### Direct Helm Install
+
+```bash
+# Create the namespace first
+kubectl create namespace my-app
+
+# Install the application
+helm install my-app ./helm/generic-app --namespace my-app --values my-values.yaml
+```
+
+### Values File Example
+
+```yaml
+# my-values.yaml
+app:
+  name: my-app
+  # renovate: datasource=docker depName=my-app
+  image: my-app:1.0.0
+  volumes:
+    emptyDir:
+      - name: cache
+        mountPath: /tmp/cache
+
+storage:
+  longhorn:
+    enabled: true
+    capacity: 10Gi
+    mountPath: /app
+
+authentik:
+  enabled: true
+  displayName: "My Application"
+  externalHost: "https://my-app.gateway.services.apocrathia.com"
+
+secrets:
+  enabled: true
+  itemPath: "vaults/Secrets/items/my-app-secrets"
+```
+
+For a complete working example, see the [demo app configuration](../../flux/manifests/04-apps/demo-app/helmrelease.yaml).
+
+## Components
+
+### Core Resources
+
+- `deployment.yaml`: Application deployment with security contexts
+- `service.yaml`: ClusterIP service for the application
+
+### Storage
+
+- `storage-longhorn.yaml`: Longhorn volume, PV, and PVC (conditional)
+- `storage-smb.yaml`: SMB PV, PVC, and credentials (conditional)
+
+### Security & Auth
+
+- `secrets.yaml`: 1Password secret integration (conditional)
+- `authentik-blueprint.yaml`: Authentik SSO configuration (conditional)
+- `httproute.yaml`: Direct Gateway API access (conditional, only when Authentik disabled)
+
+## Design Principles
+
+- **Zero Dependencies**: No external chart dependencies
+- **Convention over Configuration**: Sensible defaults with minimal required configuration
+- **Conditional Components**: Only deploy what you need
+- **Security First**: Non-root containers (UID 1000), read-only filesystems, dropped capabilities
+- **Homelab Optimized**: Designed for typical homelab use cases and infrastructure
+- **Renovate Compatible**: Single image values for automatic dependency updates
+- **Simple Configuration**: Only specify what makes your app unique
