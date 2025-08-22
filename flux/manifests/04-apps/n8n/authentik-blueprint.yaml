@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: n8n
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Proxy Provider for n8n
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "n8n-proxy-provider"
+    attrs:
+      name: "n8n-proxy-provider"
+      # prettier-ignore
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      # prettier-ignore
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      # prettier-ignore
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: true
+      internal_host: "http://n8n.n8n.svc.cluster.local:80"
+      external_host: "https://n8n.gateway.services.apocrathia.com"
+
+  # Application for n8n
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "n8n"
+    attrs:
+      name: "n8n Workflow Automation"
+      slug: "n8n"
+      # prettier-ignore
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "n8n-proxy-provider"]]
+      launch_url: "https://n8n.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://i.imgur.com/IHud7nO.png"
+      meta_description: "n8n workflow automation platform"
+      meta_publisher: "n8n"
+
+  # Outpost for n8n
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "n8n-outpost"
+    attrs:
+      name: "n8n-outpost"
+      type: "proxy"
+      # prettier-ignore
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        # prettier-ignore
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "n8n-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https

@@ -9,6 +9,7 @@ This directory contains user-facing applications and workloads deployed in the c
 The applications layer contains user-facing workloads and services that demonstrate the homelab infrastructure capabilities:
 
 - **Application Templates**: Baseline configurations for common application patterns
+- **Automation and Workflow**: Workflow automation and business process tools
 - **Development Tools**: Applications for development and testing
 - **User Services**: End-user applications and services
 - **Integration Examples**: Examples of infrastructure integration patterns
@@ -18,6 +19,10 @@ The applications layer contains user-facing workloads and services that demonstr
 ### Application Templates
 
 - [**Demo App**](demo-app/README.md) - **Baseline template** for application configuration patterns, demonstrating Authentik SSO, Gateway API routing, and SMB storage integration. This will be converted to a reusable Helm chart for multiple generic applications.
+
+### Automation and Workflow
+
+- [**n8n**](n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
 
 ### Application Patterns
 
@@ -235,6 +240,30 @@ kubectl get httproute -n <app-namespace>
 
 # Check storage status
 kubectl get pvc -n <app-namespace>
+
+# Check PostgreSQL clusters (for n8n)
+kubectl get clusters -n n8n
+```
+
+### n8n-Specific Troubleshooting
+
+```bash
+# Check n8n application status
+kubectl get pods,svc,pvc -n n8n
+kubectl get cluster n8n-postgres -n n8n
+
+# Check n8n database connectivity
+kubectl exec -it deployment/n8n -n n8n -- nc -zv n8n-postgres-rw 5432
+
+# Check n8n application logs
+kubectl logs -n n8n deployment/n8n --tail=50
+
+# Check PostgreSQL cluster logs
+kubectl logs -n n8n -l cnpg.io/cluster=n8n-postgres --tail=20
+
+# Verify Authentik integration
+kubectl get authentikprovider proxyprovider -n n8n
+kubectl get authentikapplication -n n8n
 ```
 
 ## Best Practices
