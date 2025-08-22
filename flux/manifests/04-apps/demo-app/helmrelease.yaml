@@ -1,0 +1,52 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: demo-app
+  namespace: demo-app
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: demo-app
+      # renovate: datasource=docker depName=nginx
+      image: nginx:alpine
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
+
+    storage:
+      longhorn:
+        enabled: true
+        capacity: 10Gi
+        mountPath: /app
+      smb:
+        enabled: true
+        source: "//storage.services.apocrathia.com/Library"
+        subDir: "Sites/Demo"
+        mountPath: /usr/share/nginx/html
+        credentialsPath: "vaults/Secrets/items/smb-credentials"
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/demo-app-secrets"
+
+    authentik:
+      enabled: true
+      displayName: "Demo Application"
+      externalHost: "https://demo.gateway.services.apocrathia.com"
+      icon: "https://i.imgur.com/0gNsvyk.png"
+
+    httproute:
+      enabled: false

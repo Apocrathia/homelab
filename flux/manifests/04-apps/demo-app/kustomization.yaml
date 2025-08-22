@@ -9,23 +9,4 @@ metadata:
 
 resources:
   - namespace.yaml
-  - secret.yaml
-  - smb.yaml
-  - storage.yaml
-  - deployment.yaml
-  - service.yaml
-  # - httproute.yaml
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: authentik-blueprint-demo-app
-    namespace: demo-app
-    files:
-      - demo-app.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
+  - helmrelease.yaml

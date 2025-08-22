@@ -18,7 +18,7 @@ The applications layer contains user-facing workloads and services that demonstr
 
 ### Application Templates
 
-- [**Demo App**](demo-app/README.md) - **Baseline template** for application configuration patterns, demonstrating Authentik SSO, Gateway API routing, and SMB storage integration. This will be converted to a reusable Helm chart for multiple generic applications.
+- [**Demo App**](demo-app/README.md) - **Baseline template** for application configuration patterns, demonstrating Authentik SSO, Gateway API routing, and SMB storage integration using the reusable `generic-app` Helm chart.
 
 ### Automation and Workflow
 
@@ -41,17 +41,18 @@ Each application follows consistent patterns that will be templated:
 Applications are deployed using:
 
 - **Kubernetes Resources**: Deployments, Services, ConfigMaps, etc.
-- **Helm Charts**: Where appropriate for complex applications (planned for demo app)
+- **Helm Charts**: Generic-app chart for standardized application patterns
 - **Kustomize**: For configuration management and customization
 - **Flux**: For GitOps-based deployment and management
 
 ### Template Evolution
 
-The demo app serves as a **baseline template** that will evolve into:
+The demo app serves as a **baseline template** that has evolved into a reusable Helm chart:
 
-1. **Current State**: Kustomize-based configuration with individual manifests
-2. **Next Phase**: Helm chart with configurable values and templates
-3. **Final State**: Reusable Helm chart for multiple generic applications
+1. **Phase 1 (Completed)**: Kustomize-based configuration with individual manifests
+2. **Phase 2 (Completed)**: Helm chart with configurable values and templates
+3. **Phase 3 (Completed)**: Reusable `generic-app` Helm chart for multiple applications
+4. **Phase 4 (Current)**: Production-ready chart with GitOps deployment through Flux
 
 ### Integration Points
 
@@ -73,7 +74,19 @@ The demo app serves as a **baseline template** that will evolve into:
 
 ### Application Structure
 
-Each application directory contains:
+Each application follows one of two patterns:
+
+**Pattern 1: Generic-App Chart (Recommended)**
+
+```
+app-name/
+├── README.md              # Application documentation
+├── kustomization.yaml     # Kustomize configuration
+├── helmrelease.yaml       # Flux HelmRelease using generic-app chart
+└── namespace.yaml         # Namespace definition (optional)
+```
+
+**Pattern 2: Custom Manifests (Legacy)**
 
 ```
 app-name/
@@ -164,17 +177,19 @@ spec:
 
 ### Current Demo App Status
 
-- **Purpose**: Baseline template for application configuration patterns
-- **Configuration**: Kustomize-based with individual manifests
+- **Purpose**: Production-ready baseline template for application configuration patterns
+- **Configuration**: GitOps deployment through Flux using generic-app Helm chart
 - **Integration**: Full Authentik SSO, Gateway API, and storage integration
 - **Documentation**: Comprehensive setup and troubleshooting guides
+- **Template Usage**: Serves as reference for deploying new applications
 
-### Planned Evolution
+### Chart Development Status
 
-- **Phase 1**: Extract common patterns and configurations
-- **Phase 2**: Create Helm chart with configurable values
-- **Phase 3**: Template common application types (web apps, APIs, databases)
-- **Phase 4**: Reusable Helm chart for multiple generic applications
+- **Phase 1 (✅ Completed)**: Extract common patterns and configurations
+- **Phase 2 (✅ Completed)**: Create Helm chart with configurable values
+- **Phase 3 (✅ Completed)**: Template common application types (web apps, APIs, databases)
+- **Phase 4 (✅ Completed)**: Reusable Helm chart for multiple generic applications
+- **Phase 5 (✅ In Progress)**: Production deployment and validation
 
 ### Template Benefits
 
@@ -291,25 +306,26 @@ kubectl get authentikapplication -n n8n
 
 ## Next Steps
 
-### Template Development
+### Chart Usage and Optimization
 
-1. **Pattern Analysis**: Analyze demo app for common patterns
-2. **Helm Chart Creation**: Convert to Helm chart with values
-3. **Template Testing**: Test with different application types
-4. **Documentation**: Document template usage and parameters
+1. **Template Usage**: Deploy new applications using the generic-app chart
+2. **Chart Enhancement**: Add new features and integrations as needed
+3. **Performance Tuning**: Optimize resource usage and scaling
+4. **Security Hardening**: Implement additional security best practices
 
 ### Application Deployment
 
-1. **Template Usage**: Use template for new applications
-2. **Customization**: Customize for specific application needs
-3. **Monitoring**: Configure dashboards and alerting
-4. **Scaling**: Plan for application scaling and growth
+1. **Template Usage**: Use generic-app chart for new applications
+2. **Customization**: Customize for specific application requirements
+3. **Monitoring**: Configure dashboards and alerting rules
+4. **Scaling**: Plan for application growth and performance needs
 
 ## External Resources
 
 - [Kubernetes Application Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
 - [Authentik Outpost Documentation](https://docs.goauthentik.io/docs/outposts/)
 - [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
+- [Generic-App Helm Chart](../../../helm/generic-app/README.md) - Reusable application chart
 - [Prometheus Metrics](https://prometheus.io/docs/concepts/data_model/)
 - [Kustomize Documentation](https://kustomize.io/)
 - [Helm Chart Development](https://helm.sh/docs/chart_template_guide/)
