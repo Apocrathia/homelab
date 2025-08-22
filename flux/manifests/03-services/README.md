@@ -23,6 +23,10 @@ This directory contains the deployment configuration for platform services that 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 
+### Data Services
+
+- [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL management with enterprise features
+
 ### Development and Operations
 
 - [**Dashboard**](dashboard/README.md) - Kubernetes web dashboard
@@ -39,6 +43,7 @@ The services layer provides:
 - **Traffic Management**: Gateway API for external access and routing
 - **Security**: Policy enforcement, scanning, and compliance
 - **Monitoring**: Comprehensive observability and alerting
+- **Data Services**: PostgreSQL operator for database management
 - **Development Tools**: CI/CD integration and development workflows
 - **Operations**: Automated maintenance and housekeeping tasks
 
