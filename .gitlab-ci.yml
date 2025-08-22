@@ -1,10 +1,9 @@
 ---
 stages:
+  - test
   - verify
   - renovate
 
-variables:
-  KUSTOMIZE_DIR: "flux/manifests"
-
 include:
   - local: .gitlab/renovate.gitlab-ci.yml
+  - local: .gitlab/no-op.gitlab-ci.yml

@@ -1,0 +1,7 @@
+---
+no-op:
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - echo "This is a no-op pipeline"
