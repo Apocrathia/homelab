@@ -1,1 +1,8 @@
 flux/manifests/01-bootstrap/flux-system/*
+
+# Authentik blueprint files - weird operators and formatting
+**/authentik-blueprint.yaml
+**/authentik/blueprints/**
+
+# All Helm template files - they have dumb YAML structures
+helm/**/templates/*.yaml
