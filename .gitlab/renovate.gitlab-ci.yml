@@ -3,17 +3,14 @@ variables:
   RENOVATE_BASE_DIR: $CI_PROJECT_DIR/renovate
   RENOVATE_ENDPOINT: $CI_API_V4_URL
   RENOVATE_PLATFORM: gitlab
-  RENOVATE_ONBOARDING_CONFIG: '{"$$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["config:recommended"] }'
-  RENOVATE_OPTIMIZE_FOR_DISABLED: "true"
   RENOVATE_REPOSITORY_CACHE: "enabled"
-  LOG_FILE: renovate-log.ndjson
-  LOG_FILE_LEVEL: debug
+  LOG_LEVEL: debug
 
 .renovate:
   image:
     name: ghcr.io/renovatebot/renovate:41.82.5
   script:
-    - renovate $RENOVATE_EXTRA_FLAGS
+    - renovate
 
 renovate:
   extends: .renovate
