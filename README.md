@@ -35,6 +35,13 @@ Entirely virtualized on 4x Proxmox VMs:
 - **Monitoring**: Prometheus + Grafana stack
 - **Security**: Kyverno policies + Trivy scanning
 
+### Application Deployment
+
+- **Simple Helm Usage**: Direct `helm install` commands for straightforward deployments
+- **Generic App Chart**: Reusable template at `helm/generic-app/` for consistent application patterns
+- **Demo-First**: Use the demo app as a reference for new application deployments
+- **Values-Driven**: Simple YAML values files instead of complex manifests
+
 ## Features
 
 ### 🏠 Home Services Platform
@@ -85,7 +92,8 @@ Each major component has detailed documentation:
 - **Longhorn** - Distributed storage
 - **Cilium** - Networking and security
 - **Kube Prometheus Stack** - Monitoring and observability
-- **Demo App** - Application deployment template
+- **Generic App Chart** - Reusable Helm chart for application deployment
+- **Demo App** - Example application using the generic chart
 
 ## Current Status
 
@@ -133,7 +141,8 @@ This is a personal project, but feel free to:
 
 - Each component README explains **why** decisions were made
 - Look for troubleshooting sections in component docs
-- Check the demo app for deployment patterns
+- Check the demo app and generic Helm chart for deployment patterns
+- Use simple `helm install` commands for application deployments
 
 ### For Similar Setups
 

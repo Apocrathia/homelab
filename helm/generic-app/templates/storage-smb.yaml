@@ -1,0 +1,46 @@
+---
+{{- if .Values.storage.smb.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.app.name }}-smb-pv
+  namespace: {{ .Values.app.name }}
+spec:
+  capacity:
+    storage: {{ .Values.storage.smb.capacity | default "1Gi" }}
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: true
+    volumeHandle: {{ .Values.app.name }}-smb-volume
+    nodeStageSecretRef:
+      name: {{ .Values.app.name }}-smb-credentials
+      namespace: {{ .Values.app.name }}
+    volumeAttributes:
+      source: {{ .Values.storage.smb.source | quote }}
+      subDir: {{ .Values.storage.smb.subDir | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.app.name }}-smb-pvc
+  namespace: {{ .Values.app.name }}
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: "" # Empty string to bind to specific PV
+  resources:
+    requests:
+      storage: {{ .Values.storage.smb.capacity | default "1Gi" }}
+  volumeName: {{ .Values.app.name }}-smb-pv
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: {{ .Values.app.name }}-smb-credentials
+  namespace: {{ .Values.app.name }}
+spec:
+  itemPath: {{ .Values.storage.smb.credentialsPath | quote }}
+{{- end }}

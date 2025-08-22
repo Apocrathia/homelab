@@ -1,0 +1,80 @@
+{{- if .Values.authentik.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-{{ .Values.app.name }}
+  namespace: {{ .Values.app.name }}
+  labels:
+    authentik_blueprint: "true"
+data:
+  {{ .Values.app.name }}.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    version: 1
+    metadata:
+      name: {{ .Values.app.name }}
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # Proxy Provider for {{ .Values.authentik.displayName }}
+      - model: authentik_providers_proxy.proxyprovider
+        state: present
+        identifiers:
+          name: "{{ .Values.app.name }}-proxy-provider"
+        attrs:
+          name: "{{ .Values.app.name }}-proxy-provider"
+          # prettier-ignore
+          authorization_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authorizationFlow }}"]]
+          # prettier-ignore
+          invalidation_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.invalidationFlow }}"]]
+          # prettier-ignore
+          authentication_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authenticationFlow }}"]]
+          mode: "proxy"
+          intercept_header_auth: false
+          internal_host: "http://{{ .Values.app.name }}.{{ .Values.app.name }}.svc.cluster.local:{{ .Values.app.service.port | default 80 }}"
+          external_host: "{{ .Values.authentik.externalHost }}"
+
+      # Application for {{ .Values.authentik.displayName }}
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "{{ .Values.app.name }}"
+        attrs:
+          name: "{{ .Values.authentik.displayName }}"
+          slug: "{{ .Values.app.name }}"
+          # prettier-ignore
+          provider: !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
+          launch_url: "{{ .Values.authentik.externalHost }}"
+          open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
+          {{- if .Values.authentik.icon }}
+          icon: "{{ .Values.authentik.icon }}"
+          {{- end }}
+
+      # Outpost for {{ .Values.authentik.displayName }}
+      - model: authentik_outposts.outpost
+        state: present
+        identifiers:
+          name: "{{ .Values.app.name }}-outpost"
+        attrs:
+          name: "{{ .Values.app.name }}-outpost"
+          type: "proxy"
+          # prettier-ignore
+          service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "{{ .Values.authentik.serviceConnection }}"]]
+          providers:
+            # prettier-ignore
+            - !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
+          config:
+            authentik_host: "{{ .Values.authentik.authentikHost }}"
+            authentik_host_insecure: {{ .Values.authentik.authentikHostInsecure | default true }}
+            authentik_host_browser: ""
+            log_level: "{{ .Values.authentik.logLevel | default "info" }}"
+            object_naming_template: "ak-outpost-%(name)s"
+            kubernetes_replicas: {{ .Values.authentik.replicas | default 1 }}
+            kubernetes_namespace: "{{ .Values.authentik.namespace | default "authentik" }}"
+            kubernetes_httproute_parent_refs:
+              - name: {{ .Values.authentik.gateway.name }}
+                namespace: {{ .Values.authentik.gateway.namespace }}
+                sectionName: {{ .Values.authentik.gateway.sectionName }}
+{{- end }}

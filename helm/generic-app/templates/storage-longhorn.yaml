@@ -1,0 +1,48 @@
+---
+{{- if .Values.storage.longhorn.enabled }}
+# Longhorn-based Persistent Volume for application data
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: {{ .Values.app.name }}-data
+  namespace: longhorn-system
+spec:
+  size: {{ mul (.Values.storage.longhorn.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
+  numberOfReplicas: {{ .Values.storage.longhorn.replicas | default 3 }}
+  staleReplicaTimeout: {{ .Values.storage.longhorn.staleReplicaTimeout | default 30 }}
+  frontend: blockdev
+---
+# Kubernetes Persistent Volume that references the Longhorn volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.app.name }}-data
+  namespace: {{ .Values.app.name }}
+spec:
+  capacity:
+    storage: {{ .Values.storage.longhorn.capacity }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: longhorn
+  csi:
+    driver: driver.longhorn.io
+    fsType: ext4
+    volumeHandle: {{ .Values.app.name }}-data
+---
+# Persistent Volume Claim for the application
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.app.name }}-data
+  namespace: {{ .Values.app.name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage.longhorn.capacity }}
+  storageClassName: longhorn
+  volumeName: {{ .Values.app.name }}-data
+{{- end }}
