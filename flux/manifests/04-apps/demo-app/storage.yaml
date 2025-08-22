@@ -8,8 +8,6 @@ kind: Volume
 metadata:
   name: demo-app-data
   namespace: longhorn-system
-  annotations:
-    longhorn.io/finalizer: "longhorn.io/volume"
 spec:
   size: "10737418240" # 10Gi
   numberOfReplicas: 3
