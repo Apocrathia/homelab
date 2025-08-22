@@ -10,14 +10,8 @@ variables:
   LOG_FILE_LEVEL: debug
 
 .renovate:
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-renovate
-    paths:
-      - renovate-cache/
   image:
     name: ghcr.io/renovatebot/renovate:41.82.5
-  before_script:
-    - mkdir -p renovate-cache
   script:
     - renovate $RENOVATE_EXTRA_FLAGS
 
