@@ -7,6 +7,16 @@ rules:
     level: warning
     ignore: |
       flux/manifests/01-bootstrap/flux-system/*
+      helm/**/templates/*.yaml
+
+  braces:
+    level: warning
+    ignore: |
+      helm/**/templates/*.yaml
+
+  indentation:
+    ignore: |
+      helm/**/templates/*.yaml
 
   # Adjust comments spacing rule to be compatible with prettier
   comments:
@@ -14,7 +24,10 @@ rules:
     level: warning  # Keep as warning instead of disabling completely
 
   # Other rules remain at their default settings
-  document-start: enable
+  document-start:
+    present: true
+    ignore: |
+      helm/**/templates/*.yaml
   document-end: disable
   truthy:
     check-keys: false

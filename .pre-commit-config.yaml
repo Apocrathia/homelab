@@ -7,7 +7,8 @@ repos:
         args: [--allow-multiple-documents]
         exclude: |
           (?x)^(
-            flux/manifests/.*/authentik-blueprint\.yaml
+            flux/manifests/.*/authentik-blueprint\.yaml|
+            helm/.*/templates/.*\.yaml
           )$
       - id: check-merge-conflict
       - id: detect-private-key
@@ -31,6 +32,10 @@ repos:
     hooks:
       - id: yamllint
         args: [--strict]
+        exclude: |
+          (?x)^(
+            helm/.*/templates/.*\.yaml
+          )$
 
   - repo: https://github.com/stackrox/kube-linter
     rev: v0.7.5
