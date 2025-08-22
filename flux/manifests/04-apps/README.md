@@ -20,7 +20,9 @@ The applications layer contains user-facing workloads and services that demonstr
 
 - [**Demo App**](demo-app/README.md) - **Baseline template** for application configuration patterns, demonstrating Authentik SSO, Gateway API routing, and SMB storage integration using the reusable `generic-app` Helm chart.
 
-### Automation and Workflow
+### User Applications
+
+- [**Companion**](companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO.
 
 - [**n8n**](n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
 
@@ -49,10 +51,11 @@ Applications are deployed using:
 
 The demo app serves as a **baseline template** that has evolved into a reusable Helm chart:
 
-1. **Phase 1 (Completed)**: Kustomize-based configuration with individual manifests
-2. **Phase 2 (Completed)**: Helm chart with configurable values and templates
-3. **Phase 3 (Completed)**: Reusable `generic-app` Helm chart for multiple applications
-4. **Phase 4 (Current)**: Production-ready chart with GitOps deployment through Flux
+1. **Phase 1 (✅ Completed)**: Kustomize-based configuration with individual manifests
+2. **Phase 2 (✅ Completed)**: Helm chart with configurable values and templates
+3. **Phase 3 (✅ Completed)**: Reusable `generic-app` Helm chart for multiple applications
+4. **Phase 4 (✅ Completed)**: Production-ready chart with GitOps deployment through Flux
+5. **Phase 5 (✅ In Progress)**: Real applications deployed using the chart (Companion, future apps)
 
 ### Integration Points
 
@@ -100,47 +103,6 @@ app-name/
 └── storage.yaml           # Storage configuration (if needed)
 ```
 
-### Template Configuration Patterns
-
-#### Authentik Integration Template
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: authentik-blueprint
-  labels:
-    authentik_blueprint: "true"
-data:
-  blueprint.yaml: |
-    model: authentik_providers_oauth2.oauth2provider
-    attrs:
-      name: "App Name"
-      client_id: "app-client-id"
-      redirect_uris:
-        - "https://app.domain.com/auth/callback"
-```
-
-#### Gateway API Routing Template
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: app-route
-spec:
-  parentRefs:
-    - name: main-gateway
-      namespace: cilium-system
-      sectionName: https
-  hostnames:
-    - app.domain.com
-  rules:
-    - backendRefs:
-        - name: ak-outpost-app-outpost
-          port: 9000
-```
-
 ## Security Considerations
 
 ### Application Security
@@ -172,31 +134,6 @@ spec:
 - **Access Logs**: Authentication and authorization logs
 - **Audit Logs**: Security and compliance logs
 - **Performance Logs**: Performance and debugging logs
-
-## Template Development
-
-### Current Demo App Status
-
-- **Purpose**: Production-ready baseline template for application configuration patterns
-- **Configuration**: GitOps deployment through Flux using generic-app Helm chart
-- **Integration**: Full Authentik SSO, Gateway API, and storage integration
-- **Documentation**: Comprehensive setup and troubleshooting guides
-- **Template Usage**: Serves as reference for deploying new applications
-
-### Chart Development Status
-
-- **Phase 1 (✅ Completed)**: Extract common patterns and configurations
-- **Phase 2 (✅ Completed)**: Create Helm chart with configurable values
-- **Phase 3 (✅ Completed)**: Template common application types (web apps, APIs, databases)
-- **Phase 4 (✅ Completed)**: Reusable Helm chart for multiple generic applications
-- **Phase 5 (✅ In Progress)**: Production deployment and validation
-
-### Template Benefits
-
-- **Consistency**: Standardized application deployment patterns
-- **Reusability**: Single chart for multiple similar applications
-- **Maintainability**: Centralized configuration management
-- **Scalability**: Easy deployment of new applications
 
 ## Troubleshooting
 
@@ -241,46 +178,6 @@ spec:
    kubectl get endpoints -n <app-namespace>
    ```
 
-### Health Checks
-
-```bash
-# Check application health
-kubectl get pods -n <app-namespace>
-
-# Check service endpoints
-kubectl get endpoints -n <app-namespace>
-
-# Check routing configuration
-kubectl get httproute -n <app-namespace>
-
-# Check storage status
-kubectl get pvc -n <app-namespace>
-
-# Check PostgreSQL clusters (for n8n)
-kubectl get clusters -n n8n
-```
-
-### n8n-Specific Troubleshooting
-
-```bash
-# Check n8n application status
-kubectl get pods,svc,pvc -n n8n
-kubectl get cluster n8n-postgres -n n8n
-
-# Check n8n database connectivity
-kubectl exec -it deployment/n8n -n n8n -- nc -zv n8n-postgres-rw 5432
-
-# Check n8n application logs
-kubectl logs -n n8n deployment/n8n --tail=50
-
-# Check PostgreSQL cluster logs
-kubectl logs -n n8n -l cnpg.io/cluster=n8n-postgres --tail=20
-
-# Verify Authentik integration
-kubectl get authentikprovider proxyprovider -n n8n
-kubectl get authentikapplication -n n8n
-```
-
 ## Best Practices
 
 ### Template Development
@@ -308,7 +205,7 @@ kubectl get authentikapplication -n n8n
 
 ### Chart Usage and Optimization
 
-1. **Template Usage**: Deploy new applications using the generic-app chart
+1. **Deploy More Apps**: Use generic-app chart for additional applications
 2. **Chart Enhancement**: Add new features and integrations as needed
 3. **Performance Tuning**: Optimize resource usage and scaling
 4. **Security Hardening**: Implement additional security best practices
