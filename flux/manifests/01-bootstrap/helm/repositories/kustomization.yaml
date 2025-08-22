@@ -13,6 +13,7 @@ resources:
   - bitnami.yaml
   - cert-manager.yaml
   - cilium.yaml
+  - cnpg.yaml
   - community-charts.yaml
   - csi-driver-smb.yaml
   - gitlab.yaml
