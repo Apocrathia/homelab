@@ -93,6 +93,12 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: bitfocus-satellite
+      protocol: TCP
+      port: 16622
+      allowedRoutes:
+        namespaces:
+          from: All
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1

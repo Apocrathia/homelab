@@ -22,10 +22,12 @@ This application is deployed using the [generic-app Helm chart](../../../helm/ge
 
 ### Configuration Details
 
-- **Container Image**: `ghcr.io/bitfocus/companion/companion:4.1.0-8331-main-c4786a4c6a`
+- **Container Image**: `ghcr.io/bitfocus/companion/companion:v4.0.3`
 - **Persistent Storage**: 5Gi Longhorn volume mounted at `/companion`
-- **Network Ports**: HTTP interface on port 8000
-- **Resource Limits**: 100m-500m CPU, 256Mi-512Mi memory
+- **Network Ports**:
+  - HTTP interface on port 8000
+  - Satellite communication on port 16622 (TCP listener added to main gateway)
+- **Resource Limits**: 100m-500m CPU, 1Gi-2Gi memory
 
 ### Storage
 
@@ -66,6 +68,15 @@ Companion provides a RESTful API for external control:
 # Example API endpoint
 curl -X GET "https://companion.gateway.services.apocrathia.com/api/v1/buttons"
 ```
+
+### Satellite Device Configuration
+
+Companion satellites can connect to the main instance via TCP port 16622:
+
+- **External Access**: `10.100.1.99:16622` (main gateway IP)
+- **Internal Access**: `bitfocus.bitfocus.svc:16622`
+- **Protocol**: TCP
+- **Gateway Listener**: `bitfocus-satellite` on main gateway
 
 ## Troubleshooting
 
