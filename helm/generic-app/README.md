@@ -10,7 +10,9 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - SMB storage for network file access
 - **Security**: 1Password Connect integration for secrets management
 - **Authentication**: Authentik SSO integration with automatic outpost deployment
-- **Networking**: Optional HTTPRoute for direct Gateway API access (when not using Authentik)
+- **Networking**:
+  - Optional HTTPRoute for direct Gateway API access (when not using Authentik)
+  - TCP routes for additional ports with automatic gateway configuration
 
 ## Values Configuration
 
@@ -105,7 +107,51 @@ secrets:
   itemPath: "vaults/Secrets/items/my-app-secrets"
 ```
 
-For a complete working example, see the [demo app configuration](../../flux/manifests/04-apps/demo-app/helmrelease.yaml).
+### TCP Route Configuration
+
+```yaml
+tcproute:
+  enabled: true
+  routes:
+    - name: my-service
+      port: 16623
+      gateway:
+        name: main-gateway
+        namespace: cilium-system
+```
+
+**Features:**
+
+- Automatically adds ports to the service
+- Generates gateway patches to add listeners
+- Creates TCPRoute resources for external access
+- Auto-generates unique section names if not specified
+
+### Complete Example
+
+```yaml
+app:
+  name: my-app
+  image: my-app:latest
+  container:
+    port: 8000
+  service:
+    port: 8000
+    targetPort: 8000
+
+tcproute:
+  enabled: true
+  routes:
+    - name: device-communication
+      port: 16623
+
+authentik:
+  enabled: true
+  displayName: "My Application"
+  externalHost: "https://my-app.gateway.services.apocrathia.com"
+```
+
+For a complete working example, see the [Companion app configuration](../../flux/manifests/04-apps/companion/helmrelease.yaml).
 
 ## Components
 
@@ -125,11 +171,17 @@ For a complete working example, see the [demo app configuration](../../flux/mani
 - `authentik-blueprint.yaml`: Authentik SSO configuration (conditional)
 - `httproute.yaml`: Direct Gateway API access (conditional, only when Authentik disabled)
 
+### Networking
+
+- `tcproute.yaml`: TCP routes for additional ports (conditional)
+- `gateway-patch.yaml`: Automatic gateway listener configuration (conditional)
+
 ## Design Principles
 
 - **Zero Dependencies**: No external chart dependencies
 - **Convention over Configuration**: Sensible defaults with minimal required configuration
 - **Conditional Components**: Only deploy what you need
+- **Automatic Configuration**: Gateway patches and routing automatically generated
 - **Security First**: Non-root containers (UID 1000), read-only filesystems, dropped capabilities
 - **Homelab Optimized**: Designed for typical homelab use cases and infrastructure
 - **Renovate Compatible**: Single image values for automatic dependency updates

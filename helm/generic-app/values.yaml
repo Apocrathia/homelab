@@ -111,3 +111,8 @@ httproute:
     name: main-gateway
     namespace: cilium-system
     sectionName: https
+
+# TCPRoute configuration for additional ports
+tcproute:
+  enabled: false
+  routes: []
