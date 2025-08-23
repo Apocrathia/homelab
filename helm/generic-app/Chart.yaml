@@ -3,7 +3,7 @@ apiVersion: v2
 name: generic-app
 description: A generic application Helm chart for homelab deployments
 type: application
-version: main
+version: 0.0.2
 keywords:
   - homelab
   - generic
