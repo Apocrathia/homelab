@@ -6,6 +6,13 @@ metadata:
   namespace: {{ .Values.app.name }}
   labels:
     app: {{ .Values.app.name }}
+    {{- if .Values.loadbalancer.enabled }}
+    app.kubernetes.io/name: {{ .Values.app.name }}
+    {{- end }}
+  {{- if .Values.loadbalancer.enabled }}
+  annotations:
+    io.cilium/lb-ipam-ips: "{{ .Values.loadbalancer.ip }}"
+  {{- end }}
 spec:
   selector:
     app: {{ .Values.app.name }}
@@ -22,4 +29,15 @@ spec:
       protocol: {{ .protocol | default "TCP" }}
     {{- end }}
     {{- end }}
-  type: {{ .Values.app.service.type | default "ClusterIP" }}
+    {{- if .Values.loadbalancer.enabled }}
+    {{- range .Values.loadbalancer.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+    {{- end }}
+  type: {{ if .Values.loadbalancer.enabled }}"LoadBalancer"{{ else }}{{ .Values.app.service.type | default "ClusterIP" }}{{ end }}
+  {{- if .Values.loadbalancer.enabled }}
+  externalTrafficPolicy: Local
+  {{- end }}

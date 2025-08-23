@@ -116,3 +116,24 @@ httproute:
 tcproute:
   enabled: false
   routes: []
+
+# LoadBalancer configuration for direct external access
+loadbalancer:
+  enabled: false
+  # IP address for the LoadBalancer (required when enabled)
+  ip: ""
+  # Ports to expose externally (in addition to main service port)
+  ports: []
+  # Example ports configuration:
+  # ports:
+  #   - name: satellite
+  #     port: 16622
+  #     targetPort: 16622
+  #     protocol: TCP
+
+  # Cilium configuration
+  cilium:
+    # Network interface for L2 announcements
+    interface: eth0
+    # Namespace where Cilium resources should be created
+    namespace: cilium-system

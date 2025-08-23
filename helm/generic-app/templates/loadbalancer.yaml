@@ -1,0 +1,29 @@
+{{- if .Values.loadbalancer.enabled }}
+---
+# L2 Announcement Policy for LoadBalancer
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: {{ .Values.app.name }}-l2-policy
+  namespace: {{ .Values.loadbalancer.cilium.namespace | default "cilium-system" }}
+spec:
+  interfaces:
+    - {{ .Values.loadbalancer.cilium.interface | default "eth0" }}
+  serviceSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.app.name }}
+  loadBalancerIPs: true
+---
+# IP Pool for LoadBalancer
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ .Values.app.name }}-pool
+  namespace: {{ .Values.loadbalancer.cilium.namespace | default "cilium-system" }}
+spec:
+  blocks:
+    - cidr: "{{ .Values.loadbalancer.ip }}/32"
+  serviceSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.app.name }}
+{{- end }}
