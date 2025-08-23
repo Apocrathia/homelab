@@ -1,0 +1,19 @@
+---
+{{- if .Values.tcproute.enabled }}
+{{- range .Values.tcproute.routes }}
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: {{ $.Values.app.name }}-{{ .name }}
+  namespace: {{ $.Values.app.name }}
+spec:
+  parentRefs:
+    - name: {{ if .gateway }}{{ .gateway.name }}{{ else }}"main-gateway"{{ end }}
+      namespace: {{ if .gateway }}{{ .gateway.namespace }}{{ else }}"cilium-system"{{ end }}
+      sectionName: {{ if .gateway }}{{ .gateway.sectionName }}{{ else }}{{ printf "%s-%s" $.Values.app.name .name }}{{ end }}
+  rules:
+    - backendRefs:
+        - name: {{ $.Values.app.name }}
+          port: {{ .port }}
+{{- end }}
+{{- end }}

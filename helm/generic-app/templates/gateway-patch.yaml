@@ -1,0 +1,25 @@
+{{- if .Values.tcproute.enabled }}
+{{- range .Values.tcproute.routes }}
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: gateway-patch-{{ $.Values.app.name }}-{{ .name }}
+  namespace: {{ $.Values.app.name }}
+patches:
+  - target:
+      kind: Gateway
+      name: {{ if .gateway }}{{ .gateway.name }}{{ else }}"main-gateway"{{ end }}
+      namespace: {{ if .gateway }}{{ .gateway.namespace }}{{ else }}"cilium-system"{{ end }}
+    patch: |
+      - op: add
+        path: /spec/listeners/-
+        value:
+          allowedRoutes:
+            namespaces:
+              from: All
+          name: {{ if .gateway }}{{ .gateway.sectionName }}{{ else }}{{ printf "%s-%s" $.Values.app.name .name }}{{ end }}
+          port: {{ .port }}
+          protocol: TCP
+{{- end }}
+{{- end }}
