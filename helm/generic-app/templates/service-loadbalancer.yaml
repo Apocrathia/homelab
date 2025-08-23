@@ -1,0 +1,27 @@
+{{- if .Values.loadbalancer.enabled }}
+---
+# Separate LoadBalancer service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.app.name }}-external
+  namespace: {{ .Values.app.name }}
+  labels:
+    app: {{ .Values.app.name }}
+    app.kubernetes.io/name: {{ .Values.app.name }}
+    external: "true"
+  annotations:
+    io.cilium/lb-ipam-ips: "{{ .Values.loadbalancer.ip }}"
+spec:
+  selector:
+    app: {{ .Values.app.name }}
+  ports:
+    {{- range .Values.loadbalancer.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+{{- end }}
