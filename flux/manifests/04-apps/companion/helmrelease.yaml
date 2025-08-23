@@ -27,15 +27,20 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 512Mi
         limits:
           cpu: 500m
-          memory: 512Mi
+          memory: 1Gi
       service:
         type: ClusterIP
         port: 8000
         targetPort: 8000
         portName: http
+      extraServicePorts:
+        - name: satellite
+          port: 16623
+          targetPort: 16623
+          protocol: TCP
 
     storage:
       longhorn:
@@ -56,3 +61,9 @@ spec:
 
     httproute:
       enabled: false
+
+    tcproute:
+      enabled: true
+      routes:
+        - name: satellite
+          port: 16623
