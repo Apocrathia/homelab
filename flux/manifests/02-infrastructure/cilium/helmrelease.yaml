@@ -63,10 +63,6 @@ spec:
     # Enable Hubble with modern secure defaults
     hubble:
       enabled: true
-      relay:
-        enabled: true
-        # Allow Hubble Relay to run on any node
-        affinity: {}
       ui:
         enabled: true
         securityContext:
@@ -75,6 +71,27 @@ spec:
         affinity: {}
       tls:
         enabled: false
+      # Enhanced Hubble metrics configuration
+      metrics:
+        enabled:
+          - dns:query;ignoreAAAA
+          - drop
+          - tcp
+          - flow
+          - port-distribution
+          - icmp
+          - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
+        enableOpenMetrics: true
+        serviceMonitor:
+          enabled: true
+      relay:
+        enabled: true
+        # Allow Hubble Relay to run on any node
+        affinity: {}
+        prometheus:
+          enabled: true
+          serviceMonitor:
+            enabled: true
 
     # Enable built-in DNS proxy with NextDNS
     dnsProxy:
@@ -158,16 +175,6 @@ spec:
       algorithm: maglev
       mode: hybrid
 
-    # Enable metrics for better observability
-    metrics:
-      enabled:
-        - dns:query;ignoreAAAA
-        - drop
-        - tcp
-        - flow
-        - icmp
-        - http
-
     # Enable BGP support if needed
     bgp:
       enabled: false
@@ -184,6 +191,11 @@ spec:
         limits:
           memory: 256Mi
       rollOutPods: true
+      # Enable Envoy metrics
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
 
     # Disable host firewall for Talos compatibility
     hostFirewall:
