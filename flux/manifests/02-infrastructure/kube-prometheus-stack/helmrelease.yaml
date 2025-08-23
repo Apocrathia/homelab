@@ -187,6 +187,9 @@ spec:
           enabled: true
           label: grafana_dashboard
           searchNamespace: ALL
+        datasources:
+          defaultDatasourceEnabled: true
+          isDefaultDatasource: false
 
     # AlertManager configuration
     alertmanager:
