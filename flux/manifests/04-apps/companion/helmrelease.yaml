@@ -62,8 +62,11 @@ spec:
     httproute:
       enabled: false
 
-    tcproute:
+    loadbalancer:
       enabled: true
-      routes:
+      ip: "10.100.1.97"
+      ports:
         - name: satellite
           port: 16622
+          targetPort: 16622
+          protocol: TCP
