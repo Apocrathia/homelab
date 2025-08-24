@@ -23,5 +23,5 @@ spec:
       protocol: {{ .protocol | default "TCP" }}
     {{- end }}
   type: LoadBalancer
-  externalTrafficPolicy: Local
+  externalTrafficPolicy: {{ .Values.loadbalancer.externalTrafficPolicy | default "Local" }}
 {{- end }}
