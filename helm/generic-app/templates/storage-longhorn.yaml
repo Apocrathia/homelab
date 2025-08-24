@@ -17,7 +17,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: {{ .Values.app.name }}-data
-  namespace: {{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
 spec:
   capacity:
     storage: {{ .Values.storage.longhorn.capacity }}
@@ -36,7 +36,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Values.app.name }}-data
-  namespace: {{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
 spec:
   accessModes:
     - ReadWriteOnce

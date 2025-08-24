@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: authentik-blueprint-{{ .Values.app.name }}
-  namespace: {{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
   labels:
     authentik_blueprint: "true"
 data:
@@ -30,7 +30,7 @@ data:
           authentication_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authenticationFlow }}"]]
           mode: "proxy"
           intercept_header_auth: false
-          internal_host: "http://{{ .Values.app.name }}.{{ .Values.app.name }}.svc.cluster.local:{{ .Values.app.service.port | default 80 }}"
+          internal_host: "http://{{ .Values.app.name }}.{{ .Values.app.namespace | default .Values.app.name }}.svc.cluster.local:{{ .Values.app.service.port | default 80 }}"
           external_host: "{{ .Values.authentik.externalHost }}"
 
       # Application for {{ .Values.authentik.displayName }}
@@ -43,6 +43,7 @@ data:
           slug: "{{ .Values.app.name }}"
           provider: !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
           launch_url: "{{ .Values.authentik.externalHost }}"
+          group: "Applications"
           open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
           {{- if .Values.authentik.icon }}
           icon: "{{ .Values.authentik.icon }}"
