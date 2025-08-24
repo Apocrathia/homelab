@@ -1,0 +1,78 @@
+---
+# Create Git tag when Chart.yaml is updated
+create-chart-tag:
+  stage: tag
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.email "ci@gitlab.com"
+    - git config --global user.name "GitLab CI"
+  script:
+    - |
+      echo "=== Chart Tag Creation Started ==="
+
+      # Validate Chart.yaml exists and is readable
+      if [ ! -f "helm/generic-app/Chart.yaml" ]; then
+        echo "❌ ERROR: helm/generic-app/Chart.yaml not found!"
+        exit 1
+      fi
+
+      # Extract version from Chart.yaml
+      CHART_VERSION=$(grep '^version:' helm/generic-app/Chart.yaml | awk '{print $2}' | tr -d '"')
+
+      # Validate version format (should be semver-like)
+      if [[ ! $CHART_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "❌ ERROR: Invalid version format: $CHART_VERSION"
+        echo "   Expected format: x.y.z (e.g., 0.0.7)"
+        exit 1
+      fi
+
+      TAG_NAME="generic-app-${CHART_VERSION}"
+      echo "✅ Chart version: $CHART_VERSION"
+      echo "✅ Tag name: $TAG_NAME"
+
+      # Check if tag already exists locally
+      if git tag -l | grep -q "^${TAG_NAME}$"; then
+        echo "⚠️  WARNING: Tag ${TAG_NAME} already exists locally!"
+        echo "   Checking if it exists on remote..."
+      fi
+
+      # Check if tag exists on remote
+      if git ls-remote origin "refs/tags/${TAG_NAME}" | grep -q .; then
+        echo "⏭️  SKIPPING: Tag ${TAG_NAME} already exists on remote repository"
+        echo "   This is expected if the tag was already created"
+        exit 0
+      fi
+
+      echo "🔄 Creating and pushing tag..."
+
+      # Create annotated tag with detailed message
+      git tag -a "${TAG_NAME}" -m "Release generic-app chart version ${CHART_VERSION}
+
+      Automatically created by GitLab CI
+      Chart: helm/generic-app
+      Version: ${CHART_VERSION}
+      Commit: ${CI_COMMIT_SHA}
+      Pipeline: ${CI_PIPELINE_URL}"
+
+      # Push the tag to repository
+      if git push origin "${TAG_NAME}"; then
+        echo "✅ SUCCESS: Tag ${TAG_NAME} created and pushed successfully!"
+        echo "   Tag URL: ${CI_PROJECT_URL}/-/tags/${TAG_NAME}"
+      else
+        echo "❌ ERROR: Failed to push tag ${TAG_NAME}"
+        exit 1
+      fi
+
+      echo "=== Chart Tag Creation Completed ==="
+  only:
+    changes:
+      - helm/generic-app/Chart.yaml
+      - helm/generic-app/**/*
+  when: manual
+  allow_failure: true
+  artifacts:
+    reports:
+      junit: junit.xml
+    when: always
+    expire_in: 1 week

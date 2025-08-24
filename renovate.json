@@ -42,6 +42,17 @@
     },
     {
       "customType": "regex",
+      "description": "Generic App Chart versions from Git tags",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "datasourceTemplate": "git-tags",
+      "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
+      "matchStrings": [
+        "# renovate: datasource=git-tags depName=apocrathia/homelab\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ],
+      "extractVersionTemplate": "^generic-app-(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
       "description": "Flux and other dependencies",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "matchStrings": [
