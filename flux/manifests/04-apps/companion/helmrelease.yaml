@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
-      version: "0.0.4"
+      version: "0.0.5"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -29,6 +29,11 @@ spec:
           - name: satellite-2
             containerPort: 16623
             protocol: TCP
+        env:
+          - name: COMPANION_SATELLITE_ADDRESS
+            value: "0.0.0.0"
+          - name: SATELLITE_BIND_ADDRESS
+            value: "0.0.0.0"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -78,6 +83,7 @@ spec:
     loadbalancer:
       enabled: true
       ip: "10.100.1.97"
+      externalTrafficPolicy: Cluster
       ports:
         - name: satellite
           port: 16622

@@ -49,6 +49,13 @@ spec:
               protocol: {{ .protocol | default "TCP" }}
             {{- end }}
             {{- end }}
+          {{- if .Values.app.container.env }}
+          env:
+            {{- range .Values.app.container.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

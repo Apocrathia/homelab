@@ -13,6 +13,10 @@ app:
     name: nginx
     port: 80
     # Optional: expose extra container ports
+    # Optional: set environment variables
+    # env:
+    #   - name: EXAMPLE_VAR
+    #     value: "example"
     # extraPorts:
     #   - name: satellite
     #     containerPort: 16622
@@ -132,6 +136,8 @@ loadbalancer:
   ip: ""
   # Ports to expose externally (in addition to main service port)
   ports: []
+  # External traffic policy for LoadBalancer (Local or Cluster)
+  externalTrafficPolicy: Local
   # Example ports configuration:
   # ports:
   #   - name: satellite

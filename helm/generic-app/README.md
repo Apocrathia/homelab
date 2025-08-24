@@ -30,6 +30,9 @@ app:
       - name: satellite
         containerPort: 16622
         protocol: TCP
+    env: # Environment variables (optional)
+      - name: EXAMPLE_VAR
+        value: "example-value"
   service:
     extraServicePorts: # Additional service ports (optional)
       - name: satellite
@@ -180,6 +183,7 @@ app:
 loadbalancer:
   enabled: true
   ip: "10.100.1.100"
+  externalTrafficPolicy: Cluster
   ports:
     - name: satellite
       port: 16622
@@ -215,7 +219,7 @@ For a complete working example, see the [Companion app configuration](../../flux
 ### Networking
 
 - `tcproute.yaml`: TCP routes for additional ports (conditional)
-- `service-loadbalancer.yaml`: LoadBalancer service for direct external access (conditional)
+- `service-loadbalancer.yaml`: LoadBalancer service for direct external access with configurable external traffic policy (conditional)
 - `loadbalancer.yaml`: Cilium L2 announcement and IP pool configuration (conditional)
 
 ## Design Principles
