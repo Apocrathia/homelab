@@ -16,7 +16,7 @@ entries:
       name: "Synology DSM"
       slug: "synology"
       group: "External"
-      launch_url: "https://diskstation.apocrathia.com:5001"
+      meta_launch_url: "https://diskstation.apocrathia.com:5001"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/synology.png"
       meta_description: "Synology DiskStation"

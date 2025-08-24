@@ -16,7 +16,7 @@ entries:
       name: "AMP Server Management"
       slug: "amp"
       group: "External"
-      launch_url: "http://game.apocrathia.com:8080"
+      meta_launch_url: "http://game.apocrathia.com:8080"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/amp.png"
       meta_description: "Server management and hosting solution for game servers"

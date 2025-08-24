@@ -16,7 +16,7 @@ entries:
       name: "Home Assistant"
       slug: "home-assistant"
       group: "External"
-      launch_url: "https://home.apocrathia.com:8123"
+      meta_launch_url: "https://home.apocrathia.com:8123"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/home-assistant.png"
       meta_description: "Home automation platform"

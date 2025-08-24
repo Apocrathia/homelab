@@ -16,7 +16,7 @@ entries:
       name: "UniFi Network"
       slug: "unifi"
       group: "External"
-      launch_url: "https://unifi.apocrathia.com"
+      meta_launch_url: "https://unifi.apocrathia.com"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/unifi.png"
       meta_description: "UniFi network management interface"

@@ -16,7 +16,7 @@ entries:
       name: "Proxmox VE"
       slug: "proxmox"
       group: "External"
-      launch_url: "https://node-01.management.apocrathia.com:8006"
+      meta_launch_url: "https://node-01.management.apocrathia.com:8006"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/proxmox.png"
       meta_description: "Proxmox virtualization management interface"
