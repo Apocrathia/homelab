@@ -40,6 +40,15 @@ spec:
           image: {{ .Values.app.image | default "nginx:alpine" }}
           ports:
             - containerPort: {{ .Values.app.container.port | default 80 }}
+            {{- if .Values.app.container.extraPorts }}
+            {{- range .Values.app.container.extraPorts }}
+            - containerPort: {{ .containerPort }}
+              {{- if .name }}
+              name: {{ .name }}
+              {{- end }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
