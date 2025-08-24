@@ -12,6 +12,7 @@ resources:
   - authentik.yaml
   - bitnami.yaml
   - cert-manager.yaml
+  - chaos-mesh.yaml
   - cilium.yaml
   - cnpg.yaml
   - community-charts.yaml
