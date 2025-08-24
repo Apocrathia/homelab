@@ -1,0 +1,128 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: chaos-mesh
+  namespace: chaos-mesh
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: chaos-mesh
+      # renovate: datasource=helm registryUrl=https://charts.chaos-mesh.org depName=chaos-mesh
+      version: "2.7.2"
+      sourceRef:
+        kind: HelmRepository
+        name: chaos-mesh
+        namespace: flux-system
+      interval: 30m
+  values:
+    # Configure for containerd runtime (used in Talos)
+    runtime: containerd
+    containerdRuntime: containerd
+    socketPath: /run/containerd/containerd.sock
+
+    # Controller manager configuration
+    controllerManager:
+      # Enable leader election for HA
+      leaderElection:
+        enabled: true
+      # Enable FilterNamespace to control chaos experiment scope
+      enableFilterNamespace: true
+      replicaCount: 3
+      resources:
+        limits:
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    # Chaos daemon configuration
+    chaosDaemon:
+      runtime: containerd
+      socketPath: /run/containerd/containerd.sock
+      resources:
+        limits:
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    # Dashboard configuration
+    dashboard:
+      enabled: true
+      securityMode: true # Enable authentication for production
+      resources:
+        limits:
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      service:
+        type: ClusterIP
+        port: 2333
+
+    # DNS server configuration
+    dnsServer:
+      enabled: true
+      resources:
+        limits:
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+
+    # ServiceMonitor for Prometheus integration
+    serviceMonitor:
+      enabled: true
+      namespace: chaos-mesh
+      labels:
+        release: kube-prometheus-stack
+      interval: 30s
+      scrapeTimeout: 10s
+
+    # Webhook configuration
+    admissionWebhooks:
+      enabled: true
+      failurePolicy: Fail
+      timeoutSeconds: 30
+
+    # Security contexts
+    securityContext:
+      enabled: true
+
+    # Enable Prometheus metrics
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+    # Set timezone for dashboard
+    timezone: "America/Denver"
+
+    # Enable all chaos types
+    bpfki:
+      enabled: true
+    chaosDns:
+      enabled: true
+    chaosFs:
+      enabled: true
+    chaosKernel:
+      enabled: true
+    ioChaos:
+      enabled: true
+    jvmChaos:
+      enabled: true
+    networkChaos:
+      enabled: true
+    physicalmachineChaos:
+      enabled: false # Disabled for containerized environment
+    podChaos:
+      enabled: true
+    stressChaos:
+      enabled: true
+    timeChaos:
+      enabled: true
+    httpChaos:
+      enabled: true
