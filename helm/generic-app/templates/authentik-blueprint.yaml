@@ -25,11 +25,8 @@ data:
           name: "{{ .Values.app.name }}-proxy-provider"
         attrs:
           name: "{{ .Values.app.name }}-proxy-provider"
-          # prettier-ignore
           authorization_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authorizationFlow }}"]]
-          # prettier-ignore
           invalidation_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.invalidationFlow }}"]]
-          # prettier-ignore
           authentication_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authenticationFlow }}"]]
           mode: "proxy"
           intercept_header_auth: false
@@ -44,7 +41,6 @@ data:
         attrs:
           name: "{{ .Values.authentik.displayName }}"
           slug: "{{ .Values.app.name }}"
-          # prettier-ignore
           provider: !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
           launch_url: "{{ .Values.authentik.externalHost }}"
           open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
@@ -60,10 +56,8 @@ data:
         attrs:
           name: "{{ .Values.app.name }}-outpost"
           type: "proxy"
-          # prettier-ignore
           service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "{{ .Values.authentik.serviceConnection }}"]]
           providers:
-            # prettier-ignore
             - !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
           config:
             authentik_host: "{{ .Values.authentik.authentikHost }}"
