@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: home-assistant
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for Home Assistant (Bookmark)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "home-assistant"
+    attrs:
+      name: "Home Assistant"
+      slug: "home-assistant"
+      group: "External"
+      launch_url: "https://home.apocrathia.com:8123"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/home-assistant.png"
+      meta_description: "Home automation platform"
+      meta_publisher: "Home Assistant"

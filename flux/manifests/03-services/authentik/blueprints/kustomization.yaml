@@ -13,6 +13,30 @@ configMapGenerator:
     namespace: authentik
     files:
       - truenas.yaml=truenas.yaml
+  - name: authentik-blueprint-unifi
+    namespace: authentik
+    files:
+      - unifi.yaml=unifi.yaml
+  - name: authentik-blueprint-proxmox
+    namespace: authentik
+    files:
+      - proxmox.yaml=proxmox.yaml
+  - name: authentik-blueprint-synology
+    namespace: authentik
+    files:
+      - synology.yaml=synology.yaml
+  - name: authentik-blueprint-gitlab
+    namespace: authentik
+    files:
+      - gitlab.yaml=gitlab.yaml
+  - name: authentik-blueprint-home-assistant
+    namespace: authentik
+    files:
+      - home-assistant.yaml=home-assistant.yaml
+  - name: authentik-blueprint-amp
+    namespace: authentik
+    files:
+      - amp.yaml=amp.yaml
 
 labels:
   - includeSelectors: true

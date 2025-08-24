@@ -30,6 +30,7 @@ entries:
     attrs:
       name: "Chaos Mesh"
       slug: "chaos-mesh-dashboard"
+      group: "Services"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "chaos-mesh-dashboard-proxy-provider"]]
       launch_url: "https://chaos.gateway.services.apocrathia.com"
       open_in_new_tab: true

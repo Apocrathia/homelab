@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: proxmox
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for Proxmox (Bookmark)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "proxmox"
+    attrs:
+      name: "Proxmox VE"
+      slug: "proxmox"
+      group: "External"
+      launch_url: "https://node-01.management.apocrathia.com:8006"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/proxmox.png"
+      meta_description: "Proxmox virtualization management interface"
+      meta_publisher: "Proxmox"
