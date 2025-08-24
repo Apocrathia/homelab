@@ -26,7 +26,8 @@ This application is deployed using the [generic-app Helm chart](../../../helm/ge
 - **Persistent Storage**: 5Gi Longhorn volume mounted at `/companion`
 - **Network Ports**:
   - HTTP interface on port 8000
-  - Satellite communication on port 16622 (TCP listener added to main gateway)
+  - Satellite communication on ports 16622 and 16623 (LoadBalancer service)
+  - External LoadBalancer IP: `10.100.1.97`
 - **Resource Limits**: 100m-500m CPU, 1Gi-2Gi memory
 
 ### Storage
@@ -71,12 +72,14 @@ curl -X GET "https://companion.gateway.services.apocrathia.com/api/v1/buttons"
 
 ### Satellite Device Configuration
 
-Companion satellites can connect to the main instance via TCP port 16622:
+Companion satellites can connect to the main instance via TCP ports 16622 and 16623:
 
-- **External Access**: `10.100.1.99:16622` (main gateway IP)
-- **Internal Access**: `bitfocus.bitfocus.svc:16622`
+- **External Access**: `10.100.1.97:16622` or `10.100.1.97:16623` (LoadBalancer IP)
+- **Internal Access**: `bitfocus.bitfocus.svc:16622` or `bitfocus.bitfocus.svc:16623`
 - **Protocol**: TCP
-- **Gateway Listener**: `bitfocus-satellite` on main gateway
+- **Service Type**: LoadBalancer with Cilium L2 announcement
+
+The LoadBalancer service provides direct external access without requiring Gateway API configuration for satellite connections.
 
 ## Troubleshooting
 

@@ -13,6 +13,7 @@ A generic Helm chart for deploying applications in the homelab environment with 
 - **Networking**:
   - Optional HTTPRoute for direct Gateway API access (when not using Authentik)
   - TCP routes for additional ports
+  - LoadBalancer service for direct external access with multiple ports
 
 ## Values Configuration
 
@@ -23,6 +24,18 @@ app:
   name: my-app # Application name (used for namespace and resources)
   # renovate: datasource=docker depName=nginx
   image: nginx:alpine # Container image (single value for renovate compatibility)
+  container:
+    port: 80 # Main container port
+    extraPorts: # Additional container ports (optional)
+      - name: satellite
+        containerPort: 16622
+        protocol: TCP
+  service:
+    extraServicePorts: # Additional service ports (optional)
+      - name: satellite
+        port: 16622
+        targetPort: 16622
+        protocol: TCP
   volumes: # EmptyDir volumes (optional)
     emptyDir:
       - name: cache
@@ -126,6 +139,23 @@ tcproute:
 - Creates TCPRoute resources for external access
 - Auto-generates unique section names if not specified
 
+### LoadBalancer Configuration
+
+```yaml
+loadbalancer:
+  enabled: true
+  ip: "10.100.1.100" # Static IP for LoadBalancer
+  ports:
+    - name: satellite
+      port: 16622
+      targetPort: 16622
+      protocol: TCP
+    - name: satellite-2
+      port: 16623
+      targetPort: 16623
+      protocol: TCP
+```
+
 ### Complete Example
 
 ```yaml
@@ -134,15 +164,27 @@ app:
   image: my-app:latest
   container:
     port: 8000
+    extraPorts:
+      - name: satellite
+        containerPort: 16622
+        protocol: TCP
   service:
     port: 8000
     targetPort: 8000
+    extraServicePorts:
+      - name: satellite
+        port: 16622
+        targetPort: 16622
+        protocol: TCP
 
-tcproute:
+loadbalancer:
   enabled: true
-  routes:
-    - name: device-communication
-      port: 16623
+  ip: "10.100.1.100"
+  ports:
+    - name: satellite
+      port: 16622
+      targetPort: 16622
+      protocol: TCP
 
 authentik:
   enabled: true
@@ -173,6 +215,8 @@ For a complete working example, see the [Companion app configuration](../../flux
 ### Networking
 
 - `tcproute.yaml`: TCP routes for additional ports (conditional)
+- `service-loadbalancer.yaml`: LoadBalancer service for direct external access (conditional)
+- `loadbalancer.yaml`: Cilium L2 announcement and IP pool configuration (conditional)
 
 ## Design Principles
 

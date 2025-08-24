@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
-      version: "0.0.3"
+      version: "0.0.4"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -22,6 +22,13 @@ spec:
       container:
         name: companion
         port: 8000
+        extraPorts:
+          - name: satellite
+            containerPort: 16622
+            protocol: TCP
+          - name: satellite-2
+            containerPort: 16623
+            protocol: TCP
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -37,6 +44,16 @@ spec:
         port: 8000
         targetPort: 8000
         portName: http
+        # Also expose satellite ports inside the cluster (optional but useful)
+        extraServicePorts:
+          - name: satellite
+            port: 16622
+            targetPort: 16622
+            protocol: TCP
+          - name: satellite-2
+            port: 16623
+            targetPort: 16623
+            protocol: TCP
 
     storage:
       longhorn:
@@ -65,4 +82,8 @@ spec:
         - name: satellite
           port: 16622
           targetPort: 16622
+          protocol: TCP
+        - name: satellite-2
+          port: 16623
+          targetPort: 16623
           protocol: TCP

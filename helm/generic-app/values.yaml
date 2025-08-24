@@ -12,6 +12,14 @@ app:
   container:
     name: nginx
     port: 80
+    # Optional: expose extra container ports
+    # extraPorts:
+    #   - name: satellite
+    #     containerPort: 16622
+    #     protocol: TCP
+    #   - name: satellite-2
+    #     containerPort: 16623
+    #     protocol: TCP
 
   # Deployment configuration
   replicas: 1
