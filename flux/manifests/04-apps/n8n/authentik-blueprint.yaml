@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "n8n-proxy-provider"]]
       launch_url: "https://n8n.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.simpleicons.org/n8n/EA4B71"
+      icon: "https://i.imgur.com/DWaDo7Q.png"
       meta_description: "n8n workflow automation platform"
       meta_publisher: "n8n"
 
