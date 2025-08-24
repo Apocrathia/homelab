@@ -47,7 +47,7 @@
       "datasourceTemplate": "git-tags",
       "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
       "matchStrings": [
-        "# renovate: datasource=git-tags depName=apocrathia/homelab\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+        "# renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
       "extractVersionTemplate": "^generic-app-(?<version>.*)$"
     },
