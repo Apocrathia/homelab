@@ -14,11 +14,8 @@ entries:
       name: "kubernetes-dashboard-proxy-provider"
     attrs:
       name: "kubernetes-dashboard-proxy-provider"
-      # prettier-ignore
       authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
-      # prettier-ignore
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
-      # prettier-ignore
       authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
       mode: "proxy"
       intercept_header_auth: true
@@ -42,7 +39,6 @@ entries:
     attrs:
       name: "Kubernetes Dashboard"
       slug: "kubernetes-dashboard"
-      # prettier-ignore
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
       launch_url: "https://dashboard.gateway.services.apocrathia.com"
       open_in_new_tab: true
@@ -56,10 +52,8 @@ entries:
     attrs:
       name: "kubernetes-dashboard-outpost"
       type: "proxy"
-      # prettier-ignore
       service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
       providers:
-        # prettier-ignore
         - !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
       config:
         authentik_host: "https://auth.gateway.services.apocrathia.com"
