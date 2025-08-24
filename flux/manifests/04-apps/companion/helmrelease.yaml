@@ -9,14 +9,16 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
-      version: "0.0.5"
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.6"
       sourceRef:
         kind: GitRepository
         name: homelab
         namespace: flux-system
   values:
     app:
-      name: bitfocus
+      name: companion
+      namespace: bitfocus
       # renovate: datasource=docker depName=ghcr.io/bitfocus/companion/companion
       image: ghcr.io/bitfocus/companion/companion:v4.0.3
       container:
