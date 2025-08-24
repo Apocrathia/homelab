@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: unifi
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for UniFi (Bookmark)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "unifi"
+    attrs:
+      name: "UniFi Network"
+      slug: "unifi"
+      group: "External"
+      launch_url: "https://unifi.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/unifi.png"
+      meta_description: "UniFi network management interface"
+      meta_publisher: "Ubiquiti"

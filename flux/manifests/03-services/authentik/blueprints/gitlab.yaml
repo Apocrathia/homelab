@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: gitlab
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for GitLab (Bookmark)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "gitlab"
+    attrs:
+      name: "GitLab Repository"
+      slug: "gitlab"
+      group: "External"
+      launch_url: "https://gitlab.com/Apocrathia/homelab"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/gitlab.png"
+      meta_description: "GitLab repository"
+      meta_publisher: "GitLab"

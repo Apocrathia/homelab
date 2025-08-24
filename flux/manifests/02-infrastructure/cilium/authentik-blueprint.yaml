@@ -30,10 +30,13 @@ entries:
     attrs:
       name: "Hubble Network Observability"
       slug: "hubble"
+      group: "Infrastructure"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-proxy-provider"]]
       launch_url: "https://hubble.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://cilium.io/static/hubble-dark-1-91890e273cb3d50a8f520e3cbe178806.svg"
+      meta_description: "Network observability platform for cloud native environments"
+      meta_publisher: "Cilium"
 
   # Outpost for Hubble
   - model: authentik_outposts.outpost
