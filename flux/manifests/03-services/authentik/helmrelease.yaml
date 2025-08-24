@@ -59,11 +59,11 @@ spec:
       replicas: 2
       resources:
         requests:
-          cpu: 100m
-          memory: 512Mi
+          cpu: 250m
+          memory: 1Gi
         limits:
-          cpu: 500m
-          memory: 2Gi
+          cpu: 1000m
+          memory: 4Gi
       volumes:
         - name: authentik-secrets
           secret:
@@ -104,11 +104,11 @@ spec:
       replicas: 2
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 250m
+          memory: 512Mi
         limits:
-          cpu: 300m
-          memory: 1Gi
+          cpu: 500m
+          memory: 2Gi
       volumes:
         - name: authentik-secrets
           secret:
