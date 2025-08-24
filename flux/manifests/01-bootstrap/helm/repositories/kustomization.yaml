@@ -24,5 +24,6 @@ resources:
   - longhorn.yaml
   - metrics-server.yaml
   - minio.yaml
+  - open-webui.yaml
   - prometheus-community.yaml
   - stakater.yaml
