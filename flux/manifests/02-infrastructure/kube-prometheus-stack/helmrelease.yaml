@@ -236,11 +236,11 @@ spec:
         retention: 14d
         resources:
           requests:
-            cpu: 200m
-            memory: 200Mi
+            cpu: 500m
+            memory: 2Gi
           limits:
-            cpu: 1000m
-            memory: 1Gi
+            cpu: 2000m
+            memory: 4Gi
         storageSpec:
           volumeClaimTemplate:
             metadata:
@@ -256,7 +256,7 @@ spec:
               accessModes: ["ReadWriteOnce"]
               resources:
                 requests:
-                  storage: 100Gi
+                  storage: 20Gi
         serviceMonitorSelector: {}
         serviceMonitorNamespaceSelector: {}
         podMonitorSelector: {}
