@@ -45,7 +45,7 @@
       "description": "Generic App Chart versions from Git tags",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "datasourceTemplate": "git-tags",
-      "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
+      "depNameTemplate": "generic-app",
       "matchStrings": [
         "# renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
