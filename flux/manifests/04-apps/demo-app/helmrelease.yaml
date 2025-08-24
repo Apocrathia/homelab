@@ -9,6 +9,7 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
+      # renovate: datasource=helm registryUrl=https://gitlab.com/apocrathia/homelab/helm depName=generic-app
       version: "0.0.5"
       sourceRef:
         kind: GitRepository
