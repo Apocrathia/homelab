@@ -13,7 +13,7 @@ This deployment includes:
 
 - OSV MCP server for vulnerability database queries
 - ToolHive proxy for secure communication
-- Gateway API exposure at `https://mcp-osv.gateway.services.apocrathia.com`
+- Gateway API exposure at `https://mcp.gateway.services.apocrathia.com/osv`
 - Network permission profile for database access
 
 ## Configuration
@@ -39,7 +39,7 @@ Add the following configuration to your Cursor MCP settings:
 {
   "mcpServers": {
     "osv-vulnerability-scanner": {
-      "url": "https://mcp-osv.gateway.services.apocrathia.com/mcp"
+      "url": "https://mcp.gateway.services.apocrathia.com/osv"
     }
   }
 }
@@ -49,7 +49,7 @@ Add the following configuration to your Cursor MCP settings:
 
 For other MCP-compatible clients, use this server configuration:
 
-- **Server URL**: `https://mcp-osv.gateway.services.apocrathia.com/mcp`
+- **Server URL**: `https://mcp.gateway.services.apocrathia.com/osv`
 - **Transport**: HTTP POST with JSON-RPC
 - **Authentication**: None (currently open)
 
@@ -60,15 +60,17 @@ You can test the MCP server connection:
 ```bash
 # Initialize MCP connection (recommended test)
 curl -k -X POST -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
-  https://mcp-osv.gateway.services.apocrathia.com/mcp
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}' \
+  https://mcp.gateway.services.apocrathia.com/osv
 
 # Should return server info and capabilities
 
 # List available tools
 curl -k -X POST -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  https://mcp-osv.gateway.services.apocrathia.com/mcp
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  https://mcp.gateway.services.apocrathia.com/osv
 ```
 
 ### Available MCP Tools
