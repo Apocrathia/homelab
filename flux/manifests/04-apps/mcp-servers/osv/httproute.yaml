@@ -11,12 +11,18 @@ spec:
       namespace: cilium-system
       sectionName: https
   hostnames:
-    - "mcp-osv.gateway.services.apocrathia.com"
+    - "mcp.gateway.services.apocrathia.com"
   rules:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /osv
       backendRefs:
         - name: mcp-osv-vulnerability-scanner-proxy
           port: 8080
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /mcp
