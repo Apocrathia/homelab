@@ -1,0 +1,64 @@
+---
+# ToolHive Operator CRDs
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: toolhive-operator-crds
+  namespace: toolhive-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: toolhive-operator-crds
+      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/toolhive depName=toolhive-operator-crds
+      version: "0.0.15"
+      sourceRef:
+        kind: HelmRepository
+        name: toolhive
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+---
+# ToolHive Operator
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: toolhive-operator
+  namespace: toolhive-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: toolhive-operator
+      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/toolhive depName=toolhive-operator
+      version: "0.2.6"
+      sourceRef:
+        kind: HelmRepository
+        name: toolhive
+        namespace: flux-system
+      interval: 1m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Cluster-wide deployment mode (default)
+    operator:
+      rbac:
+        scope: "cluster"
+    # Resource limits for the operator
+    resources:
+      limits:
+        cpu: "100m"
+        memory: "128Mi"
+      requests:
+        cpu: "50m"
+        memory: "64Mi"

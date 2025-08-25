@@ -16,4 +16,5 @@ resources:
   - postgresql
   - reloader
   - trivy
+  - toolhive
   - chaos-mesh
