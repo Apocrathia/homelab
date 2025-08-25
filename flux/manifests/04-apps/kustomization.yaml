@@ -7,3 +7,4 @@ resources:
   - demo-app
   - n8n
   - companion
+  - openwebui
