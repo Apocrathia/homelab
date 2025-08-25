@@ -27,3 +27,4 @@ resources:
   - open-webui.yaml
   - prometheus-community.yaml
   - stakater.yaml
+  - toolhive.yaml
