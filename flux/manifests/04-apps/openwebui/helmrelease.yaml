@@ -1,0 +1,80 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openwebui
+  namespace: openwebui
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: open-webui
+      # renovate: datasource=helm registryUrl=https://helm.openwebui.com depName=open-webui
+      version: "7.6.0"
+      sourceRef:
+        kind: HelmRepository
+        name: open-webui
+        namespace: flux-system
+  values:
+    # Disable Ollama - running on my gaming pc
+    ollama:
+      enabled: false
+
+    # Enable pipelines for enhanced functionality
+    pipelines:
+      enabled: true
+
+    # Disable tika as we may not need document processing initially
+    tika:
+      enabled: false
+
+    # Main service configuration
+    service:
+      type: ClusterIP
+      port: 80
+
+    # Ingress configuration - disabled since we use Gateway API
+    ingress:
+      enabled: false
+
+    # Persistence configuration using Longhorn
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 20Gi
+
+    # Resource limits
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    # Security settings - OpenWebUI requires root to function properly
+    securityContext:
+      readOnlyRootFilesystem: false
+      runAsNonRoot: false
+      allowPrivilegeEscalation: false
+
+    # Pod security context - allow root for OpenWebUI
+    podSecurityContext:
+      runAsNonRoot: false
+
+    # Environment variables for proper proxy handling
+    extraEnvVars:
+      - name: WEBUI_URL
+        value: "https://chat.gateway.services.apocrathia.com"
+
+    # SSO Configuration for authentik integration
+    sso:
+      enabled: true
+      trustedHeader:
+        enabled: true
+        emailHeader: "X-authentik-email"
+        nameHeader: "X-authentik-name"
+
+    # Logging configuration
+    logging:
+      level: "info"
