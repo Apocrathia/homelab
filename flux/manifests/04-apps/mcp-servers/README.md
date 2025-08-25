@@ -19,9 +19,10 @@ This directory contains MCP server deployments managed by the ToolHive operator:
 
 ### OSV Vulnerability Scanner
 
-- **Hostname**: `https://osv.apocrathia.com`
-- **Purpose**: Query the Open Source Vulnerability database
-- **Network Access**: Required for database queries
+- **Hostname**: `https://mcp-osv.gateway.services.apocrathia.com`
+- **Purpose**: Query the Open Source Vulnerability database for security vulnerabilities
+- **Available Tools**: Vulnerability queries, batch scanning, detailed vulnerability information
+- **Network Access**: Required for OSV database queries
 
 ## Adding New MCP Servers
 
