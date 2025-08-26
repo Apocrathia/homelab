@@ -1,7 +1,6 @@
 ---
-description:
-globs: *
 alwaysApply: true
+description: General guidelines for the project
 ---
 # General Guidelines for Homelab Development
 
@@ -28,13 +27,13 @@ alwaysApply: true
 - Plan for system recovery scenarios
 
 ## Documentation Standards
-- Maintain up-to-date README files
-- Document all configuration options and requirements
-- Include setup and installation guides
-- Provide troubleshooting documentation
-- Keep a changelog of major changes
-- Document architecture decisions
-- Record configuration changes and their purposes
+- Well-structured with clear sections
+- Concise but not minimal - include necessary technical details
+- Practical and actionable
+- Security-focused when appropriate
+- Include real examples and commands
+- Include configuration patterns, examples, and usage instructions
+- Avoid duplicating static configuration values, but do include configuration patterns and examples
 
 ## Observability
 - Implement comprehensive monitoring
@@ -45,12 +44,17 @@ alwaysApply: true
 - Track system health indicators
 
 ## Development Workflow
-- Use version control for all changes
+- Use version control for all changes, with explicit approval from a human
 - Test changes before applying to live system
 - Write clear and descriptive commit messages
 - Document breaking changes
 - Keep track of dependencies and versions
 - Maintain a clean and organized codebase
+
+## GitOps Workflow
+- While the project uses Flux for GitOps, iterative development may require direct cluster testing
+- Have the user apply changes directly for testing when needed. Changes will be committed to the repository by the user.
+- This balances development efficiency with GitOps principles
 
 ## Maintenance and Operations
 - Schedule regular system updates
@@ -68,3 +72,10 @@ alwaysApply: true
 - Document testing procedures
 - Verify changes meet requirements
 - Have rollback plans for changes
+
+## MCP Tools Usage
+- Use MCP tools when they provide value for the task at hand
+- Use these tools naturally rather than forcing their usage
+- Choose the most appropriate tool for the specific task rather than using all available tools
+- Combine tools where beneficial
+- Use local MCP tools over external model features when possible to optimize performance and cost
