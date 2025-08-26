@@ -18,6 +18,7 @@ flux/
 ## Flux Guidelines
 
 1. All Flux resources should be defined in YAML format
+
 2. Use Flux's GitOps Toolkit components:
    - Source controllers for Git repositories
    - Kustomize controllers for deployments
@@ -53,9 +54,9 @@ flux/
 ## Deployment Process
 
 1. Create or update manifests in the appropriate directory
-2. Test changes using available tools or the command line (eg `kubectl kustomize`)
-3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing
-4. Commit working configurations to the repository
+2. Test and validate changes using available tools or the command line (eg `kubectl kustomize`, `helm show values`, `helm template`)
+3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing before committing
+4. Commit verified working configurations to the repository
 5. Flux will automatically reconcile changes
 
 ## Security Considerations
@@ -85,7 +86,6 @@ flux/
 4. Regular pruning of unused resources
 5. Maintain documentation
 6. Secret Management:
-   - Never commit raw secrets to Git
+   - **Never** commit raw secrets to Git
    - Use 1Password Connect references (op://vault/item/field)
-   - Regularly rotate 1Password Connect tokens
    - Maintain clear documentation of secret references
