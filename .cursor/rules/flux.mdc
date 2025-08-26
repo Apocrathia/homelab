@@ -53,9 +53,10 @@ flux/
 ## Deployment Process
 
 1. Create or update manifests in the appropriate directory
-2. Test changes locally using `kubectl kustomize`
-3. Commit and push changes to the repository
-4. Flux will automatically reconcile changes
+2. Test changes using available tools or the command line (eg `kubectl kustomize`)
+3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing
+4. Commit working configurations to the repository
+5. Flux will automatically reconcile changes
 
 ## Security Considerations
 
