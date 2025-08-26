@@ -32,6 +32,13 @@ This directory contains MCP server deployments managed by the ToolHive operator:
 - **Available Tools**: Web content fetching, markdown conversion, content extraction
 - **Network Access**: Required for web content retrieval
 
+### MKP Kubernetes Server
+
+- **Hostname**: `https://mcp.gateway.services.apocrathia.com/mkp`
+- **Purpose**: Direct Kubernetes cluster access and management
+- **Available Tools**: Resource listing, getting, applying, and pod execution
+- **Network Access**: Required for Kubernetes API communication
+
 ## Adding New MCP Servers
 
 Create new server directories under `mcp-servers/` with the following structure:

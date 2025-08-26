@@ -7,3 +7,4 @@ metadata:
 resources:
   - osv/
   - gofetch/
+  - mkp/
