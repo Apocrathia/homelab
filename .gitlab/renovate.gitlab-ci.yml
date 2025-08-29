@@ -8,7 +8,7 @@ variables:
 
 .renovate:
   image:
-    name: ghcr.io/renovatebot/renovate:41.89.1
+    name: ghcr.io/renovatebot/renovate:41.89.2
   script:
     - renovate
 
