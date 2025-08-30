@@ -34,22 +34,22 @@ flux/
 ## Kustomize Guidelines
 
 1. Base configurations:
-   - Keep base configurations generic
-   - Include all mandatory resources
-   - Define resource limits and requests
-   - Set appropriate labels and annotations
+   - Store base manifests for each deployment in `flux/manifests/` under the appropriate directory
+   - Keep base files generic and reusable
+   - Include all required resources for the component
+   - Set resource requests/limits and standard labels/annotations
 
 2. Overlays:
-   - Create overlays for different environments
-   - Override only necessary values
-   - Use patches sparingly
-   - Maintain clear documentation for overrides
+   - Use a single overlay for the environment managed by this repository
+   - Reference base component directories in the overlay rather than duplicating files
+   - Override only values that differ from the base
+   - Use Kustomize patches only when necessary
+   - Document overlay-specific changes in comments or a local README if needed
 
 3. Common practices:
-   - Use namespaces for isolation
-   - Implement resource quotas
-   - Define network policies
-   - Set up monitoring and logging
+   - Use namespaces to isolate components
+   - Apply resource quotas and network policies at the namespace or deployment level
+   - Integrate monitoring and logging as part of the base or overlay as appropriate
 
 ## Deployment Process
 
