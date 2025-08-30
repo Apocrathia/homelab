@@ -13,10 +13,14 @@ configMapGenerator:
     namespace: authentik
     files:
       - truenas.yaml=truenas.yaml
-  - name: authentik-blueprint-unifi
+  - name: authentik-blueprint-unifi-network
     namespace: authentik
     files:
-      - unifi.yaml=unifi.yaml
+      - unifi.yaml=unifi-network.yaml
+  - name: authentik-blueprint-unifi-protect
+    namespace: authentik
+    files:
+      - unifi.yaml=unifi-protect.yaml
   - name: authentik-blueprint-proxmox
     namespace: authentik
     files:
