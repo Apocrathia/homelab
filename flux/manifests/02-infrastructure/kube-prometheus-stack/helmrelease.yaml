@@ -12,7 +12,7 @@ spec:
       chart: kube-prometheus-stack
 
       # renovate: datasource=helm registryUrl=https://prometheus-community.github.io/helm-charts depName=kube-prometheus-stack
-      version: "77.1.0"
+      version: "77.1.1"
       sourceRef:
         kind: HelmRepository
         name: prometheus-community
