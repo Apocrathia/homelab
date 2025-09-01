@@ -17,4 +17,5 @@ resources:
   - reloader
   - trivy
   - toolhive
+  - external-secrets
   - chaos-mesh

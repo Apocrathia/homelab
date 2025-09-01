@@ -22,6 +22,7 @@ This directory contains the deployment configuration for platform services that 
 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
+- [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
 
 ### Data Services
 
@@ -59,6 +60,6 @@ All services implement:
 
 - **RBAC**: Role-based access control
 - **Network Policies**: Traffic isolation and control
-- **Secret Management**: 1Password integration for sensitive data
+- **Secret Management**: 1Password integration and External Secrets Operator for sensitive data
 - **Audit Logging**: Comprehensive audit trails
 - **TLS Encryption**: End-to-end encryption for all communications
