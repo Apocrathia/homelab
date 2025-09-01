@@ -5,7 +5,7 @@ metadata:
   name: apps
 resources:
   - demo-app
-  - mcp-servers
-  - n8n
-  - companion
-  - openwebui
+  - artificial-intelligence/mcp-servers
+  - artificial-intelligence/openwebui
+  - management/n8n
+  - management/companion
