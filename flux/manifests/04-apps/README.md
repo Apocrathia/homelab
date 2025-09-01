@@ -6,12 +6,11 @@ This directory contains user-facing applications and workloads deployed in the c
 
 ## Overview
 
-The applications layer contains user-facing workloads and services that demonstrate the homelab infrastructure capabilities:
+The applications layer contains user-facing workloads and services organized by functional categories:
 
 - **Application Templates**: Baseline configurations for common application patterns
-- **Automation and Workflow**: Workflow automation and business process tools
-- **Development Tools**: Applications for development and testing
-- **User Services**: End-user applications and services
+- **Artificial Intelligence**: AI/ML applications and MCP servers for LLM tool integration
+- **Management**: Administrative and workflow automation tools
 - **Integration Examples**: Examples of infrastructure integration patterns
 
 ## Components
@@ -20,11 +19,20 @@ The applications layer contains user-facing workloads and services that demonstr
 
 - [**Demo App**](demo-app/README.md) - **Baseline template** for application configuration patterns, demonstrating Authentik SSO, Gateway API routing, and SMB storage integration using the reusable `generic-app` Helm chart.
 
-### User Applications
+### Artificial Intelligence
 
-- [**Companion**](companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO.
+- [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with Large Language Models (LLMs) with Authentik SSO integration and Gateway API routing.
 
-- [**n8n**](n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
+- [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration:
+  - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
+  - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
+  - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
+
+### Management
+
+- [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO.
+
+- [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
 
 ### Application Patterns
 
