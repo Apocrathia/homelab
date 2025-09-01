@@ -1,0 +1,34 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets
+  namespace: external-secrets-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: external-secrets
+      # renovate: datasource=helm registryUrl=https://charts.external-secrets.io depName=external-secrets
+      version: "0.19.2"
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets
+        namespace: flux-system
+  values:
+    # Override image repository to use GitHub Container Registry instead of oci.external-secrets.io
+    image:
+      repository: ghcr.io/external-secrets/external-secrets
+    webhook:
+      image:
+        repository: ghcr.io/external-secrets/external-secrets
+    certController:
+      image:
+        repository: ghcr.io/external-secrets/external-secrets
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
