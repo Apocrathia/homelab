@@ -16,11 +16,11 @@ configMapGenerator:
   - name: authentik-blueprint-unifi-network
     namespace: authentik
     files:
-      - unifi.yaml=unifi-network.yaml
+      - unifi-network.yaml=unifi-network.yaml
   - name: authentik-blueprint-unifi-protect
     namespace: authentik
     files:
-      - unifi.yaml=unifi-protect.yaml
+      - unifi-protect.yaml=unifi-protect.yaml
   - name: authentik-blueprint-proxmox
     namespace: authentik
     files:
