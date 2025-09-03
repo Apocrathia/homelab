@@ -29,7 +29,7 @@ This deployment creates:
 - **Service Account**: `kuber-ios` in namespace `kuber-ios`
 - **RBAC**: Bound to cluster `view` role (read-only access)
 - **Token Secret**: `kuber-ios-token` of type `kubernetes.io/service-account-token`
-- **1Password Item**: `homelab-kuber-ios-token` in `Secrets` vault
+- **1Password Item**: `kuber-ios-token` in `Secrets` vault
 - **Refresh Interval**: 24 hours
 - **Status**: ✅ Working - Token successfully synced to 1Password
 
@@ -43,7 +43,7 @@ This deployment creates:
 
    - Open 1Password on your iOS device
    - Navigate to vault `Secrets`
-   - Find item `homelab-kuber-ios-token`
+   - Find item `kuber-ios-token`
    - Copy the password field (this is your bearer token)
 
 3. **Configure Kuber**:

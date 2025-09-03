@@ -9,6 +9,7 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - helmrelease.yaml
+  - push-secret.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
