@@ -4,7 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: kubernetes-mcp-server
-  namespace: mkp
+  namespace: mcp-mkp
 rules:
   # Core resources needed for MKP functionality
   - apiGroups: [""]
@@ -46,7 +46,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kubernetes-mcp-server
-  namespace: mkp
+  namespace: mcp-mkp
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -54,7 +54,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-mcp-sa
-    namespace: mkp
+    namespace: mcp-mkp
 ---
 # ClusterRole for cluster-wide resources (READ-ONLY, UNAUTHENTICATED)
 apiVersion: rbac.authorization.k8s.io/v1
@@ -84,4 +84,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-mcp-sa
-    namespace: mkp
+    namespace: mcp-mkp
