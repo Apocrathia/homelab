@@ -21,18 +21,19 @@ The applications layer contains user-facing workloads and services organized by 
 
 ### Artificial Intelligence
 
-- [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with Large Language Models (LLMs) with Authentik SSO integration and Gateway API routing.
-
-- [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration:
-  - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
-  - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
-  - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
+- [**AI Applications**](artificial-intelligence/README.md) - Overview of AI and machine learning applications
+  - [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with Large Language Models (LLMs) with Authentik SSO integration and Gateway API routing
+  - [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration:
+    - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
+    - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
+    - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
 
 ### Management
 
-- [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO.
-
-- [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
+- [**Management Applications**](management/README.md) - Overview of management and administrative applications
+  - [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO
+  - [**Kuber**](management/kuber/README.md) - iOS Kubernetes dashboard token management for mobile cluster access
+  - [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
 
 ### Application Patterns
 
