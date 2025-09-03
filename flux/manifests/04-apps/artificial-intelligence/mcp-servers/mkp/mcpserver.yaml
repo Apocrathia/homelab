@@ -3,7 +3,7 @@ apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
 metadata:
   name: kubernetes-mcp
-  namespace: mkp
+  namespace: mcp-mkp
   labels:
     app.kubernetes.io/name: kubernetes-mcp
     app.kubernetes.io/component: mcp-server

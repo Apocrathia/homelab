@@ -3,7 +3,7 @@ apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
 metadata:
   name: osv-vulnerability-scanner
-  namespace: osv
+  namespace: mcp-osv
   labels:
     app.kubernetes.io/name: osv-vulnerability-scanner
     app.kubernetes.io/component: mcp-server
