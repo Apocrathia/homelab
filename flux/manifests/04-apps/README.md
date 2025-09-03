@@ -27,6 +27,7 @@ The applications layer contains user-facing workloads and services organized by 
     - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
     - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
     - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
+    - [**Grafana**](artificial-intelligence/mcp-servers/grafana/README.md) - Grafana dashboard and data source management
 
 ### Management
 
