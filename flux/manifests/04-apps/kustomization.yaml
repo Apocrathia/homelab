@@ -9,3 +9,4 @@ resources:
   - artificial-intelligence/openwebui
   - management/n8n
   - management/companion
+  - management/kuber
