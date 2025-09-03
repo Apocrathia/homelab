@@ -19,6 +19,11 @@ app:
     # env:
     #   - name: EXAMPLE_VAR
     #     value: "example"
+    #   - name: SECRET_VAR
+    #     valueFrom:
+    #       secretKeyRef:
+    #         name: my-secret
+    #         key: password
     # extraPorts:
     #   - name: satellite
     #     containerPort: 16622
@@ -26,6 +31,12 @@ app:
     #   - name: satellite-2
     #     containerPort: 16623
     #     protocol: TCP
+
+  # Optional: override the default container command
+  # command: ["/custom/entrypoint"]
+
+  # Optional: override the default container arguments
+  # args: ["--custom-arg", "value"]
 
   # Deployment configuration
   replicas: 1
@@ -56,13 +67,22 @@ app:
     targetPort: 80
     portName: http
 
-  # Empty directory volumes for nginx
+  # Volume configuration
   volumes:
+    # Empty directory volumes
     emptyDir:
       - name: nginx-cache
         mountPath: /var/cache/nginx
       - name: nginx-run
         mountPath: /run
+
+# ConfigMap volumes
+# configMap:
+#   - name: my-config
+#     mountPath: /etc/config
+#     subPath: config.yaml
+#     readOnly: true
+#     configMapName: my-configmap
 
 # Storage configuration
 storage:

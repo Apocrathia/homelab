@@ -38,6 +38,12 @@ spec:
       containers:
         - name: {{ .Values.app.container.name | default "main" }}
           image: {{ .Values.app.image | default "nginx:alpine" }}
+          {{- if .Values.app.command }}
+          command: {{ .Values.app.command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.app.args }}
+          args: {{ .Values.app.args | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.app.container.port | default 80 }}
             {{- if .Values.app.container.extraPorts }}
@@ -53,7 +59,11 @@ spec:
           env:
             {{- range .Values.app.container.env }}
             - name: {{ .name }}
+              {{- if .value }}
               value: {{ .value | quote }}
+              {{- else if .valueFrom }}
+              valueFrom: {{ .valueFrom | toYaml | nindent 16 }}
+              {{- end }}
             {{- end }}
           {{- end }}
           securityContext:
@@ -70,6 +80,16 @@ spec:
             {{- range .Values.app.volumes.emptyDir }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .Values.app.volumes.configMap }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
             {{- end }}
             {{- if .Values.storage.longhorn.enabled }}
             - name: app-data
@@ -91,6 +111,11 @@ spec:
         {{- range .Values.app.volumes.emptyDir }}
         - name: {{ .name }}
           emptyDir: {}
+        {{- end }}
+        {{- range .Values.app.volumes.configMap }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMapName | default .name }}
         {{- end }}
         {{- if .Values.storage.longhorn.enabled }}
         - name: app-data
