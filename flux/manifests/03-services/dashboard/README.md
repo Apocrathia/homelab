@@ -12,19 +12,35 @@ The dashboard is protected by Authentik SSO. After authenticating through Authen
 
 ### Getting the Service Account Token
 
-The dashboard automatically creates a ServiceAccount with appropriate permissions as part of the deployment, along with a token secret. To get the token:
+The dashboard now uses a secure token management system that automatically syncs tokens to 1Password:
 
-```bash
-# Copy the token to clipboard
-kubectl -n kubernetes-dashboard create token kubernetes-dashboard-api | pbcopy
-```
+1. **Get Token from 1Password**:
+
+   - Open 1Password on your device
+   - Navigate to vault `Secrets`
+   - Find item `kubernetes-dashboard-token`
+   - Copy the password field (this is your bearer token)
+
+2. **Alternative: Generate Token Manually**:
+   ```bash
+   # Copy the token to clipboard
+   kubectl -n kubernetes-dashboard create token kubernetes-dashboard-token | pbcopy
+   ```
 
 ### Using the Token
 
 1. Access the dashboard URL
 2. Authenticate through Authentik when prompted
-3. On the dashboard login screen, paste the token from your clipboard
+3. On the dashboard login screen, paste the token from 1Password (or clipboard)
 4. Click "Sign In"
+
+### Token Refresh
+
+The token automatically refreshes every 24 hours for security:
+
+- **Kubernetes**: Automatically generates a new token before expiration
+- **PushSecret**: Pushes the updated token to 1Password every 24 hours
+- **Usage**: Simply copy the latest token from the same 1Password item when needed
 
 ## Architecture
 
@@ -35,9 +51,12 @@ kubectl -n kubernetes-dashboard create token kubernetes-dashboard-api | pbcopy
 
 ## Security
 
-- The dashboard ServiceAccount has limited permissions (not cluster-admin)
-- All external access goes through Authentik
-- Kong acts as a reverse proxy with no additional authentication plugins
+- **Read-only Access**: The dashboard ServiceAccount has read-only permissions (no cluster-admin)
+- **Specific Permissions**: Limited to viewing pods, services, deployments, and other resources
+- **Token Management**: Tokens are automatically rotated every 24 hours and synced to 1Password
+- **Secure Storage**: Tokens stored in 1Password, never in git repository
+- **External Access**: All external access goes through Authentik SSO
+- **Reverse Proxy**: Kong acts as a reverse proxy with no additional authentication plugins
 
 ## Troubleshooting
 

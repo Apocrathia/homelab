@@ -1,24 +1,78 @@
 ---
+# Service Account for Dashboard Token Management
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubernetes-dashboard-token
+  namespace: kubernetes-dashboard
+  labels:
+    app.kubernetes.io/name: kubernetes-dashboard
+    app.kubernetes.io/part-of: services
+---
+# Read-only ClusterRole for Dashboard (much more secure than the previous admin role)
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kubernetes-dashboard-admin
+  name: kubernetes-dashboard-reader
 rules:
-  - apiGroups: ["*"] # don't do this
-    resources: ["*"] # seriously
-    verbs: ["*"] # holy shit this is dumb
-    # this is a bad idea. we should be more specific about what we need.
-    # but this is a homelab, so we're going to do it anyways.
+  # Read access to core resources
+  - apiGroups: [""]
+    resources:
+      [
+        "pods",
+        "services",
+        "endpoints",
+        "persistentvolumeclaims",
+        "configmaps",
+        "secrets",
+        "nodes",
+        "namespaces",
+      ]
+    verbs: ["get", "list", "watch"]
+  # Read access to apps resources
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  # Read access to batch resources
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  # Read access to networking resources
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  # Read access to storage resources
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses", "persistentvolumes"]
+    verbs: ["get", "list", "watch"]
+  # Read access to metrics (for dashboard metrics)
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list"]
 ---
+# Bind the read-only role to the service account
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubernetes-dashboard-admin
+  name: kubernetes-dashboard-reader
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubernetes-dashboard-admin
+  name: kubernetes-dashboard-reader
 subjects:
   - kind: ServiceAccount
-    name: kubernetes-dashboard-api
+    name: kubernetes-dashboard-token
     namespace: kubernetes-dashboard
+---
+# Token Secret for Dashboard Access
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kubernetes-dashboard-token
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/service-account.name: kubernetes-dashboard-token
+  labels:
+    app.kubernetes.io/name: kubernetes-dashboard
+    app.kubernetes.io/part-of: services
+type: kubernetes.io/service-account-token

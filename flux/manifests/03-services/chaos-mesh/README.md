@@ -100,19 +100,38 @@ This is a **reasonable security setup** for a homelab environment.
 
 #### How to Get the RBAC Token
 
-```bash
-# Basic command
-kubectl create token chaos-mesh-dashboard -n chaos-mesh
+The dashboard now uses a secure token management system that automatically syncs tokens to 1Password:
 
-# Copy to clipboard (macOS)
-kubectl create token chaos-mesh-dashboard -n chaos-mesh | pbcopy
-```
+1. **Get Token from 1Password**:
+
+   - Open 1Password on your device
+   - Navigate to vault `Secrets`
+   - Find item `chaos-mesh-dashboard-token`
+   - Copy the password field (this is your bearer token)
+
+2. **Alternative: Generate Token Manually**:
+
+   ```bash
+   # Basic command
+   kubectl create token chaos-mesh-dashboard -n chaos-mesh
+
+   # Copy to clipboard (macOS)
+   kubectl create token chaos-mesh-dashboard -n chaos-mesh | pbcopy
+   ```
 
 #### Use in Dashboard
 
 1. Access the dashboard at https://chaos.gateway.services.apocrathia.com
 2. When prompted for authentication, select "Token"
-3. Paste the generated token
+3. Paste the token from 1Password (or clipboard)
+
+#### Token Refresh
+
+The token automatically refreshes every 24 hours for security:
+
+- **Kubernetes**: Automatically generates a new token before expiration
+- **PushSecret**: Pushes the updated token to 1Password every 24 hours
+- **Usage**: Simply copy the latest token from the same 1Password item when needed
 
 #### Alternative: Direct Access
 
