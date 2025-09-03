@@ -33,16 +33,31 @@ app:
     env: # Environment variables (optional)
       - name: EXAMPLE_VAR
         value: "example-value"
+      - name: SECRET_VAR
+        valueFrom:
+          secretKeyRef:
+            name: my-secret
+            key: password
+  # Optional: override the default container command
+  command: ["/custom/entrypoint"]
+  # Optional: override the default container arguments
+  args: ["--custom-arg", "value"]
   service:
     extraServicePorts: # Additional service ports (optional)
       - name: satellite
         port: 16622
         targetPort: 16622
         protocol: TCP
-  volumes: # EmptyDir volumes (optional)
-    emptyDir:
+  volumes: # Volume configuration (optional)
+    emptyDir: # EmptyDir volumes
       - name: cache
         mountPath: /tmp/cache
+    configMap: # ConfigMap volumes
+      - name: my-config
+        mountPath: /etc/config
+        subPath: config.yaml
+        readOnly: true
+        configMapName: my-configmap
 ```
 
 **Note**: Most settings like replicas, resources, security context use sensible defaults and don't need to be specified unless you need custom values.
