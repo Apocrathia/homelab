@@ -39,6 +39,13 @@ This directory contains MCP server deployments managed by the ToolHive operator:
 - **Available Tools**: Resource listing, getting, applying, and pod execution
 - **Network Access**: Required for Kubernetes API communication
 
+### Grafana MCP Server
+
+- **Hostname**: `https://mcp.gateway.services.apocrathia.com/grafana`
+- **Purpose**: Grafana dashboard and data source management
+- **Available Tools**: Dashboard operations, Prometheus queries, Loki log analysis, alert management
+- **Network Access**: Required for Grafana API communication
+
 ## Adding New MCP Servers
 
 Create new server directories under `mcp-servers/` with the following structure:
