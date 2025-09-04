@@ -38,6 +38,31 @@ app:
   # Optional: override the default container arguments
   # args: ["--custom-arg", "value"]
 
+  # Sidecar containers configuration
+  sidecars: []
+  # Example sidecar configuration:
+  # sidecars:
+  #   - name: nginx-sidecar
+  #     image: nginx:alpine
+  #     command: ["/bin/sh"]
+  #     args: ["-c", "while true; do echo 'Sidecar running'; sleep 30; done"]
+  #     ports:
+  #       - containerPort: 8080
+  #         name: sidecar-port
+  #     env:
+  #       - name: SIDECAR_VAR
+  #         value: "sidecar-value"
+  #     volumeMounts:
+  #       - name: shared-data
+  #         mountPath: /shared
+  #     resources:
+  #       requests:
+  #         cpu: 10m
+  #         memory: 16Mi
+  #       limits:
+  #         cpu: 50m
+  #         memory: 32Mi
+
   # Deployment configuration
   replicas: 1
 

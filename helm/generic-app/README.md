@@ -5,6 +5,9 @@ A generic Helm chart for deploying applications in the homelab environment with 
 ## Features
 
 - **Kubernetes Resources**: Namespace, Deployment, Service
+- **Container Support**:
+  - Main application container with full configuration options
+  - Sidecar containers for auxiliary services (logging, monitoring, etc.)
 - **Storage Options**:
   - Longhorn persistent storage for application data
   - SMB storage for network file access
@@ -58,6 +61,27 @@ app:
         subPath: config.yaml
         readOnly: true
         configMapName: my-configmap
+  sidecars: # Sidecar containers (optional)
+    - name: nginx-sidecar
+      image: nginx:alpine
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do echo 'Sidecar running'; sleep 30; done"]
+      ports:
+        - containerPort: 8080
+          name: sidecar-port
+      env:
+        - name: SIDECAR_VAR
+          value: "sidecar-value"
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
 ```
 
 **Note**: Most settings like replicas, resources, security context use sensible defaults and don't need to be specified unless you need custom values.

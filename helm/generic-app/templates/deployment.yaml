@@ -107,6 +107,83 @@ spec:
             limits:
               cpu: {{ .Values.app.resources.limits.cpu | default "100m" }}
               memory: {{ .Values.app.resources.limits.memory | default "128Mi" }}
+        {{- if .Values.app.sidecars }}
+        {{- range .Values.app.sidecars }}
+        - name: {{ .name }}
+          image: {{ .image }}
+          {{- if .command }}
+          command: {{ .command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .args }}
+          args: {{ .args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .ports }}
+          ports:
+            {{- range .ports }}
+            - containerPort: {{ .containerPort }}
+              {{- if .name }}
+              name: {{ .name }}
+              {{- end }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+          {{- end }}
+          {{- if .env }}
+          env:
+            {{- range .env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- else if .valueFrom }}
+              valueFrom: {{ .valueFrom | toYaml | nindent 16 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: {{ .runAsUser | default 1000 }}
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+          {{- if .volumeMounts }}
+          volumeMounts:
+            {{- range .volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .resources }}
+          resources:
+            {{- if .resources.requests }}
+            requests:
+              cpu: {{ .resources.requests.cpu | default "10m" }}
+              memory: {{ .resources.requests.memory | default "16Mi" }}
+            {{- end }}
+            {{- if .resources.limits }}
+            limits:
+              cpu: {{ .resources.limits.cpu | default "50m" }}
+              memory: {{ .resources.limits.memory | default "32Mi" }}
+            {{- end }}
+          {{- else }}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          {{- end }}
+        {{- end }}
+        {{- end }}
       volumes:
         {{- range .Values.app.volumes.emptyDir }}
         - name: {{ .name }}
