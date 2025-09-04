@@ -6,9 +6,17 @@ create-chart-tag:
   before_script:
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
+    - git remote set-url origin https://oauth2:${GITLAB_TOKEN}@gitlab.com/Apocrathia/homelab.git
   script:
     - |
       echo "=== Chart Tag Creation Started ==="
+
+      # Validate GitLab token is available
+      if [ -z "$GITLAB_TOKEN" ]; then
+        echo "❌ ERROR: GITLAB_TOKEN environment variable is not set!"
+        echo "   Please configure the GITLAB_TOKEN variable in your project's CI/CD settings"
+        exit 1
+      fi
 
       # Validate Chart.yaml exists and is readable
       if [ ! -f "helm/generic-app/Chart.yaml" ]; then
@@ -67,8 +75,6 @@ create-chart-tag:
   only:
     changes:
       - helm/generic-app/Chart.yaml
-      - helm/generic-app/**/*
-  when: manual
   allow_failure: true
   artifacts:
     reports:
