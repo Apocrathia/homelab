@@ -20,6 +20,7 @@ This deployment includes:
 - Authentik integration for authentication
 - Longhorn persistent storage
 - Authentik-managed secure access
+- MCPO (MCP-to-OpenAPI) bridge for MCP server integration
 
 ### Environment Variables
 
