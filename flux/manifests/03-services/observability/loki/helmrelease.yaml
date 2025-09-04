@@ -21,9 +21,11 @@ spec:
     createNamespace: true
     remediation:
       retries: 3
+    timeout: 10m
   upgrade:
     remediation:
       retries: 3
+    timeout: 10m
 
   # Pull values from 1Password secret
   valuesFrom:
@@ -103,6 +105,19 @@ spec:
         requests:
           cpu: 100m
           memory: 256Mi
+
+    # Write component configuration
+    write:
+      replicas: 3
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: write
+                topologyKey: kubernetes.io/hostname
 
     # Resources for Loki components
     resources:
