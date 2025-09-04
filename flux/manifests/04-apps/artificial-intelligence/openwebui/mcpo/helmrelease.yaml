@@ -1,0 +1,82 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mcpo-bridge
+  namespace: openwebui
+  labels:
+    app.kubernetes.io/name: mcpo-bridge
+    app.kubernetes.io/component: openapi-proxy
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.8"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mcpo-bridge
+      namespace: openwebui
+      # renovate: datasource=docker depName=ghcr.io/open-webui/mcpo
+      image: ghcr.io/open-webui/mcpo:main
+
+      container:
+        name: mcpo
+        port: 8000
+
+      # Override the default command
+      command: ["mcpo"]
+      args:
+        - "--config"
+        - "/tmp/config.json"
+        - "--port"
+        - "8000"
+        - "--hot-reload"
+
+      replicas: 1
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 1000m
+          memory: 512Mi
+
+      service:
+        type: ClusterIP
+        port: 8000
+        targetPort: 8000
+        portName: http
+
+      # Mount config from ConfigMap
+      volumes:
+        configMap:
+          - name: config
+            mountPath: /tmp/config.json
+            subPath: config.json
+            readOnly: true
+            configMapName: mcpo-config
+
+    # Disable storage and authentik since we don't need them
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    # No external access - Open WebUI connects internally
+    httproute:
+      enabled: false

@@ -8,3 +8,4 @@ resources:
   - osv/
   - gofetch/
   - mkp/
+  - grafana/

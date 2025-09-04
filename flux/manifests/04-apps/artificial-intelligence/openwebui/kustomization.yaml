@@ -8,6 +8,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - mcpo/
 
 generatorOptions:
   disableNameSuffixHash: true

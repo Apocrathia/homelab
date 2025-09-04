@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "osv": {
+      "type": "streamable-http",
+      "url": "https://mcp.gateway.services.apocrathia.com/osv"
+    },
+    "gofetch": {
+      "type": "streamable-http",
+      "url": "https://mcp.gateway.services.apocrathia.com/gofetch"
+    },
+    "mkp": {
+      "type": "streamable-http",
+      "url": "https://mcp.gateway.services.apocrathia.com/mkp"
+    },
+    "grafana": {
+      "type": "sse",
+      "url": "https://mcp.gateway.services.apocrathia.com/grafana/mcp"
+    }
+  }
+}
