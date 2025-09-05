@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mealie
+  namespace: mealie
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.9"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mealie
+      # renovate: datasource=docker depName=ghcr.io/mealie-recipes/mealie
+      image: ghcr.io/mealie-recipes/mealie:v3.1.2
+      container:
+        name: mealie
+        port: 9000
+        env:
+          - name: BASE_URL
+            value: "https://mealie.gateway.services.apocrathia.com"
+          - name: DATA_DIR
+            value: "/app/data"
+          - name: APP_PORT
+            value: "9000"
+          - name: HOST
+            value: "0.0.0.0"
+          # Database Configuration
+          - name: DB_ENGINE
+            value: "postgres"
+          - name: POSTGRES_SERVER
+            value: "mealie-postgres-rw.mealie.svc.cluster.local"
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: username
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: password
+          # Authentication Configuration
+          - name: ALLOW_PASSWORD_LOGIN
+            value: "false"
+          - name: OIDC_AUTH_ENABLED
+            value: "true"
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: oidc-client-id
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: oidc-client-secret
+          - name: OIDC_CONFIGURATION_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/mealie/.well-known/openid-configuration"
+          - name: OIDC_SIGNUP_ENABLED
+            value: "true"
+          - name: OIDC_USER_CLAIM
+            value: "email"
+          - name: OIDC_NAME_CLAIM
+            value: "name"
+          - name: OIDC_GROUPS_CLAIM
+            value: "groups"
+          - name: OIDC_ADMIN_GROUP
+            value: "authentik Admins"
+          # SMTP Configuration for email functionality
+          - name: SMTP_HOST
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: smtp-host
+          - name: SMTP_PORT
+            value: "587"
+          - name: SMTP_FROM_NAME
+            value: "Mealie"
+          - name: SMTP_FROM_EMAIL
+            value: mealie@apocrathia.com
+          - name: SMTP_AUTH_STRATEGY
+            value: "TLS"
+          - name: SMTP_USER
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: smtp-user
+          - name: SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: smtp-password
+          # OpenAI Configuration
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mealie-secrets
+                key: openai-api-key
+      service:
+        port: 9000
+        targetPort: 9000
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "100m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+      securityContext:
+        readOnlyRootFilesystem: true
+
+    storage:
+      longhorn:
+        enabled: true
+        capacity: 10Gi
+        mountPath: /app/data
+      smb:
+        enabled: false
+
+    # Additional writable directories for Mealie
+    volumes:
+      emptyDir:
+        - name: temp-files
+          mountPath: /tmp
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/mealie-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: true
+      hostname: "mealie.gateway.services.apocrathia.com"
