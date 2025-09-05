@@ -287,6 +287,35 @@ kubectl logs -n authentik deployment/authentik-worker
 kubectl logs -n authentik deployment/authentik-postgresql
 ```
 
+### Blueprint Loading Issues
+
+#### Manual Blueprint Application
+
+When blueprints fail to load automatically or you need to apply them manually for debugging, use the Django management command on the worker pod:
+
+```bash
+# Find the worker pod
+kubectl get pods -n authentik -l app.kubernetes.io/component=worker
+
+# Apply a specific blueprint
+kubectl exec -n authentik authentik-worker-<pod-id> -- python manage.py apply_blueprint /blueprints/<blueprint-name>.yaml
+```
+
+**Script Location**: `/authentik/blueprints/management/commands/apply_blueprint.py`
+
+This script provides detailed error output that can help diagnose blueprint issues:
+
+- Validates blueprint syntax and structure
+- Shows specific error messages for failed imports
+- Applies blueprints in the correct order
+- Exits with error code 1 if validation fails
+
+**Available Blueprints**: Blueprints are synced to `/blueprints/` via the sidecar container and can be listed with:
+
+```bash
+kubectl exec -n authentik authentik-worker-<pod-id> -- ls -la /blueprints/
+```
+
 ## Best Practices
 
 ### Configuration Management
