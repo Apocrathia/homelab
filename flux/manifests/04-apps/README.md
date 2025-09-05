@@ -35,6 +35,7 @@ The applications layer contains user-facing workloads and services organized by 
   - [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO
   - [**Kuber**](management/kuber/README.md) - iOS Kubernetes dashboard token management for mobile cluster access
   - [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
+  - [**Mealie**](management/mealie/README.md) - Self-hosted recipe manager and meal planning application with Authentik SSO integration and Longhorn storage
 
 ### Application Patterns
 

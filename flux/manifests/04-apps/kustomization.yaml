@@ -10,3 +10,4 @@ resources:
   - management/n8n
   - management/companion
   - management/kuber
+  - management/mealie
