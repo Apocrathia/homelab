@@ -41,6 +41,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - amp.yaml
+  - name: authentik-blueprint-1password
+    namespace: authentik
+    files:
+      - 1password.yaml
 
 labels:
   - includeSelectors: true
