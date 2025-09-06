@@ -29,7 +29,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       {{- end }}
       securityContext:
-        runAsNonRoot: true
+        runAsNonRoot: {{ .Values.app.securityContext.runAsNonRoot | default true }}
         runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
         runAsGroup: {{ .Values.app.securityContext.runAsGroup | default 1000 }}
         fsGroup: {{ .Values.app.securityContext.fsGroup | default 1000 }}

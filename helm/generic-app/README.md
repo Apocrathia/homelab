@@ -114,8 +114,8 @@ app:
 ```yaml
 app:
   securityContext:
-    runAsUser: 0 # Run as root initially
-    runAsGroup: 0
+    runAsUser: "0" # Run as root initially (use string for Helm compatibility)
+    runAsGroup: "0" # Run as root group initially (use string for Helm compatibility)
     fsGroup: 1000 # Files owned by group 1000
     runAsNonRoot: "false" # Allow running as root
     allowPrivilegeEscalation: "true" # Allow s6-overlay to work
@@ -330,7 +330,14 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.12 (Latest)
+### Version 0.0.13 (Latest)
+
+- **Fixed Pod-Level Security Context**: Made pod `runAsNonRoot` configurable instead of hardcoded
+  - Resolves conflicts between pod and container security contexts
+  - Essential for LinuxServer.io containers that need to run as root
+  - Ensures consistent security settings across pod and container levels
+
+### Version 0.0.12
 
 - **Enhanced Capabilities Configuration**: Added support for configurable Linux capabilities
   - Can now add specific capabilities (SETUID, SETGID, CHOWN, DAC_OVERRIDE, etc.)
