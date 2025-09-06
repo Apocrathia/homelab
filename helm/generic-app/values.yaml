@@ -82,6 +82,17 @@ app:
     runAsNonRoot: true
     # Allow privilege escalation if needed for init processes
     allowPrivilegeEscalation: false
+    # Container capabilities configuration
+    # capabilities:
+    #   # Capabilities to add (useful for init containers or special requirements)
+    #   add:
+    #     - SETUID      # Allow changing user IDs
+    #     - SETGID      # Allow changing group IDs
+    #     - CHOWN       # Allow changing file ownership
+    #     - DAC_OVERRIDE # Allow bypassing file permission checks
+    #   # Capabilities to drop (defaults to ALL if not specified)
+    #   drop:
+    #     - NET_RAW     # Drop network raw socket capability
 
   # Resource requests and limits
   resources:
