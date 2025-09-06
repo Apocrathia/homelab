@@ -69,8 +69,26 @@ spec:
           securityContext:
             allowPrivilegeEscalation: {{ .Values.app.securityContext.allowPrivilegeEscalation | default false }}
             capabilities:
+              {{- if .Values.app.securityContext.capabilities }}
+              {{- if .Values.app.securityContext.capabilities.add }}
+              add:
+                {{- range .Values.app.securityContext.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- if .Values.app.securityContext.capabilities.drop }}
+              drop:
+                {{- range .Values.app.securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+              {{- else }}
               drop:
                 - ALL
+              {{- end }}
+              {{- else }}
+              drop:
+                - ALL
+              {{- end }}
             runAsNonRoot: {{ .Values.app.securityContext.runAsNonRoot | default true }}
             runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
             readOnlyRootFilesystem: {{ .Values.app.securityContext.readOnlyRootFilesystem | default true }}
@@ -141,8 +159,26 @@ spec:
           securityContext:
             allowPrivilegeEscalation: {{ $.Values.app.securityContext.allowPrivilegeEscalation | default false }}
             capabilities:
+              {{- if $.Values.app.securityContext.capabilities }}
+              {{- if $.Values.app.securityContext.capabilities.add }}
+              add:
+                {{- range $.Values.app.securityContext.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- if $.Values.app.securityContext.capabilities.drop }}
+              drop:
+                {{- range $.Values.app.securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+              {{- else }}
               drop:
                 - ALL
+              {{- end }}
+              {{- else }}
+              drop:
+                - ALL
+              {{- end }}
             runAsNonRoot: {{ $.Values.app.securityContext.runAsNonRoot | default true }}
             runAsUser: {{ .runAsUser | default 1000 }}
             readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}

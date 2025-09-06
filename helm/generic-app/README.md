@@ -86,6 +86,62 @@ app:
 
 **Note**: Most settings like replicas, resources, security context use sensible defaults and don't need to be specified unless you need custom values.
 
+### Security Context Configuration
+
+```yaml
+app:
+  securityContext:
+    runAsUser: 1000 # User ID to run container as
+    runAsGroup: 1000 # Group ID to run container as
+    fsGroup: 1000 # File system group ID for volumes
+    runAsNonRoot: true # Require non-root user (set to false for init containers)
+    allowPrivilegeEscalation: false # Allow privilege escalation (set to true if needed)
+    readOnlyRootFilesystem: true # Mount root filesystem as read-only (set to false for LSIO containers)
+    capabilities:
+      add: # Capabilities to add (useful for init containers)
+        - SETUID # Allow changing user IDs
+        - SETGID # Allow changing group IDs
+        - CHOWN # Allow changing file ownership
+        - DAC_OVERRIDE # Allow bypassing file permission checks
+      drop: # Capabilities to drop (defaults to ALL if not specified)
+        - NET_RAW # Drop network raw socket capability
+```
+
+#### Common Use Cases:
+
+**LinuxServer.io Containers** (e.g., Grocy, Plex, etc.):
+
+```yaml
+app:
+  securityContext:
+    runAsUser: 0 # Run as root initially
+    runAsGroup: 0
+    fsGroup: 1000 # Files owned by group 1000
+    runAsNonRoot: "false" # Allow running as root
+    allowPrivilegeEscalation: "true" # Allow s6-overlay to work
+    readOnlyRootFilesystem: "false" # Allow filesystem writes
+    capabilities:
+      add:
+        - SETUID # Required for s6-overlay
+        - SETGID # Required for s6-overlay
+        - CHOWN # Required for file permissions
+        - DAC_OVERRIDE # Required for init processes
+```
+
+**Standard Non-Root Applications** (default):
+
+```yaml
+app:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    # capabilities defaults to drop: [ALL]
+```
+
 ### Storage Configuration
 
 ```yaml
@@ -271,3 +327,27 @@ For a complete working example, see the [Companion app configuration](../../flux
 - **Homelab Optimized**: Designed for typical homelab use cases and infrastructure
 - **Renovate Compatible**: Single image values for automatic dependency updates
 - **Simple Configuration**: Only specify what makes your app unique
+
+## Changelog
+
+### Version 0.0.12 (Latest)
+
+- **Enhanced Capabilities Configuration**: Added support for configurable Linux capabilities
+  - Can now add specific capabilities (SETUID, SETGID, CHOWN, DAC_OVERRIDE, etc.)
+  - Supports both adding and dropping capabilities
+  - Applied to both main container and sidecar containers
+- **LinuxServer.io Support**: Full support for containers requiring elevated privileges during initialization
+
+### Version 0.0.11
+
+- **Enhanced Security Context Options**: Added configurable security settings
+  - `runAsNonRoot`: Allow or disallow running as root user
+  - `allowPrivilegeEscalation`: Control privilege escalation permissions
+  - Templates updated to use values-driven configuration instead of hardcoded settings
+
+### Version 0.0.10
+
+- **Read-Only Root Filesystem Control**: Added `readOnlyRootFilesystem` option
+  - Configurable read-only root filesystem (default: true)
+  - Essential for LinuxServer.io containers that need write access during s6-overlay initialization
+  - Templates updated to use dynamic configuration from values.yaml
