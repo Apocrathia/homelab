@@ -73,7 +73,7 @@ spec:
                 - ALL
             runAsNonRoot: true
             runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: {{ .Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
@@ -145,7 +145,7 @@ spec:
                 - ALL
             runAsNonRoot: true
             runAsUser: {{ .runAsUser | default 1000 }}
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
               type: RuntimeDefault
           {{- if .volumeMounts }}

@@ -75,6 +75,9 @@ app:
     runAsUser: 1000
     runAsGroup: 1000
     fsGroup: 1000
+    # Allow disabling readOnlyRootFilesystem for containers that need write access during init
+    # (e.g., LinuxServer.io containers with s6-overlay)
+    readOnlyRootFilesystem: true
 
   # Resource requests and limits
   resources:
