@@ -111,6 +111,8 @@ app:
 
 **LinuxServer.io Containers** (e.g., Grocy, Plex, etc.):
 
+The LinuxServer.io containers need to run as root initially for s6-overlay, then drop to the PUID/PGID specified in the environment variables.
+
 ```yaml
 app:
   securityContext:
@@ -289,7 +291,20 @@ authentik:
   enabled: true
   displayName: "My Application"
   externalHost: "https://my-app.gateway.services.apocrathia.com"
+  # Enable header-based authentication for reverse proxy auth (e.g., Grocy)
+  interceptHeaderAuth: false
 ```
+
+#### Authentik Configuration Options
+
+- `enabled`: Enable/disable Authentik SSO integration
+- `displayName`: Display name for the application in Authentik
+- `externalHost`: External URL for the application
+- `icon`: Icon URL for the application (optional)
+- `openInNewTab`: Open application in new tab (default: true)
+- `interceptHeaderAuth`: Enable header-based authentication for reverse proxy auth (default: false)
+  - Set to `true` for applications like Grocy that use reverse proxy authentication
+  - When enabled, Authentik will pass user information via headers
 
 For a complete working example, see the [Companion app configuration](../../flux/manifests/04-apps/companion/helmrelease.yaml).
 
@@ -330,7 +345,14 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.13 (Latest)
+### Version 0.0.14 (Latest)
+
+- **Enhanced Authentik Integration**: Added configurable header-based authentication
+  - `interceptHeaderAuth`: Enable/disable header-based authentication for reverse proxy auth
+  - Essential for applications like Grocy that use reverse proxy authentication
+  - Maintains backward compatibility with existing configurations
+
+### Version 0.0.13
 
 - **Fixed Pod-Level Security Context**: Made pod `runAsNonRoot` configurable instead of hardcoded
   - Resolves conflicts between pod and container security contexts
