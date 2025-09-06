@@ -29,7 +29,7 @@ data:
           invalidation_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.invalidationFlow }}"]]
           authentication_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authenticationFlow }}"]]
           mode: "proxy"
-          intercept_header_auth: false
+          intercept_header_auth: {{ .Values.authentik.interceptHeaderAuth | default false }}
           internal_host: "http://{{ .Values.app.name }}.{{ .Values.app.namespace | default .Values.app.name }}.svc.cluster.local:{{ .Values.app.service.port | default 80 }}"
           external_host: "{{ .Values.authentik.externalHost }}"
 

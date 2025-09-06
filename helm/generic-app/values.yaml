@@ -158,6 +158,8 @@ authentik:
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://i.imgur.com/0gNsvyk.png"
   openInNewTab: true
+  # Enable header-based authentication for reverse proxy auth
+  interceptHeaderAuth: false
 
   # Flow configuration
   authorizationFlow: "default-provider-authorization-implicit-consent"
