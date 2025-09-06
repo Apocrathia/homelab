@@ -78,6 +78,10 @@ app:
     # Allow disabling readOnlyRootFilesystem for containers that need write access during init
     # (e.g., LinuxServer.io containers with s6-overlay)
     readOnlyRootFilesystem: true
+    # Allow containers to run as root (e.g., LinuxServer.io containers with s6-overlay)
+    runAsNonRoot: true
+    # Allow privilege escalation if needed for init processes
+    allowPrivilegeEscalation: false
 
   # Resource requests and limits
   resources:
