@@ -67,11 +67,11 @@ spec:
             {{- end }}
           {{- end }}
           securityContext:
-            allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: {{ .Values.app.securityContext.allowPrivilegeEscalation | default false }}
             capabilities:
               drop:
                 - ALL
-            runAsNonRoot: true
+            runAsNonRoot: {{ .Values.app.securityContext.runAsNonRoot | default true }}
             runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
             readOnlyRootFilesystem: {{ .Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
@@ -139,11 +139,11 @@ spec:
             {{- end }}
           {{- end }}
           securityContext:
-            allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: {{ $.Values.app.securityContext.allowPrivilegeEscalation | default false }}
             capabilities:
               drop:
                 - ALL
-            runAsNonRoot: true
+            runAsNonRoot: {{ $.Values.app.securityContext.runAsNonRoot | default true }}
             runAsUser: {{ .runAsUser | default 1000 }}
             readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
