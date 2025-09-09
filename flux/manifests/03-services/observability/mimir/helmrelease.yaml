@@ -66,12 +66,22 @@ spec:
         anonymous:
           max_global_series_per_user: 1000000
 
+    # Configure replication for 2-replica setup
+    mimir:
+      structuredConfig:
+        ingester:
+          ring:
+            replication_factor: 2
+
     # Note: The chart automatically configures S3 storage when MinIO is enabled
     # No need to manually configure blocks_storage, ruler_storage, etc.
     # The chart uses the MinIO credentials from the minio section above
 
     # Resource configuration for Mimir components
     ingester:
+      replicas: 2
+      zoneAwareReplication:
+        enabled: false # Disable zone awareness for simpler setup
       resources:
         requests:
           cpu: 500m
@@ -103,6 +113,9 @@ spec:
           memory: 2Gi
 
     store_gateway:
+      replicas: 2
+      zoneAwareReplication:
+        enabled: false # Disable zone awareness for simpler setup
       resources:
         requests:
           cpu: 100m
