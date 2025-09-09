@@ -11,3 +11,4 @@ resources:
   - management/companion
   - management/kuber
   - management/mealie
+  - management/grocy
