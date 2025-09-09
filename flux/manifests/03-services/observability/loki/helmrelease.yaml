@@ -147,3 +147,9 @@ spec:
       runAsNonRoot: true
       runAsUser: 10001
       fsGroup: 10001
+
+    # Disable memcached caches for homelab (reduces memory usage)
+    chunksCache:
+      enabled: false
+    resultsCache:
+      enabled: false
