@@ -69,6 +69,22 @@ spec:
           enabled: true
         # Allow Hubble UI to run on any node
         affinity: {}
+        backend:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+        frontend:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
       tls:
         enabled: false
       # Enhanced Hubble metrics configuration
@@ -88,6 +104,13 @@ spec:
         enabled: true
         # Allow Hubble Relay to run on any node
         affinity: {}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
         prometheus:
           enabled: true
           serviceMonitor:
@@ -130,7 +153,7 @@ spec:
         cpu: 100m
         memory: 128Mi
       limits:
-        memory: 512Mi
+        memory: 1Gi
 
     # Security context for agent pods - modified for Talos compatibility
     securityContext:
@@ -189,7 +212,8 @@ spec:
           cpu: 100m
           memory: 128Mi
         limits:
-          memory: 256Mi
+          cpu: 200m
+          memory: 512Mi
       rollOutPods: true
       # Enable Envoy metrics
       prometheus:
