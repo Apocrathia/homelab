@@ -1,6 +1,6 @@
 ---
-description:
 globs: flux/*
+alwaysApply: false
 ---
 # Flux and Kustomize Deployment Guidelines
 
@@ -28,7 +28,7 @@ flux/
 3. Repository structure should follow:
    - One Git repository per cluster
    - Clear separation between infrastructure and applications
-   - Use 1Password Connect for secrets management
+   - Use 1Password Item Custom Resources (CR) for secrets management
    - Store sensitive configuration in 1Password vaults
 
 ## Kustomize Guidelines
@@ -45,6 +45,7 @@ flux/
    - Override only values that differ from the base
    - Use Kustomize patches only when necessary
    - Document overlay-specific changes in comments or a local README if needed
+   - **When adding new manifests, use a single kustomize overlay** that references existing resource directories
 
 3. Common practices:
    - Use namespaces to isolate components
@@ -54,21 +55,24 @@ flux/
 ## Deployment Process
 
 1. Create or update manifests in the appropriate directory
-2. Test and validate changes using available tools or the command line (eg `kubectl kustomize`, `helm show values`, `helm template`)
+2. **Validate manifests locally as much as possible** using available tools or the command line (eg `kubectl kustomize`, `helm show values`, `helm template`)
 3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing before committing
-4. Commit verified working configurations to the repository
-5. Flux will automatically reconcile changes
+4. **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
+5. **Never make git commits directly** - all commits must be made by the user
+6. Flux will automatically reconcile changes
 
 ## Security Considerations
 
 1. Secret Management:
-   - Deploy 1Password Connect Operator in the cluster
+   - Use 1Password Item Custom Resources (CR) to manage secrets rather than creating native Kubernetes Secret resources
    - Store all secrets in 1Password vaults
-   - Use 1Password Connect references in Kubernetes manifests
-   - Implement proper RBAC for 1Password Connect access
+   - Use Flux's fromValues function to reference secret values instead of placeholders
+   - Implement proper RBAC for 1Password access
 2. Implement RBAC policies
 3. Regular security scanning of container images
 4. Network segmentation using network policies
+5. **After making changes in any package dependency/manifest files, scan the project for security vulnerabilities**
+6. **Use Gateway API only** - do not use traditional Ingress resources
 
 ## Monitoring and Maintenance
 
@@ -87,5 +91,6 @@ flux/
 5. Maintain documentation
 6. Secret Management:
    - **Never** commit raw secrets to Git
-   - Use 1Password Connect references (op://vault/item/field)
+   - Use 1Password Item Custom Resources (CR) for secret management
+   - Use Flux's fromValues function to reference secret values
    - Maintain clear documentation of secret references

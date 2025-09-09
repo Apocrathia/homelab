@@ -37,7 +37,8 @@ The following documentation should be referenced when working with Talos Linux c
 
 1. **Version Control**
    - All Talos configurations should be version controlled
-   - Configuration changes must be documented with clear commit messages
+   - Configuration changes must be documented with clear commit messages using Conventional Commits specification
+   - **Never make git commits directly** - all commits must be made by the user
 
 2. **Security Baseline**
    - Disk encryption should be enabled for production environments
@@ -58,6 +59,8 @@ The following documentation should be referenced when working with Talos Linux c
    - Regular backup procedures must be documented
    - Upgrade paths should be clearly defined
    - Logging configurations must be appropriate for the environment
+   - **Validate configurations locally as much as possible** before applying to cluster
+   - **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 
 ---
 

@@ -10,14 +10,19 @@ description: General guidelines for the project
 - Keep configuration separate from application code
 - Store alongside components and backlink to other docs
 - Follow consistent naming conventions across the project
+- **When adding new manifests, use a single kustomize overlay** that references existing resource directories instead of copying all resource files
+- **Do not duplicate configuration info in README files** when config files are located adjacent to avoid updating versions in two places
 
 ## Security Best Practices
 - Never commit secrets or sensitive data to the repository
-- Use a secure secrets management solution
+- Use 1Password Item Custom Resources (CR) to manage secrets rather than creating native Kubernetes Secret resources
 - Follow the principle of least privilege
 - Implement proper access controls
 - Regularly audit security configurations
 - Keep all components up to date with security patches
+- **After making changes in any package dependency/manifest files, scan the project for security vulnerabilities**
+- Apply security fixes only according to the desired version reported by the scanner
+- Re-scan after applying fixes to verify issues are resolved
 
 ## Infrastructure Management
 - Use Infrastructure as Code (IaC) principles
@@ -25,15 +30,20 @@ description: General guidelines for the project
 - Keep track of resource allocations
 - Implement proper backup strategies
 - Plan for system recovery scenarios
+- **Use Gateway API only** - do not use traditional Ingress resources
+- **Clean out any old ingress resources** in favor of Gateway API
 
 ## Documentation Standards
-- Well-structured with clear sections
-- Concise but not minimal - include necessary technical details
+- High-level, concise overviews with minimal technical detail
+- Match the style and verbosity of existing project READMEs
+- Provide enough context to reorient future developers
 - Practical and actionable
 - Security-focused when appropriate
 - Include real examples and commands
 - Include configuration patterns, examples, and usage instructions
 - Avoid duplicating static configuration values, but do include configuration patterns and examples
+- **Do not describe problems that were fixed or improvements made** - this confuses future developers and AI agents
+- Make writeups straightforward and context-independent
 
 ## Observability
 - Implement comprehensive monitoring
@@ -46,15 +56,20 @@ description: General guidelines for the project
 ## Development Workflow
 - Use version control for all changes, with explicit approval from a human
 - Test changes before applying to live system
-- Write clear and descriptive commit messages
+- Write clear and descriptive commit messages using Conventional Commits specification
 - Document breaking changes
 - Keep track of dependencies and versions
 - Maintain a clean and organized codebase
+- **Never make git commits directly** - all commits must be made by the user
+- Use Prettier for code formatting
+- **Do not write file contents in the chat window unless explicitly instructed** - update files directly instead
 
 ## GitOps Workflow
 - While the project uses Flux for GitOps, iterative development may require direct cluster testing
 - Have the user apply changes directly for testing when needed. Changes will be committed to the repository by the user.
 - This balances development efficiency with GitOps principles
+- **When referencing secrets in Flux manifests, use Flux's fromValues function** to reference secret values instead of placeholders
+- **Configurations should be explicitly defined** in config files rather than relying on implicit configuration
 
 ## Maintenance and Operations
 - Schedule regular system updates
@@ -67,15 +82,30 @@ description: General guidelines for the project
 
 ## Quality Assurance
 - Test changes in a safe manner
-- Validate configurations before deployment
+- **Validate manifests locally as much as possible** before applying to cluster
 - Maintain consistent standards across the project
 - Document testing procedures
 - Verify changes meet requirements
 - Have rollback plans for changes
+- **Do not alter the cluster without permission** - confirm before running any destructive commands
+- **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
+- **Do not make implicit changes** - only perform modifications when explicitly instructed
 
 ## MCP Tools Usage
+- **Use MCP tools wherever applicable before relying on CLI commands**
 - Use MCP tools when they provide value for the task at hand
 - Use these tools naturally rather than forcing their usage
 - Choose the most appropriate tool for the specific task rather than using all available tools
 - Combine tools where beneficial
 - Use local MCP tools over external model features when possible to optimize performance and cost
+- **Use DeepWiki to get more in-depth information about a GitHub repository**
+- **Prefer flux MCP tools or the flux CLI instead of kubectl annotate** to force reconciliation of HelmRelease
+- **Use Kubernetes-native methods for retrieving resource lists** rather than custom scripts or workarounds
+- **Cursor can only use OAuth for SSE and HTTP connections** - direct header-based authentication won't work
+
+## Helm and Configuration Validation
+- **Always validate all proposed Helm values against the defaults** when suggesting Helm configurations
+- **Do not create HTTPRoute when configuring services with authentik** - authentik manages it
+- **Use dashboard icons CDN (homarr-labs)** for blueprint icons
+- **Do not create fake directories, extra config maps, or documentation scaffolding** - prefer simpler solutions with minimal extra fluff
+- **Prefer solutions that are way simpler with minimal extra fluff** - avoid unnecessary complexity
