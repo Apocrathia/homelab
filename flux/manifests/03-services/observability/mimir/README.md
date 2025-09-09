@@ -34,12 +34,12 @@ Before deploying Mimir, you need to create the MinIO credentials in 1Password:
 
 ## Integration with Prometheus
 
-Prometheus is configured to remote write all metrics to Mimir via the nginx gateway at:
-`http://mimir-nginx.mimir-system.svc:80/api/v1/push`
+Prometheus is configured to remote write all metrics to Mimir via the gateway at:
+`http://mimir-gateway.mimir-system.svc:80/api/v1/push`
 
 ## Access
 
-- **Metrics API**: `http://mimir-nginx.mimir-system.svc:80/api/v1/query`
+- **Metrics API**: `http://mimir-gateway.mimir-system.svc:80/prometheus/`
 - **MinIO Console**: Available via port-forward to MinIO service on port 9001
 
 ## Security Notes
