@@ -32,16 +32,77 @@ spec:
       backupTargetCredentialSecret: longhorn-backup-target-secret
       pollInterval: 300
     defaultSettings:
+      # Backup and restore settings
       restoreVolumeRecurringJobs: true
       backupCompressionMethod: gzip
       deletingConfirmationFlag: true
+
+      # Reliability and stability settings
+      autoSalvage: true # Automatically fix corrupted volumes
+      autoDeletePodWhenVolumeDetachedUnexpectedly: true # Auto-delete pods when volumes detach unexpectedly
+
+      # Replica settings for better stability
+      defaultReplicaCount: 2 # Reduce from 3 to 2 for less overhead
+      replicaSoftAntiAffinity: true # Allow scheduling on nodes with healthy replicas
+      replicaAutoBalance: true # Auto-rebalance replicas when nodes are available
+
+      # Timeout and cleanup settings
+      staleReplicaTimeout: 2880 # 48 hours (default is 30 minutes)
+      failedBackupTTL: 1440 # 24 hours
+      backupExecutionTimeout: 5 # 5 minutes
+
+      # Storage settings
+      storageOverProvisioningPercentage: 100
+      storageMinimalAvailablePercentage: 25
+
+      # Engine and replica settings
+      engineReplicaTimeout: 8 # 8 seconds timeout
+      concurrentReplicaRebuildPerNodeLimit: 5 # Limit concurrent rebuilds
+      concurrentVolumeBackupRestorePerNodeLimit: 5 # Limit concurrent restores
+
+      # Data integrity and recovery
+      snapshotDataIntegrity: "fast-check" # Enable fast integrity checking
+      fastReplicaRebuildEnabled: true # Enable fast rebuild using checksums
+
+      # Cleanup settings
+      autoCleanupSystemGeneratedSnapshot: true
+      autoCleanupRecurringJobBackupSnapshot: true
+      removeSnapshotsDuringFilesystemTrim: true
+
+      # Node and disk settings
+      disableSchedulingOnCordonedNode: true # Don't schedule on cordoned nodes
+      replicaZoneSoftAntiAffinity: true # Prefer same zone for replicas
+      replicaDiskSoftAntiAffinity: true # Allow same disk for replicas
+
+      # Volume creation settings
+      allowVolumeCreationWithDegradedAvailability: true # Allow creation without all replicas
+      allowRecurringJobWhileVolumeDetached: true # Allow jobs on detached volumes
+
+    # Persistence settings for better reliability
+    persistence:
+      defaultClass: true
+      defaultFsType: ext4
+      defaultClassReplicaCount: 2 # Match the defaultReplicaCount
+      defaultDataLocality: disabled
+      reclaimPolicy: Delete
+      volumeBindingMode: "Immediate"
+      migratable: false
+      disableRevisionCounter: "true"
+      unmapMarkSnapChainRemoved: ignored
+      dataEngine: v1
 
     longhornUI:
       replicas: 2
 
     ingress:
       enabled: false
-      host: longhorn.k8s.apocrathia.com
+
+    # CSI settings for better reliability
+    csi:
+      attacherReplicaCount: 2 # Reduce from default 3
+      provisionerReplicaCount: 2 # Reduce from default 3
+      resizerReplicaCount: 2 # Reduce from default 3
+      snapshotterReplicaCount: 2 # Reduce from default 3
 
     #  For Kubernetes < v1.25, if your cluster enables Pod Security Policy admission controller,
     #  set this to `true` to ship longhorn-psp which allow privileged Longhorn pods to start
