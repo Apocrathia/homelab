@@ -54,6 +54,60 @@ spec:
             - ReadWriteOnce
     redis:
       enabled: true
+      architecture: standalone
+      auth:
+        enabled: false
+      master:
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 8Gi
+          annotations:
+            longhorn.io/backup: "true"
+          labels:
+            app.kubernetes.io/name: authentik-redis
+            app.kubernetes.io/instance: authentik
+            app.kubernetes.io/component: cache
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        configuration: |-
+          # Redis configuration for better durability and resilience
+          # Enable AOF with safer settings
+          appendonly yes
+          appendfsync everysec
+          no-appendfsync-on-rewrite no
+          auto-aof-rewrite-percentage 100
+          auto-aof-rewrite-min-size 64mb
+
+          # Disable RDB persistence (AOF is sufficient)
+          save ""
+
+          # Memory management
+          maxmemory 512mb
+          maxmemory-policy allkeys-lru
+
+          # Disable dangerous commands
+          rename-command FLUSHDB ""
+          rename-command FLUSHALL ""
+          rename-command DEBUG ""
+          rename-command CONFIG ""
+
+          # Logging
+          loglevel notice
+
+          # Network settings
+          tcp-keepalive 300
+          timeout 0
+
+          # Persistence settings for better durability
+          stop-writes-on-bgsave-error yes
+          rdbcompression yes
+          rdbchecksum yes
 
     server:
       replicas: 2
