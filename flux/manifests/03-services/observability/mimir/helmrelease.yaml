@@ -79,10 +79,10 @@ spec:
         limits:
           cpu: 2000m
           memory: 4Gi
-      persistence:
+      persistentVolume:
         enabled: true
         storageClassName: longhorn
-        size: 100Gi
+        size: 20Gi
 
     distributor:
       resources:
