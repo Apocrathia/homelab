@@ -79,12 +79,12 @@ spec:
 
     # Resources
     resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
       limits:
         cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
+        memory: 1Gi
 
     # Node selector for all nodes
     nodeSelector: {}
