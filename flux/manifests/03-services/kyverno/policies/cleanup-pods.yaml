@@ -1,0 +1,39 @@
+---
+apiVersion: kyverno.io/v2
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-stale-pods
+  annotations:
+    policies.kyverno.io/title: Cleanup Stale Pods
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    kyverno.io/kyverno-version: 1.11.1
+    policies.kyverno.io/minversion: 1.9.0
+    kyverno.io/kubernetes-version: "1.27"
+    policies.kyverno.io/description: >-
+      Cleans up completed and failed pods that are not owned by ReplicaSets or StatefulSets.
+      This helps prevent accumulation of old completed/failed pods while preserving rollback capability.
+spec:
+  match:
+    any:
+      - resources:
+          kinds:
+            - Pod
+  exclude:
+    any:
+      - resources:
+          namespaces:
+            - kube-system
+  conditions:
+    all:
+      - key: "{{ target.status.phase }}"
+        operator: AnyIn
+        value: ["Succeeded", "Failed"]
+      - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
+        operator: GreaterThan
+        value: "1h0m0s"
+      - key: "{{ target.metadata.ownerReferences[0].kind }}"
+        operator: AnyNotIn
+        value: ["ReplicaSet", "StatefulSet"]
+  schedule: "0 * * * *"
