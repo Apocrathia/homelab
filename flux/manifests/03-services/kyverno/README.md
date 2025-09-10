@@ -52,7 +52,7 @@ The `default` namespace is a special namespace in Kubernetes that should be rese
 
 ## Cleanup Policies
 
-Kyverno also provides automated resource cleanup policies that replace manual cronjob-based cleanup:
+Kyverno provides automated resource cleanup policies for cluster maintenance:
 
 ### Active Cleanup Policies
 
@@ -62,19 +62,17 @@ Kyverno also provides automated resource cleanup policies that replace manual cr
 - **cleanup-failed-jobs**: Removes failed jobs older than 7 days
 - **cleanup-released-pvcs**: Removes PVCs in Released status
 
-### Benefits over Cronjob Cleanup
+### Benefits of Policy-Based Cleanup
 
-- **Real-time evaluation**: Continuous monitoring vs scheduled execution
+- **Real-time evaluation**: Continuous monitoring and evaluation
 - **Policy-native**: Kubernetes-native policy enforcement
-- **Better performance**: More efficient resource usage
-- **Integrated logging**: Better observability through Kyverno controllers
+- **High performance**: Efficient resource processing
+- **Integrated logging**: Built-in observability through Kyverno controllers
 - **Declarative**: Configuration managed through GitOps
 
 ### Configuration
 
 All cleanup policies run hourly (`0 * * * *`) and exclude system namespaces (kube-system, kyverno).
-
-> **Migration**: Resource cleanup has been migrated from [housekeeping cronjobs](../housekeeping/README.md) to these Kyverno policies for better efficiency and reliability.
 
 ## Related Policies
 
