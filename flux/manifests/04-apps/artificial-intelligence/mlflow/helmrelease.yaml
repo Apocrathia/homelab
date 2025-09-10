@@ -1,0 +1,126 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mlflow
+  namespace: mlflow
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: mlflow
+      # renovate: datasource=helm registryUrl=https://community-charts.github.io/helm-charts depName=mlflow
+      version: "1.6.2"
+      sourceRef:
+        kind: HelmRepository
+        name: community-charts
+        namespace: flux-system
+  # Pull database credentials from secret
+  valuesFrom:
+    - kind: Secret
+      name: mlflow-secrets
+      valuesKey: username
+      targetPath: backendStore.postgres.user
+    - kind: Secret
+      name: mlflow-secrets
+      valuesKey: password
+      targetPath: backendStore.postgres.password
+
+  values:
+    # Image configuration
+    image:
+      repository: burakince/mlflow
+      pullPolicy: IfNotPresent
+
+    # Replica configuration
+    replicaCount: 1
+
+    # Resource allocation
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+
+    # Service configuration
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 80
+      containerPort: 5000
+      containerPortName: mlflow
+
+    # Backend store configuration using PostgreSQL
+    backendStore:
+      databaseMigration: true
+      postgres:
+        enabled: true
+        host: mlflow-postgres-rw.mlflow.svc.cluster.local
+        port: 5432
+        database: mlflow
+        driver: "psycopg2"
+
+    # Artifact storage using Longhorn persistent volume
+    artifactRoot:
+      proxiedArtifactStorage: false
+      defaultArtifactRoot: "/mlflow/artifacts"
+      defaultArtifactsDestination: "/mlflow/artifacts"
+
+    # Extra volumes for persistent storage
+    extraVolumes:
+      - name: mlflow-artifacts
+        persistentVolumeClaim:
+          claimName: mlflow-artifacts-pvc
+
+    # Mount the persistent volume
+    extraVolumeMounts:
+      - name: mlflow-artifacts
+        mountPath: /mlflow/artifacts
+
+    # Security context
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: false
+      runAsNonRoot: true
+      privileged: false
+      runAsUser: 1001
+      runAsGroup: 1001
+
+    podSecurityContext:
+      fsGroup: 1001
+      fsGroupChangePolicy: "OnRootMismatch"
+
+    # Logging configuration
+    log:
+      enabled: true
+      level: info
+
+    # Disable telemetry for privacy
+    telemetry:
+      enabled: false
+
+    # Probes configuration
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 5
+
+    readinessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+    # Service monitor for Prometheus (optional)
+    serviceMonitor:
+      enabled: true
+
+    # Ingress disabled - using Gateway API through Authentik
+    ingress:
+      enabled: false

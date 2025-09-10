@@ -1,0 +1,49 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: mlflow-postgres
+  namespace: mlflow
+spec:
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 20Gi
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    # PostgreSQL configuration parameters
+    parameters:
+      max_connections: "200"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+      # MLflow-specific optimizations
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "64MB"
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: mlflow
+      owner: mlflow
+      secret:
+        name: mlflow-secrets
+
+  # Monitoring
+  monitoring:
+    enablePodMonitor: true

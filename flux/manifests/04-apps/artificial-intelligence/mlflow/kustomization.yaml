@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: mlflow
+  namespace: mlflow
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - secret.yaml
+  - storage.yaml
+  - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-mlflow
+    namespace: mlflow
+    files:
+      - mlflow.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"
