@@ -26,6 +26,11 @@ spec:
   values:
     extraArgs:
       - --autogenInternals=false
+    config:
+      # Remove ReplicaSet filters to allow cleanup policies to work
+      resourceFiltersExclude:
+        - "[ReplicaSet,*,*]"
+        - "[ReplicaSet/?*,*,*]"
     global:
       image:
         registry: ghcr.io

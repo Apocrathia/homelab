@@ -9,9 +9,9 @@ This directory contains the deployment configuration for housekeeping tasks that
 The housekeeping deployment provides automated maintenance tasks including:
 
 - **Node Labeling**: Automated labeling of nodes based on characteristics
-- **Resource Cleanup**: Periodic cleanup of unused resources
 - **Cluster Organization**: Automated cluster organization and maintenance
-- **Resource Management**: Efficient resource utilization and cleanup
+
+> **Note**: Resource cleanup is now handled by [Kyverno cleanup policies](../kyverno/README.md#cleanup-policies) instead of manual cronjobs for better efficiency and reliability.
 
 ## Architecture
 
@@ -24,23 +24,22 @@ The housekeeping deployment provides automated maintenance tasks including:
 - **Configuration-Driven**: ConfigMap-based label configuration
 - **Resource-Aware**: Considers node resources and capabilities
 
-#### Resource Cleanup (`resource-cleanup.yaml`)
+#### Resource Cleanup (Migrated to Kyverno)
 
-- **Unused Resources**: Identifies and removes unused resources
-- **Age-Based Cleanup**: Removes resources based on age or last use
-- **Policy-Driven**: Configurable cleanup policies
-- **Safe Operations**: Non-destructive cleanup with safety checks
+Resource cleanup has been migrated to [Kyverno cleanup policies](../kyverno/README.md#cleanup-policies) which provide:
+
+- **Policy-Native**: Kubernetes-native policy enforcement
+- **Real-Time Evaluation**: Continuous evaluation vs scheduled jobs
+- **Better Performance**: More efficient than cronjob-based cleanup
+- **Integrated Logging**: Better observability and debugging
 
 ### Resource Types
 
 The housekeeping system manages:
 
-- **ConfigMaps**: Unused configuration data
-- **Secrets**: Orphaned secret data (with care)
-- **PersistentVolumeClaims**: Unused storage claims
-- **Jobs**: Completed batch jobs
-- **Pods**: Failed or completed pods
 - **Node Labels**: Dynamic node categorization
+
+> **Resource Cleanup**: ConfigMaps, Secrets, PVCs, Jobs, and Pods are now managed by [Kyverno cleanup policies](../kyverno/README.md#cleanup-policies).
 
 ## Features
 
