@@ -23,6 +23,7 @@ The applications layer contains user-facing workloads and services organized by 
 
 - [**AI Applications**](artificial-intelligence/README.md) - Overview of AI and machine learning applications
   - [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with Large Language Models (LLMs) with Authentik SSO integration and Gateway API routing
+  - [**MLflow**](artificial-intelligence/mlflow/README.md) - Open-source platform for the machine learning lifecycle with experiment tracking, model registry, and deployment capabilities
   - [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration:
     - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
     - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service

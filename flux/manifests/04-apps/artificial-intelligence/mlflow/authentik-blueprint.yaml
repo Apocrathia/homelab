@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: mlflow
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Proxy Provider for MLflow
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "mlflow-proxy-provider"
+    attrs:
+      name: "mlflow-proxy-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: false
+      internal_host: "http://mlflow.mlflow.svc.cluster.local:80"
+      external_host: "https://mlflow.gateway.services.apocrathia.com"
+
+  # Application for MLflow
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "mlflow"
+    attrs:
+      name: "MLflow"
+      slug: "mlflow"
+      group: "Applications"
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "mlflow-proxy-provider"]]
+      launch_url: "https://mlflow.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://raw.githubusercontent.com/mlflow/mlflow/refs/heads/master/docs/static/images/logo-dark.svg"
+      meta_description: "MLflow machine learning lifecycle platform"
+      meta_publisher: "MLflow"
+
+  # Outpost for MLflow
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "mlflow-outpost"
+    attrs:
+      name: "mlflow-outpost"
+      type: "proxy"
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "mlflow-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https

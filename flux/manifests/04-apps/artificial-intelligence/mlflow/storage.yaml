@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-artifacts-pvc
+  namespace: mlflow
+  labels:
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 50Gi
