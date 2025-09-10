@@ -120,6 +120,9 @@ spec:
     # Service monitor for Prometheus (optional)
     serviceMonitor:
       enabled: true
+      namespace: prometheus-system
+      labels:
+        release: kube-prometheus-stack
 
     # Ingress disabled - using Gateway API through Authentik
     ingress:
