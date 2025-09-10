@@ -28,7 +28,7 @@ entries:
     identifiers:
       slug: "n8n"
     attrs:
-      name: "n8n Workflow Automation"
+      name: "n8n"
       slug: "n8n"
       group: "Applications"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "n8n-proxy-provider"]]
