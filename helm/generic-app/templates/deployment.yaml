@@ -33,6 +33,9 @@ spec:
         runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
         runAsGroup: {{ .Values.app.securityContext.runAsGroup | default 1000 }}
         fsGroup: {{ .Values.app.securityContext.fsGroup | default 1000 }}
+        {{- if .Values.app.securityContext.fsGroupChangePolicy }}
+        fsGroupChangePolicy: {{ .Values.app.securityContext.fsGroupChangePolicy }}
+        {{- end }}
         seccompProfile:
           type: RuntimeDefault
       containers:

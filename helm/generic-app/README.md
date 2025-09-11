@@ -94,6 +94,7 @@ app:
     runAsUser: 1000 # User ID to run container as
     runAsGroup: 1000 # Group ID to run container as
     fsGroup: 1000 # File system group ID for volumes
+    fsGroupChangePolicy: "OnRootMismatch" # Automatically change volume ownership when it doesn't match fsGroup
     runAsNonRoot: true # Require non-root user (set to false for init containers)
     allowPrivilegeEscalation: false # Allow privilege escalation (set to true if needed)
     readOnlyRootFilesystem: true # Mount root filesystem as read-only (set to false for LSIO containers)
@@ -119,6 +120,7 @@ app:
     runAsUser: "0" # Run as root initially (use string for Helm compatibility)
     runAsGroup: "0" # Run as root group initially (use string for Helm compatibility)
     fsGroup: 1000 # Files owned by group 1000
+    fsGroupChangePolicy: "OnRootMismatch" # Automatically fix volume ownership
     runAsNonRoot: "false" # Allow running as root
     allowPrivilegeEscalation: "true" # Allow s6-overlay to work
     readOnlyRootFilesystem: "false" # Allow filesystem writes
@@ -138,6 +140,7 @@ app:
     runAsUser: 1000
     runAsGroup: 1000
     fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch" # Automatically fix volume ownership
     runAsNonRoot: true
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
@@ -345,7 +348,15 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.14 (Latest)
+### Version 0.0.15 (Latest)
+
+- **Enhanced Volume Permission Management**: Added `fsGroupChangePolicy` support
+  - `fsGroupChangePolicy`: Automatically change volume ownership when it doesn't match fsGroup
+  - Set to `"OnRootMismatch"` to automatically fix volume permissions on mount
+  - Essential for applications with persistent volumes that need specific user/group ownership
+  - Resolves common permission issues with mounted volumes in Kubernetes
+
+### Version 0.0.14
 
 - **Enhanced Authentik Integration**: Added configurable header-based authentication
   - `interceptHeaderAuth`: Enable/disable header-based authentication for reverse proxy auth
