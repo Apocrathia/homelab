@@ -1,0 +1,208 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: litellm-helm
+      # renovate: datasource=helm registryUrl=oci://ghcr.io/berriai depName=litellm-helm
+      version: "0.1.772"
+      sourceRef:
+        kind: HelmRepository
+        name: litellm
+        namespace: flux-system
+
+  # Pull all sensitive configuration from secret
+  valuesFrom:
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: master-key
+      targetPath: proxy_config.general_settings.master_key
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: master-key
+      targetPath: envVars.LITELLM_MASTER_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: username
+      targetPath: proxy_config.general_settings.ui_username
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: password
+      targetPath: proxy_config.general_settings.ui_password
+
+  values:
+    # Use the database-optimized image
+    image:
+      repository: ghcr.io/berriai/litellm-database
+      pullPolicy: IfNotPresent
+      # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
+      tag: "main-v1.76.1-stable"
+
+    # Replica configuration
+    replicaCount: 1
+
+    # Service configuration
+    service:
+      type: ClusterIP
+      port: 4000
+
+    # Ingress disabled - using Gateway API through authentik
+    ingress:
+      enabled: false
+
+    # Resource limits
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    # Environment secrets
+    environmentSecrets:
+      - litellm-secrets
+
+    # Use existing database (our CNPG cluster)
+    db:
+      useExisting: true
+      deployStandalone: false
+      endpoint: litellm-postgres-rw.litellm.svc.cluster.local:5432
+      database: litellm
+      secret:
+        name: litellm-secrets
+        usernameKey: username
+        passwordKey: password
+
+    # Disable built-in postgres since we use CNPG
+    postgresql:
+      enabled: false
+
+    # Disable redis for now (can be enabled later if needed for caching)
+    redis:
+      enabled: false
+
+    # Add sidecar containers
+    extraContainers:
+      - name: mlflow
+        # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
+        image: registry.suse.com/suse/kubectl:1.33.1
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "MLflow installer sidecar started..."
+            POD_NAME=$$(cat /etc/hostname)
+            echo "Using pod name: $$POD_NAME"
+
+            while true; do
+              # Check if MLflow is already installed in the main container
+              if ! kubectl exec -n litellm $$POD_NAME -c litellm -- python -c "import mlflow" 2>/dev/null; then
+                echo "Installing MLflow dependencies in main container..."
+                kubectl exec -n litellm $$POD_NAME -c litellm -- pip install "mlflow"
+                echo "MLflow installation completed"
+              else
+                echo "MLflow already installed, skipping..."
+              fi
+              sleep 60
+            done
+        readinessProbe:
+          exec:
+            command:
+              [
+                "/bin/sh",
+                "-c",
+                "kubectl exec -n litellm $$(cat /etc/hostname) -c litellm -- python -c 'import mlflow' 2>/dev/null",
+              ]
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 30
+          failureThreshold: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+    # Use the rbac.yaml service account
+    serviceAccount:
+      create: false
+      name: litellm
+
+    # Proxy configuration
+    proxyConfigMap:
+      create: true
+
+    # Mount the secret containing model configuration
+    volumes:
+      - name: model-config
+        secret:
+          secretName: litellm-secrets
+          items:
+            - key: model-config
+              path: models.yaml
+
+    volumeMounts:
+      - name: model-config
+        mountPath: /tmp/model-config/
+        readOnly: true
+
+    # Additional environment variables
+    envVars:
+      CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
+      MLFLOW_TRACKING_URI: "http://mlflow.mlflow.svc.cluster.local:80"
+
+    proxy_config:
+      # Include model configuration from separate file using relative path
+      include:
+        - ../../tmp/model-config/models.yaml
+
+      general_settings:
+        # Database configuration
+        store_model_in_db: true
+
+        # Rate limiting
+        default_max_tokens: 4096
+        default_tpm_limit: 60000
+        default_rpm_limit: 600
+
+      litellm_settings:
+        # Logging and monitoring
+        success_callback: ["mlflow"]
+        failure_callback: ["mlflow"]
+
+        # Cost tracking
+        track_cost_per_user: true
+
+        # Health checks
+        health_check_interval: 300
+
+    # Migration job configuration
+    migrationJob:
+      enabled: true
+      retries: 3
+      backoffLimit: 4
+      ttlSecondsAfterFinished: 120
+      hooks:
+        argocd:
+          enabled: false
+        helm:
+          enabled: false
+
+    # Health check separation
+    separateHealthApp: true
+    separateHealthPort: 8081
+
+    # Pod disruption budget
+    pdb:
+      enabled: true
+      minAvailable: 1
