@@ -8,6 +8,7 @@ resources:
   - artificial-intelligence/mcp-servers
   - artificial-intelligence/openwebui
   - artificial-intelligence/mlflow
+  - artificial-intelligence/litellm
   - management/n8n
   - management/companion
   - management/kuber

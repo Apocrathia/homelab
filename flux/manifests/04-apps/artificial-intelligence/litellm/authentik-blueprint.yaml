@@ -1,0 +1,84 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: litellm
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Proxy Provider for LiteLLM Admin UI
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "litellm-proxy-provider"
+    attrs:
+      name: "litellm-proxy-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: false
+      internal_host: "http://litellm.litellm.svc.cluster.local:4000"
+      external_host: "https://ai.gateway.services.apocrathia.com"
+      # Allow unauthenticated access to root and API paths
+      skip_path_regex: |
+        ^/$
+        ^/.well-known/
+        ^/active/
+        ^/assistants
+        ^/assistants/
+        ^/audio/
+        ^/batches
+        ^/batches/
+        ^/chat/completions
+        ^/completions
+        ^/embeddings
+        ^/engines/
+        ^/fine_tuning/
+        ^/images/
+        ^/models
+        ^/models/
+        ^/moderations
+        ^/openai/
+        ^/v1/
+
+  # Application for LiteLLM Admin UI
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "litellm"
+    attrs:
+      name: "LiteLLM"
+      slug: "litellm"
+      group: "Applications"
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "litellm-proxy-provider"]]
+      launch_url: "https://ai.gateway.services.apocrathia.com/ui"
+      open_in_new_tab: true
+      icon: "https://raw.githubusercontent.com/BerriAI/litellm/refs/heads/main/docs/my-website/img/favicon.png"
+      meta_description: "LiteLLM Proxy Admin UI - Unified LLM API Gateway Management"
+      meta_publisher: "BerriAI"
+
+  # Outpost for LiteLLM Admin UI
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "litellm-outpost"
+    attrs:
+      name: "litellm-outpost"
+      type: "proxy"
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "litellm-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https

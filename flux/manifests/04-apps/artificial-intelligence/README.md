@@ -12,6 +12,10 @@ User-friendly web interface for interacting with Large Language Models (LLMs) th
 
 Open-source platform for the machine learning lifecycle with experiment tracking, model registry, and deployment capabilities.
 
+### [LiteLLM](./litellm/README.md)
+
+Unified interface for 100+ LLMs with OpenAI proxy compatibility, providing seamless integration with various AI model providers.
+
 ### [MCP Servers](./mcp-servers/README.md)
 
 Model Context Protocol servers providing specialized functionality for AI client integration.
@@ -21,6 +25,7 @@ Model Context Protocol servers providing specialized functionality for AI client
 Artificial intelligence applications provide tools for:
 
 - **LLM Interaction**: Web-based chat interfaces for language models
+- **LLM Proxy Services**: Unified API access to multiple LLM providers
 - **ML Lifecycle Management**: Experiment tracking, model registry, and deployment
 - **MCP Integration**: Specialized servers for AI client functionality
 - **Vulnerability Scanning**: Security analysis through OSV database integration
