@@ -38,6 +38,94 @@ spec:
         {{- end }}
         seccompProfile:
           type: RuntimeDefault
+      {{- if .Values.app.initContainers }}
+      initContainers:
+        {{- range .Values.app.initContainers }}
+        - name: {{ .name }}
+          image: {{ .image }}
+          {{- if .command }}
+          command: {{ .command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .args }}
+          args: {{ .args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .env }}
+          env:
+            {{- range .env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- else if .valueFrom }}
+              valueFrom: {{ .valueFrom | toYaml | nindent 16 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .volumeMounts }}
+          volumeMounts:
+            {{- range .volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .securityContext }}
+          securityContext:
+            {{- if .securityContext.runAsUser }}
+            runAsUser: {{ .securityContext.runAsUser }}
+            {{- end }}
+            {{- if .securityContext.runAsGroup }}
+            runAsGroup: {{ .securityContext.runAsGroup }}
+            {{- end }}
+            {{- if .securityContext.runAsNonRoot }}
+            runAsNonRoot: {{ .securityContext.runAsNonRoot }}
+            {{- end }}
+            {{- if .securityContext.allowPrivilegeEscalation }}
+            allowPrivilegeEscalation: {{ .securityContext.allowPrivilegeEscalation }}
+            {{- end }}
+            {{- if .securityContext.capabilities }}
+            capabilities:
+              {{- if .securityContext.capabilities.add }}
+              add:
+                {{- range .securityContext.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- if .securityContext.capabilities.drop }}
+              drop:
+                {{- range .securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .resources }}
+          resources:
+            {{- if .resources.requests }}
+            requests:
+              {{- if .resources.requests.cpu }}
+              cpu: {{ .resources.requests.cpu }}
+              {{- end }}
+              {{- if .resources.requests.memory }}
+              memory: {{ .resources.requests.memory }}
+              {{- end }}
+            {{- end }}
+            {{- if .resources.limits }}
+            limits:
+              {{- if .resources.limits.cpu }}
+              cpu: {{ .resources.limits.cpu }}
+              {{- end }}
+              {{- if .resources.limits.memory }}
+              memory: {{ .resources.limits.memory }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Values.app.container.name | default "main" }}
           image: {{ .Values.app.image | default "nginx:alpine" }}

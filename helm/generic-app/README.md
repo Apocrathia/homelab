@@ -7,6 +7,7 @@ A generic Helm chart for deploying applications in the homelab environment with 
 - **Kubernetes Resources**: Namespace, Deployment, Service
 - **Container Support**:
   - Main application container with full configuration options
+  - Init containers for setup tasks (permissions, initialization, etc.)
   - Sidecar containers for auxiliary services (logging, monitoring, etc.)
 - **Storage Options**:
   - Longhorn persistent storage for application data
@@ -61,6 +62,18 @@ app:
         subPath: config.yaml
         readOnly: true
         configMapName: my-configmap
+  initContainers: # Init containers (optional)
+    - name: fix-permissions
+      image: busybox:alpine
+      command: ["sh", "-c"]
+      args: ["chown -R 1000:1000 /app/assets && chmod -R 755 /app/assets"]
+      volumeMounts:
+        - name: app-data
+          mountPath: /app
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
   sidecars: # Sidecar containers (optional)
     - name: nginx-sidecar
       image: nginx:alpine
@@ -146,6 +159,40 @@ app:
     readOnlyRootFilesystem: true
     # capabilities defaults to drop: [ALL]
 ```
+
+### Init Container Configuration
+
+Init containers run before the main application container and are useful for setup tasks like fixing permissions, downloading files, or initializing databases.
+
+```yaml
+app:
+  initContainers:
+    - name: fix-permissions
+      image: busybox:alpine
+      command: ["sh", "-c"]
+      args: ["chown -R 1000:1000 /app/assets && chmod -R 755 /app/assets"]
+      volumeMounts:
+        - name: app-data
+          mountPath: /app
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
+```
+
+**Common Use Cases:**
+
+- **Volume Permission Fixing**: Fix ownership of mounted volumes before the main container starts
+- **Database Initialization**: Run database migrations or setup scripts
+- **File Downloads**: Download configuration files or assets
+- **Dependency Installation**: Install packages or dependencies
 
 ### Storage Configuration
 
@@ -348,7 +395,15 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.15 (Latest)
+### Version 0.0.16 (Latest)
+
+- **Init Container Support**: Added support for init containers
+  - `initContainers`: Configure init containers for setup tasks before main container starts
+  - Perfect for fixing volume permissions, database initialization, and dependency setup
+  - Full configuration support including security context, volume mounts, and resources
+  - Resolves complex permission issues that `fsGroup` alone cannot handle
+
+### Version 0.0.15
 
 - **Enhanced Volume Permission Management**: Added `fsGroupChangePolicy` support
   - `fsGroupChangePolicy`: Automatically change volume ownership when it doesn't match fsGroup
