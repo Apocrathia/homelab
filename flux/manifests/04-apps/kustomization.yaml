@@ -9,6 +9,7 @@ resources:
   - artificial-intelligence/openwebui
   - artificial-intelligence/mlflow
   - artificial-intelligence/litellm
+  - artificial-intelligence/guardrails
   - management/n8n
   - management/companion
   - management/kuber
