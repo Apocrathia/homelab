@@ -16,6 +16,10 @@ Open-source platform for the machine learning lifecycle with experiment tracking
 
 Unified interface for 100+ LLMs with OpenAI proxy compatibility, providing seamless integration with various AI model providers.
 
+### [Guardrails AI](./guardrails/README.md)
+
+API server providing guardrails validation for LLM outputs using community validators from the Guardrails Hub, designed for LiteLLM integration.
+
 ### [MCP Servers](./mcp-servers/README.md)
 
 Model Context Protocol servers providing specialized functionality for AI client integration.
@@ -26,6 +30,7 @@ Artificial intelligence applications provide tools for:
 
 - **LLM Interaction**: Web-based chat interfaces for language models
 - **LLM Proxy Services**: Unified API access to multiple LLM providers
+- **LLM Validation**: Guardrails for output validation and safety checks
 - **ML Lifecycle Management**: Experiment tracking, model registry, and deployment
 - **MCP Integration**: Specialized servers for AI client functionality
 - **Vulnerability Scanning**: Security analysis through OSV database integration

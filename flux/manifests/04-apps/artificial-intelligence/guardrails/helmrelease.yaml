@@ -1,0 +1,156 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: guardrails
+  namespace: guardrails-ai
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      version: "0.0.14"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 15m
+  values:
+    app:
+      name: guardrails
+      namespace: guardrails-ai
+      # renovate: datasource=public.ecr.aws/docker/library depName=python
+      image: public.ecr.aws/docker/library/python:3.12
+
+      # Override container configuration for Guardrails server
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - |
+          set -e
+
+          echo "Installing Guardrails AI..."
+          pip install --upgrade pip
+          pip install --no-cache-dir \
+            guardrails-ai[api] \
+            gunicorn[gthread]
+
+          echo "Configuring Guardrails..."
+          guardrails configure --enable-metrics --enable-remote-inferencing --token="${GUARDRAILS_TOKEN:-}"
+
+          echo "Installing guardrails from Hub..."
+          guardrails hub install hub://guardrails/gibberish_text
+          guardrails hub install hub://guardrails/valid_length
+          guardrails hub install hub://guardrails/two_words
+          guardrails hub install hub://guardrails/regex_match
+          guardrails hub install hub://guardrails/secrets_present
+          guardrails hub install hub://guardrails/toxic_language
+
+          echo "Starting Guardrails server with Gunicorn..."
+          exec gunicorn \
+            --bind 0.0.0.0:8000 \
+            --workers 2 \
+            --threads 2 \
+            --timeout 300 \
+            --keep-alive 5 \
+            --worker-class gthread \
+            --access-logfile - \
+            --error-logfile - \
+            --log-level info \
+            --preload \
+            "guardrails_api.app:create_app(config='/config/config.py')"
+
+      container:
+        name: guardrails
+        port: 8000
+        env:
+          - name: GUARDRAILS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: guardrails-secrets
+                key: guardrails-token
+                optional: true
+          - name: LITELLM_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: guardrails-secrets
+                key: litellm-token
+                optional: true
+          - name: GUARDRAILS_BASE_URL
+            value: "http://guardrails.guardrails-ai.svc.cluster.local:8000"
+          - name: LITELLM_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: GUARDRAILS_LOG_LEVEL
+            value: "INFO"
+          - name: APP_ENVIRONMENT
+            value: "production"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: PYTHONDONTWRITEBYTECODE
+            value: "1"
+          - name: PIP_USER
+            value: "1"
+          - name: HOME
+            value: "/home/python"
+          - name: PATH
+            value: "/home/python/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+      # Security context - run as non-root user
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false # Needed for pip installation and config files
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+
+      # Resource allocation
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      # Service configuration
+      service:
+        type: ClusterIP
+        port: 8000
+        targetPort: 8000
+        portName: http
+
+      # Volume configuration
+      volumes:
+        emptyDir:
+          - name: home
+            mountPath: /home/python
+          - name: tmp
+            mountPath: /tmp
+          - name: guardrails-cache
+            mountPath: /home/python/.guardrails
+        configMap:
+          - name: guardrails-config
+            mountPath: /config
+            readOnly: true
+            configMapName: guardrails-config
+
+    # No persistent storage needed for this stateless service
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    # 1Password secrets for Guardrails token
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/guardrails-secrets"
+
+    # No Authentik needed - this is an API-only service
+    authentik:
+      enabled: false
+
+    # No external access needed - internal service only for LiteLLM
+    httproute:
+      enabled: false
