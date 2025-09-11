@@ -38,6 +38,22 @@ app:
   # Optional: override the default container arguments
   # args: ["--custom-arg", "value"]
 
+  # Init containers configuration
+  initContainers: []
+  # Example init container configuration:
+  # initContainers:
+  #   - name: fix-permissions
+  #     image: busybox:alpine
+  #     command: ["sh", "-c"]
+  #     args: ["chown -R 1000:1000 /app/assets"]
+  #     volumeMounts:
+  #       - name: app-data
+  #         mountPath: /app
+  #     securityContext:
+  #       runAsUser: 0
+  #       runAsGroup: 0
+  #       runAsNonRoot: false
+
   # Sidecar containers configuration
   sidecars: []
   # Example sidecar configuration:
