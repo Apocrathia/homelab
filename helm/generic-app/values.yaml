@@ -47,7 +47,7 @@ app:
   #     command: ["sh", "-c"]
   #     args: ["chown -R 1000:1000 /app/assets"]
   #     volumeMounts:
-  #       - name: app-data
+  #       - name: demo-app-data
   #         mountPath: /app
   #     securityContext:
   #       runAsUser: 0

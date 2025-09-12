@@ -68,7 +68,7 @@ app:
       command: ["sh", "-c"]
       args: ["chown -R 1000:1000 /app/assets && chmod -R 755 /app/assets"]
       volumeMounts:
-        - name: app-data
+        - name: my-app-data
           mountPath: /app
       securityContext:
         runAsUser: 0
@@ -172,7 +172,7 @@ app:
       command: ["sh", "-c"]
       args: ["chown -R 1000:1000 /app/assets && chmod -R 755 /app/assets"]
       volumeMounts:
-        - name: app-data
+        - name: my-app-data
           mountPath: /app
       securityContext:
         runAsUser: 0
@@ -395,7 +395,14 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.16 (Latest)
+### Version 0.0.17 (Latest)
+
+- **Fixed Volume Naming Consistency**: Longhorn volume names now match PVC names
+  - Volume name changed from hardcoded `app-data` to dynamic `{{ .Values.app.name }}-data`
+  - Ensures consistent naming between PVC creation and pod volume references
+  - Resolves confusion when referencing volumes in init containers and sidecars
+
+### Version 0.0.16
 
 - **Init Container Support**: Added support for init containers
   - `initContainers`: Configure init containers for setup tasks before main container starts
