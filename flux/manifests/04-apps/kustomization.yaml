@@ -10,6 +10,7 @@ resources:
   - artificial-intelligence/mlflow
   - artificial-intelligence/litellm
   - artificial-intelligence/guardrails
+  - games/romm
   - management/n8n
   - management/companion
   - management/kuber

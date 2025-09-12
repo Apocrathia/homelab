@@ -1,0 +1,212 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: romm
+  namespace: romm
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.17"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: romm
+      # renovate: datasource=docker depName=ghcr.io/rommapp/romm
+      image: ghcr.io/rommapp/romm:4.2.0
+      container:
+        name: romm
+        port: 8080
+        env:
+          # ROMM Base Configuration
+          - name: ROMM_BASE_URL
+            value: "https://romm.gateway.services.apocrathia.com"
+          - name: ROMM_BASE_PATH
+            value: "/romm"
+          - name: ROMM_HOST
+            value: "0.0.0.0"
+          - name: ROMM_PORT
+            value: "8080"
+          - name: ROMM_AUTH_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: auth-secret-key
+          - name: TZ
+            value: "America/Denver"
+
+          # Database Configuration (PostgreSQL)
+          - name: ROMM_DB_DRIVER
+            value: "postgresql"
+          - name: DB_HOST
+            value: "romm-postgres-rw.romm.svc.cluster.local"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "romm"
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: username
+          - name: DB_PASSWD
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: password
+
+          # Authentication Configuration
+          - name: OIDC_ENABLED
+            value: "true"
+          - name: OIDC_PROVIDER
+            value: "authentik"
+          - name: DISABLE_USERPASS_LOGIN
+            value: "true"
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: oidc-client-id
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: oidc-client-secret
+          - name: OIDC_REDIRECT_URI
+            value: "https://romm.gateway.services.apocrathia.com/api/oauth/openid"
+          - name: OIDC_SERVER_APPLICATION_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/romm"
+
+          - name: IGDB_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: igdb-client-id
+          - name: IGDB_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: igdb-client-secret
+          - name: SCREENSCRAPER_USER
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: screenscraper-username
+          - name: SCREENSCRAPER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: screenscraper-password
+          # - name: MOBYGAMES_API_KEY
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: romm-secrets
+          #       key: mobygames-api-key
+          - name: STEAMGRIDDB_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: steamgriddb-api-key
+          - name: RETROACHIEVEMENTS_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: romm-secrets
+                key: retroachievements-api-key
+
+          # Toggle-based metadata providers (no API keys required)
+          - name: HASHEOUS_API_ENABLED
+            value: "true"
+          - name: LAUNCHBOX_API_ENABLED
+            value: "true"
+          - name: PLAYMATCH_API_ENABLED
+            value: "true"
+
+          # Task Configuration
+          - name: TASK_RETRY_ATTEMPTS
+            value: "3"
+          - name: TASK_RETRY_DELAY
+            value: "60"
+          - name: TASK_SCHEDULE_SCAN
+            value: "0 2 * * *" # Daily at 2 AM
+          - name: TASK_SCHEDULE_SCRAPE
+            value: "0 3 * * *" # Daily at 3 AM
+
+          # Emulation Configuration
+          - name: EMULATION_ENABLED
+            value: "true"
+          - name: EMULATION_ENGINE
+            value: "emulatorjs"
+          - name: EMULATION_ENGINE_URL
+            value: "https://romm.gateway.services.apocrathia.com/emulator"
+
+      replicas: 1
+
+      service:
+        port: 8080
+        targetPort: 8080
+        portName: http
+
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "200m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+
+      securityContext:
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+
+      # Additional writable directories for ROMM
+      volumes:
+        emptyDir:
+          - name: temp-files
+            mountPath: /tmp
+          - name: assets
+            mountPath: /romm/assets
+          - name: cache
+            mountPath: /romm/cache
+          - name: logs
+            mountPath: /romm/logs
+          - name: nginx-config
+            mountPath: /etc/nginx/conf.d
+        configMap:
+          - name: config
+            mountPath: /romm/config
+            readOnly: true
+            configMapName: romm-config
+
+    storage:
+      longhorn:
+        enabled: true
+        capacity: 10Gi
+        mountPath: /romm/resources
+      smb:
+        enabled: true
+        source: "//storage.services.apocrathia.com/Games"
+        subDir: "Emulation"
+        mountPath: /romm/library
+        credentialsPath: "vaults/Secrets/items/smb-credentials"
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/romm-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: true
+      hostname: "romm.gateway.services.apocrathia.com"

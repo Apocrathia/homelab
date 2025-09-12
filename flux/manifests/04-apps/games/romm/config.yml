@@ -1,0 +1,204 @@
+---
+exclude:
+  platforms: []
+  roms:
+    multi_file:
+      names:
+        - "@eaDir"
+        - "@SynoResource"
+        - .SynoResource
+        - "@Recycle"
+        - "#recycle"
+        - .sync
+        - .SynologyWorkingDirectory
+        - "@sharebin"
+        - .Spotlight-V100
+        - .DocumentRevisions-V100
+        - .TemporaryItems
+        - .Trashes
+        - .fseventsd
+        - Network Trash Folder
+        - Temporary Items
+        - $RECYCLE.BIN
+        - System Volume Information
+      parts:
+        extensions:
+          - txt
+          - xml
+          - nfo
+          - db
+          - ini
+          - bak
+          - tmp
+          - temp
+        names:
+          - .syno
+          - .DS_Store
+          - ._*
+          - .AppleDouble
+          - .AppleDB
+          - .AppleDesktop
+          - .VolumeIcon.icns
+          - Thumbs.db
+          - ehthumbs.db
+          - ehthumbs_vista.db
+          - Desktop.ini delete
+          - "*.lnk"
+          - ~*
+    single_file:
+      extensions:
+        - txt
+        - xml
+        - nfo
+        - db
+        - ini
+        - bak
+        - tmp
+        - temp
+      names:
+        - "@eaDir"
+        - "@SynoResource"
+        - .SynoResource
+        - "@Recycle"
+        - "#recycle"
+        - .sync
+        - .SynologyWorkingDirectory
+        - "@sharebin"
+        - .syno
+        - .DS_Store
+        - ._*
+        - .Trash*
+        - .Spotlight-V100
+        - .DocumentRevisions-V100
+        - .TemporaryItems
+        - .Trashes
+        - .fseventsd
+        - .VolumeIcon.icns
+        - .AppleDouble
+        - .AppleDB
+        - .AppleDesktop
+        - Network Trash Folder
+        - Temporary Items
+        - Thumbs.db
+        - ehthumbs.db
+        - ehthumbs_vista.db
+        - Desktop.ini
+        - $RECYCLE.BIN
+        - System Volume Information
+        - "*.lnk"
+        - ~*
+filesystem:
+  firmware_folder: bios
+  roms_folder: roms
+system:
+  platforms:
+    3do: 3do
+    amiga: amiga
+    amigacd32: amiga-cd32
+    amstradcpc: acpc
+    android: android
+    apfm1000: apf
+    apple2: appleii
+    apple2gs: apple2gs
+    arcade: arcade
+    arcadia: arcadia-2001
+    arduboy: arduboy
+    astrocde: astrocade
+    atari2600: atari2600
+    atari5200: atari5200
+    atari7800: atari7800
+    atari800: atari8bit
+    atarijaguar: jaguar
+    atarijaguarcd: atari-jaguar-cd
+    atarilynx: lynx
+    atarist: atari-st
+    c16: c16
+    c64: c64
+    cdtv: commodore-cdtv
+    channelf: fairchild-channel-f
+    colecovision: colecovision
+    dos: dos
+    dragon32: dragon-32-slash-64
+    dreamcast: dc
+    electron: acorn-electron
+    famicom: famicom
+    fds: fds
+    fmtowns: fm-towns
+    gameandwatch: g-and-w
+    gamecom: game-dot-com
+    gb: gb
+    gba: gba
+    gbc: gbc
+    gc: ngc
+    genesis-slash-megadrive: genesis
+    intellivision: intellivision
+    j2me: j2me
+    macintosh: mac
+    mastersystem: sega-master-system
+    megacd: segacd
+    megadrive: genesis-slash-megadrive
+    megaduck: mega-duck-slash-cougar-boy
+    msx: msx
+    msx2: msx2
+    n3ds: 3ds
+    n64: n64
+    n64dd: nintendo-64dd
+    nds: nds
+    neogeo: neogeoaes
+    neogeocd: neo-geo-cd
+    nes: nes
+    ngp: neo-geo-pocket
+    ngpc: neo-geo-pocket-color
+    odyssey2: odyssey-2-slash-videopac-g7000
+    oric: oric
+    palm: palm-os
+    pc: win
+    pc88: pc-8800-series
+    pc98: pc-9800-series
+    pcfx: pc-fx
+    pokemini: pokemon-mini
+    ps: psx
+    ps2: ps2
+    ps3: ps3
+    ps4: ps4--1
+    psp: psp
+    psx: ps
+    pv1000: casio-pv-1000
+    samcoupe: sam-coupe
+    satellaview: satellaview
+    sega-master-system: sms
+    sega32x: sega32
+    sfc: sfam
+    sg-1000: sg1000
+    snes: snes
+    supergrafx: supergrafx
+    supervision: supervision
+    switch: switch
+    symbian: symbian
+    tg-cd: turbografx-16-slash-pc-engine-cd
+    tg16: turbografx16--1
+    ti99: ti-99
+    trs-80: trs-80
+    turbografx-16-slash-pc-engine-cd: turbografx-cd
+    turbografx16--1: tg16
+    vectrex: vectrex
+    vic20: vic-20
+    videopac: videopac-g7400
+    virtualboy: virtualboy
+    vsmile: vsmile
+    wii: wii
+    wiiu: wiiu
+    windows: win
+    wonderswan: wonderswan
+    wonderswancolor: wonderswan-color
+    x1: x1
+    x68000: sharp-x68000
+    xbox: xbox
+    xbox360: xbox360
+    zmachine: z-machine
+    zx81: zx80
+    zxspectrum: zxs
+  versions:
+    naomi: arcade
+    naomi2: arcade
+    naomigd: arcade
