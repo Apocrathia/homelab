@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: romm
+  namespace: romm
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: romm-config
+    namespace: romm
+    files:
+      - config.yml
+  - name: authentik-blueprint-romm
+    namespace: romm
+    files:
+      - romm.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/name: romm
+      authentik_blueprint: "true"

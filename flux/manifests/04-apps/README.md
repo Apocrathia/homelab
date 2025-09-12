@@ -10,6 +10,7 @@ The applications layer contains user-facing workloads and services organized by 
 
 - **Application Templates**: Baseline configurations for common application patterns
 - **Artificial Intelligence**: AI/ML applications and MCP servers for LLM tool integration
+- **Games**: Game support services and applications for managing and playing games
 - **Management**: Administrative and workflow automation tools
 - **Integration Examples**: Examples of infrastructure integration patterns
 
@@ -30,6 +31,11 @@ The applications layer contains user-facing workloads and services organized by 
     - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
     - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
     - [**Grafana**](artificial-intelligence/mcp-servers/grafana/README.md) - Grafana dashboard and data source management
+
+### Games
+
+- [**Game Support Services**](games/README.md) - Overview of game management and emulation applications
+  - [**ROMM**](games/romm/README.md) - ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation
 
 ### Management
 
