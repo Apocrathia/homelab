@@ -201,7 +201,7 @@ spec:
               {{- end }}
             {{- end }}
             {{- if .Values.storage.longhorn.enabled }}
-            - name: app-data
+            - name: {{ .Values.app.name }}-data
               mountPath: {{ .Values.storage.longhorn.mountPath | default "/app" }}
             {{- end }}
             {{- if .Values.storage.smb.enabled }}
@@ -322,7 +322,7 @@ spec:
             name: {{ .configMapName | default .name }}
         {{- end }}
         {{- if .Values.storage.longhorn.enabled }}
-        - name: app-data
+        - name: {{ .Values.app.name }}-data
           persistentVolumeClaim:
             claimName: {{ .Values.app.name }}-data
         {{- end }}
