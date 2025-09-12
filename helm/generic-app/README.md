@@ -316,7 +316,12 @@ app:
 
 ### Container Volume Mounting
 
-**Pod-wide storage** is referenced by name in `volumeMounts`:
+The chart supports two types of volume configuration:
+
+1. **Pod-wide storage** (from `storage` section) - referenced by name in `volumeMounts`
+2. **Local storage** (emptyDir, configMap) - defined in `volumes` section
+
+**Both can be used together** - the chart will mount all volumes from both sections:
 
 ```yaml
 app:
@@ -327,6 +332,19 @@ app:
     - name: shared-files # References storage.smb
       mountPath: /shared
       readOnly: true
+
+  # Define local storage volumes
+  volumes:
+    emptyDir:
+      - name: cache
+        mountPath: /tmp/cache
+      - name: logs
+        mountPath: /var/log
+    configMap:
+      - name: config
+        mountPath: /etc/config
+        readOnly: true
+        configMapName: app-config
 
   # Init container with volume mounts
   initContainers:
@@ -569,7 +587,22 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.21 (Latest)
+### Version 0.0.22 (Latest)
+
+- **ENHANCED: Improved Volume Mount Logic**: Fixed volume mounting to support both local and pod-wide storage simultaneously
+
+  - **Dual Volume Support**: Chart now properly handles both `app.volumes` (local storage) and `app.volumeMounts` (pod-wide storage) in the same deployment
+  - **Backward Compatible**: Existing deployments using only `app.volumes` or only `app.volumeMounts` continue to work unchanged
+  - **Flexible Configuration**: Applications can now define local storage (emptyDir, configMap) alongside pod-wide storage (Longhorn, SMB) without conflicts
+  - **Proper Volume Naming**: Volume names are correctly prefixed with app name for pod-wide storage, while local storage uses names as-is
+
+- **FIXED: Volume Mount Conflicts**: Resolved issues where defining both `app.volumes` and `app.volumeMounts` caused deployment failures
+
+  - **Template Logic Updated**: Chart now processes both volume types independently instead of using either/or logic
+  - **Volume Creation**: All volumes (local and pod-wide) are properly created in the deployment
+  - **Mount Resolution**: Volume mounts correctly reference their corresponding volumes
+
+### Version 0.0.21
 
 - **MAJOR: Complete Storage Architecture Overhaul**: Redesigned storage system with two-tier architecture
 
