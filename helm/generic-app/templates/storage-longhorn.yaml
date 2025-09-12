@@ -1,6 +1,5 @@
----
-{{- if .Values.storage.longhorn }}
-  {{- range .Values.storage.longhorn }}
+{{- if and .Values.storage.longhorn.enabled .Values.storage.longhorn.volumes }}
+  {{- range .Values.storage.longhorn.volumes }}
 ---
 # Longhorn-based Persistent Volume: {{ .name }}
 apiVersion: longhorn.io/v1beta2

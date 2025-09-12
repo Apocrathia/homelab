@@ -60,8 +60,8 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
-          {{- if .volumeMounts }}
           volumeMounts:
+            {{- if .volumeMounts }}
             {{- range .volumeMounts }}
             - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
@@ -72,7 +72,23 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
-          {{- end }}
+            {{- end }}
+            {{- if .volumes }}
+            {{- range .volumes.emptyDir }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .volumes.configMap }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
           {{- if .securityContext }}
           securityContext:
             {{- if .securityContext.runAsUser }}
@@ -186,13 +202,9 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
-            {{- if not .Values.app.volumeMounts }}
-            {{- range .Values.app.volumes.emptyDir }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-            {{- end }}
-            {{- range .Values.app.volumes.configMap }}
-            - name: {{ .name }}
+            {{- if .Values.app.volumeMounts }}
+            {{- range .Values.app.volumeMounts }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
               {{- if .subPath }}
               subPath: {{ .subPath }}
@@ -202,8 +214,12 @@ spec:
               {{- end }}
             {{- end }}
             {{- else }}
-            {{- range .Values.app.volumeMounts }}
-            - name: {{ $.Values.app.name }}-{{ .name }}
+            {{- range .Values.app.volumes.emptyDir }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .Values.app.volumes.configMap }}
+            - name: {{ .name }}
               mountPath: {{ .mountPath }}
               {{- if .subPath }}
               subPath: {{ .subPath }}
@@ -279,8 +295,8 @@ spec:
             readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
               type: RuntimeDefault
-          {{- if .volumeMounts }}
           volumeMounts:
+            {{- if .volumeMounts }}
             {{- range .volumeMounts }}
             - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
@@ -291,7 +307,23 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
-          {{- end }}
+            {{- end }}
+            {{- if .volumes }}
+            {{- range .volumes.emptyDir }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- range .volumes.configMap }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
           {{- if .resources }}
           resources:
             {{- if .resources.requests }}
@@ -316,9 +348,8 @@ spec:
         {{- end }}
         {{- end }}
       volumes:
-        {{- if not .Values.app.volumeMounts }}
         {{- range .Values.app.volumes.emptyDir }}
-        - name: {{ .name }}
+        - name: {{ $.Values.app.name }}-{{ .name }}
           emptyDir: {}
         {{- end }}
         {{- range .Values.app.volumes.configMap }}
@@ -326,13 +357,38 @@ spec:
           configMap:
             name: {{ .configMapName | default .name }}
         {{- end }}
+        {{- range .Values.app.initContainers }}
+        {{- if .volumes }}
+        {{- range .volumes.emptyDir }}
+        - name: {{ .name }}
+          emptyDir: {}
         {{- end }}
-        {{- range .Values.storage.longhorn }}
+        {{- range .volumes.configMap }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMapName | default .name }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- range .Values.app.sidecars }}
+        {{- if .volumes }}
+        {{- range .volumes.emptyDir }}
+        - name: {{ .name }}
+          emptyDir: {}
+        {{- end }}
+        {{- range .volumes.configMap }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ .configMapName | default .name }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- range .Values.storage.longhorn.volumes }}
         - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
             claimName: {{ $.Values.app.name }}-{{ .name }}
         {{- end }}
-        {{- range .Values.storage.smb }}
+        {{- range .Values.storage.smb.volumes }}
         - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
             claimName: {{ $.Values.app.name }}-{{ .name }}-pvc

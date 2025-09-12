@@ -244,42 +244,89 @@ app:
 - **File Downloads**: Download configuration files or assets
 - **Dependency Installation**: Install packages or dependencies
 
-### Storage Configuration
+### Storage Architecture
 
-Define available storage volumes that can be mounted by any container:
+The chart uses a **two-tier storage system** optimized for different use cases:
+
+#### **Pod-wide Storage** (`storage` section)
+
+**For persistent volumes that survive pod restarts and can be shared across containers:**
 
 ```yaml
 storage:
   # Longhorn persistent storage volumes
   longhorn:
-    - name: app-data
-      capacity: 10Gi
-    - name: cache
-      capacity: 2Gi
-    - name: logs
-      capacity: 1Gi
+    enabled: true
+    volumes:
+      - name: app-data
+        capacity: 10Gi
+      - name: cache
+        capacity: 2Gi
+      - name: logs
+        capacity: 1Gi
 
-  # SMB storage volumes
+  # SMB network storage volumes
   smb:
-    - name: static-files
-      capacity: 1Gi
-      source: "//server/share"
-      subDir: "path/to/files"
-      credentialsPath: "vaults/Secrets/items/smb-creds"
+    enabled: true
+    volumes:
+      - name: static-files
+        capacity: 1Gi
+        source: "//server/share"
+        subDir: "path/to/files"
+        credentialsPath: "vaults/Secrets/items/smb-creds"
 ```
 
-### Container Volume Mounting
+**Characteristics:**
 
-Each container can specify which volumes to mount and where:
+- ✅ **Persistent** - survives pod restarts
+- ✅ **Shared** - multiple containers can mount the same volume
+- ✅ **Flexible** - containers choose which volumes to mount and where
+- ✅ **Centralized** - define storage once, mount where needed
+
+#### **Container-specific Storage** (`app.volumes` section)
+
+**For temporary storage and direct configuration mounting:**
 
 ```yaml
 app:
-  # Main container volume mounts
+  volumes:
+    # EmptyDir volumes (temporary, die with pod)
+    emptyDir:
+      - name: cache
+        mountPath: /tmp/cache
+      - name: temp
+        mountPath: /tmp
+
+    # ConfigMap volumes (configuration files)
+    configMap:
+      - name: app-config
+        mountPath: /etc/config
+        subPath: app.conf
+        readOnly: true
+        configMapName: my-configmap
+```
+
+**Characteristics:**
+
+- ✅ **Simple** - mount info included directly in definition
+- ✅ **Temporary** - EmptyDir dies with pod (perfect for cache/temp)
+- ✅ **Direct** - ConfigMap files mounted exactly where needed
+- ✅ **Self-contained** - each volume definition includes its mount info
+- ✅ **Container-specific** - available for main container, init containers, and sidecars
+
+### Container Volume Mounting
+
+**Pod-wide storage** is referenced by name in `volumeMounts`:
+
+```yaml
+app:
+  # Reference pod-wide storage by name
   volumeMounts:
-    - name: app-data
+    - name: app-data # References storage.longhorn
       mountPath: /app
-    - name: cache
-      mountPath: /tmp/cache
+    - name: shared-files # References storage.smb
+      mountPath: /shared
+      readOnly: true
 
   # Init container with volume mounts
   initContainers:
@@ -290,6 +337,14 @@ app:
           mountPath: /data
         - name: logs
           mountPath: /logs
+      volumes:
+        emptyDir:
+          - name: init-temp
+            mountPath: /tmp
+        configMap:
+          - name: init-config
+            mountPath: /etc/init
+            configMapName: init-configmap
 
   # Sidecar with volume mounts
   sidecars:
@@ -299,9 +354,17 @@ app:
         - name: app-data
           mountPath: /backup/data
           readOnly: true
+      volumes:
+        emptyDir:
+          - name: backup-cache
+            mountPath: /var/cache/backup
+        configMap:
+          - name: backup-config
+            mountPath: /etc/backup
+            configMapName: backup-configmap
 ```
 
-**Volume Naming**: Volumes are automatically prefixed with the app name (e.g., `my-app-app-data`, `my-app-cache`).
+**Volume Naming**: Pod-wide volumes are automatically prefixed with the app name (e.g., `my-app-app-data`, `my-app-cache`). Container-specific volumes use the name as-is.
 
 ### Authentication
 
@@ -506,7 +569,44 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.20 (Latest)
+### Version 0.0.21 (Latest)
+
+- **MAJOR: Complete Storage Architecture Overhaul**: Redesigned storage system with two-tier architecture
+
+  - **Pod-wide Storage**: Longhorn/SMB volumes defined in `storage` section with `enabled` flags and `volumes` arrays
+  - **Container-specific Storage**: EmptyDir/ConfigMap volumes defined in `app.volumes` with mount info included
+  - **Consistent Structure**: All storage types now follow the same pattern with explicit `enabled` flags
+  - **Enhanced Flexibility**: Container-specific volumes now available for main container, init containers, and sidecars
+
+- **CRITICAL: Fixed Volume Mount Logic**: Resolved completely broken volume mounting system
+
+  - **Fixed Conditional Logic**: Corrected `if .Values.app.volumeMounts` condition that was preventing custom mounts
+  - **Proper Volume References**: Volume mounts now correctly reference prefixed volume names
+  - **Resolved Mount Errors**: Fixed "volume not found" errors when using custom volume mounts
+
+- **CRITICAL: Fixed Init Container Rendering**: Init containers now render properly
+
+  - **Template Logic Fixed**: Init container template conditions now execute correctly
+  - **Volume Mount Support**: Init containers can now mount both pod-wide and container-specific volumes
+  - **Environment Variables**: Init container environment variables now render correctly
+
+- **CRITICAL: Fixed Environment Variable Rendering**: Container environment variables now work
+
+  - **Template Execution**: Environment variable loops now execute properly
+  - **Value Rendering**: Environment variables from values.yaml now render in deployment
+
+- **Enhanced Container-Specific Volumes**: Extended volume support to all container types
+
+  - **Init Containers**: Can define `volumes.emptyDir` and `volumes.configMap` with mount info
+  - **Sidecars**: Can define `volumes.emptyDir` and `volumes.configMap` with mount info
+  - **Main Container**: Existing `app.volumes` support maintained and improved
+
+- **Updated Documentation**: Comprehensive documentation overhaul
+  - **Storage Architecture**: Clear explanation of pod-wide vs container-specific storage
+  - **Usage Examples**: Updated examples showing new structure and capabilities
+  - **Volume Naming**: Documented volume naming conventions and patterns
+
+### Version 0.0.20
 
 - **Fixed Volume Processing Logic**: Resolved critical issue where storage volumes weren't being created
   - **Removed Problematic Conditions**: Fixed template conditions that prevented longhorn/SMB volumes from being processed
