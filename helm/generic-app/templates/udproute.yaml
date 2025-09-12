@@ -1,6 +1,6 @@
----
 {{- if .Values.udproute.enabled }}
 {{- range .Values.udproute.routes }}
+---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
 metadata:

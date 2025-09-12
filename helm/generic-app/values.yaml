@@ -49,6 +49,14 @@ app:
   #     volumeMounts:
   #       - name: demo-app-data
   #         mountPath: /app
+  #     volumes:
+  #       emptyDir:
+  #         - name: temp
+  #           mountPath: /tmp
+  #       configMap:
+  #         - name: init-config
+  #           mountPath: /etc/init
+  #           configMapName: init-configmap
   #     securityContext:
   #       runAsUser: 0
   #       runAsGroup: 0
@@ -71,6 +79,14 @@ app:
   #     volumeMounts:
   #       - name: shared-data
   #         mountPath: /shared
+  #     volumes:
+  #       emptyDir:
+  #         - name: sidecar-cache
+  #           mountPath: /var/cache/sidecar
+  #       configMap:
+  #         - name: sidecar-config
+  #           mountPath: /etc/sidecar
+  #           configMapName: sidecar-configmap
   #     resources:
   #       requests:
   #         cpu: 10m
@@ -131,38 +147,47 @@ app:
 
   # Volume configuration
   volumes:
-    # Empty directory volumes
-    emptyDir:
-      - name: nginx-cache
-        mountPath: /var/cache/nginx
-      - name: nginx-run
-        mountPath: /run
+    # EmptyDir volumes
+    emptyDir: []
+    # ConfigMap volumes
+    configMap: []
+    # Example ConfigMap volumes:
+    # configMap:
+    #   - name: my-config
+    #     mountPath: /etc/config
+    #     subPath: config.yaml
+    #     readOnly: true
+    #     configMapName: my-configmap
 
-# ConfigMap volumes
-# configMap:
-#   - name: my-config
-#     mountPath: /etc/config
-#     subPath: config.yaml
-#     readOnly: true
-#     configMapName: my-configmap
-
-# Custom volume mounts (overrides default volumes when defined)
-# When volumeMounts is defined, default volumes are ignored
-# Volume names will be prefixed with app.name (e.g., "myapp-config")
-# volumeMounts:
-#   - name: config
-#     mountPath: /app/config
-#   - name: plugins
-#     mountPath: /app/plugins
-#     readOnly: true
+  # Volume mounts - references volumes defined in storage section
+  # Volume names will be prefixed with app.name (e.g., "myapp-config")
+  volumeMounts: []
+  # Example volume mounts:
+  # volumeMounts:
+  #   - name: config
+  #     mountPath: /app/config
+  #   - name: plugins
+  #     mountPath: /app/plugins
+  #     readOnly: true
+  #   - name: cache
+  #     mountPath: /tmp/cache
 
 # Storage configuration - defines available volumes
 storage:
   # Longhorn persistent storage
-  longhorn: []
+  longhorn:
+    enabled: false
+    volumes: []
 
   # SMB storage for read-only files
-  smb: []
+  smb:
+    enabled: false
+    volumes: []
+
+  # EmptyDir storage
+  emptyDir:
+    enabled: false
+    volumes: []
 
 # 1Password secrets integration
 secrets:

@@ -1,6 +1,5 @@
----
-{{- if .Values.storage.smb | len | gt 0 }}
-  {{- range .Values.storage.smb }}
+{{- if and .Values.storage.smb.enabled .Values.storage.smb.volumes }}
+  {{- range .Values.storage.smb.volumes }}
 ---
 # SMB Persistent Volume: {{ .name }}
 apiVersion: v1
