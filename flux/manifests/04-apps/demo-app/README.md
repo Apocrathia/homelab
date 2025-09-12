@@ -26,35 +26,31 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 
 ## Current Structure
 
-This directory now contains:
+This directory contains:
 
 - `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart
 - `kustomization.yaml` - Kustomize configuration for Flux deployment
 - `README.md` - This documentation
 
-The following files are **no longer used** (replaced by chart templates):
-
-- ~~`deployment.yaml`~~ - Now generated from chart template
-- ~~`service.yaml`~~ - Now generated from chart template
-- ~~`secret.yaml`~~ - Now generated from chart template
-- ~~`storage.yaml`~~ - Now generated from chart template
-- ~~`smb.yaml`~~ - Now generated from chart template
-- ~~`authentik-blueprint.yaml`~~ - Now generated from chart template
+All Kubernetes resources (deployment, service, PVCs, Authentik blueprint, etc.) are generated from the generic-app chart templates.
 
 ## Storage Pattern
 
-The demo app demonstrates a dual storage approach:
+The demo app demonstrates a multi-volume storage approach:
 
 - **Persistent Storage**: Longhorn volume for application data that needs to persist
 - **Shared Storage**: SMB mount for shared file access
+- **Container Volumes**: EmptyDir volumes for nginx cache and runtime data
 
 ### Chart Configuration
 
 The storage configuration is managed through the HelmRelease values:
 
-- **Longhorn Storage**: Configured via `storage.longhorn` values
-- **SMB Storage**: Configured via `storage.smb` values
-- **Deployment**: Generated from chart templates with volume mounts
+- **Volume Mounts**: All volume mounts defined in `app.volumeMounts`
+- **Longhorn Storage**: Configured via `storage.longhorn.volumes` array
+- **SMB Storage**: Configured via `storage.smb.volumes` array
+- **EmptyDir Volumes**: Configured via `app.volumes.emptyDir` array
+- **Deployment**: Generated from chart templates with proper volume references
 - **GitOps**: Automatic reconciliation through Flux when values change
 
 ## Accessing Persistent Storage
@@ -130,29 +126,38 @@ spec:
 The HelmRelease contains the configuration that makes this demo app unique:
 
 ```yaml
-# Values passed to the generic-app Helm chart
+# Values passed to the generic-app Helm chart (v0.0.21+)
 app:
   name: demo-app
   # renovate: datasource=docker depName=nginx
   image: nginx:alpine
+  volumeMounts:
+    - name: data
+      mountPath: /app
+    - name: nginx-html
+      mountPath: /usr/share/nginx/html
+    - name: nginx-cache
+      mountPath: /var/cache/nginx
+    - name: nginx-run
+      mountPath: /run
   volumes:
     emptyDir:
       - name: nginx-cache
-        mountPath: /var/cache/nginx
       - name: nginx-run
-        mountPath: /run
 
 storage:
   longhorn:
     enabled: true
-    capacity: 10Gi
-    mountPath: /app
+    volumes:
+      - name: data
+        capacity: 10Gi
   smb:
     enabled: true
-    source: "//storage.services.apocrathia.com/Library"
-    subDir: "Sites/Demo"
-    mountPath: /usr/share/nginx/html
-    credentialsPath: "vaults/Secrets/items/smb-credentials"
+    volumes:
+      - name: nginx-html
+        source: "//storage.services.apocrathia.com/Library"
+        subDir: "Sites/Demo"
+        credentialsPath: "vaults/Secrets/items/smb-credentials"
 
 secrets:
   enabled: true
@@ -162,7 +167,7 @@ authentik:
   enabled: true
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
-  icon: "https://i.imgur.com/0gNsvyk.png"
+  icon: "https://i.imgur.com/A9nZmA4.png"
 
 httproute:
   enabled: false
@@ -171,8 +176,9 @@ httproute:
 ### Key Configuration Values
 
 - **Application**: nginx:alpine with nginx-specific cache and run volumes
-- **Storage**: Dual storage pattern - Longhorn for app data, SMB for static content
-- **Mount Paths**: Clearly defined for both storage types
+- **Volume Mounts**: All volume mounts defined in `app.volumeMounts` section
+- **Storage**: Multi-volume pattern - Longhorn for app data, SMB for static content
+- **Volume Structure**: Container-specific volumes (emptyDir) and pod-wide volumes (storage)
 - **Authentication**: Authentik SSO with custom display name and icon
 - **Secrets**: 1Password integration for sensitive configuration
 - **Networking**: Uses Authentik outpost (HTTPRoute disabled)
@@ -190,7 +196,7 @@ httproute:
 - **Service**: `http://demo-app.demo-app.svc:80`
 - **Outpost**: `http://ak-outpost-demo-app-outpost.demo-app.svc:9000`
 - **Persistent Storage**: Longhorn volume at `/app`
-- **Shared Storage**: SMB mount at `/shared`
+- **Shared Storage**: SMB mount at `/usr/share/nginx/html`
 
 ## Troubleshooting
 
@@ -219,6 +225,60 @@ httproute:
    kubectl exec -it <pod-name> -n demo-app -- df -h
    ```
 
+## Chart Version Compatibility
+
+This demo app is configured for **generic-app chart v0.0.21+**, which introduced significant changes to the volume structure:
+
+### Breaking Changes in v0.0.18+
+
+The chart moved from single-volume to multi-volume storage configuration:
+
+**Old Format (v0.0.17 and earlier):**
+
+```yaml
+storage:
+  longhorn:
+    enabled: true
+    capacity: 10Gi
+    mountPath: /app
+  smb:
+    enabled: true
+    source: "//storage.services.apocrathia.com/Library"
+    subDir: "Sites/Demo"
+    mountPath: /usr/share/nginx/html
+```
+
+**New Format (v0.0.18+):**
+
+```yaml
+app:
+  volumeMounts:
+    - name: data
+      mountPath: /app
+    - name: nginx-html
+      mountPath: /usr/share/nginx/html
+
+storage:
+  longhorn:
+    enabled: true
+    volumes:
+      - name: data
+        capacity: 10Gi
+  smb:
+    enabled: true
+    volumes:
+      - name: nginx-html
+        source: "//storage.services.apocrathia.com/Library"
+        subDir: "Sites/Demo"
+```
+
+### Volume Structure Changes
+
+- **Volume Mounts**: All mounts defined in `app.volumeMounts` array
+- **Storage Volumes**: Defined in `storage.{type}.volumes` arrays
+- **EmptyDir Volumes**: Defined in `app.volumes.emptyDir` array (names only)
+- **Volume Naming**: Volumes automatically prefixed with app name
+
 ## Best Practices
 
 ### Using the Generic-App Chart
@@ -240,7 +300,8 @@ cp -r flux/manifests/04-apps/demo-app flux/manifests/04-apps/my-new-app
 # Edit the helmrelease.yaml for your specific application
 # - Change metadata.name and app.name
 # - Update app.image and other values
-# - Adjust storage mount paths if needed
+# - Adjust volumeMounts mount paths if needed
+# - Update storage volumes configuration
 # - Update Authentik display name and external host
 # - Modify secrets path for your app
 
