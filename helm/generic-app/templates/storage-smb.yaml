@@ -1,46 +1,52 @@
 ---
-{{- if .Values.storage.smb.enabled }}
+{{- if .Values.storage.smb | len | gt 0 }}
+  {{- range .Values.storage.smb }}
+---
+# SMB Persistent Volume: {{ .name }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.app.name }}-smb-pv
-  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  name: {{ $.Values.app.name }}-{{ .name }}-pv
+  namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
   capacity:
-    storage: {{ .Values.storage.smb.capacity | default "1Gi" }}
+    storage: {{ .capacity | default "1Gi" }}
   accessModes:
     - ReadOnlyMany
   persistentVolumeReclaimPolicy: Retain
   csi:
     driver: smb.csi.k8s.io
     readOnly: true
-    volumeHandle: {{ .Values.app.name }}-smb-volume
+    volumeHandle: {{ $.Values.app.name }}-{{ .name }}-volume
     nodeStageSecretRef:
-      name: {{ .Values.app.name }}-smb-credentials
-      namespace: {{ .Values.app.namespace | default .Values.app.name }}
+      name: {{ $.Values.app.name }}-{{ .name }}-credentials
+      namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
     volumeAttributes:
-      source: {{ .Values.storage.smb.source | quote }}
-      subDir: {{ .Values.storage.smb.subDir | quote }}
+      source: {{ .source | quote }}
+      subDir: {{ .subDir | quote }}
 ---
+# SMB Persistent Volume Claim: {{ .name }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.app.name }}-smb-pvc
-  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  name: {{ $.Values.app.name }}-{{ .name }}-pvc
+  namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
   accessModes:
     - ReadOnlyMany
   storageClassName: "" # Empty string to bind to specific PV
   resources:
     requests:
-      storage: {{ .Values.storage.smb.capacity | default "1Gi" }}
-  volumeName: {{ .Values.app.name }}-smb-pv
+      storage: {{ .capacity | default "1Gi" }}
+  volumeName: {{ $.Values.app.name }}-{{ .name }}-pv
 ---
+# SMB Credentials: {{ .name }}
 apiVersion: onepassword.com/v1
 kind: OnePasswordItem
 metadata:
-  name: {{ .Values.app.name }}-smb-credentials
-  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  name: {{ $.Values.app.name }}-{{ .name }}-credentials
+  namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
-  itemPath: {{ .Values.storage.smb.credentialsPath | quote }}
+  itemPath: {{ .credentialsPath | quote }}
+  {{- end }}
 {{- end }}
