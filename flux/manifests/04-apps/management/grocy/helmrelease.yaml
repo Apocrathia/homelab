@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.14"
+      version: "0.0.21"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -72,12 +72,16 @@ spec:
         port: 80
         targetPort: 80
         portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /data
 
     storage:
       longhorn:
         enabled: true
-        capacity: 5Gi
-        mountPath: /data
+        volumes:
+          - name: data
+            capacity: 5Gi
       smb:
         enabled: false
 
