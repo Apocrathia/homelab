@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.17"
+      version: "0.0.22"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -168,14 +168,13 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
+        allowPrivilegeEscalation: false
 
       # Additional writable directories for ROMM
       volumes:
         emptyDir:
-          - name: temp-files
+          - name: tmp
             mountPath: /tmp
-          - name: assets
-            mountPath: /romm/assets
           - name: cache
             mountPath: /romm/cache
           - name: logs
@@ -187,18 +186,29 @@ spec:
             mountPath: /romm/config
             readOnly: true
             configMapName: romm-config
+      volumeMounts:
+        - name: resources
+          mountPath: /romm/resources
+        - name: library
+          mountPath: /romm/library
+        - name: assets
+          mountPath: /romm/assets
 
     storage:
       longhorn:
         enabled: true
-        capacity: 10Gi
-        mountPath: /romm/resources
+        volumes:
+          - name: resources
+            capacity: 10Gi
+          - name: assets
+            capacity: 2Gi
       smb:
         enabled: true
-        source: "//storage.services.apocrathia.com/Games"
-        subDir: "Emulation"
-        mountPath: /romm/library
-        credentialsPath: "vaults/Secrets/items/smb-credentials"
+        volumes:
+          - name: library
+            source: "//storage.services.apocrathia.com/Games"
+            subDir: "Emulation"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
 
     secrets:
       enabled: true
