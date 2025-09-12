@@ -327,18 +327,14 @@ spec:
             name: {{ .configMapName | default .name }}
         {{- end }}
         {{- end }}
-        {{- if .Values.storage.longhorn | len | gt 0 }}
         {{- range .Values.storage.longhorn }}
         - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
             claimName: {{ $.Values.app.name }}-{{ .name }}
         {{- end }}
-        {{- end }}
-        {{- if .Values.storage.smb | len | gt 0 }}
-          {{- range .Values.storage.smb }}
+        {{- range .Values.storage.smb }}
         - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
             claimName: {{ $.Values.app.name }}-{{ .name }}-pvc
             readOnly: true
-          {{- end }}
         {{- end }}
