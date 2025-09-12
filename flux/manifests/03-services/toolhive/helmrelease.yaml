@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: toolhive-operator-crds
-      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/toolhive depName=toolhive-operator-crds
+      # renovate: datasource=docker depName=ghcr.io/stacklok/toolhive/toolhive-operator-crds
       version: "0.0.15"
       sourceRef:
         kind: HelmRepository
@@ -36,7 +36,7 @@ spec:
   chart:
     spec:
       chart: toolhive-operator
-      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/toolhive depName=toolhive-operator
+      # renovate: datasource=docker depName=ghcr.io/stacklok/toolhive/toolhive-operator
       version: "0.2.6"
       sourceRef:
         kind: HelmRepository

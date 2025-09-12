@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: litellm-helm
-      # renovate: datasource=helm registryUrl=oci://ghcr.io/berriai depName=litellm-helm
+      # renovate: datasource=docker depName=ghcr.io/berriai/litellm-helm
       version: "0.1.772"
       sourceRef:
         kind: HelmRepository
