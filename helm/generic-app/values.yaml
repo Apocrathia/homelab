@@ -159,15 +159,16 @@ app:
     #     readOnly: true
     #     configMapName: my-configmap
 
-  # Volume mounts - references volumes defined in storage section
+  # Volume mounts - references pod-wide storage volumes (from storage section)
   # Volume names will be prefixed with app.name (e.g., "myapp-config")
+  # Can be used alongside app.volumes for local storage (emptyDir, configMap)
   volumeMounts: []
-  # Example volume mounts:
+  # Example volume mounts for pod-wide storage:
   # volumeMounts:
-  #   - name: config
-  #     mountPath: /app/config
-  #   - name: plugins
-  #     mountPath: /app/plugins
+  #   - name: data
+  #     mountPath: /app/data
+  #   - name: shared-files
+  #     mountPath: /shared
   #     readOnly: true
   #   - name: cache
   #     mountPath: /tmp/cache

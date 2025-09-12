@@ -213,11 +213,14 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
-            {{- else }}
+            {{- end }}
+            {{- if .Values.app.volumes.emptyDir }}
             {{- range .Values.app.volumes.emptyDir }}
-            - name: {{ .name }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.app.volumes.configMap }}
             {{- range .Values.app.volumes.configMap }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
