@@ -1,0 +1,120 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: archisteamfarm
+  namespace: archisteamfarm
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.21"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: archisteamfarm
+      # renovate: datasource=docker depName=ghcr.io/justarchinet/archisteamfarm
+      image: ghcr.io/justarchinet/archisteamfarm:6.2.2.2
+      container:
+        name: archisteamfarm
+        port: 1242
+        env:
+          - name: TZ
+            value: "America/Denver"
+      service:
+        port: 1242
+        targetPort: 1242
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: plugins
+          mountPath: /app/plugins
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      initContainers:
+        - name: copy-secrets
+          # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
+          image: public.ecr.aws/docker/library/alpine:3.22.1
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Copying secrets to config volume"
+              mkdir -p /app/config
+              echo "$$ASF_JSON" > /app/config/ASF.json
+              echo "$$IPC_CONFIG" > /app/config/IPC.config
+              echo "$$APOCRATHIA_JSON" > /app/config/Apocrathia.json
+              echo "$$FREEGAMES_CONFIG" > /app/config/freegames.json.config
+              ls -la /app/config
+          env:
+            - name: ASF_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: archisteamfarm-secrets
+                  key: ASF.json
+            - name: IPC_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: archisteamfarm-secrets
+                  key: IPC.config
+            - name: APOCRATHIA_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: archisteamfarm-secrets
+                  key: Apocrathia.json
+            - name: FREEGAMES_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  name: archisteamfarm-secrets
+                  key: freegames.json.config
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 2Gi
+          - name: plugins
+            capacity: 1Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/archisteamfarm-secrets"
+
+    authentik:
+      enabled: true
+      displayName: "ArchiSteamFarm"
+      externalHost: "https://asf.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/archisteamfarm.png"
+
+    httproute:
+      enabled: false
+
+    loadbalancer:
+      enabled: false

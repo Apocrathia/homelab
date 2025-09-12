@@ -4,6 +4,10 @@ This directory contains game support services and applications for managing, org
 
 ## Applications
 
+### [ArchiSteamFarm](./archisteamfarm/README.md)
+
+Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration and secure configuration management.
+
 ### [ROMM](./romm/README.md)
 
 ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation.

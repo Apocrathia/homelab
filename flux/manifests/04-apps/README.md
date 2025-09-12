@@ -35,6 +35,7 @@ The applications layer contains user-facing workloads and services organized by 
 ### Games
 
 - [**Game Support Services**](games/README.md) - Overview of game management and emulation applications
+  - [**ArchiSteamFarm**](games/archisteamfarm/README.md) - Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration
   - [**ROMM**](games/romm/README.md) - ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation
 
 ### Management
