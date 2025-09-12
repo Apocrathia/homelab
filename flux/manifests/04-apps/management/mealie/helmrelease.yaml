@@ -117,12 +117,16 @@ spec:
           cpu: "500m"
       securityContext:
         readOnlyRootFilesystem: true
+      volumeMounts:
+        - name: data
+          mountPath: /app/data
 
     storage:
       longhorn:
         enabled: true
-        capacity: 10Gi
-        mountPath: /app/data
+        volumes:
+          - name: data
+            capacity: 10Gi
       smb:
         enabled: false
 
