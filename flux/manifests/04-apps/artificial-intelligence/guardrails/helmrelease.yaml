@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
-      version: "0.0.14"
+      version: "0.0.21"
       sourceRef:
         kind: GitRepository
         name: homelab
