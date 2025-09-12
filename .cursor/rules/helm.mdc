@@ -1,0 +1,43 @@
+---
+globs: helm/*
+alwaysApply: false
+---
+# Helm Chart Development Rules
+
+## Template Logic & Conditionals
+- **Always test template conditionals**: Use `helm template` to verify `{{- if }}` blocks actually execute
+- **Avoid double negatives**: Use `{{- if .Values.feature }}` not `{{- if not .Values.feature }}` for clarity
+- **Test empty arrays**: Empty arrays `[]` evaluate to `false` in Helm templates - account for this
+- **Validate range loops**: Ensure `{{- range }}` blocks have proper data structures to iterate over
+
+## Volume Management
+- **Two-tier storage architecture**:
+  - Pod-wide storage (Longhorn/SMB) in `storage` section with `enabled` flags
+  - Container-specific storage (EmptyDir/ConfigMap) in `app.volumes` with mount info
+- **Consistent naming**: Use `{{ .Values.app.name }}-{{ .volumeName }}` pattern for volume names
+- **Volume references**: Always prefix volume names in volumeMounts to match volume definitions
+- **Test volume mounting**: Verify volumes are created AND mounted correctly
+
+## Values Structure
+- **Explicit enabled flags**: Use `enabled: true/false` for optional features instead of implicit existence
+- **Consistent patterns**: All storage types should follow same structure (enabled + volumes array)
+- **Default values**: Always provide sensible defaults in values.yaml
+- **Documentation**: Document all values with examples and use cases
+
+## Testing & Validation
+- **Test with real HelmReleases**: Use `yq '.spec.values' <helmrelease.yaml> | helm template <release> <chart> -f -`
+- **Validate all container types**: Test main container, init containers, and sidecars
+- **Check environment variables**: Ensure `env` and `envFrom` render correctly
+- **Verify volume mounts**: Confirm volumes exist and are mounted at correct paths
+
+## Security & Best Practices
+- **Non-root containers**: Default to `runAsUser: 1000`, `runAsGroup: 1000`
+- **Read-only filesystems**: Use `readOnlyRootFilesystem: true` where possible
+- **Drop capabilities**: Remove unnecessary Linux capabilities
+- **Resource limits**: Always define resource requests and limits
+
+## Documentation
+- **Changelog entries**: Document breaking changes, new features, and bug fixes
+- **Usage examples**: Provide working examples for all major features
+- **Architecture explanation**: Document design decisions and patterns
+- **Version compatibility**: Note any breaking changes between versions

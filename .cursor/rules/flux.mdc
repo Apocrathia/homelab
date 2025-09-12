@@ -56,6 +56,7 @@ flux/
 
 1. Create or update manifests in the appropriate directory
 2. **Validate manifests locally as much as possible** using available tools or the command line (eg `kubectl kustomize`, `helm show values`, `helm template`)
+  - For HelmReleases, pipe values directly to helm template: `yq '.spec.values' <helmrelease.yaml> | helm template <release-name> <chart-path> -f -`
 3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing before committing
 4. **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 5. **Never make git commits directly** - all commits must be made by the user
