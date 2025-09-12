@@ -186,6 +186,7 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
+            {{- if not .Values.app.volumeMounts }}
             {{- range .Values.app.volumes.emptyDir }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
@@ -200,7 +201,7 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
-            {{- if .Values.app.volumeMounts }}
+            {{- else }}
             {{- range .Values.app.volumeMounts }}
             - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
@@ -315,6 +316,7 @@ spec:
         {{- end }}
         {{- end }}
       volumes:
+        {{- if not .Values.app.volumeMounts }}
         {{- range .Values.app.volumes.emptyDir }}
         - name: {{ .name }}
           emptyDir: {}
@@ -324,18 +326,19 @@ spec:
           configMap:
             name: {{ .configMapName | default .name }}
         {{- end }}
+        {{- end }}
         {{- if .Values.storage.longhorn | len | gt 0 }}
-          {{- range .Values.storage.longhorn }}
-        - name: {{ .Values.app.name }}-{{ .name }}
+        {{- range .Values.storage.longhorn }}
+        - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
-            claimName: {{ .Values.app.name }}-{{ .name }}
-          {{- end }}
+            claimName: {{ $.Values.app.name }}-{{ .name }}
+        {{- end }}
         {{- end }}
         {{- if .Values.storage.smb | len | gt 0 }}
           {{- range .Values.storage.smb }}
-        - name: {{ .Values.app.name }}-{{ .name }}
+        - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
-            claimName: {{ .Values.app.name }}-{{ .name }}-pvc
+            claimName: {{ $.Values.app.name }}-{{ .name }}-pvc
             readOnly: true
           {{- end }}
         {{- end }}

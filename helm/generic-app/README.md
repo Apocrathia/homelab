@@ -22,6 +22,10 @@ A generic Helm chart for deploying applications in the homelab environment with 
 
 ## Breaking Changes
 
+### v0.0.19+ - Custom Volume Mounts Override Defaults
+
+When `app.volumeMounts` is defined, default volumes (nginx-cache, nginx-run) are automatically excluded. This ensures clean volume configuration when using custom volume mounts.
+
 ### v0.0.18+ - Multi-Volume Storage
 
 The storage configuration has been updated to support multiple volumes per storage type. This is a breaking change that requires updating existing deployments.
@@ -498,7 +502,15 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.18 (Latest)
+### Version 0.0.19 (Latest)
+
+- **Fixed Volume Mount Logic**: Custom `volumeMounts` now properly override default volumes
+  - **Clean Volume Configuration**: When `app.volumeMounts` is defined, default nginx volumes are excluded
+  - **Fixed Volume Creation**: Longhorn volumes are now properly created in deployment spec
+  - **Resolved Mount Errors**: Fixed "volume not found" errors when using custom volume mounts
+  - **Improved Flexibility**: Better separation between default and custom volume configurations
+
+### Version 0.0.18
 
 - **BREAKING CHANGE: Multi-Volume Storage Support**: Complete rewrite of storage configuration
   - **New Array-Based Storage**: Define multiple volumes per storage type using simple arrays

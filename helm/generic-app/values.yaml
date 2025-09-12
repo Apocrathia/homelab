@@ -146,6 +146,16 @@ app:
 #     readOnly: true
 #     configMapName: my-configmap
 
+# Custom volume mounts (overrides default volumes when defined)
+# When volumeMounts is defined, default volumes are ignored
+# Volume names will be prefixed with app.name (e.g., "myapp-config")
+# volumeMounts:
+#   - name: config
+#     mountPath: /app/config
+#   - name: plugins
+#     mountPath: /app/plugins
+#     readOnly: true
+
 # Storage configuration - defines available volumes
 storage:
   # Longhorn persistent storage
