@@ -10,14 +10,55 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - Init containers for setup tasks (permissions, initialization, etc.)
   - Sidecar containers for auxiliary services (logging, monitoring, etc.)
 - **Storage Options**:
-  - Longhorn persistent storage for application data
-  - SMB storage for network file access
+  - Multiple Longhorn persistent volumes for application data
+  - Multiple SMB volumes for network file access
+  - Container-specific volume mounting
 - **Security**: 1Password Connect integration for secrets management
 - **Authentication**: Authentik SSO integration with automatic outpost deployment
 - **Networking**:
   - Optional HTTPRoute for direct Gateway API access (when not using Authentik)
   - TCP routes for additional ports
   - LoadBalancer service for direct external access with multiple ports
+
+## Breaking Changes
+
+### v0.0.18+ - Multi-Volume Storage
+
+The storage configuration has been updated to support multiple volumes per storage type. This is a breaking change that requires updating existing deployments.
+
+**Old Format (deprecated):**
+
+```yaml
+storage:
+  longhorn:
+    enabled: true
+    capacity: 10Gi
+    mountPath: /app
+```
+
+**New Format:**
+
+```yaml
+app:
+  volumeMounts:
+    - name: data
+      mountPath: /app
+    - name: cache
+      mountPath: /tmp/cache
+
+storage:
+  longhorn:
+    - name: data
+      capacity: 10Gi
+    - name: cache
+      capacity: 2Gi
+```
+
+**Migration Steps:**
+
+1. Update your `values.yaml` to use the new array format
+2. Add `volumeMounts` to your containers to specify which volumes to mount
+3. Remove `enabled` flags and `mountPath` from storage configuration
 
 ## Values Configuration
 
@@ -29,6 +70,7 @@ app:
   # renovate: datasource=docker depName=nginx
   image: nginx:alpine # Container image (single value for renovate compatibility)
   container:
+    name: my-app # Container name (defaults to app name)
     port: 80 # Main container port
     extraPorts: # Additional container ports (optional)
       - name: satellite
@@ -196,20 +238,62 @@ app:
 
 ### Storage Configuration
 
+Define available storage volumes that can be mounted by any container:
+
 ```yaml
 storage:
+  # Longhorn persistent storage volumes
   longhorn:
-    enabled: true # Enable Longhorn persistent storage
-    capacity: 10Gi # Capacity (size in bytes calculated automatically)
-    mountPath: /app # Mount path in container
+    - name: app-data
+      capacity: 10Gi
+    - name: cache
+      capacity: 2Gi
+    - name: logs
+      capacity: 1Gi
 
+  # SMB storage volumes
   smb:
-    enabled: true # Enable SMB storage
-    source: "//server/share" # SMB share path
-    subDir: "path/to/files" # Subdirectory within share
-    mountPath: /data # Mount path in container
-    credentialsPath: "vaults/Secrets/items/smb-creds" # 1Password path
+    - name: static-files
+      capacity: 1Gi
+      source: "//server/share"
+      subDir: "path/to/files"
+      credentialsPath: "vaults/Secrets/items/smb-creds"
 ```
+
+### Container Volume Mounting
+
+Each container can specify which volumes to mount and where:
+
+```yaml
+app:
+  # Main container volume mounts
+  volumeMounts:
+    - name: app-data
+      mountPath: /app
+    - name: cache
+      mountPath: /tmp/cache
+
+  # Init container with volume mounts
+  initContainers:
+    - name: setup
+      image: busybox
+      volumeMounts:
+        - name: app-data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+
+  # Sidecar with volume mounts
+  sidecars:
+    - name: backup
+      image: backup-image
+      volumeMounts:
+        - name: app-data
+          mountPath: /backup/data
+          readOnly: true
+```
+
+**Volume Naming**: Volumes are automatically prefixed with the app name (e.g., `my-app-app-data`, `my-app-cache`).
 
 ### Authentication
 
@@ -256,9 +340,10 @@ app:
 
 storage:
   longhorn:
-    enabled: true
-    capacity: 10Gi
-    mountPath: /app
+    - name: app-data
+      capacity: 10Gi
+    - name: cache
+      capacity: 2Gi
 
 authentik:
   enabled: true
@@ -313,11 +398,18 @@ app:
   name: my-app
   image: my-app:latest
   container:
+    name: my-app
     port: 8000
     extraPorts:
       - name: satellite
         containerPort: 16622
         protocol: TCP
+  volumeMounts:
+    - name: app-data
+      mountPath: /app
+    - name: static-files
+      mountPath: /app/static
+      readOnly: true
   service:
     port: 8000
     targetPort: 8000
@@ -326,6 +418,17 @@ app:
         port: 16622
         targetPort: 16622
         protocol: TCP
+
+storage:
+  longhorn:
+    - name: app-data
+      capacity: 10Gi
+  smb:
+    - name: static-files
+      capacity: 1Gi
+      source: "//storage.services.apocrathia.com/Library"
+      subDir: "Sites/Demo"
+      credentialsPath: "vaults/Secrets/items/smb-credentials"
 
 loadbalancer:
   enabled: true
@@ -395,7 +498,17 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.17 (Latest)
+### Version 0.0.18 (Latest)
+
+- **BREAKING CHANGE: Multi-Volume Storage Support**: Complete rewrite of storage configuration
+  - **New Array-Based Storage**: Define multiple volumes per storage type using simple arrays
+  - **Container-Specific Mounting**: Each container specifies which volumes to mount and where
+  - **Simplified Configuration**: Remove `enabled` flags and `mountPath` from storage definitions
+  - **Consistent Volume Naming**: Volumes automatically prefixed with app name (e.g., `my-app-data`)
+  - **Flexible Volume Usage**: Init containers, sidecars, and main containers can all mount different volumes
+  - **Migration Required**: Existing deployments must update to new format (see Breaking Changes section)
+
+### Version 0.0.17
 
 - **Fixed Volume Naming Consistency**: Longhorn volume names now match PVC names
   - Volume name changed from hardcoded `app-data` to dynamic `{{ .Values.app.name }}-data`

@@ -1,26 +1,28 @@
 ---
-{{- if .Values.storage.longhorn.enabled }}
-# Longhorn-based Persistent Volume for application data
+{{- if .Values.storage.longhorn }}
+  {{- range .Values.storage.longhorn }}
+---
+# Longhorn-based Persistent Volume: {{ .name }}
 apiVersion: longhorn.io/v1beta2
 kind: Volume
 metadata:
-  name: {{ .Values.app.name }}-data
+  name: {{ $.Values.app.name }}-{{ .name }}
   namespace: longhorn-system
 spec:
-  size: {{ mul (.Values.storage.longhorn.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
-  numberOfReplicas: {{ .Values.storage.longhorn.replicas | default 3 }}
-  staleReplicaTimeout: {{ .Values.storage.longhorn.staleReplicaTimeout | default 30 }}
+  size: {{ mul (.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
+  numberOfReplicas: 3
+  staleReplicaTimeout: 30
   frontend: blockdev
 ---
-# Kubernetes Persistent Volume that references the Longhorn volume
+# Kubernetes Persistent Volume: {{ .name }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.app.name }}-data
-  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  name: {{ $.Values.app.name }}-{{ .name }}
+  namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
   capacity:
-    storage: {{ .Values.storage.longhorn.capacity }}
+    storage: {{ .capacity }}
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
@@ -29,20 +31,21 @@ spec:
   csi:
     driver: driver.longhorn.io
     fsType: ext4
-    volumeHandle: {{ .Values.app.name }}-data
+    volumeHandle: {{ $.Values.app.name }}-{{ .name }}
 ---
-# Persistent Volume Claim for the application
+# Persistent Volume Claim: {{ .name }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.app.name }}-data
-  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  name: {{ $.Values.app.name }}-{{ .name }}
+  namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.storage.longhorn.capacity }}
+      storage: {{ .capacity }}
   storageClassName: longhorn
-  volumeName: {{ .Values.app.name }}-data
+  volumeName: {{ $.Values.app.name }}-{{ .name }}
+  {{- end }}
 {{- end }}

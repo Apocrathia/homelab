@@ -63,7 +63,7 @@ spec:
           {{- if .volumeMounts }}
           volumeMounts:
             {{- range .volumeMounts }}
-            - name: {{ .name }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
               {{- if .subPath }}
               subPath: {{ .subPath }}
@@ -200,14 +200,17 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
-            {{- if .Values.storage.longhorn.enabled }}
-            - name: {{ .Values.app.name }}-data
-              mountPath: {{ .Values.storage.longhorn.mountPath | default "/app" }}
+            {{- if .Values.app.volumeMounts }}
+            {{- range .Values.app.volumeMounts }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
             {{- end }}
-            {{- if .Values.storage.smb.enabled }}
-            - name: smb-files
-              mountPath: {{ .Values.storage.smb.mountPath | default "/usr/share/nginx/html" }}
-              readOnly: true
             {{- end }}
           resources:
             requests:
@@ -278,7 +281,7 @@ spec:
           {{- if .volumeMounts }}
           volumeMounts:
             {{- range .volumeMounts }}
-            - name: {{ .name }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
               {{- if .subPath }}
               subPath: {{ .subPath }}
@@ -321,14 +324,18 @@ spec:
           configMap:
             name: {{ .configMapName | default .name }}
         {{- end }}
-        {{- if .Values.storage.longhorn.enabled }}
-        - name: {{ .Values.app.name }}-data
+        {{- if .Values.storage.longhorn | len | gt 0 }}
+          {{- range .Values.storage.longhorn }}
+        - name: {{ .Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
-            claimName: {{ .Values.app.name }}-data
+            claimName: {{ .Values.app.name }}-{{ .name }}
+          {{- end }}
         {{- end }}
-        {{- if .Values.storage.smb.enabled }}
-        - name: smb-files
+        {{- if .Values.storage.smb | len | gt 0 }}
+          {{- range .Values.storage.smb }}
+        - name: {{ .Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
-            claimName: {{ .Values.app.name }}-smb-pvc
+            claimName: {{ .Values.app.name }}-{{ .name }}-pvc
             readOnly: true
+          {{- end }}
         {{- end }}

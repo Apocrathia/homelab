@@ -146,24 +146,13 @@ app:
 #     readOnly: true
 #     configMapName: my-configmap
 
-# Storage configuration
+# Storage configuration - defines available volumes
 storage:
   # Longhorn persistent storage
-  longhorn:
-    enabled: true
-    capacity: 10Gi # Size is calculated automatically from capacity
-    replicas: 3
-    staleReplicaTimeout: 30
-    mountPath: /app
+  longhorn: []
 
   # SMB storage for read-only files
-  smb:
-    enabled: true
-    capacity: 1Gi
-    source: "//storage.services.apocrathia.com/Library"
-    subDir: "Sites/Demo"
-    mountPath: /usr/share/nginx/html
-    credentialsPath: "vaults/Secrets/items/smb-credentials"
+  smb: []
 
 # 1Password secrets integration
 secrets:
