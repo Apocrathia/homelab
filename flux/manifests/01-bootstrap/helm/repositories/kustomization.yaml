@@ -30,5 +30,6 @@ resources:
   - stakater.yaml
   - toolhive.yaml
   - external-secrets.yaml
+  - gatekeeper.yaml
   - litellm.yaml
   - wandb.yaml
