@@ -19,3 +19,4 @@ resources:
   - toolhive
   - external-secrets
   - chaos-mesh
+  - wandb

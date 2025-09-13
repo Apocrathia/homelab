@@ -31,3 +31,4 @@ resources:
   - toolhive.yaml
   - external-secrets.yaml
   - litellm.yaml
+  - wandb.yaml
