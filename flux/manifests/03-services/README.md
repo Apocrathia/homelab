@@ -21,6 +21,7 @@ This directory contains the deployment configuration for platform services that 
 ### Security and Compliance
 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
+- [**Gatekeeper**](gatekeeper/README.md) - OPA-based policy enforcement with admission control
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 - [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
 
