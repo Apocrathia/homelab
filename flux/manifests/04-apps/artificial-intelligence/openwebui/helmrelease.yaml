@@ -16,13 +16,23 @@ spec:
         name: open-webui
         namespace: flux-system
   values:
-    # Disable Ollama - running on my gaming pc
+    # Disable Ollama - running on my gaming pc, connected via litellm
     ollama:
       enabled: false
 
     # Enable pipelines for enhanced functionality
     pipelines:
       enabled: true
+      extraEnvVars:
+        - name: PIPELINES_URLS
+          value: ""
+        - name: RESET_PIPELINES_DIR
+          value: "true"
+        - name: PIPELINES_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openwebui-secrets
+              key: pipelines-key
 
     # Disable tika as we may not need document processing initially
     tika:
@@ -66,6 +76,13 @@ spec:
     extraEnvVars:
       - name: WEBUI_URL
         value: "https://chat.gateway.services.apocrathia.com"
+      - name: OPENAI_API_BASE_URLS
+        value: "http://litellm.litellm.svc.cluster.local:4000"
+      - name: OPENAI_API_KEYS
+        valueFrom:
+          secretKeyRef:
+            name: openwebui-secrets
+            key: litellm-key
 
     # SSO Configuration for authentik integration
     sso:
