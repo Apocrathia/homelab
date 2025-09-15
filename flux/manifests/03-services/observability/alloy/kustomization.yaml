@@ -8,4 +8,3 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - configmap.yaml
-  - service.yaml
