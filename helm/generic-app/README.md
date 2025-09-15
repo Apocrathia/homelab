@@ -22,6 +22,34 @@ A generic Helm chart for deploying applications in the homelab environment with 
 
 ## Breaking Changes
 
+### v0.0.23+ - Default Deployment Strategy Changed
+
+**CRITICAL CHANGE**: The default deployment strategy has changed from `RollingUpdate` to `Recreate` to prevent Multi-Attach errors with persistent volumes.
+
+**Why This Change:**
+
+- RollingUpdate strategy causes Multi-Attach errors when upgrading apps with persistent volumes
+- Recreate strategy eliminates these errors by terminating old pods before creating new ones
+- This prevents HelmRelease upgrades from getting stuck
+
+**Impact:**
+
+- **Apps with persistent volumes**: Now use Recreate strategy by default (brief downtime during upgrades)
+- **Stateless apps**: Must explicitly set `strategy: "RollingUpdate"` to maintain zero-downtime updates
+- **Data safety**: No data loss - persistent volumes survive pod restarts
+
+**Migration Required:**
+
+- **Stateless apps** (no persistent storage): Add `strategy: "RollingUpdate"` to maintain zero-downtime updates
+- **Stateful apps** (with persistent storage): No changes needed - automatically get Recreate strategy
+
+**Example for stateless apps:**
+
+```yaml
+app:
+  strategy: "RollingUpdate" # Only needed for stateless apps
+```
+
 ### v0.0.20+ - Fixed Volume Processing
 
 Resolved critical issue where storage volumes (longhorn, SMB) weren't being created in deployment spec due to problematic template conditions. Storage volumes are now processed directly from configuration arrays.
@@ -587,7 +615,25 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.22 (Latest)
+### Version 0.0.23 (Latest)
+
+- **CRITICAL: Default Deployment Strategy Changed**: Changed default strategy from RollingUpdate to Recreate to prevent Multi-Attach errors
+
+  - **Problem Solved**: RollingUpdate strategy causes Multi-Attach errors when upgrading apps with persistent volumes, leading to stuck HelmRelease upgrades
+  - **New Default**: All apps now use Recreate strategy by default, which eliminates Multi-Attach errors completely
+  - **Data Safety**: No data loss - persistent volumes survive pod restarts and maintain all application data
+  - **Brief Downtime**: Apps experience ~30-60 seconds of downtime during upgrades (acceptable for homelab use)
+  - **Stateless Override**: Stateless apps can explicitly set `strategy: "RollingUpdate"` to maintain zero-downtime updates
+  - **Automatic Protection**: New apps with persistent volumes are automatically protected from Multi-Attach errors
+
+- **BREAKING CHANGE: Strategy Configuration**: Deployment strategy now defaults to Recreate instead of RollingUpdate
+
+  - **Migration Required**: Stateless apps must add `strategy: "RollingUpdate"` to maintain zero-downtime updates
+  - **Stateful Apps**: No changes needed - automatically get the safe Recreate strategy
+  - **Template Logic**: Simplified strategy logic - defaults to Recreate, only uses RollingUpdate when explicitly requested
+  - **Documentation**: Updated values.yaml and README with clear guidance on when to use each strategy
+
+### Version 0.0.22
 
 - **ENHANCED: Improved Volume Mount Logic**: Fixed volume mounting to support both local and pod-wide storage simultaneously
 

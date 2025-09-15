@@ -6,6 +6,20 @@ metadata:
   namespace: {{ .Values.app.namespace | default .Values.app.name }}
 spec:
   replicas: {{ .Values.app.replicas | default 2 }}
+  strategy:
+    {{- if and .Values.app.strategy (kindIs "map" .Values.app.strategy) (hasKey .Values.app.strategy "rollingUpdate") }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.app.strategy.rollingUpdate.maxSurge | default "25%" }}
+      maxUnavailable: {{ .Values.app.strategy.rollingUpdate.maxUnavailable | default "25%" }}
+    {{- else if eq (toString .Values.app.strategy) "RollingUpdate" }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: "25%"
+      maxUnavailable: "25%"
+    {{- else }}
+    type: Recreate
+    {{- end }}
   selector:
     matchLabels:
       app: {{ .Values.app.name }}
