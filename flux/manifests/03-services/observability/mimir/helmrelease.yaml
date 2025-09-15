@@ -66,11 +66,8 @@ spec:
         ingester:
           ring:
             replication_factor: 2
-
-    # Runtime config for per-tenant limits (reloadable without restart)
-    runtimeConfig:
-      overrides:
-        anonymous:
+        # Global limits configuration
+        limits:
           max_global_series_per_user: 1000000
           # Increase ingestion limits for high-volume metrics
           ingestion_rate: 100000
