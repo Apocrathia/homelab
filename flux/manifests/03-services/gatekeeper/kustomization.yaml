@@ -18,7 +18,7 @@ configMapGenerator:
       annotations:
         grafana_folder: "Security"
     files:
-      - gatekeeper-dashboard.json=https://grafana.com/api/dashboards/15763/revisions/1/download
+      - gatekeeper-dashboard.json=https://grafana.com/api/dashboards/21875/revisions/1/download
 
 generatorOptions:
   disableNameSuffixHash: true
