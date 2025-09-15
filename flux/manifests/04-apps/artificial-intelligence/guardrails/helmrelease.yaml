@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
-      version: "0.0.21"
+      version: "0.0.23"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -134,6 +134,8 @@ spec:
             mountPath: /config
             readOnly: true
             configMapName: guardrails-config
+      # Use RollingUpdate for stateless service (no persistent volumes)
+      strategy: "RollingUpdate"
 
     # No persistent storage needed for this stateless service
     storage:
