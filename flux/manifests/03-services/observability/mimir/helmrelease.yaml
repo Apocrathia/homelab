@@ -60,11 +60,17 @@ spec:
       dnsService: kube-dns
       dnsNamespace: kube-system
 
-    # Increase series limits to handle Prometheus data
-    runtimeConfig:
-      overrides:
-        anonymous:
-          max_global_series_per_user: 1000000
+      # Increase series limits to handle Prometheus data
+      runtimeConfig:
+        overrides:
+          anonymous:
+            max_global_series_per_user: 1000000
+            # Increase ingestion limits for high-volume metrics
+            ingestion_rate: 100000
+            ingestion_burst_size: 1000000
+            # Increase other relevant limits
+            max_series_per_query: 1000000
+            max_query_parallelism: 32
 
     # Configure replication for 2-replica setup
     mimir:
@@ -102,6 +108,10 @@ spec:
         limits:
           cpu: 500m
           memory: 1Gi
+      # Increase ingestion rate limits to handle high-volume metrics
+      extraArgs:
+        distributor.ingestion-rate-limit: "100000"
+        distributor.ingestion-burst-size: "1000000"
 
     querier:
       resources:
