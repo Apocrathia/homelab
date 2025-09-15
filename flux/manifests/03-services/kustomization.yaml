@@ -11,6 +11,7 @@ resources:
   - dashboard
   - gitlab
   - gatekeeper
+  - falco
   - kyverno
   - cert-manager
   - housekeeping
