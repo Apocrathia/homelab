@@ -20,6 +20,7 @@ This directory contains the deployment configuration for platform services that 
 
 ### Security and Compliance
 
+- [**Falco**](falco/README.md) - Runtime security monitoring with automated threat response
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
 - [**Gatekeeper**](gatekeeper/README.md) - OPA-based policy enforcement with admission control
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
@@ -44,7 +45,7 @@ The services layer provides:
 
 - **Identity Management**: SSO and authentication through Authentik
 - **Traffic Management**: Gateway API for external access and routing
-- **Security**: Policy enforcement, scanning, and compliance
+- **Security**: Runtime monitoring, policy enforcement, scanning, and compliance
 - **Monitoring**: Comprehensive observability and alerting
 - **Data Services**: PostgreSQL operator for database management
 - **ML Operations**: Weights & Biases operator for experiment tracking and model management

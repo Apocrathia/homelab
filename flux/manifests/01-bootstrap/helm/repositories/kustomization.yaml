@@ -17,6 +17,7 @@ resources:
   - cnpg.yaml
   - community-charts.yaml
   - csi-driver-smb.yaml
+  - falcosecurity.yaml
   - gitlab.yaml
   - grafana.yaml
   - k8s-dashboard.yaml

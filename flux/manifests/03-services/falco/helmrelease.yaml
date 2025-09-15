@@ -1,0 +1,88 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: falco
+  namespace: falco-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: falco
+      # renovate: datasource=helm registryUrl=https://falcosecurity.github.io/falco/charts depName=falco
+      version: "6.2.5"
+      sourceRef:
+        kind: HelmRepository
+        name: falcosecurity
+        namespace: flux-system
+  values:
+    driver:
+      kind: modern_ebpf
+      enabled: true
+    collectors:
+      containerEngine:
+        enabled: true
+        engines:
+          docker:
+            enabled: true
+          containerd:
+            enabled: true
+          cri:
+            enabled: true
+      kubernetes:
+        enabled: true
+    falco:
+      grpc:
+        enabled: true
+        bind_address: "0.0.0.0:5060"
+      http_output:
+        enabled: true
+        port: 8765
+      webserver:
+        enabled: true
+        listen_port: 8765
+      metrics:
+        enabled: true
+        interval: "1h"
+    falcosidekick:
+      enabled: true
+      config:
+        loki:
+          hostport: "http://loki-gateway.loki-system.svc.cluster.local:80"
+          minimumpriority: "debug"
+          checkcert: false
+        talon:
+          address: "http://falco-talon:2803"
+          minimumpriority: "debug"
+          checkcert: false
+      webui:
+        enabled: true
+        replicaCount: 1
+        loglevel: "info"
+        ttl: "7d"
+        disableauth: true
+        allowcors: false
+        service:
+          type: ClusterIP
+          port: 2802
+        ingress:
+          enabled: false
+    responseActions:
+      enabled: true
+      config:
+        listenAddress: "0.0.0.0"
+        listenPort: 2803
+        defaultNotifiers:
+          - "k8sevents"
+        notifiers:
+          k8sevents:
+            enabled: true
+    falco-talon:
+      image:
+        registry: docker.io
+      extraEnv:
+        - name: NAMESPACE
+          value: falco-system
+    serviceMonitor:
+      create: true
+      interval: 30s
