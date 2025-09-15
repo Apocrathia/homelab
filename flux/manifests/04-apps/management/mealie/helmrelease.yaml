@@ -20,7 +20,7 @@ spec:
     app:
       name: mealie
       # renovate: datasource=docker depName=ghcr.io/mealie-recipes/mealie
-      image: ghcr.io/mealie-recipes/mealie:v3.1.2
+      image: ghcr.io/mealie-recipes/mealie:v3.2.1
       container:
         name: mealie
         port: 9000
