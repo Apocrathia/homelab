@@ -98,6 +98,14 @@ app:
   # Deployment configuration
   replicas: 1
 
+  # Deployment strategy (defaults to Recreate to avoid Multi-Attach errors)
+  # Use "RollingUpdate" only for stateless apps that need zero-downtime updates
+  # strategy: "RollingUpdate"
+  # strategy:
+  #   rollingUpdate:
+  #     maxSurge: "25%"
+  #     maxUnavailable: "25%"
+
   # Pod anti-affinity configuration (helps spread replicas across nodes)
   podAntiAffinity:
     enabled: true
