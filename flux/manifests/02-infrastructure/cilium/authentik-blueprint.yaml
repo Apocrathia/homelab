@@ -28,7 +28,7 @@ entries:
     identifiers:
       slug: "hubble"
     attrs:
-      name: "Hubble Network Observability"
+      name: "Hubble"
       slug: "hubble"
       group: "Infrastructure"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-proxy-provider"]]
