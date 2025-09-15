@@ -47,7 +47,7 @@ spec:
       replicaAutoBalance: true # Auto-rebalance replicas when nodes are available
 
       # Timeout and cleanup settings
-      staleReplicaTimeout: 2880 # 48 hours (default is 30 minutes)
+      staleReplicaTimeout: 60 # 1 minute
       failedBackupTTL: 1440 # 24 hours
       backupExecutionTimeout: 5 # 5 minutes
 
@@ -77,6 +77,10 @@ spec:
       # Volume creation settings
       allowVolumeCreationWithDegradedAvailability: true # Allow creation without all replicas
       allowRecurringJobWhileVolumeDetached: true # Allow jobs on detached volumes
+
+      # Orphaned resource cleanup
+      orphanResourceAutoDeletion: true # Auto-delete orphaned resources
+      orphanResourceAutoDeletionGracePeriod: 60 # 1 minute
 
     # Persistence settings for better reliability
     persistence:
