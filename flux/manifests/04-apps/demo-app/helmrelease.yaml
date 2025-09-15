@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.22"
+      version: "0.0.23"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -26,14 +26,12 @@ spec:
           mountPath: /app
         - name: nginx-html
           mountPath: /usr/share/nginx/html
-        - name: nginx-cache
-          mountPath: /var/cache/nginx
-        - name: nginx-run
-          mountPath: /run
       volumes:
         emptyDir:
           - name: nginx-cache
+            mountPath: /var/cache/nginx
           - name: nginx-run
+            mountPath: /run
 
     storage:
       longhorn:
