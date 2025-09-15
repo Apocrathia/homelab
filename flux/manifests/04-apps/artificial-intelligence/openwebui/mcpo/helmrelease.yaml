@@ -13,7 +13,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.22"
+      version: "0.0.23"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -63,6 +63,8 @@ spec:
             subPath: config.json
             readOnly: true
             configMapName: mcpo-config
+      # Use RollingUpdate for stateless service (no persistent volumes)
+      strategy: "RollingUpdate"
 
     # Disable storage and authentik since we don't need them
     storage:
