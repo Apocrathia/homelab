@@ -46,6 +46,13 @@ spec:
         readOnlyRootFilesystem: false
         capabilities:
           drop: ["ALL"]
+    trivy:
+      # Remove --list-all-pkgs to reduce report size significantly
+      listAllPackages: false
+      # Increase timeout
+      timeout: 10m
+      # Skip Java DB update to speed up scans
+      skipJavaDBUpdate: true
     resources:
       limits:
         memory: 512Mi
