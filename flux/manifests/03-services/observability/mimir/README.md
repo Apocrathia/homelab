@@ -53,12 +53,6 @@ Prometheus is configured to remote write all metrics to Mimir via the gateway at
 - All S3 storage configuration is handled automatically by the chart when MinIO is enabled
 - No sensitive values are stored in the Git repository
 
-## Resource Requirements
-
-- **MinIO**: 100Gi storage, 100m-500m CPU, 128Mi-512Mi memory
-- **Ingester**: 50Gi storage, 200m-1000m CPU, 512Mi-2Gi memory
-- **Other components**: 100m-500m CPU, 256Mi-1Gi memory each
-
 ## Monitoring
 
 Mimir components are monitored via ServiceMonitors and will appear in the existing Prometheus/Grafana stack.
