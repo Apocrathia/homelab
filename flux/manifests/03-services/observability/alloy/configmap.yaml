@@ -145,50 +145,6 @@ data:
       }
     }
 
-    // loki.source.syslog receives external syslog messages from the gateway
-    // This allows external systems to send logs to 10.100.1.99:514
-    loki.source.syslog "external_syslog" {
-      listener {
-        address  = "0.0.0.0:514"
-        protocol = "udp"
-        labels   = {
-          job = "external-syslog",
-          source = "gateway",
-          protocol = "udp",
-          log_type = "syslog",
-        }
-      }
-
-      forward_to = [loki.process.external_syslog.receiver]
-    }
-
-    // Process external syslog messages for better structure and labeling
-    loki.process "external_syslog" {
-      stage.static_labels {
-        values = {
-          cluster = "kubernetes",
-          component = "alloy",
-          log_source = "external",
-        }
-      }
-
-      // Parse RFC5424 syslog format to extract structured fields
-      stage.regex {
-        expression = "^(?P<timestamp>\\S+ \\S+ \\d+ \\d+:\\d+:\\d+) (?P<hostname>\\S+) (?P<app>\\S+)\\[(?P<pid>\\d+)\\]: (?P<message>.*)$"
-      }
-
-      // Add additional labels for better querying
-      stage.labels {
-        values = {
-          hostname = "hostname",
-          app = "app",
-          pid = "pid",
-        }
-      }
-
-      forward_to = [loki.write.default.receiver]
-    }
-
     loki.write "default" {
       endpoint {
         url = "http://loki-write.loki-system.svc:3100/loki/api/v1/push"
