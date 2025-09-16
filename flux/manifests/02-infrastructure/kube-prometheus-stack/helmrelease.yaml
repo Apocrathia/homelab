@@ -246,10 +246,13 @@ spec:
                 requests:
                   storage: 20Gi
         serviceMonitorSelector: {}
+        serviceMonitorSelectorNilUsesHelmValues: false
         serviceMonitorNamespaceSelector: {}
         podMonitorSelector: {}
+        podMonitorSelectorNilUsesHelmValues: false
         podMonitorNamespaceSelector: {}
         ruleSelector: {}
+        ruleSelectorNilUsesHelmValues: false
         ruleNamespaceSelector: {}
         enableAdminAPI: false
         walCompression: true
