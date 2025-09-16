@@ -20,82 +20,6 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - TCP routes for additional ports
   - LoadBalancer service for direct external access with multiple ports
 
-## Breaking Changes
-
-### v0.0.23+ - Default Deployment Strategy Changed
-
-**CRITICAL CHANGE**: The default deployment strategy has changed from `RollingUpdate` to `Recreate` to prevent Multi-Attach errors with persistent volumes.
-
-**Why This Change:**
-
-- RollingUpdate strategy causes Multi-Attach errors when upgrading apps with persistent volumes
-- Recreate strategy eliminates these errors by terminating old pods before creating new ones
-- This prevents HelmRelease upgrades from getting stuck
-
-**Impact:**
-
-- **Apps with persistent volumes**: Now use Recreate strategy by default (brief downtime during upgrades)
-- **Stateless apps**: Must explicitly set `strategy: "RollingUpdate"` to maintain zero-downtime updates
-- **Data safety**: No data loss - persistent volumes survive pod restarts
-
-**Migration Required:**
-
-- **Stateless apps** (no persistent storage): Add `strategy: "RollingUpdate"` to maintain zero-downtime updates
-- **Stateful apps** (with persistent storage): No changes needed - automatically get Recreate strategy
-
-**Example for stateless apps:**
-
-```yaml
-app:
-  strategy: "RollingUpdate" # Only needed for stateless apps
-```
-
-### v0.0.20+ - Fixed Volume Processing
-
-Resolved critical issue where storage volumes (longhorn, SMB) weren't being created in deployment spec due to problematic template conditions. Storage volumes are now processed directly from configuration arrays.
-
-### v0.0.19+ - Custom Volume Mounts Override Defaults
-
-When `app.volumeMounts` is defined, default volumes (nginx-cache, nginx-run) are automatically excluded. This ensures clean volume configuration when using custom volume mounts.
-
-### v0.0.18+ - Multi-Volume Storage
-
-The storage configuration has been updated to support multiple volumes per storage type. This is a breaking change that requires updating existing deployments.
-
-**Old Format (deprecated):**
-
-```yaml
-storage:
-  longhorn:
-    enabled: true
-    capacity: 10Gi
-    mountPath: /app
-```
-
-**New Format:**
-
-```yaml
-app:
-  volumeMounts:
-    - name: data
-      mountPath: /app
-    - name: cache
-      mountPath: /tmp/cache
-
-storage:
-  longhorn:
-    - name: data
-      capacity: 10Gi
-    - name: cache
-      capacity: 2Gi
-```
-
-**Migration Steps:**
-
-1. Update your `values.yaml` to use the new array format
-2. Add `volumeMounts` to your containers to specify which volumes to mount
-3. Remove `enabled` flags and `mountPath` from storage configuration
-
 ## Values Configuration
 
 ### Application Settings
@@ -298,10 +222,10 @@ storage:
     enabled: true
     volumes:
       - name: static-files
-        capacity: 1Gi
         source: "//server/share"
         subDir: "path/to/files"
         credentialsPath: "vaults/Secrets/items/smb-creds"
+        readOnly: true # Set to false for read-write access
 ```
 
 **Characteristics:**
@@ -310,6 +234,14 @@ storage:
 - ✅ **Shared** - multiple containers can mount the same volume
 - ✅ **Flexible** - containers choose which volumes to mount and where
 - ✅ **Centralized** - define storage once, mount where needed
+- ✅ **Configurable Access** - supports both read-only (default) and read-write access modes
+
+**SMB Volume Configuration Options:**
+
+- `readOnly`: Controls access mode for the SMB volume
+  - `true` (default): Read-only access, uses `ReadOnlyMany` access mode
+  - `false`: Read-write access, uses `ReadWriteMany` access mode
+  - **Security Note**: Read-only mode is recommended for shared network storage to prevent accidental data modification
 
 #### **Container-specific Storage** (`app.volumes` section)
 

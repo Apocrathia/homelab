@@ -11,11 +11,15 @@ spec:
   capacity:
     storage: {{ .capacity | default "1Gi" }}
   accessModes:
+    {{- if or (not (hasKey . "readOnly")) .readOnly }}
     - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
   persistentVolumeReclaimPolicy: Retain
   csi:
     driver: smb.csi.k8s.io
-    readOnly: true
+    readOnly: {{ or (not (hasKey . "readOnly")) .readOnly }}
     volumeHandle: {{ $.Values.app.name }}-{{ .name }}-volume
     nodeStageSecretRef:
       name: {{ $.Values.app.name }}-{{ .name }}-credentials
@@ -32,7 +36,11 @@ metadata:
   namespace: {{ $.Values.app.namespace | default $.Values.app.name }}
 spec:
   accessModes:
+    {{- if or (not (hasKey . "readOnly")) .readOnly }}
     - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
   storageClassName: "" # Empty string to bind to specific PV
   resources:
     requests:
