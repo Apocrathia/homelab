@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-operator
+  namespace: grafana-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: grafana-operator
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=grafana-operator
+      version: "v5.19.4"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+  values:
+    # Resource limits
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # Enable ServiceMonitor for metrics
+    serviceMonitor:
+      enabled: true
+
+    # Use JSON logging instead of console
+    logging:
+      encoder: json

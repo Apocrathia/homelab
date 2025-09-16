@@ -4,7 +4,18 @@ This directory contains the deployment configuration for the LGTM (Loki, Grafana
 
 ## Components Deployed
 
-### 1. **Grafana Alloy** (`alloy/`)
+### 1. **Grafana Operator** (`grafana/`)
+
+- **Purpose**: Manage Grafana dashboards and datasources via Kubernetes CRDs
+- **Deployment**: Via Grafana Operator Helm chart
+- **Features**:
+  - Dashboard management through `GrafanaDashboard` CRDs
+  - Datasource management through `GrafanaDatasource` CRDs
+  - GitOps-friendly dashboard deployment
+  - Integration with existing kube-prometheus-stack Grafana instance
+- **Note**: The actual Grafana UI is deployed via kube-prometheus-stack in infrastructure
+
+### 2. **Grafana Alloy** (`alloy/`)
 
 - **Purpose**: Log and metrics collection using OpenTelemetry Collector
 - **Deployment**: Via Grafana Alloy Helm chart
@@ -13,9 +24,8 @@ This directory contains the deployment configuration for the LGTM (Loki, Grafana
   - Metrics collection and forwarding
   - Integration with existing kube-prometheus-stack Grafana instance
   - OpenTelemetry-based architecture for future extensibility
-- **Note**: The actual Grafana UI is deployed via kube-prometheus-stack in infrastructure
 
-### 2. **Loki** (`loki/`)
+### 3. **Loki** (`loki/`)
 
 - **Purpose**: Log aggregation and storage
 - **Deployment**: Via Loki Helm chart
@@ -26,7 +36,7 @@ This directory contains the deployment configuration for the LGTM (Loki, Grafana
   - Log retention and management
 - **Storage**: MinIO with Longhorn persistent volumes
 
-### 3. **Mimir** (`mimir/`)
+### 4. **Mimir** (`mimir/`)
 
 - **Purpose**: Long-term metrics storage and querying
 - **Deployment**: Via Mimir distributed Helm chart
@@ -49,6 +59,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 - **Observability components** (this folder) provide:
 
+  - Grafana Operator for dashboard/datasource management via CRDs
   - Loki for log aggregation and storage
   - Mimir for long-term metrics storage
   - Grafana Alloy for log and metrics collection
@@ -91,6 +102,13 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 - Long-term storage in Mimir
 - Pre-configured dashboards for cluster monitoring
 
+### Managing Dashboards
+
+- Deploy dashboards via `GrafanaDashboard` CRDs
+- Manage datasources via `GrafanaDatasource` CRDs
+- GitOps-friendly dashboard versioning and deployment
+- Automatic synchronization with kube-prometheus-stack Grafana instance
+
 ## Dependencies
 
 - **Infrastructure**: Longhorn storage, MinIO
@@ -108,6 +126,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 ## Resources
 
 - [Grafana Documentation](https://grafana.com/docs/)
+- [Grafana Operator Documentation](https://grafana.github.io/grafana-operator/docs/)
 - [Loki Documentation](https://grafana.com/docs/loki/)
 - [Mimir Documentation](https://grafana.com/docs/mimir/)
 - [Grafana Alloy Documentation](https://grafana.com/docs/alloy/)
