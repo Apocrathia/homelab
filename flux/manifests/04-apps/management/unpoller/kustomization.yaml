@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: unpoller
+  namespace: unpoller
+  labels:
+    app.kubernetes.io/name: unpoller
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+  - grafana.yaml
+  - servicemonitor.yaml
+# Note: Datasource variables are mapped using the datasources field in GrafanaDashboard CRDs
+# This resolves the ${DS_PROMETHEUS} variables by mapping them to the actual Prometheus datasource
+# https://github.com/grafana/grafana/issues/10786#issuecomment-1737988383

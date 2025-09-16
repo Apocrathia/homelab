@@ -1,0 +1,18 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: unpoller
+  namespace: unpoller
+  labels:
+    app.kubernetes.io/name: unpoller
+    app.kubernetes.io/component: metrics
+spec:
+  selector:
+    matchLabels:
+      app: unpoller
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
