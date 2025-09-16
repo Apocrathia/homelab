@@ -192,6 +192,14 @@ storage:
   smb:
     enabled: false
     volumes: []
+    # Example SMB volume configuration:
+    # volumes:
+    #   - name: media
+    #     source: "//smb-server/share"
+    #     subDir: "media"
+    #     capacity: "100Gi"
+    #     credentialsPath: "vaults/Secrets/items/smb-credentials"
+    #     readOnly: true  # Set to false for read-write access
 
   # EmptyDir storage
   emptyDir:
