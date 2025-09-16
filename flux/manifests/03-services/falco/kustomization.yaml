@@ -5,18 +5,9 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - grafana.yaml
 
 configMapGenerator:
-  - name: falco-grafana-dashboard
-    namespace: prometheus-system
-    options:
-      labels:
-        app: kube-prometheus-stack-grafana
-        grafana_dashboard: "1"
-      annotations:
-        grafana_folder: "Security"
-    files:
-      - falco-dashboard.json=https://grafana.com/api/dashboards/17319/revisions/1/download
   - name: authentik-blueprint-falco-security-dashboard
     namespace: falco-system
     files:

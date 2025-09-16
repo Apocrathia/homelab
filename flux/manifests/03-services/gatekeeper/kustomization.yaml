@@ -7,18 +7,4 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
-
-configMapGenerator:
-  - name: gatekeeper-grafana-dashboard
-    namespace: prometheus-system
-    options:
-      labels:
-        app: kube-prometheus-stack-grafana
-        grafana_dashboard: "1"
-      annotations:
-        grafana_folder: "Security"
-    files:
-      - gatekeeper-dashboard.json=https://grafana.com/api/dashboards/21875/revisions/1/download
-
-generatorOptions:
-  disableNameSuffixHash: true
+  - grafana.yaml
