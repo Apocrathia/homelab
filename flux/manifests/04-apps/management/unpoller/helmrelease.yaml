@@ -1,0 +1,154 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unpoller
+  namespace: unpoller
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.23"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: unpoller
+      # renovate: datasource=docker depName=ghcr.io/unpoller/unpoller
+      image: ghcr.io/unpoller/unpoller:v2.15.4
+      container:
+        name: unpoller
+        port: 9130
+        env:
+          # Poller settings
+          - name: UP_POLLER_DEBUG
+            value: "false"
+          - name: UP_POLLER_QUIET
+            value: "false"
+
+          # UniFi controller settings
+          - name: UP_UNIFI_DISABLE
+            value: "false"
+          - name: UP_UNIFI_DYNAMIC
+            value: "false"
+          - name: UP_UNIFI_DEFAULT_URL
+            value: "https://unifi.apocrathia.com"
+          - name: UP_UNIFI_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: unpoller-secrets
+                key: unifi-user
+          - name: UP_UNIFI_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: unpoller-secrets
+                key: unifi-pass
+          - name: UP_UNIFI_DEFAULT_SAVE_SITES
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_IDS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_DPI
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_VERIFY_SSL
+            value: "false"
+          - name: UP_UNIFI_DEFAULT_SITE_0
+            value: "all"
+          - name: UP_UNIFI_DEFAULT_SAVE_SITES
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_IDS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
+            value: "true"
+          - name: UP_UNIFI_DEFAULT_SAVE_DPI
+            value: "true"
+
+          # Prometheus settings
+          - name: UP_PROMETHEUS_DISABLE
+            value: "false"
+          - name: UP_PROMETHEUS_HTTP_LISTEN
+            value: "0.0.0.0:9130"
+          - name: UP_PROMETHEUS_REPORT_ERRORS
+            value: "false"
+          - name: UP_PROMETHEUS_NAMESPACE
+            value: "unpoller"
+
+          # InfluxDB settings (disabled)
+          - name: UP_INFLUXDB_DISABLE
+            value: "true"
+
+          # Loki settings
+          - name: UP_LOKI_DISABLE
+            value: "false"
+          - name: UP_LOKI_URL
+            value: "http://loki-write.loki-system.svc.cluster.local:3100/loki/api/v1/push"
+          - name: UP_LOKI_VERIFY_SSL
+            value: "false"
+          - name: UP_LOKI_INTERVAL
+            value: "2m"
+          - name: UP_LOKI_TIMEOUT
+            value: "10s"
+
+      service:
+        port: 9130
+        targetPort: 9130
+
+      # Resource limits
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+
+      # Pod security context
+      podSecurityContext:
+        fsGroup: 1000
+
+    # Disable Authentik integration (unpoller doesn't need SSO)
+    authentik:
+      enabled: false
+
+    # Disable secrets integration (using native Kubernetes secrets)
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/unpoller-secrets"
+
+    # Disable storage (unpoller is stateless)
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    # Disable networking features (unpoller only needs internal Prometheus access)
+    tcproute:
+      enabled: false
+    loadbalancer:
+      enabled: false

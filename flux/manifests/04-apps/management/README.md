@@ -24,6 +24,10 @@ Self-hosted recipe manager and meal planning application with Authentik SSO inte
 
 Web-based groceries and household management solution for inventory tracking and meal planning.
 
+### [UnPoller](./unpoller/README.md)
+
+UniFi network monitoring and metrics collection system that exports data to Prometheus and Loki with Grafana dashboards.
+
 ## Overview
 
 Management applications provide tools for:
@@ -32,5 +36,6 @@ Management applications provide tools for:
 - **Mobile Access**: Secure Kubernetes cluster management from iOS devices
 - **Workflow Automation**: API integrations and data processing pipelines
 - **Household Management**: Recipe management, meal planning, and inventory tracking
+- **Network Monitoring**: UniFi infrastructure metrics collection and visualization
 
 All applications are deployed via Flux GitOps and integrate with the homelab's authentication and monitoring infrastructure.
