@@ -1,0 +1,18 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: kube-prometheus-stack-grafana
+  namespace: prometheus-system
+  labels:
+    app: grafana
+spec:
+  # External Grafana instance from kube-prometheus-stack
+  external:
+    url: http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local:80
+    adminPassword:
+      name: local-account
+      key: password
+    adminUser:
+      name: local-account
+      key: username

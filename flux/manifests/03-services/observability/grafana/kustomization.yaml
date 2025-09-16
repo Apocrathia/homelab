@@ -8,3 +8,4 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - grafana.yaml

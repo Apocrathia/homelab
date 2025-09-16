@@ -1,32 +1,62 @@
 # Grafana Operator
 
-The Grafana Operator manages Grafana instances and their resources through Kubernetes Custom Resources.
+The Grafana Operator manages dashboards and datasources for the existing kube-prometheus-stack Grafana instance through Kubernetes Custom Resources.
 
 ## Overview
 
-This deployment installs the Grafana Operator using the official Helm chart from the Grafana repository. The operator enables:
+This deployment installs the Grafana Operator using the official Helm chart from the Grafana repository. The operator connects to the existing kube-prometheus-stack Grafana instance and enables:
 
-- Multi-instance Grafana deployments
-- Dashboard and datasource management through CRDs
-- GitOps-friendly resource management
-- External Grafana instance management
+- Dashboard management through `GrafanaDashboard` CRDs
+- Datasource management through `GrafanaDatasource` CRDs
+- GitOps-friendly dashboard deployment
+- Import from Grafana.com dashboards
+
+## Architecture
+
+- **Grafana UI**: Provided by kube-prometheus-stack in `prometheus-system` namespace
+- **Grafana Operator**: Manages external Grafana instance via `Grafana` CRD
+- **Dashboard Management**: CRD-based dashboard deployment and synchronization
 
 ## Usage
 
-After deployment, you can create Grafana instances using the `Grafana` CRD:
+### Creating Dashboards
+
+Deploy dashboards using `GrafanaDashboard` CRDs:
 
 ```yaml
 apiVersion: grafana.integreatly.org/v1beta1
-kind: Grafana
+kind: GrafanaDashboard
 metadata:
-  name: my-grafana
+  name: my-dashboard
+  namespace: grafana-system
 spec:
-  config:
-    log:
-      mode: "console"
-    security:
-      admin_user: admin
-      admin_password: secret
+  instanceSelector:
+    matchLabels:
+      app: grafana
+  grafanaCom:
+    id: 22928 # Import from Grafana.com
+```
+
+### Managing Datasources
+
+Configure datasources using `GrafanaDatasource` CRDs:
+
+```yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: prometheus-datasource
+  namespace: grafana-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app: grafana
+  json: |
+    {
+      "name": "Prometheus",
+      "type": "prometheus",
+      "url": "http://prometheus-k8s.prometheus-system.svc:9090"
+    }
 ```
 
 ## Documentation
