@@ -7,18 +7,4 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
-
-configMapGenerator:
-  - name: trivy-operator-grafana-dashboard
-    namespace: prometheus-system
-    options:
-      labels:
-        app: kube-prometheus-stack-grafana
-        grafana_dashboard: "1"
-      annotations:
-        grafana_folder: "Security"
-    files:
-      - trivy-operator-dashboard.json=https://grafana.com/api/dashboards/17813/revisions/2/download
-
-generatorOptions:
-  disableNameSuffixHash: true
+  - grafana.yaml
