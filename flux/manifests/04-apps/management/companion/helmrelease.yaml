@@ -32,6 +32,8 @@ spec:
             containerPort: 16623
             protocol: TCP
         env:
+          - name: TZ
+            value: "America/Denver"
           - name: COMPANION_SATELLITE_ADDRESS
             value: "0.0.0.0"
           - name: SATELLITE_BIND_ADDRESS
