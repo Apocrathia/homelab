@@ -14,12 +14,10 @@ machine:
           - bind
           - rshared
           - rw
-  # System-level optimizations for etcd performance
   sysctls:
-    # Memory management optimizations
-    vm.dirty_ratio: "10"
-    vm.dirty_background_ratio: "5"
-    vm.swappiness: "1"
+    # Completely disable swap for etcd performance
+    vm.swappiness: "0" # Disable swapping completely
+    vm.vfs_cache_pressure: "50" # Reduce VFS cache pressure
     # Network optimizations
     net.core.somaxconn: "32768"
     net.core.netdev_max_backlog: "16384"
@@ -56,19 +54,15 @@ cluster:
       - 10.69.0.0/16
   proxy:
     disabled: true
-  # etcd tuning for high-performance environment (NVMe storage + 20Gbps networking)
+  # etcd tuning
   etcd:
     extraArgs:
-      # Increase timeouts to prevent premature leader elections
-      heartbeat-interval: "250" # Default: 100ms, more tolerant of microsecond delays
-      election-timeout: "2500" # Default: 1000ms, prevent unnecessary elections
-      # Optimize for high-performance storage
-      snapshot-count: "10000" # Default: 10000, keep default for NVMe
-      max-request-bytes: "10485760" # 10MB, increase for large requests
-      quota-backend-bytes: "8589934592" # 8GB, ensure adequate space
-      # Enable auto-compaction
+      # Reduce memory pressure by limiting request sizes
+      max-request-bytes: "2097152" # 2MB instead of default 1.5MB
+      quota-backend-bytes: "4294967296" # 4GB instead of default 2GB
+      # Enable auto-compaction to prevent memory bloat
       auto-compaction-mode: "periodic"
-      auto-compaction-retention: "8h"
-      # Enable metrics for monitoring
-      metrics: "extensive"
+      auto-compaction-retention: "4h" # More frequent compaction
+      # Conservative timeouts - keep defaults but enable metrics
+      metrics: "basic" # Basic metrics only, not extensive
       listen-metrics-urls: "http://0.0.0.0:2381"
