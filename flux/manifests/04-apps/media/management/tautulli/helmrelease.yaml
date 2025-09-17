@@ -1,0 +1,86 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tautulli
+  namespace: tautulli
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.24"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: tautulli
+      # renovate: datasource=docker depName=ghcr.io/tautulli/tautulli
+      image: ghcr.io/tautulli/tautulli:v2.16.0
+      container:
+        name: tautulli
+        port: 8181
+        env:
+          - name: TAUTULLI_DOCKER
+            value: "True"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      securityContext:
+        # Tautulli Docker image needs root initially to set up user/group and directories
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8181
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 10Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      displayName: "Tautulli"
+      externalHost: "https://tautulli.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tautulli.png"
+
+    httproute:
+      enabled: false

@@ -18,3 +18,4 @@ resources:
   - management/mealie
   - management/grocy
   - media/servers/plex
+  - media/management/tautulli
