@@ -55,7 +55,8 @@ spec:
       skipJavaDBUpdate: true
     resources:
       limits:
-        memory: 512Mi
+        cpu: 400m
+        memory: 1Gi
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: 200m
+        memory: 512Mi
