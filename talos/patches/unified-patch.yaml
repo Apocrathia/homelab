@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.10.6/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.1/pkg/machinery/config/schemas/config.schema.json
 machine:
   features:
     rbac: true
@@ -14,6 +14,15 @@ machine:
           - bind
           - rshared
           - rw
+  # System-level optimizations for etcd performance
+  sysctls:
+    # Memory management optimizations
+    vm.dirty_ratio: "10"
+    vm.dirty_background_ratio: "5"
+    vm.swappiness: "1"
+    # Network optimizations
+    net.core.somaxconn: "32768"
+    net.core.netdev_max_backlog: "16384"
   network:
     interfaces:
       - interface: eth0
@@ -25,7 +34,7 @@ machine:
     wipe: true
     # renovate: datasource=github-releases depName=siderolabs/talos
     image: factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:v1.11.1
-    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&secureboot=undefined&target=metal&version=1.10.6
+    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&platform=metal&secureboot=undefined&target=metal&version=1.11.1
   time:
     servers:
       - pool.ntp.org
@@ -47,3 +56,19 @@ cluster:
       - 10.69.0.0/16
   proxy:
     disabled: true
+  # etcd tuning for high-performance environment (NVMe storage + 20Gbps networking)
+  etcd:
+    extraArgs:
+      # Increase timeouts to prevent premature leader elections
+      heartbeat-interval: "250" # Default: 100ms, more tolerant of microsecond delays
+      election-timeout: "2500" # Default: 1000ms, prevent unnecessary elections
+      # Optimize for high-performance storage
+      snapshot-count: "10000" # Default: 10000, keep default for NVMe
+      max-request-bytes: "10485760" # 10MB, increase for large requests
+      quota-backend-bytes: "8589934592" # 8GB, ensure adequate space
+      # Enable auto-compaction
+      auto-compaction-mode: "periodic"
+      auto-compaction-retention: "8h"
+      # Enable metrics for monitoring
+      metrics: "extensive"
+      listen-metrics-urls: "http://0.0.0.0:2381"

@@ -18,5 +18,6 @@ machine:
     - "10.100.1.80"
     - "10.100.1.8"
     - "talos-01.apocrathia.com"
+    - "talos-01.services.apocrathia.com"
     - "kubernetes.apocrathia.com"
     - "127.0.0.1"
