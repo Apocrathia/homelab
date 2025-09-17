@@ -6,6 +6,7 @@ resources:
   - namespace.yaml
   - secret.yaml
   - helmrelease.yaml
+  - etcd/
 
 generatorOptions:
   disableNameSuffixHash: true

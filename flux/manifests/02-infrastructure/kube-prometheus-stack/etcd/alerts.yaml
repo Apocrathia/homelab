@@ -1,0 +1,86 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: etcd-performance-alerts
+  namespace: prometheus-system
+  labels:
+    app.kubernetes.io/name: prometheus-operator
+    app.kubernetes.io/version: v0.68.0
+spec:
+  groups:
+    - name: etcd.performance
+      rules:
+        - alert: EtcdSlowRequests
+          expr: histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd slow disk writes detected"
+            description: "etcd WAL fsync is taking {{ $value }}s (should be < 0.01s)"
+
+        - alert: EtcdLeaderChanges
+          expr: increase(etcd_server_leader_changes_seen_total[1h]) > 2
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Too many etcd leader changes"
+            description: "etcd has had {{ $value }} leader changes in the last hour"
+
+        - alert: EtcdHighRequestLatency
+          expr: histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd high request latency"
+            description: "etcd request latency is {{ $value }}s (should be < 0.1s)"
+
+        - alert: EtcdSlowReadIndex
+          expr: increase(etcd_server_read_indexes_failed_total[5m]) > 0
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd ReadIndex failures detected"
+            description: "etcd ReadIndex has failed {{ $value }} times in the last 5 minutes"
+
+        - alert: EtcdHighMemoryUsage
+          expr: (etcd_mvcc_db_total_size_in_bytes / etcd_server_quota_backend_bytes) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd high memory usage"
+            description: "etcd memory usage is {{ $value | humanizePercentage }} of quota limit"
+
+        - alert: EtcdTooManyOpenConnections
+          expr: etcd_network_peer_sent_bytes_total > 1000000000
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "etcd high network traffic"
+            description: "etcd network traffic is {{ $value | humanize }} bytes/s"
+
+    - name: etcd.availability
+      rules:
+        - alert: EtcdClusterDown
+          expr: up{job="etcd-metrics"} == 0
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "etcd cluster is down"
+            description: "etcd cluster {{ $labels.instance }} is down"
+
+        - alert: EtcdClusterUnhealthy
+          expr: etcd_server_health_failures_total > 0
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "etcd cluster unhealthy"
+            description: "etcd cluster {{ $labels.instance }} has health failures"
