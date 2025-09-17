@@ -17,3 +17,4 @@ resources:
   - management/kuber
   - management/mealie
   - management/grocy
+  - media/servers/plex

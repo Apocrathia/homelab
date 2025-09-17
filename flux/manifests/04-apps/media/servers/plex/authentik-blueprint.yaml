@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: plex
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for Plex (bookmark only - no authentication provider)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "plex"
+    attrs:
+      name: "Plex"
+      slug: "plex"
+      group: "Applications"
+      meta_launch_url: "http://plex.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/plex.png"
+      meta_description: "Plex Media Server for streaming personal media collection"
+      meta_publisher: "Plex Inc."
