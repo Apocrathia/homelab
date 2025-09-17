@@ -19,3 +19,4 @@ resources:
   - management/grocy
   - media/servers/plex
   - media/management/tautulli
+  - media/management/ombi
