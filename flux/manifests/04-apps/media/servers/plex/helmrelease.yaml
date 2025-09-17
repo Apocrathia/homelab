@@ -1,0 +1,161 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: plex
+  namespace: plex
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.24"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: plex
+      # renovate: datasource=docker depName=ghcr.io/linuxserver/plex:1.42.1.10060-4e8b05daf-ls279
+      image: ghcr.io/linuxserver/plex:1.42.1.10060-4e8b05daf-ls279
+      container:
+        name: plex
+        port: 32400
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: VERSION
+            value: "latest"
+          - name: TZ
+            value: "America/Denver"
+          - name: PLEX_CLAIM
+            valueFrom:
+              secretKeyRef:
+                name: plex-secrets
+                key: claim-token
+          - name: ADVERTISE_IP
+            value: "http://plex.services.apocrathia.com"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+      securityContext:
+        # LSIO containers need to run as root initially for s6-overlay, then drop to PUID/PGID
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        # Add capabilities needed for s6-overlay
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+            - KILL
+            - FOWNER
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 32400
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: tv
+          mountPath: /tv
+          readOnly: true
+        - name: movies
+          mountPath: /movies
+          readOnly: true
+        - name: anime
+          mountPath: /anime
+          readOnly: true
+        - name: educational
+          mountPath: /educational
+          readOnly: true
+        - name: music
+          mountPath: /music
+          readOnly: true
+        - name: music-videos
+          mountPath: /music-videos
+          readOnly: true
+      volumes:
+        emptyDir:
+          - name: transcode
+            mountPath: /transcode
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 20Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: tv
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "TV Shows"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: movies
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Movies"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: anime
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Anime"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: educational
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Educational"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: music
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Music"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: music-videos
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Music Videos"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/plex-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
+
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.98"
+      externalTrafficPolicy: Local
+      ports:
+        - name: http
+          port: 80
+          targetPort: 32400
+          protocol: TCP
