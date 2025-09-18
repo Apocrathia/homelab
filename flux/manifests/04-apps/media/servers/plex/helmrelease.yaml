@@ -105,7 +105,7 @@ spec:
         enabled: true
         volumes:
           - name: config
-            capacity: 20Gi
+            capacity: 100Gi
       smb:
         enabled: true
         volumes:
