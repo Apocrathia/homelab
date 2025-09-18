@@ -17,6 +17,7 @@ resources:
   - management/kuber
   - management/mealie
   - management/grocy
+  - management/uptime-kuma
   - media/servers/plex
   - media/management/tautulli
   - media/management/ombi
