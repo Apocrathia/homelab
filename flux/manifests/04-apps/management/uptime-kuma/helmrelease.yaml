@@ -1,0 +1,96 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: uptime-kuma
+  namespace: uptime-kuma
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.24"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: uptime-kuma
+      namespace: uptime-kuma
+      # renovate: datasource=docker depName=louislam/uptime-kuma
+      image: louislam/uptime-kuma:1.23.16
+      container:
+        name: uptime-kuma
+        port: 3001
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: UPTIME_KUMA_HOST
+            value: "0.0.0.0"
+          - name: UPTIME_KUMA_PORT
+            value: "3001"
+          # Disable embedded MariaDB to avoid needing CHOWN capability
+          - name: UPTIME_KUMA_ENABLE_EMBEDDED_MARIADB
+            value: "0"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      securityContext:
+        # Standard uptime-kuma container needs root initially for permission setup, then drops to node user
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        # Add capabilities needed for dumb-init and MariaDB setup
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+            - KILL
+            - FOWNER
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+      service:
+        type: ClusterIP
+        port: 3001
+        targetPort: 3001
+        portName: http
+
+      volumeMounts:
+        - name: data
+          mountPath: /app/data
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 10Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      displayName: "Uptime Kuma"
+      externalHost: "https://uptime.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/uptime-kuma.png"
+
+    httproute:
+      enabled: false
