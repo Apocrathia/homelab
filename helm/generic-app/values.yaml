@@ -159,6 +159,13 @@ app:
     emptyDir: []
     # ConfigMap volumes
     configMap: []
+    # Tmpfs volumes (for read-only filesystem support)
+    tmpfs: []
+    # Example tmpfs volumes:
+    # tmpfs:
+    #   - name: run
+    #     mountPath: /run
+    #     options: "exec,size=100M"
     # Example ConfigMap volumes:
     # configMap:
     #   - name: my-config

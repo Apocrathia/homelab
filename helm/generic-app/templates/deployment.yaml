@@ -234,6 +234,12 @@ spec:
               mountPath: {{ .mountPath }}
             {{- end }}
             {{- end }}
+            {{- if .Values.app.volumes.tmpfs }}
+            {{- range .Values.app.volumes.tmpfs }}
+            - name: {{ $.Values.app.name }}-{{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.app.volumes.configMap }}
             {{- range .Values.app.volumes.configMap }}
             - name: {{ .name }}
@@ -368,6 +374,13 @@ spec:
         {{- range .Values.app.volumes.emptyDir }}
         - name: {{ $.Values.app.name }}-{{ .name }}
           emptyDir: {}
+        {{- end }}
+        {{- range .Values.app.volumes.tmpfs }}
+        - name: {{ $.Values.app.name }}-{{ .name }}
+          tmpfs:
+            {{- if .options }}
+            options: {{ .options }}
+            {{- end }}
         {{- end }}
         {{- range .Values.app.volumes.configMap }}
         - name: {{ .name }}

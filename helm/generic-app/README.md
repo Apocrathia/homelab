@@ -58,6 +58,10 @@ app:
     emptyDir: # EmptyDir volumes
       - name: cache
         mountPath: /tmp/cache
+    tmpfs: # Tmpfs volumes (RAM-based, supports exec permissions)
+      - name: run
+        mountPath: /run
+        options: "exec,size=100M"
     configMap: # ConfigMap volumes
       - name: my-config
         mountPath: /etc/config
@@ -257,6 +261,15 @@ app:
       - name: temp
         mountPath: /tmp
 
+    # Tmpfs volumes (RAM-based, supports exec permissions)
+    tmpfs:
+      - name: run
+        mountPath: /run
+        options: "exec,size=100M"
+      - name: tmp
+        mountPath: /tmp
+        options: "size=500M"
+
     # ConfigMap volumes (configuration files)
     configMap:
       - name: app-config
@@ -273,13 +286,40 @@ app:
 - ✅ **Direct** - ConfigMap files mounted exactly where needed
 - ✅ **Self-contained** - each volume definition includes its mount info
 - ✅ **Container-specific** - available for main container, init containers, and sidecars
+- ✅ **Exec permissions** - tmpfs supports exec flags for read-only containers
 
 ### Container Volume Mounting
 
 The chart supports two types of volume configuration:
 
 1. **Pod-wide storage** (from `storage` section) - referenced by name in `volumeMounts`
-2. **Local storage** (emptyDir, configMap) - defined in `volumes` section
+2. **Local storage** (emptyDir, tmpfs, configMap) - defined in `volumes` section
+
+### Tmpfs Volumes
+
+Tmpfs volumes are RAM-based temporary storage that support mount options like `exec` permissions. Perfect for:
+
+- **Read-only containers** that need exec permissions (e.g., LinuxServer.io containers)
+- **High-performance temporary storage** (faster than disk)
+- **Process management directories** like `/run` for s6-overlay
+
+```yaml
+tmpfs:
+  - name: run
+    mountPath: /run
+    options: "exec,size=100M" # exec permissions + 100MB limit
+  - name: tmp
+    mountPath: /tmp
+    options: "size=500M" # 500MB limit, no exec needed
+```
+
+**Common mount options:**
+
+- `exec` - Allow execution of binaries (required for s6-overlay)
+- `noexec` - Disable execution (default)
+- `size=N` - Set size limit (e.g., `size=100M`, `size=1G`)
+- `rw` - Read-write access (default)
+- `ro` - Read-only access
 
 **Both can be used together** - the chart will mount all volumes from both sections:
 
