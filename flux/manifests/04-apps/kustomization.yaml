@@ -23,3 +23,7 @@ resources:
   - media/management/tautulli
   - media/management/ombi
   - media/management/sonarr
+  - media/management/radarr
+  - media/management/lidarr
+  - media/management/bazarr
+  - media/management/prowlarr
