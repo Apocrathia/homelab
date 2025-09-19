@@ -18,6 +18,7 @@ resources:
   - management/mealie
   - management/grocy
   - management/uptime-kuma
+  - management/changedetection-io
   - media/servers/plex
   - media/management/tautulli
   - media/management/ombi

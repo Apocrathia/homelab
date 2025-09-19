@@ -1,0 +1,163 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: changedetection-io
+  namespace: changedetection-io
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.24"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: changedetection-io
+      namespace: changedetection-io
+      # renovate: datasource=docker depName=lscr.io/linuxserver/changedetection.io
+      image: lscr.io/linuxserver/changedetection.io:0.50.14
+      container:
+        name: changedetection-io
+        port: 5000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: BASE_URL
+            value: "https://changedetection.gateway.services.apocrathia.com"
+          - name: PLAYWRIGHT_DRIVER_URL
+            value: "ws://localhost:3000/chrome"
+          - name: PLAYWRIGHT_BROWSER_TYPE
+            value: "chromium"
+          - name: PLAYWRIGHT_SERVICE_WORKERS
+            value: "allow"
+          - name: FETCH_WORKERS
+            value: "10"
+          - name: MINIMUM_SECONDS_RECHECK_TIME
+            value: "3"
+          - name: USE_X_SETTINGS
+            value: "1"
+          - name: HIDE_REFERER
+            value: "true"
+          - name: LOGGER_LEVEL
+            value: "INFO"
+          - name: DISABLE_VERSION_CHECK
+            value: "1"
+          - name: DEFAULT_FETCH_BACKEND
+            value: "playwright"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      securityContext:
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+            - KILL
+            - FOWNER
+
+      # Browserless Chrome sidecar for JavaScript support
+      sidecars:
+        - name: browserless
+          # renovate: datasource=docker depName=ghcr.io/browserless/chrome
+          image: ghcr.io/browserless/chrome:v2.35.0
+          ports:
+            - containerPort: 3000
+              name: browserless
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "3000"
+            - name: CONCURRENT
+              value: "5"
+            - name: QUEUED
+              value: "10"
+            - name: TIMEOUT
+              value: "30000"
+            - name: HEALTH
+              value: "true"
+            - name: ENABLE_DEBUGGER
+              value: "false"
+          volumes:
+            emptyDir:
+              - name: temp
+                mountPath: /tmp
+          runAsUser: 999
+          runAsGroup: 999
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      service:
+        type: ClusterIP
+        port: 5000
+        targetPort: 5000
+        portName: http
+
+      volumeMounts:
+        - name: config
+          mountPath: /config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+      smb:
+        enabled: false
+
+    # Additional writable directories for temporary files
+    volumes:
+      emptyDir:
+        - name: temp
+          mountPath: /tmp
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      displayName: "Change Detection"
+      externalHost: "https://changedetection.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/changedetection.png"
+
+    httproute:
+      enabled: false
