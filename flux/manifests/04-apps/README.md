@@ -41,6 +41,7 @@ The applications layer contains user-facing workloads and services organized by 
 ### Management
 
 - [**Management Applications**](management/README.md) - Overview of management and administrative applications
+  - [**ChangeDetection.io**](management/changedetection-io/README.md) - Website change detection and monitoring service with Browserless Chrome integration for JavaScript-heavy sites, Authentik SSO, and Longhorn storage
   - [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO
   - [**Kuber**](management/kuber/README.md) - iOS Kubernetes dashboard token management for mobile cluster access
   - [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
