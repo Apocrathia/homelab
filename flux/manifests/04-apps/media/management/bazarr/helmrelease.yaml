@@ -83,17 +83,17 @@ spec:
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Anime"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: tv
             source: "//storage.services.apocrathia.com/Video"
             subDir: "TV Shows"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: movies
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Movies"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
 
     secrets:
       enabled: false
