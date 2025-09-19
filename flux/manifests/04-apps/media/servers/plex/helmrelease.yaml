@@ -153,7 +153,7 @@ spec:
     loadbalancer:
       enabled: true
       ip: "10.100.1.98"
-      externalTrafficPolicy: Local
+      externalTrafficPolicy: Cluster
       ports:
         - name: http
           port: 80
