@@ -22,3 +22,4 @@ resources:
   - media/servers/plex
   - media/management/tautulli
   - media/management/ombi
+  - media/management/sonarr
