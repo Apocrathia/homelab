@@ -21,4 +21,5 @@ resources:
   - toolhive
   - external-secrets
   - chaos-mesh
+  - meshery
   - wandb

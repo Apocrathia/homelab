@@ -33,4 +33,5 @@ resources:
   - external-secrets.yaml
   - gatekeeper.yaml
   - litellm.yaml
+  - meshery.yaml
   - wandb.yaml
