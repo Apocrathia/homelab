@@ -27,3 +27,4 @@ resources:
   - media/management/lidarr
   - media/management/bazarr
   - media/management/prowlarr
+  - media/management/whisparr
