@@ -21,6 +21,11 @@ entries:
       intercept_header_auth: false
       internal_host: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local:80"
       external_host: "https://grafana.gateway.services.apocrathia.com"
+      # Allow unauthenticated access to API endpoints for MCP server
+      skip_path_regex: |
+        ^/api/
+        ^/mcp
+        ^/sse
 
   # Application for Grafana
   - model: authentik_core.application
