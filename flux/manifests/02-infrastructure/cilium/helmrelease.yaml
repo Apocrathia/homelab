@@ -295,3 +295,7 @@ spec:
         create: true
         name: cilium-secrets
         sync: true
+
+    # Egress Gateway configuration
+    egressGateway:
+      enabled: true
