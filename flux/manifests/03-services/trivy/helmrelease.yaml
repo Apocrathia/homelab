@@ -47,10 +47,48 @@ spec:
         capabilities:
           drop: ["ALL"]
       # Talos compatibility: exclude problematic volumeMounts/volumes
-      # Reference: https://github.com/aquasecurity/trivy-operator/discussions/1326
-      existingSecret: ""
-      scanJobPodTemplateVolumes: []
-      scanJobPodTemplateVolumeMounts: []
+      # References:
+      # - https://github.com/aquasecurity/trivy-operator/discussions/1326
+      # - https://github.com/aquasecurity/trivy-operator/issues/2566
+      # Override default volumes to exclude /etc/systemd and /lib/systemd for Talos
+      volumes:
+        - name: var-lib-etcd
+          hostPath:
+            path: /var/lib/etcd
+        - name: var-lib-kubelet
+          hostPath:
+            path: /var/lib/kubelet
+        - name: var-lib-kube-scheduler
+          hostPath:
+            path: /var/lib/kube-scheduler
+        - name: var-lib-kube-controller-manager
+          hostPath:
+            path: /var/lib/kube-controller-manager
+        - name: etc-kubernetes
+          hostPath:
+            path: /etc/kubernetes
+        - name: etc-cni-netd
+          hostPath:
+            path: /etc/cni/net.d/
+      volumeMounts:
+        - name: var-lib-etcd
+          mountPath: /var/lib/etcd
+          readOnly: true
+        - name: var-lib-kubelet
+          mountPath: /var/lib/kubelet
+          readOnly: true
+        - name: var-lib-kube-scheduler
+          mountPath: /var/lib/kube-scheduler
+          readOnly: true
+        - name: var-lib-kube-controller-manager
+          mountPath: /var/lib/kube-controller-manager
+          readOnly: true
+        - name: etc-kubernetes
+          mountPath: /etc/kubernetes
+          readOnly: true
+        - name: etc-cni-netd
+          mountPath: /etc/cni/net.d/
+          readOnly: true
     trivy:
       # Remove --list-all-pkgs to reduce report size significantly
       listAllPackages: false
