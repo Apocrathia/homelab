@@ -46,6 +46,11 @@ spec:
         readOnlyRootFilesystem: false
         capabilities:
           drop: ["ALL"]
+      # Talos compatibility: exclude problematic volumeMounts/volumes
+      # Reference: https://github.com/aquasecurity/trivy-operator/discussions/1326
+      existingSecret: ""
+      scanJobPodTemplateVolumes: []
+      scanJobPodTemplateVolumeMounts: []
     trivy:
       # Remove --list-all-pkgs to reduce report size significantly
       listAllPackages: false
