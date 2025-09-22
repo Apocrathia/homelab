@@ -83,6 +83,7 @@ spec:
     # MinIO subchart configuration
     minio:
       enabled: true
+      mode: standalone
       replicas: 1
       drivesPerNode: 1
       buckets:
