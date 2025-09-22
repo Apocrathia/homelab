@@ -84,7 +84,7 @@ spec:
     minio:
       enabled: true
       replicas: 1
-      drivesPerNode: 2
+      drivesPerNode: 1
       buckets:
         - name: chunks
           policy: none
@@ -96,7 +96,7 @@ spec:
           policy: none
           purge: false
       persistence:
-        size: 100Gi
+        size: 120Gi
         storageClass: "longhorn"
       resources:
         limits:

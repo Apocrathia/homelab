@@ -17,7 +17,7 @@ Loki uses MinIO (deployed as a subchart) for object storage with the following c
 
 - **Storage Type**: Object storage with MinIO backend
 - **Retention**: 31 days (744 hours)
-- **Storage Size**: 100Gi allocated
+- **Storage Size**: 120Gi allocated
 - **Storage Class**: Longhorn (consistent with your cluster)
 - **Buckets**: `loki-data` (created automatically)
 
@@ -25,7 +25,7 @@ Loki uses MinIO (deployed as a subchart) for object storage with the following c
 
 Before deploying Loki, you need to create the MinIO credentials in 1Password:
 
-1. In your 1Password vault, create a new item called `loki-minio-credentials`
+1. In your 1Password vault, create a new item called `lokid-minio-credentials`
 2. Add these fields:
    - **Field Label**: `access_key_id` | **Value**: `loki-storage` (or your preferred username)
    - **Field Label**: `secret_access_key` | **Value**: `your-secure-password-here`
