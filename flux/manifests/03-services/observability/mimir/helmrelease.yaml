@@ -100,10 +100,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 1Gi
         limits:
           cpu: 500m
-          memory: 1Gi
+          memory: 4Gi
       # Increase ingestion rate limits to handle high-volume metrics
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
@@ -147,10 +147,10 @@ spec:
       resources:
         requests:
           cpu: 50m
-          memory: 64Mi
+          memory: 128Mi
         limits:
           cpu: 200m
-          memory: 256Mi
+          memory: 512Mi
 
     # Disable nginx since we're using the gateway
     nginx:
