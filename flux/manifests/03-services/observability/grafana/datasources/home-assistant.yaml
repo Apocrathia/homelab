@@ -1,0 +1,49 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: homeassistant
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  valuesFrom:
+    - targetPath: "url"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "homeassistant-influxdb-url"
+    - targetPath: "database"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "homeassistant-influxdb-database"
+    - targetPath: "user"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "homeassistant-influxdb-username"
+    - targetPath: "secureJsonData.password"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "homeassistant-influxdb-password"
+  datasource:
+    name: Home Assistant
+    type: influxdb
+    uid: homeassistant
+    access: proxy
+    isDefault: false
+    url: "${homeassistant-influxdb-url}"
+    user: "${homeassistant-influxdb-username}"
+    database: "${homeassistant-influxdb-database}"
+    jsonData:
+      version: InfluxQL
+      organization: homeassistant
+      defaultBucket: homeassistant
+      httpMode: GET
+      httpMethod: GET
+    secureJsonData:
+      password: "${homeassistant-influxdb-password}"
