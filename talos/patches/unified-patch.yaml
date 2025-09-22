@@ -45,6 +45,24 @@ cluster:
     certSANs:
       - "10.100.1.8"
       - "kubernetes.apocrathia.com"
+    # CRD Controller Specific Optimizations
+    extraArgs:
+      # Valid API Server flags for CRD optimization
+      max-requests-inflight: "1200" # 3x increase from default 400
+      max-mutating-requests-inflight: "600" # 3x increase from default 200
+      request-timeout: "180s" # 3x increase from default 60s
+      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000"
+      # Audit optimization to reduce overhead
+      audit-log-maxbackup: "3" # Reduce from default 10
+      audit-log-maxsize: "50" # Reduce from default 100MB
+    # Scale API server resources significantly
+    resources:
+      requests:
+        cpu: "1600m" # 8x increase from current 200m
+        memory: "4Gi" # 8x increase from current 512Mi
+      limits:
+        cpu: "3200m" # Allow bursting
+        memory: "8Gi" # Generous memory limit
   network:
     cni:
       name: none
@@ -52,17 +70,28 @@ cluster:
       - 10.42.0.0/16
     serviceSubnets:
       - 10.69.0.0/16
+  controllerManager:
+    extraArgs:
+      kube-api-qps: "500" # Increase API calls per second
+      kube-api-burst: "1000" # Allow burst API calls
+    resources:
+      requests:
+        cpu: "200m" # Increase from default 100m
+        memory: "512Mi" # Increase from default 256Mi
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
   proxy:
     disabled: true
   # etcd tuning
   etcd:
     extraArgs:
-      # Reduce memory pressure by limiting request sizes
-      max-request-bytes: "2097152" # 2MB instead of default 1.5MB
-      quota-backend-bytes: "4294967296" # 4GB instead of default 2GB
-      # Enable auto-compaction to prevent memory bloat
-      auto-compaction-mode: "periodic"
-      auto-compaction-retention: "4h" # More frequent compaction
-      # Conservative timeouts - keep defaults but enable metrics
-      metrics: "basic" # Basic metrics only, not extensive
+      # Fix auto-compaction - use revision-based instead of periodic
+      auto-compaction-mode: "revision"
+      auto-compaction-retention: "5000" # More frequent compaction
+      # Optimize backend quotas and request sizes
+      quota-backend-bytes: "4294967296" # 4GB (conservative)
+      max-request-bytes: "16777216" # 16MB for large CRD schemas
+      # Metrics
+      metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
