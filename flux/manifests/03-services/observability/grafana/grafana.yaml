@@ -5,7 +5,8 @@ metadata:
   name: kube-prometheus-stack-grafana
   namespace: prometheus-system
   labels:
-    app: grafana
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: kube-prometheus-stack
 spec:
   # External Grafana instance from kube-prometheus-stack
   external:

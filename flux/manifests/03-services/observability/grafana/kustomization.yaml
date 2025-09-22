@@ -9,3 +9,5 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - grafana.yaml
+  - secret.yaml
+  - datasources/home-assistant.yaml
