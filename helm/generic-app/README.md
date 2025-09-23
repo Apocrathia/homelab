@@ -190,6 +190,7 @@ app:
       image: busybox:alpine
       command: ["sh", "-c"]
       args: ["chown -R 1000:1000 /app/assets && chmod -R 755 /app/assets"]
+      restartPolicy: Always
       volumeMounts:
         - name: my-app-data
           mountPath: /app
@@ -212,6 +213,17 @@ app:
 - **Database Initialization**: Run database migrations or setup scripts
 - **File Downloads**: Download configuration files or assets
 - **Dependency Installation**: Install packages or dependencies
+- **VPN Sidecars**: Run VPN containers that need to stay running alongside the main application
+
+**restartPolicy Feature:**
+
+The `restartPolicy` option allows init containers to stay running instead of exiting after completion. This is particularly useful for:
+
+- **VPN Containers**: Gluetun and other VPN clients that need to maintain connections
+- **Monitoring Agents**: Sidecar containers that provide ongoing monitoring or logging
+- **Network Proxies**: Containers that provide network services to the main application
+
+When `restartPolicy: Always` is set, the init container will restart if it exits, effectively making it behave like a sidecar container while retaining the init container's privileges for device access and security contexts.
 
 ### Storage Architecture
 
@@ -600,7 +612,17 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.26 (Latest)
+### Version 0.0.27 (Latest)
+
+- **NEW: Init Container restartPolicy Support**: Added support for `restartPolicy` in init containers to enable persistent sidecar-like behavior
+
+  - **Use Case**: Allows init containers to stay running instead of exiting after completion
+  - **VPN Support**: Enables VPN containers (like Gluetun) to run as init containers with persistent connections
+  - **Device Access**: Retains init container privileges for TUN device creation and elevated security contexts
+  - **Template Enhancement**: Added conditional restartPolicy rendering in deployment template
+  - **Documentation**: Added comprehensive examples and use cases for restartPolicy feature
+
+### Version 0.0.26
 
 - **CRITICAL: Fixed Sidecar Security Context Inheritance**: Resolved issue where sidecar containers weren't properly applying custom security context settings
 
