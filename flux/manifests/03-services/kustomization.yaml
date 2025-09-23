@@ -10,16 +10,16 @@ resources:
   - observability
   - dashboard
   - gitlab
-  - gatekeeper
-  - falco
+  # - gatekeeper
+  # - falco
   - kyverno
   - cert-manager
   - housekeeping
   - postgresql
   - reloader
-  - trivy
+  # - trivy
   - toolhive
   - external-secrets
-  - chaos-mesh
-  - meshery
+  # - chaos-mesh
+  # - meshery
   - wandb
