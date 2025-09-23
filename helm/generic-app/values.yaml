@@ -87,6 +87,19 @@ app:
   #         - name: sidecar-config
   #           mountPath: /etc/sidecar
   #           configMapName: sidecar-configmap
+  #     # Optional: sidecar-specific security context
+  #     # If not specified, inherits from app.securityContext
+  #     securityContext:
+  #       runAsUser: 0
+  #       runAsNonRoot: false
+  #       allowPrivilegeEscalation: true
+  #       capabilities:
+  #         add:
+  #           - NET_ADMIN
+  #           - SYS_ADMIN
+  #         drop:
+  #           - ALL
+  #       readOnlyRootFilesystem: false
   #     resources:
   #       requests:
   #         cpu: 10m
