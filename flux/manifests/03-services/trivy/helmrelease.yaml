@@ -10,7 +10,7 @@ spec:
     spec:
       chart: trivy-operator
       # renovate: datasource=helm registryUrl=https://aquasecurity.github.io/helm-charts/ depName=trivy-operator
-      version: "0.30.0"
+      version: "0.31.0"
       sourceRef:
         kind: HelmRepository
         name: aqua
