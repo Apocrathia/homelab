@@ -57,6 +57,7 @@ app:
   #         - name: init-config
   #           mountPath: /etc/init
   #           configMapName: init-configmap
+  #     restartPolicy: Always  # Optional: keep init container running (useful for VPN sidecars)
   #     securityContext:
   #       runAsUser: 0
   #       runAsGroup: 0
