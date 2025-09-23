@@ -122,3 +122,14 @@ spec:
     serviceAccount:
       # Annotations to add to the service account
       annotations: {}
+
+    metrics:
+      serviceMonitor:
+        enabled: true
+        interval: "30s"
+        scrapeTimeout: "10s"
+        additionalLabels:
+          app: longhorn
+          component: storage
+        annotations:
+          prometheus.io/scrape: "true"
