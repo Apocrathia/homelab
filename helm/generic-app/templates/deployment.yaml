@@ -290,6 +290,71 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
+          {{- if .securityContext }}
+          securityContext:
+            {{- if .securityContext.allowPrivilegeEscalation }}
+            allowPrivilegeEscalation: {{ .securityContext.allowPrivilegeEscalation }}
+            {{- else }}
+            allowPrivilegeEscalation: {{ $.Values.app.securityContext.allowPrivilegeEscalation | default false }}
+            {{- end }}
+            {{- if .securityContext.capabilities }}
+            capabilities:
+              {{- if .securityContext.capabilities.add }}
+              add:
+                {{- range .securityContext.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- if .securityContext.capabilities.drop }}
+              drop:
+                {{- range .securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+              {{- else }}
+              drop:
+                - ALL
+              {{- end }}
+            {{- else }}
+            capabilities:
+              {{- if $.Values.app.securityContext.capabilities }}
+              {{- if $.Values.app.securityContext.capabilities.add }}
+              add:
+                {{- range $.Values.app.securityContext.capabilities.add }}
+                - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- if $.Values.app.securityContext.capabilities.drop }}
+              drop:
+                {{- range $.Values.app.securityContext.capabilities.drop }}
+                - {{ . }}
+                {{- end }}
+              {{- else }}
+              drop:
+                - ALL
+              {{- end }}
+              {{- else }}
+              drop:
+                - ALL
+              {{- end }}
+            {{- end }}
+            {{- if .securityContext.runAsNonRoot }}
+            runAsNonRoot: {{ .securityContext.runAsNonRoot }}
+            {{- else }}
+            runAsNonRoot: {{ $.Values.app.securityContext.runAsNonRoot | default true }}
+            {{- end }}
+            {{- if .securityContext.runAsUser }}
+            runAsUser: {{ .securityContext.runAsUser }}
+            {{- else }}
+            runAsUser: {{ .runAsUser | default 1000 }}
+            {{- end }}
+            {{- if .securityContext.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
+            {{- else }}
+            readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
+            {{- end }}
+            seccompProfile:
+              type: RuntimeDefault
+          {{- else }}
           securityContext:
             allowPrivilegeEscalation: {{ $.Values.app.securityContext.allowPrivilegeEscalation | default false }}
             capabilities:
@@ -318,6 +383,7 @@ spec:
             readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
             seccompProfile:
               type: RuntimeDefault
+          {{- end }}
           volumeMounts:
             {{- if .volumeMounts }}
             {{- range .volumeMounts }}

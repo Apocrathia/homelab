@@ -94,6 +94,19 @@ app:
       volumeMounts:
         - name: shared-data
           mountPath: /shared
+      # Optional: sidecar-specific security context
+      # If not specified, inherits from app.securityContext
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: true
+        capabilities:
+          add:
+            - NET_ADMIN
+            - SYS_ADMIN
+          drop:
+            - ALL
+        readOnlyRootFilesystem: false
       resources:
         requests:
           cpu: 10m
@@ -587,7 +600,19 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.23 (Latest)
+### Version 0.0.26 (Latest)
+
+- **CRITICAL: Fixed Sidecar Security Context Inheritance**: Resolved issue where sidecar containers weren't properly applying custom security context settings
+
+  - **Problem Solved**: Sidecar containers were ignoring custom `securityContext` configurations and always falling back to app-level defaults
+  - **Template Logic Fixed**: Updated deployment template to properly handle sidecar-specific security context with conditional inheritance
+  - **Inheritance Behavior**: Sidecars now correctly inherit from `app.securityContext` when no sidecar-specific context is defined
+  - **Override Support**: Sidecars can now override specific security settings while inheriting others from the app level
+  - **VPN Container Support**: Enables proper configuration of VPN sidecars (like Gluetun) that require elevated privileges and capabilities
+
+- **Enhanced Documentation**: Added comprehensive sidecar security context documentation with examples and inheritance behavior
+
+### Version 0.0.23
 
 - **CRITICAL: Default Deployment Strategy Changed**: Changed default strategy from RollingUpdate to Recreate to prevent Multi-Attach errors
 
