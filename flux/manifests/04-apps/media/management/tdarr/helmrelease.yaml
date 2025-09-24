@@ -139,6 +139,6 @@ spec:
 
     authentik:
       enabled: true
-      displayName: "Tdarr Server"
+      displayName: "Tdarr"
       externalHost: "https://tdarr.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tdarr.png"
