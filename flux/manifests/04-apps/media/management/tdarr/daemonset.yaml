@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tdarr-node
+  namespace: tdarr
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "Container requires writable root filesystem for transcoding operations"
+    ignore-check.kube-linter.io/run-as-non-root: "Container starts as root for user/group initialization, then switches to PUID/PGID"
+  labels:
+    app.kubernetes.io/name: tdarr-node
+    app.kubernetes.io/instance: tdarr-node
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tdarr-node
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tdarr-node
+        app.kubernetes.io/instance: tdarr-node
+    spec:
+      serviceAccountName: tdarr-node
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 1000
+      containers:
+        - name: tdarr-node
+          # renovate: datasource=docker depName=ghcr.io/haveagitgat/tdarr_node
+          image: ghcr.io/haveagitgat/tdarr_node:2.46.01
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8267
+              protocol: TCP
+          env:
+            - name: TZ
+              value: "America/Denver"
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: UMASK
+              value: "002"
+            - name: serverIP
+              value: "tdarr-server.tdarr.svc.cluster.local"
+            - name: serverPort
+              value: "8266"
+            - name: nodePort
+              value: "8267"
+          volumeMounts:
+            - name: tv
+              mountPath: /tv
+              readOnly: true
+            - name: movies
+              mountPath: /movies
+              readOnly: true
+            - name: anime
+              mountPath: /anime
+              readOnly: true
+            - name: music
+              mountPath: /music
+              readOnly: true
+            - name: scratch
+              mountPath: /scratch
+              readOnly: false
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 8Gi
+      volumes:
+        - name: tv
+          persistentVolumeClaim:
+            claimName: tdarr-server-tv-pvc
+        - name: movies
+          persistentVolumeClaim:
+            claimName: tdarr-server-movies-pvc
+        - name: anime
+          persistentVolumeClaim:
+            claimName: tdarr-server-anime-pvc
+        - name: music
+          persistentVolumeClaim:
+            claimName: tdarr-server-music-pvc
+        - name: scratch
+          persistentVolumeClaim:
+            claimName: tdarr-server-scratch-pvc

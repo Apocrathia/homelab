@@ -29,5 +29,6 @@ resources:
   - media/management/prowlarr
   - media/management/whisparr
   - media/management/recyclarr
+  - media/management/tdarr
   - media/acquisitions/qbittorrent
   - media/acquisitions/sabnzbd
