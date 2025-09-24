@@ -612,7 +612,17 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.27 (Latest)
+### Version 0.0.28 (Latest)
+
+- **Fixed SMB Volume ReadOnly Configuration**: Resolved issue where SMB volumes were always mounted as read-only regardless of configuration
+
+  - **Problem Solved**: SMB volumes were hardcoded to `readOnly: true` in deployment template, ignoring the `readOnly: false` setting in values
+  - **Template Logic Fixed**: Updated deployment template to properly respect the `readOnly` setting from SMB volume configuration
+  - **Default Behavior**: Maintains safe default of read-only access when `readOnly` is not specified
+  - **Write Access**: Now correctly enables write access when `readOnly: false` is explicitly set
+  - **Consistent Pattern**: Uses same semantic pattern (`| default`) as other template configurations
+
+### Version 0.0.27
 
 - **NEW: Init Container restartPolicy Support**: Added support for `restartPolicy` in init containers to enable persistent sidecar-like behavior
 

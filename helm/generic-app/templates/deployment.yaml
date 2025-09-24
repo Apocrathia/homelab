@@ -491,5 +491,5 @@ spec:
         - name: {{ $.Values.app.name }}-{{ .name }}
           persistentVolumeClaim:
             claimName: {{ $.Values.app.name }}-{{ .name }}-pvc
-            readOnly: true
+            readOnly: {{ .readOnly | default true }}
         {{- end }}
