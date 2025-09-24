@@ -612,7 +612,7 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.28 (Latest)
+### Version 0.0.29 (Latest)
 
 - **Fixed SMB Volume ReadOnly Configuration**: Resolved issue where SMB volumes were always mounted as read-only regardless of configuration
 
