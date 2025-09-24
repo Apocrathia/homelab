@@ -29,3 +29,4 @@ resources:
   - media/management/prowlarr
   - media/management/whisparr
   - media/acquisitions/qbittorrent
+  - media/acquisitions/sabnzbd
