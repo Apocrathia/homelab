@@ -16,7 +16,7 @@ resources:
   - ./longhorn
   # Gateway API
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
-  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
   # Kyverno
   - ./kyverno
   # Cert Manager
