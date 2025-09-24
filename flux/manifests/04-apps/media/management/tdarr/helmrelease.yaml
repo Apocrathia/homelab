@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tdarr-server
+  namespace: tdarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.29"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: tdarr-server
+      namespace: tdarr
+      # renovate: datasource=docker depName=ghcr.io/haveagitgat/tdarr
+      image: ghcr.io/haveagitgat/tdarr:2.46.01
+      container:
+        name: tdarr-server
+        port: 8265
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: UMASK_SET
+            value: "002"
+          - name: Tdarr_Server
+            value: "true"
+          - name: Tdarr_Node
+            value: "false"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+      securityContext:
+        # Tdarr containers need root initially to set up user/group and directories
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8265
+        portName: http
+      extraServicePorts:
+        - name: api
+          port: 8266
+          targetPort: 8266
+          protocol: TCP
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: logs
+          mountPath: /logs
+        - name: cache
+          mountPath: /cache
+        - name: tv
+          mountPath: /tv
+          readOnly: true
+        - name: movies
+          mountPath: /movies
+          readOnly: true
+        - name: anime
+          mountPath: /anime
+          readOnly: true
+        - name: music
+          mountPath: /music
+          readOnly: true
+        - name: scratch
+          mountPath: /scratch
+          readOnly: true
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 10Gi
+          - name: logs
+            capacity: 5Gi
+          - name: cache
+            capacity: 20Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: tv
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "TV Shows"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: movies
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Movies"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: anime
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Anime"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: music
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Music"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: scratch
+            source: "//storage.services.apocrathia.com/Random"
+            subDir: "Scratch"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      displayName: "Tdarr Server"
+      externalHost: "https://tdarr.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tdarr.png"
