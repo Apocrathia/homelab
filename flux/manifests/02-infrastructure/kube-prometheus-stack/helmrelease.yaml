@@ -100,11 +100,11 @@ spec:
       enabled: true
       resources:
         limits:
-          cpu: 100m
-          memory: 100Mi
+          cpu: 500m
+          memory: 1Gi
         requests:
-          cpu: 50m
-          memory: 50Mi
+          cpu: 200m
+          memory: 512Mi
 
     # Grafana configuration
     grafana:
