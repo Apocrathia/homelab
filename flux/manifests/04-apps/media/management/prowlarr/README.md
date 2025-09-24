@@ -11,6 +11,7 @@ This deployment uses the LinuxServer.io Prowlarr image with the standard LinuxSe
 - **LinuxServer.io standard**: Uses root-initiated container with PUID/PGID user switching
 - **Persistent storage**: Configuration stored on Longhorn volumes
 - **Indexer management**: Centralized indexer configuration for all \*arr applications
+- **Flaresolverr integration**: Built-in CloudFlare proxy bypass via sidecar container
 - **Authentik integration**: SSO authentication through Authentik
 - **Gateway access**: Available at `https://prowlarr.gateway.services.apocrathia.com`
 
@@ -26,7 +27,17 @@ The deployment follows the LinuxServer.io standard pattern:
 
 ### Storage
 
-- **Config volume**: 5GB Longhorn persistent volume for application configuration
+- **Config volume**: 10GB Longhorn persistent volume for application configuration
+
+### Flaresolverr Sidecar
+
+This deployment includes a Flaresolverr sidecar container for CloudFlare proxy bypass:
+
+- **Image**: `ghcr.io/flaresolverr/flaresolverr:v3.4.1`
+- **Port**: 8191 (internal pod communication only)
+- **Purpose**: Bypass CloudFlare protection on indexer sites
+- **Access**: Available to Prowlarr at `localhost:8191`
+- **Configuration**: Configured with standard settings (LOG_LEVEL=info, CAPTCHA_SOLVER=none)
 
 ### Access
 

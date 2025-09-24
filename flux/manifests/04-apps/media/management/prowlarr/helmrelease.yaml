@@ -64,6 +64,30 @@ spec:
         - name: config
           mountPath: /config
 
+      sidecars:
+        - name: flaresolverr
+          # renovate: datasource=docker depName=ghcr.io/flaresolverr/flaresolverr
+          image: ghcr.io/flaresolverr/flaresolverr:v3.4.1
+          ports:
+            - containerPort: 8191
+              name: flaresolverr
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: LOG_HTML
+              value: "false"
+            - name: CAPTCHA_SOLVER
+              value: "none"
+            - name: TZ
+              value: "America/Denver"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
     storage:
       longhorn:
         enabled: true
