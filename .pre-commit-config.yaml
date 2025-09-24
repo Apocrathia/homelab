@@ -8,7 +8,8 @@ repos:
         exclude: |
           (?x)^(
             flux/manifests/.*/authentik-blueprint\.yaml|
-            helm/.*/templates/.*\.yaml
+            helm/.*/templates/.*\.yaml|
+            flux/manifests/.*/recyclarr\.yml
           )$
       - id: check-merge-conflict
       - id: detect-private-key

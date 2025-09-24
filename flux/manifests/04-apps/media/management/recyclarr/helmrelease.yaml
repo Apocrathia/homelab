@@ -1,0 +1,116 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: recyclarr
+  namespace: recyclarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.29"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: recyclarr
+      # renovate: datasource=docker depName=ghcr.io/recyclarr/recyclarr
+      image: ghcr.io/recyclarr/recyclarr:7.4.1
+      container:
+        name: recyclarr
+        # No port needed - this is a background utility, not a web service
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: CRON_SCHEDULE
+            value: "@hourly"
+          # API Keys from 1Password
+          - name: SONARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: recyclarr-secrets
+                key: sonarr-api-key
+          - name: RADARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: recyclarr-secrets
+                key: radarr-api-key
+          # Base URLs (cluster internal)
+          - name: SONARR_BASE_URL
+            value: "http://sonarr.sonarr.svc.cluster.local"
+          - name: RADARR_BASE_URL
+            value: "http://radarr.radarr.svc.cluster.local"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: "1000"
+        runAsGroup: "1000"
+        fsGroup: 1000
+        runAsNonRoot: "true"
+        allowPrivilegeEscalation: "false"
+        readOnlyRootFilesystem: "true"
+      volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+      # k8s-sidecar to sync ConfigMaps with recyclarr_config label
+      sidecars:
+        - name: config
+          # renovate: datasource=docker registryUrl=ghcr.io depName=kiwigrid/k8s-sidecar
+          image: ghcr.io/kiwigrid/k8s-sidecar:1.30.10
+          env:
+            - name: LABEL
+              value: "recyclarr-config"
+            - name: LABEL_VALUE
+              value: "true"
+            - name: NAMESPACE
+              value: "recyclarr"
+            - name: FOLDER
+              value: "/config"
+            - name: RESOURCE
+              value: "configmap"
+            - name: FOLDER_ANNOTATION
+              value: "k8s-sidecar-target-directory"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/recyclarr-secrets"
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 1Gi
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false

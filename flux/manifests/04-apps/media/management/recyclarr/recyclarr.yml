@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/recyclarr/recyclarr/master/schemas/config-schema.json
+
+# Recyclarr configuration for Sonarr and Radarr instances
+# Utilizes TRaSH Guides quality profiles and custom formats via include templates
+#
+# Reference: https://recyclarr.dev/wiki/yaml/config-reference/
+
+# Configuration for Sonarr and Radarr instances
+# Using environment variables for sensitive data per https://recyclarr.dev/wiki/yaml/env-vars/
+sonarr:
+  series:
+    # Internal cluster URLs - Sonarr runs on port 8989
+    base_url: !env_var SONARR_BASE_URL http://sonarr.sonarr.svc.cluster.local:8989
+    api_key: !env_var SONARR_API_KEY
+
+    # Include templates for quality definitions, profiles, and custom formats
+    include:
+      # Quality definitions for TV series
+      - template: sonarr-quality-definition-series
+
+      # Quality profiles - WEB 1080p profile
+      - template: sonarr-v4-quality-profile-web-1080p
+
+      # Quality profiles - WEB 2160p profile
+      - template: sonarr-v4-quality-profile-web-2160p
+
+      # Quality profiles - Anime profile
+      - template: sonarr-v4-quality-profile-anime
+
+      # Custom formats for WEB 1080p
+      - template: sonarr-v4-custom-formats-web-1080p
+
+      # Custom formats for WEB 2160p
+      - template: sonarr-v4-custom-formats-web-2160p
+
+      # Custom formats for Anime
+      - template: sonarr-v4-custom-formats-anime
+
+radarr:
+  movies:
+    # Internal cluster URLs - Radarr runs on port 7878
+    base_url: !env_var RADARR_BASE_URL http://radarr.radarr.svc.cluster.local:7878
+    api_key: !env_var RADARR_API_KEY
+
+    # Include templates for quality definitions, profiles, and custom formats
+    include:
+      # Quality definitions for movies
+      - template: radarr-quality-definition-movie
+
+      # Quality profiles - HD Bluray + WEB
+      - template: radarr-quality-profile-hd-bluray-web
+
+      # Quality profiles - UHD Bluray + WEB
+      - template: radarr-quality-profile-uhd-bluray-web
+
+      # Quality profiles - Remux + WEB 1080p
+      - template: radarr-quality-profile-remux-web-1080p
+
+      # Quality profiles - Remux + WEB 2160p
+      - template: radarr-quality-profile-remux-web-2160p
+
+      # Quality profiles - Anime
+      - template: radarr-quality-profile-anime
+
+      # Custom formats for HD Bluray + WEB
+      - template: radarr-custom-formats-hd-bluray-web
+
+      # Custom formats for UHD Bluray + WEB
+      - template: radarr-custom-formats-uhd-bluray-web
+
+      # Custom formats for Remux + WEB 1080p
+      - template: radarr-custom-formats-remux-web-1080p
+
+      # Custom formats for Remux + WEB 2160p
+      - template: radarr-custom-formats-remux-web-2160p
+
+      # Custom formats for Anime
+      - template: radarr-custom-formats-anime
