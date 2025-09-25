@@ -71,22 +71,42 @@ spec:
           mountPath: /movies
 
       sidecars:
-        - name: whisper
-          # renovate: datasource=docker depName=onerahmet/openai-whisper-asr-webservice/
-          image: onerahmet/openai-whisper-asr-webservice:v1.9.1
+        - name: subgen
+          # renovate: datasource=docker depName=mccloud/subgen
+          image: mccloud/subgen:2025.09.1-cpu
           ports:
             - containerPort: 9000
-              name: whisper
+              name: subgen-http
           env:
-            - name: ASR_MODEL
+            - name: LOG_LEVEL
+              value: "debug"
+            - name: PROCADDEDMEDIA
+              value: "True"
+            - name: PROCMEDIAONPLAY
+              value: "False"
+            - name: CONCURRENT_TRANSCRIPTIONS
+              value: "2"
+            - name: USE_PATH_MAPPING
+              value: "False"
+            - name: MODEL_PATH
+              value: "./models"
+            - name: WHISPER_MODEL
               value: "base"
-            - name: ASR_ENGINE
-              value: "openai_whisper"
-            - name: ASR_MODEL_PATH
-              value: "/data/models"
+            - name: WHISPER_THREADS
+              value: "4"
+            - name: WEBHOOKPORT
+              value: "9000"
+            - name: TRANSCRIBE_DEVICE
+              value: "cpu"
+            - name: DEBUG
+              value: "True"
+            - name: TRANSCRIBE_OR_TRANSLATE
+              value: "transcribe"
+            - name: NAMESUBLANG
+              value: "ai"
           volumeMounts:
             - name: models
-              mountPath: /data/models
+              mountPath: /subgen/models
           resources:
             requests:
               cpu: 500m
