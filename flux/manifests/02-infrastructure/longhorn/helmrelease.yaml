@@ -42,27 +42,27 @@ spec:
       autoDeletePodWhenVolumeDetachedUnexpectedly: true # Auto-delete pods when volumes detach unexpectedly
 
       # Replica settings for better stability
-      defaultReplicaCount: 2 # Reduce from 3 to 2 for less overhead
+      defaultReplicaCount: "2" # Reduce from 3 to 2 for less overhead
       replicaSoftAntiAffinity: true # Allow scheduling on nodes with healthy replicas
-      replicaAutoBalance: true # Auto-rebalance replicas when nodes are available
+      replicaAutoBalance: "best-effort" # Auto-rebalance replicas when nodes are available
 
       # Timeout and cleanup settings
       staleReplicaTimeout: 60 # 1 minute
-      failedBackupTTL: 1440 # 24 hours
-      backupExecutionTimeout: 5 # 5 minutes
+      failedBackupTTL: "1440" # 24 hours
+      backupExecutionTimeout: "5" # 5 minutes
 
       # Storage settings
-      storageOverProvisioningPercentage: 100
-      storageMinimalAvailablePercentage: 25
+      storageOverProvisioningPercentage: "100"
+      storageMinimalAvailablePercentage: "25"
 
       # Engine and replica settings
-      engineReplicaTimeout: 8 # 8 seconds timeout
-      concurrentReplicaRebuildPerNodeLimit: 5 # Limit concurrent rebuilds
-      concurrentVolumeBackupRestorePerNodeLimit: 5 # Limit concurrent restores
+      engineReplicaTimeout: "8" # 8 seconds timeout
+      concurrentReplicaRebuildPerNodeLimit: "5" # Limit concurrent rebuilds
+      concurrentVolumeBackupRestorePerNodeLimit: "5" # Limit concurrent restores
 
       # Data integrity and recovery
       snapshotDataIntegrity: "fast-check" # Enable fast integrity checking
-      fastReplicaRebuildEnabled: true # Enable fast rebuild using checksums
+      fastReplicaRebuildEnabled: "true" # Enable fast rebuild using checksums
 
       # Cleanup settings
       autoCleanupSystemGeneratedSnapshot: true
@@ -79,8 +79,8 @@ spec:
       allowRecurringJobWhileVolumeDetached: true # Allow jobs on detached volumes
 
       # Orphaned resource cleanup
-      orphanResourceAutoDeletion: true # Auto-delete orphaned resources
-      orphanResourceAutoDeletionGracePeriod: 60 # 1 minute
+      orphanResourceAutoDeletion: "true" # Auto-delete orphaned resources
+      orphanResourceAutoDeletionGracePeriod: "60" # 1 minute
 
     # Persistence settings for better reliability
     persistence:
