@@ -70,12 +70,48 @@ spec:
         - name: movies
           mountPath: /movies
 
+      sidecars:
+        - name: whisper
+          # renovate: datasource=docker depName=onerahmet/openai-whisper-asr-webservice/
+          image: onerahmet/openai-whisper-asr-webservice:v1.9.1
+          ports:
+            - containerPort: 9000
+              name: whisper
+          env:
+            - name: ASR_MODEL
+              value: "base"
+            - name: ASR_ENGINE
+              value: "openai_whisper"
+            - name: ASR_MODEL_PATH
+              value: "/data/models"
+          volumeMounts:
+            - name: models
+              mountPath: /data/models
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
     storage:
       longhorn:
         enabled: true
         volumes:
           - name: config
             capacity: 10Gi
+          - name: models
+            capacity: 5Gi
       smb:
         enabled: true
         volumes:
