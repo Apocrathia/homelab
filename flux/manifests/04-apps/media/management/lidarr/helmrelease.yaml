@@ -79,7 +79,7 @@ spec:
         volumes:
           - name: downloads
             source: "//storage.services.apocrathia.com/Downloads"
-            subDir: "Music"
+            subDir: ""
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
           - name: music
