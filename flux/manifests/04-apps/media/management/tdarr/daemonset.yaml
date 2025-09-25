@@ -7,6 +7,7 @@ metadata:
   annotations:
     ignore-check.kube-linter.io/no-read-only-root-fs: "Container requires writable root filesystem for transcoding operations"
     ignore-check.kube-linter.io/run-as-non-root: "Container starts as root for user/group initialization, then switches to PUID/PGID"
+    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
   labels:
     app.kubernetes.io/name: tdarr-node
     app.kubernetes.io/instance: tdarr-node
@@ -49,6 +50,10 @@ spec:
               value: "8266"
             - name: nodePort
               value: "8267"
+            - name: nodeID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           volumeMounts:
             - name: tv
               mountPath: /tv
