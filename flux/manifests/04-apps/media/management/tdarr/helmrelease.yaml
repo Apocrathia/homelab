@@ -74,26 +74,23 @@ spec:
           protocol: TCP
       volumeMounts:
         - name: config
-          mountPath: /config
+          mountPath: /app/server
+        - name: config
+          mountPath: /app/configs
         - name: logs
-          mountPath: /logs
+          mountPath: /app/logs
         - name: cache
           mountPath: /cache
         - name: tv
           mountPath: /tv
-          readOnly: true
         - name: movies
           mountPath: /movies
-          readOnly: true
         - name: anime
           mountPath: /anime
-          readOnly: true
         - name: music
           mountPath: /music
-          readOnly: true
         - name: scratch
           mountPath: /scratch
-          readOnly: false
 
     storage:
       longhorn:
