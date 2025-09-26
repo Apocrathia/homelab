@@ -93,7 +93,7 @@ spec:
           readOnly: true
         - name: scratch
           mountPath: /scratch
-          readOnly: true
+          readOnly: false
 
     storage:
       longhorn:
