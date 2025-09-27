@@ -54,6 +54,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: nodeTags
+              value: "media-server-only"
           volumeMounts:
             - name: tv
               mountPath: /tv
