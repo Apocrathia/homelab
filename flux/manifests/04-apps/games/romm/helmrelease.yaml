@@ -128,15 +128,23 @@ spec:
           - name: PLAYMATCH_API_ENABLED
             value: "true"
 
-          # Task Configuration
-          - name: TASK_RETRY_ATTEMPTS
-            value: "3"
-          - name: TASK_RETRY_DELAY
-            value: "60"
-          - name: TASK_SCHEDULE_SCAN
-            value: "0 2 * * *" # Daily at 2 AM
-          - name: TASK_SCHEDULE_SCRAPE
-            value: "0 3 * * *" # Daily at 3 AM
+          # Scheduled Task Configuration
+          - name: ENABLE_SCHEDULED_RESCAN
+            value: "true"
+          - name: SCHEDULED_RESCAN_CRON
+            value: "0 22 * * *" # Daily at 10 PM
+          - name: ENABLE_SCHEDULED_UPDATE_SWITCH_TITLEDB
+            value: "true"
+          - name: SCHEDULED_UPDATE_SWITCH_TITLEDB_CRON
+            value: "0 23 * * *" # Daily at 11 PM
+          - name: ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA
+            value: "true"
+          - name: SCHEDULED_UPDATE_LAUNCHBOX_METADATA_CRON
+            value: "0 0 * * *" # Daily at 12 AM
+          - name: ENABLE_SCHEDULED_CONVERT_IMAGES_TO_WEBP
+            value: "true"
+          - name: SCHEDULED_CONVERT_IMAGES_TO_WEBP_CRON
+            value: "0 1 * * *" # Daily at 1 AM
 
           # Emulation Configuration
           - name: EMULATION_ENABLED
