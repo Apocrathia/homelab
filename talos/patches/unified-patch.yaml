@@ -48,10 +48,10 @@ cluster:
     # CRD Controller Specific Optimizations
     extraArgs:
       # Valid API Server flags for CRD optimization
-      max-requests-inflight: "1200" # 3x increase from default 400
-      max-mutating-requests-inflight: "600" # 3x increase from default 200
-      request-timeout: "180s" # 3x increase from default 60s
-      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000"
+      max-requests-inflight: "800" # 2x increase from default 400
+      max-mutating-requests-inflight: "400" # 2x increase from default 200
+      request-timeout: "120s" # 2x increase from default 60s
+      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#100,persistentvolumeclaims#200"
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
       audit-log-maxsize: "50" # Reduce from default 100MB
@@ -86,9 +86,9 @@ cluster:
   # etcd tuning
   etcd:
     extraArgs:
-      # Fix auto-compaction - use revision-based instead of periodic
-      auto-compaction-mode: "revision"
-      auto-compaction-retention: "5000" # More frequent compaction
+      # Auto-compaction
+      auto-compaction-mode: "periodic"
+      auto-compaction-retention: "12h"
       # Optimize backend quotas and request sizes
       quota-backend-bytes: "4294967296" # 4GB (conservative)
       max-request-bytes: "16777216" # 16MB for large CRD schemas
