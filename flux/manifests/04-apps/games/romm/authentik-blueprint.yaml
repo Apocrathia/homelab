@@ -45,6 +45,6 @@ entries:
       launch_url: "https://romm.gateway.services.apocrathia.com"
       group: "Applications"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/romm.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/romm.svg"
       meta_description: "Self-hosted ROM management platform for organizing, scanning, and playing retro games"
       meta_publisher: "RomM"

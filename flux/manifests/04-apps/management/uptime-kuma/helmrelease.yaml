@@ -90,7 +90,7 @@ spec:
       enabled: true
       displayName: "Uptime Kuma"
       externalHost: "https://uptime.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/uptime-kuma.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg"
 
     httproute:
       enabled: false

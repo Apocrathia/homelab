@@ -80,7 +80,7 @@ spec:
       enabled: true
       displayName: "Tautulli"
       externalHost: "https://tautulli.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tautulli.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/tautulli.svg"
 
     httproute:
       enabled: false

@@ -102,4 +102,4 @@ spec:
       enabled: true
       displayName: "Prowlarr"
       externalHost: "https://prowlarr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/prowlarr.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg"

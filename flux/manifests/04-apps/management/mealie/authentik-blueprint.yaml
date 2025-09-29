@@ -47,6 +47,6 @@ entries:
       launch_url: "https://mealie.gateway.services.apocrathia.com"
       group: "Applications"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/mealie.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/mealie.svg"
       meta_description: "Self-hosted recipe manager and meal planning application"
       meta_publisher: "Mealie"

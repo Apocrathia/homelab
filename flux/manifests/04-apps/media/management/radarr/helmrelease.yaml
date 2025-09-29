@@ -95,4 +95,4 @@ spec:
       enabled: true
       displayName: "Radarr"
       externalHost: "https://radarr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/radarr.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg"

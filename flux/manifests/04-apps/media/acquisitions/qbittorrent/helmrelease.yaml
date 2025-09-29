@@ -176,4 +176,4 @@ spec:
       enabled: true
       displayName: "qBittorrent"
       externalHost: "https://qbittorrent.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/qbittorrent.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg"

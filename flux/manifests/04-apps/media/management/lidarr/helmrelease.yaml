@@ -95,4 +95,4 @@ spec:
       enabled: true
       displayName: "Lidarr"
       externalHost: "https://lidarr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/lidarr.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/lidarr.svg"

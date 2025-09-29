@@ -43,7 +43,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
       launch_url: "https://dashboard.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/kubernetes.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kubernetes.svg"
       meta_description: "Web-based Kubernetes user interface for cluster management"
       meta_publisher: "Kubernetes"
 

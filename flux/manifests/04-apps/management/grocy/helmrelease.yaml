@@ -92,7 +92,7 @@ spec:
       enabled: true
       displayName: "Grocy"
       externalHost: "https://grocy.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/grocy.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grocy.svg"
       # Enable header-based authentication for reverse proxy auth
       interceptHeaderAuth: true
 
