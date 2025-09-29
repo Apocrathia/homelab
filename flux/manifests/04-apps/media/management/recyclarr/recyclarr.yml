@@ -19,11 +19,20 @@ sonarr:
       # Quality definitions for TV series
       - template: sonarr-quality-definition-series
 
+      # Quality definitions for Anime
+      - template: sonarr-quality-definition-anime
+
       # Quality profiles - WEB 1080p profile
       - template: sonarr-v4-quality-profile-web-1080p
 
+      # Quality profiles - WEB 1080p alternative profile
+      - template: sonarr-v4-quality-profile-web-1080p-alternative
+
       # Quality profiles - WEB 2160p profile
       - template: sonarr-v4-quality-profile-web-2160p
+
+      # Quality profiles - WEB 2160p alternative profile
+      - template: sonarr-v4-quality-profile-web-2160p-alternative
 
       # Quality profiles - Anime profile
       - template: sonarr-v4-quality-profile-anime
@@ -48,6 +57,15 @@ radarr:
       # Quality definitions for movies
       - template: radarr-quality-definition-movie
 
+      # Quality definitions for Anime
+      - template: radarr-quality-definition-anime
+
+      # Quality definitions for SQP Streaming
+      - template: radarr-quality-definition-sqp-streaming
+
+      # Quality definitions for SQP UHD
+      - template: radarr-quality-definition-sqp-uhd
+
       # Quality profiles - HD Bluray + WEB
       - template: radarr-quality-profile-hd-bluray-web
 
@@ -63,6 +81,36 @@ radarr:
       # Quality profiles - Anime
       - template: radarr-quality-profile-anime
 
+      # Quality profiles - Streaming Qualtiy Profile 1 1080p
+      - template: radarr-quality-profile-sqp-1-1080p
+
+      # Quality profiles - SQP 1 WEB 1080p
+      - template: radarr-quality-profile-sqp-1-web-1080p
+
+      # Quality profiles - SQP 1 2160p 4K Only Default
+      - template: radarr-quality-profile-sqp-1-2160p-4k-only-default
+
+      # Quality profiles - SQP 1 2160p 4K Only IMAX Enhanced
+      - template: radarr-quality-profile-sqp-1-2160p-4k-only-imax-e
+
+      # Quality profiles - SQP 1 2160p Default
+      - template: radarr-quality-profile-sqp-1-2160p-default
+
+      # Quality profiles - SQP 1 2160p IMAX Enhanced
+      - template: radarr-quality-profile-sqp-1-2160p-imax-e
+
+      # Quality profiles - SQP 2
+      - template: radarr-quality-profile-sqp-2
+
+      # Quality profiles - SQP 3
+      - template: radarr-quality-profile-sqp-3
+
+      # Quality profiles - SQP 4
+      - template: radarr-quality-profile-sqp-4
+
+      # Quality profiles - SQP 5
+      - template: radarr-quality-profile-sqp-5
+
       # Custom formats for HD Bluray + WEB
       - template: radarr-custom-formats-hd-bluray-web
 
@@ -77,3 +125,24 @@ radarr:
 
       # Custom formats for Anime
       - template: radarr-custom-formats-anime
+
+      # Custom formats for SQP 1 1080p
+      - template: radarr-custom-formats-sqp-1-1080p
+
+      # Custom formats for SQP 1 WEB 1080p
+      - template: radarr-custom-formats-sqp-1-web-1080p
+
+      # Custom formats for SQP 1 2160p
+      - template: radarr-custom-formats-sqp-1-2160p
+
+      # Custom formats for SQP 2
+      - template: radarr-custom-formats-sqp-2
+
+      # Custom formats for SQP 3
+      - template: radarr-custom-formats-sqp-3
+
+      # Custom formats for SQP 4
+      - template: radarr-custom-formats-sqp-4
+
+      # Custom formats for SQP 5
+      - template: radarr-custom-formats-sqp-5
