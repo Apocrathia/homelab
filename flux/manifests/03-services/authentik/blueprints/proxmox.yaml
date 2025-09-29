@@ -18,6 +18,6 @@ entries:
       group: "External"
       meta_launch_url: "https://node-01.management.apocrathia.com:8006"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/proxmox.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/proxmox.svg"
       meta_description: "Proxmox virtualization management interface"
       meta_publisher: "Proxmox"

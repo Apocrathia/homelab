@@ -157,7 +157,7 @@ spec:
       enabled: true
       displayName: "Change Detection"
       externalHost: "https://changedetection.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/changedetection.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/changedetection.svg"
 
     httproute:
       enabled: false

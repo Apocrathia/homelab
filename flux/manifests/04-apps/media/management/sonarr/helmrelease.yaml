@@ -102,4 +102,4 @@ spec:
       enabled: true
       displayName: "Sonarr"
       externalHost: "https://sonarr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/sonarr.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sonarr.svg"

@@ -33,13 +33,13 @@ entries:
     identifiers:
       slug: "grafana"
     attrs:
-      name: "Grafana Monitoring"
+      name: "Grafana"
       slug: "grafana"
       group: "Services"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "grafana-proxy-provider"]]
       launch_url: "https://grafana.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/grafana.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg"
       meta_description: "Open source analytics and interactive visualization platform"
       meta_publisher: "Grafana Labs"
 

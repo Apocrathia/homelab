@@ -97,4 +97,4 @@ spec:
       enabled: true
       displayName: "Whisparr"
       externalHost: "https://whisparr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whisparr.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/whisparr.svg"
