@@ -64,7 +64,7 @@ sonarr:
         assign_scores_to:
           - name: Remux-1080p - Anime
             score: -100
-      - trash_ids: [9170d55c319f4fe40da8711ba9d8050d] # x265
+      - trash_ids: [47435ece6b99a0b477caf360e79ba0bb] # x265 (HD)
         assign_scores_to:
           - name: Remux-1080p - Anime
             score: 1000
