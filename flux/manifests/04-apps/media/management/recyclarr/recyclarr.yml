@@ -10,8 +10,8 @@
 # Using environment variables for sensitive data per https://recyclarr.dev/wiki/yaml/env-vars/
 sonarr:
   series:
-    # Internal cluster URLs - Sonarr runs on port 8989
-    base_url: !env_var SONARR_BASE_URL http://sonarr.sonarr.svc.cluster.local:8989
+    # Internal cluster URLs
+    base_url: !env_var SONARR_BASE_URL http://sonarr.sonarr.svc.cluster.local
     api_key: !env_var SONARR_API_KEY
 
     # Include templates for quality definitions, profiles, and custom formats
@@ -55,8 +55,8 @@ sonarr:
 
 radarr:
   movies:
-    # Internal cluster URLs - Radarr runs on port 7878
-    base_url: !env_var RADARR_BASE_URL http://radarr.radarr.svc.cluster.local:7878
+    # Internal cluster URLs
+    base_url: !env_var RADARR_BASE_URL http://radarr.radarr.svc.cluster.local
     api_key: !env_var RADARR_API_KEY
 
     # Include templates for quality definitions, profiles, and custom formats
