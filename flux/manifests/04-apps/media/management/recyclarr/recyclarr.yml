@@ -48,11 +48,26 @@ sonarr:
 
     # Additional anime custom formats using trash_ids
     custom_formats:
-      - trash_ids:
-          - 026d5aadd1a6b4e550b134cb6c72b3ca # Uncensored
-          - b2550eb333d27b75833e25b8c2557b38 # 10bit
-          - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
-          - 9c14d194486c4014d422adc64092d794 # Anime Dubs Only
+      - trash_ids: [026d5aadd1a6b4e550b134cb6c72b3ca] # Uncensored
+        assign_scores_to:
+          - name: Remux-1080p - Anime
+            score: 250
+      - trash_ids: [b2550eb333d27b75833e25b8c2557b38] # 10bit
+        assign_scores_to:
+          - name: Remux-1080p - Anime
+            score: 1000
+      - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio
+        assign_scores_to:
+          - name: Remux-1080p - Anime
+            score: 1500
+      - trash_ids: [9c14d194486c4014d422adc64092d794] # Anime Dubs Only
+        assign_scores_to:
+          - name: Remux-1080p - Anime
+            score: -100
+      - trash_ids: [9170d55c319f4fe40da8711ba9d8050d] # WEB-x265
+        assign_scores_to:
+          - name: Remux-1080p - Anime
+            score: 1000
 
 radarr:
   movies:
