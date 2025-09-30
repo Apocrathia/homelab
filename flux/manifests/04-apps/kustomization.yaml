@@ -9,6 +9,7 @@ resources:
   - artificial-intelligence/openwebui
   - artificial-intelligence/mlflow
   - artificial-intelligence/litellm
+  - artificial-intelligence/langflow
   # - artificial-intelligence/guardrails
   - games/archisteamfarm
   - games/romm

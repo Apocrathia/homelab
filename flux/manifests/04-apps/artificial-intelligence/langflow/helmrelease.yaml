@@ -1,0 +1,116 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: langflow-ide
+  namespace: langflow
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: langflow-ide
+      # renovate: datasource=helm registryUrl=https://langflow-ai.github.io/langflow-helm-charts depName=langflow-ide
+      version: "0.1.1"
+      sourceRef:
+        kind: HelmRepository
+        name: langflow
+        namespace: flux-system
+  values:
+    # Langflow configuration
+    langflow:
+      backend:
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+
+        # Environment variables
+        env:
+          - name: LANGFLOW_ALEMBIC_LOG_FILE
+            value: "/app/data/alembic.log"
+          - name: LANGFLOW_LOG_FILE
+            value: "/app/data/langflow.log"
+          - name: LANGFLOW_CORS_ORIGINS
+            value: "https://langflow.gateway.services.apocrathia.com"
+          - name: LANGFLOW_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: "secret-key"
+                name: "langflow-secrets"
+          - name: LANGFLOW_AUTO_LOGIN
+            value: "true" # Use Authentik for authentication
+          - name: LANGFLOW_MCP_SERVER_ENABLED
+            value: "true"
+          - name: LANGFLOW_MCP_COMPOSER_ENABLED
+            value: "true"
+          - name: LANGFLOW_MCP_SERVER_ENABLE_PROGRESS_NOTIFICATIONS
+            value: "true"
+          - name: LANGFLOW_CACHE_TYPE
+            value: "async"
+          - name: LANGFLOW_LOG_LEVEL
+            value: "info"
+
+        # Use external PostgreSQL database
+        externalDatabase:
+          enabled: true
+          driver:
+            value: "postgresql"
+          host:
+            value: "langflow-postgres-rw.langflow.svc.cluster.local"
+          port:
+            value: "5432"
+          user:
+            value: "langflow"
+          password:
+            valueFrom:
+              secretKeyRef:
+                key: "password"
+                name: "langflow-secrets"
+          database:
+            value: "langflow"
+
+        # Disable SQLite since we're using PostgreSQL
+        sqlite:
+          enabled: false
+
+        # Persistent volumes for Langflow data
+        volumes:
+          - name: flows
+            persistentVolumeClaim:
+              claimName: langflow-flows-pvc
+          - name: data
+            persistentVolumeClaim:
+              claimName: langflow-data-pvc
+          - name: db
+            emptyDir: {}
+          - name: tmp
+            emptyDir: {}
+
+        volumeMounts:
+          - name: flows
+            mountPath: /app/flows
+            readOnly: false
+          - name: data
+            mountPath: /app/data
+            readOnly: false
+          - name: db
+            mountPath: /app/db
+            readOnly: false
+          - name: tmp
+            mountPath: /tmp
+            readOnly: false
+
+      frontend:
+        enabled: true
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 300m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
