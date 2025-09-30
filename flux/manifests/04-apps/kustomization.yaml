@@ -10,6 +10,7 @@ resources:
   - artificial-intelligence/mlflow
   - artificial-intelligence/litellm
   - artificial-intelligence/langflow
+  - artificial-intelligence/langfuse
   # - artificial-intelligence/guardrails
   - games/archisteamfarm
   - games/romm

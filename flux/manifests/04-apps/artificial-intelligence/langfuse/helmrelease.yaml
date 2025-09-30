@@ -1,0 +1,122 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: langfuse
+  namespace: langfuse
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: langfuse
+      # renovate: datasource=helm registryUrl=https://langfuse.github.io/langfuse-k8s depName=langfuse
+      version: "1.5.4"
+      sourceRef:
+        kind: HelmRepository
+        name: langfuse
+        namespace: flux-system
+  valuesFrom:
+    - kind: Secret
+      name: langfuse-secrets
+      valuesKey: oauth-client-id
+      targetPath: langfuse.auth.providers.custom.clientId
+    - kind: Secret
+      name: langfuse-secrets
+      valuesKey: oauth-client-secret
+      targetPath: langfuse.auth.providers.custom.clientSecret
+  values:
+    # Langfuse configuration
+    langfuse:
+      # Use external secrets for sensitive data
+      salt:
+        secretKeyRef:
+          name: langfuse-secrets
+          key: salt
+      nextauth:
+        secret:
+          secretKeyRef:
+            name: langfuse-secrets
+            key: nextauth-secret
+        url: "https://langfuse.gateway.services.apocrathia.com"
+      # Optional encryption key for enhanced security
+      encryptionKey:
+        secretKeyRef:
+          name: langfuse-secrets
+          key: encryption-key
+      # Feature flags
+      features:
+        telemetryEnabled: false
+        signUpDisabled: true # Disable initially to enable account provisioning
+        experimentalFeaturesEnabled: true
+      auth:
+        disableUsernamePassword: true # Disable email/password authentication to force OAuth
+        providers:
+          custom:
+            issuer: "https://auth.gateway.services.apocrathia.com/application/o/langfuse"
+            name: "Authentik"
+            scope: "openid email profile"
+            idToken: true
+      # Additional environment variables for NextAuth OAuth handling
+      additionalEnv:
+        - name: AUTH_CUSTOM_CHECKS
+          value: "state"
+        - name: AUTH_CUSTOM_ALLOW_ACCOUNT_LINKING
+          value: "true"
+
+      # Resource configuration
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+
+    # PostgreSQL configuration (built-in)
+    postgresql:
+      auth:
+        username: langfuse
+        existingSecret: langfuse-secrets
+        secretKeys:
+          userPasswordKey: postgres-password
+        database: langfuse
+      primary:
+        persistence:
+          storageClass: longhorn
+          size: 10Gi
+
+    # ClickHouse configuration (built-in)
+    clickhouse:
+      auth:
+        existingSecret: langfuse-secrets
+        existingSecretKey: clickhouse-password
+      persistence:
+        storageClass: longhorn
+        size: 20Gi
+      replicaCount: 1
+      zookeeper:
+        replicaCount: 1
+      migration:
+        autoMigrate: false
+
+    # Redis configuration (built-in)
+    redis:
+      auth:
+        existingSecret: langfuse-secrets
+        existingSecretPasswordKey: redis-password
+      host: "langfuse-redis-primary"
+      primary:
+        persistence:
+          storageClass: longhorn
+          size: 5Gi
+
+    # S3/MinIO configuration (built-in)
+    s3:
+      auth:
+        rootUser: "minio"
+        existingSecret: langfuse-secrets
+        rootUserSecretKey: s3-root-user
+        rootPasswordSecretKey: s3-root-password
+      persistence:
+        storageClass: longhorn
+        size: 50Gi
