@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "langflow-proxy-provider"]]
       launch_url: "https://langflow.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/langflow.svg"
+      icon: "https://avatars.githubusercontent.com/u/85702467"
       meta_description: "Visual framework for building LLM applications with drag-and-drop interface"
       meta_publisher: "Logspace"
 
