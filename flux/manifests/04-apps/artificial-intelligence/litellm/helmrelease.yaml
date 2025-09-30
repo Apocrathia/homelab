@@ -34,6 +34,18 @@ spec:
       name: litellm-secrets
       valuesKey: password
       targetPath: proxy_config.general_settings.ui_password
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: langfuse-public-key
+      targetPath: envVars.LANGFUSE_PUBLIC_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: langfuse-secret-key
+      targetPath: envVars.LANGFUSE_SECRET_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: ollama-api-base
+      targetPath: envVars.OLLAMA_API_BASE
 
   values:
     # Use the database-optimized image
@@ -133,6 +145,50 @@ spec:
             seccompProfile:
               type: RuntimeDefault
 
+      - name: langfuse
+        # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
+        image: registry.suse.com/suse/kubectl:1.33.1
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "Langfuse installer sidecar started..."
+            POD_NAME=$$(cat /etc/hostname)
+            echo "Using pod name: $$POD_NAME"
+
+            while true; do
+              # Check if Langfuse is already installed in the main container
+              if ! kubectl exec -n litellm $$POD_NAME -c litellm -- python -c "import langfuse" 2>/dev/null; then
+                echo "Installing Langfuse dependencies in main container..."
+                kubectl exec -n litellm $$POD_NAME -c litellm -- pip install "langfuse"
+                echo "Langfuse installation completed"
+              else
+                echo "Langfuse already installed, skipping..."
+              fi
+              sleep 60
+            done
+        readinessProbe:
+          exec:
+            command:
+              [
+                "/bin/sh",
+                "-c",
+                "kubectl exec -n litellm $$(cat /etc/hostname) -c litellm -- python -c 'import langfuse' 2>/dev/null",
+              ]
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 30
+          failureThreshold: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
     # Use the rbac.yaml service account
     serviceAccount:
       create: false
@@ -160,6 +216,7 @@ spec:
     envVars:
       CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
       MLFLOW_TRACKING_URI: "http://mlflow.mlflow.svc.cluster.local:80"
+      LANGFUSE_HOST: "https://langfuse.gateway.services.apocrathia.com"
 
     proxy_config:
       # Include model configuration from separate file using relative path
@@ -177,8 +234,8 @@ spec:
 
       litellm_settings:
         # Logging and monitoring
-        success_callback: ["mlflow"]
-        failure_callback: ["mlflow"]
+        success_callback: ["mlflow", "langfuse"]
+        failure_callback: ["mlflow", "langfuse"]
 
         # Cost tracking
         track_cost_per_user: true

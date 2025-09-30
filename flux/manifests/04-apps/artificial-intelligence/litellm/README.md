@@ -32,6 +32,9 @@ Sensitive configuration is stored in 1Password under the `litellm-secrets` item.
 - `username`: Database and UI username (shared)
 - `password`: Database and UI password (shared)
 - `model-config`: YAML array containing the model_list configuration
+- `langfuse-public-key`: Langfuse public API key for observability
+- `langfuse-secret-key`: Langfuse secret API key for observability
+- `ollama-api-base`: Ollama API base URL for local LLM integration
 
 **Note**: The `model-config` field is mounted as a separate volume from the 1Password secret and included in the main LiteLLM configuration via the `include` directive. This approach allows complex YAML structures to be properly handled while keeping all secrets in 1Password.
 
@@ -89,11 +92,20 @@ LiteLLM is integrated with MLflow for observability and tracing:
 - **MLflow UI**: Available at `https://mlflow.gateway.services.apocrathia.com`
 - **Tracing**: All LLM calls are automatically logged to MLflow
 - **Experiments**: Track model performance, parameters, and metrics
+
+### Langfuse Integration
+
+LiteLLM is integrated with Langfuse for comprehensive LLM observability:
+
+- **Langfuse UI**: Available at `https://langfuse.gateway.services.apocrathia.com`
+- **Tracing**: All LLM calls are automatically logged to Langfuse
+- **Analytics**: Track token usage, latencies, costs, and model performance
+- **Dual Logging**: Calls are logged to both MLflow and Langfuse for comprehensive observability
 - **Artifacts**: Store model artifacts and evaluation results
 
-The integration is automatically installed via a sidecar container that installs MLflow dependencies into the main LiteLLM container during pod startup. The sidecar runs continuously, checking and installing MLflow if needed. The pod readiness probe ensures LiteLLM doesn't start receiving traffic until MLflow is properly installed and functional.
+The integrations are automatically installed via sidecar containers that install MLflow and Langfuse dependencies into the main LiteLLM container during pod startup. The sidecars run continuously, checking and installing dependencies if needed. The pod readiness probes ensure LiteLLM doesn't start receiving traffic until both MLflow and Langfuse are properly installed and functional.
 
-For detailed configuration and usage information, see the [official LiteLLM MLflow documentation](https://docs.litellm.ai/docs/observability/mlflow).
+For detailed configuration and usage information, see the [official LiteLLM MLflow documentation](https://docs.litellm.ai/docs/observability/mlflow) and [Langfuse LiteLLM integration documentation](https://langfuse.com/integrations/gateways/litellm).
 
 ## Authentication
 
