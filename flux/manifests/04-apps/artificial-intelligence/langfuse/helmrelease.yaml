@@ -97,7 +97,7 @@ spec:
       zookeeper:
         replicaCount: 1
       migration:
-        autoMigrate: false
+        autoMigrate: true
 
     # Redis configuration (built-in)
     redis:
