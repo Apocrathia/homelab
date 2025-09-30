@@ -37,6 +37,7 @@ entries:
         ^/engines/
         ^/fine_tuning/
         ^/images/
+        ^/mcp/
         ^/models
         ^/models/
         ^/moderations
