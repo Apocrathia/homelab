@@ -35,3 +35,4 @@ resources:
   - media/management/tdarr
   - media/acquisitions/qbittorrent
   - media/acquisitions/sabnzbd
+  - media/acquisitions/archiveteam-warrior
