@@ -243,7 +243,7 @@ for i in {1..4}; do
   # Upgrade the node with factory image that includes extensions
   talosctl upgrade \
     --nodes "${NODE_IP}" \
-    --image "factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:${TARGET_VERSION}" \
+    --image "factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:${TARGET_VERSION}" \
     --wait
 
   # Wait for the node to rejoin the cluster
@@ -269,7 +269,7 @@ echo "Staged upgrade to Talos version: $TARGET_VERSION"
 # Use staged upgrade for problematic nodes
 talosctl upgrade \
   --nodes 10.100.1.80 \
-  --image "factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:${TARGET_VERSION}" \
+  --image "factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:${TARGET_VERSION}" \
   --stage
 ```
 
