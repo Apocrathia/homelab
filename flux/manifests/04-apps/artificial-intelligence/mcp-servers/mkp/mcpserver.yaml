@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: mcp-server
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp
-  image: ghcr.io/stackloklabs/mkp/server:0.2.3
+  image: ghcr.io/stackloklabs/mkp/server:0.2.4
   transport: streamable-http
   port: 8080
   targetPort: 8080
