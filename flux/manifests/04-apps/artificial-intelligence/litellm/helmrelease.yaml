@@ -130,9 +130,9 @@ spec:
                 "-c",
                 "kubectl exec -n litellm $$(cat /etc/hostname) -c litellm -- python -c 'import mlflow' 2>/dev/null",
               ]
-          initialDelaySeconds: 30
-          periodSeconds: 15
-          timeoutSeconds: 30
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 60
           failureThreshold: 10
         securityContext:
           allowPrivilegeEscalation: false
@@ -174,9 +174,9 @@ spec:
                 "-c",
                 "kubectl exec -n litellm $$(cat /etc/hostname) -c litellm -- python -c 'import langfuse' 2>/dev/null",
               ]
-          initialDelaySeconds: 30
-          periodSeconds: 15
-          timeoutSeconds: 30
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 60
           failureThreshold: 10
         securityContext:
           allowPrivilegeEscalation: false
