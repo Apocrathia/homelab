@@ -57,6 +57,12 @@ spec:
 
     # Loki configuration
     loki:
+      # Disable query scheduler for homelab
+      frontend:
+        scheduler_address: ""
+      frontend_worker:
+        scheduler_address: ""
+
       # Authentication configuration (disabled for homelab)
       auth_enabled: false
 
@@ -109,7 +115,7 @@ spec:
 
     # Write component configuration
     write:
-      replicas: 3
+      replicas: 2
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
