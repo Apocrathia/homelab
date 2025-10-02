@@ -3,7 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: wandb-operator
-  namespace: wandb
+  namespace: wandb-system
 spec:
   interval: 30m
   chart:
@@ -44,5 +44,5 @@ spec:
         create: true
     airgapped: false
     namespaceIsolation:
-      enabled: true
+      enabled: false
       additionalNamespaces: []
