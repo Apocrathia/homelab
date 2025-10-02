@@ -24,6 +24,11 @@ spec:
       container:
         name: warrior
         port: 8001
+        env:
+          - name: DOWNLOADER
+            value: "Apocrathia"
+          - name: SELECTED_PROJECT
+            value: "auto"
       resources:
         requests:
           cpu: 100m
