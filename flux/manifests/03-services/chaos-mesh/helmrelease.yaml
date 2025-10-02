@@ -11,7 +11,7 @@ spec:
     spec:
       chart: chaos-mesh
       # renovate: datasource=helm registryUrl=https://charts.chaos-mesh.org depName=chaos-mesh
-      version: "2.7.2"
+      version: "2.8.0"
       sourceRef:
         kind: HelmRepository
         name: chaos-mesh
