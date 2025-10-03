@@ -27,6 +27,10 @@ spec:
       targetPath: externalPostgresql.password
 
   values:
+    # Deployment strategy to prevent Multi-Attach volume errors
+    strategy:
+      type: Recreate
+
     # Main node configuration
     main:
       count: 1
