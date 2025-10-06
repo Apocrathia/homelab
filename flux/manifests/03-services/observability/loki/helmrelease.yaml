@@ -27,36 +27,29 @@ spec:
       retries: 3
     timeout: 10m
 
-  # Pull values from 1Password secret
-  valuesFrom:
-    - kind: Secret
-      name: loki-minio-credentials
-      valuesKey: access_key_id
-      targetPath: minio.rootUser
-    - kind: Secret
-      name: loki-minio-credentials
-      valuesKey: secret_access_key
-      targetPath: minio.rootPassword
-
   values:
-    # Storage configuration (top level)
-    storage:
-      type: s3
-      s3:
-        endpoint: "http://loki-minio.loki-system.svc:9000"
-        insecure: true
-        s3ForcePathStyle: true
-        accessKeyId:
-          secretRef:
-            name: loki-minio-credentials
-            key: access_key_id
-        secretAccessKey:
-          secretRef:
-            name: loki-minio-credentials
-            key: secret_access_key
-
     # Loki configuration
     loki:
+      # Storage configuration
+      storage:
+        type: s3
+        bucketNames:
+          chunks: loki
+          ruler: loki
+          admin: loki
+        s3:
+          endpoint: "http://storage.services.apocrathia.com:9000"
+          insecure: true
+          s3ForcePathStyle: true
+          accessKeyId:
+            secretRef:
+              name: loki-secrets
+              key: access-key-id
+          secretAccessKey:
+            secretRef:
+              name: loki-secrets
+              key: access-key-secret
+
       # Disable query scheduler for homelab
       frontend:
         scheduler_address: ""
@@ -77,6 +70,11 @@ spec:
               prefix: loki_index_
               period: 24h
 
+      # Common configuration
+      commonConfig:
+        path_prefix: /var/loki
+        replication_factor: 2
+
       # Table manager for retention
       tableManager:
         retention_deletes_enabled: true
@@ -86,32 +84,9 @@ spec:
       limits_config:
         allow_structured_metadata: false
 
-    # MinIO subchart configuration
+    # MinIO subchart disabled - using external MinIO
     minio:
-      enabled: true
-      mode: standalone
-      replicas: 1
-      drivesPerNode: 1
-      buckets:
-        - name: chunks
-          policy: none
-          purge: false
-        - name: ruler
-          policy: none
-          purge: false
-        - name: admin
-          policy: none
-          purge: false
-      persistence:
-        size: 120Gi
-        storageClass: "longhorn"
-      resources:
-        limits:
-          cpu: 500m
-          memory: 2Gi
-        requests:
-          cpu: 100m
-          memory: 512Mi
+      enabled: false
 
     # Write component configuration
     write:
