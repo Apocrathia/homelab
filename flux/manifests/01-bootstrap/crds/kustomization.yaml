@@ -22,3 +22,5 @@ resources:
   # Cert Manager
   # renovate: datasource=github-releases depName=cert-manager/cert-manager
   - https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
+  # Fluent Operator CRDs
+  - ./fluent

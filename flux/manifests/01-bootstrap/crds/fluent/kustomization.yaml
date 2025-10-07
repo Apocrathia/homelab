@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: fluent-crds
+
+resources:
+  # Fluent Bit CRDs
+  # renovate: datasource=github-releases depName=fluent/fluent-operator
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clusterfilters.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clusterfluentbitconfigs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clusterinputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clustermultilineparsers.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clusteroutputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_clusterparsers.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_collectors.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_filters.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_fluentbitconfigs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_fluentbits.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_multilineparsers.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_outputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentbit.fluent.io_parsers.yaml
+  # Fluentd CRDs
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_clusterfilters.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_clusterfluentdconfigs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_clusterinputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_clusteroutputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_filters.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_fluentdconfigs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_fluentds.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_inputs.yaml
+  - https://raw.githubusercontent.com/fluent/fluent-operator/v3.4.0/config/crd/bases/fluentd.fluent.io_outputs.yaml
+
+patches:
+  - patch: |
+      - op: remove
+        path: /metadata/annotations
+    target:
+      kind: CustomResourceDefinition
+      group: apiextensions.k8s.io
