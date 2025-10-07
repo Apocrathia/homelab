@@ -27,6 +27,16 @@ spec:
       retries: 3
     timeout: 10m
 
+  valuesFrom:
+    - kind: Secret
+      name: loki-secrets
+      valuesKey: access-key-id
+      targetPath: loki.storage.s3.accessKeyId
+    - kind: Secret
+      name: loki-secrets
+      valuesKey: access-key-secret
+      targetPath: loki.storage.s3.secretAccessKey
+
   values:
     # Loki configuration
     loki:
@@ -41,14 +51,6 @@ spec:
           endpoint: "http://storage.services.apocrathia.com:9000"
           insecure: true
           s3ForcePathStyle: true
-          accessKeyId:
-            secretRef:
-              name: loki-secrets
-              key: access-key-id
-          secretAccessKey:
-            secretRef:
-              name: loki-secrets
-              key: access-key-secret
       # Disable query scheduler for homelab
       frontend:
         scheduler_address: ""
