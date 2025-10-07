@@ -11,24 +11,24 @@ Mimir is deployed in distributed mode with the following components:
 - **Querier**: Handles queries against stored metrics
 - **Store Gateway**: Provides access to long-term storage
 - **Compactor**: Compacts and deduplicates metrics
-- **MinIO**: Object storage backend for metrics data
+- **External MinIO**: Object storage backend for metrics data
 
 ## Storage Configuration
 
-Mimir uses MinIO (deployed as a subchart) for object storage with the following buckets:
+Mimir uses external MinIO for object storage with separate buckets for different data types:
 
-- `mimir-tsdb`: Time series data blocks
+- `mimir-blocks`: Time series data blocks
 - `mimir-ruler`: Recording rules and alerting rules
-- `enterprise-metrics-admin`: Administrative data
+- `mimir-alertmanager`: Alertmanager configuration
 
 ## 1Password Setup
 
 Before deploying Mimir, you need to create the MinIO credentials in 1Password:
 
-1. In your 1Password vault, create a new item called `mimir-minio-credentials`
+1. In your 1Password vault, create a new item called `mimir-secrets`
 2. Add these fields:
-   - **Field Label**: `root_user` | **Value**: `mimir-storage`
-   - **Field Label**: `root_password` | **Value**: `your-secure-password-here`
+   - **Field Label**: `access-key-id` | **Value**: `your-minio-access-key`
+   - **Field Label**: `access-key-secret` | **Value**: `your-minio-secret-key`
 3. The 1Password Connect Operator will automatically create a Kubernetes secret with these values
 4. Flux will use `valuesFrom` to inject these values into the HelmRelease at deployment time
 
@@ -40,17 +40,28 @@ Prometheus is configured to remote write all metrics to Mimir via the gateway at
 ## Access
 
 - **Metrics API**: `http://mimir-gateway.mimir-system.svc:80/prometheus/`
-- **MinIO Console**: Available via port-forward to MinIO service on port 9001
+- **External MinIO**: `http://storage.services.apocrathia.com:9000`
+
+## Required Buckets
+
+Before deploying Mimir, ensure these buckets exist in your MinIO server:
+
+- `mimir-blocks`
+- `mimir-ruler`
+- `mimir-alertmanager`
 
 ## Security Notes
 
 - MinIO credentials are stored in 1Password and referenced via 1Password Connect
-- The `mimir-minio-credentials` item should be created in your 1Password vault with:
-  - `root_user`: The MinIO root username (e.g., `mimir-storage`)
-  - `root_password`: The MinIO root password
+- The `mimir-secrets` item should be created in your 1Password vault with:
+  - `access-key-id`: The MinIO access key
+  - `access-key-secret`: The MinIO secret key
 - Flux `valuesFrom` automatically injects these values into the HelmRelease at deployment time
-- MinIO is configured with `insecure: true` for internal cluster communication
-- All S3 storage configuration is handled automatically by the chart when MinIO is enabled
+- External MinIO endpoint is configured as `storage.services.apocrathia.com:9000` (no protocol prefix)
+- External MinIO is configured with `insecure: true` for HTTP communication
+- Each storage backend uses separate buckets to avoid conflicts
+- Usage stats are disabled to prevent S3 configuration issues
+- Compactor has persistent storage for local data operations
 - No sensitive values are stored in the Git repository
 
 ## Monitoring

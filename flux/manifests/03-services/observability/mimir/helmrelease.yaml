@@ -28,31 +28,34 @@ spec:
   # Pull values from 1Password secret
   valuesFrom:
     - kind: Secret
-      name: mimir-minio-credentials
-      valuesKey: root_user
-      targetPath: minio.rootUser
+      name: mimir-secrets
+      valuesKey: access-key-id
+      targetPath: mimir.structuredConfig.blocks_storage.s3.access_key_id
     - kind: Secret
-      name: mimir-minio-credentials
-      valuesKey: root_password
-      targetPath: minio.rootPassword
+      name: mimir-secrets
+      valuesKey: access-key-secret
+      targetPath: mimir.structuredConfig.blocks_storage.s3.secret_access_key
+    - kind: Secret
+      name: mimir-secrets
+      valuesKey: access-key-id
+      targetPath: mimir.structuredConfig.ruler_storage.s3.access_key_id
+    - kind: Secret
+      name: mimir-secrets
+      valuesKey: access-key-secret
+      targetPath: mimir.structuredConfig.ruler_storage.s3.secret_access_key
+    - kind: Secret
+      name: mimir-secrets
+      valuesKey: access-key-id
+      targetPath: mimir.structuredConfig.alertmanager_storage.s3.access_key_id
+    - kind: Secret
+      name: mimir-secrets
+      valuesKey: access-key-secret
+      targetPath: mimir.structuredConfig.alertmanager_storage.s3.secret_access_key
 
   values:
-    # Enable MinIO for object storage
+    # Disable internal MinIO - using external MinIO
     minio:
-      enabled: true
-      mode: standalone
-      persistence:
-        enabled: true
-        storageClassName: longhorn
-        size: 100Gi
-        accessMode: ReadWriteOnce
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 512Mi
+      enabled: false
 
     # Configure Mimir for distributed mode
     global:
@@ -66,6 +69,7 @@ spec:
         ingester:
           ring:
             replication_factor: 2
+
         # Global limits configuration
         limits:
           max_global_series_per_user: 1000000
@@ -75,9 +79,31 @@ spec:
           # Increase query parallelism
           max_query_parallelism: 32
 
-    # Note: The chart automatically configures S3 storage when MinIO is enabled
-    # No need to manually configure blocks_storage, ruler_storage, etc.
-    # The chart uses the MinIO credentials from the minio section above
+        # Configure external MinIO storage with separate buckets
+        blocks_storage:
+          backend: s3
+          s3:
+            endpoint: "storage.services.apocrathia.com:9000"
+            insecure: true
+            bucket_name: mimir-blocks
+
+        ruler_storage:
+          backend: s3
+          s3:
+            endpoint: "storage.services.apocrathia.com:9000"
+            insecure: true
+            bucket_name: mimir-ruler
+
+        alertmanager_storage:
+          backend: s3
+          s3:
+            endpoint: "storage.services.apocrathia.com:9000"
+            insecure: true
+            bucket_name: mimir-alertmanager
+
+        # Disable usage stats to avoid S3 configuration conflicts
+        usage_stats:
+          enabled: false
 
     # Resource configuration for Mimir components
     ingester:
@@ -138,6 +164,10 @@ spec:
         limits:
           cpu: 500m
           memory: 1Gi
+      persistentVolume:
+        enabled: true
+        storageClassName: longhorn
+        size: 20Gi
 
     # Enable the proper gateway (not just nginx)
     gateway:
