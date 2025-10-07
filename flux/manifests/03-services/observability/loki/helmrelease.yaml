@@ -28,28 +28,27 @@ spec:
     timeout: 10m
 
   values:
-    # Storage configuration (top level) - using external MinIO
-    storage:
-      type: s3
-      s3:
-        endpoint: "http://storage.services.apocrathia.com:9000"
-        insecure: true
-        s3ForcePathStyle: true
-        bucketnames:
+    # Loki configuration
+    loki:
+      # Storage configuration - using external MinIO
+      storage:
+        type: s3
+        bucketNames:
           chunks: loki
           ruler: loki
           admin: loki
-        accessKeyId:
-          secretRef:
-            name: loki-secrets
-            key: access-key-id
-        secretAccessKey:
-          secretRef:
-            name: loki-secrets
-            key: access-key-secret
-
-    # Loki configuration
-    loki:
+        s3:
+          endpoint: "http://storage.services.apocrathia.com:9000"
+          insecure: true
+          s3ForcePathStyle: true
+          accessKeyId:
+            secretRef:
+              name: loki-secrets
+              key: access-key-id
+          secretAccessKey:
+            secretRef:
+              name: loki-secrets
+              key: access-key-secret
       # Disable query scheduler for homelab
       frontend:
         scheduler_address: ""
