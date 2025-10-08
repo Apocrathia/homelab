@@ -11,7 +11,7 @@ spec:
     spec:
       chart: meshery
       # renovate: datasource=helm registryUrl=https://meshery.io/charts/ depName=meshery
-      version: "v0.8.135"
+      version: "v0.8.136"
       sourceRef:
         kind: HelmRepository
         name: meshery
