@@ -20,7 +20,7 @@ spec:
       name: guardrails
       namespace: guardrails-ai
       # renovate: datasource=public.ecr.aws/docker/library depName=python
-      image: public.ecr.aws/docker/library/python:3.13
+      image: public.ecr.aws/docker/library/python:3.14
 
       # Override container configuration for Guardrails server
       command: ["/bin/sh"]
