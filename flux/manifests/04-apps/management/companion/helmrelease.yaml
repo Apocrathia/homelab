@@ -20,7 +20,7 @@ spec:
       name: companion
       namespace: bitfocus
       # renovate: datasource=docker depName=ghcr.io/bitfocus/companion/companion
-      image: ghcr.io/bitfocus/companion/companion:v4.1.1
+      image: ghcr.io/bitfocus/companion/companion:v4.1.2
       container:
         name: companion
         port: 8000
