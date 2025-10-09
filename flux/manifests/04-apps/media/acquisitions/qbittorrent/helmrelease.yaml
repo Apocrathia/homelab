@@ -115,7 +115,7 @@ spec:
             - name: DOT
               value: "on" # Enable DNS over TLS for secure, reliable DNS
             - name: DOT_PROVIDERS
-              value: "cloudflare,google,quad9,quadrant" # Use multiple DNS providers for better reliability
+              value: "cloudflare,google" # Use multiple DNS providers for better reliability
             - name: DOT_IPV6
               value: "off" # Disable IPv6 for DNS over TLS
             - name: DNS_SERVER_ADDRESS
