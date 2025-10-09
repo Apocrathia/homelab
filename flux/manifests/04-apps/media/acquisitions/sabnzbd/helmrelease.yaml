@@ -104,15 +104,17 @@ spec:
               value: "8080" # Allow SABnzbd web UI
             - name: FIREWALL_OUTBOUND_SUBNETS
               value: "10.69.0.0/16" # Allow service subnet
-            # DNS Configuration
+            # DNS Configuration - Use gluetun's built-in DNS-over-TLS
             - name: DOT
-              value: "off" # Disable DNS over TLS to avoid connection timeouts
+              value: "on" # Enable DNS over TLS for secure, reliable DNS
+            - name: DOT_PROVIDERS
+              value: "cloudflare,quad9" # Use multiple reliable DNS providers
             - name: DOT_IPV6
               value: "off" # Disable IPv6 for DNS over TLS
             - name: DNS_SERVER_ADDRESS
               value: "127.0.0.1" # DNS server binding address
             - name: DNS_ADDRESS
-              value: "127.0.0.1" # Use internal DNS server
+              value: "127.0.0.1" # Use gluetun's internal DNS server
             - name: DNS_KEEP_NAMESERVER
               value: "off" # Don't keep existing nameservers
           securityContext:
