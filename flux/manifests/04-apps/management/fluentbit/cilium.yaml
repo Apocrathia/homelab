@@ -1,0 +1,25 @@
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: fluentbit-pool
+  namespace: cilium-system
+spec:
+  blocks:
+    - cidr: "10.100.1.96/32"
+  serviceSelector:
+    matchLabels:
+      app.kubernetes.io/name: fluentbit
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: fluentbit-l2-policy
+  namespace: cilium-system
+spec:
+  interfaces:
+    - eth0
+  serviceSelector:
+    matchLabels:
+      app.kubernetes.io/name: fluentbit
+  loadBalancerIPs: true

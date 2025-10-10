@@ -1,0 +1,42 @@
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: FluentBit
+metadata:
+  name: fluentbit
+  namespace: fluentbit
+  labels:
+    app.kubernetes.io/name: fluentbit
+    app.kubernetes.io/component: log-collector
+spec:
+  # renovate: datasource=docker depName=ghcr.io/fluent/fluent-operator/fluent-bit
+  image: ghcr.io/fluent/fluent-operator/fluent-bit:4.1.0
+  fluentBitConfigName: fluentbit-config
+  disableLogVolumes: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterFluentBitConfig
+metadata:
+  name: fluentbit-config
+  labels:
+    app.kubernetes.io/name: fluentbit
+spec:
+  namespace: fluentbit
+  service:
+    parsersFile: /fluent-bit/etc/parsers.conf
+    httpServer: true
+  filterSelector:
+    matchLabels:
+      fluentbit.fluent.io/enabled: "true"
+  inputSelector:
+    matchLabels:
+      fluentbit.fluent.io/enabled: "true"
+  outputSelector:
+    matchLabels:
+      fluentbit.fluent.io/enabled: "true"

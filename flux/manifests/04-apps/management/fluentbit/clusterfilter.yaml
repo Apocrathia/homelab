@@ -1,0 +1,69 @@
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterFilter
+metadata:
+  name: syslog-rfc5424-parser
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: syslog
+spec:
+  match: "*"
+  filters:
+    - parser:
+        keyName: log
+        parser: syslog-rfc5424
+        reserveData: true
+        preserveKey: true
+  ordinal: 10
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterFilter
+metadata:
+  name: syslog-rfc3164-parser
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: syslog
+spec:
+  match: "*"
+  filters:
+    - parser:
+        keyName: log
+        parser: syslog-rfc3164
+        reserveData: true
+        preserveKey: true
+  ordinal: 20
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterFilter
+metadata:
+  name: syslog-format-marker
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: syslog
+spec:
+  match: "*"
+  filters:
+    - modify:
+        conditions:
+          - keyExists: msgid
+        rules:
+          - set:
+              syslog_format: rfc5424
+    - modify:
+        conditions:
+          - keyDoesNotExist:
+              msgid: "*"
+          - keyExists: pri
+        rules:
+          - set:
+              syslog_format: rfc3164
+    - modify:
+        conditions:
+          - keyDoesNotExist:
+              msgid: "*"
+          - keyDoesNotExist:
+              pri: "*"
+        rules:
+          - set:
+              syslog_format: invalid
+  ordinal: 30
