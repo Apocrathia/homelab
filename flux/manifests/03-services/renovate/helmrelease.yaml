@@ -1,0 +1,151 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: renovate
+  namespace: renovate
+spec:
+  chart:
+    spec:
+      chart: mend-renovate-ce
+      version: 11.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: renovate
+        namespace: flux-system
+  interval: 5m
+  timeout: 10m
+  valuesFrom:
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: license-key
+      targetPath: renovate.mendRnvLicenseKey
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: gitlab-token
+      targetPath: renovate.mendRnvGitlabPat
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: github-token
+      targetPath: renovate.githubComToken
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: webhook-secret
+      targetPath: renovate.mendRnvWebhookSecret
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: api-secret
+      targetPath: renovate.mendRnvServerApiSecret
+    - kind: Secret
+      name: renovate-secrets
+      valuesKey: password
+      targetPath: postgresql.password
+  values:
+    image:
+      repository: ghcr.io/mend/renovate-ce
+      tag: "11.4.0"
+      useFull: true
+      pullPolicy: IfNotPresent
+
+    renovate:
+      # Accept Mend Terms of Service
+      mendRnvAcceptTos: "y"
+
+      # Platform configuration
+      mendRnvPlatform: "gitlab"
+      mendRnvEndpoint: "https://gitlab.com/api/v4/"
+
+      # API configuration
+      mendRnvApiEnabled: true
+
+      # Database configuration - using PostgreSQL
+      # SQLite path removed - using PostgreSQL instead
+
+      # Logging configuration
+      logLevel: "info"
+      logFormat: "json"
+
+    # Cache persistence
+    cachePersistence:
+      enabled: true
+      storageClass: "longhorn"
+      accessModes:
+        - ReadWriteOnce
+      size: 15Gi
+
+    # PostgreSQL configuration
+    postgresql:
+      enabled: true
+      user: renovate
+      host: renovate-postgres-rw.renovate.svc.cluster.local
+      port: 5432
+      database: renovate
+
+    # Service configuration
+    service:
+      type: ClusterIP
+      ports:
+        http: 80
+        https: 443
+
+    # Resource limits
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+    # Security context
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+
+    # Health checks
+    livenessProbe:
+      initialDelaySeconds: 30
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+
+    # Termination grace period
+    terminationGracePeriodSeconds: 60
+
+    # Extra volumes to mount renovate.json config from ConfigMapGenerator
+    extraVolumes:
+      - name: renovate-config
+        configMap:
+          name: renovate-config
+      - name: tmp-volume
+        emptyDir: {}
+
+    # Extra volume mounts
+    extraVolumeMounts:
+      - name: renovate-config
+        mountPath: /usr/src/app/renovate.json
+        subPath: renovate.json
+        readOnly: true
+      - name: tmp-volume
+        mountPath: /tmp

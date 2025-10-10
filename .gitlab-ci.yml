@@ -3,9 +3,9 @@ stages:
   - test
   - verify
   - tag
-  - renovate
+  # - renovate
 
 include:
-  - local: .gitlab/renovate.gitlab-ci.yml
+  # - local: .gitlab/renovate.gitlab-ci.yml
   - local: .gitlab/no-op.gitlab-ci.yml
   - local: .gitlab/chart-tag.gitlab-ci.yml

@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: renovate
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - postgres.yaml
+  - helmrelease.yaml
+configMapGenerator:
+  - name: renovate-config
+    namespace: renovate
+    files:
+      - renovate.json
+    options:
+      disableNameSuffixHash: true
