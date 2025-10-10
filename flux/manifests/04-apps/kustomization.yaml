@@ -14,14 +14,7 @@ resources:
   # - artificial-intelligence/guardrails
   - games/archisteamfarm
   - games/romm
-  - management/n8n
-  - management/companion
-  - management/kuber
-  - management/mealie
-  - management/grocy
-  - management/uptime-kuma
-  - management/changedetection-io
-  - management/transmission
+  - management
   - media/servers/plex
   - media/management/tautulli
   - media/management/ombi

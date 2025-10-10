@@ -1,0 +1,26 @@
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterInput
+metadata:
+  name: syslog-tcp
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: syslog
+spec:
+  tcp:
+    listen: "0.0.0.0"
+    port: 6514
+    format: "none"
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterInput
+metadata:
+  name: syslog-udp
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: syslog
+spec:
+  udp:
+    listen: "0.0.0.0"
+    port: 5140
+    format: "none"

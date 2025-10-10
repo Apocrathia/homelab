@@ -1,0 +1,17 @@
+---
+apiVersion: fluentbit.fluent.io/v1alpha2
+kind: ClusterOutput
+metadata:
+  name: loki
+  labels:
+    fluentbit.fluent.io/enabled: "true"
+    fluentbit.fluent.io/component: output
+spec:
+  match: "*"
+  loki:
+    host: loki-write.loki-system.svc.cluster.local
+    port: 3100
+    labels:
+      - job=fluentbit
+      - component=syslog
+    autoKubernetesLabels: "on"
