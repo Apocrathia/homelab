@@ -8,6 +8,7 @@ spec:
   chart:
     spec:
       chart: mend-renovate-ce
+      # renovate: datasource=helm registryUrl=charts.mend.io depName=mend-renovate-ce
       version: 11.4.0
       sourceRef:
         kind: HelmRepository
@@ -43,6 +44,7 @@ spec:
   values:
     image:
       repository: ghcr.io/mend/renovate-ce
+      # renovate: datasource=docker depName=ghcr.io/mend/renovate-ce
       tag: "11.4.0"
       useFull: true
       pullPolicy: IfNotPresent
