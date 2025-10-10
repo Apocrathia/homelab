@@ -1,0 +1,36 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: renovate-postgres
+  namespace: renovate
+spec:
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    size: 10Gi
+    storageClass: longhorn
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: renovate
+      owner: renovate
+      secret:
+        name: renovate-secrets
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    # PostgreSQL configuration parameters
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      shared_buffers: "128MB"
+      effective_cache_size: "256MB"
+      maintenance_work_mem: "32MB"

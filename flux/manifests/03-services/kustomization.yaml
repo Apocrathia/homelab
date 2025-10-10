@@ -23,3 +23,4 @@ resources:
   # - chaos-mesh
   # - meshery
   - wandb
+  - renovate

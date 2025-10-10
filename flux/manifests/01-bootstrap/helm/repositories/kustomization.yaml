@@ -31,6 +31,7 @@ resources:
   - nextcloud.yaml
   - open-webui.yaml
   - prometheus-community.yaml
+  - renovate.yaml
   - stakater.yaml
   - toolhive.yaml
   - external-secrets.yaml
