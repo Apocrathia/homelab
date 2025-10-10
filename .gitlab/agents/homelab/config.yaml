@@ -3,6 +3,9 @@ ci_access:
   projects:
     - id: Apocrathia/homelab
 
+flux:
+  enabled: true
+
 user_access:
   access_as:
     agent: {}
