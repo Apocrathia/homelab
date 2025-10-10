@@ -16,7 +16,8 @@ spec:
           restartPolicy: Never
           containers:
             - name: kubectl
-              image: bitnami/kubectl:1.33.4
+              # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
+              image: registry.suse.com/suse/kubectl:1.33.1
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
