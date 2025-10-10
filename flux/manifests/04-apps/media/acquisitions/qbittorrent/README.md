@@ -51,7 +51,7 @@ Gluetun is configured with:
 
 - **Protocol**: OpenVPN over UDP
 - **Firewall**: Allows qBittorrent web UI (port 8080) and service subnet (10.69.0.0/16)
-- **DNS**: Plaintext DNS (DoT disabled to avoid timeouts) with internal DNS server on 127.0.0.1:53
+- **DNS**: Plaintext DNS (DoT disabled to avoid timeout issues with Kubernetes search domains) with internal DNS server on 127.0.0.1:53
 - **Health Monitoring**: Automatic VPN connection health checks
 - **Init Container**: Uses `restartPolicy: Always` to maintain VPN connection
 
