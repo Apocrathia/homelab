@@ -5,27 +5,7 @@ metadata:
   name: apps
 resources:
   - demo-app
-  - artificial-intelligence/mcp-servers
-  - artificial-intelligence/openwebui
-  - artificial-intelligence/mlflow
-  - artificial-intelligence/litellm
-  - artificial-intelligence/langflow
-  - artificial-intelligence/langfuse
-  # - artificial-intelligence/guardrails
-  - games/archisteamfarm
-  - games/romm
+  - artificial-intelligence
+  - games
   - management
-  - media/servers/plex
-  - media/management/tautulli
-  - media/management/ombi
-  - media/management/sonarr
-  - media/management/radarr
-  - media/management/lidarr
-  - media/management/bazarr
-  - media/management/prowlarr
-  - media/management/whisparr
-  - media/management/recyclarr
-  - media/management/tdarr
-  - media/acquisitions/qbittorrent
-  - media/acquisitions/sabnzbd
-  - media/acquisitions/archiveteam-warrior
+  - media

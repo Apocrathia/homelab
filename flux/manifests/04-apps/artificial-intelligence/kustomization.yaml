@@ -3,16 +3,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: management
+  name: artificial-intelligence
 
 resources:
-  - changedetection-io
-  - companion
-  - fluentbit
-  - grocy
-  - kuber
-  - mealie
-  - n8n
-  - transmission
-  - unpoller
-  - uptime-kuma
+  # - guardrails
+  - langflow
+  - langfuse
+  - litellm
+  - mcp-servers
+  - mlflow
+  - openwebui
