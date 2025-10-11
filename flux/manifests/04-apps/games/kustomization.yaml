@@ -3,16 +3,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: management
+  name: games
 
 resources:
-  - changedetection-io
-  - companion
-  - fluentbit
-  - grocy
-  - kuber
-  - mealie
-  - n8n
-  - transmission
-  - unpoller
-  - uptime-kuma
+  - archisteamfarm
+  - romm
