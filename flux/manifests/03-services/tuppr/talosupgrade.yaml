@@ -1,0 +1,50 @@
+---
+apiVersion: tuppr.home-operations.com/v1alpha1
+kind: TalosUpgrade
+metadata:
+  name: talos
+  namespace: system-upgrade
+spec:
+  talos:
+    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+    version: v1.11.1
+
+  policy:
+    debug: true
+    force: false
+    rebootMode: default
+    placement: soft
+
+  healthChecks:
+    # Ensure all nodes are ready
+    - apiVersion: v1
+      kind: Node
+      expr: |
+        status.conditions.exists(c, c.type == "Ready" && c.status == "True")
+      description: "All nodes must be Ready"
+      timeout: 10m
+
+    # Ensure CoreDNS is fully available
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: coredns
+      namespace: kube-system
+      expr: status.readyReplicas == status.replicas && status.replicas > 0
+      description: "CoreDNS must be fully available"
+      timeout: 5m
+
+    # Ensure Cilium is healthy
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      name: cilium
+      namespace: cilium-system
+      expr: |
+        status.numberReady == status.desiredNumberScheduled &&
+        status.desiredNumberScheduled > 0
+      description: "Cilium must be healthy on all nodes"
+      timeout: 5m
+
+  talosctl:
+    image:
+      repository: ghcr.io/siderolabs/talosctl
+      pullPolicy: IfNotPresent

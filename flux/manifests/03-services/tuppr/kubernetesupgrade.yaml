@@ -1,0 +1,33 @@
+---
+apiVersion: tuppr.home-operations.com/v1alpha1
+kind: KubernetesUpgrade
+metadata:
+  name: kubernetes
+  namespace: system-upgrade
+spec:
+  kubernetes:
+    # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+    version: v1.34.0
+
+  healthChecks:
+    # Ensure all nodes are ready
+    - apiVersion: v1
+      kind: Node
+      expr: |
+        status.conditions.exists(c, c.type == "Ready" && c.status == "True")
+      description: "All nodes must be Ready before Kubernetes upgrade"
+      timeout: 10m
+
+    # Ensure CoreDNS is healthy
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: coredns
+      namespace: kube-system
+      expr: status.readyReplicas == status.replicas && status.replicas > 0
+      description: "CoreDNS must be fully available"
+      timeout: 5m
+
+  talosctl:
+    image:
+      repository: ghcr.io/siderolabs/talosctl
+      pullPolicy: IfNotPresent
