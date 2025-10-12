@@ -231,7 +231,7 @@ spec:
             memory: 2Gi
           limits:
             cpu: 2000m
-            memory: 4Gi
+            memory: 8Gi
         storageSpec:
           volumeClaimTemplate:
             metadata:
