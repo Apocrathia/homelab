@@ -52,52 +52,39 @@ talosctl apply-config --file worker.yaml
 
 ## Usage
 
+### Version Management
+
+This deployment includes `TalosUpgrade` and `KubernetesUpgrade` resources that pin the current cluster versions. These resources serve dual purposes:
+
+1. **Version Pinning**: Maintains the current versions as a baseline, preventing unintended upgrades
+2. **Upgrade Trigger**: To upgrade, simply update the version in the respective resource
+
+The resources are managed by GitOps through Flux and include health checks for safe upgrades:
+
+- Node readiness validation
+- CoreDNS availability checks
+- Cilium health validation (Talos upgrades only)
+
 ### Talos Node Upgrades
 
-Create a `TalosUpgrade` resource (only one allowed per cluster):
+The `TalosUpgrade` resource is defined in `talosupgrade.yaml`. Currently pinned to the deployed version with health checks ensuring cluster stability during upgrades.
 
-```yaml
-apiVersion: tuppr.home-operations.com/v1alpha1
-kind: TalosUpgrade
-metadata:
-  name: cluster
-spec:
-  talos:
-    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-    version: v1.11.0
+To upgrade Talos:
 
-  policy:
-    debug: false
-    force: false
-    rebootMode: default
-    placement: soft
-
-  healthChecks:
-    - apiVersion: v1
-      kind: Node
-      expr: status.conditions.exists(c, c.type == "Ready" && c.status == "True")
-```
+1. Update the `spec.talos.version` field in `talosupgrade.yaml`
+2. Update the `spec.talosctl.image.tag` to match
+3. Commit and push the changes
+4. Monitor the upgrade: `kubectl get talosupgrade cluster -w`
 
 ### Kubernetes Upgrades
 
-Create a `KubernetesUpgrade` resource (only one allowed per cluster):
+The `KubernetesUpgrade` resource is defined in `kubernetesupgrade.yaml`. Currently pinned to the deployed version with health checks.
 
-```yaml
-apiVersion: tuppr.home-operations.com/v1alpha1
-kind: KubernetesUpgrade
-metadata:
-  name: kubernetes
-spec:
-  kubernetes:
-    # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-    version: v1.34.0
+To upgrade Kubernetes:
 
-  healthChecks:
-    - apiVersion: v1
-      kind: Node
-      expr: status.conditions.exists(c, c.type == "Ready" && c.status == "True")
-      timeout: 10m
-```
+1. Update the `spec.kubernetes.version` field in `kubernetesupgrade.yaml`
+2. Commit and push the changes
+3. Monitor the upgrade: `kubectl get kubernetesupgrade kubernetes -w`
 
 ## Operations
 

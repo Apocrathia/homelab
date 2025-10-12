@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - talosupgrade.yaml
+  - kubernetesupgrade.yaml
