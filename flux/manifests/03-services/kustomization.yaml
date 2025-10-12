@@ -24,3 +24,4 @@ resources:
   # - meshery
   - wandb
   - renovate
+  - tuppr

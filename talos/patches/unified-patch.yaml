@@ -3,6 +3,12 @@
 machine:
   features:
     rbac: true
+    kubernetesTalosAPIAccess:
+      allowedKubernetesNamespaces:
+        - system-upgrade
+      allowedRoles:
+        - os:admin
+      enabled: true
   kubelet:
     extraArgs:
       rotate-server-certificates: "false"
