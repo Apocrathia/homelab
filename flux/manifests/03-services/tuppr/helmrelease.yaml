@@ -1,0 +1,98 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tuppr
+  namespace: system-upgrade
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tuppr
+      # renovate: datasource=docker depName=ghcr.io/home-operations/charts/tuppr
+      version: "0.0.38"
+      sourceRef:
+        kind: HelmRepository
+        name: tuppr
+        namespace: flux-system
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Certificate
+              name: tuppr-serving-cert
+            patch: |
+              - op: add
+                path: /spec/issuerRef/group
+                value: cert-manager.io
+  values:
+    replicaCount: 1
+
+    image:
+      repository: ghcr.io/home-operations/tuppr
+      pullPolicy: IfNotPresent
+
+    serviceAccount:
+      create: true
+      automount: true
+
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 65532
+      fsGroup: 65532
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 65532
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+
+    controller:
+      leaderElection:
+        enabled: true
+      metrics:
+        enabled: true
+        port: 8080
+        secure: false
+      health:
+        port: 8081
+
+    webhook:
+      enabled: true
+      port: 9443
+      certManager:
+        enabled: true
+        rotationPolicy: Always
+        duration: 8760h
+        renewBefore: 720h
+        issuerGroup: cert-manager.io
+
+    rbac:
+      create: true
+
+    monitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 30s
+        scrapeTimeout: 10s
+        path: /metrics
+        labels:
+          release: kube-prometheus-stack

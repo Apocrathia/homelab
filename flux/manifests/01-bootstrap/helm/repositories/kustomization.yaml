@@ -34,6 +34,7 @@ resources:
   - renovate.yaml
   - stakater.yaml
   - toolhive.yaml
+  - tuppr.yaml
   - external-secrets.yaml
   - gatekeeper.yaml
   - litellm.yaml
