@@ -7,7 +7,7 @@ metadata:
 
 resources:
   # renovate: datasource=github-tags depName=longhorn/longhorn
-  - https://raw.githubusercontent.com/longhorn/longhorn/v1.9.1/deploy/longhorn.yaml
+  - https://raw.githubusercontent.com/longhorn/longhorn/v1.10.0/deploy/longhorn.yaml
 
 patches:
   # Keep only CRDs by removing everything else
