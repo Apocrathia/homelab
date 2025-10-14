@@ -91,6 +91,8 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 10m
