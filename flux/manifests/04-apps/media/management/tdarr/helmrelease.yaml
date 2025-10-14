@@ -97,7 +97,7 @@ spec:
         enabled: true
         volumes:
           - name: config
-            capacity: 10Gi
+            capacity: 20Gi
           - name: logs
             capacity: 5Gi
           - name: cache
