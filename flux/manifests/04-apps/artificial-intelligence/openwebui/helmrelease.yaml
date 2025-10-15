@@ -24,8 +24,6 @@ spec:
     pipelines:
       enabled: true
       extraEnvVars:
-        - name: PIPELINES_URLS
-          value: ""
         - name: RESET_PIPELINES_DIR
           value: "true"
         - name: PIPELINES_API_KEY
@@ -33,6 +31,9 @@ spec:
             secretKeyRef:
               name: openwebui-secrets
               key: pipelines-key
+
+    # Disable chart's automatic OpenAI API handling to avoid conflicts
+    enableOpenaiApi: false
 
     # Disable tika as we may not need document processing initially
     tika:
@@ -77,7 +78,7 @@ spec:
       - name: WEBUI_URL
         value: "https://chat.gateway.services.apocrathia.com"
       - name: OPENAI_API_BASE_URLS
-        value: "http://litellm.litellm.svc.cluster.local:4000"
+        value: "http://open-webui-pipelines.openwebui.svc.cluster.local:9099;http://litellm.litellm.svc.cluster.local:4000"
       - name: OPENAI_API_KEYS
         valueFrom:
           secretKeyRef:
