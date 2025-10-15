@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: log-collector
 spec:
   # renovate: datasource=docker depName=ghcr.io/fluent/fluent-operator/fluent-bit
-  image: ghcr.io/fluent/fluent-operator/fluent-bit:4.1.0
+  image: ghcr.io/fluent/fluent-operator/fluent-bit:v4.1.1
   fluentBitConfigName: fluentbit-config
   disableLogVolumes: true
   resources:
