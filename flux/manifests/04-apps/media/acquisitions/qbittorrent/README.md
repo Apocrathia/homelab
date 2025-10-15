@@ -1,30 +1,32 @@
 # qBittorrent with VPN
 
-qBittorrent torrent client with integrated VPN routing via Gluetun init container.
+Torrent client with integrated VPN routing via Gluetun init container for secure downloads.
 
-## Architecture
+> **Navigation**: [← Back to Media README](../README.md)
 
-This deployment uses an **init container pattern** where:
+## Documentation
 
-- **qBittorrent container**: Handles torrent downloads and web UI
-- **Gluetun VPN init container**: Routes all traffic through VPN connection with `restartPolicy: Always`
-- **Shared pod networking**: Both containers share the same network interface and IP address within the pod
+- **[qBittorrent Documentation](https://github.com/qbittorrent/qBittorrent/wiki)** - Primary documentation source
+- **[Gluetun VPN](https://github.com/qdm12/gluetun)** - VPN container documentation
+- **[LinuxServer.io qBittorrent](https://docs.linuxserver.io/images/docker-qbittorrent)** - Container documentation
 
-## Security Features
+## Overview
 
-- **VPN-only traffic**: All torrent traffic routes through encrypted VPN tunnel
-- **Firewall rules**: Gluetun blocks non-VPN traffic with built-in kill switch
-- **Web UI access**: Only the web interface (port 8080) is accessible locally
-- **Network policies**: Kubernetes network policies restrict traffic flow
-- **Authentik integration**: SSO authentication for web access
+This deployment includes:
+
+- qBittorrent torrent client with web UI
+- Gluetun VPN init container for secure routing
+- VPN-only traffic with kill switch protection
+- Authentik SSO integration for web access
+- SMB mounts for download storage
 
 ## Configuration
 
 ### 1Password Secrets
 
-Create a 1Password item: `vaults/Secrets/items/qbittorrent-secrets`
+Create a 1Password item:
 
-Required fields:
+#### qbittorrent-secrets (`vaults/Secrets/items/qbittorrent-secrets`)
 
 - `vpn-provider`: VPN service provider name
 - `vpn-type`: VPN protocol type
@@ -34,41 +36,63 @@ Required fields:
 
 ### Storage
 
-- **Config**: 10GB Longhorn persistent volume for qBittorrent configuration
-- **Downloads**: SMB mount to shared storage location
-- **Gluetun Data**: EmptyDir volume for Gluetun runtime configuration and server data
+- **Configuration Volume**: 10GB Longhorn persistent volume for qBittorrent configuration
+- **Downloads Volume**: SMB mount to shared storage location
+- **Gluetun Data**: EmptyDir volume for Gluetun runtime configuration
 
 ### Access
 
-- **Web UI**: `https://qbittorrent.gateway.services.apocrathia.com`
-- **Authentication**: Managed by Authentik SSO
+- **External URL**: `https://qbittorrent.gateway.services.apocrathia.com`
+- **Internal Service**: `http://qbittorrent.qbittorrent.svc.cluster.local:8080`
 
-## Technical Notes
+## Authentication
 
-### VPN Configuration
+Authentication is handled through Authentik SSO:
 
-Gluetun is configured with:
+1. **Proxy Provider**: Authentik blueprint creates a proxy provider
+2. **Automatic Setup**: HTTPRoute and outpost created automatically
+3. **Clean Deployment**: Works with Authentik from day one
 
-- **Protocol**: OpenVPN over UDP
-- **Firewall**: Allows qBittorrent web UI (port 8080) and service subnet (10.69.0.0/16)
-- **DNS**: Plaintext DNS (DoT disabled to avoid timeout issues with Kubernetes search domains) with internal DNS server on 127.0.0.1:53
-- **Health Monitoring**: Automatic VPN connection health checks
-- **Init Container**: Uses `restartPolicy: Always` to maintain VPN connection
+## Security Considerations
 
-### Container Communication
+- **VPN-only Traffic**: All torrent traffic routes through encrypted VPN tunnel
+- **Kill Switch**: Gluetun blocks non-VPN traffic with built-in firewall
+- **Network Policies**: Kubernetes network policies restrict traffic flow
+- **SSO Integration**: Complete authentication through Authentik proxy
 
-Both containers run in the same pod and share:
+## Troubleshooting
 
-- **Network namespace**: Same IP address - qBittorrent traffic automatically routes through VPN
-- **Storage volumes**: qBittorrent config and downloads are persistent
-- **Security context**: Privileged mode with NET_ADMIN capability for VPN operations
-- **DNS resolution**: qBittorrent uses Gluetun's internal DNS server (127.0.0.1:53)
+### Common Issues
 
-### Firewall Protection
+1. **VPN Connection Issues**
 
-Gluetun's built-in firewall provides:
+   ```bash
+   # Check Gluetun logs
+   kubectl -n qbittorrent logs -l app.kubernetes.io/name=gluetun
 
-- Kill switch that blocks all non-VPN traffic
-- Allows local network access for management
-- Permits qBittorrent web UI on port 8080
-- Automatic VPN reconnection on failure
+   # Check VPN status
+   kubectl -n qbittorrent exec -it deployment/qbittorrent -- curl -s ifconfig.me
+   ```
+
+2. **Download Storage Issues**
+
+   ```bash
+   # Check downloads volume mount
+   kubectl -n qbittorrent exec -it deployment/qbittorrent -- mount | grep storage
+
+   # Test download directory access
+   kubectl -n qbittorrent exec -it deployment/qbittorrent -- ls -la /downloads
+   ```
+
+### Health Checks
+
+```bash
+# Overall status
+kubectl -n qbittorrent get pods,svc,pvc
+
+# qBittorrent application status
+kubectl -n qbittorrent get pods -l app.kubernetes.io/name=qbittorrent
+
+# Gluetun VPN status
+kubectl -n qbittorrent get pods -l app.kubernetes.io/name=gluetun
+```

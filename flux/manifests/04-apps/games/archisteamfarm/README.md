@@ -1,32 +1,97 @@
 # ArchiSteamFarm
 
-ArchiSteamFarm (ASF) is a C# application with primary purpose of idling Steam cards from multiple accounts simultaneously.
+C# application for idling Steam cards from multiple accounts simultaneously with web interface.
+
+> **Navigation**: [← Back to Games README](../README.md)
+
+## Documentation
+
+- **[ArchiSteamFarm Documentation](https://github.com/JustArchiNET/ArchiSteamFarm/wiki)** - Primary documentation source
+- **[ArchiSteamFarm GitHub](https://github.com/JustArchiNET/ArchiSteamFarm)** - Source code and issues
+- **[ASF Configuration](https://github.com/JustArchiNET/ArchiSteamFarm/wiki/Configuration)** - Configuration reference
+
+## Overview
+
+This deployment includes:
+
+- ArchiSteamFarm with multi-account Steam card idling
+- Web interface for monitoring and control
+- IPC API for external integrations
+- Authentik SSO integration for secure access
+- Persistent storage for configuration and plugins
 
 ## Configuration
 
-### Secrets Management
+### 1Password Secrets
 
-Configuration files are managed through 1Password Item Custom Resources and injected via init container:
+Create a 1Password item:
 
-- `ASF.json` - Global configuration with IPC password, Steam owner ID, trade tokens
-- `Apocrathia.json` - Bot-specific configuration with Steam credentials
-- `IPC.config` - IPC server configuration
-- `freegames.json.config` - Free games plugin configuration
+#### archisteamfarm-secrets (`vaults/Secrets/items/archisteamfarm-secrets`)
 
-Secrets are stored in 1Password at `vaults/Secrets/items/archisteamfarm-secrets` and automatically synced to the cluster.
+- `ASF.json`: Global configuration with IPC password, Steam owner ID, trade tokens
+- `Apocrathia.json`: Bot-specific configuration with Steam credentials
+- `IPC.config`: IPC server configuration
+- `freegames.json.config`: Free games plugin configuration
 
-### Persistent Storage
+### Storage
 
-- **Config volume**: 2Gi Longhorn PV mounted at `/app/config`
-- **Plugins volume**: 1Gi Longhorn PV mounted at `/app/plugins`
-- **Temp volume**: EmptyDir mounted at `/tmp`
+- **Configuration Volume**: 2GB Longhorn persistent volume for ASF configuration (`/app/config`)
+- **Plugins Volume**: 1GB Longhorn persistent volume for ASF plugins (`/app/plugins`)
+- **Temp Volume**: EmptyDir volume for temporary files (`/tmp`)
 
 ### Access
 
-- **Web Interface**: https://asf.gateway.services.apocrathia.com
-- **IPC API**: Port 1242 (internal cluster access)
-- **Authentik Integration**: Enabled with custom icon and display name
+- **External URL**: `https://asf.gateway.services.apocrathia.com`
+- **Internal Service**: `http://archisteamfarm.archisteamfarm.svc.cluster.local:1242`
 
-## Deployment Notes
+## Authentication
 
-The deployment uses an init container to copy secrets from Kubernetes secrets to the config volume before ASF starts. This approach allows for secure secret management while maintaining the expected file structure for ASF. A better mechanism for this should be implemented in the future.
+Authentication is handled through Authentik SSO:
+
+1. **Proxy Provider**: Authentik blueprint creates a proxy provider
+2. **Custom Integration**: Custom icon and display name configured
+3. **Clean Deployment**: Works with Authentik from day one
+
+## Security Considerations
+
+- **Secret Management**: Configuration files managed via 1Password Item CRs
+- **Init Container**: Secrets copied to config volume before ASF starts
+- **SSO Integration**: Complete authentication through Authentik proxy
+- **IPC Security**: IPC API accessible only within cluster
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Configuration Issues**
+
+   ```bash
+   # Check configuration files
+   kubectl -n archisteamfarm exec -it deployment/archisteamfarm -- ls -la /app/config
+
+   # Check ASF logs
+   kubectl -n archisteamfarm logs deployment/archisteamfarm --tail=50
+   ```
+
+2. **Steam Connection Issues**
+
+   ```bash
+   # Check network connectivity
+   kubectl -n archisteamfarm exec -it deployment/archisteamfarm -- nc -zv steamcommunity.com 443
+
+   # Check Steam API access
+   kubectl -n archisteamfarm exec -it deployment/archisteamfarm -- curl -s https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/
+   ```
+
+### Health Checks
+
+```bash
+# Overall status
+kubectl -n archisteamfarm get pods,svc,pvc
+
+# ArchiSteamFarm application status
+kubectl -n archisteamfarm get pods -l app.kubernetes.io/name=archisteamfarm
+
+# Check Authentik outpost
+kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
+```
