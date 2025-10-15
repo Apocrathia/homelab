@@ -1,48 +1,84 @@
 # Uptime Kuma
 
-Self-hosted monitoring tool for tracking service uptime and performance across multiple protocols with 90+ notification providers.
+Self-hosted monitoring tool for tracking service uptime and performance across multiple protocols.
 
-> **Navigation**: [← Back to Management Apps](../README.md)
+> **Navigation**: [← Back to Management README](../README.md)
 
-- **GitHub**: [louislam/uptime-kuma](https://github.com/louislam/uptime-kuma)
-- **Documentation**: [uptime.kuma.pet](https://uptime.kuma.pet)
+## Documentation
 
-## Access
+- **[Uptime Kuma Documentation](https://uptime.kuma.pet)** - Primary documentation source
+- **[Uptime Kuma GitHub](https://github.com/louislam/uptime-kuma)** - Source code and issues
 
-- **URL**: https://uptime.gateway.services.apocrathia.com
-- **Authentication**: SSO via Authentik
+## Overview
 
-## Features
+This deployment includes:
 
-- **Multi-Protocol Monitoring**: HTTP/HTTPS, TCP, Ping, DNS, Docker containers, and more
-- **Real-time Notifications**: 90+ providers including Discord, Telegram, email, PagerDuty
-- **Status Pages**: Public-facing status pages with custom domains
-- **Performance Tracking**: Response time charts and uptime statistics
-- **Modern Interface**: Web UI with dark/light themes and mobile support
+- Multi-protocol monitoring (HTTP/HTTPS, TCP, Ping, DNS, Docker)
+- Real-time notifications with 90+ providers
+- Public-facing status pages with custom domains
+- Performance tracking with response time charts
+- Modern web interface with dark/light themes
+- Authentik SSO integration for secure access
 
 ## Configuration
 
-### Container
-
-- **Image**: `ghcr.io/louislam/uptime-kuma:beta-rootless` (security-hardened)
-- **Database**: SQLite
-- **Port**: 3001
-
 ### Storage
 
-- **Type**: Longhorn persistent storage
-- **Capacity**: 10Gi
-- **Mount Path**: `/app/data`
-- **Contents**: SQLite database, uploads, screenshots
+- **Data Volume**: 10GB Longhorn persistent volume for SQLite database and uploads (`/app/data`)
 
-### Security
+### Access
 
-- **Rootless container**: Runs as user 1000:1000
-- **No Linux capabilities**: Maximum security hardening
-- **Read-only root filesystem**: Disabled only where necessary
+- **External URL**: `https://uptime.gateway.services.apocrathia.com`
+- **Internal Service**: `http://uptime-kuma.uptime-kuma.svc.cluster.local:3001`
 
-## Initial Setup
+## Authentication
 
-1. Access Uptime Kuma at https://uptime.gateway.services.apocrathia.com
-2. Create admin account through the setup wizard
-3. Configure your first monitors and notification channels
+Authentication is handled through Authentik SSO:
+
+1. **Proxy Provider**: Authentik blueprint creates a proxy provider
+2. **Automatic Setup**: HTTPRoute and outpost created automatically
+3. **Clean Deployment**: Works with Authentik from day one
+
+## Security Considerations
+
+- **Rootless Container**: Runs as user 1000:1000 for security hardening
+- **No Linux Capabilities**: Maximum security hardening
+- **Read-only Root Filesystem**: Disabled only where necessary
+- **SSO Integration**: Complete authentication through Authentik proxy
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Issues**
+
+   ```bash
+   # Check database file
+   kubectl -n uptime-kuma exec -it deployment/uptime-kuma -- ls -la /app/data
+
+   # Check database permissions
+   kubectl -n uptime-kuma exec -it deployment/uptime-kuma -- ls -la /app/data/kuma.db
+   ```
+
+2. **Monitoring Issues**
+
+   ```bash
+   # Check Uptime Kuma logs
+   kubectl -n uptime-kuma logs deployment/uptime-kuma --tail=50
+
+   # Check monitoring targets
+   kubectl -n uptime-kuma exec -it deployment/uptime-kuma -- curl -s http://localhost:3001/api/status-page
+   ```
+
+### Health Checks
+
+```bash
+# Overall status
+kubectl -n uptime-kuma get pods,svc,pvc
+
+# Uptime Kuma application status
+kubectl -n uptime-kuma get pods -l app.kubernetes.io/name=uptime-kuma
+
+# Check Authentik outpost
+kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
+```

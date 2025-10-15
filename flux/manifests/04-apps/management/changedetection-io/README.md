@@ -2,45 +2,83 @@
 
 Website change detection and monitoring service with notification support.
 
+> **Navigation**: [← Back to Management README](../README.md)
+
+## Documentation
+
+- **[ChangeDetection.io Documentation](https://github.com/dgtlmoon/changedetection.io/wiki)** - Primary documentation source
+- **[ChangeDetection.io GitHub](https://github.com/dgtlmoon/changedetection.io)** - Source code and issues
+
 ## Overview
 
-ChangeDetection.io monitors websites for content changes and sends notifications when changes are detected. It supports various content filtering options, browser automation for JavaScript-heavy sites, and multiple notification channels.
+This deployment includes:
 
-## Features
-
-- **Content Monitoring**: Monitor websites for text, price, and availability changes
-- **Visual Selector**: Point-and-click element selection for monitoring specific page sections
-- **Browser Automation**: Full JavaScript support with Browserless Chrome integration
-- **Multiple Filters**: CSS selectors, XPath, JSONPath, and regular expressions
-- **Notification Channels**: Email, Discord, Telegram, Slack, webhooks, and more
-- **Restock Detection**: Specialized monitoring for e-commerce product availability
-- **Tag Organization**: Group and manage watches with tags
-- **API Access**: REST API for programmatic management
+- Website change detection and monitoring
+- Browser automation with JavaScript support
+- Multiple notification channels
+- Content filtering and visual selectors
+- Authentik SSO integration for secure access
 
 ## Configuration
 
-The deployment includes:
+### Storage
 
-- **Base URL**: Configured for external access through the gateway
-- **Browser Support**: Integrated with Browserless Chrome sidecar for JavaScript rendering
-- **Storage**: 5GB Longhorn volume for data persistence
-- **Security**: LinuxServer.io container running as root with browserless sidecar as user 999
-- **Authentik Integration**: SSO authentication through Authentik
+- **Data Volume**: 5GB Longhorn persistent volume for watch configurations and snapshots (`/datastore`)
+- **Temp Volume**: EmptyDir volume for browserless Chrome processing (`/tmp`)
 
-## Accessing the Service
+### Access
 
-Access ChangeDetection.io at: https://changedetection.gateway.services.apocrathia.com
+- **External URL**: `https://changedetection.gateway.services.apocrathia.com`
+- **Internal Service**: `http://changedetection.changedetection.svc.cluster.local:5000`
 
-Authentication is handled through Authentik SSO.
+## Authentication
 
-## Data Persistence
+Authentication is handled through Authentik SSO:
 
-- **Datastore**: All watch configurations, history, and snapshots are stored in `/datastore`
-- **Temporary Files**: Writable `/tmp` directory for browserless Chrome processing
-- **Volume Size**: 5GB allocated for data storage
+1. **Proxy Provider**: Authentik blueprint creates a proxy provider
+2. **Automatic Setup**: HTTPRoute and outpost created automatically
+3. **Clean Deployment**: Works with Authentik from day one
 
-## External Dependencies
+## Security Considerations
 
-- **Browserless Chrome**: Provides headless Chrome for JavaScript-heavy websites
-- **Authentik**: Handles authentication and authorization
-- **Gateway API**: Routes external traffic to the service
+- **SSO Integration**: Complete authentication through Authentik proxy
+- **Browser Security**: LinuxServer.io container with browserless Chrome sidecar
+- **Data Privacy**: Watch configurations stored securely in persistent volumes
+- **Network Policies**: Cilium NetworkPolicy for traffic control
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Browser Automation Issues**
+
+   ```bash
+   # Check browserless Chrome sidecar
+   kubectl -n changedetection get pods -l app.kubernetes.io/component=browserless
+
+   # Check ChangeDetection logs
+   kubectl -n changedetection logs deployment/changedetection --tail=50
+   ```
+
+2. **Storage Issues**
+
+   ```bash
+   # Check data volume
+   kubectl -n changedetection get pvc
+
+   # Check storage access
+   kubectl -n changedetection exec -it deployment/changedetection -- ls -la /datastore
+   ```
+
+### Health Checks
+
+```bash
+# Overall status
+kubectl -n changedetection get pods,svc,pvc
+
+# ChangeDetection application status
+kubectl -n changedetection get pods -l app.kubernetes.io/name=changedetection
+
+# Check Authentik outpost
+kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
+```
