@@ -1,17 +1,27 @@
 # Guardrails AI
 
-API server providing guardrails validation for LLM outputs using community validators from the [Guardrails Hub](https://www.guardrailsai.com/docs/concepts/hub). Designed to integrate with LiteLLM as a guardrails provider.
+API server providing guardrails validation for LLM outputs using community validators from the Guardrails Hub. Designed to integrate with LiteLLM as a guardrails provider.
 
-> **Reference Implementation**: Based on the [guardrails-lite-server](https://github.com/guardrails-ai/guardrails-lite-server) example from Guardrails AI.
+> **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Features
+## Documentation
 
-- **Hub Validators**: Uses proven community validators from Guardrails Hub
-- **API-Only Service**: Lightweight validation server for LiteLLM integration
-- **Production Ready**: Validates secrets, toxicity, gibberish, and content length
-- **LiteLLM Compatible**: Configured as guardrails provider in LiteLLM proxy
+- **[Guardrails Hub](https://www.guardrailsai.com/docs/concepts/hub)** - Community validators
+- **[Guardrails Lite Server](https://github.com/guardrails-ai/guardrails-lite-server)** - Reference implementation
+- **[LiteLLM Guardrails](https://docs.litellm.ai/docs/guardrails/guardrails_ai)** - Integration documentation
 
-## Hub Validators Included
+## Overview
+
+This deployment includes:
+
+- Lightweight validation server for LLM output validation
+- Community validators from Guardrails Hub
+- API-only service for LiteLLM integration
+- Production-ready validation for secrets, toxicity, and content quality
+
+## Configuration
+
+### Hub Validators Included
 
 - **secrets-present-guard**: Prevents API keys, passwords, and sensitive data leakage
 - **toxic-language-guard**: Blocks toxic, offensive, or harmful language
@@ -20,39 +30,54 @@ API server providing guardrails validation for LLM outputs using community valid
 - **two-words-guard**: Ensures output contains exactly two words
 - **email-guard**: Validates email format using regex
 
-## LiteLLM Integration
+### Access
 
-Add to your LiteLLM `config.yaml`:
+- **Internal API**: `http://guardrails.guardrails-ai.svc.cluster.local:8000`
+- **Purpose**: Cluster-internal service for LiteLLM integration
 
-```yaml
-guardrails:
-  - guardrail_name: "secrets-present"
-    litellm_params:
-      guardrail: guardrails_ai
-      guard_name: "secrets-present-guard"
-      mode: "pre_call"
-      api_base: "http://guardrails.guardrails-ai.svc.cluster.local:8000"
-```
+## Authentication
 
-## Access
+Internal API only - no external authentication required. Access controlled through cluster network policies.
 
-Internal API only at `http://guardrails.guardrails-ai.svc.cluster.local:8000` for cluster services.
+## Security Considerations
 
-## Available Guards
+- **Internal Only**: Service only accessible within cluster
+- **Network Policies**: Cilium NetworkPolicy restricts access
+- **Validation Focus**: Designed to prevent sensitive data leakage
 
-- `secrets-present-guard` - Prevents API keys, passwords, and sensitive data leakage
-- `toxic-language-guard` - Blocks toxic, offensive, or harmful language
-- `gibberish-guard` - Detects and prevents nonsensical or gibberish text
-- `length-guard` - Validates text length constraints (1-1000 characters)
-- `two-words-guard` - Ensures output contains exactly two words
-- `email-guard` - Validates email format using regex
+## Troubleshooting
 
-## Internal API Testing
+### Common Issues
+
+1. **Service Connectivity**
+
+   ```bash
+   # Check service status
+   kubectl -n guardrails-ai get pods,svc
+
+   # Test internal connectivity
+   kubectl -n guardrails-ai exec -it deployment/guardrails -- curl localhost:8000/guards
+   ```
+
+2. **LiteLLM Integration Issues**
+
+   ```bash
+   # Check LiteLLM configuration
+   kubectl -n litellm get secret litellm-secrets -o yaml
+
+   # View LiteLLM logs for guardrails errors
+   kubectl -n litellm logs -l app.kubernetes.io/name=litellm | grep guardrails
+   ```
+
+### Health Checks
 
 ```bash
-# List available guards (from within cluster)
-curl http://guardrails.guardrails-ai.svc.cluster.local:8000/guards
+# Overall status
+kubectl -n guardrails-ai get pods,svc
 
-# Get guard details (from within cluster)
-curl http://guardrails.guardrails-ai.svc.cluster.local:8000/guards/secrets-present-guard
+# Guardrails application status
+kubectl -n guardrails-ai get pods -l app.kubernetes.io/name=guardrails
+
+# Test API endpoints
+kubectl -n guardrails-ai exec -it deployment/guardrails -- curl localhost:8000/guards
 ```
