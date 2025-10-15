@@ -2,28 +2,23 @@
 
 Self-hosted ROM management platform for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation.
 
-## Architecture
+> **Navigation**: [← Back to Games README](../README.md)
 
-- **Backend**: FastAPI + SQLAlchemy + PostgreSQL + Valkey (internal)
-- **Frontend**: Vue.js 3 + Vuetify + Pinia
-- **Emulation**: EmulatorJS, Ruffle, DOSBox Pure
-- **Metadata**: IGDB, ScreenScraper, MobyGames, SteamGridDB
-- **Authentication**: OIDC via Authentik
+## Documentation
 
-## Current Deployment Status
+- **[ROMM Documentation](https://romm.app/docs)** - Primary documentation source
+- **[ROMM GitHub](https://github.com/rommapp/romm)** - Source code and issues
+- **[ROMM Configuration](https://romm.app/docs/configuration)** - Configuration reference
 
-**Working Configuration**: ROMM is successfully deployed with the following setup:
+## Overview
 
-- **Database**: PostgreSQL via CloudNativePG
-- **Storage**: Longhorn PVC for `/romm/resources` (persistent), EmptyDir for `/romm/assets` (temporary)
-- **ROM Library**: SMB mount for game files
-- **Authentication**: OIDC integration with Authentik
-- **Security**: Read-only root filesystem with proper volume permissions
+This deployment includes:
 
-**Known Limitations**:
-
-- User assets (`/romm/assets`) are stored in EmptyDir and lost on pod restart
-- This is a temporary solution pending multi-volume chart support
+- ROMM backend with FastAPI + SQLAlchemy + PostgreSQL
+- Vue.js 3 frontend with Vuetify + Pinia
+- Web-based emulation with EmulatorJS, Ruffle, DOSBox Pure
+- Metadata enrichment from IGDB, ScreenScraper, MobyGames, SteamGridDB
+- Authentik OIDC integration for secure access
 
 ## Configuration
 
@@ -33,83 +28,49 @@ Create a 1Password item:
 
 #### romm-secrets (`vaults/Secrets/items/romm-secrets`)
 
-**Database Credentials:**
-
 - `username`: PostgreSQL username (e.g., romm)
 - `password`: PostgreSQL password
-
-**Authentication:**
-
 - `auth-secret-key`: ROMM authentication secret key (generate with `openssl rand -hex 32`)
-
-**External API Keys:**
-
 - `igdb-client-id`: IGDB API client ID
 - `igdb-client-secret`: IGDB API client secret
 - `screenscraper-username`: ScreenScraper username
 - `screenscraper-password`: ScreenScraper password
 - `steamgriddb-api-key`: SteamGridDB API key
 - `retroachievements-api-key`: RetroAchievements API key (optional)
-
-**OIDC Configuration:**
-
 - `oidc-client-id`: Authentik OIDC client ID
 - `oidc-client-secret`: Authentik OIDC client secret
 
-### Storage Configuration
+### Storage
 
-**ROM Library**: SMB storage mounted at `/romm/library`
+- **Application Data**: Longhorn persistent volume for ROM metadata, covers, and screenshots (`/romm/resources`)
+- **ROM Library**: SMB mount for game files (`/romm/library`)
+- **User Assets**: EmptyDir volume for user uploads (`/romm/assets`) - **Note**: Data lost on pod restart
 
-- Source: `//storage.services.apocrathia.com/Games/Emulation`
-- Read-only access for ROM files
-- Supports all major console platforms
+### Database
 
-**Application Data**: Longhorn persistent volume at `/romm/resources`
+- **Engine**: PostgreSQL (CloudNativePG)
+- **Connection**: Internal Kubernetes service (`romm-postgres-rw.romm.svc.cluster.local:5432`)
+- **Credentials**: Managed via 1Password Connect
 
-- ROM metadata, covers, and screenshots
-- Database files (if using SQLite)
-- Application configuration and cache
+### Access
 
-**User Assets**: EmptyDir volume at `/romm/assets`
+- **External URL**: `https://romm.gateway.services.apocrathia.com`
+- **Internal Service**: `http://romm.romm.svc.cluster.local:8080`
 
-- User uploads, avatars, and custom assets
-- **Note**: Data is lost on pod restart (temporary solution)
-- **Future**: Will be migrated to persistent storage via multi-volume chart support
+## Authentication
 
-### Platform Support
+Authentication is handled through Authentik OIDC:
 
-ROMM supports 50+ gaming platforms including:
+1. **OIDC Provider**: Authentik OIDC provider configured
+2. **Client Credentials**: Automatically generated and stored in 1Password
+3. **Clean Setup**: Works with Authentik from day one
 
-- Nintendo (NES, SNES, N64, GameCube, Wii, Switch, Game Boy, DS, 3DS)
-- Sony (PlayStation 1-3, PSP, PS Vita)
-- Microsoft (Xbox, Xbox 360, Xbox One)
-- Sega (Master System, Genesis, Saturn, Dreamcast)
-- PC (DOS, Windows, Linux, Mac)
-- Handheld systems
+## Security Considerations
 
-### Emulation
-
-Web-based emulation using:
-
-- **EmulatorJS**: Multi-system emulator (RetroArch WebAssembly)
-- **Ruffle**: Flash game emulator
-- **DOSBox Pure**: MS-DOS emulator
-
-## Access
-
-- **URL**: `https://romm.gateway.services.apocrathia.com`
-- **Authentication**: OIDC via Authentik
-- **TLS**: Automatic certificate management
-
-## Features
-
-- **ROM Management**: Automatic scanning and organization
-- **Metadata Enrichment**: Covers, screenshots, descriptions
-- **Web Emulation**: Play games directly in browser
-- **Multi-file Support**: Handle multi-disc games and archives
-- **Custom Platforms**: Add support for new systems
-- **User Management**: Role-based access control
-- **API Integration**: REST API for external tools
+- **OIDC Integration**: Complete authentication through Authentik
+- **Database Security**: PostgreSQL credentials managed via 1Password
+- **Read-only ROM Access**: ROM library mounted as read-only
+- **API Key Security**: External API keys stored securely in 1Password
 
 ## Troubleshooting
 
@@ -119,70 +80,44 @@ Web-based emulation using:
 
    ```bash
    # Check ROMM logs
-   kubectl logs -f deployment/romm -n romm
+   kubectl -n romm logs deployment/romm --tail=50
 
    # Verify SMB mount
-   kubectl exec -it deployment/romm -n romm -- ls -la /romm/library
+   kubectl -n romm exec -it deployment/romm -- ls -la /romm/library
    ```
 
 2. **Database Connection Issues**
 
    ```bash
    # Check PostgreSQL connectivity
-   kubectl exec -it deployment/romm -n romm -- nc -zv romm-postgres-rw.romm.svc.cluster.local 5432
+   kubectl -n romm exec -it deployment/romm -- nc -zv romm-postgres-rw.romm.svc.cluster.local 5432
 
-   # Verify database credentials
-   kubectl get secret romm-secrets -n romm -o yaml
+   # Check PostgreSQL cluster status
+   kubectl -n romm get cluster romm-postgres
    ```
 
 3. **Authentication Issues**
 
    ```bash
    # Check OIDC configuration
-   kubectl describe deployment romm -n romm | grep OIDC
+   kubectl -n romm describe deployment romm | grep OIDC
 
    # Verify Authentik integration
-   kubectl get httproute romm -n romm
+   kubectl -n romm get httproute romm
    ```
 
-### Performance Tuning
-
-- **Resource Limits**: Adjust CPU/memory based on usage
-- **Scanning Schedule**: Modify cron schedule for off-peak hours
-- **Cache Size**: Increase cache volume for better performance
-- **Concurrent Scans**: Limit parallel scanning operations
-
-## Development
-
-### Local Testing
+### Health Checks
 
 ```bash
-# Port forward for local access
-kubectl port-forward svc/romm 8080:8080 -n romm
+# Overall status
+kubectl -n romm get pods,svc,pvc
 
-# Access at http://localhost:8080
+# ROMM application status
+kubectl -n romm get pods -l app.kubernetes.io/name=romm
+
+# PostgreSQL cluster status
+kubectl -n romm get cluster romm-postgres
+
+# Check Authentik outpost
+kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
-
-### Configuration Updates
-
-1. Update `config.yml` for platform mappings
-2. Update `helmrelease.yaml` for environment variables
-3. Apply changes: `kubectl apply -k flux/manifests/04-apps/games/romm/`
-4. Restart deployment: `kubectl rollout restart deployment/romm -n romm`
-
-### Future Improvements
-
-**Multi-Volume Support**: The generic-app chart will be enhanced to support multiple persistent volumes, enabling:
-
-- Persistent storage for `/romm/assets` (user uploads)
-- Separate volumes for different data types
-- Better data isolation and backup strategies
-
-**Breaking Changes**: This enhancement will require careful planning and migration of existing deployments using the `generic-app` chart.
-
-## External Integrations
-
-- **Playnite**: Desktop game library manager
-- **muOS**: Handheld gaming device
-- **Tinfoil**: Nintendo Switch homebrew
-- **LaunchBox**: Game launcher and frontend

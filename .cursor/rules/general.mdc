@@ -104,6 +104,7 @@ description: General guidelines for the project
 - **Do not alter the cluster without permission** - confirm before running any destructive commands
 - **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 - **Do not make implicit changes** - only perform modifications when explicitly instructed
+- Run `prettier -w` to format code before presenting to the user
 
 ## MCP Tools Usage
 - **Use MCP tools wherever applicable before relying on CLI commands**

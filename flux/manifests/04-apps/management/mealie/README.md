@@ -1,102 +1,107 @@
 # Mealie
 
-Mealie is a self-hosted recipe manager and meal planning application designed to streamline cooking and meal preparation workflows.
+Self-hosted recipe manager and meal planning application with comprehensive cooking workflow management.
 
-- **GitHub**: [mealie-recipes/mealie](https://github.com/mealie-recipes/mealie)
-- **Documentation**: [docs.mealie.io](https://docs.mealie.io/)
+> **Navigation**: [← Back to Management README](../README.md)
+
+## Documentation
+
+- **[Mealie Documentation](https://docs.mealie.io/)** - Primary documentation source
+- **[Mealie GitHub](https://github.com/mealie-recipes/mealie)** - Source code and issues
+- **[Backend Configuration](https://docs.mealie.io/documentation/getting-started/installation/backend-config/)** - Configuration reference
 
 ## Overview
 
-Mealie provides comprehensive recipe management, meal planning, shopping list generation, and data organization capabilities through a modern web interface.
+This deployment includes:
 
-## Access
-
-- **URL**: https://mealie.gateway.services.apocrathia.com
-- **Authentication**: OIDC via Authentik
-
-## Features
-
-- **Recipe Management**: Import recipes from URLs using built-in scraper
-- **Meal Planning**: Create meal plans for week, month, or year with calendar view
-- **Shopping Lists**: Generate and manage shopping lists from meal plans
-- **Multi-user Support**: Full group/household sharing capabilities
-- **Rich UI**: Beautiful interface with markdown recipe editor
-- **API Driven**: Full REST API with interactive documentation
-- **Backups**: Automatic backups with Jinja2 template support
-- **Webhooks**: Schedule notifications to 3rd party services
-
-See the [official documentation](https://docs.mealie.io/) for complete feature details.
+- Recipe management with URL scraping capabilities
+- Meal planning with calendar view
+- Shopping list generation from meal plans
+- Multi-user support with group sharing
+- Rich markdown recipe editor
+- Full REST API with interactive documentation
 
 ## Configuration
 
+### 1Password Secrets
+
+Create a 1Password item:
+
+#### mealie-secrets (`vaults/Secrets/items/mealie-secrets`)
+
+- `oidc-client-id`: Authentik OIDC client ID
+- `oidc-client-secret`: Authentik OIDC client secret
+- `postgres-password`: PostgreSQL database password
+- `smtp-host`: SMTP server hostname
+- `smtp-user`: SMTP username
+- `smtp-password`: SMTP password
+
 ### Storage
 
-- **Type**: Longhorn persistent storage
-- **Capacity**: 20Gi
-- **Mount Path**: `/app/data`
+- **Application Volume**: 20GB Longhorn persistent volume for application data (`/app/data`)
+- **Database Volume**: 10GB Longhorn persistent volume for PostgreSQL data
 
 ### Database
 
 - **Engine**: PostgreSQL 16 (CloudNativePG)
-- **Storage**: 10Gi Longhorn persistent volume
-- **Credentials**: Managed via 1Password Connect
 - **Connection**: Internal Kubernetes service (`mealie-postgres-rw.mealie.svc.cluster.local`)
+- **Credentials**: Managed via 1Password Connect
 
-### Environment
+### Access
 
-Mealie is almost entirely configured through environment variables. See the [Backend Configuration](https://docs.mealie.io/documentation/getting-started/installation/backend-config/) documentation for complete details.
+- **External URL**: `https://mealie.gateway.services.apocrathia.com`
+- **Internal Service**: `http://mealie.mealie.svc.cluster.local:9000`
 
-#### Core Configuration
+## Authentication
 
-- **BASE_URL**: External access URL for proper functionality
-- **OIDC_ENABLED**: OIDC authentication enabled
-- **OIDC_CLIENT_ID/SECRET**: Authentik OIDC credentials
-- **ALLOW_PASSWORD_LOGIN**: Disabled when OIDC is enabled
+Authentication is handled through Authentik OIDC:
 
-For OIDC configuration details, see the [OpenID Connect documentation](https://docs.mealie.io/documentation/getting-started/authentication/oidc-v2/).
+1. **OIDC Provider**: Authentik OIDC provider configured
+2. **Client Credentials**: Automatically generated and stored in 1Password
+3. **Password Login**: Disabled when OIDC is enabled
+4. **Clean Setup**: Works with Authentik from day one
 
-#### Database Configuration
+## Security Considerations
 
-- **DB_ENGINE**: Database engine (`postgres` for PostgreSQL, `sqlite` for SQLite)
-- **POSTGRES_SERVER**: PostgreSQL server hostname
-- **POSTGRES_USER**: PostgreSQL username
-- **POSTGRES_PASSWORD**: PostgreSQL password
-- **POSTGRES_DB**: PostgreSQL database name
-- **POSTGRES_PORT**: PostgreSQL port (default: 5432)
+- **OIDC Integration**: Complete authentication through Authentik
+- **Password Disabled**: No local password authentication when OIDC is active
+- **Database Security**: PostgreSQL credentials managed via 1Password
+- **SMTP Security**: Email credentials stored securely in 1Password
 
-#### SMTP Email Configuration
+## Troubleshooting
 
-Mealie requires SMTP configuration for email functionality (notifications, password resets, etc.):
+### Common Issues
 
-- **SMTP_HOST**: SMTP server hostname
-- **SMTP_PORT**: SMTP server port (default: 587)
-- **SMTP_FROM_NAME**: Sender name for emails (default: "Mealie")
-- **SMTP_FROM_EMAIL**: Sender email address
-- **SMTP_AUTH_STRATEGY**: Authentication strategy (TLS, SSL, NONE) (default: TLS)
-- **SMTP_USER**: SMTP username
-- **SMTP_PASSWORD**: SMTP password
+1. **OIDC Authentication Issues**
 
-**Note**: All sensitive configuration values are managed via 1Password Connect and stored in the `mealie-secrets` secret.
+   ```bash
+   # Check OIDC client credentials
+   kubectl -n mealie get secret mealie-secrets -o jsonpath='{.data.oidc-client-id}' | base64 -d
+   kubectl -n mealie get secret mealie-secrets -o jsonpath='{.data.oidc-client-secret}' | base64 -d
 
-### Security
+   # Check Authentik provider
+   kubectl -n authentik get authentikprovider oauth2provider mealie-oidc-provider
+   ```
 
-- OIDC authentication via Authentik
-- Password login disabled when OIDC is enabled
+2. **Database Connection Issues**
 
-## Initial Setup
+   ```bash
+   # Check PostgreSQL cluster status
+   kubectl -n mealie get cluster mealie-postgres
 
-1. Access Mealie at https://mealie.gateway.services.apocrathia.com
-2. Login via OIDC using your Authentik credentials
-3. Navigate to `/admin/site-settings` to verify configuration
-4. Configure additional settings as needed
+   # Test database connectivity
+   kubectl -n mealie exec -it deployment/mealie -- nc -zv mealie-postgres-rw 5432
+   ```
 
-## OIDC Authentication Setup
-
-To retrieve OIDC client credentials from Authentik:
+### Health Checks
 
 ```bash
-kubectl get secret mealie-secrets -n mealie -o jsonpath='{.data.oidc-client-id}' | base64 -d
-kubectl get secret mealie-secrets -n mealie -o jsonpath='{.data.oidc-client-secret}' | base64 -d
-```
+# Overall status
+kubectl -n mealie get pods,svc,pvc
 
-These credentials are automatically generated by the Authentik blueprint and stored in the `mealie-secrets` secret.
+# Mealie application status
+kubectl -n mealie get pods -l app.kubernetes.io/name=mealie
+
+# PostgreSQL cluster status
+kubectl -n mealie get cluster mealie-postgres
+```

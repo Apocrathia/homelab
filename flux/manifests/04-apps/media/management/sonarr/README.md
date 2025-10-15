@@ -1,18 +1,26 @@
 # Sonarr
 
-Sonarr is a Personal Video Recorder (PVR) for Usenet and BitTorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available.
+Personal Video Recorder (PVR) for Usenet and BitTorrent users with automated episode monitoring and quality upgrades.
+
+> **Navigation**: [← Back to Media README](../README.md)
+
+## Documentation
+
+- **[Sonarr Documentation](https://wiki.servarr.com/sonarr)** - Primary documentation source
+- **[LinuxServer.io Sonarr](https://docs.linuxserver.io/images/docker-sonarr)** - Container documentation
+- **[Sonarr GitHub](https://github.com/Sonarr/Sonarr)** - Source code and issues
+
+## Overview
+
+This deployment includes:
+
+- Sonarr PVR with RSS feed monitoring
+- LinuxServer.io container with standard configuration pattern
+- Authentik SSO integration for secure access
+- SMB mounts for downloads and media library access
+- Longhorn persistent storage for configuration
 
 ## Configuration
-
-This deployment uses the LinuxServer.io Sonarr image with the standard LinuxServer.io configuration pattern.
-
-### Key Features
-
-- **LinuxServer.io standard**: Uses root-initiated container with PUID/PGID user switching
-- **Persistent storage**: Configuration stored on Longhorn volumes
-- **Media access**: SMB mounts for downloads, anime, and TV shows
-- **Authentik integration**: SSO authentication through Authentik
-- **Gateway access**: Available at `https://sonarr.gateway.services.apocrathia.com`
 
 ### Security Configuration
 
@@ -26,43 +34,63 @@ The deployment follows the LinuxServer.io standard pattern:
 
 ### Storage
 
-- **Config volume**: 10GB Longhorn persistent volume for application configuration
-- **Downloads volume**: SMB mount for download client integration
-- **Anime volume**: SMB mount for anime library access
-- **TV volume**: SMB mount for TV shows library access
+- **Configuration Volume**: 10GB Longhorn persistent volume for application configuration
+- **Downloads Volume**: SMB mount for download client integration
+- **Anime Volume**: SMB mount for anime library access
+- **TV Volume**: SMB mount for TV shows library access
 
 ### Access
 
-Sonarr is accessible through:
+- **External URL**: `https://sonarr.gateway.services.apocrathia.com`
+- **Internal Service**: `http://sonarr.sonarr.svc.cluster.local:8989`
 
-- **Web UI**: `https://sonarr.gateway.services.apocrathia.com`
-- **Authentication**: Managed by Authentik SSO
+## Authentication
 
-## Technical Notes
+Authentication is handled through Authentik SSO:
 
-### LinuxServer.io Standard Configuration
+1. **Proxy Provider**: Authentik blueprint creates a proxy provider
+2. **Automatic Setup**: HTTPRoute and outpost created automatically
+3. **Clean Deployment**: Works with Authentik from day one
 
-This deployment uses the standard LinuxServer.io configuration pattern, which:
+## Security Considerations
 
-1. **Starts as root**: Allows s6-overlay to initialize user/group mappings and directories
-2. **Switches to PUID/PGID**: After initialization, runs as user 1000:1000
-3. **Full compatibility**: Supports Docker Mods, custom services, and all LinuxServer.io features
-4. **Automatic permissions**: Handles volume ownership and permissions automatically
+- **SSO Integration**: Complete authentication through Authentik proxy
+- **LinuxServer.io Pattern**: Standard security context for container compatibility
+- **Network Policies**: Cilium NetworkPolicy for traffic control
 
-### Container Features
+## Troubleshooting
 
-- **s6-overlay init system**: Provides process supervision and initialization
-- **Automatic user switching**: Seamlessly transitions from root to PUID/PGID
-- **Volume management**: Automatically handles permissions for mounted volumes
-- **Docker Mods support**: Compatible with LinuxServer.io Docker Mods ecosystem
+### Common Issues
 
-### Integration
+1. **Download Client Issues**
 
-Sonarr integrates with other media management applications:
+   ```bash
+   # Check download volume mounts
+   kubectl -n sonarr exec -it deployment/sonarr -- mount | grep storage
 
-- **Download clients**: Configured to access downloads via SMB mount
-- **Media libraries**: Direct access to anime and TV show libraries
-- **Plex/Jellyfin**: Can notify media servers of new content
-- **Other \*arr apps**: Shares configuration patterns with Radarr, Lidarr, etc.
+   # Test download directory access
+   kubectl -n sonarr exec -it deployment/sonarr -- ls -la /downloads
+   ```
 
-For more information about LinuxServer.io containers, see: https://docs.linuxserver.io/
+2. **Media Library Access**
+
+   ```bash
+   # Check TV library access
+   kubectl -n sonarr exec -it deployment/sonarr -- ls -la /tv
+
+   # Check anime library access
+   kubectl -n sonarr exec -it deployment/sonarr -- ls -la /anime
+   ```
+
+### Health Checks
+
+```bash
+# Overall status
+kubectl -n sonarr get pods,svc,pvc
+
+# Sonarr application status
+kubectl -n sonarr get pods -l app.kubernetes.io/name=sonarr
+
+# Check Authentik outpost
+kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
+```
