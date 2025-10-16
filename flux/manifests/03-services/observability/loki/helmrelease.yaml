@@ -83,7 +83,8 @@ spec:
 
       # Limits configuration
       limits_config:
-        allow_structured_metadata: false
+        allow_structured_metadata: true
+        reject_old_samples: false
 
     # MinIO subchart disabled - using external MinIO
     minio:
