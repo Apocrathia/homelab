@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.10.4/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.3/pkg/machinery/config/schemas/config.schema.json
 machine:
   nodeLabels:
     # https://www.robert-jensen.dk/posts/2025-loadbalancer-not-working-on-single-node-talos-cluster/

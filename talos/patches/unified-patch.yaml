@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.1/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.3/pkg/machinery/config/schemas/config.schema.json
 machine:
   features:
     rbac: true
