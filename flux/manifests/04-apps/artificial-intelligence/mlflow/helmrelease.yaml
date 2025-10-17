@@ -104,6 +104,13 @@ spec:
     telemetry:
       enabled: false
 
+    # Additional MLflow server arguments for external access
+    extraArgs:
+      # Allow connections from external hosts
+      allowedHosts: "mlflow.gateway.services.apocrathia.com"
+      # Configure CORS for external access
+      corsAllowedOrigins: "https://mlflow.gateway.services.apocrathia.com"
+
     # Probes configuration
     livenessProbe:
       initialDelaySeconds: 30
