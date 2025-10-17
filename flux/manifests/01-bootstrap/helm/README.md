@@ -93,13 +93,6 @@ Helm repositories provide access to packaged applications and services. This set
 - **Update Interval**: 30 minutes
 - **Usage**: Horizontal Pod Autoscaling, resource monitoring
 
-#### Stakater (`stakater.yaml`)
-
-- **Repository**: `https://stakater.github.io/stakater-charts`
-- **Purpose**: Reloader utility
-- **Update Interval**: 30 minutes
-- **Usage**: Configuration reloading automation
-
 ### Security and Compliance
 
 #### Aqua Security (`aqua.yaml`)

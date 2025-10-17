@@ -9,7 +9,6 @@ This directory contains the deployment configuration for platform services that 
 - [**Gateway**](gateway/README.md) - Gateway API implementation for traffic management
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
-- [**Reloader**](reloader/README.md) - Configuration reloading automation
 
 ### Monitoring and Observability
 

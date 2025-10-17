@@ -16,7 +16,6 @@ resources:
   - cert-manager
   - housekeeping
   - postgresql
-  - reloader
   # - trivy
   - toolhive
   - external-secrets
