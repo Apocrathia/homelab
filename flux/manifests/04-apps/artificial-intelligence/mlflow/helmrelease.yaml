@@ -54,7 +54,7 @@ spec:
 
     # Backend store configuration using PostgreSQL
     backendStore:
-      databaseMigration: true
+      databaseMigration: false
       postgres:
         enabled: true
         host: mlflow-postgres-rw.mlflow.svc.cluster.local
@@ -123,6 +123,13 @@ spec:
       namespace: prometheus-system
       labels:
         release: kube-prometheus-stack
+
+    # Deployment strategy to handle ReadWriteOnce PVC updates
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
 
     # Ingress disabled - using Gateway API through Authentik
     ingress:
