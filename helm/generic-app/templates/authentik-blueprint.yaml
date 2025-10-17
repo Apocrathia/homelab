@@ -43,7 +43,7 @@ data:
           slug: "{{ .Values.app.name }}"
           provider: !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
           launch_url: "{{ .Values.authentik.externalHost }}"
-          group: "Applications"
+          group: "{{ .Values.authentik.category | default "Applications" }}"
           open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
           {{- if .Values.authentik.icon }}
           icon: "{{ .Values.authentik.icon }}"

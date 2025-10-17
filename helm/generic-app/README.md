@@ -569,6 +569,8 @@ authentik:
 - `externalHost`: External URL for the application
 - `icon`: Icon URL for the application (optional)
 - `openInNewTab`: Open application in new tab (default: true)
+- `category`: Category for organizing applications in Authentik dashboard (default: "Applications")
+  - Common categories: `Applications`, `Infrastructure`, `External`
 - `interceptHeaderAuth`: Enable header-based authentication for reverse proxy auth (default: false)
   - Set to `true` for applications like Grocy that use reverse proxy authentication
   - When enabled, Authentik will pass user information via headers
@@ -612,10 +614,16 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.29 (Latest)
+### Version 0.0.30 (Latest)
+
+- **Authentik Category Control**: Added `authentik.category` configuration option
+  - Control application grouping in Authentik dashboard
+  - Defaults to "Applications" for backward compatibility
+  - Use "Infrastructure", "External", etc. to organize your dashboard
+
+### Version 0.0.29
 
 - **Fixed SMB Volume ReadOnly Configuration**: Resolved issue where SMB volumes were always mounted as read-only regardless of configuration
-
   - **Problem Solved**: SMB volumes were hardcoded to `readOnly: true` in deployment template, ignoring the `readOnly: false` setting in values
   - **Template Logic Fixed**: Updated deployment template to properly respect the `readOnly` setting from SMB volume configuration
   - **Default Behavior**: Maintains safe default of read-only access when `readOnly` is not specified
@@ -625,7 +633,6 @@ For a complete working example, see the [Companion app configuration](../../flux
 ### Version 0.0.27
 
 - **NEW: Init Container restartPolicy Support**: Added support for `restartPolicy` in init containers to enable persistent sidecar-like behavior
-
   - **Use Case**: Allows init containers to stay running instead of exiting after completion
   - **VPN Support**: Enables VPN containers (like Gluetun) to run as init containers with persistent connections
   - **Device Access**: Retains init container privileges for TUN device creation and elevated security contexts
@@ -656,7 +663,6 @@ For a complete working example, see the [Companion app configuration](../../flux
   - **Automatic Protection**: New apps with persistent volumes are automatically protected from Multi-Attach errors
 
 - **BREAKING CHANGE: Strategy Configuration**: Deployment strategy now defaults to Recreate instead of RollingUpdate
-
   - **Migration Required**: Stateless apps must add `strategy: "RollingUpdate"` to maintain zero-downtime updates
   - **Stateful Apps**: No changes needed - automatically get the safe Recreate strategy
   - **Template Logic**: Simplified strategy logic - defaults to Recreate, only uses RollingUpdate when explicitly requested
@@ -672,7 +678,6 @@ For a complete working example, see the [Companion app configuration](../../flux
   - **Proper Volume Naming**: Volume names are correctly prefixed with app name for pod-wide storage, while local storage uses names as-is
 
 - **FIXED: Volume Mount Conflicts**: Resolved issues where defining both `app.volumes` and `app.volumeMounts` caused deployment failures
-
   - **Template Logic Updated**: Chart now processes both volume types independently instead of using either/or logic
   - **Volume Creation**: All volumes (local and pod-wide) are properly created in the deployment
   - **Mount Resolution**: Volume mounts correctly reference their corresponding volumes
