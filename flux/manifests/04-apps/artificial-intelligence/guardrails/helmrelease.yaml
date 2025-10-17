@@ -19,7 +19,7 @@ spec:
     app:
       name: guardrails
       namespace: guardrails-ai
-      # renovate: datasource=public.ecr.aws/docker/library depName=python
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
       image: public.ecr.aws/docker/library/python:3.14
 
       # Override container configuration for Guardrails server
