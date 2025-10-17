@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: mend-renovate-ce
-      # renovate: datasource=helm registryUrl=charts.mend.io depName=mend-renovate-ce
+      # renovate: datasource=helm registryUrl=https://mend.github.io/renovate-ce-ee depName=mend-renovate-ce
       version: 11.4.0
       sourceRef:
         kind: HelmRepository
