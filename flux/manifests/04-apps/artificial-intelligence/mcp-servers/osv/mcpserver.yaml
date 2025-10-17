@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: osv-vulnerability-scanner
     app.kubernetes.io/component: mcp-server
 spec:
-  # renovate: datasource=docker registryUrl=https://ghcr.io/stackloklabs depName=osv-mcp/server
+  # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/osv-mcp/server
   image: ghcr.io/stackloklabs/osv-mcp/server:0.0.7
   transport: streamable-http
   port: 8080

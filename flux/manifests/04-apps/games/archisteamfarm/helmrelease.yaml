@@ -57,7 +57,7 @@ spec:
             mountPath: /tmp
       initContainers:
         - name: copy-secrets
-          # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
           image: public.ecr.aws/docker/library/alpine:3.22.2
           command: ["sh", "-c"]
           args:
