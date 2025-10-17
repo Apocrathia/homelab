@@ -56,7 +56,7 @@ spec:
           - name: tmp
             mountPath: /tmp
       initContainers:
-        - name: copy-secrets
+        - name: copy-config
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
           image: public.ecr.aws/docker/library/alpine:3.22.2
           command: ["sh", "-c"]
@@ -64,6 +64,8 @@ spec:
             - |
               echo "Copying secrets to config volume"
               mkdir -p /app/config
+              # Remove only empty/corrupted database files (preserve files with data)
+              find /app/config -name "*.db" -size 0 -delete
               echo "$$ASF_JSON" > /app/config/ASF.json
               echo "$$IPC_CONFIG" > /app/config/IPC.config
               echo "$$APOCRATHIA_JSON" > /app/config/Apocrathia.json
