@@ -239,6 +239,9 @@ authentik:
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://i.imgur.com/0gNsvyk.png"
   openInNewTab: true
+  # Category for organizing applications in Authentik dashboard
+  # Common categories: Applications, Infrastructure, External
+  category: "Applications"
   # Enable header-based authentication for reverse proxy auth
   interceptHeaderAuth: false
 
