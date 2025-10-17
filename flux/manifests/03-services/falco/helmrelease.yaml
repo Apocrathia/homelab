@@ -10,7 +10,7 @@ spec:
     spec:
       chart: falco
       # renovate: datasource=helm registryUrl=https://falcosecurity.github.io/charts depName=falco
-      version: "6.2.5"
+      version: "6.4.0"
       sourceRef:
         kind: HelmRepository
         name: falcosecurity
