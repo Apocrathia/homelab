@@ -132,7 +132,7 @@ spec:
             auto_sign_up: true
             enable_login_token: false
             whitelist: "127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
-            headers: "Groups:X-authentik-groups"
+            headers: "Groups:X-authentik-groups,Name:X-authentik-name,Email:X-authentik-email"
         security:
           allow_embedding: true
           cookie_secure: false
@@ -152,7 +152,7 @@ spec:
         GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
         GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "false"
         GF_AUTH_PROXY_WHITELIST: "127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
-        GF_AUTH_PROXY_HEADERS: "Groups:X-authentik-groups"
+        GF_AUTH_PROXY_HEADERS: "Groups:X-authentik-groups,Name:X-authentik-name,Email:X-authentik-email"
       resources:
         limits:
           cpu: 400m
