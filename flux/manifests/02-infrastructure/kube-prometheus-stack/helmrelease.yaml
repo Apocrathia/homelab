@@ -162,9 +162,13 @@ spec:
           memory: 512Mi
       persistence:
         enabled: true
+        type: pvc
         storageClassName: longhorn
+        accessModes:
+          - ReadWriteOnce
         size: 10Gi
-        claimName: grafana-storage
+        finalizers:
+          - kubernetes.io/pvc-protection
         metadata:
           labels:
             app: grafana
