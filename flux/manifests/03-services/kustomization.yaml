@@ -21,6 +21,5 @@ resources:
   - external-secrets
   # - chaos-mesh
   # - meshery
-  - wandb
   - renovate
   - tuppr
