@@ -37,7 +37,6 @@ This directory contains the deployment configuration for platform services that 
   - [**Runner**](gitlab/runner/README.md) - CI/CD runner
 - [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
 - [**Tuppr**](tuppr/README.md) - Automated Talos Linux and Kubernetes upgrade controller
-- [**W&B Operator**](wandb/README.md) - Weights & Biases Kubernetes operator for ML experiment tracking
 
 ## Architecture
 
@@ -48,7 +47,6 @@ The services layer provides:
 - **Security**: Runtime monitoring, policy enforcement, scanning, and compliance
 - **Monitoring**: Comprehensive observability and alerting
 - **Data Services**: PostgreSQL operator for database management
-- **ML Operations**: Weights & Biases operator for experiment tracking and model management
 - **Development Tools**: CI/CD integration and development workflows
 - **Operations**: Automated maintenance, housekeeping, and upgrade orchestration
 

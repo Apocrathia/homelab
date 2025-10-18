@@ -38,4 +38,3 @@ resources:
   - gatekeeper.yaml
   - litellm.yaml
   - meshery.yaml
-  - wandb.yaml
