@@ -35,6 +35,7 @@ resources:
   - toolhive.yaml
   - tuppr.yaml
   - external-secrets.yaml
+  - flyte.yaml
   - gatekeeper.yaml
   - litellm.yaml
   - meshery.yaml
