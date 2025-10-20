@@ -20,7 +20,7 @@ spec:
       name: uptime-kuma
       namespace: uptime-kuma
       # renovate: datasource=docker depName=louislam/uptime-kuma
-      image: louislam/uptime-kuma:2.0.0
+      image: louislam/uptime-kuma:2.0.1
       container:
         name: uptime-kuma
         port: 3001
