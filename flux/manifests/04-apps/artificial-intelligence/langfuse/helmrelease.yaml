@@ -10,7 +10,7 @@ spec:
     spec:
       chart: langfuse
       # renovate: datasource=helm registryUrl=https://langfuse.github.io/langfuse-k8s depName=langfuse
-      version: "1.5.7"
+      version: "1.5.8"
       sourceRef:
         kind: HelmRepository
         name: langfuse
