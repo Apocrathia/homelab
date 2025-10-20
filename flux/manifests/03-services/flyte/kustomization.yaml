@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: flyte
+  namespace: flyte-system
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - secret.yaml
+  - minio.yaml
+  - helmrelease.yaml
+  - httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-flyte
+    namespace: flyte-system
+    files:
+      - flyte.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

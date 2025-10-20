@@ -1,0 +1,166 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: flyte
+  namespace: flyte-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: flyte-core
+      # renovate: datasource=helm registryUrl=https://flyteorg.github.io/flyte depName=flyte-core
+      version: "v1.13.1"
+      sourceRef:
+        kind: HelmRepository
+        name: flyte
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  valuesFrom:
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: password
+      targetPath: db.admin.database.password
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: username
+      targetPath: db.admin.database.username
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: password
+      targetPath: db.datacatalog.database.password
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: username
+      targetPath: db.datacatalog.database.username
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: oidc-client-id
+      targetPath: configmap.adminServer.auth.userAuth.openId.clientId
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: password
+      targetPath: flyteclusterresourcesync.dbPassword
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: username
+      targetPath: flyteclusterresourcesync.dbUser
+  values:
+    # Database configuration
+    db:
+      admin:
+        database:
+          host: flyte-postgres-rw.flyte-system.svc.cluster.local
+          port: 5432
+          dbname: flyteadmin
+      datacatalog:
+        database:
+          host: flyte-postgres-rw.flyte-system.svc.cluster.local
+          port: 5432
+          dbname: datacatalog
+
+    # FlyteAdmin configuration
+    configmap:
+      adminServer:
+        # Authentication configuration
+        auth:
+          authorizedUris:
+            - "https://flyte.gateway.services.apocrathia.com"
+            - "http://flyteadmin:80"
+            - "http://flyteadmin.flyte-system.svc.cluster.local:80"
+
+          # App authentication - use external OIDC provider
+          appAuth:
+            authServerType: External
+            externalAuthServer:
+              allowedAudience: flytepropeller
+              baseUrl: "https://auth.gateway.services.apocrathia.com/application/o/flyte/"
+              metadataUrl: ".well-known/openid-configuration"
+
+          # User authentication (OIDC)
+          userAuth:
+            redirectUrl: "https://flyte.gateway.services.apocrathia.com/callback"
+            openId:
+              baseUrl: "https://auth.gateway.services.apocrathia.com/application/o/flyte/"
+              scopes:
+                - openid
+                - email
+                - profile
+
+        # Server security configuration
+        server:
+          security:
+            useAuth: true
+
+      # FlyteConsole configuration
+      console:
+        BASE_URL: /console
+        CONFIG_DIR: /etc/flyte/config
+        ADMIN_API: "http://flyteadmin.flyte-system.svc.cluster.local:80"
+        ADMIN_API_USE_SSL: "false"
+
+    # FlyteAdmin configuration
+    flyteadmin:
+      # Environment variables for init containers
+      env:
+        - name: FLYTE_SECRET_oidc_client_secret
+          valueFrom:
+            secretKeyRef:
+              name: flyte-secrets
+              key: oidc-client-secret
+
+    # FlyteAdmin resources
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+    # FlytePropeller configuration
+    flytepropeller:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+    # DataCatalog configuration
+    datacatalog:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # FlyteConsole configuration
+    flyteconsole:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # FlyteClusterResourceSync configuration
+    flyteclusterresourcesync:
+      # Database configuration for cluster resource sync
+      dbHost: flyte-postgres-rw.flyte-system.svc.cluster.local
+      dbPort: 5432
+      dbName: flyteadmin
+
+    # Storage configuration - sandbox for local development
+    storage:
+      type: sandbox
+      bucketName: flyte-data
