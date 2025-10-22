@@ -290,6 +290,31 @@ spec:
             limits:
               cpu: {{ .Values.app.resources.limits.cpu | default "100m" }}
               memory: {{ .Values.app.resources.limits.memory | default "128Mi" }}
+          {{- if .Values.app.lifecycle }}
+          lifecycle:
+            {{- if .Values.app.lifecycle.postStart }}
+            postStart:
+              {{- if .Values.app.lifecycle.postStart.exec }}
+              exec:
+                command: {{ .Values.app.lifecycle.postStart.exec.command | toYaml | nindent 16 }}
+              {{- else if .Values.app.lifecycle.postStart.httpGet }}
+              httpGet: {{ .Values.app.lifecycle.postStart.httpGet | toYaml | nindent 14 }}
+              {{- else if .Values.app.lifecycle.postStart.tcpSocket }}
+              tcpSocket: {{ .Values.app.lifecycle.postStart.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.app.lifecycle.preStop }}
+            preStop:
+              {{- if .Values.app.lifecycle.preStop.exec }}
+              exec:
+                command: {{ .Values.app.lifecycle.preStop.exec.command | toYaml | nindent 16 }}
+              {{- else if .Values.app.lifecycle.preStop.httpGet }}
+              httpGet: {{ .Values.app.lifecycle.preStop.httpGet | toYaml | nindent 14 }}
+              {{- else if .Values.app.lifecycle.preStop.tcpSocket }}
+              tcpSocket: {{ .Values.app.lifecycle.preStop.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
         {{- if .Values.app.sidecars }}
         {{- range .Values.app.sidecars }}
         - name: {{ .name }}
@@ -464,6 +489,31 @@ spec:
             limits:
               cpu: 50m
               memory: 32Mi
+          {{- end }}
+          {{- if .lifecycle }}
+          lifecycle:
+            {{- if .lifecycle.postStart }}
+            postStart:
+              {{- if .lifecycle.postStart.exec }}
+              exec:
+                command: {{ .lifecycle.postStart.exec.command | toYaml | nindent 16 }}
+              {{- else if .lifecycle.postStart.httpGet }}
+              httpGet: {{ .lifecycle.postStart.httpGet | toYaml | nindent 14 }}
+              {{- else if .lifecycle.postStart.tcpSocket }}
+              tcpSocket: {{ .lifecycle.postStart.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+            {{- if .lifecycle.preStop }}
+            preStop:
+              {{- if .lifecycle.preStop.exec }}
+              exec:
+                command: {{ .lifecycle.preStop.exec.command | toYaml | nindent 16 }}
+              {{- else if .lifecycle.preStop.httpGet }}
+              httpGet: {{ .lifecycle.preStop.httpGet | toYaml | nindent 14 }}
+              {{- else if .lifecycle.preStop.tcpSocket }}
+              tcpSocket: {{ .lifecycle.preStop.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
           {{- end }}
         {{- end }}
         {{- end }}
