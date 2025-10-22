@@ -157,6 +157,34 @@ spec:
           {{- if .restartPolicy }}
           restartPolicy: {{ .restartPolicy }}
           {{- end }}
+          {{- if .lifecycle }}
+          lifecycle:
+            {{- if .lifecycle.postStart }}
+            postStart:
+              {{- if .lifecycle.postStart.exec }}
+              exec:
+                command: {{ .lifecycle.postStart.exec.command | toYaml | nindent 16 }}
+              {{- else if .lifecycle.postStart.httpGet }}
+              httpGet: {{ .lifecycle.postStart.httpGet | toYaml | nindent 14 }}
+              {{- else if .lifecycle.postStart.tcpSocket }}
+              tcpSocket: {{ .lifecycle.postStart.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+            {{- if .lifecycle.preStop }}
+            preStop:
+              {{- if .lifecycle.preStop.exec }}
+              exec:
+                command: {{ .lifecycle.preStop.exec.command | toYaml | nindent 16 }}
+              {{- else if .lifecycle.preStop.httpGet }}
+              httpGet: {{ .lifecycle.preStop.httpGet | toYaml | nindent 14 }}
+              {{- else if .lifecycle.preStop.tcpSocket }}
+              tcpSocket: {{ .lifecycle.preStop.tcpSocket | toYaml | nindent 14 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .stopSignal }}
+          stopSignal: {{ .stopSignal }}
+          {{- end }}
         {{- end }}
       {{- end }}
       containers:
