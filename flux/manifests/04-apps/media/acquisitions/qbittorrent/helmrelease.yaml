@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.31"
+      version: "0.0.32"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -44,6 +44,17 @@ spec:
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica configuration
+
+      # Clean up stale qBittorrent lock and socket files on startup
+      lifecycle:
+        postStart:
+          exec:
+            command:
+              [
+                "/bin/sh",
+                "-c",
+                "rm -f /config/qBittorrent/ipc-socket /config/qBittorrent/lockfile || true",
+              ]
 
       resources:
         requests:
