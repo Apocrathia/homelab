@@ -225,6 +225,144 @@ The `restartPolicy` option allows init containers to stay running instead of exi
 
 When `restartPolicy: Always` is set, the init container will restart if it exits, effectively making it behave like a sidecar container while retaining the init container's privileges for device access and security contexts.
 
+#### VPN Sidecar Pattern
+
+The init container with `restartPolicy: Always` is particularly useful for VPN sidecars. This pattern provides:
+
+- **Device Access**: Init containers have access to TUN/TAP devices needed for VPN operations
+- **Elevated Privileges**: Can run with `privileged: true` and `NET_ADMIN` capabilities
+- **Persistent Connection**: Stays running alongside the main application
+- **Network Isolation**: All traffic from the main container goes through the VPN
+
+**Example VPN Sidecar Configuration:**
+
+```yaml
+app:
+  initContainers:
+    - name: vpn-sidecar
+      image: vpn-client:latest
+      restartPolicy: Always # Keep VPN container running as sidecar
+      env:
+        - name: VPN_PROVIDER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: vpn-provider
+        - name: VPN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: vpn-username
+        - name: VPN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: vpn-password
+        - name: VPN_REGION
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: vpn-region
+        - name: ALLOWED_PORTS
+          value: "8080" # Allow app port through VPN firewall
+      lifecycle:
+        postStart:
+          exec:
+            command: ["/bin/sh", "-c", "echo 'VPN sidecar started' && sleep 5"]
+        preStop:
+          exec:
+            command: ["/bin/sh", "-c", "echo 'VPN sidecar stopping' && sleep 2"]
+      # Alternative lifecycle handlers:
+      # lifecycle:
+      #   postStart:
+      #     httpGet:
+      #       path: /health
+      #       port: 8080
+      #       scheme: HTTP
+      #   preStop:
+      #     tcpSocket:
+      #       port: 8080
+      # stopSignal: SIGTERM  # Custom stop signal (optional)
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        capabilities:
+          add:
+            - NET_ADMIN
+        readOnlyRootFilesystem: false
+        runAsNonRoot: false
+        runAsUser: "0"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      volumes:
+        emptyDir:
+          - name: vpn-data
+            mountPath: /vpn
+```
+
+**Key Benefits:**
+
+- **Security**: All application traffic is routed through the VPN tunnel
+- **Privacy**: IP address is masked by the VPN provider
+- **Compliance**: Meets requirements for geo-restricted content access
+- **Reliability**: VPN connection is maintained independently of the main application
+- **Flexibility**: Easy to configure different VPN providers and regions
+
+#### Lifecycle Hook Options
+
+The chart supports all Kubernetes lifecycle hook types for init containers and sidecars:
+
+**Handler Types:**
+
+- **exec**: Execute commands inside the container
+
+  ```yaml
+  lifecycle:
+    postStart:
+      exec:
+        command: ["/bin/sh", "-c", "echo 'Container started'"]
+  ```
+
+- **httpGet**: Perform HTTP health checks
+
+  ```yaml
+  lifecycle:
+    postStart:
+      httpGet:
+        path: /health
+        port: 8080
+        scheme: HTTP
+        httpHeaders:
+          - name: Custom-Header
+            value: "value"
+  ```
+
+- **tcpSocket**: Check if a TCP port is open
+  ```yaml
+  lifecycle:
+    preStop:
+      tcpSocket:
+        port: 8080
+  ```
+
+**Stop Signal:**
+
+- **stopSignal**: Custom signal sent to container on termination
+  ```yaml
+  stopSignal: SIGTERM # Default signal sent to container
+  ```
+
+**Common Use Cases:**
+
+- **postStart**: Initialize services, wait for dependencies, perform health checks
+- **preStop**: Graceful shutdown, cleanup resources, notify other services
+- **stopSignal**: Handle containers that expect specific termination signals
+
 ### Storage Architecture
 
 The chart uses a **two-tier storage system** optimized for different use cases:
@@ -614,7 +752,16 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 ## Changelog
 
-### Version 0.0.30 (Latest)
+### Version 0.0.31 (Latest)
+
+- **Enhanced VPN Sidecar Documentation**: Added comprehensive documentation and examples for VPN sidecar patterns using init containers with `restartPolicy: Always`
+  - **New Documentation**: Added dedicated VPN Sidecar Pattern section with generic configuration examples
+  - **Generic Examples**: Provided flexible VPN sidecar configuration template applicable to various VPN clients
+  - **Best Practices**: Documented key benefits including device access, elevated privileges, persistent connections, and network isolation
+  - **Values Examples**: Added commented VPN sidecar example in values.yaml for easy reference
+  - **Use Case Coverage**: Covers common VPN scenarios for privacy, compliance, and geo-restricted content access
+
+### Version 0.0.30
 
 - **Authentik Category Control**: Added `authentik.category` configuration option
   - Control application grouping in Authentik dashboard

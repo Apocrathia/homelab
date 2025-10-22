@@ -62,6 +62,73 @@ app:
   #       runAsUser: 0
   #       runAsGroup: 0
   #       runAsNonRoot: false
+  #
+  # Example VPN sidecar using init container with restartPolicy:
+  # initContainers:
+  #   - name: vpn-sidecar
+  #     image: vpn-client:latest
+  #     restartPolicy: Always  # Keep VPN container running as sidecar
+  #     env:
+  #       - name: VPN_PROVIDER
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: app-secrets
+  #             key: vpn-provider
+  #       - name: VPN_USERNAME
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: app-secrets
+  #             key: vpn-username
+  #       - name: VPN_PASSWORD
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: app-secrets
+  #             key: vpn-password
+  #       - name: VPN_REGION
+  #         valueFrom:
+  #           secretKeyRef:
+  #             name: app-secrets
+  #             key: vpn-region
+  #       - name: ALLOWED_PORTS
+  #         value: "8080"  # Allow app port through VPN firewall
+  #     lifecycle:
+  #       postStart:
+  #         exec:
+  #           command: ["/bin/sh", "-c", "echo 'VPN sidecar started' && sleep 5"]
+  #       preStop:
+  #         exec:
+  #           command: ["/bin/sh", "-c", "echo 'VPN sidecar stopping' && sleep 2"]
+  #     # Alternative lifecycle handlers:
+  #     # lifecycle:
+  #     #   postStart:
+  #     #     httpGet:
+  #     #       path: /health
+  #     #       port: 8080
+  #     #       scheme: HTTP
+  #     #   preStop:
+  #     #     tcpSocket:
+  #     #       port: 8080
+  #     # stopSignal: SIGTERM  # Custom stop signal (optional)
+  #     securityContext:
+  #       privileged: true
+  #       allowPrivilegeEscalation: true
+  #       capabilities:
+  #         add:
+  #           - NET_ADMIN
+  #       readOnlyRootFilesystem: false
+  #       runAsNonRoot: false
+  #       runAsUser: "0"
+  #     resources:
+  #       requests:
+  #         cpu: 100m
+  #         memory: 128Mi
+  #       limits:
+  #         cpu: 200m
+  #         memory: 256Mi
+  #     volumes:
+  #       emptyDir:
+  #         - name: vpn-data
+  #           mountPath: /vpn
 
   # Sidecar containers configuration
   sidecars: []
