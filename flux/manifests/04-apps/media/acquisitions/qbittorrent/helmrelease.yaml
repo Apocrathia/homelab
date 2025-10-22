@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.30"
+      version: "0.0.31"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -120,6 +120,16 @@ spec:
               value: "127.0.0.1" # Use gluetun's internal DNS server
             - name: DNS_KEEP_NAMESERVER
               value: "off" # Don't keep existing nameservers
+          # https://github.com/qdm12/gluetun/issues/2521#issuecomment-2453592258 - Clean up IP rules after Gluetun starts
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  [
+                    "/bin/sh",
+                    "-c",
+                    "(ip rule del table 51820; ip -6 rule del table 51820) || true",
+                  ]
           securityContext:
             privileged: true
             allowPrivilegeEscalation: true
