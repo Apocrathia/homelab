@@ -175,6 +175,14 @@ app:
   #       limits:
   #         cpu: 50m
   #         memory: 32Mi
+  #     # Optional: sidecar lifecycle hooks
+  #     lifecycle:
+  #       postStart:
+  #         exec:
+  #           command: ["/bin/sh", "-c", "echo 'Sidecar started' && sleep 2"]
+  #       preStop:
+  #         exec:
+  #           command: ["/bin/sh", "-c", "echo 'Sidecar stopping' && sleep 1"]
 
   # Deployment configuration
   replicas: 1
@@ -226,6 +234,27 @@ app:
     limits:
       cpu: 100m
       memory: 128Mi
+
+  # Container lifecycle hooks (postStart and preStop)
+  # lifecycle: {}
+  # Example lifecycle configuration:
+  # lifecycle:
+  #   postStart:
+  #     exec:
+  #       command: ["/bin/sh", "-c", "echo 'Application started' && touch /tmp/app-ready"]
+  #   preStop:
+  #     exec:
+  #       command: ["/bin/sh", "-c", "echo 'Application stopping' && sleep 5"]
+  # Alternative lifecycle handlers:
+  # lifecycle:
+  #   postStart:
+  #     httpGet:
+  #       path: /health
+  #       port: 80
+  #       scheme: HTTP
+  #   preStop:
+  #     tcpSocket:
+  #       port: 80
 
   # Service configuration
   service:
