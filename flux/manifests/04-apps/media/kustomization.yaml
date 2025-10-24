@@ -11,6 +11,7 @@ resources:
   - acquisitions/sabnzbd
   - management/bazarr
   - management/cleanuparr
+  - management/huntarr
   - management/lidarr
   - management/ombi
   - management/prowlarr
