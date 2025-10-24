@@ -29,19 +29,26 @@ spec:
         - |
           set -e
 
+          echo "Setting up virtual environment..."
+          python3 -m venv /opt/venv
+          export PATH="/opt/venv/bin:$PATH"
+
           echo "Installing Guardrails AI..."
           pip install --upgrade pip
           pip install --no-cache-dir \
             guardrails-ai[api] \
-            gunicorn[gthread]
+            gunicorn[gthread] \
+            nltk
+
+          echo "Setting up Natural Language Toolkit (NLTK) data..."
+          export NLTK_DATA=/opt/nltk_data
+          python -m nltk.downloader -d /opt/nltk_data punkt
 
           echo "Configuring Guardrails..."
           guardrails configure --enable-metrics --enable-remote-inferencing --token="${GUARDRAILS_TOKEN:-}"
 
           echo "Installing guardrails from Hub..."
           guardrails hub install hub://guardrails/gibberish_text
-          guardrails hub install hub://guardrails/valid_length
-          guardrails hub install hub://guardrails/two_words
           guardrails hub install hub://guardrails/regex_match
           guardrails hub install hub://guardrails/secrets_present
           guardrails hub install hub://guardrails/toxic_language
@@ -76,6 +83,12 @@ spec:
                 name: guardrails-secrets
                 key: litellm-token
                 optional: true
+          - name: HF_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: guardrails-secrets
+                key: hf-token
+                optional: true
           - name: GUARDRAILS_BASE_URL
             value: "http://guardrails.guardrails-ai.svc.cluster.local:8000"
           - name: LITELLM_BASE_URL
@@ -88,12 +101,14 @@ spec:
             value: "1"
           - name: PYTHONDONTWRITEBYTECODE
             value: "1"
-          - name: PIP_USER
-            value: "1"
+          - name: NLTK_DATA
+            value: "/opt/nltk_data"
+          - name: GUARDRAILS_CONFIG_DIR
+            value: "/home/python/.guardrails"
           - name: HOME
             value: "/home/python"
           - name: PATH
-            value: "/home/python/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            value: "/opt/venv/bin:/home/python/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
       # Security context - run as non-root user
       securityContext:
@@ -129,6 +144,10 @@ spec:
             mountPath: /tmp
           - name: guardrails-cache
             mountPath: /home/python/.guardrails
+          - name: nltk-data
+            mountPath: /opt/nltk_data
+          - name: venv
+            mountPath: /opt/venv
         configMap:
           - name: guardrails-config
             mountPath: /config

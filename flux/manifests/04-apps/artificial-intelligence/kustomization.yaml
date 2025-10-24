@@ -6,7 +6,7 @@ metadata:
   name: artificial-intelligence
 
 resources:
-  # - guardrails
+  - guardrails
   # - langflow
   # - langfuse
   - litellm
