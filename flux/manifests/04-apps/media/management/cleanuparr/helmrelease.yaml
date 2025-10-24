@@ -1,0 +1,81 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cleanuparr
+  namespace: cleanuparr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.32"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: cleanuparr
+      # renovate: datasource=docker depName=ghcr.io/cleanuparr/cleanuparr
+      image: ghcr.io/cleanuparr/cleanuparr:2.4.0
+      container:
+        name: cleanuparr
+        port: 11011
+        env:
+          - name: PUID
+            value: "0"
+          - name: PGID
+            value: "0"
+          - name: TZ
+            value: "America/Denver"
+          - name: UMASK
+            value: "022"
+          - name: HTTP_PORTS
+            value: "11011"
+          - name: DOTNET_USE_POLLING_FILE_WATCHER
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        # Cleanuparr runs as root (PUID=0, PGID=0) to skip user/group creation
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 11011
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      displayName: "Cleanuparr"
+      externalHost: "https://cleanuparr.gateway.services.apocrathia.com"
+      icon: "https://cleanuparr.github.io/Cleanuparr/img/cleanuparr.svg"
