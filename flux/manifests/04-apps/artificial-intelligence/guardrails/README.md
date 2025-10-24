@@ -23,12 +23,10 @@ This deployment includes:
 
 ### Hub Validators Included
 
-- **secrets-present-guard**: Prevents API keys, passwords, and sensitive data leakage
-- **toxic-language-guard**: Blocks toxic, offensive, or harmful language
-- **gibberish-guard**: Detects and prevents nonsensical or gibberish text
-- **length-guard**: Validates text length constraints (1-1000 characters)
-- **two-words-guard**: Ensures output contains exactly two words
-- **email-guard**: Validates email format using regex
+- **secrets-guard**: Prevents API keys, passwords, and sensitive data leakage
+- **toxic-guard**: Blocks toxic, offensive, or harmful language
+- **gibberish-guard**: Detects and prevents nonsensical or gibberish text using AI models
+- **name-case**: Example validator for Title Case format (e.g., "John Smith")
 
 ### Access
 
