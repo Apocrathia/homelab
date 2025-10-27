@@ -36,8 +36,16 @@ spec:
       targetPath: proxy_config.general_settings.ui_password
     - kind: Secret
       name: litellm-secrets
+      valuesKey: anthropic-api-key
+      targetPath: envVars.ANTHROPIC_API_KEY
+    - kind: Secret
+      name: litellm-secrets
       valuesKey: ollama-api-base
       targetPath: envVars.OLLAMA_API_BASE
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: openai-api-key
+      targetPath: envVars.OPENAI_API_KEY
 
   values:
     # Use the database-optimized image
@@ -146,14 +154,11 @@ spec:
     proxyConfigMap:
       create: true
 
-    # Mount the secret containing model configuration
+    # Mount the ConfigMap containing model configuration
     volumes:
       - name: model-config
-        secret:
-          secretName: litellm-secrets
-          items:
-            - key: model-config
-              path: models.yaml
+        configMap:
+          name: litellm-config
 
     volumeMounts:
       - name: model-config

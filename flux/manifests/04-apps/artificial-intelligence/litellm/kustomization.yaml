@@ -20,6 +20,10 @@ configMapGenerator:
     namespace: litellm
     files:
       - litellm.yaml=authentik-blueprint.yaml
+  - name: litellm-config
+    namespace: litellm
+    files:
+      - models.yaml=litellm.yml
 
 labels:
   - includeSelectors: true
