@@ -1,0 +1,43 @@
+---
+model_list:
+  # OpenAI models
+  - model_name: gpt-5
+    litellm_params:
+      model: gpt-5
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: gpt-5-nano
+    litellm_params:
+      model: gpt-5-nano
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: o3-mini
+    litellm_params:
+      model: o3-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Claude models
+  - model_name: claude-sonnet-4-5
+    litellm_params:
+      model: anthropic/claude-sonnet-4-5
+      api_key: os.environ/ANTHROPIC_API_KEY
+  - model_name: claude-4-5-haiku
+    litellm_params:
+      model: anthropic/claude-4-5-haiku-latest
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Ollama models (local LLM server)
+  - model_name: llama3.2
+    litellm_params:
+      model: ollama/llama3.2:3b
+      api_base: os.environ/OLLAMA_API_BASE
+  - model_name: gpt-oss
+    litellm_params:
+      model: ollama/gpt-oss:20b
+      api_base: os.environ/OLLAMA_API_BASE
+  - model_name: dolphin3
+    litellm_params:
+      model: ollama/dolphin3:8b
+      api_base: os.environ/OLLAMA_API_BASE
+  - model_name: qwen3
+    litellm_params:
+      model: ollama/qwen3:8b
+      api_base: os.environ/OLLAMA_API_BASE
