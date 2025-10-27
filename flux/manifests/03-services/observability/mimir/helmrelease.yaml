@@ -86,6 +86,19 @@ spec:
             endpoint: "storage.services.apocrathia.com:9000"
             insecure: true
             bucket_name: mimir-blocks
+          # TSDB configuration to reduce local disk usage
+          tsdb:
+            retention_period: 2h # Reduced from default 13h to flush blocks faster
+            ship_interval: 30s # Ship blocks to S3 every 30s instead of 1m
+            close_idle_tsdb_timeout: 1h # Close inactive TSDBs faster
+
+        # Compactor configuration to reduce local disk usage
+        compactor:
+          compaction_concurrency: 1 # Limit concurrent compactions
+          split_and_merge_shards: 0 # Disable splitting to reduce disk usage
+          split_groups: 1 # Keep at minimum
+          deletion_delay: 6h # Faster deletion of old blocks
+          partial_block_deletion_delay: 4h # Minimum, clean up partial blocks faster
 
         ruler_storage:
           backend: s3
@@ -120,7 +133,7 @@ spec:
       persistentVolume:
         enabled: true
         storageClassName: longhorn
-        size: 20Gi
+        size: 50Gi # Increased to handle high-volume ingestion
 
     distributor:
       resources:
