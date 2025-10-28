@@ -77,7 +77,7 @@ spec:
       sidecars:
         - name: browserless
           # renovate: datasource=docker depName=ghcr.io/browserless/chrome
-          image: ghcr.io/browserless/chrome:v2.38.1
+          image: ghcr.io/browserless/chrome:v2.38.2
           ports:
             - containerPort: 3000
               name: browserless
