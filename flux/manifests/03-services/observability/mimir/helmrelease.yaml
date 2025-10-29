@@ -24,6 +24,7 @@ spec:
   upgrade:
     remediation:
       retries: 3
+    timeout: 10m
 
   # Pull values from 1Password secret
   valuesFrom:
