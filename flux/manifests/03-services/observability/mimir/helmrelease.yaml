@@ -125,7 +125,7 @@ spec:
       persistentVolume:
         enabled: true
         storageClassName: longhorn
-        size: 50Gi # Increased to handle high-volume ingestion
+        size: 20Gi
 
     distributor:
       resources:
