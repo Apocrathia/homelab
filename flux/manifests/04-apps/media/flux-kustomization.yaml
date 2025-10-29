@@ -2,14 +2,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: services
+  name: apps-media
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./flux/manifests/03-services
+  path: ./flux/manifests/04-apps/media
   prune: true
   sourceRef:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: infrastructure
+    - name: services-cert-manager
+    - name: services-gateway
+    - name: services-authentik
