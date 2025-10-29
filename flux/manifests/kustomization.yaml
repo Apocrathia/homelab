@@ -8,5 +8,22 @@ metadata:
 resources:
   - 01-bootstrap/flux-kustomization.yaml
   - 02-infrastructure/flux-kustomization.yaml
-  - 03-services/flux-kustomization.yaml
-  - 04-apps/flux-kustomization.yaml
+  - 03-services/cert-manager/flux-kustomization.yaml
+  - 03-services/gateway/flux-kustomization.yaml
+  - 03-services/authentik/flux-kustomization.yaml
+  - 03-services/postgresql/flux-kustomization.yaml
+  - 03-services/external-secrets/flux-kustomization.yaml
+  - 03-services/observability/flux-kustomization.yaml
+  - 03-services/kyverno/flux-kustomization.yaml
+  - 03-services/dashboard/flux-kustomization.yaml
+  - 03-services/gitlab/flux-kustomization.yaml
+  - 03-services/flyte/flux-kustomization.yaml
+  - 03-services/renovate/flux-kustomization.yaml
+  - 03-services/toolhive/flux-kustomization.yaml
+  - 03-services/tuppr/flux-kustomization.yaml
+  - 03-services/housekeeping/flux-kustomization.yaml
+  - 04-apps/demo-app/flux-kustomization.yaml
+  - 04-apps/artificial-intelligence/flux-kustomization.yaml
+  - 04-apps/games/flux-kustomization.yaml
+  - 04-apps/management/flux-kustomization.yaml
+  - 04-apps/media/flux-kustomization.yaml

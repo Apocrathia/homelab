@@ -2,14 +2,15 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: apps
+  name: services-gateway
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./flux/manifests/04-apps
+  path: ./flux/manifests/03-services/gateway
   prune: true
   sourceRef:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: services
+    - name: infrastructure
+    - name: services-cert-manager

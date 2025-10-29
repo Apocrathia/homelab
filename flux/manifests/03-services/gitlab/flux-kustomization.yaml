@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: services-gitlab
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./flux/manifests/03-services/gitlab
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: homelab
+  dependsOn:
+    - name: services-cert-manager
+    - name: services-gateway
+    - name: services-authentik
