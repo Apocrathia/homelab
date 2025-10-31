@@ -37,7 +37,8 @@ spec:
           pip install --upgrade pip
           pip install --no-cache-dir \
             guardrails-ai[api] \
-            gunicorn[gthread] \
+            gunicorn \
+            uvicorn[standard] \
             nltk
 
           echo "Setting up Natural Language Toolkit (NLTK) data..."
@@ -57,10 +58,9 @@ spec:
           exec gunicorn \
             --bind 0.0.0.0:8000 \
             --workers 2 \
-            --threads 2 \
             --timeout 300 \
             --keep-alive 5 \
-            --worker-class gthread \
+            --worker-class uvicorn.workers.UvicornWorker \
             --access-logfile - \
             --error-logfile - \
             --log-level info \
