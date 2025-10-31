@@ -169,6 +169,7 @@ spec:
     envVars:
       CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
       MLFLOW_TRACKING_URI: "http://mlflow.mlflow.svc.cluster.local:80"
+      GUARDRAILS_AI_API_BASE: "http://guardrails.guardrails-ai.svc.cluster.local:8000"
 
     proxy_config:
       # Include model configuration from separate file using relative path

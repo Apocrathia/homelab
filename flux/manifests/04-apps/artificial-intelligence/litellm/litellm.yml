@@ -41,3 +41,13 @@ model_list:
     litellm_params:
       model: ollama/qwen3:8b
       api_base: os.environ/OLLAMA_API_BASE
+
+guardrails:
+  - guardrail_name: "gibberish-guard"
+    litellm_params:
+      guardrail: guardrails_ai
+      guard_name: "gibberish-guard"
+      mode: "post_call"
+      guardrails_ai_api_input_format: "llmOutput"
+      api_base: os.environ/GUARDRAILS_AI_API_BASE
+      default_on: true
