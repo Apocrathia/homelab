@@ -183,6 +183,28 @@ app:
   #       preStop:
   #         exec:
   #           command: ["/bin/sh", "-c", "echo 'Sidecar stopping' && sleep 1"]
+  #     # Optional: sidecar health checks
+  #     healthChecks:
+  #       livenessProbe:
+  #         enabled: true
+  #         httpGet:
+  #           path: /health
+  #           port: 8080
+  #         initialDelaySeconds: 30
+  #         periodSeconds: 10
+  #         timeoutSeconds: 5
+  #         failureThreshold: 3
+  #         successThreshold: 1
+  #       readinessProbe:
+  #         enabled: true
+  #         httpGet:
+  #           path: /ready
+  #           port: 8080
+  #         initialDelaySeconds: 10
+  #         periodSeconds: 5
+  #         timeoutSeconds: 3
+  #         failureThreshold: 3
+  #         successThreshold: 1
 
   # Deployment configuration
   replicas: 1
@@ -255,6 +277,72 @@ app:
   #   preStop:
   #     tcpSocket:
   #       port: 80
+
+  # Health check probes (liveness, readiness, startup)
+  # healthChecks: {}
+  # Example HTTP GET probe configuration:
+  # healthChecks:
+  #   livenessProbe:
+  #     enabled: true
+  #     httpGet:
+  #       path: /health
+  #       port: 80
+  #       scheme: HTTP
+  #       httpHeaders:
+  #         - name: Custom-Header
+  #           value: "value"
+  #     initialDelaySeconds: 30
+  #     periodSeconds: 10
+  #     timeoutSeconds: 5
+  #     failureThreshold: 3
+  #     successThreshold: 1
+  #   readinessProbe:
+  #     enabled: true
+  #     httpGet:
+  #       path: /ready
+  #       port: 80
+  #       scheme: HTTP
+  #     initialDelaySeconds: 10
+  #     periodSeconds: 5
+  #     timeoutSeconds: 3
+  #     failureThreshold: 3
+  #     successThreshold: 1
+  #   startupProbe:
+  #     enabled: true
+  #     httpGet:
+  #       path: /health
+  #       port: 80
+  #       scheme: HTTP
+  #     initialDelaySeconds: 10
+  #     periodSeconds: 10
+  #     timeoutSeconds: 3
+  #     failureThreshold: 30
+  #     successThreshold: 1
+  # Example exec probe configuration:
+  # healthChecks:
+  #   livenessProbe:
+  #     enabled: true
+  #     exec:
+  #       command:
+  #         - /bin/sh
+  #         - -c
+  #         - "test -f /tmp/healthy"
+  #     initialDelaySeconds: 30
+  #     periodSeconds: 10
+  #     timeoutSeconds: 5
+  #     failureThreshold: 3
+  #     successThreshold: 1
+  # Example TCP socket probe configuration:
+  # healthChecks:
+  #   livenessProbe:
+  #     enabled: true
+  #     tcpSocket:
+  #       port: 80
+  #     initialDelaySeconds: 30
+  #     periodSeconds: 10
+  #     timeoutSeconds: 5
+  #     failureThreshold: 3
+  #     successThreshold: 1
 
   # Service configuration
   service:

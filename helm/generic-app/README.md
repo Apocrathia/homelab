@@ -9,6 +9,7 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - Main application container with full configuration options
   - Init containers for setup tasks (permissions, initialization, etc.)
   - Sidecar containers for auxiliary services (logging, monitoring, etc.)
+- **Health Checks**: Optional liveness, readiness, and startup probes for main containers and sidecars
 - **Storage Options**:
   - Multiple Longhorn persistent volumes for application data
   - Multiple SMB volumes for network file access
@@ -362,6 +363,149 @@ The chart supports all Kubernetes lifecycle hook types for init containers and s
 - **postStart**: Initialize services, wait for dependencies, perform health checks
 - **preStop**: Graceful shutdown, cleanup resources, notify other services
 - **stopSignal**: Handle containers that expect specific termination signals
+
+### Health Check Probes
+
+The chart supports optional health check probes (liveness, readiness, and startup) for both main containers and sidecars. Probes are opt-in and disabled by default, ensuring no impact on existing deployments.
+
+**Configuration:**
+
+```yaml
+app:
+  healthChecks:
+    livenessProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: 80
+        scheme: HTTP
+        httpHeaders:
+          - name: Custom-Header
+            value: "value"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+    readinessProbe:
+      enabled: true
+      httpGet:
+        path: /ready
+        port: 80
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+      successThreshold: 1
+    startupProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: 80
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+      successThreshold: 1
+```
+
+**Probe Types:**
+
+- **httpGet**: HTTP health check endpoint
+
+  ```yaml
+  healthChecks:
+    livenessProbe:
+      enabled: true
+      httpGet:
+        path: /health
+        port: 80
+        scheme: HTTP
+        httpHeaders:
+          - name: Authorization
+            value: "Bearer token"
+  ```
+
+- **exec**: Execute commands inside the container
+
+  ```yaml
+  healthChecks:
+    livenessProbe:
+      enabled: true
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - "test -f /tmp/healthy"
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+  ```
+
+- **tcpSocket**: Check if a TCP port is open
+
+  ```yaml
+  healthChecks:
+    livenessProbe:
+      enabled: true
+      tcpSocket:
+        port: 80
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+      successThreshold: 1
+  ```
+
+**Probe Configuration Fields:**
+
+- `initialDelaySeconds`: Delay before first probe (default: 0)
+- `periodSeconds`: How often to perform the probe (default: 10)
+- `timeoutSeconds`: Probe timeout (default: 1)
+- `failureThreshold`: Number of failures before marking unhealthy (default: 3)
+- `successThreshold`: Number of successes required after failure (default: 1)
+
+**Sidecar Health Checks:**
+
+Health checks can also be configured for sidecar containers:
+
+```yaml
+app:
+  sidecars:
+    - name: nginx-sidecar
+      image: nginx:alpine
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+```
+
+**Common Use Cases:**
+
+- **Liveness Probe**: Detects if container is alive and restart if unhealthy
+- **Readiness Probe**: Detects if container is ready to receive traffic
+- **Startup Probe**: Allows slow-starting containers additional time before liveness/readiness probes take over
 
 ### Storage Architecture
 
@@ -749,204 +893,3 @@ For a complete working example, see the [Companion app configuration](../../flux
 - **Homelab Optimized**: Designed for typical homelab use cases and infrastructure
 - **Renovate Compatible**: Single image values for automatic dependency updates
 - **Simple Configuration**: Only specify what makes your app unique
-
-## Changelog
-
-### Version 0.0.31 (Latest)
-
-- **Enhanced VPN Sidecar Documentation**: Added comprehensive documentation and examples for VPN sidecar patterns using init containers with `restartPolicy: Always`
-  - **New Documentation**: Added dedicated VPN Sidecar Pattern section with generic configuration examples
-  - **Generic Examples**: Provided flexible VPN sidecar configuration template applicable to various VPN clients
-  - **Best Practices**: Documented key benefits including device access, elevated privileges, persistent connections, and network isolation
-  - **Values Examples**: Added commented VPN sidecar example in values.yaml for easy reference
-  - **Use Case Coverage**: Covers common VPN scenarios for privacy, compliance, and geo-restricted content access
-
-### Version 0.0.30
-
-- **Authentik Category Control**: Added `authentik.category` configuration option
-  - Control application grouping in Authentik dashboard
-  - Defaults to "Applications" for backward compatibility
-  - Use "Infrastructure", "External", etc. to organize your dashboard
-
-### Version 0.0.29
-
-- **Fixed SMB Volume ReadOnly Configuration**: Resolved issue where SMB volumes were always mounted as read-only regardless of configuration
-  - **Problem Solved**: SMB volumes were hardcoded to `readOnly: true` in deployment template, ignoring the `readOnly: false` setting in values
-  - **Template Logic Fixed**: Updated deployment template to properly respect the `readOnly` setting from SMB volume configuration
-  - **Default Behavior**: Maintains safe default of read-only access when `readOnly` is not specified
-  - **Write Access**: Now correctly enables write access when `readOnly: false` is explicitly set
-  - **Consistent Pattern**: Uses same semantic pattern (`| default`) as other template configurations
-
-### Version 0.0.27
-
-- **NEW: Init Container restartPolicy Support**: Added support for `restartPolicy` in init containers to enable persistent sidecar-like behavior
-  - **Use Case**: Allows init containers to stay running instead of exiting after completion
-  - **VPN Support**: Enables VPN containers (like Gluetun) to run as init containers with persistent connections
-  - **Device Access**: Retains init container privileges for TUN device creation and elevated security contexts
-  - **Template Enhancement**: Added conditional restartPolicy rendering in deployment template
-  - **Documentation**: Added comprehensive examples and use cases for restartPolicy feature
-
-### Version 0.0.26
-
-- **CRITICAL: Fixed Sidecar Security Context Inheritance**: Resolved issue where sidecar containers weren't properly applying custom security context settings
-
-  - **Problem Solved**: Sidecar containers were ignoring custom `securityContext` configurations and always falling back to app-level defaults
-  - **Template Logic Fixed**: Updated deployment template to properly handle sidecar-specific security context with conditional inheritance
-  - **Inheritance Behavior**: Sidecars now correctly inherit from `app.securityContext` when no sidecar-specific context is defined
-  - **Override Support**: Sidecars can now override specific security settings while inheriting others from the app level
-  - **VPN Container Support**: Enables proper configuration of VPN sidecars (like Gluetun) that require elevated privileges and capabilities
-
-- **Enhanced Documentation**: Added comprehensive sidecar security context documentation with examples and inheritance behavior
-
-### Version 0.0.23
-
-- **CRITICAL: Default Deployment Strategy Changed**: Changed default strategy from RollingUpdate to Recreate to prevent Multi-Attach errors
-
-  - **Problem Solved**: RollingUpdate strategy causes Multi-Attach errors when upgrading apps with persistent volumes, leading to stuck HelmRelease upgrades
-  - **New Default**: All apps now use Recreate strategy by default, which eliminates Multi-Attach errors completely
-  - **Data Safety**: No data loss - persistent volumes survive pod restarts and maintain all application data
-  - **Brief Downtime**: Apps experience ~30-60 seconds of downtime during upgrades (acceptable for homelab use)
-  - **Stateless Override**: Stateless apps can explicitly set `strategy: "RollingUpdate"` to maintain zero-downtime updates
-  - **Automatic Protection**: New apps with persistent volumes are automatically protected from Multi-Attach errors
-
-- **BREAKING CHANGE: Strategy Configuration**: Deployment strategy now defaults to Recreate instead of RollingUpdate
-  - **Migration Required**: Stateless apps must add `strategy: "RollingUpdate"` to maintain zero-downtime updates
-  - **Stateful Apps**: No changes needed - automatically get the safe Recreate strategy
-  - **Template Logic**: Simplified strategy logic - defaults to Recreate, only uses RollingUpdate when explicitly requested
-  - **Documentation**: Updated values.yaml and README with clear guidance on when to use each strategy
-
-### Version 0.0.22
-
-- **ENHANCED: Improved Volume Mount Logic**: Fixed volume mounting to support both local and pod-wide storage simultaneously
-
-  - **Dual Volume Support**: Chart now properly handles both `app.volumes` (local storage) and `app.volumeMounts` (pod-wide storage) in the same deployment
-  - **Backward Compatible**: Existing deployments using only `app.volumes` or only `app.volumeMounts` continue to work unchanged
-  - **Flexible Configuration**: Applications can now define local storage (emptyDir, configMap) alongside pod-wide storage (Longhorn, SMB) without conflicts
-  - **Proper Volume Naming**: Volume names are correctly prefixed with app name for pod-wide storage, while local storage uses names as-is
-
-- **FIXED: Volume Mount Conflicts**: Resolved issues where defining both `app.volumes` and `app.volumeMounts` caused deployment failures
-  - **Template Logic Updated**: Chart now processes both volume types independently instead of using either/or logic
-  - **Volume Creation**: All volumes (local and pod-wide) are properly created in the deployment
-  - **Mount Resolution**: Volume mounts correctly reference their corresponding volumes
-
-### Version 0.0.21
-
-- **MAJOR: Complete Storage Architecture Overhaul**: Redesigned storage system with two-tier architecture
-
-  - **Pod-wide Storage**: Longhorn/SMB volumes defined in `storage` section with `enabled` flags and `volumes` arrays
-  - **Container-specific Storage**: EmptyDir/ConfigMap volumes defined in `app.volumes` with mount info included
-  - **Consistent Structure**: All storage types now follow the same pattern with explicit `enabled` flags
-  - **Enhanced Flexibility**: Container-specific volumes now available for main container, init containers, and sidecars
-
-- **CRITICAL: Fixed Volume Mount Logic**: Resolved completely broken volume mounting system
-
-  - **Fixed Conditional Logic**: Corrected `if .Values.app.volumeMounts` condition that was preventing custom mounts
-  - **Proper Volume References**: Volume mounts now correctly reference prefixed volume names
-  - **Resolved Mount Errors**: Fixed "volume not found" errors when using custom volume mounts
-
-- **CRITICAL: Fixed Init Container Rendering**: Init containers now render properly
-
-  - **Template Logic Fixed**: Init container template conditions now execute correctly
-  - **Volume Mount Support**: Init containers can now mount both pod-wide and container-specific volumes
-  - **Environment Variables**: Init container environment variables now render correctly
-
-- **CRITICAL: Fixed Environment Variable Rendering**: Container environment variables now work
-
-  - **Template Execution**: Environment variable loops now execute properly
-  - **Value Rendering**: Environment variables from values.yaml now render in deployment
-
-- **Enhanced Container-Specific Volumes**: Extended volume support to all container types
-
-  - **Init Containers**: Can define `volumes.emptyDir` and `volumes.configMap` with mount info
-  - **Sidecars**: Can define `volumes.emptyDir` and `volumes.configMap` with mount info
-  - **Main Container**: Existing `app.volumes` support maintained and improved
-
-- **Updated Documentation**: Comprehensive documentation overhaul
-  - **Storage Architecture**: Clear explanation of pod-wide vs container-specific storage
-  - **Usage Examples**: Updated examples showing new structure and capabilities
-  - **Volume Naming**: Documented volume naming conventions and patterns
-
-### Version 0.0.20
-
-- **Fixed Volume Processing Logic**: Resolved critical issue where storage volumes weren't being created
-  - **Removed Problematic Conditions**: Fixed template conditions that prevented longhorn/SMB volumes from being processed
-  - **Direct Volume Processing**: Storage volumes are now processed directly from configuration arrays
-  - **Resolved Mount Errors**: Fixed "volume not found" errors when using custom volume mounts
-  - **Maintained Override Logic**: Custom volumeMounts still properly override default volumes
-
-### Version 0.0.19
-
-- **Fixed Volume Mount Logic**: Custom `volumeMounts` now properly override default volumes
-  - **Clean Volume Configuration**: When `app.volumeMounts` is defined, default nginx volumes are excluded
-  - **Fixed Volume Creation**: Longhorn volumes are now properly created in deployment spec
-  - **Resolved Mount Errors**: Fixed "volume not found" errors when using custom volume mounts
-  - **Improved Flexibility**: Better separation between default and custom volume configurations
-
-### Version 0.0.18
-
-- **BREAKING CHANGE: Multi-Volume Storage Support**: Complete rewrite of storage configuration
-  - **New Array-Based Storage**: Define multiple volumes per storage type using simple arrays
-  - **Container-Specific Mounting**: Each container specifies which volumes to mount and where
-  - **Simplified Configuration**: Remove `enabled` flags and `mountPath` from storage definitions
-  - **Consistent Volume Naming**: Volumes automatically prefixed with app name (e.g., `my-app-data`)
-  - **Flexible Volume Usage**: Init containers, sidecars, and main containers can all mount different volumes
-  - **Migration Required**: Existing deployments must update to new format (see Breaking Changes section)
-
-### Version 0.0.17
-
-- **Fixed Volume Naming Consistency**: Longhorn volume names now match PVC names
-  - Volume name changed from hardcoded `app-data` to dynamic `{{ .Values.app.name }}-data`
-  - Ensures consistent naming between PVC creation and pod volume references
-  - Resolves confusion when referencing volumes in init containers and sidecars
-
-### Version 0.0.16
-
-- **Init Container Support**: Added support for init containers
-  - `initContainers`: Configure init containers for setup tasks before main container starts
-  - Perfect for fixing volume permissions, database initialization, and dependency setup
-  - Full configuration support including security context, volume mounts, and resources
-  - Resolves complex permission issues that `fsGroup` alone cannot handle
-
-### Version 0.0.15
-
-- **Enhanced Volume Permission Management**: Added `fsGroupChangePolicy` support
-  - `fsGroupChangePolicy`: Automatically change volume ownership when it doesn't match fsGroup
-  - Set to `"OnRootMismatch"` to automatically fix volume permissions on mount
-  - Essential for applications with persistent volumes that need specific user/group ownership
-  - Resolves common permission issues with mounted volumes in Kubernetes
-
-### Version 0.0.14
-
-- **Enhanced Authentik Integration**: Added configurable header-based authentication
-  - `interceptHeaderAuth`: Enable/disable header-based authentication for reverse proxy auth
-  - Essential for applications like Grocy that use reverse proxy authentication
-  - Maintains backward compatibility with existing configurations
-
-### Version 0.0.13
-
-- **Fixed Pod-Level Security Context**: Made pod `runAsNonRoot` configurable instead of hardcoded
-  - Resolves conflicts between pod and container security contexts
-  - Essential for LinuxServer.io containers that need to run as root
-  - Ensures consistent security settings across pod and container levels
-
-### Version 0.0.12
-
-- **Enhanced Capabilities Configuration**: Added support for configurable Linux capabilities
-  - Can now add specific capabilities (SETUID, SETGID, CHOWN, DAC_OVERRIDE, etc.)
-  - Supports both adding and dropping capabilities
-  - Applied to both main container and sidecar containers
-- **LinuxServer.io Support**: Full support for containers requiring elevated privileges during initialization
-
-### Version 0.0.11
-
-- **Enhanced Security Context Options**: Added configurable security settings
-  - `runAsNonRoot`: Allow or disallow running as root user
-  - `allowPrivilegeEscalation`: Control privilege escalation permissions
-  - Templates updated to use values-driven configuration instead of hardcoded settings
-
-### Version 0.0.10
-
-- **Read-Only Root Filesystem Control**: Added `readOnlyRootFilesystem` option
-  - Configurable read-only root filesystem (default: true)
-  - Essential for LinuxServer.io containers that need write access during s6-overlay initialization
-  - Templates updated to use dynamic configuration from values.yaml
