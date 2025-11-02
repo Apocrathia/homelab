@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.32"
+      version: "0.0.33"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -55,6 +55,20 @@ spec:
                 "-c",
                 "rm -f /config/qBittorrent/ipc-socket /config/qBittorrent/lockfile || true",
               ]
+
+      # qBittorrent likes to use up all of it's memory, so we need to check if it's alive.
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
 
       resources:
         requests:
