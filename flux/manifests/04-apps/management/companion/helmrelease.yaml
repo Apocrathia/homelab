@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.32"
+      version: "0.0.33"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -41,6 +41,21 @@ spec:
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
+
+      # Health check - verify web UI is accessible
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
       resources:
         requests:
           cpu: 100m
