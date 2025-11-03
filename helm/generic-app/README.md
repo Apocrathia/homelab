@@ -21,6 +21,97 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - TCP routes for additional ports
   - LoadBalancer service for direct external access with multiple ports
 
+## Values Reference
+
+All available configuration values for the chart:
+
+| Path                                           | Type   | Default                                           | Description                                               |
+| ---------------------------------------------- | ------ | ------------------------------------------------- | --------------------------------------------------------- |
+| `app.name`                                     | string | `demo-app`                                        | Application name used for resource naming                 |
+| `app.namespace`                                | string | `""`                                              | Namespace (defaults to app.name if not specified)         |
+| `app.image`                                    | string | `nginx:alpine`                                    | Container image (single value for renovate compatibility) |
+| `app.container.name`                           | string | `nginx`                                           | Container name                                            |
+| `app.container.port`                           | int    | `80`                                              | Main container port                                       |
+| `app.container.extraPorts`                     | array  | `[]`                                              | Additional container ports                                |
+| `app.container.env`                            | array  | `[]`                                              | Environment variables                                     |
+| `app.command`                                  | array  | `[]`                                              | Override default container command                        |
+| `app.args`                                     | array  | `[]`                                              | Override default container arguments                      |
+| `app.initContainers`                           | array  | `[]`                                              | Init container configurations                             |
+| `app.sidecars`                                 | array  | `[]`                                              | Sidecar container configurations                          |
+| `app.replicas`                                 | int    | `1`                                               | Number of pod replicas                                    |
+| `app.strategy`                                 | string | `Recreate`                                        | Deployment strategy (Recreate or RollingUpdate)           |
+| `app.strategy.rollingUpdate.maxSurge`          | string | `"25%"`                                           | Max surge for rolling update                              |
+| `app.strategy.rollingUpdate.maxUnavailable`    | string | `"25%"`                                           | Max unavailable for rolling update                        |
+| `app.podAntiAffinity.enabled`                  | bool   | `true`                                            | Enable pod anti-affinity                                  |
+| `app.securityContext.runAsUser`                | int    | `1000`                                            | User ID to run container as                               |
+| `app.securityContext.runAsGroup`               | int    | `1000`                                            | Group ID to run container as                              |
+| `app.securityContext.fsGroup`                  | int    | `1000`                                            | File system group ID for volumes                          |
+| `app.securityContext.fsGroupChangePolicy`      | string | `OnRootMismatch`                                  | Volume ownership change policy                            |
+| `app.securityContext.runAsNonRoot`             | bool   | `true`                                            | Require non-root user                                     |
+| `app.securityContext.allowPrivilegeEscalation` | bool   | `false`                                           | Allow privilege escalation                                |
+| `app.securityContext.readOnlyRootFilesystem`   | bool   | `true`                                            | Mount root filesystem as read-only                        |
+| `app.securityContext.capabilities.add`         | array  | `[]`                                              | Capabilities to add                                       |
+| `app.securityContext.capabilities.drop`        | array  | `["ALL"]`                                         | Capabilities to drop                                      |
+| `app.resources.requests.cpu`                   | string | `50m`                                             | CPU request                                               |
+| `app.resources.requests.memory`                | string | `64Mi`                                            | Memory request                                            |
+| `app.resources.limits.cpu`                     | string | `100m`                                            | CPU limit                                                 |
+| `app.resources.limits.memory`                  | string | `128Mi`                                           | Memory limit                                              |
+| `app.lifecycle`                                | object | `{}`                                              | Container lifecycle hooks (postStart, preStop)            |
+| `app.healthChecks.livenessProbe`               | object | `{}`                                              | Liveness probe configuration                              |
+| `app.healthChecks.readinessProbe`              | object | `{}`                                              | Readiness probe configuration                             |
+| `app.healthChecks.startupProbe`                | object | `{}`                                              | Startup probe configuration                               |
+| `app.service.type`                             | string | `ClusterIP`                                       | Service type                                              |
+| `app.service.port`                             | int    | `80`                                              | Service port                                              |
+| `app.service.targetPort`                       | int    | `80`                                              | Service target port                                       |
+| `app.service.portName`                         | string | `http`                                            | Service port name                                         |
+| `app.service.extraServicePorts`                | array  | `[]`                                              | Additional service ports                                  |
+| `app.volumes.emptyDir`                         | array  | `[]`                                              | EmptyDir volumes                                          |
+| `app.volumes.tmpfs`                            | array  | `[]`                                              | Tmpfs volumes (RAM-based)                                 |
+| `app.volumes.configMap`                        | array  | `[]`                                              | ConfigMap volumes                                         |
+| `app.volumeMounts`                             | array  | `[]`                                              | Volume mounts for pod-wide storage                        |
+| `storage.longhorn.enabled`                     | bool   | `false`                                           | Enable Longhorn storage                                   |
+| `storage.longhorn.volumes`                     | array  | `[]`                                              | Longhorn volume configurations                            |
+| `storage.smb.enabled`                          | bool   | `false`                                           | Enable SMB storage                                        |
+| `storage.smb.volumes`                          | array  | `[]`                                              | SMB volume configurations                                 |
+| `storage.emptyDir.enabled`                     | bool   | `false`                                           | Enable EmptyDir storage                                   |
+| `storage.emptyDir.volumes`                     | array  | `[]`                                              | EmptyDir volume configurations                            |
+| `secrets.enabled`                              | bool   | `true`                                            | Enable 1Password secrets integration                      |
+| `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`           | 1Password item path                                       |
+| `authentik.enabled`                            | bool   | `true`                                            | Enable Authentik SSO integration                          |
+| `authentik.displayName`                        | string | `Demo Application`                                | Display name in Authentik                                 |
+| `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`    | External URL                                              |
+| `authentik.icon`                               | string | `https://i.imgur.com/0gNsvyk.png`                 | Icon URL                                                  |
+| `authentik.openInNewTab`                       | bool   | `true`                                            | Open in new tab                                           |
+| `authentik.category`                           | string | `Applications`                                    | Category in Authentik dashboard                           |
+| `authentik.interceptHeaderAuth`                | bool   | `false`                                           | Enable header-based authentication                        |
+| `authentik.authorizationFlow`                  | string | `default-provider-authorization-implicit-consent` | Authorization flow                                        |
+| `authentik.invalidationFlow`                   | string | `default-invalidation-flow`                       | Invalidation flow                                         |
+| `authentik.authenticationFlow`                 | string | `default-authentication-flow`                     | Authentication flow                                       |
+| `authentik.authentikHost`                      | string | `https://auth.gateway.services.apocrathia.com`    | Authentik server URL                                      |
+| `authentik.authentikHostInsecure`              | bool   | `true`                                            | Allow insecure Authentik host                             |
+| `authentik.serviceConnection`                  | string | `Local Kubernetes Cluster`                        | Service connection name                                   |
+| `authentik.replicas`                           | int    | `1`                                               | Authentik outpost replicas                                |
+| `authentik.namespace`                          | string | `authentik`                                       | Namespace for outpost                                     |
+| `authentik.logLevel`                           | string | `info`                                            | Log level for outpost                                     |
+| `authentik.gateway.name`                       | string | `main-gateway`                                    | Gateway name                                              |
+| `authentik.gateway.namespace`                  | string | `cilium-system`                                   | Gateway namespace                                         |
+| `authentik.gateway.sectionName`                | string | `https`                                           | Gateway section name                                      |
+| `httproute.enabled`                            | bool   | `false`                                           | Enable HTTPRoute (only when Authentik disabled)           |
+| `httproute.hostname`                           | string | `demo.gateway.services.apocrathia.com`            | HTTPRoute hostname                                        |
+| `httproute.gateway.name`                       | string | `main-gateway`                                    | Gateway name                                              |
+| `httproute.gateway.namespace`                  | string | `cilium-system`                                   | Gateway namespace                                         |
+| `httproute.gateway.sectionName`                | string | `https`                                           | Gateway section name                                      |
+| `tcproute.enabled`                             | bool   | `false`                                           | Enable TCPRoute                                           |
+| `tcproute.routes`                              | array  | `[]`                                              | TCPRoute configurations                                   |
+| `udproute.enabled`                             | bool   | `false`                                           | Enable UDPRoute                                           |
+| `udproute.routes`                              | array  | `[]`                                              | UDPRoute configurations                                   |
+| `loadbalancer.enabled`                         | bool   | `false`                                           | Enable LoadBalancer service                               |
+| `loadbalancer.ip`                              | string | `""`                                              | Static IP for LoadBalancer                                |
+| `loadbalancer.ports`                           | array  | `[]`                                              | LoadBalancer ports                                        |
+| `loadbalancer.externalTrafficPolicy`           | string | `Local`                                           | External traffic policy (Local or Cluster)                |
+| `loadbalancer.cilium.interface`                | string | `eth0`                                            | Network interface for L2 announcements                    |
+| `loadbalancer.cilium.namespace`                | string | `cilium-system`                                   | Namespace for Cilium resources                            |
+
 ## Values Configuration
 
 ### Application Settings
