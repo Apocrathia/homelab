@@ -197,3 +197,10 @@ spec:
     serviceMonitor:
       enabled: true
       interval: 30s
+
+    # Rollout operator configuration
+    # Setting fullnameOverride ensures the certificate includes the correct service name
+    # (mimir-rollout-operator) instead of just 'rollout-operator'
+    rollout_operator:
+      enabled: true
+      fullnameOverride: mimir-rollout-operator
