@@ -176,6 +176,12 @@ spec:
         storageClassName: longhorn
         size: 20Gi
 
+    kafka:
+      persistence:
+        enabled: true
+        storageClassName: longhorn
+        size: 20Gi
+
     # Enable the proper gateway (not just nginx)
     gateway:
       enabled: true
