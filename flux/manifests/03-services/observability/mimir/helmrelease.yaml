@@ -92,6 +92,7 @@ spec:
             retention_period: 2h # Reduced from default 13h to flush blocks faster
             ship_interval: 30s # Ship blocks to S3 every 30s instead of 1m
             close_idle_tsdb_timeout: 1h # Close inactive TSDBs faster
+            wal_compression_enabled: true # Compress WAL to reduce disk usage
 
         ruler_storage:
           backend: s3
