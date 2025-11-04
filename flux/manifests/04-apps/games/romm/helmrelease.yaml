@@ -133,6 +133,10 @@ spec:
             value: "true"
           - name: SCHEDULED_RESCAN_CRON
             value: "0 22 * * *" # Daily at 10 PM
+          - name: ENABLE_RESCAN_ON_FILESYSTEM_CHANGE
+            value: "true"
+          - name: RESCAN_ON_FILESYSTEM_CHANGE_DELAY
+            value: "5" # Minutes to wait before rescan after filesystem change
           - name: ENABLE_SCHEDULED_UPDATE_SWITCH_TITLEDB
             value: "true"
           - name: SCHEDULED_UPDATE_SWITCH_TITLEDB_CRON
