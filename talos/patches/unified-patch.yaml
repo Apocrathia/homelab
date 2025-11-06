@@ -47,7 +47,7 @@ machine:
     disk: /dev/sda
     wipe: true
     # renovate: datasource=github-releases depName=siderolabs/talos
-    image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.11.3
+    image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.11.5
     # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=undefined&target=metal&version=1.11.2
   time:
     servers:
