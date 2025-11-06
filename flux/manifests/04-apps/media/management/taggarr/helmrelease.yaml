@@ -20,7 +20,7 @@ spec:
     app:
       name: taggarr
       # renovate: datasource=docker depName=docker.io/basshous3/taggarr
-      image: docker.io/basshous3/taggarr:0.4.20
+      image: docker.io/basshous3/taggarr:0.5.3
       container:
         name: taggarr
         env:
