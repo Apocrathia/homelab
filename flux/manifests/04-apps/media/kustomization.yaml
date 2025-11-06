@@ -18,6 +18,7 @@ resources:
   - management/radarr
   - management/recyclarr
   - management/sonarr
+  - management/taggarr
   - management/tautulli
   - management/tdarr
   - management/whisparr
