@@ -77,7 +77,7 @@ spec:
       extraContainers:
         - name: sidecar-blueprints
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=kiwigrid/k8s-sidecar
-          image: "ghcr.io/kiwigrid/k8s-sidecar:2.0.3"
+          image: "ghcr.io/kiwigrid/k8s-sidecar:2.1.1"
           env:
             - name: "LABEL"
               value: "authentik_blueprint"
@@ -122,7 +122,7 @@ spec:
       extraContainers:
         - name: sidecar-blueprints
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=kiwigrid/k8s-sidecar
-          image: "ghcr.io/kiwigrid/k8s-sidecar:2.0.3"
+          image: "ghcr.io/kiwigrid/k8s-sidecar:2.1.1"
           env:
             - name: "LABEL"
               value: "authentik_blueprint"
