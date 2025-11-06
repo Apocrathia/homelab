@@ -193,11 +193,6 @@ spec:
             mountPath: /romm/logs
           - name: nginx-config
             mountPath: /etc/nginx/conf.d
-        configMap:
-          - name: config
-            mountPath: /romm/config
-            readOnly: true
-            configMapName: romm-config
       volumeMounts:
         - name: resources
           mountPath: /romm/resources
@@ -205,6 +200,8 @@ spec:
           mountPath: /romm/library
         - name: assets
           mountPath: /romm/assets
+        - name: config
+          mountPath: /romm/config
 
     storage:
       longhorn:
@@ -214,6 +211,8 @@ spec:
             capacity: 10Gi
           - name: assets
             capacity: 2Gi
+          - name: config
+            capacity: 1Gi
       smb:
         enabled: true
         volumes:
