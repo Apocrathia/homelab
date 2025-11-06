@@ -1,0 +1,117 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: taggarr
+  namespace: taggarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.33"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: taggarr
+      # renovate: datasource=docker depName=docker.io/basshous3/taggarr
+      image: docker.io/basshous3/taggarr:0.4.20
+      container:
+        name: taggarr
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: START_RUNNING
+            value: "true"
+          - name: RUN_INTERVAL_SECONDS
+            value: "7200"
+          - name: QUICK_MODE
+            value: "false"
+          - name: DRY_RUN
+            value: "false"
+          - name: WRITE_MODE
+            value: "0"
+          - name: LOG_LEVEL
+            value: "DEBUG"
+          # Media library path (required) - anime directory
+          - name: ROOT_TV_PATH
+            value: "/anime"
+          # Sonarr configuration
+          - name: SONARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: taggarr-secrets
+                key: sonarr-api-key
+          - name: SONARR_URL
+            value: "http://sonarr.sonarr.svc.cluster.local"
+          # Target languages (comma-separated)
+          - name: TARGET_LANGUAGES
+            value: "english"
+          # Filter by genre (Anime)
+          - name: TARGET_GENRE
+            value: "Anime"
+          # Optional: Custom tags
+          - name: TAG_DUB
+            value: "dub"
+          - name: TAG_SEMI
+            value: "semi-dub"
+          - name: TAG_WRONG_DUB
+            value: "wrong-dub"
+          - name: ADD_TAG_TO_GENRE
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: anime
+          mountPath: /anime
+      volumes:
+        emptyDir:
+          - name: logs
+            mountPath: /logs
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: anime
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Anime"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/taggarr-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
