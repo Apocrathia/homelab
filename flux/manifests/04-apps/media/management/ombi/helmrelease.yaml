@@ -76,6 +76,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "Ombi"
       externalHost: "https://ombi.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/ombi.svg"

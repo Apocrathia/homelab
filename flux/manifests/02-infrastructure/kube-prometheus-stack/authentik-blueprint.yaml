@@ -35,7 +35,7 @@ entries:
     attrs:
       name: "Grafana"
       slug: "grafana"
-      group: "Services"
+      group: "Platform"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "grafana-proxy-provider"]]
       launch_url: "https://grafana.gateway.services.apocrathia.com"
       open_in_new_tab: true

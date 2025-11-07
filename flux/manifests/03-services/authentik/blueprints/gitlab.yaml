@@ -15,7 +15,7 @@ entries:
     attrs:
       name: "GitLab Repository"
       slug: "gitlab"
-      group: "External"
+      group: "Platform"
       meta_launch_url: "https://gitlab.com/Apocrathia/homelab"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/gitlab.svg"

@@ -45,7 +45,7 @@ entries:
       slug: "mealie"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "mealie-oidc-provider"]]
       launch_url: "https://mealie.gateway.services.apocrathia.com"
-      group: "Applications"
+      group: "Home"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/mealie.svg"
       meta_description: "Self-hosted recipe manager and meal planning application"

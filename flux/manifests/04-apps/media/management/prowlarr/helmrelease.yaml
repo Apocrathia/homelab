@@ -100,6 +100,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "Prowlarr"
       externalHost: "https://prowlarr.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg"

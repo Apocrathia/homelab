@@ -15,7 +15,7 @@ entries:
     attrs:
       name: "Home Assistant"
       slug: "home-assistant"
-      group: "External"
+      group: "Home"
       meta_launch_url: "https://home.apocrathia.com:8123"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg"

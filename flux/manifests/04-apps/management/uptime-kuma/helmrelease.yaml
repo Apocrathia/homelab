@@ -88,6 +88,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Home"
       displayName: "Uptime Kuma"
       externalHost: "https://uptime.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg"

@@ -69,6 +69,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "Huntarr"
       externalHost: "https://huntarr.gateway.services.apocrathia.com"
       icon: "https://raw.githubusercontent.com/plexguide/Huntarr.io/refs/heads/main/frontend/static/logo/Huntarr.svg"

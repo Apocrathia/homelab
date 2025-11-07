@@ -39,7 +39,7 @@ entries:
     attrs:
       name: "Kubernetes Dashboard"
       slug: "kubernetes-dashboard"
-      group: "Services"
+      group: "Platform"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kubernetes-dashboard-proxy-provider"]]
       launch_url: "https://dashboard.gateway.services.apocrathia.com"
       open_in_new_tab: true

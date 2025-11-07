@@ -93,6 +93,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "Radarr"
       externalHost: "https://radarr.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg"

@@ -30,7 +30,7 @@ entries:
     attrs:
       name: "Meshery"
       slug: "meshery-dashboard"
-      group: "Services"
+      group: "Platform"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "meshery-dashboard-proxy-provider"]]
       launch_url: "https://meshery.gateway.services.apocrathia.com"
       open_in_new_tab: true

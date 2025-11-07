@@ -15,7 +15,7 @@ entries:
     attrs:
       name: "UniFi Protect"
       slug: "unifi-protect"
-      group: "External"
+      group: "Home"
       meta_launch_url: "https://unvr.management.apocrathia.com/"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/unifi-protect.png"
