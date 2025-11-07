@@ -18,13 +18,13 @@ The dashboard now uses a secure token management system that automatically syncs
 
    - Open 1Password on your device
    - Navigate to vault `Secrets`
-   - Find item `kubernetes-dashboard-token`
+   - Find item `kubernetes-admin-token`
    - Copy the password field (this is your bearer token)
 
 2. **Alternative: Generate Token Manually**:
    ```bash
    # Copy the token to clipboard
-   kubectl -n kubernetes-dashboard create token kubernetes-dashboard-token | pbcopy
+   kubectl -n kubernetes-dashboard create token kubernetes-admin-token | pbcopy
    ```
 
 ### Using the Token
@@ -51,8 +51,7 @@ The token automatically refreshes every 24 hours for security:
 
 ## Security
 
-- **Read-only Access**: The dashboard ServiceAccount has read-only permissions (no cluster-admin)
-- **Specific Permissions**: Limited to viewing pods, services, deployments, and other resources
+- **Admin Access**: The dashboard ServiceAccount has cluster-admin permissions
 - **Token Management**: Tokens are automatically rotated every 24 hours and synced to 1Password
 - **Secure Storage**: Tokens stored in 1Password, never in git repository
 - **External Access**: All external access goes through Authentik SSO

@@ -1,78 +1,37 @@
 ---
-# Service Account for Dashboard Token Management
+# Service Account for Admin Token Management
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kubernetes-dashboard-token
+  name: kubernetes-admin-token
   namespace: kubernetes-dashboard
   labels:
-    app.kubernetes.io/name: kubernetes-dashboard
+    app.kubernetes.io/name: kubernetes-admin
     app.kubernetes.io/part-of: services
 ---
-# Read-only ClusterRole for Dashboard (much more secure than the previous admin role)
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: kubernetes-dashboard-reader
-rules:
-  # Read access to core resources
-  - apiGroups: [""]
-    resources:
-      [
-        "pods",
-        "services",
-        "endpoints",
-        "persistentvolumeclaims",
-        "configmaps",
-        "secrets",
-        "nodes",
-        "namespaces",
-      ]
-    verbs: ["get", "list", "watch"]
-  # Read access to apps resources
-  - apiGroups: ["apps"]
-    resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
-    verbs: ["get", "list", "watch"]
-  # Read access to batch resources
-  - apiGroups: ["batch"]
-    resources: ["jobs", "cronjobs"]
-    verbs: ["get", "list", "watch"]
-  # Read access to networking resources
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses", "networkpolicies"]
-    verbs: ["get", "list", "watch"]
-  # Read access to storage resources
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses", "persistentvolumes"]
-    verbs: ["get", "list", "watch"]
-  # Read access to metrics (for dashboard metrics)
-  - apiGroups: ["metrics.k8s.io"]
-    resources: ["nodes", "pods"]
-    verbs: ["get", "list"]
----
-# Bind the read-only role to the service account
+# Cluster Admin Role Binding
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubernetes-dashboard-reader
+  name: kubernetes-admin-token
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubernetes-dashboard-reader
+  name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: kubernetes-dashboard-token
+    name: kubernetes-admin-token
     namespace: kubernetes-dashboard
 ---
-# Token Secret for Dashboard Access
+# Token Secret for Admin Access
 apiVersion: v1
 kind: Secret
 metadata:
-  name: kubernetes-dashboard-token
+  name: kubernetes-admin-token
   namespace: kubernetes-dashboard
   annotations:
-    kubernetes.io/service-account.name: kubernetes-dashboard-token
+    kubernetes.io/service-account.name: kubernetes-admin-token
   labels:
-    app.kubernetes.io/name: kubernetes-dashboard
+    app.kubernetes.io/name: kubernetes-admin
     app.kubernetes.io/part-of: services
 type: kubernetes.io/service-account-token
