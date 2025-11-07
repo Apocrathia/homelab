@@ -15,7 +15,7 @@ entries:
     attrs:
       name: "Plex"
       slug: "plex"
-      group: "Applications"
+      group: "Media"
       meta_launch_url: "http://plex.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/plex.svg"

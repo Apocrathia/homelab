@@ -155,6 +155,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Home"
       displayName: "Change Detection"
       externalHost: "https://changedetection.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/changedetection.svg"

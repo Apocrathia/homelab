@@ -156,6 +156,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "Bazarr"
       externalHost: "https://bazarr.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/bazarr.svg"

@@ -52,7 +52,7 @@ entries:
     attrs:
       name: "LiteLLM"
       slug: "litellm"
-      group: "Applications"
+      group: "AI & Automation"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "litellm-proxy-provider"]]
       launch_url: "https://ai.gateway.services.apocrathia.com/ui"
       open_in_new_tab: true

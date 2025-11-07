@@ -96,6 +96,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Home"
       displayName: "Bitfocus Companion"
       externalHost: "https://companion.gateway.services.apocrathia.com"
       icon: "https://i.imgur.com/jfgH6IX.png"

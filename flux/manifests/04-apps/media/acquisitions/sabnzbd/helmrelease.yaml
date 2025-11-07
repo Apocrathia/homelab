@@ -176,6 +176,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "SABnzbd"
       externalHost: "https://sabnzbd.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sabnzbd.svg"

@@ -17,7 +17,7 @@ entries:
       slug: "proxmox"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "proxmox-oidc-provider"]]
       launch_url: "https://node-01.management.apocrathia.com:8006"
-      group: "External"
+      group: "Infrastructure"
       open_in_new_tab: true
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/proxmox.svg"
       meta_description: "Proxmox virtualization management interface"

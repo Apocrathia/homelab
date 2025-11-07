@@ -209,6 +209,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Media"
       displayName: "qBittorrent"
       externalHost: "https://qbittorrent.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg"

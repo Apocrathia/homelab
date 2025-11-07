@@ -44,7 +44,7 @@ entries:
       slug: "flyte"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "flyte-oidc-provider"]]
       launch_url: "https://flyte.gateway.services.apocrathia.com"
-      group: "Services"
+      group: "Platform"
       open_in_new_tab: true
       icon: "https://artwork.lfaidata.foundation/projects/flyte/icon/color/flyte-icon-color.png"
       meta_description: "Workflow orchestration platform for ML and data processing"

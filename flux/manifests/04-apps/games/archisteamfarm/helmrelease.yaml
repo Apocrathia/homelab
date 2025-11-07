@@ -111,6 +111,7 @@ spec:
 
     authentik:
       enabled: true
+      category: "Gaming"
       displayName: "ArchiSteamFarm"
       externalHost: "https://asf.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/archisteamfarm.png"
