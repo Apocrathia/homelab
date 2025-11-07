@@ -14,3 +14,4 @@ spec:
   dependsOn:
     - name: services-cert-manager
     - name: services-gateway
+    - name: infrastructure-longhorn

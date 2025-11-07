@@ -2,15 +2,15 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: services-postgresql
+  name: bootstrap-1password
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./flux/manifests/03-services/postgresql
+  path: ./flux/manifests/01-bootstrap/1password
   prune: true
   sourceRef:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: infrastructure-cilium
-    - name: infrastructure-longhorn
+    - name: bootstrap-flux-system
+    - name: bootstrap-helm

@@ -13,3 +13,4 @@ spec:
     name: homelab
   dependsOn:
     - name: services-gateway
+    - name: infrastructure-longhorn
