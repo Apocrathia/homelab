@@ -12,4 +12,4 @@ spec:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: infrastructure
+    - name: infrastructure-cilium
