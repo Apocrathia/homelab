@@ -33,7 +33,7 @@ The deployment follows the LinuxServer.io standard pattern:
 
 This deployment includes a Flaresolverr sidecar container for CloudFlare proxy bypass:
 
-- **Image**: `ghcr.io/flaresolverr/flaresolverr:v3.4.1`
+- **Image**: `ghcr.io/flaresolverr/flaresolverr`
 - **Port**: 8191 (internal pod communication only)
 - **Purpose**: Bypass CloudFlare protection on indexer sites
 - **Access**: Available to Prowlarr at `localhost:8191`
