@@ -49,8 +49,6 @@ spec:
           mountPath: /app/config
         - name: plugins
           mountPath: /app/plugins
-        - name: tmp
-          mountPath: /tmp
       volumes:
         emptyDir:
           - name: tmp
