@@ -26,6 +26,7 @@ spec:
     authentik:
       secret_key: file:///authentik-secrets/authentik-secret-key
       postgresql.password: file:///authentik-secrets/postgres-password
+      postgresql.disable_server_side_cursors: true
     postgresql:
       enabled: true
       auth:
