@@ -44,6 +44,28 @@ Required fields:
 - **Web UI**: `https://sabnzbd.gateway.services.apocrathia.com`
 - **Authentication**: Managed by Authentik SSO
 
+### Hostname Whitelist
+
+SABnzbd requires hostname whitelist configuration when accessed through a reverse proxy. To configure:
+
+1. Access the pod's config volume:
+
+   ```bash
+   kubectl exec -it -n sabnzbd deployment/sabnzbd -- sh
+   ```
+
+2. Edit `/config/sabnzbd.ini` and add or update the `host_whitelist` setting in the `[misc]` section:
+
+   ```ini
+   [misc]
+   host_whitelist = sabnzbd.gateway.services.apocrathia.com
+   ```
+
+3. Restart the pod to apply changes:
+   ```bash
+   kubectl rollout restart deployment/sabnzbd -n sabnzbd
+   ```
+
 ## Technical Notes
 
 ### VPN Configuration
