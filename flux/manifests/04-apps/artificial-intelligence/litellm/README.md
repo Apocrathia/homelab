@@ -9,7 +9,6 @@ Unified interface for 100+ LLMs with OpenAI proxy compatibility, allowing seamle
 - **[LiteLLM Official Documentation](https://docs.litellm.ai)** - Primary documentation source
 - **[LiteLLM GitHub Repository](https://github.com/BerriAI/litellm)** - Source code and issues
 - **[MLflow Integration](https://docs.litellm.ai/docs/observability/mlflow)** - Observability setup
-- **[Langfuse Integration](https://langfuse.com/integrations/gateways/litellm)** - Analytics integration
 
 ## Overview
 
@@ -18,7 +17,6 @@ This deployment includes:
 - Universal LLM proxy supporting 100+ providers with OpenAI-compatible API
 - PostgreSQL database for model configurations and usage tracking
 - MLflow integration for experiment tracking and observability
-- Langfuse integration for comprehensive LLM analytics
 - Master key-based API access control
 
 ## Configuration
@@ -33,8 +31,6 @@ Create a 1Password item:
 - `username`: Database and UI username (shared)
 - `password`: Database and UI password (shared)
 - `model-config`: YAML array containing the model_list configuration
-- `langfuse-public-key`: Langfuse public API key for observability
-- `langfuse-secret-key`: Langfuse secret API key for observability
 - `ollama-api-base`: Ollama API base URL for local LLM integration
 
 ### Storage

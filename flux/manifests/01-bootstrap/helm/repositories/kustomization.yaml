@@ -22,8 +22,6 @@ resources:
   - grafana.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml
-  - langflow.yaml
-  - langfuse.yaml
   - longhorn.yaml
   - metrics-server.yaml
   - minio.yaml

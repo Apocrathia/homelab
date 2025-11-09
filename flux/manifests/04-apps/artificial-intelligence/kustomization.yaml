@@ -7,8 +7,6 @@ metadata:
 
 resources:
   - guardrails-ai
-  # - langflow
-  # - langfuse
   - litellm
   - mcp-servers
   - mlflow
