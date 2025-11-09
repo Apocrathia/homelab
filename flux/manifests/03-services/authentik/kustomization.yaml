@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - secret.yaml
-  - storage.yaml
+  - postgres.yaml
   - helmrelease.yaml
   - httproute.yaml
   - rbac-sidecar.yaml

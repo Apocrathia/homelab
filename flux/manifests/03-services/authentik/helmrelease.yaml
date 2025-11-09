@@ -22,35 +22,37 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  # Pull credentials from secret
+  valuesFrom:
+    - kind: Secret
+      name: authentik-secrets
+      valuesKey: username
+      targetPath: authentik.postgresql.user
+    - kind: Secret
+      name: authentik-secrets
+      valuesKey: password
+      targetPath: authentik.postgresql.password
+    - kind: Secret
+      name: authentik-secrets
+      valuesKey: bootstrap-password
+      targetPath: authentik.bootstrap_password
+    - kind: Secret
+      name: authentik-secrets
+      valuesKey: bootstrap-email
+      targetPath: authentik.bootstrap_email
+    - kind: Secret
+      name: authentik-secrets
+      valuesKey: authentik-secret-key
+      targetPath: authentik.secret_key
   values:
     authentik:
-      secret_key: file:///authentik-secrets/authentik-secret-key
       postgresql:
-        password: file:///authentik-secrets/postgres-password
+        host: authentik-postgres-rw.authentik.svc.cluster.local
+        port: 5432
+        name: authentik
         disable_server_side_cursors: true
     postgresql:
-      enabled: true
-      auth:
-        username: authentik
-        existingSecret: authentik-secrets
-        secretKeys:
-          adminPasswordKey: postgres-password
-          userPasswordKey: postgres-password
-      primary:
-        persistence:
-          enabled: true
-          existingClaim: authentik-postgresql-data
-          storageClass: longhorn
-          size: 20Gi
-          annotations:
-            longhorn.io/volume-name: authentik-postgresql-data
-            longhorn.io/backup: "true"
-          labels:
-            app.kubernetes.io/name: authentik-postgresql
-            app.kubernetes.io/instance: authentik
-            app.kubernetes.io/component: database
-          accessModes:
-            - ReadWriteOnce
+      enabled: false
     redis:
       enabled: true
 
@@ -74,7 +76,7 @@ spec:
           mountPath: /authentik-secrets
           readOnly: true
         - name: blueprints-sidecar
-          mountPath: /blueprints
+          mountPath: /blueprints/user
           readOnly: true
       extraContainers:
         - name: sidecar-blueprints
@@ -88,10 +90,10 @@ spec:
             - name: "NAMESPACE"
               value: "ALL"
             - name: "FOLDER"
-              value: "/blueprints"
+              value: "/blueprints/user"
           volumeMounts:
             - name: blueprints-sidecar
-              mountPath: /blueprints
+              mountPath: /blueprints/user
           resources:
             requests:
               cpu: 10m
@@ -119,7 +121,7 @@ spec:
           mountPath: /authentik-secrets
           readOnly: true
         - name: blueprints-sidecar
-          mountPath: /blueprints
+          mountPath: /blueprints/user
           readOnly: true
       extraContainers:
         - name: sidecar-blueprints
@@ -133,10 +135,10 @@ spec:
             - name: "NAMESPACE"
               value: "ALL"
             - name: "FOLDER"
-              value: "/blueprints"
+              value: "/blueprints/user"
           volumeMounts:
             - name: blueprints-sidecar
-              mountPath: /blueprints
+              mountPath: /blueprints/user
           resources:
             requests:
               cpu: 10m
