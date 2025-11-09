@@ -24,7 +24,6 @@ resources:
   - 03-services/kyverno/flux-kustomization.yaml
   - 03-services/dashboard/flux-kustomization.yaml
   - 03-services/gitlab/flux-kustomization.yaml
-  - 03-services/flyte/flux-kustomization.yaml
   - 03-services/renovate/flux-kustomization.yaml
   - 03-services/toolhive/flux-kustomization.yaml
   - 03-services/tuppr/flux-kustomization.yaml

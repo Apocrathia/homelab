@@ -10,8 +10,6 @@ resources:
   - observability
   - dashboard
   - gitlab
-  # - gatekeeper
-  # - falco
   - kyverno
   - cert-manager
   - housekeeping
@@ -19,8 +17,6 @@ resources:
   # - trivy
   - toolhive
   - external-secrets
-  # - flyte
   # - chaos-mesh
-  # - meshery
   - renovate
   - tuppr
