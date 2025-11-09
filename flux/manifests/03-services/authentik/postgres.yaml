@@ -1,0 +1,42 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: authentik-postgres
+  namespace: authentik
+spec:
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 20Gi
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    # PostgreSQL configuration parameters
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: authentik
+      owner: authentik
+      secret:
+        name: authentik-secrets
