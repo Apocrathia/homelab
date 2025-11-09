@@ -19,7 +19,7 @@ resources:
   # - trivy
   - toolhive
   - external-secrets
-  - flyte
+  # - flyte
   # - chaos-mesh
   # - meshery
   - renovate
