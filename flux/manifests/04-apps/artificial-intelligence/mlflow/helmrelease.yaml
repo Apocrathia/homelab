@@ -10,7 +10,7 @@ spec:
     spec:
       chart: mlflow
       # renovate: datasource=helm registryUrl=https://community-charts.github.io/helm-charts depName=mlflow
-      version: "1.7.3"
+      version: "1.8.0"
       sourceRef:
         kind: HelmRepository
         name: community-charts
