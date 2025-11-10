@@ -429,6 +429,15 @@ authentik:
   # Enable header-based authentication for reverse proxy auth
   interceptHeaderAuth: false
 
+  # Unauthenticated paths configuration (regex patterns)
+  # Paths matching these patterns will bypass authentik authentication
+  # Example:
+  # skipPathRegex:
+  #   - "^/$"
+  #   - "^/.well-known/"
+  #   - "^/api/"
+  skipPathRegex: []
+
   # Flow configuration
   authorizationFlow: "default-provider-authorization-implicit-consent"
   invalidationFlow: "default-invalidation-flow"

@@ -32,6 +32,13 @@ data:
           intercept_header_auth: {{ .Values.authentik.interceptHeaderAuth | default false }}
           internal_host: "http://{{ .Values.app.name }}.{{ .Values.app.namespace | default .Values.app.name }}.svc.cluster.local:{{ .Values.app.service.port | default 80 }}"
           external_host: "{{ .Values.authentik.externalHost }}"
+          {{- if .Values.authentik.skipPathRegex }}
+          # Allow unauthenticated access to specified paths
+          skip_path_regex: |
+            {{- range .Values.authentik.skipPathRegex }}
+            {{ . }}
+            {{- end }}
+          {{- end }}
 
       # Application for {{ .Values.authentik.displayName }}
       - model: authentik_core.application
