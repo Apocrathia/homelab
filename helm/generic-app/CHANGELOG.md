@@ -1,6 +1,16 @@
 # Changelog
 
-## Version 0.0.33 (Latest)
+## Version 0.0.34 (Latest)
+
+- **NEW: Authentik Unauthenticated Paths Support**: Added `skipPathRegex` configuration option for bypassing authentik authentication on specific paths
+  - **Configuration**: Define regex patterns for paths that should bypass authentik authentication
+  - **Use Cases**: Perfect for API endpoints, health checks, public resources, or well-known paths
+  - **Blueprint Integration**: Automatically configures `skip_path_regex` in authentik proxy provider blueprint
+  - **Backward Compatible**: Defaults to empty array, no impact on existing deployments
+  - **Pattern Matching**: Supports multiple regex patterns for flexible path matching
+  - **Example Usage**: `skipPathRegex: ["^/$", "^/.well-known/", "^/api/", "^/v1/"]`
+
+## Version 0.0.33
 
 - **NEW: Health Check Probes**: Added optional health check probe support for main containers and sidecars
   - **Liveness Probes**: Detect if container is alive and restart if unhealthy
