@@ -5,3 +5,7 @@ metadata:
   name: changedetection-io
   labels:
     app.kubernetes.io/name: changedetection-io
+    # Privileged security context - allows SYS_ADMIN capability for sockpuppet browser
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged

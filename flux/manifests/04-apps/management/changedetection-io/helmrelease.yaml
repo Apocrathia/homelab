@@ -20,7 +20,7 @@ spec:
       name: changedetection-io
       namespace: changedetection-io
       # renovate: datasource=docker depName=lscr.io/linuxserver/changedetection.io
-      image: lscr.io/linuxserver/changedetection.io:0.50.42
+      image: lscr.io/linuxserver/changedetection.io:0.50.40
       container:
         name: changedetection-io
         port: 5000
@@ -34,7 +34,7 @@ spec:
           - name: BASE_URL
             value: "https://changedetection.gateway.services.apocrathia.com"
           - name: PLAYWRIGHT_DRIVER_URL
-            value: "ws://localhost:3000/chrome"
+            value: "ws://localhost:3000"
           - name: PLAYWRIGHT_BROWSER_TYPE
             value: "chromium"
           - name: PLAYWRIGHT_SERVICE_WORKERS
@@ -53,6 +53,12 @@ spec:
             value: "1"
           - name: DEFAULT_FETCH_BACKEND
             value: "playwright"
+          - name: PYTHONIOENCODING
+            value: "utf-8"
+          - name: LC_ALL
+            value: "C.UTF-8"
+          - name: LANG
+            value: "C.UTF-8"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -73,42 +79,34 @@ spec:
             - KILL
             - FOWNER
 
-      # Browserless Chrome sidecar for JavaScript support
+      # Sockpuppet browser sidecar for JavaScript support
       sidecars:
-        - name: browserless
-          # renovate: datasource=docker depName=ghcr.io/browserless/chrome
-          image: ghcr.io/browserless/chrome:v2.38.2
+        - name: sockpuppet
+          # renovate: datasource=docker depName=dgtlmoon/sockpuppetbrowser
+          image: dgtlmoon/sockpuppetbrowser:0.0.3
           ports:
             - containerPort: 3000
-              name: browserless
+              name: sockpuppet
           env:
-            - name: HOST
-              value: "0.0.0.0"
-            - name: PORT
-              value: "3000"
-            - name: CONCURRENT
-              value: "5"
-            - name: QUEUED
+            - name: SCREEN_WIDTH
+              value: "1920"
+            - name: SCREEN_HEIGHT
+              value: "1024"
+            - name: SCREEN_DEPTH
+              value: "16"
+            - name: MAX_CONCURRENT_CHROME_PROCESSES
               value: "10"
-            - name: TIMEOUT
-              value: "30000"
-            - name: HEALTH
-              value: "true"
-            - name: ENABLE_DEBUGGER
-              value: "false"
           volumes:
             emptyDir:
               - name: temp
                 mountPath: /tmp
-          runAsUser: 999
-          runAsGroup: 999
           securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
+            runAsNonRoot: false
+            allowPrivilegeEscalation: true
             readOnlyRootFilesystem: false
             capabilities:
-              drop:
-                - ALL
+              add:
+                - SYS_ADMIN
           resources:
             requests:
               cpu: 100m

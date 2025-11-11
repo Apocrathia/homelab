@@ -24,7 +24,7 @@ This deployment includes:
 ### Storage
 
 - **Data Volume**: 5GB Longhorn persistent volume for watch configurations and snapshots (`/datastore`)
-- **Temp Volume**: EmptyDir volume for browserless Chrome processing (`/tmp`)
+- **Temp Volume**: EmptyDir volume for sockpuppet browser processing (`/tmp`)
 
 ### Access
 
