@@ -39,6 +39,20 @@ Create a 1Password item:
 - **Plugins Volume**: 1GB Longhorn persistent volume for ASF plugins (`/app/plugins`)
 - **Temp Volume**: EmptyDir volume for temporary files (`/tmp`)
 
+### Plugins
+
+Plugins are automatically installed via an init container on each pod start. The following plugins are configured:
+
+- **FreePackages** ([Citrinate/FreePackages](https://github.com/Citrinate/FreePackages)): Finds and redeems free Steam packages
+- **ASFFreeGames** ([maxisoft/ASFFreeGames](https://github.com/maxisoft/ASFFreeGames)): Scans for free games from various sources
+
+Plugins are installed to `/app/plugins` with each plugin in its own subdirectory:
+
+- `/app/plugins/FreePackages/FreePackages.dll`
+- `/app/plugins/ASFFreeGames/ASFFreeGames.dll`
+
+The init container downloads the latest releases from GitHub and installs them automatically. Plugin updates are handled by ASF's built-in update mechanism.
+
 ### Access
 
 - **External URL**: `https://asf.gateway.services.apocrathia.com`
