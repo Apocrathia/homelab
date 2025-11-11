@@ -50,23 +50,23 @@ Files are transcoded based on intelligent thresholds:
 
 These variables are shared across all libraries and flows:
 
-| Variable                 | Value                                      | Purpose                    |
-| ------------------------ | ------------------------------------------ | -------------------------- |
-| `plex_url`               | `http://plex.plex.svc.cluster.local:32400` | Plex server URL            |
-| `plex_token`             | `[plex-token]`                             | Plex authentication token  |
-| `plex_libraryKey_movies` | `1`                                        | Plex Movies library ID     |
-| `plex_libraryKey_tv`     | `2`                                        | Plex TV Shows library ID   |
-| `plex_libraryKey_anime`  | `3`                                        | Plex Anime library ID      |
-| `tdarr_path_movies`      | `/movies`                                  | Movies volume mount path   |
-| `tdarr_path_tv`          | `/tv`                                      | TV Shows volume mount path |
-| `tdarr_path_anime`       | `/anime`                                   | Anime volume mount path    |
-| `url_radarr`             | `http://radarr.rarr.svc.cluster.local`     | Radarr service URL         |
-| `url_sonarr`             | `http://sonarr.sonarr.svc.cluster.local`   | Sonarr service URL         |
-| `url_sonarrAnime`        | `http://sonarr.sonarr.svc.cluster.local`   | Anime Sonarr service URL   |
-| `api_key_radarr`         | `[radarr-api-key]`                         | Radarr API key             |
-| `api_key_sonarr`         | `[sonarr-api-key]`                         | Sonarr API key             |
-| `api_key_sonarrAnime`    | `[sonarr-api-key]`                         | Anime Sonarr API key       |
-| `api_key_tmdb`           | `[tmdb-api-key]`                           | TMDB API key               |
+| Variable                 | Value                                    | Purpose                    |
+| ------------------------ | ---------------------------------------- | -------------------------- |
+| `plex_url`               | `http://plex.plex.svc.cluster.local`     | Plex server URL            |
+| `plex_token`             | `[plex-token]`                           | Plex authentication token  |
+| `plex_libraryKey_movies` | `1`                                      | Plex Movies library ID     |
+| `plex_libraryKey_tv`     | `2`                                      | Plex TV Shows library ID   |
+| `plex_libraryKey_anime`  | `3`                                      | Plex Anime library ID      |
+| `tdarr_path_movies`      | `/movies`                                | Movies volume mount path   |
+| `tdarr_path_tv`          | `/tv`                                    | TV Shows volume mount path |
+| `tdarr_path_anime`       | `/anime`                                 | Anime volume mount path    |
+| `url_radarr`             | `http://radarr.rarr.svc.cluster.local`   | Radarr service URL         |
+| `url_sonarr`             | `http://sonarr.sonarr.svc.cluster.local` | Sonarr service URL         |
+| `url_sonarrAnime`        | `http://sonarr.sonarr.svc.cluster.local` | Anime Sonarr service URL   |
+| `api_key_radarr`         | `[radarr-api-key]`                       | Radarr API key             |
+| `api_key_sonarr`         | `[sonarr-api-key]`                       | Sonarr API key             |
+| `api_key_sonarrAnime`    | `[sonarr-api-key]`                       | Anime Sonarr API key       |
+| `api_key_tmdb`           | `[tmdb-api-key]`                         | TMDB API key               |
 
 ### Library-Specific Variables
 
@@ -81,7 +81,7 @@ Each library (Movies, TV, Anime) has these configuration variables:
 | `enable_subs_cleaning`     | `false`    | Keep all subtitle streams      |
 | `enable_audio_transcoding` | `true`     | Convert audio formats          |
 | `enable_video_transcoding` | `true`     | Convert video codecs           |
-| `enable_notifications`     | `false`    | Disable notifications          |
+| `enable_notifications`     | `true`     | Enable notifications           |
 | `enable_control_flow`      | `true`     | Use controller flow            |
 | `quality_level`            | `20`       | CRF value for video encoding   |
 | `use_nvenc`                | `false`    | Use CPU-only encoding          |
@@ -99,7 +99,7 @@ Each library (Movies, TV, Anime) has these configuration variables:
 | `enable_subs_cleaning`     | `false`    | Keep all subtitle streams      |
 | `enable_audio_transcoding` | `true`     | Convert audio formats          |
 | `enable_video_transcoding` | `true`     | Convert video codecs           |
-| `enable_notifications`     | `false`    | Disable notifications          |
+| `enable_notifications`     | `true`     | Enable notifications           |
 | `enable_control_flow`      | `true`     | Use controller flow            |
 | `quality_level`            | `20`       | CRF value for video encoding   |
 | `use_nvenc`                | `false`    | Use CPU-only encoding          |
@@ -117,7 +117,7 @@ Each library (Movies, TV, Anime) has these configuration variables:
 | `enable_subs_cleaning`     | `false`    | Keep all subtitle streams      |
 | `enable_audio_transcoding` | `true`     | Convert audio formats          |
 | `enable_video_transcoding` | `true`     | Convert video codecs           |
-| `enable_notifications`     | `false`    | Disable notifications          |
+| `enable_notifications`     | `true`     | Enable notifications           |
 | `enable_control_flow`      | `true`     | Use controller flow            |
 | `quality_level`            | `20`       | CRF value for video encoding   |
 | `use_nvenc`                | `false`    | Use CPU-only encoding          |
