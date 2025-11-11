@@ -20,7 +20,7 @@ spec:
     app:
       name: archisteamfarm
       # renovate: datasource=docker depName=ghcr.io/justarchinet/archisteamfarm
-      image: ghcr.io/justarchinet/archisteamfarm:6.2.4.0
+      image: ghcr.io/justarchinet/archisteamfarm:6.3.0.1
       container:
         name: archisteamfarm
         port: 1242
