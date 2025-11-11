@@ -62,6 +62,7 @@ app:
   #       runAsUser: 0
   #       runAsGroup: 0
   #       runAsNonRoot: false
+  #       readOnlyRootFilesystem: false  # Required for package installation (apk, apt, etc.)
   #
   # Example VPN sidecar using init container with restartPolicy:
   # initContainers:

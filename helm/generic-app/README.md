@@ -291,6 +291,7 @@ app:
         runAsUser: 0
         runAsGroup: 0
         runAsNonRoot: false
+        readOnlyRootFilesystem: false
       resources:
         requests:
           cpu: 10m
@@ -307,6 +308,15 @@ app:
 - **File Downloads**: Download configuration files or assets
 - **Dependency Installation**: Install packages or dependencies
 - **VPN Sidecars**: Run VPN containers that need to stay running alongside the main application
+
+**Security Context Options:**
+
+Init containers can override pod-level security settings:
+
+- **`runAsUser: 0`** and **`runAsNonRoot: false`**: Run as root for operations requiring elevated privileges
+- **`readOnlyRootFilesystem: false`**: Required when installing packages (apk, apt, etc.) or writing to filesystem
+- **`allowPrivilegeEscalation`**: Control privilege escalation permissions
+- **`capabilities`**: Add or drop specific Linux capabilities
 
 **restartPolicy Feature:**
 

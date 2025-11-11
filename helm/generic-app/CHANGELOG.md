@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.34 (Latest)
+## Version 0.0.35 (Latest)
+
+- **FIXED: Init Container readOnlyRootFilesystem Support**: Added missing `readOnlyRootFilesystem` support for init container security contexts
+  - **Problem Solved**: Init containers requiring writable filesystem (e.g., for package installation) couldn't override pod-level read-only setting
+  - **Template Enhancement**: Added `readOnlyRootFilesystem` to init container securityContext template rendering
+  - **Use Cases**: Enables init containers to install packages (apk, apt, etc.), write temporary files, or perform other filesystem operations
+  - **Backward Compatible**: Existing init containers without `readOnlyRootFilesystem` continue to work with default behavior
+  - **Documentation**: Updated examples and documentation to include `readOnlyRootFilesystem` configuration
+
+## Version 0.0.34
 
 - **NEW: Authentik Unauthenticated Paths Support**: Added `skipPathRegex` configuration option for bypassing authentik authentication on specific paths
   - **Configuration**: Define regex patterns for paths that should bypass authentik authentication
