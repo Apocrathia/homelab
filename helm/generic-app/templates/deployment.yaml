@@ -114,6 +114,9 @@ spec:
             {{- if .securityContext.runAsNonRoot }}
             runAsNonRoot: {{ .securityContext.runAsNonRoot }}
             {{- end }}
+            {{- if .securityContext.readOnlyRootFilesystem }}
+            readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
+            {{- end }}
             {{- if .securityContext.allowPrivilegeEscalation }}
             allowPrivilegeEscalation: {{ .securityContext.allowPrivilegeEscalation }}
             {{- end }}
