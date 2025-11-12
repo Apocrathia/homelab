@@ -6,6 +6,7 @@ metadata:
   namespace: litellm
 spec:
   interval: 1h
+  timeout: 15m
   chart:
     spec:
       chart: litellm-helm
