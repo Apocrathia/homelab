@@ -7,7 +7,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
@@ -25,7 +26,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
@@ -43,7 +45,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
@@ -61,7 +64,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
@@ -79,7 +83,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
@@ -97,7 +102,8 @@ metadata:
 spec:
   instanceSelector:
     matchLabels:
-      app: grafana
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
   datasources:
     - datasourceName: Prometheus
       inputName: DS_PROMETHEUS
