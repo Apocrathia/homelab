@@ -31,17 +31,16 @@ spec:
                   memory: 256Mi
               command:
                 - /bin/sh
-                - -c
-                - |
-                  #!/bin/sh
-                  set -e
-
-                  # Label all nodes as control-plane
-                  CONTROL_PLANE_NODES="talos-01 talos-02 talos-03 talos-04"
-
-                  for node in $CONTROL_PLANE_NODES; do
-                    kubectl label node "$node" node-role.kubernetes.io/control-plane= --overwrite
-                  done
+                - /scripts/node-labeler.sh
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: node-labeler
+                defaultMode: 0755
 ---
 apiVersion: v1
 kind: ServiceAccount
