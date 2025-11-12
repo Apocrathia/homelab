@@ -14,9 +14,9 @@ resources:
   - cert-manager
   - housekeeping
   - postgresql
-  # - trivy
+  - trivy
   - toolhive
   - external-secrets
-  # - chaos-mesh
+  - chaos-mesh
   - renovate
   - tuppr
