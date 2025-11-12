@@ -58,7 +58,6 @@ The following chaos experiment types are enabled:
 ### Security
 
 - **Authentication Enabled**: Dashboard requires authentication
-- **RBAC**: Proper security contexts configured
 - **Admission Webhooks**: Enabled for experiment validation
 
 ### Monitoring
@@ -82,76 +81,6 @@ kubectl port-forward -n chaos-mesh svc/chaos-mesh-dashboard 2333:2333
 ```
 
 Then access at: http://localhost:2333
-
-### Authentication
-
-The Chaos Mesh dashboard requires an RBAC token for authentication (similar to Kubernetes dashboard). The RBAC configuration provides **minimal, read-only permissions** scoped to the chaos-mesh namespace.
-
-The dashboard will be available at: **https://chaos.gateway.services.apocrathia.com**
-
-#### Current RBAC Permissions
-
-The dashboard has **read-only access** to:
-
-- **Pods and namespaces** in the `chaos-mesh` namespace
-- **All Chaos Mesh CRDs** (to display and monitor experiments)
-
-This is a **reasonable security setup** for a homelab environment.
-
-#### How to Get the RBAC Token
-
-The dashboard now uses a secure token management system that automatically syncs tokens to 1Password:
-
-1. **Get Token from 1Password**:
-
-   - Open 1Password on your device
-   - Navigate to vault `Secrets`
-   - Find item `chaos-mesh-dashboard-token`
-   - Copy the password field (this is your bearer token)
-
-2. **Alternative: Generate Token Manually**:
-
-   ```bash
-   # Basic command
-   kubectl create token chaos-mesh-dashboard -n chaos-mesh
-
-   # Copy to clipboard (macOS)
-   kubectl create token chaos-mesh-dashboard -n chaos-mesh | pbcopy
-   ```
-
-#### Use in Dashboard
-
-1. Access the dashboard at https://chaos.gateway.services.apocrathia.com
-2. When prompted for authentication, select "Token"
-3. Paste the token from 1Password (or clipboard)
-
-#### Token Refresh
-
-The token automatically refreshes every 24 hours for security:
-
-- **Kubernetes**: Automatically generates a new token before expiration
-- **PushSecret**: Pushes the updated token to 1Password every 24 hours
-- **Usage**: Simply copy the latest token from the same 1Password item when needed
-
-#### Alternative: Direct Access
-
-For testing without Authentik:
-
-```bash
-kubectl port-forward -n chaos-mesh svc/chaos-dashboard 2333:2333
-```
-
-Then access at http://localhost:2333
-
-#### Security Note
-
-While this RBAC setup is reasonable for a homelab, in production you should:
-
-- Use Authentik SSO exclusively for better security
-- Implement fine-grained RBAC based on user roles
-- Consider using the Chaos Mesh API with proper authentication
-
-**The Authentik integration is the recommended approach for production use.**
 
 ## Getting Started with Chaos Experiments
 
@@ -196,8 +125,8 @@ kubectl apply -f pod-kill-demo.yaml
 
 ### 3. Monitor Experiments
 
-- **Dashboard**: Use the web UI at https://chaos.gateway.services.apocrathia.com
-  - Requires authentication: Use Authentik SSO (recommended) or RBAC token (see Authentication section)
+- **Dashboard**: Use the web UI at https://chaos-mesh.gateway.services.apocrathia.com
+  - Requires authentication: Use Authentik SSO or admin token
 - **CLI**: Check experiment status with `kubectl get podchaos -n chaos-mesh`
 - **Logs**: View controller logs with `kubectl logs -n chaos-mesh deployment/chaos-controller-manager`
 
@@ -286,6 +215,5 @@ For comprehensive documentation, visit:
 ## Security Considerations
 
 - Dashboard authentication is enabled for production security
-- RBAC should be configured for access control
 - Regular security audits of chaos experiments
 - Network policies to restrict chaos experiment scope
