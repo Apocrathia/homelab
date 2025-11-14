@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.35 (Latest)
+## Version 0.0.36 (Latest)
+
+- **CRITICAL: Fixed PersistentVolume Namespace Issue**: Removed invalid namespace field from PersistentVolume metadata
+  - **Problem Solved**: PersistentVolumes are cluster-scoped resources and cannot have a namespace field, causing Helm to silently fail creating PVs and PVCs
+  - **Impact**: Longhorn volumes were being created but PVs and PVCs were not, preventing pods from mounting storage
+  - **Template Fix**: Removed `namespace` field from PersistentVolume metadata in `storage-longhorn.yaml` template
+  - **Backward Compatible**: No changes required to existing deployments - this only affects new volume creation
+  - **Result**: Helm now successfully creates PersistentVolumes and PersistentVolumeClaims for Longhorn storage
+
+## Version 0.0.35
 
 - **FIXED: Init Container readOnlyRootFilesystem Support**: Added missing `readOnlyRootFilesystem` support for init container security contexts
   - **Problem Solved**: Init containers requiring writable filesystem (e.g., for package installation) couldn't override pod-level read-only setting
