@@ -34,6 +34,7 @@ This deployment includes:
 - `TUNARR_DATABASE_PATH`: Database storage path (default: `/config/tunarr`)
 - `TUNARR_SERVER_TRUST_PROXY`: Enable reverse proxy support (required for Authentik)
 - `TUNARR_BIND_ADDR`: Network interface binding (default: `0.0.0.0`)
+- `LOG_DIRECTORY`: Log directory path (default: `/config/tunarr/logs`)
 - `TZ`: Timezone for scheduling (default: `America/Denver`)
 
 ### Access
