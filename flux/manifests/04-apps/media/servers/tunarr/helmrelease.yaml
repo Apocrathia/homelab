@@ -27,10 +27,6 @@ spec:
         env:
           - name: TZ
             value: "America/Denver"
-          - name: HOME
-            value: "/config"
-          - name: LOG_DIRECTORY
-            value: "/config/tunarr/logs"
           - name: TUNARR_SERVER_PORT
             value: "8000"
           - name: TUNARR_DATABASE_PATH
@@ -50,12 +46,12 @@ spec:
           cpu: 4000m
           memory: 4Gi
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 0
-        runAsNonRoot: false
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: "0"
+        runAsNonRoot: "false"
         allowPrivilegeEscalation: true
-        readOnlyRootFilesystem: false
+        readOnlyRootFilesystem: "false"
       service:
         type: ClusterIP
         port: 80
@@ -64,6 +60,14 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+        - name: music
+          mountPath: /music
+        - name: anime
+          mountPath: /anime
+        - name: tv
+          mountPath: /tv
+        - name: movies
+          mountPath: /movies
       volumes:
         emptyDir:
           - name: tmp
@@ -75,6 +79,29 @@ spec:
         volumes:
           - name: config
             capacity: 10Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: music
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Music"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: anime
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Anime"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: tv
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "TV Shows"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: movies
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Movies"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
 
     secrets:
       enabled: false
