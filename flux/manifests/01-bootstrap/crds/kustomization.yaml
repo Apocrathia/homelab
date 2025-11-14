@@ -7,20 +7,20 @@ metadata:
 
 resources:
   # 1Password (managed by Helm chart)
-  # - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
+  - https://raw.githubusercontent.com/1Password/connect-helm-charts/refs/heads/main/charts/connect/crds/onepassworditem-crd.yaml
   # Prometheus (managed by Helm chart)
-  # - ./prometheus
+  - ./prometheus
   # Cilium (managed by Helm chart)
-  # - ./cilium
+  - ./cilium
   # Longhorn (managed by Helm chart)
-  # - ./longhorn
+  - ./longhorn
   # Gateway API
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
   # Kyverno (managed by Helm chart)
-  # - ./kyverno
+  - ./kyverno
   # Cert Manager (managed by Helm chart)
   # renovate: datasource=github-releases depName=cert-manager/cert-manager
-  # - https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
+  - https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
   # Fluent Operator CRDs
   - ./fluent
