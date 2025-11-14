@@ -12,5 +12,5 @@ spec:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: bootstrap-flux-system
+    - name: flux-system
     - name: bootstrap-helm
