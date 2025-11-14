@@ -6,7 +6,6 @@ metadata:
   name: root
 
 resources:
-  - 01-bootstrap/flux-system/flux-kustomization.yaml
   - 01-bootstrap/crds/flux-kustomization.yaml
   - 01-bootstrap/helm/flux-kustomization.yaml
   - 01-bootstrap/1password/flux-kustomization.yaml
