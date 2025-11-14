@@ -17,6 +17,8 @@ spec:
         name: cilium
         namespace: flux-system
       interval: 30m
+  install:
+    crds: Create
   values:
     namespaceOverride: cilium-system
 
