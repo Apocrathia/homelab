@@ -24,6 +24,8 @@ spec:
     remediation:
       retries: 3
   values:
+    crds:
+      install: true
     extraArgs:
       - --autogenInternals=false
     config:
