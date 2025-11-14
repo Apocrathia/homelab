@@ -29,6 +29,8 @@ spec:
             value: "America/Denver"
           - name: HOME
             value: "/config"
+          - name: LOG_DIRECTORY
+            value: "/config/tunarr/logs"
           - name: TUNARR_SERVER_PORT
             value: "8000"
           - name: TUNARR_DATABASE_PATH
