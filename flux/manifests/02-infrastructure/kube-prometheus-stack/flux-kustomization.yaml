@@ -12,7 +12,6 @@ spec:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: bootstrap-flux-system
     - name: bootstrap-helm
     - name: bootstrap-crds
     - name: infrastructure-longhorn
