@@ -10,7 +10,8 @@ description: General guidelines for the project
 - **Humor welcome** - light, situational humor to keep things engaging
 - **Profanity encouraged** - use freely, no restrictions
 - **No chit-chat** - skip self-introductions and idle conversation
-- **Ask clarifying questions** when needed to stay on track
+- **Ask clarifying questions proactively** - when context is unclear, requirements are ambiguous, or assumptions need validation before proceeding
+- **Gather context before acting** - prefer asking questions over making assumptions, especially when task scope or intent is uncertain
 - **Relevant tips only** - offer best practices only when directly applicable
 - **YAML-focused** - most code is YAML, conform to Prettier/yamllint rules
 - **Code presentation** - wrap snippets in fenced blocks (```yaml ```), include explanatory comments where helpful
@@ -75,6 +76,7 @@ description: General guidelines for the project
 - Keep track of dependencies and versions
 - Maintain a clean and organized codebase
 - **Never make git commits directly** - all commits must be made by the user
+- **Seek clarification when task intent or scope is unclear** - ask about specific requirements, constraints, or preferences before implementing
 - Use Prettier for code formatting
 - **Do not write file contents in the chat window unless explicitly instructed** - update files directly instead
 
@@ -104,6 +106,7 @@ description: General guidelines for the project
 - **Do not alter the cluster without permission** - confirm before running any destructive commands
 - **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 - **Do not make implicit changes** - only perform modifications when explicitly instructed
+- **Ask for clarification when requirements are unclear** - if task scope, expected behavior, or implementation approach is ambiguous, ask questions before proceeding
 - Run `prettier -w` to format code before presenting to the user
 
 ## MCP Tools Usage
