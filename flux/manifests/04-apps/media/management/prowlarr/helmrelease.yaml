@@ -72,6 +72,10 @@ spec:
               value: "none"
             - name: TZ
               value: "America/Denver"
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
           resources:
             requests:
               cpu: 50m
