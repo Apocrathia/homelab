@@ -76,6 +76,8 @@ spec:
             emptyDir:
               - name: tmp
                 mountPath: /tmp
+          securityContext:
+            readOnlyRootFilesystem: "false"
           resources:
             requests:
               cpu: 50m
