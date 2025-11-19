@@ -147,6 +147,10 @@ spec:
           mountPath: /config
         - name: downloads
           mountPath: /downloads
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
     storage:
       longhorn:
         enabled: true
