@@ -25,10 +25,6 @@ spec:
         name: whisparr
         port: 6969
         env:
-          - name: PUID
-            value: "1000"
-          - name: PGID
-            value: "1000"
           - name: TZ
             value: "America/Denver"
           - name: UMASK
@@ -44,19 +40,15 @@ spec:
           cpu: 1000m
           memory: 2Gi
       securityContext:
-        # Hotio containers need root initially to set up user/group and directories
-        runAsUser: "0"
-        runAsGroup: "0"
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
-        runAsNonRoot: "false"
-        allowPrivilegeEscalation: "true"
-        readOnlyRootFilesystem: "false"
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
         capabilities:
-          add:
-            - SETUID
-            - SETGID
-            - CHOWN
-            - DAC_OVERRIDE
+          drop:
+            - ALL
       service:
         type: ClusterIP
         port: 80

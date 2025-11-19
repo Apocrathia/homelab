@@ -25,10 +25,6 @@ spec:
         name: sabnzbd
         port: 8080
         env:
-          - name: PUID
-            value: "1000"
-          - name: PGID
-            value: "1000"
           - name: TZ
             value: "America/Denver"
           - name: UMASK_SET
@@ -47,19 +43,15 @@ spec:
           memory: 4Gi
 
       securityContext:
-        # LinuxServer.io containers need root initially for setup
-        runAsUser: "0"
-        runAsGroup: "0"
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
-        runAsNonRoot: "false"
-        allowPrivilegeEscalation: "true"
-        readOnlyRootFilesystem: "false"
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
         capabilities:
-          add:
-            - SETUID
-            - SETGID
-            - CHOWN
-            - DAC_OVERRIDE
+          drop:
+            - ALL
       #       - NET_ADMIN # Required for VPN operations
 
       # # Gluetun VPN init container (with `restartPolicy: Always` to act as sidecar)

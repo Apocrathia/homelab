@@ -25,10 +25,6 @@ spec:
         name: plex
         port: 32400
         env:
-          - name: PUID
-            value: "1000"
-          - name: PGID
-            value: "1000"
           - name: VERSION
             value: "latest"
           - name: TZ
@@ -51,23 +47,15 @@ spec:
           cpu: 2000m
           memory: 4Gi
       securityContext:
-        # LSIO containers need to run as root initially for s6-overlay, then drop to PUID/PGID
-        runAsUser: "0"
-        runAsGroup: "0"
+        runAsUser: 1000
+        runAsGroup: 1000
         fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
-        runAsNonRoot: "false"
-        allowPrivilegeEscalation: "true"
-        readOnlyRootFilesystem: "false"
-        # Add capabilities needed for s6-overlay
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
         capabilities:
-          add:
-            - SETUID
-            - SETGID
-            - CHOWN
-            - DAC_OVERRIDE
-            - KILL
-            - FOWNER
+          drop:
+            - ALL
       service:
         type: ClusterIP
         port: 80
