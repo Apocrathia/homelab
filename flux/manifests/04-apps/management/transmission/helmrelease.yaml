@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: transmission
-      # renovate: datasource=docker depName=ghcr.io/linuxserver/transmission versioning=semver-coerced
-      image: ghcr.io/linuxserver/transmission:4.0.6
+      # renovate: datasource=docker depName=ghcr.io/home-operations/transmission versioning=semver-coerced
+      image: ghcr.io/home-operations/transmission:4.0.6
       container:
         name: transmission
         port: 9091

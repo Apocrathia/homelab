@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: plex
-      # renovate: datasource=docker depName=ghcr.io/linuxserver/plex:1.42.1.10060-4e8b05daf-ls279
-      image: ghcr.io/linuxserver/plex:1.42.1.10060-4e8b05daf-ls279
+      # renovate: datasource=docker depName=ghcr.io/home-operations/plex
+      image: ghcr.io/home-operations/plex:1.42.2
       container:
         name: plex
         port: 32400

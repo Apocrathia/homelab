@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: tautulli
-      # renovate: datasource=docker depName=ghcr.io/tautulli/tautulli
-      image: ghcr.io/tautulli/tautulli:v2.16.0
+      # renovate: datasource=docker depName=ghcr.io/home-operations/tautulli
+      image: ghcr.io/home-operations/tautulli:2.16.0
       container:
         name: tautulli
         port: 8181
