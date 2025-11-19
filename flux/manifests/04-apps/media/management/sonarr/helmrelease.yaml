@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: sonarr
-      # renovate: datasource=docker depName=ghcr.io/linuxserver/sonarr
-      image: ghcr.io/linuxserver/sonarr:4.0.15.2941-ls291
+      # renovate: datasource=docker depName=ghcr.io/home-operations/sonarr
+      image: ghcr.io/home-operations/sonarr:4.0.16
       container:
         name: sonarr
         port: 8989
@@ -96,7 +96,8 @@ spec:
             readOnly: false
 
     secrets:
-      enabled: false
+      enabled: true
+      itemPath: "vaults/Secrets/items/sonarr-secrets"
 
     authentik:
       enabled: true

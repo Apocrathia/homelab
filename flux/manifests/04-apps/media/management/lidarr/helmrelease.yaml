@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: lidarr
-      # renovate: datasource=docker depName=ghcr.io/linuxserver/lidarr
-      image: ghcr.io/linuxserver/lidarr:2.13.3.4711-ls2
+      # renovate: datasource=docker depName=ghcr.io/home-operations/lidarr
+      image: ghcr.io/home-operations/lidarr:3.0.1
       container:
         name: lidarr
         port: 8686

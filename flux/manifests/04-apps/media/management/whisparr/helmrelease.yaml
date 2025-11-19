@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: whisparr
-      # renovate: datasource=docker depName=ghcr.io/hotio/whisparr
-      image: ghcr.io/hotio/whisparr:v3-3.0.1.1291
+      # renovate: datasource=docker depName=ghcr.io/home-operations/whisparr
+      image: ghcr.io/home-operations/whisparr:2.0.0
       container:
         name: whisparr
         port: 6969
