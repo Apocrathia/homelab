@@ -20,7 +20,7 @@ spec:
     app:
       name: tunarr
       # renovate: datasource=docker depName=ghcr.io/chrisbenincasa/tunarr
-      image: ghcr.io/chrisbenincasa/tunarr:0.22.14
+      image: ghcr.io/chrisbenincasa/tunarr:0.22.15
       container:
         name: tunarr
         port: 8000
