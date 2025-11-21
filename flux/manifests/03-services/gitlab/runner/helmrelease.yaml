@@ -11,7 +11,7 @@ spec:
     spec:
       chart: gitlab-runner
       # renovate: datasource=helm registryUrl=https://charts.gitlab.io depName=gitlab-runner
-      version: 0.83.0
+      version: 0.83.1
       sourceRef:
         kind: HelmRepository
         name: gitlab
