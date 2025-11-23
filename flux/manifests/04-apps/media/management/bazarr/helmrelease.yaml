@@ -65,7 +65,7 @@ spec:
       sidecars:
         - name: subgen
           # renovate: datasource=docker depName=mccloud/subgen
-          image: mccloud/subgen:2025.09.1-cpu
+          image: mccloud/subgen:2025.11.1-cpu
           ports:
             - containerPort: 9000
               name: subgen-http
