@@ -67,6 +67,15 @@ spec:
       runAsGroup: 1000
       fsGroup: 1000
 
+    # Volumes for the runner manager pod
+    volumes:
+      - name: gitlab-runner-state
+        emptyDir: {}
+
+    volumeMounts:
+      - name: gitlab-runner-state
+        mountPath: /.gitlab-runner
+
     # Resource limits and requests
     resources:
       limits:
