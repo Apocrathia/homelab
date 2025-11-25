@@ -37,6 +37,7 @@ machine:
     # Network optimizations
     net.core.somaxconn: "32768"
     net.core.netdev_max_backlog: "16384"
+    user.max_user_namespaces: "10000"
   network:
     interfaces:
       - interface: eth0
