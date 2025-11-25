@@ -18,6 +18,6 @@ entries:
       group: "Infrastructure"
       meta_launch_url: "https://diskstation.apocrathia.com:5001"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/synology.png"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/synology-dsm.svg"
       meta_description: "Synology DiskStation"
       meta_publisher: "Synology"
