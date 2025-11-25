@@ -14,6 +14,7 @@
   "flux": {
     "enabled": true
   },
+  "binarySource": "install",
   "kubernetes": {
     "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
   },
