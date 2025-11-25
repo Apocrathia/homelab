@@ -68,11 +68,11 @@ spec:
       fsGroup: 1000
 
     # Volumes for the runner manager pod
-    volumes:
+    extraVolumes:
       - name: gitlab-runner-state
         emptyDir: {}
 
-    volumeMounts:
+    extraVolumeMounts:
       - name: gitlab-runner-state
         mountPath: /.gitlab-runner
 
