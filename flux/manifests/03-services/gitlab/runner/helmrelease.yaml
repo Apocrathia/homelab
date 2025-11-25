@@ -63,7 +63,7 @@ spec:
 
     # Pod security context
     podSecurityContext:
-      runAsUser: 100
+      runAsUser: 1000
       fsGroup: 65533
 
     # Resource limits and requests
