@@ -64,7 +64,8 @@ spec:
     # Pod security context
     podSecurityContext:
       runAsUser: 1000
-      fsGroup: 65533
+      runAsGroup: 1000
+      fsGroup: 1000
 
     # Resource limits and requests
     resources:
@@ -101,6 +102,7 @@ spec:
             [runners.kubernetes.pod_security_context]
             run_as_non_root = true
             run_as_user = 1000
+            run_as_group = 1000
             fs_group = 1000
 
             [runners.kubernetes.container_security_context]
