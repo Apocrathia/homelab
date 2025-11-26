@@ -25,6 +25,8 @@ dist/
 build/
 *.log
 
+__pycache__/
+
 # Environment files
 .env
 .env.*
