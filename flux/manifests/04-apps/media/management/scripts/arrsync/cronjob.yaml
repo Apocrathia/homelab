@@ -1,0 +1,123 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: arrsync
+  namespace: arrsync
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: install-deps
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14
+              command:
+                - pip
+                - install
+                - --no-cache-dir
+                - --target=/deps
+                - -r
+                - /scripts/requirements.txt
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          containers:
+            - name: arrsync
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14
+              command:
+                - python
+                - /scripts/arrsync.py
+                - all
+              env:
+                - name: PYTHONPATH
+                  value: "/deps"
+                - name: SONARR_URL
+                  value: "http://sonarr.sonarr.svc.cluster.local"
+                - name: SONARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: arrsync-secrets
+                      key: sonarr-api-key
+                - name: RADARR_URL
+                  value: "http://radarr.radarr.svc.cluster.local"
+                - name: RADARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: arrsync-secrets
+                      key: radarr-api-key
+                - name: LIDARR_URL
+                  value: "http://lidarr.lidarr.svc.cluster.local"
+                - name: LIDARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: arrsync-secrets
+                      key: lidarr-api-key
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: arrsync-scripts
+                defaultMode: 0755
+            - name: deps
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
