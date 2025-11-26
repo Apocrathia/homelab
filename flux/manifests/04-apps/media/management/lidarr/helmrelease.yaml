@@ -89,3 +89,5 @@ spec:
       displayName: "Lidarr"
       externalHost: "https://lidarr.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/lidarr.svg"
+      skipPathRegex:
+        - "^/api/"
