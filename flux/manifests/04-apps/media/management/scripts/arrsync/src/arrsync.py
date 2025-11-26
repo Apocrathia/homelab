@@ -171,9 +171,14 @@ class ArrClient(ABC):
             if state == "completed":
                 return True
             elif state in ("failed", "aborted"):
-                logger.error(
-                    f"Command {command_id} {state}: {status.get('message', 'Unknown error')}"
-                )
+                error_msg = status.get("message", "Unknown error")
+                exception = status.get("exception", "")
+                if exception:
+                    # Extract the main error message from exception (first line)
+                    exception_lines = exception.split("\n")
+                    if exception_lines:
+                        error_msg = f"{error_msg}: {exception_lines[0]}"
+                logger.error(f"Command {command_id} {state}: {error_msg}")
                 return False
 
             time.sleep(2)
@@ -404,10 +409,10 @@ class LidarrClient(ArrClient):
 
     Lidarr uses API v1 (different from Sonarr/Radarr v3). Endpoints:
     - GET /api/v1/artist - List all artists
-    - POST /api/v1/command - Execute commands (RefreshArtist, RenameTracks)
+    - POST /api/v1/command - Execute commands (RefreshArtist, RenameFiles)
 
-    Note: Lidarr command format differs slightly - RefreshArtist uses "artistId"
-    (singular) while RenameTracks uses "artistIds" (plural).
+    Note: Lidarr command format differs - RefreshArtist uses "artistId" (singular),
+    while RenameFiles requires fetching track files first and using "files" parameter.
     """
 
     def __init__(self, url: str, api_key: str, dry_run: bool = False):
@@ -447,17 +452,35 @@ class LidarrClient(ArrClient):
         """
         Rename all track files for an artist.
 
-        Command: RenameTracks
+        Command: RenameFiles
         - Renames track files according to configured naming scheme
         - Updates paths if necessary
 
-        Note: Despite the command name, this renames files for the specified artist(s).
+        Note: Lidarr's RenameFiles command requires both files (track file IDs) and
+        artistId parameters. We get all track files for the artist first.
         """
-        command = {"name": "RenameTracks", "artistIds": [item_id]}
-        result = self._post_command(command)
-        if result is None:
-            return True  # dry-run
-        return self._wait_for_command(result["id"])
+        # Get all track files for this artist
+        try:
+            track_files = self._get(f"trackfile?artistId={item_id}")
+            if not track_files:
+                logger.debug(f"[{self.config.name}] No track files found for artist {item_id}, skipping rename")
+                return True  # No files to rename, consider it successful
+
+            # Extract track file IDs
+            track_file_ids = [tf["id"] for tf in track_files if "id" in tf]
+            if not track_file_ids:
+                logger.debug(f"[{self.config.name}] No track file IDs found for artist {item_id}, skipping rename")
+                return True
+
+            # RenameFiles command requires both files and artistId parameters
+            command = {"name": "RenameFiles", "files": track_file_ids, "artistId": item_id}
+            result = self._post_command(command)
+            if result is None:
+                return True  # dry-run
+            return self._wait_for_command(result["id"])
+        except Exception as e:
+            logger.error(f"[{self.config.name}] Error getting track files for rename: {e}")
+            return False
 
     def _get_item_name(self, item: dict[str, Any]) -> str:
         """Extract artist name from Lidarr artist object."""
