@@ -68,13 +68,19 @@ spec:
       fsGroup: 1000
 
     # Volumes for the runner manager pod
-    extraVolumes:
+    # Note: Chart uses 'volumes' and 'volumeMounts', not 'extraVolumes'/'extraVolumeMounts'
+    volumes:
       - name: gitlab-runner-state
         emptyDir: {}
 
-    extraVolumeMounts:
+    volumeMounts:
       - name: gitlab-runner-state
         mountPath: /.gitlab-runner
+
+    # Pre-entrypoint script to ensure state directory exists
+    # fsGroup: 1000 will automatically set ownership of the emptyDir volume
+    preEntrypointScript: |
+      mkdir -p /.gitlab-runner
 
     # Resource limits and requests
     resources:
