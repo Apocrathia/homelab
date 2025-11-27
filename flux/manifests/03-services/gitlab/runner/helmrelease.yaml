@@ -120,6 +120,13 @@ spec:
             run_as_group = 1000
             fs_group = 1000
 
+            # Build container security context - privileged mode required for buildah user namespaces
+            [runners.kubernetes.build_container_security_context]
+            privileged = true
+            allow_privilege_escalation = true
+            read_only_root_filesystem = false
+
+            # Default container security context (for helper/service containers)
             [runners.kubernetes.container_security_context]
             allow_privilege_escalation = false
             privileged = false
@@ -127,10 +134,6 @@ spec:
 
             [runners.kubernetes.container_security_context.capabilities]
             drop = ["ALL"]
-            # Add SYS_ADMIN capability to allow user namespace creation for buildah
-            # This is required even with BUILDAH_ISOLATION=chroot as buildah may
-            # still attempt user namespace operations during storage initialization
-            add = ["SYS_ADMIN"]
 
             [[runners.kubernetes.volumes.empty_dir]]
               name = "git-config"
