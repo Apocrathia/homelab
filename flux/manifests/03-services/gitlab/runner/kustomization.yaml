@@ -8,4 +8,28 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
+  - docker-externalsecret.yaml
   - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: gitlab-runner-config
+    namespace: gitlab-runner
+    files:
+      - config.toml
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: gitlab-runner-config
+      fieldPath: data.[config.toml]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: gitlab-runner
+        fieldPaths:
+          - spec.values.runners.config
+        options:
+          create: true
