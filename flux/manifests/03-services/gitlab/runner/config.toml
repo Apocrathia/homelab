@@ -1,0 +1,50 @@
+[[runners]]
+  executor = "kubernetes"
+  environment = ["FF_USE_LEGACY_KUBERNETES_EXECUTION_STRATEGY=1", "HOME=/home/gitlab-runner"]
+  [runners.kubernetes]
+    namespace = "{{.Release.Namespace}}"
+    image = "alpine:latest"
+    privileged = false
+    service_account = "gitlab-runner"
+    poll_timeout = 600
+    resource_limits = ["cpu=4", "memory=8Gi"]
+    resource_requests = ["cpu=1", "memory=1Gi"]
+    # renovate: datasource=docker registryUrl=https://registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
+    helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.10.0"
+    helper_image_flavor = "alpine"
+    cpu_limit = "4"
+    memory_limit = "8Gi"
+    cpu_request = "1"
+    memory_request = "1Gi"
+
+    [runners.kubernetes.pod_security_context]
+    run_as_non_root = true
+    run_as_user = 1000
+    run_as_group = 1000
+    fs_group = 1000
+
+    # Build container security context - privileged mode required for buildah user namespaces
+    [runners.kubernetes.build_container_security_context]
+    privileged = true
+    allow_privilege_escalation = true
+    read_only_root_filesystem = false
+
+    # Default container security context (for helper/service containers)
+    [runners.kubernetes.container_security_context]
+    allow_privilege_escalation = false
+    privileged = false
+    read_only_root_filesystem = false
+
+    [runners.kubernetes.container_security_context.capabilities]
+    drop = ["ALL"]
+
+    [[runners.kubernetes.volumes.empty_dir]]
+      name = "git-config"
+      mount_path = "/home/gitlab-runner"
+      medium = "Memory"
+
+    # Docker Hub image pull secret to avoid rate limits
+    image_pull_secrets = ["docker-io-imagepullsecret"]
+
+  [runners.custom_build_dir]
+    enabled = true
