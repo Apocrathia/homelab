@@ -54,6 +54,18 @@
     },
     {
       "customType": "regex",
+      "description": "GitLab Runner helper image in config.toml",
+      "managerFilePatterns": [
+        "/^flux/manifests/03-services/gitlab/runner/config\\.toml$/"
+      ],
+      "datasourceTemplate": "docker",
+      "matchStrings": [
+        "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^\"'\\s]+)[\"']"
+      ],
+      "extractVersionTemplate": "^x86_64-v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
       "description": "Flux and other dependencies",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "matchStrings": [
