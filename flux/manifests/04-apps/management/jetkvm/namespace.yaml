@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jetkvm
+  labels:
+    app.kubernetes.io/name: jetkvm
+    app.kubernetes.io/part-of: jetkvm

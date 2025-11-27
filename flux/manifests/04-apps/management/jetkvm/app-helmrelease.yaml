@@ -1,0 +1,221 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jetkvm-app
+  namespace: jetkvm
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+
+  values:
+    app:
+      name: jetkvm-app
+      namespace: jetkvm
+
+      # Nginx to serve static files
+      image: nginx:alpine
+
+      container:
+        name: nginx
+        port: 80
+
+      # Init containers: build frontend and setup nginx config
+      initContainers:
+        - name: build-frontend
+          image: node:22
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              REPO_URL="https://github.com/jetkvm/kvm.git"
+              REPO_DIR="/build"
+              BUILD_DIR="/build/ui"
+              DIST_DIR="/build/ui/dist"
+              HTML_DIR="/usr/share/nginx/html"
+
+              # Set HOME to a writable directory for git config
+              export HOME="$REPO_DIR"
+              # Configure git to trust the repository directory
+              git config --global --add safe.directory "$REPO_DIR"
+
+              # Note: Running as root (UID 0) required for git operations and npm install
+
+              # Check if repo exists and is valid
+              if [ -d "$REPO_DIR/.git" ]; then
+                echo "Repository exists, checking for updates..."
+                cd "$REPO_DIR"
+                git fetch origin
+                LOCAL=$(git rev-parse HEAD)
+                REMOTE=$(git rev-parse origin/HEAD)
+
+                if [ "$LOCAL" = "$REMOTE" ] && [ -d "$DIST_DIR" ] && [ "$(ls -A $DIST_DIR)" ]; then
+                  echo "Already on latest commit with built assets, skipping rebuild..."
+                  cp -r "$DIST_DIR"/* "$HTML_DIR"/
+                  echo "Assets copied, build complete."
+                  exit 0
+                fi
+
+                echo "Updates available or missing build, updating repository..."
+                git pull --depth 1 origin HEAD || git reset --hard origin/HEAD
+              else
+                echo "Repository not found, cloning..."
+                # Clone to temp location inside the volume, then move to avoid permission issues
+                TEMP_DIR="${REPO_DIR}/.tmp"
+                git clone --depth 1 "$REPO_URL" "$TEMP_DIR"
+                # Move contents from temp to target
+                mkdir -p "$REPO_DIR"
+                mv "$TEMP_DIR"/* "$TEMP_DIR"/.git "$REPO_DIR"/ 2>/dev/null || true
+                rmdir "$TEMP_DIR" 2>/dev/null || true
+              fi
+
+              echo "Installing dependencies..."
+              cd "$BUILD_DIR"
+              npm ci
+
+              echo "Building production assets..."
+              VITE_CLOUD_API="https://jetkvm.gateway.services.apocrathia.com" npm run build:prod
+
+              echo "Copying built assets to nginx html directory..."
+              cp -r "$DIST_DIR"/* "$HTML_DIR"/
+
+              echo "Build complete."
+          volumeMounts:
+            - name: nginx-html
+              mountPath: /usr/share/nginx/html
+            - name: build-cache
+              mountPath: /build
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+        - name: setup-nginx-config
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cat > /etc/nginx/conf.d/default.conf << 'EOF'
+              server {
+                  listen 80;
+                  server_name _;
+                  root /usr/share/nginx/html;
+                  index index.html;
+
+                  # SPA routing: try files, then fall back to index.html
+                  location / {
+                      try_files $uri $uri/ /index.html;
+                  }
+
+                  # Cache static assets
+                  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                      expires 1y;
+                      add_header Cache-Control "public, immutable";
+                  }
+              }
+              EOF
+              echo "Nginx config written."
+          volumeMounts:
+            - name: nginx-config-dest
+              mountPath: /etc/nginx/conf.d
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+
+      replicas: 1
+
+      # Security context for nginx
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+
+      # Resources
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+      # Health checks
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+      # Service configuration
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+
+      # Volumes
+      # nginx-html and nginx-config-dest use emptyDir (no persistence needed)
+      # build-cache uses Longhorn PVC for persistence (see storage section)
+      volumes:
+        emptyDir:
+          - name: nginx-html
+            mountPath: /usr/share/nginx/html
+          - name: nginx-config-dest
+            mountPath: /etc/nginx/conf.d
+        tmpfs:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /var/run
+
+    # Disable secrets from chart
+    secrets:
+      enabled: false
+
+    # Disable authentik
+    authentik:
+      enabled: false
+
+    # Disable HTTPRoute (using custom route)
+    httproute:
+      enabled: false
+
+    # Persistent storage for build cache
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: build-cache
+            capacity: 5Gi

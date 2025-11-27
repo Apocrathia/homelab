@@ -10,6 +10,7 @@ resources:
   - companion
   - fluentbit
   - grocy
+  - jetkvm
   - mealie
   - n8n
   - transmission
