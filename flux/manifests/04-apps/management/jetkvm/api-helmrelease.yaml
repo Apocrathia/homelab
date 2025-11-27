@@ -43,7 +43,7 @@ spec:
       namespace: jetkvm
 
       # Base image for Node.js runtime
-      image: node:22
+      image: node:24
 
       container:
         name: api
@@ -85,7 +85,7 @@ spec:
       # Init containers: clone repo, install deps, run migrations
       initContainers:
         - name: clone-and-build
-          image: node:22
+          image: node:24
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -158,7 +158,7 @@ spec:
               memory: 1Gi
 
         - name: run-migrations
-          image: node:22
+          image: node:24
           command: ["/bin/bash", "-c"]
           args:
             - |

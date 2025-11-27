@@ -29,7 +29,7 @@ spec:
       # Init containers: build frontend and setup nginx config
       initContainers:
         - name: build-frontend
-          image: node:22
+          image: node:24
           command: ["/bin/bash", "-c"]
           args:
             - |
