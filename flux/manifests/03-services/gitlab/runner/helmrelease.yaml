@@ -121,6 +121,10 @@ spec:
 
             [runners.kubernetes.container_security_context.capabilities]
             drop = ["ALL"]
+            # Add SYS_ADMIN capability to allow user namespace creation for buildah
+            # This is required even with BUILDAH_ISOLATION=chroot as buildah may
+            # still attempt user namespace operations during storage initialization
+            add = ["SYS_ADMIN"]
 
             [[runners.kubernetes.volumes.empty_dir]]
               name = "git-config"
