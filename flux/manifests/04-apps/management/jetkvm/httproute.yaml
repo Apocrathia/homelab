@@ -1,0 +1,92 @@
+---
+# Custom HTTPRoute for path-based routing to API and frontend
+# Routes:
+#   API endpoints -> jetkvm-api:3000
+#   Frontend SPA  -> jetkvm-app:80
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: jetkvm
+  namespace: jetkvm
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: https
+  hostnames:
+    - jetkvm.gateway.services.apocrathia.com
+  rules:
+    # Route WebSocket connections to API (devices connect to /, clients to /webrtc/signaling/client)
+    # This must come before the catch-all / rule
+    - matches:
+        - path:
+            type: Exact
+            value: /
+          headers:
+            - type: Exact
+              name: Upgrade
+              value: websocket
+        - path:
+            type: PathPrefix
+            value: /webrtc/signaling/client
+          headers:
+            - type: Exact
+              name: Upgrade
+              value: websocket
+      backendRefs:
+        - name: jetkvm-api
+          port: 3000
+          weight: 1
+
+    # Route browser requests for /devices/* to frontend (for SPA routes like /devices/:id/setup)
+    # This must come before the API /devices rule
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /devices/
+          headers:
+            - type: RegularExpression
+              name: Accept
+              value: "text/html.*"
+      backendRefs:
+        - name: jetkvm-app
+          port: 80
+          weight: 1
+
+    # Route API endpoints to API service
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /me
+        - path:
+            type: Exact
+            value: /devices
+        - path:
+            type: PathPrefix
+            value: /devices/token
+        - path:
+            type: PathPrefix
+            value: /devices/
+        - path:
+            type: PathPrefix
+            value: /webrtc
+        - path:
+            type: PathPrefix
+            value: /oidc
+        - path:
+            type: Exact
+            value: /logout
+      backendRefs:
+        - name: jetkvm-api
+          port: 3000
+          weight: 1
+
+    # Catch-all route to frontend SPA (must be last)
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: jetkvm-app
+          port: 80
+          weight: 1

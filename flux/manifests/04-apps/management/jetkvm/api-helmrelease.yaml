@@ -1,0 +1,283 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jetkvm-api
+  namespace: jetkvm
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+
+  # Pull secrets from 1Password
+  valuesFrom:
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: username
+      targetPath: app.container.env[0].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: password
+      targetPath: app.container.env[1].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: google-client-id
+      targetPath: app.container.env[2].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: google-client-secret
+      targetPath: app.container.env[3].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: cookie-secret
+      targetPath: app.container.env[4].value
+
+  values:
+    app:
+      name: jetkvm-api
+      namespace: jetkvm
+
+      # Base image for Node.js runtime
+      image: node:22
+
+      container:
+        name: api
+        port: 3000
+        # Environment variables - secrets are injected via valuesFrom
+        # Index 0-4 are reserved for secrets (username, password, google-client-id, google-client-secret, cookie-secret)
+        env:
+          - name: DB_USERNAME
+            value: "" # Injected from secret
+          - name: DB_PASSWORD
+            value: "" # Injected from secret
+          - name: GOOGLE_CLIENT_ID
+            value: "" # Injected from secret
+          - name: GOOGLE_CLIENT_SECRET
+            value: "" # Injected from secret
+          - name: COOKIE_SECRET
+            value: "" # Injected from secret
+          # Static environment variables
+          - name: API_HOSTNAME
+            value: "https://jetkvm.gateway.services.apocrathia.com"
+          - name: APP_HOSTNAME
+            value: "https://jetkvm.gateway.services.apocrathia.com"
+          - name: CORS_ORIGINS
+            value: "https://jetkvm.gateway.services.apocrathia.com"
+          - name: REAL_IP_HEADER
+            value: "X-Forwarded-Host"
+          - name: NODE_ENV
+            value: "production"
+
+      # Override command to run the app from the shared volume
+      # Construct DATABASE_URL from individual env vars since Kubernetes doesn't expand variables
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          export DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@jetkvm-postgres-rw.jetkvm.svc.cluster.local:5432/jetkvm"
+          cd /app &&
+          node dist/index.js
+
+      # Init containers: clone repo, install deps, run migrations
+      initContainers:
+        - name: clone-and-build
+          image: node:22
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              REPO_URL="https://github.com/jetkvm/cloud-api.git"
+              REPO_DIR="/app"
+              DIST_DIR="/app/dist"
+
+              # Set HOME to a writable directory for git config
+              export HOME="$REPO_DIR"
+              # Configure git to trust the repository directory
+              git config --global --add safe.directory "$REPO_DIR"
+
+              # Note: Running as root (UID 0) required for git operations and npm install
+
+              # Check if repo exists and is valid
+              if [ -d "$REPO_DIR/.git" ]; then
+                echo "Repository exists, checking for updates..."
+                cd "$REPO_DIR"
+                git fetch origin
+                LOCAL=$(git rev-parse HEAD)
+                REMOTE=$(git rev-parse origin/HEAD)
+
+                if [ "$LOCAL" = "$REMOTE" ] && [ -d "$DIST_DIR" ] && [ -f "$DIST_DIR/index.js" ]; then
+                  echo "Already on latest commit with built assets, skipping rebuild..."
+                  echo "Pruning dev dependencies..."
+                  npm prune --production
+                  echo "Build complete."
+                  exit 0
+                fi
+
+                echo "Updates available or missing build, updating repository..."
+                git pull --depth 1 origin HEAD || git reset --hard origin/HEAD
+              else
+                echo "Repository not found, cloning..."
+                # Clone to temp location inside the volume, then move to avoid permission issues
+                TEMP_DIR="${REPO_DIR}/.tmp"
+                git clone --depth 1 "$REPO_URL" "$TEMP_DIR"
+                # Move contents from temp to target
+                mkdir -p "$REPO_DIR"
+                mv "$TEMP_DIR"/* "$TEMP_DIR"/.git "$REPO_DIR"/ 2>/dev/null || true
+                rmdir "$TEMP_DIR" 2>/dev/null || true
+              fi
+
+              echo "Installing dependencies..."
+              cd "$REPO_DIR"
+              npm ci
+
+              echo "Building TypeScript..."
+              npm run build
+
+              echo "Pruning dev dependencies..."
+              npm prune --production
+
+              echo "Clone and build complete."
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+        - name: run-migrations
+          image: node:22
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Running Prisma migrations..."
+              cd /app
+              export DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@jetkvm-postgres-rw.jetkvm.svc.cluster.local:5432/jetkvm"
+              npx prisma migrate deploy
+              echo "Migrations complete."
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: jetkvm-secrets
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jetkvm-secrets
+                  key: password
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      replicas: 1
+
+      # Security context - run as non-root
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+
+      # Resources
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      # Health checks
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+      # Service configuration
+      service:
+        type: ClusterIP
+        port: 3000
+        targetPort: 3000
+        portName: http
+
+      # Volume for app source (shared between init containers and main container)
+      # Using Longhorn PVC for build cache persistence
+      volumes:
+        emptyDir: []
+
+      # Volume mount for main container to access app source
+      volumeMounts:
+        - name: app-source
+          mountPath: /app
+
+    # Disable secrets from chart (using 1Password)
+    secrets:
+      enabled: false
+
+    # Disable authentik (JetKVM uses Google OAuth)
+    authentik:
+      enabled: false
+
+    # Disable HTTPRoute (using custom route for path-based routing)
+    httproute:
+      enabled: false
+
+    # Persistent storage for build cache
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: app-source
+            capacity: 5Gi

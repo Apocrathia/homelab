@@ -1,0 +1,15 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: jetkvm-postgres
+  namespace: jetkvm
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: jetkvm-postgres
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

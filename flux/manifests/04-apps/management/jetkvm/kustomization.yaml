@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: jetkvm
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - postgres.yaml
+  - podmonitor.yaml
+  - api-helmrelease.yaml
+  - app-helmrelease.yaml
+  - httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Authentik blueprint as ConfigMap
+configMapGenerator:
+  - name: authentik-blueprint-jetkvm
+    namespace: authentik
+    files:
+      - jetkvm.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

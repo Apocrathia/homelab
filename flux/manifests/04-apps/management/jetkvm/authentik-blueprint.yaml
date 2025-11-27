@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# Dashboard shortcut only - JetKVM uses Google OAuth for authentication
+version: 1
+metadata:
+  name: jetkvm
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for JetKVM (link only, no authentication proxy)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "jetkvm"
+    attrs:
+      name: "JetKVM"
+      slug: "jetkvm"
+      group: "Infrastructure"
+      # No provider - this is just a dashboard link
+      meta_launch_url: "https://jetkvm.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jetkvm.png"
+      meta_description: "JetKVM Cloud Dashboard - KVM-over-IP management"
+      meta_publisher: "JetKVM"
