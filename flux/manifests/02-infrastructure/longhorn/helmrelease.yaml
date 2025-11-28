@@ -55,6 +55,7 @@ spec:
       # Storage settings
       storageOverProvisioningPercentage: "100"
       storageMinimalAvailablePercentage: "25"
+      defaultDataLocality: "strict-local" # Store replicas on the same node as the pod
 
       # Engine and replica settings
       engineReplicaTimeout: "8" # 8 seconds timeout
@@ -88,7 +89,7 @@ spec:
       defaultClass: true
       defaultFsType: ext4
       defaultClassReplicaCount: 2 # Match the defaultReplicaCount
-      defaultDataLocality: disabled
+      defaultDataLocality: "strict-local" # Store replicas on the same node as the pod (CRD supports this despite docs only listing disabled/best-effort)
       reclaimPolicy: Delete
       volumeBindingMode: "Immediate"
       migratable: false
