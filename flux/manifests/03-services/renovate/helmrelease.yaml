@@ -67,6 +67,14 @@ spec:
       logLevel: "info"
       logFormat: "json"
 
+    # Configuration file location
+    # Use the mounted config file instead of looking in the repository
+    extraEnv:
+      - name: RENOVATE_CONFIG_FILE
+        value: "/usr/src/app/renovate.json"
+      - name: RENOVATE_ONBOARDING
+        value: "false"
+
     # Cache persistence
     cachePersistence:
       enabled: true
