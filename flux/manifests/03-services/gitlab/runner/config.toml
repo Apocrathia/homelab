@@ -44,7 +44,14 @@
       medium = "Memory"
 
     # Docker Hub image pull secret to avoid rate limits
+    # This helps Kubernetes pull pod images
     image_pull_secrets = ["docker-io-imagepullsecret"]
+
+    # Mount Docker Hub secret so buildah can authenticate when pulling base images
+    # The secret is a dockerconfigjson type, mounted so buildah can read credentials
+    [[runners.kubernetes.volumes.secret]]
+      name = "docker-io-imagepullsecret"
+      mount_path = "/secrets/docker-io-imagepullsecret"
 
   [runners.custom_build_dir]
     enabled = true
