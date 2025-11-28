@@ -86,5 +86,7 @@
   "commitMessagePrefix": "chore(deps):",
   "rebaseWhen": "behind-base-branch",
   "platformAutomerge": true,
-  "automergeType": "pr"
+  "automergeType": "pr",
+  "onboarding": false,
+  "requireConfig": "optional"
 }
