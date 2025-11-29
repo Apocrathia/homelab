@@ -97,6 +97,10 @@ spec:
       disableRevisionCounter: "true"
       unmapMarkSnapChainRemoved: ignored
       dataEngine: v1
+      # Configure recurring job selector to automatically label all new volumes
+      recurringJobSelector:
+        enable: true
+        jobList: '[{"name":"snapshot-delete","isGroup":false}]'
 
     longhornUI:
       replicas: 2
