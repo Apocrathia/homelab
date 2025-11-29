@@ -70,6 +70,7 @@ spec:
       autoCleanupSystemGeneratedSnapshot: true
       autoCleanupRecurringJobBackupSnapshot: true
       removeSnapshotsDuringFilesystemTrim: true
+      snapshotMaxCount: "5" # Limit snapshots per volume (default 250 is too high, prevents accumulation)
 
       # Node and disk settings
       disableSchedulingOnCordonedNode: true # Don't schedule on cordoned nodes

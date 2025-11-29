@@ -40,3 +40,17 @@ spec:
     - default
   retain: 3
   concurrency: 2
+---
+# Daily snapshot cleanup to remove system-generated snapshots
+# This prevents accumulation of snapshots that weren't cleaned up automatically
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: snapshot-cleanup
+  namespace: longhorn-system
+spec:
+  cron: "@daily"
+  task: "snapshot-cleanup"
+  groups:
+    - default
+  concurrency: 2
