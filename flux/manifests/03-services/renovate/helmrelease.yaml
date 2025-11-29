@@ -133,3 +133,13 @@ spec:
 
     # Termination grace period
     terminationGracePeriodSeconds: 60
+
+    # Additional volumes for read-only filesystem
+    # Mount emptyDir for entire /tmp directory to allow app to create subdirectories
+    extraVolumes:
+      - name: tmp
+        emptyDir: {}
+
+    extraVolumeMounts:
+      - name: tmp
+        mountPath: /tmp
