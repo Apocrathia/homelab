@@ -54,3 +54,18 @@ spec:
   groups:
     - default
   concurrency: 2
+---
+# Snapshot deletion to enforce retention policy (keep only 5 most recent)
+# This deletes old snapshots beyond the retention limit
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: snapshot-delete
+  namespace: longhorn-system
+spec:
+  cron: "0 */6 * * *" # Run every 6 hours
+  task: "snapshot-delete"
+  groups:
+    - default
+  retain: 5 # Keep only the 5 most recent snapshots
+  concurrency: 2
