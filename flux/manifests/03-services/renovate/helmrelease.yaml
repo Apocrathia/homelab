@@ -67,13 +67,12 @@ spec:
       logLevel: "info"
       logFormat: "json"
 
-    # Cache persistence
+    # Cache persistence - disabled since we're using PostgreSQL
+    # Cache is ephemeral and can be rebuilt on restart
     cachePersistence:
+      enabled: false
+    cacheInMemory:
       enabled: true
-      storageClass: "longhorn"
-      accessModes:
-        - ReadWriteOnce
-      size: 15Gi
 
     # PostgreSQL configuration
     postgresql:
