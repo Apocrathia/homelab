@@ -1,6 +1,16 @@
 ---
+# RomM Configuration File
+# See https://deepwiki.com/rommapp/romm for documentation
+
+emulatorjs:
+  cache_limit: null
+  controls: {}
+  debug: false
+  settings: {}
+
 exclude:
-  platforms: []
+  platforms:
+    - emulators # Emulator tools folder, not ROMs
   roms:
     multi_file:
       names:
@@ -31,6 +41,8 @@ exclude:
           - bak
           - tmp
           - temp
+          - srm
+          - sav
         names:
           - .syno
           - .DS_Store
@@ -42,9 +54,12 @@ exclude:
           - Thumbs.db
           - ehthumbs.db
           - ehthumbs_vista.db
-          - Desktop.ini delete
+          - Desktop.ini
           - "*.lnk"
           - ~*
+          - systeminfo.txt
+          - systems.txt
+          - desktop.ini
     single_file:
       extensions:
         - txt
@@ -55,6 +70,8 @@ exclude:
         - bak
         - tmp
         - temp
+        - srm # Save files
+        - sav # Save files
       names:
         - "@eaDir"
         - "@SynoResource"
@@ -87,13 +104,56 @@ exclude:
         - System Volume Information
         - "*.lnk"
         - ~*
+        - systeminfo.txt
+        - systems.txt
+        - desktop.ini
+
 filesystem:
   firmware_folder: bios
   roms_folder: roms
+
+scan:
+  priority:
+    artwork:
+      - igdb
+      - moby
+      - ss
+      - ra
+      - launchbox
+      - gamelist
+      - hasheous
+      - tgdb
+      - flashpoint
+      - hltb
+    language:
+      - en
+      - fr
+    metadata:
+      - igdb
+      - moby
+      - ss
+      - ra
+      - launchbox
+      - gamelist
+      - hasheous
+      - tgdb
+      - flashpoint
+      - hltb
+    region:
+      - us
+      - wor
+      - ss
+      - eu
+      - jp
+
 system:
   platforms:
     3do: 3do
+    adam: coleco-adam
+    ags: ags
     amiga: amiga
+    amiga1200: amiga-1200
+    amiga600: amiga-600
     amigacd32: amiga-cd32
     amstradcpc: acpc
     android: android
@@ -102,8 +162,10 @@ system:
     apple2gs: apple2gs
     arcade: arcade
     arcadia: arcadia-2001
+    archimedes: acorn-archimedes
     arduboy: arduboy
     astrocde: astrocade
+    atomiswave: atomiswave
     atari2600: atari2600
     atari5200: atari5200
     atari7800: atari7800
@@ -112,34 +174,74 @@ system:
     atarijaguarcd: atari-jaguar-cd
     atarilynx: lynx
     atarist: atari-st
+    bbcmicro: bbc-micro
     c16: c16
     c64: c64
+    cdimono1: commodore-cd
     cdtv: commodore-cdtv
+    chailove: chai-love
     channelf: fairchild-channel-f
+    coco: trs-80-color-computer
     colecovision: colecovision
+    consolearcade: arcade
+    cps: arcade
+    cps1: arcade
+    cps2: arcade
+    cps3: arcade
+    crvision: creativision
+    daphne: daphne
+    desktop: desktop
+    doom: doom
     dos: dos
     dragon32: dragon-32-slash-64
     dreamcast: dc
+    easyrpg: easyrpg
     electron: acorn-electron
+    epic: epic
+    fba: final-burn-alpha
+    fbneo: final-burn-neo
     famicom: famicom
     fds: fds
+    flash: flash
+    fm7: fm-7
     fmtowns: fm-towns
+    fpinball: future-pinball
+    gamate: gamate
     gameandwatch: g-and-w
     gamecom: game-dot-com
+    gamegear: game-gear
     gb: gb
     gba: gba
     gbc: gbc
     gc: ngc
+    genesis: genesis
     genesis-slash-megadrive: genesis
+    gmaster: game-master
+    gx4000: amstrad-gx4000
     intellivision: intellivision
     j2me: j2me
+    kodi: kodi
+    laserdisc: laserdisc
+    lcdgames: lcd-games
+    lowresnx: lowres-nx
+    lutro: lutro
     macintosh: mac
+    mame: arcade
+    mame-advmame: arcade
     mastersystem: sega-master-system
     megacd: segacd
     megadrive: genesis-slash-megadrive
     megaduck: mega-duck-slash-cougar-boy
+    mess: mess
+    model2: sega-model-2
+    model3: sega-model-3
+    moto: motorola-680x0
     msx: msx
+    msx1: msx
     msx2: msx2
+    msxturbor: msx-turbor
+    mugen: mugen
+    multivision: multivision
     n3ds: 3ds
     n64: n64
     n64dd: nintendo-64dd
@@ -147,48 +249,82 @@ system:
     neogeo: neogeoaes
     neogeocd: neo-geo-cd
     nes: nes
+    ngage: n-gage
     ngp: neo-geo-pocket
     ngpc: neo-geo-pocket-color
     odyssey2: odyssey-2-slash-videopac-g7000
+    openbor: openbor
     oric: oric
     palm: palm-os
     pc: win
     pc88: pc-8800-series
     pc98: pc-9800-series
+    pcarcade: arcade
+    pcengine: turbografx16--1
+    pcenginecd: turbografx-cd
     pcfx: pc-fx
+    pico8: pico-8
+    plus4: plus-4
     pokemini: pokemon-mini
+    ports: ports
     ps: psx
     ps2: ps2
     ps3: ps3
     ps4: ps4--1
     psp: psp
+    psvita: psvita
     psx: ps
     pv1000: casio-pv-1000
+    quake: quake
     samcoupe: sam-coupe
     satellaview: satellaview
+    saturn: saturn
+    saturnjp: saturn
+    scummvm: scummvm
+    scv: super-cassette-vision
     sega-master-system: sms
     sega32x: sega32
+    sega32xjp: sega32
+    sega32xna: sega32
     sfc: sfam
     sg-1000: sg1000
+    sgb: super-game-boy
     snes: snes
+    snesna: snes
+    solarus: solarus
+    spectravideo: spectravideo
+    steam: steam
+    stv: st-v
+    sufami: sufami-turbo
     supergrafx: supergrafx
     supervision: supervision
+    supracan: supracan
     switch: switch
     symbian: symbian
+    tanodragon: tano-dragon
     tg-cd: turbografx-16-slash-pc-engine-cd
     tg16: turbografx16--1
     ti99: ti-99
+    tic80: tic-80
+    to8: thomson-to8
+    triforce: triforce
     trs-80: trs-80
     turbografx-16-slash-pc-engine-cd: turbografx-cd
     turbografx16--1: tg16
+    type-x: type-x
+    uzebox: uzebox
     vectrex: vectrex
     vic20: vic-20
     videopac: videopac-g7400
     virtualboy: virtualboy
+    vpinball: visual-pinball
     vsmile: vsmile
+    wasm4: wasm-4
     wii: wii
     wiiu: wiiu
     windows: win
+    windows3x: win
+    windows9x: win
     wonderswan: wonderswan
     wonderswancolor: wonderswan-color
     x1: x1
@@ -197,8 +333,21 @@ system:
     xbox360: xbox360
     zmachine: z-machine
     zx81: zx80
+    zxnext: zx-spectrum-next
     zxspectrum: zxs
   versions:
     naomi: arcade
     naomi2: arcade
     naomigd: arcade
+    atomiswave: arcade
+    cps: arcade
+    cps1: arcade
+    cps2: arcade
+    cps3: arcade
+    consolearcade: arcade
+    mame: arcade
+    mame-advmame: arcade
+    pcarcade: arcade
+    saturnjp: saturn
+    sega32xjp: sega32
+    sega32xna: sega32
