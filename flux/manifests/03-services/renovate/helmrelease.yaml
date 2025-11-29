@@ -67,14 +67,6 @@ spec:
       logLevel: "info"
       logFormat: "json"
 
-    # Configuration file location
-    # Use the mounted config file instead of looking in the repository
-    extraEnv:
-      - name: RENOVATE_CONFIG_FILE
-        value: "/usr/src/app/renovate.json"
-      - name: RENOVATE_ONBOARDING
-        value: "false"
-
     # Cache persistence
     cachePersistence:
       enabled: true
@@ -142,20 +134,3 @@ spec:
 
     # Termination grace period
     terminationGracePeriodSeconds: 60
-
-    # Extra volumes to mount renovate.json config from ConfigMapGenerator
-    extraVolumes:
-      - name: renovate-config
-        configMap:
-          name: renovate-config
-      - name: tmp-volume
-        emptyDir: {}
-
-    # Extra volume mounts
-    extraVolumeMounts:
-      - name: renovate-config
-        mountPath: /usr/src/app/renovate.json
-        subPath: renovate.json
-        readOnly: true
-      - name: tmp-volume
-        mountPath: /tmp
