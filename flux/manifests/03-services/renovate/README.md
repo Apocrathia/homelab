@@ -7,7 +7,7 @@ Mend Renovate Community Edition for automated dependency updates across GitLab r
 Renovate CE automatically scans repositories for outdated dependencies and creates pull requests to update them. This deployment provides:
 
 - **Automated Dependency Updates**: Scans and updates dependencies across all configured repositories
-- **Custom Configuration**: Uses repository-specific `renovate.json` configuration
+- **Global Configuration**: Uses `renovate.json` from the repository root for Renovate settings
 - **GitLab Integration**: Native GitLab bot integration with webhook support
 - **PostgreSQL Backend**: Persistent storage for job state and configuration
 - **REST API**: Admin and system APIs for monitoring and management
@@ -23,14 +23,16 @@ The deployment uses a 1Password item called `renovate-secrets` containing:
 - Admin API secret for authentication
 - PostgreSQL database password
 
-## Custom Managers
+## Configuration File
 
-The `renovate.json` configuration includes custom managers for:
+The `renovate.json` file in the repository root configures Renovate's behavior. It includes:
 
-- **Talos Linux**: Automated Talos version updates
-- **Flux Dependencies**: Flux and Kubernetes API version tracking
-- **Generic App Charts**: Custom application chart version management
-- **Docker Images**: Container image version updates
+- **Preset Configurations**: Extends recommended presets and security scanning
+- **Manager Support**: Enables managers for Kubernetes, Flux, Helm, Docker, and more
+- **Update Policies**: Configures automerge, grouping, and dependency dashboard settings
+- **Onboarding**: Disabled to prevent automatic config file creation
+
+The configuration file is read directly from the repository root by Renovate CE.
 
 ## API Access
 
