@@ -20,7 +20,7 @@ spec:
     app:
       name: radarr
       # renovate: datasource=docker depName=ghcr.io/home-operations/radarr
-      image: ghcr.io/home-operations/radarr:6.0.4
+      image: ghcr.io/home-operations/radarr:6.1.0
       container:
         name: radarr
         port: 7878
