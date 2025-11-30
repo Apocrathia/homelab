@@ -90,7 +90,7 @@ spec:
       defaultClass: true
       defaultFsType: ext4
       defaultClassReplicaCount: 2 # Match the defaultReplicaCount
-      defaultDataLocality: "strict-local" # Store replicas on the same node as the pod (CRD supports this despite docs only listing disabled/best-effort)
+      defaultDataLocality: "best-effort"
       reclaimPolicy: Delete
       volumeBindingMode: "Immediate"
       migratable: false
