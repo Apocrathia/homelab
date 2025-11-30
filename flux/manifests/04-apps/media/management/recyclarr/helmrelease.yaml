@@ -20,7 +20,7 @@ spec:
     app:
       name: recyclarr
       # renovate: datasource=docker depName=ghcr.io/recyclarr/recyclarr
-      image: ghcr.io/recyclarr/recyclarr:7.4.1
+      image: ghcr.io/recyclarr/recyclarr:7.5.1
       container:
         name: recyclarr
         # No port needed - this is a background utility, not a web service
