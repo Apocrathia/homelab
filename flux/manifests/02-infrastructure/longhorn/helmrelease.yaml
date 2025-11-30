@@ -55,7 +55,7 @@ spec:
       # Storage settings
       storageOverProvisioningPercentage: "100"
       storageMinimalAvailablePercentage: "25"
-      defaultDataLocality: "strict-local" # Store replicas on the same node as the pod
+      defaultDataLocality: "best-effort" # Allow replicas on different nodes
 
       # Engine and replica settings
       engineReplicaTimeout: "8" # 8 seconds timeout
