@@ -40,7 +40,7 @@ Updates existing volumes to reduce replica count (e.g., from 3 to 2). Longhorn w
 
 ### `update-volume-data-locality.sh`
 
-Updates volumes from `dataLocality: disabled` to `strict-local`. **Note:** Volumes must be detached during the change, which requires scaling down workloads.
+Updates volumes to `dataLocality: best-effort`, allowing replicas to be stored on different nodes for better availability. **Note:** Volumes must be detached during the change, which requires scaling down workloads.
 
 **Usage:**
 
@@ -130,7 +130,7 @@ Creates a privileged pod to clean up disk space on a node. Attempts to clean con
 
 ### Data Locality Not Applied to Existing Volumes
 
-**Problem:** Changed `defaultDataLocality` to `strict-local` in HelmRelease, but existing volumes still have `dataLocality: disabled`.
+**Problem:** Changed `defaultDataLocality` to `best-effort` in HelmRelease, but existing volumes still have `dataLocality: strict-local` or `disabled`.
 
 **Root Cause:** The global setting only applies to new volumes created after the change.
 
@@ -138,7 +138,7 @@ Creates a privileged pod to clean up disk space on a node. Attempts to clean con
 
 - Use `update-volume-data-locality.sh` to patch existing volumes
 - **Note:** Requires volumes to be detached, which means scaling down workloads
-- New volumes will automatically get `strict-local` from the StorageClass
+- New volumes will automatically get `best-effort` from the StorageClass
 
 ### Replica Count Mismatch
 
@@ -185,7 +185,7 @@ Key changes in HelmRelease:
 
 - `snapshotMaxCount: "5"` (down from 250)
 - `defaultReplicaCount: "2"` (down from 3)
-- `defaultDataLocality: "strict-local"` (replicas on same node as pod)
+- `defaultDataLocality: "best-effort"` (replicas can be on different nodes for better availability)
 - `replicaAutoBalance: "best-effort"` (automatic rebalancing)
 
 ## Best Practices
