@@ -1,11 +1,12 @@
 #!/bin/bash
-# Update dataLocality for Longhorn volumes from disabled to strict-local
+# Update dataLocality for Longhorn volumes to best-effort
+# This allows replicas to be stored on different nodes for better availability
 # Requires volumes to be detached during the change
 
 set -euo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_LOCALITY="strict-local"
+NEW_LOCALITY="best-effort"
 
 echo "Finding volumes with dataLocality != ${NEW_LOCALITY}..."
 
