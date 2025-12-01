@@ -74,6 +74,9 @@ spec:
             type: PathPrefix
             value: /oidc
         - path:
+            type: PathPrefix
+            value: /releases
+        - path:
             type: Exact
             value: /logout
       backendRefs:
