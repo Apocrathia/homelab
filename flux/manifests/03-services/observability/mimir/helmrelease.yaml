@@ -26,6 +26,19 @@ spec:
       retries: 3
     timeout: 10m
 
+  # PostRenderer to patch Kafka StatefulSet podManagementPolicy to prevent immutable field changes
+  # This maintains OrderedReady to avoid upgrade failures when chart changes to Parallel
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: mimir-kafka
+            patch: |
+              - op: replace
+                path: /spec/podManagementPolicy
+                value: OrderedReady
+
   # Pull values from 1Password secret
   valuesFrom:
     - kind: Secret
