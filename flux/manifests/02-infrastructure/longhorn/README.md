@@ -11,7 +11,7 @@ Longhorn provides persistent storage for Kubernetes workloads with features like
 - **Distributed Storage**: Replicated block storage across cluster nodes
 - **Backup & Restore**: Automated backup to SMB storage
 - **Disaster Recovery**: Cross-cluster replication and failover
-- **Data Locality**: Intelligent data placement and scheduling
+- **Data Locality**: Best-effort data placement allowing replicas on different nodes for better availability
 - **Volume Management**: Dynamic provisioning and expansion
 
 ## Architecture
@@ -62,7 +62,7 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 ### Performance
 
 - **Caching**: Intelligent read/write caching
-- **Data Locality**: Preferential data placement
+- **Data Locality**: Best-effort placement (replicas can be on different nodes)
 - **I/O Scheduling**: Optimized I/O path
 - **Resource Management**: Configurable resource limits
 
@@ -134,10 +134,11 @@ kubectl get backups -n longhorn-system
 
 ### Storage Settings
 
-- **Default Replica Count**: 3
-- **Storage Over-provisioning**: 200%
-- **Snapshot Retention**: 7 days
-- **Backup Retention**: 30 days
+- **Default Replica Count**: 2
+- **Data Locality**: `best-effort` (replicas can be on different nodes for better availability)
+- **Storage Over-provisioning**: 100%
+- **Snapshot Retention**: 5 snapshots max per volume
+- **Backup Retention**: Configurable via recurring jobs
 
 ### Resource Requirements
 
