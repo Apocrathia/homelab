@@ -13,6 +13,7 @@ resources:
   - kyverno
   - cert-manager
   - housekeeping
+  - leaderworkerset
   - postgresql
   - trivy
   - toolhive
