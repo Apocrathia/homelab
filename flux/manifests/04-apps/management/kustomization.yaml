@@ -13,6 +13,7 @@ resources:
   - jetkvm
   - mealie
   - n8n
+  - searxng
   - transmission
   - unpoller
   - uptime-kuma

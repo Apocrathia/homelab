@@ -16,6 +16,10 @@ iOS Kubernetes dashboard token management for mobile cluster access.
 
 Workflow automation platform for connecting different services and APIs.
 
+### [SearXNG](./searxng/README.md)
+
+Privacy-respecting metasearch engine that aggregates results from multiple search providers without tracking users.
+
 ### [Mealie](./mealie/README.md)
 
 Self-hosted recipe manager and meal planning application with Authentik SSO integration.
@@ -35,6 +39,7 @@ Management applications provide tools for:
 - **Device Control**: Stream Deck integration and automation
 - **Mobile Access**: Secure Kubernetes cluster management from iOS devices
 - **Workflow Automation**: API integrations and data processing pipelines
+- **Search**: Privacy-respecting metasearch engine aggregation
 - **Household Management**: Recipe management, meal planning, and inventory tracking
 - **Network Monitoring**: UniFi infrastructure metrics collection and visualization
 
