@@ -33,3 +33,4 @@ resources:
   - tuppr.yaml
   - external-secrets.yaml
   - litellm.yaml
+  - llm-d-modelservice.yaml
