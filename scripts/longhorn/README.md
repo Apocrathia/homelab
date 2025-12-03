@@ -68,6 +68,20 @@ Creates a privileged pod to clean up disk space on a node. Attempts to clean con
 ./cleanup-node-disk-space.sh <node-name>
 ```
 
+### `cleanup-stopped-replicas.sh`
+
+Cleans up stopped Longhorn replicas that have hit the rebuild retry limit. These replicas consume disk space but are not active and safe to delete as long as the volume has sufficient healthy replicas on other nodes. The script verifies each volume has enough running replicas before deletion.
+
+**Usage:**
+
+```bash
+# Clean up stopped replicas on a specific node
+./cleanup-stopped-replicas.sh <node-name>
+
+# Clean up stopped replicas on all nodes
+./cleanup-stopped-replicas.sh
+```
+
 ## Common Issues and Solutions
 
 ### Snapshot Accumulation
@@ -162,6 +176,30 @@ Creates a privileged pod to clean up disk space on a node. Attempts to clean con
 - Use `update-volume-snapshot-limits.sh` to patch existing volumes
 - **Note:** Cannot reduce limit below current snapshot count - clean up snapshots first if needed
 
+### Stopped Replicas Consuming Disk Space
+
+**Problem:** Nodes showing excessive disk usage with many stopped Longhorn replicas, even though volumes are configured for 2 replicas.
+
+**Root Causes:**
+
+- Replicas failing to start on a node (e.g., due to disk pressure) and hitting the rebuild retry limit (5)
+- Longhorn creates new replicas on other nodes but doesn't automatically clean up failed replicas
+- Stopped replicas still consume disk space even though they're not active
+- Can accumulate hundreds of GB of wasted space on affected nodes
+
+**Symptoms:**
+
+- Node disk usage much higher than expected
+- Many replicas in "stopped" state on a specific node
+- Replicas showing `rebuildRetryCount: 5` and `currentState: stopped`
+- Volumes have correct number of running replicas on other nodes
+
+**Solutions:**
+
+1. **Immediate cleanup:** Use `cleanup-stopped-replicas.sh` to remove stopped replicas
+2. **Prevention:** Address underlying disk pressure issues on the affected node
+3. **Node scheduling:** Consider disabling Longhorn scheduling on nodes that consistently fail to start replicas
+
 ## Configuration Changes
 
 ### Recurring Jobs
@@ -195,6 +233,7 @@ Key changes in HelmRelease:
 3. **Configuration Updates:** When changing global settings, use scripts to update existing volumes
 4. **Node Maintenance:** Use `cleanup-talos-ephemeral.sh` for Talos nodes before they hit disk pressure
 5. **Volume Labels:** Ensure volumes have proper recurring job labels for automated cleanup
+6. **Replica Cleanup:** Monitor for stopped replicas and clean them up periodically to free disk space
 
 ## Troubleshooting
 
