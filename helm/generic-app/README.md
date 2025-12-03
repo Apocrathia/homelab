@@ -71,6 +71,7 @@ All available configuration values for the chart:
 | `app.volumes.configMap`                        | array  | `[]`                                              | ConfigMap volumes                                             |
 | `app.volumeMounts`                             | array  | `[]`                                              | Volume mounts for pod-wide storage                            |
 | `storage.longhorn.enabled`                     | bool   | `false`                                           | Enable Longhorn storage                                       |
+| `storage.longhorn.numberOfReplicas`            | int    | `2`                                               | Number of replicas for Longhorn volumes                       |
 | `storage.longhorn.volumes`                     | array  | `[]`                                              | Longhorn volume configurations                                |
 | `storage.smb.enabled`                          | bool   | `false`                                           | Enable SMB storage                                            |
 | `storage.smb.volumes`                          | array  | `[]`                                              | SMB volume configurations                                     |
@@ -636,6 +637,7 @@ storage:
   # Longhorn persistent storage volumes
   longhorn:
     enabled: true
+    numberOfReplicas: 3 # Number of replicas for all Longhorn volumes (default: 2)
     volumes:
       - name: app-data
         capacity: 10Gi
@@ -946,10 +948,12 @@ app:
 
 storage:
   longhorn:
-    - name: app-data
-      capacity: 10Gi
-    - name: cache
-      capacity: 2Gi
+    enabled: true
+    volumes:
+      - name: app-data
+        capacity: 10Gi
+      - name: cache
+        capacity: 2Gi
 
 authentik:
   enabled: true
@@ -1027,14 +1031,18 @@ app:
 
 storage:
   longhorn:
-    - name: app-data
-      capacity: 10Gi
+    enabled: true
+    volumes:
+      - name: app-data
+        capacity: 10Gi
   smb:
-    - name: static-files
-      capacity: 1Gi
-      source: "//storage.services.apocrathia.com/Library"
-      subDir: "Sites/Demo"
-      credentialsPath: "vaults/Secrets/items/smb-credentials"
+    enabled: true
+    volumes:
+      - name: static-files
+        capacity: 1Gi
+        source: "//storage.services.apocrathia.com/Library"
+        subDir: "Sites/Demo"
+        credentialsPath: "vaults/Secrets/items/smb-credentials"
 
 loadbalancer:
   enabled: true
