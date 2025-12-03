@@ -1,6 +1,21 @@
 # Changelog
 
-## Version 0.0.36 (Latest)
+## Version 0.0.37 (Latest)
+
+- **NEW: PostgreSQL Database Support**: Added optional PostgreSQL database deployment using CloudNativePG (CNPG)
+  - **Database Integration**: Enable PostgreSQL clusters directly in the chart with `postgres.enabled: true`
+  - **CloudNativePG Operator**: Uses CNPG for Kubernetes-native PostgreSQL management with enterprise-grade features
+  - **Named Storage Volumes**: Pre-creates Longhorn volumes with meaningful names (`{app-name}-postgres-data`) for better visibility in Longhorn UI
+  - **Automatic Services**: CNPG automatically creates read-write and read-only services for database connections
+  - **Service Patterns**: Applications connect via `{app-name}-postgres-rw.{namespace}.svc.cluster.local` (read-write) or `{app-name}-postgres-ro.{namespace}.svc.cluster.local` (read-only)
+  - **Secret Integration**: Uses same 1Password secrets as the application (`{app-name}-secrets`) with `username` and `password` keys
+  - **Configurable Parameters**: Full PostgreSQL configuration parameter support (max_connections, logging, etc.)
+  - **Pod Anti-Affinity**: Configurable pod anti-affinity for better performance and high availability
+  - **Monitoring Support**: Optional PodMonitor integration for Prometheus metrics (follows CNPG v1.27+ best practices, does not use deprecated `enablePodMonitor`)
+  - **Backward Compatible**: Disabled by default, no impact on existing deployments
+  - **Documentation**: Comprehensive documentation with connection examples and configuration patterns
+
+## Version 0.0.36
 
 - **CRITICAL: Fixed PersistentVolume Namespace Issue**: Removed invalid namespace field from PersistentVolume metadata
   - **Problem Solved**: PersistentVolumes are cluster-scoped resources and cannot have a namespace field, causing Helm to silently fail creating PVs and PVCs
