@@ -13,7 +13,7 @@ metadata:
     description: "Grafana MCP server for AI assistant integration"
 spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-  image: docker.io/grafana/mcp-grafana:0.7.9
+  image: docker.io/grafana/mcp-grafana:0.7.10
   transport: sse
   port: 8000
   targetPort: 8000
