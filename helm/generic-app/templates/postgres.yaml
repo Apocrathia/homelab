@@ -1,0 +1,50 @@
+{{- if .Values.postgres.enabled }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.app.name }}-postgres
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  # PostgreSQL version
+  imageName: {{ .Values.postgres.imageName }}
+
+  # Number of instances
+  instances: {{ .Values.postgres.instances }}
+
+  # Storage configuration
+  storage:
+    storageClass: {{ .Values.postgres.storage.storageClass }}
+    size: {{ .Values.postgres.storage.size }}
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    {{- if .Values.postgres.postgresql.parameters }}
+    parameters:
+      {{- range $key, $value := .Values.postgres.postgresql.parameters }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    {{- end }}
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  {{- if .Values.postgres.affinity }}
+  affinity:
+    {{- if .Values.postgres.affinity.enablePodAntiAffinity }}
+    enablePodAntiAffinity: {{ .Values.postgres.affinity.enablePodAntiAffinity }}
+    {{- end }}
+    {{- if .Values.postgres.affinity.podAntiAffinityType }}
+    podAntiAffinityType: {{ .Values.postgres.affinity.podAntiAffinityType | quote }}
+    {{- end }}
+    {{- if .Values.postgres.affinity.topologyKey }}
+    topologyKey: {{ .Values.postgres.affinity.topologyKey | quote }}
+    {{- end }}
+  {{- end }}
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: {{ .Values.postgres.database | default .Values.app.name }}
+      owner: {{ .Values.postgres.owner | default .Values.app.name }}
+      secret:
+        name: {{ .Values.app.name }}-secrets
+{{- end }}

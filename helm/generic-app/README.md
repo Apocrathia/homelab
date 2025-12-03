@@ -14,6 +14,7 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - Multiple Longhorn persistent volumes for application data
   - Multiple SMB volumes for network file access
   - Container-specific volume mounting
+- **Database Support**: Optional PostgreSQL database using CloudNativePG (CNPG) with named Longhorn volumes
 - **Security**: 1Password Connect integration for secrets management
 - **Authentication**: Authentik SSO integration with automatic outpost deployment
 - **Networking**:
@@ -112,6 +113,19 @@ All available configuration values for the chart:
 | `loadbalancer.externalTrafficPolicy`           | string | `Local`                                           | External traffic policy (Local or Cluster)                    |
 | `loadbalancer.cilium.interface`                | string | `eth0`                                            | Network interface for L2 announcements                        |
 | `loadbalancer.cilium.namespace`                | string | `cilium-system`                                   | Namespace for Cilium resources                                |
+| `postgres.enabled`                             | bool   | `false`                                           | Enable PostgreSQL database (CloudNativePG)                    |
+| `postgres.imageName`                           | string | `ghcr.io/cloudnative-pg/postgresql:17`            | PostgreSQL image version                                      |
+| `postgres.instances`                           | int    | `1`                                               | Number of PostgreSQL instances                                |
+| `postgres.storage.storageClass`                | string | `longhorn`                                        | Storage class for PostgreSQL data                             |
+| `postgres.storage.size`                        | string | `10Gi`                                            | Storage size for PostgreSQL data                              |
+| `postgres.postgresql.parameters`               | object | `{}`                                              | PostgreSQL configuration parameters                           |
+| `postgres.affinity.enablePodAntiAffinity`      | bool   | `true`                                            | Enable pod anti-affinity for PostgreSQL pods                  |
+| `postgres.affinity.podAntiAffinityType`        | string | `preferred`                                       | Pod anti-affinity type                                        |
+| `postgres.affinity.topologyKey`                | string | `kubernetes.io/hostname`                          | Topology key for pod anti-affinity                            |
+| `postgres.monitoring.enabled`                  | bool   | `false`                                           | Enable PodMonitor for PostgreSQL metrics                      |
+| `postgres.monitoring.interval`                 | string | `30s`                                             | Metrics scraping interval                                     |
+| `postgres.database`                            | string | `""`                                              | Database name (defaults to app.name)                          |
+| `postgres.owner`                               | string | `""`                                              | Database owner (defaults to app.name)                         |
 
 ## Values Configuration
 
@@ -810,6 +824,93 @@ authentik:
     - "^/v1/"
 ```
 
+### PostgreSQL Database
+
+The chart supports optional PostgreSQL database deployment using CloudNativePG (CNPG). When enabled, it creates a PostgreSQL cluster with named Longhorn volumes for better visibility.
+
+```yaml
+postgres:
+  enabled: true
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  # Number of instances
+  instances: 1
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+  # PostgreSQL configuration parameters
+  postgresql:
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+  # Affinity settings
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+  # Monitoring (PodMonitor instead of deprecated enablePodMonitor)
+  monitoring:
+    enabled: true
+    interval: 30s
+  # Database name (defaults to app.name if not specified)
+  database: "" # Optional, defaults to app.name
+  # Database owner (defaults to app.name if not specified)
+  owner: "" # Optional, defaults to app.name
+```
+
+**Connecting to PostgreSQL:**
+
+The PostgreSQL cluster automatically creates services:
+
+- `{app-name}-postgres-rw.{namespace}.svc.cluster.local` (read-write)
+- `{app-name}-postgres-ro.{namespace}.svc.cluster.local` (read-only)
+
+Configure your application to connect using environment variables:
+
+```yaml
+app:
+  container:
+    env:
+      - name: POSTGRES_HOST
+        value: "my-app-postgres-rw.my-app.svc.cluster.local"
+      - name: POSTGRES_PORT
+        value: "5432"
+      - name: POSTGRES_DB
+        value: "my-app" # Or use postgres.database value
+      - name: POSTGRES_USER
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: username
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: my-app-secrets
+            key: password
+```
+
+**Secrets:**
+
+The PostgreSQL cluster uses the same secret as your application (`{app-name}-secrets`) and expects:
+
+- `username`: PostgreSQL database user
+- `password`: PostgreSQL database password
+
+These should be managed via 1Password Item CR (same as your app secrets).
+
+**Monitoring:**
+
+When `postgres.monitoring.enabled: true`, a PodMonitor resource is created for Prometheus metrics scraping. This follows CNPG v1.27+ best practices (the deprecated `monitoring.enablePodMonitor` field is not used).
+
+**Volume Naming:**
+
+When using Longhorn storage, the chart pre-creates a named Longhorn volume (`{app-name}-postgres-data`) for better visibility in the Longhorn UI. Note that CNPG will still create its own PVCs with pod-based names (e.g., `{pod-name}-pgdata`), but the underlying Longhorn volume will have a meaningful name.
+
 ### Secrets
 
 ```yaml
@@ -989,6 +1090,12 @@ For a complete working example, see the [Companion app configuration](../../flux
 
 - `storage-longhorn.yaml`: Longhorn volume, PV, and PVC (conditional)
 - `storage-smb.yaml`: SMB PV, PVC, and credentials (conditional)
+- `postgres-storage.yaml`: PostgreSQL Longhorn volume, PV, and PVC (conditional, when postgres enabled with Longhorn)
+
+### Database
+
+- `postgres.yaml`: CloudNativePG Cluster resource (conditional)
+- `postgres-podmonitor.yaml`: PodMonitor for PostgreSQL metrics (conditional)
 
 ### Security & Auth
 

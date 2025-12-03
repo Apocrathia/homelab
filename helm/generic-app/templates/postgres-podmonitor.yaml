@@ -1,0 +1,17 @@
+{{- if and .Values.postgres.enabled .Values.postgres.monitoring.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Values.app.name }}-postgres
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: {{ .Values.app.name }}-postgres
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: {{ .Values.postgres.monitoring.interval | default "30s" }}
+{{- end }}
