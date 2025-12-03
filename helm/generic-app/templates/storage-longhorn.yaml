@@ -9,7 +9,7 @@ metadata:
   namespace: longhorn-system
 spec:
   size: {{ mul (.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
-  numberOfReplicas: {{ .Values.storage.longhorn.numberOfReplicas | default 2 }}
+  numberOfReplicas: {{ $.Values.storage.longhorn.numberOfReplicas | default 2 }}
   staleReplicaTimeout: 30
   frontend: blockdev
 ---
