@@ -47,6 +47,10 @@ spec:
       name: litellm-secrets
       valuesKey: openai-api-key
       targetPath: envVars.OPENAI_API_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: vector-store-api-key
+      targetPath: envVars.VECTOR_STORE_API_KEY
 
   values:
     # Use the database-optimized image
