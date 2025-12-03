@@ -1,6 +1,16 @@
 # Changelog
 
-## Version 0.0.37 (Latest)
+## Version 0.0.38 (Latest)
+
+- **NEW: Longhorn Volume Replica Configuration**: Added `storage.longhorn.numberOfReplicas` configuration option
+  - **Replica Control**: Configure the number of replicas for Longhorn volumes (default: 2)
+  - **High Availability**: Increase replicas for better data redundancy and availability
+  - **Resource Optimization**: Decrease replicas for storage-constrained environments
+  - **Template Integration**: Automatically applied to all Longhorn volumes created by the chart
+  - **Backward Compatible**: Defaults to 2 replicas, matching Longhorn's default behavior
+  - **Documentation**: Added to values reference table and example configuration
+
+## Version 0.0.37
 
 - **NEW: PostgreSQL Database Support**: Added optional PostgreSQL database deployment using CloudNativePG (CNPG)
   - **Database Integration**: Enable PostgreSQL clusters directly in the chart with `postgres.enabled: true`
