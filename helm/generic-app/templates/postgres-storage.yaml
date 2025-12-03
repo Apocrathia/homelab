@@ -8,7 +8,7 @@ metadata:
   namespace: longhorn-system
 spec:
   size: {{ mul (.Values.postgres.storage.size | trimSuffix "Gi" | int) 1073741824 | quote }}
-  numberOfReplicas: 3
+  numberOfReplicas: {{ .Values.storage.longhorn.numberOfReplicas | default 2 }}
   staleReplicaTimeout: 30
   frontend: blockdev
 ---
