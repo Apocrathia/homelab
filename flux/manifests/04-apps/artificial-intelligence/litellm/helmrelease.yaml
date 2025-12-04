@@ -206,7 +206,7 @@ spec:
       enabled: true
       retries: 3
       backoffLimit: 4
-      ttlSecondsAfterFinished: 120
+      ttlSecondsAfterFinished: 3600 # 1 hour - allows Helm to manage the job properly
       hooks:
         argocd:
           enabled: false
