@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.38 (Latest)
+## Version 0.0.39 (Latest)
+
+- **CRITICAL: Fixed Nil Pointer Error in Longhorn Storage Templates**: Resolved template error when `storage.longhorn.numberOfReplicas` is not explicitly set
+  - **Problem Solved**: Template was attempting to access `$.Values.storage.longhorn.numberOfReplicas` without checking if `storage.longhorn` exists, causing "nil pointer evaluating interface {}.storage" errors
+  - **Template Fix**: Updated `storage-longhorn.yaml` and `postgres-storage.yaml` to safely check for `storage.longhorn` existence before accessing `numberOfReplicas`
+  - **Default Behavior**: Maintains default of 2 replicas when `numberOfReplicas` is not specified
+  - **Backward Compatible**: No changes required to existing deployments - this only fixes the template error
+  - **Impact**: All HelmReleases using Longhorn storage now render correctly, even when `numberOfReplicas` is not explicitly configured
+
+## Version 0.0.38
 
 - **NEW: Longhorn Volume Replica Configuration**: Added `storage.longhorn.numberOfReplicas` configuration option
   - **Replica Control**: Configure the number of replicas for Longhorn volumes (default: 2)
