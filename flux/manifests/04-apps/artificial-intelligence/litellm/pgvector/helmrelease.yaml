@@ -124,7 +124,7 @@ spec:
       initContainers:
         - name: enable-pgvector
           # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
-          image: ghcr.io/cloudnative-pg/postgresql:17
+          image: ghcr.io/cloudnative-pg/postgresql:18
           command:
             - /bin/bash
             - -c
