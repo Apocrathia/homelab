@@ -1,0 +1,97 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rdt-client
+  namespace: rdt-client
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.39"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: rdt-client
+      # renovate: datasource=docker depName=ghcr.io/rogerfar/rdtclient
+      image: ghcr.io/rogerfar/rdtclient:2.0.119
+      container:
+        name: rdt-client
+        port: 6500
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "America/Denver"
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      securityContext:
+        # s6-overlay containers need root initially to set up user/group and directories
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 6500
+        portName: http
+
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 10Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "RDT-Client"
+      externalHost: "https://debrid.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/real-debrid.svg"

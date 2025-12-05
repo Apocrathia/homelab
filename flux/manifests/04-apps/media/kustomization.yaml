@@ -8,6 +8,7 @@ metadata:
 resources:
   - acquisitions/archiveteam-warrior
   - acquisitions/qbittorrent
+  - acquisitions/rdt-client
   - acquisitions/sabnzbd
   - management/bazarr
   - management/cleanuparr
