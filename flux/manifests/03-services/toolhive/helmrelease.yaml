@@ -37,7 +37,7 @@ spec:
     spec:
       chart: toolhive-operator
       # renovate: datasource=docker depName=ghcr.io/stacklok/toolhive/toolhive-operator
-      version: "0.5.7"
+      version: "0.5.9"
       sourceRef:
         kind: HelmRepository
         name: toolhive
