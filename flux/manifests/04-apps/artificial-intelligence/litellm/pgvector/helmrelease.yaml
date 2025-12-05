@@ -258,8 +258,8 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 3
 
-      # Use RollingUpdate for stateless service
-      strategy: "RollingUpdate"
+      # Use Recreate strategy for apps with persistent volumes to avoid Multi-Attach errors
+      strategy: "Recreate"
 
     # Persistent storage for repository and dependencies
     storage:
