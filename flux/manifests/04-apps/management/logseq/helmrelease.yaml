@@ -1,0 +1,90 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: logseq
+  namespace: logseq
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.39"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: logseq
+      # renovate: datasource=docker depName=ghcr.io/logseq/logseq-webapp
+      image: ghcr.io/logseq/logseq-webapp:latest
+      container:
+        name: logseq
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+      volumes:
+        tmpfs:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+            options: "size=100M"
+          - name: nginx-run
+            mountPath: /var/run
+            options: "size=10M"
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Home"
+      displayName: "Logseq"
+      externalHost: "https://notes.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/logseq.svg"
+      interceptHeaderAuth: false
+
+    httproute:
+      enabled: false

@@ -11,6 +11,7 @@ resources:
   - fluentbit
   - grocy
   - jetkvm
+  - logseq
   - mealie
   - n8n
   - searxng
