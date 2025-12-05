@@ -48,9 +48,9 @@ spec:
           cpu: "500m"
       securityContext:
         readOnlyRootFilesystem: false
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsUser: 977
+        runAsGroup: 977
+        fsGroup: 977
       volumeMounts:
         - name: config
           mountPath: /etc/searxng
@@ -62,6 +62,48 @@ spec:
         emptyDir:
           - name: tmp
             mountPath: /tmp
+      # This init container updates the settings.yml file to enable JSON format search
+      initContainers:
+        - name: update-settings
+          # renovate: datasource=docker depName=mikefarah/yq
+          image: mikefarah/yq:4.44.3
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Checking for settings.yml file"
+              # Skip update if settings.yml doesn't exist yet (SearXNG will create it on first start)
+              if [ ! -f /etc/searxng/settings.yml ]; then
+                echo "settings.yml not found, skipping update. SearXNG will create it on first start."
+                echo "Restart the pod after SearXNG initializes to apply JSON format."
+                exit 0
+              fi
+              echo "Updating settings.yml to enable JSON format"
+              # Ensure search.formats exists and is an array, defaulting to ["html"] if missing
+              yq eval '.search.formats = (.search.formats // ["html"])' -i /etc/searxng/settings.yml
+              # Check if JSON format is already in the list (check returns empty string if not found)
+              JSON_EXISTS=$(yq eval '.search.formats[] | select(. == "json")' /etc/searxng/settings.yml 2>/dev/null)
+              if [ -z "$JSON_EXISTS" ]; then
+                # Add json to the formats list
+                yq eval '.search.formats += ["json"]' -i /etc/searxng/settings.yml
+                echo "Added JSON format to settings.yml"
+              else
+                echo "JSON format already enabled"
+              fi
+              # Validate the file is still valid YAML
+              if ! yq eval '.' /etc/searxng/settings.yml > /dev/null 2>&1; then
+                echo "ERROR: settings.yml is invalid after modification"
+                exit 1
+              fi
+              chown 977:977 /etc/searxng/settings.yml
+              chmod 644 /etc/searxng/settings.yml
+              echo "Settings file updated successfully"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/searxng
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
 
     storage:
       longhorn:
