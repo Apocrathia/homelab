@@ -9,8 +9,10 @@ resources:
   - namespace.yaml
   - secret.yaml
   - postgres.yaml
+  - podmonitor.yaml
   - helmrelease.yaml
   - rbac.yaml
+  - pgvector
 
 generatorOptions:
   disableNameSuffixHash: true

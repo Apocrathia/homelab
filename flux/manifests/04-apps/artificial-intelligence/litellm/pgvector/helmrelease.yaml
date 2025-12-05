@@ -1,0 +1,285 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vector-store
+  namespace: litellm
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      version: "0.0.36"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 15m
+  values:
+    app:
+      name: vector-store
+      namespace: litellm
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.11
+
+      # Override container configuration for litellm-pgvector
+      command: ["/bin/sh"]
+      args:
+        - "-c"
+        - |
+          set -e
+
+          echo "Setting up virtual environment..."
+          python3 -m venv /opt/venv
+          export PATH="/opt/venv/bin:$PATH"
+
+          echo "Constructing DATABASE_URL..."
+          export DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@vector-store-postgres-rw.litellm.svc.cluster.local:5432/vectorstore"
+
+          echo "Installing dependencies from repository..."
+          cd /app
+          pip install --upgrade pip
+          pip install --no-cache-dir -r requirements.txt
+
+          echo "Generating Prisma client..."
+          prisma generate
+
+          echo "Running database migrations..."
+          prisma db push --skip-generate
+
+          echo "Starting litellm-pgvector server with uvicorn..."
+          exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+
+      container:
+        name: vector-store
+        port: 8000
+        env:
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: password
+          - name: DATABASE_URL
+            value: "" # Constructed in command
+          - name: SERVER_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: vector-store-api-key
+          - name: EMBEDDING__MODEL
+            value: "text-embedding-ada-002"
+          - name: EMBEDDING__BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: EMBEDDING__API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: master-key
+          - name: EMBEDDING__DIMENSIONS
+            value: "1536"
+          - name: HOST
+            value: "0.0.0.0"
+          - name: PORT
+            value: "8000"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: PYTHONDONTWRITEBYTECODE
+            value: "1"
+          - name: HOME
+            value: "/home/python"
+          - name: PATH
+            value: "/opt/venv/bin:/home/python/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+      # Security context - run as non-root user
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false # Needed for pip installation and Prisma
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+
+      # Resource allocation
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      # Service configuration
+      service:
+        type: ClusterIP
+        port: 8000
+        targetPort: 8000
+        portName: http
+
+      # Init containers: enable pgvector extension and clone repository
+      initContainers:
+        - name: enable-pgvector
+          # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+          image: ghcr.io/cloudnative-pg/postgresql:17
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              echo "Enabling pgvector extension in database vectorstore..."
+              PGPASSWORD="${PGPASSWORD}" psql -h vector-store-postgres-rw.litellm.svc.cluster.local -U "${PGUSER}" -d vectorstore -c "CREATE EXTENSION IF NOT EXISTS vector;"
+              echo "pgvector extension enabled successfully."
+          env:
+            - name: PGHOST
+              value: vector-store-postgres-rw.litellm.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: vectorstore
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: vector-store-postgres-superuser
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vector-store-postgres-superuser
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 26
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+        - name: clone-repo
+          # renovate: datasource=docker depName=alpine/git
+          image: alpine/git:v2.49.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              REPO_URL="https://github.com/BerriAI/litellm-pgvector.git"
+              REPO_DIR="/app"
+
+              # Set HOME to a writable directory for git config
+              export HOME="/tmp"
+              git config --global --add safe.directory "$REPO_DIR"
+
+              echo "Cloning litellm-pgvector repository..."
+              if [ -d "$REPO_DIR/.git" ]; then
+                echo "Repository exists, checking for updates..."
+                cd "$REPO_DIR"
+                git fetch origin
+                LOCAL=$(git rev-parse HEAD)
+                REMOTE=$(git rev-parse origin/main)
+
+                if [ "$LOCAL" = "$REMOTE" ]; then
+                  echo "Already on latest commit, skipping update..."
+                else
+                  echo "Updates available, updating repository..."
+                  git reset --hard origin/main
+                fi
+              else
+                echo "Repository not found, cloning..."
+                # Clone to temp location inside the volume, then move to avoid permission issues
+                TEMP_DIR="${REPO_DIR}/.tmp"
+                git clone --depth 1 "$REPO_URL" "$TEMP_DIR"
+                # Move contents from temp to target
+                mkdir -p "$REPO_DIR"
+                mv "$TEMP_DIR"/* "$TEMP_DIR"/.git "$REPO_DIR"/ 2>/dev/null || true
+                rmdir "$TEMP_DIR" 2>/dev/null || true
+              fi
+
+              echo "Repository cloned successfully."
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+      # Volume configuration
+      volumes:
+        emptyDir:
+          - name: home
+            mountPath: /home/python
+          - name: tmp
+            mountPath: /tmp
+          - name: venv
+            mountPath: /opt/venv
+      volumeMounts:
+        - name: app-source
+          mountPath: /app
+
+      # Health checks
+      healthChecks:
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+      # Use RollingUpdate for stateless service
+      strategy: "RollingUpdate"
+
+    # Persistent storage for repository and dependencies
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: app-source
+            capacity: 1Gi
+      smb:
+        enabled: false
+
+    # 1Password secrets
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/litellm-secrets"
+
+    # No Authentik needed - this is an API-only service
+    authentik:
+      enabled: false
+
+    # No external access needed - internal service only for LiteLLM
+    httproute:
+      enabled: false
