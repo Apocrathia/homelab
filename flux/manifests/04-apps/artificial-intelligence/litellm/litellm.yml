@@ -45,7 +45,7 @@ model_list:
   # llm-d models (Kubernetes-native inference serving)
   - model_name: gpt-oss-20b
     litellm_params:
-      model: openai/llm-d/gpt-oss-20b
+      model: openai/gpt-oss-20b
       api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000
 
 guardrails:
@@ -61,9 +61,14 @@ guardrails:
 vector_store_registry:
   - vector_store_name: "pgvector-litellm"
     litellm_params:
-      vector_store_id: "<vector-store-id>" # Create vector store via API first, then update this ID
       custom_llm_provider: "pg_vector"
       vector_store_description: "PGVector vector store for LiteLLM"
       vector_store_metadata:
         api_base: "http://vector-store.litellm.svc.cluster.local:8000"
         api_key: os.environ/VECTOR_STORE_API_KEY
+
+mcp_servers:
+  gofetch:
+    url: "https://mcp.gateway.services.apocrathia.com/gofetch"
+    transport: "http"
+    auth_type: "none"

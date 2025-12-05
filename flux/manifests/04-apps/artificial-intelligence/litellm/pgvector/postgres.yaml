@@ -2,7 +2,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: litellm-postgres
+  name: vector-store-postgres
   namespace: litellm
 spec:
   # PostgreSQL version
@@ -14,7 +14,7 @@ spec:
   # Storage configuration
   storage:
     storageClass: longhorn
-    size: 10Gi
+    size: 5Gi
 
   # Enable superuser access for extension management
   enableSuperuserAccess: true
@@ -22,15 +22,15 @@ spec:
   # PostgreSQL-specific configuration
   postgresql:
     parameters:
-      max_connections: "200"
-      shared_buffers: "128MB"
-      effective_cache_size: "512MB"
-      maintenance_work_mem: "32MB"
+      max_connections: "100"
+      shared_buffers: "64MB"
+      effective_cache_size: "256MB"
+      maintenance_work_mem: "16MB"
 
   # Bootstrap configuration
   bootstrap:
     initdb:
-      database: litellm
+      database: vectorstore
       owner: litellm
       secret:
         name: litellm-secrets
