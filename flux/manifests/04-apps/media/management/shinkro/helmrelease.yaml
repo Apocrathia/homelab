@@ -1,0 +1,79 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: shinkro
+  namespace: shinkro
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.39"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: shinkro
+      # renovate: datasource=docker depName=ghcr.io/varoop/shinkro
+      image: ghcr.io/varoop/shinkro:v0.5.1
+      container:
+        name: shinkro
+        port: 7011
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PLEX_URL
+            value: "http://plex.plex.svc.cluster.local:80"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 7011
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Shinkro"
+      externalHost: "https://shinkro.gateway.services.apocrathia.com"
+      icon: "https://raw.githubusercontent.com/varoOP/shinkro/develop/.github/images/logo.png"
+
+    httproute:
+      enabled: false
