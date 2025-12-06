@@ -1,0 +1,142 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: bitmagnet
+  namespace: bitmagnet
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.39"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: bitmagnet
+      # renovate: datasource=docker depName=ghcr.io/bitmagnet-io/bitmagnet
+      image: ghcr.io/bitmagnet-io/bitmagnet:v0.10.0
+      args:
+        - worker
+        - run
+        - --keys=http_server
+        - --keys=queue_server
+        - --keys=dht_crawler
+      container:
+        name: bitmagnet
+        port: 3333
+        env:
+          - name: POSTGRES_HOST
+            value: "bitmagnet-postgres-rw.bitmagnet.svc.cluster.local"
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_NAME
+            value: "bitmagnet"
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: bitmagnet-secrets
+                key: username
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: bitmagnet-secrets
+                key: password
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /status
+            port: 3333
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /status
+            port: 3333
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      service:
+        type: ClusterIP
+        port: 3333
+        targetPort: 3333
+        portName: http
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/bitmagnet-secrets"
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 20Gi
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: false
+      database: "bitmagnet"
+      owner: "bitmagnet"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "BitMagnet"
+      externalHost: "https://bitmagnet.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/bitmagnet.svg"
