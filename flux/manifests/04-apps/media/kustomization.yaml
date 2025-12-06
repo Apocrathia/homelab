@@ -19,6 +19,7 @@ resources:
   - management/prowlarr
   - management/radarr
   - management/recyclarr
+  - management/shinkro
   - management/sonarr
   - management/taggarr
   - management/tautulli
