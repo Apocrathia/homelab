@@ -1,0 +1,114 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kiwix-zim-updater
+  namespace: kiwix
+  annotations:
+    ignore-check.kube-linter.io/latest-tag: "Alpine and kiwix-tools images use latest tags for automatic updates"
+    ignore-check.kube-linter.io/no-read-only-root-fs: "Containers require writable root filesystem for downloading and managing ZIM files"
+    ignore-check.kube-linter.io/run-as-non-root: "updater container requires root for package installation; update-library runs as non-root"
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: updater
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+              image: public.ecr.aws/docker/library/alpine:latest
+              command:
+                - sh
+                - -c
+                - |
+                  apk add --no-cache bash curl wget grep
+                  curl -L -o /tmp/kiwix-zim-updater.sh \
+                    https://raw.githubusercontent.com/jojo2357/kiwix-zim-updater/main/kiwix-zim-updater.sh
+                  chmod +x /tmp/kiwix-zim-updater.sh
+                  # -d: disable dry-run (actually download files)
+                  # -w: download over HTTP(S)
+                  # -c: verify checksums
+                  # -u: skip script self-update check (not needed in container)
+                  /tmp/kiwix-zim-updater.sh -d -w -c -u /data
+              env:
+                - name: TZ
+                  value: "America/Denver"
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+                limits:
+                  cpu: 1000m
+                  memory: 2Gi
+              securityContext:
+                runAsNonRoot: false
+                runAsUser: 0
+                readOnlyRootFilesystem: false
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: zim
+                  mountPath: /data
+                - name: tmp
+                  mountPath: /tmp
+            - name: update-library
+              # renovate: datasource=docker depName=ghcr.io/kiwix/kiwix-tools
+              image: ghcr.io/kiwix/kiwix-tools:latest
+              command:
+                - sh
+                - -c
+                - |
+                  echo "Updating library.xml..."
+                  # kiwix-manage will create library.xml if it doesn't exist
+                  # Add all ZIM files to library (only new ones will be added)
+                  for zim in /data/*.zim; do
+                    if [ -f "$zim" ]; then
+                      echo "Adding $zim to library..."
+                      kiwix-manage /data/library.xml add "$zim" || echo "Warning: Failed to add $zim (may already exist)"
+                    fi
+                  done
+                  echo "Library update complete"
+              env:
+                - name: TZ
+                  value: "America/Denver"
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 256Mi
+                limits:
+                  cpu: 1000m
+                  memory: 2Gi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: false
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: zim
+                  mountPath: /data
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+            - name: zim
+              persistentVolumeClaim:
+                claimName: kiwix-zim-pvc

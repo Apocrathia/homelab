@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kiwix
+  labels:
+    app.kubernetes.io/name: kiwix
+    # Baseline security - allows init containers to run as root for tool installation
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline
