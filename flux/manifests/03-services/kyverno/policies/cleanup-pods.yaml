@@ -33,6 +33,13 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "1h0m0s"
+    any:
+      - key: "{{ target.metadata.ownerReferences }}"
+        operator: Equals
+        value: null
+      - key: "{{ target.metadata.ownerReferences | length(@) }}"
+        operator: Equals
+        value: 0
       - key: "{{ target.metadata.ownerReferences[0].kind }}"
         operator: AnyNotIn
         value: ["ReplicaSet", "StatefulSet"]
@@ -72,6 +79,9 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "24h0m0s"
+      - key: "{{ target.metadata.ownerReferences | length(@) }}"
+        operator: GreaterThan
+        value: 0
       - key: "{{ target.metadata.ownerReferences[0].kind }}"
         operator: AnyIn
         value: ["ReplicaSet", "StatefulSet"]
