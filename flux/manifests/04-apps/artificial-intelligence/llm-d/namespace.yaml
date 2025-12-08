@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm-d
+  labels:
+    name: llm-d
+    app.kubernetes.io/name: llm-d

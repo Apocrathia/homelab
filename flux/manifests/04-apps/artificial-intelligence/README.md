@@ -16,7 +16,11 @@ Open-source platform for the machine learning lifecycle with experiment tracking
 
 Unified interface for 100+ LLMs with OpenAI proxy compatibility, providing seamless integration with various AI model providers.
 
-### [Guardrails AI](./guardrails/README.md)
+### [llm-d](./llm-d/README.md)
+
+Kubernetes-native distributed inference serving stack for large language models, providing optimized deployment patterns with vLLM and Inference Gateway.
+
+### [Guardrails AI](./guardrails-ai/README.md)
 
 API server providing guardrails validation for LLM outputs using community validators from the Guardrails Hub, designed for LiteLLM integration.
 
