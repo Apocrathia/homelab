@@ -53,6 +53,12 @@ spec:
       targetPath: envVars.VECTOR_STORE_API_KEY
 
   values:
+    # Global Redis configuration for subchart
+    # Password required by Bitnami chart even when auth is disabled
+    global:
+      redis:
+        password: "litellm-redis-password"
+
     # Use the database-optimized image
     image:
       repository: ghcr.io/berriai/litellm-database
@@ -100,9 +106,11 @@ spec:
     postgresql:
       enabled: false
 
-    # Disable redis for now (can be enabled later if needed for caching)
+    # Enable redis for caching
     redis:
-      enabled: false
+      enabled: true
+      auth:
+        enabled: false
 
     # Add sidecar containers
     extraContainers:
@@ -200,6 +208,14 @@ spec:
 
         # Health checks
         health_check_interval: 300
+
+        # Caching
+        cache: true
+        cache_params:
+          type: redis
+          namespace: "litellm"
+          ttl: 3600
+          max_connections: 50
 
     # Migration job configuration
     migrationJob:

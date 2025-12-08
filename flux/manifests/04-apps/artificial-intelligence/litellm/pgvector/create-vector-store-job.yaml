@@ -1,0 +1,107 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-vector-store
+  namespace: litellm
+spec:
+  # Auto-cleanup completed jobs after 1 hour
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: create-vector-store
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: create-vector-store
+          # renovate: datasource=docker depName=curlimages/curl
+          image: curlimages/curl:8.17.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+
+              echo "Waiting for vector store service to be ready..."
+              MAX_WAIT=300
+              ELAPSED=0
+              until curl -sf http://vector-store.litellm.svc.cluster.local:8000/health > /dev/null; do
+                if [ $ELAPSED -ge $MAX_WAIT ]; then
+                  echo "ERROR: Vector store service did not become ready within ${MAX_WAIT}s"
+                  exit 1
+                fi
+                echo "Waiting for vector store service... (${ELAPSED}s/${MAX_WAIT}s)"
+                sleep 5
+                ELAPSED=$((ELAPSED + 5))
+              done
+
+              echo "Vector store service is ready!"
+
+              echo "Checking for existing vector stores..."
+              EXISTING_STORES=$(curl -s -X GET \
+                http://vector-store.litellm.svc.cluster.local:8000/v1/vector_stores \
+                -H "Authorization: Bearer ${SERVER_API_KEY}" \
+                -H "Content-Type: application/json" || echo "[]")
+
+              STORE_COUNT=$(echo "$EXISTING_STORES" | grep -o '"id"' | wc -l || echo "0")
+
+              if [ "$STORE_COUNT" -eq "0" ]; then
+                echo "No vector stores found, creating one..."
+                RESPONSE=$(curl -s -X POST \
+                  http://vector-store.litellm.svc.cluster.local:8000/v1/vector_stores \
+                  -H "Authorization: Bearer ${SERVER_API_KEY}" \
+                  -H "Content-Type: application/json" \
+                  -d '{"name": "litellm-vector-store"}')
+
+                STORE_ID=$(echo "$RESPONSE" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 || echo "")
+                if [ -n "$STORE_ID" ]; then
+                  echo "✓ Vector store created successfully!"
+                  echo "Vector Store ID: $STORE_ID"
+                  echo ""
+                  echo "IMPORTANT: Add this ID to litellm.yml:"
+                  echo "  vector_store_registry:"
+                  echo "    - vector_store_name: \"pgvector-litellm\""
+                  echo "      litellm_params:"
+                  echo "        vector_store_id: \"$STORE_ID\""
+                else
+                  echo "ERROR: Failed to extract vector store ID from response"
+                  echo "Response: $RESPONSE"
+                  exit 1
+                fi
+              else
+                echo "Vector store already exists, skipping creation."
+                FIRST_ID=$(echo "$EXISTING_STORES" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+                if [ -n "$FIRST_ID" ]; then
+                  echo "Existing Vector Store ID: $FIRST_ID"
+                  echo ""
+                  echo "NOTE: Ensure this ID is set in litellm.yml:"
+                  echo "  vector_store_registry:"
+                  echo "    - vector_store_name: \"pgvector-litellm\""
+                  echo "      litellm_params:"
+                  echo "        vector_store_id: \"$FIRST_ID\""
+                fi
+              fi
+          env:
+            - name: SERVER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: vector-store-api-key
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
