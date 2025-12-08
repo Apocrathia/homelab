@@ -102,7 +102,7 @@ spec:
               memory: 256Mi
 
     worker:
-      replicas: 2
+      replicas: 4
       resources:
         requests:
           cpu: 250m
