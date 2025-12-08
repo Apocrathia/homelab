@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.39 (Latest)
+## Version 0.0.40 (Latest)
+
+- **Fixed PostgreSQL Storage Conflict with CloudNativePG**: Removed `postgres-storage.yaml` template that was creating conflicting PVCs
+  - **Problem Solved**: Template was creating a PVC named `{app-name}-postgres-data` when postgres was enabled with longhorn storage, but CloudNativePG manages its own PVCs (e.g., `{app-name}-postgres-1`)
+  - **Root Cause**: The postgres-storage template was meant to pre-create Longhorn volumes, but CNPG doesn't need or use manually created PVCs - it creates and manages its own storage
+  - **Template Removed**: Deleted `postgres-storage.yaml` template entirely since CNPG handles all storage management
+  - **Impact**: HelmReleases using postgres with CNPG will no longer have PVC conflicts or stuck upgrades
+  - **Backward Compatible**: No changes required to existing deployments - CNPG continues to manage its own storage as before
+
+## Version 0.0.39
 
 - **CRITICAL: Fixed Nil Pointer Error in Longhorn Storage Templates**: Resolved template error when `storage.longhorn.numberOfReplicas` is not explicitly set
   - **Problem Solved**: Template was attempting to access `$.Values.storage.longhorn.numberOfReplicas` without checking if `storage.longhorn` exists, causing "nil pointer evaluating interface {}.storage" errors
