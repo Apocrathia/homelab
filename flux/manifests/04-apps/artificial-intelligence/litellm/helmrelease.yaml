@@ -51,14 +51,16 @@ spec:
       name: litellm-secrets
       valuesKey: vector-store-api-key
       targetPath: envVars.VECTOR_STORE_API_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: redis-password
+      targetPath: global.redis.password
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: redis-password
+      targetPath: redis.auth.password
 
   values:
-    # Global Redis configuration for subchart
-    # Password required by Bitnami chart even when auth is disabled
-    global:
-      redis:
-        password: "litellm-redis-password"
-
     # Use the database-optimized image
     image:
       repository: ghcr.io/berriai/litellm-database
@@ -110,7 +112,7 @@ spec:
     redis:
       enabled: true
       auth:
-        enabled: false
+        enabled: true
 
     # Add sidecar containers
     extraContainers:
