@@ -9,3 +9,4 @@ resources:
   - postgres.yaml
   - podmonitor.yaml
   - helmrelease.yaml
+  - create-vector-store-job.yaml
