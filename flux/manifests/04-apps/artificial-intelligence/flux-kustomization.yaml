@@ -16,4 +16,5 @@ spec:
     - name: services-gateway
     - name: services-authentik
     - name: services-postgresql
+    - name: services-leaderworkerset
     - name: infrastructure-longhorn

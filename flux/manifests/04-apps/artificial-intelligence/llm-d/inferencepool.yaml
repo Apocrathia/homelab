@@ -1,0 +1,27 @@
+---
+# InferencePool for Gateway API Inference Extension
+# Groups the decode pods created by the Helm chart for load balancing
+# Note: Currently using LiteLLM for routing, so this is optional
+# If using Gateway API Inference Extension's Endpoint Picker, this is required
+apiVersion: inference.networking.k8s.io/v1
+kind: InferencePool
+metadata:
+  name: llama3.2-1b
+  namespace: llm-d
+spec:
+  # Selector matches the decode pods created by the Helm chart
+  selector:
+    matchLabels:
+      llm-d.ai/inferenceServing: "true"
+      llm-d.ai/model: llama3.2-1b
+      llm-d.ai/role: decode
+  # Target ports exposed by the inference pods
+  # Port 8000 is the routing sidecar servicePort
+  targetPorts:
+    - number: 8000
+  # Endpoint Picker reference - points to our Service
+  # This is required by the CRD schema, but we're using LiteLLM for routing
+  endpointPickerRef:
+    name: llm-d-modelservice
+    port:
+      number: 8000

@@ -8,6 +8,7 @@ metadata:
 resources:
   - guardrails-ai
   - litellm
+  - llm-d
   - mcp-servers
   - mlflow
   - openwebui
