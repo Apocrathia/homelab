@@ -21,6 +21,7 @@ resources:
   - 03-services/external-secrets/flux-kustomization.yaml
   - 03-services/observability/flux-kustomization.yaml
   - 03-services/kyverno/flux-kustomization.yaml
+  - 03-services/leaderworkerset/flux-kustomization.yaml
   - 03-services/dashboard/flux-kustomization.yaml
   - 03-services/gitlab/flux-kustomization.yaml
   - 03-services/renovate/flux-kustomization.yaml
