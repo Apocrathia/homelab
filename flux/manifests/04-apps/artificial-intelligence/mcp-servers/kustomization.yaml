@@ -10,5 +10,4 @@ resources:
   - mkp/
   - grafana/
   - searxng/
-  - github/
   - flux/
