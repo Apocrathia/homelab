@@ -8,6 +8,10 @@ This directory contains AI and machine learning applications for the homelab inf
 
 User-friendly web interface for interacting with Large Language Models (LLMs) through chat interfaces.
 
+### [Flowise](./flowise/README.md)
+
+Open-source platform for building and deploying AI agents, providing a user-friendly web interface for interacting with Large Language Models (LLMs) through chat interfaces.
+
 ### [MLflow](./mlflow/README.md)
 
 Open-source platform for the machine learning lifecycle with experiment tracking, model registry, and deployment capabilities.
