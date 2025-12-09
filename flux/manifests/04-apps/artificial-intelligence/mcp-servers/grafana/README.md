@@ -2,6 +2,8 @@
 
 This directory contains the deployment configuration for the Grafana MCP (Model Context Protocol) server, which enables AI assistants to interact with Grafana instances through a standardized protocol.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
 ## Overview
 
 The Grafana MCP server provides a bridge between AI assistants and Grafana's ecosystem, allowing for:

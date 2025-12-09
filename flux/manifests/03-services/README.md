@@ -2,6 +2,8 @@
 
 This directory contains the deployment configuration for platform services that provide core functionality to the homelab cluster.
 
+> **Navigation**: [← Back to Flux README](../../README.md)
+
 ## Components
 
 ### Core Services

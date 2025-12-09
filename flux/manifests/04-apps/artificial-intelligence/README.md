@@ -2,6 +2,8 @@
 
 This directory contains AI and machine learning applications for the homelab infrastructure.
 
+> **Navigation**: [← Back to Apps README](../README.md)
+
 ## Applications
 
 ### [OpenWebUI](./openwebui/README.md)

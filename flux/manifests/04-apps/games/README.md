@@ -2,6 +2,8 @@
 
 This directory contains game support services and applications for managing, organizing, and playing games in the homelab environment.
 
+> **Navigation**: [← Back to Apps README](../README.md)
+
 ## Applications
 
 ### [ArchiSteamFarm](./archisteamfarm/README.md)

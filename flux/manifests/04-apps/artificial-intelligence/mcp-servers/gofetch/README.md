@@ -2,6 +2,8 @@
 
 The GoFetch MCP server provides web content retrieval capabilities through the Model Context Protocol. This is the Go implementation of the Fetch server, which retrieves and processes content from web pages.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
 > **Note**: This is the Go implementation. There's also a Python implementation available at [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/fetch).
 
 ## Why GoFetch?

@@ -2,7 +2,7 @@
 
 Media server for streaming content from SMB storage shares with transcoding capabilities.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

@@ -2,6 +2,8 @@
 
 The MKP MCP server provides direct Kubernetes cluster access through the Model Context Protocol.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
 ## Documentation
 
 - [MKP Source Repository](https://github.com/StacklokLabs/mkp)

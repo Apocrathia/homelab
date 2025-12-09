@@ -2,6 +2,8 @@
 
 Tautulli is a Python-based monitoring and tracking tool for Plex Media Server with analytics, notifications, and user statistics.
 
+> **Navigation**: [← Back to Media README](../../README.md)
+
 ## Documentation
 
 - **Tautulli Documentation**: https://tautulli.com/

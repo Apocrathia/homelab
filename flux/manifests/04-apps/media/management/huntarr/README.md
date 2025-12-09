@@ -2,7 +2,7 @@
 
 Automated missing content hunter for \*arr applications that systematically searches for missing content in existing libraries.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

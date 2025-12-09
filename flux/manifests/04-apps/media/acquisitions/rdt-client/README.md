@@ -2,7 +2,7 @@
 
 RDT-Client integrates Real-Debrid and other debrid services with Sonarr/Radarr, enabling HTTP downloads from debrid servers instead of traditional torrenting.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

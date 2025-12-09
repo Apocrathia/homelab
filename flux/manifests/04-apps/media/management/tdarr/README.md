@@ -2,6 +2,8 @@
 
 Tdarr is a distributed transcoding system for audio and video libraries. It allows users to define rules for codecs, containers, languages, and other media attributes to standardize their media libraries and improve compatibility with playback devices.
 
+> **Navigation**: [← Back to Media README](../../README.md)
+
 ## Configuration
 
 This deployment uses a distributed architecture with separate server and node components for distributed transcoding across the cluster.

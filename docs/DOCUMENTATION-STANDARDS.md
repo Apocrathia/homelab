@@ -45,7 +45,7 @@ This document defines the standards and guidelines for maintaining consistent, h
 
 #### Links
 
-- **External Links**: Use angle bracket format `<https://example.com>`
+- **External Links**: Use standard markdown format `[Link Text](https://example.com)`
 - **Internal Links**: Use relative paths `[text](../path)`
 - **Documentation Links**: Always include official documentation link
 

@@ -2,7 +2,7 @@
 
 Personal Video Recorder (PVR) for Usenet and BitTorrent users with automated episode monitoring and quality upgrades.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

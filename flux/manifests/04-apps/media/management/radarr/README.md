@@ -2,7 +2,7 @@
 
 Movie collection manager for Usenet and BitTorrent users with automated RSS monitoring and quality upgrades.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

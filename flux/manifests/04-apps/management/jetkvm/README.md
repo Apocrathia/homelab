@@ -2,6 +2,8 @@
 
 Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
+> **Navigation**: [← Back to Management README](../README.md)
+
 ## Overview
 
 - **Cloud API**: Node.js/Express backend with Prisma ORM, WebRTC signaling, and Google OAuth

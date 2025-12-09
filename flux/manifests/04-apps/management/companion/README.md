@@ -2,7 +2,7 @@
 
 This directory contains the deployment configuration for [Bitfocus Companion](https://bitfocus.io/companion/), a powerful stream deck control software for broadcast and live production environments.
 
-> **Navigation**: [← Back to Apps README](../README.md)
+> **Navigation**: [← Back to Management README](../README.md)
 
 ## Overview
 

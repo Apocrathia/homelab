@@ -2,7 +2,7 @@
 
 Torrent client with integrated VPN routing via Gluetun init container for secure downloads.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 
