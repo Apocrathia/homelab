@@ -9,7 +9,7 @@ spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16
 
   # Number of instances
-  instances: 1
+  instances: 2
 
   # Storage configuration
   storage:
@@ -20,7 +20,10 @@ spec:
   postgresql:
     # PostgreSQL configuration parameters
     parameters:
-      max_connections: "100"
+      max_connections: "200"
+      shared_buffers: "128MB"
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "32MB"
       track_io_timing: "on"
       track_functions: "all"
       log_statement: "ddl"
