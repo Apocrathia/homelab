@@ -6,6 +6,7 @@ metadata:
   name: artificial-intelligence
 
 resources:
+  - flowise
   - guardrails-ai
   - litellm
   - llm-d

@@ -1,0 +1,190 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: flowise
+  namespace: flowise
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.39"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: flowise
+      namespace: flowise
+      # renovate: datasource=docker depName=flowiseai/flowise
+      image: flowiseai/flowise:3.0.12
+      container:
+        name: flowise
+        port: 3000
+        env:
+          # Server configuration
+          - name: PORT
+            value: "3000"
+          - name: HOST
+            value: "0.0.0.0"
+          # Database configuration - PostgreSQL
+          - name: DATABASE_TYPE
+            value: "postgres"
+          - name: DATABASE_HOST
+            value: "flowise-postgres-rw.flowise.svc.cluster.local"
+          - name: DATABASE_PORT
+            value: "5432"
+          - name: DATABASE_NAME
+            value: "flowise"
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                name: flowise-secrets
+                key: username
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: flowise-secrets
+                key: password
+          # JWT Configuration (open-source Flowise uses JWT for local accounts)
+          - name: JWT_AUTH_TOKEN_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: flowise-secrets
+                key: jwt-auth-token-secret
+          - name: JWT_REFRESH_TOKEN_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: flowise-secrets
+                key: jwt-refresh-token-secret
+          - name: JWT_ISSUER
+            value: "https://auth.gateway.services.apocrathia.com"
+          - name: JWT_AUDIENCE
+            value: "flowise"
+          # Set HOME to writable volume so ~/.flowise resolves to writable location
+          - name: HOME
+            value: "/data/flowise"
+          # Flowise write paths - configure to use writable volumes
+          # SECRETKEY_PATH is a directory - Flowise appends /encryption.key to it
+          - name: LOG_PATH
+            value: "/data/flowise/logs"
+          - name: SECRETKEY_PATH
+            value: "/data/flowise"
+          - name: BLOB_STORAGE_PATH
+            value: "/data/flowise/storage"
+          # Set DATABASE_PATH even though using PostgreSQL to prevent directory creation in home
+          - name: DATABASE_PATH
+            value: "/data/flowise"
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/ping
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/ping
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/ping
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+
+      # Volume mount for Flowise persistent data (logs, encryption key, blob storage)
+      volumeMounts:
+        - name: data
+          mountPath: /data/flowise
+
+    # Persistent storage for Flowise data
+    # SECRETKEY_PATH must be persistent - losing it breaks all encrypted credentials
+    # BLOB_STORAGE_PATH should be persistent for uploaded files
+    # LOG_PATH should be persistent for debugging/auditing
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+      smb:
+        enabled: false
+
+    # PostgreSQL database via CNPG
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      postgresql:
+        parameters:
+          max_connections: "200"
+          shared_buffers: "128MB"
+          effective_cache_size: "512MB"
+          maintenance_work_mem: "32MB"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: true
+      database: flowise
+      owner: flowise
+
+    # 1Password secrets
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/flowise-secrets"
+
+    # Authentik proxy
+    authentik:
+      enabled: true
+      category: "AI & Automation"
+      displayName: "Flowise"
+      externalHost: "https://flowise.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/flowise.svg"
+
+    # No HTTPRoute - Authentik proxy handles routing
+    httproute:
+      enabled: false
