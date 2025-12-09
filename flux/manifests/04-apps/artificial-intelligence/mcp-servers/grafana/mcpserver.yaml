@@ -23,7 +23,7 @@ spec:
   env:
     # Default Grafana URL (can be overridden via X-Grafana-URL header)
     - name: GRAFANA_URL
-      value: "https://grafana.gateway.services.apocrathia.com"
+      value: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
       # Token passed via X-Grafana-API-Key header from client through LiteLLM
   args:
     - -t
