@@ -73,7 +73,7 @@ spec:
 
     authentik:
       enabled: true
-      category: "Home"
+      category: "Productivity"
       displayName: "Kiwix"
       externalHost: "https://wiki.gateway.services.apocrathia.com"
       icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kiwix-light.svg"
