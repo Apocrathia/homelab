@@ -43,7 +43,6 @@ model_list:
       api_base: os.environ/OLLAMA_API_BASE
 
   # llm-d models (Kubernetes-native inference serving with inference-sim)
-  # inference-sim provides CPU-only inference for development/testing
   - model_name: inference-sim
     litellm_params:
       model: openai/llm-d/inference-sim
@@ -71,6 +70,21 @@ vector_store_registry:
 
 mcp_servers:
   gofetch:
-    url: "https://mcp.gateway.services.apocrathia.com/gofetch"
+    url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
+  osv:
+    url: "http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  mkp:
+    url: "http://mcp-kubernetes-mcp-proxy.mcp-mkp.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  grafana:
+    url: "http://mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+    # Forward Grafana auth headers from client
+    extra_headers:
+      - "X-Grafana-API-Key"

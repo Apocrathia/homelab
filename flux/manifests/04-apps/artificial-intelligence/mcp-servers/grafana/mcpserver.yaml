@@ -14,18 +14,22 @@ metadata:
 spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
   image: docker.io/grafana/mcp-grafana:0.7.10
-  transport: sse
-  port: 8000
-  targetPort: 8000
+  transport: streamable-http
+  port: 8080
+  targetPort: 8080
   permissionProfile:
     type: builtin
     name: network
   env:
+    # Default Grafana URL (can be overridden via X-Grafana-URL header)
     - name: GRAFANA_URL
       value: "https://grafana.gateway.services.apocrathia.com"
+      # Token passed via X-Grafana-API-Key header from client through LiteLLM
   args:
-    - --base-path
-    - /grafana
+    - -t
+    - streamable-http
+    - --address
+    - "0.0.0.0:8080"
     - --debug
   resources:
     limits:

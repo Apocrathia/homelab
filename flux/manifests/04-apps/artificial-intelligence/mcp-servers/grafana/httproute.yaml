@@ -25,10 +25,10 @@ spec:
             value: /grafana
       backendRefs:
         - name: mcp-grafana-mcp-proxy
-          port: 8000
+          port: 8080
       filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
-              replacePrefixMatch: /grafana
+              replacePrefixMatch: /mcp
