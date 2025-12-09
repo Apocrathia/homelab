@@ -1,0 +1,35 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: flux-mcp
+  namespace: mcp-flux
+  labels:
+    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Flux MCP server for GitOps pipeline management"
+spec:
+  # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
+  image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.36.0
+  transport: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  args:
+    - serve
+    - --transport
+    - http
+    - --port
+    - "8080"
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"

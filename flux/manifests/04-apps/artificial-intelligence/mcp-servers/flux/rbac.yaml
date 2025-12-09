@@ -1,0 +1,89 @@
+---
+# ServiceAccount for Flux MCP server
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux-mcp-sa
+  namespace: mcp-flux
+  labels:
+    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/component: mcp-server
+---
+# ClusterRole for Flux MCP server to access Flux resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flux-mcp-server
+  labels:
+    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/component: mcp-server
+rules:
+  # Flux source-controller resources
+  - apiGroups: ["source.toolkit.fluxcd.io"]
+    resources:
+      - gitrepositories
+      - ocirepositories
+      - buckets
+      - helmrepositories
+      - helmcharts
+    verbs: ["get", "list", "watch", "patch"]
+  # Flux kustomize-controller resources
+  - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+    resources:
+      - kustomizations
+    verbs: ["get", "list", "watch", "patch"]
+  # Flux helm-controller resources
+  - apiGroups: ["helm.toolkit.fluxcd.io"]
+    resources:
+      - helmreleases
+    verbs: ["get", "list", "watch", "patch"]
+  # Flux notification-controller resources
+  - apiGroups: ["notification.toolkit.fluxcd.io"]
+    resources:
+      - alerts
+      - providers
+      - receivers
+    verbs: ["get", "list", "watch"]
+  # Flux image-automation resources
+  - apiGroups: ["image.toolkit.fluxcd.io"]
+    resources:
+      - imagepolicies
+      - imagerepositories
+      - imageupdateautomations
+    verbs: ["get", "list", "watch", "patch"]
+  # Core resources for status and events
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - events
+      - configmaps
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+    verbs: ["get", "list", "watch"]
+  # Deployments for checking workload status
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+---
+# ClusterRoleBinding to connect the service account to the cluster role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: flux-mcp-server
+  labels:
+    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/component: mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: flux-mcp-server
+subjects:
+  - kind: ServiceAccount
+    name: flux-mcp-sa
+    namespace: mcp-flux

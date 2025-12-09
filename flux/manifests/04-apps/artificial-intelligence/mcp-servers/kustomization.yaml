@@ -9,3 +9,6 @@ resources:
   - gofetch/
   - mkp/
   - grafana/
+  - searxng/
+  - github/
+  - flux/
