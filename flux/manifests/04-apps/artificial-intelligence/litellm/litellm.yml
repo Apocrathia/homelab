@@ -93,7 +93,7 @@ mcp_servers:
     transport: "http"
     auth_type: "none"
   github:
-    url: "http://mcp-github-mcp-proxy.mcp-github.svc.cluster.local:8080/mcp"
+    url: "https://api.githubcopilot.com/mcp/"
     transport: "http"
     auth_type: "none"
     # Forward GitHub PAT from client
