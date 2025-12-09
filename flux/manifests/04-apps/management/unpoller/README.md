@@ -2,6 +2,8 @@
 
 UniFi network monitoring and metrics collection system that exports data to Prometheus and Grafana.
 
+> **Navigation**: [← Back to Management README](../README.md)
+
 ## Overview
 
 UnPoller collects metrics from Ubiquiti UniFi controllers and exports them to monitoring systems including Prometheus, InfluxDB, Loki, and Datadog. This deployment integrates with the homelab's Prometheus and Grafana infrastructure.

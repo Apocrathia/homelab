@@ -2,7 +2,7 @@
 
 LiveTV channel creator that transforms media from Plex, Jellyfin, or Emby servers into continuous virtual TV channels.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

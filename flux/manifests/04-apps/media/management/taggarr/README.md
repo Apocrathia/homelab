@@ -2,7 +2,7 @@
 
 Media tagging utility that scans and tags anime shows based on dubbed audio track availability, enabling filtering by dubbed content in Sonarr and media players.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

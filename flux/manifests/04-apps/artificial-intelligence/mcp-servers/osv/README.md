@@ -2,6 +2,8 @@
 
 The OSV MCP server provides vulnerability scanning capabilities through the Model Context Protocol.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
 ## Documentation
 
 - [OSV Database](https://osv.dev/) - Open Source Vulnerability database

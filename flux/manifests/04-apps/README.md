@@ -9,10 +9,10 @@ This directory contains user-facing applications and workloads deployed in the c
 The applications layer contains user-facing workloads and services organized by functional categories:
 
 - **Application Templates**: Baseline configurations for common application patterns
-- **Artificial Intelligence**: AI/ML applications and MCP servers for LLM tool integration
-- **Games**: Game support services and applications for managing and playing games
-- **Management**: Administrative and workflow automation tools
-- **Integration Examples**: Examples of infrastructure integration patterns
+- **Artificial Intelligence**: AI/ML applications, LLM interfaces, and MCP servers
+- **Games**: Game support services and ROM management
+- **Management**: Administrative tools, workflow automation, and monitoring
+- **Media**: Media servers, Arr stack automation, and download clients
 
 ## Components
 
@@ -23,29 +23,44 @@ The applications layer contains user-facing workloads and services organized by 
 ### Artificial Intelligence
 
 - [**AI Applications**](artificial-intelligence/README.md) - Overview of AI and machine learning applications
-  - [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with Large Language Models (LLMs) with Authentik SSO integration and Gateway API routing
-  - [**MLflow**](artificial-intelligence/mlflow/README.md) - Open-source platform for the machine learning lifecycle with experiment tracking, model registry, and deployment capabilities
-  - [**Guardrails AI**](artificial-intelligence/guardrails/README.md) - API server providing guardrails validation for LLM outputs using community validators from the Guardrails Hub, designed for LiteLLM integration
-  - [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration:
-    - [**OSV**](artificial-intelligence/mcp-servers/osv/README.md) - Open Source Vulnerabilities scanner for security analysis
-    - [**GoFetch**](artificial-intelligence/mcp-servers/gofetch/README.md) - Web content fetching and processing service
-    - [**MKP**](artificial-intelligence/mcp-servers/mkp/README.md) - Kubernetes resource management and monitoring
-    - [**Grafana**](artificial-intelligence/mcp-servers/grafana/README.md) - Grafana dashboard and data source management
+  - [**OpenWebUI**](artificial-intelligence/openwebui/README.md) - Web-based user interface for interacting with LLMs
+  - [**Flowise**](artificial-intelligence/flowise/README.md) - Low-code platform for building AI agents and workflows
+  - [**MLflow**](artificial-intelligence/mlflow/README.md) - ML lifecycle platform with experiment tracking and model registry
+  - [**LiteLLM**](artificial-intelligence/litellm/README.md) - Unified proxy interface for 100+ LLM providers
+  - [**llm-d**](artificial-intelligence/llm-d/README.md) - Kubernetes-native distributed LLM inference serving
+  - [**Guardrails AI**](artificial-intelligence/guardrails-ai/README.md) - LLM output validation and safety checks
+  - [**MCP Servers**](artificial-intelligence/mcp-servers/README.md) - Model Context Protocol servers for AI tool integration
 
 ### Games
 
 - [**Game Support Services**](games/README.md) - Overview of game management and emulation applications
-  - [**ArchiSteamFarm**](games/archisteamfarm/README.md) - Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration
-  - [**ROMM**](games/romm/README.md) - ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation
+  - [**ArchiSteamFarm**](games/archisteamfarm/README.md) - Steam card farming application
+  - [**ROMM**](games/romm/README.md) - ROM Manager for retro games with web-based emulation
 
 ### Management
 
 - [**Management Applications**](management/README.md) - Overview of management and administrative applications
-  - [**ChangeDetection.io**](management/changedetection-io/README.md) - Website change detection and monitoring service with Browserless Chrome integration for JavaScript-heavy sites, Authentik SSO, and Longhorn storage
-  - [**Companion**](management/companion/README.md) - Bitfocus Companion stream deck software deployed using the generic-app chart with Longhorn storage and Authentik SSO
-  - [**Kuber**](management/kuber/README.md) - iOS Kubernetes dashboard token management for mobile cluster access
-  - [**n8n**](management/n8n/README.md) - Workflow automation platform with Authentik SSO integration, PostgreSQL backend, and Gateway API routing for creating and automating workflows
-  - [**Mealie**](management/mealie/README.md) - Self-hosted recipe manager and meal planning application with Authentik SSO integration and Longhorn storage
+  - [**ChangeDetection.io**](management/changedetection-io/README.md) - Website change detection and monitoring
+  - [**Companion**](management/companion/README.md) - Stream Deck control software
+  - [**FluentBit**](management/fluentbit/README.md) - Log collection and forwarding to Loki
+  - [**Grocy**](management/grocy/README.md) - Groceries and household management
+  - [**JetKVM**](management/jetkvm/README.md) - KVM-over-IP device management
+  - [**Kiwix**](management/kiwix/README.md) - Offline Wikipedia and content library
+  - [**Kuber**](management/kuber/README.md) - iOS Kubernetes dashboard token management
+  - [**Logseq**](management/logseq/README.md) - Knowledge management and note-taking
+  - [**Mealie**](management/mealie/README.md) - Recipe manager and meal planning
+  - [**n8n**](management/n8n/README.md) - Workflow automation platform
+  - [**SearXNG**](management/searxng/README.md) - Privacy-respecting metasearch engine
+  - [**Transmission**](management/transmission/README.md) - Torrent client with VPN integration
+  - [**UnPoller**](management/unpoller/README.md) - UniFi network monitoring
+  - [**Uptime Kuma**](management/uptime-kuma/README.md) - Service uptime monitoring
+
+### Media
+
+- [**Media Applications**](media/README.md) - Media server ecosystem for streaming and management
+  - **Servers**: [Plex](media/servers/plex/README.md), [Cardinal](media/servers/cardinal/README.md), [Tunarr](media/servers/tunarr/README.md)
+  - **Management**: [Sonarr](media/management/sonarr/README.md), [Radarr](media/management/radarr/README.md), [Lidarr](media/management/lidarr/README.md), [Prowlarr](media/management/prowlarr/README.md), [Bazarr](media/management/bazarr/README.md), [Tdarr](media/management/tdarr/README.md), [Recyclarr](media/management/recyclarr/README.md), [Tautulli](media/management/tautulli/README.md), and more
+  - **Acquisitions**: [qBittorrent](media/acquisitions/qbittorrent/README.md), [SABnzbd](media/acquisitions/sabnzbd/README.md), [Bitmagnet](media/acquisitions/bitmagnet/README.md), [rdt-client](media/acquisitions/rdt-client/README.md)
 
 ### Application Patterns
 
@@ -76,7 +91,7 @@ The demo app serves as a **baseline template** that has evolved into a reusable 
 2. **Phase 2 (✅ Completed)**: Helm chart with configurable values and templates
 3. **Phase 3 (✅ Completed)**: Reusable `generic-app` Helm chart for multiple applications
 4. **Phase 4 (✅ Completed)**: Production-ready chart with GitOps deployment through Flux
-5. **Phase 5 (✅ In Progress)**: Real applications deployed using the chart (Companion, future apps)
+5. **Phase 5 (✅ Completed)**: Real applications deployed using the chart (Companion, n8n, Plex, OpenWebUI, and many more)
 
 ### Integration Points
 

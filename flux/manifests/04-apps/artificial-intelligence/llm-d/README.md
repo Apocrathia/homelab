@@ -2,6 +2,8 @@
 
 Kubernetes-native distributed inference serving stack for large language models (LLMs).
 
+> **Navigation**: [← Back to AI Applications README](../README.md)
+
 ## Overview
 
 llm-d accelerates distributed inference by integrating industry-standard open technologies:

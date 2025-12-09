@@ -2,7 +2,7 @@
 
 Subtitle management companion for Sonarr and Radarr with automated subtitle downloads and AI-powered transcription via Whisper.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 

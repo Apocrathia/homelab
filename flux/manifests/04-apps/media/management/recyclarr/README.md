@@ -2,6 +2,8 @@
 
 Recyclarr automatically synchronizes recommended settings from the TRaSH Guides to your Sonarr and Radarr instances.
 
+> **Navigation**: [← Back to Media README](../../README.md)
+
 ## Overview
 
 Recyclarr is a command-line utility that runs periodically to keep your media management services configured with optimal settings from the community-maintained TRaSH Guides.

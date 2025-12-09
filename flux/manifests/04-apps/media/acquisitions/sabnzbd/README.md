@@ -2,6 +2,8 @@
 
 SABnzbd Usenet client with integrated VPN routing via Gluetun init container.
 
+> **Navigation**: [← Back to Media README](../../README.md)
+
 ## Architecture
 
 This deployment uses an **init container pattern** where:

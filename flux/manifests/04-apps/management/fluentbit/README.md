@@ -2,6 +2,8 @@
 
 Generic FluentBit deployment configured to collect logs from various sources and forward them to Loki. Currently includes syslog collection capabilities via TCP/UDP.
 
+> **Navigation**: [← Back to Management README](../README.md)
+
 ## Components
 
 - **FluentBit**: Main Fluent Bit instance running as LoadBalancer service

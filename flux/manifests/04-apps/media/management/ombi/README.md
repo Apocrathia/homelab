@@ -2,6 +2,8 @@
 
 Request management system for Plex media server, allowing users to request movies and TV shows.
 
+> **Navigation**: [← Back to Media README](../../README.md)
+
 ## Configuration
 
 - **Image**: LinuxServer.io Ombi container with automatic updates

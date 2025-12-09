@@ -2,6 +2,8 @@
 
 This directory contains the MCPO (MCP-to-OpenAPI) bridge deployment that enables Open WebUI to connect to MCP servers through OpenAPI endpoints.
 
+> **Navigation**: [← Back to OpenWebUI README](../README.md)
+
 ## Overview
 
 The MCPO bridge acts as a translation layer between Open WebUI and the existing MCP servers managed by ToolHive. It exposes all MCP server tools as individual OpenAPI endpoints that Open WebUI can consume.

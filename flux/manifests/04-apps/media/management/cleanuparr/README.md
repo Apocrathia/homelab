@@ -2,7 +2,7 @@
 
 Automated download management system that monitors and cleans up unwanted or blocked files in Sonarr, Radarr, and download clients.
 
-> **Navigation**: [← Back to Media README](../README.md)
+> **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 
