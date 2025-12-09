@@ -13,7 +13,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.39"
+      version: "0.0.40"
       sourceRef:
         kind: GitRepository
         name: homelab
