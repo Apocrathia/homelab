@@ -1,0 +1,30 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: github-mcp
+  namespace: mcp-github
+  labels:
+    app.kubernetes.io/name: github-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "GitHub MCP server for repository and issue management"
+spec:
+  # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
+  image: ghcr.io/github/github-mcp-server:latest
+  transport: stdio
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  # No env vars - auth is passed via Authorization header from client through LiteLLM
+  resources:
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"

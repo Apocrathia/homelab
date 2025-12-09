@@ -88,3 +88,22 @@ mcp_servers:
     # Forward Grafana auth headers from client
     extra_headers:
       - "X-Grafana-API-Key"
+  searxng:
+    url: "http://mcp-searxng-mcp-proxy.mcp-searxng.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  github:
+    url: "http://mcp-github-mcp-proxy.mcp-github.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+    # Forward GitHub PAT from client
+    extra_headers:
+      - "Authorization"
+  flux:
+    url: "http://mcp-flux-mcp-proxy.mcp-flux.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  deepwiki:
+    url: "https://mcp.deepwiki.com/mcp"
+    transport: "http"
+    auth_type: "none"

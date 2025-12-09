@@ -46,6 +46,31 @@ This deployment includes:
 - **Tools**: Dashboard operations, Prometheus queries, Loki log analysis, alert management
 - **Access**: `https://mcp.gateway.services.apocrathia.com/grafana`
 
+#### SearXNG MCP Server
+
+- **Purpose**: Privacy-respecting web search via internal SearXNG instance
+- **Tools**: Web search with pagination, URL content reading
+- **Access**: `https://mcp.gateway.services.apocrathia.com/searxng`
+
+#### GitHub MCP Server
+
+- **Purpose**: GitHub repository and issue management
+- **Tools**: Repository operations, issues, pull requests, actions, releases
+- **Access**: `https://mcp.gateway.services.apocrathia.com/github`
+- **Auth**: Pass GitHub PAT via `Authorization` header
+
+#### Flux MCP Server
+
+- **Purpose**: GitOps pipeline management and Flux resource operations
+- **Tools**: Resource listing, reconciliation triggers, status analysis
+- **Access**: `https://mcp.gateway.services.apocrathia.com/flux`
+
+#### DeepWiki (External)
+
+- **Purpose**: AI-powered documentation for GitHub repositories
+- **Tools**: Wiki structure, content reading, question answering
+- **Access**: Via LiteLLM gateway (hosted at `mcp.deepwiki.com`)
+
 ### Access
 
 - **Unified Gateway**: All servers accessible through `https://mcp.gateway.services.apocrathia.com`
