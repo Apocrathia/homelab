@@ -52,12 +52,12 @@ This deployment includes:
 - **Tools**: Web search with pagination, URL content reading
 - **Access**: `https://mcp.gateway.services.apocrathia.com/searxng`
 
-#### GitHub MCP Server
+#### GitHub MCP Server (External)
 
 - **Purpose**: GitHub repository and issue management
 - **Tools**: Repository operations, issues, pull requests, actions, releases
-- **Access**: `https://mcp.gateway.services.apocrathia.com/github`
-- **Auth**: Pass GitHub PAT via `Authorization` header
+- **Access**: Via LiteLLM gateway (hosted at `api.githubcopilot.com`)
+- **Auth**: Pass GitHub PAT via `Authorization` header (requires Copilot subscription)
 
 #### Flux MCP Server
 
