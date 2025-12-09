@@ -20,7 +20,7 @@ spec:
     app:
       name: unpoller
       # renovate: datasource=docker depName=ghcr.io/unpoller/unpoller
-      image: ghcr.io/unpoller/unpoller:v2.17.1
+      image: ghcr.io/unpoller/unpoller:v2.17.2
       container:
         name: unpoller
         port: 9130
