@@ -20,7 +20,7 @@ spec:
   postgresql:
     # PostgreSQL configuration parameters
     parameters:
-      max_connections: "200"
+      max_connections: "400"
       shared_buffers: "128MB"
       effective_cache_size: "512MB"
       maintenance_work_mem: "32MB"
