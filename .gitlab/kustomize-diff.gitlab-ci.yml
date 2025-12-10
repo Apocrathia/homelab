@@ -1,0 +1,103 @@
+---
+kustomize-diff:
+  stage: verify
+  image:
+    name: registry.k8s.io/kustomize/kustomize:v5.4.3
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  before_script:
+    - apk add --no-cache git curl jq
+  script:
+    - |
+      MARKER="<!-- kustomize-diff -->"
+
+      echo "=== Kustomize Diff Started ==="
+
+      # Build kustomize for current MR branch
+      echo "Building manifests for MR branch..."
+      kustomize build ./flux/manifests > /tmp/mr.yaml
+
+      # Fetch and build target branch
+      echo "Fetching target branch: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+
+      echo "Building manifests for target branch..."
+      kustomize build ./flux/manifests > /tmp/target.yaml
+
+      # Switch back to MR branch
+      git checkout "$CI_COMMIT_SHA"
+
+      # Generate diff
+      echo "Generating diff..."
+      DIFF=$(diff -u /tmp/target.yaml /tmp/mr.yaml || true)
+
+      # Create hash of diff content for comparison
+      if [ -n "$DIFF" ]; then
+        DIFF_HASH=$(echo "$DIFF" | md5sum | cut -d' ' -f1)
+        COMMENT_BODY="${MARKER}
+      ## 🔍 Kustomize Diff
+
+      <details><summary>Click to expand diff</summary>
+
+      \`\`\`diff
+      ${DIFF}
+      \`\`\`
+
+      </details>
+
+      <!-- hash:${DIFF_HASH} -->"
+      else
+        DIFF_HASH="no-changes"
+        COMMENT_BODY="${MARKER}
+      ## 🔍 Kustomize Diff
+
+      No changes detected in rendered manifests.
+
+      <!-- hash:${DIFF_HASH} -->"
+      fi
+
+      echo "Diff hash: $DIFF_HASH"
+
+      # Fetch existing notes to find previous kustomize-diff comment
+      echo "Checking for existing kustomize-diff comment..."
+      NOTES=$(curl --silent --fail \
+        --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100")
+
+      # Find existing comment with our marker
+      EXISTING_NOTE=$(echo "$NOTES" | jq -r --arg marker "$MARKER" '.[] | select(.body | startswith($marker))')
+      EXISTING_NOTE_ID=$(echo "$EXISTING_NOTE" | jq -r '.id // empty')
+      EXISTING_HASH=$(echo "$EXISTING_NOTE" | jq -r '.body // ""' | grep -oP '(?<=<!-- hash:)[^-][^>]*(?= -->)' || true)
+
+      if [ -n "$EXISTING_NOTE_ID" ]; then
+        echo "Found existing comment (ID: $EXISTING_NOTE_ID)"
+        echo "Existing hash: $EXISTING_HASH"
+
+        if [ "$EXISTING_HASH" = "$DIFF_HASH" ]; then
+          echo "✅ Diff unchanged, skipping update"
+          exit 0
+        fi
+
+        echo "Diff changed, updating existing comment..."
+        curl --fail --request PUT \
+          --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}"
+
+        echo "✅ Comment updated successfully"
+      else
+        echo "No existing comment found, posting new one..."
+        curl --fail --request POST \
+          --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
+
+        echo "✅ Comment posted successfully"
+      fi
+
+      echo "=== Kustomize Diff Completed ==="
+  allow_failure: true
