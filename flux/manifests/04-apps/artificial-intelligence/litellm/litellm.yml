@@ -57,7 +57,7 @@ model_list:
   # llm-d models (Kubernetes-native inference serving with inference-sim)
   - model_name: inference-sim
     litellm_params:
-      model: openai/llm-d/inference-sim
+      model: llm-d/inference-sim
       api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000
 
 guardrails:
