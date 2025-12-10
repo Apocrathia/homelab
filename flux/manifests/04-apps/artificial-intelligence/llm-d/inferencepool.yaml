@@ -6,14 +6,14 @@
 apiVersion: inference.networking.k8s.io/v1
 kind: InferencePool
 metadata:
-  name: llama3.2-1b
+  name: inference-sim
   namespace: llm-d
 spec:
   # Selector matches the decode pods created by the Helm chart
   selector:
     matchLabels:
       llm-d.ai/inferenceServing: "true"
-      llm-d.ai/model: llama3.2-1b
+      llm-d.ai/model: inference-sim
       llm-d.ai/role: decode
   # Target ports exposed by the inference pods
   # Port 8000 is the routing sidecar servicePort
