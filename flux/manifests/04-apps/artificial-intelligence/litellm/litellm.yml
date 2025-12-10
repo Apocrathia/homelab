@@ -87,9 +87,8 @@ vector_store_registry:
       custom_llm_provider: "pg_vector"
       vector_store_id: "09beee6f-ed62-47c6-a161-dea9018a5a40"
       vector_store_description: "PGVector vector store for LiteLLM"
-      vector_store_metadata:
-        api_base: "http://vector-store.litellm.svc.cluster.local:8000"
-        api_key: os.environ/VECTOR_STORE_API_KEY
+      api_base: "http://vector-store.litellm.svc.cluster.local:8000"
+      api_key: os.environ/VECTOR_STORE_API_KEY
 
 mcp_servers:
   gofetch:
