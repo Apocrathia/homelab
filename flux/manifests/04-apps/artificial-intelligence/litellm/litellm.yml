@@ -134,6 +134,9 @@ mcp_servers:
     url: "https://home.apocrathia.com:8123/api/mcp"
     transport: "http"
     auth_type: "none"
-    # Forward HA Long-Lived Access Token from client
+    # Static HA Long-Lived Access Token for initialization
+    static_headers:
+      Authorization: os.environ/HOMEASSISTANT_TOKEN
+    # Allow client to override with their own token
     extra_headers:
       - "Authorization"

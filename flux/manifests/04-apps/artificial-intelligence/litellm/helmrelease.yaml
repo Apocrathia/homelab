@@ -59,6 +59,10 @@ spec:
       name: litellm-secrets
       valuesKey: redis-password
       targetPath: redis.auth.password
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: homeassistant-token
+      targetPath: envVars.HOMEASSISTANT_TOKEN
 
   values:
     # Use the database-optimized image
