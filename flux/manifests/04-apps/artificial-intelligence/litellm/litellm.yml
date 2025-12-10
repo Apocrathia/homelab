@@ -61,10 +61,11 @@ model_list:
       mode: embedding
 
   # llm-d models (Kubernetes-native inference serving with inference-sim)
+  # Uses openai/ provider prefix for OpenAI-compatible vLLM endpoint
   - model_name: inference-sim
     litellm_params:
-      model: llm-d/inference-sim
-      api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000
+      model: openai/llm-d/inference-sim
+      api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000/v1
 
 guardrails:
   - guardrail_name: "gibberish-guard"
