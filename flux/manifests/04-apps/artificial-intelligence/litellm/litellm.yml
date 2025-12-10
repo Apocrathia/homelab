@@ -125,7 +125,7 @@ mcp_servers:
     url: "https://mcp.deepwiki.com/mcp"
     transport: "http"
     auth_type: "none"
-  home-assistant:
+  homeassistant:
     url: "https://home.apocrathia.com:8123/api/mcp"
     transport: "http"
     auth_type: "none"
