@@ -13,6 +13,7 @@ resources:
   - 02-infrastructure/longhorn/flux-kustomization.yaml
   - 02-infrastructure/csi-driver-smb/flux-kustomization.yaml
   - 02-infrastructure/metrics-server/flux-kustomization.yaml
+  - 02-infrastructure/coredns/flux-kustomization.yaml
   - 02-infrastructure/kube-prometheus-stack/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
   - 03-services/gateway/flux-kustomization.yaml

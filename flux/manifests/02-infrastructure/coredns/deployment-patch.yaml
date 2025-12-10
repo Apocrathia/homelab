@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns
+  namespace: kube-system
+  annotations:
+    ignore-check.kube-linter.io/mismatching-selector: "patch file"
+    ignore-check.kube-linter.io/no-anti-affinity: "base has anti-affinity"
+spec:
+  replicas: 4

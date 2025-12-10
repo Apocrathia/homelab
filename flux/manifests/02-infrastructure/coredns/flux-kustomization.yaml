@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-coredns
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./flux/manifests/02-infrastructure/coredns
+  prune: false # Don't prune - Talos owns this resource
+  sourceRef:
+    kind: GitRepository
+    name: homelab
+  dependsOn:
+    - name: flux-system
