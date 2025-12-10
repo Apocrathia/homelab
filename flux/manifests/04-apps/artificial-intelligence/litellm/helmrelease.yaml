@@ -195,6 +195,9 @@ spec:
       include:
         - ../../tmp/model-config/models.yaml
 
+      # Override default model_list to prevent duplicate entries with placeholder keys
+      model_list: []
+
       general_settings:
         # Database configuration
         store_model_in_db: true
