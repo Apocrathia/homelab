@@ -34,33 +34,34 @@ model_list:
       model: anthropic/claude-haiku-4-5
       api_key: os.environ/ANTHROPIC_API_KEY
 
-  # Ollama models (local LLM server)
+  # Local models (OpenAI-compatible endpoint)
   - model_name: llama3.2
     litellm_params:
-      model: ollama/llama3.2:3b
-      api_base: os.environ/OLLAMA_API_BASE
+      model: openai/llama3.2:3b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
   - model_name: gpt-oss
     litellm_params:
-      model: ollama/gpt-oss:20b
-      api_base: os.environ/OLLAMA_API_BASE
+      model: openai/gpt-oss:20b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
   - model_name: dolphin3
     litellm_params:
-      model: ollama/dolphin3:8b
-      api_base: os.environ/OLLAMA_API_BASE
+      model: openai/dolphin3:8b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
   - model_name: deepseek-r1
     litellm_params:
-      model: ollama/deepseek-r1:14b
-      api_base: os.environ/OLLAMA_API_BASE
+      model: openai/deepseek-r1:14b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
   - model_name: qwen3
     litellm_params:
-      model: ollama/qwen3:8b
-      api_base: os.environ/OLLAMA_API_BASE
+      model: openai/qwen3:8b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
 
-  # Ollama embedding models
+  # Local embedding models (native Ollama endpoint)
   - model_name: nomic-embed-text
     litellm_params:
       model: ollama/nomic-embed-text
       api_base: os.environ/OLLAMA_API_BASE
+      drop_params: true
     model_info:
       mode: embedding
 
@@ -79,7 +80,7 @@ guardrails:
       mode: "post_call"
       guardrails_ai_api_input_format: "llmOutput"
       api_base: os.environ/GUARDRAILS_AI_API_BASE
-      default_on: true
+      default_on: false # Disabled until Guardrails AI is fixed
 
 vector_store_registry:
   - vector_store_name: "pgvector-litellm"
@@ -92,18 +93,22 @@ vector_store_registry:
 
 mcp_servers:
   gofetch:
+    alias: "gofetch"
     url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   osv:
+    alias: "osv"
     url: "http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   mkp:
+    alias: "mkp"
     url: "http://mcp-kubernetes-mcp-proxy.mcp-mkp.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   grafana:
+    alias: "grafana"
     url: "http://mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
@@ -111,10 +116,12 @@ mcp_servers:
     extra_headers:
       - "X-Grafana-API-Key"
   searxng:
+    alias: "searxng"
     url: "http://mcp-searxng-mcp-proxy.mcp-searxng.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   github:
+    alias: "github"
     url: "https://api.githubcopilot.com/mcp/"
     transport: "http"
     auth_type: "none"
@@ -122,14 +129,17 @@ mcp_servers:
     extra_headers:
       - "Authorization"
   flux:
+    alias: "flux"
     url: "http://mcp-flux-mcp-proxy.mcp-flux.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   deepwiki:
+    alias: "deepwiki"
     url: "https://mcp.deepwiki.com/mcp"
     transport: "http"
     auth_type: "none"
   homeassistant:
+    alias: "homeassistant"
     url: "https://home.apocrathia.com:8123/api/mcp"
     transport: "http"
     auth_type: "none"

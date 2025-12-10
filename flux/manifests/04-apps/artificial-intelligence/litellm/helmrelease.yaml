@@ -45,6 +45,10 @@ spec:
       targetPath: envVars.OLLAMA_API_BASE
     - kind: Secret
       name: litellm-secrets
+      valuesKey: ollama-openai-api-base
+      targetPath: envVars.OLLAMA_OPENAI_API_BASE
+    - kind: Secret
+      name: litellm-secrets
       valuesKey: openai-api-key
       targetPath: envVars.OPENAI_API_KEY
     - kind: Secret
