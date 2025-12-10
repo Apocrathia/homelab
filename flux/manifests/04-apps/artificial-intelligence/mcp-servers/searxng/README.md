@@ -21,12 +21,15 @@ This deployment includes:
 
 ## Configuration
 
+### Transport
+
+This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode. This avoids HTTP 400 errors from strict MCP session handling that can break LiteLLM's MCP client.
+
 ### Environment Variables
 
-| Variable        | Value                                           | Description               |
-| --------------- | ----------------------------------------------- | ------------------------- |
-| `SEARXNG_URL`   | `http://searxng.searxng.svc.cluster.local:8080` | Internal SearXNG instance |
-| `MCP_HTTP_PORT` | `8080`                                          | HTTP transport port       |
+| Variable      | Value                                           | Description               |
+| ------------- | ----------------------------------------------- | ------------------------- |
+| `SEARXNG_URL` | `http://searxng.searxng.svc.cluster.local:8080` | Internal SearXNG instance |
 
 ### Resources
 
