@@ -14,7 +14,13 @@ model_list:
       model: o3-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # Claude models
+  # OpenAI Embedding models
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Anthropic models
   - model_name: claude-sonnet-4-5
     litellm_params:
       model: anthropic/claude-sonnet-4-5
@@ -119,3 +125,10 @@ mcp_servers:
     url: "https://mcp.deepwiki.com/mcp"
     transport: "http"
     auth_type: "none"
+  home-assistant:
+    url: "https://home.apocrathia.com:8123/api/mcp"
+    transport: "http"
+    auth_type: "none"
+    # Forward HA Long-Lived Access Token from client
+    extra_headers:
+      - "Authorization"
