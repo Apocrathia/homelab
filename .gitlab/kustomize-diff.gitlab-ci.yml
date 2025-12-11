@@ -10,6 +10,11 @@ kustomize-diff:
   script:
     - |
       MARKER="<!-- kustomize-diff -->"
+      DIFF_COLLAPSE_THRESHOLD=50
+
+      # Sanitize branch names for use as filenames
+      TARGET_FILE="/tmp/$(echo "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" | tr '/' '-').yaml"
+      SOURCE_FILE="/tmp/$(echo "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" | tr '/' '-').yaml"
 
       echo "=== Kustomize Diff Started ==="
 
@@ -51,26 +56,26 @@ kustomize-diff:
           DIFF=""
         else
           # Build MR branch manifests
-          echo "Building manifests for MR branch..."
-          : > /tmp/mr.yaml
+          echo "Building manifests for MR branch ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)..."
+          : > "$SOURCE_FILE"
           for DIR in $KUSTOMIZE_DIRS; do
             echo "  Building $DIR"
-            echo "---" >> /tmp/mr.yaml
-            echo "# Source: $DIR" >> /tmp/mr.yaml
-            kustomize build "$DIR" >> /tmp/mr.yaml 2>&1 || echo "# Build failed for $DIR" >> /tmp/mr.yaml
+            echo "---" >> "$SOURCE_FILE"
+            echo "# Source: $DIR" >> "$SOURCE_FILE"
+            kustomize build "$DIR" >> "$SOURCE_FILE" 2>&1 || echo "# Build failed for $DIR" >> "$SOURCE_FILE"
           done
 
           # Switch to target branch and build
           git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
 
-          echo "Building manifests for target branch..."
-          : > /tmp/target.yaml
+          echo "Building manifests for target branch ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME)..."
+          : > "$TARGET_FILE"
           for DIR in $KUSTOMIZE_DIRS; do
             if [ -d "$DIR" ]; then
               echo "  Building $DIR"
-              echo "---" >> /tmp/target.yaml
-              echo "# Source: $DIR" >> /tmp/target.yaml
-              kustomize build "$DIR" >> /tmp/target.yaml 2>&1 || echo "# Build failed for $DIR" >> /tmp/target.yaml
+              echo "---" >> "$TARGET_FILE"
+              echo "# Source: $DIR" >> "$TARGET_FILE"
+              kustomize build "$DIR" >> "$TARGET_FILE" 2>&1 || echo "# Build failed for $DIR" >> "$TARGET_FILE"
             else
               echo "  Directory $DIR doesn't exist on target branch (new component)"
             fi
@@ -81,34 +86,47 @@ kustomize-diff:
 
           # Generate diff
           echo "Generating diff..."
-          DIFF=$(diff -u /tmp/target.yaml /tmp/mr.yaml || true)
+          DIFF=$(diff -u "$TARGET_FILE" "$SOURCE_FILE" || true)
         fi
       fi
 
       # Create hash of diff content for comparison
+      COMMENT_FILE="/tmp/comment.md"
       if [ -n "$DIFF" ]; then
         DIFF_HASH=$(echo "$DIFF" | md5sum | cut -d' ' -f1)
-        COMMENT_BODY="${MARKER}
-      ## 🔍 Kustomize Diff
+        DIFF_LINES=$(echo "$DIFF" | wc -l)
+        echo "Diff is $DIFF_LINES lines"
 
-      <details><summary>Click to expand diff</summary>
-
-      \`\`\`diff
-      ${DIFF}
-      \`\`\`
-
-      </details>
-
-      <!-- hash:${DIFF_HASH} -->"
+        {
+          echo "$MARKER"
+          echo "## 🔍 Kustomize Diff"
+          echo ""
+          if [ "$DIFF_LINES" -gt "$DIFF_COLLAPSE_THRESHOLD" ]; then
+            echo "<details><summary>Click to expand diff (${DIFF_LINES} lines)</summary>"
+            echo ""
+          fi
+          echo '```diff'
+          echo "$DIFF"
+          echo '```'
+          if [ "$DIFF_LINES" -gt "$DIFF_COLLAPSE_THRESHOLD" ]; then
+            echo ""
+            echo "</details>"
+          fi
+          echo ""
+          echo "<!-- hash:${DIFF_HASH} -->"
+        } > "$COMMENT_FILE"
       else
         DIFF_HASH="no-changes"
-        COMMENT_BODY="${MARKER}
-      ## 🔍 Kustomize Diff
-
-      No changes detected in rendered manifests.
-
-      <!-- hash:${DIFF_HASH} -->"
+        {
+          echo "$MARKER"
+          echo "## 🔍 Kustomize Diff"
+          echo ""
+          echo "No changes detected in rendered manifests."
+          echo ""
+          echo "<!-- hash:${DIFF_HASH} -->"
+        } > "$COMMENT_FILE"
       fi
+      COMMENT_BODY=$(cat "$COMMENT_FILE")
 
       echo "Diff hash: $DIFF_HASH"
 
