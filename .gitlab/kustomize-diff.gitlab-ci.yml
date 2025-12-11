@@ -59,9 +59,15 @@ kustomize-diff:
 
       # Fetch existing notes to find previous kustomize-diff comment
       echo "Checking for existing kustomize-diff comment..."
-      NOTES=$(curl --silent --fail \
+      echo "API URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
+
+      NOTES=$(curl --silent --show-error --fail \
         --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100")
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100") || {
+        echo "❌ Failed to fetch MR notes. Check GITLAB_TOKEN permissions."
+        echo "Token set: $([ -n \"$GITLAB_TOKEN\" ] && echo 'yes' || echo 'no')"
+        exit 1
+      }
 
       # Find existing comment with our marker
       EXISTING_NOTE=$(echo "$NOTES" | jq -r --arg marker "$MARKER" '.[] | select(.body | startswith($marker))')
