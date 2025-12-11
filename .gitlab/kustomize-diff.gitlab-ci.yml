@@ -5,6 +5,8 @@ kustomize-diff:
     name: alpine/k8s:1.32.3
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - flux/manifests/**/*
   script:
     - |
       MARKER="<!-- kustomize-diff -->"
@@ -62,10 +64,10 @@ kustomize-diff:
       echo "API URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
 
       NOTES=$(curl --silent --show-error --fail \
-        --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+        --header "PRIVATE-TOKEN: ${KUSTOMIZE_TOKEN}" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100") || {
-        echo "❌ Failed to fetch MR notes. Check GITLAB_TOKEN permissions."
-        echo "Token set: $([ -n \"$GITLAB_TOKEN\" ] && echo 'yes' || echo 'no')"
+        echo "❌ Failed to fetch MR notes. Check KUSTOMIZE_TOKEN permissions."
+        echo "Token set: $([ -n \"$KUSTOMIZE_TOKEN\" ] && echo 'yes' || echo 'no')"
         exit 1
       }
 
@@ -85,7 +87,7 @@ kustomize-diff:
 
         echo "Diff changed, updating existing comment..."
         curl --fail --request PUT \
-          --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+          --header "PRIVATE-TOKEN: ${KUSTOMIZE_TOKEN}" \
           --header "Content-Type: application/json" \
           --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}"
@@ -94,7 +96,7 @@ kustomize-diff:
       else
         echo "No existing comment found, posting new one..."
         curl --fail --request POST \
-          --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+          --header "PRIVATE-TOKEN: ${KUSTOMIZE_TOKEN}" \
           --header "Content-Type: application/json" \
           --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
