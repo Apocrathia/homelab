@@ -1,6 +1,16 @@
 # Changelog
 
-## Version 0.0.40 (Latest)
+## Version 0.0.41 (Latest)
+
+- **Fixed Volume Deduplication**: Comprehensive fix for duplicate volume errors across all container types
+  - **Problem Solved**: Duplicate volume definitions when multiple containers (main, initContainers, sidecars) reference the same configMap or emptyDir
+  - **Comprehensive Deduplication**: Uses a dict to track ALL created volumes across all sources - first occurrence wins
+  - **Cross-Container Safe**: Multiple initContainers, sidecars, or any combination can reference the same volume name without conflicts
+  - **emptyDir Support**: Deduplicates emptyDir volumes (not just configMaps)
+  - **Backward Compatible**: Existing deployments continue to work unchanged
+  - **Cleaner Pattern**: Define a volume once in any location and mount it from multiple containers without conflicts
+
+## Version 0.0.40
 
 - **Fixed PostgreSQL Storage Conflict with CloudNativePG**: Removed `postgres-storage.yaml` template that was creating conflicting PVCs
   - **Problem Solved**: Template was creating a PVC named `{app-name}-postgres-data` when postgres was enabled with longhorn storage, but CloudNativePG manages its own PVCs (e.g., `{app-name}-postgres-1`)
