@@ -55,38 +55,41 @@ kustomize-diff:
           echo "No kustomization directories found for changed files"
           DIFF=""
         else
-          # Build MR branch manifests
-          echo "Building manifests for MR branch ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME)..."
-          : > "$SOURCE_FILE"
-          for DIR in $KUSTOMIZE_DIRS; do
-            echo "  Building $DIR"
-            echo "---" >> "$SOURCE_FILE"
-            echo "# Source: $DIR" >> "$SOURCE_FILE"
-            kustomize build "$DIR" >> "$SOURCE_FILE" 2>&1 || echo "# Build failed for $DIR" >> "$SOURCE_FILE"
-          done
+          # Build and diff each directory separately for clear output
+          DIFF_FILE="/tmp/combined-diff.md"
+          : > "$DIFF_FILE"
+          DIR_COUNT=$(echo "$KUSTOMIZE_DIRS" | wc -l)
+          echo "Building and diffing $DIR_COUNT kustomization directories..."
 
-          # Switch to target branch and build
-          git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-
-          echo "Building manifests for target branch ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME)..."
-          : > "$TARGET_FILE"
           for DIR in $KUSTOMIZE_DIRS; do
+            DIR_SAFE=$(echo "$DIR" | tr '/' '-')
+            DIR_SOURCE="/tmp/source-${DIR_SAFE}.yaml"
+            DIR_TARGET="/tmp/target-${DIR_SAFE}.yaml"
+
+            echo "  Building $DIR (source)..."
+            kustomize build "$DIR" > "$DIR_SOURCE" 2>&1 || echo "# Build failed" > "$DIR_SOURCE"
+
+            git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --quiet
             if [ -d "$DIR" ]; then
-              echo "  Building $DIR"
-              echo "---" >> "$TARGET_FILE"
-              echo "# Source: $DIR" >> "$TARGET_FILE"
-              kustomize build "$DIR" >> "$TARGET_FILE" 2>&1 || echo "# Build failed for $DIR" >> "$TARGET_FILE"
+              echo "  Building $DIR (target)..."
+              kustomize build "$DIR" > "$DIR_TARGET" 2>&1 || echo "# Build failed" > "$DIR_TARGET"
             else
-              echo "  Directory $DIR doesn't exist on target branch (new component)"
+              echo "  $DIR is new (doesn't exist on target branch)"
+              : > "$DIR_TARGET"
+            fi
+            git checkout "$CI_COMMIT_SHA" --quiet
+
+            DIR_DIFF=$(diff -u "$DIR_TARGET" "$DIR_SOURCE" || true)
+            if [ -n "$DIR_DIFF" ]; then
+              echo "" >> "$DIFF_FILE"
+              echo "### ${DIR}" >> "$DIFF_FILE"
+              echo "" >> "$DIFF_FILE"
+              echo '```diff' >> "$DIFF_FILE"
+              echo "$DIR_DIFF" >> "$DIFF_FILE"
+              echo '```' >> "$DIFF_FILE"
             fi
           done
-
-          # Switch back to MR branch
-          git checkout "$CI_COMMIT_SHA"
-
-          # Generate diff
-          echo "Generating diff..."
-          DIFF=$(diff -u "$TARGET_FILE" "$SOURCE_FILE" || true)
+          DIFF=$(cat "$DIFF_FILE")
         fi
       fi
 
@@ -95,19 +98,17 @@ kustomize-diff:
       if [ -n "$DIFF" ]; then
         DIFF_HASH=$(echo "$DIFF" | md5sum | cut -d' ' -f1)
         DIFF_LINES=$(echo "$DIFF" | wc -l)
-        echo "Diff is $DIFF_LINES lines"
+        echo "Diff is $DIFF_LINES lines across $DIR_COUNT components"
 
         {
           echo "$MARKER"
           echo "## 🔍 Kustomize Diff"
           echo ""
           if [ "$DIFF_LINES" -gt "$DIFF_COLLAPSE_THRESHOLD" ]; then
-            echo "<details><summary>Click to expand diff (${DIFF_LINES} lines)</summary>"
+            echo "<details><summary>Click to expand diff (${DIFF_LINES} lines, ${DIR_COUNT} components)</summary>"
             echo ""
           fi
-          echo '```diff'
           echo "$DIFF"
-          echo '```'
           if [ "$DIFF_LINES" -gt "$DIFF_COLLAPSE_THRESHOLD" ]; then
             echo ""
             echo "</details>"
