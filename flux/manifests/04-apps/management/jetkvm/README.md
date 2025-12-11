@@ -12,11 +12,12 @@ Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
 ## Architecture
 
-```
-jetkvm.gateway.services.apocrathia.com
-├── /v1/*   → jetkvm-api:3000  (API endpoints)
-├── /health → jetkvm-api:3000  (health check)
-└── /*      → jetkvm-app:80    (frontend)
+```mermaid
+flowchart LR
+    gw[jetkvm.gateway.services.apocrathia.com]
+    gw -->|/v1/*| api[jetkvm-api:3000<br/>API endpoints]
+    gw -->|/health| api
+    gw -->|/*| app[jetkvm-app:80<br/>frontend]
 ```
 
 ## Prerequisites
