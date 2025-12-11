@@ -83,13 +83,14 @@ spec:
 
 ### Resource Hierarchy
 
-```
-GitRepository (flux-system)
-├── Kustomization (flux-system) - Bootstrap layer
-├── Kustomization (bootstrap) - Bootstrap components
-├── Kustomization (infrastructure) - Infrastructure layer
-├── Kustomization (services) - Services layer
-└── Kustomization (apps) - Applications layer
+```mermaid
+flowchart TD
+    git[GitRepository<br/>flux-system]
+    git --> ks-flux[Kustomization: flux-system<br/>Bootstrap layer]
+    git --> ks-boot[Kustomization: bootstrap<br/>Bootstrap components]
+    git --> ks-infra[Kustomization: infrastructure<br/>Infrastructure layer]
+    git --> ks-svc[Kustomization: services<br/>Services layer]
+    git --> ks-apps[Kustomization: apps<br/>Applications layer]
 ```
 
 ## Configuration
