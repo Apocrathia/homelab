@@ -677,45 +677,80 @@ spec:
         {{- end }}
         {{- end }}
       volumes:
+        {{- /*
+          Volume Deduplication Strategy:
+          Build a complete set of all volume names BEFORE creating any volumes.
+          This prevents duplicates across app.volumes, initContainers, and sidecars.
+          First occurrence wins - volume is created with the first definition found.
+        */}}
+        {{- $createdVolumes := dict }}
+        {{- /* 1. App-level emptyDir volumes (prefixed with app.name) */}}
         {{- range .Values.app.volumes.emptyDir }}
-        - name: {{ $.Values.app.name }}-{{ .name }}
+        {{- $volName := printf "%s-%s" $.Values.app.name .name }}
+        {{- if not (hasKey $createdVolumes $volName) }}
+        {{- $_ := set $createdVolumes $volName true }}
+        - name: {{ $volName }}
           emptyDir: {}
         {{- end }}
+        {{- end }}
+        {{- /* 2. App-level tmpfs volumes (prefixed with app.name) */}}
         {{- range .Values.app.volumes.tmpfs }}
-        - name: {{ $.Values.app.name }}-{{ .name }}
+        {{- $volName := printf "%s-%s" $.Values.app.name .name }}
+        {{- if not (hasKey $createdVolumes $volName) }}
+        {{- $_ := set $createdVolumes $volName true }}
+        - name: {{ $volName }}
           tmpfs:
             {{- if .options }}
             options: {{ .options }}
             {{- end }}
         {{- end }}
+        {{- end }}
+        {{- /* 3. App-level configMap volumes (NOT prefixed) */}}
         {{- range .Values.app.volumes.configMap }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
         - name: {{ .name }}
           configMap:
             name: {{ .configMapName | default .name }}
         {{- end }}
+        {{- end }}
+        {{- /* 4. initContainer volumes (emptyDir and configMap, NOT prefixed) */}}
         {{- range .Values.app.initContainers }}
         {{- if .volumes }}
         {{- range .volumes.emptyDir }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
         - name: {{ .name }}
           emptyDir: {}
         {{- end }}
+        {{- end }}
         {{- range .volumes.configMap }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
         - name: {{ .name }}
           configMap:
             name: {{ .configMapName | default .name }}
         {{- end }}
         {{- end }}
         {{- end }}
+        {{- end }}
+        {{- /* 5. Sidecar volumes (emptyDir and configMap, NOT prefixed) */}}
         {{- range .Values.app.sidecars }}
         {{- if .volumes }}
         {{- range .volumes.emptyDir }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
         - name: {{ .name }}
           emptyDir: {}
         {{- end }}
+        {{- end }}
         {{- range .volumes.configMap }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
         - name: {{ .name }}
           configMap:
             name: {{ .configMapName | default .name }}
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- end }}
