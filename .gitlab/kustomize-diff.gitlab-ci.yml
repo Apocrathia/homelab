@@ -2,7 +2,7 @@
 kustomize-diff:
   stage: verify
   image:
-    name: alpine/k8s:1.32.3
+    name: alpine/k8s:1.34.1
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
