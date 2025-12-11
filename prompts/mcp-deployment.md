@@ -153,7 +153,9 @@ Before creating the MCPServer resource, confirm you know:
 
 ## MCPServer Custom Resource
 
-ToolHive uses the `MCPServer` CRD to manage MCP server deployments:
+ToolHive uses the `MCPServer` CRD to manage MCP server deployments.
+
+### Recommended Configuration (Native streamable-http)
 
 ```yaml
 apiVersion: toolhive.stacklok.dev/v1alpha1
@@ -166,20 +168,17 @@ metadata:
     app.kubernetes.io/component: mcp-server
 spec:
   image: {container-image}:{tag}
-  transport: streamable-http  # Preferred over sse
+  transport: streamable-http
   port: 8080
   targetPort: 8080
   permissionProfile:
     type: builtin
     name: network
   env:
+    - name: MCP_HTTP_PORT
+      value: "8080"
     - name: EXAMPLE_VAR
       value: "example-value"
-  args:
-    - -t
-    - streamable-http
-    - --address
-    - "0.0.0.0:8080"
   resources:
     limits:
       cpu: "200m"
@@ -189,14 +188,85 @@ spec:
       memory: "128Mi"
 ```
 
+### Fallback Configuration (stdio with proxy)
+
+Use when the MCP server has LiteLLM compatibility issues (e.g., returns HTTP 400 for missing session initialization):
+
+```yaml
+spec:
+  image: {container-image}:{tag}
+  # stdio transport with streamable-http proxy mode
+  # ToolHive handles HTTP/session management
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  env:
+    - name: EXAMPLE_VAR
+      value: "example-value"
+    # Do NOT set MCP_HTTP_PORT - ToolHive proxy handles HTTP
+```
+
 ## Transport Types
 
-| Transport         | Endpoint | LiteLLM Config      | Use Case                                       |
-| ----------------- | -------- | ------------------- | ---------------------------------------------- |
-| `streamable-http` | `/mcp`   | `transport: "http"` | Preferred - works reliably with ToolHive proxy |
-| `sse`             | `/sse`   | `transport: "sse"`  | Only if server doesn't support streamable-http |
+| Transport         | Endpoint | LiteLLM Config      | Priority | Use Case                                          |
+| ----------------- | -------- | ------------------- | -------- | ------------------------------------------------- |
+| `streamable-http` | `/mcp`   | `transport: "http"` | 1st      | **Preferred** - native HTTP, no translation layer |
+| `stdio`           | `/mcp`   | `transport: "http"` | 2nd      | Fallback - ToolHive proxy handles HTTP/sessions   |
+| `sse`             | `/sse`   | `transport: "sse"`  | 3rd      | **Deprecated** - last resort only                 |
 
-**Important**: ToolHive's proxy health checks work better with `streamable-http`. SSE servers may show "MCP server not initialized yet" errors.
+### Preferred: Native streamable-http
+
+**Use `transport: streamable-http`** when the MCP server natively supports HTTP transport:
+
+```yaml
+spec:
+  transport: streamable-http
+  port: 8080
+  targetPort: 8080
+  env:
+    - name: MCP_HTTP_PORT
+      value: "8080"
+```
+
+This avoids translation layers and provides the most direct communication path.
+
+### Fallback: stdio with streamable-http Proxy
+
+**Use `transport: stdio` with `proxyMode: streamable-http`** when the MCP server has compatibility issues with LiteLLM, such as:
+
+- Returns HTTP 400 for requests without proper MCP session initialization
+- Has strict session handling that breaks LiteLLM's MCP client
+- Only supports stdio transport natively
+
+```yaml
+spec:
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  # Don't set MCP_HTTP_PORT - ToolHive proxy handles HTTP
+```
+
+This configuration:
+
+1. Runs the MCP server in stdio mode (no HTTP server in container)
+2. ToolHive proxy handles all HTTP transport and MCP session management
+3. Exposes `/mcp` endpoint compatible with LiteLLM's `transport: "http"`
+
+**Note**: Environment variables can be passed to stdio containers via the `env` field in the MCPServer spec. HTTP headers are handled by the proxy layer but are not directly forwarded to the stdio container - use environment variables for configuration instead.
+
+### Transport Architecture
+
+| Transport Mode                         | ToolHive Creates                           | Proxy Behavior                                        |
+| -------------------------------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `streamable-http` (native)             | Deployment + StatefulSet + HeadlessService | TransparentProxy forwards to StatefulSet pod          |
+| `stdio` + `proxyMode: streamable-http` | Deployment only                            | Proxy attaches to container stdin/stdout, serves HTTP |
+
+**Important**: When switching transport modes, you may need to delete the MCPServer and all associated resources, then recreate to get a clean state. Flux may also revert manual changes - verify the spec after applying.
 
 ## Service Naming Convention
 
@@ -381,9 +451,58 @@ for tool in result.get('result', {}).get('tools', []):
 | ---------------------------- | ------------------------------ | --------------------------------------------------------------- |
 | 404 from gateway             | Wrong URL or missing HTTPRoute | Check authentik blueprint `skip_path_regex` or HTTPRoute config |
 | "MCP server not initialized" | Wrong transport/endpoint       | Switch to `streamable-http`, verify args match transport        |
-| 400 Bad Request              | Missing Accept headers         | Ensure `Accept: application/json, text/event-stream`            |
+| 400 Bad Request from proxy   | Missing Accept headers         | Ensure `Accept: application/json, text/event-stream`            |
+| 400 Bad Request (session)    | Strict MCP session handling    | Switch to `transport: stdio` with `proxyMode: streamable-http`  |
 | No tools returned            | Auth failure to backend        | Check env vars or header forwarding for backend credentials     |
 | 500 from LiteLLM             | Missing LiteLLM auth           | Include `Authorization: Bearer <master-key>` header             |
+| Tools not in LiteLLM UI      | LiteLLM connection errors      | Check LiteLLM logs for 400/connection errors to MCP proxy       |
+| Config reverted after apply  | Flux reconciliation            | Verify spec after applying; commit changes to prevent reversion |
+
+### Diagnosing HTTP 400 Session Errors
+
+Some MCP servers strictly enforce MCP protocol session handling and return HTTP 400 for requests without proper `Mcp-Session-Id` headers or missing `initialize` calls. LiteLLM's MCP client may not handle this correctly.
+
+**Symptoms:**
+
+- LiteLLM logs show: `Error in post_writer: Client error '400 Bad Request' for url 'http://mcp-{name}-proxy...`
+- Tools don't appear in LiteLLM UI
+- Other MCP servers work fine
+
+**Diagnosis:**
+
+```bash
+# Check LiteLLM logs for 400 errors
+kubectl logs -n litellm deploy/litellm -c litellm --since=5m | grep -i "400"
+
+# Check MCP server logs for session errors
+kubectl logs -n mcp-{name} deploy/{name} --tail=50
+```
+
+**Solution:** Switch to stdio transport with streamable-http proxy:
+
+```yaml
+spec:
+  transport: stdio
+  proxyMode: streamable-http
+  # Remove MCP_HTTP_PORT from env
+```
+
+Then delete and recreate the MCPServer to ensure clean state:
+
+```bash
+kubectl delete mcpserver -n mcp-{name} {name}
+kubectl apply -f mcpserver.yaml
+```
+
+### Switching Transport Modes
+
+When changing transport modes (e.g., from `streamable-http` to `stdio`), ToolHive may not cleanly update all resources. Follow this process:
+
+1. Delete the MCPServer: `kubectl delete mcpserver -n mcp-{name} {name}`
+2. Verify all resources are deleted: `kubectl get all -n mcp-{name}`
+3. Apply the updated MCPServer: `kubectl apply -f mcpserver.yaml`
+4. Verify the spec took effect: `kubectl get mcpserver -n mcp-{name} {name} -o yaml | grep -A10 spec:`
+5. Check pod env vars match expected transport: `kubectl get pod -n mcp-{name} {name}-0 -o jsonpath='{.spec.containers[0].env}'`
 
 ## Cursor MCP Client Configuration
 
