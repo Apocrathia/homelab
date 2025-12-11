@@ -13,24 +13,77 @@ kustomize-diff:
 
       echo "=== Kustomize Diff Started ==="
 
-      # Build kustomize for current MR branch
-      echo "Building manifests for MR branch..."
-      kustomize build ./flux/manifests > /tmp/mr.yaml
-
-      # Fetch and build target branch
+      # Fetch target branch for comparison
       echo "Fetching target branch: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
       git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
-      git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
 
-      echo "Building manifests for target branch..."
-      kustomize build ./flux/manifests > /tmp/target.yaml
+      # Find changed files in flux/manifests/
+      echo "Finding changed manifest files..."
+      CHANGED_FILES=$(git diff --name-only "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"...HEAD -- flux/manifests/)
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
 
-      # Switch back to MR branch
-      git checkout "$CI_COMMIT_SHA"
+      if [ -z "$CHANGED_FILES" ]; then
+        echo "No manifest files changed"
+        DIFF=""
+      else
+        # Find kustomization directories for changed files
+        KUSTOMIZE_DIRS=""
+        for FILE in $CHANGED_FILES; do
+          DIR=$(dirname "$FILE")
+          # Walk up to find nearest kustomization.yaml
+          while [ "$DIR" != "." ] && [ "$DIR" != "flux/manifests" ]; do
+            if [ -f "$DIR/kustomization.yaml" ]; then
+              KUSTOMIZE_DIRS="$KUSTOMIZE_DIRS $DIR"
+              break
+            fi
+            DIR=$(dirname "$DIR")
+          done
+        done
 
-      # Generate diff
-      echo "Generating diff..."
-      DIFF=$(diff -u /tmp/target.yaml /tmp/mr.yaml || true)
+        # Deduplicate directories
+        KUSTOMIZE_DIRS=$(echo "$KUSTOMIZE_DIRS" | tr ' ' '\n' | sort -u | grep -v '^$')
+        echo "Kustomization directories to build:"
+        echo "$KUSTOMIZE_DIRS"
+
+        if [ -z "$KUSTOMIZE_DIRS" ]; then
+          echo "No kustomization directories found for changed files"
+          DIFF=""
+        else
+          # Build MR branch manifests
+          echo "Building manifests for MR branch..."
+          : > /tmp/mr.yaml
+          for DIR in $KUSTOMIZE_DIRS; do
+            echo "  Building $DIR"
+            echo "---" >> /tmp/mr.yaml
+            echo "# Source: $DIR" >> /tmp/mr.yaml
+            kustomize build "$DIR" >> /tmp/mr.yaml 2>&1 || echo "# Build failed for $DIR" >> /tmp/mr.yaml
+          done
+
+          # Switch to target branch and build
+          git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+
+          echo "Building manifests for target branch..."
+          : > /tmp/target.yaml
+          for DIR in $KUSTOMIZE_DIRS; do
+            if [ -d "$DIR" ]; then
+              echo "  Building $DIR"
+              echo "---" >> /tmp/target.yaml
+              echo "# Source: $DIR" >> /tmp/target.yaml
+              kustomize build "$DIR" >> /tmp/target.yaml 2>&1 || echo "# Build failed for $DIR" >> /tmp/target.yaml
+            else
+              echo "  Directory $DIR doesn't exist on target branch (new component)"
+            fi
+          done
+
+          # Switch back to MR branch
+          git checkout "$CI_COMMIT_SHA"
+
+          # Generate diff
+          echo "Generating diff..."
+          DIFF=$(diff -u /tmp/target.yaml /tmp/mr.yaml || true)
+        fi
+      fi
 
       # Create hash of diff content for comparison
       if [ -n "$DIFF" ]; then
