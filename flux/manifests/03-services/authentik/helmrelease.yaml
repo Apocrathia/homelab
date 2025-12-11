@@ -55,7 +55,7 @@ spec:
     postgresql:
       enabled: false
     redis:
-      enabled: true
+      enabled: false
 
     server:
       replicas: 2
