@@ -28,6 +28,18 @@ Guide for deploying MCP (Model Context Protocol) servers using ToolHive and inte
 - Troubleshooting connectivity issues
 - Cursor MCP client configuration
 
+### [Security Analyst](./security-analyst.md)
+
+Comprehensive security review prompt for analyzing the homelab Kubernetes project. Covers:
+
+- Automated scanning with Snyk and Semgrep
+- STRIPED threat modeling (Spoofing, Tampering, Repudiation, Information Disclosure, Privacy, Elevation of Privilege, Denial of Service)
+- Attack path analysis and deep dive investigation
+- Kubernetes manifest security review
+- Supply chain and CI/CD pipeline security
+- Structured finding format with severity classification
+- Remediation roadmaps and positive observations
+
 ## Usage
 
 These prompts are designed to be used with AI assistants to maintain consistency and best practices when working with the homelab infrastructure. They encode project-specific patterns, conventions, and decision trees to guide development workflows.
