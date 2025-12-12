@@ -1,0 +1,59 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+  namespace: flyte-system
+spec:
+  chart:
+    spec:
+      chart: minio
+      sourceRef:
+        kind: HelmRepository
+        name: minio
+        namespace: flux-system
+      version: "5.4.0"
+  interval: 5m
+  valuesFrom:
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: minio-username
+      targetPath: auth.rootUser
+    - kind: Secret
+      name: flyte-secrets
+      valuesKey: minio-password
+      targetPath: auth.rootPassword
+  values:
+    # Minio configuration
+    mode: standalone
+
+    # Storage configuration
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: longhorn
+
+    # Service configuration
+    service:
+      type: ClusterIP
+      ports:
+        api: 9000
+        console: 9001
+
+    # Default bucket creation
+    defaultBuckets: flyte-data
+
+    # Security context
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+
+    # Resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
