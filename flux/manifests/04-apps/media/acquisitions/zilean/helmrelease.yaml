@@ -1,0 +1,138 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zilean
+  namespace: zilean
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.41"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: zilean
+      # renovate: datasource=docker depName=ipromknight/zilean
+      image: ipromknight/zilean:v3.5.0
+      container:
+        name: zilean
+        port: 8181
+        env:
+          - name: Zilean__Database__ConnectionString
+            valueFrom:
+              secretKeyRef:
+                name: zilean-secrets
+                key: connectionString
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /healthchecks/ping
+            port: 8181
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /healthchecks/ping
+            port: 8181
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8181
+        portName: http
+
+      # Volume mounts for persistent data and temp
+      volumeMounts:
+        - name: data
+          mountPath: /app/data
+
+      volumes:
+        # Temp directory for read-only root filesystem
+        tmpfs:
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/zilean-secrets"
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: false
+      database: "zilean"
+      owner: "zilean"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
