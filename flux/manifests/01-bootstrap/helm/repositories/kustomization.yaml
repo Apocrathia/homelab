@@ -32,5 +32,6 @@ resources:
   - toolhive.yaml
   - tuppr.yaml
   - external-secrets.yaml
+  - flyte.yaml
   - litellm.yaml
   - llm-d-modelservice.yaml
