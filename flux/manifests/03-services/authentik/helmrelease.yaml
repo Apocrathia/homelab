@@ -92,6 +92,8 @@ spec:
               value: "ALL"
             - name: "FOLDER"
               value: "/blueprints/user"
+            - name: "IGNORE_ALREADY_PROCESSED"
+              value: "true"
           volumeMounts:
             - name: blueprints-sidecar
               mountPath: /blueprints/user
@@ -150,6 +152,8 @@ spec:
               value: "ALL"
             - name: "FOLDER"
               value: "/blueprints/user"
+            - name: "IGNORE_ALREADY_PROCESSED"
+              value: "true"
           volumeMounts:
             - name: blueprints-sidecar
               mountPath: /blueprints/user
