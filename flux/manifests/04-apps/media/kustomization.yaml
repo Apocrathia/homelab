@@ -8,6 +8,7 @@ metadata:
 resources:
   - acquisitions/archiveteam-warrior
   - acquisitions/bitmagnet
+  - acquisitions/prowlarr
   - acquisitions/qbittorrent
   - acquisitions/rdt-client
   - acquisitions/sabnzbd
@@ -16,7 +17,6 @@ resources:
   - management/huntarr
   - management/lidarr
   - management/ombi
-  - management/prowlarr
   - management/radarr
   - management/recyclarr
   - management/shinkro
