@@ -104,13 +104,16 @@ spec:
 
     worker:
       replicas: 4
+      env:
+        - name: AUTHENTIK_WORKER__THREADS
+          value: "4"
       resources:
         requests:
           cpu: 250m
           memory: 512Mi
         limits:
           cpu: 500m
-          memory: 2Gi
+          memory: 4Gi
       livenessProbe:
         timeoutSeconds: 10
         failureThreshold: 5
