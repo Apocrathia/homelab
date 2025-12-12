@@ -107,6 +107,8 @@ spec:
       env:
         - name: AUTHENTIK_WORKER__THREADS
           value: "4"
+        - name: AUTHENTIK_WORKER__SCHEDULER_INTERVAL
+          value: "minutes=30"
       resources:
         requests:
           cpu: 250m
