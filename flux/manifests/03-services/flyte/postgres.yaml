@@ -16,3 +16,5 @@ spec:
       owner: flyte
       secret:
         name: flyte-secrets
+      postInitSQL:
+        - CREATE DATABASE datacatalog OWNER flyte
