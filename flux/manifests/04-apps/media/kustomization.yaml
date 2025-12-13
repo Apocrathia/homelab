@@ -27,5 +27,6 @@ resources:
   - management/tdarr
   - management/whisparr
   - management/scripts
+  - servers/invidious
   - servers/plex
   - servers/tunarr

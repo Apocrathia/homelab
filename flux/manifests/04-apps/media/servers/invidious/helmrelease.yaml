@@ -1,0 +1,215 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: invidious
+  namespace: invidious
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.40"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: invidious
+      # renovate: datasource=docker depName=quay.io/invidious/invidious
+      image: quay.io/invidious/invidious:2025.12.06-ef2290c
+      container:
+        name: invidious
+        port: 3000
+        env:
+          # Override Kubernetes service env var collision
+          - name: INVIDIOUS_PORT
+            value: "3000"
+          # Database connection URL (includes password from 1Password)
+          - name: INVIDIOUS_DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: invidious-secrets
+                key: database-url
+          # HMAC key for signing
+          - name: INVIDIOUS_HMAC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: invidious-secrets
+                key: hmac-key
+          # Companion key for video streaming
+          - name: INVIDIOUS_INVIDIOUS_COMPANION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: invidious-secrets
+                key: companion-key
+          # Static configuration
+          - name: INVIDIOUS_CONFIG
+            value: |
+              check_tables: true
+              domain: invidious.gateway.services.apocrathia.com
+              https_only: true
+              external_port: 443
+              popular_enabled: true
+              statistics_enabled: true
+              registration_enabled: false
+              login_enabled: false
+              invidious_companion:
+                - private_url: "http://127.0.0.1:8282/companion"
+                  public_url: "https://invidious.gateway.services.apocrathia.com"
+
+      replicas: 1
+
+      sidecars:
+        - name: companion
+          # renovate: datasource=docker depName=quay.io/invidious/invidious-companion
+          image: quay.io/invidious/invidious-companion:master-8fb802c
+          ports:
+            - containerPort: 8282
+              name: companion
+          env:
+            - name: SERVER_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: invidious-secrets
+                  key: companion-key
+          volumes:
+            emptyDir:
+              - name: companion-cache
+                mountPath: /var/tmp/youtubei.js
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          healthChecks:
+            livenessProbe:
+              enabled: true
+              httpGet:
+                path: /healthz
+                port: 8282
+                scheme: HTTP
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+              successThreshold: 1
+            readinessProbe:
+              enabled: true
+              httpGet:
+                path: /healthz
+                port: 8282
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+              successThreshold: 1
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/stats
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/stats
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/invidious-secrets"
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: false
+      database: "invidious"
+      owner: "invidious"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Invidious"
+      externalHost: "https://invidious.gateway.services.apocrathia.com"
+      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/invidious.svg"
+
+    httproute:
+      enabled: false
