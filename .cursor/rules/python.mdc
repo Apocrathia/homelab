@@ -1,0 +1,336 @@
+---
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python Rules
+
+## Toolchain
+
+- **uv** for packages (not pip/pipenv/poetry): `uv add`, `uv sync`, `uv run`
+- **ruff** for format+lint: `uv run ruff format .`, `uv run ruff check --fix .`
+- **Python 3.12+** unless compatibility requires otherwise
+
+## Style
+
+- Shebang: `#!/usr/bin/env python3` | Line length: 120 | Imports: let ruff organize
+- Naming: `snake_case` (funcs/vars), `PascalCase` (classes), `SCREAMING_SNAKE` (constants), `_private` (internal)
+- Variables: descriptive (`message_count` not `n`), plurals for collections, booleans as questions (`is_valid`), units when relevant (`timeout_seconds`)
+- Comments: explain "why" not "what", use `# --- Section ---` for grouping, avoid stale comments
+
+## Type Hints (3.12+)
+
+```python
+def process(items: list[dict[str, str]], cb: Callable[[str], None]) -> bool: ...
+def get_user(id: int) -> User | None: ...
+type MessageContext = list[dict[str, str | bool]]  # type alias
+```
+
+## Documentation (Google-style)
+
+```python
+"""Module: brief description of purpose."""
+
+class Service:
+    """Purpose and key capabilities."""
+
+    def method(self, data: list[dict], dry_run: bool = False) -> Result:
+        """One-line summary.
+
+        Args:
+            data: Description
+            dry_run: Description
+
+        Returns:
+            Description
+
+        Raises:
+            ErrorType: When condition
+        """
+```
+
+## Logging
+
+```python
+logger = logging.getLogger("myapp.module")
+logger.info("Processing %s records", count)  # lazy formatting for hot paths
+logger.info(f"User {user_id} completed {action}")  # f-strings ok elsewhere
+logger.error(f"Failed: {e}", exc_info=True)  # always exc_info for errors
+```
+
+## Error Handling
+
+```python
+try:
+    result = await agent.run(prompt)
+except ValueError as e:  # catch specific
+    logger.error(f"Invalid input: {e}"); raise
+except ConnectionError:
+    return await retry_with_backoff()
+except Exception as e:  # service layer: log + domain exception
+    logger.error(f"Unexpected: {e}", exc_info=True)
+    raise ServiceError("Processing failed") from e
+
+# API layer: format for user
+async def handler(req) -> Response:
+    try: return Response(data=await service.process(req.data))
+    except ServiceError as e: return Response(error=str(e), status=500)
+```
+
+## Async
+
+```python
+# Lock for shared state
+async with self.processing_lock: return await self._do_work(data)
+
+# Concurrent tasks (3.11+)
+async with asyncio.TaskGroup() as tg:
+    tasks = [tg.create_task(fetch(url)) for url in urls]
+
+# Timeout (3.11+)
+async with asyncio.timeout(10.0): return await fetch(url)
+
+# Cancellation: cleanup before re-raising CancelledError
+
+# Entry point
+async def main_async(): await service.run()
+def main():
+    try: asyncio.run(main_async())
+    except KeyboardInterrupt: logger.info("Shutting down...")
+if __name__ == "__main__": main()
+```
+
+## Environment Config
+
+```python
+API_KEY = os.environ.get("API_KEY")
+if not API_KEY: raise ValueError("API_KEY required")
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
+DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
+PORT = int(os.environ.get("PORT", "8080"))
+```
+
+## Dependencies (pyproject.toml)
+
+```toml
+[project]
+name = "myproject"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28.0", "pydantic>=2.0.0"]
+
+[dependency-groups]
+dev = ["ruff>=0.8.0", "pytest>=8.0.0", "respx>=0.21.0"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "S", "C4", "PT"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+```
+
+**After modifying deps**: Run `snyk test` for vulnerabilities.
+
+## Data Patterns
+
+**Pydantic** for external data (APIs, files), **dataclasses** for internal structs:
+
+```python
+class DataRecord(BaseModel):
+    id: str
+    value: float = Field(ge=0)
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, v):
+        if not v.startswith("rec_"): raise ValueError("ID must start with 'rec_'")
+        return v
+
+@dataclass
+class ProcessingResult:
+    success_count: int
+    error_count: int
+```
+
+**Batch processing**: `for batch in batched(records, 100): await process_batch(list(batch))`
+
+**DB sessions**:
+
+```python
+@asynccontextmanager
+async def get_db_session():
+    session = AsyncSessionLocal()
+    try: yield session; await session.commit()
+    except: await session.rollback(); raise
+    finally: await session.close()
+```
+
+## Agentic Patterns
+
+**Structured outputs**: Pydantic models with `model_validate_json(llm_output)`
+
+**State management**: dataclass with messages, tool_results, step_count, max_steps
+
+**Retry with backoff**:
+
+```python
+@retry_with_backoff(max_retries=3, base_delay=1.0)
+async def call_api(prompt: str) -> str: ...
+# Decorator catches ConnectionError/TimeoutError, sleeps with jitter, retries
+```
+
+**Rate limiting**: Token bucket with `async def acquire()` that waits for available tokens
+
+**Streaming**: `async for chunk in response.aiter_text(): yield chunk`
+
+**Tool decorator**: `@tool("description")` extracts params from signature for schema
+
+## Production
+
+**pydantic-settings**: `class Settings(BaseSettings)` with `model_config = SettingsConfigDict(env_file=".env")`
+
+**structlog**: JSON logging with bound context (`logger.bind(request_id=id).info("processing")`)
+
+**Graceful shutdown**: Signal handlers setting `asyncio.Event`, cancel tasks on shutdown
+
+**Health checks**: `/liveness` (process alive), `/readiness` (can serve traffic + dependency checks)
+
+**OpenTelemetry**: `with tracer.start_as_current_span("op") as span: span.set_attribute("key", val)`
+
+## Testing
+
+```python
+@pytest.fixture
+def mock_api():
+    with respx.mock:
+        respx.get("https://api.example.com/users/123").mock(return_value=httpx.Response(200, json={"id": 123}))
+        yield
+
+@pytest.mark.asyncio
+async def test_fetch(mock_api): assert (await fetch_user(123))["id"] == 123
+
+@pytest.mark.parametrize("input,expected", [("valid", True), ("", False)])
+def test_validate(input, expected): assert validate(input) == expected
+```
+
+Commands: `uv run pytest [-v] [-k name] [--cov=src] [tests/unit]`
+
+## Security
+
+### Secrets
+
+```python
+# BAD: logger.info(f"Key: {api_key}")
+# GOOD: logger.info("Connecting (credentials configured)")
+# Or mask: f"****{secret[-4:]}" if len(secret) > 4 else "****"
+```
+
+### Input Validation
+
+Validate at boundaries. Username: `re.match(r"^[a-zA-Z0-9_]+$", s)`. Path traversal: `resolved.is_relative_to(allowed_base)`. Integer: try/except with range check.
+
+### SQL Injection
+
+```python
+# BAD: f"SELECT * FROM users WHERE name = '{username}'"
+# GOOD: "SELECT * FROM users WHERE name = $1", username
+# GOOD: select(User).where(User.username == username)  # SQLAlchemy
+```
+
+### Command Injection
+
+```python
+# BAD: subprocess.run(f"echo {user_input}", shell=True)
+# GOOD: subprocess.run(["cat", validated_filename], capture_output=True, timeout=30)
+```
+
+### Deserialization
+
+```python
+# BAD: pickle.loads(untrusted_data)  # RCE
+# GOOD: json.loads(data) or UserData.model_validate_json(data)
+# If pickle required: HMAC sign/verify before unpickling
+```
+
+### Cryptography
+
+```python
+# BAD: random.choices() for tokens
+# GOOD: secrets.token_urlsafe(32), secrets.token_hex(32)
+# Comparison: secrets.compare_digest(provided, expected)
+# Passwords: argon2.PasswordHasher().hash(pw) / .verify(hash, pw)
+# Never: MD5/SHA for passwords
+```
+
+### SSRF
+
+Block private IPs (10/8, 172.16/12, 192.168/16, 127/8, ::1). Allowlist hosts preferred. Resolve hostname and check IP before fetching.
+
+### XXE
+
+```python
+# BAD: ET.fromstring(xml)
+# GOOD: defusedxml.ElementTree.fromstring(xml)
+# Or lxml with resolve_entities=False, no_network=True, load_dtd=False
+```
+
+### ReDoS
+
+Avoid nested quantifiers: `(a+)+`, `(a*)*`, `(a|a)+`. Use `regex` module with timeout. Limit input length.
+
+### Template Injection
+
+```python
+# BAD: Template(f"Hello {user_input}")  # RCE
+# GOOD: Template("Hello {{ name }}").render(name=name)  # escaped
+# Use autoescape=select_autoescape(["html"]) for HTML
+```
+
+### Error Handling
+
+Log full details internally, expose generic messages to users. Never return `traceback.format_exc()` to clients.
+
+### HTTP Client
+
+Set timeouts: `httpx.Timeout(10.0, connect=5.0)`. Validate URLs before requesting. Use params dict for query strings.
+
+### Dependencies
+
+Pin versions (`==`), use hash verification, scan with `snyk test`, minimize deps.
+
+### Security Checklist
+
+- [ ] No secrets in code/logs/errors
+- [ ] Input validated at boundaries
+- [ ] Parameterized SQL queries
+- [ ] subprocess uses arg lists, not shell
+- [ ] No pickle/yaml.load on untrusted data
+- [ ] Passwords: Argon2/bcrypt
+- [ ] Tokens: secrets module
+- [ ] XML: defusedxml
+- [ ] Regex: no nested quantifiers
+- [ ] Templates: variables escaped
+- [ ] Errors: no internal details exposed
+- [ ] HTTP: URLs validated (SSRF)
+- [ ] Deps: pinned and scanned
+
+### Scanning Workflow
+
+1. After code changes: `snyk code test` (SAST)
+2. After dep changes: `snyk test` (SCA)
+3. Fix findings, re-scan until clean
+
+## References
+
+- [uv](https://docs.astral.sh/uv/) | [Ruff](https://docs.astral.sh/ruff/)
+- [PEP 8](https://peps.python.org/pep-0008/) | [Google Style](https://google.github.io/styleguide/pyguide.html)
+- [typing](https://docs.python.org/3/library/typing.html) | [asyncio](https://docs.python.org/3/library/asyncio.html) | [logging](https://docs.python.org/3/library/logging.html)
+- [Pydantic](https://docs.pydantic.dev/) | [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+- [structlog](https://www.structlog.org/) | [OpenTelemetry](https://opentelemetry.io/docs/languages/python/)
+- [pytest](https://docs.pytest.org/) | [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) | [respx](https://lundberg.github.io/respx/)
+- [HTTPX](https://www.python-httpx.org/)
+- [OWASP Python](https://cheatsheetseries.owasp.org/cheatsheets/Python_Security_Cheat_Sheet.html) | [defusedxml](https://github.com/tiran/defusedxml) | [argon2-cffi](https://argon2-cffi.readthedocs.io/) | [Snyk](https://snyk.io/)
