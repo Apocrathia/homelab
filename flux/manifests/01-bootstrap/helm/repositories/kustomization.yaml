@@ -33,5 +33,6 @@ resources:
   - tuppr.yaml
   - external-secrets.yaml
   - flyte.yaml
+  - jupyterhub.yaml
   - litellm.yaml
   - llm-d-modelservice.yaml
