@@ -13,20 +13,6 @@ spec:
   retain: 3
   concurrency: 2
 ---
-# Hourly snapshot of all volumes
-apiVersion: longhorn.io/v1beta2
-kind: RecurringJob
-metadata:
-  name: hourly-snapshot
-  namespace: longhorn-system
-spec:
-  cron: "@hourly"
-  task: "snapshot"
-  groups:
-    - default
-  retain: 3
-  concurrency: 2
----
 # Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
