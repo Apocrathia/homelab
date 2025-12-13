@@ -7,6 +7,9 @@ kustomize-diff:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - flux/manifests/**/*
+  before_script:
+    - curl --silent --location https://git.io/JYfAY | bash
+    - export PATH="$HOME/bin:$PATH"
   script:
     - |
       MARKER="<!-- kustomize-diff -->"
@@ -79,10 +82,8 @@ kustomize-diff:
             fi
             git checkout "$CI_COMMIT_SHA" --quiet
 
-            DIR_DIFF=$(diff -u \
-              --label "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}:${DIR}" \
-              --label "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}:${DIR}" \
-              "$DIR_TARGET" "$DIR_SOURCE" || true)
+            DIR_DIFF=$(dyff between --color off --detect-kubernetes \
+              --omit-header "$DIR_TARGET" "$DIR_SOURCE" 2>&1 || true)
             if [ -n "$DIR_DIFF" ]; then
               echo "" >> "$DIFF_FILE"
               echo "### ${DIR}" >> "$DIFF_FILE"
