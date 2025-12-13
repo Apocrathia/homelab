@@ -105,19 +105,19 @@ spec:
               memory: 256Mi
 
     worker:
-      replicas: 4
+      replicas: 2
       env:
         - name: AUTHENTIK_WORKER__THREADS
-          value: "4"
+          value: "2"
         - name: AUTHENTIK_WORKER__SCHEDULER_INTERVAL
           value: "hours=1"
       resources:
         requests:
-          cpu: 250m
-          memory: 512Mi
-        limits:
-          cpu: 2000m
+          cpu: 500m
           memory: 8Gi
+        limits:
+          cpu: 4000m
+          memory: 16Gi
       livenessProbe:
         timeoutSeconds: 10
         failureThreshold: 5
