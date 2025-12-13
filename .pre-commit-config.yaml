@@ -21,6 +21,7 @@ repos:
     rev: v8.30.0
     hooks:
       - id: gitleaks
+        args: ["--config", ".gitleaks.toml"]
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
