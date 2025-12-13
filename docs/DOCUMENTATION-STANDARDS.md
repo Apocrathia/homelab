@@ -80,6 +80,50 @@ This document defines the standards and guidelines for maintaining consistent, h
 - **H3**: Subsections within main sections
 - **H4**: Avoid unless absolutely necessary
 
+### Mermaid Diagrams
+
+Use Mermaid diagrams to visualize complex relationships that are difficult to convey in prose.
+
+#### When to Use
+
+- **Data Flow**: Show how data moves between services or components
+- **Architecture Overview**: Illustrate multi-service deployments and their connections
+- **Decision Trees**: Document troubleshooting flows or conditional logic
+- **Sequence Diagrams**: Explain authentication flows or API interactions
+- **Network Topology**: Visualize network paths, ingress routes, or service mesh configurations
+
+#### When to Avoid
+
+- **Simple Relationships**: If a bullet list suffices, skip the diagram
+- **Redundant Information**: Don't diagram what's obvious from the manifest structure
+- **Frequently Changing Data**: Diagrams with version numbers or IPs become stale quickly
+
+#### Diagram Types
+
+| Type              | Use Case                                        |
+| ----------------- | ----------------------------------------------- |
+| `flowchart`       | Architecture, data flow, decision trees         |
+| `sequenceDiagram` | Auth flows, API interactions, request lifecycle |
+| `graph`           | Simple relationships, dependencies              |
+| `stateDiagram`    | Component states, lifecycle transitions         |
+
+#### Formatting Guidelines
+
+- **Language Tag**: Always use ` ```mermaid ` fencing
+- **Direction**: Prefer `LR` (left-to-right) or `TB` (top-to-bottom) for readability
+- **Labels**: Keep node labels concise; use full names in surrounding prose
+- **Styling**: Avoid excessive custom styling; default themes render well
+- **Size**: Keep diagrams focused; split large diagrams into multiple smaller ones
+
+#### Example
+
+```mermaid
+flowchart LR
+    Client --> Gateway[Envoy Gateway]
+    Gateway --> Auth[Authentik]
+    Auth --> App[Application]
+```
+
 ## Maintenance Guidelines
 
 ### When to Update Documentation
@@ -114,6 +158,7 @@ Before submitting documentation updates:
 - [ ] Security considerations documented (if applicable)
 - [ ] Configuration references patterns, not values
 - [ ] Length appropriate for complexity (50-150 lines target)
+- [ ] Mermaid diagrams used only where they add clarity (not redundant)
 
 ## Examples
 
@@ -123,6 +168,7 @@ Before submitting documentation updates:
 - References external docs for details
 - Includes practical troubleshooting
 - Uses consistent formatting
+- Uses diagrams to clarify complex multi-service flows
 
 ### Poor Documentation
 
@@ -130,3 +176,4 @@ Before submitting documentation updates:
 - Missing troubleshooting information
 - Inconsistent formatting
 - Too verbose or too brief for complexity
+- Diagrams for trivial relationships or with hardcoded values
