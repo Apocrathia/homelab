@@ -8,6 +8,7 @@ kustomize-diff:
       changes:
         - flux/manifests/**/*
   before_script:
+    - mkdir -p "$HOME/bin"
     - curl --silent --location https://git.io/JYfAY | bash
     - export PATH="$HOME/bin:$PATH"
   script:
