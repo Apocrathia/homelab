@@ -111,6 +111,12 @@ spec:
           value: "2"
         - name: AUTHENTIK_WORKER__SCHEDULER_INTERVAL
           value: "hours=1"
+        - name: AUTHENTIK_CACHE__TIMEOUT
+          value: "60"
+        - name: AUTHENTIK_CACHE__TIMEOUT_FLOWS
+          value: "60"
+        - name: AUTHENTIK_CACHE__TIMEOUT_POLICIES
+          value: "60"
       resources:
         requests:
           cpu: 500m
