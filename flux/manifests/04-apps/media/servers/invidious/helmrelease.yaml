@@ -95,7 +95,7 @@ spec:
               memory: 256Mi
             limits:
               cpu: 500m
-              memory: 512Mi
+              memory: 1Gi
           healthChecks:
             livenessProbe:
               enabled: true
