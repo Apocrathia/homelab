@@ -7,10 +7,6 @@ kustomize-diff:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - flux/manifests/**/*
-  before_script:
-    - mkdir -p "$HOME/bin"
-    - curl --silent --location https://git.io/JYfAY | bash
-    - export PATH="$HOME/bin:$PATH"
   script:
     - |
       MARKER="<!-- kustomize-diff -->"
@@ -67,24 +63,23 @@ kustomize-diff:
 
           for DIR in $KUSTOMIZE_DIRS; do
             DIR_SAFE=$(echo "$DIR" | tr '/' '-')
-            DIR_SOURCE="/tmp/source-${DIR_SAFE}.yaml"
-            DIR_TARGET="/tmp/target-${DIR_SAFE}.yaml"
+            DIR_SOURCE="/tmp/source-${DIR_SAFE}"
+            DIR_TARGET="/tmp/target-${DIR_SAFE}"
+            mkdir -p "$DIR_SOURCE" "$DIR_TARGET"
 
             echo "  Building $DIR (source)..."
-            kustomize build "$DIR" > "$DIR_SOURCE" 2>&1 || echo "# Build failed" > "$DIR_SOURCE"
+            kustomize build "$DIR" -o "$DIR_SOURCE" 2>&1 || echo "# Build failed" > "$DIR_SOURCE/BUILD_FAILED"
 
             git checkout "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --quiet
             if [ -d "$DIR" ]; then
               echo "  Building $DIR (target)..."
-              kustomize build "$DIR" > "$DIR_TARGET" 2>&1 || echo "# Build failed" > "$DIR_TARGET"
+              kustomize build "$DIR" -o "$DIR_TARGET" 2>&1 || echo "# Build failed" > "$DIR_TARGET/BUILD_FAILED"
             else
               echo "  $DIR is new (doesn't exist on target branch)"
-              : > "$DIR_TARGET"
             fi
             git checkout "$CI_COMMIT_SHA" --quiet
 
-            DIR_DIFF=$(dyff between --color off --detect-kubernetes \
-              --omit-header "$DIR_TARGET" "$DIR_SOURCE" 2>&1 || true)
+            DIR_DIFF=$(diff -ru "$DIR_TARGET" "$DIR_SOURCE" 2>/dev/null || true)
             if [ -n "$DIR_DIFF" ]; then
               echo "" >> "$DIFF_FILE"
               echo "### ${DIR}" >> "$DIFF_FILE"
