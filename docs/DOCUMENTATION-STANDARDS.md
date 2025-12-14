@@ -86,11 +86,9 @@ Use Mermaid diagrams to visualize complex relationships that are difficult to co
 
 #### When to Use
 
-- **Data Flow**: Show how data moves between services or components
-- **Architecture Overview**: Illustrate multi-service deployments and their connections
-- **Decision Trees**: Document troubleshooting flows or conditional logic
-- **Sequence Diagrams**: Explain authentication flows or API interactions
-- **Network Topology**: Visualize network paths, ingress routes, or service mesh configurations
+- **Architecture/Deployment**: How services connect, network topology, infrastructure layout
+- **Code/Runtime Behavior**: How requests flow, authentication sequences, API interactions
+- **Decision Trees**: Troubleshooting flows or conditional logic
 
 #### When to Avoid
 
@@ -98,14 +96,18 @@ Use Mermaid diagrams to visualize complex relationships that are difficult to co
 - **Redundant Information**: Don't diagram what's obvious from the manifest structure
 - **Frequently Changing Data**: Diagrams with version numbers or IPs become stale quickly
 
-#### Diagram Types
+#### Diagram Type Selection
 
-| Type              | Use Case                                        |
-| ----------------- | ----------------------------------------------- |
-| `flowchart`       | Architecture, data flow, decision trees         |
-| `sequenceDiagram` | Auth flows, API interactions, request lifecycle |
-| `graph`           | Simple relationships, dependencies              |
-| `stateDiagram`    | Component states, lifecycle transitions         |
+Choose the diagram type based on what you're documenting:
+
+| Documenting...          | Use               | Why                                                 |
+| ----------------------- | ----------------- | --------------------------------------------------- |
+| Deployment/Architecture | `flowchart`       | Shows static relationships between components       |
+| Code/Runtime Behavior   | `sequenceDiagram` | Shows temporal ordering of interactions             |
+| Component States        | `stateDiagram`    | Shows lifecycle transitions and valid state changes |
+| Simple Dependencies     | `graph`           | Lightweight alternative to flowchart                |
+
+**Rule of thumb**: If time/ordering matters, use `sequenceDiagram`. If it's about structure/topology, use `flowchart`.
 
 #### Formatting Guidelines
 
@@ -115,13 +117,26 @@ Use Mermaid diagrams to visualize complex relationships that are difficult to co
 - **Styling**: Avoid excessive custom styling; default themes render well
 - **Size**: Keep diagrams focused; split large diagrams into multiple smaller ones
 
-#### Example
+#### Examples
+
+**Deployment (flowchart)** - static topology:
 
 ```mermaid
 flowchart LR
     Client --> Gateway[Envoy Gateway]
     Gateway --> Auth[Authentik]
     Auth --> App[Application]
+```
+
+**Code flow (sequence diagram)** - temporal ordering:
+
+```mermaid
+sequenceDiagram
+    Client->>Gateway: Request
+    Gateway->>Auth: Validate token
+    Auth-->>Gateway: Token valid
+    Gateway->>App: Forward request
+    App-->>Client: Response
 ```
 
 ## Maintenance Guidelines
