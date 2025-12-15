@@ -79,7 +79,44 @@ kustomize-diff:
             fi
             git checkout "$CI_COMMIT_SHA" --quiet
 
-            DIR_DIFF=$(diff -ru "$DIR_TARGET" "$DIR_SOURCE" 2>/dev/null || true)
+            # Generate diff and transform output to show branch:Kind/name format
+            DIR_DIFF=$(diff -ru "$DIR_TARGET" "$DIR_SOURCE" 2>/dev/null | awk -v target="$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" -v source="$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" '
+              function parse_resource(filename) {
+                # Remove .yaml suffix
+                gsub(/\.yaml$/, "", filename)
+                # Split by underscore to extract kind and name (last two parts)
+                n = split(filename, parts, "_")
+                if (n >= 2) {
+                  kind = parts[n-1]
+                  name = parts[n]
+                  # Capitalize first letter of kind
+                  kind = toupper(substr(kind, 1, 1)) substr(kind, 2)
+                  return kind "/" name
+                }
+                return filename
+              }
+              /^diff -ru/ {
+                # Skip the diff command line - we show resource in --- line
+                next
+              }
+              /^--- .*\/tmp\/target/ {
+                # Extract filename from path
+                match($0, /[^\/]+\.yaml/)
+                filename = substr($0, RSTART, RLENGTH)
+                resource = parse_resource(filename)
+                print "--- " target ":" resource
+                next
+              }
+              /^\+\+\+ .*\/tmp\/source/ {
+                match($0, /[^\/]+\.yaml/)
+                filename = substr($0, RSTART, RLENGTH)
+                resource = parse_resource(filename)
+                print "+++ " source ":" resource
+                next
+              }
+              { print }
+            ' || true)
+
             if [ -n "$DIR_DIFF" ]; then
               echo "" >> "$DIFF_FILE"
               echo "### ${DIR}" >> "$DIFF_FILE"
