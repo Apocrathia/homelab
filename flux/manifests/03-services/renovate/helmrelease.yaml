@@ -9,7 +9,7 @@ spec:
     spec:
       chart: mend-renovate-ce
       # renovate: datasource=helm registryUrl=https://mend.github.io/renovate-ce-ee depName=mend-renovate-ce
-      version: 13.0.0
+      version: 13.1.0
       sourceRef:
         kind: HelmRepository
         name: renovate
