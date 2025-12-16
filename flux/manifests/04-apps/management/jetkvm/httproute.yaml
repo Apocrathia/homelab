@@ -33,6 +33,16 @@ spec:
             - type: Exact
               name: Upgrade
               value: websocket
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: "no-cache, no-store, must-revalidate"
+              - name: Pragma
+                value: "no-cache"
+              - name: Expires
+                value: "0"
       backendRefs:
         - name: jetkvm-api
           port: 3000
@@ -56,6 +66,16 @@ spec:
             - type: RegularExpression
               name: Accept
               value: "text/html.*"
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: "no-cache, no-store, must-revalidate"
+              - name: Pragma
+                value: "no-cache"
+              - name: Expires
+                value: "0"
       backendRefs:
         - name: jetkvm-app
           port: 80
@@ -108,6 +128,16 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: "no-cache, no-store, must-revalidate"
+              - name: Pragma
+                value: "no-cache"
+              - name: Expires
+                value: "0"
       backendRefs:
         - name: jetkvm-app
           port: 80
