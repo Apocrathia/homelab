@@ -116,7 +116,7 @@ spec:
       instances: 1
       storage:
         storageClass: longhorn
-        size: 100Gi
+        size: 50Gi
       postgresql:
         parameters:
           max_connections: "100"
