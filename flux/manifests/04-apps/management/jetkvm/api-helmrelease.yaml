@@ -123,6 +123,9 @@ spec:
 
                 if [ "$LOCAL" = "$REMOTE" ] && [ -d "$DIST_DIR" ] && [ -f "$DIST_DIR/index.js" ]; then
                   echo "Already on latest commit with built assets, skipping rebuild..."
+                  # Ensure sameSite patch is applied (in case of stale cache)
+                  echo "Ensuring cookie sameSite patch is applied..."
+                  sed -i 's/sameSite: "strict"/sameSite: "lax"/g' "$DIST_DIR/index.js"
                   echo "Pruning dev dependencies..."
                   npm prune --production
                   echo "Build complete."
@@ -148,6 +151,11 @@ spec:
 
               echo "Building TypeScript..."
               npm run build
+
+              # Patch: Change sameSite from "strict" to "lax" for OAuth compatibility
+              # The upstream uses "strict" which breaks OAuth flows (CSRF cookie not sent on redirect from Google)
+              echo "Patching cookie sameSite policy for OAuth compatibility..."
+              sed -i 's/sameSite: "strict"/sameSite: "lax"/g' "$DIST_DIR/index.js"
 
               echo "Pruning dev dependencies..."
               npm prune --production
