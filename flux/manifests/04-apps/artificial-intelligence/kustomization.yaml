@@ -8,6 +8,7 @@ metadata:
 resources:
   - flowise
   - guardrails-ai
+  - jupyterhub
   - litellm
   - llm-d
   - mcp-servers
