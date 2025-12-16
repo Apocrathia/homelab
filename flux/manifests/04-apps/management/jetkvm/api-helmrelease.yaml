@@ -36,6 +36,14 @@ spec:
       name: jetkvm-secrets
       valuesKey: cookie-secret
       targetPath: app.container.env[4].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: cloudflare-turn-id
+      targetPath: app.container.env[5].value
+    - kind: Secret
+      name: jetkvm-secrets
+      valuesKey: cloudflare-turn-token
+      targetPath: app.container.env[6].value
 
   values:
     app:
@@ -49,7 +57,7 @@ spec:
         name: api
         port: 3000
         # Environment variables - secrets are injected via valuesFrom
-        # Index 0-4 are reserved for secrets (username, password, google-client-id, google-client-secret, cookie-secret)
+        # Index 0-6 are reserved for secrets (username, password, google-client-id, google-client-secret, cookie-secret, cloudflare-turn-id, cloudflare-turn-token)
         env:
           - name: DB_USERNAME
             value: "" # Injected from secret
@@ -60,6 +68,10 @@ spec:
           - name: GOOGLE_CLIENT_SECRET
             value: "" # Injected from secret
           - name: COOKIE_SECRET
+            value: "" # Injected from secret
+          - name: CLOUDFLARE_TURN_ID
+            value: "" # Injected from secret
+          - name: CLOUDFLARE_TURN_TOKEN
             value: "" # Injected from secret
           # Static environment variables
           - name: API_HOSTNAME
