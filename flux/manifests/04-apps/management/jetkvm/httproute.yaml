@@ -38,9 +38,17 @@ spec:
           port: 3000
           weight: 1
 
-    # Route browser requests for /devices/* to frontend (for SPA routes like /devices/:id/setup)
+    # Route browser requests for /devices to frontend (for SPA routes)
     # This must come before the API /devices rule
+    # Matches both /devices (exact) and /devices/* (prefix) with Accept: text/html
     - matches:
+        - path:
+            type: Exact
+            value: /devices
+          headers:
+            - type: RegularExpression
+              name: Accept
+              value: "text/html.*"
         - path:
             type: PathPrefix
             value: /devices/
