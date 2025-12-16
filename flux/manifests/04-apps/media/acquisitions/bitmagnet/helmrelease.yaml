@@ -116,7 +116,7 @@ spec:
       instances: 1
       storage:
         storageClass: longhorn
-        size: 20Gi
+        size: 100Gi
       postgresql:
         parameters:
           max_connections: "100"
@@ -125,6 +125,11 @@ spec:
           log_statement: "ddl"
           log_min_duration_statement: "1000ms"
           log_min_messages: "INFO"
+          # Maintenance tuning for high-write workload
+          maintenance_work_mem: "64MB"
+          autovacuum_vacuum_scale_factor: "0.1"
+          autovacuum_analyze_scale_factor: "0.05"
+          autovacuum_max_workers: "3"
       affinity:
         enablePodAntiAffinity: true
         podAntiAffinityType: "preferred"
