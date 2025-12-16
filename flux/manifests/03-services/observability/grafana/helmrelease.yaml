@@ -11,7 +11,7 @@ spec:
     spec:
       chart: grafana-operator
       # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=grafana-operator
-      version: "v5.20.0"
+      version: "5.21.1"
       sourceRef:
         kind: HelmRepository
         name: grafana
