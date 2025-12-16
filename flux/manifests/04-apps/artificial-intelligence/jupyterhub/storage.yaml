@@ -1,0 +1,58 @@
+---
+# SMB credentials for notebook storage
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: smb-credentials
+  namespace: jupyterhub
+spec:
+  itemPath: "vaults/Secrets/items/smb-credentials"
+---
+# PersistentVolume for SMB-backed notebook storage
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jupyterhub-notebooks-pv
+  labels:
+    app.kubernetes.io/name: jupyterhub
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: jupyterhub-notebooks-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Library"
+      subDir: "Projects"
+    nodeStageSecretRef:
+      name: smb-credentials
+      namespace: jupyterhub
+---
+# PersistentVolumeClaim for notebook storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub-notebooks
+  namespace: jupyterhub
+  labels:
+    app.kubernetes.io/name: jupyterhub
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: jupyterhub-notebooks-pv
+  resources:
+    requests:
+      storage: 10Gi

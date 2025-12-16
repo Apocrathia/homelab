@@ -1,0 +1,145 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jupyterhub
+  namespace: jupyterhub
+spec:
+  interval: 1h
+  timeout: 15m
+  install:
+    timeout: 15m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 15m
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: jupyterhub
+      # renovate: datasource=helm registryUrl=https://jupyterhub.github.io/helm-chart depName=jupyterhub
+      version: "4.2.0"
+      sourceRef:
+        kind: HelmRepository
+        name: jupyterhub
+        namespace: flux-system
+
+  # Pull OIDC credentials from 1Password secret
+  valuesFrom:
+    - kind: Secret
+      name: jupyterhub-secrets
+      valuesKey: oidc-client-id
+      targetPath: hub.config.GenericOAuthenticator.client_id
+    - kind: Secret
+      name: jupyterhub-secrets
+      valuesKey: oidc-client-secret
+      targetPath: hub.config.GenericOAuthenticator.client_secret
+
+  values:
+    # Hub configuration
+    hub:
+      config:
+        JupyterHub:
+          authenticator_class: generic-oauth
+          admin_access: true
+        GenericOAuthenticator:
+          oauth_callback_url: "https://jupyter.gateway.services.apocrathia.com/hub/oauth_callback"
+          authorize_url: "https://auth.gateway.services.apocrathia.com/application/o/authorize/"
+          token_url: "https://auth.gateway.services.apocrathia.com/application/o/token/"
+          userdata_url: "https://auth.gateway.services.apocrathia.com/application/o/userinfo/"
+          scope:
+            - openid
+            - email
+            - profile
+          username_claim: "preferred_username"
+          login_service: "Authentik"
+          allow_all: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Proxy configuration
+    proxy:
+      service:
+        type: ClusterIP
+      chp:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+    # Single-user notebook server configuration
+    singleuser:
+      # Disable cloud metadata blocking (requires privileged containers, not needed on homelab)
+      cloudMetadata:
+        blockWithIptables: false
+      # Resource limits per user (defaults, can be overridden by profiles)
+      cpu:
+        limit: 2
+        guarantee: 0.5
+      memory:
+        limit: 4G
+        guarantee: 1G
+      # Storage configuration - static PVC with per-user subdirectories
+      storage:
+        type: static
+        static:
+          pvcName: jupyterhub-notebooks
+          subPath: "{username}"
+        homeMountPath: /home/jovyan
+      # Extra environment variables
+      extraEnv:
+        TZ: "America/Denver"
+      # Profile options for users to choose their environment
+      profileList:
+        - display_name: "JupyterLab (PyTorch)"
+          description: "Jupyter notebook environment with PyTorch and scientific Python stack"
+          default: true
+          kubespawner_override:
+            image: quay.io/jupyter/pytorch-notebook:2025-12-10
+            default_url: /lab
+        - display_name: "VS Code (code-server)"
+          description: "VS Code in your browser"
+          kubespawner_override:
+            # renovate: datasource=docker depName=codercom/code-server
+            image: codercom/code-server:4.96.4
+            default_url: /
+            cmd:
+              ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8888"]
+
+    # Scheduling configuration
+    scheduling:
+      userScheduler:
+        enabled: false
+      userPlaceholder:
+        enabled: false
+
+    # Culling configuration - stop idle servers
+    cull:
+      enabled: true
+      timeout: 3600
+      every: 300
+      maxAge: 0
+
+    # Disable ingress - using Gateway API
+    ingress:
+      enabled: false
+
+    # Pre-puller configuration
+    prePuller:
+      hook:
+        enabled: true
+      continuous:
+        enabled: false
+
+    # Debug mode (disable in production)
+    debug:
+      enabled: false
