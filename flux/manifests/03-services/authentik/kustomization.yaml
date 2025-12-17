@@ -9,3 +9,4 @@ resources:
   - httproute.yaml
   - rbac-sidecar.yaml
   - blueprints
+  - cronjob-task-cleanup.yaml
