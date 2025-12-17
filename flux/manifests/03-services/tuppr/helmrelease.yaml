@@ -10,7 +10,7 @@ spec:
     spec:
       chart: tuppr
       # renovate: datasource=docker depName=ghcr.io/home-operations/charts/tuppr
-      version: "0.0.46"
+      version: "0.0.47"
       sourceRef:
         kind: HelmRepository
         name: tuppr
