@@ -27,7 +27,7 @@ spec:
           containers:
             - name: task-cleanup
               # renovate: datasource=docker registryUrl=https://ghcr.io depName=goauthentik/server
-              image: ghcr.io/goauthentik/server:2025.10.2
+              image: ghcr.io/goauthentik/server:2025.10.3
               securityContext:
                 readOnlyRootFilesystem: true
                 allowPrivilegeEscalation: false
