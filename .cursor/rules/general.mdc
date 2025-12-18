@@ -86,6 +86,7 @@ description: General guidelines for the project
 - This balances development efficiency with GitOps principles
 - **When referencing secrets in Flux manifests, use Flux's fromValues function** to reference secret values instead of placeholders
 - **Configurations should be explicitly defined** in config files rather than relying on implicit configuration
+- **Rule of thumb** - GitOps or GTFO
 
 ## Maintenance and Operations
 - Schedule regular system updates
@@ -107,6 +108,8 @@ description: General guidelines for the project
 - **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 - **Do not make implicit changes** - only perform modifications when explicitly instructed
 - **Ask for clarification when requirements are unclear** - if task scope, expected behavior, or implementation approach is ambiguous, ask questions before proceeding
+- **Distinguish advice requests from action requests** - when the user asks for "advice", "please advise", "what should I do", "considering", or similar consultative language, provide options and recommendations only. Do not take action unless explicitly requested
+- **When in doubt, ask** - if the user's intent is unclear (advice vs. action), ask for clarification before proceeding.
 - Run `prettier -w` to format code before presenting to the user
 
 ## MCP Tools Usage
