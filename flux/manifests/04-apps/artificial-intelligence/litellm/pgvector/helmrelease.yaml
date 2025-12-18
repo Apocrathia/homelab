@@ -167,7 +167,7 @@ spec:
               memory: 256Mi
         - name: clone-repo
           # renovate: datasource=docker depName=alpine/git
-          image: alpine/git:v2.49.1
+          image: alpine/git:v2.52.0
           command: ["/bin/sh", "-c"]
           args:
             - |
