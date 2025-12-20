@@ -68,6 +68,8 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+        - name: db
+          mountPath: /data/db
         - name: downloads
           mountPath: /downloads
 
@@ -76,6 +78,8 @@ spec:
         enabled: true
         volumes:
           - name: config
+            capacity: 10Gi
+          - name: db
             capacity: 10Gi
       smb:
         enabled: true
