@@ -25,8 +25,9 @@ All configuration is done through the RDT-Client web UI after initial deployment
 
 ### Storage
 
-- **Configuration Volume**: 10GB Longhorn persistent volume for SQLite database and application configuration
-- **Downloads Volume**: SMB mount to shared storage location (`/downloads`)
+- **Configuration Volume** (`/config`): 10GB Longhorn persistent volume for application configuration files (`appsettings.json`, logs)
+- **Database Volume** (`/data/db`): 10GB Longhorn persistent volume for SQLite database (`rdtclient.db`)
+- **Downloads Volume** (`/downloads`): SMB mount to shared storage location
 
 ### Access
 
