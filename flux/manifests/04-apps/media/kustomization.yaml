@@ -18,6 +18,7 @@ resources:
   - management/huntarr
   - management/lidarr
   - management/ombi
+  - management/overseerr
   - management/radarr
   - management/recyclarr
   - management/shinkro
