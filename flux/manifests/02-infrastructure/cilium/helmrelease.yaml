@@ -152,9 +152,10 @@ spec:
     # Resource configuration for cilium-agent
     resources:
       requests:
-        cpu: 100m
-        memory: 128Mi
+        cpu: 500m
+        memory: 512Mi
       limits:
+        cpu: 1000m
         memory: 2Gi
 
     # Security context for agent pods - modified for Talos compatibility
