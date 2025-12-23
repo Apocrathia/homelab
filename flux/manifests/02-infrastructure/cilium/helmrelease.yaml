@@ -182,8 +182,8 @@ spec:
 
     # Configure kubeproxy replacement
     kubeProxyReplacement: true
-    k8sServiceHost: "kubernetes.apocrathia.com"
-    k8sServicePort: 6443 # Standard Kubernetes API port
+    k8sServiceHost: "localhost"
+    k8sServicePort: 6443 # Use localhost to avoid VIP routing issues on control plane nodes
 
     # Enable bandwidth manager for better traffic control
     bandwidthManager:
