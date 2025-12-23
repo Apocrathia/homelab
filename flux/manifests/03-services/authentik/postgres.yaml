@@ -30,6 +30,15 @@ spec:
       log_min_duration_statement: "1000ms"
       log_min_messages: "INFO"
 
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
   # Affinity settings for better performance (CloudNativePG-specific)
   affinity:
     enablePodAntiAffinity: true
