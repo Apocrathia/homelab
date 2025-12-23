@@ -91,7 +91,7 @@ helm install cilium cilium/cilium \
   --set cgroup.autoMount.enabled=false \
   --set cgroup.hostRoot=/sys/fs/cgroup \
   --set kubeProxyReplacement=true \
-  --set k8sServiceHost=kubernetes.apocrathia.com \
+  --set k8sServiceHost=127.0.0.1 \
   --set k8sServicePort=6443 \
   --set operator.replicas=1 \
   --set hostServices.enabled=true \
