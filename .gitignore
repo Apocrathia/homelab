@@ -56,6 +56,4 @@ vault.key
 tmp/
 temp/
 .cache/
-
-# Secrets
-secrets/
+TODO.md
