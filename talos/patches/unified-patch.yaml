@@ -112,3 +112,11 @@ cluster:
       # Metrics
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
+---
+# OOM Controller tuning - less aggressive triggering to prevent false positives
+# during high pod count startup scenarios (e.g., 80+ pods on a node)
+# Default: memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")
+apiVersion: v1alpha1
+kind: OOMConfig
+triggerExpression: 'memory_full_avg10 > 20.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("2s")'
+sampleInterval: 1s
