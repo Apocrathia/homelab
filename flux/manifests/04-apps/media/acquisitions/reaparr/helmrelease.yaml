@@ -1,0 +1,115 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: reaparr
+  namespace: reaparr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.41"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: reaparr
+      # renovate: datasource=docker depName=reaparr/reaparr
+      image: reaparr/reaparr:0.34.0
+      container:
+        name: reaparr
+        port: 7000
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "America/Denver"
+          - name: AUTH_HEADER_TOKEN_NAME
+            value: "X-authentik-username"
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      securityContext:
+        # s6-overlay containers need root initially to set up user/group and directories
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 7000
+        portName: http
+
+      volumeMounts:
+        - name: config
+          mountPath: /Config
+        - name: downloads
+          mountPath: /Downloads
+        - name: movies
+          mountPath: /Movies
+        - name: tv
+          mountPath: /TvShows
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 10Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: movies
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Movies"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: tv
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "TV Shows"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Reaparr"
+      externalHost: "https://reaparr.gateway.services.apocrathia.com"
+      icon: "https://raw.githubusercontent.com/Reaparr/Reaparr/94a1f90a249757b5b220be8446f9bf9214b967ee/export/reaparr/logo/reaparr-single.svg"
+      # Enable header-based auth since Reaparr supports it natively
+      interceptHeaderAuth: true

@@ -11,6 +11,7 @@ resources:
   - acquisitions/prowlarr
   - acquisitions/qbittorrent
   - acquisitions/rdt-client
+  - acquisitions/reaparr
   - acquisitions/sabnzbd
   - acquisitions/zilean
   - management/bazarr
