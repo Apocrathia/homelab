@@ -28,6 +28,16 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    # Disable upgrade version check to allow hotfix image
+    # See: https://github.com/longhorn/longhorn/releases/tag/v1.10.1
+    upgradeVersionCheck: false
+
+    # Use hotfixed manager image to fix crashes and replica auto-balance bugs
+    image:
+      longhorn:
+        manager:
+          tag: v1.10.1-hotfix-2
+
     defaultBackupStore:
       backupTarget: cifs://storage.services.apocrathia.com/Backup
       backupTargetCredentialSecret: longhorn-backup-target-secret
