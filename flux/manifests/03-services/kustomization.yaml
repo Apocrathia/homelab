@@ -10,7 +10,7 @@ resources:
   - observability
   - dashboard
   - gitlab
-  - kong
+  # - kong
   - kyverno
   - cert-manager
   - housekeeping
