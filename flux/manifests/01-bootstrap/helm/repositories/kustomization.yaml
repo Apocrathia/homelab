@@ -34,6 +34,7 @@ resources:
   - external-secrets.yaml
   - flyte.yaml
   - jupyterhub.yaml
+  - kagent.yaml
   - kong.yaml
   - litellm.yaml
   - llm-d-modelservice.yaml
