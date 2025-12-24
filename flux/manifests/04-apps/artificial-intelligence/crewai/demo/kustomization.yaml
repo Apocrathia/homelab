@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: crewai
+
+namespace: crewai
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - helmrelease.yaml
+
+# Generate ConfigMap from source files
+configMapGenerator:
+  - name: crewai-src
+    files:
+      - src/main.py
+      - src/crew.py
+      - src/a2a_server.py
+      - src/requirements.txt
+    options:
+      disableNameSuffixHash: true

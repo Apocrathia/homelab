@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: beeai
+
+namespace: beeai
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+
+# Generate ConfigMap from source files
+configMapGenerator:
+  - name: beeai-src
+    files:
+      - src/main.py
+      - src/agent.py
+      - src/requirements.txt
+    options:
+      disableNameSuffixHash: true

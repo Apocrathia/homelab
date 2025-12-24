@@ -1,0 +1,207 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: demo
+  namespace: beeai
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.41"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: demo
+      namespace: beeai
+      # renovate: datasource=docker depName=python
+      image: python:3.12-slim
+
+      # Command must be at app level, not app.container level
+      command: ["python"]
+      args: ["/app/main.py"]
+
+      container:
+        name: agent
+        port: 10001 # A2A server port
+        env:
+          # Python path for installed dependencies
+          - name: PYTHONPATH
+            value: "/app/deps:/app"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+
+          # Home directory for writable user data
+          - name: HOME
+            value: "/data"
+
+          # Temp directory (container has no /tmp)
+          - name: TMPDIR
+            value: "/data/tmp"
+
+          # Memory storage path
+          - name: MEMORY_PATH
+            value: "/data/memory"
+
+          # LiteLLM configuration
+          - name: LITELLM_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: LITELLM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: beeai-secrets
+                key: litellm-api-key
+
+          # Discord configuration
+          - name: DISCORD_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: beeai-secrets
+                key: discord-token
+
+          # Bot configuration
+          - name: BOT_NAME
+            value: "BeeAI Demo"
+          - name: RESPONSE_CHANCE
+            value: "0.3"
+
+          # A2A server configuration
+          - name: A2A_ENABLED
+            value: "true"
+          - name: A2A_PORT
+            value: "10001"
+          - name: A2A_BASE_URL
+            value: "http://demo.beeai.svc.cluster.local:10001"
+
+      # Init container installs dependencies
+      initContainers:
+        - name: install
+          image: python:3.12-slim
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Installing Python dependencies..."
+
+              # Install system dependencies
+              apt-get update && apt-get install -y --no-install-recommends \
+                build-essential \
+                && rm -rf /var/lib/apt/lists/*
+
+              # Install Python dependencies
+              pip install --no-cache-dir --target=/app/deps -r /src/requirements.txt
+
+              # Copy source code to app directory
+              cp -rL /src/* /app/
+
+              # Ensure data directories exist
+              mkdir -p /data/memory /data/tmp
+
+              echo "Dependencies installed successfully"
+          # volumeMounts get prefixed with app.name by the chart
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: data
+              mountPath: /data
+          # volumes.configMap does NOT get prefixed (for initContainer-specific mounts)
+          volumes:
+            configMap:
+              - name: src
+                mountPath: /src
+                configMapName: beeai-src
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+
+      service:
+        type: ClusterIP
+        port: 10001
+        targetPort: 10001
+        portName: a2a
+
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      # Health checks via A2A server agent-card endpoint
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /.well-known/agent-card.json
+            port: 10001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /.well-known/agent-card.json
+            port: 10001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /.well-known/agent-card.json
+            port: 10001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+      # Volume mounts for main container
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+      # Volumes (configMap is in initContainers.volumes to avoid duplicates)
+      volumes:
+        emptyDir:
+          - name: app
+            mountPath: /app
+
+    # Persistent storage for memory
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    # 1Password secrets
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/beeai-secrets"
+
+    # No web interface - disable authentik
+    authentik:
+      enabled: false
+
+    # No HTTP route needed
+    httproute:
+      enabled: false
