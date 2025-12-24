@@ -19,7 +19,7 @@ spec:
   values:
     app:
       name: grocy
-      # renovate: datasource=docker depName=lscr.io/linuxserver/grocy
+      # renovate: datasource=docker depName=lscr.io/linuxserver/grocy versioning=semver-coerced
       image: lscr.io/linuxserver/grocy:v4.5.0-ls301
       container:
         name: grocy
