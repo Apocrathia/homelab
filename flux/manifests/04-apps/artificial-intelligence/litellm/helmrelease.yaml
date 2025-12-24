@@ -126,7 +126,7 @@ spec:
     extraContainers:
       - name: mlflow
         # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
-        image: registry.suse.com/suse/kubectl:1.33.1
+        image: registry.suse.com/suse/kubectl:1.33.7
         command: ["/bin/bash", "-c"]
         args:
           - |
