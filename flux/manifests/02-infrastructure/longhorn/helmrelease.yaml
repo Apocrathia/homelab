@@ -92,7 +92,8 @@ spec:
       allowRecurringJobWhileVolumeDetached: true # Allow jobs on detached volumes
 
       # Orphaned resource cleanup
-      orphanResourceAutoDeletion: "true" # Auto-delete orphaned resources
+      # Valid values: replica-data, instance, or replica-data;instance (semicolon-separated)
+      orphanResourceAutoDeletion: "replica-data;instance" # Auto-delete orphaned replicas and instances
       orphanResourceAutoDeletionGracePeriod: "60" # 1 minute
 
     # Persistence settings for better reliability
