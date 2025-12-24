@@ -1,0 +1,28 @@
+# CrewAI Discord Agent Dependencies
+# These are installed at container startup
+
+# Core CrewAI with A2A support
+crewai[a2a]>=0.108.0
+crewai-tools[mcp]>=0.38.0
+
+# A2A SDK for protocol support
+a2a-sdk>=0.2.0
+
+# MCP support
+mcp>=1.0.0
+
+# Discord integration
+discord.py>=2.4.0
+
+# A2A server (FastAPI + Uvicorn)
+fastapi>=0.115.0
+uvicorn>=0.32.0
+
+# HTTP client for A2A agent discovery
+httpx>=0.28.0
+
+# Async support
+aiohttp>=3.9.0
+
+# Environment management
+python-dotenv>=1.0.0

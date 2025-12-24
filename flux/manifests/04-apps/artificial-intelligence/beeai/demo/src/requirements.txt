@@ -1,0 +1,17 @@
+# BeeAI Discord Agent Dependencies
+# These are installed at container startup
+
+# Core BeeAI framework with A2A and MCP support
+beeai-framework[a2a,mcp]>=0.1.0
+
+# Discord integration
+discord.py>=2.4.0
+
+# HTTP client
+httpx>=0.28.0
+
+# Async support
+aiohttp>=3.9.0
+
+# Environment management
+python-dotenv>=1.0.0
