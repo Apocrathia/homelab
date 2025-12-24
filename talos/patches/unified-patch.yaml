@@ -116,7 +116,8 @@ cluster:
 # OOM Controller tuning - less aggressive triggering to prevent false positives
 # during high pod count startup scenarios (e.g., 80+ pods on a node)
 # Default: memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")
+# Increased cooldown to 60s to allow Cilium to complete BPF map initialization
 apiVersion: v1alpha1
 kind: OOMConfig
-triggerExpression: 'memory_full_avg10 > 20.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("2s")'
+triggerExpression: 'memory_full_avg10 > 20.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("60s")'
 sampleInterval: 1s
