@@ -69,7 +69,7 @@ spec:
 
       # Engine and replica settings
       engineReplicaTimeout: "30" # 30 seconds timeout
-      concurrentReplicaRebuildPerNodeLimit: "1" # Limit concurrent rebuilds
+      concurrentReplicaRebuildPerNodeLimit: "3" # Limit concurrent rebuilds
       concurrentVolumeBackupRestorePerNodeLimit: "1" # Limit concurrent restores
 
       # Data integrity and recovery
