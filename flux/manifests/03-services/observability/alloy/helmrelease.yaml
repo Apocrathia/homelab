@@ -32,6 +32,30 @@ spec:
         name: alloy-config
         key: config.alloy
 
+      # Resources
+      resources:
+        requests:
+          cpu: 250m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+      # Container security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+
+      # Extra volume mounts for WAL storage
+      mounts:
+        extra:
+          - name: alloy-wal
+            mountPath: /tmp/alloy
+
     # RBAC configuration - minimal permissions for secure log collection via Kubernetes API
     rbac:
       create: true
@@ -51,29 +75,12 @@ spec:
       create: true
       annotations: {}
 
-    # Pod security context
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 10001
-      fsGroup: 10001
-
-    # Container security context
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 10001
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      capabilities:
-        drop: ["ALL"]
-
-    # Resources
-    resources:
-      requests:
-        cpu: 200m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 1Gi
+    # Global pod security context
+    global:
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
 
     # Node selector for all nodes
     nodeSelector: {}
@@ -83,3 +90,11 @@ spec:
 
     # Affinity for all nodes
     affinity: {}
+
+    # Controller configuration
+    controller:
+      # Extra volumes for WAL storage (emptyDir for temporary data)
+      volumes:
+        extra:
+          - name: alloy-wal
+            emptyDir: {}
