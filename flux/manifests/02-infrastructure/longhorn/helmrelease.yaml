@@ -58,7 +58,7 @@ spec:
       replicaAutoBalance: "best-effort" # Auto-rebalance replicas when nodes are available
 
       # Timeout and cleanup settings
-      staleReplicaTimeout: 60 # 1 minute
+      staleReplicaTimeout: 300 # 5 minutes
       failedBackupTTL: "1440" # 24 hours
       backupExecutionTimeout: "5" # 5 minutes
 
@@ -68,9 +68,9 @@ spec:
       defaultDataLocality: "best-effort" # Allow replicas on different nodes
 
       # Engine and replica settings
-      engineReplicaTimeout: "8" # 8 seconds timeout
-      concurrentReplicaRebuildPerNodeLimit: "5" # Limit concurrent rebuilds
-      concurrentVolumeBackupRestorePerNodeLimit: "5" # Limit concurrent restores
+      engineReplicaTimeout: "30" # 30 seconds timeout
+      concurrentReplicaRebuildPerNodeLimit: "1" # Limit concurrent rebuilds
+      concurrentVolumeBackupRestorePerNodeLimit: "1" # Limit concurrent restores
 
       # Data integrity and recovery
       snapshotDataIntegrity: "fast-check" # Enable fast integrity checking
@@ -94,7 +94,7 @@ spec:
       # Orphaned resource cleanup
       # Valid values: replica-data, instance, or replica-data;instance (semicolon-separated)
       orphanResourceAutoDeletion: "replica-data;instance" # Auto-delete orphaned replicas and instances
-      orphanResourceAutoDeletionGracePeriod: "60" # 1 minute
+      orphanResourceAutoDeletionGracePeriod: "600" # 10 minutes
 
     # Persistence settings for better reliability
     persistence:
