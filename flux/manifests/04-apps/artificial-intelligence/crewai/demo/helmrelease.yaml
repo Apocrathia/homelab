@@ -22,7 +22,7 @@ spec:
       name: demo
       namespace: crewai
       # renovate: datasource=docker depName=python
-      image: python:3.12-slim
+      image: python:3.14-slim
 
       # Command must be at app level, not app.container level
       command: ["python"]
@@ -87,7 +87,7 @@ spec:
       # Init container installs dependencies
       initContainers:
         - name: install
-          image: python:3.12-slim
+          image: python:3.14-slim
           command: ["/bin/bash", "-c"]
           args:
             - |
