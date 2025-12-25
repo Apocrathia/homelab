@@ -63,7 +63,7 @@ spec:
       backupExecutionTimeout: "5" # 5 minutes
 
       # Storage settings
-      storageOverProvisioningPercentage: "100"
+      storageOverProvisioningPercentage: "150"
       storageMinimalAvailablePercentage: "25"
       defaultDataLocality: "best-effort" # Allow replicas on different nodes
 
