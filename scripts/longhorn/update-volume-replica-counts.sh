@@ -1,26 +1,26 @@
 #!/bin/bash
 # Update existing Longhorn volumes to use the new replica count
-# This patches volumes that still have 3 replicas to the new count of 2
+# This patches volumes that don't have 3 replicas to the new count of 3
 
 set -euo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_REPLICA_COUNT=2
+NEW_REPLICA_COUNT=3
 
-echo "Finding volumes with numberOfReplicas > ${NEW_REPLICA_COUNT}..."
+echo "Finding volumes with numberOfReplicas != ${NEW_REPLICA_COUNT}..."
 
 # Get volumes that need updating
 kubectl get volumes.longhorn.io -n "${NAMESPACE}" -o json | \
   jq -r --arg count "${NEW_REPLICA_COUNT}" '
     .items[] |
-    select(.spec.numberOfReplicas > ($count | tonumber)) |
+    select(.spec.numberOfReplicas != ($count | tonumber)) |
     .metadata.name
   ' > /tmp/volumes-to-update.txt
 
 VOLUME_COUNT=$(wc -l < /tmp/volumes-to-update.txt | tr -d ' ')
 
 if [ "${VOLUME_COUNT}" -eq 0 ]; then
-  echo "All volumes already have numberOfReplicas <= ${NEW_REPLICA_COUNT}."
+  echo "All volumes already have numberOfReplicas = ${NEW_REPLICA_COUNT}."
   rm -f /tmp/volumes-to-update.txt
   exit 0
 fi
@@ -54,7 +54,7 @@ fi
 
 echo ""
 echo "Updating volumes..."
-echo "(Longhorn will automatically remove the extra replica)"
+echo "(Longhorn will automatically add/remove replicas as needed)"
 UPDATED=0
 FAILED=0
 COUNTER=0
