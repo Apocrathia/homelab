@@ -110,8 +110,9 @@ spec:
                     app.kubernetes.io/component: write
                 topologyKey: kubernetes.io/hostname
       persistence:
-        size: 30Gi
-        storageClass: longhorn
+        volumeClaimsEnabled: false
+        dataVolumeParameters:
+          emptyDir: {}
 
     # Resources for Loki components
     resources:
