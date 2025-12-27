@@ -233,10 +233,10 @@ spec:
         resources:
           requests:
             cpu: 500m
-            memory: 2Gi
+            memory: 4Gi
           limits:
             cpu: 2000m
-            memory: 8Gi
+            memory: 16Gi
         storageSpec:
           volumeClaimTemplate:
             metadata:
