@@ -9,13 +9,16 @@ GROUP_NAME="default"
 
 echo "Finding volumes not attached to the '${GROUP_NAME}' recurring job group..."
 
-# Get volumes that need updating (those without the default group in their recurringJobSelector)
+LABEL_KEY="recurring-job-group.longhorn.io/${GROUP_NAME}"
+LABEL_VALUE="enabled"
+
+# Get volumes that need updating (those without the label)
 kubectl get volumes.longhorn.io -n "${NAMESPACE}" -o json | \
-  jq -r --arg group "${GROUP_NAME}" '
+  jq -r --arg key "${LABEL_KEY}" --arg value "${LABEL_VALUE}" '
     .items[] |
     select(
-      .spec.recurringJobSelector == null or
-      (.spec.recurringJobSelector.groups // [] | index($group) == null)
+      .metadata.labels == null or
+      .metadata.labels[$key] != $value
     ) |
     .metadata.name
   ' > /tmp/volumes-to-update.txt
@@ -66,53 +69,46 @@ while IFS= read -r volume; do
   ((COUNTER++))
   echo -n "[${COUNTER}/${VOLUME_COUNT}] ${volume}... "
 
-  # Get current recurring job selector
-  CURRENT_SELECTOR=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.recurringJobSelector}' 2>/dev/null || echo "null")
+  # Check if label already exists (double-check before patching)
+  # Use jq because jsonpath doesn't handle label keys with dots properly
+  CURRENT_LABEL=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json 2>/dev/null | \
+    jq -r --arg key "${LABEL_KEY}" '.metadata.labels[$key] // ""' || echo "")
 
-  # Build the patch payload
-  # If recurringJobSelector is null or empty, create it with the default group
-  # If it exists, add default group to the groups array
-  PATCH_PAYLOAD=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json | \
-    jq --arg group "${GROUP_NAME}" '
-      if .spec.recurringJobSelector == null then
-        .spec.recurringJobSelector = { groups: [$group] }
-      elif .spec.recurringJobSelector.groups == null then
-        .spec.recurringJobSelector.groups = [$group]
-      elif (.spec.recurringJobSelector.groups | index($group)) == null then
-        .spec.recurringJobSelector.groups += [$group]
-      else
-        .  # Already has the group, no change needed
-      end |
-      { spec: { recurringJobSelector: .spec.recurringJobSelector } }
-    ')
+  if [ "${CURRENT_LABEL}" = "${LABEL_VALUE}" ]; then
+    echo "⊘ (already has label, skipping)"
+    continue
+  fi
 
-  # Try to patch the volume with a timeout
-  PATCH_OUTPUT=$(timeout 15 kubectl patch volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
-    --type merge \
-    -p "${PATCH_PAYLOAD}" 2>&1)
+  # Add the label to attach volume to the recurring job group
+  PATCH_OUTPUT=$(timeout 15 kubectl label volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
+    "${LABEL_KEY}=${LABEL_VALUE}" \
+    --overwrite 2>&1)
   PATCH_EXIT=$?
 
   # Brief pause to let API settle
   sleep 0.5
 
-  # Verify the patch worked by checking if default group is now in the selector
-  NEW_SELECTOR=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.recurringJobSelector.groups[*]}' 2>/dev/null || echo "")
+  # Verify the label was added
+  # Use jq because jsonpath doesn't handle label keys with dots properly
+  NEW_LABEL=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json 2>/dev/null | \
+    jq -r --arg key "${LABEL_KEY}" '.metadata.labels[$key] // ""' || echo "")
 
-  if echo "${NEW_SELECTOR}" | grep -q "${GROUP_NAME}"; then
+  if [ "${NEW_LABEL}" = "${LABEL_VALUE}" ]; then
     ((UPDATED++))
-    echo "✓ (groups: ${NEW_SELECTOR})"
+    echo "✓ (label added)"
   else
     ((FAILED++))
-    echo "✗ (groups: ${NEW_SELECTOR:-none})"
+    echo "✗ (label not set)"
     if [ "${PATCH_EXIT}" -eq 124 ]; then
-      echo "    → Patch command timed out (volume may be busy - check if patch succeeded anyway)"
+      echo "    → Label command timed out (volume may be busy - check if label was added anyway)"
       # Check one more time after timeout
       sleep 1
-      FINAL_CHECK=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.recurringJobSelector.groups[*]}' 2>/dev/null || echo "")
-      if echo "${FINAL_CHECK}" | grep -q "${GROUP_NAME}"; then
+      FINAL_CHECK=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json 2>/dev/null | \
+        jq -r --arg key "${LABEL_KEY}" '.metadata.labels[$key] // ""' || echo "")
+      if [ "${FINAL_CHECK}" = "${LABEL_VALUE}" ]; then
         ((UPDATED++))
         ((FAILED--))
-        echo "    → Actually succeeded! (verified: ${FINAL_CHECK})"
+        echo "    → Actually succeeded! (verified: label is set)"
       fi
     elif [ "${PATCH_EXIT}" -ne 0 ] && [ -n "${PATCH_OUTPUT}" ]; then
       echo "    → Error: ${PATCH_OUTPUT}"
