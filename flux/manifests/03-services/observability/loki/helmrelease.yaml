@@ -109,6 +109,9 @@ spec:
                   matchLabels:
                     app.kubernetes.io/component: write
                 topologyKey: kubernetes.io/hostname
+      persistence:
+        size: 30Gi
+        storageClass: longhorn
 
     # Resources for Loki components
     resources:
