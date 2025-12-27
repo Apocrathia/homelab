@@ -43,13 +43,14 @@ spec:
 ---
 # Snapshot deletion to enforce retention policy (keep only 5 most recent)
 # This deletes old snapshots beyond the retention limit
+# Runs daily at 2 AM (after backup job completes at midnight)
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: snapshot-delete
   namespace: longhorn-system
 spec:
-  cron: "0 */6 * * *" # Run every 6 hours
+  cron: "0 2 * * *" # Run daily at 2 AM (after backups complete)
   task: "snapshot-delete"
   groups:
     - default

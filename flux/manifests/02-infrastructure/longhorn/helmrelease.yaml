@@ -60,7 +60,7 @@ spec:
       # Timeout and cleanup settings
       staleReplicaTimeout: 300 # 5 minutes
       failedBackupTTL: "1440" # 24 hours
-      backupExecutionTimeout: "5" # 5 minutes
+      backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
 
       # Storage settings
       storageOverProvisioningPercentage: "150"
@@ -78,7 +78,7 @@ spec:
 
       # Cleanup settings
       autoCleanupSystemGeneratedSnapshot: true
-      autoCleanupRecurringJobBackupSnapshot: true
+      autoCleanupRecurringJobBackupSnapshot: false # Disabled to prevent snapshots from being deleted before backups complete
       removeSnapshotsDuringFilesystemTrim: true
       snapshotMaxCount: "5" # Limit snapshots per volume (default 250 is too high, prevents accumulation)
 
