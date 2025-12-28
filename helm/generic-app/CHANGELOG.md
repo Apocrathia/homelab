@@ -1,6 +1,16 @@
 # Changelog
 
-## Version 0.0.41 (Latest)
+## Version 0.0.42 (Latest)
+
+- **NEW: PostgreSQL Resource Limits Support**: Added resource requests and limits configuration for PostgreSQL pods
+  - **Resource Configuration**: Configure CPU and memory requests/limits for PostgreSQL pods via `postgres.resources`
+  - **OOM Prevention**: Prevents OOM kills by ensuring PostgreSQL pods have proper memory guarantees and limits
+  - **Template Enhancement**: Updated `postgres.yaml` template to support resource configuration in CloudNativePG Cluster spec
+  - **Optional Configuration**: Resources are optional - existing deployments without resource limits continue to work
+  - **Best Practice**: Recommended for production workloads to ensure stable database performance and prevent unexpected pod terminations
+  - **Documentation**: Added resource configuration examples and values reference table entry
+
+## Version 0.0.41
 
 - **Fixed Volume Deduplication**: Comprehensive fix for duplicate volume errors across all container types
   - **Problem Solved**: Duplicate volume definitions when multiple containers (main, initContainers, sidecars) reference the same configMap or emptyDir
