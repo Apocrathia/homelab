@@ -119,11 +119,11 @@ spec:
         size: 50Gi
       resources:
         requests:
-          memory: "1Gi"
-          cpu: "500m"
+          memory: "256Mi"
+          cpu: "100m"
         limits:
-          memory: "2Gi"
-          cpu: "2000m"
+          memory: "512Mi"
+          cpu: "500m"
       postgresql:
         parameters:
           max_connections: "100"
