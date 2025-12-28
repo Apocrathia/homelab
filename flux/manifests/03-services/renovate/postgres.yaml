@@ -16,6 +16,15 @@ spec:
     size: 10Gi
     storageClass: longhorn
 
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
   # Bootstrap configuration
   bootstrap:
     initdb:
