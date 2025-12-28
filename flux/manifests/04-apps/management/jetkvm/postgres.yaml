@@ -16,6 +16,15 @@ spec:
     storageClass: longhorn
     size: 10Gi
 
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
   # PostgreSQL-specific configuration
   postgresql:
     parameters:
