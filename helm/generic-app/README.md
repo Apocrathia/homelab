@@ -119,6 +119,10 @@ All available configuration values for the chart:
 | `postgres.instances`                           | int    | `1`                                               | Number of PostgreSQL instances                                |
 | `postgres.storage.storageClass`                | string | `longhorn`                                        | Storage class for PostgreSQL data                             |
 | `postgres.storage.size`                        | string | `10Gi`                                            | Storage size for PostgreSQL data                              |
+| `postgres.resources.requests.memory`           | string | `""`                                              | Memory request for PostgreSQL pods                            |
+| `postgres.resources.requests.cpu`              | string | `""`                                              | CPU request for PostgreSQL pods                               |
+| `postgres.resources.limits.memory`             | string | `""`                                              | Memory limit for PostgreSQL pods                              |
+| `postgres.resources.limits.cpu`                | string | `""`                                              | CPU limit for PostgreSQL pods                                 |
 | `postgres.postgresql.parameters`               | object | `{}`                                              | PostgreSQL configuration parameters                           |
 | `postgres.affinity.enablePodAntiAffinity`      | bool   | `true`                                            | Enable pod anti-affinity for PostgreSQL pods                  |
 | `postgres.affinity.podAntiAffinityType`        | string | `preferred`                                       | Pod anti-affinity type                                        |
@@ -841,6 +845,14 @@ postgres:
   storage:
     storageClass: longhorn
     size: 10Gi
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
   # PostgreSQL configuration parameters
   postgresql:
     parameters:

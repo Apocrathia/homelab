@@ -26,6 +26,29 @@ spec:
       {{- end }}
     {{- end }}
 
+  # Resource limits to prevent OOM kills
+  {{- if .Values.postgres.resources }}
+  resources:
+    {{- if .Values.postgres.resources.requests }}
+    requests:
+      {{- if .Values.postgres.resources.requests.memory }}
+      memory: {{ .Values.postgres.resources.requests.memory | quote }}
+      {{- end }}
+      {{- if .Values.postgres.resources.requests.cpu }}
+      cpu: {{ .Values.postgres.resources.requests.cpu | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.postgres.resources.limits }}
+    limits:
+      {{- if .Values.postgres.resources.limits.memory }}
+      memory: {{ .Values.postgres.resources.limits.memory | quote }}
+      {{- end }}
+      {{- if .Values.postgres.resources.limits.cpu }}
+      cpu: {{ .Values.postgres.resources.limits.cpu | quote }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
   # Affinity settings for better performance (CloudNativePG-specific)
   {{- if .Values.postgres.affinity }}
   affinity:
