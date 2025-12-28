@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.41"
+      version: "0.0.42"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -117,6 +117,13 @@ spec:
       storage:
         storageClass: longhorn
         size: 50Gi
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "2000m"
       postgresql:
         parameters:
           max_connections: "100"
