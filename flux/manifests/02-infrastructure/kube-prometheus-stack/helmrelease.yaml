@@ -229,7 +229,8 @@ spec:
     prometheus:
       enabled: true
       prometheusSpec:
-        retention: 14d
+        retention: 7d
+        retentionSize: 90GB
         resources:
           requests:
             cpu: 500m
