@@ -11,7 +11,7 @@ spec:
   groups:
     - default
   retain: 3
-  concurrency: 5
+  concurrency: 10 # Increased to process more volumes per day (75 volumes need higher concurrency)
 ---
 # Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2
@@ -29,13 +29,14 @@ spec:
 ---
 # Daily snapshot cleanup to remove system-generated snapshots
 # This prevents accumulation of snapshots that weren't cleaned up automatically
+# Runs at 11 PM (before backups at midnight, giving backups plenty of time to complete)
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: snapshot-cleanup
   namespace: longhorn-system
 spec:
-  cron: "@daily"
+  cron: "0 23 * * *" # Run daily at 11 PM (before backups at midnight)
   task: "snapshot-cleanup"
   groups:
     - default
