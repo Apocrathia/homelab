@@ -45,6 +45,17 @@ spec:
     podAntiAffinityType: "preferred"
     topologyKey: "kubernetes.io/hostname"
 
+  # Health probe configuration
+  probes:
+    liveness:
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 5
+    readiness:
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
   # Bootstrap configuration
   bootstrap:
     initdb:
