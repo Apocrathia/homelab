@@ -17,6 +17,24 @@ spec:
         name: longhorn
         namespace: flux-system
   maxHistory: 2
+  # Add resource requests to longhorn-manager to get Burstable QoS
+  # This prevents OOM killer from targeting it first during memory pressure
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: longhorn-manager
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 100m
+                    memory: 256Mi
+                  limits:
+                    cpu: 1000m
+                    memory: 1Gi
   install:
     crds: Create
     remediation:
