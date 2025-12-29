@@ -11,7 +11,7 @@ spec:
   groups:
     - default
   retain: 3
-  concurrency: 2
+  concurrency: 5
 ---
 # Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2

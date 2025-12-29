@@ -61,6 +61,7 @@ spec:
       staleReplicaTimeout: 300 # 5 minutes
       failedBackupTTL: "1440" # 24 hours
       backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
+      backupConcurrentLimit: "5"
 
       # Storage settings
       storageOverProvisioningPercentage: "150"
@@ -108,10 +109,11 @@ spec:
       disableRevisionCounter: "true"
       unmapMarkSnapChainRemoved: ignored
       dataEngine: v1
-      # Configure recurring job selector to automatically label all new volumes
+      # Configure recurring job selector to automatically label all new volumes with the default group
+      # This ensures new volumes receive all recurring jobs (backup, snapshot-delete, etc.) from the default group
       recurringJobSelector:
         enable: true
-        jobList: '[{"name":"snapshot-delete","isGroup":false}]'
+        jobList: '[{"name":"default","isGroup":true}]'
 
     longhornUI:
       replicas: 2
