@@ -79,7 +79,7 @@ spec:
       staleReplicaTimeout: 300 # 5 minutes
       failedBackupTTL: "1440" # 24 hours
       backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
-      backupConcurrentLimit: "5"
+      backupConcurrentLimit: "10" # Increased to match recurring job concurrency (75 volumes need higher throughput)
 
       # Storage settings
       storageOverProvisioningPercentage: "150"
