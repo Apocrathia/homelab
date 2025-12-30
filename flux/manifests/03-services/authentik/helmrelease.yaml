@@ -120,10 +120,10 @@ spec:
       resources:
         requests:
           cpu: 500m
-          memory: 4Gi
+          memory: 512Mi
         limits:
           cpu: 4000m
-          memory: 8Gi
+          memory: 4Gi
       livenessProbe:
         timeoutSeconds: 30
         failureThreshold: 5

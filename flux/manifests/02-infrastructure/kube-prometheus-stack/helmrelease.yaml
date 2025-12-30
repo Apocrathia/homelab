@@ -155,11 +155,11 @@ spec:
         GF_AUTH_PROXY_WHITELIST: "127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
         GF_AUTH_PROXY_HEADERS: "Groups:X-authentik-groups,Name:X-authentik-name,Email:X-authentik-email"
       resources:
-        limits:
-          cpu: 400m
-          memory: 2Gi
         requests:
           cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
           memory: 1Gi
       persistence:
         enabled: true
