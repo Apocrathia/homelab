@@ -90,4 +90,4 @@ spec:
       category: "Media"
       displayName: "Whisparr"
       externalHost: "https://whisparr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/whisparr.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/whisparr/icon.svg"

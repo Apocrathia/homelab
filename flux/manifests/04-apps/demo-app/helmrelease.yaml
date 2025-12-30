@@ -56,7 +56,7 @@ spec:
       category: "Platform"
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"
-      icon: "https://i.imgur.com/A9nZmA4.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
 
     httproute:
       enabled: false

@@ -98,4 +98,4 @@ spec:
       category: "Media"
       displayName: "RDT-Client"
       externalHost: "https://debrid.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/real-debrid.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/rdt-client/icon.svg"

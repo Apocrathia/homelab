@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kagent-proxy-provider"]]
       launch_url: "https://kagent.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://i.imgur.com/PWTyczU.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/kagent/icon.svg"
       meta_description: "kagent - AI Agent Orchestration Platform"
       meta_publisher: "kagent-dev"
 

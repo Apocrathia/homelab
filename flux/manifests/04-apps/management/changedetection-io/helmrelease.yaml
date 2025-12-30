@@ -156,7 +156,7 @@ spec:
       category: "Productivity"
       displayName: "Change Detection"
       externalHost: "https://changedetection.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/changedetection.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/changedetection-io/icon.svg"
 
     httproute:
       enabled: false

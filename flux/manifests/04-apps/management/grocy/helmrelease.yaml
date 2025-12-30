@@ -93,7 +93,7 @@ spec:
       category: "Home"
       displayName: "Grocy"
       externalHost: "https://grocy.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grocy.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/grocy/icon.svg"
       # Enable header-based authentication for reverse proxy auth
       interceptHeaderAuth: true
 

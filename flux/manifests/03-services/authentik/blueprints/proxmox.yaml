@@ -19,7 +19,7 @@ entries:
       launch_url: "https://node-01.management.apocrathia.com:8006"
       group: "Infrastructure"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/proxmox.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/proxmox.svg"
       meta_description: "Proxmox virtualization management interface"
       meta_publisher: "Proxmox"
 

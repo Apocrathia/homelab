@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "openwebui-proxy-provider"]]
       launch_url: "https://chat.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/open-webui.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/openwebui/icon.svg"
       meta_description: "User-friendly web interface for chat interactions with LLMs"
       meta_publisher: "OpenWebUI"
   # Outpost for OpenWebUI
