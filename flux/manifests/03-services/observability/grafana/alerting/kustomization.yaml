@@ -9,3 +9,4 @@ resources:
   - discord.yaml
   - slack.yaml
   - pushover.yaml
+  - latest-image-tags.yaml
