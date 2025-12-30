@@ -207,11 +207,11 @@ spec:
           - name: "null"
       resources:
         limits:
-          cpu: 100m
-          memory: 100Mi
+          cpu: 200m
+          memory: 1Gi
         requests:
           cpu: 50m
-          memory: 50Mi
+          memory: 200Mi
       persistence:
         enabled: true
         storageClassName: longhorn
@@ -234,7 +234,7 @@ spec:
         resources:
           requests:
             cpu: 512m
-            memory: 256Mi
+            memory: 512Mi
           limits:
             cpu: 2000m
             memory: 8Gi
