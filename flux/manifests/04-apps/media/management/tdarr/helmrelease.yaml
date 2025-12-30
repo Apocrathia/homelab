@@ -43,11 +43,11 @@ spec:
         enabled: false # Single replica, no need for anti-affinity
       resources:
         requests:
-          cpu: 200m
-          memory: 512Mi
+          cpu: 100m
+          memory: 128Mi
         limits:
           cpu: 1000m
-          memory: 4Gi
+          memory: 1Gi
       securityContext:
         # Tdarr containers need root initially to set up user/group and directories
         runAsUser: "0"
