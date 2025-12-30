@@ -1,4 +1,9 @@
 ---
+# Remove auto hostname config to allow static hostname
+apiVersion: v1alpha1
+kind: HostnameConfig
+$patch: delete
+---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.3/pkg/machinery/config/schemas/config.schema.json
 machine:
   nodeLabels:
