@@ -169,13 +169,13 @@ spec:
           mountModelVolume: true
           resources:
             requests:
-              # CPU-only mode - inference-sim doesn't require GPU resources
+              # CPU-only mode - no GPU resources needed
               # Minimal requests for scheduling
-              cpu: "500m"
-              memory: "2Gi"
+              cpu: "100m"
+              memory: "128Mi"
             limits:
-              cpu: "4"
-              memory: "16Gi"
+              cpu: "500m"
+              memory: "512Mi"
           ports:
             - containerPort: 8000
               name: metrics
