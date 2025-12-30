@@ -84,7 +84,27 @@ Write and deploy your own contracts.
 - Local development environment (Foundry/Anvil or Hardhat)
 - Testnet ETH (free from faucets)
 
-### Phase 5: dApp Development
+### Phase 5: Oracles and Middleware
+
+Blockchains are intentionally isolated - they can't access external data on their own. Oracles solve this.
+
+**What you'll learn:**
+
+- Why blockchains can't access external data (determinism requirement)
+- How oracles bridge on-chain and off-chain worlds
+- Chainlink architecture (decentralized oracle network)
+- Consuming oracle data in smart contracts (price feeds, VRF, automation)
+
+**What it is:** Chainlink is the de facto standard for Web3 oracles. It provides:
+
+- **Price Feeds** - real-time asset prices for DeFi
+- **VRF** - verifiable randomness for games/NFTs
+- **Automation** - trigger contract functions based on conditions
+- **Functions** - call external APIs from contracts
+
+**Infrastructure option:** Running a Chainlink node is possible but complex. Start by consuming existing oracle data, explore running a node later.
+
+### Phase 6: dApp Development
 
 Build a complete decentralized application.
 
@@ -101,6 +121,7 @@ Build a complete decentralized application.
 | --------- | ------------- | ---------------------- |
 | Frontend  | React/Vue app | Your cluster (or IPFS) |
 | RPC       | Ethereum node | Your cluster           |
+| Oracles   | Chainlink     | Chainlink network      |
 | Contracts | Solidity      | On-chain               |
 | Storage   | IPFS          | Your cluster           |
 
@@ -173,3 +194,4 @@ Start with Sepolia testnet. Graduate to mainnet when comfortable and storage is 
 - [Nethermind Docs](https://docs.nethermind.io/)
 - [Foundry Book](https://book.getfoundry.sh/) (for Phase 4)
 - [EVM Deep Dive](https://www.evm.codes/) (opcode reference)
+- [Chainlink Documentation](https://docs.chain.link/) (for Phase 5)
