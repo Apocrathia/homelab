@@ -147,7 +147,7 @@ spec:
           memory: 128Mi
         limits:
           cpu: 500m
-          memory: 512Mi
+          memory: 1Gi
       # Increase ingestion rate limits to handle high-volume metrics
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
