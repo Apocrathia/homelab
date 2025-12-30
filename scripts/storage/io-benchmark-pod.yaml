@@ -1,0 +1,187 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage-test
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: io-benchmark-pvc
+  namespace: storage-test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: io-benchmark
+  namespace: storage-test
+spec:
+  # Note: Running as root for benchmark pod to avoid permission issues
+  # This is acceptable for a temporary test pod
+  containers:
+    - name: fio
+      image: alpine:latest
+      securityContext:
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # Install fio and coreutils (for timeout command)
+          apk update
+          apk add --no-cache fio coreutils
+
+          # Verify fio is installed
+          if ! command -v fio &> /dev/null; then
+            echo "ERROR: fio installation failed"
+            exit 1
+          fi
+
+          # Create test directory and clean up any old data files (keep JSON)
+          mkdir -p /data/benchmark
+          cd /data/benchmark
+          # Remove old fio data files but keep JSON results
+          find . -name "*.0.*" -o -name "*.1.*" -o -name "*.2.*" -o -name "*.3.*" 2>/dev/null | xargs rm -f 2>/dev/null || true
+
+          echo "=== Storage IO Benchmark ==="
+          echo "Volume: /data"
+          echo "Storage Class: longhorn"
+          echo ""
+
+          # Test 1: Sequential Read
+          echo "Test 1/6: Sequential Read (1MB blocks, 4 jobs)"
+          timeout 300 fio --name=seq-read --rw=read --bs=1M --size=500M --numjobs=4 --iodepth=16 --runtime=60 --time_based --group_reporting --output-format=normal,json --output=seq-read.json || echo "WARNING: Sequential read test timed out or failed"
+          # Clean up data files but keep JSON
+          rm -f seq-read.[0-9]*.* 2>/dev/null || true
+
+          # Test 2: Sequential Write
+          echo ""
+          echo "Test 2/6: Sequential Write (1MB blocks, 4 jobs)"
+          timeout 300 fio --name=seq-write --rw=write --bs=1M --size=500M --numjobs=4 \
+            --iodepth=16 --runtime=60 --time_based --group_reporting --sync=0 --fsync=0 \
+            --output-format=normal,json --output=seq-write.json || \
+            echo "WARNING: Sequential write test timed out or failed"
+          rm -f seq-write.[0-9]*.* 2>/dev/null || true
+
+          # Test 3: Random Read
+          echo ""
+          echo "Test 3/6: Random Read (4KB blocks, 8 jobs)"
+          timeout 300 fio --name=rand-read --rw=randread --bs=4k --size=500M --numjobs=8 --iodepth=32 --runtime=60 --time_based --group_reporting --output-format=normal,json --output=rand-read.json || echo "WARNING: Random read test timed out or failed"
+          rm -f rand-read.[0-9]*.* 2>/dev/null || true
+
+          # Test 4: Random Write (reduced iodepth to avoid cache saturation)
+          echo ""
+          echo "Test 4/6: Random Write (4KB blocks, 4 jobs, reduced iodepth)"
+          timeout 300 fio --name=rand-write --rw=randwrite --bs=4k --size=500M --numjobs=4 \
+            --iodepth=16 --runtime=60 --time_based --group_reporting --sync=0 --fsync=0 \
+            --output-format=normal,json --output=rand-write.json || \
+            echo "WARNING: Random write test timed out or failed"
+          rm -f rand-write.[0-9]*.* 2>/dev/null || true
+
+          # Test 5: Mixed Random Read/Write (70/30, reduced iodepth)
+          echo ""
+          echo "Test 5/6: Mixed Random Read/Write 70/30 (4KB blocks, 4 jobs, reduced iodepth)"
+          timeout 300 fio --name=mixed --rw=randrw --rwmixread=70 --bs=4k --size=500M --numjobs=4 \
+            --iodepth=16 --runtime=60 --time_based --group_reporting --sync=0 --fsync=0 \
+            --output-format=normal,json --output=mixed.json || \
+            echo "WARNING: Mixed test timed out or failed"
+          rm -f mixed.[0-9]*.* 2>/dev/null || true
+
+          # Test 6: Latency Test
+          echo ""
+          echo "Test 6/6: Latency Test (4KB blocks, 1 job, queue depth 1)"
+          timeout 300 fio --name=latency --rw=randwrite --bs=4k --size=200M --numjobs=1 \
+            --iodepth=1 --runtime=60 --time_based --group_reporting --sync=0 --fsync=0 \
+            --output-format=normal,json --output=latency.json || \
+            echo "WARNING: Latency test timed out or failed"
+          rm -f latency.[0-9]*.* 2>/dev/null || true
+
+          echo ""
+          echo "=== Benchmark Complete ==="
+          echo ""
+          echo "=== RESULTS SUMMARY ==="
+          echo ""
+
+          # Install jq for JSON parsing
+          apk add --no-cache jq >/dev/null 2>&1 || true
+
+          # Print human-readable summary for each test
+          for test in seq-read seq-write rand-read rand-write mixed latency; do
+            if [ -f "${test}.json" ]; then
+              echo "--- ${test} ---"
+              # Extract key metrics using jq
+              if command -v jq &> /dev/null; then
+                # Try to extract read metrics
+                READ_BW=$(jq -r '.jobs[0].read.bw // 0' "${test}.json" 2>/dev/null || echo "0")
+                READ_IOPS=$(jq -r '.jobs[0].read.iops // 0' "${test}.json" 2>/dev/null || echo "0")
+                READ_LAT_MEAN=$(jq -r '(.jobs[0].read.lat_ns.mean // 0) / 1000000' "${test}.json" 2>/dev/null || echo "0")
+                READ_LAT_P99=$(jq -r '(.jobs[0].read.lat_ns.percentile."99.000000" // 0) / 1000000' "${test}.json" 2>/dev/null || echo "0")
+
+                # Try to extract write metrics
+                WRITE_BW=$(jq -r '.jobs[0].write.bw // 0' "${test}.json" 2>/dev/null || echo "0")
+                WRITE_IOPS=$(jq -r '.jobs[0].write.iops // 0' "${test}.json" 2>/dev/null || echo "0")
+                WRITE_LAT_MEAN=$(jq -r '(.jobs[0].write.lat_ns.mean // 0) / 1000000' "${test}.json" 2>/dev/null || echo "0")
+                WRITE_LAT_P99=$(jq -r '(.jobs[0].write.lat_ns.percentile."99.000000" // 0) / 1000000' "${test}.json" 2>/dev/null || echo "0")
+
+                if [ "${READ_BW}" != "0" ] || [ "${READ_IOPS}" != "0" ]; then
+                  echo "  Read:  BW=${READ_BW}KB/s, IOPS=${READ_IOPS}, Lat(mean)=${READ_LAT_MEAN}ms, Lat(p99)=${READ_LAT_P99}ms"
+                fi
+                if [ "${WRITE_BW}" != "0" ] || [ "${WRITE_IOPS}" != "0" ]; then
+                  echo "  Write: BW=${WRITE_BW}KB/s, IOPS=${WRITE_IOPS}, Lat(mean)=${WRITE_LAT_MEAN}ms, Lat(p99)=${WRITE_LAT_P99}ms"
+                fi
+              else
+                # Fallback: extract basic info with grep
+                echo "  (jq not available, showing raw JSON below)"
+              fi
+              echo ""
+            else
+              echo "--- ${test} ---"
+              echo "  ERROR: JSON file not found"
+              echo ""
+            fi
+          done
+
+          echo "=== FULL JSON RESULTS ==="
+          echo ""
+
+          # Print full JSON results to stdout
+          for test in seq-read seq-write rand-read rand-write mixed latency; do
+            if [ -f "${test}.json" ]; then
+              echo "--- ${test}.json ---"
+              cat "${test}.json"
+              echo ""
+            fi
+          done
+
+          echo "=== END OF RESULTS ==="
+
+          # Keep pod running for a bit so logs can be collected
+          sleep 300
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      resources:
+        requests:
+          cpu: 1000m
+          memory: 2Gi
+        limits:
+          cpu: 4000m
+          memory: 4Gi
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: io-benchmark-pvc
+  restartPolicy: Never
