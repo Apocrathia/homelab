@@ -144,10 +144,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 1Gi
+          memory: 128Mi
         limits:
           cpu: 500m
-          memory: 4Gi
+          memory: 512Mi
       # Increase ingestion rate limits to handle high-volume metrics
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
@@ -156,11 +156,11 @@ spec:
     querier:
       resources:
         requests:
-          cpu: 200m
-          memory: 512Mi
+          cpu: 100m
+          memory: 128Mi
         limits:
-          cpu: 1000m
-          memory: 2Gi
+          cpu: 500m
+          memory: 512Mi
 
     store_gateway:
       replicas: 2
@@ -169,10 +169,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 128Mi
         limits:
           cpu: 500m
-          memory: 1Gi
+          memory: 512Mi
       persistentVolume:
         enabled: false
 
@@ -180,10 +180,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
+          memory: 128Mi
         limits:
           cpu: 500m
-          memory: 1Gi
+          memory: 512Mi
       persistentVolume:
         enabled: false
 
@@ -212,10 +212,10 @@ spec:
       replicas: 1
       resources:
         requests:
-          cpu: 50m
+          cpu: 100m
           memory: 128Mi
         limits:
-          cpu: 200m
+          cpu: 500m
           memory: 512Mi
 
     # Disable nginx since we're using the gateway
