@@ -149,3 +149,13 @@ mcp_servers:
     # Allow client to override with their own token
     extra_headers:
       - "Authorization"
+
+agent_list:
+  - agent_name: "homelab-agent"
+    litellm_params:
+      custom_llm_provider: "a2a_agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
+  - agent_name: "search-agent"
+    litellm_params:
+      custom_llm_provider: "a2a_agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent"

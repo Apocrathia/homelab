@@ -1,0 +1,34 @@
+---
+# RemoteMCPServer that references the MCPServer in mcp-searxng namespace
+# This works around kagent's lack of cross-namespace MCPServer support
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: searxng-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: searxng-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-searxng-mcp-proxy.mcp-searxng:8080/mcp"
+  description: "SearXNG web search - search the web and read URLs"
+---
+# RemoteMCPServer that references the MCPServer in mcp-gofetch namespace
+# This works around kagent's lack of cross-namespace MCPServer support
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: gofetch-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: gofetch-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"
+  description: "GoFetch - fetch and verify web content relevance"

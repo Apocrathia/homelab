@@ -1,0 +1,135 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: discord-bridge
+  namespace: kagent
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.41"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: discord-bridge
+      namespace: kagent
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.12-slim
+
+      command: ["python"]
+      args: ["/app/main.py"]
+
+      container:
+        name: bridge
+        env:
+          # Python configuration
+          - name: PYTHONPATH
+            value: "/app/deps:/app"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: HOME
+            value: "/data"
+
+          # Discord configuration
+          - name: DISCORD_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: homelab-agent-secrets
+                key: discord-token
+
+          # kagent A2A endpoint (trailing slash required)
+          - name: KAGENT_URL
+            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/"
+
+          # Bot configuration
+          - name: BOT_NAME
+            value: "Homelab Agent"
+          - name: HISTORY_LIMIT
+            value: "5"
+
+      initContainers:
+        - name: install
+          image: public.ecr.aws/docker/library/python:3.12-slim
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Installing Python dependencies..."
+
+              apt-get update && apt-get install -y --no-install-recommends \
+                build-essential \
+                && rm -rf /var/lib/apt/lists/*
+
+              pip install --no-cache-dir --target=/app/deps -r /src/requirements.txt
+
+              cp -rL /src/* /app/
+
+              mkdir -p /data
+
+              echo "Dependencies installed successfully"
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: data
+              mountPath: /data
+          volumes:
+            configMap:
+              - name: src
+                mountPath: /src
+                configMapName: discord-bridge-src
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      # No service needed - bot is outbound only
+      service:
+        enabled: false
+
+      volumes:
+        emptyDir:
+          - name: app
+            mountPath: /app
+          - name: data
+            mountPath: /data
+
+    # No persistent storage needed
+    storage:
+      longhorn:
+        enabled: false
+
+    # No secrets via chart
+    secrets:
+      enabled: false
+
+    # No web interface
+    authentik:
+      enabled: false
+
+    # No HTTP route
+    httproute:
+      enabled: false

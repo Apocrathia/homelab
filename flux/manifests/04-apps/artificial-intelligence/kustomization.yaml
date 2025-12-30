@@ -6,6 +6,8 @@ metadata:
   name: artificial-intelligence
 
 resources:
+  - kagent
+  - agents
   - flowise
   # - guardrails-ai
   - jupyterhub
