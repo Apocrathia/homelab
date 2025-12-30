@@ -22,13 +22,14 @@ spec:
   upgrade:
     remediation:
       retries: 3
+    timeout: 15m
   # Add memory limits to outposts to prevent OOM kills
   postRenderers:
     - kustomize:
         patches:
           - target:
               kind: Deployment
-              labelSelector: app.kubernetes.io/name=authentik-outpost-proxy
+              labelSelector: app.kubernetes.io/name=authentik-proxy
             patch: |
               - op: add
                 path: /spec/template/spec/containers/0/resources
