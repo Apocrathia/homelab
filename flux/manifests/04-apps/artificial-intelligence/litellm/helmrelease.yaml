@@ -95,7 +95,7 @@ spec:
         memory: 512Mi
       limits:
         cpu: 1000m
-        memory: 2Gi
+        memory: 1Gi
 
     # Environment secrets
     environmentSecrets:
