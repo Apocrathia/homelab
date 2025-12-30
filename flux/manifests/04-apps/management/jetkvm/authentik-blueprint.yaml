@@ -20,6 +20,6 @@ entries:
       # No provider - this is just a dashboard link
       meta_launch_url: "https://jetkvm.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/jetkvm.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/jetkvm/icon.png"
       meta_description: "JetKVM Cloud Dashboard - KVM-over-IP management"
       meta_publisher: "JetKVM"

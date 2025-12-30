@@ -73,7 +73,7 @@ spec:
       category: "Media"
       displayName: "Tautulli"
       externalHost: "https://tautulli.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/tautulli.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/tautulli/icon.svg"
 
     httproute:
       enabled: false

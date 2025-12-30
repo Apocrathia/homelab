@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "n8n-proxy-provider"]]
       launch_url: "https://n8n.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://i.imgur.com/DWaDo7Q.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/n8n/icon.png"
       meta_description: "n8n workflow automation platform"
       meta_publisher: "n8n"
 

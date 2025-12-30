@@ -190,7 +190,7 @@ spec:
       category: "AI & Automation"
       displayName: "Flowise"
       externalHost: "https://flowise.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/flowise.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/flowise/icon.svg"
 
     # No HTTPRoute - Authentik proxy handles routing
     httproute:

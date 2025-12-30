@@ -101,4 +101,4 @@ spec:
       category: "Media"
       displayName: "Prowlarr"
       externalHost: "https://prowlarr.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/prowlarr/icon.svg"

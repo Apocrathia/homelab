@@ -83,7 +83,7 @@ spec:
       category: "Productivity"
       displayName: "Logseq"
       externalHost: "https://notes.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/logseq.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/logseq/icon.svg"
       interceptHeaderAuth: false
 
     httproute:

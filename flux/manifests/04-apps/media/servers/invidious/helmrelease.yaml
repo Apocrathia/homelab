@@ -216,7 +216,7 @@ spec:
       category: "Media"
       displayName: "Invidious"
       externalHost: "https://invidious.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/invidious.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/invidious/icon.svg"
 
     httproute:
       enabled: false

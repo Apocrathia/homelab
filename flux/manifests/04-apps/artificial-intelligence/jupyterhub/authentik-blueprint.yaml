@@ -45,6 +45,6 @@ entries:
       launch_url: "https://jupyter.gateway.services.apocrathia.com"
       group: "AI & Automation"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jupyter.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/jupyterhub/icon.svg"
       meta_description: "Multi-user Jupyter notebook server for interactive computing"
       meta_publisher: "Project Jupyter"

@@ -203,4 +203,4 @@ spec:
       category: "Media"
       displayName: "qBittorrent"
       externalHost: "https://qbittorrent.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/qbittorrent/icon.svg"

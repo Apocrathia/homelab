@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "longhorn-proxy-provider"]]
       launch_url: "https://longhorn.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/longhorn.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/02-infrastructure/longhorn/icon.svg"
       meta_description: "Distributed block storage system for Kubernetes"
       meta_publisher: "Rancher Labs"
 

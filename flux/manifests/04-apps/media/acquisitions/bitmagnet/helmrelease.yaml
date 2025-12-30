@@ -151,4 +151,4 @@ spec:
       category: "Media"
       displayName: "BitMagnet"
       externalHost: "https://bitmagnet.gateway.services.apocrathia.com"
-      icon: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/bitmagnet.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/bitmagnet/icon.svg"
