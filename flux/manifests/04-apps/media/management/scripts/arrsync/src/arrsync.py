@@ -240,15 +240,18 @@ class ArrClient(ABC):
         2. For each item, refreshes metadata and rescans files
         3. For each item, renames files to match current naming scheme
 
-        The operation fails fast - if any item fails to refresh or rename,
-        the entire sync stops and returns False. This ensures we don't partially
-        sync a large library and makes errors immediately visible.
+        The operation continues on failure - if any item fails to refresh or rename,
+        the failure is logged and processing continues with the next item. This ensures
+        the entire library is processed even when individual items have issues (e.g.,
+        database/filesystem mismatches in Lidarr).
 
         Returns:
             True if all items synced successfully, False if any item failed
         """
         items = self.list_items()
         logger.info(f"[{self.config.name}] Found {len(items)} items to process")
+
+        failed_items: list[str] = []
 
         for item in items:
             item_id = item["id"]
@@ -258,14 +261,22 @@ class ArrClient(ABC):
             # Refresh first to ensure metadata is up-to-date
             if not self.refresh_item(item_id):
                 logger.error(f"[{self.config.name}] Failed to refresh: {item_name}")
-                return False
+                failed_items.append(f"{item_name} (refresh)")
+                continue
 
             # Then rename to reflect current state
             if not self.rename_item(item_id):
                 logger.error(f"[{self.config.name}] Failed to rename: {item_name}")
-                return False
+                failed_items.append(f"{item_name} (rename)")
+                continue
 
-        logger.info(f"[{self.config.name}] Successfully processed {len(items)} items")
+        success_count = len(items) - len(failed_items)
+        logger.info(f"[{self.config.name}] Processed {success_count}/{len(items)} items successfully")
+
+        if failed_items:
+            logger.warning(f"[{self.config.name}] Failed items: {', '.join(failed_items)}")
+            return False
+
         return True
 
     @abstractmethod
