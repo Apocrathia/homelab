@@ -136,12 +136,10 @@ talosctl gen config \
   -o rendered/ \
   --force
 
-# Update the talosconfig to point to the VIP
+# Configure talosconfig to connect directly to nodes (not VIP) for apply-config operations
 export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint kubernetes.apocrathia.com
+talosctl config endpoint 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
-cp rendered/talosconfig ~/.talos/config
-export TALOSCONFIG="~/.talos/config"
 
 # Apply new configurations to all nodes
 for i in {1..4}; do
@@ -174,6 +172,16 @@ for i in {1..4}; do
   # Wait a bit between reboots to allow cluster stabilization
   sleep 30
 done
+
+# Switch back to the VIP endpoint
+export TALOSCONFIG="rendered/talosconfig"
+talosctl config endpoint kubernetes.apocrathia.com
+talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
+cp rendered/talosconfig ~/.talos/config
+export TALOSCONFIG="~/.talos/config"
+
+# Verify the nodes are ready
+kubectl get nodes
 ```
 
 ## Upgrading Talos Linux
