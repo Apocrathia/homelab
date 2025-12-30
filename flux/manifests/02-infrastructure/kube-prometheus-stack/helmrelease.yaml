@@ -233,11 +233,11 @@ spec:
         retentionSize: 90GB
         resources:
           requests:
-            cpu: 500m
-            memory: 4Gi
+            cpu: 512m
+            memory: 256Mi
           limits:
             cpu: 2000m
-            memory: 16Gi
+            memory: 8Gi
         storageSpec:
           volumeClaimTemplate:
             metadata:
