@@ -38,3 +38,4 @@ resources:
   - kong.yaml
   - litellm.yaml
   - llm-d-modelservice.yaml
+  - windmill.yaml
