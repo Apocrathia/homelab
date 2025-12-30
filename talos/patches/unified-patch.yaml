@@ -103,6 +103,8 @@ cluster:
   proxy:
     disabled: true
   # etcd tuning
+  # Increased timeouts to handle storage latency (e.g., ZFS-backed VMs with txg sync delays)
+  # These settings make etcd more tolerant of brief I/O latency spikes
   etcd:
     extraArgs:
       # Auto-compaction
@@ -111,6 +113,13 @@ cluster:
       # Optimize backend quotas and request sizes
       quota-backend-bytes: "4294967296" # 4GB (conservative)
       max-request-bytes: "16777216" # 16MB for large CRD schemas
+      # Timeout settings to reduce timeout errors under load and storage latency
+      # Increase heartbeat interval to reduce coordination overhead
+      heartbeat-interval: "250" # 250ms (default 100ms) - more stable under load
+      # Increase election timeout to prevent premature leader elections during I/O latency spikes
+      election-timeout: "5000" # 5000ms (default 1000ms) - 20x heartbeat-interval for stability
+      # Enable initial election tick advance for faster startup
+      initial-election-tick-advance: "true"
       # Metrics
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
