@@ -8,3 +8,15 @@ resources:
   # LeaderWorkerSet controller and CRDs
   # renovate: datasource=github-releases depName=kubernetes-sigs/lws
   - https://github.com/kubernetes-sigs/lws/releases/download/v0.6.3/manifests.yaml
+
+patches:
+  # Add memory limits to LWS controller to prevent OOM kills
+  - target:
+      kind: Deployment
+      name: lws-controller-manager
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources/limits
+        value:
+          cpu: 2000m
+          memory: 2Gi

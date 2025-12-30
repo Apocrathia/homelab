@@ -114,7 +114,29 @@ spec:
         dataVolumeParameters:
           emptyDir: {}
 
-    # Resources for Loki components
+    # Read component configuration
+    read:
+      replicas: 2
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    # Backend component configuration
+    backend:
+      replicas: 2
+      resources:
+        limits:
+          cpu: 500m
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    # Resources for Loki components (fallback for components not explicitly configured)
     resources:
       limits:
         cpu: 1000m
