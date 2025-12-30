@@ -285,3 +285,18 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Keep documentation concise (50-150 lines target)
 - Reference adjacent manifests for complete configuration details
 - **Remove documentation** about configuration methods that aren't actually used by the application
+
+## Icons
+
+- **Store icons with deployment files**: Icons should be stored alongside deployment manifests, not referenced from external CDNs
+- **Icon location**: Store icon as `icon.svg` or `icon.png` in the deployment directory (same directory as `helmrelease.yaml`)
+- **Icon references**: Use GitLab raw URLs for all icon references:
+  - Pattern: `https://gitlab.com/Apocrathia/homelab/-/raw/main/{path-to-icon-file}`
+  - Example: `https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/companion/icon.png`
+- **Downloading icons**:
+  - Download icons from dashboard-icons CDN or other sources when creating new deployments
+  - Use `curl` or `wget` to download icons to the deployment directory
+  - For dashboard-icons CDN: `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/{svg|png}/{service-name}.{ext}`
+  - Preserve original file format (SVG preferred, PNG when SVG unavailable)
+- **Icon naming**: Use `icon.svg` or `icon.png` for deployment icons
+- **Generic-app chart**: When `authentik.enabled: true`, set `authentik.icon` to the GitLab raw URL for the icon file
