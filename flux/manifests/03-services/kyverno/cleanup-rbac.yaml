@@ -10,7 +10,8 @@ rules:
     resources: ["replicasets"]
     verbs: ["get", "list", "watch", "delete"]
   - apiGroups: [""]
-    resources: ["pods", "persistentvolumeclaims"]
+    resources:
+      ["pods", "persistentvolumeclaims", "events", "configmaps", "secrets"]
     verbs: ["get", "list", "watch", "delete"]
   - apiGroups: ["batch"]
     resources: ["jobs"]

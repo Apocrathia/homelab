@@ -1,0 +1,35 @@
+---
+apiVersion: kyverno.io/v2
+kind: ClusterCleanupPolicy
+metadata:
+  name: cleanup-old-events
+  annotations:
+    policies.kyverno.io/title: Cleanup Old Events
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Event
+    kyverno.io/kyverno-version: 1.11.1
+    policies.kyverno.io/minversion: 1.9.0
+    kyverno.io/kubernetes-version: "1.27"
+    policies.kyverno.io/description: >-
+      Cleans up Events older than 48 hours to prevent etcd bloat when API server
+      event TTL is not properly enforced. Events older than 48 hours are typically
+      no longer useful for debugging or monitoring purposes.
+spec:
+  match:
+    any:
+      - resources:
+          kinds:
+            - Event
+  exclude:
+    any:
+      - resources:
+          namespaces:
+            - kube-system
+            - kyverno
+  conditions:
+    all:
+      - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
+        operator: GreaterThan
+        value: "48h0m0s"
+  schedule: "0 * * * *"
