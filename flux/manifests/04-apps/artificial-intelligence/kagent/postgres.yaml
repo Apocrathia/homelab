@@ -1,0 +1,43 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: kagent-postgres
+  namespace: kagent
+spec:
+  # PostgreSQL version
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+
+  # Single instance for homelab
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "128MB"
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "32MB"
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: kagent
+      owner: kagent
+      secret:
+        name: kagent-secrets

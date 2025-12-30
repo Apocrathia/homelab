@@ -1,8 +1,70 @@
 # Artificial Intelligence Applications
 
-This directory contains AI and machine learning applications for the homelab infrastructure.
+This directory contains AI and ML applications for the homelab.
 
 > **Navigation**: [← Back to Apps README](../README.md)
+
+# Architecture
+
+## Data Flow Patterns
+
+All AI services are exposed through a central AI proxy service with TLS termination and path-based routing.
+
+External clients interact with the AI proxy service through the Gateway API. The AI proxy service then routes the request to the appropriate LLM provider, Agent, or Tool service. While we're using LiteLLM as our AI proxy, I want to keep this architecture flexible enough to support other AI proxy services in the future. Kong is another viable option, but lacks the discovery endpoints that LiteLLM provides and are better suited for this environment.
+
+Direct communication between agents and tools is not favored, but has valid use-cases. There may be instances where the data flowing between them is sensitive. While everything within the boundary is of the cluster is trusted, it's still possible for data to leak if not properly secured. This is why all egress traffic from these tools and agents are proxied through the AI proxy before egress.
+
+### High-Level Architecture
+
+```mermaid
+flowchart TB
+    subgraph Clients["Clients"]
+        direction LR
+        IDE["IDE / Editor"]
+        WebUI["Web Interface"]
+        Agent["AI Agent"]
+    end
+
+    subgraph AIServices["AI Services"]
+        direction LR
+        Proxy["AI Proxy"]
+        Guard["Guardrails"]
+        Backends["LLM<br/>Providers"]
+    end
+
+    subgraph AgentServices["Agent Services"]
+        direction LR
+        Agent1["Agent A"]
+        Agent2["Agent B"]
+    end
+
+    subgraph ToolsServices["Tools Services"]
+        direction LR
+        Tool1["Tool A"]
+        Tool2["Tool B"]
+    end
+
+    IDE <--> Proxy
+    WebUI <--> Proxy
+    Agent <--> Proxy
+
+    Proxy <--> Guard
+    Proxy <--> Backends
+
+    Proxy <--> AgentServices & ToolsServices
+
+    Agent1 <--> Agent2
+    Agent2 <--> Tool2
+```
+
+## Design Principles
+
+- **Unified Entry Point**: Single gateway handles all external traffic
+- **Path-Based Routing**: Services distinguished by URL path prefix
+- **TLS Termination**: Gateway handles encryption, internal traffic can be plaintext
+- **Namespace Isolation**: Each service runs in its own namespace
+- **Protocol Compatibility**: LLM proxy exposes OpenAI-compatible API
+- **Composable Validation**: Optional guardrails integrate transparently
 
 ## Applications
 
@@ -34,6 +96,10 @@ API server providing guardrails validation for LLM outputs using community valid
 
 Model Context Protocol servers providing specialized functionality for AI client integration.
 
+### [CrewAI Agent](./crewai-agent/README.md)
+
+Discord chatbot powered by CrewAI with web search capabilities and a colorful personality.
+
 ## Overview
 
 Artificial intelligence applications provide tools for:
@@ -43,6 +109,7 @@ Artificial intelligence applications provide tools for:
 - **LLM Validation**: Guardrails for output validation and safety checks
 - **ML Lifecycle Management**: Experiment tracking, model registry, and deployment
 - **MCP Integration**: Specialized servers for AI client functionality
+- **Autonomous Agents**: kagent-powered agents for various tasks
 - **Vulnerability Scanning**: Security analysis through OSV database integration
 - **Web Content Processing**: URL content retrieval and processing
 - **Kubernetes Management**: Direct cluster access for AI-assisted operations

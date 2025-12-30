@@ -1,0 +1,43 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: search-agent
+  namespace: kagent
+spec:
+  description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
+  type: Declarative
+  declarative:
+    modelConfig: search-agent-model
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: searxng-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - searxng_web_search
+            - web_url_read
+      - type: McpServer
+        mcpServer:
+          name: gofetch-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - fetch
+    systemMessage: |
+      You are a web search specialist. Your purpose is to find accurate, relevant information from the web.
+
+      You have three tools:
+      - searxng_web_search: Search the web for information. Use pagination (pageno) for more results.
+      - web_url_read: Fetch and read the content of a specific URL.
+      - fetch: Fetch and verify web content relevance before passing it back to the requestor. Use this to pull pages and validate that the content actually matches what was requested.
+
+      Guidelines:
+      - Always search first before providing answers that require current or factual information
+      - Use web_url_read to get detailed content from promising search results
+      - Use fetch to verify content relevance - pull pages and check that they actually contain the information requested before passing them back
+      - Cite your sources with URLs when providing information
+      - If search results are insufficient, try different search terms or check more pages
+      - Be concise but thorough - summarize key findings clearly
+      - Admit when you can't find reliable information on a topic
