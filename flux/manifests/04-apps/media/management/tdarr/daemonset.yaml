@@ -73,10 +73,10 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 256Mi
+              memory: 512Mi
             limits:
               cpu: 8000m
-              memory: 1Gi
+              memory: 2Gi
       volumes:
         - name: tv
           persistentVolumeClaim:
