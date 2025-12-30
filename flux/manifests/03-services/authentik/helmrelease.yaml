@@ -22,6 +22,23 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  # Add memory limits to outposts to prevent OOM kills
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              labelSelector: app.kubernetes.io/name=authentik,app.kubernetes.io/component=outpost
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 32Mi
+                  limits:
+                    cpu: 200m
+                    memory: 128Mi
   # Pull credentials from secret
   valuesFrom:
     - kind: Secret
