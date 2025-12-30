@@ -61,6 +61,9 @@ Kyverno provides automated resource cleanup policies for cluster maintenance:
 - **cleanup-completed-jobs**: Removes completed jobs older than 24 hours
 - **cleanup-failed-jobs**: Removes failed jobs older than 7 days
 - **cleanup-released-pvcs**: Removes PVCs in Released status
+- **cleanup-old-events**: Removes Events older than 48 hours (backup when API server event TTL not enforced)
+- **cleanup-orphaned-configmaps**: Removes ConfigMaps without owner references older than 30 days
+- **cleanup-orphaned-secrets**: Removes Secrets without owner references older than 30 days
 
 ### Benefits of Policy-Based Cleanup
 
@@ -72,7 +75,7 @@ Kyverno provides automated resource cleanup policies for cluster maintenance:
 
 ### Configuration
 
-All cleanup policies run hourly (`0 * * * *`) and exclude system namespaces (kube-system, kyverno).
+Most cleanup policies run hourly (`0 * * * *`). Orphaned ConfigMaps and Secrets cleanup policies run daily at 2 AM (`0 2 * * *`) to reduce overhead on high-frequency operations. All policies exclude system namespaces (kube-system, kyverno).
 
 ## Related Policies
 
