@@ -1,0 +1,107 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: security-alerts
+  namespace: prometheus-system
+spec:
+  title: Security Alerts
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: latest-image-tags
+  namespace: prometheus-system
+spec:
+  name: Latest Image Tags
+  folderRef: security-alerts
+  interval: 1h
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: latest-image-tags-alert
+      title: New Containers Using 'latest' Image Tags
+      condition: C
+      for: 0s
+      execErrState: Alerting
+      noDataState: NoData
+      data:
+        - refId: A
+          queryType: prometheus
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            expr: |
+              group by (pod, namespace, image) (
+                kube_pod_container_info{image=~".*:latest$"}
+                unless on(pod, namespace, container, image)
+                kube_pod_container_info{image=~".*:latest$"} offset 2h
+              )
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          queryType: reduce
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            reducer: count
+            expression: A
+            refId: B
+        - refId: C
+          queryType: threshold
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            type: gt
+            expression: B
+            refId: C
+            conditions:
+              - type: gt
+                value: 0
+      annotations:
+        summary: "Found {{ $values.B }} new container(s) using 'latest' image tags"
+        description: |
+          The following NEW containers are using 'latest' image tags:
+          {{ range $values.A }}
+          - Pod: {{ .pod }}, Namespace: {{ .namespace }}, Image: {{ .image }}
+          {{ end }}
+      labels:
+        severity: warning
+        team: platform
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: latest-image-tags-policy
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  route:
+    receiver: discord
+    group_by:
+      - alertname
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 0s
+    matchers:
+      - name: alertname
+        isRegex: true
+        value: latest-image-tags-alert
