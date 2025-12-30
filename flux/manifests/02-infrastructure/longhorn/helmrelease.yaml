@@ -17,8 +17,7 @@ spec:
         name: longhorn
         namespace: flux-system
   maxHistory: 2
-  # Add resource requests to longhorn-manager to get Burstable QoS
-  # This prevents OOM killer from targeting it first during memory pressure
+  # Add resource requests/limits to longhorn components to prevent OOM kills
   postRenderers:
     - kustomize:
         patches:
@@ -35,6 +34,84 @@ spec:
                   limits:
                     cpu: 1000m
                     memory: 2Gi
+          - target:
+              kind: Deployment
+              name: longhorn-ui
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 128Mi
+                  limits:
+                    cpu: 200m
+                    memory: 512Mi
+          - target:
+              kind: Deployment
+              labelSelector: app=longhorn-csi-attacher
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 64Mi
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+          - target:
+              kind: Deployment
+              labelSelector: app=longhorn-csi-provisioner
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 64Mi
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+          - target:
+              kind: Deployment
+              labelSelector: app=longhorn-csi-resizer
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 64Mi
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+          - target:
+              kind: Deployment
+              labelSelector: app=longhorn-csi-snapshotter
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 50m
+                    memory: 64Mi
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+          - target:
+              kind: DaemonSet
+              labelSelector: app=longhorn-engine-image
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/resources
+                value:
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+                  limits:
+                    cpu: 500m
+                    memory: 512Mi
   install:
     crds: Create
     remediation:
@@ -79,7 +156,7 @@ spec:
       staleReplicaTimeout: 300 # 5 minutes
       failedBackupTTL: "1440" # 24 hours
       backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
-      backupConcurrentLimit: "5" # Increased to match recurring job concurrency (75 volumes need higher throughput)
+      backupConcurrentLimit: "10" # Increased to match recurring job concurrency (75 volumes need higher throughput)
 
       # Storage settings
       storageOverProvisioningPercentage: "150"
