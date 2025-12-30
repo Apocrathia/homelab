@@ -17,7 +17,8 @@ spec:
         name: longhorn
         namespace: flux-system
   maxHistory: 2
-  # Add resource requests/limits to longhorn components to prevent OOM kills
+  # Add resource requests to longhorn-manager with Guaranteed QoS (requests = limits)
+  # Guaranteed QoS protects from Talos OOM controller kills
   postRenderers:
     - kustomize:
         patches:
@@ -29,89 +30,11 @@ spec:
                 path: /spec/template/spec/containers/0/resources
                 value:
                   requests:
-                    cpu: 100m
-                    memory: 256Mi
+                    cpu: 1000m
+                    memory: 2Gi
                   limits:
                     cpu: 1000m
                     memory: 2Gi
-          - target:
-              kind: Deployment
-              name: longhorn-ui
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 50m
-                    memory: 128Mi
-                  limits:
-                    cpu: 200m
-                    memory: 512Mi
-          - target:
-              kind: Deployment
-              labelSelector: app=longhorn-csi-attacher
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 50m
-                    memory: 64Mi
-                  limits:
-                    cpu: 200m
-                    memory: 256Mi
-          - target:
-              kind: Deployment
-              labelSelector: app=longhorn-csi-provisioner
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 50m
-                    memory: 64Mi
-                  limits:
-                    cpu: 200m
-                    memory: 256Mi
-          - target:
-              kind: Deployment
-              labelSelector: app=longhorn-csi-resizer
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 50m
-                    memory: 64Mi
-                  limits:
-                    cpu: 200m
-                    memory: 256Mi
-          - target:
-              kind: Deployment
-              labelSelector: app=longhorn-csi-snapshotter
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 50m
-                    memory: 64Mi
-                  limits:
-                    cpu: 200m
-                    memory: 256Mi
-          - target:
-              kind: DaemonSet
-              labelSelector: app=longhorn-engine-image
-            patch: |
-              - op: add
-                path: /spec/template/spec/containers/0/resources
-                value:
-                  requests:
-                    cpu: 100m
-                    memory: 128Mi
-                  limits:
-                    cpu: 500m
-                    memory: 512Mi
   install:
     crds: Create
     remediation:
