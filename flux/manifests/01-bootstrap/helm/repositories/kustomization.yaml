@@ -33,6 +33,7 @@ resources:
   - tuppr.yaml
   - external-secrets.yaml
   - flyte.yaml
+  - immich.yaml
   - jupyterhub.yaml
   - kagent.yaml
   - kong.yaml
