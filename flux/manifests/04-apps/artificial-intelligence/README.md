@@ -96,9 +96,25 @@ API server providing guardrails validation for LLM outputs using community valid
 
 Model Context Protocol servers providing specialized functionality for AI client integration.
 
-### [CrewAI Agent](./crewai-agent/README.md)
+### [kagent](./kagent/README.md)
 
-Discord chatbot powered by CrewAI with web search capabilities and a colorful personality.
+AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
+
+### [Agents](./agents/README.md)
+
+Declarative AI agents orchestrated by kagent, including custom and system agents.
+
+### [JupyterHub](./jupyterhub/README.md)
+
+Multi-user Jupyter notebook server for interactive computing with Authentik OIDC authentication and shared SMB storage.
+
+### [CrewAI Demo](./crewai/demo/)
+
+Discord chatbot demo powered by CrewAI framework with web search and A2A protocol support.
+
+### [BeeAI Demo](./beeai/demo/)
+
+Discord chatbot demo powered by BeeAI framework with A2A protocol support.
 
 ## Overview
 
