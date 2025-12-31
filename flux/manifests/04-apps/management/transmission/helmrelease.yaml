@@ -29,6 +29,9 @@ spec:
             value: "America/Denver"
           - name: UMASK_SET
             value: "022"
+      args:
+        - "--allowed"
+        - "*.*.*.*"
 
       replicas: 1
       podAntiAffinity:
