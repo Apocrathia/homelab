@@ -23,6 +23,8 @@ spec:
     remediation:
       retries: 3
     timeout: 15m
+    # Remove for upgrade to 2025.12.0
+    disableWait: true
   # Add memory limits to outposts to prevent OOM kills
   postRenderers:
     - kustomize:
