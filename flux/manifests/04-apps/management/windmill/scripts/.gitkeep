@@ -1,0 +1,9 @@
+# Windmill workflow scripts
+# This directory is for storing Windmill scripts, flows, and resources
+# that can be synced to Windmill via git sync or wmill CLI
+#
+# Suggested structure:
+#   scripts/     - Python, TypeScript, Bash scripts
+#   f/           - Flow definitions (YAML)
+#   resources/   - Resource configurations
+#   schedules/   - Schedule definitions

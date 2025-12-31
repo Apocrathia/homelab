@@ -1,0 +1,129 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: windmill
+  namespace: windmill
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: windmill
+      # renovate: datasource=helm registryUrl=https://windmill-labs.github.io/windmill-helm-charts depName=windmill
+      version: "4.0.14"
+      sourceRef:
+        kind: HelmRepository
+        name: windmill
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  valuesFrom:
+    - kind: Secret
+      name: windmill-secrets
+      valuesKey: database-url
+      targetPath: windmill.databaseUrl
+  values:
+    # Disable bundled PostgreSQL - using external CNPG
+    postgresql:
+      enabled: false
+
+    # Disable bundled MinIO
+    minio:
+      enabled: false
+
+    windmill:
+      # App configuration
+      baseDomain: windmill.gateway.services.apocrathia.com
+      baseProtocol: https
+
+      # Replica counts - start small
+      appReplicas: 1
+      lspReplicas: 1
+      multiplayerReplicas: 0
+
+      # Resource defaults
+      rustLog: info
+      imagePullPolicy: IfNotPresent
+
+      # Worker groups - minimal for homelab
+      workerGroups:
+        - name: "default"
+          controller: "Deployment"
+          replicas: 1
+          terminationGracePeriodSeconds: 300
+          privileged: true
+          podSecurityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: "2Gi"
+          mode: "worker"
+
+        - name: "native"
+          controller: "Deployment"
+          replicas: 1
+          privileged: false
+          podSecurityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: "1Gi"
+          extraEnv:
+            - name: "NUM_WORKERS"
+              value: "4"
+            - name: "SLEEP_QUEUE"
+              value: "200"
+          mode: "worker"
+
+      # App server configuration
+      app:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: "1Gi"
+
+      # LSP configuration
+      lsp:
+        enabled: false
+        # renovate: datasource=docker depName=ghcr.io/windmill-labs/windmill-lsp
+        tag: "1.589.3"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: "512Mi"
+
+      # Multiplayer - EE only, disabled
+      multiplayer:
+        enabled: false
+
+      # Indexer - EE only, disabled
+      indexer:
+        enabled: false
+
+    # Disable chart ingress - using Gateway API
+    ingress:
+      enabled: false
+
+    # Enterprise features disabled
+    enterprise:
+      enabled: false
+
+    # Hub disabled
+    hub:
+      enabled: false

@@ -1,0 +1,36 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: windmill-postgres
+  namespace: windmill
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  instances: 1
+  storage:
+    size: 20Gi
+    storageClass: longhorn
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  bootstrap:
+    initdb:
+      database: windmill
+      owner: windmill
+      secret:
+        name: windmill-secrets
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+      effective_cache_size: "512MB"
+      maintenance_work_mem: "64MB"
+      track_io_timing: "on"
+      track_functions: "all"
