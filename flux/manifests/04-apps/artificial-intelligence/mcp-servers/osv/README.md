@@ -15,7 +15,7 @@ This deployment includes:
 
 - OSV MCP server for vulnerability database queries
 - ToolHive proxy for secure communication
-- Gateway API exposure at `https://mcp.gateway.services.apocrathia.com/osv`
+- Internal access only via LiteLLM proxy
 - Network permission profile for database access
 
 ## Configuration
@@ -31,49 +31,9 @@ This deployment includes:
 - **Permission Profile**: Network access for database queries
 - **Authentication**: Currently open for ease of use
 
-## MCP Client Configuration
+## Access
 
-### Cursor IDE
-
-Add the following configuration to your Cursor MCP settings:
-
-```json
-{
-  "mcpServers": {
-    "osv-vulnerability-scanner": {
-      "url": "https://mcp.gateway.services.apocrathia.com/osv"
-    }
-  }
-}
-```
-
-### Other MCP Clients
-
-For other MCP-compatible clients, use this server configuration:
-
-- **Server URL**: `https://mcp.gateway.services.apocrathia.com/osv`
-- **Transport**: HTTP POST with JSON-RPC
-- **Authentication**: None (currently open)
-
-### Testing the Connection
-
-You can test the MCP server connection:
-
-```bash
-# Initialize MCP connection (recommended test)
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}' \
-  https://mcp.gateway.services.apocrathia.com/osv
-
-# Should return server info and capabilities
-
-# List available tools
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  https://mcp.gateway.services.apocrathia.com/osv
-```
+This server is accessible only through the LiteLLM proxy. See the [main README](../README.md) for details.
 
 ### Available MCP Tools
 

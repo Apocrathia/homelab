@@ -5,3 +5,4 @@ metadata:
   name: mcp-osv
   labels:
     name: mcp-osv
+    mcp-server: "true"

@@ -5,9 +5,19 @@ metadata:
   name: mcp-servers
 
 resources:
+  - network-policy.yaml
   - osv/
   - gofetch/
   - mkp/
   - grafana/
   - searxng/
   - flux/
+  - openzim/
+  - unifi/
+  - gitlab/
+  - servarr/
+  - plex/
+  - truenas/
+  - proxmox/
+  - firecrawl/
+  - a2a/

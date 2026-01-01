@@ -1,0 +1,92 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: proxmox-mcp-plus
+  namespace: mcp-proxmox
+  labels:
+    app.kubernetes.io/name: proxmox-mcp-plus
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Proxmox MCP Plus server for Proxmox virtualization management"
+spec:
+  # Use Python base image (not slim) which includes git for git-based installs
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.12
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              export HOME=/tmp &&
+              pip install --quiet git+https://github.com/RekklesNA/ProxmoxMCP-Plus.git &&
+              export PATH="$HOME/.local/bin:$PATH" &&
+              cat > /tmp/config.json << EOF
+              {
+                "proxmox": {
+                  "host": "$PROXMOX_HOST",
+                  "port": ${PROXMOX_PORT:-8006},
+                  "verify_ssl": ${PROXMOX_VERIFY_SSL:-false}
+                },
+                "auth": {
+                  "user": "$PROXMOX_USER",
+                  "token_name": "$PROXMOX_TOKEN_NAME",
+                  "token_value": "$PROXMOX_TOKEN_VALUE"
+                },
+                "logging": {
+                  "level": "INFO"
+                }
+              }
+              EOF
+              export PROXMOX_MCP_CONFIG=/tmp/config.json &&
+              exec python -m proxmox_mcp.server
+          env:
+            - name: HOME
+              value: "/tmp"
+            - name: PROXMOX_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-mcp-secrets
+                  key: proxmox-host
+            - name: PROXMOX_USER
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-mcp-secrets
+                  key: proxmox-user
+            - name: PROXMOX_TOKEN_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-mcp-secrets
+                  key: proxmox-token-name
+            - name: PROXMOX_TOKEN_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-mcp-secrets
+                  key: proxmox-token-value
+            - name: PROXMOX_PORT
+              value: "8006"
+            - name: PROXMOX_VERIFY_SSL
+              value: "false"

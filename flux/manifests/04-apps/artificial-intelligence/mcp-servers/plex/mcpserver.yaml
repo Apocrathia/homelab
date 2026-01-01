@@ -1,0 +1,68 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: plex-mcp-server
+  namespace: mcp-plex
+  labels:
+    app.kubernetes.io/name: plex-mcp-server
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Plex MCP server for Plex Media Server integration"
+spec:
+  # Use Python base image (not slim) which includes git for git-based installs
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.12
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              export HOME=/tmp &&
+              cd /tmp &&
+              git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git &&
+              cd plex-mcp-server &&
+              pip install --quiet -r requirements.txt aiohttp &&
+              exec python plex_mcp_server.py --transport stdio
+          env:
+            - name: HOME
+              value: "/tmp"
+            - name: PLEX_URL
+              valueFrom:
+                secretKeyRef:
+                  name: plex-mcp-secrets
+                  key: plex-url
+            - name: PLEX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: plex-mcp-secrets
+                  key: plex-token
+            - name: PLEX_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: plex-mcp-secrets
+                  key: plex-username
+                  optional: true

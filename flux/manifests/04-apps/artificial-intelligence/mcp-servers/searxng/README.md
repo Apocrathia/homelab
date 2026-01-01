@@ -16,7 +16,7 @@ This deployment includes:
 
 - SearXNG MCP server for web search queries
 - ToolHive proxy for secure communication
-- Gateway API exposure at `https://mcp.gateway.services.apocrathia.com/searxng`
+- Internal access only via LiteLLM proxy
 - Connection to internal SearXNG instance
 
 ## Configuration
@@ -42,42 +42,9 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 - **Permission Profile**: Network access for search queries
 - **Authentication**: None required
 
-## MCP Client Configuration
+## Access
 
-### Via LiteLLM Gateway
-
-The server is accessible through the LiteLLM MCP gateway:
-
-```json
-{
-  "mcpServers": {
-    "litellm": {
-      "url": "https://ai.gateway.services.apocrathia.com/mcp/",
-      "headers": {
-        "x-litellm-api-key": "Bearer <litellm-master-key>"
-      }
-    }
-  }
-}
-```
-
-### Direct Access
-
-For direct access to the SearXNG MCP server:
-
-- **Server URL**: `https://mcp.gateway.services.apocrathia.com/searxng`
-- **Transport**: HTTP POST with JSON-RPC
-- **Authentication**: None
-
-### Testing the Connection
-
-```bash
-# List available tools
-curl -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
-  https://mcp.gateway.services.apocrathia.com/searxng
-```
+This server is accessible only through the LiteLLM proxy. See the [main README](../README.md) for details.
 
 ## Available MCP Tools
 

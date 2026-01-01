@@ -1,0 +1,51 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: gitlab-mcp-server
+  namespace: mcp-gitlab
+  labels:
+    app.kubernetes.io/name: gitlab-mcp-server
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "GitLab MCP server for GitLab API integration"
+spec:
+  # Use Node.js image and run via npx
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+  image: public.ecr.aws/docker/library/node:22-slim
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+          image: public.ecr.aws/docker/library/node:22-slim
+          stdin: true
+          tty: false
+          command:
+            - /bin/sh
+            - -c
+            - npx -y @alosies/gitlab-mcp-server
+          env:
+            - name: NPM_CONFIG_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-mcp-secrets
+                  key: gitlab-token
+            - name: GITLAB_BASE_URL
+              value: "https://gitlab.com"

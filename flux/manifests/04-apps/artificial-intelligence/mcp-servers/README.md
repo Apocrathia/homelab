@@ -1,6 +1,6 @@
 # MCP Servers
 
-Model Context Protocol servers providing specialized functionality for MCP-compatible clients.
+Model Context Protocol servers providing specialized functionality for AI clients.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
@@ -11,77 +11,137 @@ Model Context Protocol servers providing specialized functionality for MCP-compa
 
 ## Overview
 
-This deployment includes:
+All MCP servers are internal-only and accessible exclusively through the LiteLLM proxy. This provides:
 
-- ToolHive operator for MCP server lifecycle management
-- Multiple specialized MCP servers for different functions
-- Gateway API integration with unified HTTPS access
-- Security isolation with namespace-based deployment
+- Unified authentication and access control
+- Centralized logging and observability
+- Simplified client configuration
 
-## Configuration
+## Architecture
 
-### Current MCP Servers
+```
+External Clients → LiteLLM Proxy → MCP Servers (internal)
+```
 
-#### OSV Vulnerability Scanner
+Clients connect to LiteLLM at `https://litellm.gateway.services.apocrathia.com` which routes requests to the appropriate MCP server.
+
+## Internal MCP Servers
+
+### OSV Vulnerability Scanner
 
 - **Purpose**: Query Open Source Vulnerability database for security vulnerabilities
 - **Tools**: Vulnerability queries, batch scanning, detailed vulnerability information
-- **Access**: `https://mcp.gateway.services.apocrathia.com/osv`
 
-#### GoFetch Web Content Server
+### GoFetch Web Content Server
 
 - **Purpose**: Retrieve and process web content from URLs
 - **Tools**: Web content fetching, markdown conversion, content extraction
-- **Access**: `https://mcp.gateway.services.apocrathia.com/gofetch`
 
-#### MKP Kubernetes Server
+### MKP Kubernetes Server
 
 - **Purpose**: Direct Kubernetes cluster access and management
 - **Tools**: Resource listing, getting, applying, and pod execution
-- **Access**: `https://mcp.gateway.services.apocrathia.com/mkp`
 
-#### Grafana MCP Server
+### Grafana MCP Server
 
 - **Purpose**: Grafana dashboard and data source management
 - **Tools**: Dashboard operations, Prometheus queries, Loki log analysis, alert management
-- **Access**: `https://mcp.gateway.services.apocrathia.com/grafana`
 
-#### SearXNG MCP Server
+### SearXNG MCP Server
 
 - **Purpose**: Privacy-respecting web search via internal SearXNG instance
 - **Tools**: Web search with pagination, URL content reading
-- **Access**: `https://mcp.gateway.services.apocrathia.com/searxng`
 
-#### GitHub MCP Server (External)
-
-- **Purpose**: GitHub repository and issue management
-- **Tools**: Repository operations, issues, pull requests, actions, releases
-- **Access**: Via LiteLLM gateway (hosted at `api.githubcopilot.com`)
-- **Auth**: Pass GitHub PAT via `Authorization` header (requires Copilot subscription)
-
-#### Flux MCP Server
+### Flux MCP Server
 
 - **Purpose**: GitOps pipeline management and Flux resource operations
 - **Tools**: Resource listing, reconciliation triggers, status analysis
-- **Access**: `https://mcp.gateway.services.apocrathia.com/flux`
 
-#### DeepWiki (External)
+### OpenZIM MCP Server
+
+- **Purpose**: Offline knowledge base queries (Wikipedia, etc.)
+- **Tools**: ZIM file content search and retrieval
+
+### UniFi Network MCP Server
+
+- **Purpose**: UniFi network device management
+- **Tools**: Device listing, client management, network configuration
+
+### GitLab MCP Server
+
+- **Purpose**: GitLab repository and issue management
+- **Tools**: Repository operations, issues, merge requests, pipelines
+
+### Servarr MCP Server
+
+- **Purpose**: Sonarr and Radarr media management
+- **Tools**: Media search, queue management, library operations
+
+### Plex MCP Server
+
+- **Purpose**: Plex Media Server integration
+- **Tools**: Library browsing, media playback control, user management
+
+### TrueNAS MCP Server
+
+- **Purpose**: TrueNAS Core/SCALE storage management
+- **Tools**: Pool status, dataset operations, snapshot management
+
+### Proxmox MCP Server
+
+- **Purpose**: Proxmox virtualization management
+- **Tools**: VM/container operations, resource monitoring, cluster management
+
+### Firecrawl MCP Server
+
+- **Purpose**: Web scraping and content extraction
+- **Tools**: Page scraping, content extraction, site crawling
+
+### A2A MCP Server
+
+- **Purpose**: Bridge between MCP and Agent-to-Agent protocol
+- **Tools**: Agent registration, message routing, task delegation
+
+## External MCP Servers (via LiteLLM)
+
+### GitHub MCP Server
+
+- **Purpose**: GitHub repository and issue management
+- **Tools**: Repository operations, issues, pull requests, actions, releases
+- **Auth**: Pass GitHub PAT via `Authorization` header (requires Copilot subscription)
+
+### DeepWiki
 
 - **Purpose**: AI-powered documentation for GitHub repositories
 - **Tools**: Wiki structure, content reading, question answering
-- **Access**: Via LiteLLM gateway (hosted at `mcp.deepwiki.com`)
 
-### Access
+### Home Assistant
 
-- **Unified Gateway**: All servers accessible through `https://mcp.gateway.services.apocrathia.com`
-- **Server-specific Paths**: Each server has its own path (e.g., `/osv`, `/gofetch`)
+- **Purpose**: Home automation control and status
+- **Tools**: Device control, automation triggers, state queries
 
 ## Security Considerations
 
-- **Network Isolation**: Each server runs in its own namespace
+- **Network Isolation**: Each server runs in its own namespace with Cilium network policy
 - **Minimal Permissions**: ToolHive operator creates least-privilege RBAC
-- **Gateway Integration**: Unified HTTPS access with TLS termination
-- **Authentication**: Consider adding for sensitive functionality
+- **Internal Access Only**: No direct external access to MCP servers
+- **Centralized Auth**: All access through LiteLLM proxy
+
+### Network Policy
+
+MCP servers are protected by a `CiliumClusterwideNetworkPolicy` that restricts ingress:
+
+- **Target**: Namespaces with `mcp-server: "true"` label
+- **Allowed Sources**: Namespaces with `mcp-client: "true"` label (litellm, kagent)
+- **System Access**: kube-system and toolhive-system are allowed for health checks and operator management
+
+To allow a new namespace to access MCP servers, add the label:
+
+```yaml
+metadata:
+  labels:
+    mcp-client: "true"
+```
 
 ## Troubleshooting
 
@@ -100,25 +160,25 @@ This deployment includes:
    kubectl get pods -n toolhive-system
    ```
 
-2. **Gateway Access Issues**
+2. **LiteLLM Routing Issues**
 
    ```bash
-   # Check HTTPRoute configuration
-   kubectl get httproute -n <server-namespace>
+   # Check LiteLLM pod logs
+   kubectl logs -n litellm deploy/litellm
 
-   # Check Gateway status
-   kubectl get gateway -n cilium-system
+   # Verify MCP server service exists
+   kubectl get svc -n mcp-<server>
    ```
 
 ### Health Checks
 
 ```bash
 # Check ToolHive operator
-kubectl -n toolhive-system get pods
+kubectl get pods -n toolhive-system
 
 # Check MCP server deployments
 kubectl get mcpservers --all-namespaces
 
-# Check Gateway API resources
-kubectl get httproute --all-namespaces
+# Check services
+kubectl get svc --all-namespaces | grep mcp-
 ```

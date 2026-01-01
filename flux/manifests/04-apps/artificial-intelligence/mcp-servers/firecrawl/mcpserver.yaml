@@ -1,0 +1,47 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: firecrawl-mcp
+  namespace: mcp-firecrawl
+  labels:
+    app.kubernetes.io/name: firecrawl-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Firecrawl MCP server for web scraping and content extraction"
+spec:
+  # Use Node.js image and run via npx
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+  image: public.ecr.aws/docker/library/node:22-slim
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+          image: public.ecr.aws/docker/library/node:22-slim
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args: ["export HOME=/tmp && exec npx -y firecrawl-mcp"]
+          env:
+            - name: HOME
+              value: "/tmp"
+            - name: FIRECRAWL_API_URL
+              value: "http://firecrawl-api.firecrawl.svc.cluster.local:3002"

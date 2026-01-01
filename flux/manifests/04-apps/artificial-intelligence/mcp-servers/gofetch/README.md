@@ -29,54 +29,14 @@ This deployment includes:
 
 - GoFetch MCP server for web content retrieval and processing
 - ToolHive proxy for secure communication
-- Gateway API exposure at `https://mcp.gateway.services.apocrathia.com/gofetch`
+- Internal access only via LiteLLM proxy
 - Network permission profile for web access
 
 ## Configuration
 
-## MCP Client Configuration
+## Access
 
-### Cursor IDE
-
-Add the following configuration to your Cursor MCP settings:
-
-```json
-{
-  "mcpServers": {
-    "gofetch": {
-      "url": "https://mcp.gateway.services.apocrathia.com/gofetch"
-    }
-  }
-}
-```
-
-### Other MCP Clients
-
-For other MCP-compatible clients, use this server configuration:
-
-- **Server URL**: `https://mcp.gateway.services.apocrathia.com/gofetch`
-- **Transport**: HTTP POST with JSON-RPC
-- **Authentication**: None (currently open)
-
-### Testing the Connection
-
-You can test the MCP server connection:
-
-```bash
-# Initialize MCP connection (recommended test)
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}}' \
-  https://mcp.gateway.services.apocrathia.com/gofetch
-
-# Should return server info and capabilities
-
-# List available tools
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
-  https://mcp.gateway.services.apocrathia.com/gofetch
-```
+This server is accessible only through the LiteLLM proxy. See the [main README](../README.md) for details.
 
 ### Available MCP Tools
 
@@ -90,19 +50,3 @@ The GoFetch MCP server provides web content retrieval tools:
      - `max_length` (optional): Maximum characters to return (default: 5000, max: 1000000)
      - `start_index` (optional): Starting character index (default: 0)
      - `raw` (optional): Return raw HTML instead of markdown (default: false)
-
-### Example Usage
-
-```bash
-# Fetch web content as markdown (default)
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"fetch","arguments":{"url":"https://example.com","max_length":5000}}}' \
-  https://mcp.gateway.services.apocrathia.com/gofetch
-
-# Fetch raw HTML content
-curl -k -X POST -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"fetch","arguments":{"url":"https://example.com","raw":true}}}' \
-  https://mcp.gateway.services.apocrathia.com/gofetch
-```

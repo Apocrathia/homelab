@@ -1,0 +1,74 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: servarr-mcp
+  namespace: mcp-servarr
+  labels:
+    app.kubernetes.io/name: servarr-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Servarr MCP server for Sonarr and Radarr integration"
+spec:
+  # Use Python base image (not slim) which includes git for git-based installs
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.12
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              export HOME=/tmp &&
+              cd /tmp &&
+              git clone --depth 1 https://github.com/bdfrost/mcp-servarr.git &&
+              cd mcp-servarr &&
+              pip install --quiet -r requirements.txt &&
+              exec python src/server.py
+          env:
+            - name: HOME
+              value: "/tmp"
+            - name: SONARR_URL
+              valueFrom:
+                secretKeyRef:
+                  name: servarr-mcp-secrets
+                  key: sonarr-url
+            - name: SONARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: servarr-mcp-secrets
+                  key: sonarr-api-key
+            - name: RADARR_URL
+              valueFrom:
+                secretKeyRef:
+                  name: servarr-mcp-secrets
+                  key: radarr-url
+            - name: RADARR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: servarr-mcp-secrets
+                  key: radarr-api-key
+            - name: REQUEST_TIMEOUT
+              value: "30"
