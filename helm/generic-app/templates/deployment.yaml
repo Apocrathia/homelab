@@ -43,7 +43,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       {{- end }}
       securityContext:
-        runAsNonRoot: {{ .Values.app.securityContext.runAsNonRoot | default true }}
+        runAsNonRoot: {{ if (hasKey .Values.app.securityContext "runAsNonRoot") }}{{ .Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
         runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
         runAsGroup: {{ .Values.app.securityContext.runAsGroup | default 1000 }}
         fsGroup: {{ .Values.app.securityContext.fsGroup | default 1000 }}
@@ -244,9 +244,9 @@ spec:
               drop:
                 - ALL
               {{- end }}
-            runAsNonRoot: {{ .Values.app.securityContext.runAsNonRoot | default true }}
+            runAsNonRoot: {{ if (hasKey .Values.app.securityContext "runAsNonRoot") }}{{ .Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
             runAsUser: {{ .Values.app.securityContext.runAsUser | default 1000 }}
-            readOnlyRootFilesystem: {{ .Values.app.securityContext.readOnlyRootFilesystem | default true }}
+            readOnlyRootFilesystem: {{ if (hasKey .Values.app.securityContext "readOnlyRootFilesystem") }}{{ .Values.app.securityContext.readOnlyRootFilesystem }}{{ else }}true{{ end }}
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
@@ -477,7 +477,7 @@ spec:
             {{- if .securityContext.runAsNonRoot }}
             runAsNonRoot: {{ .securityContext.runAsNonRoot }}
             {{- else }}
-            runAsNonRoot: {{ $.Values.app.securityContext.runAsNonRoot | default true }}
+            runAsNonRoot: {{ if (hasKey $.Values.app.securityContext "runAsNonRoot") }}{{ $.Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
             {{- end }}
             {{- if .securityContext.runAsUser }}
             runAsUser: {{ .securityContext.runAsUser }}
@@ -487,7 +487,7 @@ spec:
             {{- if .securityContext.readOnlyRootFilesystem }}
             readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
             {{- else }}
-            readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
+            readOnlyRootFilesystem: {{ if (hasKey $.Values.app.securityContext "readOnlyRootFilesystem") }}{{ $.Values.app.securityContext.readOnlyRootFilesystem }}{{ else }}true{{ end }}
             {{- end }}
             seccompProfile:
               type: RuntimeDefault
@@ -515,9 +515,9 @@ spec:
               drop:
                 - ALL
               {{- end }}
-            runAsNonRoot: {{ $.Values.app.securityContext.runAsNonRoot | default true }}
+            runAsNonRoot: {{ if (hasKey $.Values.app.securityContext "runAsNonRoot") }}{{ $.Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
             runAsUser: {{ .runAsUser | default 1000 }}
-            readOnlyRootFilesystem: {{ $.Values.app.securityContext.readOnlyRootFilesystem | default true }}
+            readOnlyRootFilesystem: {{ if (hasKey $.Values.app.securityContext "readOnlyRootFilesystem") }}{{ $.Values.app.securityContext.readOnlyRootFilesystem }}{{ else }}true{{ end }}
             seccompProfile:
               type: RuntimeDefault
           {{- end }}

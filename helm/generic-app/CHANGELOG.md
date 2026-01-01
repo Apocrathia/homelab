@@ -1,6 +1,14 @@
 # Changelog
 
-## Version 0.0.42 (Latest)
+## Version 0.0.43 (Latest)
+
+- **Fixed Boolean Security Context Overrides**: Fixed template bug where `false` values for security context booleans were ignored
+  - **Problem Solved**: Setting `readOnlyRootFilesystem: false` or `runAsNonRoot: false` had no effect because Go templates treat `false` as "empty", causing `| default true` to always return `true`
+  - **Template Fix**: Replaced `| default true` pattern with `hasKey` checks for `readOnlyRootFilesystem` and `runAsNonRoot` in deployment template
+  - **Impact**: Containers that require writable filesystems (e.g., PostgreSQL, Playwright) can now properly disable read-only root filesystem
+  - **Backward Compatible**: Defaults remain `true` when not explicitly set
+
+## Version 0.0.42
 
 - **NEW: PostgreSQL Resource Limits Support**: Added resource requests and limits configuration for PostgreSQL pods
   - **Resource Configuration**: Configure CPU and memory requests/limits for PostgreSQL pods via `postgres.resources`
