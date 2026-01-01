@@ -59,8 +59,8 @@ spec:
       hostRouting: true # Enable BPF host routing for BBR to work
       hostLegacyRouting: false # Disable legacy routing as we're using BPF host routing
 
-    # Disable policy enforcement during migration
-    policyEnforcementMode: "never"
+    # Enable policy enforcement when policies exist
+    policyEnforcementMode: "default"
 
     # Enable Hubble with modern secure defaults
     hubble:
