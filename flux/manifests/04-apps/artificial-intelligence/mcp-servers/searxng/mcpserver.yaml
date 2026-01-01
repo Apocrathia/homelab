@@ -24,9 +24,6 @@ spec:
   permissionProfile:
     type: builtin
     name: network
-  env:
-    - name: SEARXNG_URL
-      value: "http://searxng.searxng.svc.cluster.local:8080"
   resources:
     limits:
       cpu: "200m"
@@ -34,3 +31,13 @@ spec:
     requests:
       cpu: "100m"
       memory: "128Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
+          image: docker.io/isokoliuk/mcp-searxng:latest
+          stdin: true
+          env:
+            - name: SEARXNG_URL
+              value: "http://searxng.searxng.svc.cluster.local:8080"

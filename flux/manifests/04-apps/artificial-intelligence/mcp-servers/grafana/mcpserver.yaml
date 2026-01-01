@@ -20,17 +20,6 @@ spec:
   permissionProfile:
     type: builtin
     name: network
-  env:
-    # Default Grafana URL (can be overridden via X-Grafana-URL header)
-    - name: GRAFANA_URL
-      value: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
-      # Token passed via X-Grafana-API-Key header from client through LiteLLM
-  args:
-    - -t
-    - streamable-http
-    - --address
-    - "0.0.0.0:8080"
-    - --debug
   resources:
     limits:
       cpu: "200m"
@@ -38,3 +27,20 @@ spec:
     requests:
       cpu: "100m"
       memory: "128Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
+          image: docker.io/grafana/mcp-grafana:0.7.10
+          args:
+            - -t
+            - streamable-http
+            - --address
+            - "0.0.0.0:8080"
+            - --debug
+          env:
+            # Default Grafana URL (can be overridden via X-Grafana-URL header)
+            - name: GRAFANA_URL
+              value: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
+              # Token passed via X-Grafana-API-Key header from client through LiteLLM

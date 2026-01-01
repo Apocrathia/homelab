@@ -16,11 +16,6 @@ spec:
   permissionProfile:
     type: builtin
     name: network
-  env:
-    - name: MCP_PORT
-      value: "8080"
-    - name: MCP_TRANSPORT
-      value: "streamable-http"
   resources:
     limits:
       cpu: "200m"
@@ -28,3 +23,9 @@ spec:
     requests:
       cpu: "100m"
       memory: "128Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp
+          image: ghcr.io/stackloklabs/mkp/server:0.2.4
