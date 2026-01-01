@@ -22,3 +22,9 @@ spec:
     requests:
       cpu: "50m"
       memory: "128Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/osv-mcp/server
+          image: ghcr.io/stackloklabs/osv-mcp/server:0.0.7

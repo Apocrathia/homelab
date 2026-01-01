@@ -20,12 +20,6 @@ spec:
   permissionProfile:
     type: builtin
     name: network
-  args:
-    - serve
-    - --transport
-    - http
-    - --port
-    - "8080"
   resources:
     limits:
       cpu: "500m"
@@ -33,3 +27,15 @@ spec:
     requests:
       cpu: "100m"
       memory: "128Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
+          image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.38.1
+          args:
+            - serve
+            - --transport
+            - http
+            - --port
+            - "8080"
