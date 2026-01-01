@@ -22,9 +22,9 @@ The Grafana MCP server provides a bridge between AI assistants and Grafana's eco
 The deployment uses the Toolhive MCPServer pattern and includes:
 
 - **Namespace**: `mcp-grafana` for isolation
-- **Transport**: SSE (Server-Sent Events) for real-time communication
-- **External Access**: Gateway API HTTPRoute for external connectivity
-- **Security**: Non-root containers with read-only filesystem
+- **Transport**: stdio with streamable-http proxy
+- **Access**: Internal only via LiteLLM proxy
+- **Security**: Non-root containers, network policy restricted
 
 ## Prerequisites
 
@@ -54,28 +54,8 @@ You'll need to create a Grafana service account and generate a token for authent
 4. Click **Generate token**
 5. Copy the generated token (it will only be shown once)
 
-**Step 3: Configure Client**
-Add the Grafana MCP server to your client configuration:
-
-```json
-{
-  "mcpServers": {
-    "grafana": {
-      "command": "uvx",
-      "args": [
-        "mcp-proxy",
-        "-H",
-        "X-Grafana-URL",
-        "https://grafana.gateway.services.apocrathia.com",
-        "-H",
-        "X-Grafana-API-Key",
-        "your-actual-token-here",
-        "https://mcp.gateway.services.apocrathia.com/grafana/sse"
-      ]
-    }
-  }
-}
-```
+**Step 3: Store in 1Password**
+Store the token in the 1Password item referenced by the secret.
 
 ## Deployment
 
@@ -90,12 +70,12 @@ kubectl apply -k .
 
 ## Configuration
 
-### Transport Mode
+### Access
 
-The server is configured to use **SSE (Server-Sent Events)** transport for real-time communication. The server exposes:
+The server is accessible only through LiteLLM proxy:
 
-- **Internal**: `mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8000`
-- **External**: `https://mcp.gateway.services.apocrathia.com/grafana/sse`
+- **Internal**: `mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8080/mcp`
+- **Via LiteLLM**: Configured in `litellm.yml` as `grafana` MCP server
 
 ### Available Tools
 

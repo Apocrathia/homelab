@@ -5,3 +5,4 @@ metadata:
   name: litellm
   labels:
     app.kubernetes.io/name: litellm
+    mcp-client: "true"

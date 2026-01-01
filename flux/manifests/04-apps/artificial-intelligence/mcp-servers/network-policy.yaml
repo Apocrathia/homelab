@@ -1,0 +1,39 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: mcp-server-isolation
+  labels:
+    app.kubernetes.io/name: mcp-server-isolation
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Restrict MCP server access to authorized AI orchestration namespaces"
+spec:
+  description: |
+    Isolates MCP servers to only accept traffic from authorized namespaces.
+    Allowed sources: namespaces with mcp-client=true label.
+  # Target all pods in namespaces labeled as MCP servers
+  endpointSelector:
+    matchExpressions:
+      - key: io.cilium.k8s.namespace.labels.mcp-server
+        operator: In
+        values:
+          - "true"
+  ingress:
+    # Allow traffic from MCP client namespaces (litellm, kagent, agent-*)
+    - fromEndpoints:
+        - matchExpressions:
+            - key: io.cilium.k8s.namespace.labels.mcp-client
+              operator: In
+              values:
+                - "true"
+    # Allow traffic from kube-system for DNS, health checks, etc.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+    # Allow traffic from toolhive-system for operator management
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: toolhive-system

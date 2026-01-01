@@ -149,6 +149,51 @@ mcp_servers:
     # Allow client to override with their own token
     extra_headers:
       - "Authorization"
+  openzim:
+    alias: "openzim"
+    url: "http://mcp-openzim-mcp-proxy.mcp-openzim.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  unifi:
+    alias: "unifi"
+    url: "http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  gitlab:
+    alias: "gitlab"
+    url: "http://mcp-gitlab-mcp-server-proxy.mcp-gitlab.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  servarr:
+    alias: "servarr"
+    url: "http://mcp-servarr-mcp-proxy.mcp-servarr.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  plex:
+    alias: "plex"
+    url: "http://mcp-plex-mcp-server-proxy.mcp-plex.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  truenas:
+    alias: "truenas"
+    url: "http://mcp-truenas-mcp-server-proxy.mcp-truenas.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  proxmox:
+    alias: "proxmox"
+    url: "http://mcp-proxmox-mcp-plus-proxy.mcp-proxmox.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  firecrawl:
+    alias: "firecrawl"
+    url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  a2a:
+    alias: "a2a"
+    url: "http://mcp-a2a-mcp-server-proxy.mcp-a2a.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
 
 agent_list:
   - agent_name: "homelab-agent"

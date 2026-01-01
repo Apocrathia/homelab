@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-proxmox
+  labels:
+    name: mcp-proxmox
+    app.kubernetes.io/name: proxmox-mcp-plus
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+    mcp-server: "true"
+  annotations:
+    description: "Namespace for Proxmox MCP Plus server deployment"

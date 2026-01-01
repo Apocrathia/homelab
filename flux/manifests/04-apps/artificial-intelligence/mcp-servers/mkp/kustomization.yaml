@@ -7,5 +7,4 @@ metadata:
 resources:
   - namespace.yaml
   - mcpserver.yaml
-  - httproute.yaml
   - rbac.yaml

@@ -1,0 +1,62 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: truenas-mcp-server
+  namespace: mcp-truenas
+  labels:
+    app.kubernetes.io/name: truenas-mcp-server
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "TrueNAS MCP server for TrueNAS Core/SCALE management"
+spec:
+  # Use Python base image and install from PyPI
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.12-slim
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12-slim
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args:
+            [
+              'export HOME=/tmp && pip install --quiet truenas-mcp-server && export PATH="$HOME/.local/bin:$PATH" && exec truenas-mcp-server',
+            ]
+          env:
+            - name: HOME
+              value: "/tmp"
+            - name: TRUENAS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: truenas-mcp-secrets
+                  key: truenas-url
+            - name: TRUENAS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: truenas-mcp-secrets
+                  key: truenas-api-key
+            - name: TRUENAS_VERIFY_SSL
+              value: "false"
+            - name: TRUENAS_LOG_LEVEL
+              value: "INFO"

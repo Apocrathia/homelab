@@ -1,0 +1,60 @@
+---
+# SMB credentials for OpenZIM ZIM file storage
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: openzim-zim-credentials
+  namespace: mcp-openzim
+spec:
+  itemPath: "vaults/Secrets/items/smb-credentials"
+---
+# PersistentVolume for SMB-backed ZIM file storage (read-only)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: openzim-zim-pv
+  namespace: mcp-openzim
+  labels:
+    app.kubernetes.io/name: openzim-mcp
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+    - ro
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: openzim-zim-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Library"
+      subDir: "zim"
+    nodeStageSecretRef:
+      name: openzim-zim-credentials
+      namespace: mcp-openzim
+---
+# PersistentVolumeClaim for OpenZIM ZIM file storage (read-only)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openzim-zim
+  namespace: mcp-openzim
+  labels:
+    app.kubernetes.io/name: openzim-mcp
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: ""
+  volumeName: openzim-zim-pv
+  resources:
+    requests:
+      storage: 100Gi
