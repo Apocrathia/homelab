@@ -116,6 +116,18 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Be prepared to remove unused secrets, environment variables, or configuration that isn't actually needed
   - Simplify the deployment based on how the application actually works, not assumptions
   - Update documentation to reflect the actual configuration method used
+- **After successful deployment, provide pattern improvement feedback**:
+  - Reflect on what worked well and what could be improved in the deployment process
+  - Identify any gaps in this prompt that caused issues or required workarounds
+  - Suggest specific, actionable improvements to this deployment pattern
+  - Format feedback as:
+    - **What worked**: Patterns/instructions that helped
+    - **What was missing**: Information or guidance that would have prevented issues
+    - **Suggested additions**: Specific text/sections to add to this prompt
+    - **Suggested modifications**: Changes to existing guidance that would improve accuracy
+  - Focus on generalizable learnings, not application-specific quirks
+  - If the deployment exposed a common pattern not documented here, propose adding it
+  - Ask the user if they'd like to apply any suggested improvements to this prompt
 
 # Restrictions
 
@@ -285,6 +297,27 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Keep documentation concise (50-150 lines target)
 - Reference adjacent manifests for complete configuration details
 - **Remove documentation** about configuration methods that aren't actually used by the application
+
+## Pattern Improvement Feedback
+
+After each deployment, provide structured feedback to improve this prompt:
+
+- **Trigger**: Always provide feedback after a deployment is successfully validated
+- **Format**: Use the structured format (What worked / What was missing / Suggested additions / Suggested modifications)
+- **Scope**: Focus on improvements that would help future deployments of any application, not just the current one
+- **Types of improvements to look for**:
+  - Missing decision trees or checklists that would have saved time
+  - Incorrect assumptions in the current guidance
+  - New patterns discovered during deployment (auth methods, storage patterns, networking quirks)
+  - Common pitfalls that should be explicitly warned against
+  - Chart-specific capabilities that should be documented
+  - Validation steps that would have caught issues earlier
+- **Quality bar**: Only suggest improvements that:
+  - Would apply to multiple future deployments
+  - Are specific and actionable (not vague suggestions)
+  - Can be directly incorporated into this prompt
+- **User decision**: Always ask the user if they want to apply suggested improvements - never modify this prompt without explicit approval
+- **Continuous improvement mindset**: Treat each deployment as an opportunity to make the next one smoother
 
 ## Icons
 
