@@ -14,7 +14,7 @@ metadata:
 spec:
   # Use Node.js image and run via npx
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-  image: public.ecr.aws/docker/library/node:22-slim
+  image: public.ecr.aws/docker/library/node:24-slim
   transport: stdio
   proxyMode: streamable-http
   port: 8080
@@ -34,7 +34,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: public.ecr.aws/docker/library/node:22-slim
+          image: public.ecr.aws/docker/library/node:24-slim
           securityContext:
             readOnlyRootFilesystem: false
           stdin: true
