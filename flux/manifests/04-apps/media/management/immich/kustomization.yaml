@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: immich
+  namespace: immich
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - postgres.yaml
+  - library-pvc.yaml
+  - helmrelease.yaml
+  - httproute.yaml
+  - import-cronjob.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-immich
+    namespace: authentik
+    files:
+      - immich.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

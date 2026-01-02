@@ -37,6 +37,10 @@ Custom TV channel creation from media library content.
 - **[Prowlarr](./management/prowlarr/README.md)** - Indexer management for all Arr applications
 - **[Bazarr](./management/bazarr/README.md)** - Subtitle management and automation
 
+### Photo/Video Management
+
+- **[Immich](./management/immich/README.md)** - Self-hosted photo and video backup with ML features
+
 ### Media Tools
 
 - **[Tdarr](./management/tdarr/README.md)** - Distributed transcoding with worker nodes

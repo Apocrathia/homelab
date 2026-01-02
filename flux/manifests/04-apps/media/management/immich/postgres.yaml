@@ -1,0 +1,46 @@
+---
+# PostgreSQL cluster with vectorchord extension for Immich
+# Uses tensorchord/cloudnative-vectorchord image which includes the required vector extension
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  # renovate: datasource=docker depName=tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>\d+)-(?<minor>\d+)\.(?<patch>\d+)\.(?<build>\d+)$
+  imageName: tensorchord/cloudnative-vectorchord:17-0.4.3
+  instances: 1
+  storage:
+    size: 20Gi
+    storageClass: longhorn
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      secret:
+        name: immich-secrets
+      # These run as postgres superuser on the immich database
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
+        - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
+        - CREATE EXTENSION IF NOT EXISTS earthdistance CASCADE;
+
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "512MB"
+      effective_cache_size: "1GB"
+      maintenance_work_mem: "128MB"
+      track_io_timing: "on"
+      track_functions: "all"
+    shared_preload_libraries:
+      - "vchord.so"

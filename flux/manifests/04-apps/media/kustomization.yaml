@@ -17,6 +17,7 @@ resources:
   - management/bazarr
   - management/cleanuparr
   - management/huntarr
+  - management/immich
   - management/lidarr
   # - management/ombi
   - management/overseerr

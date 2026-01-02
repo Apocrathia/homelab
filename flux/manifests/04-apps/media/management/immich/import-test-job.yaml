@@ -1,0 +1,112 @@
+---
+# Test Job for Immich CLI import - apply manually, not included in kustomization
+# Usage: kubectl apply -f import-test-job.yaml
+# Delete after: kubectl delete -f import-test-job.yaml
+#
+# PersistentVolume for SMB-backed import folder
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-import-test-pv
+  labels:
+    app.kubernetes.io/name: immich
+    app.kubernetes.io/component: import
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: immich-import-test-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Pictures"
+      subDir: "Immich/import/test"
+    nodeStageSecretRef:
+      name: immich-library-credentials
+      namespace: immich
+---
+# PersistentVolumeClaim for test import folder
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-import-test
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: immich-import-test-pv
+  resources:
+    requests:
+      storage: 500Gi
+---
+# Test Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: immich-import-test
+  namespace: immich
+spec:
+  ttlSecondsAfterFinished: 3600 # Auto-cleanup after 1 hour
+  backoffLimit: 0 # Don't retry on failure
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: immich-cli
+          # renovate: datasource=docker depName=ghcr.io/immich-app/immich-cli
+          image: ghcr.io/immich-app/immich-cli:v2.4.1
+          # The immich-cli image has immich as the entrypoint, invoke directly
+          args:
+            - upload
+            - --recursive
+            - /import
+          env:
+            - name: IMMICH_INSTANCE_URL
+              value: "http://immich-server.immich.svc.cluster.local:2283"
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: immich-secrets
+                  key: immich-api-key
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: import
+              mountPath: /import
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: import
+          persistentVolumeClaim:
+            claimName: immich-import-test
+        - name: tmp
+          emptyDir: {}
