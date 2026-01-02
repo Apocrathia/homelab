@@ -23,6 +23,9 @@ spec:
     # Enable pipelines for enhanced functionality
     pipelines:
       enabled: true
+      # RWO volumes require Recreate strategy to avoid deadlock during rollout
+      strategy:
+        type: Recreate
       extraEnvVars:
         - name: RESET_PIPELINES_DIR
           value: "true"
