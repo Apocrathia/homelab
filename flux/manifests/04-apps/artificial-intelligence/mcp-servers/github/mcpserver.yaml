@@ -1,0 +1,49 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: github-mcp-server
+  namespace: mcp-github
+  labels:
+    app.kubernetes.io/name: github-mcp-server
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "GitHub MCP server for repository and issue management"
+spec:
+  image: ghcr.io/github/github-mcp-server:0.26.3
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      securityContext:
+        readOnlyRootFilesystem: false
+      containers:
+        - name: mcp
+          image: ghcr.io/github/github-mcp-server:0.26.3
+          stdin: true
+          stdinOnce: false
+          tty: false
+          env:
+            - name: GITHUB_PERSONAL_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-mcp-secrets
+                  key: github-token
+            - name: GITHUB_DYNAMIC_TOOLSETS
+              value: "1"
+            - name: HOME
+              value: "/tmp"
