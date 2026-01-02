@@ -102,13 +102,14 @@ Clients connect to LiteLLM at `https://litellm.gateway.services.apocrathia.com` 
 - **Purpose**: Bridge between MCP and Agent-to-Agent protocol
 - **Tools**: Agent registration, message routing, task delegation
 
-## External MCP Servers (via LiteLLM)
-
 ### GitHub MCP Server
 
 - **Purpose**: GitHub repository and issue management
-- **Tools**: Repository operations, issues, pull requests, actions, releases
-- **Auth**: Pass GitHub PAT via `Authorization` header (requires Copilot subscription)
+- **Tools**: Repository operations, issues, pull requests, code search, security advisories
+- **Auth**: Self-hosted with PAT configured via 1Password secret
+- **Source**: [github/github-mcp-server](https://github.com/github/github-mcp-server)
+
+## External MCP Servers (via LiteLLM)
 
 ### DeepWiki
 

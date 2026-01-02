@@ -21,3 +21,4 @@ resources:
   - proxmox/
   - firecrawl/
   - a2a/
+  - github/
