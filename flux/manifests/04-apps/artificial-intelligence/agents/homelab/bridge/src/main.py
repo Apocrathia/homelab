@@ -207,10 +207,11 @@ class DiscordBridge(commands.Bot):
 
             history_lines = []
             for msg in messages:
-                # Skip bot's own messages in history context
+                # Use bot name for own messages so agent recognizes them
                 if msg.author == self.user:
-                    continue
-                author = msg.author.display_name
+                    author = BOT_NAME
+                else:
+                    author = msg.author.display_name
                 content = msg.content[:200]  # Truncate long messages
                 if len(msg.content) > 200:
                     content += "..."
