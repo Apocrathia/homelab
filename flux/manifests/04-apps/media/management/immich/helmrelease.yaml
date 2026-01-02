@@ -1,0 +1,133 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: immich
+      # renovate: datasource=docker registryUrl=ghcr.io depName=immich-app/immich-charts/immich
+      version: "0.10.3"
+      sourceRef:
+        kind: HelmRepository
+        name: immich
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+
+  valuesFrom:
+    - kind: Secret
+      name: immich-secrets
+      valuesKey: oidc-client-id
+      targetPath: immich.configuration.oauth.clientId
+    - kind: Secret
+      name: immich-secrets
+      valuesKey: oidc-client-secret
+      targetPath: immich.configuration.oauth.clientSecret
+
+  values:
+    # Global configuration shared between components
+    controllers:
+      main:
+        containers:
+          main:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
+              tag: v2.4.1
+            env:
+              # Redis - using built-in Valkey
+              REDIS_HOSTNAME: "immich-valkey"
+              # Machine Learning URL
+              IMMICH_MACHINE_LEARNING_URL: "http://immich-machine-learning:3003"
+              # Database connection - from CNPG secrets
+              DB_HOSTNAME: "immich-postgres-rw.immich.svc.cluster.local"
+              DB_PORT: "5432"
+              DB_DATABASE_NAME: "immich"
+              DB_USERNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-secrets
+                    key: username
+              DB_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-secrets
+                    key: password
+
+    # Immich-specific configuration
+    immich:
+      metrics:
+        enabled: true
+      persistence:
+        library:
+          existingClaim: immich-library
+      # OAuth configuration - clientId/clientSecret injected via valuesFrom
+      configuration:
+        oauth:
+          enabled: true
+          autoRegister: true
+          buttonText: "Sign in with Authentik"
+          issuerUrl: "https://auth.gateway.services.apocrathia.com/application/o/immich/"
+          scope: "openid email profile"
+          signingAlgorithm: "RS256"
+          tokenEndpointAuthMethod: "client_secret_post"
+          # Disable password login once OAuth is working
+          # passwordLogin:
+          #   enabled: false
+
+    # Enable Valkey for Redis-compatible caching
+    valkey:
+      enabled: true
+      persistence:
+        data:
+          enabled: true
+          type: persistentVolumeClaim
+          size: 1Gi
+          storageClass: longhorn
+          accessMode: ReadWriteOnce
+
+    # Server component configuration
+    server:
+      enabled: true
+      controllers:
+        main:
+          containers:
+            main:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  memory: 2Gi
+      # Disable chart ingress - using Gateway API HTTPRoute
+      ingress:
+        main:
+          enabled: false
+
+    # Machine Learning component
+    machine-learning:
+      enabled: true
+      controllers:
+        main:
+          containers:
+            main:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  memory: 4Gi
+      persistence:
+        cache:
+          enabled: true
+          type: persistentVolumeClaim
+          size: 10Gi
+          storageClass: longhorn
+          accessMode: ReadWriteOnce

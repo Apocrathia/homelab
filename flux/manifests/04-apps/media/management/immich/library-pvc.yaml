@@ -1,0 +1,57 @@
+---
+# SMB credentials for Immich library storage
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: immich-library-credentials
+  namespace: immich
+spec:
+  itemPath: "vaults/Secrets/items/smb-credentials"
+---
+# PersistentVolume for SMB-backed Immich library storage
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-library-pv
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: immich
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: immich-library-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Pictures"
+      subDir: "Immich"
+    nodeStageSecretRef:
+      name: immich-library-credentials
+      namespace: immich
+---
+# PersistentVolumeClaim for Immich photo/video library storage
+# This is separate from the HelmRelease because the chart requires an existing PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: immich-library-pv
+  resources:
+    requests:
+      storage: 1Ti
