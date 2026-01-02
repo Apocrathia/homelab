@@ -12,6 +12,10 @@ All agents run in the consolidated `kagent` namespace alongside the kagent contr
 
 - **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface)
 - **[search](./search/)** - `search-agent`: Web search specialist using SearXNG
+- **[knowledge](./knowledge/)** - `knowledge-agent`: Knowledge management with OpenZIM and Qdrant
+- **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
+- **[media](./media/)** - `media-agent`: Plex and Servarr (Sonarr/Radarr) management
+- **[git](./git/)** - `git-agent`: GitHub and GitLab operations
 
 **System Agents (managed by kagent helm chart):**
 
@@ -42,3 +46,31 @@ flowchart TB
 2. Define the Agent CRD with system prompt and model config (namespace: `kagent`)
 3. Add any necessary bridge components for external integrations
 4. Update this README with a link to the new agent
+
+## Writing System Prompts
+
+Good system prompts are critical for agent behavior. Follow the [kagent System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts) for best practices:
+
+- **Operational Protocol** - Define step-by-step methodology for the agent
+- **Tool Descriptions** - Include "Use this tool when..." with trigger phrases
+- **Execution Guidelines** - Explicit behavioral rules and safety guidelines
+
+Example structure:
+
+```yaml
+systemMessage: |
+  You are a [role]. Your goal is to [purpose].
+
+  Operational Protocol:
+  1. [Step 1]
+  2. [Step 2]
+
+  Tools:
+  1. tool_name
+  Use when: [conditions]
+  Trigger phrases: [examples]
+
+  Execution Guidelines:
+  - [Rule 1]
+  - [Rule 2]
+```

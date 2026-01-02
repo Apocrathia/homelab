@@ -109,6 +109,13 @@ Clients connect to LiteLLM at `https://litellm.gateway.services.apocrathia.com` 
 - **Auth**: Self-hosted with PAT configured via 1Password secret
 - **Source**: [github/github-mcp-server](https://github.com/github/github-mcp-server)
 
+### Qdrant MCP Server
+
+- **Purpose**: Knowledge storage and semantic search via Qdrant vector database
+- **Tools**: Information storage with embeddings, semantic similarity search
+- **Backend**: Qdrant vector database (deployed separately in `qdrant` namespace)
+- **Source**: [qdrant/mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant)
+
 ## External MCP Servers (via LiteLLM)
 
 ### DeepWiki
