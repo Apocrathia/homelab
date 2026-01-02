@@ -17,7 +17,7 @@ spec:
           containers:
             - name: kubectl
               # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
-              image: registry.suse.com/suse/kubectl:1.33.7
+              image: registry.suse.com/suse/kubectl:1.35.0
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
