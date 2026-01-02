@@ -5,20 +5,21 @@ metadata:
   name: security-alerts
   namespace: prometheus-system
 spec:
-  title: Security Alerts
+  title: Security
   instanceSelector:
     matchLabels:
       app.kubernetes.io/name: grafana
       app.kubernetes.io/instance: kube-prometheus-stack
 
 ---
+# Real-time alerts for NEW containers using :latest (hourly check)
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaAlertRuleGroup
 metadata:
-  name: latest-image-tags
+  name: latest-image-tags-realtime
   namespace: prometheus-system
 spec:
-  name: Latest Image Tags
+  name: Latest Image Tags - Realtime
   folderRef: security-alerts
   interval: 1h
   instanceSelector:
@@ -26,20 +27,22 @@ spec:
       app.kubernetes.io/name: grafana
       app.kubernetes.io/instance: kube-prometheus-stack
   rules:
-    - uid: latest-image-tags-alert
-      title: New Containers Using 'latest' Image Tags
+    - uid: new-latest-image-tag-alert
+      title: New Container Using 'latest' Image Tag
       condition: C
       for: 0s
       execErrState: Alerting
-      noDataState: NoData
+      noDataState: OK
       data:
         - refId: A
-          queryType: prometheus
           relativeTimeRange:
             from: 300
             to: 0
           datasourceUid: prometheus
           model:
+            datasource:
+              type: prometheus
+              uid: prometheus
             expr: |
               group by (pod, namespace, image) (
                 kube_pod_container_info{image=~".*:latest$"}
@@ -50,38 +53,135 @@ spec:
             maxDataPoints: 43200
             refId: A
         - refId: B
-          queryType: reduce
           relativeTimeRange:
             from: 300
             to: 0
           datasourceUid: __expr__
           model:
-            reducer: count
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
             expression: A
             refId: B
         - refId: C
-          queryType: threshold
           relativeTimeRange:
             from: 300
             to: 0
           datasourceUid: __expr__
           model:
-            type: gt
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
             expression: B
             refId: C
             conditions:
-              - type: gt
-                value: 0
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
       annotations:
-        summary: "Found {{ $values.B }} new container(s) using 'latest' image tags"
-        description: |
-          The following NEW containers are using 'latest' image tags:
-          {{ range $values.A }}
-          - Pod: {{ .pod }}, Namespace: {{ .namespace }}, Image: {{ .image }}
-          {{ end }}
+        summary: "🆕 {{ $labels.namespace }}/{{ $labels.pod }} using :latest tag"
+        description: "Image: {{ $labels.image }}"
       labels:
         severity: warning
         team: platform
+        alert_type: realtime
+
+---
+# Daily report of ALL containers using :latest
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: latest-image-tags-report
+  namespace: prometheus-system
+spec:
+  name: Latest Image Tags - Daily Report
+  folderRef: security-alerts
+  interval: 24h
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: latest-image-tags-daily-report
+      title: "Daily Report: Container Using 'latest' Image Tag"
+      condition: C
+      for: 0s
+      execErrState: Alerting
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            datasource:
+              type: prometheus
+              uid: prometheus
+            expr: |
+              group by (pod, namespace, image) (
+                kube_pod_container_info{image=~".*:latest$"}
+              )
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "📋 {{ $labels.namespace }}/{{ $labels.pod }} using :latest tag"
+        description: "Image: {{ $labels.image }}"
+      labels:
+        severity: info
+        team: platform
+        alert_type: report
 
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -95,13 +195,11 @@ spec:
       app.kubernetes.io/name: grafana
       app.kubernetes.io/instance: kube-prometheus-stack
   route:
-    receiver: discord
+    receiver: Discord
     group_by:
       - alertname
+      - namespace
+      - pod
     group_wait: 30s
     group_interval: 5m
-    repeat_interval: 0s
-    matchers:
-      - name: alertname
-        isRegex: true
-        value: latest-image-tags-alert
+    repeat_interval: 4h
