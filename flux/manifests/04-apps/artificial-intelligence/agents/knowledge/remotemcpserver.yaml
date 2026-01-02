@@ -1,0 +1,32 @@
+---
+# RemoteMCPServer for Qdrant vector knowledge base
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: qdrant-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: qdrant-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-qdrant-mcp-proxy.mcp-qdrant.svc.cluster.local:8080/mcp"
+  description: "Qdrant vector store - semantic knowledge storage and retrieval"
+---
+# RemoteMCPServer for OpenZIM offline encyclopedic content
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: openzim-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: openzim-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-openzim-mcp-proxy.mcp-openzim.svc.cluster.local:8080/mcp"
+  description: "OpenZIM - offline Wikipedia and encyclopedic content"

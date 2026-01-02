@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-qdrant
+  labels:
+    app.kubernetes.io/name: qdrant-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    mcp-server: "true"

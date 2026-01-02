@@ -54,7 +54,11 @@ spec:
             - name: zim
               mountPath: /data
               readOnly: true
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: zim
           persistentVolumeClaim:
             claimName: openzim-zim
+        - name: tmp
+          emptyDir: {}

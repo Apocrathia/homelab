@@ -1,0 +1,66 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: qdrant-mcp
+  namespace: mcp-qdrant
+  labels:
+    app.kubernetes.io/name: qdrant-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Qdrant MCP server for knowledge storage and semantic search"
+spec:
+  # Official Qdrant MCP server - runs via uvx
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.12-slim
+  transport: stdio
+  proxyMode: streamable-http
+  port: 8080
+  targetPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12-slim
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              pip install --quiet uv && \
+              export PATH="/tmp/.local/bin:$PATH" && \
+              exec uvx mcp-server-qdrant --transport stdio
+          env:
+            # Qdrant connection
+            - name: QDRANT_URL
+              value: "http://qdrant.qdrant.svc.cluster.local:6333"
+            - name: QDRANT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qdrant-secrets
+                  key: api-key
+            # Default collection for knowledge storage
+            - name: COLLECTION_NAME
+              value: "knowledge"
+            # Embedding model - uses FastEmbed (local, no external API)
+            - name: EMBEDDING_PROVIDER
+              value: "fastembed"
+            - name: EMBEDDING_MODEL
+              value: "sentence-transformers/all-MiniLM-L6-v2"
+            # Writable home for pip/uv cache
+            - name: HOME
+              value: "/tmp"

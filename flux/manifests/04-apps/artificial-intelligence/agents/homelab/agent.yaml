@@ -9,13 +9,121 @@ spec:
   type: Declarative
   declarative:
     modelConfig: homelab-agent-model
+    a2aConfig:
+      skills:
+        - id: knowledge-lookup
+          name: Knowledge Lookup
+          description: Query encyclopedic content and search the web for information, documentation, and tutorials
+          examples:
+            - What is a Kubernetes StatefulSet?
+            - Search for Tailscale documentation
+            - Tell me about ZFS snapshots
+            - Look up how BGP works
+          tags:
+            - knowledge
+            - search
+            - documentation
+            - encyclopedia
+        - id: kubernetes-ops
+          name: Kubernetes Operations
+          description: Manage and troubleshoot Kubernetes resources, pods, deployments, services, logs, and cluster issues
+          examples:
+            - List all pods in the default namespace
+            - Why is my pod crashlooping?
+            - Get logs from the nginx deployment
+            - Describe the ingress controller service
+          tags:
+            - kubernetes
+            - k8s
+            - pods
+            - deployments
+            - troubleshooting
+        - id: helm-ops
+          name: Helm Operations
+          description: Manage Helm releases - install, upgrade, rollback, and troubleshoot chart issues
+          examples:
+            - What Helm releases are installed?
+            - Upgrade the prometheus release
+            - Rollback the failed deployment
+            - Show me the values for the nginx chart
+          tags:
+            - helm
+            - releases
+            - charts
+            - upgrades
+        - id: cilium-ops
+          name: Cilium Operations
+          description: Manage Cilium CNI, network policies, and Hubble network observability
+          examples:
+            - Check Cilium status
+            - Create a network policy to block external traffic
+            - Show me Hubble flows for the api namespace
+            - Why can't my pods reach the internet?
+          tags:
+            - cilium
+            - networking
+            - network-policy
+            - hubble
+            - ebpf
+        - id: observability
+          name: Observability
+          description: Query Prometheus metrics, navigate Grafana dashboards, and manage alerts
+          examples:
+            - What's the CPU usage of my cluster?
+            - Show me the Grafana dashboard for node metrics
+            - Are there any firing alerts?
+            - Query memory usage over the last hour
+          tags:
+            - prometheus
+            - grafana
+            - metrics
+            - alerts
+            - monitoring
+        - id: media-ops
+          name: Media Operations
+          description: Manage Plex media libraries and Sonarr/Radarr automation for TV shows and movies
+          examples:
+            - What's playing on Plex right now?
+            - Add the new season of Severance to Sonarr
+            - Search for a movie in my library
+            - What's in the download queue?
+          tags:
+            - plex
+            - sonarr
+            - radarr
+            - media
+            - downloads
+        - id: infrastructure-ops
+          name: Infrastructure Operations
+          description: Manage Proxmox VMs, TrueNAS storage pools and shares, and UniFi network devices
+          examples:
+            - List all VMs on Proxmox
+            - Check the status of my ZFS pools
+            - Show me connected WiFi clients
+            - Start the dev VM
+          tags:
+            - proxmox
+            - truenas
+            - unifi
+            - vms
+            - storage
+            - network
+        - id: git-ops
+          name: Git Platform Operations
+          description: Manage GitHub and GitLab repositories, issues, pull requests, and CI/CD pipelines
+          examples:
+            - List open PRs in my homelab repo
+            - Check the pipeline status for the main branch
+            - Show me recent issues
+            - What failed in the last CI run?
+          tags:
+            - github
+            - gitlab
+            - git
+            - ci-cd
+            - pull-requests
     tools:
       # Delegate to specialist agents (all same namespace now)
-      - type: Agent
-        agent:
-          name: search-agent
-          kind: Agent
-          apiGroup: kagent.dev
       - type: Agent
         agent:
           name: k8s-agent
@@ -24,11 +132,6 @@ spec:
       - type: Agent
         agent:
           name: helm-agent
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
-          name: cilium-policy-agent
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
@@ -56,33 +159,57 @@ spec:
           name: git-agent
           kind: Agent
           apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: knowledge-agent
+          kind: Agent
+          apiGroup: kagent.dev
     systemMessage: |
-      You are a knowledgeable tech assistant who hangs out in a homelab Discord.
-      You're genuinely helpful, direct, and don't bullshit people. You admit when you don't know something.
+      You are a knowledgeable homelab tech assistant. You're direct, helpful, and don't bullshit.
 
-      You have access to specialized agents you can delegate to:
-      - search-agent: Web search for current info, docs, error messages, time-sensitive data
-      - k8s-agent: Kubernetes cluster operations, troubleshooting, pod logs, resource management
-      - helm-agent: Helm releases, chart management, release troubleshooting
-      - cilium-policy-agent: Creating Cilium network policies from natural language
-      - cilium-manager-agent: Cilium installation, configuration, and troubleshooting
-      - observability-agent: Prometheus metrics, Grafana dashboards, monitoring queries
-      - media-agent: Plex library, Sonarr/Radarr automation, media management
-      - infrastructure-agent: Proxmox VMs, TrueNAS storage, UniFi network
-      - git-agent: GitHub and GitLab repositories, issues, PRs, pipelines
+      Operational Protocol:
+      1. Identify the domain of the request
+      2. Delegate to the appropriate specialist agent
+      3. Summarize results for the user
+      4. Admit when you don't know something
 
-      Delegate when the task matches an agent's specialty. For general homelab questions
-      you can answer directly, but use the specialists for cluster operations.
+      Specialist Agents (delegate based on request type):
 
-      When being asked technical questions, you should delegate to the specialists. However, you are encouraged to
-      return technical details to the user when possible. Do not make up information.
+      1. knowledge-agent
+      Delegate when: user asks for information lookups, web searches, documentation, factual questions, or wants to store/recall information.
+      Trigger phrases: "what is", "search for", "find", "look up", "tell me about", "remember this", etc.
 
-      Tone: Casual and natural, like talking to a colleague. Swearing is fine when it fits naturally,
-      but don't force it. No emojis. No corporate cheerfulness. Just be helpful and real.
+      2. k8s-agent
+      Delegate when: user asks about Kubernetes resources, pods, deployments, services, logs, or cluster troubleshooting.
+      Trigger phrases: "pod", "deployment", "service", "kubectl", "kubernetes", "k8s", "logs", "namespace", etc.
 
-      Discord guidelines:
-      - Keep responses concise (under 500 chars when possible)
-      - Be direct - no fluff, no filler phrases like "Great question!"
-      - Match the energy of the question - casual questions get casual answers
-      - If someone asks about homelab stuff (Kubernetes, networking, self-hosting, etc.), lean into your expertise
-      - For general questions, be helpful but brief
+      3. helm-agent
+      Delegate when: user asks about Helm releases, charts, values, upgrades, or Helm-related troubleshooting.
+      Trigger phrases: "helm", "release", "chart", "values", "upgrade", "rollback", etc.
+
+      4. cilium-manager-agent
+      Delegate when: user asks about Cilium networking, network policies, eBPF, or CNI issues.
+      Trigger phrases: "cilium", "network policy", "eBPF", "CNI", "hubble", etc.
+
+      5. observability-agent
+      Delegate when: user asks about metrics, monitoring, alerts, dashboards, or Prometheus/Grafana.
+      Trigger phrases: "metrics", "prometheus", "grafana", "dashboard", "alert", "monitoring", etc.
+
+      6. media-agent
+      Delegate when: user asks about Plex, media libraries, Sonarr, Radarr, downloads, or media management.
+      Trigger phrases: "plex", "media", "movie", "tv show", "sonarr", "radarr", "download", "library", etc.
+
+      7. infrastructure-agent
+      Delegate when: user asks about VMs, Proxmox, TrueNAS storage, UniFi network, or physical infrastructure.
+      Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "network", "NAS", etc.
+
+      8. git-agent
+      Delegate when: user asks about GitHub, GitLab, repositories, issues, PRs, pipelines, or git operations.
+      Trigger phrases: "github", "gitlab", "repo", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+
+      Execution Guidelines:
+      - ALWAYS delegate technical requests to specialist agents
+      - For general homelab questions, you may answer directly
+      - Be concise (under 500 chars when possible)
+      - No fluff, no "Great question!" - just be helpful and real
+      - Swearing is fine when natural, no emojis

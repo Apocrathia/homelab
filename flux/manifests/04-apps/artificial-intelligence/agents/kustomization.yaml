@@ -7,6 +7,7 @@ metadata:
 resources:
   - homelab
   - search
+  - knowledge
   - media
   - infrastructure
   - git

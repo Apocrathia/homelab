@@ -9,12 +9,14 @@ Features:
 - Multi-turn conversations via A2A contextId
 - Message history included for richer context
 - Session reset commands (!reset, !clear, !new)
+- Delegation status messages when agents hand off to specialists
 """
 
 import asyncio
 import logging
 import os
 import sys
+from typing import Callable, Coroutine
 from uuid import uuid4
 
 import discord
@@ -22,6 +24,7 @@ import httpx
 from a2a.client import ClientConfig, ClientFactory
 from a2a.client.card_resolver import A2ACardResolver
 from a2a.types import (
+    DataPart,
     Message,
     Part,
     Role,
@@ -33,6 +36,9 @@ from a2a.types import (
 from a2a.utils.artifact import get_artifact_text
 from a2a.utils.message import get_message_text
 from discord.ext import commands
+
+# Type alias for status callback
+StatusCallback = Callable[[str], Coroutine[None, None, None]]
 
 # Configure logging
 logging.basicConfig(
@@ -54,6 +60,76 @@ HISTORY_LIMIT = int(os.environ.get("HISTORY_LIMIT", "5"))
 channel_contexts: dict[str, str] = {}
 
 MAX_MESSAGE_LENGTH = 1900
+
+# Agent names to display-friendly names (optional customization)
+AGENT_DISPLAY_NAMES = {
+    "k8s-agent": "Kubernetes specialist",
+    "helm-agent": "Helm specialist",
+    "cilium-manager-agent": "Cilium specialist",
+    "observability-agent": "Observability specialist",
+    "media-agent": "Media specialist",
+    "infrastructure-agent": "Infrastructure specialist",
+    "git-agent": "Git specialist",
+    "knowledge-agent": "Knowledge specialist",
+    "search-agent": "Search specialist",
+}
+
+
+def get_tool_call_info(artifact) -> tuple[str | None, str | None]:
+    """
+    Extract tool call info from an artifact if it's a delegation.
+
+    Returns (tool_name, call_id) or (None, None) if not a tool call.
+    """
+    if not hasattr(artifact, "parts"):
+        return None, None
+
+    for part in artifact.parts:
+        part_data = part.root if hasattr(part, "root") else part
+
+        # Check for DataPart with kagent function_call metadata
+        if isinstance(part_data, DataPart):
+            metadata = getattr(part_data, "metadata", {}) or {}
+            kagent_type = metadata.get("kagent_type")
+
+            if kagent_type == "function_call":
+                data = getattr(part_data, "data", {}) or {}
+                tool_name = data.get("name")
+                call_id = data.get("id")
+                return tool_name, call_id
+
+    return None, None
+
+
+def get_tool_response_info(artifact) -> tuple[str | None, str | None]:
+    """
+    Extract tool response info from an artifact.
+
+    Returns (tool_name, call_id) or (None, None) if not a tool response.
+    """
+    if not hasattr(artifact, "parts"):
+        return None, None
+
+    for part in artifact.parts:
+        part_data = part.root if hasattr(part, "root") else part
+
+        if isinstance(part_data, DataPart):
+            metadata = getattr(part_data, "metadata", {}) or {}
+            kagent_type = metadata.get("kagent_type")
+
+            if kagent_type == "function_response":
+                data = getattr(part_data, "data", {}) or {}
+                tool_name = data.get("name")
+                call_id = data.get("id")
+                return tool_name, call_id
+
+    return None, None
+
+
+def format_delegation_message(tool_name: str) -> str:
+    """Format a user-friendly delegation status message."""
+    display_name = AGENT_DISPLAY_NAMES.get(tool_name, tool_name)
+    return f"Asking {display_name}..."
 
 
 def ensure_trailing_slash(url: str) -> str:
@@ -148,8 +224,20 @@ class DiscordBridge(commands.Bot):
             logger.warning(f"Failed to fetch channel history: {e}")
             return ""
 
-    async def _call_agent(self, message: str, channel_id: str) -> str:
-        """Call the kagent agent via A2A and return the response."""
+    async def _call_agent(
+        self,
+        message: str,
+        channel_id: str,
+        status_callback: StatusCallback | None = None,
+    ) -> str:
+        """
+        Call the kagent agent via A2A and return the response.
+
+        Args:
+            message: The message to send to the agent
+            channel_id: Discord channel ID for session tracking
+            status_callback: Optional async callback for delegation status updates
+        """
         # Ensure URL has trailing slash to avoid 301 redirects
         base_url = ensure_trailing_slash(KAGENT_URL)
 
@@ -183,6 +271,9 @@ class DiscordBridge(commands.Bot):
         response_text = []
         new_context_id = None
 
+        # Track active delegations to avoid duplicate status messages
+        active_delegations: set[str] = set()
+
         try:
             async for event in client.send_message(a2a_message):
                 logger.debug(f"A2A event: {type(event).__name__}")
@@ -209,9 +300,29 @@ class DiscordBridge(commands.Bot):
                             # Fallback to task ID
                             new_context_id = task.id
 
-                    # TaskArtifactUpdateEvent - extract artifact text
+                    # TaskArtifactUpdateEvent - extract artifact text and delegation info
                     if isinstance(update_event, TaskArtifactUpdateEvent):
-                        text = get_artifact_text(update_event.artifact)
+                        artifact = update_event.artifact
+
+                        # Check for delegation (tool call to another agent)
+                        tool_name, call_id = get_tool_call_info(artifact)
+                        if tool_name and call_id and call_id not in active_delegations:
+                            active_delegations.add(call_id)
+                            logger.info(f"Delegation started: {tool_name}")
+
+                            # Send status message via callback
+                            if status_callback:
+                                status_msg = format_delegation_message(tool_name)
+                                await status_callback(status_msg)
+
+                        # Check for delegation response (tool result)
+                        resp_name, resp_id = get_tool_response_info(artifact)
+                        if resp_name and resp_id and resp_id in active_delegations:
+                            active_delegations.discard(resp_id)
+                            logger.info(f"Delegation completed: {resp_name}")
+
+                        # Extract the actual text content
+                        text = get_artifact_text(artifact)
                         if text:
                             logger.debug(f"Artifact text: {text[:100]}...")
                             response_text.append(text)
@@ -316,6 +427,19 @@ class DiscordBridge(commands.Bot):
             f"in #{message.channel.name}: {preview}"
         )
 
+        # Track status messages so we can clean them up
+        status_messages: list[discord.Message] = []
+
+        async def send_status(status_text: str):
+            """Send a delegation status message to Discord."""
+            try:
+                # Send as a regular message (not reply) with subtle formatting
+                status_msg = await message.channel.send(f"*{status_text}*")
+                status_messages.append(status_msg)
+                logger.debug(f"Sent status message: {status_text}")
+            except Exception as e:
+                logger.warning(f"Failed to send status message: {e}")
+
         async with message.channel.typing():
             try:
                 # Clean the message content (remove bot mention)
@@ -339,17 +463,25 @@ class DiscordBridge(commands.Bot):
 
                 logger.info(f"[Bridge->kagent] Sending: {content[:100]}")
 
-                # Call kagent via A2A
+                # Call kagent via A2A with status callback
                 agent_start = time.monotonic()
                 response = await self._call_agent(
                     message=prompt,
                     channel_id=channel_id,
+                    status_callback=send_status,
                 )
                 agent_time = time.monotonic() - agent_start
                 logger.info(
                     f"[kagent->Bridge] Response received in {agent_time:.2f}s "
                     f"({len(response)} chars)"
                 )
+
+                # Delete status messages now that we have the response
+                for status_msg in status_messages:
+                    try:
+                        await status_msg.delete()
+                    except Exception as e:
+                        logger.debug(f"Failed to delete status message: {e}")
 
                 # Send response
                 await self._send_response(message, response)
@@ -362,6 +494,14 @@ class DiscordBridge(commands.Bot):
 
             except Exception as e:
                 logger.error(f"Error processing message: {e}", exc_info=True)
+
+                # Clean up status messages on error too
+                for status_msg in status_messages:
+                    try:
+                        await status_msg.delete()
+                    except Exception:
+                        pass
+
                 await message.reply(
                     "I encountered an error. Please try again.",
                     mention_author=False,
