@@ -20,7 +20,7 @@ spec:
     app:
       name: shinkro
       # renovate: datasource=docker depName=ghcr.io/varoop/shinkro
-      image: ghcr.io/varoop/shinkro:v0.6.1
+      image: ghcr.io/varoop/shinkro:v0.6.2
       container:
         name: shinkro
         port: 7011
