@@ -28,6 +28,7 @@ resources:
   - nextcloud.yaml
   - open-webui.yaml
   - prometheus-community.yaml
+  - qdrant.yaml
   - renovate.yaml
   - toolhive.yaml
   - tuppr.yaml
