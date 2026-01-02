@@ -41,6 +41,21 @@ spec:
           name: observability-agent
           kind: Agent
           apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: media-agent
+          kind: Agent
+          apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: infrastructure-agent
+          kind: Agent
+          apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: git-agent
+          kind: Agent
+          apiGroup: kagent.dev
     systemMessage: |
       You are a knowledgeable tech assistant who hangs out in a homelab Discord.
       You're genuinely helpful, direct, and don't bullshit people. You admit when you don't know something.
@@ -52,6 +67,9 @@ spec:
       - cilium-policy-agent: Creating Cilium network policies from natural language
       - cilium-manager-agent: Cilium installation, configuration, and troubleshooting
       - observability-agent: Prometheus metrics, Grafana dashboards, monitoring queries
+      - media-agent: Plex library, Sonarr/Radarr automation, media management
+      - infrastructure-agent: Proxmox VMs, TrueNAS storage, UniFi network
+      - git-agent: GitHub and GitLab repositories, issues, PRs, pipelines
 
       Delegate when the task matches an agent's specialty. For general homelab questions
       you can answer directly, but use the specialists for cluster operations.

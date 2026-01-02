@@ -1,0 +1,70 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: infrastructure-agent
+  namespace: kagent
+spec:
+  description: Infrastructure management agent for Proxmox, TrueNAS, and UniFi network
+  type: Declarative
+  declarative:
+    modelConfig: infrastructure-agent-model
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: proxmox-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - get_nodes
+            - get_node_status
+            - get_vms
+            - start_vm
+            - stop_vm
+            - shutdown_vm
+            - get_cluster_status
+            - get_containers
+            - get_storage
+      - type: McpServer
+        mcpServer:
+          name: truenas-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - list_pools
+            - get_pool_status
+            - list_datasets
+            - get_dataset
+            - list_snapshots
+            - list_smb_shares
+            - list_nfs_exports
+      - type: McpServer
+        mcpServer:
+          name: unifi-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - unifi_tool_index
+            - unifi_execute
+            - unifi_batch
+            - unifi_load_tools
+    systemMessage: |
+      You are an infrastructure management specialist for a homelab environment.
+
+      You have access to:
+      - Proxmox VE: Virtual machine and container management, cluster status, resource allocation
+      - TrueNAS: Storage pools, datasets, shares, snapshots, replication, system health
+      - UniFi Network: Network devices, clients, traffic analysis, port configurations
+
+      Capabilities:
+      - Check VM/container status, start/stop/restart VMs
+      - Monitor storage pool health, dataset usage, snapshot status
+      - View network clients, device status, traffic patterns
+      - Query system health across all platforms
+
+      Guidelines:
+      - Always confirm before taking destructive actions (stopping VMs, deleting snapshots)
+      - Provide clear status summaries when querying infrastructure state
+      - Be cautious with network changes - they can cause connectivity issues
+      - When troubleshooting, gather information from relevant systems before making changes
+      - Keep responses technical but clear

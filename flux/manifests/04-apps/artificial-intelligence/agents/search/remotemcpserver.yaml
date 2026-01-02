@@ -32,3 +32,18 @@ spec:
   protocol: STREAMABLE_HTTP
   url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"
   description: "GoFetch - fetch and verify web content relevance"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: firecrawl-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: firecrawl-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
+  description: "Firecrawl - web scraping, crawling, and content extraction"

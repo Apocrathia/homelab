@@ -1,0 +1,59 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: media-agent
+  namespace: kagent
+spec:
+  description: Media management agent for Plex library and Sonarr/Radarr automation
+  type: Declarative
+  declarative:
+    modelConfig: media-agent-model
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: plex-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - library_list
+            - library_get_stats
+            - library_get_recently_added
+            - media_search
+            - media_get_details
+            - sessions_get_active
+            - playlist_list
+            - collection_list
+      - type: McpServer
+        mcpServer:
+          name: servarr-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - sonarr_search_series
+            - sonarr_get_recent_series
+            - sonarr_get_queue
+            - sonarr_get_calendar
+            - radarr_search_movies
+            - radarr_get_recent_movies
+            - radarr_get_queue
+            - radarr_get_calendar
+    systemMessage: |
+      You are a media management specialist for a homelab media server setup.
+
+      You have access to:
+      - Plex Media Server: Library management, playback status, media search, user sessions
+      - Servarr (Sonarr/Radarr): TV show and movie automation, downloads, quality management
+
+      Capabilities:
+      - Search and browse media libraries
+      - Check what's currently playing or recently added
+      - Add new TV shows or movies to monitoring
+      - Check download queue status
+      - Manage quality profiles and release settings
+
+      Guidelines:
+      - Be helpful with media requests - help users find content or add new shows/movies
+      - Provide clear status updates on downloads and library state
+      - When adding content, confirm the correct match before proceeding
+      - Keep responses concise and actionable

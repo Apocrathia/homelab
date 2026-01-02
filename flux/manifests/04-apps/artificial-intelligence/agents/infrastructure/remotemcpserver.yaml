@@ -1,0 +1,45 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: proxmox-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: proxmox-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-proxmox-mcp-plus-proxy.mcp-proxmox.svc.cluster.local:8080/mcp"
+  description: "Proxmox VE - VM and container management, cluster status"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: truenas-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: truenas-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-truenas-mcp-server-proxy.mcp-truenas.svc.cluster.local:8080/mcp"
+  description: "TrueNAS - storage pools, datasets, shares, and system status"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: unifi-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: unifi-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp"
+  description: "UniFi Network - network devices, clients, traffic, and configuration"

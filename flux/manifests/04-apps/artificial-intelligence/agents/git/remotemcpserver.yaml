@@ -1,0 +1,30 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: github-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: github-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
+  description: "GitHub - repositories, issues, pull requests, code search"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: gitlab-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: gitlab-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-gitlab-mcp-server-proxy.mcp-gitlab.svc.cluster.local:8080/mcp"
+  description: "GitLab - projects, merge requests, issues, pipelines"
