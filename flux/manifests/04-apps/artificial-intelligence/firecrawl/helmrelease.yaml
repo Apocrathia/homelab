@@ -1,0 +1,152 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: firecrawl
+  namespace: firecrawl
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.43"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  dependsOn:
+    - name: firecrawl-redis
+    - name: firecrawl-rabbitmq
+    - name: firecrawl-postgres
+    - name: firecrawl-playwright
+  values:
+    app:
+      name: firecrawl
+      namespace: firecrawl
+      # Using official ghcr.io image with latest tag (only tag they publish)
+      # renovate: datasource=docker depName=ghcr.io/firecrawl/firecrawl
+      image: ghcr.io/firecrawl/firecrawl:latest
+      container:
+        name: firecrawl
+        port: 3002
+        command:
+          - node
+        args:
+          - dist/src/harness.js
+          - --start-docker
+        env:
+          # Server configuration
+          - name: HOST
+            value: "0.0.0.0"
+          - name: PORT
+            value: "3002"
+          # Redis configuration
+          - name: REDIS_URL
+            value: "redis://firecrawl-redis.firecrawl.svc.cluster.local:6379"
+          - name: REDIS_RATE_LIMIT_URL
+            value: "redis://firecrawl-redis.firecrawl.svc.cluster.local:6379"
+          # RabbitMQ configuration
+          - name: NUQ_RABBITMQ_URL
+            value: "amqp://firecrawl-rabbitmq.firecrawl.svc.cluster.local:5672"
+          # Playwright configuration
+          - name: PLAYWRIGHT_MICROSERVICE_URL
+            value: "http://firecrawl-playwright.firecrawl.svc.cluster.local:3000/scrape"
+          # PostgreSQL configuration
+          - name: POSTGRES_HOST
+            value: "firecrawl-postgres.firecrawl.svc.cluster.local"
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_USER
+            value: "postgres"
+          - name: POSTGRES_PASSWORD
+            value: "postgres"
+          - name: POSTGRES_DB
+            value: "postgres"
+          # Application configuration
+          - name: USE_DB_AUTHENTICATION
+            value: "false"
+          - name: NUM_WORKERS_PER_QUEUE
+            value: "4"
+          - name: CRAWL_CONCURRENT_REQUESTS
+            value: "5"
+          - name: MAX_CONCURRENT_JOBS
+            value: "3"
+          - name: BROWSER_POOL_SIZE
+            value: "3"
+          - name: ENV
+            value: "local"
+          # Bull Queue admin UI key
+          - name: BULL_AUTH_KEY
+            value: "firecrawl-admin"
+      service:
+        type: ClusterIP
+        port: 3002
+        targetPort: 3002
+        portName: http
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /v0/health/liveness
+            port: 3002
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /v0/health/readiness
+            port: 3002
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /v0/health/liveness
+            port: 3002
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 30
+
+    # No persistent storage needed for API
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    # No database via generic-app - using separate deployment
+    postgres:
+      enabled: false
+
+    # No secrets via 1Password for now
+    secrets:
+      enabled: false
+
+    # Authentik proxy
+    authentik:
+      enabled: true
+      category: "AI & Automation"
+      displayName: "Firecrawl"
+      externalHost: "https://firecrawl.gateway.services.apocrathia.com"
+      icon: "https://raw.githubusercontent.com/mendableai/firecrawl/main/apps/www/public/og.png"
+
+    # No HTTPRoute - Authentik proxy handles routing
+    httproute:
+      enabled: false

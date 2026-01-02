@@ -1,0 +1,104 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: firecrawl-postgres
+  namespace: firecrawl
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.43"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: firecrawl-postgres
+      namespace: firecrawl
+      # Postgres needs writable filesystem and init scripts may need root
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        runAsNonRoot: false
+        readOnlyRootFilesystem: false
+        allowPrivilegeEscalation: false
+      # Custom nuq-postgres image with pg_cron extension
+      # renovate: datasource=docker depName=ghcr.io/firecrawl/nuq-postgres
+      image: ghcr.io/firecrawl/nuq-postgres:latest
+      container:
+        name: postgres
+        port: 5432
+        env:
+          - name: POSTGRES_USER
+            value: "postgres"
+          - name: POSTGRES_PASSWORD
+            value: "postgres"
+          - name: POSTGRES_DB
+            value: "postgres"
+          # Required for postgres to init properly in a subdirectory
+          - name: PGDATA
+            value: "/var/lib/postgresql/data/pgdata"
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      service:
+        type: ClusterIP
+        port: 5432
+        targetPort: 5432
+        portName: postgres
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - pg_isready
+              - -U
+              - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - pg_isready
+              - -U
+              - postgres
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+
+    # Persistent storage for PostgreSQL data
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false

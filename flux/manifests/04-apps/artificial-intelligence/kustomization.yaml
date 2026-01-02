@@ -8,6 +8,7 @@ metadata:
 resources:
   - kagent
   - agents
+  - firecrawl
   - flowise
   # - guardrails-ai
   - jupyterhub
