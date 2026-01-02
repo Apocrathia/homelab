@@ -7,3 +7,6 @@ metadata:
 resources:
   - homelab
   - search
+  - media
+  - infrastructure
+  - git

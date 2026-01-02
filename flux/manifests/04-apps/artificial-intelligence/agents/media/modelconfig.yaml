@@ -1,0 +1,13 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: ModelConfig
+metadata:
+  name: media-agent-model
+  namespace: kagent
+spec:
+  provider: OpenAI
+  model: qwen3
+  openAI:
+    baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
+  apiKeySecret: media-agent-secrets
+  apiKeySecretKey: litellm-api-key

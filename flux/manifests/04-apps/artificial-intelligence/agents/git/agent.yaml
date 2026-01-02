@@ -1,0 +1,55 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: git-agent
+  namespace: kagent
+spec:
+  description: Git platform agent for GitHub and GitLab repository management
+  type: Declarative
+  declarative:
+    modelConfig: git-agent-model
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: github-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - enable_toolset
+            - get_toolset_tools
+            - list_available_toolsets
+      - type: McpServer
+        mcpServer:
+          name: gitlab-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - list_projects
+            - get_project
+            - list_merge_requests
+            - get_merge_request
+            - list_issues
+            - get_issue
+            - list_pipelines
+            - get_pipeline
+    systemMessage: |
+      You are a Git platform specialist with access to both GitHub and GitLab.
+
+      You have access to:
+      - GitHub: Repositories, issues, pull requests, code search, actions, releases
+      - GitLab: Projects, merge requests, issues, pipelines, CI/CD
+
+      Capabilities:
+      - Search repositories and code across both platforms
+      - View and manage issues and pull/merge requests
+      - Check CI/CD pipeline status
+      - Browse repository contents and file history
+      - Create branches, commits, and PRs/MRs
+
+      Guidelines:
+      - When searching, clarify which platform (GitHub vs GitLab) if not specified
+      - Provide direct links to issues, PRs, and repositories when referencing them
+      - Be careful with write operations - confirm before creating PRs or modifying issues
+      - Summarize key information clearly (open issues, failing pipelines, review status)
+      - For code search, provide file paths and relevant context

@@ -1,0 +1,30 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: plex-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: plex-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-plex-mcp-server-proxy.mcp-plex.svc.cluster.local:8080/mcp"
+  description: "Plex Media Server - library management, playback control, media search"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: servarr-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: servarr-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-servarr-mcp-proxy.mcp-servarr.svc.cluster.local:8080/mcp"
+  description: "Servarr - Sonarr and Radarr integration for TV and movie management"
