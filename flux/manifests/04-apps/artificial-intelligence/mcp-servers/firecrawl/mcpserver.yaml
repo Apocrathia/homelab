@@ -44,4 +44,4 @@ spec:
             - name: HOME
               value: "/tmp"
             - name: FIRECRAWL_API_URL
-              value: "http://firecrawl-api.firecrawl.svc.cluster.local:3002"
+              value: "http://firecrawl.firecrawl.svc.cluster.local:3002"
