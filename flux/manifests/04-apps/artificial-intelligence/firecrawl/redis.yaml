@@ -1,0 +1,83 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: firecrawl-redis
+  namespace: firecrawl
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.43"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: firecrawl-redis
+      namespace: firecrawl
+      image: redis:alpine
+      args:
+        - redis-server
+        - --bind
+        - "0.0.0.0"
+        - --save
+        - ""
+        - --appendonly
+        - "no"
+      container:
+        name: redis
+        port: 6379
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: redis
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - redis-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - redis-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
