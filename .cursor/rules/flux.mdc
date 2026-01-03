@@ -86,7 +86,21 @@ flux/
 ## Best Practices
 
 1. Version all deployments
-2. Use semantic versioning for images
+2. **Never use `latest` or mutable image tags** - they're garbage for GitOps
+   - `latest` is unpredictable, unreproducible, and breaks rollbacks
+   - Always pin to explicit semantic versions (e.g., `v1.2.3`, `1.2.3`)
+   - If you see `latest` in a manifest, fix that shit immediately
+   - Renovate handles version bumps - let it do its job
+   - **Add Renovate comments** so versions get tracked:
+     ```yaml
+     # Docker images
+     # renovate: datasource=docker depName=ghcr.io/org/image
+     tag: v1.2.3
+
+     # Helm charts
+     # renovate: datasource=helm registryUrl=https://charts.example.com depName=my-chart
+     version: 1.2.3
+     ```
 3. Implement progressive delivery
 4. Regular pruning of unused resources
 5. Maintain documentation
