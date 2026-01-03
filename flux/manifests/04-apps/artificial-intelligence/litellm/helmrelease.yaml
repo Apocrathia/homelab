@@ -121,12 +121,17 @@ spec:
       enabled: true
       auth:
         enabled: true
+      image:
+        registry: public.ecr.aws
+        repository: docker/library/redis
+        # renovate: datasource=docker depName=public.ecr.aws/docker/library/redis
+        tag: 8.4.0-bookworm
 
     # Add sidecar containers
     extraContainers:
       - name: mlflow
-        # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
-        image: registry.suse.com/suse/kubectl:1.35.0
+        # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
+        image: ghcr.io/trueforge-org/kubectl:1.35.0
         command: ["/bin/bash", "-c"]
         args:
           - |

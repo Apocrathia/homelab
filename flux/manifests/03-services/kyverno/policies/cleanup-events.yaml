@@ -32,4 +32,4 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "48h0m0s"
-  schedule: "0 * * * *"
+  schedule: "0 * * * *" # Hourly

@@ -9,7 +9,8 @@ metadata:
     ignore-check.kube-linter.io/no-read-only-root-fs: "Containers require writable root filesystem for downloading and managing ZIM files"
     ignore-check.kube-linter.io/run-as-non-root: "updater container requires root for package installation; update-library runs as non-root"
 spec:
-  schedule: "0 2 * * *" # Daily at 2 AM
+  schedule: "0 2 * * *" # 0200
+  timeZone: "America/Denver"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3

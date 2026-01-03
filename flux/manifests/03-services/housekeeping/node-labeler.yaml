@@ -5,7 +5,8 @@ metadata:
   name: node-labeler
   namespace: kube-system
 spec:
-  schedule: "0 */2 * * *" # Run every 2 hours
+  schedule: "0 */2 * * *" # Every 2 hours
+  timeZone: "America/Denver"
   concurrencyPolicy: Forbid # Prevent overlapping jobs
   jobTemplate:
     spec:
@@ -16,8 +17,8 @@ spec:
           restartPolicy: Never
           containers:
             - name: kubectl
-              # renovate: datasource=docker depName=registry.suse.com/suse/kubectl
-              image: registry.suse.com/suse/kubectl:1.35.0
+              # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
+              image: ghcr.io/trueforge-org/kubectl:1.35.0
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
