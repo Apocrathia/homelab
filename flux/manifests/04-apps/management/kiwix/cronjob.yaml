@@ -5,7 +5,6 @@ metadata:
   name: kiwix-zim-updater
   namespace: kiwix
   annotations:
-    ignore-check.kube-linter.io/latest-tag: "Alpine and kiwix-tools images use latest tags for automatic updates"
     ignore-check.kube-linter.io/no-read-only-root-fs: "Containers require writable root filesystem for downloading and managing ZIM files"
     ignore-check.kube-linter.io/run-as-non-root: "updater container requires root for package installation; update-library runs as non-root"
 spec:
@@ -29,8 +28,8 @@ spec:
               type: RuntimeDefault
           containers:
             - name: updater
-              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
-              image: public.ecr.aws/docker/library/alpine:latest
+              # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
+              image: public.ecr.aws/docker/library/alpine:3.21
               command:
                 - sh
                 - -c
@@ -69,7 +68,7 @@ spec:
                   mountPath: /tmp
             - name: update-library
               # renovate: datasource=docker depName=ghcr.io/kiwix/kiwix-tools
-              image: ghcr.io/kiwix/kiwix-tools:latest
+              image: ghcr.io/kiwix/kiwix-tools:3.8.1
               command:
                 - sh
                 - -c
