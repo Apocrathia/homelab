@@ -104,7 +104,8 @@ spec:
               cpu: 2000m
               memory: 2Gi
         - name: setup-nginx-config
-          image: alpine:latest
+          # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
+          image: public.ecr.aws/docker/library/alpine:3.23.2
           command: ["/bin/sh", "-c"]
           args:
             - |
