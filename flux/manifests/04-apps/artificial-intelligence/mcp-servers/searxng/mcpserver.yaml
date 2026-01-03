@@ -13,7 +13,7 @@ metadata:
     description: "SearXNG MCP server for web search capabilities"
 spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
-  image: docker.io/isokoliuk/mcp-searxng:latest
+  image: docker.io/isokoliuk/mcp-searxng:0.8
   # Use stdio transport with streamable-http proxy mode
   # This runs mcp-searxng in stdio mode while ToolHive proxy handles HTTP/session management
   # Exposes /mcp endpoint, compatible with LiteLLM's transport: "http"
@@ -36,7 +36,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
-          image: docker.io/isokoliuk/mcp-searxng:latest
+          image: docker.io/isokoliuk/mcp-searxng:0.8
           stdin: true
           env:
             - name: SEARXNG_URL
