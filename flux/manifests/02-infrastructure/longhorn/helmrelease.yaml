@@ -97,7 +97,7 @@ spec:
 
       # Cleanup settings
       autoCleanupSystemGeneratedSnapshot: true
-      autoCleanupRecurringJobBackupSnapshot: false # Disabled to prevent snapshots from being deleted before backups complete
+      autoCleanupRecurringJobBackupSnapshot: true # Auto-delete backup snapshots after backup completes
       removeSnapshotsDuringFilesystemTrim: true
       snapshotMaxCount: "5" # Limit snapshots per volume (default 250 is too high, prevents accumulation)
 
