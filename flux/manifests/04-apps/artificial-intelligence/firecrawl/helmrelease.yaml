@@ -25,9 +25,8 @@ spec:
     app:
       name: firecrawl
       namespace: firecrawl
-      # Using official ghcr.io image with latest tag (only tag they publish)
       # renovate: datasource=docker depName=ghcr.io/firecrawl/firecrawl
-      image: ghcr.io/firecrawl/firecrawl:latest
+      image: ghcr.io/firecrawl/firecrawl@sha256:cc33486883a20edf0b6c6ecb272e08d5b7d6205fc56529f3ddbe1ae77bc5c200
       container:
         name: firecrawl
         port: 3002
