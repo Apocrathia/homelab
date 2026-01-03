@@ -28,9 +28,8 @@ spec:
         runAsNonRoot: false
         readOnlyRootFilesystem: false
         allowPrivilegeEscalation: false
-      # Custom nuq-postgres image with pg_cron extension
       # renovate: datasource=docker depName=ghcr.io/firecrawl/nuq-postgres
-      image: ghcr.io/firecrawl/nuq-postgres:latest
+      image: ghcr.io/firecrawl/nuq-postgres@sha256:692bc5b0cc757093cb103baa26be3429423d7aa4c72ea4e40187d52d2b3ddb17
       container:
         name: postgres
         port: 5432
