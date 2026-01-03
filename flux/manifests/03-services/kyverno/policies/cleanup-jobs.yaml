@@ -33,7 +33,7 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "24h0m0s"
-  schedule: "0 * * * *"
+  schedule: "0 * * * *" # Hourly
 ---
 apiVersion: kyverno.io/v2
 kind: ClusterCleanupPolicy
@@ -69,4 +69,4 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "168h0m0s"
-  schedule: "0 * * * *"
+  schedule: "0 * * * *" # Hourly

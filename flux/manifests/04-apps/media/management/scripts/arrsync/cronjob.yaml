@@ -5,7 +5,8 @@ metadata:
   name: arrsync
   namespace: arrsync
 spec:
-  schedule: "0 2 * * *" # Daily at 2 AM
+  schedule: "0 2 * * *" # 0200
+  timeZone: "America/Denver"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3

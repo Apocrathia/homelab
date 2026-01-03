@@ -52,7 +52,8 @@ metadata:
   name: immich-import
   namespace: immich
 spec:
-  schedule: "0 3 * * *" # Daily at 3 AM
+  schedule: "0 3 * * *" # 0300
+  timeZone: "America/Denver"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
