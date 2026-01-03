@@ -65,8 +65,8 @@ spec:
       # This init container updates the settings.yml file to enable JSON format search
       initContainers:
         - name: update-settings
-          # renovate: datasource=docker depName=mikefarah/yq
-          image: mikefarah/yq:4.50.1
+          # renovate: datasource=docker depName=ghcr.io/trueforge-org/go-yq
+          image: ghcr.io/trueforge-org/go-yq:4.50.1
           command: ["sh", "-c"]
           args:
             - |
