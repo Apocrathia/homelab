@@ -138,13 +138,9 @@ spec:
     secrets:
       enabled: false
 
-    # Authentik proxy
+    # No Authentik proxy
     authentik:
-      enabled: true
-      category: "AI & Automation"
-      displayName: "Firecrawl"
-      externalHost: "https://firecrawl.gateway.services.apocrathia.com"
-      icon: "https://raw.githubusercontent.com/mendableai/firecrawl/main/apps/www/public/og.png"
+      enabled: false
 
     # No HTTPRoute - Authentik proxy handles routing
     httproute:
