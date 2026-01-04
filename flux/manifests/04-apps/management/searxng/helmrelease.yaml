@@ -66,7 +66,7 @@ spec:
       initContainers:
         - name: update-settings
           # renovate: datasource=docker depName=ghcr.io/trueforge-org/go-yq
-          image: ghcr.io/trueforge-org/go-yq:4.50.1
+          image: ghcr.io/trueforge-org/go-yq:4.48.2
           command: ["sh", "-c"]
           args:
             - |

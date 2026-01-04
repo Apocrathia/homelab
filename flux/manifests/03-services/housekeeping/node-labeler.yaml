@@ -18,7 +18,7 @@ spec:
           containers:
             - name: kubectl
               # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
-              image: ghcr.io/trueforge-org/kubectl:1.35.0
+              image: ghcr.io/trueforge-org/kubectl:1.31.1
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
