@@ -123,9 +123,9 @@ spec:
         enabled: true
       image:
         registry: public.ecr.aws
-        repository: docker/library/redis
-        # renovate: datasource=docker depName=public.ecr.aws/docker/library/redis
-        tag: 8.4.0-bookworm
+        repository: bitnami/redis
+        # renovate: datasource=docker depName=public.ecr.aws/bitnami/redis
+        tag: "8.4.0"
 
     # Add sidecar containers
     extraContainers:
