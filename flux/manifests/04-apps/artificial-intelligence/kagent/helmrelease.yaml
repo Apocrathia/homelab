@@ -98,6 +98,13 @@ spec:
     tools:
       grafana-mcp:
         enabled: true
+        image:
+          # Use official Grafana image instead of kagent's default mcp/grafana:latest
+          registry: docker.io
+          repository: grafana/mcp-grafana
+          # renovate: datasource=docker depName=docker.io/grafana/mcp-grafana
+          tag: "0.7.10"
+          pullPolicy: IfNotPresent
       querydoc:
         enabled: true
 
