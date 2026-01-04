@@ -2,7 +2,8 @@
 # Create Git tag when Chart.yaml is updated
 create-chart-tag:
   stage: tag
-  image: alpine/git:latest
+  # renovate: datasource=docker depName=alpine/git
+  image: alpine/git:2.52.0
   before_script:
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
