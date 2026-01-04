@@ -1,12 +1,13 @@
 ---
 # Daily backup of all volumes
+# All times are UTC (cluster timezone). MST = UTC-7.
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: daily-backup
   namespace: longhorn-system
 spec:
-  cron: "@daily"
+  cron: "0 7 * * *" # 0000 MST = 0700 UTC
   task: "backup"
   groups:
     - default
@@ -20,7 +21,7 @@ metadata:
   name: weekly-trim
   namespace: longhorn-system
 spec:
-  cron: "@weekly"
+  cron: "0 8 * * 0" # 0100 MST Sunday = 0800 UTC Sunday
   task: "filesystem-trim"
   groups:
     - default
@@ -29,14 +30,14 @@ spec:
 ---
 # Daily snapshot cleanup to remove system-generated snapshots
 # This prevents accumulation of snapshots that weren't cleaned up automatically
-# Runs at 11 PM (before backups at midnight, giving backups plenty of time to complete)
+# Runs at 2300 MST (before backups at 0000)
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: snapshot-cleanup
   namespace: longhorn-system
 spec:
-  cron: "0 23 * * *" # Run daily at 11 PM (before backups at midnight)
+  cron: "0 6 * * *" # 2300 MST = 0600 UTC
   task: "snapshot-cleanup"
   groups:
     - default
@@ -44,14 +45,14 @@ spec:
 ---
 # Snapshot deletion to enforce retention policy (keep only 3 most recent)
 # This deletes old snapshots beyond the retention limit
-# Runs daily at 2 AM (after backup job completes at midnight)
+# Runs daily at 0200 MST (after backup job completes at 0000)
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: snapshot-delete
   namespace: longhorn-system
 spec:
-  cron: "0 2 * * *" # Run daily at 2 AM (after backups complete)
+  cron: "0 9 * * *" # 0200 MST = 0900 UTC
   task: "snapshot-delete"
   groups:
     - default
