@@ -524,7 +524,7 @@ To use LiteLLM as MCP gateway in Cursor, add to `~/.cursor/mcp.json`:
 
 ## Documentation
 
-Create README.md following `docs/DOCUMENTATION-STANDARDS.md`:
+Create README.md following `docs/documentation-standards.md`:
 
 - Navigation back to MCP servers README
 - Link to official MCP server documentation
@@ -532,3 +532,19 @@ Create README.md following `docs/DOCUMENTATION-STANDARDS.md`:
 - Configuration (env vars, auth headers)
 - Access URLs (gateway and internal)
 - Troubleshooting commands
+
+# Continuous Improvement
+
+After completing an MCP server deployment:
+
+1. **Identify patterns**: Note common issues with transport modes, authentication, or networking
+2. **Update ToolHive docs**: Suggest improvements to MCPServer examples if gaps found
+3. **Update LiteLLM config**: Suggest additions to mcp_tools configuration patterns
+4. **Refine this prompt**: Suggest additions to this prompt based on learnings
+
+Format improvement suggestions as:
+
+- **Pattern observed**: What issue appeared during deployment
+- **Root cause**: Why the issue exists (transport quirks, auth requirements, etc.)
+- **Suggested fix**: Specific change to deployment patterns/prompt
+- **Validation step**: How to verify this works in future deployments

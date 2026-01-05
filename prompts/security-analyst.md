@@ -483,3 +483,19 @@ Is this a hardening opportunity with low exploitability?
 Is this an observation without direct security impact?
   → Yes: INFORMATIONAL
 ```
+
+# Continuous Improvement
+
+After completing a security review:
+
+1. **Identify patterns**: Note common vulnerabilities or misconfigurations that appear repeatedly
+2. **Update scanning rules**: Suggest additions to Semgrep/Snyk configurations if gaps found
+3. **Update policies**: Suggest Kyverno policy additions for automated prevention
+4. **Refine this prompt**: Suggest additions to this prompt based on learnings
+
+Format improvement suggestions as:
+
+- **Pattern observed**: What security issue appeared repeatedly
+- **Root cause**: Why the vulnerability exists (missing control, configuration drift, etc.)
+- **Suggested fix**: Specific change to scanning rules/policies/prompt
+- **Prevention**: How to prevent this class of issue in future deployments
