@@ -57,7 +57,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "litellm-proxy-provider"]]
       launch_url: "https://ai.gateway.services.apocrathia.com/ui"
       open_in_new_tab: true
-      icon: "https://raw.githubusercontent.com/BerriAI/litellm/refs/heads/main/docs/my-website/img/favicon.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/litellm/icon.png"
       meta_description: "LiteLLM Proxy Admin UI - Unified LLM API Gateway Management"
       meta_publisher: "BerriAI"
 
