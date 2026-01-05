@@ -124,18 +124,9 @@ cluster:
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
 ---
-# OOM Controller tuning - extremely conservative to prevent killing pods
-# Default: memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")
-#
-# Current settings (very conservative):
-# - Threshold raised to 75% (from default 12%) - only trigger on extreme memory pressure
-# - 10 minute cooldown (from default 500ms) - prevent rapid-fire killing
-# - 120s sample interval (from default 500ms) - much less frequent checks
-# - cgroupRankingExpression prioritizes BestEffort pods and avoids killing System/Podruntime/Guaranteed pods
-#
-# Note: If pods are still being killed, consider disabling entirely by setting triggerExpression to 'false'
+# Disable Talos's broke-ass OOM controller
 apiVersion: v1alpha1
 kind: OOMConfig
-triggerExpression: 'memory_full_avg10 > 75.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("10m")'
-cgroupRankingExpression: "memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] * double(memory_current.orValue(0u)))"
-sampleInterval: 120s
+triggerExpression: "false"
+cgroupRankingExpression: "0.0"
+sampleInterval: "5s"
