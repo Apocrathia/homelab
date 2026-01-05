@@ -41,12 +41,6 @@ Create a Kubernetes secret `plex-mcp-secrets` in the `mcp-plex` namespace with:
 - `plex-token`: Plex authentication token (Long-Lived Access Token)
 - `plex-username`: Plex username (optional)
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for Plex API communication
-
 ### Security
 
 - **Permission Profile**: Network access for Plex API

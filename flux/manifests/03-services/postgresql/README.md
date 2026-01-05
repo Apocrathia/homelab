@@ -28,19 +28,12 @@ This deployment provides the CloudNativePG operator which enables:
 - **Security**: Non-root execution with proper security contexts
 - **Resource management**: Configurable CPU/memory limits
 
-### Resource Configuration
-
-- **CPU Requests**: 100m
-- **CPU Limits**: 500m
-- **Memory Requests**: 256Mi
-- **Memory Limits**: 512Mi
-
 ## Managed Clusters
 
 The operator currently manages:
 
 - **n8n-postgres**: PostgreSQL cluster for n8n workflow automation
-  - 1 instance with Longhorn storage
+  - Longhorn storage
   - Integrated with 1Password secrets
   - Cilium network policies for security
 
@@ -70,11 +63,8 @@ metadata:
   name: my-postgres
   namespace: my-namespace
 spec:
-  # imageName is optional - defaults to ghcr.io/cloudnative-pg/postgresql:17.5
-  imageName: ghcr.io/cloudnative-pg/postgresql:16 # Or omit for default
   instances: 1
   storage:
-    size: 10Gi
     storageClass: longhorn
   bootstrap:
     initdb:
@@ -82,7 +72,7 @@ spec:
       owner: myuser
 ```
 
-**Note**: If `imageName` is not specified, the operator will use the default PostgreSQL image (`ghcr.io/cloudnative-pg/postgresql:17.5` for CloudNativePG v1.27.0). You can override this default by setting the `POSTGRES_IMAGE_NAME` configuration in the operator's ConfigMap.
+See official documentation for complete configuration options including image versions and storage sizing.
 
 ### Key Features for Applications
 
@@ -207,10 +197,8 @@ metadata:
   name: another-app-postgres
   namespace: another-app
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:16
   instances: 2 # For high availability
   storage:
-    size: 20Gi
     storageClass: longhorn
   bootstrap:
     initdb:
@@ -218,16 +206,4 @@ spec:
       owner: anotherapp_user
 ```
 
-## Resources
-
-- [CloudNativePG Documentation](https://cloudnative-pg.io/)
-- [Helm Chart Documentation](https://github.com/cloudnative-pg/charts)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-
-## Version Information
-
-- **Operator Image**: `ghcr.io/cloudnative-pg/cloudnative-pg:1.27.0`
-- **Helm Chart Version**: 0.26.0
-- **PostgreSQL Version**: 16 (default for new clusters)
-- **Storage Class**: Longhorn
-- **Monitoring**: Prometheus PodMonitor integration
+See `helmrelease.yaml` for complete operator configuration.

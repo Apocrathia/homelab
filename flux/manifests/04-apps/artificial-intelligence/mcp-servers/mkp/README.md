@@ -21,12 +21,6 @@ This deployment includes:
 
 ## Configuration
 
-### Resources
-
-- **CPU**: 100m requests, 200m limits
-- **Memory**: 128Mi requests, 256Mi limits
-- **Network Access**: Required for Kubernetes API communication
-
 ### Security
 
 - **Permission Profile**: Network access for cluster operations

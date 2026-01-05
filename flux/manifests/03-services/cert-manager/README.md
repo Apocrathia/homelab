@@ -328,9 +328,7 @@ kubectl logs -n cert-manager deployment/cert-manager-webhook
 
 ## Resource Requirements
 
-- **Controller**: 100m-500m CPU, 256Mi-1Gi memory
-- **CA Injector**: 50m-200m CPU, 128Mi-512Mi memory
-- **Webhook**: 50m-200m CPU, 128Mi-256Mi memory
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ## External Resources
 

@@ -31,8 +31,8 @@ Create a 1Password item:
 
 ### Storage
 
-- **Configuration Volume**: 1Gi Longhorn volume mounted at `/etc/searxng` for settings and configuration files
-- **Cache Volume**: 5Gi Longhorn volume mounted at `/var/cache/searxng` for search result caching
+- **Configuration Volume**: Longhorn volume mounted at `/etc/searxng` for settings and configuration files (size configured in `helmrelease.yaml`)
+- **Cache Volume**: Longhorn volume mounted at `/var/cache/searxng` for search result caching (size configured in `helmrelease.yaml`)
 
 ### Access
 

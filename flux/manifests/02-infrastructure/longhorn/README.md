@@ -134,17 +134,15 @@ kubectl get backups -n longhorn-system
 
 ### Storage Settings
 
-- **Default Replica Count**: 2
+- **Default Replica Count**: Configured in `helmrelease.yaml`
 - **Data Locality**: `best-effort` (replicas can be on different nodes for better availability)
 - **Storage Over-provisioning**: 100%
-- **Snapshot Retention**: 5 snapshots max per volume
+- **Snapshot Retention**: Configured in `helmrelease.yaml`
 - **Backup Retention**: Configurable via recurring jobs
 
 ### Resource Requirements
 
-- **Manager**: 100m-500m CPU, 256Mi-1Gi memory
-- **Engine**: 200m-1000m CPU, 512Mi-2Gi memory
-- **UI**: 50m-200m CPU, 128Mi-512Mi memory
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ### Node Configuration
 

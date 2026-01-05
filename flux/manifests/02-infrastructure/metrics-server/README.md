@@ -266,9 +266,7 @@ kubectl logs -n kube-system kube-apiserver
 
 ## Resource Requirements
 
-- **CPU**: 50m-200m per replica
-- **Memory**: 128Mi-512Mi per replica
-- **Storage**: None (in-memory metrics)
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ## Monitoring
 

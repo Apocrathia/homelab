@@ -94,7 +94,7 @@ PostgreSQL is managed by CloudNativePG:
 - Cluster: `jetkvm-postgres`
 - Service: `jetkvm-postgres-rw.jetkvm.svc.cluster.local:5432`
 - Database: `jetkvm`
-- Storage: 10Gi Longhorn
+- Storage: Longhorn (size configured in `helmrelease.yaml`)
 
 Prisma migrations run automatically via init container before the API starts.
 

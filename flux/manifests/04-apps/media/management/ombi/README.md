@@ -10,7 +10,7 @@ Request management system for Plex media server, allowing users to request movie
 - **Port**: 3579 (standard Ombi port)
 - **Authentication**: SSO through Authentik
 - **Storage**: Longhorn for configuration data
-- **Resources**: 256Mi-1Gi RAM, 100-500m CPU for web interface
+- **Resources**: Configured in `helmrelease.yaml`
 
 ## Access
 

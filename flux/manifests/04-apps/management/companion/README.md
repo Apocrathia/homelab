@@ -22,17 +22,17 @@ This application is deployed using the [generic-app Helm chart](../../../helm/ge
 
 ### Configuration Details
 
-- **Container Image**: `ghcr.io/bitfocus/companion/companion:v4.0.3`
-- **Persistent Storage**: 5Gi Longhorn volume mounted at `/companion`
+- **Persistent Storage**: Longhorn volume mounted at `/companion`
 - **Network Ports**:
   - HTTP interface on port 8000
   - Satellite communication on ports 16622 and 16623 (LoadBalancer service)
   - External LoadBalancer IP: `10.100.1.97`
-- **Resource Limits**: 100m-500m CPU, 1Gi-2Gi memory
+
+See `helmrelease.yaml` for complete deployment configuration.
 
 ### Storage
 
-The application uses a 5Gi Longhorn persistent volume to store:
+The application uses a Longhorn persistent volume to store:
 
 - Configuration files
 - Button layouts and settings

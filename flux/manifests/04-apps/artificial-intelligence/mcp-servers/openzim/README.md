@@ -30,12 +30,6 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 | ----------------------- | -------- | ------------------------------------------- |
 | `OPENZIM_MCP_TOOL_MODE` | `simple` | Tool mode: `simple` (default) or `advanced` |
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for optional features
-
 ### Security
 
 - **Permission Profile**: Network access

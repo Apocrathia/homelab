@@ -41,12 +41,6 @@ Create a Kubernetes secret `truenas-mcp-secrets` in the `mcp-truenas` namespace 
 - `truenas-url`: TrueNAS server URL (e.g., `https://truenas.local`)
 - `truenas-api-key`: TrueNAS API key (created in Settings → API Keys)
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for TrueNAS API communication
-
 ### Security
 
 - **Permission Profile**: Network access for TrueNAS API

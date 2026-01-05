@@ -37,12 +37,6 @@ The deployment includes a dedicated ServiceAccount with ClusterRole permissions 
 - Read notification resources (Alerts, Providers, Receivers)
 - Read core resources (pods, events, deployments)
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 128Mi requests, 512Mi limits
-- **Network Access**: Required for in-cluster communication
-
 ### Security
 
 - **Permission Profile**: Network access for Kubernetes API

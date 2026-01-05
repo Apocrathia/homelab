@@ -118,11 +118,7 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 ### Resource Requirements
 
-- **Prometheus**: 500m-2000m CPU, 1Gi-4Gi memory
-- **Grafana**: 100m-500m CPU, 256Mi-1Gi memory
-- **Alertmanager**: 100m-500m CPU, 256Mi-512Mi memory
-- **Node Exporter**: 50m-100m CPU, 64Mi-128Mi memory per node
-- **Kube State Metrics**: 100m-200m CPU, 256Mi-512Mi memory
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ### Storage Configuration
 

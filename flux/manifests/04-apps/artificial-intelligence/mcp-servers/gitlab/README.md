@@ -37,12 +37,6 @@ Create a Kubernetes secret `gitlab-mcp-secrets` in the `mcp-gitlab` namespace wi
 
 - `gitlab-token`: GitLab Personal Access Token with `api`, `read_user`, and `read_repository` scopes
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for GitLab API communication
-
 ### Security
 
 - **Permission Profile**: Network access for GitLab API

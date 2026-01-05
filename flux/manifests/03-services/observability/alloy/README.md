@@ -77,12 +77,6 @@ Each log entry includes:
 - Integrates with your Prometheus stack
 - Uses your existing security patterns
 
-## Resource Requirements
-
-- **CPU**: 100m-500m per node
-- **Memory**: 128Mi-512Mi per node
-- **Storage**: Minimal (logs are streamed, not stored)
-
 ## Security
 
 - **Non-root execution**: Runs as user 10001
