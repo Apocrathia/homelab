@@ -50,6 +50,13 @@ spec:
         capabilities:
           drop: ["ALL"]
 
+      # Extra ports for webhook receivers
+      extraPorts:
+        - name: trivy-webhook
+          port: 8080
+          targetPort: 8080
+          protocol: TCP
+
       # Extra volume mounts for WAL storage
       mounts:
         extra:

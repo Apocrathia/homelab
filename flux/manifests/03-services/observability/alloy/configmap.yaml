@@ -150,3 +150,66 @@ data:
         url = "http://loki-write.loki-system.svc:3100/loki/api/v1/push"
       }
     }
+
+    // ==========================================================================
+    // Trivy Webhook Receiver
+    // Receives vulnerability and security reports from Trivy operator via webhook
+    // ==========================================================================
+
+    loki.source.api "trivy_webhook" {
+      http {
+        listen_address = "0.0.0.0"
+        listen_port    = 8080
+      }
+      labels = {
+        source = "trivy",
+        job    = "trivy-operator",
+      }
+      forward_to = [loki.process.trivy_reports.receiver]
+    }
+
+    loki.process "trivy_reports" {
+      // Extract top-level fields from Trivy webhook payload
+      stage.json {
+        expressions = {
+          verb = "Verb",
+        }
+      }
+
+      // Add verb as label (update/delete)
+      stage.labels {
+        values = {
+          verb = "",
+        }
+      }
+
+      // Extract metadata from the OperatorObject
+      stage.json {
+        source = ""
+        expressions = {
+          kind       = "OperatorObject.kind",
+          apiVersion = "OperatorObject.apiVersion",
+          name       = "OperatorObject.metadata.name",
+          namespace  = "OperatorObject.metadata.namespace",
+        }
+      }
+
+      // Add report metadata as labels for efficient querying
+      stage.labels {
+        values = {
+          report_kind = "kind",
+          report_name = "name",
+          namespace   = "namespace",
+        }
+      }
+
+      // Add static labels for organization
+      stage.static_labels {
+        values = {
+          cluster   = "kubernetes",
+          component = "security",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
