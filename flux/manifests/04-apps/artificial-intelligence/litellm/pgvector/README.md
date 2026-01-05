@@ -39,8 +39,6 @@ The following fields are required in `litellm-secrets` (`vaults/Secrets/items/li
 
 The `vector_store_id` in `litellm.yml` must reference an existing vector store created via the API. Unlike other providers (OpenAI, Bedrock), `pg_vector` does not support automatic vector store creation.
 
-**Current Vector Store ID**: `09beee6f-ed62-47c6-a161-dea9018a5a40`
-
 ## Initial Setup
 
 ### Creating a Vector Store

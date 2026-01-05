@@ -67,6 +67,10 @@ spec:
       name: litellm-secrets
       valuesKey: homeassistant-token
       targetPath: envVars.HOMEASSISTANT_TOKEN
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: vector-store-id
+      targetPath: envVars.VECTOR_STORE_ID
 
   values:
     # Allow ECR-hosted Bitnami images (they're mirrors of Docker Hub)
