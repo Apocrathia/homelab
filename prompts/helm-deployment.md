@@ -283,19 +283,21 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Follow documentation standards: `docs/DOCUMENTATION-STANDARDS.md`
 - Use README template: `docs/README-TEMPLATE.md`
 - Create or update `README.md` in the deployment directory
+- **Avoid duplicating tunable configuration**:
+  - Don't include resource limits, volume sizes, replica counts, or image versions - these get tuned and will drift
+  - Static values like URLs and hostnames are fine - they're set once and don't change
+  - Ask yourself: "Will someone adjust this value later?" If yes, it belongs only in the manifest
+  - GitOps means manifests ARE the source of truth for tunable configuration
 - Include:
   - Navigation breadcrumb back to category README
   - Links to official documentation
-  - Overview of key features
-  - Essential configuration patterns (not values)
-    - Include links to specific documentation for configuration patterns as needed
-  - **Configuration method**: Clearly document whether configuration is done via web UI, env vars, or config files
-  - **Secrets requirements**: Document whether secrets are required or optional, and what they're used for (if needed)
+  - Brief overview of what the application does
+  - External URL for access
+  - Configuration method (web UI vs env vars vs config files)
   - Authentication approach
-  - Initial setup steps based on how the application actually works
+  - Initial setup steps (if web UI configuration needed)
   - Troubleshooting commands
-- Keep documentation concise (50-150 lines target)
-- Reference adjacent manifests for complete configuration details
+- Keep documentation concise (40-80 lines target)
 - **Remove documentation** about configuration methods that aren't actually used by the application
 
 ## Pattern Improvement Feedback

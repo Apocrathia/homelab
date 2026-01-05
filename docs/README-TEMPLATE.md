@@ -8,7 +8,6 @@
 
 - **[Official Documentation](https://example.com/docs)** - Primary documentation source
 - **[GitHub Repository](https://github.com/example/repo)** - Source code and issues
-- **[Helm Chart](https://github.com/example/helm-charts)** - Deployment configuration
 
 ## Overview
 
@@ -16,73 +15,51 @@ This deployment includes:
 
 - [Key feature 1]
 - [Key feature 2]
-- [Key feature 3]
-- [Integration details]
+- [Integration details - e.g., Authentik SSO, Longhorn storage]
+
+## Access
+
+- **URL**: `https://[app-name].gateway.services.apocrathia.com`
 
 ## Configuration
 
-### 1Password Secrets
+[Describe configuration METHOD, not tunable values]
 
-Create a 1Password item:
+- **Web UI**: All configuration done through web interface after deployment
+- OR **Environment Variables**: Required env vars configured in helmrelease
+- OR **Config Files**: Application generates config on first run
 
-#### [app-name]-secrets (`vaults/Secrets/items/[app-name]-secrets`)
+See `helmrelease.yaml` for complete deployment configuration.
 
-- `[secret-key]`: [Description of what this secret is used for]
-- `[another-key]`: [Description]
+### Secrets
 
-### Storage
+[Only include if secrets are REQUIRED for startup - omit entire section if not needed]
 
-- **[Storage Type]**: [Description of storage usage]
-- **[Another Storage]**: [Description]
-
-### Access
-
-- **External URL**: `https://[app-name].gateway.services.apocrathia.com`
-- **Internal Service**: `http://[app-name].[namespace].svc.cluster.local:[port]`
+Create a 1Password item at path specified in helmrelease.yaml with required fields.
 
 ## Authentication
 
-[If applicable - describe how authentication works]
+[Brief description of auth approach]
 
-Authentication is handled through [method]:
+Uses Authentik [proxy/OIDC] provider for SSO.
 
-1. **[Step 1]**: [Description]
-2. **[Step 2]**: [Description]
+## Initial Setup
 
-## Security Considerations
+[Only if web UI or manual setup is required after deployment]
 
-[If applicable - security-specific notes]
-
-- **[Security Aspect]**: [Description]
-- **[Another Aspect]**: [Description]
+1. Access the web UI
+2. [Setup step]
+3. [Setup step]
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **[Issue Type]**
-
-   ```bash
-   # Check [component] status
-   kubectl -n [namespace] get [resource]
-
-   # View logs
-   kubectl -n [namespace] logs -l [selector]
-   ```
-
-2. **[Another Issue]**
-
-   ```bash
-   # Diagnostic command
-   kubectl -n [namespace] describe [resource] [name]
-   ```
-
-### Health Checks
-
 ```bash
-# Overall status
-kubectl -n [namespace] get pods,svc,pvc
+# Pod status
+kubectl get pods -n [namespace]
 
-# Specific component
-kubectl -n [namespace] get [resource] -l [selector]
+# Application logs
+kubectl logs -n [namespace] deployment/[app-name] -f
+
+# Check Authentik outpost (if using SSO)
+kubectl get pods -n authentik | grep [app-name]
 ```
