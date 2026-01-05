@@ -373,9 +373,7 @@ kubectl logs -n cilium-system -l io.cilium.gateway/owning-gateway=main-gateway
 
 ## Resource Requirements
 
-- **Gateway Controller**: 100m-500m CPU, 256Mi-1Gi memory
-- **Load Balancer**: 50m-200m CPU, 128Mi-512Mi memory
-- **Envoy Proxies**: 50m-200m CPU, 128Mi-256Mi memory per instance
+Resource limits and requests are configured in the Gateway manifests.
 
 ## External Resources
 

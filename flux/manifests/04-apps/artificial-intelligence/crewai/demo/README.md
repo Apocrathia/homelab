@@ -40,15 +40,15 @@ Create a 1Password item at `vaults/Secrets/items/crewai-secrets` with:
 
 ### Environment Variables
 
-| Variable           | Default                                    | Description                  |
-| ------------------ | ------------------------------------------ | ---------------------------- |
-| `BOT_NAME`         | `CrewAI Demo`                              | Bot display name             |
-| `RESPONSE_CHANCE`  | `0.3`                                      | Chance to respond unprompted |
-| `LITELLM_BASE_URL` | `http://litellm.litellm.svc.cluster.local` | LiteLLM proxy URL            |
-| `A2A_ENABLED`      | `true`                                     | Enable A2A server            |
-| `A2A_PORT`         | `10001`                                    | Port for A2A server          |
-| `A2A_BASE_URL`     | `http://demo.crewai.svc.cluster.local`     | Base URL for A2A agent card  |
-| `MEMORY_PATH`      | `/data/memory`                             | Path for memory persistence  |
+| Variable           | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `BOT_NAME`         | Bot display name                                         |
+| `RESPONSE_CHANCE`  | Chance to respond unprompted (configured in helmrelease) |
+| `LITELLM_BASE_URL` | LiteLLM proxy URL                                        |
+| `A2A_ENABLED`      | Enable A2A server                                        |
+| `A2A_PORT`         | Port for A2A server                                      |
+| `A2A_BASE_URL`     | Base URL for A2A agent card                              |
+| `MEMORY_PATH`      | Path for memory persistence (configured in helmrelease)  |
 
 ### Models
 

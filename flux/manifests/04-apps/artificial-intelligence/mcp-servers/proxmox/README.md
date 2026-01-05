@@ -45,12 +45,6 @@ Create a Kubernetes secret `proxmox-mcp-secrets` in the `mcp-proxmox` namespace 
 - `proxmox-token-name`: Proxmox API token ID
 - `proxmox-token-value`: Proxmox API token value
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for Proxmox API communication
-
 ### Security
 
 - **Permission Profile**: Network access for Proxmox API

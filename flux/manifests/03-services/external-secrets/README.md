@@ -39,8 +39,7 @@ The main use case in this homelab is to **write back secrets to 1Password** when
 The operator is configured with:
 
 - **CRDs**: Automatically installed for all External Secrets resources
-- **Resource Limits**: CPU 200m, Memory 256Mi (appropriate for homelab usage)
-- **Single Replica**: Efficient resource usage for homelab environment
+- **Resource Limits**: Configured in `helmrelease.yaml`
 - **GitHub Container Registry**: Uses `ghcr.io` images for reliable access
 
 ## Key Resources

@@ -36,7 +36,7 @@ Create a 1Password item:
 
 ### Storage
 
-- **Database Storage**: 10Gi Longhorn volume for PostgreSQL metadata
+- **Database Storage**: Longhorn volume for PostgreSQL metadata (size configured in `helmrelease.yaml`)
 - **Application Data**: Stored in PostgreSQL database (no additional volumes needed)
 
 ### Access

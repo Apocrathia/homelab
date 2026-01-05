@@ -20,13 +20,13 @@ Loki is deployed in monolithic mode with the following components:
 
 ## Storage Configuration
 
-Loki uses MinIO (deployed as a subchart) for object storage with the following configuration:
+Loki uses MinIO (deployed as a subchart) for object storage:
 
 - **Storage Type**: Object storage with MinIO backend
-- **Retention**: 31 days (744 hours)
-- **Storage Size**: 120Gi allocated
-- **Storage Class**: Longhorn (consistent with your cluster)
+- **Storage Class**: Longhorn
 - **Buckets**: `loki-data` (created automatically)
+
+See `helmrelease.yaml` for storage sizing and retention configuration.
 
 ## 1Password Setup
 
@@ -43,7 +43,7 @@ Before deploying Loki, you need to create the MinIO credentials in 1Password:
 
 - **Log Collection**: Automatic collection of container logs via Grafana Agent Operator
 - **Query Interface**: LogQL query language support
-- **Retention Management**: Automatic log cleanup after 31 days
+- **Retention Management**: Automatic log cleanup based on configured retention
 - **Monitoring**: Integrated with Prometheus stack via ServiceMonitor
 - **Security**: Non-root execution, proper security contexts
 
@@ -73,13 +73,6 @@ Before deploying Loki, you need to create the MinIO credentials in 1Password:
 - Integrates with your Prometheus stack
 - Follows your existing namespace and labeling conventions
 
-## Resource Requirements
-
-- **Loki**: 200m-1000m CPU, 512Mi-2Gi memory
-- **MinIO**: 100m-500m CPU, 256Mi-1Gi memory
-- **Grafana Agent Operator**: 100m-200m CPU, 128Mi-256Mi memory
-- **Rollout Operator**: 50m-100m CPU, 64Mi-128Mi memory
-
 ## Log Collection
 
 The Grafana Agent Operator will automatically:
@@ -90,18 +83,6 @@ The Grafana Agent Operator will automatically:
 - Handle log rotation and buffering
 
 ## Configuration
-
-### Log Retention
-
-- Default retention: 31 days
-- Configurable via `loki.table_manager.retention_period`
-- Automatic cleanup enabled
-
-### Storage
-
-- MinIO backend with 100Gi allocation
-- Filesystem storage for chunks and rules
-- Longhorn storage class for persistence
 
 ### Security
 
@@ -153,18 +134,3 @@ For external log sources (syslog, filebeat, etc.), you can:
 - MinIO is configured with `insecure: true` for internal cluster communication
 - All S3 storage configuration is handled automatically by the chart when MinIO is enabled
 - No sensitive values are stored in the Git repository
-
-## Next Steps
-
-1. **Loki is automatically configured in Grafana** as a datasource
-2. **Create Dashboards**: Build dashboards for log analysis and monitoring
-3. **Configure Alerts**: Set up alerts for log volume, errors, and system health
-4. **Custom Log Parsing**: Configure log parsing rules for specific applications
-5. **Log Retention Policies**: Adjust retention based on your compliance needs
-6. **External Sources**: Set up log forwarding from external systems
-
-## References
-
-- [Loki Helm Chart Documentation](https://grafana.com/docs/loki/next/installation/helm/)
-- [LogQL Query Language](https://grafana.com/docs/loki/next/logql/)
-- [Grafana Agent Operator](https://grafana.com/docs/agent/latest/static/flow/reference/components/grafana.agent.operator/)

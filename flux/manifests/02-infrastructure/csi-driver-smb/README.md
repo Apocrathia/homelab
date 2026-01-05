@@ -298,9 +298,7 @@ kubectl exec -it <pod-name> -- nslookup server
 
 ## Resource Requirements
 
-- **Controller**: 50m-200m CPU, 128Mi-512Mi memory
-- **Node Plugin**: 50m-100m CPU, 128Mi-256Mi memory per node
-- **Storage**: Minimal local storage requirements
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ## External Resources
 

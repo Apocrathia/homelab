@@ -79,8 +79,8 @@ The vector store ID persists as long as the PostgreSQL database persists. The da
 
 ## Storage
 
-- **Database Storage**: CloudNativePG PostgreSQL cluster with 5Gi Longhorn storage
-- **Application Source**: 1Gi Longhorn volume for repository and dependencies
+- **Database Storage**: CloudNativePG PostgreSQL cluster with Longhorn storage (size configured in `helmrelease.yaml`)
+- **Application Source**: Longhorn volume for repository and dependencies (size configured in `helmrelease.yaml`)
 
 ## Access
 

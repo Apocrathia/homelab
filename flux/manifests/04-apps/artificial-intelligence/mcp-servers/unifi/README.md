@@ -43,12 +43,6 @@ Create a Kubernetes secret `unifi-mcp-secrets` in the `mcp-unifi` namespace with
 - `username`: UniFi administrator username
 - `password`: UniFi administrator password
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for UniFi Controller communication
-
 ### Security
 
 - **Permission Profile**: Network access for UniFi API

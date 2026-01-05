@@ -35,12 +35,6 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 | `MCP_PATH`         | `/mcp`            | Endpoint path                              |
 | `A2A_MCP_DATA_DIR` | `/tmp/a2a-data`   | Data directory (ephemeral)                 |
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for A2A agent communication
-
 ### Security
 
 - **Permission Profile**: Network access for A2A agent endpoints

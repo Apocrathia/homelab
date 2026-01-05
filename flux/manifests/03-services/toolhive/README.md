@@ -28,11 +28,6 @@ This deployment includes:
 - Simplified configuration and management
 - Best for homelab environments
 
-### Resource Limits
-
-- **CPU**: 50m requests, 100m limits
-- **Memory**: 64Mi requests, 128Mi limits
-
 ## Security Considerations
 
 ### Permission Profiles

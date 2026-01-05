@@ -47,12 +47,6 @@ Create a Kubernetes secret `servarr-mcp-secrets` in the `mcp-servarr` namespace 
 
 **Note**: At least one service (Sonarr or Radarr) must be configured.
 
-### Resources
-
-- **CPU**: 100m requests, 500m limits
-- **Memory**: 256Mi requests, 512Mi limits
-- **Network Access**: Required for Sonarr/Radarr API communication
-
 ### Security
 
 - **Permission Profile**: Network access for media management APIs

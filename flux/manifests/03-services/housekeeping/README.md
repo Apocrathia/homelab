@@ -46,8 +46,7 @@ kubectl get nodes -o custom-columns=NAME:.metadata.name,LABELS:.metadata.labels
 
 ## Resource Requirements
 
-- **Node Labeler**: 50m-200m CPU, 128Mi-256Mi memory
-- **Cron Jobs**: Minimal resources, scheduled execution
+Resource requirements are configured in the CronJob manifests.
 
 ## External Resources
 

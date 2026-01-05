@@ -17,7 +17,7 @@ Tautulli is a Python-based monitoring and tracking tool for Plex Media Server wi
 - **Authentication**: Authentik SSO proxy for secure access
 - **Storage**: Longhorn persistent volume for configuration, logs, cache, and data
 - **Security**: Runs as root initially for setup, then drops to user 1000:1000
-- **Resources**: 256Mi-1Gi RAM, 100m-500m CPU for Python web application
+- **Resources**: Configured in `helmrelease.yaml`
 
 ## Features
 

@@ -320,10 +320,7 @@ For detailed chart documentation, see [Generic-App Chart README](../../../helm/g
 
 ## Resource Requirements
 
-- **Application**: 100m-500m CPU, 128Mi-512Mi memory
-- **Outpost**: 50m-200m CPU, 64Mi-256Mi memory
-- **Persistent Storage**: 10Gi Longhorn volume
-- **Shared Storage**: 1Gi SMB mount
+Resource requirements are configured in `helmrelease.yaml`.
 
 ## External Resources
 

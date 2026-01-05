@@ -25,7 +25,7 @@ This deployment includes:
 
 ### Storage
 
-- **Configuration Volume**: Longhorn volume at `/config` (10Gi)
+- **Configuration Volume**: Longhorn volume at `/config` (size configured in `helmrelease.yaml`)
 - **Database**: SQLite database stored at `/config/tunarr/db.db`
 
 ### Environment Variables

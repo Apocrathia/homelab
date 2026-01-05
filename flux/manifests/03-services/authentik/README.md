@@ -113,10 +113,7 @@ Authentik uses a blueprint system for GitOps-driven configuration:
 
 ### Resource Requirements
 
-- **Server**: 200m-1000m CPU, 512Mi-2Gi memory
-- **Worker**: 100m-500m CPU, 256Mi-1Gi memory
-- **PostgreSQL**: 200m-1000m CPU, 512Mi-2Gi memory
-- **Redis**: 100m-200m CPU, 256Mi-512Mi memory
+Resource limits and requests are configured in `helmrelease.yaml`.
 
 ## Access and Usage
 

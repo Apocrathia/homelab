@@ -31,12 +31,6 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 | ------------- | ----------------------------------------------- | ------------------------- |
 | `SEARXNG_URL` | `http://searxng.searxng.svc.cluster.local:8080` | Internal SearXNG instance |
 
-### Resources
-
-- **CPU**: 100m requests, 200m limits
-- **Memory**: 128Mi requests, 256Mi limits
-- **Network Access**: Required for SearXNG queries
-
 ### Security
 
 - **Permission Profile**: Network access for search queries

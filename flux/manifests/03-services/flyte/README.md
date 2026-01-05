@@ -38,8 +38,8 @@ Create a 1Password item:
 
 ### Storage
 
-- **Database Storage**: 20Gi Longhorn volume for PostgreSQL metadata
-- **Workflow Artifacts**: 50Gi Longhorn volume for workflow outputs and artifacts
+- **Database Storage**: Longhorn volume for PostgreSQL metadata (size configured in `helmrelease.yaml`)
+- **Workflow Artifacts**: Longhorn volume for workflow outputs and artifacts (size configured in `helmrelease.yaml`)
 
 ### Access
 

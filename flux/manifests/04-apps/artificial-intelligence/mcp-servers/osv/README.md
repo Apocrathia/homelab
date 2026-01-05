@@ -20,12 +20,6 @@ This deployment includes:
 
 ## Configuration
 
-### Resources
-
-- **CPU**: 50m requests, 200m limits
-- **Memory**: 128Mi requests, 256Mi limits
-- **Network Access**: Required for OSV database queries
-
 ### Security
 
 - **Permission Profile**: Network access for database queries

@@ -15,7 +15,7 @@ Request management and media discovery tool for Plex, enabling users to request 
 - **Port**: 5055 (standard Overseerr port)
 - **Authentication**: SSO through Authentik proxy, internal auth via Plex OAuth
 - **Storage**: Longhorn for configuration data
-- **Resources**: 256Mi-1Gi RAM, 100-500m CPU
+- **Resources**: Configured in `helmrelease.yaml`
 
 ## Access
 
