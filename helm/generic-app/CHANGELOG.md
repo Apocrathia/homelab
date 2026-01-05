@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.43 (Latest)
+## Version 0.0.44 (Latest)
+
+- **NEW: Pasture-Operator Restore Annotation**: Added automatic restore annotation to Longhorn volumes
+  - **Restore Support**: All Longhorn volumes created by the chart now include `pasture.longhorn.io/restore: "true"` annotation
+  - **Automatic Restore**: Enables pasture-operator to automatically restore volumes from backups when available
+  - **Template Enhancement**: Annotation automatically applied to all Longhorn Volume resources in `storage-longhorn.yaml`
+  - **Zero Configuration**: No values.yaml configuration required - annotation is always applied
+  - **Backward Compatible**: Existing deployments automatically benefit from restore functionality
+
+## Version 0.0.43
 
 - **Fixed Boolean Security Context Overrides**: Fixed template bug where `false` values for security context booleans were ignored
   - **Problem Solved**: Setting `readOnlyRootFilesystem: false` or `runAsNonRoot: false` had no effect because Go templates treat `false` as "empty", causing `| default true` to always return `true`
