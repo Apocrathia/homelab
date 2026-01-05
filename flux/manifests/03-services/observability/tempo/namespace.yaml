@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tempo-system
+  labels:
+    app.kubernetes.io/name: tempo
+    app.kubernetes.io/component: tracing
