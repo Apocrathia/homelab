@@ -2,6 +2,8 @@
 
 Knowledge management agent for the homelab AI stack.
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
 ## Purpose
 
 Stores, retrieves, and synthesizes information across multiple knowledge sources:

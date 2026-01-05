@@ -2,6 +2,13 @@
 
 A generic Helm chart for deploying applications in the homelab environment with common patterns for storage, secrets, and authentication.
 
+> **Navigation**: [← Home](../../README.md)
+
+## Documentation
+
+- **[Helm Documentation](https://helm.sh/docs/)** - Helm package manager
+- **[Kubernetes Documentation](https://kubernetes.io/docs/)** - Kubernetes resources
+
 ## Features
 
 - **Kubernetes Resources**: Namespace, Deployment, Service

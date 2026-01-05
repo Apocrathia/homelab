@@ -2,6 +2,8 @@
 
 Infrastructure management agent for Proxmox, TrueNAS, and UniFi Network.
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
 ## Tools
 
 - **proxmox-mcp**: Proxmox VE virtualization management

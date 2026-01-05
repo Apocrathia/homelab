@@ -1,16 +1,17 @@
 # Windmill
 
-[← Back to Management](../README.md)
+Open-source developer platform for building internal tools, workflows, and scripts.
 
-## Links
+> **Navigation**: [← Back to Management README](../README.md)
 
-- [Windmill Documentation](https://www.windmill.dev/docs)
-- [Helm Chart](https://github.com/windmill-labs/windmill-helm-charts)
-- [Dashboard Icon](https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/windmill.svg)
+## Documentation
+
+- **[Windmill Documentation](https://www.windmill.dev/docs)** - Primary documentation source
+- **[Helm Chart](https://github.com/windmill-labs/windmill-helm-charts)** - Kubernetes deployment
 
 ## Overview
 
-Windmill is an open-source developer platform for building internal tools, workflows, and scripts. It provides:
+This deployment provides:
 
 - **Scripts**: Python, TypeScript, Go, Bash, SQL execution
 - **Flows**: DAG-based workflows with branching and error handling

@@ -2,6 +2,8 @@
 
 Git platform agent for GitHub and GitLab repository management.
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
 ## Tools
 
 - **github-mcp**: GitHub API integration

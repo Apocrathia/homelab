@@ -2,6 +2,8 @@
 
 This directory contains utility scripts for managing Longhorn volumes and addressing common operational issues.
 
+> **Navigation**: [← Home](../../README.md)
+
 ## Scripts Overview
 
 ### `cleanup-longhorn-snapshots.sh`

@@ -2,6 +2,15 @@
 
 Hands-on blockchain learning - from running nodes to writing smart contracts.
 
+> **Navigation**: [← Back to Apps README](../README.md)
+
+## Documentation
+
+- **[IPFS Documentation](https://docs.ipfs.tech/)** - Distributed file system
+- **[Ethereum Node Guide](https://ethereum.org/en/developers/docs/nodes-and-clients/run-a-node/)** - Running Ethereum nodes
+- **[Foundry Book](https://book.getfoundry.sh/)** - Smart contract development
+- **[EVM Codes](https://www.evm.codes/)** - EVM opcode reference
+
 ## Why This Exists
 
 The blockchain space spans infrastructure (running nodes, indexing data, query layers) to application development (smart contracts, dApps). Understanding the full stack requires actually running it, not just reading whitepapers.
@@ -185,13 +194,3 @@ SolarEdge → Home Assistant → Webhook → Mining Deployment (0 or N replicas)
 | Ethereum (Mainnet) | 3000m-6000m | 12Gi-24Gi | 2.5Ti   | 30303, 9000  |
 
 Start with Sepolia testnet. Graduate to mainnet when comfortable and storage is available.
-
-## References
-
-- [IPFS Documentation](https://docs.ipfs.tech/)
-- [Ethereum Node Guide](https://ethereum.org/en/developers/docs/nodes-and-clients/run-a-node/)
-- [Lighthouse Book](https://lighthouse-book.sigmaprime.io/)
-- [Nethermind Docs](https://docs.nethermind.io/)
-- [Foundry Book](https://book.getfoundry.sh/) (for Phase 4)
-- [EVM Deep Dive](https://www.evm.codes/) (opcode reference)
-- [Chainlink Documentation](https://docs.chain.link/) (for Phase 5)

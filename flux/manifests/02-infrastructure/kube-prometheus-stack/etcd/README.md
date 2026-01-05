@@ -2,6 +2,13 @@
 
 This directory contains the monitoring configuration for etcd running on Talos control plane nodes.
 
+> **Navigation**: [← Back to kube-prometheus-stack README](../README.md)
+
+## Documentation
+
+- **[etcd Documentation](https://etcd.io/docs/)** - Primary documentation source
+- **[Talos etcd Guide](https://www.talos.dev/v1.9/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
+
 ## Overview
 
 etcd is the distributed key-value store that serves as the backbone of Kubernetes. Monitoring etcd performance is critical for cluster stability, especially for detecting leader changes, slow requests, and memory pressure issues.

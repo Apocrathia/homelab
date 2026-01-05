@@ -1,6 +1,14 @@
 # Talos
 
-> **Navigation**: [Home](../README.md) | [Next: Cilium Install →](./cilium-install.md) | [Flux Setup →](../flux/README.md)
+Kubernetes cluster bootstrap and management using Talos Linux.
+
+> **Navigation**: [← Home](../README.md) | [Cilium Install →](./cilium-install.md) | [Flux Setup →](../flux/README.md)
+
+## Documentation
+
+- **[Talos Documentation](https://www.talos.dev/latest/)** - Primary documentation source
+- **[Configuration Reference](https://www.talos.dev/latest/reference/configuration/)** - Machine configuration
+- **[GitHub Repository](https://github.com/siderolabs/talos)** - Source code and issues
 
 ## Overview
 

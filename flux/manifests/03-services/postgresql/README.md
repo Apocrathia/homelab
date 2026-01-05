@@ -2,6 +2,13 @@
 
 Kubernetes-native PostgreSQL operator for managing PostgreSQL clusters with enterprise-grade features.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[CloudNativePG Documentation](https://cloudnative-pg.io/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/cloudnative-pg/cloudnative-pg)** - Source code and issues
+
 ## Overview
 
 This deployment provides the CloudNativePG operator which enables:

@@ -2,6 +2,13 @@
 
 This directory contains the deployment configuration for Grafana Loki, which provides log aggregation and querying capabilities for the cluster.
 
+> **Navigation**: [← Back to Observability README](../README.md)
+
+## Documentation
+
+- **[Loki Documentation](https://grafana.com/docs/loki/)** - Primary documentation source
+- **[LogQL Reference](https://grafana.com/docs/loki/latest/logql/)** - Query language documentation
+
 ## Architecture
 
 Loki is deployed in monolithic mode with the following components:

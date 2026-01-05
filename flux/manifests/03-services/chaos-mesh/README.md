@@ -2,6 +2,8 @@
 
 Chaos Mesh is a cloud-native chaos engineering platform that orchestrates chaos experiments on Kubernetes environments.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
 ## Overview
 
 This installation deploys Chaos Mesh v2.7.2 with the following components:

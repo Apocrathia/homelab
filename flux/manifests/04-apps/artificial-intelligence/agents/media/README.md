@@ -2,6 +2,8 @@
 
 Media management agent for Plex and Servarr (Sonarr/Radarr) integration.
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
 ## Tools
 
 - **plex-mcp**: Plex Media Server integration

@@ -2,6 +2,13 @@
 
 Web scraping and content extraction via self-hosted Firecrawl backend.
 
+> **Navigation**: [← Back to MCP Servers README](../README.md)
+
+## Documentation
+
+- **[Firecrawl Documentation](https://docs.firecrawl.dev/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/mendableai/firecrawl)** - Source code and issues
+
 ## Configuration
 
 - **Backend**: Self-hosted Firecrawl at `http://firecrawl-api.firecrawl.svc.cluster.local:3002`

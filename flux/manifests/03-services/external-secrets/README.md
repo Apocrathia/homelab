@@ -2,6 +2,13 @@
 
 External Secrets Operator is a Kubernetes operator that integrates external secret management systems with Kubernetes, enabling bidirectional secret synchronization between your cluster and external secret stores.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[External Secrets Documentation](https://external-secrets.io/latest/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/external-secrets/external-secrets)** - Source code and issues
+
 ## Overview
 
 This deployment installs the External Secrets Operator using Helm, which provides:

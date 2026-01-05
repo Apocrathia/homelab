@@ -1,8 +1,23 @@
-# Kyverno Policy: Block Default Namespace
+# Kyverno Policies
+
+Policy engine for Kubernetes with admission control and resource cleanup capabilities.
+
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Kyverno Documentation](https://kyverno.io/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kyverno/kyverno)** - Source code and issues
+
+## Overview
+
+This deployment includes admission policies and automated cleanup policies for cluster maintenance.
+
+## Block Default Namespace Policy
 
 This policy prevents deployments of workloads to the `default` namespace, enforcing the best practice of using dedicated namespaces for applications.
 
-## Policy Details
+### Policy Details
 
 The policy `block-default-namespace` applies to the following resource types:
 
@@ -15,7 +30,7 @@ The policy `block-default-namespace` applies to the following resource types:
 When a user attempts to create any of these resources in the `default` namespace, the policy will block the operation with the message:
 "Deployments to the default namespace are not allowed. Please use a dedicated namespace."
 
-## Validation Process
+### Validation Process
 
 To verify that the policy is working correctly:
 
@@ -40,7 +55,7 @@ To verify that the policy is working correctly:
    ```
    This should succeed.
 
-## Why Block the Default Namespace?
+### Why Block the Default Namespace?
 
 The `default` namespace is a special namespace in Kubernetes that should be reserved for system components and testing. Using dedicated namespaces for applications provides several benefits:
 
@@ -77,6 +92,18 @@ Kyverno provides automated resource cleanup policies for cluster maintenance:
 
 Most cleanup policies run hourly (`0 * * * *`). Orphaned ConfigMaps and Secrets cleanup policies run daily at 2 AM (`0 2 * * *`) to reduce overhead on high-frequency operations. All policies exclude system namespaces (kube-system, kyverno).
 
-## Related Policies
+## Troubleshooting
 
-This is part of a broader set of security and best practice policies implemented through Kyverno. See other policies in this directory for additional security controls.
+```bash
+# Check Kyverno controller status
+kubectl get pods -n kyverno
+
+# View policy reports
+kubectl get policyreport --all-namespaces
+
+# Check cleanup policy status
+kubectl get cleanuppolicy --all-namespaces
+
+# View Kyverno logs
+kubectl logs -n kyverno -l app.kubernetes.io/component=admission-controller
+```
