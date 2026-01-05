@@ -1,6 +1,6 @@
 # Observability Stack (LGTM)
 
-This directory contains the deployment configuration for the LGTM (Loki, Grafana, Tempo, Mimir) observability stack components. We're deploying a subset focused on logs, metrics, and visualization.
+This directory contains the deployment configuration for the full LGTM (Loki, Grafana, Tempo, Mimir) observability stack.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -8,6 +8,7 @@ This directory contains the deployment configuration for the LGTM (Loki, Grafana
 
 - **[Grafana Documentation](https://grafana.com/docs/)** - Primary Grafana documentation
 - **[Loki Documentation](https://grafana.com/docs/loki/)** - Log aggregation
+- **[Tempo Documentation](https://grafana.com/docs/tempo/)** - Distributed tracing
 - **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Metrics storage
 
 ## Components Deployed
@@ -55,6 +56,18 @@ This directory contains the deployment configuration for the LGTM (Loki, Grafana
   - Multi-tenant support
 - **Storage**: S3-compatible storage (MinIO)
 
+### 5. **Tempo** (`tempo/`)
+
+- **Purpose**: Distributed tracing backend
+- **Deployment**: Via Tempo distributed Helm chart
+- **Features**:
+  - OTLP trace ingestion (gRPC and HTTP)
+  - Trace-to-logs correlation with Loki
+  - Trace-to-metrics with Prometheus
+  - Service graph and node graph visualization
+  - Metrics generation from traces
+- **Storage**: S3-compatible storage (MinIO)
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
@@ -69,17 +82,18 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
   - Grafana Operator for dashboard/datasource management via CRDs
   - Loki for log aggregation and storage
+  - Tempo for distributed tracing
   - Mimir for long-term metrics storage
-  - Grafana Alloy for log and metrics collection
+  - Grafana Alloy for log, metrics, and trace collection
 
 - **Data flow**: All components store data in MinIO (S3-compatible storage) and feed into the kube-prometheus-stack Grafana instance for unified visualization.
 
 ## Data Flow
 
-1. **Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana visualization (via kube-prometheus-stack)
-2. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana visualization (via kube-prometheus-stack)
-3. **Log Collection**: Grafana Alloy collects logs from pods and forwards to Loki
-4. **Datasources**: Configured directly in kube-prometheus-stack Grafana instance
+1. **Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana visualization
+2. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana visualization
+3. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana visualization
+4. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)
 
 ## Configuration
 

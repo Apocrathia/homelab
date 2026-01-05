@@ -1,0 +1,174 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tempo
+  namespace: tempo-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: tempo-distributed
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=tempo-distributed
+      version: "1.60.0"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+
+  valuesFrom:
+    - kind: Secret
+      name: tempo-secrets
+      valuesKey: access-key-id
+      targetPath: storage.trace.s3.access_key
+    - kind: Secret
+      name: tempo-secrets
+      valuesKey: access-key-secret
+      targetPath: storage.trace.s3.secret_key
+
+  values:
+    # Enable OTLP trace ingestion
+    traces:
+      otlp:
+        grpc:
+          enabled: true
+        http:
+          enabled: true
+
+    # Storage configuration - using external MinIO
+    storage:
+      trace:
+        backend: s3
+        s3:
+          bucket: tempo
+          endpoint: storage.services.apocrathia.com:9000
+          insecure: true
+
+    # Distributor configuration
+    distributor:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Ingester configuration
+    ingester:
+      replicas: 2
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      persistence:
+        enabled: false
+
+    # Compactor configuration
+    compactor:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Querier configuration
+    querier:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Query frontend configuration
+    queryFrontend:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    # Metrics generator for service graphs and span metrics
+    metricsGenerator:
+      enabled: true
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      config:
+        # Send generated metrics to Mimir
+        registry:
+          external_labels:
+            source: tempo
+            cluster: kubernetes
+        storage:
+          path: /var/tempo/wal
+          remote_write:
+            - url: http://mimir-gateway.mimir-system.svc:80/api/v1/push
+
+    # Global configuration
+    global:
+      clusterDomain: cluster.local
+
+    # Tempo configuration overrides
+    tempo:
+      # Multi-tenancy disabled for homelab
+      multitenancyEnabled: false
+
+    # Disable internal MinIO - using external MinIO
+    minio:
+      enabled: false
+
+    # Disable memcached caches for homelab (reduces memory usage)
+    memcached:
+      enabled: false
+    memcachedExporter:
+      enabled: false
+
+    # Monitoring configuration
+    metaMonitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 30s
+        additionalLabels:
+          release: prometheus
+
+    # Gateway configuration (nginx)
+    gateway:
+      enabled: true
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
