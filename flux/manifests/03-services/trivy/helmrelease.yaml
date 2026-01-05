@@ -33,6 +33,19 @@ spec:
       metricsInfraAssessmentInfo: true
       metricsImageInfo: true
       metricsClusterComplianceInfo: true
+      # Webhook configuration - send reports to Alloy for Loki ingestion
+      webhookBroadcastURL: "http://alloy.alloy-system.svc:8080/loki/api/v1/raw"
+      webhookBroadcastTimeout: 30s
+      webhookSendDeletedReports: true
+    # Alternate report storage - prevents CRD creation in etcd
+    # Reports are sent to Loki via webhook; local PVC is just scratch space
+    alternateReportStorage:
+      enabled: true
+      mountPath: /mnt/data/trivy-operator
+      storage: 1Gi
+      podSecurityContext:
+        runAsUser: 10000
+        fsGroup: 10000
     # Configure node-collector to comply with Pod Security Standards
     nodeCollector:
       # Set security context for node-collector pods

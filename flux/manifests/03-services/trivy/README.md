@@ -1,6 +1,6 @@
 # Trivy Operator
 
-The Trivy Operator provides continuous security scanning for Kubernetes clusters, including:
+The Trivy Operator provides continuous security scanning for Kubernetes clusters.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -19,46 +19,35 @@ The Trivy Operator provides continuous security scanning for Kubernetes clusters
 - **Compliance Reports**: CIS benchmarks, NSA/CISA guidance, and Pod Security Standards
 - **SBOM Generation**: Software Bill of Materials for workloads
 
-## Installation
+## Architecture
 
-This component is installed via Flux using the Aqua Security Helm chart repository.
+```mermaid
+flowchart LR
+    Trivy[Trivy Operator] -->|JSON reports| Alloy[Alloy Webhook]
+    Alloy -->|Push| Loki
+    Loki --> Grafana
+    Trivy -->|Metrics| Prometheus
+```
 
-## Configuration
+**Key design decisions:**
 
-The operator is configured with:
+- **Reports → Loki**: Security reports are sent via webhook to Alloy, which forwards them to Loki. This prevents etcd bloat from CRD storage.
+- **Metrics → Prometheus**: Vulnerability metrics continue to be scraped by Prometheus via ServiceMonitor.
+- **Alternate storage**: Reports are written to a small scratch PVC instead of CRDs. The PVC is just ephemeral scratch space since Loki is the source of truth.
 
-- **Resource limits and requests** for stability
-- **ServiceMonitor enabled** for Prometheus integration with proper labels
-- **Metrics fully enabled** for comprehensive monitoring:
-  - `metricsFindingsEnabled: true` - Vulnerability findings metrics
-  - `metricsVulnIdEnabled: true` - Vulnerability ID metrics
-  - `metricsExposedSecretInfo: true` - Exposed secret information
-  - `metricsConfigAuditInfo: true` - Configuration audit details
-  - `metricsRbacAssessmentInfo: true` - RBAC assessment information
-  - `metricsInfraAssessmentInfo: true` - Infrastructure assessment data
-  - `metricsImageInfo: true` - Container image information
-  - `metricsClusterComplianceInfo: true` - Cluster compliance metrics
-- **Service configuration** optimized for ServiceMonitor scraping:
-  - `headless: false` - Standard ClusterIP service for cross-namespace access
-  - `metricsPort: 80` - Metrics exposed on port 80
-- **Latest stable versions** of both operator and Trivy scanner
+## Querying Reports in Loki
 
-## Monitoring
+Reports can be queried in Grafana using LogQL:
 
-The operator exposes comprehensive metrics that are scraped by Prometheus via ServiceMonitor:
+```logql
+{source="trivy", report_kind="VulnerabilityReport"}
+```
 
-- **ServiceMonitor**: Configured with `release: kube-prometheus-stack` label
-- **Metrics endpoint**: Accessible on port 80 with thousands of Trivy-specific metrics
-- **Dashboard**: Grafana dashboard provisioned via ConfigMapGenerator for visualization
+Filter by namespace:
 
-## Usage
-
-Once deployed, Trivy Operator will automatically:
-
-- Scan new workloads for vulnerabilities
-- Generate security reports as Kubernetes CRDs
-- Provide security insights through the Kubernetes API
-- Expose metrics for monitoring and alerting
+```logql
+{source="trivy", namespace="production"}
+```
 
 ## Resources
 

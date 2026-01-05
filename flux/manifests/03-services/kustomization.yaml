@@ -16,7 +16,7 @@ resources:
   - housekeeping
   - leaderworkerset
   - postgresql
-  # - trivy
+  - trivy
   - toolhive
   - external-secrets
   # - flyte
