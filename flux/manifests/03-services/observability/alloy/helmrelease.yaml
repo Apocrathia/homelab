@@ -50,11 +50,19 @@ spec:
         capabilities:
           drop: ["ALL"]
 
-      # Extra ports for webhook receivers
+      # Extra ports for webhook receivers and OTLP ingestion
       extraPorts:
         - name: trivy-webhook
           port: 8080
           targetPort: 8080
+          protocol: TCP
+        - name: otlp-grpc
+          port: 4317
+          targetPort: 4317
+          protocol: TCP
+        - name: otlp-http
+          port: 4318
+          targetPort: 4318
           protocol: TCP
 
       # Extra volume mounts for WAL storage

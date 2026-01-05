@@ -212,3 +212,38 @@ data:
 
       forward_to = [loki.write.default.receiver]
     }
+
+    // ==========================================================================
+    // OpenTelemetry Trace Collection
+    // Receives OTLP traces from applications (e.g., LiteLLM) and forwards to Tempo
+    // ==========================================================================
+
+    // OTLP receiver for gRPC (port 4317) and HTTP (port 4318)
+    otelcol.receiver.otlp "default" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      http {
+        endpoint = "0.0.0.0:4318"
+      }
+      output {
+        traces = [otelcol.processor.batch.default.input]
+      }
+    }
+
+    // Batch processor to improve efficiency
+    otelcol.processor.batch "default" {
+      output {
+        traces = [otelcol.exporter.otlp.tempo.input]
+      }
+    }
+
+    // Export traces to Tempo
+    otelcol.exporter.otlp "tempo" {
+      client {
+        endpoint = "tempo-distributor.tempo-system.svc.cluster.local:4317"
+        tls {
+          insecure = true
+        }
+      }
+    }
