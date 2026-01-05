@@ -15,5 +15,5 @@ resources:
   - litellm
   - llm-d
   - mcp-servers
-  - mlflow
+  # - mlflow
   - openwebui
