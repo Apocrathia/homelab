@@ -1,0 +1,71 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: agregarr
+  namespace: agregarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.43"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: agregarr
+      # renovate: datasource=docker depName=ghcr.io/agregarr/agregarr
+      image: ghcr.io/agregarr/agregarr:2.1.0
+      container:
+        name: agregarr
+        port: 7171
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 7171
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /app/config
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Agregarr"
+      externalHost: "https://agregarr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/agregarr/icon.svg"
