@@ -21,6 +21,9 @@ spec:
       name: archiveteam-warrior
       # renovate: datasource=docker depName=atdr.meo.ws/archiveteam/warrior-dockerfile
       image: atdr.meo.ws/archiveteam/warrior-dockerfile@sha256:0404579c23edf10f722d6efc02d026721936ffd3531e303b8f9c071cc8de4788
+      replicas: 3
+      podAntiAffinity:
+        enabled: true
       container:
         name: warrior
         port: 8001
@@ -29,6 +32,8 @@ spec:
             value: "Apocrathia"
           - name: SELECTED_PROJECT
             value: "auto"
+          - name: CONCURRENT_ITEMS
+            value: "6"
       resources:
         requests:
           cpu: 100m
