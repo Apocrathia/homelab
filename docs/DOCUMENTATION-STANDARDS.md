@@ -15,10 +15,14 @@ This document defines the standards and guidelines for maintaining consistent, h
 
 ### What to Omit
 
+- **Tunable Configuration Values**: Don't duplicate values that get adjusted over time (resource limits, volume sizes, replica counts, image versions)
+  - These values drift between docs and manifests when someone tunes performance or updates versions
+  - GitOps means manifests ARE the source of truth for tunable configuration
+  - Static values like URLs and hostnames are fine - they're set once and don't change
 - **Detailed Configuration**: Don't duplicate information available in adjacent manifests
 - **Complete Code Examples**: Keep only essential patterns, reference official docs for full examples
 - **Implementation Details**: Focus on usage, not internal architecture
-- **Version-Specific Information**: Avoid hardcoded versions unless critical
+- **Version-Specific Information**: Avoid hardcoded versions - Renovate handles updates for us
 
 ### Configuration Documentation
 

@@ -56,8 +56,10 @@ description: General guidelines for the project
 - Practical and actionable
 - Security-focused when appropriate
 - Include real examples and commands
-- Include configuration patterns, examples, and usage instructions
-- Avoid duplicating static configuration values, but do include configuration patterns and examples
+- **Avoid duplicating tunable configuration values** - resource limits, volume sizes, replica counts, etc. belong in manifests only
+  - GitOps means manifests ARE the documentation for configuration - duplicating tunable values in documentation leads to inaccurate documentation.
+  - Static values like URLs and hostnames are fine - they don't change once deployed
+  - When in doubt, ask: "Will this value be tuned over time?" If yes, keep it in the manifest only
 - **Do not describe problems that were fixed or improvements made** - this confuses future developers and AI agents
 - Make writeups straightforward and context-independent
 
