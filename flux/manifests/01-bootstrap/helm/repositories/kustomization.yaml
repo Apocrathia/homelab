@@ -40,4 +40,5 @@ resources:
   - kong.yaml
   - litellm.yaml
   - llm-d-modelservice.yaml
+  - backstage.yaml
   - windmill.yaml
