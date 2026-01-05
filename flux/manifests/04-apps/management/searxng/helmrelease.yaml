@@ -123,7 +123,7 @@ spec:
       category: "Productivity"
       displayName: "SearXNG"
       externalHost: "https://searxng.gateway.services.apocrathia.com"
-      icon: "https://docs.searxng.org/_static/searxng-wordmark.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/searxng/icon.svg"
 
     httproute:
       enabled: false

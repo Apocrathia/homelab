@@ -111,7 +111,7 @@ spec:
       category: "Media"
       displayName: "Tunarr"
       externalHost: "https://tunarr.gateway.services.apocrathia.com"
-      icon: "https://raw.githubusercontent.com/chrisbenincasa/tunarr/refs/heads/dev/web/public/tunarr.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/tunarr/icon.png"
       # Allow unauthenticated access to API, streaming, and image endpoints
       skipPathRegex:
         - "^/api/"

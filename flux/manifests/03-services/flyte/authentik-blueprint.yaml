@@ -46,6 +46,6 @@ entries:
       launch_url: "https://flyte.gateway.services.apocrathia.com"
       group: "Platform"
       open_in_new_tab: true
-      icon: "https://artwork.lfaidata.foundation/projects/flyte/icon/color/flyte-icon-color.png"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/flyte/icon.png"
       meta_description: "Workflow orchestration platform for ML and data processing"
       meta_publisher: "Flyte"

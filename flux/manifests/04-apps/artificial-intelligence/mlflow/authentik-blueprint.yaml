@@ -34,7 +34,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "mlflow-proxy-provider"]]
       launch_url: "https://mlflow.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://raw.githubusercontent.com/mlflow/mlflow/refs/heads/master/docs/static/images/logo-dark.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/mlflow/icon.svg"
       meta_description: "MLflow machine learning lifecycle platform"
       meta_publisher: "MLflow"
 
