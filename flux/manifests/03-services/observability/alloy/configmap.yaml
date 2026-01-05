@@ -183,9 +183,8 @@ data:
         }
       }
 
-      // Extract metadata from the OperatorObject
+      // Extract metadata from the OperatorObject (nested JSON extraction)
       stage.json {
-        source = ""
         expressions = {
           kind       = "OperatorObject.kind",
           apiVersion = "OperatorObject.apiVersion",
