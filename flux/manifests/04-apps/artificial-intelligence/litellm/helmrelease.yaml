@@ -69,6 +69,11 @@ spec:
       targetPath: envVars.HOMEASSISTANT_TOKEN
 
   values:
+    # Allow ECR-hosted Bitnami images (they're mirrors of Docker Hub)
+    global:
+      security:
+        allowInsecureImages: true
+
     # Use the database-optimized image
     image:
       repository: ghcr.io/berriai/litellm-database
