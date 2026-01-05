@@ -2,9 +2,11 @@
 
 Self-hosted GitHub MCP server for repository and issue management.
 
-## References
+> **Navigation**: [← Back to MCP Servers README](../README.md)
 
-- [github-mcp-server](https://github.com/github/github-mcp-server) - Official GitHub MCP server
+## Documentation
+
+- **[GitHub MCP Server](https://github.com/github/github-mcp-server)** - Official GitHub MCP server
 
 ## Access
 

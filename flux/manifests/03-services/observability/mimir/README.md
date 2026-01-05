@@ -2,6 +2,13 @@
 
 This directory contains the deployment configuration for Grafana Mimir, which provides long-term storage for Prometheus metrics.
 
+> **Navigation**: [← Back to Observability README](../README.md)
+
+## Documentation
+
+- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/grafana/mimir)** - Source code and issues
+
 ## Architecture
 
 Mimir is deployed in distributed mode with the following components:

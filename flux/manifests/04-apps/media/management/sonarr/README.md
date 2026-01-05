@@ -34,7 +34,7 @@ The deployment follows the LinuxServer.io standard pattern:
 
 ### Storage
 
-- **Configuration Volume**: 10GB Longhorn persistent volume for application configuration
+- **Configuration Volume**: Longhorn persistent volume for application configuration
 - **Downloads Volume**: SMB mount for download client integration
 - **Anime Volume**: SMB mount for anime library access
 - **TV Volume**: SMB mount for TV shows library access

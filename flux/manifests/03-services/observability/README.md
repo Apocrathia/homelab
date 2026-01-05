@@ -2,6 +2,14 @@
 
 This directory contains the deployment configuration for the LGTM (Loki, Grafana, Tempo, Mimir) observability stack components. We're deploying a subset focused on logs, metrics, and visualization.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Grafana Documentation](https://grafana.com/docs/)** - Primary Grafana documentation
+- **[Loki Documentation](https://grafana.com/docs/loki/)** - Log aggregation
+- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Metrics storage
+
 ## Components Deployed
 
 ### 1. **Grafana Operator** (`grafana/`)

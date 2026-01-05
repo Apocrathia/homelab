@@ -2,6 +2,13 @@
 
 The Kubernetes Dashboard provides a web-based UI for managing Kubernetes clusters.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Kubernetes Dashboard Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kubernetes/dashboard)** - Source code and issues
+
 ## Access
 
 The dashboard is accessible at: `https://dashboard.gateway.services.apocrathia.com`

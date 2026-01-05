@@ -2,7 +2,12 @@
 
 The ToolHive operator manages MCP (Model Context Protocol) servers in Kubernetes clusters.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
 ## Documentation
+
+- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/stacklok/toolhive)** - Source code and issues
 
 ## Overview
 

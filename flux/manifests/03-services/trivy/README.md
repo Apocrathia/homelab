@@ -2,6 +2,15 @@
 
 The Trivy Operator provides continuous security scanning for Kubernetes clusters, including:
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Trivy Operator Documentation](https://aquasecurity.github.io/trivy-operator/latest/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/aquasecurity/trivy-operator)** - Source code and issues
+
+## Overview
+
 - **Vulnerability Scans**: Automated vulnerability scanning for Kubernetes workloads
 - **Configuration Audits**: Automated configuration audits with predefined rules or custom OPA policies
 - **Exposed Secret Scans**: Automated secret scans to find exposed secrets

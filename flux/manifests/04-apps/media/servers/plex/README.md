@@ -49,7 +49,7 @@ Direct access via LoadBalancer service - no Authentik proxy integration.
 ## Security Considerations
 
 - **Direct Access**: No proxy authentication layer
-- **Resource Limits**: Optimized for transcoding workloads (2-4GB RAM, 0.5-2 CPU cores)
+- **Resource Limits**: Optimized for transcoding workloads
 - **Storage Security**: Configuration stored on Longhorn volumes
 
 ## Troubleshooting

@@ -2,6 +2,13 @@
 
 Fluent Operator manages Fluent Bit and Fluentd deployments in Kubernetes using a declarative, operator-based approach.
 
+> **Navigation**: [← Back to Observability README](../README.md)
+
+## Documentation
+
+- **[Fluent Operator Documentation](https://github.com/fluent/fluent-operator)** - Primary documentation source
+- **[Fluent Bit Documentation](https://docs.fluentbit.io/)** - Fluent Bit reference
+
 ## Components
 
 - **Fluent Operator**: Kubernetes operator that manages Fluent Bit and Fluentd instances via CRDs

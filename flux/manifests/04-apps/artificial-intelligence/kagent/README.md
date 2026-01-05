@@ -2,6 +2,13 @@
 
 AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
 
+> **Navigation**: [← Back to AI README](../README.md)
+
+## Documentation
+
+- **[kagent Documentation](https://kagent.dev/docs)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kagent-dev/kagent)** - Source code and issues
+
 ## Components
 
 - **Controller**: Watches Agent CRDs and manages agent deployments
@@ -51,8 +58,3 @@ controller:
 ```
 
 Then create Agent CRDs in those namespaces.
-
-## Links
-
-- [kagent Documentation](https://kagent.dev/docs)
-- [GitHub Repository](https://github.com/kagent-dev/kagent)

@@ -2,6 +2,13 @@
 
 Kong Gateway Operator manages Kong Gateway deployments on Kubernetes using the Gateway API.
 
+> **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Kong Operator Documentation](https://developer.konghq.com/operator/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/Kong/kong-operator)** - Source code and issues
+
 ## Components
 
 - **Kong Operator**: Manages `ControlPlane`, `DataPlane`, `GatewayConfiguration`, and other Kong CRDs
@@ -46,8 +53,3 @@ spec:
     name: kong
     namespace: kong-system
 ```
-
-## References
-
-- [Kong Operator Documentation](https://developer.konghq.com/operator/)
-- [Kong Operator GitHub](https://github.com/Kong/kong-operator)

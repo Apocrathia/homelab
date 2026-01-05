@@ -2,6 +2,13 @@
 
 This directory contains the deployment configuration for Grafana Alloy, which provides log collection capabilities for the cluster using OpenTelemetry Collector patterns.
 
+> **Navigation**: [← Back to Observability README](../README.md)
+
+## Documentation
+
+- **[Grafana Alloy Documentation](https://grafana.com/docs/alloy/)** - Primary documentation source
+- **[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)** - OTel Collector docs
+
 ## Architecture
 
 Alloy is deployed as a DaemonSet with the following components:
