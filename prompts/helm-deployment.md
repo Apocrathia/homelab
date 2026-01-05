@@ -97,8 +97,8 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - Common pattern: Service exposes port 80, targets container port 8080 (or similar)
   - Make any necessary adjustments to the values to ensure the chart generates the expected resources.
 - Create documentation for the deployment:
-  - Follow standards in `docs/DOCUMENTATION-STANDARDS.md`
-  - Use template from `docs/README-TEMPLATE.md`
+  - Follow standards in `docs/documentation-standards.md`
+  - Use template from `docs/readme-template.md`
   - Create or update `README.md` in the deployment directory
   - Include navigation, links, overview, configuration patterns, and troubleshooting
 - When you are satisfied with the deployment, present your work to the user for review and approval.
@@ -280,8 +280,8 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 
 ## Documentation
 
-- Follow documentation standards: `docs/DOCUMENTATION-STANDARDS.md`
-- Use README template: `docs/README-TEMPLATE.md`
+- Follow documentation standards: `docs/documentation-standards.md`
+- Use README template: `docs/readme-template.md`
 - Create or update `README.md` in the deployment directory
 - **Avoid duplicating tunable configuration**:
   - Don't include resource limits, volume sizes, replica counts, or image versions - these get tuned and will drift
@@ -300,27 +300,6 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Keep documentation concise (40-80 lines target)
 - **Remove documentation** about configuration methods that aren't actually used by the application
 
-## Pattern Improvement Feedback
-
-After each deployment, provide structured feedback to improve this prompt:
-
-- **Trigger**: Always provide feedback after a deployment is successfully validated
-- **Format**: Use the structured format (What worked / What was missing / Suggested additions / Suggested modifications)
-- **Scope**: Focus on improvements that would help future deployments of any application, not just the current one
-- **Types of improvements to look for**:
-  - Missing decision trees or checklists that would have saved time
-  - Incorrect assumptions in the current guidance
-  - New patterns discovered during deployment (auth methods, storage patterns, networking quirks)
-  - Common pitfalls that should be explicitly warned against
-  - Chart-specific capabilities that should be documented
-  - Validation steps that would have caught issues earlier
-- **Quality bar**: Only suggest improvements that:
-  - Would apply to multiple future deployments
-  - Are specific and actionable (not vague suggestions)
-  - Can be directly incorporated into this prompt
-- **User decision**: Always ask the user if they want to apply suggested improvements - never modify this prompt without explicit approval
-- **Continuous improvement mindset**: Treat each deployment as an opportunity to make the next one smoother
-
 ## Icons
 
 - **Store icons with deployment files**: Icons should be stored alongside deployment manifests, not referenced from external CDNs
@@ -335,3 +314,23 @@ After each deployment, provide structured feedback to improve this prompt:
   - Preserve original file format (SVG preferred, PNG when SVG unavailable)
 - **Icon naming**: Use `icon.svg` or `icon.png` for deployment icons
 - **Generic-app chart**: When `authentik.enabled: true`, set `authentik.icon` to the GitLab raw URL for the icon file
+
+# Continuous Improvement
+
+After completing a Helm deployment:
+
+1. **Identify patterns**: Note common issues with configuration, authentication, or networking
+2. **Update chart docs**: Suggest improvements to generic-app chart README if gaps found
+3. **Update standards**: Suggest additions to documentation standards if needed
+4. **Refine this prompt**: Suggest additions to this prompt based on learnings
+
+Format improvement suggestions as:
+
+- **Pattern observed**: What issue appeared during deployment
+- **Root cause**: Why the issue exists (missing validation, incorrect assumption, etc.)
+- **Suggested fix**: Specific change to deployment patterns/prompt
+- **Validation step**: How to catch this issue earlier in future deployments
+
+**Quality bar**: Only suggest improvements that would apply to multiple future deployments, are specific and actionable, and can be directly incorporated into this prompt.
+
+**User decision**: Always ask the user if they want to apply suggested improvements - never modify this prompt without explicit approval.
