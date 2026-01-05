@@ -2,6 +2,8 @@
 
 This directory contains prompts and templates for common development processes in the homelab project.
 
+> **Navigation**: [← Home](../README.md)
+
 ## Available Prompts
 
 ### [Helm Deployment](./helm-deployment.md)
@@ -39,6 +41,17 @@ Comprehensive security review prompt for analyzing the homelab Kubernetes projec
 - Supply chain and CI/CD pipeline security
 - Structured finding format with severity classification
 - Remediation roadmaps and positive observations
+
+### [Document Review](./document-review.md)
+
+Systematic documentation quality review prompt for maintaining consistency across the repository. Covers:
+
+- Template compliance auditing (structure, navigation, sections)
+- Content quality checks (tunable values, external links, code blocks)
+- Document type categorization (app READMEs, infrastructure docs, reference docs)
+- Structured finding reports with priority classification
+- Fix patterns for common issues
+- Continuous improvement suggestions
 
 ## Usage
 
