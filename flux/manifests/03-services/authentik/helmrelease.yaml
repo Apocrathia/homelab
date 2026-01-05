@@ -102,7 +102,7 @@ spec:
       extraContainers:
         - name: sidecar-blueprints
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=home-operations/k8s-sidecar
-          image: "ghcr.io/home-operations/k8s-sidecar:2.1.4"
+          image: "ghcr.io/home-operations/k8s-sidecar:2.2.2"
           env:
             - name: "LABEL"
               value: "authentik_blueprint"
@@ -168,7 +168,7 @@ spec:
       extraContainers:
         - name: sidecar-blueprints
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=home-operations/k8s-sidecar
-          image: "ghcr.io/home-operations/k8s-sidecar:2.1.4"
+          image: "ghcr.io/home-operations/k8s-sidecar:2.2.2"
           env:
             - name: "LABEL"
               value: "authentik_blueprint"
