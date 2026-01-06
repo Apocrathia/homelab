@@ -128,7 +128,6 @@ description: General guidelines for the project
 - **Prefer flux MCP tools or the flux CLI instead of kubectl annotate** to force reconciliation of HelmRelease
 - **Use Kubernetes-native methods for retrieving resource lists** rather than custom scripts or workarounds
 - **Cursor can only use OAuth for SSE and HTTP connections** - direct header-based authentication won't work
-- **Run terminal commands in the default sandbox without `network` permissions** - if a command fails due to network restrictions, ask the user to run it in an actual terminal instead of requesting network permissions
 
 ## Helm and Configuration Validation
 - **Always validate all proposed Helm values against the defaults** when suggesting Helm configurations
