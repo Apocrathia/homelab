@@ -32,5 +32,6 @@ resources:
   - management/whisparr
   - management/scripts
   - servers/invidious
+  - servers/komga
   - servers/plex
   - servers/tunarr
