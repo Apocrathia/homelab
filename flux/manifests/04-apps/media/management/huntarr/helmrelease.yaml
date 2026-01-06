@@ -73,3 +73,6 @@ spec:
       displayName: "Huntarr"
       externalHost: "https://huntarr.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/huntarr/icon.svg"
+      # Skip auth for API endpoints - frontend polls every 30s and inflates login counts
+      skipPathRegex:
+        - "^/api/"
