@@ -36,7 +36,7 @@ spec:
     argument: "1"
   java:
     # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.16.0
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.23.0
 ---
 # Node.js auto-instrumentation
 apiVersion: opentelemetry.io/v1alpha1
