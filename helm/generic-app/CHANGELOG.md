@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.44 (Latest)
+## Version 0.0.45 (Latest)
+
+- **NEW: Pod Annotations Support**: Added `app.podAnnotations` configuration for adding custom annotations to pod templates
+  - **OpenTelemetry Integration**: Enables OpenTelemetry auto-instrumentation via pod annotations
+  - **Template Enhancement**: Added annotations block to deployment pod template metadata
+  - **Flexible Configuration**: Any key-value pairs can be added as pod annotations
+  - **Use Case**: Perfect for OTel auto-instrumentation (`instrumentation.opentelemetry.io/inject-python: "otel-system/python"`)
+  - **Backward Compatible**: Defaults to empty object, no impact on existing deployments
+
+## Version 0.0.44
 
 - **NEW: Pasture-Operator Restore Annotation**: Added automatic restore annotation to Longhorn volumes
   - **Restore Support**: All Longhorn volumes created by the chart now include `pasture.longhorn.io/restore: "true"` annotation

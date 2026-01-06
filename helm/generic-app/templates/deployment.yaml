@@ -27,6 +27,10 @@ spec:
     metadata:
       labels:
         app: {{ .Values.app.name }}
+      {{- if .Values.app.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.app.podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
       {{- if .Values.app.podAntiAffinity.enabled }}
       affinity:

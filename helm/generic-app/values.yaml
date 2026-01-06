@@ -207,6 +207,12 @@ app:
   #         failureThreshold: 3
   #         successThreshold: 1
 
+  # Pod annotations (e.g., for OpenTelemetry auto-instrumentation)
+  podAnnotations: {}
+  # Example:
+  # podAnnotations:
+  #   instrumentation.opentelemetry.io/inject-python: "otel-system/python"
+
   # Deployment configuration
   replicas: 1
 
