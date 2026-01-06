@@ -14,6 +14,9 @@ spec:
     spec:
       backoffLimit: 1
       template:
+        metadata:
+          annotations:
+            instrumentation.opentelemetry.io/inject-python: "otel-system/python"
         spec:
           restartPolicy: Never
           securityContext:
