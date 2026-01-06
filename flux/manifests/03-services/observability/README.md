@@ -68,6 +68,17 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - Metrics generation from traces
 - **Storage**: S3-compatible storage (MinIO)
 
+### 6. **OpenTelemetry Operator** (`otel-operator/`)
+
+- **Purpose**: Manage OpenTelemetry components via Kubernetes CRDs
+- **Deployment**: Via OpenTelemetry Operator Helm chart
+- **Features**:
+  - Auto-instrumentation injection for Python, Java, Node.js, .NET
+  - `OpenTelemetryCollector` CRD for deploying collectors
+  - `Instrumentation` CRD for language-specific agent configuration
+  - Pod/namespace annotation-based opt-in for instrumentation
+- **Usage**: Annotate pods with `instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
@@ -85,6 +96,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
   - Tempo for distributed tracing
   - Mimir for long-term metrics storage
   - Grafana Alloy for log, metrics, and trace collection
+  - OpenTelemetry Operator for auto-instrumentation and collector management
 
 - **Data flow**: All components store data in MinIO (S3-compatible storage) and feed into the kube-prometheus-stack Grafana instance for unified visualization.
 
@@ -152,4 +164,5 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 - [Loki Documentation](https://grafana.com/docs/loki/)
 - [Mimir Documentation](https://grafana.com/docs/mimir/)
 - [Grafana Alloy Documentation](https://grafana.com/docs/alloy/)
+- [OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)
 - [LGTM Stack Overview](https://grafana.com/docs/grafana-cloud/quickstart/)
