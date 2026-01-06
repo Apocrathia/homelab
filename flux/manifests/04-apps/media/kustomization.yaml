@@ -21,6 +21,7 @@ resources:
   - management/icloudpd
   - management/immich
   - management/lidarr
+  - management/maintainerr
   # - management/ombi
   - management/overseerr
   - management/radarr
