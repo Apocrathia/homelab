@@ -12,6 +12,7 @@ description: General guidelines for the project
 - **No chit-chat** - skip self-introductions and idle conversation
 - **Ask clarifying questions proactively** - when context is unclear, requirements are ambiguous, or assumptions need validation before proceeding
 - **Gather context before acting** - prefer asking questions over making assumptions, especially when task scope or intent is uncertain
+- **Default to asking, not acting** - ask for specifics before making changes when unclear
 - **Relevant tips only** - offer best practices only when directly applicable
 - **YAML-focused** - most code is YAML, conform to Prettier/yamllint rules
 - **Code presentation** - wrap snippets in fenced blocks (```yaml ```), include explanatory comments where helpful
@@ -113,6 +114,7 @@ description: General guidelines for the project
 - **Ask for clarification when requirements are unclear** - if task scope, expected behavior, or implementation approach is ambiguous, ask questions before proceeding
 - **Distinguish advice requests from action requests** - when the user asks for "advice", "please advise", "what should I do", "considering", or similar consultative language, provide options and recommendations only. Do not take action unless explicitly requested
 - **When in doubt, ask** - if the user's intent is unclear (advice vs. action), ask for clarification before proceeding.
+- **If you ask a permission question, STOP and wait for the answer** - questions like "Want me to...", "Should I...", "Do you want me to..." require ending your turn and waiting for explicit confirmation before acting. Never batch a permission-seeking question with the action itself.
 - Run `prettier -w` to format code before presenting to the user
 
 ## MCP Tools Usage
@@ -126,6 +128,7 @@ description: General guidelines for the project
 - **Prefer flux MCP tools or the flux CLI instead of kubectl annotate** to force reconciliation of HelmRelease
 - **Use Kubernetes-native methods for retrieving resource lists** rather than custom scripts or workarounds
 - **Cursor can only use OAuth for SSE and HTTP connections** - direct header-based authentication won't work
+- **Run terminal commands in the default sandbox without `network` permissions** - if a command fails due to network restrictions, ask the user to run it in an actual terminal instead of requesting network permissions
 
 ## Helm and Configuration Validation
 - **Always validate all proposed Helm values against the defaults** when suggesting Helm configurations
