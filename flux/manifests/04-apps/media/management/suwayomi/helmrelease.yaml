@@ -1,0 +1,108 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: suwayomi
+  namespace: suwayomi
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.44"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: suwayomi
+      # renovate: datasource=docker depName=ghcr.io/suwayomi/suwayomi-server
+      image: ghcr.io/suwayomi/suwayomi-server:v2.1.1867
+      container:
+        name: suwayomi
+        port: 4567
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # Download as CBZ for Komga compatibility
+          - name: DOWNLOAD_AS_CBZ
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false # Suwayomi needs to write to home directory
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 4567
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /home/suwayomi/.local/share/Tachidesk
+        - name: manga
+          mountPath: /manga
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 4567
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 4567
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 50Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: manga
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Manga"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false # No secrets needed - web UI configuration
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Suwayomi"
+      externalHost: "https://suwayomi.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/suwayomi/icon.png"
