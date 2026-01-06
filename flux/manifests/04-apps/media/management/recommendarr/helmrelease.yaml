@@ -1,0 +1,75 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: recommendarr
+  namespace: recommendarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.44"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: recommendarr
+      # renovate: datasource=docker depName=tannermiddleton/recommendarr
+      image: tannermiddleton/recommendarr:v1.4.4
+      container:
+        name: recommendarr
+        port: 3000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: NODE_ENV
+            value: "production"
+          - name: PORT
+            value: "3000"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false # Application needs to write to /app/server/data
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /app/server/data
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Recommendarr"
+      externalHost: "https://recommendarr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/recommendarr/icon.png"
