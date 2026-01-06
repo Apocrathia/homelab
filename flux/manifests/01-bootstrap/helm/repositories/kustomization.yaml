@@ -42,3 +42,4 @@ resources:
   - llm-d-modelservice.yaml
   - backstage.yaml
   - windmill.yaml
+  - open-telemetry.yaml
