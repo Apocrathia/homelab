@@ -18,5 +18,6 @@ resources:
   - n8n
   - searxng
   - transmission
+  - rclone
   - unpoller
   - uptime-kuma
