@@ -47,12 +47,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: recommendarr-secrets
-                key: oauth-client-id
+                key: oidc-client-id
           - name: CUSTOM_OAUTH_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
                 name: recommendarr-secrets
-                key: oauth-client-secret
+                key: oidc-client-secret
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
