@@ -1,0 +1,64 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: komga
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Custom email scope mapping with email_verified set to True
+  - model: authentik_providers_oauth2.scopemapping
+    state: present
+    identifiers:
+      name: "komga-email-verified-mapping"
+    attrs:
+      name: "komga-email-verified-mapping"
+      scope_name: email
+      description: "Email address with email_verified set to True for Komga"
+      expression: |
+        return {
+            "email": request.user.email,
+            "email_verified": True
+        }
+
+  # OIDC Provider for Komga
+  - model: authentik_providers_oauth2.oauth2provider
+    state: present
+    identifiers:
+      name: "komga-oidc-provider"
+    attrs:
+      name: "komga-oidc-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [name, "komga-email-verified-mapping"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "profile"]]
+      sub_mode: "user_email"
+      include_claims_in_id_token: true
+      issuer_mode: "per_provider"
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      redirect_uris:
+        - url: "https://komga.gateway.services.apocrathia.com/login/oauth2/code/authentik"
+          matching_mode: "strict"
+      access_code_validity: "minutes=1"
+      access_token_validity: "minutes=5"
+      refresh_token_validity: "days=30"
+      client_type: "confidential"
+
+  # Application for Komga
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "komga"
+    attrs:
+      name: "Komga"
+      slug: "komga"
+      provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "komga-oidc-provider"]]
+      launch_url: "https://komga.gateway.services.apocrathia.com"
+      group: "Media"
+      open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/komga/icon.svg"
+      meta_description: "Self-hosted media server for comics, manga, and eBooks"
+      meta_publisher: "Komga"
