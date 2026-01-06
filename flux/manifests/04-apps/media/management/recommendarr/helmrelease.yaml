@@ -88,7 +88,7 @@ spec:
 
     secrets:
       enabled: true
-      itemPath: "vaults/Secrets/items/recommendarr"
+      itemPath: "vaults/Secrets/items/recommendarr-secrets"
 
     httproute:
       enabled: true
