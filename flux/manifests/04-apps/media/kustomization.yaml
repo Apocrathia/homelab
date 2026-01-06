@@ -28,6 +28,7 @@ resources:
   - management/recyclarr
   - management/shinkro
   - management/sonarr
+  - management/suwayomi
   - management/taggarr
   - management/tautulli
   - management/tdarr
