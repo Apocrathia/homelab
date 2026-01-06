@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: maintainerr
+  labels:
+    app.kubernetes.io/name: maintainerr
