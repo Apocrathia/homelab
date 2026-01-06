@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.44"
+      version: "0.0.46"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -31,6 +31,28 @@ spec:
             value: "production"
           - name: PORT
             value: "3000"
+          - name: PUBLIC_URL
+            value: "https://recommendarr.gateway.services.apocrathia.com"
+          # Custom OAuth configuration pointing to Authentik
+          - name: CUSTOM_OAUTH_AUTH_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/authorize/"
+          - name: CUSTOM_OAUTH_TOKEN_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/token/"
+          - name: CUSTOM_OAUTH_USERINFO_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/userinfo/"
+          - name: CUSTOM_OAUTH_SCOPE
+            value: "openid email profile"
+          # Client credentials from 1Password
+          - name: CUSTOM_OAUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: recommendarr-secrets
+                key: oauth-client-id
+          - name: CUSTOM_OAUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: recommendarr-secrets
+                key: oauth-client-secret
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -65,11 +87,25 @@ spec:
             capacity: 5Gi
 
     secrets:
-      enabled: false
+      enabled: true
+      itemPath: "vaults/Secrets/items/recommendarr"
+
+    httproute:
+      enabled: true
+      hostname: recommendarr.gateway.services.apocrathia.com
 
     authentik:
       enabled: true
+      mode: "oidc"
       category: "Media"
       displayName: "Recommendarr"
       externalHost: "https://recommendarr.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/recommendarr/icon.png"
+      oidc:
+        redirectUris:
+          - url: "https://recommendarr.gateway.services.apocrathia.com/api/auth/custom/callback"
+            matchingMode: "strict"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
