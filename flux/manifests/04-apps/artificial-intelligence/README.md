@@ -19,29 +19,36 @@ Direct communication between agents and tools is not favored, but has valid use-
 ```mermaid
 flowchart TB
     subgraph Clients["Clients"]
-        direction LR
+        direction TB
         IDE["IDE / Editor"]
         WebUI["Web Interface"]
         Agent["AI Agent"]
     end
 
     subgraph AIServices["AI Services"]
-        direction LR
+        direction TB
         Proxy["AI Proxy"]
         Guard["Guardrails"]
         Backends["LLM<br/>Providers"]
     end
 
     subgraph AgentServices["Agent Services"]
-        direction LR
+        direction TB
         Agent1["Agent A"]
         Agent2["Agent B"]
     end
 
     subgraph ToolsServices["Tools Services"]
-        direction LR
+        direction TB
         Tool1["Tool A"]
         Tool2["Tool B"]
+    end
+
+    subgraph Observability["Observability"]
+        direction TB
+        Logs["Logs"]
+        Traces["Traces"]
+        Metrics["Metrics"]
     end
 
     IDE <--> Proxy
@@ -55,6 +62,8 @@ flowchart TB
 
     Agent1 <--> Agent2
     Agent2 <--> Tool2
+
+    Proxy --> Observability
 ```
 
 ## Design Principles
@@ -65,6 +74,7 @@ flowchart TB
 - **Namespace Isolation**: Each service runs in its own namespace
 - **Protocol Compatibility**: LLM proxy exposes OpenAI-compatible API
 - **Composable Validation**: Optional guardrails integrate transparently
+- **Distributed Tracing**: OpenTelemetry traces captured via Tempo
 
 ## Applications
 
@@ -75,10 +85,6 @@ User-friendly web interface for interacting with Large Language Models (LLMs) th
 ### [Flowise](./flowise/README.md)
 
 Open-source platform for building and deploying AI agents, providing a user-friendly web interface for interacting with Large Language Models (LLMs) through chat interfaces.
-
-### [MLflow](./mlflow/README.md)
-
-Open-source platform for the machine learning lifecycle with experiment tracking, model registry, and deployment capabilities.
 
 ### [LiteLLM](./litellm/README.md)
 
@@ -123,7 +129,7 @@ Artificial intelligence applications provide tools for:
 - **LLM Interaction**: Web-based chat interfaces for language models
 - **LLM Proxy Services**: Unified API access to multiple LLM providers
 - **LLM Validation**: Guardrails for output validation and safety checks
-- **ML Lifecycle Management**: Experiment tracking, model registry, and deployment
+- **LLM Observability**: OpenTelemetry tracing for all LLM requests
 - **MCP Integration**: Specialized servers for AI client functionality
 - **Autonomous Agents**: kagent-powered agents for various tasks
 - **Vulnerability Scanning**: Security analysis through OSV database integration
