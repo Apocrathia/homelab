@@ -1,0 +1,120 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: backstage
+  namespace: backstage
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: backstage
+      # renovate: datasource=helm registryUrl=https://backstage.github.io/charts depName=backstage
+      version: "2.6.3"
+      sourceRef:
+        kind: HelmRepository
+        name: backstage
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+
+  values:
+    # Disable bundled PostgreSQL - using external CNPG
+    postgresql:
+      enabled: false
+
+    # Disable ingress - using Gateway API
+    ingress:
+      enabled: false
+
+    backstage:
+      # Image configuration
+      image:
+        registry: ghcr.io
+        repository: backstage/backstage
+        # renovate: datasource=docker depName=ghcr.io/backstage/backstage
+        tag: "1.46.2"
+        pullPolicy: IfNotPresent
+
+      # Resource configuration
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "100m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+
+      # Environment variables from secrets
+      extraEnvVarsSecrets:
+        - backstage-secrets
+
+      # Environment variables
+      extraEnvVars:
+        # PostgreSQL connection
+        - name: POSTGRES_HOST
+          value: "backstage-postgres-rw.backstage.svc.cluster.local"
+        - name: POSTGRES_PORT
+          value: "5432"
+
+      # Backstage app configuration
+      appConfig:
+        app:
+          title: "Backstage"
+          baseUrl: "https://backstage.gateway.services.apocrathia.com"
+
+        organization:
+          name: "Apocrathia"
+
+        backend:
+          baseUrl: "https://backstage.gateway.services.apocrathia.com"
+          listen:
+            port: 7007
+          cors:
+            origin: "https://backstage.gateway.services.apocrathia.com"
+            methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+            credentials: true
+          database:
+            client: pg
+            # Use schema mode to avoid needing CREATEDB privilege
+            pluginDivisionMode: schema
+            connection:
+              host: ${POSTGRES_HOST}
+              port: ${POSTGRES_PORT}
+              user: ${username}
+              password: ${password}
+              # Use the single database created by CNPG
+              database: backstage
+
+        # Authentication configuration
+        auth:
+          environment: production
+          session:
+            secret: ${session-secret}
+          providers:
+            oidc:
+              production:
+                metadataUrl: "https://auth.gateway.services.apocrathia.com/application/o/backstage/.well-known/openid-configuration"
+                clientId: ${oidc-client-id}
+                clientSecret: ${oidc-client-secret}
+                prompt: auto
+                signIn:
+                  resolvers:
+                    - resolver: emailMatchingUserEntityProfileEmail
+
+    # Service configuration
+    service:
+      type: ClusterIP
+      ports:
+        backend: 7007
+
+    # Enable ServiceMonitor for Prometheus
+    metrics:
+      serviceMonitor:
+        enabled: true
+        labels:
+          release: prometheus

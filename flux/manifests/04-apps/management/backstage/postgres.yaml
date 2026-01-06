@@ -1,0 +1,50 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: backstage-postgres
+  namespace: backstage
+spec:
+  # PostgreSQL version
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+
+  # Affinity settings
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: backstage
+      owner: backstage
+      secret:
+        name: backstage-secrets
