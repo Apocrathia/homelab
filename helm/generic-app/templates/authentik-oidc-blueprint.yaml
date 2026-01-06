@@ -1,0 +1,71 @@
+{{- if and .Values.authentik.enabled (eq .Values.authentik.mode "oidc") }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-{{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  labels:
+    authentik_blueprint: "true"
+data:
+  {{ .Values.app.name }}.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    version: 1
+    metadata:
+      name: {{ .Values.app.name }}
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # OIDC Provider for {{ .Values.authentik.displayName }}
+      - model: authentik_providers_oauth2.oauth2provider
+        state: present
+        identifiers:
+          name: "{{ .Values.app.name }}-oidc-provider"
+        attrs:
+          name: "{{ .Values.app.name }}-oidc-provider"
+          authorization_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authorizationFlow }}"]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.invalidationFlow }}"]]
+          property_mappings:
+            {{- range .Values.authentik.oidc.scopes }}
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "{{ . }}"]]
+            {{- end }}
+          sub_mode: "{{ .Values.authentik.oidc.subMode | default "user_username" }}"
+          include_claims_in_id_token: {{ .Values.authentik.oidc.includeClaimsInIdToken | default true }}
+          issuer_mode: "{{ .Values.authentik.oidc.issuerMode | default "per_provider" }}"
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, "{{ .Values.authentik.oidc.signingKey | default "authentik Self-signed Certificate" }}"]]
+          {{- if .Values.authentik.oidc.redirectUris }}
+          redirect_uris:
+            {{- range .Values.authentik.oidc.redirectUris }}
+            - url: "{{ .url }}"
+              matching_mode: "{{ .matchingMode | default "strict" }}"
+            {{- end }}
+          {{- end }}
+          access_code_validity: "{{ .Values.authentik.oidc.accessCodeValidity | default "minutes=1" }}"
+          access_token_validity: "{{ .Values.authentik.oidc.accessTokenValidity | default "minutes=5" }}"
+          refresh_token_validity: "{{ .Values.authentik.oidc.refreshTokenValidity | default "days=30" }}"
+          client_type: "{{ .Values.authentik.oidc.clientType | default "confidential" }}"
+          {{- if .Values.authentik.oidc.clientId }}
+          client_id: "{{ .Values.authentik.oidc.clientId }}"
+          {{- end }}
+          {{- if .Values.authentik.oidc.clientSecret }}
+          client_secret: "{{ .Values.authentik.oidc.clientSecret }}"
+          {{- end }}
+
+      # Application for {{ .Values.authentik.displayName }}
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "{{ .Values.app.name }}"
+        attrs:
+          name: "{{ .Values.authentik.displayName }}"
+          slug: "{{ .Values.app.name }}"
+          provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "{{ .Values.app.name }}-oidc-provider"]]
+          launch_url: "{{ .Values.authentik.externalHost }}"
+          group: "{{ .Values.authentik.category | default "Applications" }}"
+          open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
+          {{- if .Values.authentik.icon }}
+          icon: "{{ .Values.authentik.icon }}"
+          {{- end }}
+{{- end }}
