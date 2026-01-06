@@ -101,6 +101,11 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Use template from `docs/readme-template.md`
   - Create or update `README.md` in the deployment directory
   - Include navigation, links, overview, configuration patterns, and troubleshooting
+- **Add deployment to parent kustomization overlay**:
+  - Locate the parent `kustomization.yaml` that references sibling deployments in [DIRECTORY]
+  - Add the new deployment directory to the `resources:` list in alphabetical order
+  - This step is required for Flux to discover and deploy the new application
+  - Example: If deploying to `04-apps/media/management/myapp`, add `- management/myapp` to `04-apps/media/kustomization.yaml`
 - When you are satisfied with the deployment, present your work to the user for review and approval.
   - At this point, the user will likely apply the deployment to the cluster, and we can observe the deployment in action.
 - After the user applies and tests the deployment:
