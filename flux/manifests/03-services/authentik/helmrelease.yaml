@@ -65,6 +65,10 @@ spec:
       valuesKey: authentik-secret-key
       targetPath: authentik.secret_key
   values:
+    # Testing RC3 for worker fix - revert to chart default when 2025.12.0 stable releases
+    global:
+      image:
+        tag: 2025.12.0-rc3
     authentik:
       postgresql:
         host: authentik-postgres-rw.authentik.svc.cluster.local
