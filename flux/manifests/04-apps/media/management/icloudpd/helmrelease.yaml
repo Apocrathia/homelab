@@ -1,0 +1,110 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: icloudpd
+  namespace: icloudpd
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.42"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: icloudpd
+      # renovate: datasource=docker depName=icloudpd/icloudpd
+      image: icloudpd/icloudpd:1.32.2
+      container:
+        name: icloudpd
+        # WebUI for authentication via port-forward
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: ICLOUD_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: icloudpd-secrets
+                key: username
+      # Override entrypoint to run icloudpd in watch mode with webui auth
+      command:
+        - /app/entrypoint.sh
+      args:
+        - icloudpd
+        - --directory
+        - /data
+        - --username
+        - $(ICLOUD_USERNAME)
+        - --password-provider
+        - webui
+        - --mfa-provider
+        - webui
+        - --cookie-directory
+        - /config
+        - --folder-structure
+        - "{:%Y/%m/%d}"
+        - --watch-with-interval
+        - "3600"
+        - --no-progress-bar
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: photos
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 1Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: photos
+            source: "//storage.services.apocrathia.com/Pictures"
+            subDir: "iCloud"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/icloudpd-secrets"
+
+    # No service exposure - use port-forward for webui auth
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
