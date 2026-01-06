@@ -178,6 +178,9 @@ spec:
         # Database configuration
         store_model_in_db: true
 
+        # Allow client-side credentials for vector store registration
+        allow_client_side_credentials: true
+
         # Rate limiting
         default_max_tokens: 4096
         default_tpm_limit: 60000
