@@ -171,12 +171,10 @@ Go look at the [flux/manifests](./flux/manifests) directory for the GitOps struc
 - **Storage**: Longhorn + SMB integration
 - **Networking**: Cilium CNI with Gateway API
 - **Authentication**: Authentik SSO
-- **Monitoring**: Prometheus + Grafana LGTM (Loki, Grafana, \*Tempo\*\*, Mimir)
+- **Monitoring**: Prometheus + Grafana LGTM (Loki, Grafana, Tempo, Mimir)
 - **Security**: Kyverno policies + Trivy scanning
 - **Database**: CloudNativePG operator
 - **Automation**: Renovate + n8n + kyverno
-
-> **Note**: _Tempo_ is not currently deployed.
 
 ## Application Deployment
 
