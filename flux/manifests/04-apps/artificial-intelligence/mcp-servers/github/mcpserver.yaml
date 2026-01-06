@@ -12,7 +12,7 @@ metadata:
   annotations:
     description: "GitHub MCP server for repository and issue management"
 spec:
-  image: ghcr.io/github/github-mcp-server:0.26.3
+  image: ghcr.io/github/github-mcp-server:v0.27.0
   transport: stdio
   proxyMode: streamable-http
   port: 8080
@@ -33,7 +33,7 @@ spec:
         readOnlyRootFilesystem: false
       containers:
         - name: mcp
-          image: ghcr.io/github/github-mcp-server:0.26.3
+          image: ghcr.io/github/github-mcp-server:v0.27.0
           stdin: true
           stdinOnce: false
           tty: false
