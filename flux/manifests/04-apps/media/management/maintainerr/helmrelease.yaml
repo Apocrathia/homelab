@@ -20,7 +20,7 @@ spec:
     app:
       name: maintainerr
       # renovate: datasource=docker depName=ghcr.io/maintainerr/maintainerr
-      image: ghcr.io/maintainerr/maintainerr:2.260
+      image: ghcr.io/maintainerr/maintainerr:2.26.0
       container:
         name: maintainerr
         port: 6246
