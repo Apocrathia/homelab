@@ -428,6 +428,12 @@ secrets:
 # Authentik SSO integration
 authentik:
   enabled: true
+  # Provider mode: "proxy" (network-layer auth) or "oidc" (OAuth2/OpenID Connect)
+  # - proxy: Creates proxy provider + outpost, Authentik handles auth before requests reach app
+  # - oidc: Creates OAuth2 provider, app handles auth via OAuth flow (requires app OIDC support)
+  mode: "proxy"
+
+  # Common settings (both modes)
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://i.imgur.com/0gNsvyk.png"
@@ -435,6 +441,14 @@ authentik:
   # Category for organizing applications in Authentik dashboard
   # Common categories: Applications, Infrastructure, External
   category: "Applications"
+
+  # Flow configuration (both modes)
+  authorizationFlow: "default-provider-authorization-implicit-consent"
+  invalidationFlow: "default-invalidation-flow"
+
+  # ============================================================
+  # Proxy mode settings (only when mode: "proxy")
+  # ============================================================
   # Enable header-based authentication for reverse proxy auth
   interceptHeaderAuth: false
 
@@ -447,28 +461,76 @@ authentik:
   #   - "^/api/"
   skipPathRegex: []
 
-  # Flow configuration
-  authorizationFlow: "default-provider-authorization-implicit-consent"
-  invalidationFlow: "default-invalidation-flow"
+  # Authentication flow (proxy mode only)
   authenticationFlow: "default-authentication-flow"
 
-  # Authentik server configuration
+  # Authentik server configuration (proxy mode only)
   authentikHost: "https://auth.gateway.services.apocrathia.com"
   authentikHostInsecure: true
   serviceConnection: "Local Kubernetes Cluster"
 
-  # Outpost configuration
+  # Outpost configuration (proxy mode only)
   replicas: 1
   namespace: authentik
   logLevel: info
 
-  # Gateway configuration
+  # Gateway configuration (proxy mode only - outpost creates HTTPRoute)
   gateway:
     name: main-gateway
     namespace: cilium-system
     sectionName: https
 
-# HTTPRoute configuration (only used when authentik.enabled is false)
+  # ============================================================
+  # OIDC mode settings (only when mode: "oidc")
+  # ============================================================
+  oidc:
+    # OAuth2 redirect URIs - where Authentik redirects after auth
+    # Each URI needs a url and matchingMode ("strict" or "regex")
+    redirectUris: []
+    # Example:
+    # redirectUris:
+    #   - url: "https://demo.gateway.services.apocrathia.com/oauth/callback"
+    #     matchingMode: "strict"
+    #   - url: "app.myapp:///oauth-callback"
+    #     matchingMode: "strict"
+
+    # OAuth2 scopes to include in tokens
+    scopes:
+      - "openid"
+      - "email"
+      - "profile"
+
+    # Client type: "confidential" (with secret) or "public" (no secret, e.g., mobile apps)
+    clientType: "confidential"
+
+    # Subject mode - what to use as the "sub" claim in tokens
+    # Options: "hashed_user_id", "user_id", "user_uuid", "user_username", "user_email"
+    subMode: "user_username"
+
+    # Include claims in ID token (vs requiring userinfo endpoint call)
+    includeClaimsInIdToken: true
+
+    # Issuer mode - how to construct the issuer URL
+    # Options: "global" (shared issuer) or "per_provider" (unique per provider)
+    issuerMode: "per_provider"
+
+    # Signing key for JWT tokens
+    signingKey: "authentik Self-signed Certificate"
+
+    # Token validity periods
+    accessCodeValidity: "minutes=1"
+    accessTokenValidity: "minutes=5"
+    refreshTokenValidity: "days=30"
+
+    # Pre-defined client credentials (optional)
+    # If set, these values are used in the blueprint instead of auto-generated
+    # Useful for GitOps - store in 1Password and reference here
+    # clientId: ""
+    # clientSecret: ""
+
+# HTTPRoute configuration
+# Use with OIDC mode or when not using Authentik proxy
+# Note: Don't enable with proxy mode (outpost creates its own HTTPRoute)
 httproute:
   enabled: false
   hostname: demo.gateway.services.apocrathia.com

@@ -1,6 +1,27 @@
 # Changelog
 
-## Version 0.0.45 (Latest)
+## Version 0.0.46 (Latest)
+
+- **NEW: OIDC Provider Mode for Authentik**: Added OAuth2/OpenID Connect provider support alongside existing proxy mode
+  - **Mode Selection**: New `authentik.mode` setting - `"proxy"` (default, backward compatible) or `"oidc"`
+  - **Proxy Mode**: Existing behavior unchanged - creates proxy provider + outpost for network-layer authentication
+  - **OIDC Mode**: Creates OAuth2 provider for apps with native OIDC/OAuth support
+    - Use with `httproute.enabled: true` for routing (no outpost needed)
+    - Configurable redirect URIs, scopes, token validity
+    - Optional pre-defined client credentials for GitOps workflows
+  - **New Values**:
+    - `authentik.mode`: Provider mode selection
+    - `authentik.oidc.redirectUris`: OAuth callback URLs
+    - `authentik.oidc.scopes`: Token scopes (default: openid, email, profile)
+    - `authentik.oidc.clientType`: "confidential" or "public"
+    - `authentik.oidc.subMode`: Subject claim mode
+    - `authentik.oidc.signingKey`: JWT signing key
+    - `authentik.oidc.accessCodeValidity`, `accessTokenValidity`, `refreshTokenValidity`: Token lifetimes
+    - `authentik.oidc.clientId`, `clientSecret`: Optional pre-defined credentials
+  - **Use Case**: Apps like Immich, Grafana, Recommendarr that support OAuth/OIDC natively
+  - **Backward Compatible**: Existing deployments with `authentik.enabled: true` continue using proxy mode
+
+## Version 0.0.45
 
 - **NEW: Pod Annotations Support**: Added `app.podAnnotations` configuration for adding custom annotations to pod templates
   - **OpenTelemetry Integration**: Enables OpenTelemetry auto-instrumentation via pod annotations
