@@ -35,6 +35,17 @@ spec:
             - name: http
               containerPort: 8267
               protocol: TCP
+          livenessProbe:
+            exec:
+              # Restart if node loses TCP connection to tdarr server
+              command:
+                - /bin/sh
+                - -c
+                - grep -q ":204A" /proc/net/tcp # 204A = port 8266 (server) in hex
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 5
           env:
             - name: TZ
               value: "America/Denver"
