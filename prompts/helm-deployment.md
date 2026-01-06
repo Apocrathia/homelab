@@ -309,7 +309,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Example: `https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/companion/icon.png`
 - **Downloading icons**:
   - Download icons from dashboard-icons CDN or other sources when creating new deployments
-  - Use `curl` or `wget` to download icons to the deployment directory
+  - Use `wget` to download icons to the deployment directory
   - For dashboard-icons CDN: `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/{svg|png}/{service-name}.{ext}`
   - Preserve original file format (SVG preferred, PNG when SVG unavailable)
 - **Icon naming**: Use `icon.svg` or `icon.png` for deployment icons
