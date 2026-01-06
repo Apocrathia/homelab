@@ -72,7 +72,7 @@ spec:
                 name: litellm-secrets
                 key: vector-store-api-key
           - name: EMBEDDING__MODEL
-            value: "text-embedding-ada-002"
+            value: "openai/nomic-embed-text"
           - name: EMBEDDING__BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000"
           - name: EMBEDDING__API_KEY
@@ -81,7 +81,7 @@ spec:
                 name: litellm-secrets
                 key: master-key
           - name: EMBEDDING__DIMENSIONS
-            value: "1536"
+            value: "768"
           - name: HOST
             value: "0.0.0.0"
           - name: PORT
