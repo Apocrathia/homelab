@@ -113,6 +113,8 @@ spec:
     # Grafana configuration
     grafana:
       enabled: true
+      deploymentStrategy:
+        type: Recreate
       ingress:
         enabled: false
       admin:
@@ -190,6 +192,9 @@ spec:
     # AlertManager configuration
     alertmanager:
       enabled: true
+      alertmanagerSpec:
+        updateStrategy:
+          type: Recreate
       config:
         global:
           resolve_timeout: 5m
@@ -229,6 +234,8 @@ spec:
     prometheus:
       enabled: true
       prometheusSpec:
+        updateStrategy:
+          type: Recreate
         retention: 7d
         retentionSize: 90GB
         resources:
