@@ -6,6 +6,7 @@ metadata:
   name: management
 
 resources:
+  - backstage
   - changedetection-io
   - companion
   - fluentbit
