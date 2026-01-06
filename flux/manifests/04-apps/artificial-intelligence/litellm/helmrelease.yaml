@@ -214,7 +214,7 @@ spec:
         argocd:
           enabled: false
         helm:
-          enabled: false
+          enabled: true # Auto-deletes old job before creating new one
 
     # Health check separation
     separateHealthApp: true
