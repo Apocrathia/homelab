@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.44"
+      version: "0.0.45"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -21,6 +21,8 @@ spec:
     app:
       name: discord-bridge
       namespace: kagent
+      podAnnotations:
+        instrumentation.opentelemetry.io/inject-python: "otel-system/python"
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
       image: public.ecr.aws/docker/library/python:3.12-slim
 
