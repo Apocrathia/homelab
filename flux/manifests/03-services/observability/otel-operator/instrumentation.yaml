@@ -1,0 +1,77 @@
+---
+# Cluster-wide Python auto-instrumentation configuration
+# To enable on a pod, add annotation: instrumentation.opentelemetry.io/inject-python: "true"
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: python
+  namespace: otel-system
+spec:
+  exporter:
+    endpoint: http://alloy.alloy-system.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1" # Sample 100% of traces (adjust for high-volume apps)
+  python:
+    # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:0.53b0
+---
+# Java auto-instrumentation
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: java
+  namespace: otel-system
+spec:
+  exporter:
+    endpoint: http://alloy.alloy-system.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  java:
+    # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.16.0
+---
+# Node.js auto-instrumentation
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: nodejs
+  namespace: otel-system
+spec:
+  exporter:
+    endpoint: http://alloy.alloy-system.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  nodejs:
+    # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.60.0
+---
+# .NET auto-instrumentation
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: dotnet
+  namespace: otel-system
+spec:
+  exporter:
+    endpoint: http://alloy.alloy-system.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  dotnet:
+    # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet:1.11.0
