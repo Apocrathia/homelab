@@ -32,7 +32,7 @@ Updates existing volumes to use the new `snapshotMaxCount` limit. The global set
 
 ### `update-volume-replica-counts.sh`
 
-Updates existing volumes to reduce replica count (e.g., from 3 to 2). Longhorn will automatically remove the extra replicas after the patch.
+Updates existing volumes to match the configured replica count (default is 3). Longhorn will automatically add or remove replicas as needed after the patch.
 
 **Usage:**
 
@@ -158,14 +158,14 @@ Cleans up stopped Longhorn replicas that have hit the rebuild retry limit. These
 
 ### Replica Count Mismatch
 
-**Problem:** Changed `defaultReplicaCount` from 3 to 2, but existing volumes still have 3 replicas.
+**Problem:** Changed `defaultReplicaCount` in HelmRelease, but existing volumes still have the old replica count.
 
 **Root Cause:** The global setting only applies to new volumes.
 
 **Solution:**
 
 - Use `update-volume-replica-counts.sh` to patch existing volumes
-- Longhorn will automatically remove the extra replica after the patch
+- Longhorn will automatically add or remove replicas as needed after the patch
 
 ### Snapshot Limits Not Applied Retroactively
 
@@ -180,7 +180,7 @@ Cleans up stopped Longhorn replicas that have hit the rebuild retry limit. These
 
 ### Stopped Replicas Consuming Disk Space
 
-**Problem:** Nodes showing excessive disk usage with many stopped Longhorn replicas, even though volumes are configured for 2 replicas.
+**Problem:** Nodes showing excessive disk usage with many stopped Longhorn replicas, even though volumes are configured for 3 replicas.
 
 **Root Causes:**
 
@@ -224,7 +224,7 @@ Added `recurringJobSelector` to automatically label new volumes:
 Key changes in HelmRelease:
 
 - `snapshotMaxCount: "5"` (down from 250)
-- `defaultReplicaCount: "2"` (down from 3)
+- `defaultReplicaCount: "3"` (default replica count for new volumes)
 - `defaultDataLocality: "best-effort"` (replicas can be on different nodes for better availability)
 - `replicaAutoBalance: "best-effort"` (automatic rebalancing)
 
