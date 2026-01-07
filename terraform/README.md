@@ -261,6 +261,7 @@ Key considerations:
 - Use image with OpenTofu + Terragrunt (e.g., `alpine/terragrunt`)
 - Cache `.terragrunt-cache` directory
 - Store plan output as artifact
+- Post plan output as MR comment for reviewer visibility
 - Require manual approval for apply on main
 
 ## Local Development
