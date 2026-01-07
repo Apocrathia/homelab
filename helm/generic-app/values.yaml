@@ -398,7 +398,7 @@ storage:
   # Longhorn persistent storage
   longhorn:
     enabled: false
-    # Number of replicas for Longhorn volumes (default: 2)
+    # Number of replicas for Longhorn volumes (default: 3)
     # numberOfReplicas: 3
     volumes: []
 

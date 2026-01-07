@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.46 (Latest)
+## Version 0.0.47 (Latest)
+
+- **Changed Longhorn Volume Replica Default**: Updated default replica count from 2 to 3 for better data redundancy
+  - **Default Behavior**: All Longhorn volumes now default to 3 replicas when `storage.longhorn.numberOfReplicas` is not specified
+  - **Template Update**: Updated `storage-longhorn.yaml` template to use 3 as the default replica count
+  - **High Availability**: Matches Longhorn's recommended configuration for production workloads
+  - **Backward Compatible**: Existing deployments with explicit `numberOfReplicas` configuration are unaffected
+  - **Migration**: Existing volumes created with 2 replicas will continue to use 2 replicas until explicitly updated
+
+## Version 0.0.46
 
 - **NEW: OIDC Provider Mode for Authentik**: Added OAuth2/OpenID Connect provider support alongside existing proxy mode
   - **Mode Selection**: New `authentik.mode` setting - `"proxy"` (default, backward compatible) or `"oidc"`

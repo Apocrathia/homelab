@@ -11,9 +11,9 @@ metadata:
     pasture.longhorn.io/restore: "true"
 spec:
   size: {{ mul (.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
-  {{- $replicas := 2 }}
+  {{- $replicas := 3 }}
   {{- if $.Values.storage.longhorn }}
-  {{- $replicas = $.Values.storage.longhorn.numberOfReplicas | default 2 }}
+  {{- $replicas = $.Values.storage.longhorn.numberOfReplicas | default 3 }}
   {{- end }}
   numberOfReplicas: {{ $replicas }}
   staleReplicaTimeout: 30
