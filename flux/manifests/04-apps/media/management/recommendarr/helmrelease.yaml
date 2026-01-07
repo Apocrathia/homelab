@@ -103,6 +103,10 @@ spec:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/recommendarr/icon.png"
       oidc:
         redirectUris:
+          # App constructs redirect_uri from request origin (http internally)
+          - url: "http://recommendarr.gateway.services.apocrathia.com/api/auth/custom/callback"
+            matchingMode: "strict"
+          # Also allow https in case PUBLIC_URL is used
           - url: "https://recommendarr.gateway.services.apocrathia.com/api/auth/custom/callback"
             matchingMode: "strict"
         scopes:
