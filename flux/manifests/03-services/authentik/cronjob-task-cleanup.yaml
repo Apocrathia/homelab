@@ -74,26 +74,25 @@ spec:
                   if total_deduped > 0:
                       print(f'Deduped {total_deduped} singleton tasks')
 
-                  # Clear stale outpost tasks (older than 5 min)
+                  # Clear stale outpost tasks (older than 5 min) - these spam and regenerate
                   stale_threshold = timezone.now() - timedelta(minutes=5)
-                  stale_outpost = Task.objects.filter(
+                  SPAMMY_TASKS = [
+                      'authentik.outposts.tasks.outpost_send_update',
+                      'authentik.outposts.tasks.outpost_controller',
+                      'authentik.events.tasks.event_trigger_dispatch',
+                  ]
+                  stale_spammy = Task.objects.filter(
                       state='queued',
                       mtime__lt=stale_threshold,
-                      actor_name__in=[
-                          'authentik.outposts.tasks.outpost_send_update',
-                          'authentik.outposts.tasks.outpost_controller',
-                      ]
+                      actor_name__in=SPAMMY_TASKS
                   )
-                  if stale_outpost.count() > 0:
-                      deleted, _ = stale_outpost.delete()
-                      print(f'Deleted {deleted} stale outpost tasks')
+                  if stale_spammy.count() > 0:
+                      deleted, _ = stale_spammy.delete()
+                      print(f'Deleted {deleted} stale spammy tasks')
 
-                  # Nuclear option: if queue > 500, clear all stale tasks
-                  remaining = Task.objects.filter(state='queued').count()
-                  if remaining > 500:
-                      stale_all = Task.objects.filter(state='queued', mtime__lt=stale_threshold)
-                      deleted, _ = stale_all.delete()
-                      print(f'Deleted {deleted} additional stale tasks (nuclear)')
+                  # NOTE: We intentionally do NOT have a nuclear option that deletes
+                  # all stale tasks. Tasks like apply_blueprint are legitimate and
+                  # just waiting their turn in the queue.
 
                   final = Task.objects.filter(state='queued').count()
                   print(f'Final queued: {final}')
