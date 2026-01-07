@@ -7,7 +7,7 @@ metadata:
   name: authentik-task-cleanup
   namespace: authentik
 spec:
-  schedule: "0 * * * *" # Hourly
+  schedule: "*/15 * * * *" # Every 15 minutes
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -26,7 +26,7 @@ spec:
           containers:
             - name: task-cleanup
               # renovate: datasource=docker registryUrl=https://ghcr.io depName=goauthentik/server
-              image: ghcr.io/goauthentik/server:2025.10.3
+              image: ghcr.io/goauthentik/server:2025.12.0-rc3
               securityContext:
                 readOnlyRootFilesystem: true
                 allowPrivilegeEscalation: false
@@ -43,42 +43,60 @@ spec:
                   from django.utils import timezone
                   from datetime import timedelta
 
-                  # Only clear tasks queued for more than 5 minutes (stale)
-                  stale_threshold = timezone.now() - timedelta(minutes=5)
-
-                  # Count before
                   queued = Task.objects.filter(state='queued').count()
                   print(f'Total queued tasks: {queued}')
 
-                  if queued > 100:
-                      # Clear stale outpost tasks that accumulate
-                      stale_outpost = Task.objects.filter(
-                          state='queued',
-                          mtime__lt=stale_threshold,
-                          actor_name__in=[
-                              'authentik.outposts.tasks.outpost_send_update',
-                              'authentik.outposts.tasks.outpost_controller',
-                          ]
-                      )
-                      count = stale_outpost.count()
-                      if count > 0:
-                          deleted, _ = stale_outpost.delete()
-                          print(f'Deleted {deleted} stale outpost tasks')
+                  # Scheduled tasks that should only have 1 instance queued
+                  SINGLETON_TASKS = [
+                      'authentik.core.tasks.clean_expired_models',
+                      'authentik.core.tasks.clean_temporary_users',
+                      'authentik.admin.tasks.update_latest_version',
+                      'authentik.blueprints.v1.tasks.blueprints_discovery',
+                      'authentik.blueprints.v1.tasks.clear_failed_blueprints',
+                      'authentik.crypto.tasks.certificate_discovery',
+                      'authentik.outposts.tasks.outpost_service_connection_monitor',
+                      'authentik.outposts.tasks.outpost_connection_discovery',
+                  ]
 
-                      # If still heavily backed up, clear all stale queued tasks
-                      remaining = Task.objects.filter(state='queued').count()
-                      if remaining > 500:
-                          stale_all = Task.objects.filter(
+                  # Dedupe singleton tasks - keep only the newest queued instance
+                  total_deduped = 0
+                  for actor in SINGLETON_TASKS:
+                      queued_tasks = Task.objects.filter(state='queued', actor_name=actor).order_by('-mtime')
+                      count = queued_tasks.count()
+                      if count > 1:
+                          newest = queued_tasks.first()
+                          deleted, _ = Task.objects.filter(
                               state='queued',
-                              mtime__lt=stale_threshold
-                          )
-                          deleted, _ = stale_all.delete()
-                          print(f'Deleted {deleted} additional stale tasks')
+                              actor_name=actor
+                          ).exclude(message_id=newest.message_id).delete()
+                          total_deduped += deleted
+                          print(f'  {actor.split(\".\")[-1]}: {deleted} duplicates')
+                  if total_deduped > 0:
+                      print(f'Deduped {total_deduped} singleton tasks')
 
-                      final = Task.objects.filter(state='queued').count()
-                      print(f'Remaining queued tasks: {final}')
-                  else:
-                      print('Queue healthy, no cleanup needed')
+                  # Clear stale outpost tasks (older than 5 min)
+                  stale_threshold = timezone.now() - timedelta(minutes=5)
+                  stale_outpost = Task.objects.filter(
+                      state='queued',
+                      mtime__lt=stale_threshold,
+                      actor_name__in=[
+                          'authentik.outposts.tasks.outpost_send_update',
+                          'authentik.outposts.tasks.outpost_controller',
+                      ]
+                  )
+                  if stale_outpost.count() > 0:
+                      deleted, _ = stale_outpost.delete()
+                      print(f'Deleted {deleted} stale outpost tasks')
+
+                  # Nuclear option: if queue > 500, clear all stale tasks
+                  remaining = Task.objects.filter(state='queued').count()
+                  if remaining > 500:
+                      stale_all = Task.objects.filter(state='queued', mtime__lt=stale_threshold)
+                      deleted, _ = stale_all.delete()
+                      print(f'Deleted {deleted} additional stale tasks (nuclear)')
+
+                  final = Task.objects.filter(state='queued').count()
+                  print(f'Final queued: {final}')
                   "
               env:
                 - name: AUTHENTIK_POSTGRESQL__HOST

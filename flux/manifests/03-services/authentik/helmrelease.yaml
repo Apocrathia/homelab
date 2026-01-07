@@ -129,10 +129,10 @@ spec:
               memory: 256Mi
 
     worker:
-      replicas: 2
+      replicas: 4
       env:
         - name: AUTHENTIK_WORKER__THREADS
-          value: "2"
+          value: "4"
         - name: AUTHENTIK_WORKER__SCHEDULER_INTERVAL
           value: "hours=1"
         - name: AUTHENTIK_CACHE__TIMEOUT
