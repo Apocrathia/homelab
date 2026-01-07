@@ -69,6 +69,9 @@ spec:
     global:
       image:
         tag: 2025.12.0-rc3
+    serviceAccount:
+      create: true
+      fullnameOverride: authentik
     authentik:
       postgresql:
         host: authentik-postgres-rw.authentik.svc.cluster.local
@@ -82,6 +85,7 @@ spec:
       enabled: false
 
     server:
+      serviceAccountName: authentik
       replicas: 2
       resources:
         requests:
@@ -129,6 +133,7 @@ spec:
               memory: 256Mi
 
     worker:
+      serviceAccountName: authentik
       replicas: 4
       env:
         - name: AUTHENTIK_WORKER__THREADS
