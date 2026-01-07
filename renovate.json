@@ -91,7 +91,7 @@
         "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/\\s]+)/[^\\s]+",
         "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
         "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*image: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?\\s*tag: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*tag: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ]
     }
   ],
