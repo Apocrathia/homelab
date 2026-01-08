@@ -30,11 +30,11 @@ spec:
                 path: /spec/template/spec/containers/0/resources
                 value:
                   requests:
-                    cpu: 1000m
+                    cpu: 500m
                     memory: 2Gi
                   limits:
-                    cpu: 1000m
-                    memory: 4Gi
+                    cpu: 500m
+                    memory: 2Gi
   install:
     crds: Create
     remediation:
