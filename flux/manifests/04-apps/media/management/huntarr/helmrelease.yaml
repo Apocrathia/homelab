@@ -20,7 +20,7 @@ spec:
     app:
       name: huntarr
       # renovate: datasource=docker depName=ghcr.io/plexguide/huntarr
-      image: ghcr.io/plexguide/huntarr:8.2.10
+      image: ghcr.io/plexguide/huntarr:8.2.11
       container:
         name: huntarr
         port: 9705
