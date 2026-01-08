@@ -66,21 +66,20 @@ cluster:
     extraArgs:
       # Event garbage collection - 1 hour TTL
       event-ttl: "1h"
-      # Valid API Server flags for CRD optimization
-      max-requests-inflight: "400"
-      max-mutating-requests-inflight: "200"
-      request-timeout: "60s"
+      max-requests-inflight: "800"
+      max-mutating-requests-inflight: "400"
+      request-timeout: "120s"
       watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#100,persistentvolumeclaims#200"
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
       audit-log-maxsize: "50" # Reduce from default 100MB
     resources:
       requests:
-        cpu: "1000m"
-        memory: "1Gi"
+        cpu: "2000m"
+        memory: "4Gi" # Increased for larger CRD watch cache
       limits:
-        cpu: "2000m" # Allow bursting
-        memory: "4Gi"
+        cpu: "4000m" # Allow bursting
+        memory: "8Gi" # Increased to accommodate larger watch cache
   network:
     cni:
       name: none
