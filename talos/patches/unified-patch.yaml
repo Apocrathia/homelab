@@ -67,9 +67,9 @@ cluster:
       # Event garbage collection - 1 hour TTL
       event-ttl: "1h"
       # Valid API Server flags for CRD optimization
-      max-requests-inflight: "800" # 2x increase from default 400
-      max-mutating-requests-inflight: "400" # 2x increase from default 200
-      request-timeout: "120s" # 2x increase from default 60s
+      max-requests-inflight: "400"
+      max-mutating-requests-inflight: "200"
+      request-timeout: "60s"
       watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#100,persistentvolumeclaims#200"
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
