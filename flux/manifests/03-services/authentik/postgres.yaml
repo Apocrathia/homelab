@@ -30,11 +30,10 @@ spec:
       log_min_duration_statement: "1000ms"
       log_min_messages: "INFO"
 
-  # Resource limits to prevent OOM kills
   resources:
     requests:
       memory: "512Mi"
-      cpu: "200m"
+      cpu: "100m"
     limits:
       memory: "2Gi"
       cpu: "2000m"
