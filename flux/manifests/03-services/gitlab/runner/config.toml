@@ -8,8 +8,8 @@
     privileged = false
     service_account = "gitlab-runner"
     poll_timeout = 600
-    resource_limits = ["cpu=4", "memory=8Gi"]
-    resource_requests = ["cpu=1", "memory=1Gi"]
+    resource_limits = ["cpu=4000m", "memory=4Gi"]
+    resource_requests = ["cpu=100m", "memory=128Mi"]
     # renovate: datasource=docker registryUrl=https://registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
     helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.10.0"
     helper_image_flavor = "alpine"
