@@ -56,7 +56,7 @@ spec:
         livenessProbe:
           enabled: true
           httpGet:
-            path: /api/v3/system/status
+            path: /ping
             port: 7878
             scheme: HTTP
           initialDelaySeconds: 60
@@ -67,7 +67,7 @@ spec:
         readinessProbe:
           enabled: true
           httpGet:
-            path: /api/v3/system/status
+            path: /ping
             port: 7878
             scheme: HTTP
           initialDelaySeconds: 10
