@@ -56,7 +56,7 @@ spec:
         livenessProbe:
           enabled: true
           httpGet:
-            path: /api/v1/health
+            path: /
             port: 8686
             scheme: HTTP
           initialDelaySeconds: 60
@@ -67,7 +67,7 @@ spec:
         readinessProbe:
           enabled: true
           httpGet:
-            path: /api/v1/health
+            path: /
             port: 8686
             scheme: HTTP
           initialDelaySeconds: 10
