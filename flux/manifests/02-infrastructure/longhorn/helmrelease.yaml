@@ -31,9 +31,9 @@ spec:
                 value:
                   requests:
                     cpu: 500m
-                    memory: 2Gi
+                    memory: 512Mi
                   limits:
-                    cpu: 500m
+                    cpu: 2000m
                     memory: 2Gi
   install:
     crds: Create
