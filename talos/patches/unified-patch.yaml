@@ -77,11 +77,11 @@ cluster:
     # Scale API server resources significantly
     resources:
       requests:
-        cpu: "1600m" # 8x increase from current 200m
-        memory: "4Gi" # 8x increase from current 512Mi
+        cpu: "500m"
+        memory: "1Gi"
       limits:
-        cpu: "3200m" # Allow bursting
-        memory: "8Gi" # Generous memory limit
+        cpu: "2000m" # Allow bursting
+        memory: "4Gi"
   network:
     cni:
       name: none
