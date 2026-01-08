@@ -40,7 +40,7 @@ spec:
         enabled: false # Single replica, no need for anti-affinity
       resources:
         requests:
-          cpu: 200m
+          cpu: 50m
           memory: 512Mi
         limits:
           cpu: 4000m
