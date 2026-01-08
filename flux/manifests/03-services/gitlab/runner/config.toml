@@ -13,10 +13,10 @@
     # renovate: datasource=docker registryUrl=https://registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
     helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.10.0"
     helper_image_flavor = "alpine"
-    cpu_limit = "4"
-    memory_limit = "8Gi"
-    cpu_request = "1"
-    memory_request = "1Gi"
+    cpu_limit = "4000m"
+    memory_limit = "4Gi"
+    cpu_request = "100m"
+    memory_request = "128Mi"
 
     [runners.kubernetes.pod_security_context]
     run_as_non_root = true
