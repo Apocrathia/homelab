@@ -150,14 +150,13 @@ spec:
     autoDirectNodeRoutes: true
 
     # Resource configuration for cilium-agent
-    # Guaranteed QoS (requests = limits) protects from Talos OOM controller
     resources:
       requests:
-        cpu: 2000m
-        memory: 2Gi
+        cpu: 1000m
+        memory: 1Gi
       limits:
-        cpu: 2000m
-        memory: 2Gi
+        cpu: 1000m
+        memory: 1Gi
 
     # Security context for agent pods - modified for Talos compatibility
     securityContext:
