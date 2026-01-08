@@ -28,6 +28,9 @@ spec:
       install: true
     extraArgs:
       - --autogenInternals=false
+      - --leaderElectionLeaseDuration=30s
+      - --leaderElectionRenewDeadline=20s
+      - --leaderElectionRetryPeriod=5s
     config:
       # Remove ReplicaSet filters to allow cleanup policies to work
       resourceFiltersExclude:
