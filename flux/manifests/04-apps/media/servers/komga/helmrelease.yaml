@@ -93,8 +93,10 @@ spec:
       healthChecks:
         livenessProbe:
           enabled: true
-          tcpSocket:
+          httpGet:
+            path: /actuator/health
             port: 25600
+            scheme: HTTP
           initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 5
@@ -102,8 +104,10 @@ spec:
           successThreshold: 1
         readinessProbe:
           enabled: true
-          tcpSocket:
+          httpGet:
+            path: /actuator/health
             port: 25600
+            scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 3
