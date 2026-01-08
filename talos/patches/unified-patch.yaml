@@ -74,10 +74,9 @@ cluster:
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
       audit-log-maxsize: "50" # Reduce from default 100MB
-    # Scale API server resources significantly
     resources:
       requests:
-        cpu: "500m"
+        cpu: "1000m"
         memory: "1Gi"
       limits:
         cpu: "2000m" # Allow bursting
