@@ -12,13 +12,6 @@ create-chart-tag:
     - |
       echo "=== Chart Tag Creation Started ==="
 
-      # Validate GitLab token is available
-      if [ -z "$GITLAB_TOKEN" ]; then
-        echo "❌ ERROR: GITLAB_TOKEN environment variable is not set!"
-        echo "   Please configure the GITLAB_TOKEN variable in your project's CI/CD settings"
-        exit 1
-      fi
-
       # Validate Chart.yaml exists and is readable
       if [ ! -f "helm/generic-app/Chart.yaml" ]; then
         echo "❌ ERROR: helm/generic-app/Chart.yaml not found!"
