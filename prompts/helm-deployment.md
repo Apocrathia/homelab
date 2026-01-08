@@ -247,6 +247,15 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Understand how database connection is configured (env vars, config files, service discovery)
   - For PostgreSQL with generic-app: Connection uses service name pattern `{app-name}-postgres-rw.{namespace}.svc.cluster.local`
 
+## Resource Management
+
+- **Avoid overcommitting resources**: Generic applications typically don't need excessive resource requests
+  - Most generic-apps don't need a full CPU core (1000m) - start with 100-250m CPU request
+  - Memory requests should be based on actual application needs, not defaulting to high values
+  - Use reasonable defaults that allow the application to run without starving other workloads
+  - Only increase resource requests if the application demonstrates actual need through monitoring
+  - Consider the application's workload type: simple web apps need less than compute-intensive services
+
 ## Storage and Persistence
 
 - **Determine persistence requirements**: Before choosing storage type (emptyDir vs persistent volume):
