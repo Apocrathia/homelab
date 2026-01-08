@@ -72,10 +72,15 @@ spec:
         periodSeconds: 5
         timeoutSeconds: 5
         failureThreshold: 12
+      readinessProbe:
+        initialDelaySeconds: 15
+        periodSeconds: 15
+        timeoutSeconds: 10
+        failureThreshold: 9
       livenessProbe:
         initialDelaySeconds: 30
         periodSeconds: 10
-        timeoutSeconds: 5
+        timeoutSeconds: 10
         failureThreshold: 3
     cleanupController:
       resources:
