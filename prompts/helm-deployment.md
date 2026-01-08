@@ -49,9 +49,9 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - What is the minimum configuration needed to get the application running?
 - Check for database and dependency requirements:
   - Review application documentation for database requirements (PostgreSQL, MySQL, SQLite, etc.)
-  - **CRITICAL: Check chart capabilities first** - Before creating separate resources (postgres.yaml, authentik-blueprint.yaml), verify if the chart supports these features:
+  - **CRITICAL: Check chart capabilities first** - Before creating separate resources (postgres.yaml), verify if the chart supports these features:
     - For generic-app chart: Check if `postgres.enabled: true` is available before creating separate CNPG cluster
-    - For generic-app chart: Check if `authentik.enabled: true` supports your authentication needs (proxy vs OIDC)
+    - For generic-app chart: `authentik.enabled: true` supports both proxy AND OIDC modes via `authentik.mode`
     - Review chart README/values.yaml to understand built-in capabilities
     - Only create separate resources if the chart doesn't support the required feature
   - Understand how database connection is configured (env vars, config files, service discovery)
@@ -67,7 +67,6 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - The namespace for the deployment.
     - The helmrelease.yaml file that will deploy the chart.
     - Any additional resources that you have identified as needed for the deployment.
-    - For authentik blueprints: Use configMapGenerator pattern with `authentik_blueprint: "true"` label
 - Determine networking approach:
   - If using Authentik proxy: Don't create HTTPRoute (Authentik handles it)
   - If not using Authentik: Create HTTPRoute for Gateway API access
@@ -79,14 +78,14 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
     - Use DeepWiki to verify if OIDC/SSO is supported in the open-source version
     - Check application documentation for OIDC/OAuth/SAML support explicitly
   - **Chart authentication capabilities**:
-    - For generic-app chart: `authentik.enabled: true` creates a **proxy provider** (not OIDC)
-    - Proxy provider works for apps with local/no auth - Authentik handles authentication at network layer
-    - If app requires OIDC provider (app has OIDC client support), chart's built-in authentik won't work - create separate blueprint
+    - For generic-app chart: `authentik.enabled: true` with `authentik.mode` supports both proxy AND OIDC
+    - `authentik.mode: "proxy"` (default) - creates proxy provider for apps with local/no auth
+    - `authentik.mode: "oidc"` - creates OAuth2/OIDC provider for apps with native OIDC support
+    - Both modes generate the blueprint automatically - no manual blueprint needed
   - **Authentication decision tree**:
-    1. Does the application natively support OIDC/OAuth? → Use OIDC provider (manual blueprint if chart doesn't support)
-    2. Does the application have local authentication or no auth? → Use proxy provider (chart's built-in authentik)
-    3. Does the application require SAML? → Use SAML provider (manual blueprint)
-  - If creating blueprint, use configMapGenerator pattern in kustomization.yaml
+    1. Does the application natively support OIDC/OAuth? → Use `authentik.mode: "oidc"` with `httproute.enabled: true`
+    2. Does the application have local authentication or no auth? → Use `authentik.mode: "proxy"` (no HTTPRoute needed)
+    3. Does the application require SAML? → Use SAML provider (manual blueprint required)
 - Once you have the deployment drafted, you will need to test the supplied values against the chart to pre-validate the deployment.
   - This will involve using `helm template` to render the template and validate the deployment.
   - Validate service names and ports match your networking configuration
@@ -146,34 +145,54 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 
 ## Authentication Integration
 
-- For manual Authentik blueprints: Use configMapGenerator in kustomization.yaml
+The generic-app chart supports both proxy and OIDC authentication modes via `authentik.mode`:
+
+- **Proxy Mode** (`authentik.mode: "proxy"`, default):
 
   ```yaml
-  configMapGenerator:
-    - name: authentik-blueprint-[app-name]
-      namespace: authentik  # CRITICAL: Always use 'authentik' namespace, not app namespace
-      files:
-        - [app-name].yaml=authentik-blueprint.yaml
-
-  labels:
-    - includeSelectors: true
-      pairs:
-        authentik_blueprint: "true"
+  authentik:
+    enabled: true
+    mode: "proxy"
+    displayName: "My Application"
+    externalHost: "https://my-app.gateway.services.apocrathia.com"
+    icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/path/to/icon.svg"
+    category: "Applications"
+  # No HTTPRoute needed - outpost handles routing
+  httproute:
+    enabled: false
   ```
 
-- **Blueprint namespace**: Authentik blueprints MUST be in the `authentik` namespace, not the application namespace. This is required for Authentik to discover and instantiate the blueprints.
+- **OIDC Mode** (`authentik.mode: "oidc"`):
+
+  ```yaml
+  authentik:
+    enabled: true
+    mode: "oidc"
+    displayName: "My Application"
+    externalHost: "https://my-app.gateway.services.apocrathia.com"
+    icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/path/to/icon.svg"
+    category: "Applications"
+    oidc:
+      redirectUris:
+        - url: "https://my-app.gateway.services.apocrathia.com/oauth/callback"
+          matchingMode: "strict"
+  # HTTPRoute required for OIDC mode
+  httproute:
+    enabled: true
+    hostname: "my-app.gateway.services.apocrathia.com"
+  ```
 
 - **OIDC vs Proxy decision**:
   - **OIDC Provider**: Use when application natively supports OIDC/OAuth (has OIDC client configuration)
     - Verify OIDC support exists in open-source version (not Enterprise-only)
-    - Chart's built-in `authentik.enabled: true` does NOT create OIDC provider (only proxy)
-    - For OIDC, create manual blueprint with OIDC provider configuration
+    - Set `authentik.mode: "oidc"` and configure `authentik.oidc.redirectUris`
+    - Enable `httproute.enabled: true` for routing (no outpost needed)
   - **Proxy Provider**: Use when application has local authentication or no authentication
-    - Chart's built-in `authentik.enabled: true` creates proxy provider automatically
+    - Set `authentik.mode: "proxy"` (or omit, as proxy is default)
     - Authentik handles authentication at network layer before requests reach application
-    - Application still uses its own authentication, but users must pass through Authentik first
+    - Don't enable HTTPRoute - outpost handles routing
 - Prefer OIDC provider pattern for web applications that support it
-- Use SAML only when application specifically requires it
+- Use SAML only when application specifically requires it (manual blueprint needed)
 
 ## Networking Approach
 
