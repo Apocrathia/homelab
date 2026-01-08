@@ -60,6 +60,29 @@ spec:
         port: 80
         targetPort: 5055
         portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/status
+            port: 5055
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/status
+            port: 5055
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
       volumeMounts:
         - name: config
           mountPath: /config
