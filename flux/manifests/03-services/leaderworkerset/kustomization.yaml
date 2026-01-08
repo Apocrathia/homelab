@@ -10,13 +10,17 @@ resources:
   - https://github.com/kubernetes-sigs/lws/releases/download/v0.6.3/manifests.yaml
 
 patches:
-  # Add memory limits to LWS controller to prevent OOM kills
+  # Add resource requests and limits to LWS controller to prevent OOM kills
   - target:
       kind: Deployment
       name: lws-controller-manager
     patch: |-
       - op: add
-        path: /spec/template/spec/containers/0/resources/limits
+        path: /spec/template/spec/containers/0/resources
         value:
-          cpu: 2000m
-          memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
