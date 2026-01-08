@@ -125,6 +125,18 @@ spec:
         usage_stats:
           enabled: false
 
+        # Distributor configuration
+        distributor:
+          remote_timeout: 30s # Increased from default 5s to handle Kafka latency
+
+        # Kafka ingest storage configuration
+        ingest_storage:
+          kafka:
+            # Maximum time to open connection to Kafka broker (default 2s)
+            dial_timeout: 10s
+            # How long to wait for write request to be committed to Kafka (default 10s)
+            write_timeout: 30s
+
     # Resource configuration for Mimir components
     ingester:
       replicas: 2
