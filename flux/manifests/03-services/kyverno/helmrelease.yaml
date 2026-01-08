@@ -59,6 +59,24 @@ spec:
       cleanupController:
         clusterRole:
           extraResources: *commonResources
+    admissionController:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      startupProbe:
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 5
+        failureThreshold: 12
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
     cleanupController:
       resources:
         requests:
