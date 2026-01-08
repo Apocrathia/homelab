@@ -156,10 +156,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 128Mi
+          memory: 256Mi
         limits:
           cpu: 500m
-          memory: 1Gi
+          memory: 2Gi
       # Increase ingestion rate limits to handle high-volume metrics
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
