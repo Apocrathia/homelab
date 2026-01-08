@@ -206,16 +206,16 @@ spec:
         size: 20Gi
       resources:
         requests:
-          cpu: 500m
-          memory: 1Gi
+          cpu: 100m
+          memory: 128Mi
         limits:
           cpu: 1000m
-          memory: 2Gi
-      # Override retention from default 24h to 2h
+          memory: 1Gi
+      # Override retention from default 24h to 1h
       # Kafka is just a buffer - data should be consumed quickly by ingesters and flushed to S3
       extraEnv:
         - name: KAFKA_LOG_RETENTION_HOURS
-          value: "2"
+          value: "1"
 
     # Enable the proper gateway (not just nginx)
     gateway:
