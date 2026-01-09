@@ -1,13 +1,19 @@
 # RClone Manager
 
-[← Management Apps](../README.md)
+Cross-platform GUI application for managing rclone remotes with a web-based interface.
+
+> **Navigation**: [← Back to Management Apps README](../README.md)
+
+## Documentation
+
+- **[RClone Documentation](https://rclone.org/docs/)** - RClone official documentation
+- **[GitHub Repository](https://github.com/Zarestia-Dev/rclone-manager)** - Source code and issues
 
 ## Overview
 
-RClone Manager is a cross-platform GUI application for managing [rclone](https://rclone.org/) remotes. It provides a web-based interface to configure cloud storage remotes, mount drives, sync/copy/move files, and schedule backup jobs.
+RClone Manager provides a web-based interface to configure cloud storage remotes, mount drives, sync/copy/move files, and schedule backup jobs.
 
-- **Project**: [Zarestia-Dev/rclone-manager](https://github.com/Zarestia-Dev/rclone-manager)
-- **External URL**: <https://rclone.gateway.services.apocrathia.com>
+- **External URL**: `https://rclone.gateway.services.apocrathia.com`
 
 ## Features
 

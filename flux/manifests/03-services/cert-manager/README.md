@@ -1,8 +1,14 @@
 # Cert Manager - Certificate Management
 
-This directory contains the deployment configuration for cert-manager, an add-on to automate the management and issuance of TLS certificates from various issuing sources.
+Kubernetes add-on to automate the management and issuance of TLS certificates.
 
 > **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[cert-manager Documentation](https://cert-manager.io/docs/)** - Official documentation
+- **[Let's Encrypt](https://cert-manager.io/docs/configuration/acme/)** - ACME integration
+- **[DNS-01 Challenge](https://cert-manager.io/docs/configuration/acme/dns01/)** - DNS challenge setup
 
 ## Overview
 
@@ -329,11 +335,3 @@ kubectl logs -n cert-manager deployment/cert-manager-webhook
 ## Resource Requirements
 
 Resource limits and requests are configured in `helmrelease.yaml`.
-
-## External Resources
-
-- [cert-manager Documentation](https://cert-manager.io/docs/)
-- [Let's Encrypt Integration](https://cert-manager.io/docs/configuration/acme/)
-- [DNS-01 Challenge Setup](https://cert-manager.io/docs/configuration/acme/dns01/)
-- [Cloudflare DNS Setup](https://cert-manager.io/docs/configuration/acme/dns01/cloudflare/)
-- [Certificate Specifications](https://cert-manager.io/docs/usage/certificate/)

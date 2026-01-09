@@ -1,14 +1,13 @@
 # Tautulli
 
-Tautulli is a Python-based monitoring and tracking tool for Plex Media Server with analytics, notifications, and user statistics.
+Python-based monitoring and tracking tool for Plex Media Server with analytics, notifications, and user statistics.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 
-- **Tautulli Documentation**: https://tautulli.com/
-- **GitHub Repository**: https://github.com/Tautulli/Tautulli
-- **Docker Image**: `ghcr.io/tautulli/tautulli`
+- **[Tautulli Documentation](https://tautulli.com/)** - Official documentation
+- **[GitHub Repository](https://github.com/Tautulli/Tautulli)** - Source code and issues
 
 ## Configuration
 
@@ -32,3 +31,16 @@ Tautulli is a Python-based monitoring and tracking tool for Plex Media Server wi
 - **External**: `https://tautulli.gateway.services.apocrathia.com`
 - **Internal**: `http://tautulli.tautulli.svc.cluster.local:80`
 - **Configuration**: Longhorn volume at `/config`
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n tautulli
+
+# Application logs
+kubectl logs -n tautulli deployment/tautulli -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep tautulli
+```

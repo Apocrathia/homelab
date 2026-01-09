@@ -58,3 +58,17 @@ The Plex MCP server provides tools for media library management:
 6. **Session Management** - View active sessions and playback history
 7. **Server Operations** - Server logs, information, and statistics
 8. **Client Control** - Control playback and client interfaces
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-plex
+
+# MCP server logs
+kubectl logs -n mcp-plex deployment/plex-mcp -c mcp -f
+
+# Test Plex connectivity
+kubectl exec -n mcp-plex deployment/plex-mcp -- \
+  curl -s -H "X-Plex-Token: $PLEX_TOKEN" "$PLEX_URL/identity"
+```

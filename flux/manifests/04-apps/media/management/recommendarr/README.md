@@ -1,13 +1,13 @@
 # Recommendarr
 
-[← Media Management](../README.md)
-
 AI-powered TV show and movie recommendation engine that integrates with existing media libraries.
 
-## Links
+> **Navigation**: [← Back to Media Management README](../README.md)
 
-- [GitHub Repository](https://github.com/fingerthief/recommendarr)
-- [Docker Hub](https://hub.docker.com/r/tannermiddleton/recommendarr)
+## Documentation
+
+- **[GitHub Repository](https://github.com/fingerthief/recommendarr)** - Source code and issues
+- **[Docker Hub](https://hub.docker.com/r/tannermiddleton/recommendarr)** - Container images
 
 ## Access
 

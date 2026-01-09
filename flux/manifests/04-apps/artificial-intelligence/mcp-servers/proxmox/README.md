@@ -61,3 +61,17 @@ The Proxmox MCP Plus server provides tools for virtualization management:
 5. **Cluster Health** - Check cluster status and health
 6. **VM Console** - Execute commands in VM consoles
 7. **Resource Management** - Update container CPU, memory, swap, and disk resources
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-proxmox
+
+# MCP server logs
+kubectl logs -n mcp-proxmox deployment/proxmox-mcp -c mcp -f
+
+# Test Proxmox connectivity
+kubectl exec -n mcp-proxmox deployment/proxmox-mcp -- \
+  curl -s -k "https://$PROXMOX_HOST:8006/api2/json/version"
+```

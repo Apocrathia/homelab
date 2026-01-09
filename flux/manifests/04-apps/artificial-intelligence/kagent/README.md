@@ -58,3 +58,23 @@ controller:
 ```
 
 Then create Agent CRDs in those namespaces.
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n kagent
+
+# Controller logs
+kubectl logs -n kagent deployment/kagent-controller -f
+
+# A2A Gateway logs
+kubectl logs -n kagent deployment/kagent-a2a -f
+
+# Check Agent CRDs
+kubectl get agents --all-namespaces
+
+# Check database connectivity
+kubectl exec -n kagent deployment/kagent-controller -- \
+  pg_isready -h kagent-postgres-rw.kagent.svc.cluster.local -U kagent
+```

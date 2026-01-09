@@ -1,8 +1,14 @@
 # Longhorn - Distributed Storage
 
-This directory contains the deployment configuration for Longhorn, a distributed block storage system for Kubernetes.
+Distributed block storage system for Kubernetes with replication, backup, and disaster recovery.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
+
+## Documentation
+
+- **[Longhorn Documentation](https://longhorn.io/docs/)** - Official documentation
+- **[Architecture Guide](https://longhorn.io/docs/1.6.0/concepts/)** - System architecture
+- **[Backup and Restore](https://longhorn.io/docs/1.6.0/snapshots-and-backups/)** - Backup documentation
 
 ## Overview
 
@@ -261,10 +267,3 @@ kubectl logs -n longhorn-system deployment/longhorn-ui
 2. **Network Security**: Use network policies to restrict traffic
 3. **Backup Security**: Secure backup credentials and data
 4. **Audit Logging**: Enable audit logging for compliance
-
-## External Resources
-
-- [Longhorn Documentation](https://longhorn.io/docs/)
-- [Longhorn Architecture](https://longhorn.io/docs/1.6.0/concepts/)
-- [Backup and Restore Guide](https://longhorn.io/docs/1.6.0/snapshots-and-backups/)
-- [Troubleshooting Guide](https://longhorn.io/docs/1.6.0/troubleshoot/)

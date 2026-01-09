@@ -1,8 +1,13 @@
 # Applications
 
-This directory contains user-facing applications and workloads deployed in the cluster.
+User-facing applications and workloads deployed in the cluster.
 
 > **Navigation**: [← Back to Flux README](../README.md)
+
+## Documentation
+
+- **[Generic-App Chart](../../helm/generic-app/README.md)** - Reusable Helm chart
+- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration
 
 ## Overview
 
@@ -252,13 +257,3 @@ app-name/
 2. **Customization**: Customize for specific application requirements
 3. **Monitoring**: Configure dashboards and alerting rules
 4. **Scaling**: Plan for application growth and performance needs
-
-## External Resources
-
-- [Kubernetes Application Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
-- [Authentik Outpost Documentation](https://docs.goauthentik.io/docs/outposts/)
-- [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
-- [Generic-App Helm Chart](../../../helm/generic-app/README.md) - Reusable application chart
-- [Prometheus Metrics](https://prometheus.io/docs/concepts/data_model/)
-- [Kustomize Documentation](https://kustomize.io/)
-- [Helm Chart Development](https://helm.sh/docs/chart_template_guide/)

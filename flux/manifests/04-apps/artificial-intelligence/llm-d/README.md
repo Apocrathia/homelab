@@ -4,6 +4,12 @@ Kubernetes-native distributed inference serving stack for large language models 
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
+## Documentation
+
+- **[llm-d Documentation](https://llm-d.ai/docs/)** - Official documentation
+- **[GitHub Repository](https://github.com/llm-d/llm-d)** - Source code and issues
+- **[ModelService Guide](https://llm-d.ai/docs/architecture/Components/modelservice)** - Model deployment guide
+
 ## Overview
 
 llm-d accelerates distributed inference by integrating industry-standard open technologies:
@@ -58,9 +64,18 @@ spec:
       nvidia.com/gpu: 1
 ```
 
-## Resources
+## Troubleshooting
 
-- [llm-d Architecture](https://llm-d.ai/docs/architecture)
-- [ModelService Documentation](https://llm-d.ai/docs/architecture/Components/modelservice)
-- [Deployment Guides](https://llm-d.ai/docs/guide)
-- [Quick Start Guide](https://llm-d.ai/docs/guide/Installation/quickstart)
+```bash
+# Pod status
+kubectl get pods -n llm-d
+
+# Check ModelService resources
+kubectl get modelservices -n llm-d
+
+# Model server logs
+kubectl logs -n llm-d deployment/llm-d -f
+
+# Inference Gateway logs
+kubectl logs -n llm-d deployment/igw -f
+```

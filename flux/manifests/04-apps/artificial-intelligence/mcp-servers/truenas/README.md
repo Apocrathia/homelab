@@ -63,3 +63,17 @@ The TrueNAS MCP server provides tools for storage and system management:
 - **Apps** - Manage Docker Compose-based TrueNAS applications
 - **Incus Instances** - Control Incus VMs and containers (SCALE 25.04+)
 - **Legacy VMs** - Manage bhyve virtual machines
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-truenas
+
+# MCP server logs
+kubectl logs -n mcp-truenas deployment/truenas-mcp -c mcp -f
+
+# Test TrueNAS connectivity
+kubectl exec -n mcp-truenas deployment/truenas-mcp -- \
+  curl -s -k -H "Authorization: Bearer $TRUENAS_API_KEY" "$TRUENAS_URL/api/v2.0/system/info"
+```

@@ -1,8 +1,13 @@
 # Tuppr - Talos Linux Upgrade Controller
 
-This directory contains the deployment configuration for Tuppr, a Kubernetes controller for managing automated upgrades of Talos Linux and Kubernetes.
+Kubernetes controller for managing automated upgrades of Talos Linux and Kubernetes.
 
 > **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Tuppr Documentation](https://github.com/aenix-io/tuppr)** - Official documentation
+- **[Talos Upgrades](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)** - Talos upgrade process
 
 ## Overview
 

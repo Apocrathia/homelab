@@ -1,8 +1,13 @@
 # MCPO Bridge for Open WebUI
 
-This directory contains the MCPO (MCP-to-OpenAPI) bridge deployment that enables Open WebUI to connect to MCP servers through OpenAPI endpoints.
+MCPO (MCP-to-OpenAPI) bridge that enables Open WebUI to connect to MCP servers through OpenAPI endpoints.
 
 > **Navigation**: [← Back to OpenWebUI README](../README.md)
+
+## Documentation
+
+- **[MCPO GitHub](https://github.com/modelcontextprotocol/mcpo)** - Source code and documentation
+- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol specification
 
 ## Overview
 
@@ -62,8 +67,15 @@ The bridge connects to the configured MCP servers with `streamable-http` transpo
    - Save the configuration
    - Enable desired tools from the available MCP servers
 
-## Files
+## Troubleshooting
 
-- `helmrelease.yaml`: MCPO deployment using generic-app chart
-- `configmap.yaml`: MCP server configuration
-- `kustomization.yaml`: Kustomize configuration
+```bash
+# Pod status
+kubectl get pods -n openwebui -l app.kubernetes.io/name=mcpo-bridge
+
+# MCPO logs
+kubectl logs -n openwebui deployment/mcpo-bridge -f
+
+# Test OpenAPI endpoint
+kubectl exec -n openwebui deployment/mcpo-bridge -- curl -s localhost:8000/openapi.json | head -20
+```

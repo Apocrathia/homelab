@@ -1,8 +1,14 @@
 # Grafana MCP Server
 
-This directory contains the deployment configuration for the Grafana MCP (Model Context Protocol) server, which enables AI assistants to interact with Grafana instances through a standardized protocol.
+MCP server enabling AI assistants to interact with Grafana instances through a standardized protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
+
+## Documentation
+
+- **[Grafana MCP Documentation](https://deepwiki.com/grafana/mcp-grafana)** - Server documentation
+- **[MCP Protocol Specification](https://modelcontextprotocol.io/)** - Model Context Protocol
+- **[Grafana API](https://grafana.com/docs/grafana/latest/developers/http_api/)** - Grafana HTTP API
 
 ## Overview
 
@@ -129,9 +135,15 @@ The deployment runs in an isolated namespace with:
 - No direct database access
 - Proxy authentication through Grafana
 
-## Resources
+## Troubleshooting
 
-- [Grafana MCP Documentation](https://deepwiki.com/grafana/mcp-grafana)
-- [MCP Protocol Specification](https://modelcontextprotocol.io/)
-- [Grafana API Documentation](https://grafana.com/docs/grafana/latest/developers/http_api/)
-- [Toolhive MCPServer Documentation](https://github.com/stacklok/toolhive)
+```bash
+# Pod status
+kubectl get pods -n mcp-grafana
+
+# MCP server logs
+kubectl logs -n mcp-grafana grafana-mcp-0 -c mcp -f
+
+# Check health endpoint
+kubectl exec -n mcp-grafana grafana-mcp-0 -- curl -s localhost:8080/health
+```

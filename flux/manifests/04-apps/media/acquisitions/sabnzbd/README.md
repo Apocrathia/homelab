@@ -4,6 +4,12 @@ SABnzbd Usenet client with integrated VPN routing via Gluetun init container.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
+## Documentation
+
+- **[SABnzbd Documentation](https://sabnzbd.org/wiki/)** - Official documentation
+- **[GitHub Repository](https://github.com/sabnzbd/sabnzbd)** - Source code and issues
+- **[Gluetun Documentation](https://github.com/qdm12/gluetun-wiki)** - VPN container documentation
+
 ## Architecture
 
 This deployment uses an **init container pattern** where:
@@ -36,8 +42,8 @@ Required fields:
 
 ### Storage
 
-- **Config**: 10GB Longhorn persistent volume for SABnzbd configuration
-- **Incomplete**: 50GB Longhorn persistent volume for incomplete downloads
+- **Config**: Longhorn persistent volume for SABnzbd configuration
+- **Incomplete**: Longhorn persistent volume for incomplete downloads
 - **Downloads**: SMB mount to shared storage location
 - **Gluetun Data**: EmptyDir volume for Gluetun runtime configuration and server data
 
@@ -97,3 +103,22 @@ Gluetun's built-in firewall provides:
 - Allows local network access for management
 - Permits SABnzbd web UI on port 8080
 - Automatic VPN reconnection on failure
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n sabnzbd
+
+# SABnzbd logs
+kubectl logs -n sabnzbd deployment/sabnzbd -f
+
+# Gluetun VPN logs
+kubectl logs -n sabnzbd deployment/sabnzbd -c gluetun -f
+
+# Check VPN connection
+kubectl exec -n sabnzbd deployment/sabnzbd -c gluetun -- wget -qO- https://ipinfo.io
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep sabnzbd
+```

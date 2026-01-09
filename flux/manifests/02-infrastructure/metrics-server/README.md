@@ -1,8 +1,13 @@
 # Metrics Server - Resource Metrics Collection
 
-This directory contains the deployment configuration for Metrics Server, which provides resource usage metrics for Kubernetes workloads.
+Scalable, efficient source of container resource metrics for Kubernetes autoscaling pipelines.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
+
+## Documentation
+
+- **[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)** - Official documentation
+- **[Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)** - Horizontal Pod Autoscaler guide
 
 ## Overview
 
@@ -283,10 +288,3 @@ Resource limits and requests are configured in `helmrelease.yaml`.
 - **Collection Failures**: Alert on metrics collection issues
 - **API Errors**: Alert on API server issues
 - **Scaling Events**: Alert on scaling activities
-
-## External Resources
-
-- [Metrics Server Documentation](https://github.com/kubernetes-sigs/metrics-server)
-- [Kubernetes HPA Guide](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-- [Prometheus Metrics Guide](https://prometheus.io/docs/concepts/data_model/)
-- [Resource Management Best Practices](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)

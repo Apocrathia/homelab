@@ -4,6 +4,12 @@ Discord chatbot powered by CrewAI with web search and A2A (Agent-to-Agent) proto
 
 > **Navigation**: [← Back to AI README](../README.md)
 
+## Documentation
+
+- **[CrewAI Documentation](https://docs.crewai.com/)** - Official documentation
+- **[discord.py](https://discordpy.readthedocs.io/)** - Discord library
+- **[A2A Protocol](https://google.github.io/A2A/)** - Agent-to-Agent specification
+
 ## Overview
 
 A Discord bot that uses CrewAI agents for intelligent conversation and web search. Responds to mentions, participates in relevant conversations, and doesn't hold back on the colorful language.

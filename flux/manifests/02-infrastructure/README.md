@@ -1,8 +1,14 @@
 # Infrastructure Components
 
-This directory contains core infrastructure components required for cluster operation.
+Core infrastructure components required for cluster operation.
 
 > **Navigation**: [← Back to Flux README](../README.md)
+
+## Documentation
+
+- **[Cilium](https://docs.cilium.io/)** - CNI and networking
+- **[Longhorn](https://longhorn.io/docs/)** - Distributed storage
+- **[Prometheus Operator](https://prometheus-operator.dev/)** - Monitoring stack
 
 ## Overview
 
@@ -168,10 +174,3 @@ After infrastructure deployment:
 1. **Services Layer**: Deploy platform services and applications
 2. **Applications Layer**: Deploy user-facing applications
 3. **Monitoring**: Configure dashboards and alerting rules
-
-## External Resources
-
-- [Cilium Documentation](https://docs.cilium.io/)
-- [Longhorn Documentation](https://longhorn.io/docs/)
-- [Prometheus Operator](https://prometheus-operator.dev/)
-- [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/)

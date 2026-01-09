@@ -1,8 +1,13 @@
 # Games
 
-This directory contains game support services and applications for managing, organizing, and playing games in the homelab environment.
+Game support services for managing, organizing, and playing games in the homelab.
 
 > **Navigation**: [← Back to Apps README](../README.md)
+
+## Documentation
+
+- **[ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)** - Steam card farming
+- **[ROMM](https://github.com/rommapp/romm)** - ROM management
 
 ## Applications
 

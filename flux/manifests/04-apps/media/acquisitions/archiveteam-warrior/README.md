@@ -1,14 +1,14 @@
 # ArchiveTeam Warrior
 
-ArchiveTeam Warrior is a virtual archiving appliance that helps with Archive Team archiving efforts. It downloads sites and uploads them to the archive automatically.
+Virtual archiving appliance that helps with Archive Team archiving efforts by downloading and uploading sites to the archive.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
 ## Documentation
 
-- **ArchiveTeam Warrior Wiki**: <https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior>
-- **Docker Usage Guide**: <https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>
-- **ArchiveTeam Projects**: <https://wiki.archiveteam.org/index.php?title=Warrior_projects>
+- **[ArchiveTeam Warrior Wiki](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)** - Official documentation
+- **[Docker Usage Guide](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)** - Container deployment
+- **[Active Projects](https://wiki.archiveteam.org/index.php?title=Warrior_projects)** - Current archiving projects
 
 ## Overview
 
@@ -34,8 +34,15 @@ The Warrior runs with default settings and automatically:
 - Uploads completed work to the archive
 - Updates code every hour
 
-## External Resources
+## Troubleshooting
 
-- [ArchiveTeam Warrior Documentation](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)
-- [Docker Container Usage](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)
-- [Active Projects List](https://wiki.archiveteam.org/index.php?title=Warrior_projects)
+```bash
+# Pod status
+kubectl get pods -n archiveteam-warrior
+
+# Application logs
+kubectl logs -n archiveteam-warrior deployment/archiveteam-warrior -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep archiveteam
+```

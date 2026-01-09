@@ -4,6 +4,11 @@ Sync \*arr application file metadata and naming across Sonarr, Radarr, and Lidar
 
 > **Navigation**: [← Back to Media README](../../../README.md)
 
+## Documentation
+
+- **[Servarr Wiki](https://wiki.servarr.com/)** - \*arr application documentation
+- **[uv](https://docs.astral.sh/uv/)** - Python dependency management
+
 ## Purpose
 
 After tdarr re-encodes media to x265/HEVC, the original filenames may not reflect the new codec. This causes Sonarr/Radarr to potentially attempt unnecessary "upgrades" since they don't recognize the file as HEVC. Lidarr is not affected by this issue, but we still want to run the script to ensure the filenames are correct.

@@ -1,8 +1,13 @@
 # Demo App - Baseline Application Template
 
-This directory contains the deployment configuration for a demo application that serves as a **baseline template** for application configuration patterns. The demo app is deployed using the [generic-app Helm chart](../../../helm/generic-app/README.md).
+Baseline template demonstrating application configuration patterns using the generic-app Helm chart.
 
 > **Navigation**: [← Back to Apps README](../README.md)
+
+## Documentation
+
+- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Helm chart documentation
+- **[Flux HelmRelease](https://fluxcd.io/flux/components/helm/helmreleases/)** - Flux Helm controller
 
 ## Overview
 
@@ -321,11 +326,3 @@ For detailed chart documentation, see [Generic-App Chart README](../../../helm/g
 ## Resource Requirements
 
 Resource requirements are configured in `helmrelease.yaml`.
-
-## External Resources
-
-- [Kubernetes Application Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
-- [Authentik Outpost Documentation](https://docs.goauthentik.io/docs/outposts/)
-- [Gateway API HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
-- [SMB CSI Driver](https://github.com/kubernetes-csi/csi-driver-smb)
-- [Longhorn Storage](https://longhorn.io/docs/)

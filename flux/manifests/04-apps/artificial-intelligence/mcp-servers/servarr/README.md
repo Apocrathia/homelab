@@ -75,3 +75,17 @@ The Servarr MCP server provides tools for media management:
 - View download queue
 - Refresh movie metadata
 - Trigger movie searches
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-servarr
+
+# MCP server logs
+kubectl logs -n mcp-servarr deployment/servarr-mcp -c mcp -f
+
+# Test Sonarr/Radarr connectivity
+kubectl exec -n mcp-servarr deployment/servarr-mcp -- \
+  curl -s -H "X-Api-Key: $SONARR_API_KEY" "$SONARR_URL/api/v3/system/status"
+```

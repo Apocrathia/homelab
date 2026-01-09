@@ -4,6 +4,12 @@ Media server ecosystem for personal media collection management, streaming, and 
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
+## Documentation
+
+- **[Plex](https://support.plex.tv/)** - Media server documentation
+- **[Servarr Wiki](https://wiki.servarr.com/)** - \*arr application documentation
+- **[TRaSH Guides](https://trash-guides.info/)** - Configuration best practices
+
 ## Overview
 
 Media applications are organized into three categories:

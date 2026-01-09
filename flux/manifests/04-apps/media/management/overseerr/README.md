@@ -36,3 +36,16 @@ Overseerr requires initial configuration via web UI:
 ## Integration
 
 Overseerr integrates with Plex for authentication and library scanning, and connects to Radarr/Sonarr for automated media acquisition.
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n overseerr
+
+# Application logs
+kubectl logs -n overseerr deployment/overseerr -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep overseerr
+```

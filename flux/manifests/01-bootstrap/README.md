@@ -1,8 +1,14 @@
 # Bootstrap Configuration
 
-This directory contains the initial Flux configuration and core components needed to bootstrap the cluster.
+Initial Flux configuration and core components needed to bootstrap the cluster.
 
 > **Navigation**: [← Back to Flux README](../README.md)
+
+## Documentation
+
+- **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
+- **[GitOps Toolkit](https://fluxcd.io/flux/)** - Flux documentation
+- **[1Password Connect](https://developer.1password.com/docs/connect)** - Secrets operator
 
 ## Overview
 
@@ -122,10 +128,3 @@ After successful bootstrap:
 1. **Infrastructure Layer**: Deploy storage, networking, and monitoring
 2. **Services Layer**: Deploy platform services and applications
 3. **Applications Layer**: Deploy user-facing applications
-
-## External Resources
-
-- [Flux Bootstrap Guide](https://fluxcd.io/flux/installation/bootstrap/)
-- [GitOps Toolkit Documentation](https://fluxcd.io/flux/)
-- [1Password Connect Documentation](https://developer.1password.com/docs/connect)
-- [Kubernetes CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)

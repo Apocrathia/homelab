@@ -1,8 +1,13 @@
 # Custom Resource Definitions (CRDs) Setup
 
-This directory contains the deployment configuration for Custom Resource Definitions (CRDs) required by the various components in my homelab cluster so that they can be applied to the cluster before the controllers are deployed.
+CRDs required by components, applied before controllers are deployed.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
+
+## Documentation
+
+- **[Kubernetes CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)** - Official documentation
+- **[Prometheus Operator CRDs](https://prometheus-operator.dev/docs/operator/api/)** - Monitoring CRDs
 
 ## Overview
 
@@ -144,11 +149,3 @@ kubectl explain <resource-type>.<group>
 3. **Change Management**: Use GitOps for CRD updates
 4. **Testing**: Validate CRD changes in non-production first
 5. **Documentation**: Maintain up-to-date API documentation
-
-## External Resources
-
-- [Kubernetes CRD Documentation](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
-- [Cilium CRD Reference](https://docs.cilium.io/en/stable/concepts/kubernetes/crd/)
-- [Kyverno CRD Documentation](https://kyverno.io/docs/crds/)
-- [Longhorn CRD Reference](https://longhorn.io/docs/1.6.0/references/)
-- [Prometheus Operator CRDs](https://prometheus-operator.dev/docs/operator/api/)

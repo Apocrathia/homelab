@@ -1,8 +1,14 @@
 # FluentBit Log Collector
 
-Generic FluentBit deployment configured to collect logs from various sources and forward them to Loki. Currently includes syslog collection capabilities via TCP/UDP.
+Generic FluentBit deployment configured to collect logs from various sources and forward them to Loki.
 
 > **Navigation**: [← Back to Management README](../README.md)
+
+## Documentation
+
+- **[Fluent Bit Documentation](https://docs.fluentbit.io/)** - Official documentation
+- **[Fluent Operator](https://github.com/fluent/fluent-operator)** - Kubernetes operator
+- **[Syslog Input](https://docs.fluentbit.io/manual/data-pipeline/inputs/syslog)** - Syslog plugin documentation
 
 ## Components
 
@@ -52,9 +58,18 @@ This deployment is designed to be extensible. Additional input sources can be ad
 2. Adding corresponding ClusterFilter resources if needed
 3. The existing FluentBit configuration will automatically pick up new inputs
 
-## Resources
+## Troubleshooting
 
-- [Fluent Bit Documentation](https://docs.fluentbit.io/)
-- [Fluent Bit Syslog Input](https://docs.fluentbit.io/manual/data-pipeline/inputs/syslog)
-- [Fluent Bit Loki Output](https://docs.fluentbit.io/manual/data-pipeline/outputs/loki)
-- [Fluent Operator Examples](https://github.com/fluent/fluent-operator/blob/master/manifests/quick-start/fluentbit.yaml)
+```bash
+# Pod status
+kubectl get pods -n fluentbit
+
+# FluentBit logs
+kubectl logs -n fluentbit deployment/fluentbit -f
+
+# Check ClusterInput resources
+kubectl get clusterinputs -l fluentbit.fluent.io/enabled=true
+
+# Verify Loki output connectivity
+kubectl logs -n fluentbit deployment/fluentbit | grep -i loki
+```

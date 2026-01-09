@@ -1,8 +1,14 @@
 # Kube Prometheus Stack - Monitoring and Observability
 
-This directory contains the deployment configuration for the kube-prometheus-stack, a comprehensive monitoring solution for Kubernetes based on Prometheus.
+Comprehensive monitoring solution for Kubernetes based on Prometheus, Grafana, and Alertmanager.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
+
+## Documentation
+
+- **[Kube Prometheus Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)** - Helm chart documentation
+- **[Prometheus](https://prometheus.io/docs/)** - Prometheus documentation
+- **[Grafana](https://grafana.com/docs/)** - Grafana documentation
 
 ## Overview
 
@@ -282,11 +288,3 @@ kubectl logs -n prometheus-system -l app.kubernetes.io/name=alertmanager
 2. **Network Security**: Use network policies and encryption
 3. **Monitoring**: Monitor the monitoring stack itself
 4. **Updates**: Regular security updates
-
-## External Resources
-
-- [Kube Prometheus Stack Documentation](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Grafana Documentation](https://grafana.com/docs/)
-- [Alertmanager Documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
-- [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)

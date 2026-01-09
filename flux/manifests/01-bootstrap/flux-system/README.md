@@ -1,8 +1,14 @@
 # Flux System Components
 
-This directory contains the core Flux GitOps Toolkit components that manage the homelab cluster configuration.
+Core Flux GitOps Toolkit components that manage the homelab cluster configuration.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
+
+## Documentation
+
+- **[Flux Documentation](https://fluxcd.io/flux/)** - Official documentation
+- **[GitOps Guide](https://www.gitops.tech/)** - GitOps best practices
+- **[Flux Security](https://fluxcd.io/flux/security/)** - Security guide
 
 ## Overview
 
@@ -239,10 +245,3 @@ kubectl logs -n flux-system -l app.kubernetes.io/name=source-controller
 - Metrics collection and visualization
 - Alerting for GitOps failures
 - Dashboard integration
-
-## External Resources
-
-- [Flux Documentation](https://fluxcd.io/flux/)
-- [GitOps Guide](https://www.gitops.tech/)
-- [Flux GitHub Repository](https://github.com/fluxcd/flux2)
-- [Flux Security Guide](https://fluxcd.io/flux/security/)

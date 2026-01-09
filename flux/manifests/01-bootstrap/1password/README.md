@@ -1,8 +1,14 @@
 # 1Password Connect Setup Guide
 
-This guide explains how to set up the required credentials for deploying the 1Password Connect Operator in your Kubernetes cluster.
+Guide for deploying the 1Password Connect Operator in your Kubernetes cluster.
 
 > **Navigation**: [← Back to Flux README](../../../README.md)
+
+## Documentation
+
+- **[1Password Connect](https://developer.1password.com/docs/connect)** - Official documentation
+- **[1Password CLI](https://developer.1password.com/docs/cli/)** - CLI reference
+- **[Helm Charts](https://github.com/1Password/connect-helm-charts)** - Deployment charts
 
 ## Prerequisites
 
