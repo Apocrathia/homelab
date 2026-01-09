@@ -1,8 +1,14 @@
 # Gateway - Gateway API Implementation
 
-This directory contains the deployment configuration for the Gateway API implementation, providing advanced traffic management and routing capabilities.
+Gateway API implementation providing advanced traffic management, routing, and TLS termination.
 
 > **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Gateway API](https://gateway-api.sigs.k8s.io/)** - Official Gateway API documentation
+- **[Cilium Gateway](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)** - Cilium Gateway implementation
+- **[HTTPRoute Reference](https://gateway-api.sigs.k8s.io/api-types/httproute/)** - HTTPRoute API reference
 
 ## Overview
 
@@ -374,11 +380,3 @@ kubectl logs -n cilium-system -l io.cilium.gateway/owning-gateway=main-gateway
 ## Resource Requirements
 
 Resource limits and requests are configured in the Gateway manifests.
-
-## External Resources
-
-- [Gateway API Documentation](https://gateway-api.sigs.k8s.io/)
-- [Cilium Gateway Documentation](https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/)
-- [HTTPRoute API Reference](https://gateway-api.sigs.k8s.io/api-types/httproute/)
-- [TLS Configuration Guide](https://gateway-api.sigs.k8s.io/guides/tls/)
-- [Traffic Management](https://gateway-api.sigs.k8s.io/guides/traffic-splitting/)

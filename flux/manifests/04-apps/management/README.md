@@ -1,8 +1,13 @@
 # Management Applications
 
-This directory contains management and administrative applications for the homelab infrastructure.
+Management and administrative applications for the homelab infrastructure.
 
 > **Navigation**: [← Back to Apps README](../README.md)
+
+## Documentation
+
+- **[Generic-App Chart](../../helm/generic-app/README.md)** - Application deployment template
+- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration
 
 ## Applications
 

@@ -1,8 +1,14 @@
 # Companion - Stream Deck Control Software
 
-This directory contains the deployment configuration for [Bitfocus Companion](https://bitfocus.io/companion/), a powerful stream deck control software for broadcast and live production environments.
+Powerful stream deck control software for broadcast and live production environments.
 
 > **Navigation**: [← Back to Management README](../README.md)
+
+## Documentation
+
+- **[Bitfocus Companion](https://bitfocus.io/companion/)** - Official website
+- **[GitHub Repository](https://github.com/bitfocus/companion)** - Source code and issues
+- **[Wiki](https://github.com/bitfocus/companion/wiki)** - Documentation and guides
 
 ## Overview
 
@@ -138,11 +144,3 @@ The persistent storage contains all configuration data. Regular backups of the L
 # Copy configuration files
 kubectl cp companion-abc123:/companion ./companion-backup/ -n companion
 ```
-
-## Resources
-
-- [Bitfocus Companion Website](https://bitfocus.io/companion/)
-- [GitHub Repository](https://github.com/bitfocus/companion)
-- [Documentation](https://github.com/bitfocus/companion/wiki)
-- [Container Registry](https://github.com/bitfocus/companion/pkgs/container/companion%2Fcompanion)
-- [Installation Guide](https://github.com/bitfocus/companion/wiki/Installation)

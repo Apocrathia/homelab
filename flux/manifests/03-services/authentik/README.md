@@ -1,8 +1,14 @@
 # Authentik - Identity and Access Management
 
-This directory contains the deployment configuration for Authentik, an open-source identity and access management solution.
+Open-source identity and access management solution with SSO, policy-based authorization, and GitOps-driven configuration.
 
 > **Navigation**: [← Back to Services README](../README.md)
+
+## Documentation
+
+- **[Authentik Documentation](https://docs.goauthentik.io/)** - Official documentation
+- **[Blueprint System](https://docs.goauthentik.io/docs/customize/blueprints/)** - GitOps configuration
+- **[OAuth2/OIDC](https://docs.goauthentik.io/docs/providers/oauth2/)** - OAuth2/OIDC provider setup
 
 ## Overview
 
@@ -335,11 +341,3 @@ kubectl exec -n authentik authentik-worker-<pod-id> -- ls -la /blueprints/
 2. **Monitoring**: Monitor Authentik health and performance
 3. **Updates**: Keep Authentik updated with security patches
 4. **Scaling**: Monitor resource usage and scale appropriately
-
-## External Resources
-
-- [Authentik Documentation](https://docs.goauthentik.io/)
-- [Blueprint System](https://docs.goauthentik.io/docs/customize/blueprints/)
-- [OAuth2/OIDC Integration](https://docs.goauthentik.io/docs/providers/oauth2/)
-- [LDAP Integration](https://docs.goauthentik.io/docs/providers/ldap/)
-- [Policy Engine](https://docs.goauthentik.io/docs/policies/)

@@ -59,3 +59,16 @@ For full functionality, the PAT should have these scopes:
 - `gist` - Create gists
 - `read:user` - Read user profile data
 - `notifications` - Access notifications
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-github
+
+# MCP server logs
+kubectl logs -n mcp-github deployment/github-mcp -c mcp -f
+
+# Check health endpoint
+kubectl exec -n mcp-github deployment/github-mcp -- curl -s localhost:8080/health
+```

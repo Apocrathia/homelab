@@ -4,6 +4,12 @@ UniFi network monitoring and metrics collection system that exports data to Prom
 
 > **Navigation**: [← Back to Management README](../README.md)
 
+## Documentation
+
+- **[UnPoller Documentation](https://unpoller.com/docs/)** - Official documentation
+- **[Configuration Guide](https://unpoller.com/docs/install/configuration)** - Configuration options
+- **[Grafana Dashboards](https://grafana.com/grafana/dashboards/?search=unpoller)** - Pre-built dashboards
+
 ## Overview
 
 UnPoller collects metrics from Ubiquiti UniFi controllers and exports them to monitoring systems including Prometheus, InfluxDB, Loki, and Datadog. This deployment integrates with the homelab's Prometheus and Grafana infrastructure.
@@ -32,8 +38,19 @@ UnPoller exposes metrics on port 9130 and integrates with:
 - **Grafana**: Pre-built dashboards for UniFi monitoring
 - **Loki**: Events, alarms, anomalies, and IDS data export
 
-## Documentation
+## Troubleshooting
 
-- [UnPoller Configuration](https://unpoller.com/docs/install/configuration)
-- [UnPoller Kubernetes Installation](https://unpoller.com/docs/install/kubernetes/)
-- [UnPoller Grafana Dashboards](https://grafana.com/grafana/dashboards/?search=unpoller)
+```bash
+# Pod status
+kubectl get pods -n unpoller
+
+# Application logs
+kubectl logs -n unpoller deployment/unpoller -f
+
+# Check ServiceMonitor
+kubectl get servicemonitor -n unpoller
+
+# Check metrics endpoint
+kubectl port-forward -n unpoller deployment/unpoller 9130:9130
+curl localhost:9130/metrics
+```

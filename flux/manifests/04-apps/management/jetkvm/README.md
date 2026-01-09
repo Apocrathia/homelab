@@ -4,6 +4,11 @@ Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
 > **Navigation**: [← Back to Management README](../README.md)
 
+## Documentation
+
+- **[JetKVM Cloud API](https://github.com/jetkvm/cloud-api)** - Cloud API source and documentation
+- **[JetKVM KVM](https://github.com/jetkvm/kvm)** - Frontend and KVM documentation
+
 ## Overview
 
 - **Cloud API**: Node.js/Express backend with Prisma ORM, WebRTC signaling, and Google OAuth
@@ -102,9 +107,18 @@ Prisma migrations run automatically via init container before the API starts.
 
 The API uses WebSocket for real-time device signaling. Gateway API's HTTPRoute should handle WebSocket upgrades transparently, but verify this works with your Cilium configuration.
 
-## Resources
+## Troubleshooting
 
-- [JetKVM Cloud API](https://github.com/jetkvm/cloud-api)
-- [JetKVM KVM (includes frontend)](https://github.com/jetkvm/kvm)
-- [DeepWiki - Cloud API Docs](https://deepwiki.com/jetkvm/cloud-api)
-- [DeepWiki - KVM Docs](https://deepwiki.com/jetkvm/kvm)
+```bash
+# Pod status
+kubectl get pods -n jetkvm
+
+# API logs
+kubectl logs -n jetkvm deployment/jetkvm-api -f
+
+# Frontend logs
+kubectl logs -n jetkvm deployment/jetkvm-app -f
+
+# Database status
+kubectl get cluster -n jetkvm
+```

@@ -1,8 +1,14 @@
 # Artificial Intelligence Applications
 
-This directory contains AI and ML applications for the homelab.
+AI and ML applications for the homelab.
 
 > **Navigation**: [← Back to Apps README](../README.md)
+
+## Documentation
+
+- **[LiteLLM](https://docs.litellm.ai/)** - AI proxy and gateway
+- **[kagent](https://kagent.dev/docs/)** - Agent orchestration
+- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol
 
 # Architecture
 

@@ -1,8 +1,14 @@
 # Helm Repository Management
 
-This directory contains the configuration for Helm repositories used across the homelab cluster.
+Configuration for Helm repositories used across the homelab cluster.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
+
+## Documentation
+
+- **[Helm Repository Guide](https://helm.sh/docs/topics/chart_repository/)** - Official documentation
+- **[Flux HelmRepository](https://fluxcd.io/flux/components/source/helmrepositories/)** - Flux integration
+- **[Artifact Hub](https://artifacthub.io/)** - Chart discovery
 
 ## Overview
 
@@ -247,10 +253,3 @@ Repositories are monitored through:
 2. **Change Management**: Use GitOps for repository changes
 3. **Testing**: Validate changes in development first
 4. **Documentation**: Keep repository documentation current
-
-## External Resources
-
-- [Helm Repository Guide](https://helm.sh/docs/topics/chart_repository/)
-- [Flux Helm Repository Documentation](https://fluxcd.io/flux/components/source/helmrepositories/)
-- [Artifact Hub](https://artifacthub.io/) - Chart discovery
-- [Helm Security Guide](https://helm.sh/docs/topics/security/)

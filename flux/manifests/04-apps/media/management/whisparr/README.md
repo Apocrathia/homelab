@@ -1,8 +1,13 @@
 # Whisparr
 
-Whisparr is an adult entertainment collection manager for Usenet and BitTorrent users. It can monitor multiple RSS feeds for new content and will interface with clients and indexers to grab, sort, and rename them. It can also be configured to automatically upgrade the quality of existing files in the library when a better quality format becomes available.
+Adult entertainment collection manager for Usenet and BitTorrent users with automated monitoring and quality upgrades.
 
 > **Navigation**: [← Back to Media README](../../README.md)
+
+## Documentation
+
+- **[Whisparr Wiki](https://wiki.servarr.com/whisparr)** - Primary documentation source
+- **[GitHub Repository](https://github.com/Whisparr/Whisparr)** - Source code and issues
 
 ## Configuration
 
@@ -28,7 +33,7 @@ The deployment follows the Hotio standard pattern:
 
 ### Storage
 
-- **Config volume**: 10GB Longhorn persistent volume for application configuration
+- **Config volume**: Longhorn persistent volume for application configuration
 - **Downloads volume**: SMB mount for download client integration
 - **Adult volume**: SMB mount for adult content library access
 
@@ -49,3 +54,16 @@ This deployment uses the standard Hotio configuration pattern, which:
 2. **Switches to PUID/PGID**: After initialization, runs as user 1000:1000
 3. **Full compatibility**: Supports custom services and all Hotio container features
 4. **Automatic permissions**: Handles volume ownership and permissions automatically
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n whisparr
+
+# Application logs
+kubectl logs -n whisparr deployment/whisparr -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep whisparr
+```

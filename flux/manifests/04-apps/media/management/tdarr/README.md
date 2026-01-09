@@ -1,8 +1,13 @@
 # Tdarr
 
-Tdarr is a distributed transcoding system for audio and video libraries. It allows users to define rules for codecs, containers, languages, and other media attributes to standardize their media libraries and improve compatibility with playback devices.
+Distributed transcoding system for audio and video libraries with rules-based media standardization.
 
 > **Navigation**: [← Back to Media README](../../README.md)
+
+## Documentation
+
+- **[Tdarr Documentation](https://docs.tdarr.io/)** - Official documentation
+- **[GitHub Repository](https://github.com/HaveAGitGat/Tdarr)** - Source code and issues
 
 ## Configuration
 
@@ -29,9 +34,9 @@ The deployment follows the standard container pattern:
 
 ### Storage
 
-- **Config volume**: 10GB Longhorn persistent volume for server configuration
-- **Logs volume**: 5GB Longhorn persistent volume for server logs
-- **Cache volume**: 20GB Longhorn persistent volume for server cache
+- **Config volume**: Longhorn persistent volume for server configuration
+- **Logs volume**: Longhorn persistent volume for server logs
+- **Cache volume**: Longhorn persistent volume for server cache
 - **Media volumes**: SMB mounts for TV shows, movies, anime, and music libraries
 - **Scratch volume**: SMB mount for transcoding workspace
 
@@ -68,3 +73,19 @@ Tdarr integrates with other media management applications:
 - **Plex/Jellyfin**: Can process media for improved compatibility
 - **Download clients**: Can monitor and process new downloads
 - **Storage systems**: Optimizes media for efficient storage
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n tdarr
+
+# Server logs
+kubectl logs -n tdarr deployment/tdarr-server -f
+
+# Node logs
+kubectl logs -n tdarr daemonset/tdarr-node -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep tdarr
+```

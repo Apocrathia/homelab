@@ -1,8 +1,14 @@
 # Flux
 
-Flux is a tool for managing Kubernetes resources. It is a GitOps tool that allows you to manage your Kubernetes resources in a Git repository.
+GitOps tool for managing Kubernetes resources in a Git repository.
 
 > **Navigation**: [← Back to Talos Setup](../talos/README.md) | [Next: 1Password Connect Setup →](./manifests/01-bootstrap/1password/README.md)
+
+## Documentation
+
+- **[Flux Documentation](https://fluxcd.io/flux/)** - Official documentation
+- **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
+- **[GitHub Repository](https://github.com/fluxcd/flux2)** - Source code and issues
 
 ## Installation
 

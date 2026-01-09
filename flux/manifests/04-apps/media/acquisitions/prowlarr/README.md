@@ -1,8 +1,14 @@
 # Prowlarr
 
-Prowlarr is an indexer manager/proxy built on the popular \*arr .net/reactjs base stack to integrate with your various PVR apps. It supports management of both Torrent Trackers and Usenet Indexers. It integrates seamlessly with Lidarr, Mylar3, Radarr, Readarr, and Sonarr offering complete management of your indexers with no per app Indexer setup required.
+Indexer manager/proxy for \*arr applications with centralized indexer configuration for torrent trackers and Usenet indexers.
 
 > **Navigation**: [← Back to Media README](../../README.md)
+
+## Documentation
+
+- **[Prowlarr Wiki](https://wiki.servarr.com/prowlarr)** - Primary documentation source
+- **[GitHub Repository](https://github.com/Prowlarr/Prowlarr)** - Source code and issues
+- **[LinuxServer.io Prowlarr](https://docs.linuxserver.io/images/docker-prowlarr)** - Container documentation
 
 ## Configuration
 
@@ -29,7 +35,7 @@ The deployment follows the LinuxServer.io standard pattern:
 
 ### Storage
 
-- **Config volume**: 10GB Longhorn persistent volume for application configuration
+- **Config volume**: Longhorn persistent volume for application configuration
 
 ### Flaresolverr Sidecar
 
@@ -76,4 +82,18 @@ Prowlarr serves as the central indexer manager for:
 - **Simplified setup**: No need to configure indexers in each \*arr application
 - **Statistics and monitoring**: Track indexer performance and health
 
-For more information about LinuxServer.io containers, see: https://docs.linuxserver.io/
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n prowlarr
+
+# Application logs
+kubectl logs -n prowlarr deployment/prowlarr -f
+
+# Flaresolverr sidecar logs
+kubectl logs -n prowlarr deployment/prowlarr -c flaresolverr -f
+
+# Check Authentik outpost
+kubectl get pods -n authentik | grep prowlarr
+```

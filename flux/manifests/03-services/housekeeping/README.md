@@ -4,6 +4,11 @@ Automated maintenance tasks for cluster health and organization.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
+## Documentation
+
+- **[Kubernetes Node Management](https://kubernetes.io/docs/concepts/architecture/nodes/)** - Node administration
+- **[CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
+
 ## Overview
 
 The housekeeping deployment provides automated node labeling and cluster organization.
@@ -47,10 +52,3 @@ kubectl get nodes -o custom-columns=NAME:.metadata.name,LABELS:.metadata.labels
 ## Resource Requirements
 
 Resource requirements are configured in the CronJob manifests.
-
-## External Resources
-
-- [Kubernetes Node Management](https://kubernetes.io/docs/concepts/architecture/nodes/)
-- [Resource Cleanup Best Practices](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/)
-- [CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
-- [RBAC Best Practices](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)

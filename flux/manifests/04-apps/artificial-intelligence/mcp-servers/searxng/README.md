@@ -54,3 +54,17 @@ The SearXNG MCP server provides these tools:
    - Read and convert URL content to markdown
    - **Input**: `{"url": "https://example.com/article"}`
    - **Optional**: `startChar`, `maxLength`, `section`, `paragraphRange`, `readHeadings`
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-searxng
+
+# MCP server logs
+kubectl logs -n mcp-searxng deployment/searxng-mcp -c mcp -f
+
+# Test SearXNG connectivity
+kubectl exec -n mcp-searxng deployment/searxng-mcp -- \
+  curl -s http://searxng.searxng.svc.cluster.local:8080/healthz
+```

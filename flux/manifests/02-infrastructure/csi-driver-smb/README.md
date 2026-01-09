@@ -1,8 +1,13 @@
 # CSI Driver SMB - SMB Storage Integration
 
-This directory contains the deployment configuration for the CSI Driver for SMB (Server Message Block) storage, enabling Kubernetes workloads to use SMB file shares as persistent volumes.
+CSI driver enabling Kubernetes workloads to use SMB file shares as persistent volumes.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
+
+## Documentation
+
+- **[CSI Driver SMB](https://github.com/kubernetes-csi/csi-driver-smb)** - Official documentation
+- **[Kubernetes CSI](https://kubernetes-csi.github.io/docs/)** - CSI specification
 
 ## Overview
 
@@ -299,10 +304,3 @@ kubectl exec -it <pod-name> -- nslookup server
 ## Resource Requirements
 
 Resource limits and requests are configured in `helmrelease.yaml`.
-
-## External Resources
-
-- [CSI Driver SMB Documentation](https://github.com/kubernetes-csi/csi-driver-smb)
-- [SMB Protocol Documentation](https://docs.microsoft.com/en-us/windows/win32/fileio/microsoft-smb-protocol)
-- [Kubernetes CSI Specification](https://github.com/container-storage-interface/spec)
-- [SMB Security Best Practices](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/smb-security-best-practices)

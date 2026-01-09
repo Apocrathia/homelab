@@ -60,3 +60,17 @@ The UniFi Network MCP server provides tools for managing network resources:
 6. **QoS Configuration** - Manage Quality of Service settings
 7. **Statistics** - Query network statistics and metrics
 8. **System Operations** - System-level operations and monitoring
+
+## Troubleshooting
+
+```bash
+# Pod status
+kubectl get pods -n mcp-unifi
+
+# MCP server logs
+kubectl logs -n mcp-unifi deployment/unifi-mcp -c mcp -f
+
+# Test UniFi connectivity
+kubectl exec -n mcp-unifi deployment/unifi-mcp -- \
+  curl -s -k "https://$UNIFI_HOST:$UNIFI_PORT"
+```
