@@ -84,6 +84,72 @@ Cleans up stopped Longhorn replicas that have hit the rebuild retry limit. These
 ./cleanup-stopped-replicas.sh
 ```
 
+### `cancel-stuck-restores.sh`
+
+Cancels stuck Longhorn volume restores triggered by the pasture-operator. Clears the `fromBackup` field from volumes stuck in restore state and sets the `pasture.longhorn.io/status` annotation to `error`. Only processes volumes that are in error state or have been stuck for more than 30 minutes.
+
+**Usage:**
+
+```bash
+./cancel-stuck-restores.sh
+```
+
+### `clear-engine-restores.sh`
+
+Clears `requestedBackupRestore` from Longhorn engines stuck in restore state. This allows engines to stop trying to restore from empty backups. Finds engines for volumes with `restoreRequired=true` and clears the restore request.
+
+**Usage:**
+
+```bash
+./clear-engine-restores.sh
+```
+
+### `clear-restore-conditions.sh`
+
+Clears the Restore condition from Longhorn volumes stuck with `RestoreInProgress` status. This allows Longhorn to properly reconcile and recognize existing replicas. Updates the Restore condition to `False` with reason `RestoreCancelled`.
+
+**Usage:**
+
+```bash
+./clear-restore-conditions.sh
+```
+
+### `clear-volume-restore-status.sh`
+
+Clears `restoreRequired` and `restoreInitiated` from Longhorn volume status using server-side apply with force conflicts. This forces Longhorn to stop treating volumes as being restored and allows normal operation. Volumes will then be able to start replicas normally.
+
+**Usage:**
+
+```bash
+./clear-volume-restore-status.sh
+```
+
+### `reset-stopped-replicas.sh`
+
+Resets `rebuildRetryCount` to 0 for stopped Longhorn replicas that have a retry count greater than 0. This allows Longhorn to retry starting these replicas instead of leaving them stuck. Useful after node reboots or restore failures when replicas are stuck in stopped state.
+
+**Usage:**
+
+```bash
+# Reset stopped replicas on a specific node
+./reset-stopped-replicas.sh <node-name>
+
+# Reset stopped replicas on all nodes
+./reset-stopped-replicas.sh
+```
+
+### `restart-degraded-volume-engines.sh`
+
+Restarts engines for degraded volumes to force Longhorn reconciliation. This helps volumes stuck with null `replicaDirectoryMap` to properly update status and recognize existing replicas. Deletes engines (Longhorn will recreate them) for all degraded attached volumes.
+
+**Usage:**
+
+```bash
+./restart-degraded-volume-engines.sh
+```
+
+**Warning:** This will briefly interrupt I/O for affected volumes during engine restart (typically 10-30 seconds per volume).
+
 ## Common Issues and Solutions
 
 ### Snapshot Accumulation
@@ -202,6 +268,51 @@ Cleans up stopped Longhorn replicas that have hit the rebuild retry limit. These
 2. **Prevention:** Address underlying disk pressure issues on the affected node
 3. **Node scheduling:** Consider disabling Longhorn scheduling on nodes that consistently fail to start replicas
 
+### Stuck Volume Restores
+
+**Problem:** Volumes stuck in degraded state after node upgrades or reboots, with restore operations that failed or never completed. Volumes show `restoreRequired=true`, `restoreInitiated=true`, or have Restore conditions stuck in `RestoreInProgress` state.
+
+**Root Causes:**
+
+- pasture-operator attempting to restore volumes from empty backups
+- Restore operations timing out or failing but not clearing their state
+- Engines stuck with `requestedBackupRestore` set even after restore failure
+- Volume status fields not being cleared by Longhorn after restore cancellation
+- Restore conditions not being updated when restores fail
+
+**Symptoms:**
+
+- Volumes stuck in degraded state with 0 ready replicas
+- Volumes have `restoreRequired=true` and `restoreInitiated=true` in status
+- Engines have `requestedBackupRestore` set in spec
+- Restore condition shows `status: True, reason: RestoreInProgress`
+- Logs show "backup volume is empty for backup restoration"
+- Volumes have running replicas but `replicaDirectoryMap` is null
+
+**Solutions:**
+
+1. **Clear engine restore requests:** Use `clear-engine-restores.sh` to clear `requestedBackupRestore` from engines
+2. **Clear volume restore status:** Use `clear-volume-restore-status.sh` to clear `restoreRequired` and `restoreInitiated` flags
+3. **Clear restore conditions:** Use `clear-restore-conditions.sh` to clear stuck Restore conditions
+4. **Reset stopped replicas:** Use `reset-stopped-replicas.sh` if replicas are stuck in stopped state
+5. **Restart engines:** Use `restart-degraded-volume-engines.sh` to force reconciliation if volumes still show null `replicaDirectoryMap`
+6. **Cancel stuck restores:** Use `cancel-stuck-restores.sh` to clear `fromBackup` field from volumes stuck in restore state
+
+**Recovery Sequence:**
+
+When volumes are stuck after restore failures, run scripts in this order:
+
+1. `clear-engine-restores.sh` - Stop engines from trying to restore
+2. `clear-volume-restore-status.sh` - Clear restore flags from volumes
+3. `clear-restore-conditions.sh` - Clear stuck Restore conditions
+4. `reset-stopped-replicas.sh` - Reset retry counts for stopped replicas
+5. `restart-degraded-volume-engines.sh` - Force reconciliation if volumes still stuck
+
+**Prevention:**
+
+- pasture-operator has been updated to prevent restoring existing volumes
+- Safeguards added to skip restore for volumes that already have replicas or are in healthy/degraded state
+
 ## Configuration Changes
 
 ### Recurring Jobs
@@ -236,6 +347,7 @@ Key changes in HelmRelease:
 4. **Node Maintenance:** Use `cleanup-talos-ephemeral.sh` for Talos nodes before they hit disk pressure
 5. **Volume Labels:** Ensure volumes have proper recurring job labels for automated cleanup
 6. **Replica Cleanup:** Monitor for stopped replicas and clean them up periodically to free disk space
+7. **Post-Upgrade Recovery:** After node upgrades, monitor for stuck restore operations and use recovery scripts if needed
 
 ## Troubleshooting
 

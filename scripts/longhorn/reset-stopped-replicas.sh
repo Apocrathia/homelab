@@ -18,15 +18,16 @@ prompt_confirm() {
   echo "${confirm}"
 }
 
-echo "Finding stopped replicas with rebuildRetryCount >= 5..."
+echo "Finding stopped replicas with rebuildRetryCount > 0..."
 echo ""
 
-# Build jq filter
+# Build jq filter - reset any stopped replica with retry count > 0
+# This helps recover from restore failures or node reboots
 if [ -n "${NODE}" ]; then
-  FILTER=".items[] | select(.spec.nodeID == \"${NODE}\" and .status.currentState == \"stopped\" and (.spec.rebuildRetryCount // 0) >= 5)"
+  FILTER=".items[] | select(.spec.nodeID == \"${NODE}\" and .status.currentState == \"stopped\" and (.spec.rebuildRetryCount // 0) > 0)"
   echo "Filtering for node: ${NODE}"
 else
-  FILTER=".items[] | select(.status.currentState == \"stopped\" and (.spec.rebuildRetryCount // 0) >= 5)"
+  FILTER=".items[] | select(.status.currentState == \"stopped\" and (.spec.rebuildRetryCount // 0) > 0)"
   echo "Finding stopped replicas on all nodes"
 fi
 
@@ -37,12 +38,12 @@ kubectl get replicas.longhorn.io -n "${NAMESPACE}" -o json | \
 REPLICA_COUNT=$(wc -l < /tmp/stopped-replicas-to-reset.txt | tr -d ' ')
 
 if [ "${REPLICA_COUNT}" -eq 0 ]; then
-  echo "No stopped replicas with rebuildRetryCount >= 5 found."
+  echo "No stopped replicas with rebuildRetryCount > 0 found."
   rm -f /tmp/stopped-replicas-to-reset.txt
   exit 0
 fi
 
-echo "Found ${REPLICA_COUNT} stopped replicas with rebuildRetryCount >= 5"
+echo "Found ${REPLICA_COUNT} stopped replicas with rebuildRetryCount > 0"
 echo ""
 
 # Show preview
