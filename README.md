@@ -20,6 +20,8 @@ Yes, there are risks to publishing infrastructure configurations. Much of that h
 
 ## Architecture
 
+It's important to me that I maintain accurate documentation for my homelab. While I don't expect anyone to pick up this entire repository and deploy everything, I want to provide a clear and concise overview of the architecture and how it's deployed. This way, future me, or anyone else who wants to understand my homelab (\*cough\* AI agents \*cough\*), can do so easily. C4 diagrams are a great way to do this. However, Mermaid is not the greatest for this ([yet](https://docs.mermaidchart.com/mermaid-oss/syntax/c4.html)), so don't expect them to be perfect.
+
 #### Level 1: System Context
 
 ```mermaid
