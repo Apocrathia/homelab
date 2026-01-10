@@ -115,6 +115,9 @@ spec:
       enabled: true
       deploymentStrategy:
         type: Recreate
+      plugins:
+        - grafana-llm-app
+        - grafana-advisor-app
       ingress:
         enabled: false
       admin:
@@ -123,6 +126,8 @@ spec:
         passwordKey: password
       # Configure for proxy authentication via grafana.ini
       grafana.ini:
+        feature_toggles:
+          enable: grafanaAdvisor
         auth:
           disable_login_form: true
           disable_signout_menu: true
