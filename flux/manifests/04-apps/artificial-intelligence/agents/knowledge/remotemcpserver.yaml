@@ -30,3 +30,19 @@ spec:
   protocol: STREAMABLE_HTTP
   url: "http://mcp-openzim-mcp-proxy.mcp-openzim.svc.cluster.local:8080/mcp"
   description: "OpenZIM - offline Wikipedia and encyclopedic content"
+---
+# RemoteMCPServer for DeepWiki GitHub repository documentation
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: deepwiki-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: deepwiki-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "https://mcp.deepwiki.com/mcp"
+  description: "DeepWiki - AI-generated documentation and Q&A for GitHub repositories"
