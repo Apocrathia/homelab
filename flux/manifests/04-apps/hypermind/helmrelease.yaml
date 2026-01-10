@@ -51,7 +51,7 @@ spec:
           cpu: 50m
           memory: 64Mi
         limits:
-          cpu: 200m
+          cpu: 500m
           memory: 128Mi
       healthChecks:
         livenessProbe:
@@ -59,15 +59,17 @@ spec:
           httpGet:
             path: /api/stats
             port: 3000
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
           periodSeconds: 30
+          timeoutSeconds: 5
         readinessProbe:
           enabled: true
           httpGet:
             path: /api/stats
             port: 3000
-          initialDelaySeconds: 5
+          initialDelaySeconds: 15
           periodSeconds: 10
+          timeoutSeconds: 5
 
     secrets:
       enabled: false
