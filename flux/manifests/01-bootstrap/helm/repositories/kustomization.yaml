@@ -36,6 +36,7 @@ resources:
   - flyte.yaml
   - immich.yaml
   - jupyterhub.yaml
+  - k8sgpt.yaml
   - kagent.yaml
   - kong.yaml
   - litellm.yaml
