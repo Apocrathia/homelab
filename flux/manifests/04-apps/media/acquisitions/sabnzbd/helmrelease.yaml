@@ -39,8 +39,8 @@ spec:
           cpu: 100m
           memory: 128Mi
         limits:
-          cpu: 1000m
-          memory: 1Gi
+          cpu: 2000m
+          memory: 2Gi
 
       securityContext:
         runAsUser: 1000
@@ -149,9 +149,9 @@ spec:
             port: 8080
             scheme: HTTP
           initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 3
+          periodSeconds: 60
+          timeoutSeconds: 30
+          failureThreshold: 5
           successThreshold: 1
         readinessProbe:
           enabled: true
