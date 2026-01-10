@@ -24,7 +24,7 @@ spec:
       name: mcpo-bridge
       namespace: openwebui
       # renovate: datasource=docker depName=ghcr.io/open-webui/mcpo
-      image: ghcr.io/open-webui/mcpo:sha256:f2c86ef16fd12c6dbfd55caec817bc5d09114327ffed03301b6e339a66bf95ae
+      image: ghcr.io/open-webui/mcpo@sha256:f2c86ef16fd12c6dbfd55caec817bc5d09114327ffed03301b6e339a66bf95ae
 
       container:
         name: mcpo
