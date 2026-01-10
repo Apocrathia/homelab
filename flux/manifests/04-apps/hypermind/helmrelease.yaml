@@ -1,0 +1,87 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hypermind
+  namespace: hypermind
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.47"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: hypermind
+      # renovate: datasource=docker depName=ghcr.io/lklynet/hypermind
+      image: ghcr.io/lklynet/hypermind@sha256:6e588fbc4efa7e7878a29fda78d023992d7cb85a7b4763d148bc87dd89364977
+      replicas: 1
+      container:
+        name: hypermind
+        port: 3000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PORT
+            value: "3000"
+          - name: ENABLE_CHAT
+            value: "true"
+          - name: ENABLE_MAP
+            value: "true"
+          - name: ENABLE_THEMES
+            value: "true"
+      service:
+        port: 80
+        targetPort: 3000
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/stats
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/stats
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      displayName: "Hypermind"
+      externalHost: "https://hypermind.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/hypermind/icon.svg"
+      category: "Miscellaneous"
+
+    httproute:
+      enabled: false
+
+    loadbalancer:
+      enabled: false
