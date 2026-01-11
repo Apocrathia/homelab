@@ -14,7 +14,7 @@ metadata:
 spec:
   # Use Python base image (not slim) which includes git for git-based installs
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.12
+  image: public.ecr.aws/docker/library/python:3.14
   transport: stdio
   proxyMode: streamable-http
   port: 8080
@@ -34,7 +34,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.12
+          image: public.ecr.aws/docker/library/python:3.14
           securityContext:
             readOnlyRootFilesystem: false
           stdin: true

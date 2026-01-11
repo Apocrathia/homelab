@@ -24,7 +24,7 @@ spec:
       podAnnotations:
         instrumentation.opentelemetry.io/inject-python: "otel-system/python"
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.12-slim
+      image: public.ecr.aws/docker/library/python:3.14-slim
 
       command: ["python"]
       args: ["/app/main.py"]
@@ -59,7 +59,7 @@ spec:
 
       initContainers:
         - name: install
-          image: public.ecr.aws/docker/library/python:3.12-slim
+          image: public.ecr.aws/docker/library/python:3.14-slim
           command: ["/bin/bash", "-c"]
           args:
             - |
