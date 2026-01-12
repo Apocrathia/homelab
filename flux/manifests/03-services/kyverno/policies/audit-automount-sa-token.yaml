@@ -1,0 +1,42 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: audit-automount-sa-token
+  annotations:
+    policies.kyverno.io/title: Audit automountServiceAccountToken
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Kubernetes mounts ServiceAccount tokens into Pods by default, which can
+      be a security risk if the Pod doesn't need API access. This policy audits
+      Pods that have automountServiceAccountToken enabled or not explicitly set.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: check-automount-sa-token
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          # Exclude system namespaces where SA tokens are legitimately needed
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - cilium-system
+                - flux-system
+                - kyverno
+      validate:
+        message: >-
+          automountServiceAccountToken should be set to false unless the Pod
+          requires Kubernetes API access.
+        pattern:
+          spec:
+            automountServiceAccountToken: false
