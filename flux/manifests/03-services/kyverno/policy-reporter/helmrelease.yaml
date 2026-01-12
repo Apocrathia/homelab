@@ -1,0 +1,81 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: policy-reporter
+  namespace: policy-reporter
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: policy-reporter
+      # renovate: datasource=helm registryUrl=https://kyverno.github.io/policy-reporter depName=policy-reporter
+      version: "3.7.1"
+      sourceRef:
+        kind: HelmRepository
+        name: policy-reporter
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # Pull OIDC credentials from 1Password secret
+  valuesFrom:
+    - kind: Secret
+      name: kyverno-secrets
+      valuesKey: oidc-client-id
+      targetPath: ui.openIDConnect.clientId
+    - kind: Secret
+      name: kyverno-secrets
+      valuesKey: oidc-client-secret
+      targetPath: ui.openIDConnect.clientSecret
+  values:
+    # Enable UI component
+    ui:
+      enabled: true
+      openIDConnect:
+        enabled: true
+        discoveryUrl: "https://auth.gateway.services.apocrathia.com/application/o/policy-reporter/"
+        callbackUrl: "https://kyverno.gateway.services.apocrathia.com/callback"
+        scopes:
+          - openid
+          - email
+          - profile
+    # Enable Kyverno plugin
+    plugin:
+      kyverno:
+        enabled: true
+    # Enable Prometheus metrics
+    metrics:
+      enabled: true
+      mode: detailed
+    # Enable monitoring (ServiceMonitor and Grafana dashboards)
+    monitoring:
+      enabled: true
+      serviceMonitor:
+        labels:
+          release: kube-prometheus-stack
+      grafana:
+        dashboards:
+          enabled: true
+    # Enable HTTPRoute for Gateway API
+    httproute:
+      enabled: true
+      parentRefs:
+        - name: main-gateway
+          namespace: cilium-system
+          sectionName: https
+      hostnames:
+        - kyverno.gateway.services.apocrathia.com
+    # Resource limits
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi

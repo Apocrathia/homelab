@@ -44,3 +44,4 @@ resources:
   - backstage.yaml
   - windmill.yaml
   - open-telemetry.yaml
+  - policy-reporter.yaml

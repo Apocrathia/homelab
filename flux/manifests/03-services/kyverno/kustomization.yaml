@@ -8,3 +8,4 @@ resources:
   - helmrelease.yaml
   - cleanup-rbac.yaml
   - policies/
+  - policy-reporter/
