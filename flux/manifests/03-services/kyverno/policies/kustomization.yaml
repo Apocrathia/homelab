@@ -4,6 +4,7 @@ kind: Kustomization
 metadata:
   name: kyverno-cleanup-policies
 resources:
+  - audit-automount-sa-token.yaml
   - block-default-namespace.yaml
   - cleanup-replicasets.yaml
   - cleanup-pods.yaml
