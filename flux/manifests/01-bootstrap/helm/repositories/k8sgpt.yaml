@@ -6,6 +6,5 @@ metadata:
   name: k8sgpt
   namespace: flux-system
 spec:
-  type: oci
   interval: 2h
-  url: oci://ghcr.io/k8sgpt-ai/k8sgpt-operator
+  url: https://charts.k8sgpt.ai
