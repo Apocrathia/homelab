@@ -16,10 +16,9 @@ Recyclarr is a command-line utility that runs periodically to keep your media ma
 
 ## Configuration
 
-Recyclarr configuration is managed via GitOps using the same pattern as authentik blueprints:
+Recyclarr configuration is managed via GitOps:
 
-- **ConfigMap**: `recyclarr.yml` is generated from source files via Kustomize with `k8s-sidecar-target-directory` annotation
-- **k8s-sidecar**: Continuously syncs ConfigMaps with `recyclarr_config: "true"` label directly to `/config/recyclarr.yml`
+- **ConfigMap**: `recyclarr.yml` is generated from source files via Kustomize and mounted directly to `/config/recyclarr.yml`
 - **Environment variables**: Sensitive data (API keys) sourced from 1Password
 
 ### Quality Profiles Configured
