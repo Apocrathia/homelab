@@ -1,0 +1,71 @@
+---
+# K8sGPT Custom Resource - configures the AI-powered cluster analysis
+apiVersion: core.k8sgpt.ai/v1alpha1
+kind: K8sGPT
+metadata:
+  name: k8sgpt
+  namespace: k8sgpt-system
+spec:
+  # AI backend configuration - using LiteLLM as OpenAI-compatible proxy
+  ai:
+    enabled: true
+    backend: localai
+    model: cogito
+    baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
+    secret:
+      name: k8sgpt-secrets
+      key: litellm-api-key
+    # Don't anonymize - we control the LLM endpoint
+    anonymized: false
+    # Language for analysis output
+    language: english
+
+  # Analysis configuration
+  analysis:
+    # Run analysis once per day
+    interval: "24h"
+
+  # Disable caching to always get fresh analysis
+  noCache: false
+
+  # k8sgpt container image
+  repository: ghcr.io/k8sgpt-ai/k8sgpt
+  # renovate: datasource=docker depName=ghcr.io/k8sgpt-ai/k8sgpt
+  version: v0.4.27
+
+  # Resource limits for the k8sgpt pod
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Analyzers to enable
+  # Note: specifying filters replaces defaults, so we include core + optional ones
+  filters:
+    # Core analyzers
+    - Pod
+    - Deployment
+    - ReplicaSet
+    - PersistentVolumeClaim
+    - Service
+    - StatefulSet
+    - Job
+    - CronJob
+    - Node
+    - ValidatingWebhookConfiguration
+    - MutatingWebhookConfiguration
+    - ConfigMap
+    # Gateway API analyzers
+    - GatewayClass
+    - Gateway
+    - HTTPRoute
+
+  # Trivy integration for security scanning
+  integrations:
+    trivy:
+      enabled: true
+      # Use the existing trivy-operator in trivy-system namespace
+      namespace: trivy-system

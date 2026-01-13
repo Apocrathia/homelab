@@ -6,6 +6,7 @@ metadata:
   name: artificial-intelligence
 
 resources:
+  - k8sgpt
   - kagent
   - agents
   - firecrawl
