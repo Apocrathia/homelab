@@ -45,9 +45,11 @@ spec:
           - openid
           - email
           - profile
-    # Enable Kyverno plugin
+    # Enable plugins
     plugin:
       kyverno:
+        enabled: true
+      trivy:
         enabled: true
     # Enable Prometheus metrics
     metrics:
@@ -62,15 +64,9 @@ spec:
       grafana:
         dashboards:
           enabled: true
-    # Enable HTTPRoute for Gateway API
+    # Disable chart's HTTPRoute (routes to core service, we need UI service)
     httproute:
-      enabled: true
-      parentRefs:
-        - name: main-gateway
-          namespace: cilium-system
-          sectionName: https
-      hostnames:
-        - kyverno.gateway.services.apocrathia.com
+      enabled: false
     # Resource limits
     resources:
       requests:
