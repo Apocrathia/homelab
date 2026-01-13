@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.47 (Latest)
+## Version 0.0.48 (Latest)
+
+- **Security: Disable ServiceAccount Token Mounting by Default**: Added `automountServiceAccountToken: false` to pod spec
+  - **Security Best Practice**: Pods no longer mount Kubernetes API tokens unless explicitly needed
+  - **Policy Compliance**: Resolves ~74 violations of `audit-automount-sa-token` Kyverno policy across all generic-app deployments
+  - **Configurable Override**: Set `app.automountServiceAccountToken: true` if your app legitimately needs Kubernetes API access
+  - **Backward Compatible**: Existing deployments automatically become more secure upon next reconciliation
+  - **References**: [CIS Kubernetes Benchmark 5.1.6](https://www.cisecurity.org/benchmark/kubernetes), [Kyverno Policy](https://kyverno.io/policies/pod-security/baseline/disallow-auto-mount-service-account-token/)
+
+## Version 0.0.47
 
 - **Changed Longhorn Volume Replica Default**: Updated default replica count from 2 to 3 for better data redundancy
   - **Default Behavior**: All Longhorn volumes now default to 3 replicas when `storage.longhorn.numberOfReplicas` is not specified
