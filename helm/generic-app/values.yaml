@@ -228,6 +228,10 @@ app:
   podAntiAffinity:
     enabled: true
 
+  # Disable SA token mounting by default (security best practice)
+  # Set to true only if your app needs Kubernetes API access
+  automountServiceAccountToken: false
+
   # Security context (defaults to 1000)
   securityContext:
     runAsUser: 1000
