@@ -79,4 +79,9 @@ data:
               - name: {{ .Values.authentik.gateway.name }}
                 namespace: {{ .Values.authentik.gateway.namespace }}
                 sectionName: {{ .Values.authentik.gateway.sectionName }}
+            kubernetes_json_patches:
+              deployment:
+                - op: add
+                  path: /spec/template/spec/automountServiceAccountToken
+                  value: false
 {{- end }}

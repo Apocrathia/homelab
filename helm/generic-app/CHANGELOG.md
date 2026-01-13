@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.48 (Latest)
+## Version 0.0.49 (Latest)
+
+- **Security: Disable SA Token Mounting in Authentik Outposts**: Added `kubernetes_json_patches` to outpost config
+  - **Outpost Hardening**: Authentik proxy outposts no longer mount Kubernetes API tokens
+  - **Uses Native Config**: Leverages authentik's `kubernetes_json_patches` to inject `automountServiceAccountToken: false`
+  - **No API Access Needed**: Proxy outposts only communicate with authentik server over HTTP, not the K8s API
+  - **Policy Compliance**: Resolves ~41 additional violations of `audit-automount-sa-token` Kyverno policy for generic-app outposts
+  - **Combined with 0.0.48**: Together, these changes secure both the app deployment AND its authentik outpost
+
+## Version 0.0.48
 
 - **Security: Disable ServiceAccount Token Mounting by Default**: Added `automountServiceAccountToken: false` to pod spec
   - **Security Best Practice**: Pods no longer mount Kubernetes API tokens unless explicitly needed
