@@ -70,3 +70,8 @@ entries:
           - name: main-gateway
             namespace: cilium-system
             sectionName: https
+        kubernetes_json_patches:
+          deployment:
+            - op: add
+              path: /spec/template/spec/automountServiceAccountToken
+              value: false
