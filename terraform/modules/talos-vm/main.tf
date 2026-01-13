@@ -78,6 +78,9 @@ resource "proxmox_virtual_environment_vm" "this" {
       disk[0].file_id,
       # SMBIOS UUID is auto-generated
       machine,
+      # QEMU agent reports these dynamically
+      ipv4_addresses,
+      ipv6_addresses,
     ]
   }
 }

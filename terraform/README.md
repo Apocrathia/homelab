@@ -314,22 +314,25 @@ pre-commit run --all-files
 
 ## CI/CD Pipeline
 
-> **TODO**: Create `.gitlab/tofu.gitlab-ci.yml` and add to `.gitlab-ci.yml` includes.
+Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 
-| Stage    | Job             | Trigger            | Description                         |
-| -------- | --------------- | ------------------ | ----------------------------------- |
-| validate | `tofu-validate` | All MRs            | Syntax and configuration validation |
-| plan     | `tofu-plan`     | All MRs            | Generate and display execution plan |
-| apply    | `tofu-apply`    | Manual (main only) | Apply changes to infrastructure     |
+| Stage  | Job             | Trigger              | Description                         |
+| ------ | --------------- | -------------------- | ----------------------------------- |
+| verify | `tofu-validate` | MRs (terraform/\*\*) | Syntax and configuration validation |
+| verify | `tofu-plan`     | MRs (terraform/\*\*) | Plan posted as MR comment           |
+| deploy | `tofu-apply`    | Manual (main only)   | Apply with `--parallelism 1`        |
 
-Key considerations:
+### Required CI/CD Variables
 
-- Use image with OpenTofu + Terragrunt (e.g., `alpine/terragrunt`)
-- Cache `.terragrunt-cache` directory
-- Store plan output as artifact
-- Post plan output as MR comment for reviewer visibility
-- Require manual approval for apply on main
-- **CRITICAL**: Use `--parallelism 1` for applies to prevent simultaneous control plane reboots
+| Variable               | Description                     |
+| ---------------------- | ------------------------------- |
+| `TF_HTTP_ADDRESS`      | GitLab state base URL           |
+| `TF_HTTP_USERNAME`     | GitLab username                 |
+| `TF_HTTP_PASSWORD`     | GitLab access token (api scope) |
+| `PROXMOX_VE_ENDPOINT`  | Proxmox API URL                 |
+| `PROXMOX_VE_API_TOKEN` | Full Proxmox API token          |
+| `PROXMOX_VE_INSECURE`  | `true` for self-signed certs    |
+| `TOFU_MR_TOKEN`        | Token for posting MR comments   |
 
 ## Troubleshooting
 
