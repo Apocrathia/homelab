@@ -10,6 +10,7 @@ metadata:
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp
   image: ghcr.io/stackloklabs/mkp/server:0.2.4
+  serviceAccount: kubernetes-mcp-sa
   transport: streamable-http
   port: 8080
   targetPort: 8080

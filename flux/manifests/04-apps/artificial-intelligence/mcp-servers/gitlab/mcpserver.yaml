@@ -31,6 +31,7 @@ spec:
       memory: "512Mi"
   podTemplateSpec:
     spec:
+      automountServiceAccountToken: false
       securityContext:
         readOnlyRootFilesystem: false
       containers:

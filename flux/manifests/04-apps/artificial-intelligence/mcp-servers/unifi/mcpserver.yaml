@@ -30,6 +30,7 @@ spec:
       memory: "256Mi"
   podTemplateSpec:
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp

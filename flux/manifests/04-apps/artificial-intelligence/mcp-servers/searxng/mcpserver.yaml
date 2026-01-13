@@ -33,6 +33,7 @@ spec:
       memory: "128Mi"
   podTemplateSpec:
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng

@@ -14,6 +14,7 @@ metadata:
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
   image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.38.1
+  serviceAccount: flux-mcp-sa
   transport: streamable-http
   port: 8080
   targetPort: 8080
