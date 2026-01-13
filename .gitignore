@@ -39,13 +39,17 @@ __pycache__/
 *.swo
 *~
 
-# Terraform
+# Terraform / OpenTofu / Terragrunt
 .terraform/
+.terragrunt-cache/
 *.tfstate
 *.tfstate.*
 *.tfvars
 .terraformrc
 terraform.rc
+# Terragrunt-generated files (in root, not in modules)
+terraform/backend.tf
+terraform/provider.tf
 
 # Ansible
 *.retry
