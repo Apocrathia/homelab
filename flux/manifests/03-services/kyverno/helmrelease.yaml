@@ -91,5 +91,20 @@ spec:
           cpu: 100m
           memory: 128Mi
         limits:
-          cpu: 500m
-          memory: 512Mi
+          cpu: 1000m
+          memory: 1Gi
+      startupProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 10
+        failureThreshold: 30
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 20
+        timeoutSeconds: 15
+        failureThreshold: 12
+      livenessProbe:
+        initialDelaySeconds: 60
+        periodSeconds: 20
+        timeoutSeconds: 15
+        failureThreshold: 6
