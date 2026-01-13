@@ -31,8 +31,27 @@ spec:
                 - kube-public
                 - kube-node-lease
                 - cilium-system
+                - longhorn-system
                 - flux-system
                 - kyverno
+                # Operators and controllers that need API access
+                - cert-manager
+                - external-secrets-system
+                - prometheus-system
+                - postgres-system
+                - otel-system
+                - trivy-system
+                - policy-reporter
+                - grafana-system
+                - onepassword-system
+                - lws-system
+                - pasture-system
+                - toolhive-system
+                - fluent-system
+                - system-upgrade
+                - gitlab-runner
+                - kagent
+                - renovate
       validate:
         message: >-
           automountServiceAccountToken should be set to false unless the Pod
