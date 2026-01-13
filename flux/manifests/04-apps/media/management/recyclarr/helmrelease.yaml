@@ -65,40 +65,17 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+        - name: recyclarr-config
+          mountPath: /config/recyclarr.yml
+          subPath: recyclarr.yml
+          readOnly: true
       volumes:
         emptyDir:
           - name: tmp
             mountPath: /tmp
-
-      # k8s-sidecar to sync ConfigMaps with recyclarr_config label
-      sidecars:
-        - name: config
-          # renovate: datasource=docker registryUrl=https://ghcr.io depName=home-operations/k8s-sidecar
-          image: ghcr.io/home-operations/k8s-sidecar:2.2.3
-          env:
-            - name: LABEL
-              value: "recyclarr-config"
-            - name: LABEL_VALUE
-              value: "true"
-            - name: NAMESPACE
-              value: "recyclarr"
-            - name: FOLDER
-              value: "/config"
-            - name: RESOURCE
-              value: "configmap"
-            - name: FOLDER_ANNOTATION
-              value: "k8s-sidecar-target-directory"
-          volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: tmp
-              mountPath: /tmp
-          resources:
-            requests:
-              cpu: 10m
-              memory: 128Mi
-            limits:
-              memory: 256Mi
+        configMap:
+          - name: recyclarr-config
+            configMapName: recyclarr-config
 
     secrets:
       enabled: true

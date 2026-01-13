@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrelease.yaml
-  - rbac.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -14,11 +13,3 @@ configMapGenerator:
     namespace: recyclarr
     files:
       - recyclarr.yml
-    options:
-      annotations:
-        k8s-sidecar-target-directory: "/config"
-
-labels:
-  - includeSelectors: true
-    pairs:
-      recyclarr-config: "true"
