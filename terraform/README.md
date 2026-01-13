@@ -45,7 +45,6 @@ HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Fo
 ### Why Terragrunt?
 
 - **DRY configurations** - define common settings once, inherit everywhere
-- **Multi-module orchestration** - `terragrunt run-all plan` across all VMs
 - **Automatic backend configuration** - no copy-paste of backend blocks
 - **Input inheritance** - common VM specs in parent, unique values per-VM
 
@@ -53,52 +52,50 @@ Terragrunt auto-detects OpenTofu when both are installed.
 
 ### State Backend
 
-GitLab-managed Terraform state via HTTP backend - remote storage, state locking, versioning, and native CI/CD integration without additional infrastructure.
+GitLab-managed Terraform state via HTTP backend. Each deployment gets a unique state key based on its path.
 
-The root `terragrunt.hcl` configures the backend:
+The `root.hcl` configures the backend with dynamic state keys:
 
 ```hcl
+locals {
+  base_address = get_env("TF_HTTP_ADDRESS", "")
+  state_key    = replace(path_relative_to_include(), "/", "-")
+  address      = "${local.base_address}-${local.state_key}"
+}
+
 remote_state {
   backend = "http"
   config = {
-    address        = get_env("TF_HTTP_ADDRESS")
-    lock_address   = get_env("TF_HTTP_LOCK_ADDRESS")
-    unlock_address = get_env("TF_HTTP_UNLOCK_ADDRESS")
-    username       = get_env("TF_HTTP_USERNAME")
-    password       = get_env("TF_HTTP_PASSWORD")
+    address        = local.address
+    lock_address   = "${local.address}/lock"
+    unlock_address = "${local.address}/lock"
+    username       = get_env("TF_HTTP_USERNAME", "")
+    password       = get_env("TF_HTTP_PASSWORD", "")
     lock_method    = "POST"
     unlock_method  = "DELETE"
   }
 }
 ```
 
-### Authentication
-
-| Variable                   | Description                                     | Masked |
-| -------------------------- | ----------------------------------------------- | ------ |
-| `PROXMOX_API_URL`          | Proxmox API endpoint (e.g., `https://pve:8006`) | No     |
-| `PROXMOX_API_TOKEN_ID`     | API token ID (e.g., `user@pam!tokenname`)       | No     |
-| `PROXMOX_API_TOKEN_SECRET` | API token secret                                | Yes    |
-
-> **Note**: The provider wants the base URL without `/api2/json` suffix.
+This creates unique state files per VM (e.g., `homelab-deployments-proxmox-talos-cluster-talos-01`).
 
 ## Directory Structure
 
 ```
 terraform/
 ├── README.md
-├── terragrunt.hcl                      # Root config (backend, provider)
+├── root.hcl                            # Root config (backend, provider)
 ├── modules/
 │   └── talos-vm/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
+│       ├── main.tf                     # VM resource definition
+│       ├── variables.tf                # Input variables
+│       └── outputs.tf                  # Outputs (VM ID, IPs, etc.)
 └── deployments/
     └── proxmox/
         └── talos-cluster/
-            ├── terragrunt.hcl          # Common inputs (CPU, RAM, network)
+            ├── common.hcl              # Shared inputs (CPU, RAM, network)
             ├── talos-01/
-            │   └── terragrunt.hcl      # VM-specific: hostname, VMID, IP
+            │   └── terragrunt.hcl      # VM-specific: hostname, VMID, MAC
             ├── talos-02/
             │   └── terragrunt.hcl
             ├── talos-03/
@@ -110,17 +107,17 @@ terraform/
 ### Configuration Hierarchy
 
 ```
-Root terragrunt.hcl
-    └── Backend config (GitLab HTTP state)
-    └── Provider config (Proxmox API)
+root.hcl
+    └── Backend config (GitLab HTTP state with dynamic keys)
+    └── Provider config (Proxmox API via env vars)
             │
             ▼
-deployments/proxmox/talos-cluster/terragrunt.hcl
-    └── Common VM inputs (CPU, RAM, disk size, storage pool)
+deployments/proxmox/talos-cluster/common.hcl
+    └── Shared VM inputs (CPU, RAM, disk size, storage pool)
             │
             ▼
 deployments/proxmox/talos-cluster/talos-XX/terragrunt.hcl
-    └── Per-VM inputs (hostname, VMID, Proxmox node, IP address)
+    └── Per-VM inputs (hostname, VMID, Proxmox node, MAC address)
     └── terraform { source = "../../../../modules/talos-vm" }
 ```
 
@@ -131,8 +128,8 @@ Each VM runs on a dedicated Proxmox node, so `proxmox_node` is a per-VM input.
 ### Version Requirements
 
 ```bash
-tofu version       # >= 1.6.0
-terragrunt --version  # >= 0.55.0
+tofu version          # >= 1.6.0
+terragrunt --version  # >= 0.52.0
 ```
 
 ### Installation (macOS)
@@ -143,20 +140,95 @@ brew install opentofu terragrunt
 
 ### Proxmox API Token
 
-Create an API token in Proxmox (Datacenter → Permissions → API Tokens → Add) with these permissions:
+Create an API token in Proxmox (Datacenter → Permissions → API Tokens → Add).
 
-- `VM.Allocate`, `VM.Audit`, `VM.Config.*`, `VM.PowerMgmt`
-- `Datastore.AllocateSpace`, `Datastore.Audit`
+**Option A**: Uncheck "Privilege Separation" to inherit user permissions.
+
+**Option B**: Keep privilege separation and add explicit permissions:
+
+| Path       | Role               |
+| ---------- | ------------------ |
+| `/vms`     | `PVEVMAdmin`       |
+| `/storage` | `PVEDatastoreUser` |
+
+## Environment Variables
+
+### Local Development
+
+Create a `.env` file in the `terraform/` directory (gitignored):
+
+```bash
+# Proxmox API (for curl commands)
+export PROXMOX_API_URL=https://pve.example.com:8006
+export PROXMOX_API_TOKEN_ID=serviceaccount@pam!terraform
+export PROXMOX_API_TOKEN_SECRET=your-secret-here
+
+# Proxmox Provider (bpg/proxmox reads these directly)
+export PROXMOX_VE_ENDPOINT=${PROXMOX_API_URL}
+export PROXMOX_VE_API_TOKEN=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}
+export PROXMOX_VE_INSECURE=true
+
+# GitLab HTTP State Backend
+export TF_HTTP_USERNAME=your-gitlab-username
+export TF_HTTP_PASSWORD=glpat-your-token-here
+export TF_HTTP_ADDRESS=https://gitlab.com/api/v4/projects/PROJECT_ID/terraform/state/homelab
+```
+
+Source before running terragrunt:
+
+```bash
+source terraform/.env
+```
 
 ### GitLab CI/CD Variables
 
 Configure in GitLab (Settings → CI/CD → Variables):
 
-| Variable                   | Type     | Protected | Masked |
-| -------------------------- | -------- | --------- | ------ |
-| `PROXMOX_API_URL`          | Variable | Yes       | No     |
-| `PROXMOX_API_TOKEN_ID`     | Variable | Yes       | No     |
-| `PROXMOX_API_TOKEN_SECRET` | Variable | Yes       | Yes    |
+| Variable               | Type     | Protected | Masked |
+| ---------------------- | -------- | --------- | ------ |
+| `TF_HTTP_ADDRESS`      | Variable | Yes       | No     |
+| `TF_HTTP_USERNAME`     | Variable | Yes       | No     |
+| `TF_HTTP_PASSWORD`     | Variable | Yes       | Yes    |
+| `PROXMOX_VE_ENDPOINT`  | Variable | Yes       | No     |
+| `PROXMOX_VE_API_TOKEN` | Variable | Yes       | Yes    |
+| `PROXMOX_VE_INSECURE`  | Variable | Yes       | No     |
+
+## Local Development
+
+### Single VM Operations
+
+```bash
+cd terraform/deployments/proxmox/talos-cluster/talos-01
+terragrunt init
+terragrunt plan
+terragrunt apply
+```
+
+### All Deployments
+
+Use `run --all` from the deployments directory:
+
+```bash
+cd terraform/deployments
+
+# Plan all
+terragrunt run --all -- plan
+
+# Apply all (MUST use --parallelism 1 for control plane nodes!)
+terragrunt run --all --parallelism 1 --non-interactive -- apply -auto-approve
+```
+
+> **⚠️ CRITICAL**: Always use `--parallelism 1` when applying to control plane nodes. Parallel applies will reboot all nodes simultaneously, causing cluster outage and potential etcd quorum loss.
+
+### Validate Configuration
+
+```bash
+cd terraform
+terragrunt hcl fmt --check
+
+cd deployments/proxmox/talos-cluster/talos-01
+terragrunt validate
+```
 
 ## Import Strategy
 
@@ -165,77 +237,79 @@ VMs already exist in Proxmox - import them into state rather than recreate.
 ### Step 1: Capture Current VM Configuration
 
 ```bash
-curl -s \
+curl -sk \
   -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
   "${PROXMOX_API_URL}/api2/json/nodes/{node}/qemu/{vmid}/config" | jq
 ```
 
-### Step 2: Write Module and Deployment Configs
-
-1. Create `modules/talos-vm/` module matching VM specs
-2. Create `terragrunt.hcl` files with appropriate inputs
-3. Ensure inputs match actual VM configuration
-
-### Step 3: Import Existing Resources
+### Step 2: Import Existing Resources
 
 Import ID format: `node_name/vm_id` (e.g., `node-01/801`)
 
 ```bash
 cd deployments/proxmox/talos-cluster/talos-01
-terragrunt init
-terragrunt import proxmox_virtual_environment_vm.this node-01/801
+terragrunt init -lock=false
+terragrunt import -lock=false proxmox_virtual_environment_vm.this node-01/801
 ```
 
-Or batch import:
+Batch import all VMs:
 
 ```bash
-cd deployments/proxmox/talos-cluster
-
-# Each VM is on its own Proxmox node
-declare -A VM_MAP=(
-  ["talos-01"]="node-01/801"
-  ["talos-02"]="node-02/802"
-  ["talos-03"]="node-03/803"
-  ["talos-04"]="node-04/804"
-)
-
-for vm in "${!VM_MAP[@]}"; do
-  import_id="${VM_MAP[$vm]}"
-  echo "Importing ${vm} (${import_id})..."
-  (
-    cd "${vm}" && \
-    terragrunt init && \
-    terragrunt import proxmox_virtual_environment_vm.this "${import_id}"
-  )
+for i in 1 2 3 4; do
+  vm="talos-0${i}"
+  node="node-0${i}"
+  vmid="80${i}"
+  echo "=== ${vm} ==="
+  cd "/path/to/terraform/deployments/proxmox/talos-cluster/${vm}"
+  terragrunt init -lock=false
+  terragrunt import -lock=false proxmox_virtual_environment_vm.this "${node}/${vmid}"
 done
 ```
 
-### Step 4: Verify and Iterate
+### Step 3: Verify Plan
 
 ```bash
-terragrunt run-all plan
+terragrunt plan
 ```
 
-Adjust module/inputs until plan shows no changes.
+Expected drift after import (intentional additions):
 
-### Common Import Drift
+| Attribute         | Change                           | Notes                    |
+| ----------------- | -------------------------------- | ------------------------ |
+| `tags`            | Adding `["talos", "kubernetes"]` | Organizational tags      |
+| `keyboard_layout` | Adding `en-us`                   | Provider default         |
+| `agent.type`      | Adding `virtio`                  | Transport type (default) |
+| `cdrom`           | Explicit block                   | Matches existing config  |
 
-After import, `terragrunt plan` may show spurious changes. Common fixes:
-
-| Attribute       | Symptom                                          | Resolution                                 |
-| --------------- | ------------------------------------------------ | ------------------------------------------ |
-| `cpu.type`      | `host` vs `x86-64-v2-AES`                        | Match actual: `qm config VMID \| grep cpu` |
-| `scsi_hardware` | `virtio-scsi-pci` vs `virtio-scsi-single`        | Check VM hardware tab                      |
-| `boot_order`    | Proxmox stores `order=scsi0;net0`                | Set as list in module                      |
-| `on_boot`       | May default differently                          | Set explicitly                             |
-| `started`       | Provider wants bool, Proxmox has different state | Set `started = true`                       |
-
-Run `qm config VMID` on each Proxmox node to get exact values.
-
-### Step 5: Commit Lock Files
+### Step 4: Commit Lock Files
 
 ```bash
 git add deployments/**/.terraform.lock.hcl
+```
+
+## Pre-commit Hooks
+
+Add to `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.23
+    hooks:
+      - id: tflint
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v2.1.0
+    hooks:
+      - id: tofu_fmt
+      - id: tofu_validate
+```
+
+> **Note**: Terragrunt CLI was redesigned in v0.52+. Use `terragrunt hcl fmt` for HCL formatting.
+
+Run manually:
+
+```bash
+pre-commit run --all-files
 ```
 
 ## CI/CD Pipeline
@@ -248,14 +322,6 @@ git add deployments/**/.terraform.lock.hcl
 | plan     | `tofu-plan`     | All MRs            | Generate and display execution plan |
 | apply    | `tofu-apply`    | Manual (main only) | Apply changes to infrastructure     |
 
-```mermaid
-flowchart TB
-    MR[MR Created/Updated] --> validate
-    validate[validate<br/>tofu fmt, validate] --> plan
-    plan[plan<br/>tofu plan] --> merge{Merge to main}
-    merge --> apply[apply<br/>tofu apply]
-```
-
 Key considerations:
 
 - Use image with OpenTofu + Terragrunt (e.g., `alpine/terragrunt`)
@@ -263,81 +329,20 @@ Key considerations:
 - Store plan output as artifact
 - Post plan output as MR comment for reviewer visibility
 - Require manual approval for apply on main
-
-## Local Development
-
-### Environment Setup
-
-```bash
-# Proxmox API
-export PROXMOX_API_URL="https://pve.example.com:8006"
-export PROXMOX_API_TOKEN_ID="user@pam!tokenname"
-export PROXMOX_API_TOKEN_SECRET="your-secret"
-
-# GitLab HTTP backend
-export GITLAB_ACCESS_TOKEN="your-gitlab-token"
-export TF_HTTP_USERNAME="your-username"
-export TF_HTTP_PASSWORD="${GITLAB_ACCESS_TOKEN}"
-export TF_HTTP_ADDRESS="https://gitlab.com/api/v4/projects/PROJECT_ID/terraform/state/STATE_NAME"
-export TF_HTTP_LOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-export TF_HTTP_UNLOCK_ADDRESS="${TF_HTTP_ADDRESS}/lock"
-```
-
-### Single VM Operations
-
-```bash
-cd terraform/deployments/proxmox/talos-cluster/talos-01
-terragrunt init
-terragrunt plan
-terragrunt apply
-```
-
-### All VMs at Once
-
-```bash
-cd terraform/deployments/proxmox/talos-cluster
-terragrunt run-all init
-terragrunt run-all plan
-terragrunt run-all apply
-```
-
-### Validate Configuration
-
-```bash
-cd terraform
-terragrunt hclfmt --check
-
-cd deployments/proxmox/talos-cluster
-terragrunt run-all validate
-```
-
-### Pre-commit Hooks
-
-Add to `.pre-commit-config.yaml`:
-
-```yaml
-repos:
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.23
-    hooks:
-      - id: terragrunt-hclfmt
-      - id: tflint
-  - repo: https://github.com/tofuutils/pre-commit-opentofu
-    rev: v2.1.0
-    hooks:
-      - id: tofu_fmt
-      - id: tofu_validate
-```
-
-Run manually:
-
-```bash
-pre-commit run --all-files
-```
+- **CRITICAL**: Use `--parallelism 1` for applies to prevent simultaneous control plane reboots
 
 ## Troubleshooting
 
 ### State Lock Issues
+
+For initial setup, use `-lock=false`:
+
+```bash
+terragrunt init -lock=false
+terragrunt import -lock=false proxmox_virtual_environment_vm.this node-01/801
+```
+
+To force unlock:
 
 ```bash
 terragrunt force-unlock LOCK_ID
@@ -352,8 +357,10 @@ terragrunt state rm proxmox_virtual_environment_vm.this
 
 ### Provider Authentication
 
+Test Proxmox API access:
+
 ```bash
-curl -s \
+curl -sk \
   -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
   "${PROXMOX_API_URL}/api2/json/version" | jq
 ```
@@ -362,16 +369,15 @@ curl -s \
 
 ```bash
 find terraform -name ".terragrunt-cache" -type d -exec rm -rf {} +
-terragrunt run-all init
+terragrunt init
 ```
 
 ### Drift After Import
 
-If plan shows changes after import, capture the actual VM config:
+If plan shows unexpected changes, capture the actual VM config:
 
 ```bash
-# On each Proxmox node
-qm config 801  # Adjust VMID as needed
+qm config 801  # On the Proxmox node
 ```
 
 Match module inputs exactly to the output, paying attention to:
@@ -380,11 +386,13 @@ Match module inputs exactly to the output, paying attention to:
 - `scsihw` (SCSI controller type)
 - `boot` order
 - `memory` and `balloon` settings
+- `disk.cache` (often `none` after import)
 
 ## References
 
 - [OpenTofu Documentation](https://opentofu.org/docs/)
 - [Terragrunt Documentation](https://terragrunt.gruntwork.io/docs/)
+- [Terragrunt CLI Redesign Migration](https://terragrunt.gruntwork.io/docs/migrate/cli-redesign/)
 - [bpg/proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
 - [GitLab Terraform State](https://docs.gitlab.com/ee/user/infrastructure/iac/terraform_state.html)
 - [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/)
