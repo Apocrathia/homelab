@@ -73,7 +73,26 @@ for vol_ns in "${VOLUMES[@]}"; do
 done
 
 echo ""
-echo "Step 5: Waiting for PVCs and volumes to be recreated..."
+echo "Step 5: Triggering Helm reconciliation to recreate PVCs..."
+# Trigger Flux HelmRelease reconciliation for each namespace
+declare -A HELMRELEASES
+for vol_ns in "${VOLUMES[@]}"; do
+  IFS=':' read -r vol_name ns <<< "$vol_ns"
+  # Find HelmRelease in the namespace (assuming it matches the namespace name or app name)
+  hr_name=$(kubectl get hr -n "$ns" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+  if [ -n "$hr_name" ]; then
+    HELMRELEASES["$ns"]="$hr_name"
+    echo "  Triggering reconciliation for $ns/$hr_name..."
+    kubectl annotate hr "$hr_name" -n "$ns" \
+      reconcile.fluxcd.io/requestedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --overwrite > /dev/null 2>&1 || true
+  else
+    echo "  WARNING: No HelmRelease found in namespace $ns"
+  fi
+done
+
+echo ""
+echo "Step 6: Waiting for PVCs and volumes to be recreated..."
 echo "  This may take 1-2 minutes..."
 sleep 30
 
@@ -103,7 +122,41 @@ while [ $WAITED -lt $MAX_WAIT ]; do
 done
 
 echo ""
-echo "Step 6: Restoring volumes from backup..."
+echo "Step 7: Verifying PVCs were recreated by Helm..."
+PVC_ISSUES=0
+for vol_ns in "${VOLUMES[@]}"; do
+  IFS=':' read -r vol_name ns <<< "$vol_ns"
+
+  if ! kubectl get pvc "$vol_name" -n "$ns" > /dev/null 2>&1; then
+    echo "  ✗ WARNING: PVC $ns/$vol_name does not exist"
+    ((PVC_ISSUES++))
+    continue
+  fi
+
+  # Check for Helm management labels
+  helm_name=$(kubectl get pvc "$vol_name" -n "$ns" -o jsonpath='{.metadata.labels.helm\.toolkit\.fluxcd\.io/name}' 2>/dev/null || echo "")
+  helm_ns=$(kubectl get pvc "$vol_name" -n "$ns" -o jsonpath='{.metadata.labels.helm\.toolkit\.fluxcd\.io/namespace}' 2>/dev/null || echo "")
+
+  if [ -z "$helm_name" ] || [ -z "$helm_ns" ]; then
+    echo "  ✗ WARNING: PVC $ns/$vol_name is missing Helm management labels"
+    echo "    This PVC was likely created manually. Helm may not manage it properly."
+    echo "    Consider deleting it and letting Helm recreate it."
+    ((PVC_ISSUES++))
+  else
+    echo "  ✓ PVC $ns/$vol_name is managed by Helm ($helm_ns/$helm_name)"
+  fi
+done
+
+if [ $PVC_ISSUES -gt 0 ]; then
+  echo ""
+  echo "  ⚠️  WARNING: Some PVCs have issues. You may need to:"
+  echo "    1. Delete the problematic PVCs manually"
+  echo "    2. Trigger Helm reconciliation to recreate them"
+  echo "    3. Verify they have Helm labels and correct sizes"
+fi
+
+echo ""
+echo "Step 8: Restoring volumes from backup..."
 RESTORED=0
 FAILED=0
 
