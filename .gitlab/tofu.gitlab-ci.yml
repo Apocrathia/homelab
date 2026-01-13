@@ -1,0 +1,119 @@
+---
+# OpenTofu/Terragrunt CI Pipeline
+# Manages Proxmox VMs via Infrastructure as Code
+
+.tofu-base:
+  image:
+    name: alpine/terragrunt:1.11.2
+  variables:
+    TF_IN_AUTOMATION: "true"
+  before_script:
+    - cd terraform/deployments
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - terraform/**/*
+
+tofu-validate:
+  extends: .tofu-base
+  stage: verify
+  script:
+    - |
+      echo "=== Validating Terragrunt Configuration ==="
+      terragrunt run --all -- validate
+  allow_failure: false
+
+tofu-plan:
+  extends: .tofu-base
+  stage: verify
+  script:
+    - |
+      MARKER="<!-- tofu-plan -->"
+      PLAN_FILE="/tmp/plan-output.md"
+
+      echo "=== Running Terragrunt Plan ==="
+
+      # Run plan and capture output
+      PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
+
+      # Extract plan summaries
+      PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | grep -E "Plan:|No changes" || echo "Plan output not found")
+
+      echo "$PLAN_OUTPUT"
+      echo ""
+      echo "=== Plan Summary ==="
+      echo "$PLAN_SUMMARY"
+
+      # Build MR comment
+      {
+        echo "$MARKER"
+        echo "## 🏗️ OpenTofu Plan"
+        echo ""
+        echo "### Summary"
+        echo ""
+        echo '```'
+        echo "$PLAN_SUMMARY"
+        echo '```'
+        echo ""
+        echo "<details><summary>Full Plan Output</summary>"
+        echo ""
+        echo '```hcl'
+        echo "$PLAN_OUTPUT"
+        echo '```'
+        echo ""
+        echo "</details>"
+        echo ""
+        echo "<!-- pipeline:${CI_PIPELINE_ID} -->"
+      } > "$PLAN_FILE"
+
+      COMMENT_BODY=$(cat "$PLAN_FILE")
+
+      # Post or update MR comment
+      echo "Posting plan to MR..."
+      NOTES=$(curl --silent --show-error --fail \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100") || {
+        echo "⚠️ Failed to fetch MR notes, skipping comment"
+        exit ${PLAN_EXIT:-0}
+      }
+
+      EXISTING_NOTE_ID=$(echo "$NOTES" | jq -r --arg marker "$MARKER" '.[] | select(.body | startswith($marker)) | .id // empty' | head -1)
+
+      if [ -n "$EXISTING_NOTE_ID" ]; then
+        echo "Updating existing comment (ID: $EXISTING_NOTE_ID)..."
+        curl --silent --show-error --fail --request PUT \
+          --header "PRIVATE-TOKEN: ${TOFU_MR_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}" > /dev/null || true
+      else
+        echo "Posting new comment..."
+        curl --silent --show-error --fail --request POST \
+          --header "PRIVATE-TOKEN: ${TOFU_MR_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" > /dev/null || true
+      fi
+
+      echo "✅ Plan complete"
+      exit ${PLAN_EXIT:-0}
+  allow_failure: false
+
+tofu-apply:
+  extends: .tofu-base
+  stage: deploy
+  script:
+    - |
+      echo "=== Applying Terragrunt Configuration ==="
+      echo "⚠️  Using --parallelism 1 to prevent simultaneous control plane reboots"
+
+      terragrunt run --all --parallelism 1 --non-interactive -- apply -auto-approve
+
+      echo "✅ Apply complete"
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes:
+        - terraform/**/*
+      when: manual
+  allow_failure: false
+  resource_group: terraform-apply
