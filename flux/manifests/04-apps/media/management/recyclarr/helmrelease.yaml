@@ -62,20 +62,18 @@ spec:
         runAsNonRoot: "true"
         allowPrivilegeEscalation: "false"
         readOnlyRootFilesystem: "true"
-      volumeMounts:
-        - name: config
-          mountPath: /config
-        - name: recyclarr-config
-          mountPath: /config/recyclarr.yml
-          subPath: recyclarr.yml
-          readOnly: true
       volumes:
         emptyDir:
           - name: tmp
             mountPath: /tmp
+          - name: config
+            mountPath: /config
         configMap:
-          - name: recyclarr-config
+          - name: config-file
             configMapName: recyclarr-config
+            mountPath: /config/recyclarr.yml
+            subPath: recyclarr.yml
+            readOnly: true
 
     secrets:
       enabled: true
@@ -83,10 +81,7 @@ spec:
 
     storage:
       longhorn:
-        enabled: true
-        volumes:
-          - name: config
-            capacity: 1Gi
+        enabled: false
 
     authentik:
       enabled: false
