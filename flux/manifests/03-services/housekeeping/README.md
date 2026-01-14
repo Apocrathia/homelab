@@ -6,49 +6,77 @@ Automated maintenance tasks for cluster health and organization.
 
 ## Documentation
 
-- **[Kubernetes Node Management](https://kubernetes.io/docs/concepts/architecture/nodes/)** - Node administration
-- **[CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
+- **[Kubernetes CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
+- **[Talos etcd Management](https://www.talos.dev/v1.12/talos-guides/configuration/etcd-maintenance/)** - etcd operations
 
 ## Overview
 
-The housekeeping deployment provides automated node labeling and cluster organization.
+Housekeeping provides automated maintenance tasks via CronJobs.
 
 > **Resource Cleanup**: Automated resource cleanup is handled by [Kyverno cleanup policies](../kyverno/README.md#cleanup-policies).
 
 ## Components
 
-### Node Labels (`node-labels.yaml`)
+### etcd Defragmentation (`etcd-defrag/`)
 
-- **Control Plane Labeling**: Labels specific nodes as control-plane nodes
-- **Scheduled Updates**: Runs every 2 hours to ensure labels are consistent
-- **Hardcoded Configuration**: Labels nodes `talos-01` through `talos-04` as control-plane
-- **Overwrite Protection**: Uses `--overwrite` to ensure labels are applied correctly
+Prevents etcd database bloat by periodically defragmenting when fragmentation exceeds threshold.
+
+- **Schedule**: Weekly (Sunday 4 AM)
+- **Namespace**: `housekeeping`
+- **Threshold**: Defragments when fragmentation exceeds 50%
+- **Talos API**: Uses `kubernetesTalosAPIAccess` feature
+
+### Node Labeler (`node-labeler/`)
+
+Ensures control-plane nodes maintain proper labels.
+
+- **Schedule**: Every 2 hours
+- **Namespace**: `kube-system`
+- **Targets**: `talos-01` through `talos-04`
 
 ## Troubleshooting
 
-### Node Labeling Issues
+### etcd Defrag Issues
 
 ```bash
-# Check node labels
-kubectl get nodes --show-labels
+# Check cronjob status
+kubectl get cronjobs -n housekeeping etcd-defrag
 
-# Check labeling job logs
-kubectl logs -n kube-system job/node-labeler
+# Run manually
+kubectl create job etcd-defrag-manual --from=cronjob/etcd-defrag -n housekeeping
+
+# Check logs
+kubectl logs job/etcd-defrag-manual -n housekeeping
+
+# Check etcd status directly
+talosctl etcd status -n 10.100.1.80
 ```
 
-### Health Checks
+### Node Labeling Issues
 
 ```bash
 # Check cronjob status
 kubectl get cronjobs -n kube-system node-labeler
 
-# Check recent jobs
-kubectl get jobs -n kube-system -l job-name=node-labeler
+# Check recent job logs
+kubectl logs -n kube-system -l job-name=node-labeler --tail=20
 
 # Verify node labels
-kubectl get nodes -o custom-columns=NAME:.metadata.name,LABELS:.metadata.labels
+kubectl get nodes --show-labels | grep control-plane
 ```
 
-## Resource Requirements
+## Prerequisites
 
-Resource requirements are configured in the CronJob manifests.
+The `housekeeping` namespace requires Talos API access. This is configured in `talos/patches/unified-patch.yaml`:
+
+```yaml
+machine:
+  features:
+    kubernetesTalosAPIAccess:
+      allowedKubernetesNamespaces:
+        - system-upgrade
+        - housekeeping
+      allowedRoles:
+        - os:admin
+      enabled: true
+```
