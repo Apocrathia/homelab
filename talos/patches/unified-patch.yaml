@@ -6,6 +6,7 @@ machine:
     kubernetesTalosAPIAccess:
       allowedKubernetesNamespaces:
         - system-upgrade
+        - kube-system
       allowedRoles:
         - os:admin
       enabled: true
@@ -69,7 +70,7 @@ cluster:
       max-requests-inflight: "800"
       max-mutating-requests-inflight: "400"
       request-timeout: "120s"
-      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#100,persistentvolumeclaims#200"
+      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#200,persistentvolumeclaims#200"
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
       audit-log-maxsize: "50" # Reduce from default 100MB
@@ -101,7 +102,7 @@ cluster:
   proxy:
     disabled: true
   # etcd tuning
-  # Increased timeouts to handle storage latency (e.g., ZFS-backed VMs with txg sync delays)
+  # Increased timeouts to handle storage latency and high load
   # These settings make etcd more tolerant of brief I/O latency spikes
   etcd:
     extraArgs:
@@ -111,10 +112,10 @@ cluster:
       # Optimize backend quotas and request sizes
       quota-backend-bytes: "4294967296" # 4GB (conservative)
       max-request-bytes: "16777216" # 16MB for large CRD schemas
-      # Timeout settings to reduce timeout errors under load and storage latency
+      # Timeout settings to reduce timeout errors under load
       # Increase heartbeat interval to reduce coordination overhead
       heartbeat-interval: "250" # 250ms (default 100ms) - more stable under load
-      # Increase election timeout to prevent premature leader elections during I/O latency spikes
+      # Increase election timeout to prevent premature leader elections during high load
       election-timeout: "5000" # 5000ms (default 1000ms) - 20x heartbeat-interval for stability
       # Enable initial election tick advance for faster startup
       initial-election-tick-advance: "true"
