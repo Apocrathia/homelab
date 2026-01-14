@@ -1,0 +1,146 @@
+---
+# Defragments etcd on all control plane nodes weekly
+# Uses Talos kubernetesTalosAPIAccess feature (kube-system namespace is allowed)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-defrag
+  namespace: kube-system
+spec:
+  schedule: "0 4 * * 0" # Weekly at 4 AM Sunday
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: talos-01
+              # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
+              image: ghcr.io/siderolabs/talosctl:v1.12.1
+              args:
+                - etcd
+                - defrag
+                - --endpoints=10.100.1.80
+                - --nodes=10.100.1.80
+              env:
+                - name: TALOSCONFIG
+                  value: /talos/config
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: talos-config
+                  mountPath: /talos
+                  readOnly: true
+            - name: talos-02
+              image: ghcr.io/siderolabs/talosctl:v1.12.1
+              args:
+                - etcd
+                - defrag
+                - --endpoints=10.100.1.81
+                - --nodes=10.100.1.81
+              env:
+                - name: TALOSCONFIG
+                  value: /talos/config
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: talos-config
+                  mountPath: /talos
+                  readOnly: true
+            - name: talos-03
+              image: ghcr.io/siderolabs/talosctl:v1.12.1
+              args:
+                - etcd
+                - defrag
+                - --endpoints=10.100.1.82
+                - --nodes=10.100.1.82
+              env:
+                - name: TALOSCONFIG
+                  value: /talos/config
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: talos-config
+                  mountPath: /talos
+                  readOnly: true
+            - name: talos-04
+              image: ghcr.io/siderolabs/talosctl:v1.12.1
+              args:
+                - etcd
+                - defrag
+                - --endpoints=10.100.1.83
+                - --nodes=10.100.1.83
+              env:
+                - name: TALOSCONFIG
+                  value: /talos/config
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: talos-config
+                  mountPath: /talos
+                  readOnly: true
+          volumes:
+            - name: talos-config
+              secret:
+                secretName: etcd-defrag
