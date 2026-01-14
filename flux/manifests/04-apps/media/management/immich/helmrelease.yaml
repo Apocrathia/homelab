@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: immich
-      # renovate: datasource=helm registryUrl=oci://ghcr.io/immich-app/immich-charts depName=immich
+      # renovate: datasource=docker depName=ghcr.io/immich-app/immich-charts/immich
       version: "0.10.3"
       sourceRef:
         kind: HelmRepository
