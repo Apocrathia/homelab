@@ -39,6 +39,13 @@
     [runners.kubernetes.container_security_context.capabilities]
     drop = ["ALL"]
 
+    # DNS configuration to fix Alpine Linux resolution with high ndots
+    # Alpine's musl libc struggles with Kubernetes' default ndots:5
+    [runners.kubernetes.dns_config]
+    [[runners.kubernetes.dns_config.options]]
+      name = "ndots"
+      value = "1"
+
     [[runners.kubernetes.volumes.empty_dir]]
       name = "git-config"
       mount_path = "/home/gitlab-runner"
