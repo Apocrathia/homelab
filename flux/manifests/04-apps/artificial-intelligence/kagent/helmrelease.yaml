@@ -103,7 +103,7 @@ spec:
           registry: docker.io
           repository: grafana/mcp-grafana
           # renovate: datasource=docker depName=docker.io/grafana/mcp-grafana
-          tag: "0.7.10"
+          tag: "0.8.2"
           pullPolicy: IfNotPresent
       querydoc:
         enabled: true
