@@ -37,10 +37,4 @@ spec:
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "720h0m0s"
-    # Only clean up ConfigMaps without owner references
-    # ConfigMaps don't have ownerReferences by default - use length() which handles missing fields
-    any:
-      - key: "{{ length(target.metadata.ownerReferences || `[]`) }}"
-        operator: Equals
-        value: 0
   schedule: "0 9 * * *" # 0200 America/Denver (UTC-7)
