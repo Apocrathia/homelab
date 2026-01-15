@@ -446,6 +446,10 @@ authentik:
   # Common categories: Applications, Infrastructure, External
   category: "Applications"
 
+  # Application metadata (shown in Authentik dashboard)
+  # metaDescription: "Brief description of the application"
+  # metaPublisher: "Publisher or vendor name"
+
   # Flow configuration (both modes)
   authorizationFlow: "default-provider-authorization-implicit-consent"
   invalidationFlow: "default-invalidation-flow"
@@ -499,10 +503,24 @@ authentik:
     #     matchingMode: "strict"
 
     # OAuth2 scopes to include in tokens
+    # Standard scopes reference built-in Authentik scope mappings by scope_name
     scopes:
       - "openid"
       - "email"
       - "profile"
+
+    # Custom scope mappings for apps needing modified claim expressions
+    # These create app-specific scope mappings and reference them by name
+    # Example: apps requiring email_verified: True in the email scope
+    # customScopeMappings:
+    #   - name: "myapp-email-verified-mapping"
+    #     scopeName: "email"
+    #     description: "Email address with email_verified set to True"
+    #     expression: |
+    #       return {
+    #           "email": request.user.email,
+    #           "email_verified": True
+    #       }
 
     # Client type: "confidential" (with secret) or "public" (no secret, e.g., mobile apps)
     clientType: "confidential"
@@ -525,6 +543,8 @@ authentik:
     accessCodeValidity: "minutes=1"
     accessTokenValidity: "minutes=5"
     refreshTokenValidity: "days=30"
+    # Token validity (some apps like Mealie/RomM need this separate from refreshTokenValidity)
+    # tokenValidity: "days=30"
 
     # Pre-defined client credentials (optional)
     # If set, these values are used in the blueprint instead of auto-generated
