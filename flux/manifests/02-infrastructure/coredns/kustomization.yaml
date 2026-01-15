@@ -12,3 +12,8 @@ patches:
       kind: Deployment
       name: coredns
       namespace: kube-system
+  - path: configmap-patch.yaml
+    target:
+      kind: ConfigMap
+      name: coredns
+      namespace: kube-system
