@@ -1,6 +1,17 @@
 # Changelog
 
-## Version 0.0.49 (Latest)
+## Version 0.0.50 (Latest)
+
+- **Enhanced OIDC Provider Mode**: Extended OAuth2/OpenID Connect support with additional configuration options
+  - **Token Validity**: Added `authentik.oidc.tokenValidity` for apps requiring explicit token validity (e.g., Mealie, RomM)
+  - **Application Metadata**: Added `authentik.metaDescription` and `authentik.metaPublisher` for Authentik dashboard
+  - **Custom Scope Mappings**: Added `authentik.oidc.customScopeMappings` for apps requiring modified claim expressions
+    - Define app-specific scope mappings with custom expressions (e.g., `email_verified: True`)
+    - Automatically replaces standard scopes when custom mapping shares the same scope name
+    - References custom mappings by name instead of scope_name
+  - **Migration Ready**: Enables migration of Komga, Mealie, and RomM to chart-managed OIDC blueprints
+
+## Version 0.0.49
 
 - **Security: Disable SA Token Mounting in Authentik Outposts**: Added `kubernetes_json_patches` to outpost config
   - **Outpost Hardening**: Authentik proxy outposts no longer mount Kubernetes API tokens

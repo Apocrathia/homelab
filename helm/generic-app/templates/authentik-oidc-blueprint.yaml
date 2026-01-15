@@ -18,6 +18,24 @@ data:
         blueprints.goauthentik.io/instantiate: "true"
     context: {}
     entries:
+      {{- if .Values.authentik.oidc.customScopeMappings }}
+      {{- range .Values.authentik.oidc.customScopeMappings }}
+      # Custom scope mapping: {{ .name }}
+      - model: authentik_providers_oauth2.scopemapping
+        state: present
+        identifiers:
+          name: "{{ .name }}"
+        attrs:
+          name: "{{ .name }}"
+          scope_name: {{ .scopeName }}
+          {{- if .description }}
+          description: "{{ .description }}"
+          {{- end }}
+          expression: |
+{{ .expression | indent 12 }}
+      {{- end }}
+      {{- end }}
+
       # OIDC Provider for {{ .Values.authentik.displayName }}
       - model: authentik_providers_oauth2.oauth2provider
         state: present
@@ -28,8 +46,20 @@ data:
           authorization_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.authorizationFlow }}"]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, "{{ .Values.authentik.invalidationFlow }}"]]
           property_mappings:
+            {{- /* Build list of scope names that have custom mappings */ -}}
+            {{- $customScopeNames := list }}
+            {{- range .Values.authentik.oidc.customScopeMappings }}
+            {{- $customScopeNames = append $customScopeNames .scopeName }}
+            {{- end }}
+            {{- /* Add standard scopes (skip any with custom mappings) */ -}}
             {{- range .Values.authentik.oidc.scopes }}
+            {{- if not (has . $customScopeNames) }}
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "{{ . }}"]]
+            {{- end }}
+            {{- end }}
+            {{- /* Add custom scope mappings by name */ -}}
+            {{- range .Values.authentik.oidc.customScopeMappings }}
+            - !Find [authentik_providers_oauth2.scopemapping, [name, "{{ .name }}"]]
             {{- end }}
           sub_mode: "{{ .Values.authentik.oidc.subMode | default "user_username" }}"
           include_claims_in_id_token: {{ .Values.authentik.oidc.includeClaimsInIdToken | default true }}
@@ -45,6 +75,9 @@ data:
           access_code_validity: "{{ .Values.authentik.oidc.accessCodeValidity | default "minutes=1" }}"
           access_token_validity: "{{ .Values.authentik.oidc.accessTokenValidity | default "minutes=5" }}"
           refresh_token_validity: "{{ .Values.authentik.oidc.refreshTokenValidity | default "days=30" }}"
+          {{- if .Values.authentik.oidc.tokenValidity }}
+          token_validity: "{{ .Values.authentik.oidc.tokenValidity }}"
+          {{- end }}
           client_type: "{{ .Values.authentik.oidc.clientType | default "confidential" }}"
           {{- if .Values.authentik.oidc.clientId }}
           client_id: "{{ .Values.authentik.oidc.clientId }}"
@@ -67,5 +100,11 @@ data:
           open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
           {{- if .Values.authentik.icon }}
           icon: "{{ .Values.authentik.icon }}"
+          {{- end }}
+          {{- if .Values.authentik.metaDescription }}
+          meta_description: "{{ .Values.authentik.metaDescription }}"
+          {{- end }}
+          {{- if .Values.authentik.metaPublisher }}
+          meta_publisher: "{{ .Values.authentik.metaPublisher }}"
           {{- end }}
 {{- end }}
