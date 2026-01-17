@@ -15,6 +15,16 @@ spec:
         kind: HelmRepository
         name: external-secrets
         namespace: flux-system
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: ClusterRole
+              name: external-secrets-cert-controller
+            patch: |
+              - op: add
+                path: /rules/6/verbs/-
+                value: create
   values:
     # Override image repository to use GitHub Container Registry instead of oci.external-secrets.io
     image:
