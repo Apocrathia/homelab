@@ -10,7 +10,7 @@ spec:
     spec:
       chart: authentik
       # renovate: datasource=helm registryUrl=https://charts.goauthentik.io depName=authentik
-      version: "2025.10.3"
+      version: "2025.12.1"
       sourceRef:
         kind: HelmRepository
         name: authentik
@@ -23,8 +23,6 @@ spec:
     remediation:
       retries: 3
     timeout: 15m
-    # Remove for upgrade to 2025.12.0
-    disableWait: true
   # Add memory limits to outposts to prevent OOM kills
   postRenderers:
     - kustomize:
@@ -65,10 +63,6 @@ spec:
       valuesKey: authentik-secret-key
       targetPath: authentik.secret_key
   values:
-    # Testing RC3 for worker fix - revert to chart default when 2025.12.0 stable releases
-    global:
-      image:
-        tag: 2025.12.0-rc3
     serviceAccount:
       create: true
       fullnameOverride: authentik
