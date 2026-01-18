@@ -27,10 +27,13 @@ spec:
     crds:
       install: true
     extraArgs:
-      - --autogenInternals=false
-      - --leaderElectionLeaseDuration=30s
-      - --leaderElectionRenewDeadline=20s
-      - --leaderElectionRetryPeriod=5s
+      - --leaderElectionLeaseDuration=60s
+      - --leaderElectionRenewDeadline=45s
+      - --leaderElectionRetryPeriod=10s
+      - --clientRateLimitQPS=300
+      - --clientRateLimitBurst=300
+      - --eventsRateLimitQPS=300
+      - --eventsRateLimitBurst=300
     config:
       # Remove ReplicaSet filters to allow cleanup policies to work
       resourceFiltersExclude:
@@ -78,7 +81,7 @@ spec:
       readinessProbe:
         initialDelaySeconds: 30
         periodSeconds: 10
-        timeoutSeconds: 5
+        timeoutSeconds: 10
         failureThreshold: 6
       livenessProbe:
         initialDelaySeconds: 30
