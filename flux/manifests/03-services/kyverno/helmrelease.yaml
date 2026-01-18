@@ -34,6 +34,8 @@ spec:
       - --clientRateLimitBurst=300
       - --eventsRateLimitQPS=300
       - --eventsRateLimitBurst=300
+      - --webhookTimeout=15
+      - --forceFailurePolicyIgnore=true
     config:
       # Remove ReplicaSet filters to allow cleanup policies to work
       resourceFiltersExclude:
@@ -68,11 +70,11 @@ spec:
     admissionController:
       resources:
         requests:
-          cpu: 100m
-          memory: 256Mi
+          cpu: 200m
+          memory: 512Mi
         limits:
-          cpu: 1000m
-          memory: 1Gi
+          cpu: 2000m
+          memory: 2Gi
       startupProbe:
         initialDelaySeconds: 10
         periodSeconds: 5
