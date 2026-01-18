@@ -25,7 +25,7 @@ This deployment includes:
 
 ### Storage
 
-- **Configuration Volume**: 5GB Longhorn persistent volume for application data (`/config`)
+- **Configuration Volume**: Longhorn persistent volume for application data (`/config`)
 - **Database**: SQLite database included in persistent volume (`/config/database/grocy.db`)
 
 ### Access

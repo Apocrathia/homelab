@@ -1,13 +1,16 @@
 # Tautulli
 
-Python-based monitoring and tracking tool for Plex Media Server with analytics, notifications, and user statistics.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[Tautulli Documentation](https://tautulli.com/)** - Official documentation
-- **[GitHub Repository](https://github.com/Tautulli/Tautulli)** - Source code and issues
+This deployment includes:
+
+- Python-based monitoring and tracking tool for Plex Media Server
+- Real-time activity monitoring with detailed analytics
+- User statistics and comprehensive watching history tracking
+- Customizable notifications for media activity and server events
+- Rich reporting with graphs and detailed media information
 
 ## Configuration
 
@@ -44,3 +47,8 @@ kubectl logs -n tautulli deployment/tautulli -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep tautulli
 ```
+
+## References
+
+- **[Tautulli Documentation](https://tautulli.com/)** - Official documentation
+- **[GitHub Repository](https://github.com/Tautulli/Tautulli)** - Source code and issues

@@ -1,14 +1,16 @@
 # Ombi
 
-Request management system for Plex media server, allowing users to request movies and TV shows.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[Ombi Documentation](https://docs.ombi.app/)** - Official documentation
-- **[GitHub Repository](https://github.com/Ombi-app/Ombi)** - Source code and issues
-- **[LinuxServer.io Ombi](https://docs.linuxserver.io/images/docker-ombi)** - Container documentation
+This deployment includes:
+
+- Request management system for Plex media server
+- User-friendly interface for requesting movies and TV shows
+- Integration with \*Arr applications for automated media acquisition
+- Authentik SSO integration for secure access
+- Longhorn persistent storage for configuration
 
 ## Configuration
 
@@ -40,3 +42,9 @@ kubectl logs -n ombi deployment/ombi -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep ombi
 ```
+
+## References
+
+- **[Ombi Documentation](https://docs.ombi.app/)** - Official documentation
+- **[GitHub Repository](https://github.com/Ombi-app/Ombi)** - Source code and issues
+- **[LinuxServer.io Ombi](https://docs.linuxserver.io/images/docker-ombi)** - Container documentation

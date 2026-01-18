@@ -36,7 +36,7 @@ Create a 1Password item:
 
 ### Storage
 
-- **Configuration Volume**: 10GB Longhorn persistent volume for Transmission configuration
+- **Configuration Volume**: Longhorn persistent volume for Transmission configuration
 - **Downloads Volume**: SMB mount to shared storage location
 - **Gluetun Data**: EmptyDir volume for Gluetun runtime configuration
 

@@ -1,15 +1,17 @@
 # Web3
 
-Hands-on blockchain learning - from running nodes to writing smart contracts.
-
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
+## Overview
 
-- **[IPFS Documentation](https://docs.ipfs.tech/)** - Distributed file system
-- **[Ethereum Node Guide](https://ethereum.org/en/developers/docs/nodes-and-clients/run-a-node/)** - Running Ethereum nodes
-- **[Foundry Book](https://book.getfoundry.sh/)** - Smart contract development
-- **[EVM Codes](https://www.evm.codes/)** - EVM opcode reference
+This collection provides hands-on blockchain learning through running actual infrastructure rather than just consuming APIs. The deployments span from fundamental decentralized storage (IPFS) to full blockchain nodes and smart contract development environments.
+
+Key components include:
+
+- IPFS node for distributed content addressing and storage
+- Ethereum full nodes (testnet and mainnet) for blockchain participation
+- Smart contract development tools and environments
+- CPU mining capabilities for practical blockchain economics
 
 ## Why This Exists
 
@@ -194,3 +196,10 @@ SolarEdge → Home Assistant → Webhook → Mining Deployment (0 or N replicas)
 | Ethereum (Mainnet) | 3000m-6000m | 12Gi-24Gi | 2.5Ti   | 30303, 9000  |
 
 Start with Sepolia testnet. Graduate to mainnet when comfortable and storage is available.
+
+## References
+
+- **[IPFS Documentation](https://docs.ipfs.tech/)** - Distributed file system
+- **[Ethereum Node Guide](https://ethereum.org/en/developers/docs/nodes-and-clients/run-a-node/)** - Running Ethereum nodes
+- **[Foundry Book](https://book.getfoundry.sh/)** - Smart contract development
+- **[EVM Codes](https://www.evm.codes/)** - EVM opcode reference

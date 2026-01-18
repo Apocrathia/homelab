@@ -1,13 +1,16 @@
 # Overseerr
 
-Request management and media discovery tool for Plex, enabling users to request movies and TV shows with automatic integration to Sonarr and Radarr.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[Official Documentation](https://docs.overseerr.dev/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/sct/overseerr)** - Source code and issues
+This deployment includes Overseerr, a request management and media discovery tool for Plex:
+
+- User-friendly interface for requesting movies and TV shows
+- Automatic integration with Sonarr and Radarr for media acquisition
+- Plex OAuth authentication with SSO support through Authentik
+- Media discovery with comprehensive library scanning capabilities
+- Longhorn persistent storage for configuration data
 
 ## Configuration
 
@@ -49,3 +52,8 @@ kubectl logs -n overseerr deployment/overseerr -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep overseerr
 ```
+
+## References
+
+- **[Official Documentation](https://docs.overseerr.dev/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/sct/overseerr)** - Source code and issues

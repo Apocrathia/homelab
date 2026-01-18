@@ -38,12 +38,12 @@ This document defines the standards and guidelines for maintaining consistent, h
 1. **Title**: Application name as H1
 2. **Description**: 1-2 sentence overview
 3. **Navigation**: Breadcrumb navigation (if applicable)
-4. **Documentation**: External links section
-5. **Overview**: What's deployed and key features
-6. **Configuration**: Essential config details
-7. **Authentication**: How auth works (if applicable)
-8. **Security Considerations**: Security notes (if applicable)
-9. **Troubleshooting**: Common issues and commands
+4. **Overview**: What's deployed and key features
+5. **Configuration**: Essential config details
+6. **Authentication**: How auth works (if applicable)
+7. **Security Considerations**: Security notes (if applicable)
+8. **Troubleshooting**: Common issues and commands
+9. **References**: External links and documentation
 
 ### Style Guidelines
 

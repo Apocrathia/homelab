@@ -33,8 +33,8 @@ Create a 1Password item:
 
 ### Storage
 
-- **Application Volume**: 20GB Longhorn persistent volume for n8n data and workflows
-- **Database Volume**: 10GB Longhorn persistent volume for PostgreSQL data
+- **Application Volume**: Longhorn persistent volume for n8n data and workflows
+- **Database Volume**: Longhorn persistent volume for PostgreSQL data
 
 ### Database
 

@@ -4,12 +4,6 @@ Personal Video Recorder (PVR) for Usenet and BitTorrent users with automated epi
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Sonarr Documentation](https://wiki.servarr.com/sonarr)** - Primary documentation source
-- **[LinuxServer.io Sonarr](https://docs.linuxserver.io/images/docker-sonarr)** - Container documentation
-- **[Sonarr GitHub](https://github.com/Sonarr/Sonarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -94,3 +88,9 @@ kubectl -n sonarr get pods -l app.kubernetes.io/name=sonarr
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Sonarr Documentation](https://wiki.servarr.com/sonarr)** - Primary documentation source
+- **[LinuxServer.io Sonarr](https://docs.linuxserver.io/images/docker-sonarr)** - Container documentation
+- **[Sonarr GitHub](https://github.com/Sonarr/Sonarr)** - Source code and issues

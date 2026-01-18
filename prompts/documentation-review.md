@@ -76,11 +76,11 @@ For each documentation file, check against the following criteria:
 | H1 Title        | All                  | Single H1 with application/component name              |
 | Description     | All                  | 1-2 sentence overview after title                      |
 | Navigation      | All                  | `> **Navigation**: [← Back to X](../README.md)` format |
-| Documentation   | All                  | `## Documentation` section with external links         |
 | Overview        | Apps                 | `## Overview` with deployment components               |
 | Configuration   | Apps                 | `## Configuration` describing method (not values)      |
 | Authentication  | Apps (if applicable) | `## Authentication` describing SSO approach            |
 | Troubleshooting | Apps                 | `## Troubleshooting` with kubectl commands             |
+| References      | All                  | `## References` section with external links at bottom  |
 
 ### Content Compliance Checklist
 
@@ -97,11 +97,17 @@ For each documentation file, check against the following criteria:
 
 ### Document Type-Specific Requirements
 
-**Application READMEs** (`flux/manifests/04-apps/*/`):
+**Application READMEs** (`flux/manifests/04-apps/*/` - individual apps):
 
 - Full template compliance required
 - Must include all structural elements
 - Troubleshooting section required with kubectl commands
+
+**Category READMEs** (`flux/manifests/04-apps/` - root category indexes):
+
+- Navigation and Documentation sections required
+- Overview section summarizing category purpose
+- No troubleshooting section (delegate to individual application READMEs)
 
 **Infrastructure/Policy READMEs** (`flux/manifests/02-infrastructure/`, `flux/manifests/03-services/`):
 
@@ -176,10 +182,10 @@ When fixing issues:
 > **Navigation**: [← Back to [Category] README](../README.md)
 ```
 
-**Adding Documentation Section:**
+**Adding References Section (at bottom):**
 
 ```markdown
-## Documentation
+## References
 
 - **[Official Documentation](https://...)** - Primary documentation source
 - **[GitHub Repository](https://...)** - Source code and issues
@@ -239,12 +245,12 @@ For multi-link navigation (e.g., sequential guides):
 > **Navigation**: [← Home](../README.md) | [Next: Step 2 →](./step2.md)
 ```
 
-## Documentation Section
+## References Section
 
-Place immediately after navigation, before Overview:
+Place at the bottom of the README, after Troubleshooting:
 
 ```markdown
-## Documentation
+## References
 
 - **[Primary Docs](https://...)** - Main documentation
 - **[GitHub](https://...)** - Source and issues

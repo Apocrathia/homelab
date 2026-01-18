@@ -24,7 +24,7 @@ This deployment includes:
 
 ### Storage
 
-- **Data Volume**: 10GB Longhorn persistent volume for SQLite database and uploads (`/app/data`)
+- **Data Volume**: Longhorn persistent volume for SQLite database and uploads (`/app/data`)
 
 ### Access
 
