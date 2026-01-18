@@ -1,13 +1,16 @@
 # Tdarr
 
-Distributed transcoding system for audio and video libraries with rules-based media standardization.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[Tdarr Documentation](https://docs.tdarr.io/)** - Official documentation
-- **[GitHub Repository](https://github.com/HaveAGitGat/Tdarr)** - Source code and issues
+This deployment includes Tdarr, a distributed transcoding system for audio and video libraries:
+
+- Server-node architecture for distributed media processing across the cluster
+- Rules-based transcoding with comprehensive plugin system
+- Direct access to media libraries via SMB mounts
+- Authentik SSO integration for secure web access
+- Longhorn persistent storage for configuration and cache
 
 ## Configuration
 
@@ -89,3 +92,8 @@ kubectl logs -n tdarr daemonset/tdarr-node -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep tdarr
 ```
+
+## References
+
+- **[Tdarr Documentation](https://docs.tdarr.io/)** - Official documentation
+- **[GitHub Repository](https://github.com/HaveAGitGat/Tdarr)** - Source code and issues

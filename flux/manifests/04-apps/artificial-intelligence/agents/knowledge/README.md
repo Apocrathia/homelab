@@ -1,13 +1,15 @@
 # Knowledge Agent
 
-Knowledge management agent for the homelab AI stack.
-
 > **Navigation**: [← Back to Agents README](../README.md)
 
-## Documentation
+## Overview
 
-- **[Qdrant MCP Server](../../../mcp-servers/qdrant/README.md)** - Vector database integration
-- **[OpenZIM MCP Server](../../../mcp-servers/openzim/README.md)** - Encyclopedic content
+This deployment includes a knowledge management agent that stores, retrieves, and synthesizes information across multiple sources:
+
+- Vector database integration via Qdrant for semantic storage and retrieval
+- Offline encyclopedic content access through OpenZIM
+- Web search delegation for current information when needed
+- Designed to be called by other agents for knowledge queries
 
 ## Purpose
 
@@ -49,3 +51,8 @@ kubectl get agents -n kagent knowledge-agent
 # View agent logs
 kubectl logs -n kagent -l app.kubernetes.io/name=knowledge-agent -f
 ```
+
+## References
+
+- **[Qdrant MCP Server](../../../mcp-servers/qdrant/README.md)** - Vector database integration
+- **[OpenZIM MCP Server](../../../mcp-servers/openzim/README.md)** - Encyclopedic content

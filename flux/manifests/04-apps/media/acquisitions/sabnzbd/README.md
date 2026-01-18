@@ -1,14 +1,16 @@
 # SABnzbd with VPN
 
-SABnzbd Usenet client with integrated VPN routing via Gluetun init container.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[SABnzbd Documentation](https://sabnzbd.org/wiki/)** - Official documentation
-- **[GitHub Repository](https://github.com/sabnzbd/sabnzbd)** - Source code and issues
-- **[Gluetun Documentation](https://github.com/qdm12/gluetun-wiki)** - VPN container documentation
+This deployment includes SABnzbd Usenet client with integrated VPN routing for secure downloads:
+
+- SABnzbd for Usenet downloads with web-based management interface
+- Gluetun VPN container for encrypted traffic routing
+- Init container pattern with persistent VPN connection
+- Authentik SSO integration for secure web access
+- Longhorn persistent storage for configuration and downloads
 
 ## Architecture
 
@@ -122,3 +124,9 @@ kubectl exec -n sabnzbd deployment/sabnzbd -c gluetun -- wget -qO- https://ipinf
 # Check Authentik outpost
 kubectl get pods -n authentik | grep sabnzbd
 ```
+
+## References
+
+- **[SABnzbd Documentation](https://sabnzbd.org/wiki/)** - Official documentation
+- **[GitHub Repository](https://github.com/sabnzbd/sabnzbd)** - Source code and issues
+- **[Gluetun Documentation](https://github.com/qdm12/gluetun-wiki)** - VPN container documentation

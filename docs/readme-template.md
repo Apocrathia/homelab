@@ -4,11 +4,6 @@
 
 > **Navigation**: [← Back to [Category] README](../README.md)
 
-## Documentation
-
-- **[Official Documentation](https://example.com/docs)** - Primary documentation source
-- **[GitHub Repository](https://github.com/example/repo)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -63,3 +58,8 @@ kubectl logs -n [namespace] deployment/[app-name] -f
 # Check Authentik outpost (if using SSO)
 kubectl get pods -n authentik | grep [app-name]
 ```
+
+## References
+
+- **[Official Documentation](https://example.com/docs)** - Primary documentation source
+- **[GitHub Repository](https://github.com/example/repo)** - Source code and issues

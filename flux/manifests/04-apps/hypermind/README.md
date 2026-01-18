@@ -1,8 +1,8 @@
 # Hypermind
 
-[← Apps](../README.md)
-
 > _"Hey everyone, so you just finished setting up the \*Arr stack and your dashboards lookin crisp. But you look at your htop and see… unused RAM. It's disgusting, isn't it?"_
+
+> **Navigation**: [← Back to Apps README](../README.md)
 
 ## Overview
 
@@ -35,12 +35,6 @@ A: The homelab must grow. ¯\\_(ツ)_/¯
 - **URL**: https://hypermind.gateway.services.apocrathia.com
 - **Auth**: Authentik SSO (proxy mode)
 
-## References
-
-- [GitHub Repository](https://github.com/lklynet/hypermind)
-- [Reddit Announcement](https://www.reddit.com/r/selfhosted/comments/1q20yew/introducing_hypermind_a_fully_decentralized_p2p/)
-- [Lemmy Discussion](https://lemmy.ml/post/41166894)
-
 ## Troubleshooting
 
 ```bash
@@ -53,3 +47,9 @@ kubectl logs -n hypermind -l app=hypermind
 # Check swarm stats
 kubectl exec -n hypermind deploy/hypermind -- wget -qO- http://localhost:3000/api/stats
 ```
+
+## References
+
+- **[Hypermind](https://github.com/lklynet/hypermind)** - Primary repository and documentation
+- **[Reddit Announcement](https://www.reddit.com/r/selfhosted/comments/1q20yew/introducing_hypermind_a_fully_decentralized_p2p/)** - Original announcement
+- **[Lemmy Discussion](https://lemmy.ml/post/41166894)** - Community discussion

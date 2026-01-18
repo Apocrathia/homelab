@@ -1,13 +1,16 @@
 # Whisparr
 
-Adult entertainment collection manager for Usenet and BitTorrent users with automated monitoring and quality upgrades.
-
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
+## Overview
 
-- **[Whisparr Wiki](https://wiki.servarr.com/whisparr)** - Primary documentation source
-- **[GitHub Repository](https://github.com/Whisparr/Whisparr)** - Source code and issues
+This deployment includes Whisparr, an adult entertainment collection manager:
+
+- Automated monitoring and quality upgrades for adult content
+- Usenet and BitTorrent download client integration
+- Hotio container with standard security configuration pattern
+- Authentik SSO integration for secure access
+- SMB mounts for downloads and media library access
 
 ## Configuration
 
@@ -67,3 +70,8 @@ kubectl logs -n whisparr deployment/whisparr -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep whisparr
 ```
+
+## References
+
+- **[Whisparr Wiki](https://wiki.servarr.com/whisparr)** - Primary documentation source
+- **[GitHub Repository](https://github.com/Whisparr/Whisparr)** - Source code and issues
