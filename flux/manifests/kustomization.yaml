@@ -29,6 +29,7 @@ resources:
   - 03-services/toolhive/flux-kustomization.yaml
   - 03-services/tuppr/flux-kustomization.yaml
   - 03-services/housekeeping/flux-kustomization.yaml
+  - 03-services/trivy/flux-kustomization.yaml
   - 04-apps/demo-app/flux-kustomization.yaml
   - 04-apps/artificial-intelligence/flux-kustomization.yaml
   - 04-apps/games/flux-kustomization.yaml
