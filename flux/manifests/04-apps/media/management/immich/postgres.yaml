@@ -1,14 +1,14 @@
 ---
 # PostgreSQL cluster with vectorchord extension for Immich
-# Uses tensorchord/cloudnative-vectorchord image which includes the required vector extension
+# Uses ghcr.io/tensorchord/cloudnative-vectorchord image which includes the required vector extension
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: immich-postgres
   namespace: immich
 spec:
-  # renovate: datasource=docker depName=tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>\d+)-(?<minor>\d+)\.(?<patch>\d+)\.(?<build>\d+)$
-  imageName: tensorchord/cloudnative-vectorchord:17-0.4.3
+  # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>\d+)-(?<minor>\d+)\.(?<patch>\d+)\.(?<build>\d+)$
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-0.4.3
   instances: 1
   storage:
     size: 20Gi
