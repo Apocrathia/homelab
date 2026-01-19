@@ -30,5 +30,9 @@ spec:
         cpu: 100m
         memory: 256Mi
       limits:
-        cpu: 500m
-        memory: 512Mi
+        cpu: 1000m
+        memory: 1Gi
+
+    # Reduce concurrent reconciles to reduce API server load and prevent timeouts
+    config:
+      maxConcurrentReconciles: 5
