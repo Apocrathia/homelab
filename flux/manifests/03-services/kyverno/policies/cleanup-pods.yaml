@@ -43,7 +43,7 @@ spec:
       - key: "{{ target.metadata.ownerReferences[0].kind }}"
         operator: AnyNotIn
         value: ["ReplicaSet", "StatefulSet"]
-  schedule: "0 * * * *" # Hourly
+  schedule: "5 * * * *" # Hourly at :05
 ---
 apiVersion: kyverno.io/v2
 kind: ClusterCleanupPolicy
@@ -85,4 +85,4 @@ spec:
       - key: "{{ target.metadata.ownerReferences[0].kind }}"
         operator: AnyIn
         value: ["ReplicaSet", "StatefulSet"]
-  schedule: "0 * * * *" # Hourly
+  schedule: "50 * * * *" # Hourly at :50
