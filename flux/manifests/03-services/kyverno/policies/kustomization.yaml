@@ -6,10 +6,10 @@ metadata:
 resources:
   - audit-automount-sa-token.yaml
   - block-default-namespace.yaml
-  - cleanup-replicasets.yaml
-  - cleanup-pods.yaml
-  - cleanup-jobs.yaml
-  - cleanup-pvcs.yaml
-  - cleanup-events.yaml
+  # - cleanup-replicasets.yaml
+  # - cleanup-pods.yaml
+  # - cleanup-jobs.yaml
+  # - cleanup-pvcs.yaml
+  # - cleanup-events.yaml
   # - cleanup-orphaned-configmaps.yaml
   # - cleanup-orphaned-secrets.yaml
