@@ -139,7 +139,32 @@ spec:
       itemPath: "vaults/Secrets/items/komga-secrets"
 
     authentik:
-      enabled: false
+      enabled: true
+      mode: oidc
+      displayName: "Komga"
+      externalHost: "https://komga.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/komga/icon.svg"
+      category: "Media"
+      metaDescription: "Self-hosted media server for comics, manga, and eBooks"
+      metaPublisher: "Komga"
+      oidc:
+        subMode: "user_email"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        customScopeMappings:
+          - name: "komga-email-verified-mapping"
+            scopeName: "email"
+            description: "Email address with email_verified set to True for Komga"
+            expression: |
+              return {
+                  "email": request.user.email,
+                  "email_verified": True
+              }
+        redirectUris:
+          - url: "https://komga.gateway.services.apocrathia.com/login/oauth2/code/authentik"
+            matchingMode: "strict"
 
     httproute:
       enabled: true

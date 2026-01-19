@@ -141,7 +141,21 @@ spec:
       itemPath: "vaults/Secrets/items/mealie-secrets"
 
     authentik:
-      enabled: false
+      enabled: true
+      mode: oidc
+      displayName: "Mealie"
+      externalHost: "https://mealie.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/mealie/icon.svg"
+      category: "Home"
+      metaDescription: "Self-hosted recipe manager and meal planning application"
+      metaPublisher: "Mealie"
+      oidc:
+        tokenValidity: "days=30"
+        redirectUris:
+          - url: "https://mealie.gateway.services.apocrathia.com/login"
+            matchingMode: "strict"
+          - url: "https://mealie.gateway.services.apocrathia.com/login?direct=1"
+            matchingMode: "strict"
 
     httproute:
       enabled: true
