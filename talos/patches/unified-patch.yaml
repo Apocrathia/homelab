@@ -112,6 +112,8 @@ cluster:
       # Optimize backend quotas and request sizes
       quota-backend-bytes: "4294967296" # 4GB (conservative)
       max-request-bytes: "16777216" # 16MB for large CRD schemas
+      # Snapshot settings to reduce I/O frequency
+      snapshot-count: "100000" # Increase from default 10000 to reduce I/O under load
       # Timeout settings to reduce timeout errors under load
       # Increase heartbeat interval to reduce coordination overhead
       heartbeat-interval: "250" # 250ms (default 100ms) - more stable under load
@@ -119,6 +121,10 @@ cluster:
       election-timeout: "5000" # 5000ms (default 1000ms) - 20x heartbeat-interval for stability
       # Enable initial election tick advance for faster startup
       initial-election-tick-advance: "true"
+      # WAL sync settings optimized for NVMe + ZFS performance
+      # Higher batch sizes reduce IOPS while maintaining durability
+      wal-sync-batch-size: "1000" # 1000 entries per batch for NVMe efficiency
+      wal-sync-interval: "5" # 5ms sync interval for balanced performance
       # Metrics
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
