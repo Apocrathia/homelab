@@ -137,6 +137,14 @@ spec:
           autovacuum_vacuum_scale_factor: "0.1"
           autovacuum_analyze_scale_factor: "0.05"
           autovacuum_max_workers: "3"
+          # WAL management to prevent disk space issues
+          # Disable archiving for DHT scraper (data loss acceptable)
+          archive_mode: "off"
+          # Limit WAL size to prevent accumulation
+          max_wal_size: "2GB"
+          wal_keep_size: "256MB"
+          # Use minimal WAL level since we don't need logical replication
+          wal_level: "replica"
       affinity:
         enablePodAntiAffinity: true
         podAntiAffinityType: "preferred"
