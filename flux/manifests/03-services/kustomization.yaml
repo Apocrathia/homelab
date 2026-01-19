@@ -11,7 +11,7 @@ resources:
   - dashboard
   - gitlab
   # - kong
-  - kyverno
+  # - kyverno
   - cert-manager
   - housekeeping
   - leaderworkerset
