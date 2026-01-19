@@ -22,9 +22,12 @@ spec:
               kind: Certificate
               name: tuppr-serving-cert
             patch: |
-              - op: add
-                path: /spec/issuerRef/group
-                value: cert-manager.io
+              - op: replace
+                path: /spec/issuerRef
+                value:
+                  group: cert-manager.io
+                  kind: ClusterIssuer
+                  name: self-signed
   values:
     replicaCount: 1
 
