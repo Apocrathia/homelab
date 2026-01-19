@@ -1,6 +1,17 @@
 # Changelog
 
-## Version 0.0.50 (Latest)
+## Version 0.0.51 (Latest)
+
+- **NEW: Authentik Proxy Timeout Configuration**: Added HTTPRoute timeout configuration for authentik proxy outposts
+  - **Timeout Control**: Configure request and backend request timeouts via `authentik.timeouts.request` and `authentik.timeouts.backendRequest`
+  - **Connection Stability**: Prevents authentik proxy from closing connections prematurely during long-running requests
+  - **Gateway API Integration**: Uses `kubernetes_json_patches` to configure timeouts on HTTPRoutes created by authentik outposts
+  - **Default Values**: Defaults to `request: 5m` and `backendRequest: 2m` for reasonable timeout behavior
+  - **Configurable**: Override per-app or use chart defaults
+  - **Proxy Mode Only**: Only applies when `authentik.mode: "proxy"` (outpost-managed HTTPRoutes)
+  - **Backward Compatible**: Existing deployments automatically get timeout configuration on next reconciliation
+
+## Version 0.0.50
 
 - **Enhanced OIDC Provider Mode**: Extended OAuth2/OpenID Connect support with additional configuration options
   - **Token Validity**: Added `authentik.oidc.tokenValidity` for apps requiring explicit token validity (e.g., Mealie, RomM)
