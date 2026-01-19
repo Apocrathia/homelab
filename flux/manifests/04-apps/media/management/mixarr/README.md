@@ -4,11 +4,6 @@ Music discovery companion for Lidarr and Plex that integrates with multiple musi
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Mixarr Documentation](https://aquantumofdonuts.github.io/mixarr/)** - Primary documentation source
-- **[Mixarr GitHub](https://github.com/aquantumofdonuts/mixarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -20,9 +15,7 @@ This deployment includes:
 - Authentik SSO integration for secure access
 - Longhorn persistent storage for application data
 
-## Access
-
-- **URL**: `https://mixarr.gateway.services.apocrathia.com`
+Access at `https://mixarr.gateway.services.apocrathia.com`.
 
 ## Configuration
 
@@ -62,5 +55,10 @@ kubectl logs -n mixarr deployment/mixarr -f
 kubectl get pods -n authentik | grep mixarr
 
 # Verify health endpoint
-kubectl -n mixarr exec -it deployment/mixarr -- curl http://localhost:3010/api/health
+kubectl -n mixarr exec -it deployment/mixarr -- curl http://localhost:3005/api/health
 ```
+
+## References
+
+- **[Mixarr Documentation](https://aquantumofdonuts.github.io/mixarr/)** - Primary documentation source
+- **[Mixarr GitHub](https://github.com/aquantumofdonuts/mixarr)** - Source code and issues
