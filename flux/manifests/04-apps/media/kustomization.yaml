@@ -22,6 +22,7 @@ resources:
   - management/immich
   - management/lidarr
   - management/maintainerr
+  - management/mixarr
   # - management/ombi
   - management/overseerr
   - management/radarr
