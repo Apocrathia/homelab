@@ -164,4 +164,4 @@ spec:
       category: "Home"
       displayName: "Transmission"
       externalHost: "https://transmission.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/transmission/icon.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/transmission/icon.svg"

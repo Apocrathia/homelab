@@ -3,11 +3,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: management
+  name: home
 
 resources:
-  - backstage
-  - fluentbit
-  - jetkvm
-  - n8n
-  - unpoller
+  - companion
+  - grocy
+  - mealie
+  - transmission
+  - uptime-kuma
