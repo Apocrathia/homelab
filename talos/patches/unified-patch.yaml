@@ -92,6 +92,11 @@ cluster:
     extraArgs:
       kube-api-qps: "500" # Increase API calls per second
       kube-api-burst: "1000" # Allow burst API calls
+      # Increase leader election lease duration to tolerate etcd latency spikes
+      # Default is 15s, increasing to 30s gives more tolerance for I/O spikes
+      leader-elect-lease-duration: "30s"
+      leader-elect-renew-deadline: "20s" # Default is 10s, increase to 20s
+      leader-elect-retry-period: "4s" # Default is 2s, increase to 4s
     resources:
       requests:
         cpu: "200m" # Increase from default 100m
