@@ -4,11 +4,6 @@ Policy engine for Kubernetes with admission control and resource cleanup capabil
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Kyverno Documentation](https://kyverno.io/docs/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/kyverno/kyverno)** - Source code and issues
-
 ## Overview
 
 This deployment includes admission policies and automated cleanup policies for cluster maintenance.
@@ -107,3 +102,8 @@ kubectl get cleanuppolicy --all-namespaces
 # View Kyverno logs
 kubectl logs -n kyverno -l app.kubernetes.io/component=admission-controller
 ```
+
+## References
+
+- **[Kyverno Documentation](https://kyverno.io/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kyverno/kyverno)** - Source code and issues

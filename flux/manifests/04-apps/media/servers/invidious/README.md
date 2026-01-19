@@ -4,12 +4,6 @@ Invidious is an open-source alternative front-end to YouTube that focuses on pri
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Invidious DeepWiki](https://deepwiki.com/iv-org/invidious)** - Primary documentation source
-- **[Invidious GitHub](https://github.com/iv-org/invidious)** - Source code and issues
-- **[Invidious Documentation](https://docs.invidious.io/)** - Official documentation
-
 ## Overview
 
 This deployment includes:
@@ -114,3 +108,9 @@ kubectl -n invidious get cluster invidious-postgres
 # Check service connectivity
 kubectl -n invidious get svc
 ```
+
+## References
+
+- **[Invidious DeepWiki](https://deepwiki.com/iv-org/invidious)** - Primary documentation source
+- **[Invidious GitHub](https://github.com/iv-org/invidious)** - Source code and issues
+- **[Invidious Documentation](https://docs.invidious.io/)** - Official documentation

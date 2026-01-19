@@ -4,10 +4,6 @@ Self-hosted GitHub MCP server for repository and issue management.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- **[GitHub MCP Server](https://github.com/github/github-mcp-server)** - Official GitHub MCP server
-
 ## Access
 
 Internal only via LiteLLM gateway - no external HTTPRoute.
@@ -72,3 +68,7 @@ kubectl logs -n mcp-github deployment/github-mcp -c mcp -f
 # Check health endpoint
 kubectl exec -n mcp-github deployment/github-mcp -- curl -s localhost:8080/health
 ```
+
+## References
+
+- **[GitHub MCP Server](https://github.com/github/github-mcp-server)** - Official GitHub MCP server

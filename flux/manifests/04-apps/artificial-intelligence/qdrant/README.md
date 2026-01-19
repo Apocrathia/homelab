@@ -4,11 +4,6 @@ High-performance vector database for AI knowledge storage and semantic search.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
-## Documentation
-
-- **[Qdrant Documentation](https://qdrant.tech/documentation/)** - Official documentation
-- **[Qdrant Helm Chart](https://github.com/qdrant/qdrant-helm)** - Helm chart repository
-
 ## Overview
 
 Qdrant provides the vector storage backend for the knowledge management system:
@@ -102,3 +97,8 @@ kubectl exec -n qdrant deployment/qdrant -- \
   curl -s -H "api-key: $API_KEY" \
   http://localhost:6333/collections
 ```
+
+## References
+
+- **[Qdrant Documentation](https://qdrant.tech/documentation/)** - Official documentation
+- **[Qdrant Helm Chart](https://github.com/qdrant/qdrant-helm)** - Helm chart repository

@@ -4,11 +4,6 @@ MCP server for knowledge storage and semantic search via Qdrant vector database.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- **[mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant)** - Official Qdrant MCP server
-- **[Qdrant Documentation](https://qdrant.tech/documentation/)** - Vector database documentation
-
 ## Overview
 
 Provides semantic memory and knowledge retrieval capabilities:
@@ -77,3 +72,8 @@ kubectl logs -n mcp-qdrant -l app.kubernetes.io/name=qdrant-mcp
 kubectl exec -n mcp-qdrant -l app.kubernetes.io/name=qdrant-mcp -- \
   curl -s http://qdrant.qdrant.svc.cluster.local:6333/readyz
 ```
+
+## References
+
+- **[mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant)** - Official Qdrant MCP server
+- **[Qdrant Documentation](https://qdrant.tech/documentation/)** - Vector database documentation

@@ -4,11 +4,6 @@ Mend Renovate Community Edition for automated dependency updates across GitLab r
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Renovate Documentation](https://docs.renovatebot.com/)** - Primary documentation source
-- **[Mend Renovate CE](https://www.mend.io/renovate/)** - Enterprise edition documentation
-
 ## Overview
 
 Renovate CE automatically scans repositories for outdated dependencies and creates pull requests to update them. This deployment provides:
@@ -48,3 +43,8 @@ Renovate CE exposes REST APIs on port 8080 for monitoring and administration. Au
 ## Monitoring
 
 Health checks and logs are available through standard Kubernetes tooling. The service integrates with the cluster's monitoring stack for metrics collection.
+
+## References
+
+- **[Renovate Documentation](https://docs.renovatebot.com/)** - Primary documentation source
+- **[Mend Renovate CE](https://www.mend.io/renovate/)** - Enterprise edition documentation

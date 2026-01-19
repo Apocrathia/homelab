@@ -4,12 +4,6 @@ Movie collection manager for Usenet and BitTorrent users with automated RSS moni
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Radarr Documentation](https://wiki.servarr.com/radarr)** - Primary documentation source
-- **[LinuxServer.io Radarr](https://docs.linuxserver.io/images/docker-radarr)** - Container documentation
-- **[Radarr GitHub](https://github.com/Radarr/Radarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -90,3 +84,9 @@ kubectl -n radarr get pods -l app.kubernetes.io/name=radarr
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Radarr Documentation](https://wiki.servarr.com/radarr)** - Primary documentation source
+- **[LinuxServer.io Radarr](https://docs.linuxserver.io/images/docker-radarr)** - Container documentation
+- **[Radarr GitHub](https://github.com/Radarr/Radarr)** - Source code and issues

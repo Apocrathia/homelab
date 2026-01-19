@@ -4,15 +4,6 @@ User-friendly web interface for interacting with Large Language Models (LLMs) th
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Documentation
-
-- **[OpenWebUI Official Documentation](https://docs.openwebui.com)** - Primary documentation source
-- **[OpenWebUI GitHub Repository](https://github.com/open-webui/open-webui)** - Source code and issues
-- **[OpenWebUI Helm Chart](https://github.com/open-webui/helm-charts)** - Deployment configuration
-- **[Environment Variables Reference](https://docs.openwebui.com/getting-started/env-configuration)** - Configuration options
-- **[OpenWebUI SSO/Authentication Guide](https://docs.openwebui.com/features/sso)** - Authentication setup
-- **[Authentik Homepage](https://goauthentik.io)** - Authentication provider
-
 ## Overview
 
 This deployment includes:
@@ -100,3 +91,12 @@ kubectl -n openwebui get pods -l app.kubernetes.io/name=openwebui
 # Authentik outpost status
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[OpenWebUI Official Documentation](https://docs.openwebui.com)** - Primary documentation source
+- **[OpenWebUI GitHub Repository](https://github.com/open-webui/open-webui)** - Source code and issues
+- **[OpenWebUI Helm Chart](https://github.com/open-webui/helm-charts)** - Deployment configuration
+- **[Environment Variables Reference](https://docs.openwebui.com/getting-started/env-configuration)** - Configuration options
+- **[OpenWebUI SSO/Authentication Guide](https://docs.openwebui.com/features/sso)** - Authentication setup
+- **[Authentik Homepage](https://goauthentik.io)** - Authentication provider

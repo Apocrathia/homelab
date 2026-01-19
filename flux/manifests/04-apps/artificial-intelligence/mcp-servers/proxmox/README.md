@@ -4,12 +4,6 @@ The Proxmox MCP Plus server provides Proxmox virtualization management through t
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [ProxmoxMCP-Plus](https://github.com/RekklesNA/ProxmoxMCP-Plus) - MCP server repository
-- [Proxmox](https://www.proxmox.com/) - Proxmox VE documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -75,3 +69,9 @@ kubectl logs -n mcp-proxmox deployment/proxmox-mcp -c mcp -f
 kubectl exec -n mcp-proxmox deployment/proxmox-mcp -- \
   curl -s -k "https://$PROXMOX_HOST:8006/api2/json/version"
 ```
+
+## References
+
+- [ProxmoxMCP-Plus](https://github.com/RekklesNA/ProxmoxMCP-Plus) - MCP server repository
+- [Proxmox](https://www.proxmox.com/) - Proxmox VE documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

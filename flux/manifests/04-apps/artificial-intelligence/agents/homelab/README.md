@@ -4,12 +4,6 @@ The homelab tech assistant, accessible via Discord. Powered by kagent.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
-## Documentation
-
-- **[kagent Documentation](https://kagent.dev/docs)** - Agent orchestration platform
-- **[A2A Protocol](https://a2a-protocol.org)** - Agent-to-Agent communication protocol
-- **[discord.py](https://discordpy.readthedocs.io)** - Discord bot framework
-
 ## Overview
 
 This deployment includes:
@@ -102,3 +96,9 @@ kubectl get agent,modelconfig -n kagent
 kubectl exec -n kagent deploy/discord-bridge -- \
   curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/.well-known/agent-card.json
 ```
+
+## References
+
+- **[kagent Documentation](https://kagent.dev/docs)** - Agent orchestration platform
+- **[A2A Protocol](https://a2a-protocol.org)** - Agent-to-Agent communication protocol
+- **[discord.py](https://discordpy.readthedocs.io)** - Discord bot framework

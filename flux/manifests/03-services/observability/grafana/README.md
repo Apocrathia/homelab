@@ -4,11 +4,6 @@ The Grafana Operator manages dashboards and datasources for the existing kube-pr
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Documentation
-
-- **[Grafana Operator Documentation](https://grafana.github.io/grafana-operator/docs/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/grafana/grafana-operator)** - Source code and issues
-
 ## Overview
 
 This deployment installs the Grafana Operator using the official Helm chart from the Grafana repository. The operator connects to the existing kube-prometheus-stack Grafana instance and enables:
@@ -65,3 +60,8 @@ spec:
       "url": "http://prometheus-k8s.prometheus-system.svc:9090"
     }
 ```
+
+## References
+
+- **[Grafana Operator Documentation](https://grafana.github.io/grafana-operator/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/grafana/grafana-operator)** - Source code and issues

@@ -4,13 +4,6 @@ The Servarr MCP server provides Sonarr and Radarr integration through the Model 
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [mcp-servarr](https://github.com/bdfrost/mcp-servarr) - MCP server repository
-- [Sonarr](https://sonarr.tv/) - TV series management
-- [Radarr](https://radarr.video/) - Movie management
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -89,3 +82,10 @@ kubectl logs -n mcp-servarr deployment/servarr-mcp -c mcp -f
 kubectl exec -n mcp-servarr deployment/servarr-mcp -- \
   curl -s -H "X-Api-Key: $SONARR_API_KEY" "$SONARR_URL/api/v3/system/status"
 ```
+
+## References
+
+- [mcp-servarr](https://github.com/bdfrost/mcp-servarr) - MCP server repository
+- [Sonarr](https://sonarr.tv/) - TV series management
+- [Radarr](https://radarr.video/) - Movie management
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

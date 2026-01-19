@@ -4,11 +4,6 @@ Background service that syncs iCloud Photos to local NAS storage.
 
 > **Navigation**: [← Back to Media Management README](../README.md)
 
-## Documentation
-
-- **[icloudpd Documentation](https://icloudpd.github.io/icloud_photos_downloader/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/icloud-photos-downloader/icloud_photos_downloader)** - Source code and issues
-
 ## Overview
 
 - **Sync Mode**: Copy (download only, no iCloud deletion)
@@ -41,3 +36,8 @@ kubectl logs -n icloudpd deployment/icloudpd -f
 # Force resync (restart pod)
 kubectl rollout restart -n icloudpd deployment/icloudpd
 ```
+
+## References
+
+- **[icloudpd Documentation](https://icloudpd.github.io/icloud_photos_downloader/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/icloud-photos-downloader/icloud_photos_downloader)** - Source code and issues

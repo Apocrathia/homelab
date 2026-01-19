@@ -4,11 +4,6 @@ Monitoring and observability tool for PolicyReport CRDs with an optional UI.
 
 > **Navigation**: [← Back to Kyverno README](../README.md)
 
-## Documentation
-
-- **[Policy Reporter Documentation](https://kyverno.github.io/policy-reporter-docs/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/kyverno/policy-reporter)** - Source code and issues
-
 ## Overview
 
 Policy Reporter watches for PolicyReport resources from policy engines like Kyverno and Trivy. It provides:
@@ -68,3 +63,8 @@ kubectl get policyreport --all-namespaces
 # Check HTTPRoute
 kubectl get httproute -n policy-reporter
 ```
+
+## References
+
+- **[Policy Reporter Documentation](https://kyverno.github.io/policy-reporter-docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kyverno/policy-reporter)** - Source code and issues

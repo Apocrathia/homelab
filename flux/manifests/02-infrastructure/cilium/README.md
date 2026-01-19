@@ -4,11 +4,6 @@ Cilium is a Kubernetes-native networking and security solution based on eBPF.
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
-## Documentation
-
-- **[Cilium Documentation](https://docs.cilium.io/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/cilium/cilium)** - Source code and issues
-
 ## Installation
 
 Cilium is installed using the Helm chart from the Cilium project.
@@ -64,3 +59,8 @@ If you encounter issues during migration:
    - Both nodes have been migrated to Cilium
    - The Cilium pods are running correctly
    - The correct routing mode is configured
+
+## References
+
+- **[Cilium Documentation](https://docs.cilium.io/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/cilium/cilium)** - Source code and issues

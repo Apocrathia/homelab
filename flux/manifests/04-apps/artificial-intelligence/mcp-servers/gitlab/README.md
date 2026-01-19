@@ -4,12 +4,6 @@ The GitLab MCP server provides GitLab API integration through the Model Context 
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [gitlab-mcp-server](https://github.com/Alosies/gitlab-mcp-server) - MCP server repository
-- [GitLab API](https://docs.gitlab.com/ee/api/) - GitLab API documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -51,3 +45,9 @@ The GitLab MCP server provides tools for GitLab operations:
 3. **Merge Requests** - Create, list, comment on merge requests
 4. **File Operations** - Read, create, update files
 5. **Branch Management** - Create and manage branches
+
+## References
+
+- [gitlab-mcp-server](https://github.com/Alosies/gitlab-mcp-server) - MCP server repository
+- [GitLab API](https://docs.gitlab.com/ee/api/) - GitLab API documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

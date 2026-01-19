@@ -4,12 +4,6 @@ Privacy-respecting metasearch engine that aggregates results from multiple searc
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Official Documentation](https://docs.searxng.org/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/searxng/searxng)** - Source code and issues
-- **[DeepWiki Documentation](https://deepwiki.com/searxng/searxng)** - Architecture and implementation details
-
 ## Overview
 
 This deployment includes:
@@ -102,3 +96,9 @@ kubectl get endpoints -n searxng searxng
 # Authentik blueprint status
 kubectl get configmap -n searxng authentik-blueprint-searxng
 ```
+
+## References
+
+- **[Official Documentation](https://docs.searxng.org/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/searxng/searxng)** - Source code and issues
+- **[DeepWiki Documentation](https://deepwiki.com/searxng/searxng)** - Architecture and implementation details

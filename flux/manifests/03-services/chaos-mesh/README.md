@@ -196,6 +196,13 @@ kubectl logs -n chaos-mesh daemonset/chaos-daemon
 kubectl logs -n chaos-mesh deployment/chaos-dashboard
 ```
 
+## References
+
+For comprehensive documentation, visit:
+
+- [Chaos Mesh Documentation](https://chaos-mesh.org/docs/)
+- [GitHub Repository](https://github.com/chaos-mesh/chaos-mesh)
+
 ## Integration
 
 Chaos Mesh integrates with:
@@ -206,13 +213,6 @@ Chaos Mesh integrates with:
 - **Kyverno**: Policy-based chaos experiment governance
 - **Cert-Manager**: Certificate management for dashboard
 - **Gateway API**: Automatic HTTPRoute management through Authentik outpost
-
-## Documentation
-
-For comprehensive documentation, visit:
-
-- [Chaos Mesh Documentation](https://chaos-mesh.org/docs/)
-- [GitHub Repository](https://github.com/chaos-mesh/chaos-mesh)
 
 ## Security Considerations
 

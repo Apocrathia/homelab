@@ -4,11 +4,6 @@ User-facing applications and workloads deployed in the cluster.
 
 > **Navigation**: [← Back to Flux README](../README.md)
 
-## Documentation
-
-- **[Generic-App Chart](../../helm/generic-app/README.md)** - Reusable Helm chart
-- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration
-
 ## Overview
 
 The applications layer contains user-facing workloads and services organized by functional categories:
@@ -218,6 +213,11 @@ app-name/
    # Check service endpoints
    kubectl get endpoints -n <app-namespace>
    ```
+
+## References
+
+- **[Generic-App Chart](../../helm/generic-app/README.md)** - Reusable Helm chart
+- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration
 
 ## Best Practices
 

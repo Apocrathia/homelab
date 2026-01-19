@@ -4,11 +4,6 @@ The Kubernetes Dashboard provides a web-based UI for managing Kubernetes cluster
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Kubernetes Dashboard Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/kubernetes/dashboard)** - Source code and issues
-
 ## Access
 
 The dashboard is accessible at: `https://dashboard.gateway.services.apocrathia.com`
@@ -72,3 +67,8 @@ If you encounter authentication issues:
 2. Check Kong logs: `kubectl logs -n kubernetes-dashboard deployment/kubernetes-dashboard-kong`
 3. Ensure you're using a fresh token (tokens expire)
 4. Verify Authentik is accessible at `https://auth.gateway.services.apocrathia.com`
+
+## References
+
+- **[Kubernetes Dashboard Documentation](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kubernetes/dashboard)** - Source code and issues

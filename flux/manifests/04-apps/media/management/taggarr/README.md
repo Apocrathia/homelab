@@ -4,11 +4,6 @@ Media tagging utility that scans and tags anime shows based on dubbed audio trac
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Taggarr GitHub](https://github.com/BassHous3/taggarr)** - Source code and issues
-- **[Taggarr Docker Hub](https://hub.docker.com/r/basshous3/taggarr)** - Container image
-
 ## Overview
 
 This deployment includes:
@@ -148,3 +143,8 @@ kubectl -n taggarr logs deployment/taggarr -c taggarr -f
 # Check for errors
 kubectl -n taggarr logs deployment/taggarr -c taggarr | grep -i error
 ```
+
+## References
+
+- **[Taggarr GitHub](https://github.com/BassHous3/taggarr)** - Source code and issues
+- **[Taggarr Docker Hub](https://hub.docker.com/r/basshous3/taggarr)** - Container image

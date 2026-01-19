@@ -4,14 +4,6 @@ AI and ML applications for the homelab.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
-
-- **[LiteLLM](https://docs.litellm.ai/)** - AI proxy and gateway
-- **[kagent](https://kagent.dev/docs/)** - Agent orchestration
-- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol
-
-# Architecture
-
 ## Data Flow Patterns
 
 All AI services are exposed through a central AI proxy service with TLS termination and path-based routing.
@@ -143,3 +135,11 @@ Artificial intelligence applications provide tools for:
 - **Kubernetes Management**: Direct cluster access for AI-assisted operations
 
 All applications are deployed via Flux GitOps and integrate with the homelab's authentication, monitoring, and gateway infrastructure.
+
+## References
+
+- **[LiteLLM](https://docs.litellm.ai/)** - AI proxy and gateway
+- **[kagent](https://kagent.dev/docs/)** - Agent orchestration
+- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol
+
+# Architecture

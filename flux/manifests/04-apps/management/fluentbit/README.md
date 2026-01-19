@@ -4,12 +4,6 @@ Generic FluentBit deployment configured to collect logs from various sources and
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Fluent Bit Documentation](https://docs.fluentbit.io/)** - Official documentation
-- **[Fluent Operator](https://github.com/fluent/fluent-operator)** - Kubernetes operator
-- **[Syslog Input](https://docs.fluentbit.io/manual/data-pipeline/inputs/syslog)** - Syslog plugin documentation
-
 ## Components
 
 - **FluentBit**: Main Fluent Bit instance running as LoadBalancer service
@@ -73,3 +67,9 @@ kubectl get clusterinputs -l fluentbit.fluent.io/enabled=true
 # Verify Loki output connectivity
 kubectl logs -n fluentbit deployment/fluentbit | grep -i loki
 ```
+
+## References
+
+- **[Fluent Bit Documentation](https://docs.fluentbit.io/)** - Official documentation
+- **[Fluent Operator](https://github.com/fluent/fluent-operator)** - Kubernetes operator
+- **[Syslog Input](https://docs.fluentbit.io/manual/data-pipeline/inputs/syslog)** - Syslog plugin documentation

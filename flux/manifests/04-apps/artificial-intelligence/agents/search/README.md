@@ -4,12 +4,6 @@ Web search specialist powered by kagent. Uses SearXNG for search capabilities.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
-## Documentation
-
-- **[kagent Documentation](https://kagent.dev/docs)** - Agent orchestration platform
-- **[A2A Protocol](https://a2a-protocol.org)** - Agent-to-Agent communication protocol
-- **[SearXNG](https://docs.searxng.org/)** - Privacy-respecting metasearch engine
-
 ## Overview
 
 This deployment includes:
@@ -112,3 +106,9 @@ kubectl get agent,modelconfig -n kagent-agents
 # Test A2A endpoint
 curl -s http://kagent-controller.kagent-system.svc.cluster.local:8083/api/a2a/kagent-agents/search-agent/.well-known/agent-card.json
 ```
+
+## References
+
+- **[kagent Documentation](https://kagent.dev/docs)** - Agent orchestration platform
+- **[A2A Protocol](https://a2a-protocol.org)** - Agent-to-Agent communication protocol
+- **[SearXNG](https://docs.searxng.org/)** - Privacy-respecting metasearch engine

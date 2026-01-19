@@ -4,12 +4,6 @@ The Flux MCP server provides GitOps pipeline management through the Model Contex
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [Flux MCP Server](https://fluxcd.control-plane.io/mcp/) - Official Flux MCP documentation
-- [Flux CD](https://fluxcd.io/) - GitOps toolkit for Kubernetes
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -69,3 +63,9 @@ The Flux MCP server provides these capabilities:
 - Generate dependency diagrams
 
 For the complete list of tools, see the [official documentation](https://fluxcd.control-plane.io/mcp/tools/).
+
+## References
+
+- [Flux MCP Server](https://fluxcd.control-plane.io/mcp/) - Official Flux MCP documentation
+- [Flux CD](https://fluxcd.io/) - GitOps toolkit for Kubernetes
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

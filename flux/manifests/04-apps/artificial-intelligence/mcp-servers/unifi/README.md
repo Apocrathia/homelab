@@ -4,12 +4,6 @@ The UniFi Network MCP server provides network management capabilities through th
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [unifi-network-mcp](https://github.com/sirkirby/unifi-network-mcp) - MCP server repository
-- [UniFi Network](https://www.ui.com/software/) - UniFi Network Controller documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -74,3 +68,9 @@ kubectl logs -n mcp-unifi deployment/unifi-mcp -c mcp -f
 kubectl exec -n mcp-unifi deployment/unifi-mcp -- \
   curl -s -k "https://$UNIFI_HOST:$UNIFI_PORT"
 ```
+
+## References
+
+- [unifi-network-mcp](https://github.com/sirkirby/unifi-network-mcp) - MCP server repository
+- [UniFi Network](https://www.ui.com/software/) - UniFi Network Controller documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

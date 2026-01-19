@@ -4,12 +4,6 @@ Indexer manager/proxy for \*arr applications with centralized indexer configurat
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Prowlarr Wiki](https://wiki.servarr.com/prowlarr)** - Primary documentation source
-- **[GitHub Repository](https://github.com/Prowlarr/Prowlarr)** - Source code and issues
-- **[LinuxServer.io Prowlarr](https://docs.linuxserver.io/images/docker-prowlarr)** - Container documentation
-
 ## Configuration
 
 This deployment uses the LinuxServer.io Prowlarr image with the standard LinuxServer.io configuration pattern.
@@ -97,3 +91,9 @@ kubectl logs -n prowlarr deployment/prowlarr -c flaresolverr -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep prowlarr
 ```
+
+## References
+
+- **[Prowlarr Wiki](https://wiki.servarr.com/prowlarr)** - Primary documentation source
+- **[GitHub Repository](https://github.com/Prowlarr/Prowlarr)** - Source code and issues
+- **[LinuxServer.io Prowlarr](https://docs.linuxserver.io/images/docker-prowlarr)** - Container documentation

@@ -4,12 +4,6 @@ Music collection manager for Usenet and BitTorrent users with automated RSS moni
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Lidarr Documentation](https://wiki.servarr.com/lidarr)** - Primary documentation source
-- **[LinuxServer.io Lidarr](https://docs.linuxserver.io/images/docker-lidarr)** - Container documentation
-- **[Lidarr GitHub](https://github.com/Lidarr/Lidarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -90,3 +84,9 @@ kubectl -n lidarr get pods -l app.kubernetes.io/name=lidarr
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Lidarr Documentation](https://wiki.servarr.com/lidarr)** - Primary documentation source
+- **[LinuxServer.io Lidarr](https://docs.linuxserver.io/images/docker-lidarr)** - Container documentation
+- **[Lidarr GitHub](https://github.com/Lidarr/Lidarr)** - Source code and issues

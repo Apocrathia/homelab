@@ -4,12 +4,6 @@ Self-hosted recipe manager and meal planning application with comprehensive cook
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Mealie Documentation](https://docs.mealie.io/)** - Primary documentation source
-- **[Mealie GitHub](https://github.com/mealie-recipes/mealie)** - Source code and issues
-- **[Backend Configuration](https://docs.mealie.io/documentation/getting-started/installation/backend-config/)** - Configuration reference
-
 ## Overview
 
 This deployment includes:
@@ -105,3 +99,9 @@ kubectl -n mealie get pods -l app.kubernetes.io/name=mealie
 # PostgreSQL cluster status
 kubectl -n mealie get cluster mealie-postgres
 ```
+
+## References
+
+- **[Mealie Documentation](https://docs.mealie.io/)** - Primary documentation source
+- **[Mealie GitHub](https://github.com/mealie-recipes/mealie)** - Source code and issues
+- **[Backend Configuration](https://docs.mealie.io/documentation/getting-started/installation/backend-config/)** - Configuration reference

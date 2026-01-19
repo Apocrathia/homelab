@@ -4,12 +4,6 @@ Open-source platform for the machine learning lifecycle deployed with Authentik 
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Documentation
-
-- **[MLflow Official Documentation](https://mlflow.org/docs/latest/index.html)** - Primary documentation source
-- **[MLflow GitHub Repository](https://github.com/mlflow/mlflow)** - Source code and issues
-- **[MLflow Python API](https://mlflow.org/docs/latest/python_api/index.html)** - Python client documentation
-
 ## Overview
 
 This deployment includes:
@@ -99,3 +93,9 @@ kubectl -n mlflow get pods -l app.kubernetes.io/name=mlflow
 # PostgreSQL cluster status
 kubectl -n mlflow get cluster mlflow-postgres -o wide
 ```
+
+## References
+
+- **[MLflow Official Documentation](https://mlflow.org/docs/latest/index.html)** - Primary documentation source
+- **[MLflow GitHub Repository](https://github.com/mlflow/mlflow)** - Source code and issues
+- **[MLflow Python API](https://mlflow.org/docs/latest/python_api/index.html)** - Python client documentation

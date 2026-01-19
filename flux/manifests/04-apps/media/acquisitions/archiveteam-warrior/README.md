@@ -4,12 +4,6 @@ Virtual archiving appliance that helps with Archive Team archiving efforts by do
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[ArchiveTeam Warrior Wiki](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)** - Official documentation
-- **[Docker Usage Guide](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)** - Container deployment
-- **[Active Projects](https://wiki.archiveteam.org/index.php?title=Warrior_projects)** - Current archiving projects
-
 ## Overview
 
 This deployment includes:
@@ -46,3 +40,9 @@ kubectl logs -n archiveteam-warrior deployment/archiveteam-warrior -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep archiveteam
 ```
+
+## References
+
+- **[ArchiveTeam Warrior Wiki](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)** - Official documentation
+- **[Docker Usage Guide](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)** - Container deployment
+- **[Active Projects](https://wiki.archiveteam.org/index.php?title=Warrior_projects)** - Current archiving projects

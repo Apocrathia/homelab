@@ -4,12 +4,6 @@ Multi-user Jupyter notebook server for interactive computing with Authentik OIDC
 
 > **Navigation**: [← Back to AI & Automation](../README.md)
 
-## Documentation
-
-- [JupyterHub Documentation](https://jupyterhub.readthedocs.io/)
-- [Zero to JupyterHub](https://z2jh.jupyter.org/)
-- [Chart Repository](https://github.com/jupyterhub/zero-to-jupyterhub-k8s)
-
 ## Overview
 
 Zero to JupyterHub on Kubernetes (z2jh) deployment providing:
@@ -81,3 +75,9 @@ kubectl get pv jupyterhub-notebooks-pv
 kubectl get pvc -n jupyterhub jupyterhub-notebooks
 kubectl get secret -n jupyterhub smb-credentials
 ```
+
+## References
+
+- [JupyterHub Documentation](https://jupyterhub.readthedocs.io/)
+- [Zero to JupyterHub](https://z2jh.jupyter.org/)
+- [Chart Repository](https://github.com/jupyterhub/zero-to-jupyterhub-k8s)

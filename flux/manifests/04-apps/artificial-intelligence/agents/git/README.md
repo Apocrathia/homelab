@@ -4,11 +4,6 @@ Git platform agent for GitHub and GitLab repository management.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
-## Documentation
-
-- **[GitHub MCP Server](../../../mcp-servers/github/README.md)** - GitHub integration
-- **[GitLab MCP Server](../../../mcp-servers/gitlab/README.md)** - GitLab integration
-
 ## Tools
 
 - **github-mcp**: GitHub API integration
@@ -39,3 +34,8 @@ kubectl get agents -n kagent git-agent
 # View agent logs
 kubectl logs -n kagent -l app.kubernetes.io/name=git-agent -f
 ```
+
+## References
+
+- **[GitHub MCP Server](../../../mcp-servers/github/README.md)** - GitHub integration
+- **[GitLab MCP Server](../../../mcp-servers/gitlab/README.md)** - GitLab integration

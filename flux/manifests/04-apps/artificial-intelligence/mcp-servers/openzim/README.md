@@ -4,12 +4,6 @@ The OpenZIM MCP server provides offline knowledge base querying through ZIM form
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [openzim-mcp](https://github.com/cameronrye/openzim-mcp) - MCP server repository
-- [OpenZIM](https://wiki.openzim.org/) - ZIM file format documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -41,3 +35,9 @@ The OpenZIM MCP server provides tools for querying ZIM knowledge bases:
 
 1. **zim_query** (Simple Mode) - Natural language queries against ZIM files
 2. **Advanced Mode Tools** - 15 specialized tools for granular ZIM operations when `OPENZIM_MCP_TOOL_MODE=advanced`
+
+## References
+
+- [openzim-mcp](https://github.com/cameronrye/openzim-mcp) - MCP server repository
+- [OpenZIM](https://wiki.openzim.org/) - ZIM file format documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

@@ -4,13 +4,6 @@ Subtitle management companion for Sonarr and Radarr with automated subtitle down
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Bazarr Documentation](https://wiki.bazarr.media/)** - Primary documentation source
-- **[Whisper Provider Setup](https://wiki.bazarr.media/Additional-Configuration/Whisper-Provider/)** - SubGen/Whisper configuration guide
-- **[LinuxServer.io Bazarr](https://docs.linuxserver.io/images/docker-bazarr)** - Container documentation
-- **[Bazarr GitHub](https://github.com/morpheus65535/bazarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -168,3 +161,10 @@ kubectl -n bazarr get pods -o jsonpath='{.items[*].spec.containers[*].name}'
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Bazarr Documentation](https://wiki.bazarr.media/)** - Primary documentation source
+- **[Whisper Provider Setup](https://wiki.bazarr.media/Additional-Configuration/Whisper-Provider/)** - SubGen/Whisper configuration guide
+- **[LinuxServer.io Bazarr](https://docs.linuxserver.io/images/docker-bazarr)** - Container documentation
+- **[Bazarr GitHub](https://github.com/morpheus65535/bazarr)** - Source code and issues

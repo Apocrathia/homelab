@@ -4,12 +4,6 @@ Powerful stream deck control software for broadcast and live production environm
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Bitfocus Companion](https://bitfocus.io/companion/)** - Official website
-- **[GitHub Repository](https://github.com/bitfocus/companion)** - Source code and issues
-- **[Wiki](https://github.com/bitfocus/companion/wiki)** - Documentation and guides
-
 ## Overview
 
 Companion is an open-source controller for Elgato Stream Decks and other input devices. It provides a web-based interface for creating custom control surfaces with buttons, dials, and other controls to interface with various broadcast and production systems.
@@ -133,6 +127,12 @@ kubectl logs -n bitfocus -l app=outpost --tail=50
 # Check events
 kubectl get events -n bitfocus --sort-by=.metadata.creationTimestamp
 ```
+
+## References
+
+- **[Bitfocus Companion](https://bitfocus.io/companion/)** - Official website
+- **[GitHub Repository](https://github.com/bitfocus/companion)** - Source code and issues
+- **[Wiki](https://github.com/bitfocus/companion/wiki)** - Documentation and guides
 
 ## Backup and Recovery
 

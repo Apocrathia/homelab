@@ -4,11 +4,6 @@ This directory contains the deployment configuration for the OpenTelemetry Opera
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Documentation
-
-- **[OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)** - Primary documentation
-- **[Helm Chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-operator)** - Chart source and values
-
 ## Custom Resources
 
 The operator manages the following CRDs:
@@ -158,6 +153,11 @@ kubectl get mutatingwebhookconfigurations | grep opentelemetry
 # Check certificate
 kubectl get certificate -n otel-system
 ```
+
+## References
+
+- **[OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)** - Primary documentation
+- **[Helm Chart](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-operator)** - Chart source and values
 
 ## References
 

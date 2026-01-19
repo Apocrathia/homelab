@@ -4,12 +4,6 @@ The TrueNAS MCP server provides TrueNAS Core and SCALE management through the Mo
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [TrueNasCoreMCP](https://github.com/vespo92/TrueNasCoreMCP) - MCP server repository
-- [TrueNAS](https://www.truenas.com/) - TrueNAS documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -77,3 +71,9 @@ kubectl logs -n mcp-truenas deployment/truenas-mcp -c mcp -f
 kubectl exec -n mcp-truenas deployment/truenas-mcp -- \
   curl -s -k -H "Authorization: Bearer $TRUENAS_API_KEY" "$TRUENAS_URL/api/v2.0/system/info"
 ```
+
+## References
+
+- [TrueNasCoreMCP](https://github.com/vespo92/TrueNasCoreMCP) - MCP server repository
+- [TrueNAS](https://www.truenas.com/) - TrueNAS documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

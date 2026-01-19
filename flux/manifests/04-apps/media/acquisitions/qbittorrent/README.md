@@ -4,12 +4,6 @@ Torrent client with integrated VPN routing via Gluetun init container for secure
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[qBittorrent Documentation](https://github.com/qbittorrent/qBittorrent/wiki)** - Primary documentation source
-- **[Gluetun VPN](https://github.com/qdm12/gluetun)** - VPN container documentation
-- **[LinuxServer.io qBittorrent](https://docs.linuxserver.io/images/docker-qbittorrent)** - Container documentation
-
 ## Overview
 
 This deployment includes:
@@ -96,3 +90,9 @@ kubectl -n qbittorrent get pods -l app.kubernetes.io/name=qbittorrent
 # Gluetun VPN status
 kubectl -n qbittorrent get pods -l app.kubernetes.io/name=gluetun
 ```
+
+## References
+
+- **[qBittorrent Documentation](https://github.com/qbittorrent/qBittorrent/wiki)** - Primary documentation source
+- **[Gluetun VPN](https://github.com/qdm12/gluetun)** - VPN container documentation
+- **[LinuxServer.io qBittorrent](https://docs.linuxserver.io/images/docker-qbittorrent)** - Container documentation

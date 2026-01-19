@@ -4,12 +4,6 @@ Kubernetes add-on to automate the management and issuance of TLS certificates.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[cert-manager Documentation](https://cert-manager.io/docs/)** - Official documentation
-- **[Let's Encrypt](https://cert-manager.io/docs/configuration/acme/)** - ACME integration
-- **[DNS-01 Challenge](https://cert-manager.io/docs/configuration/acme/dns01/)** - DNS challenge setup
-
 ## Overview
 
 cert-manager automates certificate management with:
@@ -301,6 +295,12 @@ kubectl logs -n cert-manager deployment/cert-manager-cainjector
 # Webhook logs
 kubectl logs -n cert-manager deployment/cert-manager-webhook
 ```
+
+## References
+
+- **[cert-manager Documentation](https://cert-manager.io/docs/)** - Official documentation
+- **[Let's Encrypt](https://cert-manager.io/docs/configuration/acme/)** - ACME integration
+- **[DNS-01 Challenge](https://cert-manager.io/docs/configuration/acme/dns01/)** - DNS challenge setup
 
 ## Best Practices
 

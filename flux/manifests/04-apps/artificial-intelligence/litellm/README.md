@@ -4,12 +4,6 @@ Unified interface for 100+ LLMs with OpenAI proxy compatibility, allowing seamle
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Documentation
-
-- **[LiteLLM Official Documentation](https://docs.litellm.ai)** - Primary documentation source
-- **[LiteLLM GitHub Repository](https://github.com/BerriAI/litellm)** - Source code and issues
-- **[MLflow Integration](https://docs.litellm.ai/docs/observability/mlflow)** - Observability setup
-
 ## Overview
 
 This deployment includes:
@@ -90,3 +84,9 @@ kubectl -n litellm get pods -l app.kubernetes.io/name=litellm
 # PostgreSQL cluster status
 kubectl -n litellm get cluster litellm-postgres -o wide
 ```
+
+## References
+
+- **[LiteLLM Official Documentation](https://docs.litellm.ai)** - Primary documentation source
+- **[LiteLLM GitHub Repository](https://github.com/BerriAI/litellm)** - Source code and issues
+- **[MLflow Integration](https://docs.litellm.ai/docs/observability/mlflow)** - Observability setup

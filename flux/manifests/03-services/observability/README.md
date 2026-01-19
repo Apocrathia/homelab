@@ -4,13 +4,6 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Grafana Documentation](https://grafana.com/docs/)** - Primary Grafana documentation
-- **[Loki Documentation](https://grafana.com/docs/loki/)** - Log aggregation
-- **[Tempo Documentation](https://grafana.com/docs/tempo/)** - Distributed tracing
-- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Metrics storage
-
 ## Components Deployed
 
 ### 1. **Grafana Operator** (`grafana/`)
@@ -166,3 +159,10 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 - [Grafana Alloy Documentation](https://grafana.com/docs/alloy/)
 - [OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)
 - [LGTM Stack Overview](https://grafana.com/docs/grafana-cloud/quickstart/)
+
+## References
+
+- **[Grafana Documentation](https://grafana.com/docs/)** - Primary Grafana documentation
+- **[Loki Documentation](https://grafana.com/docs/loki/)** - Log aggregation
+- **[Tempo Documentation](https://grafana.com/docs/tempo/)** - Distributed tracing
+- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Metrics storage

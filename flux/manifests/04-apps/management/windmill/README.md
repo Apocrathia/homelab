@@ -4,11 +4,6 @@ Open-source developer platform for building internal tools, workflows, and scrip
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Windmill Documentation](https://www.windmill.dev/docs)** - Primary documentation source
-- **[Helm Chart](https://github.com/windmill-labs/windmill-helm-charts)** - Kubernetes deployment
-
 ## Overview
 
 This deployment provides:
@@ -76,3 +71,8 @@ kubectl logs -n windmill -l app.kubernetes.io/component=worker
 # Check database connectivity
 kubectl exec -it -n windmill deploy/windmill-app -- printenv DATABASE_URL
 ```
+
+## References
+
+- **[Windmill Documentation](https://www.windmill.dev/docs)** - Primary documentation source
+- **[Helm Chart](https://github.com/windmill-labs/windmill-helm-charts)** - Kubernetes deployment

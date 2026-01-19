@@ -4,12 +4,6 @@ Media server for streaming content from SMB storage shares with transcoding capa
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Plex Documentation](https://support.plex.tv/)** - Primary documentation source
-- **[LinuxServer.io Plex](https://docs.linuxserver.io/images/docker-plex)** - Container documentation
-- **[Plex Docker Image](https://hub.docker.com/r/linuxserver/plex)** - Container registry
-
 ## Overview
 
 This deployment includes:
@@ -88,3 +82,9 @@ kubectl -n plex get pods -l app.kubernetes.io/name=plex
 # Check LoadBalancer IP
 kubectl -n plex get svc plex
 ```
+
+## References
+
+- **[Plex Documentation](https://support.plex.tv/)** - Primary documentation source
+- **[LinuxServer.io Plex](https://docs.linuxserver.io/images/docker-plex)** - Container documentation
+- **[Plex Docker Image](https://hub.docker.com/r/linuxserver/plex)** - Container registry

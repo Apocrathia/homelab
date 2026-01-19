@@ -4,12 +4,6 @@ Drag & drop UI to build customized LLM flows with PostgreSQL backend and Authent
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Documentation
-
-- **[Flowise Official Documentation](https://docs.flowiseai.com/)** - Primary documentation source
-- **[Flowise GitHub Repository](https://github.com/FlowiseAI/Flowise)** - Source code and issues
-- **[Flowise DeepWiki](https://deepwiki.com/FlowiseAI/Flowise)** - In-depth repository documentation
-
 ## Overview
 
 This deployment includes:
@@ -120,3 +114,9 @@ kubectl -n flowise get cluster flowise-postgres -o wide
 kubectl -n flowise port-forward svc/flowise 3000:3000
 curl http://localhost:3000/api/v1/ping
 ```
+
+## References
+
+- **[Flowise Official Documentation](https://docs.flowiseai.com/)** - Primary documentation source
+- **[Flowise GitHub Repository](https://github.com/FlowiseAI/Flowise)** - Source code and issues
+- **[Flowise DeepWiki](https://deepwiki.com/FlowiseAI/Flowise)** - In-depth repository documentation

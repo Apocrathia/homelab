@@ -4,12 +4,6 @@ Web-based groceries and household management solution for inventory tracking, me
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Grocy Documentation](https://grocy.info/)** - Primary documentation source
-- **[Grocy GitHub](https://github.com/grocy/grocy)** - Source code and issues
-- **[LinuxServer.io Grocy](https://docs.linuxserver.io/images/docker-grocy)** - Container documentation
-
 ## Overview
 
 This deployment includes:
@@ -84,3 +78,9 @@ kubectl -n grocy get pods -l app.kubernetes.io/name=grocy
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Grocy Documentation](https://grocy.info/)** - Primary documentation source
+- **[Grocy GitHub](https://github.com/grocy/grocy)** - Source code and issues
+- **[LinuxServer.io Grocy](https://docs.linuxserver.io/images/docker-grocy)** - Container documentation

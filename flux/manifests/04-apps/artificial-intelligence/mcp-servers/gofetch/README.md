@@ -17,12 +17,6 @@ The GoFetch implementation provides several advantages over the Python version:
 - **Container Security**: Distroless images, non-root user, container signing
 - **StreamableHTTP Transport**: Modern transport protocol instead of STDIO
 
-## Documentation
-
-- [ToolHive Documentation](https://docs.stacklok.com/toolhive/)
-- [MCP Specification](https://spec.modelcontextprotocol.io/)
-- [GoFetch Source Repository](https://github.com/StacklokLabs/gofetch)
-
 ## Overview
 
 This deployment includes:
@@ -50,3 +44,9 @@ The GoFetch MCP server provides web content retrieval tools:
      - `max_length` (optional): Maximum characters to return (default: 5000, max: 1000000)
      - `start_index` (optional): Starting character index (default: 0)
      - `raw` (optional): Return raw HTML instead of markdown (default: false)
+
+## References
+
+- [ToolHive Documentation](https://docs.stacklok.com/toolhive/)
+- [MCP Specification](https://spec.modelcontextprotocol.io/)
+- [GoFetch Source Repository](https://github.com/StacklokLabs/gofetch)

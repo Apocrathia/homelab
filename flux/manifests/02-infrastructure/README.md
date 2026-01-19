@@ -4,12 +4,6 @@ Core infrastructure components required for cluster operation.
 
 > **Navigation**: [← Back to Flux README](../README.md)
 
-## Documentation
-
-- **[Cilium](https://docs.cilium.io/)** - CNI and networking
-- **[Longhorn](https://longhorn.io/docs/)** - Distributed storage
-- **[Prometheus Operator](https://prometheus-operator.dev/)** - Monitoring stack
-
 ## Overview
 
 The infrastructure layer provides the foundational services that enable the cluster to function:
@@ -143,6 +137,12 @@ kubectl get gateway -A
 kubectl get storageclass
 kubectl get crd | grep -E "(cilium|longhorn|prometheus)"
 ```
+
+## References
+
+- **[Cilium](https://docs.cilium.io/)** - CNI and networking
+- **[Longhorn](https://longhorn.io/docs/)** - Distributed storage
+- **[Prometheus Operator](https://prometheus-operator.dev/)** - Monitoring stack
 
 ## Best Practices
 

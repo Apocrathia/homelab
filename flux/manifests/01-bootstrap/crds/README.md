@@ -4,11 +4,6 @@ CRDs required by components, applied before controllers are deployed.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
 
-## Documentation
-
-- **[Kubernetes CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)** - Official documentation
-- **[Prometheus Operator CRDs](https://prometheus-operator.dev/docs/operator/api/)** - Monitoring CRDs
-
 ## Overview
 
 CRDs extend the Kubernetes API with custom resources that define new object types. This deployment installs CRDs for:
@@ -141,6 +136,11 @@ kubectl get crd -o custom-columns=NAME:.metadata.name,VERSION:.spec.versions[0].
 # Test CRD functionality
 kubectl explain <resource-type>.<group>
 ```
+
+## References
+
+- **[Kubernetes CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)** - Official documentation
+- **[Prometheus Operator CRDs](https://prometheus-operator.dev/docs/operator/api/)** - Monitoring CRDs
 
 ## Best Practices
 

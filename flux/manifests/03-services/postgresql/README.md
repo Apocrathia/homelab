@@ -4,11 +4,6 @@ Kubernetes-native PostgreSQL operator for managing PostgreSQL clusters with ente
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[CloudNativePG Documentation](https://cloudnative-pg.io/docs/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/cloudnative-pg/cloudnative-pg)** - Source code and issues
-
 ## Overview
 
 This deployment provides the CloudNativePG operator which enables:
@@ -170,6 +165,11 @@ kubectl -n <namespace> exec -it <pod-name> -- psql -U <username> -d <database>
 # Check database status
 kubectl -n <namespace> exec -it <pod-name> -- pg_isready -U <username> -d <database>
 ```
+
+## References
+
+- **[CloudNativePG Documentation](https://cloudnative-pg.io/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/cloudnative-pg/cloudnative-pg)** - Source code and issues
 
 ## Security Considerations
 

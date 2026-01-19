@@ -4,11 +4,6 @@ Management and administrative applications for the homelab infrastructure.
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
-
-- **[Generic-App Chart](../../helm/generic-app/README.md)** - Application deployment template
-- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration
-
 ## Applications
 
 ### [ChangeDetection.io](./changedetection-io/README.md)
@@ -84,3 +79,8 @@ Management applications provide tools for:
 - **Downloads**: Secure torrent client with VPN integration
 
 All applications are deployed via Flux GitOps and integrate with the homelab's authentication and monitoring infrastructure.
+
+## References
+
+- **[Generic-App Chart](../../helm/generic-app/README.md)** - Application deployment template
+- **[Authentik Outpost](https://docs.goauthentik.io/docs/outposts/)** - SSO integration

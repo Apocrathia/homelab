@@ -4,12 +4,6 @@ Web scraping API that converts websites into LLM-ready markdown.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
-## Documentation
-
-- **[Firecrawl Docs](https://docs.firecrawl.dev/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/mendableai/firecrawl)** - Source code and issues
-- **[Self-Hosting Guide](https://github.com/mendableai/firecrawl/blob/main/SELF_HOST.md)** - Container deployment
-
 ## Overview
 
 This deployment includes multiple generic-app HelmReleases:
@@ -60,3 +54,9 @@ kubectl get pods -n firecrawl-redis
 kubectl get pods -n firecrawl-rabbitmq
 kubectl get pods -n firecrawl-postgres
 ```
+
+## References
+
+- **[Firecrawl Docs](https://docs.firecrawl.dev/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/mendableai/firecrawl)** - Source code and issues
+- **[Self-Hosting Guide](https://github.com/mendableai/firecrawl/blob/main/SELF_HOST.md)** - Container deployment

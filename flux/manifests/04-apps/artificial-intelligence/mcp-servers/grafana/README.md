@@ -4,12 +4,6 @@ MCP server enabling AI assistants to interact with Grafana instances through a s
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- **[Grafana MCP Documentation](https://deepwiki.com/grafana/mcp-grafana)** - Server documentation
-- **[MCP Protocol Specification](https://modelcontextprotocol.io/)** - Model Context Protocol
-- **[Grafana API](https://grafana.com/docs/grafana/latest/developers/http_api/)** - Grafana HTTP API
-
 ## Overview
 
 The Grafana MCP server provides a bridge between AI assistants and Grafana's ecosystem, allowing for:
@@ -147,3 +141,9 @@ kubectl logs -n mcp-grafana grafana-mcp-0 -c mcp -f
 # Check health endpoint
 kubectl exec -n mcp-grafana grafana-mcp-0 -- curl -s localhost:8080/health
 ```
+
+## References
+
+- **[Grafana MCP Documentation](https://deepwiki.com/grafana/mcp-grafana)** - Server documentation
+- **[MCP Protocol Specification](https://modelcontextprotocol.io/)** - Model Context Protocol
+- **[Grafana API](https://grafana.com/docs/grafana/latest/developers/http_api/)** - Grafana HTTP API

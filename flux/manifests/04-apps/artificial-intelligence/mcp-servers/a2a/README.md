@@ -4,12 +4,6 @@ Bridge between Model Context Protocol (MCP) and Agent-to-Agent (A2A) protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [A2A-MCP-Server](https://github.com/GongRzhe/A2A-MCP-Server) - MCP server repository
-- [A2A Protocol](https://a2a-protocol.org) - Agent-to-Agent protocol documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -87,3 +81,9 @@ The A2A MCP server provides these tools:
 ## Integration
 
 Enables MCP clients (Cursor, Open WebUI, Claude Desktop) to communicate with kagent agents and other A2A-compatible agents via the A2A protocol. Agents are registered dynamically through MCP tools, providing flexibility to add or remove agents without restarting the server.
+
+## References
+
+- [A2A-MCP-Server](https://github.com/GongRzhe/A2A-MCP-Server) - MCP server repository
+- [A2A Protocol](https://a2a-protocol.org) - Agent-to-Agent protocol documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

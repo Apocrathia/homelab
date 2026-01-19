@@ -4,12 +4,6 @@ Automated download management system that monitors and cleans up unwanted or blo
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Cleanuparr Documentation](https://cleanuparr.github.io/Cleanuparr/)** - Primary documentation source
-- **[Cleanuparr GitHub](https://github.com/Cleanuparr/Cleanuparr)** - Source code and issues
-- **[DeepWiki Cleanuparr](https://deepwiki.com/Cleanuparr/Cleanuparr)** - Technical architecture details
-
 ## Overview
 
 This deployment includes:
@@ -133,3 +127,9 @@ kubectl -n cleanuparr logs -l app.kubernetes.io/name=cleanuparr -f
 # Check for errors
 kubectl -n cleanuparr logs -l app.kubernetes.io/name=cleanuparr | grep -i error
 ```
+
+## References
+
+- **[Cleanuparr Documentation](https://cleanuparr.github.io/Cleanuparr/)** - Primary documentation source
+- **[Cleanuparr GitHub](https://github.com/Cleanuparr/Cleanuparr)** - Source code and issues
+- **[DeepWiki Cleanuparr](https://deepwiki.com/Cleanuparr/Cleanuparr)** - Technical architecture details

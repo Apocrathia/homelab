@@ -4,12 +4,6 @@ Self-hosted photo and video backup solution with powerful machine learning featu
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Official Documentation](https://immich.app/docs)** - Primary documentation source
-- **[GitHub Repository](https://github.com/immich-app/immich)** - Source code and issues
-- **[Helm Chart](https://github.com/immich-app/immich-charts)** - Kubernetes deployment
-
 ## Overview
 
 This deployment includes:
@@ -158,3 +152,9 @@ kubectl get helmrelease -n immich
 # Server logs
 kubectl logs -n immich -l app.kubernetes.io/component=server
 ```
+
+## References
+
+- **[Official Documentation](https://immich.app/docs)** - Primary documentation source
+- **[GitHub Repository](https://github.com/immich-app/immich)** - Source code and issues
+- **[Helm Chart](https://github.com/immich-app/immich-charts)** - Kubernetes deployment

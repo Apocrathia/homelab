@@ -4,11 +4,6 @@ Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[JetKVM Cloud API](https://github.com/jetkvm/cloud-api)** - Cloud API source and documentation
-- **[JetKVM KVM](https://github.com/jetkvm/kvm)** - Frontend and KVM documentation
-
 ## Overview
 
 - **Cloud API**: Node.js/Express backend with Prisma ORM, WebRTC signaling, and Google OAuth
@@ -122,3 +117,8 @@ kubectl logs -n jetkvm deployment/jetkvm-app -f
 # Database status
 kubectl get cluster -n jetkvm
 ```
+
+## References
+
+- **[JetKVM Cloud API](https://github.com/jetkvm/cloud-api)** - Cloud API source and documentation
+- **[JetKVM KVM](https://github.com/jetkvm/kvm)** - Frontend and KVM documentation

@@ -4,12 +4,6 @@ Recyclarr automatically synchronizes recommended settings from the TRaSH Guides 
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Recyclarr Documentation](https://recyclarr.dev/wiki/)** - Official documentation
-- **[TRaSH Guides](https://trash-guides.info/)** - Community configuration recommendations
-- **[GitHub Repository](https://github.com/recyclarr/recyclarr)** - Source code and issues
-
 ## Overview
 
 Recyclarr is a command-line utility that runs periodically to keep your media management services configured with optimal settings from the community-maintained TRaSH Guides.
@@ -74,3 +68,9 @@ kubectl logs -n recyclarr deployment/recyclarr -f
 # Test configuration
 kubectl exec -it deployment/recyclarr -n recyclarr -- recyclarr sync --preview
 ```
+
+## References
+
+- **[Recyclarr Documentation](https://recyclarr.dev/wiki/)** - Official documentation
+- **[TRaSH Guides](https://trash-guides.info/)** - Community configuration recommendations
+- **[GitHub Repository](https://github.com/recyclarr/recyclarr)** - Source code and issues

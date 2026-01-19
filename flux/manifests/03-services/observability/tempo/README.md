@@ -4,11 +4,6 @@ This directory contains the deployment configuration for Grafana Tempo, providin
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Documentation
-
-- **[Grafana Tempo Documentation](https://grafana.com/docs/tempo/)** - Primary documentation source
-- **[OpenTelemetry](https://opentelemetry.io/)** - OTLP protocol specification
-
 ## Architecture
 
 Tempo is deployed in distributed mode with the following components:
@@ -106,3 +101,8 @@ This enables service graph visualization and span metrics in Grafana.
 - Flux `valuesFrom` automatically injects credentials into the HelmRelease
 - External MinIO is configured with `insecure: true` for HTTP communication
 - No sensitive values are stored in the Git repository
+
+## References
+
+- **[Grafana Tempo Documentation](https://grafana.com/docs/tempo/)** - Primary documentation source
+- **[OpenTelemetry](https://opentelemetry.io/)** - OTLP protocol specification

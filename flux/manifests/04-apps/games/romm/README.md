@@ -4,12 +4,6 @@ Self-hosted ROM management platform for organizing, scanning, and playing retro 
 
 > **Navigation**: [← Back to Games README](../README.md)
 
-## Documentation
-
-- **[ROMM Documentation](https://romm.app/docs)** - Primary documentation source
-- **[ROMM GitHub](https://github.com/rommapp/romm)** - Source code and issues
-- **[ROMM Configuration](https://romm.app/docs/configuration)** - Configuration reference
-
 ## Overview
 
 This deployment includes:
@@ -121,3 +115,9 @@ kubectl -n romm get cluster romm-postgres
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[ROMM Documentation](https://romm.app/docs)** - Primary documentation source
+- **[ROMM GitHub](https://github.com/rommapp/romm)** - Source code and issues
+- **[ROMM Configuration](https://romm.app/docs/configuration)** - Configuration reference

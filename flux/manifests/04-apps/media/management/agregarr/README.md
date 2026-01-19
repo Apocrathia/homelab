@@ -4,11 +4,6 @@ Plex collection management tool that keeps Home and Recommended screens fresh wi
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Agregarr Documentation](https://agregarr.org/docs)** - Official documentation
-- **[Agregarr GitHub](https://github.com/agregarr/agregarr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -53,3 +48,8 @@ kubectl logs -n agregarr deployment/agregarr -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep agregarr
 ```
+
+## References
+
+- **[Agregarr Documentation](https://agregarr.org/docs)** - Official documentation
+- **[Agregarr GitHub](https://github.com/agregarr/agregarr)** - Source code and issues

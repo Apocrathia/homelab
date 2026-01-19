@@ -4,11 +4,6 @@ Automated missing content hunter for \*arr applications that systematically sear
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Huntarr Documentation](https://deepwiki.com/plexguide/Huntarr.io)** - Primary documentation source
-- **[Huntarr GitHub](https://github.com/plexguide/Huntarr.io)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -85,3 +80,8 @@ kubectl -n huntarr get pods -l app.kubernetes.io/name=huntarr
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost | grep huntarr
 ```
+
+## References
+
+- **[Huntarr Documentation](https://deepwiki.com/plexguide/Huntarr.io)** - Primary documentation source
+- **[Huntarr GitHub](https://github.com/plexguide/Huntarr.io)** - Source code and issues

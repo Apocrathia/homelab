@@ -4,11 +4,6 @@ Kubernetes controller for managing automated upgrades of Talos Linux and Kuberne
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Tuppr Documentation](https://github.com/aenix-io/tuppr)** - Official documentation
-- **[Talos Upgrades](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)** - Talos upgrade process
-
 ## Overview
 
 Tuppr provides automated upgrade orchestration for:
@@ -142,6 +137,11 @@ kubectl scale deployment tuppr --replicas=0 -n system-upgrade
 # Resume operations
 kubectl scale deployment tuppr --replicas=1 -n system-upgrade
 ```
+
+## References
+
+- **[Tuppr Documentation](https://github.com/aenix-io/tuppr)** - Official documentation
+- **[Talos Upgrades](https://www.talos.dev/v1.10/talos-guides/upgrading-talos/)** - Talos upgrade process
 
 ## Monitoring
 

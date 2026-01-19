@@ -4,12 +4,6 @@ Initial Flux configuration and core components needed to bootstrap the cluster.
 
 > **Navigation**: [← Back to Flux README](../README.md)
 
-## Documentation
-
-- **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
-- **[GitOps Toolkit](https://fluxcd.io/flux/)** - Flux documentation
-- **[1Password Connect](https://developer.1password.com/docs/connect)** - Secrets operator
-
 ## Overview
 
 The bootstrap layer provides the foundational components required to establish GitOps-based cluster management:
@@ -104,6 +98,12 @@ flux get sources git
 # Verify 1Password operator
 kubectl get pods -n onepassword-system
 ```
+
+## References
+
+- **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
+- **[GitOps Toolkit](https://fluxcd.io/flux/)** - Flux documentation
+- **[1Password Connect](https://developer.1password.com/docs/connect)** - Secrets operator
 
 ## Best Practices
 

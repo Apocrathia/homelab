@@ -4,12 +4,6 @@ Configuration for Helm repositories used across the homelab cluster.
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
 
-## Documentation
-
-- **[Helm Repository Guide](https://helm.sh/docs/topics/chart_repository/)** - Official documentation
-- **[Flux HelmRepository](https://fluxcd.io/flux/components/source/helmrepositories/)** - Flux integration
-- **[Artifact Hub](https://artifacthub.io/)** - Chart discovery
-
 ## Overview
 
 Helm repositories provide access to packaged applications and services. This setup manages repository configuration through Flux's `HelmRepository` resources, ensuring:
@@ -253,3 +247,9 @@ Repositories are monitored through:
 2. **Change Management**: Use GitOps for repository changes
 3. **Testing**: Validate changes in development first
 4. **Documentation**: Keep repository documentation current
+
+## References
+
+- **[Helm Repository Guide](https://helm.sh/docs/topics/chart_repository/)** - Official documentation
+- **[Flux HelmRepository](https://fluxcd.io/flux/components/source/helmrepositories/)** - Flux integration
+- **[Artifact Hub](https://artifacthub.io/)** - Chart discovery

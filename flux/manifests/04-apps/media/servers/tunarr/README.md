@@ -4,12 +4,6 @@ LiveTV channel creator that transforms media from Plex, Jellyfin, or Emby server
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Tunarr Documentation](https://deepwiki.com/chrisbenincasa/tunarr)** - Architecture and API documentation
-- **[Tunarr GitHub](https://github.com/chrisbenincasa/tunarr)** - Source code and issues
-- **[Tunarr Container](https://github.com/chrisbenincasa/tunarr/pkgs/container/tunarr)** - Container registry
-
 ## Overview
 
 This deployment includes:
@@ -106,3 +100,9 @@ kubectl -n tunarr logs -l app=tunarr --tail=50
 # Check configuration volume
 kubectl -n tunarr get pvc
 ```
+
+## References
+
+- **[Tunarr Documentation](https://deepwiki.com/chrisbenincasa/tunarr)** - Architecture and API documentation
+- **[Tunarr GitHub](https://github.com/chrisbenincasa/tunarr)** - Source code and issues
+- **[Tunarr Container](https://github.com/chrisbenincasa/tunarr/pkgs/container/tunarr)** - Container registry

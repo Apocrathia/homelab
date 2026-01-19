@@ -4,11 +4,6 @@ Website change detection and monitoring service with notification support.
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[ChangeDetection.io Documentation](https://github.com/dgtlmoon/changedetection.io/wiki)** - Primary documentation source
-- **[ChangeDetection.io GitHub](https://github.com/dgtlmoon/changedetection.io)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -82,3 +77,8 @@ kubectl -n changedetection get pods -l app.kubernetes.io/name=changedetection
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[ChangeDetection.io Documentation](https://github.com/dgtlmoon/changedetection.io/wiki)** - Primary documentation source
+- **[ChangeDetection.io GitHub](https://github.com/dgtlmoon/changedetection.io)** - Source code and issues

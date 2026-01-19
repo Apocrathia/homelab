@@ -4,12 +4,6 @@ Media server ecosystem for personal media collection management, streaming, and 
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
-
-- **[Plex](https://support.plex.tv/)** - Media server documentation
-- **[Servarr Wiki](https://wiki.servarr.com/)** - \*arr application documentation
-- **[TRaSH Guides](https://trash-guides.info/)** - Configuration best practices
-
 ## Overview
 
 Media applications are organized into three categories:
@@ -109,3 +103,9 @@ Arr applications communicate via internal Kubernetes services:
 - Sonarr/Radarr → qBittorrent/SABnzbd for downloads
 - Prowlarr → All Arr apps for indexer sync
 - Tautulli → Plex for monitoring
+
+## References
+
+- **[Plex](https://support.plex.tv/)** - Media server documentation
+- **[Servarr Wiki](https://wiki.servarr.com/)** - \*arr application documentation
+- **[TRaSH Guides](https://trash-guides.info/)** - Configuration best practices

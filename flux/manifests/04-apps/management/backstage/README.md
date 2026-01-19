@@ -4,12 +4,6 @@ Developer portal for building and managing software catalogs, templates, and doc
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Backstage Documentation](https://backstage.io/docs/)** - Primary documentation
-- **[Backstage GitHub](https://github.com/backstage/backstage)** - Source code and issues
-- **[Helm Chart](https://github.com/backstage/charts)** - Official Helm chart
-
 ## Overview
 
 This deployment includes:
@@ -98,3 +92,9 @@ kubectl logs -n backstage -l app.kubernetes.io/name=backstage -f
 # PostgreSQL cluster status
 kubectl get cluster backstage-postgres -n backstage
 ```
+
+## References
+
+- **[Backstage Documentation](https://backstage.io/docs/)** - Primary documentation
+- **[Backstage GitHub](https://github.com/backstage/backstage)** - Source code and issues
+- **[Helm Chart](https://github.com/backstage/charts)** - Official Helm chart

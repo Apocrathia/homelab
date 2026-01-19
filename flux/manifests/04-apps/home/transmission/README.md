@@ -4,12 +4,6 @@ Torrent client with integrated VPN routing via Gluetun init container for secure
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Transmission Documentation](https://transmissionbt.com/help/)** - Primary documentation source
-- **[Gluetun VPN](https://github.com/qdm12/gluetun)** - VPN container documentation
-- **[LinuxServer.io Transmission](https://docs.linuxserver.io/images/docker-transmission)** - Container documentation
-
 ## Overview
 
 This deployment includes:
@@ -96,3 +90,9 @@ kubectl -n transmission get pods -l app.kubernetes.io/name=transmission
 # Gluetun VPN status
 kubectl -n transmission get pods -l app.kubernetes.io/name=gluetun
 ```
+
+## References
+
+- **[Transmission Documentation](https://transmissionbt.com/help/)** - Primary documentation source
+- **[Gluetun VPN](https://github.com/qdm12/gluetun)** - VPN container documentation
+- **[LinuxServer.io Transmission](https://docs.linuxserver.io/images/docker-transmission)** - Container documentation

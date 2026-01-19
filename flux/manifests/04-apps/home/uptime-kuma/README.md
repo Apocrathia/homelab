@@ -4,11 +4,6 @@ Self-hosted monitoring tool for tracking service uptime and performance across m
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Uptime Kuma Documentation](https://uptime.kuma.pet)** - Primary documentation source
-- **[Uptime Kuma GitHub](https://github.com/louislam/uptime-kuma)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -82,3 +77,8 @@ kubectl -n uptime-kuma get pods -l app.kubernetes.io/name=uptime-kuma
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[Uptime Kuma Documentation](https://uptime.kuma.pet)** - Primary documentation source
+- **[Uptime Kuma GitHub](https://github.com/louislam/uptime-kuma)** - Source code and issues

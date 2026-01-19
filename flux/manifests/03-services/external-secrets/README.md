@@ -4,11 +4,6 @@ External Secrets Operator is a Kubernetes operator that integrates external secr
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[External Secrets Documentation](https://external-secrets.io/latest/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/external-secrets/external-secrets)** - Source code and issues
-
 ## Overview
 
 This deployment installs the External Secrets Operator using Helm, which provides:
@@ -149,3 +144,8 @@ The operator provides metrics and logs for:
 - Push/pull operations to external systems
 - Authentication and authorization events
 - Performance metrics for troubleshooting
+
+## References
+
+- **[External Secrets Documentation](https://external-secrets.io/latest/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/external-secrets/external-secrets)** - Source code and issues

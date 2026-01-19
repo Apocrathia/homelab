@@ -4,11 +4,6 @@ Application to sync Plex watch status to MyAnimeList automatically.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Shinkro Documentation](https://docs.shinkro.com)** - Primary documentation source
-- **[Shinkro GitHub](https://github.com/varoOP/shinkro)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -93,3 +88,8 @@ kubectl -n shinkro get pods,svc,pvc
 # Check configuration volume
 kubectl -n shinkro get pvc
 ```
+
+## References
+
+- **[Shinkro Documentation](https://docs.shinkro.com)** - Primary documentation source
+- **[Shinkro GitHub](https://github.com/varoOP/shinkro)** - Source code and issues

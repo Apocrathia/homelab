@@ -4,11 +4,6 @@ Kubernetes controller for managing distributed workloads with leader-worker patt
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[LeaderWorkerSet Documentation](https://lws.sigs.k8s.io/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/kubernetes-sigs/lws)** - Source code and issues
-
 ## Overview
 
 LeaderWorkerSet provides a Kubernetes-native way to deploy distributed workloads that require coordination between leader and worker pods. This is used by `llm-d` for multi-node data parallelism in LLM inference.
@@ -22,3 +17,8 @@ LeaderWorkerSet provides a Kubernetes-native way to deploy distributed workloads
 ## Usage
 
 This service is automatically deployed and provides the `LeaderWorkerSet` CRD for use by other components like `llm-d` ModelService.
+
+## References
+
+- **[LeaderWorkerSet Documentation](https://lws.sigs.k8s.io/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/kubernetes-sigs/lws)** - Source code and issues

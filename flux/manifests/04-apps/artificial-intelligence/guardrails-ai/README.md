@@ -4,12 +4,6 @@ API server providing guardrails validation for LLM outputs using community valid
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
-## Documentation
-
-- **[Guardrails Hub](https://www.guardrailsai.com/docs/concepts/hub)** - Community validators
-- **[Guardrails Lite Server](https://github.com/guardrails-ai/guardrails-lite-server)** - Reference implementation
-- **[LiteLLM Guardrails](https://docs.litellm.ai/docs/guardrails/guardrails_ai)** - Integration documentation
-
 ## Overview
 
 This deployment includes:
@@ -79,3 +73,9 @@ kubectl -n guardrails-ai get pods -l app.kubernetes.io/name=guardrails
 # Test API endpoints
 kubectl -n guardrails-ai exec -it deployment/guardrails -- curl localhost:8000/guards
 ```
+
+## References
+
+- **[Guardrails Hub](https://www.guardrailsai.com/docs/concepts/hub)** - Community validators
+- **[Guardrails Lite Server](https://github.com/guardrails-ai/guardrails-lite-server)** - Reference implementation
+- **[LiteLLM Guardrails](https://docs.litellm.ai/docs/guardrails/guardrails_ai)** - Integration documentation

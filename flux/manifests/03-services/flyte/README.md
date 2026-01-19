@@ -4,12 +4,6 @@ Kubernetes-native workflow orchestration platform for machine learning and data 
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Flyte Official Documentation](https://www.union.ai/docs/v1/flyte/user-guide/)** - Primary documentation source
-- **[Flyte GitHub Repository](https://github.com/flyteorg/flyte)** - Source code and issues
-- **[Flyte Helm Charts](https://github.com/flyteorg/flyte/tree/master/charts)** - Deployment configuration
-
 ## Overview
 
 This deployment includes:
@@ -126,3 +120,9 @@ kubectl get pods -l app.kubernetes.io/name=flytepropeller -n flyte-system
 kubectl get pods -l app.kubernetes.io/name=datacatalog -n flyte-system
 kubectl get pods -l app.kubernetes.io/name=flyteconsole -n flyte-system
 ```
+
+## References
+
+- **[Flyte Official Documentation](https://www.union.ai/docs/v1/flyte/user-guide/)** - Primary documentation source
+- **[Flyte GitHub Repository](https://github.com/flyteorg/flyte)** - Source code and issues
+- **[Flyte Helm Charts](https://github.com/flyteorg/flyte/tree/master/charts)** - Deployment configuration

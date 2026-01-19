@@ -4,12 +4,6 @@ BitMagnet is a self-hosted BitTorrent indexer, DHT crawler, content classifier, 
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[BitMagnet DeepWiki](https://deepwiki.com/bitmagnet-io/bitmagnet)** - Primary documentation source
-- **[BitMagnet GitHub](https://github.com/bitmagnet-io/bitmagnet)** - Source code and issues
-- **[BitMagnet Website](https://bitmagnet.io/)** - Official website
-
 ## Overview
 
 This deployment includes:
@@ -131,3 +125,9 @@ kubectl -n bitmagnet get cluster bitmagnet-postgres
 # Check service connectivity
 kubectl -n bitmagnet get svc
 ```
+
+## References
+
+- **[BitMagnet DeepWiki](https://deepwiki.com/bitmagnet-io/bitmagnet)** - Primary documentation source
+- **[BitMagnet GitHub](https://github.com/bitmagnet-io/bitmagnet)** - Source code and issues
+- **[BitMagnet Website](https://bitmagnet.io/)** - Official website

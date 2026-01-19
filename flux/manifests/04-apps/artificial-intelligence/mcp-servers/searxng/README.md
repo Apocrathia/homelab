@@ -4,12 +4,6 @@ The SearXNG MCP server provides web search capabilities through the Model Contex
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [SearXNG](https://docs.searxng.org/) - Privacy-respecting metasearch engine
-- [mcp-searxng](https://github.com/ihor-sokoliuk/mcp-searxng) - MCP server repository
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -68,3 +62,9 @@ kubectl logs -n mcp-searxng deployment/searxng-mcp -c mcp -f
 kubectl exec -n mcp-searxng deployment/searxng-mcp -- \
   curl -s http://searxng.searxng.svc.cluster.local:8080/healthz
 ```
+
+## References
+
+- [SearXNG](https://docs.searxng.org/) - Privacy-respecting metasearch engine
+- [mcp-searxng](https://github.com/ihor-sokoliuk/mcp-searxng) - MCP server repository
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

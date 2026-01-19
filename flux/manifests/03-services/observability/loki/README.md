@@ -4,11 +4,6 @@ This directory contains the deployment configuration for Grafana Loki, which pro
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Documentation
-
-- **[Loki Documentation](https://grafana.com/docs/loki/)** - Primary documentation source
-- **[LogQL Reference](https://grafana.com/docs/loki/latest/logql/)** - Query language documentation
-
 ## Architecture
 
 Loki is deployed in monolithic mode with the following components:
@@ -115,6 +110,11 @@ kubectl exec -n loki-system deployment/loki -- logcli query '{job="kubelet"}'
 # Port forward to access Loki API
 kubectl port-forward -n loki-system svc/loki 3100:3100
 ```
+
+## References
+
+- **[Loki Documentation](https://grafana.com/docs/loki/)** - Primary documentation source
+- **[LogQL Reference](https://grafana.com/docs/loki/latest/logql/)** - Query language documentation
 
 ## External Log Ingestion
 

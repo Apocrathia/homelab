@@ -4,12 +4,6 @@ Distributed block storage system for Kubernetes with replication, backup, and di
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
-## Documentation
-
-- **[Longhorn Documentation](https://longhorn.io/docs/)** - Official documentation
-- **[Architecture Guide](https://longhorn.io/docs/1.6.0/concepts/)** - System architecture
-- **[Backup and Restore](https://longhorn.io/docs/1.6.0/snapshots-and-backups/)** - Backup documentation
-
 ## Overview
 
 Longhorn provides persistent storage for Kubernetes workloads with features like:
@@ -244,6 +238,12 @@ kubectl logs -n longhorn-system -l longhorn-engine
 # UI logs
 kubectl logs -n longhorn-system deployment/longhorn-ui
 ```
+
+## References
+
+- **[Longhorn Documentation](https://longhorn.io/docs/)** - Official documentation
+- **[Architecture Guide](https://longhorn.io/docs/1.6.0/concepts/)** - System architecture
+- **[Backup and Restore](https://longhorn.io/docs/1.6.0/snapshots-and-backups/)** - Backup documentation
 
 ## Best Practices
 

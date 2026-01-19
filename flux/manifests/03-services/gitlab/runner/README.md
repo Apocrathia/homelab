@@ -4,11 +4,6 @@ This guide explains how to set up the GitLab Runner in your Kubernetes cluster.
 
 > **Navigation**: [← Back to GitLab README](../README.md)
 
-## Documentation
-
-- **[GitLab Runner Documentation](https://docs.gitlab.com/runner/)** - Primary documentation source
-- **[Kubernetes Executor](https://docs.gitlab.com/runner/executors/kubernetes/)** - Kubernetes executor documentation
-
 ## Prerequisites
 
 - Access to your GitLab account with permissions to create runners
@@ -71,3 +66,8 @@ If the runner isn't connecting:
    ```bash
    kubectl describe pod -n gitlab-runner -l app=gitlab-runner
    ```
+
+## References
+
+- **[GitLab Runner Documentation](https://docs.gitlab.com/runner/)** - Primary documentation source
+- **[Kubernetes Executor](https://docs.gitlab.com/runner/executors/kubernetes/)** - Kubernetes executor documentation

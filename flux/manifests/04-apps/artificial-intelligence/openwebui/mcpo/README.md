@@ -4,11 +4,6 @@ MCPO (MCP-to-OpenAPI) bridge that enables Open WebUI to connect to MCP servers t
 
 > **Navigation**: [← Back to OpenWebUI README](../README.md)
 
-## Documentation
-
-- **[MCPO GitHub](https://github.com/modelcontextprotocol/mcpo)** - Source code and documentation
-- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol specification
-
 ## Overview
 
 The MCPO bridge acts as a translation layer between Open WebUI and the existing MCP servers managed by ToolHive. It exposes all MCP server tools as individual OpenAPI endpoints that Open WebUI can consume.
@@ -79,3 +74,8 @@ kubectl logs -n openwebui deployment/mcpo-bridge -f
 # Test OpenAPI endpoint
 kubectl exec -n openwebui deployment/mcpo-bridge -- curl -s localhost:8000/openapi.json | head -20
 ```
+
+## References
+
+- **[MCPO GitHub](https://github.com/modelcontextprotocol/mcpo)** - Source code and documentation
+- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol specification

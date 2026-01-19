@@ -4,11 +4,6 @@ RDT-Client integrates Real-Debrid and other debrid services with Sonarr/Radarr, 
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[RDT-Client DeepWiki](https://deepwiki.com/rogerfar/rdt-client)** - Primary documentation source
-- **[RDT-Client GitHub](https://github.com/rogerfar/rdt-client)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -115,3 +110,8 @@ kubectl -n rdt-client get pods -l app.kubernetes.io/name=rdt-client
 # Check configuration volume
 kubectl -n rdt-client get pvc
 ```
+
+## References
+
+- **[RDT-Client DeepWiki](https://deepwiki.com/rogerfar/rdt-client)** - Primary documentation source
+- **[RDT-Client GitHub](https://github.com/rogerfar/rdt-client)** - Source code and issues

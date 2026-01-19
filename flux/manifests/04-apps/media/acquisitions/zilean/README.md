@@ -4,12 +4,6 @@ Zilean is a content search and indexing service that aggregates torrent metadata
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Zilean Documentation](https://ipromknight.github.io/zilean/)** - Official documentation
-- **[Zilean DeepWiki](https://deepwiki.com/iPromKnight/zilean)** - DeepWiki documentation
-- **[Zilean GitHub](https://github.com/iPromKnight/zilean)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -128,3 +122,9 @@ kubectl get cluster zilean-postgres -n zilean
 # Check service connectivity
 kubectl get svc -n zilean
 ```
+
+## References
+
+- **[Zilean Documentation](https://ipromknight.github.io/zilean/)** - Official documentation
+- **[Zilean DeepWiki](https://deepwiki.com/iPromKnight/zilean)** - DeepWiki documentation
+- **[Zilean GitHub](https://github.com/iPromKnight/zilean)** - Source code and issues

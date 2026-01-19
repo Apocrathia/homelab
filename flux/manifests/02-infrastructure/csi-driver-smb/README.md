@@ -4,11 +4,6 @@ CSI driver enabling Kubernetes workloads to use SMB file shares as persistent vo
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
-## Documentation
-
-- **[CSI Driver SMB](https://github.com/kubernetes-csi/csi-driver-smb)** - Official documentation
-- **[Kubernetes CSI](https://kubernetes-csi.github.io/docs/)** - CSI specification
-
 ## Overview
 
 The CSI Driver for SMB allows Kubernetes pods to mount SMB file shares as persistent volumes, providing:
@@ -277,6 +272,11 @@ kubectl exec -it <pod-name> -- smbclient -U user%pass //server/share -c 'ls'
 # Test DNS resolution
 kubectl exec -it <pod-name> -- nslookup server
 ```
+
+## References
+
+- **[CSI Driver SMB](https://github.com/kubernetes-csi/csi-driver-smb)** - Official documentation
+- **[Kubernetes CSI](https://kubernetes-csi.github.io/docs/)** - CSI specification
 
 ## Best Practices
 

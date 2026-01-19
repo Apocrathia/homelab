@@ -4,12 +4,6 @@ Guide for deploying the 1Password Connect Operator in your Kubernetes cluster.
 
 > **Navigation**: [← Back to Flux README](../../../README.md)
 
-## Documentation
-
-- **[1Password Connect](https://developer.1password.com/docs/connect)** - Official documentation
-- **[1Password CLI](https://developer.1password.com/docs/cli/)** - CLI reference
-- **[Helm Charts](https://github.com/1Password/connect-helm-charts)** - Deployment charts
-
 ## Prerequisites
 
 - Access to your 1Password account with administrative privileges
@@ -100,6 +94,12 @@ Common issues and solutions:
    - Ensure the credentials file is valid and properly encoded
    - Verify the token has the correct permissions in 1Password
    - Check if the token has expired or been revoked
+
+## References
+
+- **[1Password Connect](https://developer.1password.com/docs/connect)** - Official documentation
+- **[1Password CLI](https://developer.1password.com/docs/cli/)** - CLI reference
+- **[Helm Charts](https://github.com/1Password/connect-helm-charts)** - Deployment charts
 
 ## Additional Resources
 

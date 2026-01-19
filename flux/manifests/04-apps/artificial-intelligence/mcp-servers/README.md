@@ -4,11 +4,6 @@ Model Context Protocol servers providing specialized functionality for AI client
 
 > **Navigation**: [← Back to AI README](../README.md)
 
-## Documentation
-
-- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
-- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Protocol specification
-
 ## Overview
 
 All MCP servers are internal-only and accessible exclusively through the LiteLLM proxy. This provides:
@@ -190,3 +185,8 @@ kubectl get mcpservers --all-namespaces
 # Check services
 kubectl get svc --all-namespaces | grep mcp-
 ```
+
+## References
+
+- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
+- **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Protocol specification

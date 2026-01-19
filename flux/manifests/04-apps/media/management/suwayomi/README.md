@@ -4,11 +4,6 @@ Manga download manager that uses Tachiyomi's extension ecosystem to browse and d
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Official Documentation](https://github.com/Suwayomi/Suwayomi-Server/wiki)** - Wiki and setup guides
-- **[GitHub Repository](https://github.com/Suwayomi/Suwayomi-Server)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -59,3 +54,8 @@ kubectl logs -n suwayomi deployment/suwayomi -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep suwayomi
 ```
+
+## References
+
+- **[Official Documentation](https://github.com/Suwayomi/Suwayomi-Server/wiki)** - Wiki and setup guides
+- **[GitHub Repository](https://github.com/Suwayomi/Suwayomi-Server)** - Source code and issues

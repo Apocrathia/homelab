@@ -4,12 +4,6 @@ Comprehensive monitoring solution for Kubernetes based on Prometheus, Grafana, a
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
-## Documentation
-
-- **[Kube Prometheus Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)** - Helm chart documentation
-- **[Prometheus](https://prometheus.io/docs/)** - Prometheus documentation
-- **[Grafana](https://grafana.com/docs/)** - Grafana documentation
-
 ## Overview
 
 The kube-prometheus-stack provides a complete monitoring platform with:
@@ -265,6 +259,12 @@ kubectl logs -n grafana-system deployment/grafana
 # Alertmanager logs
 kubectl logs -n prometheus-system -l app.kubernetes.io/name=alertmanager
 ```
+
+## References
+
+- **[Kube Prometheus Stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)** - Helm chart documentation
+- **[Prometheus](https://prometheus.io/docs/)** - Prometheus documentation
+- **[Grafana](https://grafana.com/docs/)** - Grafana documentation
 
 ## Best Practices
 

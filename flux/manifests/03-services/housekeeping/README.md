@@ -4,11 +4,6 @@ Automated maintenance tasks for cluster health and organization.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Kubernetes CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
-- **[Talos etcd Management](https://www.talos.dev/v1.12/talos-guides/configuration/etcd-maintenance/)** - etcd operations
-
 ## Overview
 
 Housekeeping provides automated maintenance tasks via CronJobs.
@@ -64,6 +59,11 @@ kubectl logs -n kube-system -l job-name=node-labeler --tail=20
 # Verify node labels
 kubectl get nodes --show-labels | grep control-plane
 ```
+
+## References
+
+- **[Kubernetes CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
+- **[Talos etcd Management](https://www.talos.dev/v1.12/talos-guides/configuration/etcd-maintenance/)** - etcd operations
 
 ## Prerequisites
 

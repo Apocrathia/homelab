@@ -4,11 +4,6 @@ Cross-platform GUI application for managing rclone remotes with a web-based inte
 
 > **Navigation**: [← Back to Management Apps README](../README.md)
 
-## Documentation
-
-- **[RClone Documentation](https://rclone.org/docs/)** - RClone official documentation
-- **[GitHub Repository](https://github.com/Zarestia-Dev/rclone-manager)** - Source code and issues
-
 ## Overview
 
 RClone Manager provides a web-based interface to configure cloud storage remotes, mount drives, sync/copy/move files, and schedule backup jobs.
@@ -57,3 +52,8 @@ kubectl logs -n rclone -l app.kubernetes.io/name=rclone -f
 kubectl port-forward -n rclone svc/rclone 8080:8080
 curl localhost:8080/health
 ```
+
+## References
+
+- **[RClone Documentation](https://rclone.org/docs/)** - RClone official documentation
+- **[GitHub Repository](https://github.com/Zarestia-Dev/rclone-manager)** - Source code and issues

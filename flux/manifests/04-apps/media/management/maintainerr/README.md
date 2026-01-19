@@ -4,11 +4,6 @@ Automated media library management system that identifies and removes stale cont
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Maintainerr Documentation](https://docs.maintainerr.info)** - Primary documentation source
-- **[Maintainerr GitHub](https://github.com/maintainerr/maintainerr)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -99,3 +94,8 @@ kubectl logs -n maintainerr -l app=maintainerr -f
 # Check for errors
 kubectl logs -n maintainerr -l app=maintainerr | grep -i error
 ```
+
+## References
+
+- **[Maintainerr Documentation](https://docs.maintainerr.info)** - Primary documentation source
+- **[Maintainerr GitHub](https://github.com/maintainerr/maintainerr)** - Source code and issues

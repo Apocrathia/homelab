@@ -4,11 +4,6 @@ The ToolHive operator manages MCP (Model Context Protocol) servers in Kubernetes
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/stacklok/toolhive)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -46,3 +41,8 @@ Each MCPServer gets minimal required permissions:
 - Pod lifecycle operations
 
 > **Note**: This is experimental software under active development. CRDs are in alpha state and breaking changes are possible.
+
+## References
+
+- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/stacklok/toolhive)** - Source code and issues

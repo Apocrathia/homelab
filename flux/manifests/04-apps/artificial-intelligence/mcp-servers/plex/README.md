@@ -4,12 +4,6 @@ The Plex MCP server provides Plex Media Server integration through the Model Con
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [plex-mcp-server](https://github.com/vladimir-tutin/plex-mcp-server) - MCP server repository
-- [Plex Media Server](https://www.plex.tv/) - Media server documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -72,3 +66,9 @@ kubectl logs -n mcp-plex deployment/plex-mcp -c mcp -f
 kubectl exec -n mcp-plex deployment/plex-mcp -- \
   curl -s -H "X-Plex-Token: $PLEX_TOKEN" "$PLEX_URL/identity"
 ```
+
+## References
+
+- [plex-mcp-server](https://github.com/vladimir-tutin/plex-mcp-server) - MCP server repository
+- [Plex Media Server](https://www.plex.tv/) - Media server documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

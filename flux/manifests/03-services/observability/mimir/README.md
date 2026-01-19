@@ -4,11 +4,6 @@ This directory contains the deployment configuration for Grafana Mimir, which pr
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Documentation
-
-- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/grafana/mimir)** - Source code and issues
-
 ## Architecture
 
 Mimir is deployed in distributed mode with the following components:
@@ -74,3 +69,8 @@ Before deploying Mimir, ensure these buckets exist in your MinIO server:
 ## Monitoring
 
 Mimir components are monitored via ServiceMonitors and will appear in the existing Prometheus/Grafana stack.
+
+## References
+
+- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/grafana/mimir)** - Source code and issues

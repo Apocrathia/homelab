@@ -4,12 +4,6 @@ Workflow automation platform with visual flow editor for complex workflows and i
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[n8n Documentation](https://docs.n8n.io/)** - Primary documentation source
-- **[n8n GitHub](https://github.com/n8n-io/n8n)** - Source code and issues
-- **[n8n Helm Chart](https://github.com/n8n-io/n8n-helm-chart)** - Deployment configuration
-
 ## Overview
 
 This deployment includes:
@@ -109,3 +103,9 @@ kubectl -n n8n get cluster n8n-postgres
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[n8n Documentation](https://docs.n8n.io/)** - Primary documentation source
+- **[n8n GitHub](https://github.com/n8n-io/n8n)** - Source code and issues
+- **[n8n Helm Chart](https://github.com/n8n-io/n8n-helm-chart)** - Deployment configuration

@@ -4,11 +4,6 @@ Scalable, efficient source of container resource metrics for Kubernetes autoscal
 
 > **Navigation**: [← Back to Infrastructure README](../README.md)
 
-## Documentation
-
-- **[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)** - Official documentation
-- **[Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)** - Horizontal Pod Autoscaler guide
-
 ## Overview
 
 Metrics Server is a scalable, efficient source of container resource metrics for Kubernetes built-in autoscaling pipelines. It provides:
@@ -245,6 +240,11 @@ kubectl logs -n kube-system kubelet
 # Monitor API server logs
 kubectl logs -n kube-system kube-apiserver
 ```
+
+## References
+
+- **[Metrics Server](https://github.com/kubernetes-sigs/metrics-server)** - Official documentation
+- **[Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)** - Horizontal Pod Autoscaler guide
 
 ## Best Practices
 

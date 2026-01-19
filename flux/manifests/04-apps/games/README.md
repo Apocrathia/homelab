@@ -4,11 +4,6 @@ Game support services for managing, organizing, and playing games in the homelab
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
-
-- **[ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)** - Steam card farming
-- **[ROMM](https://github.com/rommapp/romm)** - ROM management
-
 ## Applications
 
 ### [ArchiSteamFarm](./archisteamfarm/README.md)
@@ -29,3 +24,8 @@ Game support services provide tools for:
 - **Metadata Integration**: Automatic cover art, descriptions, and platform information
 
 All applications are deployed via Flux GitOps and integrate with the homelab's authentication, monitoring, and gateway infrastructure. Game server hosting is handled separately at `game.apocrathia.com` using [AMP (Application Management Platform)](https://cubecoders.com/AMP).
+
+## References
+
+- **[ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)** - Steam card farming
+- **[ROMM](https://github.com/rommapp/romm)** - ROM management

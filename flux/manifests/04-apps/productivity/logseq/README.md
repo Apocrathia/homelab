@@ -4,12 +4,6 @@ Privacy-first, open-source platform for knowledge management and collaboration w
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Official Documentation](https://docs.logseq.com/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/logseq/logseq)** - Source code and issues
-- **[Logseq Guide](https://github.com/dustinlacewell/logseq-guide)** - Community deployment guide
-
 ## Overview
 
 This deployment includes:
@@ -88,3 +82,9 @@ kubectl -n logseq get endpoints logseq
 # Check Authentik application
 kubectl get authentikapplication -n logseq
 ```
+
+## References
+
+- **[Official Documentation](https://docs.logseq.com/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/logseq/logseq)** - Source code and issues
+- **[Logseq Guide](https://github.com/dustinlacewell/logseq-guide)** - Community deployment guide

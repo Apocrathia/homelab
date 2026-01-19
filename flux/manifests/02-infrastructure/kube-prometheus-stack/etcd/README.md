@@ -4,11 +4,6 @@ This directory contains the monitoring configuration for etcd running on Talos c
 
 > **Navigation**: [← Back to kube-prometheus-stack README](../README.md)
 
-## Documentation
-
-- **[etcd Documentation](https://etcd.io/docs/)** - Primary documentation source
-- **[Talos etcd Guide](https://www.talos.dev/v1.9/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
-
 ## Overview
 
 etcd is the distributed key-value store that serves as the backbone of Kubernetes. Monitoring etcd performance is critical for cluster stability, especially for detecting leader changes, slow requests, and memory pressure issues.
@@ -114,6 +109,11 @@ increase(etcd_server_read_indexes_failed_total[5m])
 - Ensure Prometheus pods can reach Talos nodes on port 2381
 - Verify direct IP access to node IPs (10.100.1.80-83)
 - Check firewall rules allow port 2381 access
+
+## References
+
+- **[etcd Documentation](https://etcd.io/docs/)** - Primary documentation source
+- **[Talos etcd Guide](https://www.talos.dev/v1.9/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
 
 ## Related Configuration
 

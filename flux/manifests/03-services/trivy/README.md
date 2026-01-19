@@ -4,11 +4,6 @@ The Trivy Operator provides continuous security scanning for Kubernetes clusters
 
 > **Navigation**: [← Back to Services README](../README.md)
 
-## Documentation
-
-- **[Trivy Operator Documentation](https://aquasecurity.github.io/trivy-operator/latest/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/aquasecurity/trivy-operator)** - Source code and issues
-
 ## Overview
 
 - **Vulnerability Scans**: Automated vulnerability scanning for Kubernetes workloads
@@ -49,7 +44,8 @@ Filter by namespace:
 {source="trivy", namespace="production"}
 ```
 
-## Resources
+## References
 
-- [Trivy Operator Documentation](https://aquasecurity.github.io/trivy-operator/latest/)
-- [Helm Chart Repository](https://aquasecurity.github.io/helm-charts/)
+- **[Trivy Operator Documentation](https://aquasecurity.github.io/trivy-operator/latest/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/aquasecurity/trivy-operator)** - Source code and issues
+- **[Helm Chart Repository](https://aquasecurity.github.io/helm-charts/)** - Helm chart documentation

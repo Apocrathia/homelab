@@ -4,12 +4,6 @@ Platform services that provide core functionality to the homelab cluster.
 
 > **Navigation**: [← Back to Flux README](../../README.md)
 
-## Documentation
-
-- **[Gateway API](https://gateway-api.sigs.k8s.io/)** - Traffic management
-- **[Authentik](https://docs.goauthentik.io/)** - Identity and access management
-- **[cert-manager](https://cert-manager.io/docs/)** - Certificate automation
-
 ## Components
 
 ### Core Services
@@ -71,3 +65,9 @@ All services implement:
 - **Secret Management**: 1Password integration and External Secrets Operator for sensitive data
 - **Audit Logging**: Comprehensive audit trails
 - **TLS Encryption**: End-to-end encryption for all communications
+
+## References
+
+- **[Gateway API](https://gateway-api.sigs.k8s.io/)** - Traffic management
+- **[Authentik](https://docs.goauthentik.io/)** - Identity and access management
+- **[cert-manager](https://cert-manager.io/docs/)** - Certificate automation

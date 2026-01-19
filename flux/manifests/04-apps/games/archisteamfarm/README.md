@@ -4,12 +4,6 @@ C# application for idling Steam cards from multiple accounts simultaneously with
 
 > **Navigation**: [← Back to Games README](../README.md)
 
-## Documentation
-
-- **[ArchiSteamFarm Documentation](https://github.com/JustArchiNET/ArchiSteamFarm/wiki)** - Primary documentation source
-- **[ArchiSteamFarm GitHub](https://github.com/JustArchiNET/ArchiSteamFarm)** - Source code and issues
-- **[ASF Configuration](https://github.com/JustArchiNET/ArchiSteamFarm/wiki/Configuration)** - Configuration reference
-
 ## Overview
 
 This deployment includes:
@@ -109,3 +103,9 @@ kubectl -n archisteamfarm get pods -l app.kubernetes.io/name=archisteamfarm
 # Check Authentik outpost
 kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
 ```
+
+## References
+
+- **[ArchiSteamFarm Documentation](https://github.com/JustArchiNET/ArchiSteamFarm/wiki)** - Primary documentation source
+- **[ArchiSteamFarm GitHub](https://github.com/JustArchiNET/ArchiSteamFarm)** - Source code and issues
+- **[ASF Configuration](https://github.com/JustArchiNET/ArchiSteamFarm/wiki/Configuration)** - Configuration reference

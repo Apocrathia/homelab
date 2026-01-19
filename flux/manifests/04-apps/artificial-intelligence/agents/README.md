@@ -4,12 +4,6 @@ Declarative AI agents orchestrated by kagent.
 
 > **Navigation**: [← Back to AI README](../README.md)
 
-## Documentation
-
-- **[kagent Documentation](https://kagent.dev/docs/)** - Agent orchestration documentation
-- **[Agent CRD Reference](https://kagent.dev/docs/kagent/crds)** - Custom resource definitions
-- **[System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts)** - Writing effective prompts
-
 ## Overview
 
 All agents run in the consolidated `kagent` namespace alongside the kagent controller and system agents.
@@ -93,3 +87,9 @@ kubectl logs -n kagent deployment/kagent-controller -f
 # Check A2A gateway status
 kubectl get pods -n kagent -l app=a2a-gateway
 ```
+
+## References
+
+- **[kagent Documentation](https://kagent.dev/docs/)** - Agent orchestration documentation
+- **[Agent CRD Reference](https://kagent.dev/docs/kagent/crds)** - Custom resource definitions
+- **[System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts)** - Writing effective prompts

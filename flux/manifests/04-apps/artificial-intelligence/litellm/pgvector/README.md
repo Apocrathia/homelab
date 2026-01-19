@@ -4,11 +4,6 @@ OpenAI-compatible vector store service using PostgreSQL with the pgvector extens
 
 > **Navigation**: [← Back to LiteLLM README](../README.md)
 
-## Documentation
-
-- **[litellm-pgvector GitHub Repository](https://github.com/BerriAI/litellm-pgvector)** - Source code and API reference
-- **[LiteLLM Vector Store Documentation](https://docs.litellm.ai/docs/providers/vector_store)** - Vector store integration guide
-
 ## Overview
 
 This deployment provides:
@@ -142,3 +137,8 @@ kubectl -n litellm get cluster vector-store-postgres -o wide
 kubectl exec -n litellm deployment/vector-store -- curl -s \
   http://localhost:8000/health
 ```
+
+## References
+
+- **[litellm-pgvector GitHub Repository](https://github.com/BerriAI/litellm-pgvector)** - Source code and API reference
+- **[LiteLLM Vector Store Documentation](https://docs.litellm.ai/docs/providers/vector_store)** - Vector store integration guide

@@ -4,11 +4,6 @@ The MKP MCP server provides direct Kubernetes cluster access through the Model C
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [MKP Source Repository](https://github.com/StacklokLabs/mkp)
-- [MCP Specification](https://spec.modelcontextprotocol.io/)
-
 ## Overview
 
 This deployment includes:
@@ -54,3 +49,8 @@ The MKP server provides these Kubernetes tools:
 4. **post_resource**
    - Execute commands in pods or interact with subresources
    - **Input**: `{"resource_type": "namespaced", "group": "", "version": "v1", "resource": "pods", "namespace": "default", "name": "my-pod", "subresource": "exec", "body": {"command": ["ls", "-la"]}}`
+
+## References
+
+- [MKP Source Repository](https://github.com/StacklokLabs/mkp)
+- [MCP Specification](https://spec.modelcontextprotocol.io/)

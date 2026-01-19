@@ -4,12 +4,6 @@ Core Flux GitOps Toolkit components that manage the homelab cluster configuratio
 
 > **Navigation**: [← Back to Bootstrap README](../README.md)
 
-## Documentation
-
-- **[Flux Documentation](https://fluxcd.io/flux/)** - Official documentation
-- **[GitOps Guide](https://www.gitops.tech/)** - GitOps best practices
-- **[Flux Security](https://fluxcd.io/flux/security/)** - Security guide
-
 ## Overview
 
 The Flux System provides the foundation for GitOps-based cluster management, continuously reconciling the desired state defined in Git with the actual cluster state.
@@ -210,6 +204,13 @@ kubectl logs -n flux-system -l app.kubernetes.io/name=kustomize-controller
 kubectl logs -n flux-system -l app.kubernetes.io/name=helm-controller
 kubectl logs -n flux-system -l app.kubernetes.io/name=source-controller
 ```
+
+
+## References
+
+- **[Flux Documentation](https://fluxcd.io/flux/)** - Official documentation
+- **[GitOps Guide](https://www.gitops.tech/)** - GitOps best practices
+- **[Flux Security](https://fluxcd.io/flux/security/)** - Security guide
 
 ## Best Practices
 

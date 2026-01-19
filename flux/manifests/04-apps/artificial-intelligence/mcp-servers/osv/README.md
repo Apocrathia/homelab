@@ -4,11 +4,6 @@ The OSV MCP server provides vulnerability scanning capabilities through the Mode
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-## Documentation
-
-- [OSV Database](https://osv.dev/) - Open Source Vulnerability database
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
-
 ## Overview
 
 This deployment includes:
@@ -47,3 +42,8 @@ The OSV MCP server provides these tools:
 3. **get_vulnerability**
    - Get detailed information about a specific vulnerability by OSV ID
    - **Input**: `{"id": "GHSA-vqj2-4v8m-8vrq"}`
+
+## References
+
+- [OSV Database](https://osv.dev/) - Open Source Vulnerability database
+- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation

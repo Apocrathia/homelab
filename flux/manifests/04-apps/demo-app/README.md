@@ -4,11 +4,6 @@ Baseline template demonstrating application configuration patterns using the gen
 
 > **Navigation**: [← Back to Apps README](../README.md)
 
-## Documentation
-
-- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Helm chart documentation
-- **[Flux HelmRelease](https://fluxcd.io/flux/components/helm/helmreleases/)** - Flux Helm controller
-
 ## Overview
 
 The demo app is a **baseline template** that demonstrates:
@@ -229,6 +224,11 @@ httproute:
    # Check SMB mount
    kubectl exec -it <pod-name> -n demo-app -- df -h
    ```
+
+## References
+
+- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Helm chart documentation
+- **[Flux HelmRelease](https://fluxcd.io/flux/components/helm/helmreleases/)** - Flux Helm controller
 
 ## Chart Version Compatibility
 

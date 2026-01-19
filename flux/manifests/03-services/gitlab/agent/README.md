@@ -4,11 +4,6 @@ This guide explains how to set up the GitLab Agent for Kubernetes (KAS) in your 
 
 > **Navigation**: [← Back to GitLab README](../README.md)
 
-## Documentation
-
-- **[GitLab Agent Documentation](https://docs.gitlab.com/ee/user/clusters/agent/)** - Primary documentation source
-- **[Agent Configuration](https://docs.gitlab.com/ee/user/clusters/agent/install/)** - Installation and configuration
-
 ## Prerequisites
 
 - Access to your GitLab account with permissions to create agents
@@ -66,3 +61,8 @@ If the agent isn't connecting:
 2. Check the agent logs for connection errors
 3. Ensure your cluster has outbound access to GitLab's KAS service (wss://kas.gitlab.com)
 4. Verify the agent configuration in your GitLab repository
+
+## References
+
+- **[GitLab Agent Documentation](https://docs.gitlab.com/ee/user/clusters/agent/)** - Primary documentation source
+- **[Agent Configuration](https://docs.gitlab.com/ee/user/clusters/agent/install/)** - Installation and configuration

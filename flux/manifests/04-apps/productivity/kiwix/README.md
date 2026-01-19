@@ -4,13 +4,6 @@ Offline Wikipedia and content library server for serving ZIM (Zstandard-compress
 
 > **Navigation**: [← Back to Management README](../README.md)
 
-## Documentation
-
-- **[Kiwix Documentation](https://wiki.kiwix.org/wiki/Main_Page)** - Primary documentation source
-- **[Kiwix Tools GitHub](https://github.com/kiwix/kiwix-tools)** - Source code and issues
-- **[Kiwix Tools Documentation](https://deepwiki.com/kiwix/kiwix-tools)** - Architecture and API documentation
-- **[ZIM File Downloads](https://download.kiwix.org/)** - Available ZIM file catalog
-
 ## Overview
 
 This deployment includes:
@@ -100,3 +93,10 @@ kubectl -n kiwix logs -l app.kubernetes.io/name=kiwix
 # Check updater CronJob
 kubectl -n kiwix get cronjob kiwix-zim-updater
 ```
+
+## References
+
+- **[Kiwix Documentation](https://wiki.kiwix.org/wiki/Main_Page)** - Primary documentation source
+- **[Kiwix Tools GitHub](https://github.com/kiwix/kiwix-tools)** - Source code and issues
+- **[Kiwix Tools Documentation](https://deepwiki.com/kiwix/kiwix-tools)** - Architecture and API documentation
+- **[ZIM File Downloads](https://download.kiwix.org/)** - Available ZIM file catalog

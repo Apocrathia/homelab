@@ -4,11 +4,6 @@ Self-hosted media server for comics, manga, magazines, and eBooks.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[Komga Documentation](https://komga.org/docs/)** - Primary documentation source
-- **[GitHub Repository](https://github.com/gotson/komga)** - Source code and issues
-
 ## Overview
 
 This deployment includes:
@@ -57,3 +52,8 @@ kubectl logs -n komga deployment/komga -f
 # Check Authentik outpost
 kubectl get pods -n authentik | grep komga
 ```
+
+## References
+
+- **[Komga Documentation](https://komga.org/docs/)** - Primary documentation source
+- **[GitHub Repository](https://github.com/gotson/komga)** - Source code and issues

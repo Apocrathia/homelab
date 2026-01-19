@@ -4,11 +4,6 @@ Cross-platform media management tool for downloading content from other Plex ser
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
-## Documentation
-
-- **[GitHub Repository](https://github.com/Reaparr/Reaparr)** - Source code and releases
-- **[Docker Hub](https://hub.docker.com/r/reaparr/reaparr)** - Container images
-
 ## Overview
 
 This deployment includes:
@@ -135,3 +130,8 @@ kubectl get pods,svc,pvc -n reaparr
 # Authentik outpost status
 kubectl get pods -n authentik -l app.kubernetes.io/name=ak-outpost-reaparr-outpost
 ```
+
+## References
+
+- **[GitHub Repository](https://github.com/Reaparr/Reaparr)** - Source code and releases
+- **[Docker Hub](https://hub.docker.com/r/reaparr/reaparr)** - Container images
