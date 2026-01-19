@@ -71,7 +71,7 @@ spec:
           - name: alloy-wal
             mountPath: /tmp/alloy
 
-    # RBAC configuration - minimal permissions for secure log collection via Kubernetes API
+    # RBAC configuration - permissions for log collection, metrics scraping, and node discovery
     rbac:
       create: true
       rules:
@@ -86,6 +86,9 @@ spec:
           verbs: ["get", "list", "watch"]
         - apiGroups: [""]
           resources: ["services"]
+          verbs: ["get", "list", "watch"]
+        - apiGroups: [""]
+          resources: ["nodes"]
           verbs: ["get", "list", "watch"]
 
     # Service account configuration
