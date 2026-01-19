@@ -130,10 +130,8 @@ class ArrClient(ABC):
                     (e.g., {"name": "RefreshSeries", "seriesIds": [123]})
 
         Returns:
-            Command status object with "id" and other metadata, or None in dry-run mode
-
-        Raises:
-            requests.HTTPError: If the API request fails
+            Command status object with "id" and other metadata, None in dry-run mode,
+            or None if the API request fails (error is logged)
         """
         if self.dry_run:
             logger.info(f"[DRY-RUN] Would send command: {command}")
@@ -141,9 +139,22 @@ class ArrClient(ABC):
 
         url = f"{self.config.url}/api/{self.config.api_version}/command"
         logger.debug(f"POST {url}: {command}")
-        response = self.session.post(url, json=command, timeout=30)
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = self.session.post(url, json=command, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            logger.error(f"[{self.config.name}] API request failed: {e}")
+            if e.response is not None:
+                logger.error(f"[{self.config.name}] Response status: {e.response.status_code}")
+                try:
+                    logger.error(f"[{self.config.name}] Response body: {e.response.text}")
+                except Exception:
+                    pass
+            return None
+        except requests.RequestException as e:
+            logger.error(f"[{self.config.name}] Request error: {e}")
+            return None
 
     def _wait_for_command(self, command_id: int, timeout: int = 300) -> bool:
         """
@@ -333,7 +344,7 @@ class SonarrClient(ArrClient):
         command = {"name": "RefreshSeries", "seriesIds": [item_id]}
         result = self._post_command(command)
         if result is None:
-            return True  # dry-run
+            return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
     def rename_item(self, item_id: int) -> bool:
@@ -347,7 +358,7 @@ class SonarrClient(ArrClient):
         command = {"name": "RenameSeries", "seriesIds": [item_id]}
         result = self._post_command(command)
         if result is None:
-            return True  # dry-run
+            return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
     def _get_item_name(self, item: dict[str, Any]) -> str:
@@ -392,7 +403,7 @@ class RadarrClient(ArrClient):
         command = {"name": "RefreshMovie", "movieIds": [item_id]}
         result = self._post_command(command)
         if result is None:
-            return True  # dry-run
+            return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
     def rename_item(self, item_id: int) -> bool:
@@ -406,7 +417,7 @@ class RadarrClient(ArrClient):
         command = {"name": "RenameMovie", "movieIds": [item_id]}
         result = self._post_command(command)
         if result is None:
-            return True  # dry-run
+            return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
     def _get_item_name(self, item: dict[str, Any]) -> str:
@@ -456,7 +467,7 @@ class LidarrClient(ArrClient):
         command = {"name": "RefreshArtist", "artistId": item_id}
         result = self._post_command(command)
         if result is None:
-            return True  # dry-run
+            return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
     def rename_item(self, item_id: int) -> bool:
@@ -487,7 +498,7 @@ class LidarrClient(ArrClient):
             command = {"name": "RenameFiles", "files": track_file_ids, "artistId": item_id}
             result = self._post_command(command)
             if result is None:
-                return True  # dry-run
+                return self.dry_run  # True if dry-run, False if API error
             return self._wait_for_command(result["id"])
         except Exception as e:
             logger.error(f"[{self.config.name}] Error getting track files for rename: {e}")
