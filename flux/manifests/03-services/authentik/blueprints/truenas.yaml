@@ -13,7 +13,7 @@ entries:
     identifiers:
       slug: "truenas"
     attrs:
-      name: "TrueNAS Storage"
+      name: "TrueNAS"
       slug: "truenas"
       group: "Infrastructure"
       meta_launch_url: "https://storage.management.apocrathia.com"
