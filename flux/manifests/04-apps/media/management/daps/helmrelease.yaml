@@ -1,0 +1,102 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: daps
+  namespace: daps
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.51"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: daps
+      # renovate: datasource=docker depName=docker.io/drazzilb08/daps
+      image: docker.io/drazzilb08/daps:latest
+      container:
+        name: daps
+        port: 8000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "0"
+          - name: PGID
+            value: "0"
+          - name: UMASK
+            value: "022"
+          - name: PORT
+            value: "8000"
+          - name: HOST
+            value: "0.0.0.0"
+          - name: DOCKER_ENV
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        # Run as root to allow start.sh to modify user/group, but set PUID/PGID to match
+        # dockeruser defaults (100/99) so groupmod/usermod are no-ops
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 0
+        fsGroupChangePolicy: "OnRootMismatch" # Auto-fix volume ownership
+        runAsNonRoot: false
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+          drop:
+            - NET_RAW # Drop harmless capability so array isn't empty
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8000
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: posters
+          mountPath: /posters
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+          - name: posters
+            capacity: 10Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Media"
+      displayName: "DAPS"
+      externalHost: "https://daps.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/daps/icon.png"
+
+    httproute:
+      enabled: false
