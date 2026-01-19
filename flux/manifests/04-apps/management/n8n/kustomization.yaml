@@ -9,7 +9,6 @@ resources:
   - namespace.yaml
   - secret.yaml
   - postgres.yaml
-  - cilium.yaml
   - helmrelease.yaml
 
 generatorOptions:
