@@ -36,3 +36,17 @@ spec:
     # Reduce concurrent reconciles to reduce API server load and prevent timeouts
     config:
       maxConcurrentReconciles: 5
+
+    # Increase leader election timeouts to handle slow API server responses
+    # Defaults are too short (15s lease, 10s renew) causing frequent leader loss
+    controller:
+      manager:
+        args:
+          - controller
+          - --leader-elect
+          - --leader-election-lease-duration=60s
+          - --leader-election-renew-deadline=40s
+          - --leader-election-retry-period=10s
+          - --max-concurrent-reconciles=5
+          - --config-map-name=cnpg-controller-manager-config
+          - --webhook-port=9443
