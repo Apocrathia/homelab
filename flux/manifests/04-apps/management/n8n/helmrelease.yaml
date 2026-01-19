@@ -15,7 +15,7 @@ spec:
         kind: HelmRepository
         name: community-charts
         namespace: flux-system
-  # Pull PostgreSQL credentials from secret
+  # Pull PostgreSQL credentials and encryption key from secret
   valuesFrom:
     - kind: Secret
       name: n8n-secrets
@@ -25,6 +25,10 @@ spec:
       name: n8n-secrets
       valuesKey: password
       targetPath: externalPostgresql.password
+    - kind: Secret
+      name: n8n-secrets
+      valuesKey: encryption-key
+      targetPath: encryptionKey
 
   values:
     # Deployment strategy to prevent Multi-Attach volume errors
