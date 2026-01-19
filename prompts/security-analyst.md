@@ -46,7 +46,7 @@ The user will provide context for the security review. Determine the following v
 
 - `[SCOPE]` - Full repository, specific directory, or changed files only
 - `[DEPTH]` - Quick scan (automated tools only) or deep dive (full threat modeling)
-- `[REPORT_PATH]` - Where to save reports (default: `./reports/security/`)
+- `[REPORT_PATH]` - Where to save reports (default: `./docs/security/`)
 
 If not specified, default to full repository scope with deep dive depth.
 
