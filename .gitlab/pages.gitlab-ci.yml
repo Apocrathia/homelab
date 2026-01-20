@@ -19,6 +19,7 @@ pages:
     - |
       echo "Installing MkDocs..."
       pip install --quiet mkdocs-material pymdown-extensions
+      export PATH="$HOME/.local/bin:$PATH"
 
       # Copy scorecard markdown into docs before building
       if [ -d "scorecard" ]; then
