@@ -75,10 +75,7 @@ scorecard:
       FAILED_COUNT=0
       SUCCESS_COUNT=0
 
-      {
-        echo "| Repository | Score | Lowest Checks |"
-        echo "|------------|-------|---------------|"
-      } > "$RESULTS_FILE"
+      : > "$RESULTS_FILE"
 
       for REPO in $REPOS; do
         echo "Scanning: $REPO"
@@ -93,31 +90,53 @@ scorecard:
           LOW_CHECKS=$(echo "$OUTPUT" | jq -r '
             .checks // []
             | map(select(.score < 5 and .score >= 0))
-            | map("• \(.name): \(.score)")
-            | join("<br>")
+            | map("- \(.name): \(.score)/10")
+            | .[]
           ')
 
-          if [ -z "$LOW_CHECKS" ]; then
-            FINDINGS="All checks ≥5"
-          else
-            FINDINGS="$LOW_CHECKS"
+          # Log low scores to pipeline output
+          if [ -n "$LOW_CHECKS" ]; then
             echo "  Low scores:"
             echo "$OUTPUT" | jq -r '.checks // [] | map(select(.score < 5 and .score >= 0)) | map("    \(.name): \(.score)") | .[]'
           fi
 
-          echo "| [\`${REPO}\`](https://${REPO}) | **${SCORE}/10** | ${FINDINGS} |" >> "$RESULTS_FILE"
+          {
+            echo "<details>"
+            echo "<summary><strong><a href=\"https://${REPO}\">${REPO}</a></strong> — ${SCORE}/10</summary>"
+            echo ""
+            if [ -z "$LOW_CHECKS" ]; then
+              echo "All checks ≥5 :white_check_mark:"
+            else
+              echo "**Low-scoring checks:**"
+              echo ""
+              echo "$LOW_CHECKS"
+            fi
+            echo ""
+            echo "</details>"
+            echo ""
+          } >> "$RESULTS_FILE"
           SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
           EXIT_CODE=$?
           echo "  Error (exit $EXIT_CODE):"
           cat "$ERROR_FILE" | head -5
-          if [ "$EXIT_CODE" -eq 124 ]; then
-            echo "| \`${REPO}\` | :hourglass: Timeout | Scan exceeded 90s |" >> "$RESULTS_FILE"
-          else
-            # Extract first line of error for the comment
-            ERROR_MSG=$(head -1 "$ERROR_FILE" | cut -c1-50)
-            echo "| \`${REPO}\` | :warning: Scan failed | ${ERROR_MSG:-Unknown error} |" >> "$RESULTS_FILE"
-          fi
+
+          {
+            echo "<details>"
+            if [ "$EXIT_CODE" -eq 124 ]; then
+              echo "<summary><strong>${REPO}</strong> — :hourglass: Timeout</summary>"
+              echo ""
+              echo "Scan exceeded 90 seconds."
+            else
+              ERROR_MSG=$(head -1 "$ERROR_FILE" | cut -c1-80)
+              echo "<summary><strong>${REPO}</strong> — :warning: Scan failed</summary>"
+              echo ""
+              echo "Error: ${ERROR_MSG:-Unknown error}"
+            fi
+            echo ""
+            echo "</details>"
+            echo ""
+          } >> "$RESULTS_FILE"
           FAILED_COUNT=$((FAILED_COUNT + 1))
         fi
       done
@@ -133,10 +152,9 @@ scorecard:
         echo "$SCORECARD_MARKER"
         echo "## :shield: OpenSSF Scorecard Results"
         echo ""
-        echo "Security analysis of dependencies changed in this MR:"
+        echo "Security analysis of dependencies changed in this MR. Click to expand details."
         echo ""
         cat "$RESULTS_FILE"
-        echo ""
         echo "<sub>Scanned ${SUCCESS_COUNT}/${TOTAL} repositories. [What is Scorecard?](https://securityscorecards.dev/)</sub>"
         echo ""
         echo "<!-- hash:${RESULTS_HASH} -->"
