@@ -209,6 +209,10 @@ spec:
         enabled: false
 
     kafka:
+      image:
+        repository: apache/kafka
+        # renovate: datasource=docker depName=apache/kafka
+        tag: "4.1.0"
       persistence:
         enabled: true
         storageClassName: longhorn
