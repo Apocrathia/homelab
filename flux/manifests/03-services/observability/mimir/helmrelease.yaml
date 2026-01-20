@@ -220,11 +220,13 @@ spec:
         limits:
           cpu: 1000m
           memory: 1Gi
-      # Override retention from default 24h to 1h
-      # Kafka is just a buffer - data should be consumed quickly by ingesters and flushed to S3
+      # Aggressive retention - Kafka is just a buffer, data should be consumed quickly by ingesters
+      # Use extraConfig to properly override retention (avoids duplicate env vars from chart defaults)
+      extraConfig: |-
+        log.retention.hours=1
+        log.retention.check.interval.ms=60000
+        log.segment.delete.delay.ms=60000
       extraEnv:
-        - name: KAFKA_LOG_RETENTION_HOURS
-          value: "1"
         # Increase max message size to handle large timeseries (default 1MB)
         # This must be smaller than distributor's max_write_request_size
         - name: KAFKA_MESSAGE_MAX_BYTES
