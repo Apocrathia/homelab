@@ -62,10 +62,6 @@ pages:
           # Convert to flattened name
           flat = flatten_path(resolved)
 
-          # Remove .md extension for MkDocs links (it adds them back)
-          if flat.endswith('.md'):
-              flat = flat[:-3]
-
           return flat + anchor
 
       def process_file(source_path, dest_dir):

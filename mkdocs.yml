@@ -9,6 +9,7 @@ repo_name: Apocrathia/homelab
 
 docs_dir: docs
 site_dir: public
+use_directory_urls: false
 
 theme:
   name: material
