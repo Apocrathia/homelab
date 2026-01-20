@@ -1,6 +1,6 @@
 # Homelab Kubernetes cluster
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Apocrathia/homelab) [![pipeline status](https://gitlab.com/Apocrathia/homelab/badges/main/pipeline.svg)](https://gitlab.com/Apocrathia/homelab/-/commits/main) [![OpenSSF Scorecard](https://img.shields.io/endpoint?url=https://apocrathia.gitlab.io/homelab/scorecard.json)](https://apocrathia.gitlab.io/homelab/scorecard-full.json)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Apocrathia/homelab) [![pipeline status](https://gitlab.com/Apocrathia/homelab/badges/main/pipeline.svg)](https://gitlab.com/Apocrathia/homelab/-/commits/main) [![OpenSSF Scorecard](https://img.shields.io/endpoint?url=https://apocrathia.gitlab.io/homelab/scorecard.json)](https://apocrathia.gitlab.io/homelab/)
 
 Configuration for my home Kubernetes cluster, managed through GitOps.
 

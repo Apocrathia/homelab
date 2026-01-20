@@ -10,7 +10,8 @@ repos:
             flux/manifests/.*/authentik-blueprint\.yaml|
             flux/manifests/.*/authentik/blueprints/.*\.yaml|
             helm/.*/templates/.*\.yaml|
-            flux/manifests/.*/recyclarr\.yml
+            flux/manifests/.*/recyclarr\.yml|
+            mkdocs\.yml
           )$
       - id: check-merge-conflict
       - id: detect-private-key

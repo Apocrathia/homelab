@@ -270,36 +270,52 @@ scorecard-badge:
       fi
 
       # Create shields.io endpoint JSON
-      mkdir -p public
+      mkdir -p scorecard
       jq -n \
         --argjson schema 1 \
         --arg label "OpenSSF Scorecard" \
         --arg message "${SCORE}/10" \
         --arg color "$COLOR" \
         '{schemaVersion: $schema, label: $label, message: $message, color: $color}' \
-        > public/scorecard.json
+        > scorecard/scorecard.json
 
       echo "Badge JSON created:"
-      cat public/scorecard.json
+      cat scorecard/scorecard.json
 
       # Also save full results for reference
-      echo "$OUTPUT" | jq '.' > public/scorecard-full.json
-  artifacts:
-    paths:
-      - public
-    expire_in: 1 week
+      echo "$OUTPUT" | jq '.' > scorecard/scorecard-full.json
 
-# Publish to GitLab Pages
-pages:
-  stage: deploy
-  needs:
-    - job: scorecard-badge
-      optional: true
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  script:
-    - echo "Publishing scorecard badge to GitLab Pages"
+      # Generate human-readable markdown report
+      echo "Generating markdown report..."
+      {
+        echo "# Scorecard Results"
+        echo ""
+        echo "**Score: ${SCORE}/10**"
+        echo ""
+        echo "Last updated: $(date -u '+%Y-%m-%d %H:%M UTC')"
+        echo ""
+        echo "| Check | Score | Description |"
+        echo "|-------|-------|-------------|"
+        echo "$OUTPUT" | jq -r '
+          .checks
+          | sort_by(.score)
+          | reverse
+          | .[]
+          | "| \(.name) | \(if .score < 0 then "N/A" else "\(.score)/10" end) | \(.reason | split(" -- ")[0] | .[0:80]) |"
+        '
+        echo ""
+        echo "## Check Details"
+        echo ""
+        echo "$OUTPUT" | jq -r '
+          .checks
+          | sort_by(.score)
+          | .[]
+          | "### \(.name)\n\n**Score:** \(if .score < 0 then "N/A" else "\(.score)/10" end)\n\n\(.reason)\n\n[Documentation](\(.documentation.url))\n"
+        '
+      } > scorecard/scorecard-details.md
+
+      echo "Markdown report generated"
   artifacts:
     paths:
-      - public
+      - scorecard
+    expire_in: 1 week

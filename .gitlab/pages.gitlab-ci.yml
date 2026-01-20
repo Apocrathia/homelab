@@ -1,0 +1,45 @@
+---
+# Build and publish GitLab Pages using MkDocs
+pages:
+  stage: deploy
+  image: python:3.12-alpine
+  needs:
+    - job: scorecard-badge
+      artifacts: true
+      optional: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes:
+        - mkdocs.yml
+        - docs/**/*
+        - "**/*.md"
+  script:
+    - |
+      echo "Installing MkDocs..."
+      pip install --quiet mkdocs-material pymdown-extensions
+
+      # Copy scorecard markdown into docs before building
+      if [ -d "scorecard" ]; then
+        echo "Copying scorecard artifacts into docs..."
+        cp scorecard/scorecard-details.md docs/ 2>/dev/null || true
+      fi
+
+      echo "Building documentation site..."
+      mkdocs build --strict --site-dir public
+
+      # Copy scorecard JSON files to site root for badge endpoint
+      if [ -d "scorecard" ]; then
+        echo "Copying scorecard JSON to site..."
+        cp scorecard/*.json public/
+        ls -la public/*.json
+      else
+        echo "No scorecard artifacts found (job may not have run)"
+      fi
+
+      echo "Site contents:"
+      ls -la public/
+  artifacts:
+    paths:
+      - public
