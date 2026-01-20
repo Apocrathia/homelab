@@ -1,0 +1,148 @@
+---
+scorecard:
+  stage: verify
+  image: gcr.io/openssf/scorecard:v5.4.0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - flux/manifests/**/*
+        - renovate.json
+  variables:
+    GITHUB_AUTH_TOKEN: ${GITHUB_TOKEN}
+    SCORECARD_MARKER: "<!-- openssf-scorecard -->"
+  script:
+    - |
+      apk add --no-cache curl jq git
+
+      echo "=== OpenSSF Scorecard Analysis ==="
+
+      # Fetch target branch
+      git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+
+      # Find changed YAML files
+      CHANGED_FILES=$(git diff --name-only "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"...HEAD -- flux/manifests/ | grep -E '\.ya?ml$' || true)
+
+      if [ -z "$CHANGED_FILES" ]; then
+        echo "No manifest files changed"
+        exit 0
+      fi
+
+      # Extract GitHub/GitLab repos from changed files
+      # Patterns: ghcr.io/owner/repo, github.com/owner/repo, gitlab.com/owner/repo
+      REPOS=$(for FILE in $CHANGED_FILES; do
+        if [ -f "$FILE" ]; then
+          # Extract from container images (ghcr.io/owner/repo:tag -> github.com/owner/repo)
+          grep -oE 'ghcr\.io/[^/:\"]+/[^/:\"]+' "$FILE" 2>/dev/null | sed 's|ghcr\.io/|github.com/|' || true
+          # Extract from chart URLs (github.com/owner/repo)
+          grep -oE 'github\.com/[^/:\"]+/[^/:\"]+' "$FILE" 2>/dev/null || true
+          # Extract from GitLab refs
+          grep -oE 'gitlab\.com/[^/:\"]+/[^/:\"]+' "$FILE" 2>/dev/null || true
+          # Extract from repository field in HelmRelease
+          grep -A5 'spec:' "$FILE" 2>/dev/null | grep -oE 'https://github\.com/[^\"]+' | sed 's|https://||' || true
+        fi
+      done | sort -u | grep -v '^$')
+
+      echo "Found repositories to scan:"
+      echo "$REPOS"
+
+      if [ -z "$REPOS" ]; then
+        echo "No scannable repositories found in changes"
+        exit 0
+      fi
+
+      # Run scorecard against each repo
+      RESULTS_FILE="/tmp/scorecard-results.md"
+      FAILED_COUNT=0
+      SUCCESS_COUNT=0
+
+      {
+        echo "| Repository | Score | Key Findings |"
+        echo "|------------|-------|--------------|"
+      } > "$RESULTS_FILE"
+
+      for REPO in $REPOS; do
+        echo "Scanning: $REPO"
+
+        # Run scorecard and capture output
+        if OUTPUT=$(scorecard --repo="$REPO" --format=json 2>/dev/null); then
+          SCORE=$(echo "$OUTPUT" | jq -r '.score // "N/A"')
+
+          # Extract low-scoring checks (score < 5)
+          LOW_CHECKS=$(echo "$OUTPUT" | jq -r '
+            .checks // []
+            | map(select(.score < 5 and .score >= 0))
+            | map("\(.name): \(.score)/10")
+            | join(", ")
+          ')
+
+          if [ -z "$LOW_CHECKS" ]; then
+            LOW_CHECKS="All checks passing"
+          fi
+
+          echo "| [\`${REPO}\`](https://${REPO}) | **${SCORE}/10** | ${LOW_CHECKS} |" >> "$RESULTS_FILE"
+          SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        else
+          echo "| \`${REPO}\` | :warning: Scan failed | Could not reach repository |" >> "$RESULTS_FILE"
+          FAILED_COUNT=$((FAILED_COUNT + 1))
+        fi
+      done
+
+      TOTAL=$((SUCCESS_COUNT + FAILED_COUNT))
+      echo "Scanned $SUCCESS_COUNT/$TOTAL repositories successfully"
+
+      # Build comment body
+      COMMENT_FILE="/tmp/comment.md"
+      RESULTS_HASH=$(cat "$RESULTS_FILE" | md5sum | cut -d' ' -f1)
+
+      {
+        echo "$SCORECARD_MARKER"
+        echo "## :shield: OpenSSF Scorecard Results"
+        echo ""
+        echo "Security analysis of dependencies changed in this MR:"
+        echo ""
+        cat "$RESULTS_FILE"
+        echo ""
+        echo "<sub>Scanned ${SUCCESS_COUNT}/${TOTAL} repositories. [What is Scorecard?](https://securityscorecards.dev/)</sub>"
+        echo ""
+        echo "<!-- hash:${RESULTS_HASH} -->"
+      } > "$COMMENT_FILE"
+
+      COMMENT_BODY=$(cat "$COMMENT_FILE")
+
+      # Post/update MR comment
+      NOTES=$(curl --silent --show-error --fail \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes?per_page=100") || {
+        echo "Failed to fetch MR notes"
+        exit 1
+      }
+
+      EXISTING_NOTE=$(echo "$NOTES" | jq -r --arg marker "$SCORECARD_MARKER" '.[] | select(.body | startswith($marker))')
+      EXISTING_NOTE_ID=$(echo "$EXISTING_NOTE" | jq -r '.id // empty')
+      EXISTING_HASH=$(echo "$EXISTING_NOTE" | jq -r '.body // ""' | sed -n 's/.*<!-- hash:\([^ ]*\) -->.*/\1/p')
+
+      if [ -n "$EXISTING_NOTE_ID" ]; then
+        if [ "$EXISTING_HASH" = "$RESULTS_HASH" ]; then
+          echo "Results unchanged, skipping update"
+          exit 0
+        fi
+
+        curl --silent --show-error --fail --request PUT \
+          --header "PRIVATE-TOKEN: ${SCORECARD_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}" > /dev/null
+
+        echo "Comment updated"
+      else
+        curl --silent --show-error --fail --request POST \
+          --header "PRIVATE-TOKEN: ${SCORECARD_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" > /dev/null
+
+        echo "Comment posted"
+      fi
+
+      echo "=== Scorecard Analysis Complete ==="
+  allow_failure: true
