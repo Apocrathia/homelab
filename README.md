@@ -152,7 +152,7 @@ See [flux/manifests](./flux/manifests) for the GitOps structure.
 
 ### Cluster topology
 
-Four Proxmox nodes each host a Talos VM. All four VMs run as both control plane and worker nodes (quorum + 1 failure tolerance). Storage is Longhorn distributed block storage. Networking is Cilium with Gateway API.
+Four Proxmox nodes. Each hosts a Talos VM. All four VMs run as both control plane and worker nodes (quorum + 1 failure tolerance). Storage is Longhorn distributed block storage. Networking is Cilium with Gateway API.
 
 ### Stack
 
