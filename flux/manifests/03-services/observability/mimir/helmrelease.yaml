@@ -128,6 +128,9 @@ spec:
         # Distributor configuration
         distributor:
           remote_timeout: 30s # Increased from default 5s to handle Kafka latency
+          # Increase max gRPC receive message size to handle large timeseries (default 100MB)
+          server:
+            grpc_max_recv_msg_size_bytes: 104857600 # 100MB
 
         # Kafka ingest storage configuration
         ingest_storage:
@@ -136,6 +139,9 @@ spec:
             dial_timeout: 10s
             # How long to wait for write request to be committed to Kafka (default 10s)
             write_timeout: 30s
+            # Maximum message size for Kafka producer (must match Kafka broker config)
+            # Default is ~15MB, increasing to 50MB to handle large timeseries
+            max_message_bytes: 52428800 # 50MB
 
     # Resource configuration for Mimir components
     ingester:
@@ -164,6 +170,9 @@ spec:
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
         distributor.ingestion-burst-size: "1000000"
+        # Increase max write request data item size to handle large timeseries
+        # Default is ~15MB (15983616 bytes), increasing to 50MB
+        distributor.max-write-request-data-item-size: "52428800" # 50MB
 
     querier:
       resources:
@@ -216,6 +225,14 @@ spec:
       extraEnv:
         - name: KAFKA_LOG_RETENTION_HOURS
           value: "1"
+        # Increase max message size to handle large timeseries (default 1MB)
+        # This must be smaller than distributor's max_write_request_size
+        - name: KAFKA_MESSAGE_MAX_BYTES
+          value: "52428800" # 50MB
+        - name: KAFKA_REPLICA_FETCH_MAX_BYTES
+          value: "52428800" # 50MB
+        - name: KAFKA_SOCKET_REQUEST_MAX_BYTES
+          value: "52428800" # 50MB
 
     # Enable the proper gateway (not just nginx)
     gateway:
