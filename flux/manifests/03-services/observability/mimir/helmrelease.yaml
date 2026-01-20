@@ -164,7 +164,7 @@ spec:
           cpu: 100m
           memory: 256Mi
         limits:
-          cpu: 500m
+          cpu: 1000m
           memory: 2Gi
       # Increase ingestion rate limits to handle high-volume metrics
       extraArgs:
