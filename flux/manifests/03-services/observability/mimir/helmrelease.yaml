@@ -164,9 +164,6 @@ spec:
       extraArgs:
         distributor.ingestion-rate-limit: "100000"
         distributor.ingestion-burst-size: "1000000"
-        # Increase max write request data item size to handle large timeseries
-        # Default is ~15MB (15983616 bytes), increasing to 50MB
-        distributor.max-write-request-data-item-size: "52428800" # 50MB
 
     querier:
       resources:
