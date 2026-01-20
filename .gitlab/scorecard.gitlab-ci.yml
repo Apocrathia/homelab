@@ -224,11 +224,24 @@ scorecard-badge:
 
       echo "=== Scoring gitlab.com/${CI_PROJECT_PATH} ==="
 
+      # Verify token is set
+      if [ -n "$GITLAB_AUTH_TOKEN" ]; then
+        echo "GITLAB_AUTH_TOKEN: set (${#GITLAB_AUTH_TOKEN} chars)"
+      else
+        echo "WARNING: GITLAB_AUTH_TOKEN not set"
+      fi
+
       # Run scorecard against this repo (may exit non-zero even with valid results)
-      OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>&1) || true
+      echo "Running scorecard..."
+      set +e
+      OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>&1)
+      EXIT_CODE=$?
+      set -e
+      echo "Scorecard exited with code: $EXIT_CODE"
 
       # Check if we got a valid score from the output
-      SCORE=$(echo "$OUTPUT" | jq -r '.score // empty' 2>/dev/null)
+      SCORE=$(echo "$OUTPUT" | jq -r '.score // empty' 2>/dev/null || true)
+      echo "Parsed score: '$SCORE'"
 
       if [ -z "$SCORE" ]; then
         echo "Scorecard scan failed - no score in output:"
