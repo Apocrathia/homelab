@@ -7,9 +7,8 @@ site_author: Ian Young
 repo_url: https://gitlab.com/Apocrathia/homelab
 repo_name: Apocrathia/homelab
 
-# Use repo root as docs directory to include scattered READMEs
-docs_dir: "."
-site_dir: "public"
+docs_dir: docs
+site_dir: public
 
 theme:
   name: material
@@ -43,19 +42,19 @@ markdown_extensions:
       permalink: true
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - Getting Started:
-      - Cluster Bootstrap: talos/README.md
-      - Flux Setup: flux/README.md
-      - Generic App Chart: helm/generic-app/README.md
+      - Cluster Bootstrap: talos-README.md
+      - Flux Setup: flux-README.md
+      - Generic App Chart: helm-generic-app-README.md
   - Layers:
-      - Bootstrap: flux/manifests/01-bootstrap/README.md
-      - Infrastructure: flux/manifests/02-infrastructure/README.md
-      - Services: flux/manifests/03-services/README.md
-      - Apps: flux/manifests/04-apps/README.md
+      - Bootstrap: flux-manifests-01-bootstrap-README.md
+      - Infrastructure: flux-manifests-02-infrastructure-README.md
+      - Services: flux-manifests-03-services-README.md
+      - Apps: flux-manifests-04-apps-README.md
   - Security:
-      - Overview: docs/scorecard.md
-      - Latest Results: docs/scorecard-details.md
+      - Overview: scorecard.md
+      - Latest Results: scorecard-details.md
   - Reference:
-      - Terraform: terraform/README.md
-      - GitLab CI: .gitlab/README.md
+      - Terraform: terraform-README.md
+      - GitLab CI: .gitlab-README.md
