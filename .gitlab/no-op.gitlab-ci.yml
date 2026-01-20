@@ -12,4 +12,4 @@ no-op:
     # Otherwise run for MRs with no applicable jobs
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - echo "No-op: no other jobs applicable for this MR"
+    - echo "No-op - no other jobs applicable for this MR"
