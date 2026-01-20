@@ -264,14 +264,13 @@ scorecard-badge:
 
       # Create shields.io endpoint JSON
       mkdir -p public
-      cat > public/scorecard.json <<EOF
-      {
-        "schemaVersion": 1,
-        "label": "OpenSSF Scorecard",
-        "message": "${SCORE}/10",
-        "color": "${COLOR}"
-      }
-      EOF
+      jq -n \
+        --argjson schema 1 \
+        --arg label "OpenSSF Scorecard" \
+        --arg message "${SCORE}/10" \
+        --arg color "$COLOR" \
+        '{schemaVersion: $schema, label: $label, message: $message, color: $color}' \
+        > public/scorecard.json
 
       echo "Badge JSON created:"
       cat public/scorecard.json
