@@ -8,3 +8,5 @@ metadata:
 resources:
   - agent
   - runner
+  - secret.yaml
+  - flux-notifications.yaml

@@ -1,0 +1,26 @@
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: gitlab-commit-status
+  namespace: flux-system
+spec:
+  type: gitlab
+  address: https://gitlab.com
+  secretRef:
+    name: gitlab-token # needs api scope
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: gitlab-deployments
+  namespace: flux-system
+spec:
+  providerRef:
+    name: gitlab-commit-status
+  eventSources:
+    - kind: Kustomization
+      name: "*"
+    - kind: HelmRelease
+      name: "*"
+      namespace: "*"
