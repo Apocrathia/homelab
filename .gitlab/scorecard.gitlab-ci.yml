@@ -1,7 +1,7 @@
 ---
 scorecard:
   stage: verify
-  image: gcr.io/openssf/scorecard:v5.4.0
+  image: alpine:3.21
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
@@ -10,9 +10,15 @@ scorecard:
   variables:
     GITHUB_AUTH_TOKEN: ${GITHUB_TOKEN}
     SCORECARD_MARKER: "<!-- openssf-scorecard -->"
+    # renovate: datasource=github-releases depName=ossf/scorecard
+    SCORECARD_VERSION: v5.1.1
   script:
     - |
       apk add --no-cache curl jq git
+
+      # Install scorecard
+      echo "Installing scorecard ${SCORECARD_VERSION}..."
+      curl -sL "https://github.com/ossf/scorecard/releases/download/${SCORECARD_VERSION}/scorecard_${SCORECARD_VERSION#v}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin
 
       echo "=== OpenSSF Scorecard Analysis ==="
 
