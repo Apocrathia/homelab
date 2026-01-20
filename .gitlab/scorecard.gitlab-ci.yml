@@ -9,8 +9,8 @@ scorecard:
         - flux/manifests/**/*
         - renovate.json
   variables:
-    GITHUB_AUTH_TOKEN: ${GITHUB_TOKEN}
-    GITLAB_AUTH_TOKEN: ${GITLAB_TOKEN}
+    GITHUB_AUTH_TOKEN: ${SCORECARD_GITHUB_AUTH_TOKEN}
+    GITLAB_AUTH_TOKEN: ${SCORECARD_GITLAB_AUTH_TOKEN}
     SCORECARD_MARKER: "<!-- openssf-scorecard -->"
     # renovate: datasource=github-releases depName=ossf/scorecard
     SCORECARD_VERSION: v5.1.1
