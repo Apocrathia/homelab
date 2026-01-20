@@ -128,9 +128,6 @@ spec:
         # Distributor configuration
         distributor:
           remote_timeout: 30s # Increased from default 5s to handle Kafka latency
-          # Increase max gRPC receive message size to handle large timeseries (default 100MB)
-          server:
-            grpc_max_recv_msg_size_bytes: 104857600 # 100MB
 
         # Kafka ingest storage configuration
         ingest_storage:
@@ -139,9 +136,6 @@ spec:
             dial_timeout: 10s
             # How long to wait for write request to be committed to Kafka (default 10s)
             write_timeout: 30s
-            # Maximum message size for Kafka producer (must match Kafka broker config)
-            # Default is ~15MB, increasing to 50MB to handle large timeseries
-            max_message_bytes: 52428800 # 50MB
 
     # Resource configuration for Mimir components
     ingester:
