@@ -10,6 +10,7 @@ scorecard:
         - renovate.json
   variables:
     GITHUB_AUTH_TOKEN: ${GITHUB_TOKEN}
+    GITLAB_AUTH_TOKEN: ${GITLAB_TOKEN}
     SCORECARD_MARKER: "<!-- openssf-scorecard -->"
     # renovate: datasource=github-releases depName=ossf/scorecard
     SCORECARD_VERSION: v5.1.1
@@ -35,7 +36,7 @@ scorecard:
       fi
 
       # Extract GitHub/GitLab repos from changed files
-      # Patterns: ghcr.io/owner/repo, github.com/owner/repo, gitlab.com/owner/repo
+      # Excludes this repository to avoid self-scanning
       REPOS=$(for FILE in $CHANGED_FILES; do
         if [ -f "$FILE" ]; then
           # Extract from container images (ghcr.io/owner/repo:tag -> github.com/owner/repo)
@@ -47,7 +48,7 @@ scorecard:
           # Extract from repository field in HelmRelease
           grep -A5 'spec:' "$FILE" 2>/dev/null | grep -oE 'https://github\.com/[^\"]+' | sed 's|https://||' || true
         fi
-      done | sort -u | grep -v '^$')
+      done | sort -u | grep -v '^$' | grep -v 'Apocrathia/homelab')
 
       echo "Found repositories to scan:"
       echo "$REPOS"
@@ -70,8 +71,8 @@ scorecard:
       for REPO in $REPOS; do
         echo "Scanning: $REPO"
 
-        # Run scorecard and capture output
-        if OUTPUT=$(scorecard --repo="$REPO" --format=json 2>/dev/null); then
+        # Run scorecard with 90 second timeout per repo
+        if OUTPUT=$(timeout 90 scorecard --repo="$REPO" --format=json 2>/dev/null); then
           SCORE=$(echo "$OUTPUT" | jq -r '.score // "N/A"')
 
           # Extract low-scoring checks (score < 5)
@@ -89,7 +90,12 @@ scorecard:
           echo "| [\`${REPO}\`](https://${REPO}) | **${SCORE}/10** | ${LOW_CHECKS} |" >> "$RESULTS_FILE"
           SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
-          echo "| \`${REPO}\` | :warning: Scan failed | Could not reach repository |" >> "$RESULTS_FILE"
+          EXIT_CODE=$?
+          if [ "$EXIT_CODE" -eq 124 ]; then
+            echo "| \`${REPO}\` | :hourglass: Timeout | Scan exceeded 90s |" >> "$RESULTS_FILE"
+          else
+            echo "| \`${REPO}\` | :warning: Scan failed | Could not reach repository |" >> "$RESULTS_FILE"
+          fi
           FAILED_COUNT=$((FAILED_COUNT + 1))
         fi
       done
