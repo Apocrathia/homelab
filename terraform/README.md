@@ -40,13 +40,11 @@ OpenTofu configurations for managing Proxmox virtual machines running the Talos 
 
 ### Why OpenTofu?
 
-HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Foundation's MPL 2.0 fork - truly open source, drop-in compatible, community governed.
+HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Foundation's MPL 2.0 fork with full Terraform compatibility.
 
 ### Why Terragrunt?
 
-- **DRY configurations** - define common settings once, inherit everywhere
-- **Automatic backend configuration** - no copy-paste of backend blocks
-- **Input inheritance** - common VM specs in parent, unique values per-VM
+Terragrunt wraps OpenTofu to reduce duplication. Define common settings once in parent configs and override per-VM. Backend configuration is automatic - no copy-paste of backend blocks across deployments.
 
 Terragrunt auto-detects OpenTofu when both are installed.
 
