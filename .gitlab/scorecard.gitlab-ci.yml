@@ -24,6 +24,18 @@ scorecard:
 
       echo "=== OpenSSF Scorecard Analysis ==="
 
+      # Verify auth tokens are available (without exposing them)
+      if [ -n "$GITHUB_AUTH_TOKEN" ]; then
+        echo "GITHUB_AUTH_TOKEN: set (${#GITHUB_AUTH_TOKEN} chars)"
+      else
+        echo "WARNING: GITHUB_AUTH_TOKEN not set"
+      fi
+      if [ -n "$GITLAB_AUTH_TOKEN" ]; then
+        echo "GITLAB_AUTH_TOKEN: set (${#GITLAB_AUTH_TOKEN} chars)"
+      else
+        echo "WARNING: GITLAB_AUTH_TOKEN not set"
+      fi
+
       # Fetch target branch
       git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
 
@@ -48,7 +60,7 @@ scorecard:
           # Extract from repository field in HelmRelease
           grep -A5 'spec:' "$FILE" 2>/dev/null | grep -oE 'https://github\.com/[^\"]+' | sed 's|https://||' || true
         fi
-      done | sort -u | grep -v '^$' | grep -v 'Apocrathia/homelab')
+      done | sort -u | grep -v '^$' | grep -v 'Apocrathia/homelab' || true)
 
       echo "Found repositories to scan:"
       echo "$REPOS"
@@ -72,7 +84,8 @@ scorecard:
         echo "Scanning: $REPO"
 
         # Run scorecard with 90 second timeout per repo
-        if OUTPUT=$(timeout 90 scorecard --repo="$REPO" --format=json 2>/dev/null); then
+        ERROR_FILE="/tmp/scorecard-error.txt"
+        if OUTPUT=$(timeout 90 scorecard --repo="$REPO" --format=json 2>"$ERROR_FILE"); then
           SCORE=$(echo "$OUTPUT" | jq -r '.score // "N/A"')
 
           # Extract low-scoring checks (score < 5)
@@ -91,10 +104,14 @@ scorecard:
           SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
           EXIT_CODE=$?
+          echo "  Error (exit $EXIT_CODE):"
+          cat "$ERROR_FILE" | head -5
           if [ "$EXIT_CODE" -eq 124 ]; then
             echo "| \`${REPO}\` | :hourglass: Timeout | Scan exceeded 90s |" >> "$RESULTS_FILE"
           else
-            echo "| \`${REPO}\` | :warning: Scan failed | Could not reach repository |" >> "$RESULTS_FILE"
+            # Extract first line of error for the comment
+            ERROR_MSG=$(head -1 "$ERROR_FILE" | cut -c1-50)
+            echo "| \`${REPO}\` | :warning: Scan failed | ${ERROR_MSG:-Unknown error} |" >> "$RESULTS_FILE"
           fi
           FAILED_COUNT=$((FAILED_COUNT + 1))
         fi
