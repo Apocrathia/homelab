@@ -6,9 +6,9 @@ metadata:
   namespace: flux-system
 spec:
   type: gitlab
-  address: https://gitlab.com
+  address: https://gitlab.com/67295640
   secretRef:
-    name: gitlab-token # needs api scope
+    name: gitlab-token
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
