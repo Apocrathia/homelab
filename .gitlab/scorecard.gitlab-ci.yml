@@ -233,11 +233,18 @@ scorecard-badge:
 
       # Run scorecard against this repo (may exit non-zero even with valid results)
       echo "Running scorecard..."
+      ERROR_LOG="/tmp/scorecard-stderr.txt"
       set +e
-      OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>&1)
+      OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>"$ERROR_LOG")
       EXIT_CODE=$?
       set -e
       echo "Scorecard exited with code: $EXIT_CODE"
+
+      # Show any errors
+      if [ -s "$ERROR_LOG" ]; then
+        echo "Scorecard warnings/errors:"
+        cat "$ERROR_LOG"
+      fi
 
       # Check if we got a valid score from the output
       SCORE=$(echo "$OUTPUT" | jq -r '.score // empty' 2>/dev/null || true)
