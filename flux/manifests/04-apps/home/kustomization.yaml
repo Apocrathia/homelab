@@ -9,5 +9,6 @@ resources:
   - companion
   - grocy
   - mealie
+  - meshtastic
   - transmission
   - uptime-kuma

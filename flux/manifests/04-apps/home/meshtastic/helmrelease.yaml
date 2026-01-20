@@ -1,0 +1,168 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: meshtastic
+  namespace: meshtastic
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.51"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: meshtastic
+      # renovate: datasource=docker depName=ghcr.io/yeraze/meshmonitor
+      image: ghcr.io/yeraze/meshmonitor:3.0.3
+      container:
+        name: meshtastic
+        port: 3001
+        env:
+          # Meshtastic Device Configuration
+          - name: MESHTASTIC_NODE_IP
+            value: "tbeam.iot.apocrathia.com"
+          - name: MESHTASTIC_USE_TLS
+            value: "false"
+          - name: MESHTASTIC_TCP_PORT
+            value: "4403"
+          # Application Configuration
+          - name: NODE_ENV
+            value: "production"
+          - name: PORT
+            value: "3001"
+          - name: TRUST_PROXY
+            value: "true"
+          - name: COOKIE_SECURE
+            value: "true"
+          - name: ALLOWED_ORIGINS
+            value: "https://meshtastic.gateway.services.apocrathia.com"
+          # Session Configuration
+          - name: SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: meshtastic-secrets
+                key: session-secret
+          # OIDC Configuration
+          - name: OIDC_ISSUER
+            value: "https://auth.gateway.services.apocrathia.com/application/o/meshtastic/"
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: meshtastic-secrets
+                key: oidc-client-id
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: meshtastic-secrets
+                key: oidc-client-secret
+          - name: OIDC_REDIRECT_URI
+            value: "https://meshtastic.gateway.services.apocrathia.com/api/auth/oidc/callback"
+          - name: OIDC_SCOPES
+            value: "openid profile email"
+          - name: OIDC_AUTO_CREATE_USERS
+            value: "true"
+          # Optional: Disable local auth to force OIDC
+          # - name: DISABLE_LOCAL_AUTH
+          #   value: "true"
+          # Virtual Node Server (allows multiple mobile apps to connect)
+          - name: ENABLE_VIRTUAL_NODE
+            value: "true"
+          - name: VIRTUAL_NODE_PORT
+            value: "4404"
+          # Timezone
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica
+
+      securityContext:
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 1000
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - CHOWN
+            - FOWNER
+            - DAC_OVERRIDE
+            - SETUID
+            - SETGID
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+      service:
+        type: ClusterIP
+        port: 3001
+        targetPort: 3001
+        portName: http
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/meshtastic-secrets"
+
+    authentik:
+      enabled: true
+      mode: oidc
+      displayName: "Meshtastic"
+      externalHost: "https://meshtastic.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/meshmonitor/icon.svg"
+      category: "Home"
+      metaDescription: "Web application for monitoring Meshtastic mesh networks"
+      metaPublisher: "Meshtastic"
+      oidc:
+        redirectUris:
+          - url: "https://meshtastic.gateway.services.apocrathia.com/api/auth/oidc/callback"
+            matchingMode: "strict"
+
+    httproute:
+      enabled: true
+      hostname: "meshtastic.gateway.services.apocrathia.com"
