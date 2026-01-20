@@ -2,7 +2,7 @@
 # Build and publish GitLab Pages using MkDocs
 pages:
   stage: deploy
-  image: python:3.12-alpine
+  image: python:3.14-alpine
   needs:
     - job: scorecard-badge
       artifacts: true
