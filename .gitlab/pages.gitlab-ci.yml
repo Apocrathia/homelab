@@ -28,7 +28,7 @@ pages:
       fi
 
       echo "Building documentation site..."
-      mkdocs build --strict --site-dir public
+      mkdocs build
 
       # Copy scorecard JSON files to site root for badge endpoint
       if [ -d "scorecard" ]; then

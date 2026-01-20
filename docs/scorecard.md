@@ -19,7 +19,7 @@ Scorecard assesses open source projects for security risks through automated che
 The badge above shows the aggregate score. For detailed check results:
 
 - [Latest Results](scorecard-details.md) - Human-readable breakdown of all checks
-- [Full Results (JSON)](../scorecard-full.json) - Raw JSON data
+- [Full Results (JSON)](scorecard-full.json) - Raw JSON data
 
 ## Schedule
 

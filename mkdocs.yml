@@ -7,6 +7,10 @@ site_author: Ian Young
 repo_url: https://gitlab.com/Apocrathia/homelab
 repo_name: Apocrathia/homelab
 
+# Use repo root as docs directory to include scattered READMEs
+docs_dir: "."
+site_dir: "public"
+
 theme:
   name: material
   palette:
