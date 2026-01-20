@@ -23,22 +23,106 @@ pages:
 
       echo "Assembling documentation..."
 
-      # Copy all markdown files into docs/ with path-based naming
-      # e.g., talos/README.md -> docs/talos-README.md
-      # Skip files already in docs/ and hidden directories
-      find . -name "*.md" -type f \
-        ! -path "./docs/*" \
-        ! -path "./.git/*" \
-        ! -path "./.cursor/*" \
-        ! -path "./node_modules/*" \
-        | while read -r file; do
-          # Remove leading ./
-          relative="${file#./}"
-          # Convert path separators to dashes
-          flat_name=$(echo "$relative" | tr '/' '-')
-          echo "  $relative -> $flat_name"
-          cp "$file" "docs/$flat_name"
-        done
+      # Create a Python script to copy and rewrite links
+      cat > /tmp/flatten_docs.py << 'PYTHON_SCRIPT'
+      import os
+      import re
+      import sys
+      from pathlib import Path
+
+      def flatten_path(path):
+          """Convert path/to/file.md to path-to-file.md"""
+          return path.replace('/', '-')
+
+      def resolve_link(link, source_dir):
+          """Resolve a relative link and convert to flattened name."""
+          # Skip external URLs and anchors
+          if link.startswith(('http://', 'https://', 'mailto:', '#')):
+              return link
+
+          # Skip non-markdown links
+          if not link.endswith('.md') and '#' not in link:
+              return link
+
+          # Handle anchor links within markdown files
+          anchor = ''
+          if '#' in link:
+              link, anchor = link.split('#', 1)
+              anchor = '#' + anchor
+              if not link:  # Just an anchor like #section
+                  return anchor
+
+          # Resolve relative path from source directory
+          resolved = os.path.normpath(os.path.join(source_dir, link))
+
+          # Remove leading ./ if present
+          if resolved.startswith('./'):
+              resolved = resolved[2:]
+
+          # Convert to flattened name
+          flat = flatten_path(resolved)
+
+          # Remove .md extension for MkDocs links (it adds them back)
+          if flat.endswith('.md'):
+              flat = flat[:-3]
+
+          return flat + anchor
+
+      def process_file(source_path, dest_dir):
+          """Process a markdown file, rewriting links."""
+          source_path = Path(source_path)
+
+          # Get the directory of the source file for resolving relative links
+          source_dir = str(source_path.parent)
+          if source_dir == '.':
+              source_dir = ''
+
+          # Create flattened filename
+          flat_name = flatten_path(str(source_path))
+          dest_path = Path(dest_dir) / flat_name
+
+          # Read content
+          with open(source_path, 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          # Rewrite markdown links: [text](link)
+          def replace_link(match):
+              text = match.group(1)
+              link = match.group(2)
+              new_link = resolve_link(link, source_dir)
+              return f'[{text}]({new_link})'
+
+          content = re.sub(r'\[([^\]]*)\]\(([^)]+)\)', replace_link, content)
+
+          # Write to destination
+          with open(dest_path, 'w', encoding='utf-8') as f:
+              f.write(content)
+
+          print(f"  {source_path} -> {flat_name}")
+
+      def main():
+          dest_dir = sys.argv[1] if len(sys.argv) > 1 else 'docs'
+
+          # Find all markdown files, excluding docs/, .git/, .cursor/
+          exclude_dirs = {'docs', '.git', '.cursor', 'node_modules', 'public'}
+
+          for root, dirs, files in os.walk('.'):
+              # Filter out excluded directories
+              dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
+              for file in files:
+                  if file.endswith('.md'):
+                      source = os.path.join(root, file)
+                      # Remove leading ./
+                      if source.startswith('./'):
+                          source = source[2:]
+                      process_file(source, dest_dir)
+
+      if __name__ == '__main__':
+          main()
+      PYTHON_SCRIPT
+
+      python /tmp/flatten_docs.py docs
 
       # Rename root README to index for landing page
       mv docs/README.md docs/index.md 2>/dev/null || true
@@ -50,7 +134,7 @@ pages:
       fi
 
       echo "Documentation files:"
-      ls -la docs/*.md | head -30
+      ls docs/*.md | head -30
 
       echo "Building documentation site..."
       mkdocs build
