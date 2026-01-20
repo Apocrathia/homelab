@@ -2,6 +2,14 @@
 no-op:
   stage: test
   rules:
+    # Skip if any other job would run
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - helm/generic-app/Chart.yaml
+        - flux/manifests/**/*
+        - terraform/**/*
+      when: never
+    # Otherwise run for MRs with no applicable jobs
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - echo "This is a no-op pipeline"
+    - echo "No-op: no other jobs applicable for this MR"
