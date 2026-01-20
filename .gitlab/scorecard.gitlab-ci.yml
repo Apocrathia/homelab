@@ -224,25 +224,34 @@ scorecard-badge:
 
       echo "=== Scoring gitlab.com/${CI_PROJECT_PATH} ==="
 
-      # Run scorecard against this repo
-      if OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>&1); then
-        SCORE=$(echo "$OUTPUT" | jq -r '.score // 0')
-        echo "Score: $SCORE/10"
+      # Run scorecard against this repo (may exit non-zero even with valid results)
+      OUTPUT=$(scorecard --repo="gitlab.com/${CI_PROJECT_PATH}" --format=json 2>&1) || true
 
-        # Determine badge color based on score
-        if [ "$(echo "$SCORE >= 7" | bc)" -eq 1 ]; then
-          COLOR="brightgreen"
-        elif [ "$(echo "$SCORE >= 5" | bc)" -eq 1 ]; then
-          COLOR="yellow"
-        elif [ "$(echo "$SCORE >= 3" | bc)" -eq 1 ]; then
-          COLOR="orange"
-        else
-          COLOR="red"
-        fi
+      # Check if we got a valid score from the output
+      SCORE=$(echo "$OUTPUT" | jq -r '.score // empty' 2>/dev/null)
 
-        # Create shields.io endpoint JSON
-        mkdir -p public
-        cat > public/scorecard.json <<EOF
+      if [ -z "$SCORE" ]; then
+        echo "Scorecard scan failed - no score in output:"
+        echo "$OUTPUT"
+        exit 1
+      fi
+
+      echo "Score: $SCORE/10"
+
+      # Determine badge color based on score
+      if [ "$(echo "$SCORE >= 7" | bc)" -eq 1 ]; then
+        COLOR="brightgreen"
+      elif [ "$(echo "$SCORE >= 5" | bc)" -eq 1 ]; then
+        COLOR="yellow"
+      elif [ "$(echo "$SCORE >= 3" | bc)" -eq 1 ]; then
+        COLOR="orange"
+      else
+        COLOR="red"
+      fi
+
+      # Create shields.io endpoint JSON
+      mkdir -p public
+      cat > public/scorecard.json <<EOF
       {
         "schemaVersion": 1,
         "label": "OpenSSF Scorecard",
@@ -251,16 +260,11 @@ scorecard-badge:
       }
       EOF
 
-        echo "Badge JSON created:"
-        cat public/scorecard.json
+      echo "Badge JSON created:"
+      cat public/scorecard.json
 
-        # Also save full results for reference
-        echo "$OUTPUT" | jq '.' > public/scorecard-full.json
-      else
-        echo "Scorecard scan failed:"
-        echo "$OUTPUT"
-        exit 1
-      fi
+      # Also save full results for reference
+      echo "$OUTPUT" | jq '.' > public/scorecard-full.json
   artifacts:
     paths:
       - public

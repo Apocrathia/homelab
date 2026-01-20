@@ -66,9 +66,12 @@ create-chart-tag:
       fi
 
       echo "=== Chart Tag Creation Completed ==="
-  only:
-    changes:
-      - helm/generic-app/Chart.yaml
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      changes:
+        - helm/generic-app/Chart.yaml
   allow_failure: true
   artifacts:
     reports:
