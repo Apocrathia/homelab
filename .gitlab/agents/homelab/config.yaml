@@ -1,13 +1,5 @@
----
-ci_access:
-  projects:
-    - id: Apocrathia/homelab
-
-flux:
-  enabled: true
-
 user_access:
-  access_as:
-    agent: {}
-  projects:
-    - id: Apocrathia/homelab
+    access_as:
+        agent: {}
+    projects:
+        - id: Apocrathia/homelab
