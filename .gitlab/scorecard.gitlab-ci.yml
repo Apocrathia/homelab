@@ -76,8 +76,8 @@ scorecard:
       SUCCESS_COUNT=0
 
       {
-        echo "| Repository | Score | Key Findings |"
-        echo "|------------|-------|--------------|"
+        echo "| Repository | Score | Lowest Checks |"
+        echo "|------------|-------|---------------|"
       } > "$RESULTS_FILE"
 
       for REPO in $REPOS; do
@@ -87,20 +87,25 @@ scorecard:
         ERROR_FILE="/tmp/scorecard-error.txt"
         if OUTPUT=$(timeout 90 scorecard --repo="$REPO" --format=json 2>"$ERROR_FILE"); then
           SCORE=$(echo "$OUTPUT" | jq -r '.score // "N/A"')
+          echo "  Score: $SCORE/10"
 
-          # Extract low-scoring checks (score < 5)
+          # Extract all low-scoring checks (score < 5) as a list
           LOW_CHECKS=$(echo "$OUTPUT" | jq -r '
             .checks // []
             | map(select(.score < 5 and .score >= 0))
-            | map("\(.name): \(.score)/10")
-            | join(", ")
+            | map("• \(.name): \(.score)")
+            | join("<br>")
           ')
 
           if [ -z "$LOW_CHECKS" ]; then
-            LOW_CHECKS="All checks passing"
+            FINDINGS="All checks ≥5"
+          else
+            FINDINGS="$LOW_CHECKS"
+            echo "  Low scores:"
+            echo "$OUTPUT" | jq -r '.checks // [] | map(select(.score < 5 and .score >= 0)) | map("    \(.name): \(.score)") | .[]'
           fi
 
-          echo "| [\`${REPO}\`](https://${REPO}) | **${SCORE}/10** | ${LOW_CHECKS} |" >> "$RESULTS_FILE"
+          echo "| [\`${REPO}\`](https://${REPO}) | **${SCORE}/10** | ${FINDINGS} |" >> "$RESULTS_FILE"
           SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
         else
           EXIT_CODE=$?
