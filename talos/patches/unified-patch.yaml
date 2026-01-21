@@ -126,10 +126,6 @@ cluster:
       election-timeout: "5000" # 5000ms (default 1000ms) - 20x heartbeat-interval for stability
       # Enable initial election tick advance for faster startup
       initial-election-tick-advance: "true"
-      # WAL sync settings optimized for NVMe + ZFS performance
-      # Higher batch sizes reduce IOPS while maintaining durability
-      wal-sync-batch-size: "1000" # 1000 entries per batch for NVMe efficiency
-      wal-sync-interval: "5" # 5ms sync interval for balanced performance
       # Metrics
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
