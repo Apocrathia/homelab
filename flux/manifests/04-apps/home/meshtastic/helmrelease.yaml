@@ -154,7 +154,7 @@ spec:
       mode: oidc
       displayName: "Meshtastic"
       externalHost: "https://meshtastic.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/meshmonitor/icon.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/meshtastic/icon.svg"
       category: "Home"
       metaDescription: "Web application for monitoring Meshtastic mesh networks"
       metaPublisher: "Meshtastic"
