@@ -1,8 +1,8 @@
 ---
 # Trivy - IaC security scanning
-# Scans Terraform and Kubernetes manifests for misconfigurations
+# Scans Kubernetes and Terraform manifests for misconfigurations
 
-trivy-iac:
+trivy:
   stage: test
   image:
     # renovate: datasource=docker depName=ghcr.io/aquasecurity/trivy
@@ -15,11 +15,5 @@ trivy-iac:
         - flux/**/*.yaml
         - helm/**/*.yaml
   script:
-    - |
-      echo "=== Trivy IaC Security Scanning ==="
-      trivy config \
-        --severity CRITICAL,HIGH \
-        --exit-code 1 \
-        terraform/ flux/ helm/
-      echo "=== Trivy Scan Complete ==="
+    - trivy config --severity CRITICAL,HIGH --exit-code 1 .
   allow_failure: false
