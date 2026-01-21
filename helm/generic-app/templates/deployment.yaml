@@ -110,10 +110,10 @@ spec:
             {{- end }}
           {{- if .securityContext }}
           securityContext:
-            {{- if .securityContext.runAsUser }}
+            {{- if hasKey .securityContext "runAsUser" }}
             runAsUser: {{ .securityContext.runAsUser }}
             {{- end }}
-            {{- if .securityContext.runAsGroup }}
+            {{- if hasKey .securityContext "runAsGroup" }}
             runAsGroup: {{ .securityContext.runAsGroup }}
             {{- end }}
             {{- if .securityContext.runAsNonRoot }}
@@ -333,19 +333,19 @@ spec:
             {{- else if .Values.app.healthChecks.livenessProbe.tcpSocket }}
             tcpSocket: {{ .Values.app.healthChecks.livenessProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .Values.app.healthChecks.livenessProbe.initialDelaySeconds }}
+            {{- if hasKey .Values.app.healthChecks.livenessProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .Values.app.healthChecks.livenessProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.livenessProbe.periodSeconds }}
+            {{- if hasKey .Values.app.healthChecks.livenessProbe "periodSeconds" }}
             periodSeconds: {{ .Values.app.healthChecks.livenessProbe.periodSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.livenessProbe.timeoutSeconds }}
+            {{- if hasKey .Values.app.healthChecks.livenessProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .Values.app.healthChecks.livenessProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.livenessProbe.failureThreshold }}
+            {{- if hasKey .Values.app.healthChecks.livenessProbe "failureThreshold" }}
             failureThreshold: {{ .Values.app.healthChecks.livenessProbe.failureThreshold }}
             {{- end }}
-            {{- if .Values.app.healthChecks.livenessProbe.successThreshold }}
+            {{- if hasKey .Values.app.healthChecks.livenessProbe "successThreshold" }}
             successThreshold: {{ .Values.app.healthChecks.livenessProbe.successThreshold }}
             {{- end }}
           {{- end }}
@@ -359,19 +359,19 @@ spec:
             {{- else if .Values.app.healthChecks.readinessProbe.tcpSocket }}
             tcpSocket: {{ .Values.app.healthChecks.readinessProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .Values.app.healthChecks.readinessProbe.initialDelaySeconds }}
+            {{- if hasKey .Values.app.healthChecks.readinessProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .Values.app.healthChecks.readinessProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.readinessProbe.periodSeconds }}
+            {{- if hasKey .Values.app.healthChecks.readinessProbe "periodSeconds" }}
             periodSeconds: {{ .Values.app.healthChecks.readinessProbe.periodSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.readinessProbe.timeoutSeconds }}
+            {{- if hasKey .Values.app.healthChecks.readinessProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .Values.app.healthChecks.readinessProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.readinessProbe.failureThreshold }}
+            {{- if hasKey .Values.app.healthChecks.readinessProbe "failureThreshold" }}
             failureThreshold: {{ .Values.app.healthChecks.readinessProbe.failureThreshold }}
             {{- end }}
-            {{- if .Values.app.healthChecks.readinessProbe.successThreshold }}
+            {{- if hasKey .Values.app.healthChecks.readinessProbe "successThreshold" }}
             successThreshold: {{ .Values.app.healthChecks.readinessProbe.successThreshold }}
             {{- end }}
           {{- end }}
@@ -385,19 +385,19 @@ spec:
             {{- else if .Values.app.healthChecks.startupProbe.tcpSocket }}
             tcpSocket: {{ .Values.app.healthChecks.startupProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .Values.app.healthChecks.startupProbe.initialDelaySeconds }}
+            {{- if hasKey .Values.app.healthChecks.startupProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .Values.app.healthChecks.startupProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.startupProbe.periodSeconds }}
+            {{- if hasKey .Values.app.healthChecks.startupProbe "periodSeconds" }}
             periodSeconds: {{ .Values.app.healthChecks.startupProbe.periodSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.startupProbe.timeoutSeconds }}
+            {{- if hasKey .Values.app.healthChecks.startupProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .Values.app.healthChecks.startupProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .Values.app.healthChecks.startupProbe.failureThreshold }}
+            {{- if hasKey .Values.app.healthChecks.startupProbe "failureThreshold" }}
             failureThreshold: {{ .Values.app.healthChecks.startupProbe.failureThreshold }}
             {{- end }}
-            {{- if .Values.app.healthChecks.startupProbe.successThreshold }}
+            {{- if hasKey .Values.app.healthChecks.startupProbe "successThreshold" }}
             successThreshold: {{ .Values.app.healthChecks.startupProbe.successThreshold }}
             {{- end }}
           {{- end }}
@@ -484,7 +484,7 @@ spec:
             {{- else }}
             runAsNonRoot: {{ if (hasKey $.Values.app.securityContext "runAsNonRoot") }}{{ $.Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
             {{- end }}
-            {{- if .securityContext.runAsUser }}
+            {{- if hasKey .securityContext "runAsUser" }}
             runAsUser: {{ .securityContext.runAsUser }}
             {{- else }}
             runAsUser: {{ .runAsUser | default 1000 }}
@@ -611,19 +611,19 @@ spec:
             {{- else if .healthChecks.livenessProbe.tcpSocket }}
             tcpSocket: {{ .healthChecks.livenessProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .healthChecks.livenessProbe.initialDelaySeconds }}
+            {{- if hasKey .healthChecks.livenessProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .healthChecks.livenessProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .healthChecks.livenessProbe.periodSeconds }}
+            {{- if hasKey .healthChecks.livenessProbe "periodSeconds" }}
             periodSeconds: {{ .healthChecks.livenessProbe.periodSeconds }}
             {{- end }}
-            {{- if .healthChecks.livenessProbe.timeoutSeconds }}
+            {{- if hasKey .healthChecks.livenessProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .healthChecks.livenessProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .healthChecks.livenessProbe.failureThreshold }}
+            {{- if hasKey .healthChecks.livenessProbe "failureThreshold" }}
             failureThreshold: {{ .healthChecks.livenessProbe.failureThreshold }}
             {{- end }}
-            {{- if .healthChecks.livenessProbe.successThreshold }}
+            {{- if hasKey .healthChecks.livenessProbe "successThreshold" }}
             successThreshold: {{ .healthChecks.livenessProbe.successThreshold }}
             {{- end }}
           {{- end }}
@@ -637,19 +637,19 @@ spec:
             {{- else if .healthChecks.readinessProbe.tcpSocket }}
             tcpSocket: {{ .healthChecks.readinessProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .healthChecks.readinessProbe.initialDelaySeconds }}
+            {{- if hasKey .healthChecks.readinessProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .healthChecks.readinessProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .healthChecks.readinessProbe.periodSeconds }}
+            {{- if hasKey .healthChecks.readinessProbe "periodSeconds" }}
             periodSeconds: {{ .healthChecks.readinessProbe.periodSeconds }}
             {{- end }}
-            {{- if .healthChecks.readinessProbe.timeoutSeconds }}
+            {{- if hasKey .healthChecks.readinessProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .healthChecks.readinessProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .healthChecks.readinessProbe.failureThreshold }}
+            {{- if hasKey .healthChecks.readinessProbe "failureThreshold" }}
             failureThreshold: {{ .healthChecks.readinessProbe.failureThreshold }}
             {{- end }}
-            {{- if .healthChecks.readinessProbe.successThreshold }}
+            {{- if hasKey .healthChecks.readinessProbe "successThreshold" }}
             successThreshold: {{ .healthChecks.readinessProbe.successThreshold }}
             {{- end }}
           {{- end }}
@@ -663,19 +663,19 @@ spec:
             {{- else if .healthChecks.startupProbe.tcpSocket }}
             tcpSocket: {{ .healthChecks.startupProbe.tcpSocket | toYaml | nindent 14 }}
             {{- end }}
-            {{- if .healthChecks.startupProbe.initialDelaySeconds }}
+            {{- if hasKey .healthChecks.startupProbe "initialDelaySeconds" }}
             initialDelaySeconds: {{ .healthChecks.startupProbe.initialDelaySeconds }}
             {{- end }}
-            {{- if .healthChecks.startupProbe.periodSeconds }}
+            {{- if hasKey .healthChecks.startupProbe "periodSeconds" }}
             periodSeconds: {{ .healthChecks.startupProbe.periodSeconds }}
             {{- end }}
-            {{- if .healthChecks.startupProbe.timeoutSeconds }}
+            {{- if hasKey .healthChecks.startupProbe "timeoutSeconds" }}
             timeoutSeconds: {{ .healthChecks.startupProbe.timeoutSeconds }}
             {{- end }}
-            {{- if .healthChecks.startupProbe.failureThreshold }}
+            {{- if hasKey .healthChecks.startupProbe "failureThreshold" }}
             failureThreshold: {{ .healthChecks.startupProbe.failureThreshold }}
             {{- end }}
-            {{- if .healthChecks.startupProbe.successThreshold }}
+            {{- if hasKey .healthChecks.startupProbe "successThreshold" }}
             successThreshold: {{ .healthChecks.startupProbe.successThreshold }}
             {{- end }}
           {{- end }}

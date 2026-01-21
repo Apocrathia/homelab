@@ -1,6 +1,18 @@
 # Changelog
 
-## Version 0.0.52 (Latest)
+## Version 0.0.53 (Latest)
+
+- **Fixed Numeric Zero Value Handling**: Fixed template bug where `0` values were treated as falsy and omitted from rendered output
+  - **Problem Solved**: Setting `runAsUser: 0`, `runAsGroup: 0`, or `initialDelaySeconds: 0` had no effect because Go templates treat `0` as falsy, causing `{{- if .value }}` conditionals to skip the field entirely
+  - **Template Fix**: Replaced direct value checks with `hasKey` checks for numeric fields that can legitimately be `0`
+  - **Fields Fixed**:
+    - InitContainers: `securityContext.runAsUser`, `securityContext.runAsGroup`
+    - Sidecars: `securityContext.runAsUser`
+    - Health probes (main + sidecars): `initialDelaySeconds`, `periodSeconds`, `timeoutSeconds`, `failureThreshold`, `successThreshold`
+  - **Impact**: Containers running as root (`runAsUser: 0`) now render correctly instead of being silently dropped
+  - **Backward Compatible**: No changes required to existing deployments - only affects deployments using `0` values
+
+## Version 0.0.52
 
 - **Reverted Authentik Proxy Timeout Configuration**: Removed HTTPRoute timeout patches from authentik blueprints
   - **Issue**: Timeout JSON patches were breaking authentik HTTPRoute creation
