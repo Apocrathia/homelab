@@ -1,0 +1,52 @@
+---
+# Trivy - IaC security scanning
+# Scans Terraform and Kubernetes manifests for vulnerabilities and misconfigurations
+
+# Job 1: Fail on fixable CRITICAL/HIGH issues
+trivy-iac:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=ghcr.io/aquasecurity/trivy
+    name: ghcr.io/aquasecurity/trivy:0.68.2
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - terraform/**/*
+        - flux/**/*.yaml
+        - flux/**/*.yml
+        - helm/**/*.yaml
+  script:
+    - |
+      echo "=== Trivy IaC Security Scanning (Fixable Issues) ==="
+      trivy config \
+        --severity CRITICAL,HIGH \
+        --exit-code 1 \
+        --ignore-unfixed \
+        terraform/ flux/ helm/
+      echo "=== Trivy Scan Complete ==="
+  allow_failure: false
+
+# Job 2: Report unfixed CRITICAL/HIGH issues (warning only)
+trivy-iac-unfixed:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=ghcr.io/aquasecurity/trivy
+    name: ghcr.io/aquasecurity/trivy:0.68.2
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - terraform/**/*
+        - flux/**/*.yaml
+        - flux/**/*.yml
+        - helm/**/*.yaml
+  script:
+    - |
+      echo "=== Trivy IaC Security Scanning (Unfixed Issues - Warning Only) ==="
+      trivy config \
+        --severity CRITICAL,HIGH \
+        --exit-code 1 \
+        terraform/ flux/ helm/
+      echo "=== Trivy Scan Complete ==="
+  allow_failure: true

@@ -13,10 +13,15 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 | File                           | Stage         | Trigger                     | Purpose                                          |
 | ------------------------------ | ------------- | --------------------------- | ------------------------------------------------ |
 | `no-op.gitlab-ci.yml`          | test          | MR (fallback)               | Ensures pipeline passes when no other jobs apply |
-| `chart-tag.gitlab-ci.yml`      | tag           | `Chart.yaml` changes        | Creates Git tags for Helm chart releases         |
+| `chart-tag.gitlab-ci.yml`      | deploy        | `Chart.yaml` changes        | Creates Git tags for Helm chart releases         |
 | `kustomize-diff.gitlab-ci.yml` | verify        | MR (manifest changes)       | Posts rendered manifest diffs to MR comments     |
 | `scorecard.gitlab-ci.yml`      | verify        | MR (manifest changes)       | Runs OpenSSF Scorecard on changed dependencies   |
 | `tofu.gitlab-ci.yml`           | verify/deploy | MR/main (terraform changes) | OpenTofu plan/apply for Proxmox VMs              |
+| `gitleaks.gitlab-ci.yml`       | test          | MR (all files)              | Secret scanning on MR commits                    |
+| `kube-linter.gitlab-ci.yml`    | test          | MR (manifest changes)       | Kubernetes manifest security linting             |
+| `trivy.gitlab-ci.yml`          | test          | MR (IaC changes)            | IaC security scanning for Terraform and K8s      |
+| `shellcheck.gitlab-ci.yml`     | test          | MR (shell script changes)   | Shell script static analysis                     |
+| `semgrep.gitlab-ci.yml`        | test          | MR (code changes)           | SAST for Python, Go, JS, TS                      |
 
 ### Disabled Pipelines
 
@@ -28,10 +33,9 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 ```yaml
 stages:
-  - test # Validation, no-op fallback
+  - test # Validation, security scanning, no-op fallback
   - verify # Kustomize diff, Scorecard, Tofu plan
-  - tag # Chart tagging
-  - deploy # Tofu apply (manual)
+  - deploy # Chart tagging, Tofu apply (manual)
 ```
 
 ## Pipeline Details
@@ -65,7 +69,7 @@ Manages Proxmox VM infrastructure. Runs validation and plan on MRs, manual apply
 
 **Requirements**:
 
-- `TOFU_MR_TOKEN` - Personal access token for posting MR comments
+- `TOFU_TOKEN` - Personal access token for posting MR comments
 - Proxmox credentials configured in Terragrunt
 
 ### Chart Tagging
@@ -79,6 +83,31 @@ Creates Git tags when `helm/generic-app/Chart.yaml` version changes. Tag format:
 ### No-Op
 
 Fallback job that runs when an MR has no other applicable jobs. Prevents empty pipelines.
+
+### Security Scanning
+
+Six security scanning jobs run on MRs to catch issues before merge:
+
+| Job                 | Tool        | Scope                           | Blocks Merge |
+| ------------------- | ----------- | ------------------------------- | ------------ |
+| `gitleaks`          | Gitleaks    | MR commits (diff only)          | Yes          |
+| `kube-linter`       | kube-linter | `flux/`, `helm/` manifests      | Yes          |
+| `trivy-iac`         | Trivy       | Terraform, Flux, Helm (fixable) | Yes          |
+| `trivy-iac-unfixed` | Trivy       | Same as above (unfixed issues)  | No (warning) |
+| `shellcheck`        | ShellCheck  | `scripts/*.sh` (errors only)    | Yes          |
+| `semgrep`           | Semgrep     | `*.py`, `*.go`, `*.js`, `*.ts`  | Yes          |
+
+**Configuration files**:
+
+- `.gitleaks.toml` - Gitleaks allowlist for false positives
+- `.kube-linter.yaml` - kube-linter check configuration
+
+**Notes**:
+
+- Gitleaks scans only commits in the MR, not full repo history
+- Trivy is split into two jobs: one blocks on fixable CRITICAL/HIGH issues, another warns on unfixed
+- ShellCheck only fails on errors (ignores warnings/info/style)
+- Semgrep uses auto-detected rulesets based on detected languages
 
 ## GitLab Agent
 
@@ -94,7 +123,7 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 | ----------------- | -------------------- | -------------- |
 | `KUSTOMIZE_TOKEN` | MR comment access    | kustomize-diff |
 | `SCORECARD_TOKEN` | MR comment access    | scorecard      |
-| `TOFU_MR_TOKEN`   | MR comment access    | tofu-plan      |
+| `TOFU_TOKEN`      | MR comment access    | tofu-plan      |
 | `GITHUB_TOKEN`    | Scorecard API access | scorecard      |
 | `GITLAB_TOKEN`    | Git tag push access  | chart-tag      |
 

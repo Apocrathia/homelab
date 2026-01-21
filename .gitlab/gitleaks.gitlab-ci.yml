@@ -1,0 +1,22 @@
+---
+# Gitleaks - Secret scanning
+# Runs on all files to detect leaked secrets in MR commits
+gitleaks:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=ghcr.io/gitleaks/gitleaks
+    name: ghcr.io/gitleaks/gitleaks:v8.30.0
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - |
+      echo "=== Gitleaks Secret Scanning ==="
+      git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      gitleaks detect \
+        --source . \
+        --config .gitleaks.toml \
+        --log-opts "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" \
+        --verbose
+      echo "=== Gitleaks Scan Complete ==="
+  allow_failure: false

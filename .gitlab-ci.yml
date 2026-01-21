@@ -2,7 +2,6 @@
 stages:
   - test
   - verify
-  - tag
   - deploy
   # - renovate
 
@@ -14,3 +13,9 @@ include:
   - local: .gitlab/scorecard.gitlab-ci.yml
   - local: .gitlab/pages.gitlab-ci.yml
   - local: .gitlab/tofu.gitlab-ci.yml
+  # Security scanning
+  - local: .gitlab/gitleaks.gitlab-ci.yml
+  - local: .gitlab/kube-linter.gitlab-ci.yml
+  - local: .gitlab/trivy.gitlab-ci.yml
+  - local: .gitlab/shellcheck.gitlab-ci.yml
+  - local: .gitlab/semgrep.gitlab-ci.yml

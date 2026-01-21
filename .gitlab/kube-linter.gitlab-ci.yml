@@ -1,0 +1,21 @@
+---
+# kube-linter - Kubernetes manifest security linting
+# Runs on flux/ and helm/ manifests to catch security misconfigurations
+kube-linter:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=stackrox/kube-linter
+    name: stackrox/kube-linter:v0.8.1-amd64
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - flux/**/*.yaml
+        - flux/**/*.yml
+        - helm/**/*.yaml
+  script:
+    - |
+      echo "=== kube-linter Security Scanning ==="
+      kube-linter lint flux/ helm/ --config .kube-linter.yaml
+      echo "=== kube-linter Scan Complete ==="
+  allow_failure: false

@@ -8,6 +8,12 @@ no-op:
         - helm/generic-app/Chart.yaml
         - flux/manifests/**/*
         - terraform/**/*
+        - scripts/**/*.sh
+        - "*.sh"
+        - "**/*.py"
+        - "**/*.go"
+        - "**/*.js"
+        - "**/*.ts"
       when: never
     # Otherwise run for MRs with no applicable jobs
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

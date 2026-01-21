@@ -82,14 +82,14 @@ tofu-plan:
       if [ -n "$EXISTING_NOTE_ID" ]; then
         echo "Updating existing comment (ID: $EXISTING_NOTE_ID)..."
         curl --silent --show-error --fail --request PUT \
-          --header "PRIVATE-TOKEN: ${TOFU_MR_TOKEN}" \
+          --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
           --header "Content-Type: application/json" \
           --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}" > /dev/null || true
       else
         echo "Posting new comment..."
         curl --silent --show-error --fail --request POST \
-          --header "PRIVATE-TOKEN: ${TOFU_MR_TOKEN}" \
+          --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
           --header "Content-Type: application/json" \
           --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" > /dev/null || true
