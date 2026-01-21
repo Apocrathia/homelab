@@ -58,4 +58,4 @@ nav:
       - Latest Results: scorecard-details.md
   - Reference:
       - Terraform: terraform-README.md
-      - GitLab CI: .gitlab-README.md
+      - GitLab CI: gitlab-README.md
