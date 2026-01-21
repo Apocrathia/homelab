@@ -197,6 +197,39 @@ class ArrClient(ABC):
         logger.error(f"Command {command_id} timed out after {timeout}s")
         return False
 
+    def _wait_for_idle(self, timeout: int = 60) -> bool:
+        """
+        Wait for the command queue to be idle (no running/queued commands).
+
+        Some *arr applications (particularly Lidarr) may have background tasks
+        that continue after a command reports as complete. This method polls
+        the command queue until all commands have finished processing.
+
+        Args:
+            timeout: Maximum time to wait in seconds (default: 60 seconds)
+
+        Returns:
+            True if queue is idle, False if timeout reached
+        """
+        if self.dry_run:
+            return True
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                commands = self._get("command")
+                active = [c for c in commands if c.get("status") in ("started", "queued")]
+                if not active:
+                    return True
+                logger.debug(f"[{self.config.name}] Waiting for {len(active)} commands to complete")
+            except Exception as e:
+                logger.warning(f"[{self.config.name}] Error checking command queue: {e}")
+
+            time.sleep(2)
+
+        logger.warning(f"[{self.config.name}] Timed out waiting for command queue to idle")
+        return False
+
     @abstractmethod
     def list_items(self) -> list[dict[str, Any]]:
         """
@@ -274,6 +307,10 @@ class ArrClient(ABC):
                 logger.error(f"[{self.config.name}] Failed to refresh: {item_name}")
                 failed_items.append(f"{item_name} (refresh)")
                 continue
+
+            # Wait for command queue to be idle before renaming
+            # This ensures any background tasks triggered by refresh have completed
+            self._wait_for_idle()
 
             # Then rename to reflect current state
             if not self.rename_item(item_id):
