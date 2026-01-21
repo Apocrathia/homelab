@@ -2,9 +2,9 @@
 apiVersion: kyverno.io/v2
 kind: ClusterCleanupPolicy
 metadata:
-  name: cleanup-released-pvcs
+  name: cleanup-lost-pvcs
   annotations:
-    policies.kyverno.io/title: Cleanup Released PVCs
+    policies.kyverno.io/title: Cleanup Lost PVCs
     policies.kyverno.io/category: Other
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: PersistentVolumeClaim
@@ -12,8 +12,9 @@ metadata:
     policies.kyverno.io/minversion: 1.9.0
     kyverno.io/kubernetes-version: "1.27"
     policies.kyverno.io/description: >-
-      Cleans up PersistentVolumeClaims that are in Released status to prevent
-      accumulation of orphaned PVC resources in the cluster.
+      Cleans up PersistentVolumeClaims that are in Lost status (backing PV no
+      longer exists) and are older than 7 days. Lost PVCs cannot recover and
+      require manual intervention to recreate. Excludes critical namespaces.
 spec:
   match:
     any:
@@ -22,12 +23,32 @@ spec:
             - PersistentVolumeClaim
   exclude:
     any:
+      # Exclude critical system namespaces
       - resources:
           namespaces:
             - kube-system
+            - longhorn-system
+            - cnpg-system
+            - flux-system
+      # Exclude Helm-managed PVCs
+      - resources:
+          selector:
+            matchLabels:
+              app.kubernetes.io/managed-by: Helm
+      # Exclude Flux-managed PVCs
+      - resources:
+          selector:
+            matchExpressions:
+              - key: kustomize.toolkit.fluxcd.io/name
+                operator: Exists
   conditions:
     all:
+      # Only target Lost PVCs (backing PV no longer exists)
       - key: "{{ target.status.phase }}"
         operator: Equals
-        value: "Released"
-  schedule: "30 * * * *" # Hourly at :30
+        value: "Lost"
+      # Must be older than 7 days to allow recovery attempts
+      - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
+        operator: GreaterThan
+        value: "168h0m0s"
+  schedule: "30 9 * * *" # Daily at 0230 America/Denver (UTC-7)

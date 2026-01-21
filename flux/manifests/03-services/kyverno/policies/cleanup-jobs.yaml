@@ -25,6 +25,9 @@ spec:
       - resources:
           namespaces:
             - kube-system
+            - kyverno
+            - flux-system
+            - cert-manager
   conditions:
     all:
       - key: "{{ target.status.conditions[?(@.type=='Complete')].status }}"
@@ -61,6 +64,9 @@ spec:
       - resources:
           namespaces:
             - kube-system
+            - kyverno
+            - flux-system
+            - cert-manager
   conditions:
     all:
       - key: "{{ target.status.conditions[?(@.type=='Failed')].status }}"

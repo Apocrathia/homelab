@@ -13,9 +13,9 @@ metadata:
     kyverno.io/kubernetes-version: "1.27"
     policies.kyverno.io/description: >-
       Cleans up ConfigMaps without owner references that are older than 30 days
-      to prevent etcd bloat from accumulating orphaned configuration resources.
-      Only targets ConfigMaps with no owner references to avoid disrupting
-      active workloads.
+      to prevent etcd bloat. Only targets ConfigMaps that have NO management
+      indicators (no owner refs, no Helm labels, no Flux labels, no operator
+      annotations). Excludes critical system namespaces.
 spec:
   match:
     any:
@@ -24,21 +24,62 @@ spec:
             - ConfigMap
   exclude:
     any:
+      # Exclude critical system namespaces
       - resources:
           namespaces:
             - kube-system
             - kyverno
+            - flux-system
+            - cert-manager
+            - longhorn-system
+            - cilium-system
+            - kube-prometheus-stack
+            - cnpg-system
+            - external-secrets
+      # Exclude system-managed ConfigMaps by name
       - resources:
-          # Exclude system-managed ConfigMaps
           names:
             - "kube-root-ca.crt"
+            - "*-ca-bundle"
+      # Exclude Helm-managed (app.kubernetes.io/managed-by label)
+      - resources:
+          selector:
+            matchLabels:
+              app.kubernetes.io/managed-by: Helm
+      # Exclude Helm-managed (helm.sh/chart label)
+      - resources:
+          selector:
+            matchExpressions:
+              - key: helm.sh/chart
+                operator: Exists
+      # Exclude Flux-managed resources
+      - resources:
+          selector:
+            matchExpressions:
+              - key: kustomize.toolkit.fluxcd.io/name
+                operator: Exists
+      # Exclude resources with app.kubernetes.io/name (typically managed)
+      - resources:
+          selector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: Exists
   conditions:
     all:
+      # Must be older than 30 days
       - key: "{{ time_diff(target.metadata.creationTimestamp, time_now_utc()) }}"
         operator: GreaterThan
         value: "720h0m0s"
-    any:
+      # Must have no owner references
       - key: "{{ target.metadata.ownerReferences[] || `[]` }}"
         operator: Equals
         value: []
+      # Must not have Helm release annotation
+      - key: '{{ target.metadata.annotations."meta.helm.sh/release-name" || '''' }}'
+        operator: Equals
+        value: ""
+      # Must not have cert-manager annotation
+      - key: '{{ target.metadata.annotations."cert-manager.io/allow-direct-injection" || '''' }}'
+        operator: Equals
+        value: ""
   schedule: "0 9 * * *" # 0200 America/Denver (UTC-7)

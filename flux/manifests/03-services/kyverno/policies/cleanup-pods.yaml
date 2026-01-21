@@ -25,6 +25,9 @@ spec:
       - resources:
           namespaces:
             - kube-system
+            - kyverno
+            - flux-system
+            - cert-manager
   conditions:
     all:
       - key: "{{ target.status.phase }}"
@@ -71,6 +74,9 @@ spec:
       - resources:
           namespaces:
             - kube-system
+            - kyverno
+            - flux-system
+            - cert-manager
   conditions:
     all:
       - key: "{{ target.status.phase }}"
