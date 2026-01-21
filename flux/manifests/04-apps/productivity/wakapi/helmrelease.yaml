@@ -1,0 +1,153 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wakapi
+  namespace: wakapi
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.52"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: wakapi
+      # renovate: datasource=docker depName=ghcr.io/muety/wakapi
+      image: ghcr.io/muety/wakapi:2.17.0
+      container:
+        name: wakapi
+        port: 3000
+        env:
+          # Server Configuration
+          # Explicitly set port to override K8s service discovery env var
+          - name: WAKAPI_PORT
+            value: "3000"
+          - name: WAKAPI_LISTEN_IPV4
+            value: "0.0.0.0"
+          - name: WAKAPI_PUBLIC_URL
+            value: "https://wakapi.gateway.services.apocrathia.com"
+          - name: WAKAPI_INSECURE_COOKIES
+            value: "false"
+          # Database Configuration
+          - name: WAKAPI_DB_TYPE
+            value: "postgres"
+          - name: WAKAPI_DB_HOST
+            value: "wakapi-postgres-rw.wakapi.svc.cluster.local"
+          - name: WAKAPI_DB_PORT
+            value: "5432"
+          - name: WAKAPI_DB_NAME
+            value: "wakapi"
+          - name: WAKAPI_DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: wakapi-secrets
+                key: username
+          - name: WAKAPI_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: wakapi-secrets
+                key: password
+          # Security - Password Salt
+          - name: WAKAPI_PASSWORD_SALT
+            valueFrom:
+              secretKeyRef:
+                name: wakapi-secrets
+                key: password-salt
+          # Trusted Header Authentication (Authentik proxy)
+          - name: WAKAPI_TRUSTED_HEADER_AUTH
+            value: "true"
+          - name: WAKAPI_TRUSTED_HEADER_AUTH_KEY
+            value: "X-authentik-username"
+          - name: WAKAPI_TRUSTED_HEADER_AUTH_ALLOW_SIGNUP
+            value: "true"
+          # Trust pod network for reverse proxy headers
+          - name: WAKAPI_TRUST_REVERSE_PROXY_IPS
+            value: "10.42.0.0/16"
+          # Disable local signup since using SSO
+          - name: WAKAPI_ALLOW_SIGNUP
+            value: "false"
+      service:
+        port: 3000
+        targetPort: 3000
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+      volumes:
+        tmpfs:
+          - name: cache
+            mountPath: /home/app/.cache
+            options: "size=50M"
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/wakapi-secrets"
+
+    postgres:
+      enabled: true
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 5Gi
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Productivity"
+      displayName: "Wakapi"
+      externalHost: "https://wakapi.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/wakapi/icon.svg"
+      interceptHeaderAuth: true
+      metaDescription: "Self-hosted WakaTime-compatible coding statistics backend"
+      metaPublisher: "Wakapi"
+      # Allow API paths to bypass SSO - clients use API key auth
+      skipPathRegex:
+        - "^/api/"
+
+    httproute:
+      enabled: false
