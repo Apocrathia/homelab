@@ -32,7 +32,11 @@ pages:
 
       def flatten_path(path):
           """Convert path/to/file.md to path-to-file.md"""
-          return path.replace('/', '-')
+          # Replace slashes with dashes
+          flattened = path.replace('/', '-')
+          # Strip leading periods to avoid web server issues with hidden files
+          flattened = flattened.lstrip('.')
+          return flattened
 
       def resolve_link(link, source_dir):
           """Resolve a relative link and convert to flattened name."""
