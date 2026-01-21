@@ -86,16 +86,15 @@ Fallback job that runs when an MR has no other applicable jobs. Prevents empty p
 
 ### Security Scanning
 
-Six security scanning jobs run on MRs to catch issues before merge:
+Five security scanning jobs run on MRs to catch issues before merge:
 
-| Job                 | Tool        | Scope                           | Blocks Merge |
-| ------------------- | ----------- | ------------------------------- | ------------ |
-| `gitleaks`          | Gitleaks    | MR commits (diff only)          | Yes          |
-| `kube-linter`       | kube-linter | `flux/`, `helm/` manifests      | Yes          |
-| `trivy-iac`         | Trivy       | Terraform, Flux, Helm (fixable) | Yes          |
-| `trivy-iac-unfixed` | Trivy       | Same as above (unfixed issues)  | No (warning) |
-| `shellcheck`        | ShellCheck  | `scripts/*.sh` (errors only)    | Yes          |
-| `semgrep`           | Semgrep     | `*.py`, `*.go`, `*.js`, `*.ts`  | Yes          |
+| Job           | Tool        | Scope                          | Blocks Merge |
+| ------------- | ----------- | ------------------------------ | ------------ |
+| `gitleaks`    | Gitleaks    | MR commits (diff only)         | Yes          |
+| `kube-linter` | kube-linter | `flux/`, `helm/` manifests     | Yes          |
+| `trivy`       | Trivy       | Changed Terraform, Flux, Helm  | Yes          |
+| `shellcheck`  | ShellCheck  | `scripts/*.sh` (errors only)   | Yes          |
+| `semgrep`     | Semgrep     | `*.py`, `*.go`, `*.js`, `*.ts` | Yes          |
 
 **Configuration files**:
 
@@ -105,7 +104,7 @@ Six security scanning jobs run on MRs to catch issues before merge:
 **Notes**:
 
 - Gitleaks scans only commits in the MR, not full repo history
-- Trivy is split into two jobs: one blocks on fixable CRITICAL/HIGH issues, another warns on unfixed
+- Trivy scans only files changed in the MR, fails on CRITICAL/HIGH issues
 - ShellCheck only fails on errors (ignores warnings/info/style)
 - Semgrep uses auto-detected rulesets based on detected languages
 
