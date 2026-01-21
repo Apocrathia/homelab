@@ -226,6 +226,13 @@ spec:
         log.segment.delete.delay.ms=60000
         log.segment.bytes=1073741824
       extraEnv:
+        # Override chart defaults for aggressive retention - env vars take precedence over extraConfig
+        - name: KAFKA_LOG_RETENTION_HOURS
+          value: "1"
+        - name: KAFKA_LOG_RETENTION_BYTES
+          value: "16106127360" # 15Gi safety net
+        - name: KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS
+          value: "60000" # Check every 60s
         # Increase max message size to handle large timeseries (default 1MB)
         # This must be smaller than distributor's max_write_request_size
         - name: KAFKA_MESSAGE_MAX_BYTES
