@@ -488,15 +488,6 @@ authentik:
     namespace: cilium-system
     sectionName: https
 
-  # HTTPRoute timeout configuration (proxy mode only)
-  # Timeouts for requests through the authentik proxy outpost
-  # request: Total timeout for the entire request (client → gateway → outpost → backend)
-  # backendRequest: Timeout for each backend request (outpost → backend)
-  # Set to "0s" to disable timeout, or use duration format like "5m", "2m", etc.
-  timeouts:
-    request: 5m
-    backendRequest: 2m
-
   # ============================================================
   # OIDC mode settings (only when mode: "oidc")
   # ============================================================

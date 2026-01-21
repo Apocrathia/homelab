@@ -1,6 +1,13 @@
 # Changelog
 
-## Version 0.0.51 (Latest)
+## Version 0.0.52 (Latest)
+
+- **Reverted Authentik Proxy Timeout Configuration**: Removed HTTPRoute timeout patches from authentik blueprints
+  - **Issue**: Timeout JSON patches were breaking authentik HTTPRoute creation
+  - **Removed**: `authentik.timeouts.request` and `authentik.timeouts.backendRequest` configuration
+  - **Backward Compatible**: Existing deployments continue working without timeout patches
+
+## Version 0.0.51
 
 - **NEW: Authentik Proxy Timeout Configuration**: Added HTTPRoute timeout configuration for authentik proxy outposts
   - **Timeout Control**: Configure request and backend request timeouts via `authentik.timeouts.request` and `authentik.timeouts.backendRequest`

@@ -84,17 +84,4 @@ data:
                 - op: add
                   path: /spec/template/spec/automountServiceAccountToken
                   value: false
-              {{- if .Values.authentik.timeouts }}
-              httproute:
-                {{- if .Values.authentik.timeouts.request }}
-                - op: add
-                  path: /spec/rules/0/timeouts/request
-                  value: {{ .Values.authentik.timeouts.request | quote }}
-                {{- end }}
-                {{- if .Values.authentik.timeouts.backendRequest }}
-                - op: add
-                  path: /spec/rules/0/timeouts/backendRequest
-                  value: {{ .Values.authentik.timeouts.backendRequest | quote }}
-                {{- end }}
-              {{- end }}
 {{- end }}
