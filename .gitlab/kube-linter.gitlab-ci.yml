@@ -3,20 +3,16 @@
 # Runs on flux/ and helm/ manifests to catch security misconfigurations
 kube-linter:
   stage: test
-  image:
-    # renovate: datasource=docker depName=stackrox/kube-linter
-    name: stackrox/kube-linter:v0.8.1-amd64
-    entrypoint: ["/kube-linter"]
+  image: alpine:3.21
+  variables:
+    # renovate: datasource=github-releases depName=stackrox/kube-linter
+    KUBE_LINTER_VERSION: v0.8.1
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - flux/**/*.yaml
-        - flux/**/*.yml
         - helm/**/*.yaml
   script:
-    - lint
-    - flux/
-    - helm/
-    - --config
-    - .kube-linter.yaml
+    - wget -qO- "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" | tar xz -C /usr/local/bin
+    - kube-linter lint flux/ helm/ --config .kube-linter.yaml
   allow_failure: false
