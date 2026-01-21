@@ -42,7 +42,7 @@ echo "This will clear requestedBackupRestore from engine specs,"
 echo "allowing Longhorn to stop trying to restore from empty backups."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/engines-to-fix.txt

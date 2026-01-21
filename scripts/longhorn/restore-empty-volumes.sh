@@ -27,7 +27,7 @@ if [ "${VOLUME_COUNT}" -eq 0 ]; then
 fi
 
 # Convert backup names to backup URLs
-> /tmp/volumes-to-restore.txt
+: > /tmp/volumes-to-restore.txt
 while IFS='|' read -r volume_name backup_name; do
   backup_url=$(kubectl get backups.longhorn.io "${backup_name}" -n "${NAMESPACE}" -o jsonpath='{.status.url}' 2>/dev/null)
   if [ -n "${backup_url}" ] && [ "${backup_url}" != "null" ]; then
@@ -65,7 +65,7 @@ echo ""
 echo "   This will cause downtime for affected applications."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-restore.txt

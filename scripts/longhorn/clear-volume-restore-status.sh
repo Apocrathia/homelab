@@ -38,7 +38,7 @@ echo "allowing Longhorn to stop treating these volumes as being restored."
 echo "Volumes will then be able to start replicas normally."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-fix.txt
@@ -57,7 +57,7 @@ while read -r volume_name; do
 
   # Use kubectl apply with status subresource to clear restore flags
   # Create a temporary YAML file with just the status fields we want to update
-  cat > /tmp/volume-status-${volume_name}.yaml <<EOF
+  cat > "/tmp/volume-status-${volume_name}.yaml" <<EOF
 apiVersion: longhorn.io/v1beta2
 kind: Volume
 metadata:
@@ -68,12 +68,12 @@ status:
   restoreInitiated: false
 EOF
 
-  if kubectl apply --server-side --force-conflicts --subresource=status -f /tmp/volume-status-${volume_name}.yaml > /dev/null 2>&1; then
-    rm -f /tmp/volume-status-${volume_name}.yaml
+  if kubectl apply --server-side --force-conflicts --subresource=status -f "/tmp/volume-status-${volume_name}.yaml" > /dev/null 2>&1; then
+    rm -f "/tmp/volume-status-${volume_name}.yaml"
     ((FIXED++))
     echo "✓"
   else
-    rm -f /tmp/volume-status-${volume_name}.yaml
+    rm -f "/tmp/volume-status-${volume_name}.yaml"
     ((FAILED++))
     echo "✗"
   fi

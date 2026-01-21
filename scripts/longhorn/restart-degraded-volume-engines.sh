@@ -44,7 +44,7 @@ echo "   The volumes are attached, so pods using them may experience"
 echo "   brief disconnections during engine restart."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-fix.txt

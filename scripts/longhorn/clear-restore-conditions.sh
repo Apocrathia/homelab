@@ -40,7 +40,7 @@ echo "This will clear the Restore condition from volume status,"
 echo "allowing Longhorn to properly reconcile and recognize replicas."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-fix.txt
@@ -72,7 +72,7 @@ while read -r volume_name; do
       }]')
 
   # Create temporary YAML with updated conditions
-  cat > /tmp/volume-conditions-${volume_name}.yaml <<EOF
+  cat > "/tmp/volume-conditions-${volume_name}.yaml" <<EOF
 apiVersion: longhorn.io/v1beta2
 kind: Volume
 metadata:
@@ -82,12 +82,12 @@ status:
   conditions: $(echo "${CONDITIONS}" | jq -c .)
 EOF
 
-  if kubectl apply --server-side --force-conflicts --subresource=status -f /tmp/volume-conditions-${volume_name}.yaml > /dev/null 2>&1; then
-    rm -f /tmp/volume-conditions-${volume_name}.yaml
+  if kubectl apply --server-side --force-conflicts --subresource=status -f "/tmp/volume-conditions-${volume_name}.yaml" > /dev/null 2>&1; then
+    rm -f "/tmp/volume-conditions-${volume_name}.yaml"
     ((FIXED++))
     echo "✓"
   else
-    rm -f /tmp/volume-conditions-${volume_name}.yaml
+    rm -f "/tmp/volume-conditions-${volume_name}.yaml"
     ((FAILED++))
     echo "✗"
   fi

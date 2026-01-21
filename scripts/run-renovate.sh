@@ -32,4 +32,4 @@ RENOVATE_CONFIG_FILE=renovate.json \
 RENOVATE_PLATFORM=local \
 RENOVATE_REPOSITORIES=null \
 LOG_LEVEL=debug \
-renovate 2>&1 | tee scripts/logs/renovate-$(date +%Y%m%d-%H%M%S).log
+renovate 2>&1 | tee "scripts/logs/renovate-$(date +%Y%m%d-%H%M%S).log"

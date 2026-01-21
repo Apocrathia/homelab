@@ -44,9 +44,9 @@ echo ""
 prompt_confirm() {
   local message="$1"
   if [ -t 0 ]; then
-    read -p "${message} (yes/no): " confirm < /dev/tty
+    read -r -p "${message} (yes/no): " confirm < /dev/tty
   else
-    read -p "${message} (yes/no): " confirm
+    read -r -p "${message} (yes/no): " confirm
   fi
   echo "${confirm}"
 }

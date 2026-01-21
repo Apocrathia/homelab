@@ -19,7 +19,7 @@ NODE_IP=$(kubectl get node "${NODE_NAME}" -o jsonpath='{.status.addresses[?(@.ty
 if [ -z "${NODE_IP}" ]; then
   echo "Error: Could not find IP address for node ${NODE_NAME}"
   echo "Please provide the node IP address manually:"
-  read -p "Enter IP address for ${NODE_NAME}: " NODE_IP
+  read -r -p "Enter IP address for ${NODE_NAME}: " NODE_IP
   if [ -z "${NODE_IP}" ]; then
     echo "Error: IP address required"
     exit 1
@@ -49,9 +49,9 @@ echo ""
 prompt_confirm() {
   local message="$1"
   if [ -t 0 ]; then
-    read -p "${message} (yes/no): " confirm < /dev/tty
+    read -r -p "${message} (yes/no): " confirm < /dev/tty
   else
-    read -p "${message} (yes/no): " confirm
+    read -r -p "${message} (yes/no): " confirm
   fi
   echo "${confirm}"
 }

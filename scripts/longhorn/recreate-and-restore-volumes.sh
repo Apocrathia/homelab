@@ -27,7 +27,7 @@ echo "   - Backups are valid and will be restored"
 echo "   - PVCs will be recreated by your Helm charts"
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   exit 0
@@ -75,13 +75,11 @@ done
 echo ""
 echo "Step 5: Triggering Helm reconciliation to recreate PVCs..."
 # Trigger Flux HelmRelease reconciliation for each namespace
-declare -A HELMRELEASES
 for vol_ns in "${VOLUMES[@]}"; do
   IFS=':' read -r vol_name ns <<< "$vol_ns"
   # Find HelmRelease in the namespace (assuming it matches the namespace name or app name)
   hr_name=$(kubectl get hr -n "$ns" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
   if [ -n "$hr_name" ]; then
-    HELMRELEASES["$ns"]="$hr_name"
     echo "  Triggering reconciliation for $ns/$hr_name..."
     kubectl annotate hr "$hr_name" -n "$ns" \
       reconcile.fluxcd.io/requestedAt="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \

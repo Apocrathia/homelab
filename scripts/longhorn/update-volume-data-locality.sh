@@ -40,7 +40,7 @@ echo "   (e.g., when pods are restarted or volumes are reattached)."
 echo "   No downtime will occur during this update."
 echo ""
 
-read -p "Update ${VOLUME_COUNT} volumes to dataLocality=${NEW_LOCALITY}? (yes/no): " confirm < /dev/tty
+read -r -p "Update ${VOLUME_COUNT} volumes to dataLocality=${NEW_LOCALITY}? (yes/no): " confirm < /dev/tty
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-update-locality.txt
@@ -53,7 +53,7 @@ UPDATED=0
 FAILED=0
 COUNTER=0
 
-while IFS='|' read -r volume current_locality state pod_name; do
+while IFS='|' read -r volume current_locality _state pod_name; do
   ((COUNTER++))
   echo -n "[${COUNTER}/${VOLUME_COUNT}] ${volume}... "
 

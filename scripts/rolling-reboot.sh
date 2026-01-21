@@ -6,7 +6,7 @@ echo "This will reboot nodes one at a time to minimize disruption."
 echo ""
 
 for i in {1..4}; do
-  NODE_NUM=$(printf "%02d" $i)
+  NODE_NUM=$(printf "%02d" "$i")
   IP_LAST_OCTET=$((79 + i))
   NODE_IP="10.100.1.${IP_LAST_OCTET}"
 
@@ -34,7 +34,7 @@ for i in {1..4}; do
   echo "  ✓ talos-${NODE_NUM} is back online and ready"
 
   # Wait between reboots to allow cluster stabilization
-  if [ $i -lt 4 ]; then
+  if [ "$i" -lt 4 ]; then
     echo "  - Waiting 30s for cluster stabilization before next reboot..."
     sleep 30
   fi

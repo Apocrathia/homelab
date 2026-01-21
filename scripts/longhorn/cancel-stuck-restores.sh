@@ -65,7 +65,7 @@ echo "   Volumes will start normally with existing data (if any)."
 echo "   The restore annotation is kept so future upgrades won't trigger restores."
 echo ""
 
-read -p "Continue? (yes/no): " confirm
+read -r -p "Continue? (yes/no): " confirm
 if [ "${confirm}" != "yes" ]; then
   echo "Aborted."
   rm -f /tmp/volumes-to-fix.txt
