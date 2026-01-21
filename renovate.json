@@ -32,7 +32,6 @@
     },
     {
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
-      "extractVersionTemplate": "^main-v(?<version>.*)-stable$",
       "versioning": "semver"
     }
   ],
@@ -87,6 +86,16 @@
       "matchStrings": [
         "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^\"'\\s]+)[\"']"
       ]
+    },
+    {
+      "customType": "regex",
+      "description": "LiteLLM database image with main-v tag format",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
+      "datasourceTemplate": "docker",
+      "matchStrings": [
+        "# renovate: datasource=docker depName=(?<depName>ghcr\\.io/berriai/litellm-database)\\s*\\n[\\s\\S]*?tag: [\"']?(?<currentValue>main-v[^\"'\\s]+-stable)[\"']?"
+      ],
+      "extractVersionTemplate": "^main-v(?<version>.*)-stable$"
     },
     {
       "customType": "regex",
