@@ -166,3 +166,13 @@ spec:
     httproute:
       enabled: true
       hostname: "meshtastic.gateway.services.apocrathia.com"
+
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.95"
+      externalTrafficPolicy: Cluster
+      ports:
+        - name: node-proxy
+          port: 4403
+          targetPort: 4404
+          protocol: TCP
