@@ -287,3 +287,9 @@ spec:
             writeRelabelConfigs:
               - action: labeldrop
                 regex: "__meta_kubernetes_pod_label_(.+)"
+
+    # SNMP Exporter for network device monitoring
+    prometheus-snmp-exporter:
+      enabled: true
+      serviceMonitor:
+        enabled: true
