@@ -160,10 +160,6 @@ spec:
         limits:
           cpu: 1000m
           memory: 2Gi
-      # Increase ingestion rate limits to handle high-volume metrics
-      extraArgs:
-        distributor.ingestion-rate-limit: "100000"
-        distributor.ingestion-burst-size: "1000000"
 
     querier:
       resources:
