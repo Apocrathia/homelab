@@ -13,6 +13,6 @@ kube-linter:
         - flux/**/*.yaml
         - helm/**/*.yaml
   script:
-    - wget -qO- "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" | tar xz -C /usr/local/bin kube-linter
-    - kube-linter lint flux/ helm/ --config .kube-linter.yaml
+    - wget -qO- "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" | tar xz -C /tmp kube-linter
+    - /tmp/kube-linter lint flux/ helm/ --config .kube-linter.yaml
   allow_failure: false

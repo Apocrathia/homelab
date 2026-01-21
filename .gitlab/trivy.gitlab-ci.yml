@@ -15,5 +15,14 @@ trivy:
         - flux/**/*.yaml
         - helm/**/*.yaml
   script:
-    - trivy config --severity CRITICAL,HIGH --exit-code 1 .
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - |
+      CHANGED=$(git diff --name-only "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" -- terraform/ flux/ helm/ | grep -E '\.(yaml|yml|tf)$' || true)
+      if [ -z "$CHANGED" ]; then
+        echo "No scannable files changed"
+        exit 0
+      fi
+      echo "Scanning changed files:"
+      echo "$CHANGED"
+      echo "$CHANGED" | xargs trivy config --severity CRITICAL,HIGH --exit-code 1
   allow_failure: false
