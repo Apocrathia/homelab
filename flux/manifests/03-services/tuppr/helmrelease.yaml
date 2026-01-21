@@ -15,6 +15,18 @@ spec:
         kind: HelmRepository
         name: tuppr
         namespace: flux-system
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Certificate
+              name: tuppr-serving-cert
+            patch: |
+              - op: replace
+                path: /spec/issuerRef
+                value:
+                  kind: ClusterIssuer
+                  name: self-signed
   values:
     replicaCount: 1
 
