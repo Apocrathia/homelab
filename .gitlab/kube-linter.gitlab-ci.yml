@@ -6,7 +6,7 @@ kube-linter:
   image:
     # renovate: datasource=docker depName=stackrox/kube-linter
     name: stackrox/kube-linter:v0.8.1-amd64
-    entrypoint: [""]
+    entrypoint: ["/kube-linter"]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
@@ -14,8 +14,9 @@ kube-linter:
         - flux/**/*.yml
         - helm/**/*.yaml
   script:
-    - |
-      echo "=== kube-linter Security Scanning ==="
-      kube-linter lint flux/ helm/ --config .kube-linter.yaml
-      echo "=== kube-linter Scan Complete ==="
+    - lint
+    - flux/
+    - helm/
+    - --config
+    - .kube-linter.yaml
   allow_failure: false
