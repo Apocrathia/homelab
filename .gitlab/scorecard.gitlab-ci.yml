@@ -87,31 +87,25 @@ scorecard:
           SCORE=$(echo "$OUTPUT" | jq -r '.score // "N/A"')
           echo "  Score: $SCORE/10"
 
-          # Extract all low-scoring checks (score < 5) as a list
-          LOW_CHECKS=$(echo "$OUTPUT" | jq -r '
+          # Extract all checks as a table
+          CHECKS_TABLE=$(echo "$OUTPUT" | jq -r '
             .checks // []
-            | map(select(.score < 5 and .score >= 0))
-            | map("- \(.name): \(.score)/10")
+            | sort_by(.name)
+            | map("| \(.name) | \(if .score < 0 then "N/A" else "\(.score)/10" end) |")
             | .[]
           ')
 
-          # Log low scores to pipeline output
-          if [ -n "$LOW_CHECKS" ]; then
-            echo "  Low scores:"
-            echo "$OUTPUT" | jq -r '.checks // [] | map(select(.score < 5 and .score >= 0)) | map("    \(.name): \(.score)") | .[]'
-          fi
+          # Log all checks to pipeline output
+          echo "  Checks:"
+          echo "$OUTPUT" | jq -r '.checks // [] | sort_by(.name) | map("    \(.name): \(if .score < 0 then "N/A" else "\(.score)/10" end)") | .[]'
 
           {
             echo "<details>"
             echo "<summary><strong><a href=\"https://${REPO}\">${REPO}</a></strong> — ${SCORE}/10</summary>"
             echo ""
-            if [ -z "$LOW_CHECKS" ]; then
-              echo "All checks ≥5 :white_check_mark:"
-            else
-              echo "**Low-scoring checks:**"
-              echo ""
-              echo "$LOW_CHECKS"
-            fi
+            echo "| Check | Score |"
+            echo "|-------|-------|"
+            echo "$CHECKS_TABLE"
             echo ""
             echo "</details>"
             echo ""
