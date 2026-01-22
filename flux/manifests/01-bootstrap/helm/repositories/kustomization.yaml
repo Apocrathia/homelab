@@ -45,3 +45,4 @@ resources:
   - windmill.yaml
   - open-telemetry.yaml
   - policy-reporter.yaml
+  - truecharts.yaml
