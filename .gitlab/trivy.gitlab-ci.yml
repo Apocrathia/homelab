@@ -24,5 +24,5 @@ trivy:
       fi
       echo "Scanning changed files:"
       echo "$CHANGED"
-      echo "$CHANGED" | xargs trivy config --severity CRITICAL,HIGH --exit-code 1
+      echo "$CHANGED" | xargs -n 1 trivy config --severity CRITICAL,HIGH --exit-code 1
   allow_failure: false
