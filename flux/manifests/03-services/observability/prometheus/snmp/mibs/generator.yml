@@ -26,9 +26,10 @@ modules:
       - 1.3.6.1.4.1.41112 # Ubiquiti enterprise OID
 
   # Synology NAS - system, disks, RAID, storage I/O, services, etc.
-  synology:
-    walk:
-      - 1.3.6.1.4.1.6574 # Synology enterprise OID
+  # Commented out - using default chart synology module instead
+  # synology:
+  #   walk:
+  #     - 1.3.6.1.4.1.6574 # Synology enterprise OID
 
   # TrueNAS - ZFS pools, zvols, ARC, L2ARC, ZIL, temps, alerts
   truenas:
