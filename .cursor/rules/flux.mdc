@@ -12,8 +12,10 @@ flux/
 │   ├── 02-infrastructure/
 │   ├── 03-services/
 │   ├── 04-apps/
-│   └── kustomization.yaml
+│   └── kustomization.yaml     # ROOT - lists all flux-kustomization.yaml files
 ```
+
+**Adding new components:** Create `flux-kustomization.yaml` in component dir, then add it to root `kustomization.yaml` or Flux won't manage it.
 
 ## Flux Guidelines
 
