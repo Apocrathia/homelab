@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.53 (Latest)
+## Version 0.0.54 (Latest)
+
+- **NEW: LoadBalancer Service Labels**: Added support for custom labels on LoadBalancer services
+  - **Configuration**: Define custom labels via `loadbalancer.labels` to add to the LoadBalancer service metadata
+  - **Use Case**: Enables Cilium IP pool selection via label selectors (e.g., `apocrathia.com/ingest: "true"`)
+  - **Shared IP Support**: Multiple services can share the same LoadBalancer IP by using matching labels with a `CiliumLoadBalancerIPPool`
+  - **Template Update**: Updated `service-loadbalancer.yaml` to include optional custom labels
+  - **Backward Compatible**: Defaults to empty object, no impact on existing deployments
+
+## Version 0.0.53
 
 - **Fixed Numeric Zero Value Handling**: Fixed template bug where `0` values were treated as falsy and omitted from rendered output
   - **Problem Solved**: Setting `runAsUser: 0`, `runAsGroup: 0`, or `initialDelaySeconds: 0` had no effect because Go templates treat `0` as falsy, causing `{{- if .value }}` conditionals to skip the field entirely

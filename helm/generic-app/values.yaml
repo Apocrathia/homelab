@@ -582,6 +582,11 @@ loadbalancer:
   ports: []
   # External traffic policy for LoadBalancer (Local or Cluster)
   externalTrafficPolicy: Local
+  # Optional labels for the LoadBalancer service (e.g., for Cilium IP pool selection)
+  labels: {}
+  # Example labels configuration:
+  # labels:
+  #   apocrathia.com/ingest: "true"
   # Example ports configuration:
   # ports:
   #   - name: satellite

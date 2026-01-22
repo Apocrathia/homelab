@@ -10,6 +10,9 @@ metadata:
     app: {{ .Values.app.name }}
     app.kubernetes.io/name: {{ .Values.app.name }}
     external: "true"
+    {{- with .Values.loadbalancer.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   annotations:
     io.cilium/lb-ipam-ips: "{{ .Values.loadbalancer.ip }}"
 spec:
