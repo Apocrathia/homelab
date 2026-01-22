@@ -11,7 +11,7 @@ resources:
   - dashboard
   - gitlab
   # - kong
-  # - kyverno
+  - kyverno
   - cert-manager
   - housekeeping
   - leaderworkerset
@@ -20,6 +20,6 @@ resources:
   - toolhive
   - external-secrets
   # - flyte
-  # - chaos-mesh
+  - chaos-mesh
   - renovate
   - tuppr
