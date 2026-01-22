@@ -1,0 +1,151 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.50"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: jellyfin
+      # renovate: datasource=docker depName=ghcr.io/trueforge-org/jellyfin
+      image: ghcr.io/trueforge-org/jellyfin:10.11.4
+      container:
+        name: jellyfin
+        port: 8096
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 4000m
+          memory: 8Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8096
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: tv
+          mountPath: /tv
+          readOnly: true
+        - name: movies
+          mountPath: /movies
+          readOnly: true
+        - name: anime
+          mountPath: /anime
+          readOnly: true
+        - name: educational
+          mountPath: /educational
+          readOnly: true
+        - name: music
+          mountPath: /music
+          readOnly: true
+        - name: music-videos
+          mountPath: /music-videos
+          readOnly: true
+      volumes:
+        emptyDir:
+          - name: cache
+            mountPath: /cache
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 50Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: tv
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "TV Shows"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: movies
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Movies"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: anime
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Anime"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: educational
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Educational"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: music
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Music"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: music-videos
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "Music Videos"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+
+    secrets:
+      enabled: false
+
+    # Authentik OIDC integration (creates OAuth2 provider via blueprint)
+    authentik:
+      enabled: true
+      mode: "oidc"
+      displayName: "Jellyfin"
+      externalHost: "https://jellyfin.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/jellyfin/icon.svg"
+      category: "Media"
+      oidc:
+        redirectUris:
+          - url: "https://jellyfin.gateway.services.apocrathia.com/sso/OID/redirect/Authentik"
+            matchingMode: "strict"
+          - url: "https://jellyfin.gateway.services.apocrathia.com/sso/OID/r/Authentik"
+            matchingMode: "strict"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        clientType: "confidential"
+        subMode: "user_username"
+
+    # Keep HTTPRoute for direct access (OIDC mode doesn't use proxy auth)
+    httproute:
+      enabled: true
+      hostname: jellyfin.gateway.services.apocrathia.com
