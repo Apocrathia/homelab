@@ -7,7 +7,7 @@ stages:
 
 include:
   # - local: .gitlab/renovate.gitlab-ci.yml
-  - local: .gitlab/no-op.gitlab-ci.yml
+  # - local: .gitlab/no-op.gitlab-ci.yml  # gitleaks runs on all MRs now
   - local: .gitlab/chart-tag.gitlab-ci.yml
   - local: .gitlab/kustomize-diff.gitlab-ci.yml
   - local: .gitlab/scorecard.gitlab-ci.yml
