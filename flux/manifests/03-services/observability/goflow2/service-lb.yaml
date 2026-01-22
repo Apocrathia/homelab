@@ -16,7 +16,7 @@ metadata:
     lbipam.cilium.io/sharing-cross-namespace: "alloy-system"
 spec:
   type: LoadBalancer
-  externalTrafficPolicy: Local
+  externalTrafficPolicy: Cluster
   ports:
     - name: ipfix
       port: 2055
