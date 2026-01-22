@@ -98,10 +98,11 @@ spec:
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/busybox
           image: public.ecr.aws/docker/library/busybox:1.37.0-glibc
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
             readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
           command: ["sh", "-c"]
           args:
             - |
@@ -144,9 +145,6 @@ spec:
                 echo "Error: Failed to download ASFFreeGames plugin"
                 exit 1
               fi
-
-              # Set ownership to match main container (user 1000:1000)
-              chown -R 1000:1000 /app/plugins/FreePackages /app/plugins/ASFFreeGames 2>/dev/null || true
 
               # Cleanup
               rm -rf /app/plugins/tmp
