@@ -8,7 +8,9 @@ metadata:
 resources:
   - alloy
   - fluent
+  - goflow2
   - grafana
+  - ingest
   - loki
   - mimir
   - otel-operator

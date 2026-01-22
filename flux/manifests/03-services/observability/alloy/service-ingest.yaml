@@ -1,0 +1,34 @@
+---
+# LoadBalancer service for external syslog and CEF ingestion
+# Uses shared ingest IP pool from flux/manifests/03-services/observability/ingest/
+apiVersion: v1
+kind: Service
+metadata:
+  name: alloy-ingest-lb
+  namespace: alloy-system
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/component: ingest
+    apocrathia.com/ingest: "true"
+  annotations:
+    io.cilium/lb-ipam-ips: "10.100.1.96"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    # Standard syslog (RFC3164/5424)
+    - name: syslog-tcp
+      port: 6514
+      protocol: TCP
+      targetPort: 6514
+    - name: syslog-udp
+      port: 514
+      protocol: UDP
+      targetPort: 5140
+    # CEF (UniFi devices)
+    - name: cef-tcp
+      port: 1514
+      protocol: TCP
+      targetPort: 1514
+  selector:
+    app.kubernetes.io/name: alloy

@@ -1,0 +1,80 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: goflow2
+  namespace: goflow2-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.54"
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    app:
+      name: goflow2
+      namespace: goflow2-system
+      # renovate: datasource=docker depName=netsampler/goflow2
+      image: netsampler/goflow2:v2.2.2
+      container:
+        name: goflow2
+        port: 8080
+        args:
+          - "-listen=netflow://:2055"
+          - "-transport=file"
+          - "-transport.file=/dev/null"
+          - "-metrics.addr=:8080"
+          - "-metrics.path=/metrics"
+        extraPorts:
+          - name: ipfix
+            containerPort: 2055
+            protocol: UDP
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: metrics
+
+    # Expose IPFIX UDP 2055 via shared ingest LoadBalancer IP
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.96"
+      externalTrafficPolicy: Local
+      labels:
+        apocrathia.com/ingest: "true"
+      ports:
+        - name: ipfix
+          port: 2055
+          targetPort: 2055
+          protocol: UDP
+
+    # Disable unused features
+    authentik:
+      enabled: false
+    secrets:
+      enabled: false
+    storage:
+      longhorn:
+        enabled: false

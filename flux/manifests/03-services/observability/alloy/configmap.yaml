@@ -247,3 +247,131 @@ data:
         }
       }
     }
+
+    // ==========================================================================
+    // Standard Syslog Collection (RFC3164/5424)
+    // Receives syslog messages from generic network devices and Linux hosts
+    // ==========================================================================
+
+    loki.source.syslog "syslog_tcp" {
+      listener {
+        address       = "0.0.0.0:6514"
+        protocol      = "tcp"
+        syslog_format = "rfc3164"
+      }
+      labels = {
+        job       = "syslog",
+        transport = "tcp",
+      }
+      forward_to = [loki.process.syslog.receiver]
+    }
+
+    loki.source.syslog "syslog_udp" {
+      listener {
+        address       = "0.0.0.0:5140"
+        protocol      = "udp"
+        syslog_format = "rfc3164"
+      }
+      labels = {
+        job       = "syslog",
+        transport = "udp",
+      }
+      forward_to = [loki.process.syslog.receiver]
+    }
+
+    loki.process "syslog" {
+      stage.static_labels {
+        values = {
+          cluster   = "kubernetes",
+          component = "syslog",
+        }
+      }
+
+      // Preserve syslog metadata as labels
+      stage.labels {
+        values = {
+          severity = "",
+          facility = "",
+          hostname = "",
+          app_name = "",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    // ==========================================================================
+    // CEF Collection (UniFi Devices)
+    // Receives CEF-formatted logs from UniFi devices over TCP on port 1514
+    // ==========================================================================
+
+    // Raw TCP receiver for CEF messages (no syslog protocol parsing)
+    otelcol.receiver.tcplog "cef_tcp" {
+      listen_address = "0.0.0.0:1514"
+      add_attributes = true
+      output {
+        logs = [otelcol.processor.transform.cef_parse.input]
+      }
+    }
+
+    // Transform processor to extract CEF fields
+    otelcol.processor.transform "cef_parse" {
+      error_mode = "ignore"
+
+      log_statements {
+        context = "log"
+        statements = [
+          // Extract CEF header fields using regex
+          // Format: CEF:Version|Vendor|Product|DeviceVersion|EventClassID|Name|Severity|Extension
+          `set(attributes["cef_version"], ExtractPatterns(body, "^CEF:(?P<version>\\d+)\\|")["version"])`,
+          `set(attributes["device_vendor"], ExtractPatterns(body, "^CEF:\\d+\\|(?P<vendor>[^|]+)\\|")["vendor"])`,
+          `set(attributes["device_product"], ExtractPatterns(body, "^CEF:\\d+\\|[^|]+\\|(?P<product>[^|]+)\\|")["product"])`,
+          `set(attributes["event_class_id"], ExtractPatterns(body, "^CEF:\\d+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?P<id>[^|]+)\\|")["id"])`,
+          `set(attributes["event_name"], ExtractPatterns(body, "^CEF:\\d+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?P<name>[^|]+)\\|")["name"])`,
+          `set(attributes["severity"], ExtractPatterns(body, "^CEF:\\d+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?P<sev>[^|]+)\\|")["sev"])`,
+          // Extract common UniFi extension fields
+          `set(attributes["unifi_category"], ExtractPatterns(body, "UNIFIcategory=(?P<cat>[^ ]+)")["cat"])`,
+          `set(attributes["unifi_subcategory"], ExtractPatterns(body, "UNIFIsubCategory=(?P<sub>[^ ]+)")["sub"])`,
+          `set(attributes["unifi_host"], ExtractPatterns(body, "UNIFIhost=(?P<host>[^ ]+)")["host"])`,
+          `set(attributes["client_mac"], ExtractPatterns(body, "UNIFIclientMac=(?P<mac>[^ ]+)")["mac"])`,
+          `set(attributes["client_ip"], ExtractPatterns(body, "UNIFIclientIp=(?P<ip>[^ ]+)")["ip"])`,
+          // Extract message field
+          `set(attributes["message"], ExtractPatterns(body, "msg=(?P<msg>.+)$")["msg"])`,
+        ]
+      }
+
+      output {
+        logs = [otelcol.exporter.loki.cef.input]
+      }
+    }
+
+    // Export to Loki
+    otelcol.exporter.loki "cef" {
+      forward_to = [loki.process.cef.receiver]
+    }
+
+    // Final Loki processing
+    loki.process "cef" {
+      // Add static labels
+      stage.static_labels {
+        values = {
+          cluster   = "kubernetes",
+          component = "cef",
+          job       = "syslog",
+          source    = "unifi",
+        }
+      }
+
+      // Map OTEL attributes to Loki labels
+      stage.labels {
+        values = {
+          device_vendor = "",
+          device_product = "",
+          event_name = "",
+          severity = "",
+          unifi_category = "",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }

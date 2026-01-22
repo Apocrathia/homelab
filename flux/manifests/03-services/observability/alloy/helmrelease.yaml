@@ -27,6 +27,11 @@ spec:
   values:
     # Alloy configuration for log collection
     alloy:
+      # Enable experimental components (required for otelcol.receiver.tcplog CEF receiver)
+      # Ref: https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.receiver.tcplog/
+      # TODO: Change back to "stable" (or remove this value) once otelcol.receiver.tcplog graduates from experimental
+      stabilityLevel: experimental
+
       configMap:
         create: false
         name: alloy-config
@@ -50,7 +55,7 @@ spec:
         capabilities:
           drop: ["ALL"]
 
-      # Extra ports for webhook receivers and OTLP ingestion
+      # Extra ports for webhook receivers, OTLP ingestion, and syslog/CEF collection
       extraPorts:
         - name: trivy-webhook
           port: 8080
@@ -63,6 +68,20 @@ spec:
         - name: otlp-http
           port: 4318
           targetPort: 4318
+          protocol: TCP
+        # Syslog collection (RFC3164/5424)
+        - name: syslog-tcp
+          port: 6514
+          targetPort: 6514
+          protocol: TCP
+        - name: syslog-udp
+          port: 5140
+          targetPort: 5140
+          protocol: UDP
+        # CEF collection (UniFi devices)
+        - name: cef-tcp
+          port: 1514
+          targetPort: 1514
           protocol: TCP
 
       # Extra volume mounts for WAL storage
