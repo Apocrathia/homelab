@@ -26,6 +26,18 @@ spec:
       owner: windmill
       secret:
         name: windmill-secrets
+      # Windmill requires these roles for RLS-based permissions
+      # See: https://github.com/windmill-labs/windmill/blob/main/init-db-as-superuser.sql
+      postInitApplicationSQL:
+        - CREATE ROLE windmill_user
+        - GRANT ALL ON ALL TABLES IN SCHEMA public TO windmill_user
+        - GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO windmill_user
+        - ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO windmill_user
+        - ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO windmill_user
+        - CREATE ROLE windmill_admin WITH BYPASSRLS
+        - GRANT windmill_user TO windmill_admin
+        - GRANT windmill_admin TO windmill
+        - GRANT CREATE ON DATABASE windmill TO windmill_admin
   postgresql:
     parameters:
       max_connections: "200"
