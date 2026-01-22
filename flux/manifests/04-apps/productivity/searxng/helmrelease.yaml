@@ -94,16 +94,15 @@ spec:
                 echo "ERROR: settings.yml is invalid after modification"
                 exit 1
               fi
-              chown 977:977 /etc/searxng/settings.yml
-              chmod 644 /etc/searxng/settings.yml
               echo "Settings file updated successfully"
           volumeMounts:
             - name: config
               mountPath: /etc/searxng
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
+            runAsUser: 977
+            runAsGroup: 977
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
 
     storage:
       longhorn:
