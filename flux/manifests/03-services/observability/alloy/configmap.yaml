@@ -258,10 +258,10 @@ data:
         address       = "0.0.0.0:6514"
         protocol      = "tcp"
         syslog_format = "rfc3164"
-      }
-      labels = {
-        job       = "syslog",
-        transport = "tcp",
+        labels        = {
+          job       = "syslog",
+          transport = "tcp",
+        }
       }
       forward_to = [loki.process.syslog.receiver]
     }
@@ -271,10 +271,10 @@ data:
         address       = "0.0.0.0:5140"
         protocol      = "udp"
         syslog_format = "rfc3164"
-      }
-      labels = {
-        job       = "syslog",
-        transport = "udp",
+        labels        = {
+          job       = "syslog",
+          transport = "udp",
+        }
       }
       forward_to = [loki.process.syslog.receiver]
     }
