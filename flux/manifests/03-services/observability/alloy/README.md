@@ -1,6 +1,6 @@
 # Grafana Alloy - Log Collection
 
-This directory contains the deployment configuration for Grafana Alloy, which provides log collection capabilities for the cluster using OpenTelemetry Collector patterns.
+This directory contains the deployment configuration for Grafana Alloy, which provides log collection capabilities for the cluster and external syslog/CEF ingestion.
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
@@ -9,18 +9,34 @@ This directory contains the deployment configuration for Grafana Alloy, which pr
 Alloy is deployed as a DaemonSet with the following components:
 
 - **Alloy**: OpenTelemetry Collector-based log collection agent
-- **Filelog Receiver**: Scrapes container logs from `/var/log/pods/*/*/*.log`
-- **K8s Attributes Processor**: Adds Kubernetes metadata to logs
+- **Kubernetes Log Source**: Collects logs from all pods via Kubernetes API
+- **Syslog Receiver**: Ingests RFC3164/5424 syslog from network devices
+- **CEF Receiver**: Ingests CEF-formatted logs from UniFi devices
 - **Loki Exporter**: Sends logs to Loki for storage and querying
 
 ## Log Collection
+
+### Kubernetes Pod Logs
 
 Alloy automatically collects logs from all pods in the cluster:
 
 - **Source**: Container logs from all namespaces
 - **Format**: JSON with Kubernetes metadata
-- **Destination**: Loki endpoint at `loki.loki-system.svc:3100`
-- **Coverage**: All pods, including control plane components
+- **Destination**: Loki endpoint at `loki-write.loki-system.svc:3100`
+- **Labels**: namespace, pod, container, cluster, component
+
+### External Syslog Ingestion
+
+Alloy accepts syslog from external devices via a shared LoadBalancer IP:
+
+| Protocol | Port | Format       | Use Case                 |
+| -------- | ---- | ------------ | ------------------------ |
+| UDP      | 514  | RFC3164      | Standard syslog devices  |
+| TCP      | 6514 | RFC3164/5424 | Reliable syslog delivery |
+| TCP      | 1514 | CEF          | UniFi device logs        |
+
+- **External IP**: `10.100.1.96` (`ingest.services.apocrathia.com`)
+- **Labels**: job=syslog, component=syslog/cef, transport=tcp/udp
 
 ## Features
 

@@ -19,13 +19,15 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 ### 2. **Grafana Alloy** (`alloy/`)
 
-- **Purpose**: Log and metrics collection using OpenTelemetry Collector
+- **Purpose**: Log collection, metrics forwarding, and external syslog/CEF ingestion
 - **Deployment**: Via Grafana Alloy Helm chart
 - **Features**:
   - Kubernetes pod log collection
-  - Metrics collection and forwarding
-  - Integration with existing kube-prometheus-stack Grafana instance
-  - OpenTelemetry-based architecture for future extensibility
+  - Syslog ingestion (RFC3164/5424) on ports 6514/TCP and 514/UDP
+  - CEF log ingestion from UniFi devices on port 1514/TCP
+  - OpenTelemetry trace collection (OTLP gRPC/HTTP)
+  - Integration with Loki for log storage
+- **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
 
 ### 3. **Loki** (`loki/`)
 
@@ -72,6 +74,27 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - Pod/namespace annotation-based opt-in for instrumentation
 - **Usage**: Annotate pods with `instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
 
+### 7. **goflow2** (`goflow2/`)
+
+- **Purpose**: NetFlow/IPFIX/sFlow collection for network traffic analysis
+- **Deployment**: Via generic-app Helm chart with goflow2 container
+- **Features**:
+  - IPFIX v10 ingestion from UniFi devices on port 2055/UDP
+  - NetFlow v5/v9 support
+  - sFlow v5 support
+  - Prometheus metrics export for flow data
+- **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
+- **Dashboard**: NetFlow Exporter Overview (Grafana dashboard ID 11408)
+
+### 8. **Shared Ingest Pool** (`ingest/`)
+
+- **Purpose**: Shared LoadBalancer IP for external telemetry ingestion
+- **IP Address**: `10.100.1.96` (`ingest.services.apocrathia.com`)
+- **Services Sharing IP**:
+  - Alloy: syslog (514/UDP, 6514/TCP), CEF (1514/TCP)
+  - goflow2: IPFIX (2055/UDP)
+- **Implementation**: Cilium LB IPAM with `lbipam.cilium.io/sharing-key` annotation
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
@@ -95,10 +118,12 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 ## Data Flow
 
-1. **Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana visualization
-2. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana visualization
-3. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana visualization
-4. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)
+1. **Pod Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana
+2. **Syslog/CEF**: Network devices → Alloy (via ingest LB) → Loki → Grafana
+3. **NetFlow/IPFIX**: Network devices → goflow2 (via ingest LB) → Prometheus metrics → Grafana
+4. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana
+5. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana
+6. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)
 
 ## Configuration
 
