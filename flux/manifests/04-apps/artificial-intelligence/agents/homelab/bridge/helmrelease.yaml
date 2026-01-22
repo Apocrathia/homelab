@@ -59,16 +59,14 @@ spec:
 
       initContainers:
         - name: install
-          image: public.ecr.aws/docker/library/python:3.14-slim
+          # Using full Python image (not slim) to include build tools for native extensions
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14
           command: ["/bin/bash", "-c"]
           args:
             - |
               set -e
               echo "Installing Python dependencies..."
-
-              apt-get update && apt-get install -y --no-install-recommends \
-                build-essential \
-                && rm -rf /var/lib/apt/lists/*
 
               pip install --no-cache-dir --target=/app/deps -r /src/requirements.txt
 
@@ -88,9 +86,11 @@ spec:
                 mountPath: /src
                 configMapName: discord-bridge-src
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
             readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
 
       resources:
         requests:
