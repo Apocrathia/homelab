@@ -45,7 +45,7 @@ spec:
               # Configure git to trust the repository directory
               git config --global --add safe.directory "$REPO_DIR"
 
-              # Note: Running as root (UID 0) required for git operations and npm install
+              # Note: Running as node user (UID 1000) for git and npm operations
 
               # Check if repo exists and is valid
               if [ -d "$REPO_DIR/.git" ]; then
@@ -92,10 +92,11 @@ spec:
             - name: build-cache
               mountPath: /build
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
             readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
           resources:
             requests:
               cpu: 50m
@@ -133,10 +134,11 @@ spec:
             - name: nginx-config-dest
               mountPath: /etc/nginx/conf.d
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
+            runAsUser: 101
+            runAsGroup: 101
+            runAsNonRoot: true
             readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
 
       replicas: 1
 
