@@ -3,7 +3,7 @@
 # Runs on flux/ and helm/ manifests to catch security misconfigurations
 kube-linter:
   stage: test
-  image: alpine:3.21
+  image: alpine:3.23
   variables:
     # renovate: datasource=github-releases depName=stackrox/kube-linter
     KUBE_LINTER_VERSION: v0.8.1
