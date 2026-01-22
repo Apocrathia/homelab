@@ -11,8 +11,8 @@ metadata:
     app.kubernetes.io/component: ingest
     apocrathia.com/ingest: "true"
   annotations:
-    io.cilium/lb-ipam-ips: "10.100.1.96"
-    io.cilium/lb-ipam-sharing-key: "ingest"
+    lbipam.cilium.io/ips: "10.100.1.96"
+    lbipam.cilium.io/sharing-key: "ingest"
     lbipam.cilium.io/sharing-cross-namespace: "alloy-system"
 spec:
   type: LoadBalancer
