@@ -1,0 +1,718 @@
+
+UBNT-Combined-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Counter32, Gauge32, IpAddress, enterprises
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString, MacAddress, DateAndTime, TruthValue
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF;
+
+-- --------------------------------------------------------------------------------
+--                         Main MIB Module Identity
+-- --------------------------------------------------------------------------------
+
+ubntMIB MODULE-IDENTITY
+    LAST-UPDATED "201606250000Z"
+    ORGANIZATION "Ubiquiti Networks, Inc."
+    CONTACT-INFO "support@ui.com"
+    DESCRIPTION  "The combined MIB module for Ubiquiti Networks, Inc. entities"
+    REVISION "201606250000Z"
+    DESCRIPTION "Combined UniFi and base MIB modules"
+    ::= { ubnt 1 }
+
+-- --------------------------------------------------------------------------------
+--                         Ubiquiti Networks Root
+-- --------------------------------------------------------------------------------
+
+ubnt OBJECT IDENTIFIER ::= { enterprises 41112 }
+
+-- --------------------------------------------------------------------------------
+--                         Ubiquiti Networks SNMP Information
+-- --------------------------------------------------------------------------------
+
+ubntSnmpInfo OBJECT IDENTIFIER ::= { ubntMIB 2 }
+ubntSnmpGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 1 }
+ubntAirosGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 2 }
+ubntAirFiberGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 3 }
+ubntEdgeMaxGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 4 }
+ubntUniFiGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 5 }
+ubntAirVisionGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 6 }
+ubntMFiGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 7 }
+ubntUniTelGroups OBJECT IDENTIFIER ::= { ubntSnmpInfo 8 }
+
+-- --------------------------------------------------------------------------------
+--                         Ubiquiti Networks Products
+-- --------------------------------------------------------------------------------
+
+ubntAirFIBER OBJECT IDENTIFIER ::= { ubntMIB 3 }
+ubntEdgeMax OBJECT IDENTIFIER ::= { ubntMIB 5 }
+ubntUniFi OBJECT IDENTIFIER ::= { ubntMIB 6 }
+ubntAirVision OBJECT IDENTIFIER ::= { ubntMIB 7 }
+ubntMFi OBJECT IDENTIFIER ::= { ubntMIB 8 }
+ubntUniTel OBJECT IDENTIFIER ::= { ubntMIB 9 }
+
+-- --------------------------------------------------------------------------------
+--                         Ubiquiti Networks OR table
+-- --------------------------------------------------------------------------------
+
+ubntORTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF UbntOREntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION "Capabilities"
+    ::= { ubntMIB 1 }
+
+ubntOREntry OBJECT-TYPE
+    SYNTAX     UbntOREntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION "An entry in the ubntORTable"
+    INDEX      { ubntORIndex }
+    ::= { ubntORTable 1 }
+
+UbntOREntry ::= SEQUENCE {
+    ubntORIndex     Integer32,
+    ubntORID        OBJECT IDENTIFIER,
+    ubntORDescr     DisplayString
+}
+
+ubntORIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..255)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION "Index for the ubntORTable"
+    ::= { ubntOREntry 1 }
+
+ubntORID OBJECT-TYPE
+    SYNTAX     OBJECT IDENTIFIER
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION "OR ID"
+    ::= { ubntOREntry 2 }
+
+ubntORDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION "Description of identifier"
+    ::= { ubntOREntry 3 }
+
+-- --------------------------------------------------------------------------------
+--                         UniFi Access Point Wireless
+-- --------------------------------------------------------------------------------
+
+unifiApWireless OBJECT IDENTIFIER ::= { ubntUniFi 1 }
+unifiApIf       OBJECT IDENTIFIER ::= { ubntUniFi 2 }
+unifiApSystem   OBJECT IDENTIFIER ::= { ubntUniFi 3 }
+
+-- --------------------------------------------------------------------------------
+--                         Textual Conventions
+-- --------------------------------------------------------------------------------
+
+ObjectIndex ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "x"
+    STATUS current
+    DESCRIPTION "Internal object index"
+    SYNTAX Integer32 (0..2147483647)
+
+-- --------------------------------------------------------------------------------
+--                         UniFi Interface Table
+-- --------------------------------------------------------------------------------
+
+unifiIfTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF UbntIfEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Ethernet interface table"
+    ::= { unifiApIf 1 }
+
+unifiIfEntry OBJECT-TYPE
+    SYNTAX UbntIfEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Ethernet interface entry"
+    INDEX { unifiIfIndex }
+    ::= { unifiIfTable 1 }
+
+UbntIfEntry ::= SEQUENCE {
+    unifiIfIndex ObjectIndex,
+    unifiIfFullDuplex TruthValue,
+    unifiIfIp IpAddress,
+    unifiIfMac MacAddress,
+    unifiIfName DisplayString,
+    unifiIfRxBytes Counter32,
+    unifiIfRxDropped Counter32,
+    unifiIfRxError Counter32,
+    unifiIfRxMulticast Counter32,
+    unifiIfRxPackets Counter32,
+    unifiIfSpeed Integer32,
+    unifiIfTxBytes Counter32,
+    unifiIfTxDropped Counter32,
+    unifiIfTxError Counter32,
+    unifiIfTxPackets Counter32,
+    unifiIfUp TruthValue
+}
+
+unifiIfIndex OBJECT-TYPE
+    SYNTAX ObjectIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Interface index"
+    ::= { unifiIfEntry 1 }
+
+unifiIfFullDuplex OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Full duplex status"
+    ::= { unifiIfEntry 2 }
+
+unifiIfIp OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Interface IP address"
+    ::= { unifiIfEntry 3 }
+
+unifiIfMac OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Interface MAC address"
+    ::= { unifiIfEntry 4 }
+
+unifiIfName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Interface name"
+    ::= { unifiIfEntry 5 }
+
+unifiIfRxBytes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received bytes"
+    ::= { unifiIfEntry 6 }
+
+unifiIfRxDropped OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received dropped packets"
+    ::= { unifiIfEntry 7 }
+
+unifiIfRxError OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received error packets"
+    ::= { unifiIfEntry 8 }
+
+unifiIfRxMulticast OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received multicast packets"
+    ::= { unifiIfEntry 9 }
+
+unifiIfRxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received packets"
+    ::= { unifiIfEntry 10 }
+
+unifiIfSpeed OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Interface speed"
+    ::= { unifiIfEntry 11 }
+
+unifiIfTxBytes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted bytes"
+    ::= { unifiIfEntry 12 }
+
+unifiIfTxDropped OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted dropped packets"
+    ::= { unifiIfEntry 13 }
+
+unifiIfTxError OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted error packets"
+    ::= { unifiIfEntry 14 }
+
+unifiIfTxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted packets"
+    ::= { unifiIfEntry 15 }
+
+unifiIfUp OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Interface up status"
+    ::= { unifiIfEntry 16 }
+
+-- --------------------------------------------------------------------------------
+--                         UniFi Radio Table
+-- --------------------------------------------------------------------------------
+
+unifiRadioTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF UbntRadioEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Wireless radio table"
+    ::= { unifiApWireless 1 }
+
+unifiRadioEntry OBJECT-TYPE
+    SYNTAX UbntRadioEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Wireless interface entry"
+    INDEX { unifiRadioIndex }
+    ::= { unifiRadioTable 1 }
+
+UbntRadioEntry ::= SEQUENCE {
+    unifiRadioIndex ObjectIndex,
+    unifiRadioName DisplayString,
+    unifiRadioRadio DisplayString,
+    unifiRadioRxPackets Counter32,
+    unifiRadioTxPackets Counter32,
+    unifiRadioCuTotal Integer32,
+    unifiRadioCuSelfRx Integer32,
+    unifiRadioCuSelfTx Integer32,
+    unifiRadioOtherBss Integer32
+}
+
+unifiRadioIndex OBJECT-TYPE
+    SYNTAX ObjectIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Radio index"
+    ::= { unifiRadioEntry 1 }
+
+unifiRadioName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Radio name"
+    ::= { unifiRadioEntry 2 }
+
+unifiRadioRadio OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Radio type"
+    ::= { unifiRadioEntry 3 }
+
+unifiRadioRxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received packets"
+    ::= { unifiRadioEntry 4 }
+
+unifiRadioTxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted packets"
+    ::= { unifiRadioEntry 5 }
+
+unifiRadioCuTotal OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Total channel utilization"
+    ::= { unifiRadioEntry 6 }
+
+unifiRadioCuSelfRx OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Self receive channel utilization"
+    ::= { unifiRadioEntry 7 }
+
+unifiRadioCuSelfTx OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Self transmit channel utilization"
+    ::= { unifiRadioEntry 8 }
+
+unifiRadioOtherBss OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Other BSS channel utilization"
+    ::= { unifiRadioEntry 9 }
+
+-- --------------------------------------------------------------------------------
+--                         UniFi VAP Table
+-- --------------------------------------------------------------------------------
+
+unifiVapTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF UbntVapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Virtual Access Point table"
+    ::= { unifiApWireless 2 }
+
+unifiVapEntry OBJECT-TYPE
+    SYNTAX UbntVapEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Virtual Access Point entry"
+    INDEX { unifiVapIndex }
+    ::= { unifiVapTable 1 }
+
+UbntVapEntry ::= SEQUENCE {
+    unifiVapIndex ObjectIndex,
+    unifiVapBssId MacAddress,
+    unifiVapCcq Integer32,
+    unifiVapChannel Integer32,
+    unifiVapExtChannel Integer32,
+    unifiVapEssId DisplayString,
+    unifiVapName DisplayString,
+    unifiVapNumStations Integer32,
+    unifiVapRadio DisplayString,
+    unifiVapRxBytes Counter32,
+    unifiVapRxCrypts Counter32,
+    unifiVapRxDropped Counter32,
+    unifiVapRxErrors Counter32,
+    unifiVapRxFrags Counter32,
+    unifiVapRxPackets Counter32,
+    unifiVapTxBytes Counter32,
+    unifiVapTxDropped Counter32,
+    unifiVapTxErrors Counter32,
+    unifiVapTxPackets Counter32,
+    unifiVapTxRetries Counter32,
+    unifiVapTxPower Integer32,
+    unifiVapUp TruthValue,
+    unifiVapUsage DisplayString
+}
+
+unifiVapIndex OBJECT-TYPE
+    SYNTAX ObjectIndex
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "VAP index"
+    ::= { unifiVapEntry 1 }
+
+unifiVapBssId OBJECT-TYPE
+    SYNTAX MacAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "BSS ID"
+    ::= { unifiVapEntry 2 }
+
+unifiVapCcq OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Client connection quality"
+    ::= { unifiVapEntry 3 }
+
+unifiVapChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Channel number"
+    ::= { unifiVapEntry 4 }
+
+unifiVapExtChannel OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Extended channel"
+    ::= { unifiVapEntry 5 }
+
+unifiVapEssId OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "ESS ID"
+    ::= { unifiVapEntry 6 }
+
+unifiVapName OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "VAP name"
+    ::= { unifiVapEntry 7 }
+
+unifiVapNumStations OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Number of connected stations"
+    ::= { unifiVapEntry 8 }
+
+unifiVapRadio OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Radio name"
+    ::= { unifiVapEntry 9 }
+
+unifiVapRxBytes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received bytes"
+    ::= { unifiVapEntry 10 }
+
+unifiVapRxCrypts OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received encrypted packets"
+    ::= { unifiVapEntry 11 }
+
+unifiVapRxDropped OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received dropped packets"
+    ::= { unifiVapEntry 12 }
+
+unifiVapRxErrors OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received error packets"
+    ::= { unifiVapEntry 13 }
+
+unifiVapRxFrags OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received fragmented packets"
+    ::= { unifiVapEntry 14 }
+
+unifiVapRxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Received packets"
+    ::= { unifiVapEntry 15 }
+
+unifiVapTxBytes OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted bytes"
+    ::= { unifiVapEntry 16 }
+
+unifiVapTxDropped OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted dropped packets"
+    ::= { unifiVapEntry 17 }
+
+unifiVapTxErrors OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted error packets"
+    ::= { unifiVapEntry 18 }
+
+unifiVapTxPackets OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted packets"
+    ::= { unifiVapEntry 19 }
+
+unifiVapTxRetries OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmitted retries"
+    ::= { unifiVapEntry 20 }
+
+unifiVapTxPower OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Transmit power"
+    ::= { unifiVapEntry 21 }
+
+unifiVapUp OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "VAP up status"
+    ::= { unifiVapEntry 22 }
+
+unifiVapUsage OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Usage type: guest or regular user"
+    ::= { unifiVapEntry 23 }
+
+-- --------------------------------------------------------------------------------
+--                         UniFi Access Point System
+-- --------------------------------------------------------------------------------
+
+unifiApSystemIp OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Access point IP address"
+    ::= { unifiApSystem 1 }
+
+unifiApSystemIsolated OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Isolation status"
+    ::= { unifiApSystem 2 }
+
+unifiApSystemModel OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Access point model"
+    ::= { unifiApSystem 3 }
+
+unifiApSystemUplink OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Uplink information"
+    ::= { unifiApSystem 4 }
+
+unifiApSystemUptime OBJECT-TYPE
+    SYNTAX Counter32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "System uptime"
+    ::= { unifiApSystem 5 }
+
+unifiApSystemVersion OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "System version"
+    ::= { unifiApSystem 6 }
+
+-- --------------------------------------------------------------------------------
+--                         Object Groups
+-- --------------------------------------------------------------------------------
+
+ubntORInfoGroup OBJECT-GROUP
+    OBJECTS { ubntORID,
+              ubntORDescr }
+    STATUS current
+    DESCRIPTION "Collection of related objects"
+    ::= { ubntSnmpGroups 1 }
+
+unifiIfGroup OBJECT-GROUP
+    OBJECTS {
+        unifiIfFullDuplex,
+        unifiIfIp,
+        unifiIfMac,
+        unifiIfName,
+        unifiIfRxBytes,
+        unifiIfRxDropped,
+        unifiIfRxError,
+        unifiIfRxMulticast,
+        unifiIfRxPackets,
+        unifiIfSpeed,
+        unifiIfTxBytes,
+        unifiIfTxDropped,
+        unifiIfTxError,
+        unifiIfTxPackets,
+        unifiIfUp
+    }
+    STATUS current
+    DESCRIPTION "UniFi interface group"
+    ::= { ubntUniFiGroups 1 }
+
+unifiRadioGroups OBJECT-GROUP
+    OBJECTS {
+        unifiRadioName,
+        unifiRadioRadio,
+        unifiRadioRxPackets,
+        unifiRadioTxPackets,
+        unifiRadioCuTotal,
+        unifiRadioCuSelfRx,
+        unifiRadioCuSelfTx,
+        unifiRadioOtherBss
+    }
+    STATUS current
+    DESCRIPTION "UniFi radio group"
+    ::= { ubntUniFiGroups 2 }
+
+unifiVapGroups OBJECT-GROUP
+    OBJECTS {
+        unifiVapBssId,
+        unifiVapCcq,
+        unifiVapChannel,
+        unifiVapExtChannel,
+        unifiVapEssId,
+        unifiVapName,
+        unifiVapNumStations,
+        unifiVapRadio,
+        unifiVapRxBytes,
+        unifiVapRxCrypts,
+        unifiVapRxDropped,
+        unifiVapRxErrors,
+        unifiVapRxFrags,
+        unifiVapRxPackets,
+        unifiVapTxBytes,
+        unifiVapTxDropped,
+        unifiVapTxErrors,
+        unifiVapTxPackets,
+        unifiVapTxRetries,
+        unifiVapTxPower,
+        unifiVapUp,
+        unifiVapUsage
+    }
+    STATUS current
+    DESCRIPTION "UniFi VAP group"
+    ::= { ubntUniFiGroups 3 }
+
+unifiApSystemGroup OBJECT-GROUP
+    OBJECTS {
+        unifiApSystemIp,
+        unifiApSystemIsolated,
+        unifiApSystemModel,
+        unifiApSystemUplink,
+        unifiApSystemUptime,
+        unifiApSystemVersion
+    }
+    STATUS current
+    DESCRIPTION "UniFi access point system group"
+    ::= { ubntUniFiGroups 4 }
+
+-- --------------------------------------------------------------------------------
+--                         Compliance
+-- --------------------------------------------------------------------------------
+
+ubntORCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION "The compliance statement for Ubiquiti entities."
+    MODULE
+        GROUP ubntORInfoGroup
+        DESCRIPTION "This group is for Ubiquiti systems."
+    ::= { ubntSnmpGroups 2 }
+
+END

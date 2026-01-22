@@ -13,14 +13,14 @@ spec:
         - pdu-01.iot.apocrathia.com
       labels:
         job: snmp
-        module: apcups
+        module: apc_pdu
         device_type: pdu
   scrapeInterval: 60s
   scrapeTimeout: 30s
   metricsPath: /snmp
   params:
     module:
-      - apcups
+      - apc_pdu
     auth:
       - snmpv3-nopriv
   # Relabeling to route through the SNMP exporter

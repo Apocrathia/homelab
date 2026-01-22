@@ -1,0 +1,26 @@
+---
+# Generator config for SNMP modules
+# Run with: ./generate.sh
+#
+# Modules are split by device type to keep ConfigMaps under 1MB
+
+modules:
+  # APC UPS - Smart-UPS, Symmetra, etc.
+  apc_ups:
+    walk:
+      - 1.3.6.1.4.1.318.1.1.1 # ups - UPS objects
+
+  # APC PDU - Rack PDU (older models)
+  apc_pdu:
+    walk:
+      - 1.3.6.1.4.1.318.1.1.12 # rPDU - Rack PDU
+
+  # APC PDU2 - Rack PDU (newer models)
+  apc_pdu2:
+    walk:
+      - 1.3.6.1.4.1.318.1.1.26 # rPDU2 - Rack PDU Gen2
+
+  # Ubiquiti UniFi - switches, APs, routers
+  unifi:
+    walk:
+      - 1.3.6.1.4.1.41112 # Ubiquiti enterprise OID

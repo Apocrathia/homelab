@@ -36,7 +36,14 @@ spec:
         mountPath: /etc/snmp_exporter/auth
         secretName: snmp-secrets
         readOnly: true
-    # Load both default config (modules) and custom auth config
+    # Mount custom SNMP modules from ConfigMap
+    extraConfigmapMounts:
+      - name: snmp-modules
+        mountPath: /etc/snmp_exporter/modules
+        configMap: snmp-modules
+        readOnly: true
+    # Load configs: default modules, custom modules, and auth
     extraArgs:
       - --config.file=/etc/snmp_exporter/snmp.yml
+      - --config.file=/etc/snmp_exporter/modules/snmp.yml
       - --config.file=/etc/snmp_exporter/auth/config

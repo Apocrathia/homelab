@@ -1,6 +1,14 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: prometheus-system
 resources:
   - pdu-01.yaml
   - ups-01.yaml
+
+configMapGenerator:
+  - name: snmp-modules
+    files:
+      - snmp.yml
+    options:
+      disableNameSuffixHash: true
