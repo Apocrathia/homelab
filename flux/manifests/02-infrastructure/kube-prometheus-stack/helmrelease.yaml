@@ -26,33 +26,6 @@ spec:
     timeout: 15m
     remediation:
       retries: 3
-  valuesFrom:
-    # SNMP exporter SNMPv3 credentials (SHA/AES)
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: username
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3.username
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: auth-password
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3.password
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: priv-password
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3.priv_password
-    # SNMP exporter SNMPv3 legacy credentials (MD5/DES)
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: username
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3-legacy.username
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: auth-password
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3-legacy.password
-    - kind: Secret
-      name: snmp-secrets
-      valuesKey: priv-password
-      targetPath: prometheus-snmp-exporter.config.auths.snmpv3-legacy.priv_password
   # This is the longest values file I've ever seen.
   # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
   values:
@@ -314,23 +287,3 @@ spec:
             writeRelabelConfigs:
               - action: labeldrop
                 regex: "__meta_kubernetes_pod_label_(.+)"
-
-    # SNMP Exporter for network device monitoring
-    prometheus-snmp-exporter:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-      config:
-        auths:
-          snmpv3:
-            version: 3
-            security_level: authPriv
-            auth_protocol: SHA
-            priv_protocol: AES
-            # username, password, priv_password injected via valuesFrom
-          snmpv3-legacy:
-            version: 3
-            security_level: authPriv
-            auth_protocol: MD5
-            priv_protocol: DES
-            # username, password, priv_password injected via valuesFrom
