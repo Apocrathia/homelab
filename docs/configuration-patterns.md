@@ -12,7 +12,6 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **Purpose**: External access to applications through Authentik proxy
 - **Examples**:
   - `https://chat.gateway.services.apocrathia.com` (OpenWebUI)
-  - `https://mlflow.gateway.services.apocrathia.com` (MLflow)
   - `https://n8n.gateway.services.apocrathia.com` (n8n)
 
 ### Storage Services
@@ -21,7 +20,7 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **Purpose**: SMB network storage access
 - **Examples**:
   - `//storage.services.apocrathia.com/Video/Movies`
-  - `//storage.services.apocrathia.com/Library/Sites/Demo`
+  - `//storage.services.apocrathia.com/Video/TV`
 
 ### Internal Services
 
@@ -39,7 +38,6 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **Purpose**: Standardized secret storage location
 - **Examples**:
   - `vaults/Secrets/items/n8n-secrets`
-  - `vaults/Secrets/items/mlflow-secrets`
   - `vaults/Secrets/items/litellm-secrets`
 
 ### Common Secret Fields
@@ -47,20 +45,14 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 - **Database Credentials**:
   - `username`: Database username
   - `password`: Database password
-- **API Keys**:
-  - `api-key`: External API access key
-  - `master-key`: Application master key
-- **OAuth Configuration**:
-  - `oauth-client-id`: OAuth client identifier
-  - `oauth-client-secret`: OAuth client secret
+- **Application-Specific Keys**: Field names vary by app (e.g., `master-key`, `api-key`, `secret-key`)
 
 ## Storage Patterns
 
 ### Longhorn Volumes
 
 - **Purpose**: Persistent application data
-- **Pattern**: `storageClassName: longhorn`
-- **Common Sizes**: 10Gi, 20Gi, 50Gi
+- **Pattern**: Longhorn is the default StorageClass; explicit `storageClassName: longhorn` used when needed
 - **Usage**: Configuration files, databases, application data
 
 ### SMB Volumes
@@ -80,16 +72,15 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 
 ### Proxy Provider Configuration
 
-- **Pattern**: Authentik proxy provider with outpost
-- **HTTPRoute**: Disabled (Authentik manages routing)
-- **Authentication**: Trusted header authentication
-- **Headers**: `X-Forwarded-Email`, `X-Forwarded-User`
+- **Pattern**: Authentik proxy provider with dedicated outpost per application
+- **HTTPRoute**: Disabled (Authentik outpost manages Gateway API routes via `kubernetes_httproute_parent_refs`)
+- **Authentication**: Proxy-based authentication with optional header injection for apps that support it
 
 ### Blueprint Integration
 
-- **Pattern**: `authentik-blueprint.yaml` with Kustomize config generator
-- **Purpose**: Automated user/group management
-- **Configuration**: Display name, icon, external host
+- **Pattern**: `authentik-blueprint.yaml` files in application directories, loaded via Kustomize configMapGenerator
+- **Purpose**: Declarative Authentik configuration (providers, applications, outposts)
+- **Components**: Proxy provider, application entry, outpost with Gateway API integration
 
 ## Database Patterns
 
@@ -102,9 +93,9 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 
 ### Common Database Configurations
 
-- **Max Connections**: 100-200 (depending on workload)
-- **Logging**: DDL statements, slow queries (>1s)
-- **Monitoring**: PodMonitor integration enabled
+- **Max Connections**: 100-200 for most apps (up to 400 for high-traffic services like Authentik)
+- **Logging**: DDL statements (`log_statement: ddl`), slow queries (`log_min_duration_statement: 1000ms`)
+- **Monitoring**: PodMonitor for Postgres metrics collection
 
 ## Security Patterns
 
@@ -116,23 +107,17 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
 
 ### Network Policies
 
-- **Pattern**: Cilium NetworkPolicy resources
-- **Purpose**: Fine-grained traffic control
-- **Common Rules**: Allow application-to-database communication
+- **Pattern**: `CiliumClusterwideNetworkPolicy` for cross-namespace isolation
+- **Current Usage**: MCP server isolation (restricts access to authorized namespaces)
+- **Scope**: Namespace-level restrictions via label selectors
 
 ## Resource Patterns
 
 ### CPU/Memory Limits
 
-- **Light Applications**: 100m-500m CPU, 256Mi-1Gi memory
-- **Medium Applications**: 200m-1000m CPU, 512Mi-2Gi memory
-- **Heavy Applications**: 500m-4000m CPU, 1-8Gi memory
-
-### HPA Configuration
-
-- **Pattern**: HorizontalPodAutoscaler for scaling
-- **Common Metrics**: CPU utilization, memory utilization
-- **Scaling Range**: 2-5 replicas typical
+- **Light Applications**: 50m-200m CPU, 128Mi-512Mi memory
+- **Medium Applications**: 100m-500m CPU, 256Mi-1Gi memory
+- **Heavy Applications**: 300m-2000m CPU, 512Mi-4Gi memory
 
 ## Troubleshooting Patterns
 
