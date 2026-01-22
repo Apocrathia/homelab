@@ -10,7 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: goflow2
+      app: goflow2
   namespaceSelector:
     matchNames:
       - goflow2
