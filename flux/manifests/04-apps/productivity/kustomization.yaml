@@ -12,3 +12,4 @@ resources:
   - rclone
   - searxng
   - wakapi
+  - windmill

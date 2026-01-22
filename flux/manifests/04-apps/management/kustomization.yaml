@@ -11,4 +11,3 @@ resources:
   - jetkvm
   - n8n
   - unpoller
-  # - windmill
