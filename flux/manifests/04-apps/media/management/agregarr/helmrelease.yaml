@@ -20,7 +20,7 @@ spec:
     app:
       name: agregarr
       # renovate: datasource=docker depName=ghcr.io/agregarr/agregarr
-      image: ghcr.io/agregarr/agregarr:v2.2.1
+      image: ghcr.io/agregarr/agregarr:v2.3.0
       container:
         name: agregarr
         port: 7171
