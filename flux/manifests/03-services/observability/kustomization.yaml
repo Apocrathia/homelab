@@ -12,4 +12,5 @@ resources:
   - loki
   - mimir
   - otel-operator
+  - prometheus
   - tempo

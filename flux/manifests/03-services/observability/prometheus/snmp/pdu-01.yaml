@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: pdu-01
+  namespace: prometheus-system
+  labels:
+    release: kube-prometheus-stack
+spec:
+  staticConfigs:
+    - targets:
+        - pdu-01.iot.apocrathia.com
+      labels:
+        job: snmp
+        module: apcups
+        device_type: pdu
+  scrapeInterval: 60s
+  scrapeTimeout: 30s
+  metricsPath: /snmp
+  params:
+    module:
+      - apcups
+    auth:
+      - snmpv3-legacy
+  # Relabeling to route through the SNMP exporter
+  relabelings:
+    - sourceLabels: [__address__]
+      targetLabel: __param_target
+    - sourceLabels: [__param_target]
+      targetLabel: instance
+    - targetLabel: __address__
+      replacement: kube-prometheus-stack-prometheus-snmp-exporter.prometheus-system.svc:9116
