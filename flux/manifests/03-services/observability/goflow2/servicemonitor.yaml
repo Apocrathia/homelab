@@ -3,7 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: goflow2
-  namespace: goflow2-system
+  namespace: goflow2
   labels:
     app.kubernetes.io/name: goflow2
     release: prometheus
@@ -13,7 +13,7 @@ spec:
       app.kubernetes.io/name: goflow2
   namespaceSelector:
     matchNames:
-      - goflow2-system
+      - goflow2
   endpoints:
     - port: metrics
       interval: 30s

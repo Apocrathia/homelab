@@ -4,7 +4,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: goflow2
-  namespace: goflow2-system
+  namespace: goflow2
 spec:
   interval: 5m
   chart:
@@ -27,7 +27,7 @@ spec:
   values:
     app:
       name: goflow2
-      namespace: goflow2-system
+      namespace: goflow2
       # renovate: datasource=docker depName=netsampler/goflow2
       image: netsampler/goflow2:v2.2.2
       container:

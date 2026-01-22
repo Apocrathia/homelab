@@ -5,7 +5,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: goflow2-ingest-lb
-  namespace: goflow2-system
+  namespace: goflow2
   labels:
     app.kubernetes.io/name: goflow2
     app.kubernetes.io/component: ingest
