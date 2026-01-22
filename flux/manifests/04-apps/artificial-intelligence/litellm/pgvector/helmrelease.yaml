@@ -213,9 +213,9 @@ spec:
               - name: tmp
                 mountPath: /tmp
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
           resources:
