@@ -95,6 +95,19 @@ spec:
             memory: 256Mi
           limits:
             memory: "1Gi"
+        # Mount oauth.json for Authentik SSO
+        volumes:
+          - name: oauth-config
+            secret:
+              secretName: windmill-secrets
+              items:
+                - key: oauth.json
+                  path: oauth.json
+        volumeMounts:
+          - name: oauth-config
+            mountPath: /usr/src/app/oauth.json
+            subPath: oauth.json
+            readOnly: true
 
       # LSP configuration
       lsp:
