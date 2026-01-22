@@ -3,27 +3,26 @@
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
-  name: pdu-01
+  name: snmp-diskstation
   namespace: prometheus-system
   labels:
     release: kube-prometheus-stack
 spec:
   staticConfigs:
     - targets:
-        - pdu-01.iot.apocrathia.com
+        - diskstation.services.apocrathia.com
       labels:
         job: snmp
-        module: apc_pdu
-        device_type: pdu
+        module: synology
+        device_type: nas
   scrapeInterval: 60s
   scrapeTimeout: 30s
   metricsPath: /snmp
   params:
     module:
-      - apc_pdu
+      - synology
     auth:
-      - snmpv3-nopriv
-  # Relabeling to route through the SNMP exporter
+      - snmpv3
   relabelings:
     - sourceLabels: [__address__]
       targetLabel: __param_target
