@@ -34,4 +34,4 @@ spec:
       targetLabel: instance
     # Point to the SNMP exporter service
     - targetLabel: __address__
-      replacement: kube-prometheus-stack-prometheus-snmp-exporter.prometheus-system.svc:9116
+      replacement: snmp-exporter.prometheus-system.svc:9116

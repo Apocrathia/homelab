@@ -22,7 +22,7 @@ spec:
     module:
       - apcups
     auth:
-      - snmpv3-legacy
+      - snmpv3-nopriv
   # Relabeling to route through the SNMP exporter
   relabelings:
     - sourceLabels: [__address__]
@@ -30,4 +30,4 @@ spec:
     - sourceLabels: [__param_target]
       targetLabel: instance
     - targetLabel: __address__
-      replacement: kube-prometheus-stack-prometheus-snmp-exporter.prometheus-system.svc:9116
+      replacement: snmp-exporter.prometheus-system.svc:9116
