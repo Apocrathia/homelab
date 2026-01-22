@@ -58,24 +58,12 @@ spec:
             value: "true"
           - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
             value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_DPI
+          - name: UP_UNIFI_DEFAULT_SAVE_DPI # Broken https://github.com/unpoller/unpoller/issues/834
             value: "true"
           - name: UP_UNIFI_DEFAULT_VERIFY_SSL
             value: "false"
           - name: UP_UNIFI_DEFAULT_SITE_0
             value: "all"
-          - name: UP_UNIFI_DEFAULT_SAVE_SITES
-            value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_IDS
-            value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
-            value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
-            value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
-            value: "true"
-          - name: UP_UNIFI_DEFAULT_SAVE_DPI
-            value: "true"
 
           # Prometheus settings
           - name: UP_PROMETHEUS_DISABLE
