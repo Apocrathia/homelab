@@ -1,0 +1,3264 @@
+-- Consolidated Synology MIB
+-- Generated from individual Synology MIB files
+-- Enterprise OID: 1.3.6.1.4.1.6574
+
+SYNOLOGY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-GROUP, MODULE-COMPLIANCE
+        FROM SNMPv2-CONF
+    enterprises, MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter32, Counter64, Gauge32, TimeTicks
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC;
+
+synology OBJECT IDENTIFIER ::= { enterprises 6574 }
+
+-- Module OID definitions (extracted from MODULE-IDENTITY blocks)
+synoDisk OBJECT IDENTIFIER ::= { synology 2 }
+synologyEbox OBJECT IDENTIFIER ::= { synology 105 }
+flashCache OBJECT IDENTIFIER ::= { synology 103 }
+gpuInfo OBJECT IDENTIFIER ::= { synology 108 }
+synologyiSCSILUN OBJECT IDENTIFIER ::= { synology 104 }
+synologyiSCSITarget OBJECT IDENTIFIER ::= { synology 110 }
+nfs OBJECT IDENTIFIER ::= { synology 107 }
+synoEthPort OBJECT IDENTIFIER ::= { synology 109 }
+synoRaid OBJECT IDENTIFIER ::= { synology 3 }
+synologyService OBJECT IDENTIFIER ::= { synology 6 }
+synologyHA OBJECT IDENTIFIER ::= { synology 106 }
+synologyDiskSMART OBJECT IDENTIFIER ::= { synology 5 }
+spaceIO OBJECT IDENTIFIER ::= { synology 102 }
+storageIO OBJECT IDENTIFIER ::= { synology 101 }
+synoSystem OBJECT IDENTIFIER ::= { synology 1 }
+synoUPS OBJECT IDENTIFIER ::= { synology 4 }
+
+
+-- ============================================
+-- From: SYNOLOGY-DISK-MIB.txt
+-- ============================================
+
+diskTable OBJECT-TYPE
+    SYNTAX	   SEQUENCE OF DiskEntry
+    MAX-ACCESS	  not-accessible
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk table"
+    ::= { synoDisk 1 }
+
+diskEntry	  OBJECT-TYPE
+    SYNTAX	   DiskEntry
+    MAX-ACCESS	  not-accessible
+    STATUS	   current
+    DESCRIPTION
+    "For all disk entry"
+    INDEX   { diskIndex }
+    ::= { diskTable 1 }
+
+DiskEntry ::= SEQUENCE {
+    diskIndex		Integer32,
+    diskID			OCTET STRING,
+	diskModel		OCTET STRING,
+	diskType		OCTET STRING,
+	diskStatus		Integer32,
+	diskTemperature	Integer32,
+	diskRole        OCTET STRING,
+	diskRetry       Integer32,
+	diskBadSector         Integer32,
+	diskIdentifyFail Integer32,
+	diskRemainLife  Integer32,
+    diskName        OCTET STRING,
+	diskHealthStatus Integer32
+}
+
+diskIndex OBJECT-TYPE
+    SYNTAX	   Integer32(0..2147483647)
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "The index of disk table"
+    ::= { diskEntry 1 }
+
+diskID OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk ID
+	 The ID of disk is assigned by disk Station.
+	"
+    ::= { diskEntry 2 }
+
+diskModel OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk model name
+	 The disk model name will be showed here.
+	"
+    ::= { diskEntry 3 }
+
+diskType OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk type
+	 The type of disk will be showed here, including SATA, SSD and so on.
+	"
+    ::= { diskEntry 4 }
+
+diskStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..5)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk status
+	 Each meanings of status represented describe below.
+
+	 Normal(1): The hard disk functions normally.
+	 Initialized(2): The hard disk has system partition but no data.
+	 NotInitialized(3):	The hard disk does not have system in system partition.
+	 SystemPartitionFailed(4): The system partitions on the hard disks are damaged.
+	 Crashed(5): The hard disk has damaged.
+	"
+    ::= { diskEntry 5 }
+
+diskTemperature OBJECT-TYPE
+    SYNTAX	   Integer32
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk temperature
+	 The temperature of each disk uses Celsius degree.
+	"
+    ::= { diskEntry 6 }
+
+diskRole OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk role
+	 The role of the disk in system.
+	 Could be:
+	 data, cache, hotspare, none
+	"
+    ::= { diskEntry 7 }
+
+diskRetry OBJECT-TYPE
+    SYNTAX	   Integer32
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk retry count
+	 The count of each disk connection retries.
+	"
+    ::= { diskEntry 8 }
+
+diskBadSector OBJECT-TYPE
+    SYNTAX	   Integer32
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk bad sector count
+	 The count of each disk I/O bad sector.
+	"
+    ::= { diskEntry 9 }
+
+diskIdentifyFail OBJECT-TYPE
+    SYNTAX	   Integer32
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk identify fail count
+	 The count of each disk identify fails.
+	"
+    ::= { diskEntry 10 }
+
+diskRemainLife OBJECT-TYPE
+    SYNTAX	   Integer32
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "Synology disk remainLife
+	 The estimate remain life of each disk.
+	"
+    ::= { diskEntry 11 }
+
+diskName OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk name
+	 The name of disk which align to storage manager.
+	"
+    ::= { diskEntry 12 }
+
+diskHealthStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..5)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology disk health status
+	 Each meanings of status represented describe below.
+
+	 Normal(1):   The disk health status is normal.
+	 Warning(2):  The disk health status is warning.
+	 Critical(3): The disk health status is critical.
+	 Failing(4):  The disk health status is failing.
+	"
+    ::= { diskEntry 13 }
+
+diskConformance OBJECT IDENTIFIER ::= { synoDisk 2 }
+diskCompliances OBJECT IDENTIFIER ::= { diskConformance 1 }
+diskGroups 		OBJECT IDENTIFIER ::= { diskConformance 2 }
+
+diskCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for synoDisk entities which
+            implement the SYNOLOGY DISK MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { diskGroup }
+
+    ::= { diskCompliances 1 }
+
+diskGroup OBJECT-GROUP
+    OBJECTS { diskIndex,
+              diskID,
+              diskModel,
+              diskType,
+              diskStatus,
+              diskTemperature,
+	      diskRole,
+	      diskRetry,
+	      diskBadSector,
+	      diskIdentifyFail,
+	      diskRemainLife,
+          diskName,
+          diskHealthStatus}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology disk entity."
+    ::= { diskGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-EBOX-MIB.txt
+-- ============================================
+
+eboxTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF EboxEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Table of ebox data."
+	::= { synologyEbox 1 }
+
+eboxEntry OBJECT-TYPE
+	SYNTAX		EboxEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION "An entry containing ebox information"
+	INDEX		{ eboxIndex }
+	::= { eboxTable 1 }
+
+EboxEntry ::= SEQUENCE {
+	eboxIndex           Integer32,
+	eboxModel           OCTET STRING,
+	eboxPower	        Integer32,
+	eboxRedundantPower	Integer32
+}
+
+eboxIndex OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Ebox info index"
+	::= { eboxEntry 1 }
+
+eboxModel OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Ebox model"
+	::= { eboxEntry 2 }
+
+eboxPower OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Ebox Power"
+	::= { eboxEntry 3 }
+
+eboxRedundantPower OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Ebox Redundant Power"
+	::= { eboxEntry 4 }
+
+synologyEboxConformance	OBJECT IDENTIFIER ::= { synologyEbox 2 }
+synologyEboxCompliances	OBJECT IDENTIFIER ::= { synologyEboxConformance 1 }
+synologyEboxGroups OBJECT IDENTIFIER ::= { synologyEboxConformance 2 }
+
+synologyEboxCompliance MODULE-COMPLIANCE
+	STATUS				current
+	DESCRIPTION         "The compliance statement for ebox information."
+	MODULE				-- this module
+	MANDATORY-GROUPS	{ synologyEboxGroup }
+	::= { synologyEboxCompliances 1 }
+
+synologyEboxGroup OBJECT-GROUP
+	OBJECTS {	eboxIndex,
+				eboxModel,
+				eboxPower,
+				eboxRedundantPower }
+	STATUS		current
+	DESCRIPTION
+				"A collection of objects providing basic information
+				of an synology ebox entity."
+	::= { synologyEboxGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-FLASHCACHE-MIB.txt
+-- ============================================
+
+flashCacheTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF FlashCacheEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of flash cache devices and how much data they have read/written."
+    ::= { flashCache 1 }
+
+flashCacheEntry OBJECT-TYPE
+    SYNTAX      FlashCacheEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing a device and its statistics."
+    INDEX       { flashCacheIndex }
+    ::= { flashCacheTable 1 }
+
+FlashCacheEntry ::= SEQUENCE {
+    flashCacheIndex			Integer32,
+    flashCacheSSDDev		DisplayString,
+    flashCacheSpaceDev		DisplayString,
+    flashCacheReadHits		Counter64,
+    flashCacheWriteHits		Counter64,
+    flashCacheDiskRead		Counter64,
+    flashCacheDiskWrite		Counter64,
+    flashCacheTotalRead		Counter64,
+    flashCacheTotalWrite	Counter64,
+    flashCacheReadHitRate	Integer32,
+    flashCacheWriteHitRate	Integer32,
+    flashCacheReadSeqSkip	Counter64,
+    flashCacheWriteSeqSkip	Counter64,
+    flashCacheWriteMissSsd	Counter64,
+    flashCacheSsdUuid		DisplayString
+}
+
+flashCacheIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Reference index for each observed device."
+    ::= { flashCacheEntry 1 }
+
+flashCacheSSDDev OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ssd device on flashcache we are counting/checking."
+    ::= { flashCacheEntry 2 }
+
+flashCacheSpaceDev OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The space device on flashcache we are counting/checking."
+    ::= { flashCacheEntry 3 }
+
+flashCacheReadHits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of reads on flash cache."
+    ::= { flashCacheEntry 4 }
+
+flashCacheWriteHits OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of writes on flash cache."
+    ::= { flashCacheEntry 5 }
+
+flashCacheDiskRead OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of reads on disk."
+    ::= { flashCacheEntry 6 }
+
+flashCacheDiskWrite OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of writes on disk."
+    ::= { flashCacheEntry 7 }
+
+flashCacheTotalRead OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of reads on volume with flash cache."
+    ::= { flashCacheEntry 8 }
+
+flashCacheTotalWrite OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of writes on volume with flash cache."
+    ::= { flashCacheEntry 9 }
+
+flashCacheReadHitRate OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The read hit rate of flash cache (%)"
+    ::= { flashCacheEntry 10 }
+
+flashCacheWriteHitRate OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The write hit rate of flash cache (%)"
+    ::= { flashCacheEntry 11 }
+
+flashCacheReadSeqSkip OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of skipped sequential reads on flash cache."
+    ::= { flashCacheEntry 12 }
+
+flashCacheWriteSeqSkip OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of skipped sequential writes on flash cache."
+    ::= { flashCacheEntry 13 }
+
+flashCacheWriteMissSsd OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of data writes to SSD for the first time."
+    ::= { flashCacheEntry 14 }
+
+flashCacheSsdUuid OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ssd UUID on flashcache we are counting/checking."
+    ::= { flashCacheEntry 15 }
+
+flashCacheConformance OBJECT IDENTIFIER ::= { flashCache 2 }
+flashCacheCompliances OBJECT IDENTIFIER ::= { flashCacheConformance 1 }
+flashCacheGroups 			OBJECT IDENTIFIER ::= { flashCacheConformance 2 }
+
+flashCacheCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for flash cache entities which
+            implement the SYNOLOGY FLASHCACHE MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { flashCacheGroup }
+
+    ::= { flashCacheCompliances 1 }
+
+flashCacheGroup OBJECT-GROUP
+    OBJECTS { flashCacheSSDDev,
+              flashCacheSpaceDev,
+              flashCacheReadHits,
+              flashCacheWriteHits,
+              flashCacheDiskRead,
+              flashCacheDiskWrite,
+              flashCacheTotalRead,
+              flashCacheTotalWrite,
+              flashCacheReadHitRate,
+              flashCacheWriteHitRate,
+              flashCacheReadSeqSkip,
+              flashCacheWriteSeqSkip,
+              flashCacheWriteMissSsd,
+              flashCacheSsdUuid}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology flash cache entity."
+    ::= { flashCacheGroups 1 }
+
+
+
+-- ============================================
+-- From: SYNOLOGY-GPUINFO-MIB.txt
+-- ============================================
+
+gpuInfoSupported OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu Supported."
+	::= { gpuInfo 1 }
+
+gpuUtilization OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu utilization %."
+	::= { gpuInfo 2 }
+
+gpuMemoryUtilization OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu memory utilization %."
+	::= { gpuInfo 3 }
+
+gpuMemoryFree OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu free memory in kB."
+	::= { gpuInfo 4 }
+
+gpuMemoryUsed OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu used memory in kB."
+	::= { gpuInfo 5 }
+
+gpuMemoryTotal OBJECT-TYPE
+	SYNTAX	  Integer32
+	MAX-ACCESS  read-only
+	STATUS	  current
+	DESCRIPTION
+	"Synology gpu total memory in kB."
+	::= { gpuInfo 6 }
+
+gpuInfoConformance OBJECT IDENTIFIER ::= { gpuInfo 7 }
+gpuInfoCompliances OBJECT IDENTIFIER ::= { gpuInfoConformance 1 }
+gpuInfoGroups 			OBJECT IDENTIFIER ::= { gpuInfoConformance 2 }
+
+gpuInfoCompliance MODULE-COMPLIANCE
+	STATUS  current
+	DESCRIPTION
+			"The compliance statement for syno gpuInfo which
+			implement the SYNOLOGY GPUINFO MIB."
+	MODULE  -- this module
+		MANDATORY-GROUPS { gpuInfoGroup }
+
+	::= { gpuInfoCompliances 1 }
+
+gpuInfoGroup OBJECT-GROUP
+	OBJECTS {	gpuInfoSupported,
+				gpuUtilization,
+				gpuMemoryUtilization,
+				gpuMemoryFree,
+				gpuMemoryUsed,
+				gpuMemoryTotal }
+	STATUS  current
+	DESCRIPTION
+			"A collection of objects providing basic information
+			 of a synology gpu.
+			 If platform doesn't support gpu, it will get 0 for every oids."
+	::= { gpuInfoGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-ISCSILUN-MIB.txt
+-- ============================================
+
+iSCSILUNTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF ISCSILUNEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Table of iSCSI LUN data."
+	::= { synologyiSCSILUN 1 }
+
+iSCSILUNEntry OBJECT-TYPE
+	SYNTAX		ISCSILUNEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION "An entry containing iscsi lun information"
+	INDEX		{ iSCSILUNInfoIndex }
+	::= { iSCSILUNTable 1 }
+
+ISCSILUNEntry ::= SEQUENCE {
+	iSCSILUNInfoIndex		Integer32,
+	iSCSILUNUUID	OCTET STRING,
+	iSCSILUNName	OCTET STRING,
+	iSCSILUNThroughputReadHigh	Integer32,
+	iSCSILUNThroughputReadLow	Integer32,
+	iSCSILUNThroughputWriteHigh	Integer32,
+	iSCSILUNThroughputWriteLow	Integer32,
+	iSCSILUNIopsRead	Integer32,
+	iSCSILUNIopsWrite	Integer32,
+	iSCSILUNDiskLatencyRead	Integer32,
+	iSCSILUNDiskLatencyWrite	Integer32,
+	iSCSILUNNetworkLatencyTx	Integer32,
+	iSCSILUNNetworkLatencyRx	Integer32,
+	iSCSILUNIoSizeRead	Integer32,
+	iSCSILUNIoSizeWrite	Integer32,
+	iSCSILUNQueueDepth	Integer32,
+	iSCSILUNType	OCTET STRING,
+	iSCSILUNDiskLatencyAvg	Integer32,
+	iSCSILUNThinProvisionVolFreeMBs	Integer32
+}
+
+iSCSILUNInfoIndex OBJECT-TYPE
+	SYNTAX		Integer32(0..2147483647)
+	MAX-ACCESS  not-accessible
+	STATUS		current
+	DESCRIPTION	"LUN info index"
+	::= { iSCSILUNEntry 1 }
+
+iSCSILUNUUID OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..255))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "LUN uuid"
+	::= { iSCSILUNEntry 2 }
+
+iSCSILUNName OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..255))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "LUN name"
+	::= { iSCSILUNEntry 3 }
+
+iSCSILUNThroughputReadHigh OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN read throughput over 32 bits part"
+	::= { iSCSILUNEntry 4 }
+
+iSCSILUNThroughputReadLow OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN read throughput in unsigned 32 bit"
+	::= { iSCSILUNEntry 5 }
+
+iSCSILUNThroughputWriteHigh OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN write throughput over 32 bits part"
+	::= { iSCSILUNEntry 6 }
+
+iSCSILUNThroughputWriteLow OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN write throughput in unsigned 32 bit"
+	::= { iSCSILUNEntry 7 }
+
+iSCSILUNIopsRead OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN read iops"
+	::= { iSCSILUNEntry 8 }
+
+iSCSILUNIopsWrite OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN write iops"
+	::= { iSCSILUNEntry 9 }
+
+iSCSILUNDiskLatencyRead OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN disk latency when reading"
+	::= { iSCSILUNEntry 10 }
+
+iSCSILUNDiskLatencyWrite OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN disk latency when writing"
+	::= { iSCSILUNEntry 11 }
+
+iSCSILUNNetworkLatencyTx OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN transfer data network latency"
+	::= { iSCSILUNEntry 12 }
+
+iSCSILUNNetworkLatencyRx OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN receive data network latency"
+	::= { iSCSILUNEntry 13 }
+
+iSCSILUNIoSizeRead OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN average io size when reading"
+	::= { iSCSILUNEntry 14 }
+
+iSCSILUNIoSizeWrite OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"LUN average io size when writing"
+	::= { iSCSILUNEntry 15 }
+
+iSCSILUNQueueDepth OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Num of iSCSI commands in LUN queue"
+	::= { iSCSILUNEntry 16 }
+
+iSCSILUNType OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..255))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "LUN type"
+	::= { iSCSILUNEntry 17 }
+
+iSCSILUNDiskLatencyAvg OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Average latency of LUN disk"
+	::= { iSCSILUNEntry 18 }
+
+iSCSILUNThinProvisionVolFreeMBs OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Free space(MB) of thin provisioning lun's volume"
+	::= { iSCSILUNEntry 19 }
+
+synologyiSCSILUNConformance	OBJECT IDENTIFIER ::= { synologyiSCSILUN 2 }
+synologyiSCSILUNCompliances	OBJECT IDENTIFIER ::= { synologyiSCSILUNConformance 1 }
+synologyiSCSILUNGroups			OBJECT IDENTIFIER ::= { synologyiSCSILUNConformance 2 }
+
+synologyiSCSILUNCompliance MODULE-COMPLIANCE
+	STATUS				current
+	DESCRIPTION
+						"The compliance statement for iSCSI LUN information."
+	MODULE				-- this module
+	MANDATORY-GROUPS	{ synologyiSCSILUNGroup }
+	::= { synologyiSCSILUNCompliances 1 }
+
+synologyiSCSILUNGroup OBJECT-GROUP
+	OBJECTS {	iSCSILUNUUID,
+				iSCSILUNName,
+				iSCSILUNThroughputReadHigh,
+				iSCSILUNThroughputReadLow,
+				iSCSILUNThroughputWriteHigh,
+				iSCSILUNThroughputWriteLow,
+				iSCSILUNIopsRead,
+				iSCSILUNIopsWrite,
+				iSCSILUNDiskLatencyRead,
+				iSCSILUNDiskLatencyWrite,
+				iSCSILUNNetworkLatencyTx,
+				iSCSILUNNetworkLatencyRx,
+				iSCSILUNIoSizeRead,
+				iSCSILUNIoSizeWrite,
+				iSCSILUNQueueDepth,
+				iSCSILUNType,
+				iSCSILUNDiskLatencyAvg,
+				iSCSILUNThinProvisionVolFreeMBs }
+	STATUS		current
+	DESCRIPTION
+				"A collection of objects providing basic information
+				of an synology iSCSI LUN entity."
+	::= { synologyiSCSILUNGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-ISCSITarget-MIB.txt
+-- ============================================
+
+iSCSITargetTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF ISCSITargetEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Table of iSCSI Target data."
+	::= { synologyiSCSITarget 1 }
+
+iSCSITargetEntry OBJECT-TYPE
+	SYNTAX		ISCSITargetEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION "An entry containing iscsi target information"
+	INDEX		{ iSCSITargetInfoIndex }
+	::= { iSCSITargetTable 1 }
+
+ISCSITargetEntry ::= SEQUENCE {
+	iSCSITargetInfoIndex		Integer32,
+	iSCSITargetName	OCTET STRING,
+	iSCSITargetIQN	OCTET STRING,
+	iSCSITargetConnectionStatus	OCTET STRING
+}
+
+iSCSITargetInfoIndex OBJECT-TYPE
+	SYNTAX		Integer32(0..2147483647)
+	MAX-ACCESS  not-accessible
+	STATUS		current
+	DESCRIPTION	"Target info index"
+	::= { iSCSITargetEntry 1 }
+
+iSCSITargetName OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..255))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "Target name"
+	::= { iSCSITargetEntry 2 }
+
+iSCSITargetIQN OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..255))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "Target iqn"
+	::= { iSCSITargetEntry 3 }
+
+iSCSITargetConnectionStatus OBJECT-TYPE
+	SYNTAX		OCTET STRING (SIZE(0..4096))
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "Target connection status"
+	::= { iSCSITargetEntry 4 }
+
+synologyiSCSITargetConformance	OBJECT IDENTIFIER ::= { synologyiSCSITarget 2 }
+synologyiSCSITargetCompliances	OBJECT IDENTIFIER ::= { synologyiSCSITargetConformance 1 }
+synologyiSCSITargetGroups			OBJECT IDENTIFIER ::= { synologyiSCSITargetConformance 2 }
+
+synologyiSCSITargetCompliance MODULE-COMPLIANCE
+	STATUS				current
+	DESCRIPTION
+						"The compliance statement for iSCSI Target information."
+	MODULE				-- this module
+	MANDATORY-GROUPS	{ synologyiSCSITargetGroup }
+	::= { synologyiSCSITargetCompliances 1 }
+
+synologyiSCSITargetGroup OBJECT-GROUP
+	OBJECTS {	iSCSITargetName,
+				iSCSITargetIQN,
+				iSCSITargetConnectionStatus }
+	STATUS		current
+	DESCRIPTION
+				"A collection of objects providing basic information
+				of an synology iSCSI Target entity."
+	::= { synologyiSCSITargetGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-NFS-MIB.txt
+-- ============================================
+
+nfsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF NfsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of nfs data."
+    ::= { nfs 1 }
+
+nfsEntry OBJECT-TYPE
+    SYNTAX      NfsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing nfs information."
+    INDEX       { nfsIndex }
+    ::= { nfsTable 1 }
+
+NfsEntry ::= SEQUENCE {
+    nfsIndex			Integer32,
+    nfsName			DisplayString,
+    nfsTotalMaxLatency		Integer32,
+    nfsReadMaxLatency		Integer32,
+    nfsWriteMaxLatency		Integer32,
+    nfsTotalOPS			Counter64,
+    nfsReadOPS			Counter64,
+    nfsWriteOPS			Counter64
+}
+
+nfsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Reference index for each observed device."
+    ::= { nfsEntry 1 }
+
+nfsName OBJECT-TYPE
+	SYNTAX		DisplayString
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"nfs name"
+	::= { nfsEntry 2 }
+
+
+nfsTotalMaxLatency OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs total max latency."
+    ::= { nfsEntry 3 }
+
+nfsReadMaxLatency OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs read max latency."
+    ::= { nfsEntry 4 }
+
+nfsWriteMaxLatency OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs write max latency."
+    ::= { nfsEntry 5 }
+
+nfsTotalOPS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs total OPS."
+    ::= { nfsEntry 6 }
+
+nfsReadOPS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs read OPS."
+    ::= { nfsEntry 7 }
+
+nfsWriteOPS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of nfs write OPS."
+    ::= { nfsEntry 8 }
+
+nfsConformance OBJECT IDENTIFIER ::= { nfs 2 }
+nfsCompliances OBJECT IDENTIFIER ::= { nfsConformance 1 }
+nfsGroups 			OBJECT IDENTIFIER ::= { nfsConformance 2 }
+
+nfsCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for nfs entities which
+            implement the SYNOLOGY NFS MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { nfsGroup }
+
+    ::= { nfsCompliances 1 }
+
+nfsGroup OBJECT-GROUP
+    OBJECTS { nfsName,
+              nfsTotalMaxLatency,
+              nfsReadMaxLatency,
+              nfsWriteMaxLatency,
+              nfsTotalOPS,
+              nfsReadOPS,
+              nfsWriteOPS}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology nfs entity."
+    ::= { nfsGroups 1 }
+
+
+
+-- ============================================
+-- From: SYNOLOGY-PORT-MIB.txt
+-- ============================================
+
+-- ============================================
+-- From: SYNOLOGY-RAID-MIB.txt
+-- ============================================
+
+raidTable OBJECT-TYPE
+    SYNTAX	   SEQUENCE OF RaidEntry
+    MAX-ACCESS	  not-accessible
+    STATUS	   current
+    DESCRIPTION
+    "Synology raid table"
+    ::= { synoRaid 1 }
+
+raidEntry	  OBJECT-TYPE
+    SYNTAX	   RaidEntry
+    MAX-ACCESS	  not-accessible
+    STATUS	   current
+    DESCRIPTION
+    "For all raid entry"
+    INDEX   { raidIndex }
+    ::= { raidTable 1 }
+
+RaidEntry ::= SEQUENCE {
+    raidIndex		Integer32,
+    raidName		OCTET STRING,
+	raidStatus		Integer32,
+	raidFreeSize	Counter64,
+	raidTotalSize	Counter64,
+	raidHotspareCnt Integer32
+}
+
+raidIndex OBJECT-TYPE
+    SYNTAX	   Integer32(0..2147483647)
+    MAX-ACCESS	  read-only
+    STATUS	   current
+    DESCRIPTION
+    "The index of raid table"
+    ::= { raidEntry 1 }
+
+raidName OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology raid name
+	 The name of each raid will be showed here.
+	"
+    ::= { raidEntry 2 }
+
+raidStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..12)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology Raid status
+	 Each meanings of status represented describe below.
+	 Normal(1): The raid functions normally.
+ 	 Degrade(11): Degrade happens when a tolerable failure of disk(s) occurs.
+ 	 Crashed(12): Raid has crashed and just uses for read-only operation.
+
+	 Note:
+	 Other status will be showed when creating or deleting raids, including below status, Repairing(2), Migrating(3), Expanding(4), Deleting(5), Creating(6), RaidSyncing(7), RaidParityChecking(8), RaidAssembling(9) and Canceling(10).
+	"
+    ::= { raidEntry 3 }
+
+raidFreeSize OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Synology raid freesize
+	 Free space in bytes.
+	"
+    ::= { raidEntry 4 }
+
+raidTotalSize OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Synology raid totalsize
+	 Total space in bytes.
+	"
+    ::= { raidEntry 5 }
+
+raidHotspareCnt OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Synology raid hotspare
+	 Total hotspare disks count.
+	 Each meaning of values described as below.
+	 Normal(>=0): Total number of hotspare disks in this pool.
+	"
+    ::= { raidEntry 6 }
+
+raidConformance OBJECT IDENTIFIER ::= { synoRaid 2 }
+raidCompliances OBJECT IDENTIFIER ::= { raidConformance 1 }
+raidGroups 			OBJECT IDENTIFIER ::= { raidConformance 2 }
+
+raidCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for synoRaid entities which
+            implement the SYNOLOGY RAID MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { raidGroup }
+
+    ::= { raidCompliances 1 }
+
+raidGroup OBJECT-GROUP
+    OBJECTS { raidIndex,
+              raidName,
+              raidStatus,
+              raidFreeSize,
+              raidTotalSize,
+              raidHotspareCnt}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic instrumentation and
+            control of an synology raid entity."
+    ::= { raidGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-SERVICES-MIB.txt
+-- ============================================
+
+serviceTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF ServiceEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Table of Services data."
+	::= { synologyService 1 }
+
+serviceEntry OBJECT-TYPE
+	SYNTAX		ServiceEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION "An entry containing Service information"
+	INDEX		{ serviceInfoIndex }
+	::= { serviceTable 1 }
+
+ServiceEntry ::= SEQUENCE {
+	serviceInfoIndex	Integer32,
+	serviceName	OCTET STRING,
+	serviceUsers	Integer32
+}
+
+serviceInfoIndex OBJECT-TYPE
+	SYNTAX		Integer32(0..2147483647)
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Service info index"
+	::= { serviceEntry 1 }
+
+serviceName OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"Service name"
+	::= { serviceEntry 2 }
+
+serviceUsers OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "Number of users using this service"
+	::= { serviceEntry 3 }
+
+synologyServiceConformance	OBJECT IDENTIFIER ::= { synologyService 2 }
+synologyServiceCompliances	OBJECT IDENTIFIER ::= { synologyServiceConformance 1 }
+synologyServiceGroups			OBJECT IDENTIFIER ::= { synologyServiceConformance 2 }
+
+synologyServiceCompliance MODULE-COMPLIANCE
+	STATUS				current
+	DESCRIPTION
+						"The compliance statement for service information."
+	MODULE				-- this module
+	MANDATORY-GROUPS	{ synologyServiceGroup }
+	::= { synologyServiceCompliances 1 }
+
+synologyServiceGroup OBJECT-GROUP
+	OBJECTS {	serviceName,
+				serviceUsers }
+	STATUS		current
+	DESCRIPTION
+				"A collection of objects providing basic information
+				of an synology service entity."
+	::= { synologyServiceGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-SHA-MIB.txt
+-- ============================================
+
+HostName ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT    "255a"
+    STATUS          current
+    DESCRIPTION     "Host name"
+    SYNTAX          OCTET STRING (SIZE(0..256))
+
+ClusterStatusType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This TC enumerates cluster status."
+    SYNTAX      INTEGER {
+                    normal(0),
+                    warning(1),
+                    critical(2),
+                    upgrading(3),
+                    processing(4)
+                }
+
+HeartbeatStatusType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This TC enumerates heartbeat status."
+    SYNTAX      INTEGER {
+                    normal(0),
+                    abnormal(1),
+                    disconnected(2),
+                    empty(3)
+                }
+
+activeNodeName OBJECT-TYPE
+    SYNTAX      HostName
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Hostname of node providing services"
+    ::= { synologyHA 1 }
+
+passiveNodeName OBJECT-TYPE
+    SYNTAX      HostName
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Hostname of node not providing services"
+    ::= { synologyHA 2 }
+
+clusterAutoFailover OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Whether cluster can launch failover"
+    ::= { synologyHA 3 }
+
+clusterName OBJECT-TYPE
+    SYNTAX      HostName
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Hostname of node providing services"
+    ::= { synologyHA 4 }
+
+clusterStatus OBJECT-TYPE
+    SYNTAX      ClusterStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "One of critical, upgrading, processing, warning, normal"
+    ::= { synologyHA 5 }
+
+heartbeatStatus OBJECT-TYPE
+    SYNTAX      HeartbeatStatusType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "One of empty, disconnected, normal, abnormal"
+    ::= { synologyHA 6 }
+
+heartbeatTxRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Transfer speed of heartbeat in kilo-byte-per-second"
+    ::= { synologyHA 7 }
+
+heartbeatLatency OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Heartbeat latency in microseconds"
+    ::= { synologyHA 8 }
+
+synologyHAConformance   OBJECT IDENTIFIER ::= { synologyHA 9 }
+synologyHACompliances   OBJECT IDENTIFIER ::= { synologyHAConformance 1 }
+synologyHAGroups        OBJECT IDENTIFIER ::= { synologyHAConformance 2 }
+
+synologyHACompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION "The compliance statement for SHA information."
+    MODULE      -- this module
+        MANDATORY-GROUPS { synologyHAGroup }
+    ::= { synologyHACompliances 1 }
+
+synologyHAGroup OBJECT-GROUP
+    OBJECTS     {
+                    activeNodeName,
+                    passiveNodeName,
+                    clusterAutoFailover,
+                    clusterName,
+                    clusterStatus,
+                    heartbeatStatus,
+                    heartbeatTxRate,
+                    heartbeatLatency
+                }
+    STATUS      current
+    DESCRIPTION "A collection of objects providing basic information of an synology High-availability cluster."
+    ::= { synologyHAGroups 1 }
+
+-- ============================================
+-- From: SYNOLOGY-SMART-MIB.txt
+-- ============================================
+
+diskSMARTTable OBJECT-TYPE
+	SYNTAX		SEQUENCE OF DiskSMARTEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION	"Table of disk SMART data."
+	::= { synologyDiskSMART 1 }
+
+diskSMARTEntry OBJECT-TYPE
+	SYNTAX		DiskSMARTEntry
+	MAX-ACCESS	not-accessible
+	STATUS		current
+	DESCRIPTION "An entry containing a disk SMART information"
+	INDEX		{ diskSMARTInfoIndex }
+	::= { diskSMARTTable 1 }
+
+DiskSMARTEntry ::= SEQUENCE {
+	diskSMARTInfoIndex		Integer32,
+	diskSMARTInfoDevName	OCTET STRING,
+	diskSMARTAttrName		OCTET STRING,
+	diskSMARTAttrId			Integer32,
+	diskSMARTAttrCurrent	Integer32,
+	diskSMARTAttrWorst		Integer32,
+	diskSMARTAttrThreshold	Integer32,
+	diskSMARTAttrRaw		Integer32,
+	diskSMARTAttrStatus		OCTET STRING
+}
+
+diskSMARTInfoIndex OBJECT-TYPE
+	SYNTAX		Integer32(0..2147483647)
+	MAX-ACCESS  not-accessible
+	STATUS		current
+	DESCRIPTION	"SMART info index"
+	::= { diskSMARTEntry 1 }
+
+diskSMARTInfoDevName OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "SMART info device name"
+	::= { diskSMARTEntry 2 }
+
+diskSMARTAttrName OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION "SMART attribute name"
+	::= { diskSMARTEntry 3 }
+
+diskSMARTAttrId OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute ID"
+	::= { diskSMARTEntry 4 }
+
+diskSMARTAttrCurrent OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute current value"
+	::= { diskSMARTEntry 5 }
+
+diskSMARTAttrWorst OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute worst value"
+	::= { diskSMARTEntry 6 }
+
+diskSMARTAttrThreshold OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute threshold value"
+	::= { diskSMARTEntry 7 }
+
+diskSMARTAttrRaw OBJECT-TYPE
+	SYNTAX		Integer32
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute raw value"
+	::= { diskSMARTEntry 8 }
+
+diskSMARTAttrStatus OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	read-only
+	STATUS		current
+	DESCRIPTION	"SMART attribute status"
+	::= { diskSMARTEntry 9 }
+
+synologyDiskSMARTConformance	OBJECT IDENTIFIER ::= { synologyDiskSMART 2 }
+synologyDiskSMARTCompliances	OBJECT IDENTIFIER ::= { synologyDiskSMARTConformance 1 }
+synologyDiskSMARTGroups			OBJECT IDENTIFIER ::= { synologyDiskSMARTConformance 2 }
+
+synologyDiskSMARTCompliance MODULE-COMPLIANCE
+	STATUS				current
+	DESCRIPTION
+						"The compliance statement for storage IO entities which
+						implement the SYNOLOGY SMART MIB."
+	MODULE				-- this module
+	MANDATORY-GROUPS	{ synologyDiskSMARTGroup }
+	::= { synologyDiskSMARTCompliances 1 }
+
+synologyDiskSMARTGroup OBJECT-GROUP
+	OBJECTS {	diskSMARTInfoDevName,
+				diskSMARTAttrName,
+				diskSMARTAttrId,
+				diskSMARTAttrCurrent,
+				diskSMARTAttrWorst,
+				diskSMARTAttrThreshold,
+				diskSMARTAttrRaw,
+				diskSMARTAttrStatus }
+	STATUS		current
+	DESCRIPTION
+				"A collection of objects providing basic information
+				of an synology disk SMART entity."
+	::= { synologyDiskSMARTGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-SPACEIO-MIB.txt
+-- ============================================
+
+spaceIOTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF SpaceIOEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of IO devices and how much data they have read/written."
+    ::= { spaceIO 1 }
+
+spaceIOEntry OBJECT-TYPE
+    SYNTAX      SpaceIOEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing a device and its statistics."
+    INDEX       { spaceIOIndex }
+    ::= { spaceIOTable 1 }
+
+SpaceIOEntry ::= SEQUENCE {
+    spaceIOIndex         Integer32,
+    spaceIODevice        DisplayString,
+    spaceIONRead         Counter32,
+    spaceIONWritten      Counter32,
+    spaceIOReads         Counter32,
+    spaceIOWrites        Counter32,
+    spaceIOLA            Integer32,
+    spaceIOLA1           Integer32,
+    spaceIOLA5           Integer32,
+    spaceIOLA15          Integer32,
+    spaceIONReadX        Counter64,
+    spaceIONWrittenX     Counter64,
+    spaceUUID            DisplayString
+}
+
+spaceIOIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Reference index for each observed device."
+    ::= { spaceIOEntry 1 }
+
+spaceIODevice OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the device we are counting/checking."
+    ::= { spaceIOEntry 2 }
+
+spaceIONRead OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes read from this device since boot."
+    ::= { spaceIOEntry 3 }
+
+spaceIONWritten OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes written to this device since boot."
+    ::= { spaceIOEntry 4 }
+
+spaceIOReads OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of read accesses from this device since boot."
+    ::= { spaceIOEntry 5 }
+
+spaceIOWrites OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of write accesses to this device since boot."
+    ::= { spaceIOEntry 6 }
+
+spaceIOLA OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The load of disk (%)"
+    ::= { spaceIOEntry 8 }
+
+spaceIOLA1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 1 minute average load of disk (%)"
+    ::= { spaceIOEntry 9 }
+
+spaceIOLA5 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 5 minute average load of disk (%)"
+    ::= { spaceIOEntry 10 }
+
+spaceIOLA15 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 15 minute average load of disk (%)"
+    ::= { spaceIOEntry 11 }
+
+spaceIONReadX OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes read from this device since boot."
+    ::= { spaceIOEntry 12 }
+
+spaceIONWrittenX OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes written to this device since boot."
+    ::= { spaceIOEntry 13 }
+
+spaceUUID OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The uuid of space."
+    ::= { spaceIOEntry 14 }
+
+
+spaceIOConformance OBJECT IDENTIFIER ::= { spaceIO 2 }
+spaceIOCompliances OBJECT IDENTIFIER ::= { spaceIOConformance 1 }
+spaceIOGroups 			OBJECT IDENTIFIER ::= { spaceIOConformance 2 }
+
+spaceIOCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for space IO entities which
+            implement the SYNOLOGY SPACEIO MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { spaceIOGroup }
+
+    ::= { spaceIOCompliances 1 }
+
+spaceIOGroup OBJECT-GROUP
+    OBJECTS { spaceIODevice,
+              spaceIONRead,
+              spaceIONWritten,
+              spaceIOReads,
+              spaceIOWrites,
+              spaceIOLA,
+              spaceIOLA1,
+              spaceIOLA5,
+              spaceIOLA15,
+              spaceIONReadX,
+              spaceIONWrittenX,
+              spaceUUID}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology space io entity."
+    ::= { spaceIOGroups 1 }
+
+
+
+-- ============================================
+-- From: SYNOLOGY-STORAGEIO-MIB.txt
+-- ============================================
+
+storageIOTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF StorageIOEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of IO devices and how much data they have read/written."
+    ::= { storageIO 1 }
+
+storageIOEntry OBJECT-TYPE
+    SYNTAX      StorageIOEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "An entry containing a device and its statistics."
+    INDEX       { storageIOIndex }
+    ::= { storageIOTable 1 }
+
+StorageIOEntry ::= SEQUENCE {
+    storageIOIndex         Integer32,
+    storageIODevice        DisplayString,
+    storageIONRead         Counter32,
+    storageIONWritten      Counter32,
+    storageIOReads         Counter32,
+    storageIOWrites        Counter32,
+    storageIOLA            Integer32,
+    storageIOLA1           Integer32,
+    storageIOLA5           Integer32,
+    storageIOLA15          Integer32,
+    storageIONReadX        Counter64,
+    storageIONWrittenX     Counter64,
+    storageIODeviceSerial  DisplayString
+}
+
+storageIOIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..65535)
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Reference index for each observed device."
+    ::= { storageIOEntry 1 }
+
+storageIODevice OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the device we are counting/checking."
+    ::= { storageIOEntry 2 }
+
+storageIONRead OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes read from this device since boot."
+    ::= { storageIOEntry 3 }
+
+storageIONWritten OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes written to this device since boot."
+    ::= { storageIOEntry 4 }
+
+storageIOReads OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of read accesses from this device since boot."
+    ::= { storageIOEntry 5 }
+
+storageIOWrites OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of write accesses to this device since boot."
+    ::= { storageIOEntry 6 }
+
+storageIOLA OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The load of disk (%)"
+    ::= { storageIOEntry 8 }
+
+storageIOLA1 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 1 minute average load of disk (%)"
+    ::= { storageIOEntry 9 }
+
+storageIOLA5 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 5 minute average load of disk (%)"
+    ::= { storageIOEntry 10 }
+
+storageIOLA15 OBJECT-TYPE
+    SYNTAX      Integer32 (0..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The 15 minute average load of disk (%)"
+    ::= { storageIOEntry 11 }
+
+storageIONReadX OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes read from this device since boot."
+    ::= { storageIOEntry 12 }
+
+storageIONWrittenX OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes written to this device since boot."
+    ::= { storageIOEntry 13 }
+
+storageIODeviceSerial OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the device we are counting/checking."
+    ::= { storageIOEntry 14 }
+
+storageIOConformance OBJECT IDENTIFIER ::= { storageIO 2 }
+storageIOCompliances OBJECT IDENTIFIER ::= { storageIOConformance 1 }
+storageIOGroups 			OBJECT IDENTIFIER ::= { storageIOConformance 2 }
+
+storageIOCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for storage IO entities which
+            implement the SYNOLOGY STORAGEIO MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { storageIOGroup }
+
+    ::= { storageIOCompliances 1 }
+
+storageIOGroup OBJECT-GROUP
+    OBJECTS { storageIODevice,
+              storageIONRead,
+              storageIONWritten,
+              storageIOReads,
+              storageIOWrites,
+              storageIOLA,
+              storageIOLA1,
+              storageIOLA5,
+              storageIOLA15,
+              storageIONReadX,
+              storageIONWrittenX,
+              storageIODeviceSerial}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology storage io entity."
+    ::= { storageIOGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-SYSTEM-MIB.txt
+-- ============================================
+
+systemStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..2)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology system status
+	 Each meanings of status represented describe below.
+	 Normal(1): System functionals normally.
+	 Failed(2): Volume has crashed.
+	"
+    ::= { synoSystem 1 }
+
+temperature OBJECT-TYPE
+    SYNTAX	  Integer32
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology system temperature
+	 The temperature of Disk Station uses Celsius degree.
+	"
+    ::= { synoSystem 2 }
+
+powerStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..2)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology power status
+	 Each meanings of status represented describe below.
+	 Normal(1): All power supplies functional normally.
+	 Failed(2): One of power supply has failed.
+	"
+    ::= { synoSystem 3 }
+
+fan OBJECT IDENTIFIER ::= { synoSystem 4 }
+
+systemFanStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..2)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology system fan status
+	 Each meanings of status represented describe below.
+	 Normal(1): All Internal fans functional normally.
+	 Failed(2): One of internal fan stopped.
+	"
+    ::= { fan 1 }
+
+
+cpuFanStatus OBJECT-TYPE
+    SYNTAX	  Integer32(1..2)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "Synology cpu fan status
+	 Each meanings of status represented describe below.
+	 Normal(1): All CPU fans functional normally.
+	 Failed(2): One of CPU fan stopped.
+	"
+    ::= { fan 2 }
+
+dsmInfo OBJECT IDENTIFIER ::= { synoSystem 5 }
+
+modelName OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "The Model name of this NAS"
+    ::= { dsmInfo 1 }
+
+serialNumber OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "The serial number of this NAS"
+    ::= { dsmInfo 2 }
+
+version OBJECT-TYPE
+    SYNTAX	  OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "The version of this DSM"
+    ::= { dsmInfo 3 }
+
+upgradeAvailable OBJECT-TYPE
+    SYNTAX    Integer32(1..5)
+    MAX-ACCESS  read-only
+    STATUS	  current
+    DESCRIPTION
+    "This oid is for checking whether there is a latest DSM can be upgraded.
+	 Available(1): There is version ready for download.
+	 Unavailable(2): The DSM is latest version.
+	 Connecting(3): Checking for the latest DSM.
+	 Disconnected(4): Failed to connect to server.
+	 Others(5): If DSM is upgrading or downloading, the status will show others."
+    ::= { dsmInfo 4 }
+
+controllerNumber OBJECT-TYPE
+    SYNTAX    Integer32
+    MAX-ACCESS  read-only
+    STATUS    current
+    DESCRIPTION
+    "Synology system controller number
+    Controller A(0)
+    Controller B(1)
+	"
+    ::= { synoSystem 6 }
+
+
+systemConformance OBJECT IDENTIFIER ::= { synoSystem 7 }
+systemCompliances OBJECT IDENTIFIER ::= { systemConformance 1 }
+systemGroups 			OBJECT IDENTIFIER ::= { systemConformance 2 }
+
+systemCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for synoSystem entities which
+            implement the SYNOLOGY SYSTEM MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { systemGroup }
+
+    ::= { systemCompliances 1 }
+
+systemGroup OBJECT-GROUP
+    OBJECTS { systemStatus,
+              temperature,
+              powerStatus,
+              systemFanStatus,
+              cpuFanStatus,
+			  modelName,
+			  serialNumber,
+			  version,
+			  upgradeAvailable,
+			  controllerNumber}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology system entity."
+    ::= { systemGroups 1 }
+
+
+-- ============================================
+-- From: SYNOLOGY-UPS-MIB.txt
+-- ============================================
+
+NonNegativeInteger ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "d"
+    STATUS       current
+    DESCRIPTION
+            "This data type is a non-negative value."
+    SYNTAX       Integer32 (0..2147483647)
+
+--
+-- The Device Identification group.
+--      All objects in this group except for upsIdentName and
+--      upsIdentAttachedDevices are set at device initialization
+--      and remain static.
+--
+
+--
+-- Device Group
+--
+
+upsDevice              OBJECT IDENTIFIER ::= { synoUPS 1 }
+
+upsDeviceModel OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device model"
+    ::= { upsDevice 1 }
+
+upsDeviceManufacturer OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device manufacturer"
+    ::= { upsDevice 2 }
+
+upsDeviceSerial OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device serial number."
+    ::= { upsDevice 3 }
+
+upsDeviceType OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device type (ups, pdu, scd, psu)"
+    ::= { upsDevice 4 }
+
+upsDeviceDescription OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device description."
+    ::= { upsDevice 5 }
+
+upsDeviceContact OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device administrator name."
+    ::= { upsDevice 6 }
+
+upsDeviceLocation OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device physical location."
+    ::= { upsDevice 7 }
+
+upsDevicePart OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Device part number."
+    ::= { upsDevice 8 }
+
+upsDeviceMACAddr OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Physical network address of the device."
+    ::= { upsDevice 9 }
+
+--
+-- UPS Group
+--
+
+upsInfo              OBJECT IDENTIFIER ::= { synoUPS 2 }
+
+upsInfoStatus OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS status."
+    ::= { upsInfo 1 }
+
+upsInfoAlarm OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS alarms"
+    ::= { upsInfo 2 }
+
+upsInfoTime OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Internal UPS clock time"
+    ::= { upsInfo 3 }
+
+upsInfoDate OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Internal UPS clock date"
+    ::= { upsInfo 4 }
+
+upsInfoModel OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS model"
+    ::= { upsInfo 5 }
+
+upsInfoMfr              OBJECT IDENTIFIER ::= { upsInfo 6 }
+
+upsInfoMfrName OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS manufacturer"
+    ::= { upsInfoMfr 1 }
+
+upsInfoMfrDate OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS manufacturing date"
+    ::= { upsInfoMfr 2 }
+
+upsInfoSerial OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS serial number"
+    ::= { upsInfo 7 }
+
+upsInfoVendorID OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Vendor ID for USB devices"
+    ::= { upsInfo 8 }
+
+upsInfoProductID OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Product ID for USB devices"
+    ::= { upsInfo 9 }
+
+upsInfoFirmware              OBJECT IDENTIFIER ::= { upsInfo 10 }
+
+upsInfoFirmwareName OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS firmware"
+    ::= { upsInfoFirmware 1 }
+
+upsInfoFirmwareAux OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Auxiliary device firmware"
+    ::= { upsInfoFirmware 2 }
+
+upsInfoTemperature OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "degree C"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS temperature (degrees C)"
+    ::= { upsInfo 11 }
+
+upsInfoLoad              OBJECT IDENTIFIER ::= { upsInfo 12 }
+
+upsInfoLoadValue OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "percentage"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Load on UPS (percent)"
+    ::= { upsInfoLoad 1 }
+
+upsInfoLoadHigh OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "percentage"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Load when UPS switches to overload condition (OVER) (percent)"
+    ::= { upsInfoLoad 2 }
+
+upsInfoID OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS system identifier"
+    ::= { upsInfo 13 }
+
+upsInfoDelay              OBJECT IDENTIFIER ::= { upsInfo 14 }
+
+upsInfoDelayStart OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Interval to wait before restarting the load (seconds)"
+    ::= { upsInfoDelay 1 }
+
+upsInfoDelayReboot OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Interval to wait before rebooting the UPS (seconds)"
+    ::= { upsInfoDelay 2 }
+
+upsInfoDelayShutdown OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Interval to wait after shutdown with delay command (seconds)"
+    ::= { upsInfoDelay 3 }
+
+upsInfoTimer              OBJECT IDENTIFIER ::= { upsInfo 15 }
+
+upsInfoTimerStart OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Time before the load will be started (seconds)"
+    ::= { upsInfoTimer 1 }
+
+upsInfoTimerReboot OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Time before the load will be rebooted (seconds)"
+    ::= { upsInfoTimer 2 }
+
+upsInfoTimerShutdown OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Time before the load will be shutdown (seconds)"
+    ::= { upsInfoTimer 3 }
+
+upsInfoTest              OBJECT IDENTIFIER ::= { upsInfo 16 }
+
+upsInfoTestInterval OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Interval between self tests"
+    ::= { upsInfoTest 1 }
+
+upsInfoTestResult OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Results of last self test"
+    ::= { upsInfoTest 2 }
+
+upsInfoDisplayLanguage OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Language to use on front panel"
+    ::= { upsInfo 17 }
+
+upsInfoContacts OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS external contact sensors"
+    ::= { upsInfo 18 }
+
+upsInfoEffciency OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Efficiency of the UPS (ratio of the output current on the input current) (percent)"
+    ::= { upsInfo 19 }
+
+upsInfoPower              OBJECT IDENTIFIER ::= { upsInfo 20 }
+
+upsInfoPowerValue OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "Volt-Amps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Current value of apparent power (Volt-Amps)"
+    ::= { upsInfoPower 1 }
+
+upsInfoPowerNominal OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "Volt-Amps"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal value of apparent power (Volt-Amps)"
+    ::= { upsInfoPower 2 }
+
+upsInfoRealPower              OBJECT IDENTIFIER ::= { upsInfo 21 }
+
+upsInfoRealPowerValue OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "Watts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Current value of real power (Watts)"
+    ::= { upsInfoRealPower 1 }
+
+upsInfoRealPowerNominal OBJECT-TYPE
+    SYNTAX     Float
+	UNITS      "Watts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal value of real power (Watts)"
+    ::= { upsInfoRealPower 2 }
+
+upsInfoBeeperStatus OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS beeper status (enabled, disabled or muted)"
+    ::= { upsInfo 22 }
+
+upsInfoType OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS type"
+    ::= { upsInfo 23 }
+
+upsInfoWatchdogStatus OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS watchdog status (enabled or disabled)"
+    ::= { upsInfo 24 }
+
+upsInfoStart              OBJECT IDENTIFIER ::= { upsInfo 25 }
+
+upsInfoStartAuto OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS starts when mains is (re)applied"
+    ::= { upsInfoStart 1 }
+
+upsInfoStartBattery OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Allow to start UPS from battery"
+    ::= { upsInfoStart 2 }
+
+upsInfoStartReboot OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE (0..31))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "UPS coldstarts from battery (enabled or disabled)"
+    ::= { upsInfoStart 3 }
+
+
+--
+-- Battery Group
+--
+
+upsBattery            OBJECT IDENTIFIER ::= { synoUPS 3 }
+
+upsBatteryCharge            OBJECT IDENTIFIER ::= { upsBattery 1 }
+
+upsBatteryChargeValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Percent"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery charge"
+    ::= { upsBatteryCharge 1 }
+
+upsBatteryChargeLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Percent"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Remaining battery level when UPS switches to LB (percent)"
+    ::= { upsBatteryCharge 2 }
+
+upsBatteryChargeRestart OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Percent"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Minimum battery level for UPS restart after power-off"
+    ::= { upsBatteryCharge 3 }
+
+upsBatteryChargeWarning OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Percent"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery level when UPS switches to Warning state (percent)"
+    ::= { upsBatteryCharge 4 }
+
+upsBatteryVoltage            OBJECT IDENTIFIER ::= { upsBattery 2 }
+
+upsBatteryVoltageValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volt DC"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The magnitude of the present battery voltage."
+    ::= { upsBatteryVoltage 1 }
+
+upsBatteryVoltageNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volt DC"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal battery voltage."
+    ::= { upsBatteryVoltage 2 }
+
+upsBatteryVoltageLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volt DC"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Minimum battery voltage, that triggers FSD status ."
+    ::= { upsBatteryVoltage 3 }
+
+upsBatteryVoltageHigh OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volt DC"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Maximum battery voltage (Ie battery.charge = 100)."
+    ::= { upsBatteryVoltage 4 }
+
+upsBatteryCapacity OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "A"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery capacity (Ah)"
+    ::= { upsBattery 3 }
+
+upsBatteryCurrent OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Amp DC"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The present battery current."
+    ::= { upsBattery 4 }
+
+upsBatteryTemperature OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "The ambient temperature at or near the UPS Battery
+            casing."
+    ::= { upsBattery 5 }
+
+upsBatteryRuntime            OBJECT IDENTIFIER ::= { upsBattery 6 }
+
+upsBatteryRuntimeValue OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+    UNITS      "Seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery runtime (seconds)"
+    ::= { upsBatteryRuntime 1 }
+
+upsBatteryRuntimeLow OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+    UNITS      "Seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Remaining battery runtime when UPS switches to LB (seconds)"
+    ::= { upsBatteryRuntime 2 }
+
+upsBatteryRuntimeRestart OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+    UNITS      "Seconds"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Minimum battery runtime for UPS restart after power-off (seconds)"
+    ::= { upsBatteryRuntime 3 }
+
+upsBatteryAlarmThreshold OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery alarm threshold"
+    ::= { upsBattery 7 }
+
+upsBatteryDate OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery change date"
+    ::= { upsBattery 8 }
+
+upsBatteryMfrDate OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery manufacturing date"
+    ::= { upsBattery 9 }
+
+upsBatteryPacks OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Number of battery packs"
+    ::= { upsBattery 10 }
+
+upsBatteryPacksBad OBJECT-TYPE
+    SYNTAX     NonNegativeInteger
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Number of bad battery packs"
+    ::= { upsBattery 11 }
+
+upsBatteryType OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Battery chemistry"
+    ::= { upsBattery 12 }
+
+upsBatteryProtection OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Prevent deep discharge of battery"
+    ::= { upsBattery 13 }
+
+upsBatteryEnergySave OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Switch off when running on battery and no/low load"
+    ::= { upsBattery 14 }
+
+--
+-- Input Group
+--
+
+upsInput              OBJECT IDENTIFIER ::= { synoUPS 4 }
+
+upsInputVoltage  OBJECT IDENTIFIER ::= { upsInput 1 }
+
+upsInputVoltageValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input voltage"
+    ::= { upsInputVoltage 1 }
+
+upsInputVoltageMax OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Maximum incoming voltage seen"
+    ::= { upsInputVoltage 2 }
+
+upsInputVoltageMin OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Minimum incoming voltage seen"
+    ::= { upsInputVoltage 3 }
+
+upsInputVoltageNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal input voltage"
+    ::= { upsInputVoltage 4 }
+
+upsInputVoltageExtend OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Extended input voltage range"
+    ::= { upsInputVoltage 5 }
+
+upsInputVoltageFault OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input voltage Fault"
+    ::= { upsInputVoltage 6 }
+
+
+upsInputTransfer  OBJECT IDENTIFIER ::= { upsInput 2 }
+
+upsInputTransferReason OBJECT-TYPE
+	SYNTAX     DisplayString (SIZE(0..63))
+	MAX-ACCESS read-only
+	STATUS     current
+	DESCRIPTION
+	"Reason for last transfer to battery"
+	::= { upsInputTransfer 1 }
+
+upsInputTransferLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Low voltage transfer point"
+    ::= { upsInputTransfer 2 }
+
+upsInputTransferHigh OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "High voltage transfer point"
+    ::= { upsInputTransfer 3 }
+
+upsInputTransferLowMin OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "smallest settable low voltage transfer point"
+    ::= { upsInputTransfer 4 }
+
+upsInputTransferLowMax OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "greatest settable low voltage transfer point"
+    ::= { upsInputTransfer 5 }
+
+upsInputTransferHighMin OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "smallest settable high voltage transfer point"
+    ::= { upsInputTransfer 6 }
+
+upsInputTransferHighMax OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "greatest settable high voltage transfer point"
+    ::= { upsInputTransfer 7 }
+
+upsInputTransferBoostLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Low voltage boosting transfer point"
+    ::= { upsInputTransfer 8 }
+
+upsInputTransferBoostHigh OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "High voltage boosting transfer point"
+    ::= { upsInputTransfer 9 }
+
+upsInputTransferTrimLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Low voltage trimming transfer point"
+    ::= { upsInputTransfer 10 }
+
+upsInputTransferTrimHigh OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "High voltage trimming transfer point"
+    ::= { upsInputTransfer 11 }
+
+upsInputSensitivity OBJECT-TYPE
+	SYNTAX     DisplayString (SIZE(0..63))
+	MAX-ACCESS read-only
+	STATUS     current
+	DESCRIPTION
+	"Input power sensitivity"
+	::= { upsInput 3 }
+
+upsInputQuality OBJECT-TYPE
+	SYNTAX     DisplayString (SIZE(0..63))
+	MAX-ACCESS read-only
+	STATUS     current
+	DESCRIPTION
+	"Input power quality"
+	::= { upsInput 4 }
+
+upsInputCurrent  OBJECT IDENTIFIER ::= { upsInput 5 }
+
+upsInputCurrentValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Amp"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input current (A)"
+    ::= { upsInputCurrent 1 }
+
+upsInputCurrentNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Amp"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal input current (A)"
+    ::= { upsInputCurrent 2 }
+
+upsInputFrequency  OBJECT IDENTIFIER ::= { upsInput 6 }
+
+upsInputFrequencyValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input line frequency (Hz)"
+    ::= { upsInputFrequency 1 }
+
+upsInputFrequencyNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal input line frequency (Hz)"
+    ::= { upsInputFrequency 2 }
+
+upsInputFrequencyLow OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input line frequency low (Hz)"
+    ::= { upsInputFrequency 3 }
+
+upsInputFrequencyHigh OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Input line frequency high (Hz)"
+    ::= { upsInputFrequency 4 }
+
+upsInputFrequencyExtend OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Extended input frequency range"
+    ::= { upsInputFrequency 5 }
+
+--
+-- The Output group.
+--
+
+upsOutput             OBJECT IDENTIFIER ::= { synoUPS 5 }
+
+upsOutputVoltage  OBJECT IDENTIFIER ::= { upsOutput 1 }
+
+upsOutputVoltageValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Output voltage (V)"
+    ::= { upsOutputVoltage 1 }
+
+upsOutputVoltageNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Volts"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal output voltage (V)"
+    ::= { upsOutputVoltage 2 }
+
+upsOutputFrequency  OBJECT IDENTIFIER ::= { upsOutput 2 }
+
+upsOutputFrequencyValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Output frequency (Hz)"
+    ::= { upsOutputFrequency 1 }
+
+upsOutputFrequencyNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Hz"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal output frequency (Hz)"
+    ::= { upsOutputFrequency 2 }
+
+upsOutputCurrent  OBJECT IDENTIFIER ::= { upsOutput 3 }
+
+upsOutputCurrentValue OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Amp"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Output current (A)"
+    ::= { upsOutputCurrent 1 }
+
+upsOutputCurrentNominal OBJECT-TYPE
+    SYNTAX     Float
+    UNITS      "Amp"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+            "Nominal output current (A)"
+    ::= { upsOutputCurrent 2 }
+
+--
+-- The ambient group.
+--
+
+upsAmbient             OBJECT IDENTIFIER ::= { synoUPS 6 }
+
+upsAmbientTemperature  OBJECT IDENTIFIER ::= { upsAmbient 1 }
+
+upsAmbientTemperatureValue OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Ambient temperature (degrees C)"
+	::= { upsAmbientTemperature 1 }
+
+upsAmbientTemperatureAlarm OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+ 	UNITS      "enabled/disabled"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Temperature alarm (enabled/disabled)"
+	::= { upsAmbientTemperature 2 }
+
+upsAmbientTemperatureHigh OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Temperature threshold high (degrees C)"
+	::= { upsAmbientTemperature 3 }
+
+upsAmbientTemperatureLow OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Temperature threshold low (degrees C)"
+	::= { upsAmbientTemperature 4 }
+
+upsAmbientTemperatureMax OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Maximum temperature seen (degrees C)"
+	::= { upsAmbientTemperature 5 }
+
+upsAmbientTemperatureMin OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "degrees Centigrade"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Minimum temperature seen (degrees C)"
+	::= { upsAmbientTemperature 6 }
+
+upsAmbientHumidity  OBJECT IDENTIFIER ::= { upsAmbient 2 }
+
+upsAmbientHumidityValue OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Ambient relative humidity (percent)"
+	::= { upsAmbientHumidity 1 }
+
+upsAmbientHumidityAlarm OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+ 	UNITS      "enabled/disabled"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Relative humidity alarm (enabled/disabled)"
+	::= { upsAmbientHumidity 2 }
+
+upsAmbientHumidityHigh OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Relative humidity threshold high (percent)"
+	::= { upsAmbientHumidity 3 }
+
+upsAmbientHumidityLow OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Relative humidity threshold low (percent)"
+	::= { upsAmbientHumidity 4 }
+
+upsAmbientHumidityMax OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Maximum relative humidity seen (percent)"
+	::= { upsAmbientHumidity 5 }
+
+upsAmbientHumidityMin OBJECT-TYPE
+    SYNTAX     Float
+ 	UNITS      "percent"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Minimum relative humidity seen (percent)"
+	::= { upsAmbientHumidity 6 }
+
+--
+-- The Driver group.
+--
+
+upsDriver             OBJECT IDENTIFIER ::= { synoUPS 7 }
+
+upsDriverName OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Driver name"
+	::= { upsDriver 1 }
+
+upsDriverVersion OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Driver version (NUT release)"
+	::= { upsDriver 2 }
+
+upsDriverVersionData OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Driver version data"
+	::= { upsDriver 3 }
+
+
+upsDriverVersionInternal OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Internal driver version (if tracked separately)"
+	::= { upsDriver 4 }
+
+upsDriverPollInterval OBJECT-TYPE
+    SYNTAX     Integer32
+    UNITS      "second"
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Poll interval setup in configuration file"
+	::= { upsDriver 5 }
+
+upsDriverPort OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Port setup in configuration file"
+	::= { upsDriver 6 }
+
+upsDriverPollFrequency OBJECT-TYPE
+    SYNTAX     Integer32
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Poll frequency"
+	::= { upsDriver 7 }
+
+upsDriverProductID OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Product ID"
+	::= { upsDriver 8 }
+
+upsDriverSnmpVersion OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Snmp version"
+	::= { upsDriver 9 }
+
+--
+-- The server group.
+--
+
+upsServer             OBJECT IDENTIFIER ::= { synoUPS 8 }
+
+upsServerInfo OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Server information"
+	::= { upsServer 1 }
+
+upsServerVersion OBJECT-TYPE
+    SYNTAX     DisplayString (SIZE(0..63))
+    MAX-ACCESS read-only
+    STATUS     current
+	DESCRIPTION
+	"Server version"
+	::= { upsServer 2 }
+
+
+upsConformance OBJECT IDENTIFIER ::= { synoUPS 9 }
+upsCompliances OBJECT IDENTIFIER ::= { upsConformance 1 }
+upsGroups 			OBJECT IDENTIFIER ::= { upsConformance 2 }
+
+upsCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION
+            "The compliance statement for synoSystem entities which
+            implement the SYNOLOGY SYSTEM MIB."
+    MODULE  -- this module
+        MANDATORY-GROUPS { upsGroup }
+
+    ::= { upsCompliances 1 }
+
+upsGroup OBJECT-GROUP
+    OBJECTS {
+    					upsDeviceModel,
+							upsDeviceManufacturer,
+							upsDeviceSerial,
+							upsDeviceType,
+							upsDeviceDescription,
+							upsDeviceContact,
+							upsDeviceLocation,
+							upsDevicePart,
+							upsDeviceMACAddr,
+							upsInfoStatus,
+							upsInfoAlarm,
+							upsInfoTime,
+							upsInfoDate,
+							upsInfoModel,
+							upsInfoMfrName,
+							upsInfoMfrDate,
+							upsInfoSerial,
+							upsInfoVendorID,
+							upsInfoProductID,
+							upsInfoFirmwareName,
+							upsInfoFirmwareAux,
+							upsInfoTemperature,
+							upsInfoLoadValue,
+							upsInfoLoadHigh,
+							upsInfoID,
+							upsInfoDelayStart,
+							upsInfoDelayReboot,
+							upsInfoDelayShutdown,
+							upsInfoTimerStart,
+							upsInfoTimerReboot,
+							upsInfoTimerShutdown,
+							upsInfoTestInterval,
+							upsInfoTestResult,
+							upsInfoDisplayLanguage,
+							upsInfoContacts,
+							upsInfoEffciency,
+							upsInfoPowerValue,
+							upsInfoPowerNominal,
+							upsInfoRealPowerValue,
+							upsInfoRealPowerNominal,
+							upsInfoBeeperStatus,
+							upsInfoType,
+							upsInfoWatchdogStatus,
+							upsInfoStartAuto,
+							upsInfoStartBattery,
+							upsInfoStartReboot,
+							upsBatteryChargeValue,
+							upsBatteryChargeLow,
+							upsBatteryChargeRestart,
+							upsBatteryChargeWarning,
+							upsBatteryVoltageValue,
+							upsBatteryVoltageNominal,
+							upsBatteryVoltageLow,
+							upsBatteryVoltageHigh,
+							upsBatteryCapacity,
+							upsBatteryCurrent,
+							upsBatteryTemperature,
+							upsBatteryRuntimeValue,
+							upsBatteryRuntimeLow,
+							upsBatteryRuntimeRestart,
+							upsBatteryAlarmThreshold,
+							upsBatteryDate,
+							upsBatteryMfrDate,
+							upsBatteryPacks,
+							upsBatteryPacksBad,
+							upsBatteryType,
+							upsBatteryProtection,
+							upsBatteryEnergySave,
+							upsInputVoltageValue,
+							upsInputVoltageMax,
+							upsInputVoltageMin,
+							upsInputVoltageNominal,
+							upsInputVoltageExtend,
+							upsInputVoltageFault,
+							upsInputTransferReason,
+							upsInputTransferLow,
+							upsInputTransferHigh,
+							upsInputTransferLowMin,
+							upsInputTransferLowMax,
+							upsInputTransferHighMin,
+							upsInputTransferHighMax,
+							upsInputTransferBoostLow,
+							upsInputTransferBoostHigh,
+							upsInputTransferTrimLow,
+							upsInputTransferTrimHigh,
+							upsInputSensitivity,
+							upsInputQuality,
+							upsInputCurrentValue,
+							upsInputCurrentNominal,
+							upsInputFrequencyValue,
+							upsInputFrequencyNominal,
+							upsInputFrequencyLow,
+							upsInputFrequencyHigh,
+							upsInputFrequencyExtend,
+							upsOutputVoltageValue,
+							upsOutputVoltageNominal,
+							upsOutputFrequencyValue,
+							upsOutputFrequencyNominal,
+							upsOutputCurrentValue,
+							upsOutputCurrentNominal,
+							upsAmbientTemperatureValue,
+							upsAmbientTemperatureAlarm,
+							upsAmbientTemperatureHigh,
+							upsAmbientTemperatureLow,
+							upsAmbientTemperatureMax,
+							upsAmbientTemperatureMin,
+							upsAmbientHumidityValue,
+							upsAmbientHumidityAlarm,
+							upsAmbientHumidityHigh,
+							upsAmbientHumidityLow,
+							upsAmbientHumidityMax,
+							upsAmbientHumidityMin,
+							upsDriverName,
+							upsDriverVersion,
+							upsDriverVersionData,
+							upsDriverVersionInternal,
+							upsDriverPollInterval,
+							upsDriverPort,
+							upsDriverPollFrequency,
+							upsDriverProductID,
+							upsDriverSnmpVersion,
+							upsServerInfo,
+							upsServerVersion}
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic information
+             of an synology ups entity."
+    ::= { upsGroups 1 }
+
+
+END

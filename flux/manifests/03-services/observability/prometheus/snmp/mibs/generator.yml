@@ -24,3 +24,20 @@ modules:
   unifi:
     walk:
       - 1.3.6.1.4.1.41112 # Ubiquiti enterprise OID
+
+  # Synology NAS - system, disks, RAID, storage I/O, services, etc.
+  synology:
+    walk:
+      - 1.3.6.1.4.1.6574 # Synology enterprise OID
+
+  # TrueNAS - ZFS pools, zvols, ARC, L2ARC, ZIL, temps, alerts
+  truenas:
+    walk:
+      - 1.3.6.1.4.1.50536 # iXsystems/TrueNAS enterprise OID
+
+  # Brother Printer - status, toner, page counts, jams
+  # Full OID is huge, targeting the most useful sections
+  brother:
+    walk:
+      - 1.3.6.1.4.1.2435.2.3.9.1 # net-peripheral (printer/MFP status)
+      - 1.3.6.1.4.1.2435.2.3.9.4 # netPML (device/engine info)

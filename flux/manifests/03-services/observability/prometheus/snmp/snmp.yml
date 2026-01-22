@@ -9105,6 +9105,3852 @@ modules:
         help:
           Time (in minutes) since last timer reset of the OID upsEnergyEfficiencyStatsTimeInEconversion
           - 1.3.6.1.4.1.318.1.1.1.22.3.9
+  brother:
+    walk:
+      - 1.3.6.1.4.1.2435.2.3.9.1
+      - 1.3.6.1.4.1.2435.2.3.9.4
+    metrics:
+      - name: brJamPlace
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.2.9
+        type: gauge
+        help: Location of JAM - 1.3.6.1.4.1.2435.2.3.9.1.1.2.9
+      - name: brToner1Low
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.1
+        type: gauge
+        help: Black Toner status - 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.1
+      - name: brToner2Low
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.2
+        type: gauge
+        help: Cyan Toner status - 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.2
+      - name: brToner3Low
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.3
+        type: gauge
+        help: Magenta Toner status - 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.3
+      - name: brToner4Low
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.4
+        type: gauge
+        help: Yellow Toner status - 1.3.6.1.4.1.2435.2.3.9.1.1.2.10.4
+      - name: brieee1284id
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.7
+        type: OctetString
+        help: IEEE1284 device ID - 1.3.6.1.4.1.2435.2.3.9.1.1.7
+      - name: brttt1
+        oid: 1.3.6.1.4.1.2435.2.3.9.1.1.10
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.1.1.10
+      - name: brpowerstime
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.1.1
+        type: gauge
+        help: PowerSave Timeout value - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.1.1
+      - name: brautocont
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.2.7
+        type: gauge
+        help: Auto Continue - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.2.7
+      - name: brsimmtype0
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.1.4
+        type: gauge
+        help: SIMM type on slot0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.1.4
+      - name: brsimmsize0
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.1.5
+        type: gauge
+        help: SIMM size on slot0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.1.5
+      - name: brsimmtype1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.2.4
+        type: gauge
+        help: SIMM type on slot1 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.2.4
+      - name: brsimmsize1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.2.5
+        type: gauge
+        help: SIMM size on slot1 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.2.5
+      - name: brsimmtype2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.3.4
+        type: gauge
+        help: SIMM type on slot2 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.3.4
+      - name: brsimmsize2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.3.5
+        type: gauge
+        help: SIMM size on slot2. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.3.5
+      - name: brsimmtype3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.4.4
+        type: gauge
+        help: SIMM type on slot3 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.4.4
+      - name: brsimmsize3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.4.5
+        type: gauge
+        help: SIMM type on slot3. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.1.4.5
+      - name: brTBD1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.3.1.4
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.1.4.3.1.4
+      - name: brtimeout
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.2.1.1.1
+        type: gauge
+        help: Job Timeout - 1.3.6.1.4.1.2435.2.3.9.4.2.1.2.1.1.1
+      - name: brTBD2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.2.1.1.5
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.2.1.1.5
+      - name: brpersonality
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.1
+        type: gauge
+        help: Printer Emulation setting - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.1
+        enum_values:
+          1: pcl
+          2: hpgl
+          4: ps
+          5: auto
+          6: ibm
+          7: epson
+          8: hbp
+      - name: brorientation
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.2
+        type: gauge
+        help: Default Paper Orientation - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.2
+      - name: brcopies
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.4
+        type: gauge
+        help: Default Copy Pages - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.4
+      - name: brTBD3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.6
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.6
+      - name: brresolution
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.8
+        type: gauge
+        help: Default Resolution - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.8
+      - name: brpageprotect
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.10
+        type: gauge
+        help: Page Protect mode 1:Off 3:Auto 4:Letter 5:Legal 6:A4 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.10
+      - name: brlines
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.11
+        type: gauge
+        help: lines per page - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.11
+      - name: brpaper
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.13
+        type: gauge
+        help: Default Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.13
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          923: a5l
+          924: b6JIS
+          925: prc16k195x270
+          926: prc16k184x260
+          927: prc16k197x273
+          1001: auto
+      - name: brpapertype
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.22
+        type: gauge
+        help: Default Media type - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.22
+      - name: brpapertype2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.23
+        type: gauge
+        help: Default Media type - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.23
+      - name: brpapertypeMP
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.26
+        type: gauge
+        help: Default Media type - 1.3.6.1.4.1.2435.2.3.9.4.2.1.3.3.1.26
+      - name: brdensity
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.1.5
+        type: gauge
+        help: Print Density - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.1.5
+      - name: brmanualfeed
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.1.4
+        type: gauge
+        help: Manualfeed mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.1.4
+      - name: brmpsize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.1.1
+        type: gauge
+        help:
+          MP Tray paper size -1:No Casette 1:Executive 2:Letter 3:Legal 24:A6 25:A5
+          26:A4 27:A3(ISO) 45:B5(JIS) 46:B4(JIS) 80:Monarch 81:COM10 90:DL 91:C5 99:B6
+          100:B5 890:LEDGER 891:A3PLUS(13x19) 892:Letter Short Edge 893:A4 Short Edge
+          894:A4LONG 895:Executive Short Edge 896:B5(ISO) Short Edge 897:CUSTOM 898:A4/Letter
+          899:B5/Executive 900:Envelopes 901:DL-L 902:HAGAKI 903:FOLIO 904:ORGANIZER
+          J 905:ORGANIZER K 906:ORGANIZER L 907:ORGANIZER M 908:USER DEFINED 911:Detect
+          Sensor - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.1.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brtray1size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.2.1
+        type: gauge
+        help:
+          Tray1 paper size -1:No Casette 1:Executive 2:Letter 3:Legal 24:A6 25:A5
+          26:A4 27:A3(ISO) 45:B5(JIS) 46:B4(JIS) 80:Monarch 81:COM10 90:DL 91:C5 99:B6
+          100:B5 890:LEDGER 891:A3PLUS(13x19) 892:Letter Short Edge 893:A4 Short Edge
+          894:A4LONG 895:Executive Short Edge 896:B5(ISO) Short Edge 897:CUSTOM 898:A4/Letter
+          899:B5/Executive 900:Envelopes 901:DL-L 902:HAGAKI 903:FOLIO 904:ORGANIZER
+          J 905:ORGANIZER K 906:ORGANIZER L 907:ORGANIZER M 908:USER DEFINED 911:Detect
+          Sensor - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.2.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brtray2size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.3.1
+        type: gauge
+        help:
+          Tray2 paper size -1:No Casette 1:Executive 2:Letter 3:Legal 24:A6 25:A5
+          26:A4 27:A3(ISO) 45:B5(JIS) 46:B4(JIS) 80:Monarch 81:COM10 90:DL 91:C5 99:B6
+          100:B5 890:LEDGER 891:A3PLUS(13x19) 892:Letter Short Edge 893:A4 Short Edge
+          894:A4LONG 895:Executive Short Edge 896:B5(ISO) Short Edge 897:CUSTOM 898:A4/Letter
+          899:B5/Executive 900:Envelopes 901:DL-L 902:HAGAKI 903:FOLIO 904:ORGANIZER
+          J 905:ORGANIZER K 906:ORGANIZER L 907:ORGANIZER M 908:USER DEFINED 911:Detect
+          Sensor - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.3.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brtray3size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.4.1
+        type: gauge
+        help:
+          Tray3 paper size -1:No Casette 1:Executive 2:Letter 3:Legal 24:A6 25:A5
+          26:A4 27:A3(ISO) 45:B5(JIS) 46:B4(JIS) 80:Monarch 81:COM10 90:DL 91:C5 99:B6
+          100:B5 890:LEDGER 891:A3PLUS(13x19) 892:Letter Short Edge 893:A4 Short Edge
+          894:A4LONG 895:Executive Short Edge 896:B5(ISO) Short Edge 897:CUSTOM 898:A4/Letter
+          899:B5/Executive 900:Envelopes 901:DL-L 902:HAGAKI 903:FOLIO 904:ORGANIZER
+          J 905:ORGANIZER K 906:ORGANIZER L 907:ORGANIZER M 908:USER DEFINED 911:Detect
+          Sensor - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.4.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brtray4size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.5.1
+        type: gauge
+        help:
+          Tray4 paper size -1:No Casette 1:Executive 2:Letter 3:Legal 24:A6 25:A5
+          26:A4 27:A3(ISO) 45:B5(JIS) 46:B4(JIS) 80:Monarch 81:COM10 90:DL 91:C5 99:B6
+          100:B5 890:LEDGER 891:A3PLUS(13x19) 892:Letter Short Edge 893:A4 Short Edge
+          894:A4LONG 895:Executive Short Edge 896:B5(ISO) Short Edge 897:CUSTOM 898:A4/Letter
+          899:B5/Executive 900:Envelopes 901:DL-L 902:HAGAKI 903:FOLIO 904:ORGANIZER
+          J 905:ORGANIZER K 906:ORGANIZER L 907:ORGANIZER M 908:USER DEFINED 911:Detect
+          Sensor - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.3.3.5.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brret
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.6.5
+        type: gauge
+        help: HRC mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.6.5
+      - name: breconomode
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.6.7
+        type: gauge
+        help: Toner Save mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.4.1.6.7
+      - name: brPrtGeneralEmulationTimeout
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.1
+        type: gauge
+        help: Emulation Timeout - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.1
+      - name: brPrtGeneralFeeder
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.2
+        type: gauge
+        help: Default Feeder mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.2
+      - name: brPrtGeneralPowerSave
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.3
+        type: gauge
+        help: Power Save mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.3
+      - name: brPrtGeneralBuzzer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.4
+        type: gauge
+        help: Buzzer - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.4
+      - name: brPrtGeneralColor
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.5
+        type: gauge
+        help: Default Color mode 1:Monochrome 2:Color 3:Auto - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.5
+      - name: brPrtGeneralDuplex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.6
+        type: gauge
+        help: Duplex mode 1:Off(Simplex) 2:On(Duplex) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.6
+      - name: brPrtGeneralBinding
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.7
+        type: gauge
+        help: Binding type 3:Short Edge 2:Long Edge - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.1.7
+      - name: brPrtAdvancedPriority
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.1
+        type: gauge
+        help: FX/XL Priority - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.1
+      - name: brPrtAdvancedUseMPTrayFirst
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.2
+        type: gauge
+        help: MP Tray First 1:No 2:Yes - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.2
+      - name: brPrtAdvancedMPTrayFeed
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.3
+        type: gauge
+        help: MP Tray feed mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.3
+      - name: brPrtAdvancedXOffset
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.4
+        type: gauge
+        help: X Offset - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.4
+      - name: brPrtAdvancedYOffset
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.5
+        type: gauge
+        help: Y Offset - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.5
+      - name: brPrtAdvancedImageCompression
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.6
+        type: gauge
+        help: Image Compression mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.6
+      - name: brPrtAdvancedAutoFormFeed
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.7.1
+        type: gauge
+        help: Auto Formfeed mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.7.1
+      - name: brPrtAdvancedAutoTimeout
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.7.2
+        type: gauge
+        help: Auto Formfeed timeout - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.7.2
+      - name: brPrtAdvancedFFSuppress
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.8
+        type: gauge
+        help: FF Suppress mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.8
+      - name: brPrtAdvancedTonerLowPrint
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.9
+        type: gauge
+        help: Print mode on Toner Low - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.9
+      - name: brPrtAdvancedPrintDensity
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.10
+        type: gauge
+        help: Print Density - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.10
+      - name: brPrtAdvancedInputBuffer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.11
+        type: gauge
+        help: Input Buffer size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.11
+      - name: brPrtAdvancedLanguage
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.12
+        type: gauge
+        help:
+          1:ENGLISH 2:DANISH 3:DUTCH 4:FINNISH 5:FRENCH 6:GERMAN 7:ITALIAN 8:NORWEGIAN
+          9:PORTUGUESE 10:SWEDISH 11:SPANISH 12:TURKISH 13:POLISH 14:JAPANESE 15:RUSSIAN
+          16:CZECH 17:HUNGARIAN 18:ROMANIAN 19:BULGARIAN 20:SLOVAKIAN 21:CHINESE 22:BRAZIL
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.12
+        enum_values:
+          1: english
+          2: danish
+          3: dutch
+          4: finish
+          5: french
+          6: german
+          7: italian
+          8: norwegian
+          9: portuguse
+          10: swedish
+          11: spanish
+          12: turkish
+          13: polish
+          14: japanese
+          15: russian
+          16: czech
+          17: hungarian
+          18: romanian
+          19: bulgarian
+          20: slovakian
+          21: chinese
+          22: brazil
+      - name: brSecurePrintRAMSizeMax
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.13
+        type: gauge
+        help: The Max of Secure print RAM Size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.13
+      - name: brSecurePrintRAMSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.14
+        type: gauge
+        help: Secure print RAM Size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.14
+      - name: brPrtAdvancedJamRecovery
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.15
+        type: gauge
+        help: Jam recovery setting - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.15
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPrtAdvancedSleepIndication
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.16
+        type: gauge
+        help:
+          By enabling the Dimmed option, the status LED is dimmed while the printer
+          is in sleep mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.16
+        enum_values:
+          1: "off"
+          2: dimmed
+      - name: brPrtAdvancedDestination
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.17
+        type: gauge
+        help: Destination - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.17
+        enum_values:
+          1: standardOutputTray
+          2: oct
+          3: octStack
+      - name: brPrtAdvancedLowerLCD
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.18
+        type: gauge
+        help: Lower LCD - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.18
+        enum_values:
+          1: nonePage
+          2: counter
+          3: jobName
+      - name: brPrtAdvancedAutoOnline
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.19
+        type: gauge
+        help: Auto Online - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.19
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPrtAdvancedButtonRepeat
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.20
+        type: gauge
+        help: Button Repeat - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.20
+      - name: brPrtAdvancedMessageScroll
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.21
+        type: gauge
+        help: Message Scroll - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.21
+      - name: brPrtAdvancedErrorBuzzer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.1
+        type: gauge
+        help: Error Buzzer - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.1
+        enum_values:
+          1: "off"
+          2: normal
+          3: special
+      - name: brPrtAdvancedPanelBuzzer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.2
+        type: gauge
+        help: Panel Buzzer - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.2
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPrtAdvancedBuzzerVolume
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.3
+        type: gauge
+        help: Buzzer Volume - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.22.3
+        enum_values:
+          1: high
+          2: low
+      - name: brPrtAdvancedLCDDensity
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.23
+        type: gauge
+        help: LCDDensity - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.23
+      - name: brSmallPaperSizeMP
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.1
+        type: gauge
+        help: MP Tray Small Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          1000: noCasette
+      - name: brSmallPaperSize1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.2
+        type: gauge
+        help: Tray1 Small Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.2
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          1000: noCasette
+      - name: brSmallPaperSize2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.3
+        type: gauge
+        help: Tray2 Small Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.3
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          1000: noCasette
+      - name: brSmallPaperSize3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.4
+        type: gauge
+        help: Tray3 Small Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.4
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          1000: noCasette
+      - name: brSmallPaperSize4
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.5
+        type: gauge
+        help: Tray4 Small Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.51.5
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          1000: noCasette
+      - name: brPrtAdvancedTrayPriority
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.1
+        type: gauge
+        help:
+          The value of brTrayPriorityIndex corresponding to the default setting.
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.1
+      - name: brTrayPriorityCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.2
+        type: gauge
+        help: Maximum number of TrayPriority INDEX. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.2
+      - name: brTrayPriorityIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.3.1.1
+        type: gauge
+        help: The number. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.3.1.1
+        indexes:
+          - labelname: brTrayPriorityIndex
+            type: gauge
+      - name: brTrayPriorityMember
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.3.1.2
+        type: OctetString
+        help: The TrayPriority member data - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.52.3.1.2
+        indexes:
+          - labelname: brTrayPriorityIndex
+            type: gauge
+      - name: brCarbonCopyMode
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.1
+        type: gauge
+        help: Carbon Copy mode setting. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.1
+        enum_values:
+          1: "off"
+          2: "on"
+          3: auto
+          4: parallel
+      - name: brCarbonCopies
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.2
+        type: gauge
+        help: The copies setting of Carbon Copy function. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.2
+      - name: brCarbonCopyIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.1
+        type: gauge
+        help: The number. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.1
+        indexes:
+          - labelname: brCarbonCopyIndex
+            type: gauge
+      - name: brCarbonCopyTray
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.2
+        type: gauge
+        help: Copy Tray setting. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.2
+        indexes:
+          - labelname: brCarbonCopyIndex
+            type: gauge
+        enum_values:
+          1: tray1
+          2: tray2
+          3: tray3
+          4: tray4
+          10: mpTray
+          11: auto
+      - name: brCarbonCopyMacro
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.3
+        type: gauge
+        help: Carbon Copy Macro Setting - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.3
+        indexes:
+          - labelname: brCarbonCopyIndex
+            type: gauge
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brCarbonCopyMacroID
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.4
+        type: gauge
+        help: Carbon Copy Macro ID Setting - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.53.10.1.4
+        indexes:
+          - labelname: brCarbonCopyIndex
+            type: gauge
+      - name: brMediaFixTray1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.1
+        type: gauge
+        help: Media Fix setting for tray1. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.1
+        enum_values:
+          1: "off"
+          2: regular
+          3: thick
+          4: thicker
+          5: transparency
+          6: thin
+          7: bond
+          8: envelopes
+          9: envThick
+          10: envThin
+          11: recycled
+      - name: brMediaFixTray2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.2
+        type: gauge
+        help: Media Fix setting for tray2. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.2
+        enum_values:
+          1: "off"
+          2: regular
+          3: thick
+          4: thicker
+          5: transparency
+          6: thin
+          7: bond
+          8: envelopes
+          9: envThick
+          10: envThin
+          11: recycled
+      - name: brMediaFixTray3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.3
+        type: gauge
+        help: Media Fix setting for tray3. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.3
+        enum_values:
+          1: "off"
+          2: regular
+          3: thick
+          4: thicker
+          5: transparency
+          6: thin
+          7: bond
+          8: envelopes
+          9: envThick
+          10: envThin
+          11: recycled
+      - name: brMediaFixTray4
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.4
+        type: gauge
+        help: Media Fix setting for tray4. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.4
+        enum_values:
+          1: "off"
+          2: regular
+          3: thick
+          4: thicker
+          5: transparency
+          6: thin
+          7: bond
+          8: envelopes
+          9: envThick
+          10: envThin
+          11: recycled
+      - name: brMediaFixMP
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.10
+        type: gauge
+        help: Media Fix setting for MPtray. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.54.10
+        enum_values:
+          1: "off"
+          2: regular
+          3: thick
+          4: thicker
+          5: transparency
+          6: thin
+          7: bond
+          8: envelopes
+          9: envThick
+          10: envThin
+          11: recycled
+      - name: brDirectPrintPaperSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.1
+        type: gauge
+        help: Default Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          923: a5l
+          924: b6jis
+          925: prc16k195x270
+          926: prc16k184x260
+          927: prc16k197x273
+      - name: brDirectPrintMediaType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.2
+        type: gauge
+        help: Default Media type - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.2
+      - name: brDirectPrintMultipulPage
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.3
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.3"
+      - name: brDirectPrintOrientation
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.4
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.4"
+      - name: brDirectPrintCollate
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.5
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.5"
+      - name: brDirectPrintOutputColor
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.6
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.6"
+      - name: brDirectPrintPrintQuality
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.7
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.7"
+      - name: brDirectPrintPdfOption
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.8
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.8"
+      - name: brDirectPrintSetting
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.9
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.9"
+      - name: brDirectPrintPdfThumbnailType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.10
+        type: gauge
+        help: PDF Thumbnail Type 1:AlternativeImage 2:ReductionImage - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.60.10
+        enum_values:
+          1: alternativeImage
+          2: reductionImage
+      - name: brPictBridgePaperSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.1
+        type: gauge
+        help: Default Paper size - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.1
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+      - name: brPictBridgeOrientation
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.2
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.2"
+      - name: brPictBridgeDateTime
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.3
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.3"
+      - name: brPictBridgeFileName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.4
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.4"
+      - name: brPictBridgePrintQuality
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.5
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.5"
+      - name: brPictBridgePrintSetting
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.6
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.61.6"
+      - name: brColorCalibration
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.1"
+      - name: brColorCalibrationReset
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.2
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.2"
+      - name: brAutoRegistRegistrate
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.3
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.3"
+      - name: brAutoRegistSetInterval
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.4
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.4"
+      - name: brRegistrationPrintChart
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.5
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.5"
+      - name: brRegistrationXMagentaLeft
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.6
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.6"
+      - name: brRegistrationXMagentaRight
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.7
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.7"
+      - name: brRegistrationXCyanLeft
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.8
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.8"
+      - name: brRegistrationXCyanRight
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.9
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.9"
+      - name: brRegistrationXYellowLeft
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.10
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.10"
+      - name: brRegistrationXYellowRight
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.11
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.11"
+      - name: brRegistrationYMagenta
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.12
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.12"
+      - name: brRegistrationYCyan
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.13
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.13"
+      - name: brRegistrationYYellow
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.14
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.62.14"
+      - name: brFuncLockSettingInit
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.1
+        type: gauge
+        help: Init Function Lock Setting. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.1
+      - name: brFuncLockAdminPassword
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.2
+        type: DisplayString
+        help: Get or Set the administrator password of Function Lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.2
+      - name: brFuncLock
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.3
+        type: gauge
+        help: Get or Set the status of Function Lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.3
+      - name: brFuncLockPublicFuncCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.4
+        type: gauge
+        help: Return the number of functions to be locked on the public mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.4
+      - name: brFuncLockPublicFuncIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.1
+        type: gauge
+        help:
+          Return the index value of functions to be locked on the public mode. -
+          1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.1
+        indexes:
+          - labelname: brFuncLockPublicFuncIndex
+            type: gauge
+      - name: brFuncLockPublicFuncMember
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.2
+        type: gauge
+        help: Return the member of functions to be locked on the public mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.2
+        indexes:
+          - labelname: brFuncLockPublicFuncIndex
+            type: gauge
+        enum_values:
+          1: copycolor
+          2: copybr
+          3: faxtx
+          4: faxrx
+          5: scan
+          6: print
+          7: pcc
+      - name: brFuncLockPublicFuncSupported
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.3
+        type: gauge
+        help:
+          Return the status of availableness of functions to be locked on the public
+          mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.3
+        indexes:
+          - labelname: brFuncLockPublicFuncIndex
+            type: gauge
+      - name: brFuncLockPublicFuncEnable
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.4
+        type: gauge
+        help: Get of Set the status of functions on the public mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.5.1.4
+        indexes:
+          - labelname: brFuncLockPublicFuncIndex
+            type: gauge
+      - name: brFuncLockUserCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.6
+        type: gauge
+        help: Return the number of users to be locked on function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.6
+      - name: brFuncLockUserIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.1
+        type: gauge
+        help: Return the index value of users to be locked on function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.1
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+      - name: brFuncLockUserName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.2
+        type: DisplayString
+        help: Get or Set the user name of function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.2
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+      - name: brFuncLockUserPassword
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.3
+        type: DisplayString
+        help: Get or Set the user password of function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.7.1.3
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+      - name: brFuncLockUserFuncCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.8
+        type: gauge
+        help: Return the number of users to be locked on the function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.8
+      - name: brFuncLockUserFuncIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.1
+        type: gauge
+        help: Return the index value of users to be locked on user mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.1
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+          - labelname: brFuncLockUserFuncIndex
+            type: gauge
+      - name: brFuncLockUserFuncMember
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.2
+        type: gauge
+        help: Return the function numbers to be locked on user mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.2
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+          - labelname: brFuncLockUserFuncIndex
+            type: gauge
+        enum_values:
+          1: copycolor
+          2: copybr
+          3: faxtx
+          4: faxrx
+          5: scan
+          6: print
+          7: pcc
+      - name: brFuncLockUserFuncSupported
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.3
+        type: gauge
+        help: Return the availableness of function to be locked on user mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.3
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+          - labelname: brFuncLockUserFuncIndex
+            type: gauge
+      - name: brFuncLockUserFuncEnable
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.4
+        type: gauge
+        help: Get or Set the lock status on the user mode. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.9.1.4
+        indexes:
+          - labelname: brFuncLockUserIndex
+            type: gauge
+          - labelname: brFuncLockUserFuncIndex
+            type: gauge
+      - name: brFuncLockSetting
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.10
+        type: gauge
+        help: Write the all information of function lock. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.10
+      - name: brFuncLockUserPrintPageCounterReset
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.20
+        type: gauge
+        help: Reset all user's counter of Color/Mono print page. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.20
+      - name: brFuncLockPublicPrintLimitEnable
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.21
+        type: gauge
+        help:
+          This MIB represents Enable/Disable of print limit setting for public user.
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.21
+      - name: brFuncLockPublicPrintPageMax
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.22
+        type: gauge
+        help: The Maximum of print limited for public user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.22
+      - name: brFuncLockPublicPrintPageCountMono
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.23
+        type: gauge
+        help: The counter of monochrome print page. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.23
+      - name: brFuncLockPublicPrintPageCountColor
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.24
+        type: gauge
+        help: The counter of color print page for public user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.24
+      - name: brFuncLockUserPrintPageIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.1"
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageLimitEnable
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.2
+        type: gauge
+        help: The Maximum of Print Page setting for user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.2
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageCountMono
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.3
+        type: gauge
+        help: The Counter of Monochrome Print Page for user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.3
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageCountColor
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.4
+        type: gauge
+        help: The counter of color print page for user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.4
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageMax
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.5
+        type: gauge
+        help: The Maximum of print limited for user. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.5
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageCountMonoLast
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.6
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.6"
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockUserPrintPageCountColorLast
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.7
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.25.1.7"
+        indexes:
+          - labelname: brFuncLockUserPrintPageIndex
+            type: gauge
+      - name: brFuncLockPcLoginNameAuthEnable
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.26
+        type: gauge
+        help:
+          This MIB represents Enable/Disable of PC Login Authentication setting.
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.26
+      - name: brFuncLockPcLoginNameAuthCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.27
+        type: gauge
+        help: The number of PC Login Name. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.27
+      - name: brFuncLockPcLoginNameAuthIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.1"
+        indexes:
+          - labelname: brFuncLockPcLoginNameAuthIndex
+            type: gauge
+      - name: brFuncLockPcLoginName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.2
+        type: OctetString
+        help: The PC Login Name. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.2
+        indexes:
+          - labelname: brFuncLockPcLoginNameAuthIndex
+            type: gauge
+      - name: brFuncLockPcLoginNameAuthID
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.3
+        type: gauge
+        help: PC Login ID for PC Login name. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.28.1.3
+        indexes:
+          - labelname: brFuncLockPcLoginNameAuthIndex
+            type: gauge
+      - name: brFuncLockPublicPrintPageCountMonoLast
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.29
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.29"
+      - name: brFuncLockPublicPrintPageCountColorLast
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.30
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.30"
+      - name: brFuncLockAutoCountResetFrequency
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.1"
+      - name: brFuncLockAutoCountResetTime
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.2
+        type: OctetString
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.2"
+      - name: brFuncLockAutoCountResetWeek
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.3
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.3"
+      - name: brFuncLockAutoCountResetDate
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.4
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.2.63.31.4"
+      - name: brPrtMailbox
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.1
+        type: gauge
+        help: Mailbox Installed of not - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.1
+      - name: brPrtMailboxProtectIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.2.1.1
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.2.1.1
+        indexes:
+          - labelname: brPrtMailboxProtectIndex
+            type: gauge
+      - name: brPrtMailboxProtect
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.2.1.2
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.2.1.2
+        indexes:
+          - labelname: brPrtMailboxProtectIndex
+            type: gauge
+      - name: brPrtAvoidMailboxFullIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.3.1.1
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.3.1.1
+        indexes:
+          - labelname: brPrtAvoidMailboxFullIndex
+            type: gauge
+      - name: brPrtAvoidMailboxFull
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.3.1.2
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.3.1.2
+        indexes:
+          - labelname: brPrtAvoidMailboxFullIndex
+            type: gauge
+      - name: brPrtMailboxOutbin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.4
+        type: gauge
+        help: Outbin - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.4
+      - name: brPrtMailboxProtectGroup
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.5
+        type: gauge
+        help: Mailbox Protect - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.5
+      - name: brPrtAvoidMailboxFullGroup
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.6
+        type: gauge
+        help: Avoid Mailbox Full - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.3.6
+      - name: brPrtFinisher
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.4.1
+        type: gauge
+        help: Finisher type 0:no finisher 1:FS5050 2:FS5100 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.4.1
+      - name: brPrtCatchTray
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.5.1
+        type: gauge
+        help: catch tray Installed or not - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.1.5.1
+      - name: brPagePCLLeftMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.1
+        type: gauge
+        help: PCL LeftMargin 1270N :0-145 2400Ce :0-176 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.1
+      - name: brPagePCLRightMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.2
+        type: gauge
+        help: PCL RightMargin 1270N :10-155 2400Ce :10-186 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.2
+      - name: brPagePCLTopMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.3
+        type: gauge
+        help: PCL TopMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.3
+      - name: brPagePCLBottomMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.4
+        type: gauge
+        help: PCL BottomMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.4
+      - name: brPagePCLLines
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.5
+        type: gauge
+        help: PCL Form Line 5-128 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.1.5
+      - name: brPagePCLAutoLF
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.1
+        type: gauge
+        help: PCL AutoLF 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.1
+      - name: brPagePCLAutoCR
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.2
+        type: gauge
+        help: PCL AutoCR 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.2
+      - name: brPagePCLAutoWrap
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.3
+        type: gauge
+        help: PCL AutoWrap 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.3
+      - name: brPagePCLAutoSkip
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.4
+        type: gauge
+        help: PCL AutoSkip 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.1.2.4
+      - name: brPagePSPrintPSError
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.1
+        type: gauge
+        help: PrintPSError 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.1
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPagePSKeepPCLFonts
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.2
+        type: gauge
+        help: KeepPCLFonts 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.2
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPagePSCAPTsetting
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.3
+        type: gauge
+        help: PS CAPT setting 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.2.3
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPageGLPen1Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.1.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.1.1
+      - name: brPageGLPen1GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.1.2
+        type: gauge
+        help: GLPen GrayLevel 0:15% 1:30% 2:45% 3:75% 4:90% 5:100% - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.1.2
+      - name: brPageGLPen2Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.2.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.2.1
+      - name: brPageGLPen2GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.2.2
+        type: gauge
+        help: GLPen GrayLevel 0:15% 1:30% 2:45% 3:75% 4:90% 5:100% - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.2.2
+      - name: brPageGLPen3Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.3.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.3.1
+      - name: brPageGLPen3GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.3.2
+        type: gauge
+        help: GLPen GrayLevel 0:15% 1:30% 2:45% 3:75% 4:90% 5:100% - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.3.2
+      - name: brPageGLPen4Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.4.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.4.1
+      - name: brPageGLPen4GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.4.2
+        type: gauge
+        help: GLPen GrayLevel 0:15% 1:30% 2:45% 3:75% 4:90% 5:100% - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.4.2
+      - name: brPageGLPen5Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.5.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.5.1
+      - name: brPageGLPen5GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.5.2
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.5.2"
+      - name: brPageGLPen6Size
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.6.1
+        type: gauge
+        help: GL PenSize 1-16 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.6.1
+      - name: brPageGLPen6GrayLevel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.6.2
+        type: gauge
+        help: GLPen GrayLevel 0:15% 1:30% 2:45% 3:75% 4:90% 5:100% - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.3.6.2
+      - name: brPageEPSONLeftMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.1
+        type: gauge
+        help: EPSON LeftMargin 1270N :0-145 2400Ce :0-176 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.1
+      - name: brPageEPSONRightMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.2
+        type: gauge
+        help: EPSON RightMargin 1270N :10-155 2400Ce :10-186 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.2
+      - name: brPageEPSONTopMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.3
+        type: gauge
+        help: EPSON TopMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.3
+      - name: brPageEPSONBottomMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.4
+        type: gauge
+        help: EPSON BottomMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.4
+      - name: brPageEPSONLines
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.5
+        type: gauge
+        help: EPSON Form Line 5-128 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.1.5
+      - name: brPageEPSONAutoLF
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.2.1
+        type: gauge
+        help: EPSON AutoLF 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.2.1
+      - name: brPageEPSONAutoMask
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.2.5
+        type: gauge
+        help: EPSON AutoMask 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.4.2.5
+      - name: brPageIBMLeftMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.1
+        type: gauge
+        help: IBM LeftMargin 1270N :0-145 2400Ce :0-176 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.1
+      - name: brPageIBMRightMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.2
+        type: gauge
+        help: IBM LeftMargin 1270N :10-155 2400Ce :10-186 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.2
+      - name: brPageIBMTopMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.3
+        type: gauge
+        help: IBM BottomMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.3
+      - name: brPageIBMBottomMargin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.4
+        type: gauge
+        help: IBM BottomMargin 0:0 33:0.33 50:0.5 100:1.0 150:1.5 200:2.0 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.4
+      - name: brPageIBMLines
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.5
+        type: gauge
+        help: IBM Form Line 5-128 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.1.5
+      - name: brPageIBMAutoLF
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.1
+        type: gauge
+        help: IBM AutoLF 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.1
+      - name: brPageIBMAutoCR
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.2
+        type: gauge
+        help: IBM AutoCR 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.2
+      - name: brPageIBMAutoMask
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.5
+        type: gauge
+        help: IBM AutoMask 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.2.5.2.5
+      - name: brFontName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.1
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.1
+      - name: brFontPointSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.2
+        type: gauge
+        help: unused(400-99975) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.2
+      - name: brFontPitch
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.3
+        type: gauge
+        help: unused(44-9999) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.3
+      - name: brFontSymbolSet
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.4
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.3.4
+      - name: brPanelResetUser
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.1.1
+        type: gauge
+        help: User Reset - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.1.1
+      - name: brPanelResetFactory
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.1.2
+        type: gauge
+        help: Factory Reset - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.1.2
+      - name: brPanelTestConfiguration
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.1
+        type: gauge
+        help: Print Config page - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.1
+      - name: brPanelTestFontList
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.2
+        type: gauge
+        help: Print Fonts list - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.2
+      - name: brPanelTestTestPage
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.3
+        type: gauge
+        help: Print Test page - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.3
+      - name: brPanelTestDemoPage
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.4
+        type: gauge
+        help: Print Demo page 0:Enable Print Demo page 1:Disable Print Demo page - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.2.4
+      - name: brPanelLockPasswd
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.1
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.1
+      - name: brPanelLock
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.2
+        type: gauge
+        help: The state of panel lock - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.2
+        enum_values:
+          1: "off"
+          2: "on"
+      - name: brPanelLockOn
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.3
+        type: OctetString
+        help: Panel Lock by setting a password. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.3
+      - name: brPanelLockOff
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.4
+        type: OctetString
+        help: Panel Lock is canceled by inputting a password.. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.3.4
+      - name: brPanelKeyOnline
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.1
+        type: gauge
+        help: Press Online Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.1
+      - name: brPanelKeyFormFeed
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.2
+        type: gauge
+        help: Press FormFeed Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.2
+      - name: brPanelKeyContinue
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.3
+        type: gauge
+        help: Press Countinue Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.3
+      - name: brPanelKeyMode
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.4
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.4
+      - name: brPanelKeyGo
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.5
+        type: gauge
+        help: Press Go Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.5
+      - name: brPanelKeyJobCancel
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.6
+        type: gauge
+        help: Press JobCancel Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.6
+      - name: brPanelKeyReprint
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.7
+        type: gauge
+        help: Press Reprint Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.7
+      - name: brPanelKeySecure
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.8
+        type: gauge
+        help: Press SecurePrint Key - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.4.8
+      - name: brLCDMode1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.1
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.1
+        enum_values:
+          1: fix
+          2: blink
+          3: scroll
+          4: blinkScroll
+      - name: brLCDString1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2
+        type: OctetString
+        help: LCD Display String of first line. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2
+      - name: brLCDMode2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.3
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.3
+        enum_values:
+          1: fix
+          2: blink
+          3: scroll
+      - name: brLCDString2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.4
+        type: OctetString
+        help: LCD Display String of second line. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.4
+      - name: brLCDString16fix
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.5
+        type: DisplayString
+        help: LCD Display String of 16fix. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.5
+      - name: brBackLightColor
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.6
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.6
+        enum_values:
+          1: green
+          2: orange
+          3: red
+          255: notsupport
+      - name: brLCDMode3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.7
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.7
+        enum_values:
+          1: fix
+          2: blink
+          3: scroll
+          4: blinkScroll
+      - name: brLCDString3
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.8
+        type: OctetString
+        help: LCD Display String of first line. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.8
+      - name: brLCDMode4
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.9
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.9
+        enum_values:
+          1: fix
+          2: blink
+          3: scroll
+          4: blinkScroll
+      - name: brLCDString4
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.10
+        type: OctetString
+        help: LCD Display String of first line. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.10
+      - name: brLCDMode5
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.11
+        type: gauge
+        help: LCD Display Mode - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.11
+        enum_values:
+          1: fix
+          2: blink
+          3: scroll
+          4: blinkScroll
+      - name: brLCDString5
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.12
+        type: OctetString
+        help: LCD Display String of first line. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.12
+      - name: brLCDContrast
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.13
+        type: gauge
+        help: This value adjusts the contrast of the LCD Display. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.13
+      - name: brInfoSerialNumber
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1
+        type: OctetString
+        help: Serial number of printer - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1
+      - name: brInfoType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.2
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.2
+      - name: brInfoUpperMIBVer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.3.1
+        type: gauge
+        help: unused (upper digit of the MIB version) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.3.1
+      - name: brInfoLowerMIBVer
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.3.2
+        type: gauge
+        help: unused (lower digit of the MIB version) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.3.2
+      - name: brInfoStatus
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.4
+        type: gauge
+        help: Status message ID - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.4
+      - name: brInfoNetVerUpStatus
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.5
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.5
+      - name: brInfoPrinterUStatus
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.6
+        type: gauge
+        help: Status ID - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.6
+      - name: brInfoPConSupported
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.7
+        type: gauge
+        help: BRPCon support 0:not supported 1:supported - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.7
+      - name: brInfoMaintenance
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8
+        type: OctetString
+        help: Maintenance info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8
+      - name: brInfoModelNumber
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.9
+        type: gauge
+        help:
+          "Printer Model ID 4:2400Ce 5:3400CN 6:3260 8:2460 9:2600cn 11:3450cn 13:am
+          14:zlhe 15:zl2 16:jigen 17:aml 18:l4c 19: ALL 20: AL LED 21: AL LCD 22: HL-4040CN
+          23: ALL China 24: HL-4050CDN/HL-4070CDW 25: ALL2 101:ZL MFC FB type 102:ZL
+          MFC Normal type 103:BH MFC Nornal type 104:BH MFC FB type 105:ZL MFC with
+          HS 106:BH MFC with HS 107: ZL2FB 108: BHL2MFC 109: BHL2FB 110: ZL2MFC 111:
+          Mini2 112: Mini2 ADF 113: BH3FB 114: BH3MFC 115: ALL-MFC 116: ALL-FB 117:
+          SLow4C 118: mini2eColorLCD, 119: mini2eColorLCD ADF 120: AL-FB 121: DCP540
+          122: DCP750 123: MFC440 124: MFC665 125: MFC850 126: MFC860 127: MFC5460 128:
+          MFC5860 129: DCP6150 130: DCP6260 131: MFC6460 132: MFC6860 133: DCP770 134:
+          MFC480 135: AC-FB CIS 136: AC-FB CCD 137: MFC7440 138: MFC7840 139: MFC5490
+          140: MFC5890 141: MFC6490 142: DCP6690 143: MFC6890 144: DCP585 145: MFC490
+          146: MFC790 147: MFC990 148: MFC930 - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.9"
+        enum_values:
+          4: hl2400ce
+          5: hl3400CN
+          6: hl3260
+          8: hl2460
+          9: hl2600cn
+          11: hl3450cn
+          13: am
+          14: zlhe
+          15: zl2
+          16: jigen
+          17: aml
+          18: l4c
+          19: all
+          20: alLedModel
+          21: alLcdModel
+          22: hl4040
+          23: allchn
+          24: hl4050hl4070
+          25: all2
+          101: zlfb
+          102: zl
+          103: bh
+          104: bhfb
+          105: zlhs
+          106: bhhs
+          107: zl2fb
+          108: bhl2mfc
+          109: bhl2fb
+          110: zl2mfc
+          111: mini2
+          112: mini2adf
+          113: bh3fb
+          114: bh3mfc
+          115: allmfc
+          116: allfb
+          117: slow4c
+          118: mini2eColorLCD
+          119: mini2eColorLCDADF
+          120: alfb
+          121: dcp540
+          122: dcp750
+          123: mfc440
+          124: mfc665
+          125: mfc850
+          126: mfc860
+          127: mfc5460
+          128: mfc5860
+          129: dcp6150
+          130: dcp6260
+          131: dcp6460
+          132: dcp6860
+          133: dcp770
+          134: mfc480
+          135: acfbCIS
+          136: acfbCCD
+          137: mfc7440
+          138: mfc7840
+          139: mfc5490
+          140: mfc5890
+          141: mfc6490
+          142: dcp6690
+          143: mfc6890
+          144: dcp585
+          145: mfc490
+          146: mfc790
+          147: mfc990
+          148: mfc930
+      - name: brInfoCounter
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10
+        type: OctetString
+        help: Page counter - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10
+      - name: brInfoNextCare
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11
+        type: OctetString
+        help: Remaining life info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11
+      - name: brInfoHDDSlot1
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.12
+        type: gauge
+        help:
+          Card Slot1 status 1:complete 2:IO error 3:memory error 4:not found 5:no
+          device 6:no file(format) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.12
+      - name: brInfoHDDSlot2
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.13
+        type: gauge
+        help:
+          Card Slot2 status 1:complete 2:IO error 3:memory error 4:not found 5:no
+          device 6:no file(format) - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.13
+      - name: brInfoHDDInternal
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.14
+        type: gauge
+        help: Internal HDD info - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.14
+      - name: brInfoHDDSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.15
+        type: OctetString
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.15
+      - name: brInfoSolutionsCenterURL
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.16
+        type: DisplayString
+        help: Brother Solutions Center's URL - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.16
+      - name: brInfoDeviceRomVersion
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17
+        type: DisplayString
+        help: The device rom version - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17
+      - name: brInfoCoverage
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.18
+        type: OctetString
+        help: Coverage info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.18
+      - name: brInfoEstimatedPagesRemaining
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.19
+        type: counter
+        help: Estimated pages remaining info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.19
+      - name: brInfoReplaceCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.20
+        type: OctetString
+        help: Replace count info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.20
+      - name: brInfoJamCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.21
+        type: OctetString
+        help: Jam count info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.21
+      - name: brInfoJamCountClear
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.22
+        type: gauge
+        help: Jam count Clear. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.22
+      - name: brInfoReplaceTime
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.23
+        type: OctetString
+        help: Replace count time info. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.23
+      - name: brInfoDeviceSubRomVersion
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.24
+        type: OctetString
+        help: The PCL/PS ROM Version. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.24
+      - name: brInfoAlertVersion
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.25
+        type: gauge
+        help:
+          It indicates the version that prtAlertLocation is implemented correctly.
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.25
+      - name: brInfoBlackPrint
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.26
+        type: gauge
+        help:
+          "It indicates black only print enable/disable info 0: disable 1: enable
+          - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.26"
+      - name: brErrorHistoryCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.1
+        type: gauge
+        help: Maximum number of Error History. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.1
+      - name: brErrorHistoryIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.2.1.1
+        type: gauge
+        help: A unique value for the error history. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.2.1.1
+        indexes:
+          - labelname: brErrorHistoryIndex
+            type: gauge
+      - name: brErrorHistoryDescription
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.2.1.2
+        type: OctetString
+        help: The ErrorHistory Description. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.2.1.2
+        indexes:
+          - labelname: brErrorHistoryIndex
+            type: gauge
+      - name: brErrorHistoryAllClear
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.3
+        type: gauge
+        help: All clear Error History. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.3
+      - name: brCommunicationErrorHistoryCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.11
+        type: gauge
+        help: Maximum number of Communication Error History. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.11
+      - name: brCommunicationErrorHistoryIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.12.1.1
+        type: gauge
+        help: A unique value for the Communication error history. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.12.1.1
+        indexes:
+          - labelname: brCommunicationErrorHistoryIndex
+            type: gauge
+      - name: brCommunicationErrorHistoryDescription
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.12.1.2
+        type: OctetString
+        help: The Communication Error History Description. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.51.12.1.2
+        indexes:
+          - labelname: brCommunicationErrorHistoryIndex
+            type: gauge
+      - name: brPrintPagesIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.1
+        type: gauge
+        help: A unique value for the print pages. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.1
+        indexes:
+          - labelname: brPrintPagesIndex
+            type: gauge
+      - name: brPrintPagesPaperSize
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.2
+        type: gauge
+        help: The paper size of print pages. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.2
+        indexes:
+          - labelname: brPrintPagesIndex
+            type: gauge
+        enum_values:
+          1: executive
+          2: letter
+          3: legal
+          24: a6
+          25: a5
+          26: a4
+          27: a3ISO
+          45: b5JIS
+          46: b4JIS
+          80: monarch
+          81: com10
+          90: dl
+          91: c5
+          99: b6
+          100: b5
+          890: ledger
+          891: a3PLUS
+          892: letterShortEdge
+          893: a4ShortEdge
+          894: a4LONG
+          895: executiveShortEdge
+          896: b5ISOShortEdge
+          897: custom
+          898: a4Letter
+          899: b5Executive
+          900: envelopes
+          901: dll
+          902: hagaki
+          903: folio
+          904: organaizerJ
+          905: organaizerK
+          906: organaizerL
+          907: organaizerM
+          908: userdefined
+          909: legalA4Long
+          910: b6A5A6
+          911: detectsensor
+          920: inches3x5
+          921: envelopesY4
+          922: largestEnvelopesTheWest
+          924: b6JIS
+          999: otherPage
+      - name: brPrintPages
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.3
+        type: counter
+        help: The count of Print pages. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.1.1.3
+        indexes:
+          - labelname: brPrintPagesIndex
+            type: gauge
+      - name: brPrintPagesMediaPlaceIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.1
+        type: gauge
+        help: A unique value for the print pages of media place. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.1
+        indexes:
+          - labelname: brPrintPagesMediaPlaceIndex
+            type: gauge
+      - name: brPrintPagesMediaPlaceType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.2
+        type: gauge
+        help: The place of media. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.2
+        indexes:
+          - labelname: brPrintPagesMediaPlaceIndex
+            type: gauge
+        enum_values:
+          1: face
+          2: back
+      - name: brPrintPagesMediaPlaceCounter
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.3
+        type: counter
+        help: The count of Print pages of media place. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.11.1.3
+        indexes:
+          - labelname: brPrintPagesMediaPlaceIndex
+            type: gauge
+      - name: brPrintPagesFuncIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.1
+        type: gauge
+        help: A unique value for the print pages of each function. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.1
+        indexes:
+          - labelname: brPrintPagesFuncIndex
+            type: gauge
+      - name: brPrintPagesFuncType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.2
+        type: gauge
+        help: The kind of function. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.2
+        indexes:
+          - labelname: brPrintPagesFuncIndex
+            type: gauge
+        enum_values:
+          1: pcPrinttotal
+          2: faxtotal
+          3: copytotal
+          4: copycolor
+          5: pcPrintcolor
+          6: faxcolor
+          7: pcPrintmono
+          8: faxmono
+          9: copymono
+      - name: brPrintPagesFuncCounter
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.3
+        type: counter
+        help: The count of Print pages of the function. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.21.1.3
+        indexes:
+          - labelname: brPrintPagesFuncIndex
+            type: gauge
+      - name: brPrintPagesPaperTypeIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.1
+        type: gauge
+        help: A unique value for the print pages of paper type. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.1
+        indexes:
+          - labelname: brPrintPagesPaperTypeIndex
+            type: gauge
+      - name: brPrintPagesPaperTypeType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.2
+        type: gauge
+        help: The type of paper. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.2
+        indexes:
+          - labelname: brPrintPagesPaperTypeIndex
+            type: gauge
+        enum_values:
+          3: transparency
+          12: regularthinrecycled
+          13: thickthickerbond
+          14: envelopesenvthickenvthin
+      - name: brPrintPagesPaperTypeCounter
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.3
+        type: counter
+        help: The count of Print pages of paper type. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.52.31.1.3
+        indexes:
+          - labelname: brPrintPagesPaperTypeIndex
+            type: gauge
+      - name: brCapabilityCopiesMax
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.1.1
+        type: gauge
+        help: The maximum value of copies - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.1.1
+      - name: brCapabilityCopiesMin
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.1.2
+        type: gauge
+        help: The minimum value of copies - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.1.2
+      - name: brCapabilityOrientationCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.1
+        type: gauge
+        help: The number of support of orientation - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.1
+      - name: brCapabilityOrientationIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.2.1.1
+        type: gauge
+        help: A unique value for the capability of orientation. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.2.1.1
+        indexes:
+          - labelname: brCapabilityOrientationIndex
+            type: gauge
+      - name: brCapabilityOrientationName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.2.1.2
+        type: DisplayString
+        help: The name of orientation currently supported. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.2.2.1.2
+        indexes:
+          - labelname: brCapabilityOrientationIndex
+            type: gauge
+      - name: brCapabilityPaperCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.1
+        type: gauge
+        help: The number of kinds of the paper currently supported - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.1
+      - name: brCapabilityPaperIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.2.1.1
+        type: gauge
+        help: A unique value for the capability of paper. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.2.1.1
+        indexes:
+          - labelname: brCapabilityPaperIndex
+            type: gauge
+      - name: brCapabilityPaperName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.2.1.2
+        type: DisplayString
+        help: The name of paper currently supported. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.3.2.1.2
+        indexes:
+          - labelname: brCapabilityPaperIndex
+            type: gauge
+      - name: brCapabilityMediatypeCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.1
+        type: gauge
+        help: The number of kinds of the mediatype currently supported - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.1
+      - name: brCapabilityMediatypeIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.2.1.1
+        type: gauge
+        help: A unique value for the capability of mediatype. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.2.1.1
+        indexes:
+          - labelname: brCapabilityMediatypeIndex
+            type: gauge
+      - name: brCapabilityMediatypeName
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.2.1.2
+        type: DisplayString
+        help: The name of mediatype currently supported. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.4.2.1.2
+        indexes:
+          - labelname: brCapabilityMediatypeIndex
+            type: gauge
+      - name: brCapabilityResolutionCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.1
+        type: gauge
+        help: The number of kinds of the resolution currently supported - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.1
+      - name: brCapabilityResolutionIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.2.1.1
+        type: gauge
+        help: A unique value for the capability of resolution. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.2.1.1
+        indexes:
+          - labelname: brCapabilityResolutionIndex
+            type: gauge
+      - name: brCapabilityResolution
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.2.1.2
+        type: gauge
+        help: The value of resolution currently supported. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.53.5.2.1.2
+        indexes:
+          - labelname: brCapabilityResolutionIndex
+            type: gauge
+      - name: brPfKitIndexCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.1
+        type: gauge
+        help: Maximum number of PF kit. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.1
+      - name: brPfKitIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.1
+        type: gauge
+        help: A unique value for the PF kit. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.1
+        indexes:
+          - labelname: brPfKitIndex
+            type: gauge
+      - name: brPfKitType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.2
+        type: gauge
+        help: The PF kit ID. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.2
+        indexes:
+          - labelname: brPfKitIndex
+            type: gauge
+        enum_values:
+          1: pfkit1
+          2: pfkit2
+          3: pfkit3
+          4: pfkit4
+          10: pfkitmp
+          20: pfkitdx
+      - name: brPfKitCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.3
+        type: counter
+        help: Counter of the PF kit. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.1.2.1.3
+        indexes:
+          - labelname: brPfKitIndex
+            type: gauge
+      - name: brScanCountIndexCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.1
+        type: gauge
+        help: Maximum number of Scan place. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.1
+      - name: brScanCountIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.1
+        type: gauge
+        help: A unique value for the scan count place. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.1
+        indexes:
+          - labelname: brScanCountIndex
+            type: gauge
+      - name: brScanCountType
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.2
+        type: gauge
+        help: The scan place ID. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.2
+        indexes:
+          - labelname: brScanCountIndex
+            type: gauge
+        enum_values:
+          1: adf
+          2: fb
+          3: adfdx
+      - name: brScanCountCounter
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.3
+        type: counter
+        help: Counter of the scan. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.54.2.2.1.3
+        indexes:
+          - labelname: brScanCountIndex
+            type: gauge
+      - name: brFirmwareUpdateKeywordCount
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.1
+        type: gauge
+        help: The number of Firmware for update the device. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.1
+      - name: brFirmwareUpdateKeywordIndex
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.2.1.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.2.1.1"
+        indexes:
+          - labelname: brFirmwareUpdateKeywordIndex
+            type: gauge
+      - name: brFirmwareUpdateKeyword
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.2.1.2
+        type: OctetString
+        help: The keyword for firemware update the device. - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.55.2.1.2
+        indexes:
+          - labelname: brFirmwareUpdateKeywordIndex
+            type: gauge
+      - name: brStatusSleep
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.6.1
+        type: gauge
+        help: Sleeping status 0:ready 1:sleep - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.6.1
+      - name: brSecretMPRetry
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.1
+        type: gauge
+        help: unused - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.1
+      - name: brSecretReprint
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.2
+        type: gauge
+        help: Secret Reprint mode 0:Off 111:On 222:Job - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.2
+      - name: brFontSetting
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.3
+        type: gauge
+        help: Font Setting 0:Brother Font 1:Agfa Font - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.3
+      - name: brFontSwitchOn
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.4
+        type: gauge
+        help: Switch of Agfa Font On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.4
+      - name: brFontSwitchOff
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.5
+        type: gauge
+        help: Switch of Agfa Font Off - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.7.5
+      - name: brClockFuncTimeStyle
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.1
+        type: gauge
+        help: Time format 0:YMD 1:MDY 2:DMY - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.1
+      - name: brClockFuncSummerTime
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.2
+        type: gauge
+        help: Summer time 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.2
+      - name: brClockFuncTimeZone
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.3
+        type: gauge
+        help: TimeZone - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.3
+      - name: brClockFuncZoneSet
+        oid: 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.4
+        type: gauge
+        help: TimeZone enable 1:Off 2:On - 1.3.6.1.4.1.2435.2.3.9.4.2.1.5.8.1.4
+  synology:
+    walk:
+      - 1.3.6.1.4.1.6574
+    metrics:
+      - name: systemStatus
+        oid: 1.3.6.1.4.1.6574.1.1
+        type: gauge
+        help:
+          Synology system status Each meanings of status represented describe below
+          - 1.3.6.1.4.1.6574.1.1
+      - name: temperature
+        oid: 1.3.6.1.4.1.6574.1.2
+        type: gauge
+        help:
+          Synology system temperature The temperature of Disk Station uses Celsius
+          degree. - 1.3.6.1.4.1.6574.1.2
+      - name: powerStatus
+        oid: 1.3.6.1.4.1.6574.1.3
+        type: gauge
+        help:
+          Synology power status Each meanings of status represented describe below
+          - 1.3.6.1.4.1.6574.1.3
+      - name: systemFanStatus
+        oid: 1.3.6.1.4.1.6574.1.4.1
+        type: gauge
+        help:
+          Synology system fan status Each meanings of status represented describe
+          below - 1.3.6.1.4.1.6574.1.4.1
+      - name: cpuFanStatus
+        oid: 1.3.6.1.4.1.6574.1.4.2
+        type: gauge
+        help:
+          Synology cpu fan status Each meanings of status represented describe below
+          - 1.3.6.1.4.1.6574.1.4.2
+      - name: modelName
+        oid: 1.3.6.1.4.1.6574.1.5.1
+        type: OctetString
+        help: The Model name of this NAS - 1.3.6.1.4.1.6574.1.5.1
+      - name: serialNumber
+        oid: 1.3.6.1.4.1.6574.1.5.2
+        type: OctetString
+        help: The serial number of this NAS - 1.3.6.1.4.1.6574.1.5.2
+      - name: version
+        oid: 1.3.6.1.4.1.6574.1.5.3
+        type: OctetString
+        help: The version of this DSM - 1.3.6.1.4.1.6574.1.5.3
+      - name: upgradeAvailable
+        oid: 1.3.6.1.4.1.6574.1.5.4
+        type: gauge
+        help:
+          This oid is for checking whether there is a latest DSM can be upgraded
+          - 1.3.6.1.4.1.6574.1.5.4
+      - name: controllerNumber
+        oid: 1.3.6.1.4.1.6574.1.6
+        type: gauge
+        help: Synology system controller number Controller A(0) Controller B(1) - 1.3.6.1.4.1.6574.1.6
+      - name: diskIndex
+        oid: 1.3.6.1.4.1.6574.2.1.1.1
+        type: gauge
+        help: The index of disk table - 1.3.6.1.4.1.6574.2.1.1.1
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskID
+        oid: 1.3.6.1.4.1.6574.2.1.1.2
+        type: OctetString
+        help: Synology disk ID The ID of disk is assigned by disk Station. - 1.3.6.1.4.1.6574.2.1.1.2
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskModel
+        oid: 1.3.6.1.4.1.6574.2.1.1.3
+        type: OctetString
+        help: Synology disk model name The disk model name will be showed here. - 1.3.6.1.4.1.6574.2.1.1.3
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskType
+        oid: 1.3.6.1.4.1.6574.2.1.1.4
+        type: OctetString
+        help:
+          Synology disk type The type of disk will be showed here, including SATA,
+          SSD and so on. - 1.3.6.1.4.1.6574.2.1.1.4
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskStatus
+        oid: 1.3.6.1.4.1.6574.2.1.1.5
+        type: gauge
+        help:
+          Synology disk status Each meanings of status represented describe below
+          - 1.3.6.1.4.1.6574.2.1.1.5
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskTemperature
+        oid: 1.3.6.1.4.1.6574.2.1.1.6
+        type: gauge
+        help:
+          Synology disk temperature The temperature of each disk uses Celsius degree.
+          - 1.3.6.1.4.1.6574.2.1.1.6
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskRole
+        oid: 1.3.6.1.4.1.6574.2.1.1.7
+        type: OctetString
+        help: Synology disk role The role of the disk in system - 1.3.6.1.4.1.6574.2.1.1.7
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskRetry
+        oid: 1.3.6.1.4.1.6574.2.1.1.8
+        type: gauge
+        help:
+          Synology disk retry count The count of each disk connection retries. -
+          1.3.6.1.4.1.6574.2.1.1.8
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskBadSector
+        oid: 1.3.6.1.4.1.6574.2.1.1.9
+        type: gauge
+        help:
+          Synology disk bad sector count The count of each disk I/O bad sector.
+          - 1.3.6.1.4.1.6574.2.1.1.9
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskIdentifyFail
+        oid: 1.3.6.1.4.1.6574.2.1.1.10
+        type: gauge
+        help:
+          Synology disk identify fail count The count of each disk identify fails.
+          - 1.3.6.1.4.1.6574.2.1.1.10
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskRemainLife
+        oid: 1.3.6.1.4.1.6574.2.1.1.11
+        type: gauge
+        help: Synology disk remainLife The estimate remain life of each disk. - 1.3.6.1.4.1.6574.2.1.1.11
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskName
+        oid: 1.3.6.1.4.1.6574.2.1.1.12
+        type: OctetString
+        help:
+          Synology disk name The name of disk which align to storage manager. -
+          1.3.6.1.4.1.6574.2.1.1.12
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: diskHealthStatus
+        oid: 1.3.6.1.4.1.6574.2.1.1.13
+        type: gauge
+        help:
+          Synology disk health status Each meanings of status represented describe
+          below - 1.3.6.1.4.1.6574.2.1.1.13
+        indexes:
+          - labelname: diskIndex
+            type: gauge
+      - name: raidIndex
+        oid: 1.3.6.1.4.1.6574.3.1.1.1
+        type: gauge
+        help: The index of raid table - 1.3.6.1.4.1.6574.3.1.1.1
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: raidName
+        oid: 1.3.6.1.4.1.6574.3.1.1.2
+        type: OctetString
+        help: Synology raid name The name of each raid will be showed here. - 1.3.6.1.4.1.6574.3.1.1.2
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: raidStatus
+        oid: 1.3.6.1.4.1.6574.3.1.1.3
+        type: gauge
+        help:
+          Synology Raid status Each meanings of status represented describe below
+          - 1.3.6.1.4.1.6574.3.1.1.3
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: raidFreeSize
+        oid: 1.3.6.1.4.1.6574.3.1.1.4
+        type: counter
+        help: Synology raid freesize Free space in bytes. - 1.3.6.1.4.1.6574.3.1.1.4
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: raidTotalSize
+        oid: 1.3.6.1.4.1.6574.3.1.1.5
+        type: counter
+        help: Synology raid totalsize Total space in bytes. - 1.3.6.1.4.1.6574.3.1.1.5
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: raidHotspareCnt
+        oid: 1.3.6.1.4.1.6574.3.1.1.6
+        type: gauge
+        help: Synology raid hotspare Total hotspare disks count - 1.3.6.1.4.1.6574.3.1.1.6
+        indexes:
+          - labelname: raidIndex
+            type: gauge
+      - name: upsDeviceModel
+        oid: 1.3.6.1.4.1.6574.4.1.1
+        type: DisplayString
+        help: Device model - 1.3.6.1.4.1.6574.4.1.1
+      - name: upsDeviceManufacturer
+        oid: 1.3.6.1.4.1.6574.4.1.2
+        type: DisplayString
+        help: Device manufacturer - 1.3.6.1.4.1.6574.4.1.2
+      - name: upsDeviceSerial
+        oid: 1.3.6.1.4.1.6574.4.1.3
+        type: DisplayString
+        help: Device serial number. - 1.3.6.1.4.1.6574.4.1.3
+      - name: upsDeviceType
+        oid: 1.3.6.1.4.1.6574.4.1.4
+        type: DisplayString
+        help: Device type (ups, pdu, scd, psu) - 1.3.6.1.4.1.6574.4.1.4
+      - name: upsDeviceDescription
+        oid: 1.3.6.1.4.1.6574.4.1.5
+        type: DisplayString
+        help: Device description. - 1.3.6.1.4.1.6574.4.1.5
+      - name: upsDeviceContact
+        oid: 1.3.6.1.4.1.6574.4.1.6
+        type: DisplayString
+        help: Device administrator name. - 1.3.6.1.4.1.6574.4.1.6
+      - name: upsDeviceLocation
+        oid: 1.3.6.1.4.1.6574.4.1.7
+        type: DisplayString
+        help: Device physical location. - 1.3.6.1.4.1.6574.4.1.7
+      - name: upsDevicePart
+        oid: 1.3.6.1.4.1.6574.4.1.8
+        type: DisplayString
+        help: Device part number. - 1.3.6.1.4.1.6574.4.1.8
+      - name: upsDeviceMACAddr
+        oid: 1.3.6.1.4.1.6574.4.1.9
+        type: DisplayString
+        help: Physical network address of the device. - 1.3.6.1.4.1.6574.4.1.9
+      - name: upsInfoStatus
+        oid: 1.3.6.1.4.1.6574.4.2.1
+        type: DisplayString
+        help: UPS status. - 1.3.6.1.4.1.6574.4.2.1
+      - name: upsInfoAlarm
+        oid: 1.3.6.1.4.1.6574.4.2.2
+        type: DisplayString
+        help: UPS alarms - 1.3.6.1.4.1.6574.4.2.2
+      - name: upsInfoTime
+        oid: 1.3.6.1.4.1.6574.4.2.3
+        type: DisplayString
+        help: Internal UPS clock time - 1.3.6.1.4.1.6574.4.2.3
+      - name: upsInfoDate
+        oid: 1.3.6.1.4.1.6574.4.2.4
+        type: DisplayString
+        help: Internal UPS clock date - 1.3.6.1.4.1.6574.4.2.4
+      - name: upsInfoModel
+        oid: 1.3.6.1.4.1.6574.4.2.5
+        type: DisplayString
+        help: UPS model - 1.3.6.1.4.1.6574.4.2.5
+      - name: upsInfoMfrName
+        oid: 1.3.6.1.4.1.6574.4.2.6.1
+        type: DisplayString
+        help: UPS manufacturer - 1.3.6.1.4.1.6574.4.2.6.1
+      - name: upsInfoMfrDate
+        oid: 1.3.6.1.4.1.6574.4.2.6.2
+        type: DisplayString
+        help: UPS manufacturing date - 1.3.6.1.4.1.6574.4.2.6.2
+      - name: upsInfoSerial
+        oid: 1.3.6.1.4.1.6574.4.2.7
+        type: DisplayString
+        help: UPS serial number - 1.3.6.1.4.1.6574.4.2.7
+      - name: upsInfoVendorID
+        oid: 1.3.6.1.4.1.6574.4.2.8
+        type: DisplayString
+        help: Vendor ID for USB devices - 1.3.6.1.4.1.6574.4.2.8
+      - name: upsInfoProductID
+        oid: 1.3.6.1.4.1.6574.4.2.9
+        type: DisplayString
+        help: Product ID for USB devices - 1.3.6.1.4.1.6574.4.2.9
+      - name: upsInfoFirmwareName
+        oid: 1.3.6.1.4.1.6574.4.2.10.1
+        type: DisplayString
+        help: UPS firmware - 1.3.6.1.4.1.6574.4.2.10.1
+      - name: upsInfoFirmwareAux
+        oid: 1.3.6.1.4.1.6574.4.2.10.2
+        type: DisplayString
+        help: Auxiliary device firmware - 1.3.6.1.4.1.6574.4.2.10.2
+      - name: upsInfoID
+        oid: 1.3.6.1.4.1.6574.4.2.13
+        type: DisplayString
+        help: UPS system identifier - 1.3.6.1.4.1.6574.4.2.13
+      - name: upsInfoDelayStart
+        oid: 1.3.6.1.4.1.6574.4.2.14.1
+        type: gauge
+        help: Interval to wait before restarting the load (seconds) - 1.3.6.1.4.1.6574.4.2.14.1
+      - name: upsInfoDelayReboot
+        oid: 1.3.6.1.4.1.6574.4.2.14.2
+        type: gauge
+        help: Interval to wait before rebooting the UPS (seconds) - 1.3.6.1.4.1.6574.4.2.14.2
+      - name: upsInfoDelayShutdown
+        oid: 1.3.6.1.4.1.6574.4.2.14.3
+        type: gauge
+        help: Interval to wait after shutdown with delay command (seconds) - 1.3.6.1.4.1.6574.4.2.14.3
+      - name: upsInfoTimerStart
+        oid: 1.3.6.1.4.1.6574.4.2.15.1
+        type: gauge
+        help: Time before the load will be started (seconds) - 1.3.6.1.4.1.6574.4.2.15.1
+      - name: upsInfoTimerReboot
+        oid: 1.3.6.1.4.1.6574.4.2.15.2
+        type: gauge
+        help: Time before the load will be rebooted (seconds) - 1.3.6.1.4.1.6574.4.2.15.2
+      - name: upsInfoTimerShutdown
+        oid: 1.3.6.1.4.1.6574.4.2.15.3
+        type: gauge
+        help: Time before the load will be shutdown (seconds) - 1.3.6.1.4.1.6574.4.2.15.3
+      - name: upsInfoTestInterval
+        oid: 1.3.6.1.4.1.6574.4.2.16.1
+        type: gauge
+        help: Interval between self tests - 1.3.6.1.4.1.6574.4.2.16.1
+      - name: upsInfoTestResult
+        oid: 1.3.6.1.4.1.6574.4.2.16.2
+        type: DisplayString
+        help: Results of last self test - 1.3.6.1.4.1.6574.4.2.16.2
+      - name: upsInfoDisplayLanguage
+        oid: 1.3.6.1.4.1.6574.4.2.17
+        type: DisplayString
+        help: Language to use on front panel - 1.3.6.1.4.1.6574.4.2.17
+      - name: upsInfoContacts
+        oid: 1.3.6.1.4.1.6574.4.2.18
+        type: DisplayString
+        help: UPS external contact sensors - 1.3.6.1.4.1.6574.4.2.18
+      - name: upsInfoEffciency
+        oid: 1.3.6.1.4.1.6574.4.2.19
+        type: gauge
+        help:
+          Efficiency of the UPS (ratio of the output current on the input current)
+          (percent) - 1.3.6.1.4.1.6574.4.2.19
+      - name: upsInfoBeeperStatus
+        oid: 1.3.6.1.4.1.6574.4.2.22
+        type: DisplayString
+        help: UPS beeper status (enabled, disabled or muted) - 1.3.6.1.4.1.6574.4.2.22
+      - name: upsInfoType
+        oid: 1.3.6.1.4.1.6574.4.2.23
+        type: DisplayString
+        help: UPS type - 1.3.6.1.4.1.6574.4.2.23
+      - name: upsInfoWatchdogStatus
+        oid: 1.3.6.1.4.1.6574.4.2.24
+        type: DisplayString
+        help: UPS watchdog status (enabled or disabled) - 1.3.6.1.4.1.6574.4.2.24
+      - name: upsInfoStartAuto
+        oid: 1.3.6.1.4.1.6574.4.2.25.1
+        type: DisplayString
+        help: UPS starts when mains is (re)applied - 1.3.6.1.4.1.6574.4.2.25.1
+      - name: upsInfoStartBattery
+        oid: 1.3.6.1.4.1.6574.4.2.25.2
+        type: DisplayString
+        help: Allow to start UPS from battery - 1.3.6.1.4.1.6574.4.2.25.2
+      - name: upsInfoStartReboot
+        oid: 1.3.6.1.4.1.6574.4.2.25.3
+        type: DisplayString
+        help: UPS coldstarts from battery (enabled or disabled) - 1.3.6.1.4.1.6574.4.2.25.3
+      - name: upsBatteryRuntimeValue
+        oid: 1.3.6.1.4.1.6574.4.3.6.1
+        type: gauge
+        help: Battery runtime (seconds) - 1.3.6.1.4.1.6574.4.3.6.1
+      - name: upsBatteryRuntimeLow
+        oid: 1.3.6.1.4.1.6574.4.3.6.2
+        type: gauge
+        help: Remaining battery runtime when UPS switches to LB (seconds) - 1.3.6.1.4.1.6574.4.3.6.2
+      - name: upsBatteryRuntimeRestart
+        oid: 1.3.6.1.4.1.6574.4.3.6.3
+        type: gauge
+        help: Minimum battery runtime for UPS restart after power-off (seconds) - 1.3.6.1.4.1.6574.4.3.6.3
+      - name: upsBatteryAlarmThreshold
+        oid: 1.3.6.1.4.1.6574.4.3.7
+        type: DisplayString
+        help: Battery alarm threshold - 1.3.6.1.4.1.6574.4.3.7
+      - name: upsBatteryDate
+        oid: 1.3.6.1.4.1.6574.4.3.8
+        type: DisplayString
+        help: Battery change date - 1.3.6.1.4.1.6574.4.3.8
+      - name: upsBatteryMfrDate
+        oid: 1.3.6.1.4.1.6574.4.3.9
+        type: DisplayString
+        help: Battery manufacturing date - 1.3.6.1.4.1.6574.4.3.9
+      - name: upsBatteryPacks
+        oid: 1.3.6.1.4.1.6574.4.3.10
+        type: gauge
+        help: Number of battery packs - 1.3.6.1.4.1.6574.4.3.10
+      - name: upsBatteryPacksBad
+        oid: 1.3.6.1.4.1.6574.4.3.11
+        type: gauge
+        help: Number of bad battery packs - 1.3.6.1.4.1.6574.4.3.11
+      - name: upsBatteryType
+        oid: 1.3.6.1.4.1.6574.4.3.12
+        type: DisplayString
+        help: Battery chemistry - 1.3.6.1.4.1.6574.4.3.12
+      - name: upsBatteryProtection
+        oid: 1.3.6.1.4.1.6574.4.3.13
+        type: DisplayString
+        help: Prevent deep discharge of battery - 1.3.6.1.4.1.6574.4.3.13
+      - name: upsBatteryEnergySave
+        oid: 1.3.6.1.4.1.6574.4.3.14
+        type: DisplayString
+        help: Switch off when running on battery and no/low load - 1.3.6.1.4.1.6574.4.3.14
+      - name: upsInputVoltageExtend
+        oid: 1.3.6.1.4.1.6574.4.4.1.5
+        type: DisplayString
+        help: Extended input voltage range - 1.3.6.1.4.1.6574.4.4.1.5
+      - name: upsInputTransferReason
+        oid: 1.3.6.1.4.1.6574.4.4.2.1
+        type: DisplayString
+        help: Reason for last transfer to battery - 1.3.6.1.4.1.6574.4.4.2.1
+      - name: upsInputSensitivity
+        oid: 1.3.6.1.4.1.6574.4.4.3
+        type: DisplayString
+        help: Input power sensitivity - 1.3.6.1.4.1.6574.4.4.3
+      - name: upsInputQuality
+        oid: 1.3.6.1.4.1.6574.4.4.4
+        type: DisplayString
+        help: Input power quality - 1.3.6.1.4.1.6574.4.4.4
+      - name: upsInputFrequencyExtend
+        oid: 1.3.6.1.4.1.6574.4.4.6.5
+        type: DisplayString
+        help: Extended input frequency range - 1.3.6.1.4.1.6574.4.4.6.5
+      - name: upsAmbientTemperatureAlarm
+        oid: 1.3.6.1.4.1.6574.4.6.1.2
+        type: DisplayString
+        help: Temperature alarm (enabled/disabled) - 1.3.6.1.4.1.6574.4.6.1.2
+      - name: upsAmbientHumidityAlarm
+        oid: 1.3.6.1.4.1.6574.4.6.2.2
+        type: DisplayString
+        help: Relative humidity alarm (enabled/disabled) - 1.3.6.1.4.1.6574.4.6.2.2
+      - name: upsDriverName
+        oid: 1.3.6.1.4.1.6574.4.7.1
+        type: DisplayString
+        help: Driver name - 1.3.6.1.4.1.6574.4.7.1
+      - name: upsDriverVersion
+        oid: 1.3.6.1.4.1.6574.4.7.2
+        type: DisplayString
+        help: Driver version (NUT release) - 1.3.6.1.4.1.6574.4.7.2
+      - name: upsDriverVersionData
+        oid: 1.3.6.1.4.1.6574.4.7.3
+        type: DisplayString
+        help: Driver version data - 1.3.6.1.4.1.6574.4.7.3
+      - name: upsDriverVersionInternal
+        oid: 1.3.6.1.4.1.6574.4.7.4
+        type: DisplayString
+        help: Internal driver version (if tracked separately) - 1.3.6.1.4.1.6574.4.7.4
+      - name: upsDriverPollInterval
+        oid: 1.3.6.1.4.1.6574.4.7.5
+        type: gauge
+        help: Poll interval setup in configuration file - 1.3.6.1.4.1.6574.4.7.5
+      - name: upsDriverPort
+        oid: 1.3.6.1.4.1.6574.4.7.6
+        type: DisplayString
+        help: Port setup in configuration file - 1.3.6.1.4.1.6574.4.7.6
+      - name: upsDriverPollFrequency
+        oid: 1.3.6.1.4.1.6574.4.7.7
+        type: gauge
+        help: Poll frequency - 1.3.6.1.4.1.6574.4.7.7
+      - name: upsDriverProductID
+        oid: 1.3.6.1.4.1.6574.4.7.8
+        type: DisplayString
+        help: Product ID - 1.3.6.1.4.1.6574.4.7.8
+      - name: upsDriverSnmpVersion
+        oid: 1.3.6.1.4.1.6574.4.7.9
+        type: DisplayString
+        help: Snmp version - 1.3.6.1.4.1.6574.4.7.9
+      - name: upsServerInfo
+        oid: 1.3.6.1.4.1.6574.4.8.1
+        type: DisplayString
+        help: Server information - 1.3.6.1.4.1.6574.4.8.1
+      - name: upsServerVersion
+        oid: 1.3.6.1.4.1.6574.4.8.2
+        type: DisplayString
+        help: Server version - 1.3.6.1.4.1.6574.4.8.2
+      - name: diskSMARTInfoIndex
+        oid: 1.3.6.1.4.1.6574.5.1.1.1
+        type: gauge
+        help: SMART info index - 1.3.6.1.4.1.6574.5.1.1.1
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTInfoDevName
+        oid: 1.3.6.1.4.1.6574.5.1.1.2
+        type: OctetString
+        help: SMART info device name - 1.3.6.1.4.1.6574.5.1.1.2
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrName
+        oid: 1.3.6.1.4.1.6574.5.1.1.3
+        type: OctetString
+        help: SMART attribute name - 1.3.6.1.4.1.6574.5.1.1.3
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrId
+        oid: 1.3.6.1.4.1.6574.5.1.1.4
+        type: gauge
+        help: SMART attribute ID - 1.3.6.1.4.1.6574.5.1.1.4
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrCurrent
+        oid: 1.3.6.1.4.1.6574.5.1.1.5
+        type: gauge
+        help: SMART attribute current value - 1.3.6.1.4.1.6574.5.1.1.5
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrWorst
+        oid: 1.3.6.1.4.1.6574.5.1.1.6
+        type: gauge
+        help: SMART attribute worst value - 1.3.6.1.4.1.6574.5.1.1.6
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrThreshold
+        oid: 1.3.6.1.4.1.6574.5.1.1.7
+        type: gauge
+        help: SMART attribute threshold value - 1.3.6.1.4.1.6574.5.1.1.7
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrRaw
+        oid: 1.3.6.1.4.1.6574.5.1.1.8
+        type: gauge
+        help: SMART attribute raw value - 1.3.6.1.4.1.6574.5.1.1.8
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: diskSMARTAttrStatus
+        oid: 1.3.6.1.4.1.6574.5.1.1.9
+        type: OctetString
+        help: SMART attribute status - 1.3.6.1.4.1.6574.5.1.1.9
+        indexes:
+          - labelname: diskSMARTInfoIndex
+            type: gauge
+      - name: serviceInfoIndex
+        oid: 1.3.6.1.4.1.6574.6.1.1.1
+        type: gauge
+        help: Service info index - 1.3.6.1.4.1.6574.6.1.1.1
+        indexes:
+          - labelname: serviceInfoIndex
+            type: gauge
+      - name: serviceName
+        oid: 1.3.6.1.4.1.6574.6.1.1.2
+        type: OctetString
+        help: Service name - 1.3.6.1.4.1.6574.6.1.1.2
+        indexes:
+          - labelname: serviceInfoIndex
+            type: gauge
+      - name: serviceUsers
+        oid: 1.3.6.1.4.1.6574.6.1.1.3
+        type: gauge
+        help: Number of users using this service - 1.3.6.1.4.1.6574.6.1.1.3
+        indexes:
+          - labelname: serviceInfoIndex
+            type: gauge
+      - name: storageIOIndex
+        oid: 1.3.6.1.4.1.6574.101.1.1.1
+        type: gauge
+        help: Reference index for each observed device. - 1.3.6.1.4.1.6574.101.1.1.1
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIODevice
+        oid: 1.3.6.1.4.1.6574.101.1.1.2
+        type: DisplayString
+        help: The name of the device we are counting/checking. - 1.3.6.1.4.1.6574.101.1.1.2
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIONRead
+        oid: 1.3.6.1.4.1.6574.101.1.1.3
+        type: counter
+        help: The number of bytes read from this device since boot. - 1.3.6.1.4.1.6574.101.1.1.3
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIONWritten
+        oid: 1.3.6.1.4.1.6574.101.1.1.4
+        type: counter
+        help: The number of bytes written to this device since boot. - 1.3.6.1.4.1.6574.101.1.1.4
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOReads
+        oid: 1.3.6.1.4.1.6574.101.1.1.5
+        type: counter
+        help: The number of read accesses from this device since boot. - 1.3.6.1.4.1.6574.101.1.1.5
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOWrites
+        oid: 1.3.6.1.4.1.6574.101.1.1.6
+        type: counter
+        help: The number of write accesses to this device since boot. - 1.3.6.1.4.1.6574.101.1.1.6
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOLA
+        oid: 1.3.6.1.4.1.6574.101.1.1.8
+        type: gauge
+        help: The load of disk (%) - 1.3.6.1.4.1.6574.101.1.1.8
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOLA1
+        oid: 1.3.6.1.4.1.6574.101.1.1.9
+        type: gauge
+        help: The 1 minute average load of disk (%) - 1.3.6.1.4.1.6574.101.1.1.9
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOLA5
+        oid: 1.3.6.1.4.1.6574.101.1.1.10
+        type: gauge
+        help: The 5 minute average load of disk (%) - 1.3.6.1.4.1.6574.101.1.1.10
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIOLA15
+        oid: 1.3.6.1.4.1.6574.101.1.1.11
+        type: gauge
+        help: The 15 minute average load of disk (%) - 1.3.6.1.4.1.6574.101.1.1.11
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIONReadX
+        oid: 1.3.6.1.4.1.6574.101.1.1.12
+        type: counter
+        help: The number of bytes read from this device since boot. - 1.3.6.1.4.1.6574.101.1.1.12
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIONWrittenX
+        oid: 1.3.6.1.4.1.6574.101.1.1.13
+        type: counter
+        help: The number of bytes written to this device since boot. - 1.3.6.1.4.1.6574.101.1.1.13
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: storageIODeviceSerial
+        oid: 1.3.6.1.4.1.6574.101.1.1.14
+        type: DisplayString
+        help: The name of the device we are counting/checking. - 1.3.6.1.4.1.6574.101.1.1.14
+        indexes:
+          - labelname: storageIOIndex
+            type: gauge
+      - name: spaceIOIndex
+        oid: 1.3.6.1.4.1.6574.102.1.1.1
+        type: gauge
+        help: Reference index for each observed device. - 1.3.6.1.4.1.6574.102.1.1.1
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIODevice
+        oid: 1.3.6.1.4.1.6574.102.1.1.2
+        type: DisplayString
+        help: The name of the device we are counting/checking. - 1.3.6.1.4.1.6574.102.1.1.2
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIONRead
+        oid: 1.3.6.1.4.1.6574.102.1.1.3
+        type: counter
+        help: The number of bytes read from this device since boot. - 1.3.6.1.4.1.6574.102.1.1.3
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIONWritten
+        oid: 1.3.6.1.4.1.6574.102.1.1.4
+        type: counter
+        help: The number of bytes written to this device since boot. - 1.3.6.1.4.1.6574.102.1.1.4
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOReads
+        oid: 1.3.6.1.4.1.6574.102.1.1.5
+        type: counter
+        help: The number of read accesses from this device since boot. - 1.3.6.1.4.1.6574.102.1.1.5
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOWrites
+        oid: 1.3.6.1.4.1.6574.102.1.1.6
+        type: counter
+        help: The number of write accesses to this device since boot. - 1.3.6.1.4.1.6574.102.1.1.6
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOLA
+        oid: 1.3.6.1.4.1.6574.102.1.1.8
+        type: gauge
+        help: The load of disk (%) - 1.3.6.1.4.1.6574.102.1.1.8
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOLA1
+        oid: 1.3.6.1.4.1.6574.102.1.1.9
+        type: gauge
+        help: The 1 minute average load of disk (%) - 1.3.6.1.4.1.6574.102.1.1.9
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOLA5
+        oid: 1.3.6.1.4.1.6574.102.1.1.10
+        type: gauge
+        help: The 5 minute average load of disk (%) - 1.3.6.1.4.1.6574.102.1.1.10
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIOLA15
+        oid: 1.3.6.1.4.1.6574.102.1.1.11
+        type: gauge
+        help: The 15 minute average load of disk (%) - 1.3.6.1.4.1.6574.102.1.1.11
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIONReadX
+        oid: 1.3.6.1.4.1.6574.102.1.1.12
+        type: counter
+        help: The number of bytes read from this device since boot. - 1.3.6.1.4.1.6574.102.1.1.12
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceIONWrittenX
+        oid: 1.3.6.1.4.1.6574.102.1.1.13
+        type: counter
+        help: The number of bytes written to this device since boot. - 1.3.6.1.4.1.6574.102.1.1.13
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: spaceUUID
+        oid: 1.3.6.1.4.1.6574.102.1.1.14
+        type: DisplayString
+        help: The uuid of space. - 1.3.6.1.4.1.6574.102.1.1.14
+        indexes:
+          - labelname: spaceIOIndex
+            type: gauge
+      - name: flashCacheIndex
+        oid: 1.3.6.1.4.1.6574.103.1.1.1
+        type: gauge
+        help: Reference index for each observed device. - 1.3.6.1.4.1.6574.103.1.1.1
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheSSDDev
+        oid: 1.3.6.1.4.1.6574.103.1.1.2
+        type: DisplayString
+        help: The ssd device on flashcache we are counting/checking. - 1.3.6.1.4.1.6574.103.1.1.2
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheSpaceDev
+        oid: 1.3.6.1.4.1.6574.103.1.1.3
+        type: DisplayString
+        help: The space device on flashcache we are counting/checking. - 1.3.6.1.4.1.6574.103.1.1.3
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheReadHits
+        oid: 1.3.6.1.4.1.6574.103.1.1.4
+        type: counter
+        help: The number of reads on flash cache. - 1.3.6.1.4.1.6574.103.1.1.4
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheWriteHits
+        oid: 1.3.6.1.4.1.6574.103.1.1.5
+        type: counter
+        help: The number of writes on flash cache. - 1.3.6.1.4.1.6574.103.1.1.5
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheDiskRead
+        oid: 1.3.6.1.4.1.6574.103.1.1.6
+        type: counter
+        help: The number of reads on disk. - 1.3.6.1.4.1.6574.103.1.1.6
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheDiskWrite
+        oid: 1.3.6.1.4.1.6574.103.1.1.7
+        type: counter
+        help: The number of writes on disk. - 1.3.6.1.4.1.6574.103.1.1.7
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheTotalRead
+        oid: 1.3.6.1.4.1.6574.103.1.1.8
+        type: counter
+        help: The number of reads on volume with flash cache. - 1.3.6.1.4.1.6574.103.1.1.8
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheTotalWrite
+        oid: 1.3.6.1.4.1.6574.103.1.1.9
+        type: counter
+        help: The number of writes on volume with flash cache. - 1.3.6.1.4.1.6574.103.1.1.9
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheReadHitRate
+        oid: 1.3.6.1.4.1.6574.103.1.1.10
+        type: gauge
+        help: The read hit rate of flash cache (%) - 1.3.6.1.4.1.6574.103.1.1.10
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheWriteHitRate
+        oid: 1.3.6.1.4.1.6574.103.1.1.11
+        type: gauge
+        help: The write hit rate of flash cache (%) - 1.3.6.1.4.1.6574.103.1.1.11
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheReadSeqSkip
+        oid: 1.3.6.1.4.1.6574.103.1.1.12
+        type: counter
+        help: The number of skipped sequential reads on flash cache. - 1.3.6.1.4.1.6574.103.1.1.12
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheWriteSeqSkip
+        oid: 1.3.6.1.4.1.6574.103.1.1.13
+        type: counter
+        help: The number of skipped sequential writes on flash cache. - 1.3.6.1.4.1.6574.103.1.1.13
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheWriteMissSsd
+        oid: 1.3.6.1.4.1.6574.103.1.1.14
+        type: counter
+        help: The number of data writes to SSD for the first time. - 1.3.6.1.4.1.6574.103.1.1.14
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: flashCacheSsdUuid
+        oid: 1.3.6.1.4.1.6574.103.1.1.15
+        type: DisplayString
+        help: The ssd UUID on flashcache we are counting/checking. - 1.3.6.1.4.1.6574.103.1.1.15
+        indexes:
+          - labelname: flashCacheIndex
+            type: gauge
+      - name: iSCSILUNInfoIndex
+        oid: 1.3.6.1.4.1.6574.104.1.1.1
+        type: gauge
+        help: LUN info index - 1.3.6.1.4.1.6574.104.1.1.1
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNUUID
+        oid: 1.3.6.1.4.1.6574.104.1.1.2
+        type: OctetString
+        help: LUN uuid - 1.3.6.1.4.1.6574.104.1.1.2
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNName
+        oid: 1.3.6.1.4.1.6574.104.1.1.3
+        type: OctetString
+        help: LUN name - 1.3.6.1.4.1.6574.104.1.1.3
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNThroughputReadHigh
+        oid: 1.3.6.1.4.1.6574.104.1.1.4
+        type: gauge
+        help: LUN read throughput over 32 bits part - 1.3.6.1.4.1.6574.104.1.1.4
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNThroughputReadLow
+        oid: 1.3.6.1.4.1.6574.104.1.1.5
+        type: gauge
+        help: LUN read throughput in unsigned 32 bit - 1.3.6.1.4.1.6574.104.1.1.5
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNThroughputWriteHigh
+        oid: 1.3.6.1.4.1.6574.104.1.1.6
+        type: gauge
+        help: LUN write throughput over 32 bits part - 1.3.6.1.4.1.6574.104.1.1.6
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNThroughputWriteLow
+        oid: 1.3.6.1.4.1.6574.104.1.1.7
+        type: gauge
+        help: LUN write throughput in unsigned 32 bit - 1.3.6.1.4.1.6574.104.1.1.7
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNIopsRead
+        oid: 1.3.6.1.4.1.6574.104.1.1.8
+        type: gauge
+        help: LUN read iops - 1.3.6.1.4.1.6574.104.1.1.8
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNIopsWrite
+        oid: 1.3.6.1.4.1.6574.104.1.1.9
+        type: gauge
+        help: LUN write iops - 1.3.6.1.4.1.6574.104.1.1.9
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNDiskLatencyRead
+        oid: 1.3.6.1.4.1.6574.104.1.1.10
+        type: gauge
+        help: LUN disk latency when reading - 1.3.6.1.4.1.6574.104.1.1.10
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNDiskLatencyWrite
+        oid: 1.3.6.1.4.1.6574.104.1.1.11
+        type: gauge
+        help: LUN disk latency when writing - 1.3.6.1.4.1.6574.104.1.1.11
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNNetworkLatencyTx
+        oid: 1.3.6.1.4.1.6574.104.1.1.12
+        type: gauge
+        help: LUN transfer data network latency - 1.3.6.1.4.1.6574.104.1.1.12
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNNetworkLatencyRx
+        oid: 1.3.6.1.4.1.6574.104.1.1.13
+        type: gauge
+        help: LUN receive data network latency - 1.3.6.1.4.1.6574.104.1.1.13
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNIoSizeRead
+        oid: 1.3.6.1.4.1.6574.104.1.1.14
+        type: gauge
+        help: LUN average io size when reading - 1.3.6.1.4.1.6574.104.1.1.14
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNIoSizeWrite
+        oid: 1.3.6.1.4.1.6574.104.1.1.15
+        type: gauge
+        help: LUN average io size when writing - 1.3.6.1.4.1.6574.104.1.1.15
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNQueueDepth
+        oid: 1.3.6.1.4.1.6574.104.1.1.16
+        type: gauge
+        help: Num of iSCSI commands in LUN queue - 1.3.6.1.4.1.6574.104.1.1.16
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNType
+        oid: 1.3.6.1.4.1.6574.104.1.1.17
+        type: OctetString
+        help: LUN type - 1.3.6.1.4.1.6574.104.1.1.17
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNDiskLatencyAvg
+        oid: 1.3.6.1.4.1.6574.104.1.1.18
+        type: gauge
+        help: Average latency of LUN disk - 1.3.6.1.4.1.6574.104.1.1.18
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: iSCSILUNThinProvisionVolFreeMBs
+        oid: 1.3.6.1.4.1.6574.104.1.1.19
+        type: gauge
+        help: Free space(MB) of thin provisioning lun's volume - 1.3.6.1.4.1.6574.104.1.1.19
+        indexes:
+          - labelname: iSCSILUNInfoIndex
+            type: gauge
+      - name: eboxIndex
+        oid: 1.3.6.1.4.1.6574.105.1.1.1
+        type: gauge
+        help: Ebox info index - 1.3.6.1.4.1.6574.105.1.1.1
+        indexes:
+          - labelname: eboxIndex
+            type: gauge
+      - name: eboxModel
+        oid: 1.3.6.1.4.1.6574.105.1.1.2
+        type: OctetString
+        help: Ebox model - 1.3.6.1.4.1.6574.105.1.1.2
+        indexes:
+          - labelname: eboxIndex
+            type: gauge
+      - name: eboxPower
+        oid: 1.3.6.1.4.1.6574.105.1.1.3
+        type: gauge
+        help: Ebox Power - 1.3.6.1.4.1.6574.105.1.1.3
+        indexes:
+          - labelname: eboxIndex
+            type: gauge
+      - name: eboxRedundantPower
+        oid: 1.3.6.1.4.1.6574.105.1.1.4
+        type: gauge
+        help: Ebox Redundant Power - 1.3.6.1.4.1.6574.105.1.1.4
+        indexes:
+          - labelname: eboxIndex
+            type: gauge
+      - name: activeNodeName
+        oid: 1.3.6.1.4.1.6574.106.1
+        type: DisplayString
+        help: Hostname of node providing services - 1.3.6.1.4.1.6574.106.1
+      - name: passiveNodeName
+        oid: 1.3.6.1.4.1.6574.106.2
+        type: DisplayString
+        help: Hostname of node not providing services - 1.3.6.1.4.1.6574.106.2
+      - name: clusterName
+        oid: 1.3.6.1.4.1.6574.106.4
+        type: DisplayString
+        help: Hostname of node providing services - 1.3.6.1.4.1.6574.106.4
+      - name: clusterStatus
+        oid: 1.3.6.1.4.1.6574.106.5
+        type: gauge
+        help: One of critical, upgrading, processing, warning, normal - 1.3.6.1.4.1.6574.106.5
+        enum_values:
+          0: normal
+          1: warning
+          2: critical
+          3: upgrading
+          4: processing
+      - name: heartbeatStatus
+        oid: 1.3.6.1.4.1.6574.106.6
+        type: gauge
+        help: One of empty, disconnected, normal, abnormal - 1.3.6.1.4.1.6574.106.6
+        enum_values:
+          0: normal
+          1: abnormal
+          2: disconnected
+          3: empty
+      - name: heartbeatTxRate
+        oid: 1.3.6.1.4.1.6574.106.7
+        type: gauge
+        help: Transfer speed of heartbeat in kilo-byte-per-second - 1.3.6.1.4.1.6574.106.7
+      - name: heartbeatLatency
+        oid: 1.3.6.1.4.1.6574.106.8
+        type: gauge
+        help: Heartbeat latency in microseconds - 1.3.6.1.4.1.6574.106.8
+      - name: nfsIndex
+        oid: 1.3.6.1.4.1.6574.107.1.1.1
+        type: gauge
+        help: Reference index for each observed device. - 1.3.6.1.4.1.6574.107.1.1.1
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsName
+        oid: 1.3.6.1.4.1.6574.107.1.1.2
+        type: DisplayString
+        help: nfs name - 1.3.6.1.4.1.6574.107.1.1.2
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsTotalMaxLatency
+        oid: 1.3.6.1.4.1.6574.107.1.1.3
+        type: gauge
+        help: The number of nfs total max latency. - 1.3.6.1.4.1.6574.107.1.1.3
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsReadMaxLatency
+        oid: 1.3.6.1.4.1.6574.107.1.1.4
+        type: gauge
+        help: The number of nfs read max latency. - 1.3.6.1.4.1.6574.107.1.1.4
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsWriteMaxLatency
+        oid: 1.3.6.1.4.1.6574.107.1.1.5
+        type: gauge
+        help: The number of nfs write max latency. - 1.3.6.1.4.1.6574.107.1.1.5
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsTotalOPS
+        oid: 1.3.6.1.4.1.6574.107.1.1.6
+        type: counter
+        help: The number of nfs total OPS. - 1.3.6.1.4.1.6574.107.1.1.6
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsReadOPS
+        oid: 1.3.6.1.4.1.6574.107.1.1.7
+        type: counter
+        help: The number of nfs read OPS. - 1.3.6.1.4.1.6574.107.1.1.7
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: nfsWriteOPS
+        oid: 1.3.6.1.4.1.6574.107.1.1.8
+        type: counter
+        help: The number of nfs write OPS. - 1.3.6.1.4.1.6574.107.1.1.8
+        indexes:
+          - labelname: nfsIndex
+            type: gauge
+      - name: gpuInfoSupported
+        oid: 1.3.6.1.4.1.6574.108.1
+        type: gauge
+        help: Synology gpu Supported. - 1.3.6.1.4.1.6574.108.1
+      - name: gpuUtilization
+        oid: 1.3.6.1.4.1.6574.108.2
+        type: gauge
+        help: Synology gpu utilization %. - 1.3.6.1.4.1.6574.108.2
+      - name: gpuMemoryUtilization
+        oid: 1.3.6.1.4.1.6574.108.3
+        type: gauge
+        help: Synology gpu memory utilization %. - 1.3.6.1.4.1.6574.108.3
+      - name: gpuMemoryFree
+        oid: 1.3.6.1.4.1.6574.108.4
+        type: gauge
+        help: Synology gpu free memory in kB. - 1.3.6.1.4.1.6574.108.4
+      - name: gpuMemoryUsed
+        oid: 1.3.6.1.4.1.6574.108.5
+        type: gauge
+        help: Synology gpu used memory in kB. - 1.3.6.1.4.1.6574.108.5
+      - name: gpuMemoryTotal
+        oid: 1.3.6.1.4.1.6574.108.6
+        type: gauge
+        help: Synology gpu total memory in kB. - 1.3.6.1.4.1.6574.108.6
+      - name: iSCSITargetInfoIndex
+        oid: 1.3.6.1.4.1.6574.110.1.1.1
+        type: gauge
+        help: Target info index - 1.3.6.1.4.1.6574.110.1.1.1
+        indexes:
+          - labelname: iSCSITargetInfoIndex
+            type: gauge
+      - name: iSCSITargetName
+        oid: 1.3.6.1.4.1.6574.110.1.1.2
+        type: OctetString
+        help: Target name - 1.3.6.1.4.1.6574.110.1.1.2
+        indexes:
+          - labelname: iSCSITargetInfoIndex
+            type: gauge
+      - name: iSCSITargetIQN
+        oid: 1.3.6.1.4.1.6574.110.1.1.3
+        type: OctetString
+        help: Target iqn - 1.3.6.1.4.1.6574.110.1.1.3
+        indexes:
+          - labelname: iSCSITargetInfoIndex
+            type: gauge
+      - name: iSCSITargetConnectionStatus
+        oid: 1.3.6.1.4.1.6574.110.1.1.4
+        type: OctetString
+        help: Target connection status - 1.3.6.1.4.1.6574.110.1.1.4
+        indexes:
+          - labelname: iSCSITargetInfoIndex
+            type: gauge
+  truenas:
+    walk:
+      - 1.3.6.1.4.1.50536
+    metrics:
+      - name: zpoolIndex
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.1.1.1.1"
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolName
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.2
+        type: DisplayString
+        help: The name of the zpool - 1.3.6.1.4.1.50536.1.1.1.1.2
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolHealth
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.3
+        type: DisplayString
+        help: The health of the zpool - 1.3.6.1.4.1.50536.1.1.1.1.3
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolReadOps
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.4
+        type: counter
+        help:
+          The number of read I/O operations sent to the pool or device, including
+          metadata requests (averaged since system booted). - 1.3.6.1.4.1.50536.1.1.1.1.4
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolWriteOps
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.5
+        type: counter
+        help:
+          The number of write I/O operations sent to the pool or device (averaged
+          since system booted). - 1.3.6.1.4.1.50536.1.1.1.1.5
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolReadBytes
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.6
+        type: counter
+        help:
+          The bandwidth of all read operations (including metadata), expressed as
+          units per second (averaged since system booted) - 1.3.6.1.4.1.50536.1.1.1.1.6
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolWriteBytes
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.7
+        type: counter
+        help:
+          The bandwidth of all write operations, expressed as units per second (averaged
+          since system booted). - 1.3.6.1.4.1.50536.1.1.1.1.7
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolReadOps1sec
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.8
+        type: counter
+        help:
+          The number of read I/O operations sent to the pool or device, including
+          metadata requests (over 1 second interval). - 1.3.6.1.4.1.50536.1.1.1.1.8
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolWriteOps1sec
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.9
+        type: counter
+        help:
+          The number of write I/O operations sent to the pool or device (over 1
+          second interval). - 1.3.6.1.4.1.50536.1.1.1.1.9
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolReadBytes1sec
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.10
+        type: counter
+        help:
+          The bandwidth of all read operations (including metadata), expressed as
+          units per second (over 1 second interval) - 1.3.6.1.4.1.50536.1.1.1.1.10
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zpoolWriteBytes1sec
+        oid: 1.3.6.1.4.1.50536.1.1.1.1.11
+        type: counter
+        help:
+          The bandwidth of all write operations, expressed as units per second (over
+          1 second interval). - 1.3.6.1.4.1.50536.1.1.1.1.11
+        indexes:
+          - labelname: zpoolIndex
+            type: gauge
+      - name: zvolIndex
+        oid: 1.3.6.1.4.1.50536.1.2.1.1.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.2.1.1.1"
+        indexes:
+          - labelname: zvolIndex
+            type: gauge
+      - name: zvolDescr
+        oid: 1.3.6.1.4.1.50536.1.2.1.1.2
+        type: DisplayString
+        help: The name of the zvol - 1.3.6.1.4.1.50536.1.2.1.1.2
+        indexes:
+          - labelname: zvolIndex
+            type: gauge
+      - name: zvolUsedBytes
+        oid: 1.3.6.1.4.1.50536.1.2.1.1.3
+        type: counter
+        help: The zfs used property value - 1.3.6.1.4.1.50536.1.2.1.1.3
+        indexes:
+          - labelname: zvolIndex
+            type: gauge
+      - name: zvolAvailableBytes
+        oid: 1.3.6.1.4.1.50536.1.2.1.1.4
+        type: counter
+        help: The zfs available property value - 1.3.6.1.4.1.50536.1.2.1.1.4
+        indexes:
+          - labelname: zvolIndex
+            type: gauge
+      - name: zvolReferencedBytes
+        oid: 1.3.6.1.4.1.50536.1.2.1.1.5
+        type: counter
+        help: The zfs referenced property value - 1.3.6.1.4.1.50536.1.2.1.1.5
+        indexes:
+          - labelname: zvolIndex
+            type: gauge
+      - name: zfsArcSize
+        oid: 1.3.6.1.4.1.50536.1.3.1
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.1"
+      - name: zfsArcMeta
+        oid: 1.3.6.1.4.1.50536.1.3.2
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.2"
+      - name: zfsArcData
+        oid: 1.3.6.1.4.1.50536.1.3.3
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.3"
+      - name: zfsArcHits
+        oid: 1.3.6.1.4.1.50536.1.3.4
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.4"
+      - name: zfsArcMisses
+        oid: 1.3.6.1.4.1.50536.1.3.5
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.5"
+      - name: zfsArcC
+        oid: 1.3.6.1.4.1.50536.1.3.6
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.3.6"
+      - name: zfsArcMissPercent
+        oid: 1.3.6.1.4.1.50536.1.3.8
+        type: DisplayString
+        help: Arc Miss Percentage - 1.3.6.1.4.1.50536.1.3.8
+      - name: zfsArcCacheHitRatio
+        oid: 1.3.6.1.4.1.50536.1.3.9
+        type: DisplayString
+        help: Arc Cache Hit Ration Percentage - 1.3.6.1.4.1.50536.1.3.9
+      - name: zfsArcCacheMissRatio
+        oid: 1.3.6.1.4.1.50536.1.3.10
+        type: DisplayString
+        help: Arc Cache Miss Ration Percentage - 1.3.6.1.4.1.50536.1.3.10
+      - name: zfsL2ArcHits
+        oid: 1.3.6.1.4.1.50536.1.4.1
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.4.1"
+      - name: zfsL2ArcMisses
+        oid: 1.3.6.1.4.1.50536.1.4.2
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.4.2"
+      - name: zfsL2ArcRead
+        oid: 1.3.6.1.4.1.50536.1.4.3
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.4.3"
+      - name: zfsL2ArcWrite
+        oid: 1.3.6.1.4.1.50536.1.4.4
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.4.4"
+      - name: zfsL2ArcSize
+        oid: 1.3.6.1.4.1.50536.1.4.5
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.1.4.5"
+      - name: zfsZilstatOps1sec
+        oid: 1.3.6.1.4.1.50536.1.5.1
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.5.1"
+      - name: zfsZilstatOps5sec
+        oid: 1.3.6.1.4.1.50536.1.5.2
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.5.2"
+      - name: zfsZilstatOps10sec
+        oid: 1.3.6.1.4.1.50536.1.5.3
+        type: counter
+        help: " - 1.3.6.1.4.1.50536.1.5.3"
+      - name: alertId
+        oid: 1.3.6.1.4.1.50536.2.2.1
+        type: DisplayString
+        help: " - 1.3.6.1.4.1.50536.2.2.1"
+      - name: alertLevel
+        oid: 1.3.6.1.4.1.50536.2.2.2
+        type: gauge
+        help: " - 1.3.6.1.4.1.50536.2.2.2"
+        enum_values:
+          1: info
+          2: notice
+          3: warning
+          4: error
+          5: critical
+          6: alert
+          7: emergency
+      - name: alertMessage
+        oid: 1.3.6.1.4.1.50536.2.2.3
+        type: DisplayString
+        help: " - 1.3.6.1.4.1.50536.2.2.3"
+      - name: hddTempIndex
+        oid: 1.3.6.1.4.1.50536.3.1.1
+        type: gauge
+        help: Reference index for each observed HDD. - 1.3.6.1.4.1.50536.3.1.1
+        indexes:
+          - labelname: hddTempIndex
+            type: gauge
+      - name: hddTempDevice
+        oid: 1.3.6.1.4.1.50536.3.1.2
+        type: DisplayString
+        help: The name of the HDD we are reading temperature from. - 1.3.6.1.4.1.50536.3.1.2
+        indexes:
+          - labelname: hddTempIndex
+            type: gauge
+      - name: hddTempValue
+        oid: 1.3.6.1.4.1.50536.3.1.3
+        type: gauge
+        help: The temperature of this HDD in mC. - 1.3.6.1.4.1.50536.3.1.3
+        indexes:
+          - labelname: hddTempIndex
+            type: gauge
   unifi:
     walk:
       - 1.3.6.1.4.1.41112
