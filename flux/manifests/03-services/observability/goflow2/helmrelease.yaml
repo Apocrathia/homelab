@@ -57,18 +57,9 @@ spec:
         targetPort: 8080
         portName: metrics
 
-    # Expose IPFIX UDP 2055 via shared ingest LoadBalancer IP
+    # LoadBalancer disabled - using shared ingest pool via service-lb.yaml
     loadbalancer:
-      enabled: true
-      ip: "10.100.1.96"
-      externalTrafficPolicy: Local
-      labels:
-        apocrathia.com/ingest: "true"
-      ports:
-        - name: ipfix
-          port: 2055
-          targetPort: 2055
-          protocol: UDP
+      enabled: false
 
     # Disable unused features
     authentik:

@@ -1,0 +1,24 @@
+---
+# LoadBalancer service for IPFIX ingestion
+# Uses shared ingest IP pool from flux/manifests/03-services/observability/ingest/
+apiVersion: v1
+kind: Service
+metadata:
+  name: goflow2-ingest-lb
+  namespace: goflow2-system
+  labels:
+    app.kubernetes.io/name: goflow2
+    app.kubernetes.io/component: ingest
+    apocrathia.com/ingest: "true"
+  annotations:
+    io.cilium/lb-ipam-ips: "10.100.1.96"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - name: ipfix
+      port: 2055
+      protocol: UDP
+      targetPort: 2055
+  selector:
+    app: goflow2
