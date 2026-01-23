@@ -40,6 +40,9 @@ spec:
       baseDomain: windmill.gateway.services.apocrathia.com
       baseProtocol: https
 
+      # AI integration - route through LiteLLM
+      openaiAzureBasePath: "http://litellm.litellm.svc.cluster.local:4000/v1"
+
       # Replica counts - start small
       appReplicas: 1
       lspReplicas: 1
