@@ -29,7 +29,7 @@ spec:
       name: goflow2
       namespace: goflow2
       # renovate: datasource=docker depName=netsampler/goflow2
-      image: netsampler/goflow2:v2.2.2
+      image: netsampler/goflow2:v2.2.6
       container:
         name: goflow2
         port: 8080
