@@ -95,6 +95,22 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - goflow2: IPFIX (2055/UDP)
 - **Implementation**: Cilium LB IPAM with `lbipam.cilium.io/sharing-key` annotation
 
+### 9. **Fluent Operator** (`fluent/`)
+
+- **Purpose**: Declarative Fluent Bit and Fluentd management via CRDs
+- **Deployment**: Via Fluent Operator Helm chart
+- **Features**:
+  - Fluent Bit DaemonSet for node-level log collection
+  - CRD-based pipeline configuration
+  - ServiceMonitor for Prometheus integration
+
+### 10. **Prometheus Extras** (`prometheus/`)
+
+- **Purpose**: Additional Prometheus scrape targets and exporters
+- **Components**:
+  - SNMP Exporter for network device monitoring (UPS, NAS, switches)
+  - etcd ScrapeConfig for Talos cluster metrics
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
@@ -175,19 +191,12 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 - **Scaling**: Horizontal scaling supported for all components
 - **Monitoring**: Self-monitoring via ServiceMonitors
 
-## Resources
-
-- [Grafana Documentation](https://grafana.com/docs/)
-- [Grafana Operator Documentation](https://grafana.github.io/grafana-operator/docs/)
-- [Loki Documentation](https://grafana.com/docs/loki/)
-- [Mimir Documentation](https://grafana.com/docs/mimir/)
-- [Grafana Alloy Documentation](https://grafana.com/docs/alloy/)
-- [OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)
-- [LGTM Stack Overview](https://grafana.com/docs/grafana-cloud/quickstart/)
-
 ## References
 
-- **[Grafana Documentation](https://grafana.com/docs/)** - Primary Grafana documentation
+- **[Grafana Documentation](https://grafana.com/docs/)** - Dashboards and visualization
+- **[Grafana Operator](https://grafana.github.io/grafana-operator/docs/)** - CRD-based management
 - **[Loki Documentation](https://grafana.com/docs/loki/)** - Log aggregation
 - **[Tempo Documentation](https://grafana.com/docs/tempo/)** - Distributed tracing
-- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Metrics storage
+- **[Mimir Documentation](https://grafana.com/docs/mimir/)** - Long-term metrics storage
+- **[Grafana Alloy](https://grafana.com/docs/alloy/)** - Telemetry collector
+- **[OpenTelemetry Operator](https://opentelemetry.io/docs/kubernetes/operator/)** - Auto-instrumentation

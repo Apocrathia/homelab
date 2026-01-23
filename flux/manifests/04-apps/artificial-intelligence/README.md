@@ -6,13 +6,9 @@ AI and ML applications for the homelab.
 
 ## Data Flow Patterns
 
-All AI services are exposed through a central AI proxy service with TLS termination and path-based routing.
+External clients interact with the AI proxy through the Gateway API. The proxy routes requests to the appropriate LLM provider, agent, or tool service. We're using LiteLLM as the proxy, but the architecture is designed to support alternatives (Kong is viable but lacks LiteLLM's discovery endpoints).
 
-External clients interact with the AI proxy service through the Gateway API. The AI proxy service then routes the request to the appropriate LLM provider, Agent, or Tool service. While we're using LiteLLM as our AI proxy, I want to keep this architecture flexible enough to support other AI proxy services in the future. Kong is another viable option, but lacks the discovery endpoints that LiteLLM provides and are better suited for this environment.
-
-Direct communication between agents and tools is not favored, but has valid use-cases. There may be instances where the data flowing between them is sensitive. While everything within the boundary is of the cluster is trusted, it's still possible for data to leak if not properly secured. This is why all egress traffic from these tools and agents are proxied through the AI proxy before egress.
-
-### High-Level Architecture
+Direct communication between agents and tools is not favored but has valid use cases. When sensitive data flows between components, even within the trusted cluster boundary, leaks are possible if not properly secured. Egress traffic from agents and tools is proxied through LiteLLM for observability and control.
 
 ```mermaid
 flowchart TB
@@ -45,8 +41,8 @@ flowchart TB
     subgraph Observability["Observability"]
         direction TB
         Logs["Logs"]
-        Traces["Traces"]
         Metrics["Metrics"]
+        Traces["Traces"]
     end
 
     IDE <--> Proxy
@@ -64,6 +60,37 @@ flowchart TB
     Proxy --> Observability
 ```
 
+## Applications
+
+### LLM Services
+
+- **[LiteLLM](./litellm/README.md)** - Unified proxy for 100+ LLM providers with OpenAI-compatible API
+- **[llm-d](./llm-d/README.md)** - Kubernetes-native distributed LLM inference with vLLM
+- **[Guardrails AI](./guardrails-ai/README.md)** - LLM output validation and safety checks
+- **[Qdrant](./qdrant/README.md)** - Vector database for embeddings and semantic search
+
+### User Interfaces
+
+- **[OpenWebUI](./openwebui/README.md)** - Chat interface for LLMs
+- **[Flowise](./flowise/README.md)** - Visual AI agent and workflow builder
+- **[JupyterHub](./jupyterhub/README.md)** - Multi-user notebook server with Authentik SSO
+
+### Agent Orchestration
+
+- **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes
+- **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
+- **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
+
+### ML Platform
+
+- **[MLflow](./mlflow/README.md)** - Experiment tracking and model registry
+- **[Firecrawl](./firecrawl/README.md)** - Web scraping and content extraction
+
+### Demos
+
+- **[BeeAI Demo](./beeai/demo/README.md)** - Discord chatbot with BeeAI and A2A protocol
+- **[CrewAI Demo](./crewai/demo/README.md)** - Discord chatbot with CrewAI and A2A protocol
+
 ## Design Principles
 
 - **Unified Entry Point**: Single gateway handles all external traffic
@@ -74,72 +101,8 @@ flowchart TB
 - **Composable Validation**: Optional guardrails integrate transparently
 - **Distributed Tracing**: OpenTelemetry traces captured via Tempo
 
-## Applications
-
-### [OpenWebUI](./openwebui/README.md)
-
-User-friendly web interface for interacting with Large Language Models (LLMs) through chat interfaces.
-
-### [Flowise](./flowise/README.md)
-
-Open-source platform for building and deploying AI agents, providing a user-friendly web interface for interacting with Large Language Models (LLMs) through chat interfaces.
-
-### [LiteLLM](./litellm/README.md)
-
-Unified interface for 100+ LLMs with OpenAI proxy compatibility, providing seamless integration with various AI model providers.
-
-### [llm-d](./llm-d/README.md)
-
-Kubernetes-native distributed inference serving stack for large language models, providing optimized deployment patterns with vLLM and Inference Gateway.
-
-### [Guardrails AI](./guardrails-ai/README.md)
-
-API server providing guardrails validation for LLM outputs using community validators from the Guardrails Hub, designed for LiteLLM integration.
-
-### [MCP Servers](./mcp-servers/README.md)
-
-Model Context Protocol servers providing specialized functionality for AI client integration.
-
-### [kagent](./kagent/README.md)
-
-AI agent orchestration platform for managing and deploying AI agents in Kubernetes.
-
-### [Agents](./agents/README.md)
-
-Declarative AI agents orchestrated by kagent, including custom and system agents.
-
-### [JupyterHub](./jupyterhub/README.md)
-
-Multi-user Jupyter notebook server for interactive computing with Authentik OIDC authentication and shared SMB storage.
-
-### [CrewAI Demo](./crewai/demo/)
-
-Discord chatbot demo powered by CrewAI framework with web search and A2A protocol support.
-
-### [BeeAI Demo](./beeai/demo/)
-
-Discord chatbot demo powered by BeeAI framework with A2A protocol support.
-
-## Overview
-
-Artificial intelligence applications provide tools for:
-
-- **LLM Interaction**: Web-based chat interfaces for language models
-- **LLM Proxy Services**: Unified API access to multiple LLM providers
-- **LLM Validation**: Guardrails for output validation and safety checks
-- **LLM Observability**: OpenTelemetry tracing for all LLM requests
-- **MCP Integration**: Specialized servers for AI client functionality
-- **Autonomous Agents**: kagent-powered agents for various tasks
-- **Vulnerability Scanning**: Security analysis through OSV database integration
-- **Web Content Processing**: URL content retrieval and processing
-- **Kubernetes Management**: Direct cluster access for AI-assisted operations
-
-All applications are deployed via Flux GitOps and integrate with the homelab's authentication, monitoring, and gateway infrastructure.
-
 ## References
 
 - **[LiteLLM](https://docs.litellm.ai/)** - AI proxy and gateway
 - **[kagent](https://kagent.dev/docs/)** - Agent orchestration
 - **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Model Context Protocol
-
-# Architecture
