@@ -1,0 +1,90 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: excalidraw
+  namespace: excalidraw
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.54"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: excalidraw
+      # renovate: datasource=docker depName=excalidraw/excalidraw
+      image: excalidraw/excalidraw@sha256:3c2513e830bb6e195147c05b34ecf8393d0ba2b1cc86e93b407a5777d6135c6c
+      container:
+        name: excalidraw
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+      volumes:
+        tmpfs:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+            options: "size=50M"
+          - name: nginx-run
+            mountPath: /var/run
+            options: "size=10M"
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      category: "Productivity"
+      displayName: "Excalidraw"
+      externalHost: "https://excalidraw.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/excalidraw/icon.svg"
+      interceptHeaderAuth: false
+
+    httproute:
+      enabled: false
