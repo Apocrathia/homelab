@@ -321,6 +321,7 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
 
 - Follow documentation standards: `docs/documentation-standards.md`
 - Use README template: `docs/readme-template.md`
+- **Apply humanizer rules**: Run README through `.cursor/rules/humanizer.mdc` to remove AI writing patterns
 - Create or update `README.md` in the deployment directory
 - **Avoid duplicating tunable configuration**:
   - Don't include resource limits, volume sizes, replica counts, or image versions - these get tuned and will drift
