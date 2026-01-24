@@ -30,6 +30,7 @@ prompt_confirm() {
 }
 
 # Function to delete snapshots from a file
+# Status messages go to stderr, only the count goes to stdout
 delete_snapshots() {
   local file="$1"
   local type="$2"
@@ -48,18 +49,18 @@ delete_snapshots() {
     if kubectl delete snapshot.longhorn.io "${snapshot}" -n "${NAMESPACE}" --ignore-not-found=true > /dev/null 2>&1; then
       ((deleted++))
       if [ $((deleted % 10)) -eq 0 ]; then
-        echo -n "."
+        echo -n "." >&2
       fi
     else
       ((failed++))
-      echo "Failed to delete: ${snapshot}"
+      echo "Failed to delete: ${snapshot}" >&2
     fi
   done < "${file}"
 
-  echo ""
-  echo "Deleted: ${deleted} ${type} snapshots"
+  echo "" >&2
+  echo "Deleted: ${deleted} ${type} snapshots" >&2
   if [ "${failed}" -gt 0 ]; then
-    echo "Failed: ${failed} ${type} snapshots"
+    echo "Failed: ${failed} ${type} snapshots" >&2
   fi
   echo "${deleted}"
 }
