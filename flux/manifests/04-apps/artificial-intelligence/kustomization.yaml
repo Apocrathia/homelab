@@ -10,7 +10,7 @@ resources:
   - kagent
   - agents
   - firecrawl
-  - flowise
+  # - flowise
   # - guardrails-ai
   - jupyterhub
   - litellm
