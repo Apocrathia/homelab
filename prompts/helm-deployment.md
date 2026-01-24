@@ -105,6 +105,11 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Add the new deployment directory to the `resources:` list in alphabetical order
   - This step is required for Flux to discover and deploy the new application
   - Example: If deploying to `04-apps/media/management/myapp`, add `- management/myapp` to `04-apps/media/kustomization.yaml`
+- **Update parent README documentation**:
+  - Locate the parent category README (e.g., `04-apps/media/README.md`)
+  - Add the new application to the appropriate section in alphabetical order
+  - Include a brief one-line description and link to the app's README
+  - This ensures the application is discoverable in documentation hierarchy
 - **CRITICAL: Register flux-kustomization.yaml in root kustomization**:
   - If you created a new `flux-kustomization.yaml` (for standalone apps or new categories), it MUST be added to `flux/manifests/kustomization.yaml`
   - The root kustomization is how Flux discovers and deploys new Flux Kustomization resources
