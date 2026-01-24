@@ -214,8 +214,9 @@ data:
     }
 
     // ==========================================================================
-    // OpenTelemetry Trace Collection
-    // Receives OTLP traces from applications (e.g., LiteLLM) and forwards to Tempo
+    // OpenTelemetry Collection (OTLP)
+    // Receives traces, metrics, and logs from instrumented applications
+    // Routes to: Tempo (traces), Mimir (metrics), Loki (logs)
     // ==========================================================================
 
     // OTLP receiver for gRPC (port 4317) and HTTP (port 4318)
@@ -227,14 +228,28 @@ data:
         endpoint = "0.0.0.0:4318"
       }
       output {
-        traces = [otelcol.processor.batch.default.input]
+        traces  = [otelcol.processor.batch.traces.input]
+        metrics = [otelcol.processor.batch.metrics.input]
+        logs    = [otelcol.processor.batch.logs.input]
       }
     }
 
-    // Batch processor to improve efficiency
-    otelcol.processor.batch "default" {
+    // Batch processors for each signal type
+    otelcol.processor.batch "traces" {
       output {
         traces = [otelcol.exporter.otlp.tempo.input]
+      }
+    }
+
+    otelcol.processor.batch "metrics" {
+      output {
+        metrics = [otelcol.exporter.otlphttp.mimir.input]
+      }
+    }
+
+    otelcol.processor.batch "logs" {
+      output {
+        logs = [otelcol.exporter.loki.otlp_logs.input]
       }
     }
 
@@ -246,6 +261,31 @@ data:
           insecure = true
         }
       }
+    }
+
+    // Export metrics to Mimir (via OTLP/HTTP)
+    otelcol.exporter.otlphttp "mimir" {
+      client {
+        endpoint = "http://mimir-distributor.mimir-system.svc.cluster.local:8080/otlp"
+        tls {
+          insecure = true
+        }
+      }
+    }
+
+    // Export OTLP logs to Loki
+    otelcol.exporter.loki "otlp_logs" {
+      forward_to = [loki.process.otlp_logs.receiver]
+    }
+
+    loki.process "otlp_logs" {
+      stage.static_labels {
+        values = {
+          cluster   = "kubernetes",
+          component = "otlp",
+        }
+      }
+      forward_to = [loki.write.default.receiver]
     }
 
     // ==========================================================================
