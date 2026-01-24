@@ -43,14 +43,15 @@ Custom TV channel creation from media library content.
 
 ### Media Tools
 
-- **[Tdarr](./management/tdarr/README.md)** - Distributed transcoding with worker nodes
-- **[Recyclarr](./management/recyclarr/README.md)** - TRaSH Guides sync for quality profiles
-- **[Tautulli](./management/tautulli/README.md)** - Plex monitoring and statistics
+- **[Chaptarr](./management/chaptarr/README.md)** - Chapter management for audiobooks and ebooks
+- **[Cleanuparr](./management/cleanuparr/README.md)** - Orphaned media cleanup
+- **[Huntarr](./management/huntarr/README.md)** - Search automation for missing media
 - **[Ombi](./management/ombi/README.md)** - Media request management
+- **[Recyclarr](./management/recyclarr/README.md)** - TRaSH Guides sync for quality profiles
 - **[Shinkro](./management/shinkro/README.md)** - AniList integration and tracking
 - **[Taggarr](./management/taggarr/README.md)** - Media tagging automation
-- **[Huntarr](./management/huntarr/README.md)** - Search automation for missing media
-- **[Cleanuparr](./management/cleanuparr/README.md)** - Orphaned media cleanup
+- **[Tautulli](./management/tautulli/README.md)** - Plex monitoring and statistics
+- **[Tdarr](./management/tdarr/README.md)** - Distributed transcoding with worker nodes
 
 ### Utilities
 

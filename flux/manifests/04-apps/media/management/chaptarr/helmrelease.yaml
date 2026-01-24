@@ -1,0 +1,146 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: chaptarr
+  namespace: chaptarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.54"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: chaptarr
+      # renovate: datasource=docker depName=robertlordhood/chaptarr
+      image: robertlordhood/chaptarr@sha256:3673f49b21356f0cbf80a194f6d4461c5327015b5114c60a449f22fda3dc808f
+      container:
+        name: chaptarr
+        port: 8789
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # PostgreSQL configuration - uses CNPG-generated secret
+          - name: Chaptarr__Postgres__Host
+            value: "chaptarr-postgres-rw.chaptarr.svc.cluster.local"
+          - name: Chaptarr__Postgres__Port
+            value: "5432"
+          - name: Chaptarr__Postgres__User
+            valueFrom:
+              secretKeyRef:
+                name: chaptarr-secrets
+                key: username
+          - name: Chaptarr__Postgres__Password
+            valueFrom:
+              secretKeyRef:
+                name: chaptarr-secrets
+                key: password
+          # Use same database for all - app will use tables/schemas to separate
+          - name: Chaptarr__Postgres__MainDb
+            value: "chaptarr"
+          - name: Chaptarr__Postgres__LogDb
+            value: "chaptarr"
+          - name: Chaptarr__Postgres__CacheDb
+            value: "chaptarr"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8789
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+        - name: audiobooks
+          mountPath: /audiobooks
+        - name: books
+          mountPath: /books
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: audiobooks
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Audiobooks"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: books
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/chaptarr-secrets"
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: false
+      database: "chaptarr"
+      owner: "chaptarr"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Chaptarr"
+      externalHost: "https://chaptarr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/chaptarr/icon.svg"
+
+    httproute:
+      enabled: false

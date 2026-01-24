@@ -16,6 +16,7 @@ resources:
   - acquisitions/zilean
   - management/agregarr
   - management/bazarr
+  - management/chaptarr
   - management/cleanuparr
   # - management/daps
   - management/huntarr
