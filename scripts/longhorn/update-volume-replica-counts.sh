@@ -1,11 +1,10 @@
 #!/bin/bash
 # Update existing Longhorn volumes to use the new replica count
-# This patches volumes that don't have 3 replicas to the new count of 3
 
-set -euo pipefail
+set -uo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_REPLICA_COUNT=3
+NEW_REPLICA_COUNT=2
 
 echo "Finding volumes with numberOfReplicas != ${NEW_REPLICA_COUNT}..."
 
@@ -66,10 +65,18 @@ while IFS= read -r volume; do
   # Get current replica count
   CURRENT=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.numberOfReplicas}' 2>/dev/null || echo "")
 
-  # Try to patch the volume with a timeout (increased to 15s for busy volumes)
-  PATCH_OUTPUT=$(timeout 15 kubectl patch volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
+  # Try to patch the volume (timeout command differs between Linux and macOS)
+  if command -v gtimeout &> /dev/null; then
+    TIMEOUT_CMD="gtimeout 30"
+  elif command -v timeout &> /dev/null; then
+    TIMEOUT_CMD="timeout 30"
+  else
+    TIMEOUT_CMD=""
+  fi
+
+  PATCH_OUTPUT=$(${TIMEOUT_CMD} kubectl patch volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
     --type merge \
-    -p "{\"spec\":{\"numberOfReplicas\":${NEW_REPLICA_COUNT}}}" 2>&1)
+    -p "{\"spec\":{\"numberOfReplicas\":${NEW_REPLICA_COUNT}}}" 2>&1) || true
   PATCH_EXIT=$?
 
   # Brief pause to let API settle
@@ -79,10 +86,10 @@ while IFS= read -r volume; do
   NEW_CURRENT=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.numberOfReplicas}' 2>/dev/null || echo "")
 
   if [ "${NEW_CURRENT}" = "${NEW_REPLICA_COUNT}" ]; then
-    ((UPDATED++))
+    ((UPDATED++)) || true
     echo "✓ (${CURRENT} → ${NEW_CURRENT})"
   else
-    ((FAILED++))
+    ((FAILED++)) || true
     echo "✗ (current: ${NEW_CURRENT:-null}, expected: ${NEW_REPLICA_COUNT})"
     if [ "${PATCH_EXIT}" -eq 124 ]; then
       echo "    → Patch command timed out (volume may be busy - check if patch succeeded anyway)"
@@ -90,8 +97,8 @@ while IFS= read -r volume; do
       sleep 1
       FINAL_CHECK=$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o jsonpath='{.spec.numberOfReplicas}' 2>/dev/null || echo "")
       if [ "${FINAL_CHECK}" = "${NEW_REPLICA_COUNT}" ]; then
-        ((UPDATED++))
-        ((FAILED--))
+        ((UPDATED++)) || true
+        ((FAILED--)) || true
         echo "    → Actually succeeded! (verified: ${FINAL_CHECK})"
       fi
     elif [ "${PATCH_EXIT}" -ne 0 ] && [ -n "${PATCH_OUTPUT}" ]; then
