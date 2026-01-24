@@ -12,7 +12,7 @@ spec:
   groups:
     - default
   retain: 3
-  concurrency: 10 # Increased to process more volumes per day (75 volumes need higher concurrency)
+  concurrency: 10 # Increased to process more volumes per day
 ---
 # Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2
@@ -43,19 +43,18 @@ spec:
     - default
   concurrency: 2
 ---
-# Snapshot deletion to enforce retention policy (keep only 3 most recent)
-# This deletes old snapshots beyond the retention limit
-# Runs BEFORE backup so yesterday's backup snapshots are cleaned up before new ones are created
-# This prevents the issue where hourly snapshots create children that block cleanup
+# Snapshot deletion - removes ALL local snapshots
+# Since backups are stored on the NAS, we don't need local snapshots
+# Runs after backup completes to clean up the pre-backup snapshots
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
   name: snapshot-delete
   namespace: longhorn-system
 spec:
-  cron: "30 6 * * *" # 2330 MST = 0630 UTC (30 min before backup at 0700)
+  cron: "0 9 * * *" # 0200 MST = 0900 UTC (after backup completes ~0730)
   task: "snapshot-delete"
   groups:
     - default
-  retain: 3 # Match backup retention (3 daily backups)
-  concurrency: 2
+  retain: 0 # Keep ZERO local snapshots - backups are on NAS
+  concurrency: 5
