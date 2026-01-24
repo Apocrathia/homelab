@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.54 (Latest)
+## Version 0.0.55 (Latest)
+
+- **Changed Longhorn Volume Replica Default**: Reduced default replica count from 3 to 2 for better storage efficiency
+  - **Storage Optimization**: Reduces storage overhead by 33% (2 replicas instead of 3)
+  - **Template Update**: Updated `storage-longhorn.yaml` template to use 2 as the default replica count
+  - **Rationale**: With daily backups to NAS, 2 replicas provides sufficient redundancy while conserving cluster storage
+  - **Reverts 0.0.47**: Returns to the original default of 2 replicas
+  - **Backward Compatible**: Existing deployments with explicit `numberOfReplicas` configuration are unaffected
+
+## Version 0.0.54
 
 - **NEW: LoadBalancer Service Labels**: Added support for custom labels on LoadBalancer services
   - **Configuration**: Define custom labels via `loadbalancer.labels` to add to the LoadBalancer service metadata

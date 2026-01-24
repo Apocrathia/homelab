@@ -402,8 +402,8 @@ storage:
   # Longhorn persistent storage
   longhorn:
     enabled: false
-    # Number of replicas for Longhorn volumes (default: 3)
-    # numberOfReplicas: 3
+    # Number of replicas for Longhorn volumes (default: 2)
+    # numberOfReplicas: 2
     volumes: []
 
   # SMB storage for read-only files
