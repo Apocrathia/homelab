@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mylar
+  labels:
+    app.kubernetes.io/name: mylar

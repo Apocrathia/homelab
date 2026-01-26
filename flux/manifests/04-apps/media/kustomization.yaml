@@ -22,8 +22,10 @@ resources:
   - management/huntarr
   - management/icloudpd
   - management/immich
+  - management/lazylibrarian
   - management/lidarr
   - management/maintainerr
+  - management/mylar
   - management/mixarr
   # - management/ombi
   - management/overseerr
