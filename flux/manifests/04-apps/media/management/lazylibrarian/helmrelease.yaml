@@ -82,6 +82,8 @@ spec:
           mountPath: /downloads
         - name: books
           mountPath: /books
+        - name: audiobooks
+          mountPath: /audiobooks
 
     storage:
       longhorn:
@@ -100,6 +102,11 @@ spec:
           - name: books
             source: "//storage.services.apocrathia.com/Library"
             subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: audiobooks
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Audiobooks"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
 
