@@ -39,7 +39,7 @@ Media applications are organized into three categories:
 ### Media Tools
 
 - **[Agregarr](./management/agregarr/README.md)** - Plex collection manager using Trakt, IMDb, TMDB, and other list sources
-- **[Chaptarr](./management/chaptarr/README.md)** - Chapter management for audiobooks and ebooks
+- **[Chaptarr](./management/chaptarr/README.md)** - Ebook/audiobook collection manager (Readarr successor)
 - **[Cleanuparr](./management/cleanuparr/README.md)** - Monitors and removes blocked/stalled downloads from Arr apps
 - **[LazyLibrarian](./management/lazylibrarian/README.md)** - Book and audiobook metadata management for digital libraries
 - **[DAPS](./management/daps/README.md)** - Poster management and Arr automation scripts

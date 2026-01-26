@@ -1,6 +1,6 @@
 # Chaptarr
 
-Chapter management tool for audiobooks and ebooks. Still in development hell - no public GitHub repo yet.
+Ebook and audiobook collection manager for Usenet and BitTorrent users. Successor to [Readarr](https://readarr.com/), which was retired due to metadata source issues.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
