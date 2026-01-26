@@ -10,6 +10,10 @@ Workflow automation, search, and knowledge management tools.
 
 Website change detection and monitoring with notification support.
 
+### [Excalidraw](./excalidraw/README.md)
+
+Virtual whiteboard for sketching diagrams and hand-drawn visuals.
+
 ### [Kiwix](./kiwix/README.md)
 
 Offline Wikipedia and content library server with automated ZIM updates.
@@ -17,6 +21,10 @@ Offline Wikipedia and content library server with automated ZIM updates.
 ### [Logseq](./logseq/README.md)
 
 Knowledge management with block-based note-taking and bidirectional linking.
+
+### [Matrix (Element Web)](./matrix/README.md)
+
+Web client for the Matrix decentralized communication protocol.
 
 ### [rclone](./rclone/README.md)
 
