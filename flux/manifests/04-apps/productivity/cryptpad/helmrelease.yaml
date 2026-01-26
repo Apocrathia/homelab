@@ -1,0 +1,127 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cryptpad
+  namespace: cryptpad
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.55"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: cryptpad
+      # renovate: datasource=docker depName=cryptpad/cryptpad
+      image: cryptpad/cryptpad:version-2025.9.0
+      container:
+        name: cryptpad
+        port: 3000
+        extraPorts:
+          - name: websocket
+            containerPort: 3003
+            protocol: TCP
+        env:
+          - name: CPAD_CONF
+            value: "/cryptpad/config/config.js"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      # CryptPad container runs as user/group 4001
+      securityContext:
+        runAsUser: 4001
+        runAsGroup: 4001
+        fsGroup: 4001
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+      volumes:
+        configMap:
+          - name: config
+            mountPath: /cryptpad/config/config.js
+            subPath: config.js
+            configMapName: cryptpad-config
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: true
+        volumes:
+          - name: data
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "CryptPad"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    # Authentik proxy for main domain
+    authentik:
+      enabled: true
+      category: "Productivity"
+      displayName: "CryptPad"
+      externalHost: "https://cryptpad.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/cryptpad/icon.svg"
+
+    # HTTPRoute for sandbox domain (no auth required)
+    httproute:
+      enabled: true
+      hostname: cryptpad-sandbox.gateway.services.apocrathia.com

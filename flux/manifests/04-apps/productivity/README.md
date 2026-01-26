@@ -10,6 +10,10 @@ Workflow automation, search, and knowledge management tools.
 
 Website change detection and monitoring with notification support.
 
+### [CryptPad](./cryptpad/README.md)
+
+End-to-end encrypted collaboration suite with real-time document editing.
+
 ### [Excalidraw](./excalidraw/README.md)
 
 Virtual whiteboard for sketching diagrams and hand-drawn visuals.
