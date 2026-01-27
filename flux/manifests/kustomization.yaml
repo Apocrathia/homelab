@@ -18,7 +18,7 @@ resources:
   - 02-infrastructure/kube-prometheus-stack/flux-kustomization.yaml
   - 03-services/authentik/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
-  - 03-services/chaos-mesh/flux-kustomization.yaml
+  # - 03-services/chaos-mesh/flux-kustomization.yaml
   - 03-services/dashboard/flux-kustomization.yaml
   - 03-services/external-secrets/flux-kustomization.yaml
   # - 03-services/flyte/flux-kustomization.yaml
