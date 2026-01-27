@@ -105,7 +105,12 @@ spec:
       nodeSelector:
         kubernetes.io/os: linux
       priorityClassName: system-cluster-critical
-      securityContext: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccount: coredns
       serviceAccountName: coredns
       terminationGracePeriodSeconds: 30
