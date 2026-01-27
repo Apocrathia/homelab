@@ -96,7 +96,7 @@ spec:
           - dns:query;ignoreAAAA
           - drop
           - tcp
-          - flow
+          - flow:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload
           - port-distribution
           - icmp
           - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
