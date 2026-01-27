@@ -18,6 +18,10 @@ End-to-end encrypted collaboration suite with real-time document editing.
 
 Virtual whiteboard for sketching diagrams and hand-drawn visuals.
 
+### [Ideon](./ideon/README.md)
+
+Visual workspace for project organization with spatial layouts and real-time collaboration.
+
 ### [Kiwix](./kiwix/README.md)
 
 Offline Wikipedia and content library server with automated ZIM updates.
