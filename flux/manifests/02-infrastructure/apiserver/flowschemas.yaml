@@ -1,0 +1,172 @@
+---
+# Flux GitOps controllers (01-bootstrap)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: flux
+spec:
+  priorityLevelConfiguration:
+    name: bootstrap
+  matchingPrecedence: 350
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: helm-controller
+            namespace: flux-system
+        - kind: ServiceAccount
+          serviceAccount:
+            name: kustomize-controller
+            namespace: flux-system
+        - kind: ServiceAccount
+          serviceAccount:
+            name: source-controller
+            namespace: flux-system
+        - kind: ServiceAccount
+          serviceAccount:
+            name: notification-controller
+            namespace: flux-system
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]
+---
+# 1Password Connect (01-bootstrap)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: onepassword
+spec:
+  priorityLevelConfiguration:
+    name: bootstrap
+  matchingPrecedence: 400
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: onepassword-connect-operator
+            namespace: onepassword-system
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]
+---
+# Cilium CNI (02-infrastructure)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: cilium
+spec:
+  priorityLevelConfiguration:
+    name: infrastructure
+  matchingPrecedence: 200
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: cilium
+            namespace: cilium-system
+        - kind: ServiceAccount
+          serviceAccount:
+            name: cilium-operator
+            namespace: cilium-system
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]
+---
+# Longhorn storage (02-infrastructure)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: longhorn
+spec:
+  priorityLevelConfiguration:
+    name: infrastructure
+  matchingPrecedence: 250
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: longhorn-service-account
+            namespace: longhorn-system
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]
+---
+# CloudNativePG (03-services)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: cnpg
+spec:
+  priorityLevelConfiguration:
+    name: services
+  matchingPrecedence: 300
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: postgres-operator-cloudnative-pg
+            namespace: postgres-system
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]
+---
+# Kyverno policy engine (03-services)
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: FlowSchema
+metadata:
+  name: kyverno
+spec:
+  priorityLevelConfiguration:
+    name: services
+  matchingPrecedence: 310
+  distinguisherMethod:
+    type: ByUser
+  rules:
+    - subjects:
+        - kind: ServiceAccount
+          serviceAccount:
+            name: kyverno-admission-controller
+            namespace: kyverno
+        - kind: ServiceAccount
+          serviceAccount:
+            name: kyverno-background-controller
+            namespace: kyverno
+        - kind: ServiceAccount
+          serviceAccount:
+            name: kyverno-cleanup-controller
+            namespace: kyverno
+        - kind: ServiceAccount
+          serviceAccount:
+            name: kyverno-reports-controller
+            namespace: kyverno
+      resourceRules:
+        - verbs: ["*"]
+          apiGroups: ["*"]
+          resources: ["*"]
+          clusterScope: true
+          namespaces: ["*"]

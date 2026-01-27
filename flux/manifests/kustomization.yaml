@@ -9,6 +9,7 @@ resources:
   - 01-bootstrap/crds/flux-kustomization.yaml
   - 01-bootstrap/helm/flux-kustomization.yaml
   - 01-bootstrap/1password/flux-kustomization.yaml
+  - 02-infrastructure/apiserver/flux-kustomization.yaml
   - 02-infrastructure/cilium/flux-kustomization.yaml
   - 02-infrastructure/longhorn/flux-kustomization.yaml
   - 02-infrastructure/csi-driver-smb/flux-kustomization.yaml

@@ -1,0 +1,14 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infrastructure-apiserver
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./flux/manifests/02-infrastructure/apiserver
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  timeout: 5m0s

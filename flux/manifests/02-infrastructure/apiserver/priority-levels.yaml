@@ -1,0 +1,51 @@
+---
+# Bootstrap layer (01-bootstrap)
+# Flux and 1Password - GitOps and secrets must work first
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: PriorityLevelConfiguration
+metadata:
+  name: bootstrap
+spec:
+  type: Limited
+  limited:
+    nominalConcurrencyShares: 80
+    limitResponse:
+      type: Queue
+      queuing:
+        queues: 64
+        handSize: 6
+        queueLengthLimit: 100
+---
+# Infrastructure layer (02-infrastructure)
+# CNI and storage - cluster fundamentals
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: PriorityLevelConfiguration
+metadata:
+  name: infrastructure
+spec:
+  type: Limited
+  limited:
+    nominalConcurrencyShares: 70
+    limitResponse:
+      type: Queue
+      queuing:
+        queues: 64
+        handSize: 6
+        queueLengthLimit: 100
+---
+# Services layer (03-services)
+# Databases and platform services
+apiVersion: flowcontrol.apiserver.k8s.io/v1
+kind: PriorityLevelConfiguration
+metadata:
+  name: services
+spec:
+  type: Limited
+  limited:
+    nominalConcurrencyShares: 50
+    limitResponse:
+      type: Queue
+      queuing:
+        queues: 64
+        handSize: 6
+        queueLengthLimit: 100
