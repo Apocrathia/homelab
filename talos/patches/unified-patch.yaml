@@ -69,13 +69,17 @@ cluster:
     extraArgs:
       # Event garbage collection - 1 hour TTL
       event-ttl: "1h"
-      max-requests-inflight: "800"
-      max-mutating-requests-inflight: "400"
+      max-requests-inflight: "1600"
+      max-mutating-requests-inflight: "800"
       request-timeout: "120s"
+      # Watch cache sizing for heavy CRD usage
       watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#200,persistentvolumeclaims#200"
       # Audit optimization to reduce overhead
       audit-log-maxbackup: "3" # Reduce from default 10
       audit-log-maxsize: "50" # Reduce from default 100MB
+      # Goaway chance to force client reconnection distribution
+      # Helps prevent thundering herd on single API server
+      goaway-chance: "0.01"
     resources:
       requests:
         cpu: "2000m"
