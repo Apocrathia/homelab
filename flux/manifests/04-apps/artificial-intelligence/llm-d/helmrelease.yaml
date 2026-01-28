@@ -197,7 +197,3 @@ spec:
     # Optional: Fast Model Actuation (FMA) requester
     requester:
       enable: true
-
-    # Optional: Dynamic Resource Allocation (DRA)
-    dra:
-      enabled: false
