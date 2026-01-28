@@ -85,6 +85,9 @@ spec:
     # Enable Valkey for Redis-compatible caching
     valkey:
       enabled: true
+      controllers:
+        main:
+          strategy: Recreate
       persistence:
         data:
           enabled: true
@@ -98,6 +101,7 @@ spec:
       enabled: true
       controllers:
         main:
+          strategy: Recreate
           containers:
             main:
               resources:
@@ -116,6 +120,7 @@ spec:
       enabled: true
       controllers:
         main:
+          strategy: Recreate
           containers:
             main:
               resources:
