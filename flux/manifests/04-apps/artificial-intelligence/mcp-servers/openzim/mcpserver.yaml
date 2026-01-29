@@ -48,7 +48,7 @@ spec:
             - name: HOME
               value: "/tmp"
             - name: OPENZIM_MCP_TOOL_MODE
-              value: "simple"
+              value: "advanced"
             - name: OPENZIM_MCP_INSTANCES_PATH
               value: "/tmp"
           volumeMounts:

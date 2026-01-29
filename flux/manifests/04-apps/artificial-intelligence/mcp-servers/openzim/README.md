@@ -20,9 +20,9 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 
 ### Environment Variables
 
-| Variable                | Value    | Description                                 |
-| ----------------------- | -------- | ------------------------------------------- |
-| `OPENZIM_MCP_TOOL_MODE` | `simple` | Tool mode: `simple` (default) or `advanced` |
+| Variable                | Value      | Description                                 |
+| ----------------------- | ---------- | ------------------------------------------- |
+| `OPENZIM_MCP_TOOL_MODE` | `advanced` | Tool mode: `simple` (default) or `advanced` |
 
 ### Security
 
@@ -31,10 +31,14 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 
 ## Available MCP Tools
 
-The OpenZIM MCP server provides tools for querying ZIM knowledge bases:
+The OpenZIM MCP server runs in advanced mode, providing specialized tools for ZIM operations:
 
-1. **zim_query** (Simple Mode) - Natural language queries against ZIM files
-2. **Advanced Mode Tools** - 15 specialized tools for granular ZIM operations when `OPENZIM_MCP_TOOL_MODE=advanced`
+- **list_zim_files** - List available ZIM files with names and paths
+- **search_zim_file** - Search content within a ZIM file
+- **get_zim_entry** - Retrieve full article content by path
+- **get_search_suggestions** - Get autocomplete suggestions for partial queries
+
+Additional advanced tools are available but not exposed to agents (server diagnostics, namespace browsing, etc.).
 
 ## References
 
