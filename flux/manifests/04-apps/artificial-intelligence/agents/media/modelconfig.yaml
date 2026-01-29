@@ -3,7 +3,7 @@ apiVersion: kagent.dev/v1alpha2
 kind: ModelConfig
 metadata:
   name: media-agent-model
-  namespace: kagent
+  namespace: agent-media
 spec:
   provider: OpenAI
   model: qwen3

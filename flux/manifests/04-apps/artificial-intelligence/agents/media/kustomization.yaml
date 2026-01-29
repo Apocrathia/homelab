@@ -5,6 +5,7 @@ metadata:
   name: media-agent
 
 resources:
+  - namespace.yaml
   - secret.yaml
   - modelconfig.yaml
   - remotemcpserver.yaml

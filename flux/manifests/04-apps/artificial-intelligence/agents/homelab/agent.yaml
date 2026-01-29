@@ -147,6 +147,7 @@ spec:
       - type: Agent
         agent:
           name: media-agent
+          namespace: agent-media
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent

@@ -3,9 +3,12 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: media-agent
-  namespace: kagent
+  namespace: agent-media
 spec:
   description: Media management agent for Plex library and Sonarr/Radarr automation
+  # Allow cross-namespace access from any namespace (secured via Cilium NetworkPolicy)
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: media-agent-model
