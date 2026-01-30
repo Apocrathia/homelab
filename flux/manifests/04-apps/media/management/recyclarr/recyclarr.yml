@@ -13,6 +13,7 @@ sonarr:
     # Internal cluster URLs
     base_url: !env_var SONARR_BASE_URL http://sonarr.sonarr.svc.cluster.local
     api_key: !env_var SONARR_API_KEY
+    replace_existing_custom_formats: "true"
 
     # Include templates for quality definitions, profiles, and custom formats
     include:
@@ -319,7 +320,7 @@ radarr:
     # Internal cluster URLs
     base_url: !env_var RADARR_BASE_URL http://radarr.radarr.svc.cluster.local
     api_key: !env_var RADARR_API_KEY
-
+    replace_existing_custom_formats: "true"
     # Include templates for quality definitions, profiles, and custom formats
     include:
       # Quality definitions for movies
