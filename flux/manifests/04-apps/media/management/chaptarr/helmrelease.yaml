@@ -20,7 +20,7 @@ spec:
     app:
       name: chaptarr
       # renovate: datasource=docker depName=robertlordhood/chaptarr
-      image: robertlordhood/chaptarr@sha256:a59144ebedc6cc044153affcb03b49ced2a9e9db43cb8446e186f0557f05abec
+      image: robertlordhood/chaptarr@sha256:83323632bf1c2bf1fda4e0dde77f5e1dd97a6ca90341c4c1e49058e5809cf192
       container:
         name: chaptarr
         port: 8789
