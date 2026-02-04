@@ -29,6 +29,8 @@ spec:
             value: "America/Denver"
           - name: UMASK_SET
             value: "022"
+          - name: TRANSMISSION__RPC_HOST_WHITELIST_ENABLED
+            value: "false"
       args:
         - "--allowed"
         - "*.*.*.*"
