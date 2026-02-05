@@ -26,7 +26,7 @@ spec:
       name: firecrawl
       namespace: firecrawl
       # renovate: datasource=docker depName=ghcr.io/firecrawl/firecrawl
-      image: ghcr.io/firecrawl/firecrawl@sha256:c485996d5299acedd3b959ecba15ee7090e29e81487e3b54c7294493ee10477d
+      image: ghcr.io/firecrawl/firecrawl@sha256:e66e62d3e256514f11d59ba9846e5913053911df35efdc4aef7cad874240bb12
       container:
         name: firecrawl
         port: 3002
