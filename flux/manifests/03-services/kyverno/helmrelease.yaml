@@ -41,6 +41,10 @@ spec:
       resourceFiltersExclude:
         - "[ReplicaSet,*,*]"
         - "[ReplicaSet/?*,*,*]"
+        # system-upgrade: tuppr jobs and upgrade CR status patches; exclude so ops don't depend on webhook connectivity
+        - "[Job,system-upgrade,*]"
+        - "[TalosUpgrade,*,*]"
+        - "[KubernetesUpgrade,*,*]"
     global:
       image:
         registry: ghcr.io
