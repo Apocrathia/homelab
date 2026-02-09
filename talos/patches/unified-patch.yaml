@@ -1,8 +1,7 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.3/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.12.3/pkg/machinery/config/schemas/config.schema.json
 machine:
   features:
-    rbac: true
     kubernetesTalosAPIAccess:
       allowedKubernetesNamespaces:
         - system-upgrade
@@ -41,21 +40,12 @@ machine:
     net.core.somaxconn: "32768"
     net.core.netdev_max_backlog: "16384"
     user.max_user_namespaces: "10000"
-  network:
-    interfaces:
-      - interface: eth0
-        dhcp: true
-        vip:
-          ip: "10.100.1.8"
   install:
     disk: /dev/sda
     wipe: true
     # renovate: datasource=github-releases depName=siderolabs/talos
     image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.12.3
     # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=undefined&target=metal&version=1.12.2
-  time:
-    servers:
-      - pool.ntp.org
 cluster:
   clusterName: home
   allowSchedulingOnControlPlanes: true
@@ -85,8 +75,8 @@ cluster:
         cpu: "2000m"
         memory: "4Gi" # Increased for larger CRD watch cache
       limits:
-        cpu: "4000m" # Allow bursting
-        memory: "8Gi" # Increased to accommodate larger watch cache
+        cpu: "5000m" # Allow bursting
+        memory: "10Gi" # Increased to accommodate larger watch cache
   network:
     cni:
       name: none
@@ -142,3 +132,16 @@ kind: OOMConfig
 triggerExpression: "false"
 cgroupRankingExpression: "0.0"
 sampleInterval: "5s"
+---
+# Layer 2 VIP for Kubernetes API (replaces deprecated machine.network.interfaces[].vip)
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: 10.100.1.8
+link: eth0
+---
+# NTP time servers (replaces deprecated machine.time)
+apiVersion: v1alpha1
+kind: TimeSyncConfig
+ntp:
+  servers:
+    - pool.ntp.org

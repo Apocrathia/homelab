@@ -1,24 +1,10 @@
 ---
-# Remove auto hostname config to allow static hostname
-apiVersion: v1alpha1
-kind: HostnameConfig
-$patch: delete
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.11.3/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.12.3/pkg/machinery/config/schemas/config.schema.json
 machine:
   nodeLabels:
-    # https://www.robert-jensen.dk/posts/2025-loadbalancer-not-working-on-single-node-talos-cluster/
+    # https://www.robert-jensen.dk/posts/2025/fix-loadbalancer-services-not-working-on-single-node-talos-kubernetes-cluster/
     node.kubernetes.io/exclude-from-external-load-balancers: ""
     $patch: delete
-  network:
-    hostname: talos-02
-    interfaces:
-      - interface: eth0
-        addresses:
-          - 10.100.1.81/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 10.100.1.1
   certSANs:
     - "10.100.1.81"
     - "10.100.1.8"
@@ -26,3 +12,16 @@ machine:
     - "talos-02.services.apocrathia.com"
     - "kubernetes.apocrathia.com"
     - "127.0.0.1"
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: talos-02
+auto: false
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: eth0
+addresses:
+  - address: 10.100.1.81/24
+routes:
+  - gateway: 10.100.1.1
