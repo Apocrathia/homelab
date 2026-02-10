@@ -16,7 +16,7 @@ machine:
 apiVersion: v1alpha1
 kind: HostnameConfig
 hostname: talos-04
-auto: false
+auto: off # yamllint disable-line rule:truthy
 ---
 apiVersion: v1alpha1
 kind: LinkConfig
