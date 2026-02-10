@@ -242,6 +242,7 @@ spec:
       prometheusSpec:
         updateStrategy:
           type: Recreate
+        maximumStartupDurationSeconds: 1800
         retention: 7d
         retentionSize: 90GB
         resources:
