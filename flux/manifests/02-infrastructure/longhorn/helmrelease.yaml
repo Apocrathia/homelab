@@ -78,7 +78,7 @@ spec:
       engineReplicaTimeout: "30" # 30 seconds timeout
       concurrentReplicaRebuildPerNodeLimit: "3" # Limit concurrent rebuilds
       concurrentVolumeBackupRestorePerNodeLimit: "1" # Limit concurrent restores
-      rebuildConcurrentSyncLimit: '{"v1":"1"}' # Fix for v1.11.0 engine validation. TODO: Remove this once we upgrade to v1.11.1 or later.
+      rebuildConcurrentSyncLimit: "2" # Limit concurrent syncs
 
       # Data integrity and recovery
       snapshotDataIntegrity: "fast-check" # Enable fast integrity checking
