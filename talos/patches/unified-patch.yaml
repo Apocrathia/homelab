@@ -70,6 +70,13 @@ cluster:
       # Goaway chance to force client reconnection distribution
       # Helps prevent thundering herd on single API server
       goaway-chance: "0.01"
+      # OIDC authentication via Authentik
+      oidc-issuer-url: "https://auth.gateway.services.apocrathia.com/application/o/kubernetes/"
+      oidc-client-id: "kubernetes"
+      oidc-username-claim: "email"
+      oidc-username-prefix: "oidc:"
+      oidc-groups-claim: "groups"
+      oidc-groups-prefix: "oidc:"
     resources:
       requests:
         cpu: "2000m"
@@ -138,6 +145,12 @@ apiVersion: v1alpha1
 kind: Layer2VIPConfig
 name: 10.100.1.8
 link: eth0
+---
+# DNS resolvers (overrides Talos defaults of 1.1.1.1 and 8.8.8.8)
+apiVersion: v1alpha1
+kind: ResolverConfig
+nameservers:
+  - address: 10.100.1.1
 ---
 # NTP time servers (replaces deprecated machine.time)
 apiVersion: v1alpha1
