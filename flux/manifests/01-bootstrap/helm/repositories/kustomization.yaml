@@ -20,6 +20,7 @@ resources:
   - fluent.yaml
   - gitlab.yaml
   - grafana.yaml
+  - headlamp.yaml
   - k8s-dashboard.yaml
   - kyverno.yaml
   - longhorn.yaml
