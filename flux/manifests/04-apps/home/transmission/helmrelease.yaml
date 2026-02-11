@@ -62,7 +62,7 @@ spec:
       initContainers:
         - name: gluetun
           # renovate: datasource=docker depName=qmcgaw/gluetun
-          image: qmcgaw/gluetun:v3.41.0
+          image: qmcgaw/gluetun:v3.41.1
           restartPolicy: Always
           env:
             # VPN Credentials from 1Password
