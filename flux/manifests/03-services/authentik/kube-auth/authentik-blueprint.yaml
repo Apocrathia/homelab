@@ -31,6 +31,23 @@ entries:
     attrs:
       name: "kubernetes-viewers"
 
+  # Custom email scope mapping that always returns email_verified: true
+  # Required because the K8s API server rejects tokens with email_verified: false
+  # Authentik does not support email verification, so we need to add it manually.
+  - model: authentik_providers_oauth2.scopemapping
+    state: present
+    identifiers:
+      name: "Kubernetes Email"
+    attrs:
+      name: "Kubernetes Email"
+      scope_name: "email"
+      description: "Email claim with verified status for Kubernetes OIDC"
+      expression: |
+        return {
+            "email": request.user.email,
+            "email_verified": True,
+        }
+
   # Scope mapping for groups claim
   - model: authentik_providers_oauth2.scopemapping
     state: present
@@ -56,7 +73,7 @@ entries:
       invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "openid"]]
-        - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "email"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [name, "Kubernetes Email"]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "profile"]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "groups"]]
       sub_mode: "user_email"
@@ -69,6 +86,8 @@ entries:
         - url: "http://localhost:18000"
           matching_mode: "strict"
         - url: "http://127.0.0.1:8000"
+          matching_mode: "strict"
+        - url: "https://headlamp.gateway.services.apocrathia.com/oidc-callback"
           matching_mode: "strict"
       client_id: "kubernetes"
       client_type: "public"

@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: headlamp
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application library entry for Headlamp
+  # Authentication is handled by Headlamp's native OIDC integration
+  # using the kubernetes OIDC provider from kube-auth
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "headlamp"
+    attrs:
+      name: "Headlamp"
+      slug: "headlamp"
+      group: "Platform"
+      launch_url: "https://headlamp.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/headlamp/icon.svg"
+      meta_description: "Kubernetes web UI with OIDC authentication"
+      meta_publisher: "Kubernetes SIG UI"
