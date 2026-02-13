@@ -14,11 +14,14 @@
   "flux": {
     "enabled": true
   },
-  "binarySource": "install",
   "kubernetes": {
     "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
   },
   "packageRules": [
+    {
+      "matchDatasources": ["python-version"],
+      "enabled": false
+    },
     {
       "matchCategories": ["docker"],
       "enabled": true
@@ -121,7 +124,5 @@
   "commitMessagePrefix": "chore(deps):",
   "rebaseWhen": "behind-base-branch",
   "platformAutomerge": true,
-  "automergeType": "pr",
-  "onboarding": false,
-  "requireConfig": "optional"
+  "automergeType": "pr"
 }

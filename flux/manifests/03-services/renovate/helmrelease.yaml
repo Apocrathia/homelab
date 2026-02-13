@@ -67,6 +67,14 @@ spec:
       logLevel: "info"
       logFormat: "json"
 
+      # Global self-hosted configuration
+      config: |
+        module.exports = {
+          binarySource: "install",
+          onboarding: false,
+          requireConfig: "optional",
+        }
+
     # Cache persistence - disabled since we're using PostgreSQL
     # Cache is ephemeral and can be rebuilt on restart
     cachePersistence:
