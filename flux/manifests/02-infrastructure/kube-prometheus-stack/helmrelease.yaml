@@ -243,8 +243,21 @@ spec:
         updateStrategy:
           type: Recreate
         maximumStartupDurationSeconds: 1800
-        retention: 7d
+        retention: 48h
         retentionSize: 90GB
+        # Override the default liveness probe which is too aggressive
+        # for an instance with large WAL replay and remote write to Mimir.
+        # Default: failureThreshold=6, periodSeconds=5, timeoutSeconds=3 (30s grace)
+        containers:
+          - name: prometheus
+            livenessProbe:
+              httpGet:
+                path: /-/healthy
+                port: http-web
+                scheme: HTTP
+              failureThreshold: 20
+              periodSeconds: 10
+              timeoutSeconds: 10
         resources:
           requests:
             cpu: 512m
