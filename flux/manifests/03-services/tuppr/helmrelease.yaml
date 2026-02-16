@@ -25,6 +25,18 @@ spec:
               - op: add
                 path: /spec/issuerRef/group
                 value: cert-manager.io
+          # Chart uses EmptyDir for webhook cert; cert-rotator doesn't copy from Secret on
+          # startup, so TLS handshake fails. Mount the cert-manager Secret directly.
+          - target:
+              kind: Deployment
+              name: tuppr
+            patch: |
+              - op: replace
+                path: /spec/template/spec/volumes/0
+                value:
+                  name: cert
+                  secret:
+                    secretName: tuppr-webhook-server-cert
   values:
     replicaCount: 1
 
