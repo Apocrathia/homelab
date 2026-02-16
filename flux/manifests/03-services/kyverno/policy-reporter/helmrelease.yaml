@@ -10,7 +10,7 @@ spec:
     spec:
       chart: policy-reporter
       # renovate: datasource=helm registryUrl=https://kyverno.github.io/policy-reporter depName=policy-reporter
-      version: "3.7.1"
+      version: "3.7.2"
       sourceRef:
         kind: HelmRepository
         name: policy-reporter
