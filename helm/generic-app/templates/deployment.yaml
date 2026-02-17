@@ -52,7 +52,7 @@ spec:
           {{- range .Values.app.dnsConfig.options }}
           - name: {{ .name }}
             {{- if .value }}
-            value: {{ .value }}
+            value: {{ .value | quote }}
             {{- end }}
           {{- end }}
         {{- end }}
