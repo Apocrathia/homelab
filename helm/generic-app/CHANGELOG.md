@@ -1,6 +1,12 @@
 # Changelog
 
-## Version 0.0.58 (Latest)
+## Version 0.0.59 (Latest)
+
+- **Fixed DNS config option values rendered as numbers instead of strings**: Kubernetes requires `dnsConfig.options[].value` to be a string, but the template output bare values causing `cannot unmarshal number into Go struct field` errors
+  - **Fix**: Added `| quote` to the dnsConfig options value in the deployment template
+  - **Impact**: `ndots` and other numeric DNS options now deploy correctly
+
+## Version 0.0.58
 
 - **Added DNS Configuration Support**: Added support for configuring pod DNS settings via `app.dnsConfig`
   - **New Configuration**: `app.dnsConfig` supports `nameservers`, `searches`, and `options`
