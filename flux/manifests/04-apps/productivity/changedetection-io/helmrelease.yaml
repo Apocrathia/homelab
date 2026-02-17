@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.56"
+      version: "0.0.57"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -136,6 +136,15 @@ spec:
         - name: config
           mountPath: /config
 
+      volumes:
+        emptyDir:
+          - name: temp
+            mountPath: /tmp
+          - name: shm
+            medium: Memory
+            mountPath: /dev/shm
+            sizeLimit: "2Gi"
+
     storage:
       longhorn:
         enabled: true
@@ -144,17 +153,6 @@ spec:
             capacity: 5Gi
       smb:
         enabled: false
-
-    # Additional writable directories for temporary files
-    volumes:
-      emptyDir:
-        - name: temp
-          mountPath: /tmp
-      tmpfs:
-        - name: shm
-          medium: Memory
-          mountPath: /dev/shm
-          sizeLimit: "2Gi"
 
     secrets:
       enabled: false
