@@ -39,11 +39,11 @@
     [runners.kubernetes.container_security_context.capabilities]
     drop = ["ALL"]
 
-    # DNS configuration: explicitly set cluster DNS nameserver and ndots option.
-    # Alpine's musl libc struggles with Kubernetes' default ndots:5, so we set ndots:1.
-    # Explicit nameservers ensure DNS resolution works even if dns_policy behavior is inconsistent.
+    # DNS configuration: use ClusterFirst policy so Kubernetes injects cluster DNS automatically,
+    # then override only ndots to fix Alpine musl issues with Kubernetes default ndots:5.
+    # CI jobs don't need cluster service resolution, so we don't need explicit search domains.
+    dns_policy = "cluster-first"
     [runners.kubernetes.dns_config]
-    nameservers = ["10.69.0.10"]  # kube-dns ClusterIP (pinned in coredns/service.yaml)
     [[runners.kubernetes.dns_config.options]]
       name = "ndots"
       value = "1"
