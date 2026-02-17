@@ -228,6 +228,21 @@ app:
   podAntiAffinity:
     enabled: true
 
+  # DNS configuration for pod (optional)
+  # dnsConfig:
+  #   # Custom DNS nameservers
+  #   nameservers:
+  #     - "10.69.0.10" # Cluster DNS
+  #   # DNS search domains
+  #   searches:
+  #     - "default.svc.cluster.local"
+  #     - "svc.cluster.local"
+  #     - "cluster.local"
+  #   # DNS resolver options
+  #   options:
+  #     - name: ndots
+  #       value: "1" # Reduce search domain lookups for external domains
+
   # Disable SA token mounting by default (security best practice)
   # Set to true only if your app needs Kubernetes API access
   automountServiceAccountToken: false

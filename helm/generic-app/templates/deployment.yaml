@@ -33,6 +33,30 @@ spec:
       {{- end }}
     spec:
       automountServiceAccountToken: {{ .Values.app.automountServiceAccountToken | default false }}
+      {{- if .Values.app.dnsConfig }}
+      dnsConfig:
+        {{- if .Values.app.dnsConfig.nameservers }}
+        nameservers:
+          {{- range .Values.app.dnsConfig.nameservers }}
+          - {{ . }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.app.dnsConfig.searches }}
+        searches:
+          {{- range .Values.app.dnsConfig.searches }}
+          - {{ . }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.app.dnsConfig.options }}
+        options:
+          {{- range .Values.app.dnsConfig.options }}
+          - name: {{ .name }}
+            {{- if .value }}
+            value: {{ .value }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
       {{- if .Values.app.podAntiAffinity.enabled }}
       affinity:
         podAntiAffinity:

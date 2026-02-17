@@ -60,6 +60,9 @@ All available configuration values for the chart:
 | `app.securityContext.readOnlyRootFilesystem`   | bool   | `true`                                            | Mount root filesystem as read-only                                          |
 | `app.securityContext.capabilities.add`         | array  | `[]`                                              | Capabilities to add                                                         |
 | `app.securityContext.capabilities.drop`        | array  | `["ALL"]`                                         | Capabilities to drop                                                        |
+| `app.dnsConfig.nameservers`                    | array  | `[]`                                              | DNS nameservers for the pod                                                 |
+| `app.dnsConfig.searches`                       | array  | `[]`                                              | DNS search domains                                                          |
+| `app.dnsConfig.options`                        | array  | `[]`                                              | DNS resolver options (e.g., ndots)                                          |
 | `app.resources.requests.cpu`                   | string | `50m`                                             | CPU request                                                                 |
 | `app.resources.requests.memory`                | string | `64Mi`                                            | Memory request                                                              |
 | `app.resources.limits.cpu`                     | string | `100m`                                            | CPU limit                                                                   |
@@ -295,6 +298,41 @@ app:
     fsGroup: 1000
     fsGroupChangePolicy: "OnRootMismatch" # Automatically fix volume ownership
     runAsNonRoot: true
+```
+
+### DNS Configuration
+
+Configure pod DNS settings for applications that need custom DNS resolution behavior.
+
+```yaml
+app:
+  dnsConfig:
+    # Optional: Custom DNS nameservers
+    # nameservers:
+    #   - "10.69.0.10" # Cluster DNS
+    # Optional: DNS search domains
+    # searches:
+    #   - "default.svc.cluster.local"
+    #   - "svc.cluster.local"
+    #   - "cluster.local"
+    # DNS resolver options
+    options:
+      - name: ndots
+        value: "1" # Reduce search domain lookups for external domains
+```
+
+**Common Use Cases:**
+
+**Improve External Domain Resolution** (e.g., browser automation):
+
+Setting `ndots: 1` tells the DNS resolver to skip search domain lookups for domain names with at least one dot, which improves resolution of external domains and reduces DNS query overhead.
+
+```yaml
+app:
+  dnsConfig:
+    options:
+      - name: ndots
+        value: "1"
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
     # capabilities defaults to drop: [ALL]

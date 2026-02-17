@@ -1,6 +1,14 @@
 # Changelog
 
-## Version 0.0.57 (Latest)
+## Version 0.0.58 (Latest)
+
+- **Added DNS Configuration Support**: Added support for configuring pod DNS settings via `app.dnsConfig`
+  - **New Configuration**: `app.dnsConfig` supports `nameservers`, `searches`, and `options`
+  - **Use Case**: Useful for applications that need custom DNS settings, such as setting `ndots` to improve external domain resolution
+  - **Template Updates**: Added `dnsConfig` block to deployment template that conditionally renders based on values
+  - **Documentation**: Added DNS configuration examples to README and values.yaml
+
+## Version 0.0.57
 
 - **Removed Tmpfs Abstraction**: Removed `tmpfs` volume type from chart API - use `emptyDir` with `medium: Memory` instead
   - **Rationale**: Kubernetes doesn't support `tmpfs` as a volume type, so we shouldn't pretend it does
