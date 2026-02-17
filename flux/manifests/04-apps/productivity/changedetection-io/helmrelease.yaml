@@ -62,6 +62,10 @@ spec:
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
 
       securityContext:
         runAsUser: "0"
