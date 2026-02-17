@@ -5,6 +5,7 @@ kind: Kustomization
 
 resources:
   - deployment.yaml
+  - service.yaml
 
 patches:
   - path: deployment-patch.yaml

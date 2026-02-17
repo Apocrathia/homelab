@@ -1,0 +1,28 @@
+---
+# Pins the cluster DNS Service IP so consumers (e.g. GitLab runner job pods) can rely on it.
+# Must match the existing kube-dns ClusterIP (10.69.0.10) if the Service was created by Talos;
+# otherwise this creates it with a stable IP.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-dns
+  namespace: kube-system
+  labels:
+    k8s-app: kube-dns
+spec:
+  clusterIP: 10.69.0.10
+  ports:
+    - name: dns
+      port: 53
+      protocol: UDP
+      targetPort: dns
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: dns-tcp
+    - name: metrics
+      port: 9153
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    k8s-app: kube-dns

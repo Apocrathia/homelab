@@ -39,9 +39,13 @@
     [runners.kubernetes.container_security_context.capabilities]
     drop = ["ALL"]
 
-    # DNS configuration to fix Alpine Linux resolution with high ndots
-    # Alpine's musl libc struggles with Kubernetes' default ndots:5
+    # DNS configuration: explicit nameservers + ndots for Alpine
+    # Partial dns_config (options only) can leave build pods with no nameservers and break
+    # resolution. Use cluster DNS so job pods get both cluster and external resolution.
+    # ClusterIP is stable for the lifetime of the kube-dns Service (only changes if Service is recreated).
+    # ndots:1 avoids Alpine musl issues with Kubernetes default ndots:5.
     [runners.kubernetes.dns_config]
+    nameservers = ["10.69.0.10"]
     [[runners.kubernetes.dns_config.options]]
       name = "ndots"
       value = "1"
