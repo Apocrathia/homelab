@@ -9,6 +9,8 @@ spec:
   chart:
     spec:
       chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.57"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -197,7 +199,6 @@ spec:
             mountPath: /usr/share/nginx/html
           - name: nginx-config-dest
             mountPath: /etc/nginx/conf.d
-        tmpfs:
           - name: nginx-cache
             mountPath: /var/cache/nginx
           - name: nginx-run

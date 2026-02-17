@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.55"
+      version: "0.0.57"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -91,7 +91,7 @@ spec:
 
       volumes:
         # Temp directory for read-only root filesystem
-        tmpfs:
+        emptyDir:
           - name: tmp
             mountPath: /tmp
 

@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.55"
+      version: "0.0.57"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -63,13 +63,11 @@ spec:
         targetPort: 80
         portName: http
       volumes:
-        tmpfs:
+        emptyDir:
           - name: nginx-cache
             mountPath: /var/cache/nginx
-            options: "size=100M"
           - name: nginx-run
             mountPath: /var/run
-            options: "size=10M"
 
     storage:
       longhorn:
