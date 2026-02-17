@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.55"
+      version: "0.0.56"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -95,7 +95,10 @@ spec:
             - name: SCREEN_DEPTH
               value: "16"
             - name: MAX_CONCURRENT_CHROME_PROCESSES
-              value: "10"
+              value: "5"
+          volumeMounts:
+            - name: changedetection-io-shm
+              mountPath: /dev/shm
           volumes:
             emptyDir:
               - name: temp
@@ -109,11 +112,11 @@ spec:
                 - SYS_ADMIN
           resources:
             requests:
-              cpu: 50m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 100m
               memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
 
       resources:
         requests:
@@ -147,6 +150,11 @@ spec:
       emptyDir:
         - name: temp
           mountPath: /tmp
+      tmpfs:
+        - name: shm
+          medium: Memory
+          mountPath: /dev/shm
+          sizeLimit: "2Gi"
 
     secrets:
       enabled: false
