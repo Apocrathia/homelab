@@ -34,7 +34,7 @@ spec:
           - name: BASE_URL
             value: "https://changedetection.gateway.services.apocrathia.com"
           - name: PLAYWRIGHT_DRIVER_URL
-            value: "ws://localhost:3000"
+            value: "ws://localhost:3000/?--disable-gpu&--disable-gpu-sandbox&--disable-software-rasterizer"
           - name: PLAYWRIGHT_BROWSER_TYPE
             value: "chromium"
           - name: PLAYWRIGHT_SERVICE_WORKERS
