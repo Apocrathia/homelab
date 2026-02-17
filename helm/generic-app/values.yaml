@@ -366,19 +366,16 @@ app:
   volumes:
     # EmptyDir volumes
     emptyDir: []
-    # ConfigMap volumes
-    configMap: []
-    # Tmpfs volumes (converted to emptyDir with medium: Memory)
-    tmpfs: []
-    # Example tmpfs volumes:
-    # tmpfs:
+    # Example emptyDir volumes:
+    # emptyDir:
+    #   - name: temp
+    #     mountPath: /tmp
     #   - name: shm
     #     mountPath: /dev/shm
-    #     medium: Memory
+    #     medium: Memory  # Use Memory for RAM-based storage (tmpfs), omit for filesystem
     #     sizeLimit: "2Gi"
-    #   - name: run
-    #     mountPath: /run
-    #     options: "exec,size=100M"  # sizeLimit parsed from options string
+    # ConfigMap volumes
+    configMap: []
     # Example ConfigMap volumes:
     # configMap:
     #   - name: my-config

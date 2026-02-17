@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.56 (Latest)
+## Version 0.0.57 (Latest)
+
+- **Removed Tmpfs Abstraction**: Removed `tmpfs` volume type from chart API - use `emptyDir` with `medium: Memory` instead
+  - **Rationale**: Kubernetes doesn't support `tmpfs` as a volume type, so we shouldn't pretend it does
+  - **Change**: `app.volumes.tmpfs` removed - use `app.volumes.emptyDir` with `medium: Memory` for RAM-based storage
+  - **Breaking Change**: Existing configurations using `tmpfs` must be migrated to `emptyDir` with `medium: Memory`
+  - **Template Updates**: `emptyDir` volumes now support `medium` and `sizeLimit` options directly
+  - **Documentation**: Updated README and examples to use `emptyDir` with `medium` option
+
+## Version 0.0.56
 
 - **Fixed Tmpfs Volume Implementation**: Fixed tmpfs volumes to use proper Kubernetes `emptyDir` volumes instead of invalid `tmpfs` type
   - **Problem Solved**: The chart was generating invalid Kubernetes YAML with `tmpfs:` volume type, which Kubernetes doesn't support

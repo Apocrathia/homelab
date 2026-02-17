@@ -74,7 +74,6 @@ All available configuration values for the chart:
 | `app.service.portName`                         | string | `http`                                            | Service port name                                                           |
 | `app.service.extraServicePorts`                | array  | `[]`                                              | Additional service ports                                                    |
 | `app.volumes.emptyDir`                         | array  | `[]`                                              | EmptyDir volumes                                                            |
-| `app.volumes.tmpfs`                            | array  | `[]`                                              | Tmpfs volumes (RAM-based)                                                   |
 | `app.volumes.configMap`                        | array  | `[]`                                              | ConfigMap volumes                                                           |
 | `app.volumeMounts`                             | array  | `[]`                                              | Volume mounts for pod-wide storage                                          |
 | `storage.longhorn.enabled`                     | bool   | `false`                                           | Enable Longhorn storage                                                     |
@@ -178,14 +177,12 @@ app:
     emptyDir: # EmptyDir volumes
       - name: cache
         mountPath: /tmp/cache
-    tmpfs: # Tmpfs volumes (converted to emptyDir)
       - name: shm
         mountPath: /dev/shm
         medium: Memory
         sizeLimit: "2Gi"
-      - name: run
-        mountPath: /run
-        options: "exec,size=100M"
+      - name: temp
+        mountPath: /tmp
     configMap: # ConfigMap volumes
       - name: my-config
         mountPath: /etc/config
@@ -702,16 +699,12 @@ app:
       - name: temp
         mountPath: /tmp
 
-    # Tmpfs volumes (converted to emptyDir)
-    tmpfs:
+    # EmptyDir volumes with medium and sizeLimit options
+    emptyDir:
       - name: shm
         mountPath: /dev/shm
         medium: Memory
         sizeLimit: "2Gi"
-      - name: run
-        mountPath: /run
-        medium: Memory
-        options: "exec,size=100M"
       - name: tmp
         mountPath: /tmp
         sizeLimit: "500M"
@@ -732,34 +725,29 @@ app:
 - ✅ **Direct** - ConfigMap files mounted exactly where needed
 - ✅ **Self-contained** - each volume definition includes its mount info
 - ✅ **Container-specific** - available for main container, init containers, and sidecars
-- ✅ **Exec permissions** - tmpfs supports exec flags for read-only containers
 
 ### Container Volume Mounting
 
 The chart supports two types of volume configuration:
 
 1. **Pod-wide storage** (from `storage` section) - referenced by name in `volumeMounts`
-2. **Local storage** (emptyDir, tmpfs, configMap) - defined in `volumes` section
+2. **Local storage** (emptyDir, configMap) - defined in `volumes` section
 
-### Tmpfs Volumes
+### EmptyDir Volumes
 
-Tmpfs volumes are converted to Kubernetes `emptyDir` volumes with configurable storage medium. Perfect for:
+EmptyDir volumes support configurable storage medium and size limits. Perfect for:
 
-- **Shared memory** (`/dev/shm`) for browser automation and other applications requiring tmpfs
+- **Shared memory** (`/dev/shm`) for browser automation and other applications requiring RAM-based storage
 - **High-performance temporary storage** (faster than disk when using `medium: Memory`)
-- **Process management directories** like `/run` for s6-overlay
+- **Temporary files and caches** that don't need persistence
 
 ```yaml
-tmpfs:
+emptyDir:
   - name: shm
     mountPath: /dev/shm
-    medium: Memory
+    medium: Memory # Use Memory for RAM-based storage (tmpfs), omit for filesystem
     sizeLimit: "2Gi"
-  - name: run
-    mountPath: /run
-    medium: Memory
-    options: "exec,size=100M" # sizeLimit parsed from options string
-  - name: tmp
+  - name: temp
     mountPath: /tmp
     # Defaults to filesystem (no medium specified)
     sizeLimit: "500M"
@@ -767,11 +755,8 @@ tmpfs:
 
 **Configuration options:**
 
-- `medium` - Storage medium: `Memory` for tmpfs (RAM-based) or omit for filesystem (default)
-- `sizeLimit` - Size limit (e.g., `"2Gi"`, `"500M"`) - can be set directly or parsed from `options`
-- `options` - Legacy format: comma-separated options string (e.g., `"exec,size=100M"`) - `size=` value is parsed as `sizeLimit`
-
-**Note:** Tmpfs volumes are converted to Kubernetes `emptyDir` volumes. When `medium: Memory` is specified, they use tmpfs (RAM-based storage). When omitted, they default to filesystem-based emptyDir volumes.
+- `medium` - Storage medium: `Memory` for RAM-based storage (tmpfs) or omit for filesystem (default)
+- `sizeLimit` - Size limit (e.g., `"2Gi"`, `"500M"`)
 
 **Both can be used together** - the chart will mount all volumes from both sections:
 

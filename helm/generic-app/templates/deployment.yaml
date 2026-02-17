@@ -273,12 +273,6 @@ spec:
               mountPath: {{ .mountPath }}
             {{- end }}
             {{- end }}
-            {{- if .Values.app.volumes.tmpfs }}
-            {{- range .Values.app.volumes.tmpfs }}
-            - name: {{ $.Values.app.name }}-{{ .name }}
-              mountPath: {{ .mountPath }}
-            {{- end }}
-            {{- end }}
             {{- if .Values.app.volumes.configMap }}
             {{- range .Values.app.volumes.configMap }}
             - name: {{ .name }}
@@ -695,29 +689,12 @@ spec:
         {{- if not (hasKey $createdVolumes $volName) }}
         {{- $_ := set $createdVolumes $volName true }}
         - name: {{ $volName }}
-          emptyDir: {}
-        {{- end }}
-        {{- end }}
-        {{- /* 2. App-level tmpfs volumes (prefixed with app.name) - converted to emptyDir */}}
-        {{- range .Values.app.volumes.tmpfs }}
-        {{- $volName := printf "%s-%s" $.Values.app.name .name }}
-        {{- if not (hasKey $createdVolumes $volName) }}
-        {{- $_ := set $createdVolumes $volName true }}
-        - name: {{ $volName }}
           emptyDir:
             {{- if and (hasKey . "medium") (ne .medium "") }}
             medium: {{ .medium }}
             {{- end }}
             {{- if hasKey . "sizeLimit" }}
             sizeLimit: {{ .sizeLimit }}
-            {{- else if hasKey . "options" }}
-            {{- /* Parse size from options string (e.g., "size=2Gi" or "exec,size=100M") */}}
-            {{- $parts := splitList "," .options }}
-            {{- range $parts }}
-            {{- if hasPrefix "size=" . }}
-            sizeLimit: {{ trim (replace "size=" "" .) }}
-            {{- end }}
-            {{- end }}
             {{- end }}
         {{- end }}
         {{- end }}
