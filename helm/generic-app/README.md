@@ -178,7 +178,11 @@ app:
     emptyDir: # EmptyDir volumes
       - name: cache
         mountPath: /tmp/cache
-    tmpfs: # Tmpfs volumes (RAM-based, supports exec permissions)
+    tmpfs: # Tmpfs volumes (converted to emptyDir)
+      - name: shm
+        mountPath: /dev/shm
+        medium: Memory
+        sizeLimit: "2Gi"
       - name: run
         mountPath: /run
         options: "exec,size=100M"
@@ -698,14 +702,19 @@ app:
       - name: temp
         mountPath: /tmp
 
-    # Tmpfs volumes (RAM-based, supports exec permissions)
+    # Tmpfs volumes (converted to emptyDir)
     tmpfs:
+      - name: shm
+        mountPath: /dev/shm
+        medium: Memory
+        sizeLimit: "2Gi"
       - name: run
         mountPath: /run
+        medium: Memory
         options: "exec,size=100M"
       - name: tmp
         mountPath: /tmp
-        options: "size=500M"
+        sizeLimit: "500M"
 
     # ConfigMap volumes (configuration files)
     configMap:
@@ -734,29 +743,35 @@ The chart supports two types of volume configuration:
 
 ### Tmpfs Volumes
 
-Tmpfs volumes are RAM-based temporary storage that support mount options like `exec` permissions. Perfect for:
+Tmpfs volumes are converted to Kubernetes `emptyDir` volumes with configurable storage medium. Perfect for:
 
-- **Read-only containers** that need exec permissions (e.g., LinuxServer.io containers)
-- **High-performance temporary storage** (faster than disk)
+- **Shared memory** (`/dev/shm`) for browser automation and other applications requiring tmpfs
+- **High-performance temporary storage** (faster than disk when using `medium: Memory`)
 - **Process management directories** like `/run` for s6-overlay
 
 ```yaml
 tmpfs:
+  - name: shm
+    mountPath: /dev/shm
+    medium: Memory
+    sizeLimit: "2Gi"
   - name: run
     mountPath: /run
-    options: "exec,size=100M" # exec permissions + 100MB limit
+    medium: Memory
+    options: "exec,size=100M" # sizeLimit parsed from options string
   - name: tmp
     mountPath: /tmp
-    options: "size=500M" # 500MB limit, no exec needed
+    # Defaults to filesystem (no medium specified)
+    sizeLimit: "500M"
 ```
 
-**Common mount options:**
+**Configuration options:**
 
-- `exec` - Allow execution of binaries (required for s6-overlay)
-- `noexec` - Disable execution (default)
-- `size=N` - Set size limit (e.g., `size=100M`, `size=1G`)
-- `rw` - Read-write access (default)
-- `ro` - Read-only access
+- `medium` - Storage medium: `Memory` for tmpfs (RAM-based) or omit for filesystem (default)
+- `sizeLimit` - Size limit (e.g., `"2Gi"`, `"500M"`) - can be set directly or parsed from `options`
+- `options` - Legacy format: comma-separated options string (e.g., `"exec,size=100M"`) - `size=` value is parsed as `sizeLimit`
+
+**Note:** Tmpfs volumes are converted to Kubernetes `emptyDir` volumes. When `medium: Memory` is specified, they use tmpfs (RAM-based storage). When omitted, they default to filesystem-based emptyDir volumes.
 
 **Both can be used together** - the chart will mount all volumes from both sections:
 

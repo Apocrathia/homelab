@@ -368,13 +368,17 @@ app:
     emptyDir: []
     # ConfigMap volumes
     configMap: []
-    # Tmpfs volumes (for read-only filesystem support)
+    # Tmpfs volumes (converted to emptyDir with medium: Memory)
     tmpfs: []
     # Example tmpfs volumes:
     # tmpfs:
+    #   - name: shm
+    #     mountPath: /dev/shm
+    #     medium: Memory
+    #     sizeLimit: "2Gi"
     #   - name: run
     #     mountPath: /run
-    #     options: "exec,size=100M"
+    #     options: "exec,size=100M"  # sizeLimit parsed from options string
     # Example ConfigMap volumes:
     # configMap:
     #   - name: my-config

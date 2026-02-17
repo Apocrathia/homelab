@@ -1,6 +1,18 @@
 # Changelog
 
-## Version 0.0.55 (Latest)
+## Version 0.0.56 (Latest)
+
+- **Fixed Tmpfs Volume Implementation**: Fixed tmpfs volumes to use proper Kubernetes `emptyDir` volumes instead of invalid `tmpfs` type
+  - **Problem Solved**: The chart was generating invalid Kubernetes YAML with `tmpfs:` volume type, which Kubernetes doesn't support
+  - **Solution**: Tmpfs volumes are now converted to `emptyDir` volumes with `medium: Memory` for RAM-based storage
+  - **New Configuration Options**:
+    - `medium` - Set to `Memory` for tmpfs (RAM-based) or omit for filesystem (default)
+    - `sizeLimit` - Size limit can be set directly (e.g., `"2Gi"`) or parsed from legacy `options` string
+  - **Backward Compatible**: Existing configurations using `options` string format continue to work - `size=` values are automatically parsed as `sizeLimit`
+  - **Template Updates**: Updated `deployment.yaml` to properly convert tmpfs volumes to emptyDir with configurable medium
+  - **Consistency**: Uses `hasKey` pattern for optional field checks, consistent with rest of template
+
+## Version 0.0.55
 
 - **Changed Longhorn Volume Replica Default**: Reduced default replica count from 3 to 2 for better storage efficiency
   - **Storage Optimization**: Reduces storage overhead by 33% (2 replicas instead of 3)
