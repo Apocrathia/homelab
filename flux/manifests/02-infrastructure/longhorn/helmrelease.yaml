@@ -75,6 +75,7 @@ spec:
       defaultDataLocality: "best-effort" # Allow replicas on different nodes
 
       # Engine and replica settings
+      concurrentAutomaticEngineUpgradePerNodeLimit: "0"
       engineReplicaTimeout: "30" # 30 seconds timeout
       concurrentReplicaRebuildPerNodeLimit: "3" # Limit concurrent rebuilds
       concurrentVolumeBackupRestorePerNodeLimit: "1" # Limit concurrent restores
