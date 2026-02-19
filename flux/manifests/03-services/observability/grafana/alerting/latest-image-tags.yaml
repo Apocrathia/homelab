@@ -44,10 +44,10 @@ spec:
               type: prometheus
               uid: prometheus
             expr: |
-              group by (pod, namespace, image) (
-                kube_pod_container_info{image=~".*:latest$"}
-                unless on(pod, namespace, container, image)
-                kube_pod_container_info{image=~".*:latest$"} offset 2h
+              group by (pod, namespace, image_spec) (
+                kube_pod_container_info{image_spec=~".*:latest$"}
+                unless on(pod, namespace, container, image_spec)
+                kube_pod_container_info{image_spec=~".*:latest$"} offset 2h
               )
             intervalMs: 1000
             maxDataPoints: 43200
@@ -92,7 +92,7 @@ spec:
                 type: query
       annotations:
         summary: "🆕 {{ $labels.namespace }}/{{ $labels.pod }} using :latest tag"
-        description: "Image: {{ $labels.image }}"
+        description: "Image: {{ $labels.image_spec }}"
       labels:
         severity: warning
         team: platform
@@ -131,8 +131,8 @@ spec:
               type: prometheus
               uid: prometheus
             expr: |
-              group by (pod, namespace, image) (
-                kube_pod_container_info{image=~".*:latest$"}
+              group by (pod, namespace, image_spec) (
+                kube_pod_container_info{image_spec=~".*:latest$"}
               )
             intervalMs: 1000
             maxDataPoints: 43200
@@ -177,7 +177,7 @@ spec:
                 type: query
       annotations:
         summary: "📋 {{ $labels.namespace }}/{{ $labels.pod }} using :latest tag"
-        description: "Image: {{ $labels.image }}"
+        description: "Image: {{ $labels.image_spec }}"
       labels:
         severity: info
         team: platform
@@ -201,7 +201,7 @@ spec:
     title: "{{ .CommonLabels.alertname }}{{ if gt (len .Alerts) 1 }} ({{ len .Alerts }} instances){{ end }}"
     message: |
       {{ range .Alerts }}• **{{ .Labels.namespace }}/{{ .Labels.pod }}**
-        `{{ .Labels.image }}`
+        `{{ .Labels.image_spec }}`
       {{ end }}
   valuesFrom:
     - targetPath: url
