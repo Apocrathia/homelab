@@ -27,11 +27,6 @@ Create a 1Password item:
 - `password`: PostgreSQL database password
 - `tmdb-api-key`: (Optional) TMDB API key for enhanced metadata. If not provided, BitMagnet uses a shared API key with rate limits.
 
-### Storage
-
-- **PostgreSQL**: 20GB Longhorn persistent volume for database storage
-- **No application storage**: BitMagnet is stateless and stores all data in PostgreSQL
-
 ### Access
 
 - **External URL**: `https://bitmagnet.gateway.services.apocrathia.com`

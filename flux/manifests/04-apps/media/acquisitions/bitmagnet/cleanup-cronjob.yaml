@@ -1,0 +1,120 @@
+---
+# Purges stale torrents from the bitmagnet database to prevent unbounded growth.
+# Bitmagnet has no built-in retention (https://github.com/bitmagnet-io/bitmagnet/issues/187),
+# so this CronJob enforces a 180-day retention policy on torrents not re-seen by the DHT crawler.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bitmagnet-db-cleanup
+  namespace: bitmagnet
+spec:
+  schedule: "0 3 * * 0" # Weekly at 3 AM Sunday
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: cleanup
+              # renovate: datasource=docker depName=postgres
+              image: postgres:17-alpine
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  echo "=== Bitmagnet DB Cleanup ==="
+                  echo "Database size before:"
+                  psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
+
+                  echo "Top 10 tables by size:"
+                  psql -c "
+                    SELECT relname, pg_size_pretty(pg_total_relation_size(c.oid))
+                    FROM pg_class c
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = 'public' AND c.relkind = 'r'
+                    ORDER BY pg_total_relation_size(c.oid) DESC
+                    LIMIT 10;
+                  "
+
+                  echo "Deleting torrents not seen in 180 days..."
+                  psql -c "
+                    DELETE FROM torrents t
+                    WHERE t.updated_at < NOW() - INTERVAL '180 days'
+                    AND NOT EXISTS (
+                      SELECT 1 FROM torrents_torrent_sources tts
+                      WHERE tts.info_hash = t.info_hash
+                      AND tts.updated_at >= NOW() - INTERVAL '180 days'
+                    );
+                  "
+
+                  echo "Cleaning up orphaned content metadata..."
+                  psql -c "
+                    DELETE FROM content c
+                    WHERE NOT EXISTS (
+                      SELECT 1 FROM torrent_contents tc
+                      WHERE tc.content_type = c.type
+                      AND tc.content_source = c.source
+                      AND tc.content_id = c.id
+                    );
+                  "
+
+                  echo "Running VACUUM ANALYZE..."
+                  psql -c "VACUUM (ANALYZE);"
+
+                  echo "Database size after:"
+                  psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
+
+                  echo "=== Cleanup complete ==="
+              env:
+                - name: PGHOST
+                  value: "bitmagnet-postgres-rw.bitmagnet.svc.cluster.local"
+                - name: PGPORT
+                  value: "5432"
+                - name: PGDATABASE
+                  value: "bitmagnet"
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: bitmagnet-secrets
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: bitmagnet-secrets
+                      key: password
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 10Mi
