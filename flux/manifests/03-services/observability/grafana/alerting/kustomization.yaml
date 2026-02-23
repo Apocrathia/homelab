@@ -10,3 +10,4 @@ resources:
   - slack.yaml
   - pushover.yaml
   - latest-image-tags.yaml
+  - pvc-capacity.yaml

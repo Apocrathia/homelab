@@ -1,0 +1,161 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: storage-alerts
+  namespace: prometheus-system
+spec:
+  title: Storage
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: pvc-capacity
+  namespace: prometheus-system
+spec:
+  name: PVC Capacity
+  folderRef: storage-alerts
+  interval: 15m
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: pvc-capacity-warning
+      title: PVC usage above 80%
+      condition: C
+      for: 15m
+      execErrState: Alerting
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            datasource:
+              type: prometheus
+              uid: prometheus
+            expr: |
+              kubelet_volume_stats_used_bytes
+              / kubelet_volume_stats_capacity_bytes
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0.8
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "{{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} above 80% capacity"
+        description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} is running low on space"
+      labels:
+        severity: warning
+        team: platform
+
+    - uid: pvc-capacity-critical
+      title: PVC usage above 90%
+      condition: C
+      for: 5m
+      execErrState: Alerting
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            datasource:
+              type: prometheus
+              uid: prometheus
+            expr: |
+              kubelet_volume_stats_used_bytes
+              / kubelet_volume_stats_capacity_bytes
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0.9
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "{{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} above 90% capacity"
+        description: "PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }} needs expansion urgently"
+      labels:
+        severity: critical
+        team: platform
