@@ -29,7 +29,7 @@ spec:
           containers:
             - name: cleanup
               # renovate: datasource=docker depName=postgres
-              image: postgres:17-alpine
+              image: postgres:18-alpine
               command:
                 - /bin/sh
                 - -c
