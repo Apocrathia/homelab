@@ -1,9 +1,8 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/recyclarr/recyclarr/master/schemas/config-schema.json
 
-# Recyclarr configuration for Sonarr and Radarr instances
-# Utilizes TRaSH Guides quality profiles and custom formats via include templates
-#
+# Recyclarr configuration for Sonarr and Radarr instances (v8 format).
+# Guide-backed quality profiles; custom formats use assign_scores_to.
 # Reference: https://recyclarr.dev/wiki/yaml/config-reference/
 
 # Configuration for Sonarr and Radarr instances
@@ -13,39 +12,31 @@ sonarr:
     # Internal cluster URLs
     base_url: !env_var SONARR_BASE_URL http://sonarr.sonarr.svc.cluster.local
     api_key: !env_var SONARR_API_KEY
-    replace_existing_custom_formats: "true"
 
-    # Include templates for quality definitions, profiles, and custom formats
-    include:
-      # Quality definitions for TV series
-      - template: sonarr-quality-definition-series
-
-      # Quality definitions for Anime
-      - template: sonarr-quality-definition-anime
-
-      # Quality profiles - WEB 1080p profile
-      - template: sonarr-v4-quality-profile-web-1080p
-
-      # Quality profiles - WEB 1080p alternative profile
-      - template: sonarr-v4-quality-profile-web-1080p-alternative
-
-      # Quality profiles - WEB 2160p profile
-      - template: sonarr-v4-quality-profile-web-2160p
-
-      # Quality profiles - WEB 2160p alternative profile
-      - template: sonarr-v4-quality-profile-web-2160p-alternative
-
-      # Quality profiles - Anime profile
-      - template: sonarr-v4-quality-profile-anime
-
-      # Custom formats for WEB 1080p
-      - template: sonarr-v4-custom-formats-web-1080p
-
-      # Custom formats for WEB 2160p
-      - template: sonarr-v4-custom-formats-web-2160p
-
-      # Custom formats for Anime
-      - template: sonarr-v4-custom-formats-anime
+    # v8: guide-backed quality profiles (official include templates removed in v8)
+    quality_definition:
+      type: series
+    quality_profiles:
+      - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+        name: WEB-1080p
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
+        name: WEB-1080p (Alternative)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: d1498e7d189fbe6c7110ceaabb7473e6 # WEB-2160p
+        name: WEB-2160p
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: dfa5eaae7894077ad6449169b6eb03e0 # WEB-2160p (Alternative)
+        name: WEB-2160p (Alternative)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
+        name: Remux-1080p - Anime
+        reset_unmatched_scores:
+          enabled: true
 
     # Additional custom formats using trash_ids with comprehensive scoring
     custom_formats:
@@ -320,101 +311,55 @@ radarr:
     # Internal cluster URLs
     base_url: !env_var RADARR_BASE_URL http://radarr.radarr.svc.cluster.local
     api_key: !env_var RADARR_API_KEY
-    replace_existing_custom_formats: "true"
-    # Include templates for quality definitions, profiles, and custom formats
-    include:
-      # Quality definitions for movies
-      - template: radarr-quality-definition-movie
 
-      # Quality definitions for Anime
-      - template: radarr-quality-definition-anime
-
-      # Quality definitions for SQP Streaming
-      - template: radarr-quality-definition-sqp-streaming
-
-      # Quality definitions for SQP UHD
-      - template: radarr-quality-definition-sqp-uhd
-
-      # Quality profiles - HD Bluray + WEB
-      - template: radarr-quality-profile-hd-bluray-web
-
-      # Quality profiles - UHD Bluray + WEB
-      - template: radarr-quality-profile-uhd-bluray-web
-
-      # Quality profiles - Remux + WEB 1080p
-      - template: radarr-quality-profile-remux-web-1080p
-
-      # Quality profiles - Remux + WEB 2160p
-      - template: radarr-quality-profile-remux-web-2160p
-
-      # Quality profiles - Anime
-      - template: radarr-quality-profile-anime
-
-      # Quality profiles - Streaming Qualtiy Profile 1 1080p
-      - template: radarr-quality-profile-sqp-1-1080p
-
-      # Quality profiles - SQP 1 WEB 1080p
-      - template: radarr-quality-profile-sqp-1-web-1080p
-
-      # Quality profiles - SQP 1 2160p 4K Only Default
-      - template: radarr-quality-profile-sqp-1-2160p-4k-only-default
-
-      # Quality profiles - SQP 1 2160p 4K Only IMAX Enhanced
-      - template: radarr-quality-profile-sqp-1-2160p-4k-only-imax-e
-
-      # Quality profiles - SQP 1 2160p Default
-      - template: radarr-quality-profile-sqp-1-2160p-default
-
-      # Quality profiles - SQP 1 2160p IMAX Enhanced
-      - template: radarr-quality-profile-sqp-1-2160p-imax-e
-
-      # Quality profiles - SQP 2
-      - template: radarr-quality-profile-sqp-2
-
-      # Quality profiles - SQP 3
-      - template: radarr-quality-profile-sqp-3
-
-      # Quality profiles - SQP 4
-      - template: radarr-quality-profile-sqp-4
-
-      # Quality profiles - SQP 5
-      - template: radarr-quality-profile-sqp-5
-
-      # Custom formats for HD Bluray + WEB
-      - template: radarr-custom-formats-hd-bluray-web
-
-      # Custom formats for UHD Bluray + WEB
-      - template: radarr-custom-formats-uhd-bluray-web
-
-      # Custom formats for Remux + WEB 1080p
-      - template: radarr-custom-formats-remux-web-1080p
-
-      # Custom formats for Remux + WEB 2160p
-      - template: radarr-custom-formats-remux-web-2160p
-
-      # Custom formats for Anime
-      - template: radarr-custom-formats-anime
-
-      # Custom formats for SQP 1 1080p
-      - template: radarr-custom-formats-sqp-1-1080p
-
-      # Custom formats for SQP 1 WEB 1080p
-      - template: radarr-custom-formats-sqp-1-web-1080p
-
-      # Custom formats for SQP 1 2160p
-      - template: radarr-custom-formats-sqp-1-2160p
-
-      # Custom formats for SQP 2
-      - template: radarr-custom-formats-sqp-2
-
-      # Custom formats for SQP 3
-      - template: radarr-custom-formats-sqp-3
-
-      # Custom formats for SQP 4
-      - template: radarr-custom-formats-sqp-4
-
-      # Custom formats for SQP 5
-      - template: radarr-custom-formats-sqp-5
+    # v8: guide-backed quality profiles (official include templates removed in v8)
+    quality_definition:
+      type: movie
+    quality_profiles:
+      - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB
+        name: HD Bluray + WEB
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 64fb5f9858489bdac2af690e27c8f42f # UHD Bluray + WEB
+        name: UHD Bluray + WEB
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 9ca12ea80aa55ef916e3751f4b874151 # Remux + WEB 1080p
+        name: Remux + WEB 1080p
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: fd161a61e3ab826d3a22d53f935696dd # Remux + WEB 2160p
+        name: Remux + WEB 2160p
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
+        name: Remux-1080p - Anime
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 90a3370d2d30cbaf08d9c23b856a12c8 # [SQP] SQP-1 WEB (1080p)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: e91c9adaca0231493f4af0d571b907f9 # [SQP] SQP-1 WEB (2160p)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: c3933358ba2356bafc41524f81471069 # [SQP] SQP-2
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 2cf36c1f0106ffac993be003ade51865 # [SQP] SQP-3
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 013f89e6da27519fe56cf482702a2db9 # [SQP] SQP-4
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: a7bb1539fd147256b21b1098f3dc2016 # [SQP] SQP-5
+        reset_unmatched_scores:
+          enabled: true
 
     # Additional custom formats using trash_ids with scoring
     custom_formats:
