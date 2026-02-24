@@ -65,7 +65,7 @@ To verify the credentials are working:
 
 ```bash
 # Check if secrets exist
-kubectl get secrets -n onepassword-system op-credentials onepassword-token
+kubectl get secrets -n onepassword-system 1password-credentials 1password-token
 
 # Check operator logs
 kubectl logs -n onepassword-system deployment/onepassword-connect-operator
@@ -91,9 +91,16 @@ Common issues and solutions:
    - Verify the credentials file format wasn't corrupted during encoding
 
 3. **Authentication Errors**
+
    - Ensure the credentials file is valid and properly encoded
    - Verify the token has the correct permissions in 1Password
    - Check if the token has expired or been revoked
+
+4. **Connect returns 500 on `/v1/vaults` / OnePasswordItems never become Ready**
+
+   - **Symptom**: Operator logs show "GetVaultsByTitle using 1Password Connect: status 500: failed to initiate". Connect sync logs show "failed to Unmarshal credentials file data into map", "invalid character 'e' looking for beginning of value".
+   - **Cause**: The secret `1password-credentials` (key `1password-credentials.json`) does not contain valid credentials that Connect can parse as JSON. Connect expects the credentials file content (or its base64 decoding) to be valid JSON from 1Password's "Create Credentials".
+   - **Fix**: Recreate the credentials secret. Ensure the source file is the raw JSON from 1Password (no extra text, no path, no "error" string). Base64-encode per Step 1 (URL-safe variant), then `kubectl create secret generic 1password-credentials -n onepassword-system --from-file=1password-credentials.json=<path-to-b64-file>`. Restart the Connect deployment so it picks up the new secret: `kubectl rollout restart deployment/onepassword-connect -n onepassword-system`.
 
 ## References
 
