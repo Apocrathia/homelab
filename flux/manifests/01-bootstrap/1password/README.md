@@ -20,7 +20,7 @@ The 1Password Connect Operator requires two main credentials:
 ### Step 1: Create 1Password Connect Credentials
 
 1. Sign in to your 1Password account at [1password.com](https://1password.com)
-2. Go to Integrations → Connect Server → New Connect Server
+2. Go to Developer → Connect Servers → New Connect Server
 3. Give your Connect Server a name (e.g., "Homelab K8s")
 4. Click "Create Credentials" and save the `1password-credentials.json` file
 5. Base64 encode the credentials file:
