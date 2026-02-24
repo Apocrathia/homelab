@@ -19,7 +19,7 @@ resources:
   - management/chaptarr
   - management/cleanuparr
   # - management/daps
-  - management/huntarr
+  # - management/huntarr
   - management/icloudpd
   - management/immich
   - management/lazylibrarian
