@@ -20,7 +20,7 @@ spec:
     app:
       name: bazarr
       # renovate: datasource=docker depName=ghcr.io/home-operations/bazarr
-      image: ghcr.io/home-operations/bazarr:1.5.5
+      image: ghcr.io/home-operations/bazarr:1.5.6
       container:
         name: bazarr
         port: 6767
