@@ -29,7 +29,7 @@ spec:
         readOnlyRootFilesystem: false
         allowPrivilegeEscalation: false
       # renovate: datasource=docker depName=ghcr.io/firecrawl/nuq-postgres
-      image: ghcr.io/firecrawl/nuq-postgres@sha256:4e29acde1469b8366a411301044c0739d6732f650ec8f43e81ee5d57ed0f1e56
+      image: ghcr.io/firecrawl/nuq-postgres@sha256:8565e5f46000085c16d247a4354c41e2439dbcf1640f7dd6e6406c0b18c31732
       container:
         name: postgres
         port: 5432
