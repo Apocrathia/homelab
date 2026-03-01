@@ -72,7 +72,7 @@ spec:
         port: 5432
         name: authentik
         disable_server_side_cursors: true
-        conn_max_age: 300
+        conn_max_age: 60
     postgresql:
       enabled: false
     redis:

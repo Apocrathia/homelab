@@ -18,9 +18,9 @@ spec:
 
   # PostgreSQL-specific configuration
   postgresql:
-    # PostgreSQL configuration parameters
+    # PostgreSQL configuration parameters (max_connections sized for server + worker pods)
     parameters:
-      max_connections: "400"
+      max_connections: "600"
       shared_buffers: "128MB"
       effective_cache_size: "512MB"
       maintenance_work_mem: "32MB"
