@@ -3,7 +3,7 @@
 scorecard:
   stage: verify
   image:
-    name: alpine/k8s:1.35.1
+    name: alpine/k8s:1.35.2
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
@@ -199,7 +199,7 @@ scorecard:
 scorecard-badge:
   stage: deploy
   image:
-    name: alpine/k8s:1.35.1
+    name: alpine/k8s:1.35.2
   rules:
     # Run on schedule or manual trigger on default branch
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
