@@ -81,6 +81,14 @@ spec:
     server:
       serviceAccountName: authentik
       replicas: 2
+      livenessProbe:
+        timeoutSeconds: 30
+        failureThreshold: 5
+      readinessProbe:
+        timeoutSeconds: 30
+      startupProbe:
+        timeoutSeconds: 30
+        initialDelaySeconds: 60
       resources:
         requests:
           cpu: 100m
