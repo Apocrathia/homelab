@@ -6,6 +6,10 @@ Home automation utilities and personal services.
 
 ## Applications
 
+### [Cannery](./cannery/README.md)
+
+Self-hosted firearm and ammunition tracker.
+
 ### [Companion](./companion/README.md)
 
 Stream Deck control software for broadcast and live production environments.

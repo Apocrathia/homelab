@@ -1,0 +1,113 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cannery
+  namespace: cannery
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.59"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: cannery
+      # renovate: datasource=docker depName=shibaobun/cannery
+      image: shibaobun/cannery:0.9.16
+      container:
+        name: cannery
+        port: 4000
+        env:
+          - name: HOST
+            value: "cannery.gateway.services.apocrathia.com"
+          - name: PORT
+            value: "4000"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: cannery-secrets
+                key: database-url
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                name: cannery-secrets
+                key: secret-key-base
+          - name: REGISTRATION
+            value: "invite"
+          - name: SMTP_HOST
+            valueFrom:
+              secretKeyRef:
+                name: cannery-secrets
+                key: smtp-host
+          - name: SMTP_PORT
+            value: "465"
+          - name: SMTP_SSL
+            value: "true"
+          - name: SMTP_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: cannery-secrets
+                key: smtp-user
+          - name: SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: cannery-secrets
+                key: smtp-password
+          - name: EMAIL_FROM
+            value: "cannery@apocrathia.com"
+          - name: EMAIL_NAME
+            value: "Cannery"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+      service:
+        type: ClusterIP
+        port: 4000
+        targetPort: 4000
+        portName: http
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/cannery-secrets"
+
+    postgres:
+      enabled: true
+      instances: 1
+      storage:
+        size: 5Gi
+
+    authentik:
+      enabled: true
+      category: "Home"
+      displayName: "Cannery"
+      externalHost: "https://cannery.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/cannery/icon.svg"
+
+    httproute:
+      enabled: false

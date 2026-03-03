@@ -6,6 +6,7 @@ metadata:
   name: home
 
 resources:
+  - cannery
   - companion
   - grocy
   - mealie
