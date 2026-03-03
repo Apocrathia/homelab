@@ -1,0 +1,35 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      "dangerouslyDisableDeviceAuth": false
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "litellm": {
+        "baseUrl": "http://litellm.litellm.svc.cluster.local:4000/v1",
+        "apiKey": "${LITELLM_API_KEY}",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3",
+            "name": "Qwen3 (Local)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "litellm/qwen3"
+      }
+    }
+  }
+}
