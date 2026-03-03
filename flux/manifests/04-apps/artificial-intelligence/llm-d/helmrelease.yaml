@@ -74,7 +74,7 @@ spec:
         enabled: true
         # Sidecar image for P/D disaggregation routing
         # renovate: datasource=docker depName=ghcr.io/llm-d/llm-d-routing-sidecar
-        image: ghcr.io/llm-d/llm-d-routing-sidecar:v0.5.1-rc.1
+        image: ghcr.io/llm-d/llm-d-routing-sidecar:v0.6.0-rc.1
         # Port inference-sim decode container listens on (proxy forwards to this)
         targetPort: 8200
         # Connector type: nixl, nixlv2
