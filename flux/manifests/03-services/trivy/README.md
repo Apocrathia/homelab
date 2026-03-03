@@ -26,9 +26,9 @@ flowchart LR
 
 **Key design decisions:**
 
-- **Reports → CRDs**: Security reports are stored as CRDs in etcd with a 24h TTL to prevent etcd bloat.
-- **Reports → Loki**: Security reports are also sent via webhook to Alloy, which forwards them to Loki for long-term storage and querying.
-- **Metrics → Prometheus**: Vulnerability metrics are scraped by Prometheus via ServiceMonitor.
+- **Reports → Loki**: Security reports are sent via webhook to Alloy, which forwards them to Loki. This prevents etcd bloat from CRD storage.
+- **Metrics → Prometheus**: Vulnerability metrics continue to be scraped by Prometheus via ServiceMonitor.
+- **Alternate storage**: Reports are written to a small scratch PVC instead of CRDs. The PVC is just ephemeral scratch space since Loki is the source of truth.
 
 ## Querying Reports in Loki
 
