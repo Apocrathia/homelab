@@ -72,8 +72,20 @@ spec:
                     );
                   "
 
-                  echo "Running VACUUM ANALYZE..."
-                  psql -c "VACUUM (ANALYZE);"
+                  echo "Running VACUUM ANALYZE on application tables..."
+                  psql -c "
+                    DO \$\$
+                    DECLARE r RECORD;
+                    BEGIN
+                      FOR r IN
+                        SELECT schemaname, tablename
+                        FROM pg_tables
+                        WHERE schemaname = 'public'
+                      LOOP
+                        EXECUTE format('VACUUM (ANALYZE) %I.%I', r.schemaname, r.tablename);
+                      END LOOP;
+                    END \$\$;
+                  "
 
                   echo "Database size after:"
                   psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
