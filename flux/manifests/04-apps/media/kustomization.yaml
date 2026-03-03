@@ -17,7 +17,7 @@ resources:
   - management/agregarr
   - management/bazarr
   - management/chaptarr
-  # - management/cleanuparr
+  - management/cleanuparr
   # - management/daps
   # - management/huntarr
   - management/icloudpd
