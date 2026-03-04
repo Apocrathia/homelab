@@ -17,5 +17,6 @@ resources:
   - llm-d
   - mcp-servers
   # - mlflow
+  - openclaw
   - openwebui
   - qdrant
