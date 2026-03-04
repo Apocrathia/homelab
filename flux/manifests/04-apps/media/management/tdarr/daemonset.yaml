@@ -87,7 +87,7 @@ spec:
               memory: 512Mi
             limits:
               cpu: 8000m
-              memory: 2Gi
+              memory: 8Gi
       volumes:
         - name: tv
           persistentVolumeClaim:
