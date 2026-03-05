@@ -1,0 +1,189 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rustdesk
+  namespace: rustdesk
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.51"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: rustdesk
+      # renovate: datasource=docker depName=ghcr.io/rustdesk/rustdesk-server
+      image: ghcr.io/rustdesk/rustdesk-server:1.1.15
+
+      # Main container runs hbbs (ID/Rendezvous server)
+      # hbbs = Hole Binding Broker Server - handles client registration,
+      # NAT traversal, and peer discovery. Hosts Pro WebUI on port 21114.
+      container:
+        name: server
+        port: 21116
+        extraPorts:
+          - name: nat-test
+            containerPort: 21115
+            protocol: TCP
+          - name: id-udp
+            containerPort: 21116
+            protocol: UDP
+            # Uncomment for Pro WebUI:
+            # - name: webui
+            #   containerPort: 21114
+            #   protocol: TCP
+            # Uncomment for web client websocket:
+            # - name: ws
+            #   containerPort: 21118
+            #   protocol: TCP
+
+      # Run hbbs with relay server address
+      command: ["hbbs"]
+      args:
+        - "-r"
+        - "rustdesk.services.apocrathia.com:21117"
+
+      # Sidecar runs hbbr (Relay server)
+      # hbbr = Hole Binding Broker Relay - forwards traffic when direct
+      # P2P connection fails due to restrictive NAT/firewall.
+      sidecars:
+        - name: relay
+          # renovate: datasource=docker depName=ghcr.io/rustdesk/rustdesk-server
+          image: ghcr.io/rustdesk/rustdesk-server:1.1.15
+          command: ["hbbr"]
+          ports:
+            - name: relay
+              containerPort: 21117
+              protocol: TCP
+            - name: relay-ws
+              containerPort: 21119
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /root
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+
+      service:
+        type: ClusterIP
+        port: 21116
+        targetPort: 21116
+        portName: id-tcp
+        extraServicePorts:
+          - name: nat-test
+            port: 21115
+            targetPort: 21115
+            protocol: TCP
+          - name: relay
+            port: 21117
+            targetPort: 21117
+            protocol: TCP
+          - name: relay-ws
+            port: 21119
+            targetPort: 21119
+            protocol: TCP
+
+      volumeMounts:
+        - name: data
+          mountPath: /root
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    # Note: Pro WebUI does NOT support trusted header authentication.
+    # It only uses X-Real-IP/X-Forwarded-For for IP logging, not user auth.
+    # Therefore, Authentik proxy mode is required (handles auth before app).
+    #
+    # To enable Pro WebUI:
+    # 1. Fork over money for a fucking license
+    # 2. Uncomment webui port in container.extraPorts above
+    # 3. Add webui to service.extraServicePorts:
+    #    - name: webui
+    #      port: 21114
+    #      targetPort: 21114
+    #      protocol: TCP
+    # 4. Uncomment the authentik config below
+    # 5. Delete this comment
+
+    # authentik:
+    #   enabled: true
+    #   mode: "proxy"
+    #   category: "Productivity"
+    #   displayName: "RustDesk"
+    #   externalHost: "https://rustdesk.gateway.services.apocrathia.com"
+    #   icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/rustdesk/icon.svg"
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
+
+    # LoadBalancer for direct client access
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.94"
+      externalTrafficPolicy: Local
+      ports:
+        - name: nat-test
+          port: 21115
+          targetPort: 21115
+          protocol: TCP
+        - name: id-tcp
+          port: 21116
+          targetPort: 21116
+          protocol: TCP
+        - name: id-udp
+          port: 21116
+          targetPort: 21116
+          protocol: UDP
+        - name: relay
+          port: 21117
+          targetPort: 21117
+          protocol: TCP
+        - name: relay-ws
+          port: 21119
+          targetPort: 21119
+          protocol: TCP
