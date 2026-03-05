@@ -51,6 +51,7 @@ Media applications are organized into three categories:
 - **[Overseerr](./management/overseerr/README.md)** - Media request and discovery with Plex OAuth
 - **[Recommendarr](./management/recommendarr/README.md)** - AI-powered TV and movie recommendations
 - **[Recyclarr](./management/recyclarr/README.md)** - TRaSH Guides sync for quality profiles
+- **[Seerr](./management/seerr/README.md)** - Media request and discovery for Plex, Jellyfin, and Emby
 - **[Shinkro](./management/shinkro/README.md)** - Syncs Plex watch status to MyAnimeList
 - **[Suwayomi](./management/suwayomi/README.md)** - Manga download manager using Tachiyomi extensions
 - **[Taggarr](./management/taggarr/README.md)** - Tags anime in Sonarr based on dubbed audio availability
