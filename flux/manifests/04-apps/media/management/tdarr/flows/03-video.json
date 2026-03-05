@@ -1,0 +1,307 @@
+{
+  "_id": "custom_03_video",
+  "name": "03 - Video Transcoding",
+  "description": "HEVC x265 10-bit CPU encoding with correct libx265 argument construction.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Entry point",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "inputsDB": {
+        "fileAccessChecks": "true"
+      },
+      "id": "vid001",
+      "position": { "x": 400, "y": 0 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Does file need video transcoding?",
+      "sourceRepo": "Community",
+      "pluginName": "checkFlowVariable",
+      "version": "1.0.0",
+      "inputsDB": {
+        "variable": "{{{args.variables.user.needs_transcode}}}",
+        "value": "true"
+      },
+      "id": "vid002",
+      "position": { "x": 400, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "No transcode needed - skip to output",
+      "sourceRepo": "Community",
+      "pluginName": "goToFlow",
+      "version": "2.0.0",
+      "inputsDB": {
+        "flowId": "custom_04_output"
+      },
+      "id": "vid003",
+      "position": { "x": 700, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Begin ffmpeg command",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandStart",
+      "version": "1.0.0",
+      "id": "vid005",
+      "position": { "x": 400, "y": 250 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Set container to MKV",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetContainer",
+      "version": "1.0.0",
+      "inputsDB": {
+        "container": "mkv",
+        "forceConform": "false"
+      },
+      "id": "vid006",
+      "position": { "x": 400, "y": 350 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Reorder streams (English preferred)",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandRorderStreams",
+      "version": "1.0.0",
+      "inputsDB": {
+        "languages": "eng,und,jpn"
+      },
+      "id": "vid006r",
+      "position": { "x": 400, "y": 400 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Set video encoder to HEVC (CPU)",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetVideoEncoder",
+      "version": "1.0.0",
+      "inputsDB": {
+        "outputCodec": "hevc",
+        "ffmpegPreset": "{{{args.userVariables.library.ffmpeg_preset}}}",
+        "ffmpegQuality": "{{{args.userVariables.library.quality_level}}}",
+        "hardwareEncoding": "false"
+      },
+      "id": "vid007",
+      "position": { "x": 400, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Set 10-bit output",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommand10BitVideo",
+      "version": "1.0.0",
+      "id": "vid008",
+      "position": { "x": 400, "y": 550 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Is content animated?",
+      "sourceRepo": "Community",
+      "pluginName": "checkFlowVariable",
+      "version": "1.0.0",
+      "inputsDB": {
+        "variable": "{{{args.userVariables.library.is_animated}}}",
+        "value": "true"
+      },
+      "id": "vid_anim",
+      "position": { "x": 400, "y": 625 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Standard x265 tuning",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandCustomArguments",
+      "version": "1.0.0",
+      "inputsDB": {
+        "outputArguments": "-x265-params lookahead=64:frame-threads=2:deblock=-1,-1:psy-rd=1.1:psy-rdoq=1:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
+      },
+      "id": "vid009",
+      "position": { "x": 250, "y": 725 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Animation x265 tuning",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandCustomArguments",
+      "version": "1.0.0",
+      "inputsDB": {
+        "outputArguments": "-tune animation -bf 3 -x265-params lookahead=64:frame-threads=2:deblock=-2,-2:psy-rd=1:psy-rdoq=0.5:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
+      },
+      "id": "vid009a",
+      "position": { "x": 550, "y": 725 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Execute video encode",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandExecute",
+      "version": "1.0.0",
+      "id": "vid010",
+      "position": { "x": 400, "y": 850 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Verify output file size (8-200% of original)",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_a9he_New_file_size_check",
+        "lowerBound": "8",
+        "upperBound": "200"
+      },
+      "id": "vid011",
+      "position": { "x": 400, "y": 950 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Go to Output flow",
+      "sourceRepo": "Community",
+      "pluginName": "goToFlow",
+      "version": "2.0.0",
+      "inputsDB": {
+        "flowId": "custom_04_output"
+      },
+      "id": "vid012",
+      "position": { "x": 400, "y": 1100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "File size check FAILED - holding for review",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "vid013",
+      "position": { "x": 700, "y": 950 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Encode FAILED",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "vid014",
+      "position": { "x": 700, "y": 800 },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "vid001",
+      "sourceHandle": "1",
+      "target": "vid002",
+      "targetHandle": null,
+      "id": "ve001"
+    },
+    {
+      "source": "vid002",
+      "sourceHandle": "1",
+      "target": "vid005",
+      "targetHandle": null,
+      "id": "ve002_needs_transcode"
+    },
+    {
+      "source": "vid002",
+      "sourceHandle": "2",
+      "target": "vid003",
+      "targetHandle": null,
+      "id": "ve003_skip"
+    },
+    {
+      "source": "vid005",
+      "sourceHandle": "1",
+      "target": "vid006",
+      "targetHandle": null,
+      "id": "ve005"
+    },
+    {
+      "source": "vid006",
+      "sourceHandle": "1",
+      "target": "vid006r",
+      "targetHandle": null,
+      "id": "ve006"
+    },
+    {
+      "source": "vid006r",
+      "sourceHandle": "1",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve006r"
+    },
+    {
+      "source": "vid007",
+      "sourceHandle": "1",
+      "target": "vid008",
+      "targetHandle": null,
+      "id": "ve007"
+    },
+    {
+      "source": "vid008",
+      "sourceHandle": "1",
+      "target": "vid_anim",
+      "targetHandle": null,
+      "id": "ve008"
+    },
+    {
+      "source": "vid_anim",
+      "sourceHandle": "1",
+      "target": "vid009a",
+      "targetHandle": null,
+      "id": "ve_anim_yes"
+    },
+    {
+      "source": "vid_anim",
+      "sourceHandle": "2",
+      "target": "vid009",
+      "targetHandle": null,
+      "id": "ve_anim_no"
+    },
+    {
+      "source": "vid009",
+      "sourceHandle": "1",
+      "target": "vid010",
+      "targetHandle": null,
+      "id": "ve009"
+    },
+    {
+      "source": "vid009a",
+      "sourceHandle": "1",
+      "target": "vid010",
+      "targetHandle": null,
+      "id": "ve009a"
+    },
+    {
+      "source": "vid010",
+      "sourceHandle": "1",
+      "target": "vid011",
+      "targetHandle": null,
+      "id": "ve010_success"
+    },
+    {
+      "source": "vid010",
+      "sourceHandle": "err1",
+      "target": "vid014",
+      "targetHandle": null,
+      "id": "ve010_error"
+    },
+    {
+      "source": "vid011",
+      "sourceHandle": "1",
+      "target": "vid013",
+      "targetHandle": null,
+      "id": "ve011_fail"
+    },
+    {
+      "source": "vid011",
+      "sourceHandle": "2",
+      "target": "vid012",
+      "targetHandle": null,
+      "id": "ve011_pass"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+{
+  "_id": "custom_01_input",
+  "name": "01 - Input and Validation",
+  "description": "Entry point. File validation, codec detection, resolution tagging, and skip logic.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Input File",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "inputsDB": {
+        "fileAccessChecks": "true"
+      },
+      "id": "inp001",
+      "position": { "x": 400, "y": 0 },
+      "fpEnabled": true
+    },
+    {
+      "name": "File size check (10MB - 200GB)",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_a9he_New_file_size_check",
+        "lowerBound": "0.01",
+        "upperBound": "200"
+      },
+      "id": "inp002",
+      "position": { "x": 400, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Is video codec HEVC?",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoCodec",
+      "version": "1.0.0",
+      "inputsDB": {
+        "codec": "hevc"
+      },
+      "id": "inp003",
+      "position": { "x": 400, "y": 250 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Not HEVC - needs transcode",
+      "sourceRepo": "Community",
+      "pluginName": "setFlowVariable",
+      "version": "1.0.0",
+      "inputsDB": {
+        "variable": "needs_transcode",
+        "value": "true"
+      },
+      "id": "inp004",
+      "position": { "x": 200, "y": 350 },
+      "fpEnabled": true
+    },
+    {
+      "name": "HEVC - check resolution for bitrate thresholds",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoResolution",
+      "version": "1.0.0",
+      "id": "inp005",
+      "position": { "x": 600, "y": 350 },
+      "fpEnabled": true
+    },
+    {
+      "name": "720p or below: bitrate < 4 Mbps?",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoBitrate",
+      "version": "1.0.0",
+      "inputsDB": {
+        "lessThan": "4",
+        "unit": "mbps"
+      },
+      "id": "inp006",
+      "position": { "x": 300, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "1080p: bitrate < 10 Mbps?",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoBitrate",
+      "version": "1.0.0",
+      "inputsDB": {
+        "lessThan": "10",
+        "unit": "mbps"
+      },
+      "id": "inp007",
+      "position": { "x": 600, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "4K: bitrate < 25 Mbps?",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoBitrate",
+      "version": "1.0.0",
+      "inputsDB": {
+        "lessThan": "25",
+        "unit": "mbps"
+      },
+      "id": "inp008",
+      "position": { "x": 900, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "HEVC bitrate OK - skip",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "inp009",
+      "position": { "x": 600, "y": 650 },
+      "fpEnabled": true
+    },
+    {
+      "name": "HEVC bitrate too high - needs transcode",
+      "sourceRepo": "Community",
+      "pluginName": "setFlowVariable",
+      "version": "1.0.0",
+      "inputsDB": {
+        "variable": "needs_transcode",
+        "value": "true"
+      },
+      "id": "inp010",
+      "position": { "x": 200, "y": 650 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Go to Audio flow",
+      "sourceRepo": "Community",
+      "pluginName": "goToFlow",
+      "version": "2.0.0",
+      "inputsDB": {
+        "flowId": "custom_02_audio"
+      },
+      "id": "inp011",
+      "position": { "x": 200, "y": 800 },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "inp001",
+      "sourceHandle": "1",
+      "target": "inp002",
+      "targetHandle": null,
+      "id": "e001"
+    },
+    {
+      "source": "inp002",
+      "sourceHandle": "1",
+      "target": "inp003",
+      "targetHandle": null,
+      "id": "e002_process"
+    },
+    {
+      "source": "inp002",
+      "sourceHandle": "2",
+      "target": "inp003",
+      "targetHandle": null,
+      "id": "e002_noprocess"
+    },
+    {
+      "source": "inp003",
+      "sourceHandle": "2",
+      "target": "inp004",
+      "targetHandle": null,
+      "id": "e003_not_hevc"
+    },
+    {
+      "source": "inp003",
+      "sourceHandle": "1",
+      "target": "inp005",
+      "targetHandle": null,
+      "id": "e004_is_hevc"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "1",
+      "target": "inp006",
+      "targetHandle": null,
+      "id": "e005_480p"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "2",
+      "target": "inp006",
+      "targetHandle": null,
+      "id": "e005_576p"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "3",
+      "target": "inp006",
+      "targetHandle": null,
+      "id": "e005_720p"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "4",
+      "target": "inp007",
+      "targetHandle": null,
+      "id": "e005_1080p"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "5",
+      "target": "inp008",
+      "targetHandle": null,
+      "id": "e005_4k"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "6",
+      "target": "inp008",
+      "targetHandle": null,
+      "id": "e005_dci4k"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "7",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e005_8k"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "8",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e005_other"
+    },
+    {
+      "source": "inp006",
+      "sourceHandle": "1",
+      "target": "inp009",
+      "targetHandle": null,
+      "id": "e006_under"
+    },
+    {
+      "source": "inp006",
+      "sourceHandle": "2",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e006_over"
+    },
+    {
+      "source": "inp007",
+      "sourceHandle": "1",
+      "target": "inp009",
+      "targetHandle": null,
+      "id": "e007_under"
+    },
+    {
+      "source": "inp007",
+      "sourceHandle": "2",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e007_over"
+    },
+    {
+      "source": "inp008",
+      "sourceHandle": "1",
+      "target": "inp009",
+      "targetHandle": null,
+      "id": "e008_under"
+    },
+    {
+      "source": "inp008",
+      "sourceHandle": "2",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e008_over"
+    },
+    {
+      "source": "inp004",
+      "sourceHandle": "1",
+      "target": "inp011",
+      "targetHandle": null,
+      "id": "e009_to_audio"
+    },
+    {
+      "source": "inp010",
+      "sourceHandle": "1",
+      "target": "inp011",
+      "targetHandle": null,
+      "id": "e010_to_audio"
+    },
+    {
+      "source": "inp009",
+      "sourceHandle": "1",
+      "target": "inp011",
+      "targetHandle": null,
+      "id": "e011_skip_to_audio"
+    }
+  ]
+}

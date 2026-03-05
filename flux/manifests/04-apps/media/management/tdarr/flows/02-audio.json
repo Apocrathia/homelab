@@ -1,0 +1,171 @@
+{
+  "_id": "custom_02_audio",
+  "name": "02 - Audio Normalization",
+  "description": "Ensure stereo AAC 2.0 track exists and clean titles. Stream reordering handled in video flow.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Entry point",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "inputsDB": {
+        "fileAccessChecks": "true"
+      },
+      "id": "aud001",
+      "position": { "x": 400, "y": 0 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Begin ffmpeg command",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandStart",
+      "version": "1.0.0",
+      "id": "aud002",
+      "position": { "x": 400, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Set container to MKV",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetContainer",
+      "version": "1.0.0",
+      "inputsDB": {
+        "container": "mkv",
+        "forceConform": "false"
+      },
+      "id": "aud003",
+      "position": { "x": 400, "y": 200 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Ensure stereo AAC track exists (256k)",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandEnsureAudioStream",
+      "version": "1.0.0",
+      "inputsDB": {
+        "audioCodec": "aac",
+        "audioChannels": "2",
+        "audioBitrate": "256",
+        "position": "first"
+      },
+      "id": "aud005",
+      "position": { "x": 400, "y": 400 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clean stream titles",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_MC93_Migz2CleanTitle"
+      },
+      "id": "aud006",
+      "position": { "x": 400, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Execute audio processing",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandExecute",
+      "version": "1.0.0",
+      "id": "aud007",
+      "position": { "x": 400, "y": 600 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Go to Video flow",
+      "sourceRepo": "Community",
+      "pluginName": "goToFlow",
+      "version": "2.0.0",
+      "inputsDB": {
+        "flowId": "custom_03_video"
+      },
+      "id": "aud008",
+      "position": { "x": 400, "y": 750 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Audio processing failed - go to Video flow anyway",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "aud009",
+      "position": { "x": 650, "y": 650 },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "aud001",
+      "sourceHandle": "1",
+      "target": "aud002",
+      "targetHandle": null,
+      "id": "ae001"
+    },
+    {
+      "source": "aud002",
+      "sourceHandle": "1",
+      "target": "aud003",
+      "targetHandle": null,
+      "id": "ae002"
+    },
+    {
+      "source": "aud003",
+      "sourceHandle": "1",
+      "target": "aud005",
+      "targetHandle": null,
+      "id": "ae003"
+    },
+    {
+      "source": "aud005",
+      "sourceHandle": "1",
+      "target": "aud006",
+      "targetHandle": null,
+      "id": "ae005"
+    },
+    {
+      "source": "aud006",
+      "sourceHandle": "1",
+      "target": "aud007",
+      "targetHandle": null,
+      "id": "ae006_process"
+    },
+    {
+      "source": "aud006",
+      "sourceHandle": "2",
+      "target": "aud007",
+      "targetHandle": null,
+      "id": "ae006_noprocess"
+    },
+    {
+      "source": "aud007",
+      "sourceHandle": "1",
+      "target": "aud008",
+      "targetHandle": null,
+      "id": "ae007_success"
+    },
+    {
+      "source": "aud007",
+      "sourceHandle": "2",
+      "target": "aud008",
+      "targetHandle": null,
+      "id": "ae007_noprocess"
+    },
+    {
+      "source": "aud007",
+      "sourceHandle": "err1",
+      "target": "aud009",
+      "targetHandle": null,
+      "id": "ae008_error"
+    },
+    {
+      "source": "aud009",
+      "sourceHandle": "1",
+      "target": "aud008",
+      "targetHandle": null,
+      "id": "ae009_continue"
+    }
+  ]
+}

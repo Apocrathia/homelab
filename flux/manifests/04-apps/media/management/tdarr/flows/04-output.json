@@ -1,0 +1,408 @@
+{
+  "_id": "custom_04_output",
+  "name": "04 - Output and Notification",
+  "description": "File replacement, then notify all services. Radarr/Sonarr ignore files they don't manage.",
+  "tags": "",
+  "flowPlugins": [
+    {
+      "name": "Entry point",
+      "sourceRepo": "Community",
+      "pluginName": "inputFile",
+      "version": "1.0.0",
+      "inputsDB": {
+        "fileAccessChecks": "true"
+      },
+      "id": "out001",
+      "position": { "x": 400, "y": 0 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Replace original file",
+      "sourceRepo": "Community",
+      "pluginName": "replaceOriginalFile",
+      "version": "1.0.0",
+      "id": "out002",
+      "position": { "x": 400, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Replace failed - try move then delete",
+      "sourceRepo": "Community",
+      "pluginName": "moveToOriginalDirectory",
+      "version": "1.0.0",
+      "id": "out002a",
+      "position": { "x": 700, "y": 100 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Delete original after move",
+      "sourceRepo": "Community",
+      "pluginName": "deleteFile",
+      "version": "1.0.0",
+      "inputsDB": {
+        "fileToDelete": "originalFile"
+      },
+      "id": "out002b",
+      "position": { "x": 700, "y": 200 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear error from replace fallback",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out002c",
+      "position": { "x": 700, "y": 300 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Wait 5s for filesystem sync",
+      "sourceRepo": "Community",
+      "pluginName": "waitTimeout",
+      "version": "1.0.0",
+      "inputsDB": {
+        "amount": "5"
+      },
+      "id": "out003",
+      "position": { "x": 400, "y": 300 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Notify Radarr",
+      "sourceRepo": "Community",
+      "pluginName": "notifyRadarrOrSonarr",
+      "version": "2.0.0",
+      "inputsDB": {
+        "arr": "radarr",
+        "arr_api_key": "{{{args.userVariables.global.api_key_radarr}}}",
+        "arr_host": "{{{args.userVariables.global.url_radarr}}}"
+      },
+      "id": "out004",
+      "position": { "x": 400, "y": 400 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear Radarr notification error if any",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out004a",
+      "position": { "x": 650, "y": 400 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Notify Sonarr",
+      "sourceRepo": "Community",
+      "pluginName": "notifyRadarrOrSonarr",
+      "version": "2.0.0",
+      "inputsDB": {
+        "arr": "sonarr",
+        "arr_api_key": "{{{args.userVariables.global.api_key_sonarr}}}",
+        "arr_host": "{{{args.userVariables.global.url_sonarr}}}"
+      },
+      "id": "out005",
+      "position": { "x": 400, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear Sonarr notification error if any",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out005a",
+      "position": { "x": 650, "y": 500 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Wait 10s before Plex refresh",
+      "sourceRepo": "Community",
+      "pluginName": "waitTimeout",
+      "version": "1.0.0",
+      "inputsDB": {
+        "amount": "10"
+      },
+      "id": "out006",
+      "position": { "x": 400, "y": 600 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Plex refresh - Movies",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_goof1_URL_Plex_Refresh",
+        "Plex_Token": "{{{args.userVariables.global.plex_token}}}",
+        "Plex_Url": "{{{args.userVariables.global.plex_url}}}",
+        "Library_Key": "{{{args.userVariables.global.plex_libraryKey_movies}}}"
+      },
+      "id": "out007",
+      "position": { "x": 400, "y": 700 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear Plex Movies error if any",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out007a",
+      "position": { "x": 650, "y": 700 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Plex refresh - TV",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_goof1_URL_Plex_Refresh",
+        "Plex_Token": "{{{args.userVariables.global.plex_token}}}",
+        "Plex_Url": "{{{args.userVariables.global.plex_url}}}",
+        "Library_Key": "{{{args.userVariables.global.plex_libraryKey_tv}}}"
+      },
+      "id": "out008",
+      "position": { "x": 400, "y": 800 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear Plex TV error if any",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out008a",
+      "position": { "x": 650, "y": 800 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Plex refresh - Anime",
+      "sourceRepo": "Community",
+      "pluginName": "runClassicTranscodePlugin",
+      "version": "2.0.0",
+      "inputsDB": {
+        "pluginSourceId": "Community:Tdarr_Plugin_goof1_URL_Plex_Refresh",
+        "Plex_Token": "{{{args.userVariables.global.plex_token}}}",
+        "Plex_Url": "{{{args.userVariables.global.plex_url}}}",
+        "Library_Key": "{{{args.userVariables.global.plex_libraryKey_anime}}}"
+      },
+      "id": "out009",
+      "position": { "x": 400, "y": 900 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Clear Plex Anime error if any",
+      "sourceRepo": "Community",
+      "pluginName": "resetFlowError",
+      "version": "1.0.0",
+      "id": "out009a",
+      "position": { "x": 650, "y": 900 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Processing complete",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "out010",
+      "position": { "x": 400, "y": 1000 },
+      "fpEnabled": true
+    }
+  ],
+  "flowEdges": [
+    {
+      "source": "out001",
+      "sourceHandle": "1",
+      "target": "out002",
+      "targetHandle": null,
+      "id": "oe001"
+    },
+    {
+      "source": "out002",
+      "sourceHandle": "1",
+      "target": "out003",
+      "targetHandle": null,
+      "id": "oe002_success"
+    },
+    {
+      "source": "out002",
+      "sourceHandle": "err1",
+      "target": "out002a",
+      "targetHandle": null,
+      "id": "oe002_error"
+    },
+    {
+      "source": "out002a",
+      "sourceHandle": "1",
+      "target": "out002b",
+      "targetHandle": null,
+      "id": "oe002a"
+    },
+    {
+      "source": "out002b",
+      "sourceHandle": "1",
+      "target": "out002c",
+      "targetHandle": null,
+      "id": "oe002b"
+    },
+    {
+      "source": "out002c",
+      "sourceHandle": "1",
+      "target": "out003",
+      "targetHandle": null,
+      "id": "oe002c"
+    },
+    {
+      "source": "out003",
+      "sourceHandle": "1",
+      "target": "out004",
+      "targetHandle": null,
+      "id": "oe003"
+    },
+    {
+      "source": "out004",
+      "sourceHandle": "1",
+      "target": "out005",
+      "targetHandle": null,
+      "id": "oe004"
+    },
+    {
+      "source": "out004",
+      "sourceHandle": "2",
+      "target": "out005",
+      "targetHandle": null,
+      "id": "oe004_notfound"
+    },
+    {
+      "source": "out004",
+      "sourceHandle": "err1",
+      "target": "out004a",
+      "targetHandle": null,
+      "id": "oe004_err"
+    },
+    {
+      "source": "out004a",
+      "sourceHandle": "1",
+      "target": "out005",
+      "targetHandle": null,
+      "id": "oe004a"
+    },
+    {
+      "source": "out005",
+      "sourceHandle": "1",
+      "target": "out006",
+      "targetHandle": null,
+      "id": "oe005"
+    },
+    {
+      "source": "out005",
+      "sourceHandle": "2",
+      "target": "out006",
+      "targetHandle": null,
+      "id": "oe005_notfound"
+    },
+    {
+      "source": "out005",
+      "sourceHandle": "err1",
+      "target": "out005a",
+      "targetHandle": null,
+      "id": "oe005_err"
+    },
+    {
+      "source": "out005a",
+      "sourceHandle": "1",
+      "target": "out006",
+      "targetHandle": null,
+      "id": "oe005a"
+    },
+    {
+      "source": "out006",
+      "sourceHandle": "1",
+      "target": "out007",
+      "targetHandle": null,
+      "id": "oe006"
+    },
+    {
+      "source": "out007",
+      "sourceHandle": "1",
+      "target": "out008",
+      "targetHandle": null,
+      "id": "oe007"
+    },
+    {
+      "source": "out007",
+      "sourceHandle": "2",
+      "target": "out008",
+      "targetHandle": null,
+      "id": "oe007_noprocess"
+    },
+    {
+      "source": "out007",
+      "sourceHandle": "err1",
+      "target": "out007a",
+      "targetHandle": null,
+      "id": "oe007_err"
+    },
+    {
+      "source": "out007a",
+      "sourceHandle": "1",
+      "target": "out008",
+      "targetHandle": null,
+      "id": "oe007a"
+    },
+    {
+      "source": "out008",
+      "sourceHandle": "1",
+      "target": "out009",
+      "targetHandle": null,
+      "id": "oe008"
+    },
+    {
+      "source": "out008",
+      "sourceHandle": "2",
+      "target": "out009",
+      "targetHandle": null,
+      "id": "oe008_noprocess"
+    },
+    {
+      "source": "out008",
+      "sourceHandle": "err1",
+      "target": "out008a",
+      "targetHandle": null,
+      "id": "oe008_err"
+    },
+    {
+      "source": "out008a",
+      "sourceHandle": "1",
+      "target": "out009",
+      "targetHandle": null,
+      "id": "oe008a"
+    },
+    {
+      "source": "out009",
+      "sourceHandle": "1",
+      "target": "out010",
+      "targetHandle": null,
+      "id": "oe009"
+    },
+    {
+      "source": "out009",
+      "sourceHandle": "2",
+      "target": "out010",
+      "targetHandle": null,
+      "id": "oe009_noprocess"
+    },
+    {
+      "source": "out009",
+      "sourceHandle": "err1",
+      "target": "out009a",
+      "targetHandle": null,
+      "id": "oe009_err"
+    },
+    {
+      "source": "out009a",
+      "sourceHandle": "1",
+      "target": "out010",
+      "targetHandle": null,
+      "id": "oe009a"
+    }
+  ]
+}
