@@ -131,6 +131,16 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
+            {{- range .volumes.secret }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
             {{- end }}
           {{- if .securityContext }}
           securityContext:
@@ -572,6 +582,16 @@ spec:
               readOnly: {{ .readOnly }}
               {{- end }}
             {{- end }}
+            {{- range .volumes.secret }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
             {{- end }}
           {{- if .resources }}
           resources:
@@ -731,7 +751,7 @@ spec:
             name: {{ .configMapName | default .name }}
         {{- end }}
         {{- end }}
-        {{- /* 4. initContainer volumes (emptyDir and configMap, NOT prefixed) */}}
+        {{- /* 4. initContainer volumes (emptyDir, configMap, and secret, NOT prefixed) */}}
         {{- range .Values.app.initContainers }}
         {{- if .volumes }}
         {{- range .volumes.emptyDir }}
@@ -749,9 +769,17 @@ spec:
             name: {{ .configMapName | default .name }}
         {{- end }}
         {{- end }}
+        {{- range .volumes.secret }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName | default .name }}
         {{- end }}
         {{- end }}
-        {{- /* 5. Sidecar volumes (emptyDir and configMap, NOT prefixed) */}}
+        {{- end }}
+        {{- end }}
+        {{- /* 5. Sidecar volumes (emptyDir, configMap, and secret, NOT prefixed) */}}
         {{- range .Values.app.sidecars }}
         {{- if .volumes }}
         {{- range .volumes.emptyDir }}
@@ -767,6 +795,14 @@ spec:
         - name: {{ .name }}
           configMap:
             name: {{ .configMapName | default .name }}
+        {{- end }}
+        {{- end }}
+        {{- range .volumes.secret }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName | default .name }}
         {{- end }}
         {{- end }}
         {{- end }}

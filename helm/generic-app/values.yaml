@@ -57,6 +57,11 @@ app:
   #         - name: init-config
   #           mountPath: /etc/init
   #           configMapName: init-configmap
+  #       secret:
+  #         - name: tls-cert
+  #           mountPath: /etc/tls
+  #           secretName: my-tls-secret
+  #           readOnly: true
   #     restartPolicy: Always  # Optional: keep init container running (useful for VPN sidecars)
   #     securityContext:
   #       runAsUser: 0
@@ -156,6 +161,11 @@ app:
   #         - name: sidecar-config
   #           mountPath: /etc/sidecar
   #           configMapName: sidecar-configmap
+  #       secret:
+  #         - name: tls-cert
+  #           mountPath: /etc/tls
+  #           secretName: my-tls-secret
+  #           readOnly: true
   #     # Optional: sidecar-specific security context
   #     # If not specified, inherits from app.securityContext
   #     securityContext:

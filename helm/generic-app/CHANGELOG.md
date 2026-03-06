@@ -1,6 +1,21 @@
 # Changelog
 
-## Version 0.0.59 (Latest)
+## Version 0.0.61 (Latest)
+
+- **Secret volume support for initContainers and sidecars**: Added `volumes.secret` alongside existing `emptyDir` and `configMap` volume types
+  - Mount Kubernetes Secrets (e.g. TLS certs from cert-manager) directly into init containers and sidecar containers
+  - Supports `name`, `mountPath`, `secretName`, `subPath`, and `readOnly`
+  - Integrated into the volume deduplication strategy — no duplicate volumes across containers
+
+## Version 0.0.60
+
+- **Authentik bookmark mode**: Added `authentik.mode: "bookmark"` for dashboard-only entries with no auth provider or outpost
+  - Creates an `authentik_core.application` with `meta_launch_url` — shows up in the authentik dashboard as a clickable link
+  - Supports `metaDescription` and `metaPublisher` for richer dashboard entries
+  - Replaces the need to hand-roll blueprint ConfigMaps in kustomization.yaml (as Plex was doing)
+  - No deployment, service, or routing behavior changes — bookmark mode only affects the authentik blueprint
+
+## Version 0.0.59
 
 - **Fixed DNS config option values rendered as numbers instead of strings**: Kubernetes requires `dnsConfig.options[].value` to be a string, but the template output bare values causing `cannot unmarshal number into Go struct field` errors
   - **Fix**: Added `| quote` to the dnsConfig options value in the deployment template
