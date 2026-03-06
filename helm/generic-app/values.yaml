@@ -448,9 +448,10 @@ secrets:
 # Authentik SSO integration
 authentik:
   enabled: true
-  # Provider mode: "proxy" (network-layer auth) or "oidc" (OAuth2/OpenID Connect)
+  # Provider mode: "proxy", "oidc", or "bookmark"
   # - proxy: Creates proxy provider + outpost, Authentik handles auth before requests reach app
   # - oidc: Creates OAuth2 provider, app handles auth via OAuth flow (requires app OIDC support)
+  # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
 
   # Common settings (both modes)

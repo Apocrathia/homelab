@@ -1,0 +1,41 @@
+{{- if and .Values.authentik.enabled (eq .Values.authentik.mode "bookmark") }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-{{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+  labels:
+    authentik_blueprint: "true"
+data:
+  {{ .Values.app.name }}.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    version: 1
+    metadata:
+      name: {{ .Values.app.name }}
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # Application for {{ .Values.authentik.displayName }} (Bookmark)
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "{{ .Values.app.name }}"
+        attrs:
+          name: "{{ .Values.authentik.displayName }}"
+          slug: "{{ .Values.app.name }}"
+          group: "{{ .Values.authentik.category | default "Applications" }}"
+          meta_launch_url: "{{ .Values.authentik.externalHost }}"
+          open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
+          {{- if .Values.authentik.icon }}
+          icon: "{{ .Values.authentik.icon }}"
+          {{- end }}
+          {{- if .Values.authentik.metaDescription }}
+          meta_description: "{{ .Values.authentik.metaDescription }}"
+          {{- end }}
+          {{- if .Values.authentik.metaPublisher }}
+          meta_publisher: "{{ .Values.authentik.metaPublisher }}"
+          {{- end }}
+{{- end }}
