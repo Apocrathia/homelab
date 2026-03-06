@@ -28,7 +28,7 @@ resources:
   - management/mylar
   - management/mixarr
   # - management/ombi
-  - management/overseerr
+  # - management/overseerr
   - management/radarr
   - management/recommendarr
   - management/recyclarr
