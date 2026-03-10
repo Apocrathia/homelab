@@ -1,0 +1,103 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: thelounge
+  namespace: thelounge
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.59"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: thelounge
+      # renovate: datasource=docker depName=ghcr.io/thelounge/thelounge
+      image: ghcr.io/thelounge/thelounge:4.4.3
+      container:
+        name: thelounge
+        port: 9000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: THELOUNGE_HOME
+            value: "/var/opt/thelounge"
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 9000
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /var/opt/thelounge
+      volumes:
+        configMap:
+          - name: thelounge-config
+            mountPath: /var/opt/thelounge/config.js
+            subPath: config.js
+            configMapName: thelounge-config
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Social"
+      displayName: "The Lounge"
+      externalHost: "https://thelounge.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/thelounge/icon.svg"
+      metaDescription: "Self-hosted web IRC client"
+      metaPublisher: "The Lounge"
+
+    httproute:
+      enabled: false
+
+    postgres:
+      enabled: false
