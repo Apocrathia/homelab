@@ -6,7 +6,7 @@ kube-linter:
   image: alpine:3.23
   variables:
     # renovate: datasource=github-releases depName=stackrox/kube-linter
-    KUBE_LINTER_VERSION: v0.8.1
+    KUBE_LINTER_VERSION: v0.8.3
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
