@@ -21,7 +21,7 @@ spec:
       name: element-web
       namespace: matrix
       # renovate: datasource=docker depName=ghcr.io/element-hq/element-web
-      image: ghcr.io/element-hq/element-web:v1.12.11
+      image: ghcr.io/element-hq/element-web:v1.12.12
       container:
         name: element-web
         port: 80
