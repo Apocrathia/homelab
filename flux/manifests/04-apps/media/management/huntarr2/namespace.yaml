@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: huntarr2
+  labels:
+    name: huntarr2

@@ -43,7 +43,8 @@ Media applications are organized into three categories:
 - **[Cleanuparr](./management/cleanuparr/README.md)** - Monitors and removes blocked/stalled downloads from Arr apps
 - **[LazyLibrarian](./management/lazylibrarian/README.md)** - Book and audiobook metadata management for digital libraries
 - **[DAPS](./management/daps/README.md)** - Poster management and Arr automation scripts
-- **[Huntarr](./management/huntarr/README.md)** - Automated missing content hunter for Arr apps
+- **[Huntarr](./management/huntarr/README.md)** - Automated missing content hunter for Arr apps (deprecated)
+- **[Huntarr2](./management/huntarr2/README.md)** - Rewrite of Huntarr for automated missing content and quality upgrade searches
 - **[Maintainerr](./management/maintainerr/README.md)** - Removes stale Plex content based on configurable rules
 - **[Mylar](./management/mylar/README.md)** - Comic book collection manager with ComicVine integration
 - **[Mixarr](./management/mixarr/README.md)** - Music discovery for Lidarr with AI-powered recommendations
