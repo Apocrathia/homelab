@@ -39,7 +39,6 @@ resources:
   - 04-apps/artificial-intelligence/flux-kustomization.yaml
   - 04-apps/games/flux-kustomization.yaml
   - 04-apps/home/flux-kustomization.yaml
-  - 04-apps/hypermind/flux-kustomization.yaml
   - 04-apps/management/flux-kustomization.yaml
   - 04-apps/media/flux-kustomization.yaml
   - 04-apps/productivity/flux-kustomization.yaml
