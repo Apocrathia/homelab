@@ -19,7 +19,7 @@ entries:
       authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
       mode: "proxy"
       intercept_header_auth: false
-      internal_host: "http://open-webui.openwebui.svc.cluster.local:80"
+      internal_host: "http://openwebui-open-webui.openwebui.svc.cluster.local:80"
       external_host: "https://chat.gateway.services.apocrathia.com"
 
   # Application for OpenWebUI
