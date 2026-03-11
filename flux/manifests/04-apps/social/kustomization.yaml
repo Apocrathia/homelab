@@ -6,5 +6,6 @@ metadata:
   name: social
 
 resources:
+  - hypermind
   - lemmy
   - thelounge

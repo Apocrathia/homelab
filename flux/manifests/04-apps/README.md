@@ -33,10 +33,6 @@ ArchiSteamFarm for card farming, ROMM for retro game management.
 
 Companion (Stream Deck), Grocy, Mealie, Meshtastic, Transmission, Uptime Kuma.
 
-### [Hypermind](hypermind/README.md)
-
-P2P swarm network for counting how many other people are wasting RAM on this container.
-
 ### [Management](management/README.md)
 
 Backstage developer portal, JetKVM, n8n workflows, UnPoller.

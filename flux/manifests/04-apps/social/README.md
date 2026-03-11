@@ -6,6 +6,10 @@ Community and social networking applications.
 
 ## Applications
 
+### [Hypermind](./hypermind/README.md)
+
+P2P swarm network for counting how many other people are wasting RAM on this container.
+
 ### [Lemmy](./lemmy/README.md)
 
 Lemmy UI frontend for the lemmy.ml instance.

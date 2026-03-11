@@ -2,7 +2,7 @@
 
 > _"Hey everyone, so you just finished setting up the \*Arr stack and your dashboards lookin crisp. But you look at your htop and see… unused RAM. It's disgusting, isn't it?"_
 
-> **Navigation**: [← Back to Apps README](../README.md)
+> **Navigation**: [← Back to Social README](../README.md)
 
 ## Overview
 
