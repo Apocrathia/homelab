@@ -78,6 +78,7 @@ All available configuration values for the chart:
 | `app.service.extraServicePorts`                | array  | `[]`                                              | Additional service ports                                                    |
 | `app.volumes.emptyDir`                         | array  | `[]`                                              | EmptyDir volumes                                                            |
 | `app.volumes.configMap`                        | array  | `[]`                                              | ConfigMap volumes                                                           |
+| `app.volumes.secret`                           | array  | `[]`                                              | Secret volumes                                                              |
 | `app.volumeMounts`                             | array  | `[]`                                              | Volume mounts for pod-wide storage                                          |
 | `storage.longhorn.enabled`                     | bool   | `false`                                           | Enable Longhorn storage                                                     |
 | `storage.longhorn.numberOfReplicas`            | int    | `3`                                               | Number of replicas for Longhorn volumes                                     |
@@ -192,6 +193,11 @@ app:
         subPath: config.yaml
         readOnly: true
         configMapName: my-configmap
+    secret: # Secret volumes
+      - name: tls-cert
+        mountPath: /etc/tls
+        readOnly: true
+        secretName: my-tls-secret
   initContainers: # Init containers (optional)
     - name: fix-permissions
       image: busybox:alpine
@@ -754,13 +760,20 @@ app:
         subPath: app.conf
         readOnly: true
         configMapName: my-configmap
+
+    # Secret volumes (credentials, TLS certs, etc.)
+    secret:
+      - name: tls-cert
+        mountPath: /etc/tls
+        readOnly: true
+        secretName: my-tls-secret
 ```
 
 **Characteristics:**
 
 - ✅ **Simple** - mount info included directly in definition
 - ✅ **Temporary** - EmptyDir dies with pod (perfect for cache/temp)
-- ✅ **Direct** - ConfigMap files mounted exactly where needed
+- ✅ **Direct** - ConfigMap and Secret files mounted exactly where needed
 - ✅ **Self-contained** - each volume definition includes its mount info
 - ✅ **Container-specific** - available for main container, init containers, and sidecars
 
@@ -769,7 +782,7 @@ app:
 The chart supports two types of volume configuration:
 
 1. **Pod-wide storage** (from `storage` section) - referenced by name in `volumeMounts`
-2. **Local storage** (emptyDir, configMap) - defined in `volumes` section
+2. **Local storage** (emptyDir, configMap, secret) - defined in `volumes` section
 
 ### EmptyDir Volumes
 

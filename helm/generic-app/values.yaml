@@ -408,6 +408,15 @@ app:
     #     subPath: config.yaml
     #     readOnly: true
     #     configMapName: my-configmap
+    # Secret volumes
+    secret: []
+    # Example Secret volumes:
+    # secret:
+    #   - name: my-secret
+    #     mountPath: /etc/secret
+    #     subPath: credentials.yaml
+    #     readOnly: true
+    #     secretName: my-secret-name
 
   # Volume mounts - references pod-wide storage volumes (from storage section)
   # Volume names will be prefixed with app.name (e.g., "myapp-config")

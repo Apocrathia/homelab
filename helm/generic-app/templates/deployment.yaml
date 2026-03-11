@@ -320,6 +320,18 @@ spec:
               {{- end }}
             {{- end }}
             {{- end }}
+            {{- if .Values.app.volumes.secret }}
+            {{- range .Values.app.volumes.secret }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
           resources:
             requests:
               cpu: {{ .Values.app.resources.requests.cpu | default "50m" }}
@@ -750,6 +762,15 @@ spec:
         - name: {{ .name }}
           configMap:
             name: {{ .configMapName | default .name }}
+        {{- end }}
+        {{- end }}
+        {{- /* 3b. App-level secret volumes (NOT prefixed) */}}
+        {{- range .Values.app.volumes.secret }}
+        {{- if not (hasKey $createdVolumes .name) }}
+        {{- $_ := set $createdVolumes .name true }}
+        - name: {{ .name }}
+          secret:
+            secretName: {{ .secretName | default .name }}
         {{- end }}
         {{- end }}
         {{- /* 4. initContainer volumes (emptyDir, configMap, and secret, NOT prefixed) */}}

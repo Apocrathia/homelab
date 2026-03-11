@@ -1,6 +1,14 @@
 # Changelog
 
-## Version 0.0.63 (Latest)
+## Version 0.0.64 (Latest)
+
+- **Secret volume support for main container**: Added `app.volumes.secret` alongside existing `emptyDir` and `configMap` volume types
+  - Mount Kubernetes Secrets directly into the main application container
+  - Supports `name`, `mountPath`, `secretName`, `subPath`, and `readOnly`
+  - Uses `.secretName | default .name` for the volume source, matching the `configMap` pattern
+  - Integrated into the volume deduplication strategy — no duplicate volumes across containers
+
+## Version 0.0.63
 
 - **Pod and sidecar runAsUser/runAsGroup**: Use `hasKey` for pod-level and sidecar `runAsUser`/`runAsGroup` so explicit `0` (root) is rendered. Previously `| default 1000` treated `0` as empty in Go templates and replaced it with 1000.
 
