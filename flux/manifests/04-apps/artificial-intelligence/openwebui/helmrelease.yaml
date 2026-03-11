@@ -81,7 +81,7 @@ spec:
       - name: WEBUI_URL
         value: "https://chat.gateway.services.apocrathia.com"
       - name: OPENAI_API_BASE_URLS
-        value: "http://open-webui-pipelines.openwebui.svc.cluster.local:9099;http://litellm.litellm.svc.cluster.local:4000"
+        value: "http://openwebui-pipelines.openwebui.svc.cluster.local:9099;http://litellm.litellm.svc.cluster.local:4000"
       - name: OPENAI_API_KEYS
         valueFrom:
           secretKeyRef:
