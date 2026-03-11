@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.62 (Latest)
+## Version 0.0.63 (Latest)
+
+- **Pod and sidecar runAsUser/runAsGroup**: Use `hasKey` for pod-level and sidecar `runAsUser`/`runAsGroup` so explicit `0` (root) is rendered. Previously `| default 1000` treated `0` as empty in Go templates and replaced it with 1000.
+
+## Version 0.0.62
 
 - **Container securityContext.runAsNonRoot**: Use `hasKey` so `runAsNonRoot: false` is rendered when set (e.g. init containers that run as root). Previously the template only emitted the field when the value was truthy, so explicit `false` was dropped.
 
