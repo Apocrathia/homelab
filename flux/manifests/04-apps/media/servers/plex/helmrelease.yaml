@@ -135,7 +135,14 @@ spec:
       itemPath: "vaults/Secrets/items/plex-secrets"
 
     authentik:
-      enabled: false
+      enabled: true
+      mode: "bookmark"
+      displayName: "Plex"
+      externalHost: "http://plex.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/plex/icon.svg"
+      category: "Media"
+      metaDescription: "Plex Media Server for streaming personal media collection"
+      metaPublisher: "Plex Inc."
 
     httproute:
       enabled: false
