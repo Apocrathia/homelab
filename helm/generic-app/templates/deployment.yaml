@@ -150,7 +150,7 @@ spec:
             {{- if hasKey .securityContext "runAsGroup" }}
             runAsGroup: {{ .securityContext.runAsGroup }}
             {{- end }}
-            {{- if .securityContext.runAsNonRoot }}
+            {{- if hasKey .securityContext "runAsNonRoot" }}
             runAsNonRoot: {{ .securityContext.runAsNonRoot }}
             {{- end }}
             {{- if .securityContext.readOnlyRootFilesystem }}

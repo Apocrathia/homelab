@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.61 (Latest)
+## Version 0.0.62 (Latest)
+
+- **Container securityContext.runAsNonRoot**: Use `hasKey` so `runAsNonRoot: false` is rendered when set (e.g. init containers that run as root). Previously the template only emitted the field when the value was truthy, so explicit `false` was dropped.
+
+## Version 0.0.61
 
 - **Secret volume support for initContainers and sidecars**: Added `volumes.secret` alongside existing `emptyDir` and `configMap` volume types
   - Mount Kubernetes Secrets (e.g. TLS certs from cert-manager) directly into init containers and sidecar containers
