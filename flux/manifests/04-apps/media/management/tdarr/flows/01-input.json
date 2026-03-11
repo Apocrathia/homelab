@@ -65,9 +65,9 @@
       "fpEnabled": true
     },
     {
-      "name": "720p or below: bitrate < 4 Mbps?",
+      "name": "720p or below: overall bitrate < 4 Mbps?",
       "sourceRepo": "Community",
-      "pluginName": "checkVideoBitrate",
+      "pluginName": "checkOverallBitrate",
       "version": "1.0.0",
       "inputsDB": {
         "lessThan": "4",
@@ -78,9 +78,9 @@
       "fpEnabled": true
     },
     {
-      "name": "1080p: bitrate < 10 Mbps?",
+      "name": "1080p: overall bitrate < 10 Mbps?",
       "sourceRepo": "Community",
-      "pluginName": "checkVideoBitrate",
+      "pluginName": "checkOverallBitrate",
       "version": "1.0.0",
       "inputsDB": {
         "lessThan": "10",
@@ -91,9 +91,9 @@
       "fpEnabled": true
     },
     {
-      "name": "4K: bitrate < 25 Mbps?",
+      "name": "4K: overall bitrate < 25 Mbps?",
       "sourceRepo": "Community",
-      "pluginName": "checkVideoBitrate",
+      "pluginName": "checkOverallBitrate",
       "version": "1.0.0",
       "inputsDB": {
         "lessThan": "25",

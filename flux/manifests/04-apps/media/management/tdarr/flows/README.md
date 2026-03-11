@@ -25,13 +25,13 @@ flowchart TD
     SizeCheck --> CodecCheck{Video codec is HEVC?}
     CodecCheck -->|no| NeedsTranscode["Set needs_transcode = true"]
     CodecCheck -->|yes| ResCheck["Check resolution"]
-    ResCheck --> BitrateCheck{Bitrate below threshold?}
+    ResCheck --> BitrateCheck{Overall bitrate below threshold?}
     BitrateCheck -->|yes| GoToF2["goToFlow: Audio"]
     BitrateCheck -->|no| NeedsTranscode
     NeedsTranscode --> GoToF2
 ```
 
-Bitrate thresholds for HEVC skip logic:
+Overall bitrate thresholds for HEVC skip logic (uses `checkOverallBitrate` since per-stream video bitrate is unavailable on VBR x265 MKV files):
 
 - 720p and below: skip if under 4 Mbps
 - 1080p: skip if under 10 Mbps
