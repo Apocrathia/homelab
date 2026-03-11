@@ -1,0 +1,92 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mumble-web
+  namespace: mumble
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.62"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mumble-web
+      namespace: mumble
+      # renovate: datasource=docker depName=rankenstein/mumble-web
+      image: rankenstein/mumble-web:0.5
+
+      container:
+        name: mumble-web
+        port: 8080
+        env:
+          - name: MUMBLE_SERVER
+            value: "mumble.mumble.svc.cluster.local:64738"
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+
+      healthChecks:
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 2
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      displayName: "Mumble"
+      externalHost: "https://mumble.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/mumble/icon.svg"
+      category: "Social"
+      metaDescription: "Open-source VoIP server for low-latency voice chat"
+      metaPublisher: "Mumble"
+
+    httproute:
+      enabled: false

@@ -14,6 +14,10 @@ P2P swarm network for counting how many other people are wasting RAM on this con
 
 Lemmy UI frontend for the lemmy.ml instance.
 
+### [Mumble](./mumble/README.md)
+
+Open-source VoIP server for low-latency voice chat.
+
 ### [The Lounge](./thelounge/README.md)
 
 Self-hosted web IRC client with persistent connections and message history.

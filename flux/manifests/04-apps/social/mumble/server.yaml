@@ -1,0 +1,132 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mumble
+  namespace: mumble
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.62"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mumble
+      # renovate: datasource=docker depName=ghcr.io/mumble-voip/mumble-server
+      image: ghcr.io/mumble-voip/mumble-server:v1.5.857-1
+
+      container:
+        name: mumble-server
+        port: 64738
+        extraPorts:
+          - name: voice-udp
+            containerPort: 64738
+            protocol: UDP
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: MUMBLE_CONFIG_AUTOBAN_ATTEMPTS
+            value: "0"
+          - name: MUMBLE_SUPERUSER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mumble-secrets
+                key: superuser-password
+          - name: MUMBLE_CONFIG_SERVER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mumble-secrets
+                key: server-password
+          - name: MUMBLE_CONFIG_SSL_CERT
+            value: "/certs/tls.crt"
+          - name: MUMBLE_CONFIG_SSL_KEY
+            value: "/certs/tls.key"
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+
+      securityContext:
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      service:
+        type: ClusterIP
+        port: 64738
+        targetPort: 64738
+        portName: mumble-tcp
+        extraServicePorts:
+          - name: voice-udp
+            port: 64738
+            targetPort: 64738
+            protocol: UDP
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 64738
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 64738
+
+      volumes:
+        secret:
+          - name: mumble-tls
+            mountPath: /certs
+            readOnly: true
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/mumble-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
+
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.93" # mumble.services.apocrathia.com
+      externalTrafficPolicy: Cluster
+      ports:
+        - name: mumble-tcp
+          port: 64738
+          targetPort: 64738
+          protocol: TCP
+        - name: voice-udp
+          port: 64738
+          targetPort: 64738
+          protocol: UDP
