@@ -45,7 +45,7 @@ spec:
     image:
       repository: ghcr.io/mend/renovate-ce
       # renovate: datasource=docker depName=ghcr.io/mend/renovate-ce
-      tag: "14.1.0"
+      tag: "14.1.1"
       useFull: true
       pullPolicy: IfNotPresent
 
