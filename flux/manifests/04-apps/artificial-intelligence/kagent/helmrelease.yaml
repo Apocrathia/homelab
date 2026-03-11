@@ -43,6 +43,8 @@ spec:
     database:
       type: postgres
       # URL injected via valuesFrom from kagent-secrets.postgres-url
+      postgres:
+        vectorEnabled: false
 
     controller:
       replicas: 1
