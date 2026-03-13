@@ -1,0 +1,70 @@
+---
+# Prunes alternate report storage files older than 24h
+# Reports are shipped to Loki via webhook; local PVC is scratch space only
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: trivy-report-cleanup
+  namespace: trivy-system
+spec:
+  schedule: "0 3 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: trivy-operator
+                  topologyKey: kubernetes.io/hostname
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10000
+            runAsGroup: 10000
+            fsGroup: 10000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: cleanup
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/busybox
+              image: public.ecr.aws/docker/library/busybox:1.37.0
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Disk usage before cleanup:"
+                  df -h /mnt/data/trivy-operator
+                  find /mnt/data/trivy-operator -type f -mtime +1 -delete
+                  echo "Disk usage after cleanup:"
+                  df -h /mnt/data/trivy-operator
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 10000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 32Mi
+              volumeMounts:
+                - name: report-storage
+                  mountPath: /mnt/data/trivy-operator
+          volumes:
+            - name: report-storage
+              persistentVolumeClaim:
+                claimName: trivy-operator-pvc
