@@ -206,6 +206,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 1
         volumes:
           - name: resources
             capacity: 10Gi

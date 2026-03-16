@@ -299,6 +299,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 1
         volumes:
           - name: app-source
             capacity: 5Gi

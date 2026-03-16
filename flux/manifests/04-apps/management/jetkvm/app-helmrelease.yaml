@@ -220,6 +220,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 1
         volumes:
           - name: build-cache
             capacity: 5Gi

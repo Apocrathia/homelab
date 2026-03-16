@@ -101,6 +101,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 1
         volumes:
           - name: storage
             capacity: 5Gi

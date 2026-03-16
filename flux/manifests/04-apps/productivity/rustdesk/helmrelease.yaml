@@ -126,6 +126,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 1
         volumes:
           - name: data
             capacity: 1Gi
