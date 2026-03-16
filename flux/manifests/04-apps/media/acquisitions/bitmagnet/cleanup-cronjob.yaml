@@ -1,7 +1,7 @@
 ---
 # Purges stale torrents from the bitmagnet database to prevent unbounded growth.
 # Bitmagnet has no built-in retention (https://github.com/bitmagnet-io/bitmagnet/issues/187),
-# so this CronJob enforces a 180-day retention policy on torrents not re-seen by the DHT crawler.
+# so this CronJob enforces a 90-day retention policy on torrents not re-seen by the DHT crawler.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -50,14 +50,14 @@ spec:
                     LIMIT 10;
                   "
 
-                  echo "Deleting torrents not seen in 180 days..."
+                  echo "Deleting torrents not seen in 90 days..."
                   psql -c "
                     DELETE FROM torrents t
-                    WHERE t.updated_at < NOW() - INTERVAL '180 days'
+                    WHERE t.updated_at < NOW() - INTERVAL '90 days'
                     AND NOT EXISTS (
                       SELECT 1 FROM torrents_torrent_sources tts
                       WHERE tts.info_hash = t.info_hash
-                      AND tts.updated_at >= NOW() - INTERVAL '180 days'
+                      AND tts.updated_at >= NOW() - INTERVAL '90 days'
                     );
                   "
 
