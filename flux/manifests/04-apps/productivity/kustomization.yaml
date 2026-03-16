@@ -9,7 +9,7 @@ resources:
   - changedetection-io
   - cryptpad
   - excalidraw
-  # - ideon
+  - ideon
   - kiwix
   - logseq
   - matrix
