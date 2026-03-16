@@ -1,0 +1,46 @@
+---
+description: DeepWiki MCP usage patterns for repository research and antipattern detection
+alwaysApply: false
+---
+# DeepWiki usage
+
+DeepWiki (`user-deepwiki` MCP) provides AI-powered documentation for GitHub repositories. Use it whenever you're working with an external chart, tool, or dependency.
+
+## Tools
+
+- `read_wiki_structure` — get topic list for a repo
+- `read_wiki_contents` — get full documentation for a repo
+- `ask_question` — ask targeted questions about a repo (supports up to 10 repos at once)
+
+All tools take `repoName` in `owner/repo` format (e.g. `fluxcd/flux2`).
+
+## Standard uses
+
+- Understand a Helm chart's values, architecture, and configuration options before deploying
+- Verify environment variable names actually exist in application source
+- Check if OIDC/SSO support exists in the open-source version vs enterprise-only
+- Identify required startup commands, health endpoints, and storage patterns
+- Understand database requirements and connection configuration
+
+## Antipattern detection
+
+Before deploying or integrating any external repository, use `ask_question` to probe for antipatterns:
+
+**Privacy:**
+- "Does this application phone home, send telemetry, or transmit usage data?"
+- "Are there analytics, tracking, or data collection features enabled by default?"
+- "Does this application contact external services on startup?"
+
+**Security:**
+- "Does this application store credentials in plaintext or use weak encryption?"
+- "Are there known security issues, CVEs, or unsafe default configurations?"
+- "Does this application run as root or require privileged access?"
+- "Are there hardcoded secrets, default passwords, or insecure defaults?"
+
+**General fuckery:**
+- "Does this application have vendor lock-in, forced account creation, or license restrictions?"
+- "Are there features that silently modify data, overwrite configurations, or have destructive defaults?"
+- "Does this application respect standard signals for graceful shutdown?"
+- "Are there undocumented side effects, hidden dependencies, or surprising behaviors?"
+
+Ask these **before** writing manifests. If something smells off, flag it to the user before proceeding.

@@ -20,7 +20,9 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Start by reviewing the deployments adjacent to the [DIRECTORY] to understand the existing deployment structure and values.
 - Now, pull the chart and/or repository into the /tmp directory.
 - Next, you will thoroughly review the chart and/or repository to understand the deployment structure and values.
-  - Leverage Deepwiki whenever possible to further understand the chart and/or repository.
+  - Leverage DeepWiki whenever possible to further understand the chart and/or repository.
+  - **Run DeepWiki antipattern checks** per `.cursor/rules/deepwiki.mdc` — probe for privacy, security, and general fuckery before writing any manifests.
+  - **Use Context7** per `.cursor/rules/context7.mdc` to pull current documentation for the chart and its dependencies — verify values schema, default config, and API surface before writing any manifests.
   - Understand required vs optional components and their purposes.
   - Identify authentication mechanisms supported by the application.
 - Determine the application's configuration method:
@@ -39,6 +41,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - **Validate environment variables exist**: Before setting environment variables, verify they actually exist in the application:
     - Search application codebase/documentation for the exact variable names
     - Use DeepWiki to search for environment variable usage in the repository
+    - Use Context7 to check official documentation for supported configuration options
     - Check application's .env.example or documentation for supported variables
     - Don't assume variables exist based on patterns from other applications
     - If unsure, start without the variable and check logs for errors
@@ -224,6 +227,7 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
 - **Validate environment variables exist**: Before setting any environment variable:
   - Search application codebase/documentation for exact variable names
   - Use DeepWiki to search repository for environment variable usage
+  - Use Context7 to verify configuration options against official library docs
   - Check application's .env.example, documentation, or source code
   - Don't assume variables exist based on patterns from other applications
   - If variable doesn't exist, the application will ignore it (may cause confusion)
@@ -292,6 +296,7 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
   - Check application documentation for data persistence requirements
   - Identify what data must survive pod restarts (encryption keys, uploaded files, logs, etc.)
   - Use DeepWiki to understand application's storage patterns and requirements
+  - Use Context7 to check documented persistence and volume configuration options
   - Common persistence needs: encryption keys, uploaded files, logs, configuration files
   - If data loss would break functionality, use persistent volumes (Longhorn)
   - If data is ephemeral/cache, emptyDir is acceptable

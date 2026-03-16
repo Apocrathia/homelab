@@ -1,0 +1,43 @@
+---
+description: Context7 MCP usage patterns for retrieving up-to-date library documentation
+alwaysApply: false
+---
+
+# Context7 usage
+
+Context7 (`user-context7` MCP) retrieves up-to-date documentation and code examples for any library or framework. Use it when you need current API references, configuration options, or usage patterns.
+
+## Tools
+
+1. `resolve-library-id` — resolve a library name to a Context7-compatible ID (must call first)
+2. `query-docs` — query documentation using the resolved library ID
+
+Always call `resolve-library-id` before `query-docs` unless the user provides an ID in `/org/project` format.
+
+## When to use
+
+- Look up current Helm chart values and configuration options
+- Verify API signatures, function parameters, or config schema
+- Get code examples for a specific library version
+- Check default values before overriding them in manifests
+- Confirm environment variable names, CLI flags, or config file formats
+
+## When to use DeepWiki instead
+
+Context7 pulls from official documentation. DeepWiki reads source code and repository internals. Pick the right tool:
+
+| Need                                                                | Tool     |
+| ------------------------------------------------------------------- | -------- |
+| Official docs, API reference, config schema                         | Context7 |
+| Source-level behavior, antipattern detection, privacy/security audit | DeepWiki |
+| Environment variable names documented in README                     | Context7 |
+| Environment variable names buried in source code                    | DeepWiki |
+
+Use both when deploying a new app — Context7 for configuration, DeepWiki for vetting.
+
+## Query tips
+
+- Be specific: "How to configure PostgreSQL connection in Authentik Helm chart" beats "authentik config"
+- Include version context when relevant — `resolve-library-id` returns available versions
+- Max 3 calls per question per tool — use the best result you have after that
+- Pick libraries by name match, source reputation, snippet count, and benchmark score
