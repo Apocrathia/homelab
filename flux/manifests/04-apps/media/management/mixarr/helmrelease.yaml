@@ -20,7 +20,7 @@ spec:
     app:
       name: mixarr
       # renovate: datasource=docker depName=ghcr.io/aquantumofdonuts/mixarr
-      image: ghcr.io/aquantumofdonuts/mixarr:v2.0.0
+      image: ghcr.io/aquantumofdonuts/mixarr:v2.1.0
       container:
         name: mixarr
         port: 3005
