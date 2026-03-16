@@ -1,0 +1,118 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: lidarr-youtube-downloader
+  namespace: lidarr-youtube-downloader
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.64"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: lidarr-youtube-downloader
+      # renovate: datasource=docker depName=angrido/lidarr-downloader
+      image: angrido/lidarr-downloader@sha256:4b776611f736fae831c7e59abfd8afc276b6e63d1276ad735e82a9dd7876bf79
+      container:
+        name: lidarr-youtube-downloader
+        port: 5000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: LIDARR_URL
+            value: "http://lidarr.lidarr.svc.cluster.local"
+          - name: DOWNLOAD_PATH
+            value: "/downloads"
+          - name: LIDARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: lidarr-youtube-downloader-secrets
+                key: lidarr-api-key
+          - name: SCHEDULER_ENABLED
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 5000
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/test-connection
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/test-connection
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+        emptyDir:
+          - name: downloads
+            mountPath: /downloads
+
+    storage:
+      longhorn:
+        enabled: true
+        volumes:
+          - name: config
+            capacity: 5Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/lidarr-youtube-downloader-secrets"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Lidarr YouTube Downloader"
+      externalHost: "https://lidarr-youtube-downloader.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/lidarr-youtube-downloader/icon.svg"
+      skipPathRegex:
+        - "^/api/"
+
+    httproute:
+      enabled: false
