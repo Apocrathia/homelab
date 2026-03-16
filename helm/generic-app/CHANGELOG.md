@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.64 (Latest)
+## Version 0.0.65 (Latest)
+
+- **Longhorn volume replica count**: Exposed `storage.longhorn.numberOfReplicas` as an explicit chart value (default: 2). Per-volume `numberOfReplicas` override also supported for mixed-redundancy setups.
+
+## Version 0.0.64
 
 - **Secret volume support for main container**: Added `app.volumes.secret` alongside existing `emptyDir` and `configMap` volume types
   - Mount Kubernetes Secrets directly into the main application container
