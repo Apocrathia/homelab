@@ -33,6 +33,7 @@ entries:
         ^/batches/
         ^/chat/completions
         ^/completions
+        ^/cursor
         ^/embeddings
         ^/engines/
         ^/fine_tuning/
