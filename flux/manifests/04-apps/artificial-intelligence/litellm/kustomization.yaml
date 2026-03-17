@@ -11,6 +11,7 @@ resources:
   - postgres.yaml
   - podmonitor.yaml
   - helmrelease.yaml
+  - httproute.yaml
   - rbac.yaml
   - pgvector
 

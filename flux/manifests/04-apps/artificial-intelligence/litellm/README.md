@@ -26,6 +26,8 @@ Create a 1Password item:
 - `password`: Database and UI password (shared)
 - `model-config`: YAML array containing the model_list configuration
 - `ollama-api-base`: Ollama API base URL for local LLM integration
+- `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
+- `oidc-client-secret`: Authentik OIDC provider Client Secret
 
 ### Storage
 
@@ -39,7 +41,7 @@ Create a 1Password item:
 
 ## Authentication
 
-Access to the LiteLLM proxy requires a master key configured through the secret management system. Individual model API keys are stored securely via 1Password.
+Admin UI uses native LiteLLM SSO (OIDC) with Authentik as the IdP. Traffic is routed directly to LiteLLM via HTTPRoute; no Authentik proxy. API access uses the master key. Username/password remain for fallback login at `/fallback/login`. After applying the blueprint, copy the OIDC provider Client ID and Client Secret from Authentik into the 1Password item.
 
 ## Security Considerations
 
@@ -88,5 +90,6 @@ kubectl -n litellm get cluster litellm-postgres -o wide
 ## References
 
 - **[LiteLLM Official Documentation](https://docs.litellm.ai)** - Primary documentation source
+- **[LiteLLM Admin UI SSO](https://docs.litellm.ai/docs/proxy/admin_ui_sso)** - SSO setup (Generic OIDC)
 - **[LiteLLM GitHub Repository](https://github.com/BerriAI/litellm)** - Source code and issues
 - **[MLflow Integration](https://docs.litellm.ai/docs/observability/mlflow)** - Observability setup

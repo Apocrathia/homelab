@@ -1,4 +1,13 @@
 ---
+general_settings:
+  user_header_mappings:
+    - header_name: X-OpenWebUI-User-Id
+      litellm_user_role: internal_user
+    - header_name: X-OpenWebUI-User-Email
+      litellm_user_role: customer
+    - header_name: X-OpenWebUI-User-Name
+      litellm_user_role: customer
+
 model_list:
   # OpenAI models
   - model_name: gpt-5

@@ -71,6 +71,14 @@ spec:
       name: litellm-secrets
       valuesKey: vector-store-id
       targetPath: envVars.VECTOR_STORE_ID
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: oidc-client-id
+      targetPath: envVars.GENERIC_CLIENT_ID
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: oidc-client-secret
+      targetPath: envVars.GENERIC_CLIENT_SECRET
 
   values:
     # Allow ECR-hosted Bitnami images (they're mirrors of Docker Hub)
@@ -93,7 +101,7 @@ spec:
       type: ClusterIP
       port: 4000
 
-    # Ingress disabled - using Gateway API through authentik
+    # Ingress disabled - using Gateway API (HTTPRoute direct to service)
     ingress:
       enabled: false
 
@@ -164,6 +172,11 @@ spec:
       OTEL_EXPORTER: "otlp_grpc"
       OTEL_ENDPOINT: "http://alloy.alloy-system.svc.cluster.local:4317"
       OTEL_SERVICE_NAME: "litellm"
+      # SSO (Authentik OIDC) - free for up to 5 users from v1.76.0
+      PROXY_BASE_URL: "https://ai.gateway.services.apocrathia.com"
+      GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/authorize/"
+      GENERIC_TOKEN_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/token/"
+      GENERIC_USERINFO_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/userinfo/"
 
     proxy_config:
       # Include model configuration from separate file using relative path
