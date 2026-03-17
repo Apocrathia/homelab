@@ -18,6 +18,7 @@ spec:
       backoffLimit: 2
       template:
         spec:
+          automountServiceAccountToken: false
           restartPolicy: Never
           securityContext:
             runAsNonRoot: true
