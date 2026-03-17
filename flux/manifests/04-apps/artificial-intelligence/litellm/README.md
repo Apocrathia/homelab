@@ -34,7 +34,7 @@ Create a 1Password item:
 
 ### Access
 
-- **External URL**: `https://litellm.gateway.services.apocrathia.com`
+- **External URL**: `https://ai.gateway.services.apocrathia.com`
 - **Internal Service**: `http://litellm.litellm.svc.cluster.local:4000`
 
 ## Authentication
@@ -54,23 +54,23 @@ Access to the LiteLLM proxy requires a master key configured through the secret 
 
 1. **Database Connection Issues**
 
-   ```bash
-   # Check PostgreSQL cluster status
-   kubectl -n litellm get cluster litellm-postgres
+```bash
+ # Check PostgreSQL cluster status
+ kubectl -n litellm get cluster litellm-postgres
 
-   # Verify database connectivity
-   kubectl -n litellm exec -it litellm-postgres-1 -- psql -U litellm -d litellm -c "SELECT version();"
-   ```
+ # Verify database connectivity
+ kubectl -n litellm exec -it litellm-postgres-1 -- psql -U litellm -d litellm -c "SELECT version();"
+```
 
 2. **Model Configuration Issues**
 
-   ```bash
-   # Check model config secret
-   kubectl -n litellm get secret litellm-secrets -o yaml
+```bash
+ # Check model config secret
+ kubectl -n litellm get secret litellm-secrets -o yaml
 
-   # View LiteLLM logs
-   kubectl -n litellm logs -l app.kubernetes.io/name=litellm
-   ```
+ # View LiteLLM logs
+ kubectl -n litellm logs -l app.kubernetes.io/name=litellm
+```
 
 ### Health Checks
 
