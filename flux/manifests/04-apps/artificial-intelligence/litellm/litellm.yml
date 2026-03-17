@@ -59,6 +59,18 @@ model_list:
     litellm_params:
       model: openai/cogito:14b
       api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-small
+    litellm_params:
+      model: openai/qwen3.5:4b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-medium
+    litellm_params:
+      model: openai/qwen3.5:9b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-large
+    litellm_params:
+      model: openai/qwen3.5:27b
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
 
   # Local embedding models (native Ollama endpoint)
   - model_name: nomic-embed-text
