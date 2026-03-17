@@ -172,11 +172,11 @@ spec:
       OTEL_EXPORTER: "otlp_grpc"
       OTEL_ENDPOINT: "http://alloy.alloy-system.svc.cluster.local:4317"
       OTEL_SERVICE_NAME: "litellm"
-      # SSO (Authentik OIDC) - free for up to 5 users from v1.76.0
       PROXY_BASE_URL: "https://ai.gateway.services.apocrathia.com"
-      GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/authorize/"
-      GENERIC_TOKEN_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/token/"
-      GENERIC_USERINFO_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/litellm-oidc-provider/userinfo/"
+      GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/authorize/"
+      GENERIC_TOKEN_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/token/"
+      GENERIC_USERINFO_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/userinfo/"
+      GENERIC_SCOPE: "openid profile email"
 
     proxy_config:
       # Include model configuration from separate file using relative path
