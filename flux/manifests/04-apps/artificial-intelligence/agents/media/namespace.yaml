@@ -9,3 +9,4 @@ metadata:
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
     kagent-agent: "true"
+    mcp-client: "true"
