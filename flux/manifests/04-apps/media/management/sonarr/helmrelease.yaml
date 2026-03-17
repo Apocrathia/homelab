@@ -20,7 +20,7 @@ spec:
     app:
       name: sonarr
       # renovate: datasource=docker depName=ghcr.io/home-operations/sonarr
-      image: ghcr.io/home-operations/sonarr:4.0.16
+      image: ghcr.io/home-operations/sonarr:4.0.17
       container:
         name: sonarr
         port: 8989
