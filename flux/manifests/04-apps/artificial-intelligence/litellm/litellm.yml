@@ -4,9 +4,9 @@ general_settings:
     - header_name: X-OpenWebUI-User-Id
       litellm_user_role: internal_user
     - header_name: X-OpenWebUI-User-Email
-      litellm_user_role: customer
+      litellm_user_role: internal_user
     - header_name: X-OpenWebUI-User-Name
-      litellm_user_role: customer
+      litellm_user_role: internal_user
 
 model_list:
   # OpenAI models
@@ -117,19 +117,44 @@ vector_store_registry:
       api_key: os.environ/VECTOR_STORE_API_KEY
 
 mcp_servers:
+  a2a:
+    alias: "a2a"
+    url: "http://mcp-a2a-mcp-server-proxy.mcp-a2a.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  context7:
+    alias: "context7"
+    url: "https://mcp.context7.com/mcp"
+    transport: "http"
+    auth_type: "none"
+  deepwiki:
+    alias: "deepwiki"
+    url: "https://mcp.deepwiki.com/mcp"
+    transport: "http"
+    auth_type: "none"
+  firecrawl:
+    alias: "firecrawl"
+    url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  flux:
+    alias: "flux"
+    url: "http://mcp-flux-mcp-proxy.mcp-flux.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  gitlab:
+    alias: "gitlab"
+    url: "http://mcp-gitlab-mcp-server-proxy.mcp-gitlab.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  github:
+    alias: "github"
+    url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
   gofetch:
     alias: "gofetch"
     url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  osv:
-    alias: "osv"
-    url: "http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  mkp:
-    alias: "mkp"
-    url: "http://mcp-kubernetes-mcp-proxy.mcp-mkp.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   grafana:
@@ -140,26 +165,6 @@ mcp_servers:
     # Forward Grafana auth headers from client
     extra_headers:
       - "X-Grafana-API-Key"
-  searxng:
-    alias: "searxng"
-    url: "http://mcp-searxng-mcp-proxy.mcp-searxng.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  github:
-    alias: "github"
-    url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  flux:
-    alias: "flux"
-    url: "http://mcp-flux-mcp-proxy.mcp-flux.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  deepwiki:
-    alias: "deepwiki"
-    url: "https://mcp.deepwiki.com/mcp"
-    transport: "http"
-    auth_type: "none"
   homeassistant:
     alias: "homeassistant"
     url: "https://home.apocrathia.com:8123/api/mcp"
@@ -171,24 +176,19 @@ mcp_servers:
     # Allow client to override with their own token
     extra_headers:
       - "Authorization"
+  mkp:
+    alias: "mkp"
+    url: "http://mcp-kubernetes-mcp-proxy.mcp-mkp.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
   openzim:
     alias: "openzim"
     url: "http://mcp-openzim-mcp-proxy.mcp-openzim.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
-  unifi:
-    alias: "unifi"
-    url: "http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  gitlab:
-    alias: "gitlab"
-    url: "http://mcp-gitlab-mcp-server-proxy.mcp-gitlab.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  servarr:
-    alias: "servarr"
-    url: "http://mcp-servarr-mcp-proxy.mcp-servarr.svc.cluster.local:8080/mcp"
+  osv:
+    alias: "osv"
+    url: "http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   plex:
@@ -196,29 +196,34 @@ mcp_servers:
     url: "http://mcp-plex-mcp-server-proxy.mcp-plex.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
-  truenas:
-    alias: "truenas"
-    url: "http://mcp-truenas-mcp-server-proxy.mcp-truenas.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
   proxmox:
     alias: "proxmox"
     url: "http://mcp-proxmox-mcp-plus-proxy.mcp-proxmox.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
-  firecrawl:
-    alias: "firecrawl"
-    url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
-  a2a:
-    alias: "a2a"
-    url: "http://mcp-a2a-mcp-server-proxy.mcp-a2a.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
   qdrant:
     alias: "qdrant"
     url: "http://mcp-qdrant-mcp-proxy.mcp-qdrant.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  searxng:
+    alias: "searxng"
+    url: "http://mcp-searxng-mcp-proxy.mcp-searxng.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  servarr:
+    alias: "servarr"
+    url: "http://mcp-servarr-mcp-proxy.mcp-servarr.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  truenas:
+    alias: "truenas"
+    url: "http://mcp-truenas-mcp-server-proxy.mcp-truenas.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
+  unifi:
+    alias: "unifi"
+    url: "http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
 
