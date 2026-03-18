@@ -20,7 +20,7 @@ spec:
     app:
       name: cannery
       # renovate: datasource=docker depName=shibaobun/cannery
-      image: shibaobun/cannery:0.9.18
+      image: shibaobun/cannery:0.9.20
       container:
         name: cannery
         port: 4000
