@@ -35,9 +35,14 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  set -e
+                  set -eu
 
                   echo "=== Bitmagnet DB Cleanup ==="
+
+                  : "${RETENTION_DAYS:=90}"
+                  : "${VACUUM_FULL:=false}"
+                  : "${CLEAN_ORPHANED_CONTENT:=false}"
+
                   echo "Database size before:"
                   psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
 
@@ -51,42 +56,39 @@ spec:
                     LIMIT 10;
                   "
 
-                  echo "Deleting torrents not seen in 90 days..."
+                  echo "Deleting torrents not seen in ${RETENTION_DAYS} days..."
                   psql -c "
                     DELETE FROM torrents t
-                    WHERE t.updated_at < NOW() - INTERVAL '90 days'
+                    WHERE t.updated_at < NOW() - make_interval(days => ${RETENTION_DAYS})
                     AND NOT EXISTS (
                       SELECT 1 FROM torrents_torrent_sources tts
                       WHERE tts.info_hash = t.info_hash
-                      AND tts.updated_at >= NOW() - INTERVAL '90 days'
+                      AND tts.updated_at >= NOW() - make_interval(days => ${RETENTION_DAYS})
                     );
                   "
 
-                  echo "Cleaning up orphaned content metadata..."
-                  psql -c "
-                    DELETE FROM content c
-                    WHERE NOT EXISTS (
-                      SELECT 1 FROM torrent_contents tc
-                      WHERE tc.content_type = c.type
-                      AND tc.content_source = c.source
-                      AND tc.content_id = c.id
-                    );
-                  "
+                  if [ "$CLEAN_ORPHANED_CONTENT" = "true" ]; then
+                    echo "Cleaning up orphaned content metadata..."
+                    psql -c "
+                      DELETE FROM content c
+                      WHERE NOT EXISTS (
+                        SELECT 1 FROM torrent_contents tc
+                        WHERE tc.content_type = c.type
+                        AND tc.content_source = c.source
+                        AND tc.content_id = c.id
+                      );
+                    "
+                  else
+                    echo "Skipping orphaned content cleanup (CLEAN_ORPHANED_CONTENT=false)."
+                  fi
 
-                  echo "Running VACUUM ANALYZE on application tables..."
-                  psql -c "
-                    DO \$\$
-                    DECLARE r RECORD;
-                    BEGIN
-                      FOR r IN
-                        SELECT schemaname, tablename
-                        FROM pg_tables
-                        WHERE schemaname = 'public'
-                      LOOP
-                        EXECUTE format('VACUUM (ANALYZE) %I.%I', r.schemaname, r.tablename);
-                      END LOOP;
-                    END \$\$;
-                  "
+                  echo "Running VACUUM ANALYZE..."
+                  vacuumdb --analyze --verbose --dbname "$PGDATABASE"
+
+                  if [ "$VACUUM_FULL" = "true" ]; then
+                    echo "Running VACUUM FULL (this will lock tables and can take a while)..."
+                    vacuumdb --full --analyze --verbose --dbname "$PGDATABASE"
+                  fi
 
                   echo "Database size after:"
                   psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
@@ -109,6 +111,12 @@ spec:
                     secretKeyRef:
                       name: bitmagnet-secrets
                       key: password
+                - name: RETENTION_DAYS
+                  value: "90"
+                - name: VACUUM_FULL
+                  value: "true"
+                - name: CLEAN_ORPHANED_CONTENT
+                  value: "true"
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
