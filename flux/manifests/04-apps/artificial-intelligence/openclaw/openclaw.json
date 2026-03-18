@@ -3,7 +3,8 @@
     "mode": "local",
     "bind": "lan",
     "controlUi": {
-      "dangerouslyDisableDeviceAuth": false
+      "dangerouslyDisableDeviceAuth": false,
+      "allowedOrigins": ["https://openclaw.gateway.services.apocrathia.com"]
     }
   },
   "models": {
