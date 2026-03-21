@@ -93,6 +93,7 @@ spec:
     storage:
       longhorn:
         enabled: true
+        numberOfReplicas: 2
         volumes:
           - name: config
             capacity: 200Gi
