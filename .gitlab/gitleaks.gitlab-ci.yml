@@ -5,7 +5,7 @@ gitleaks:
   stage: test
   image:
     # renovate: datasource=docker depName=ghcr.io/gitleaks/gitleaks
-    name: ghcr.io/gitleaks/gitleaks:v8.30.0
+    name: ghcr.io/gitleaks/gitleaks:v8.30.1
     entrypoint: [""]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
