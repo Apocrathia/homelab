@@ -11,7 +11,7 @@ metadata:
     pasture.longhorn.io/restore: "true"
 spec:
   size: {{ mul (.capacity | trimSuffix "Gi" | int) 1073741824 | quote }}
-  numberOfReplicas: {{ .numberOfReplicas | default $.Values.storage.longhorn.numberOfReplicas | default 2 }}
+  numberOfReplicas: {{ .numberOfReplicas | default $.Values.storage.longhorn.numberOfReplicas | default 1 }}
   staleReplicaTimeout: 30
   frontend: blockdev
 ---

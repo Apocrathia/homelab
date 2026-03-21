@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.65 (Latest)
+## Version 0.0.66 (Latest)
+
+- **Longhorn default replica count**: Chart default for `storage.longhorn.numberOfReplicas` is now **1** (was 2), matching a cluster-wide Longhorn `defaultReplicaCount` of 1. Set `numberOfReplicas: 2` on releases or per-volume for HA-critical workloads.
+
+## Version 0.0.65
 
 - **Longhorn volume replica count**: Exposed `storage.longhorn.numberOfReplicas` as an explicit chart value (default: 2). Per-volume `numberOfReplicas` override also supported for mixed-redundancy setups.
 
