@@ -1,12 +1,17 @@
 #!/bin/bash
-# Update dataLocality for Longhorn volumes to best-effort
-# This allows replicas to be stored on different nodes for better availability
-# Patches volumes without detaching - changes take effect on next detach/reattach cycle
+# Update dataLocality for Longhorn volumes to strict-local (keep data on the workload node).
+# Matches flux/.../longhorn/helmrelease.yaml defaultSettings.defaultDataLocality and
+# persistence.defaultDataLocality.
+#
+# Longhorn rejects converting between strict-local and any other locality while the volume is
+# attached ("data locality cannot be converted between strict-local and other modes when volume
+# is not detached"). Scale down workloads so volumes are detached, then run this script.
 
-set -euo pipefail
+# No -e: bash returns status 1 for ((var++)) when var was 0, which would kill the loop on first volume.
+set -uo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_LOCALITY="best-effort"
+NEW_LOCALITY="strict-local"
 
 echo "Finding volumes with dataLocality != ${NEW_LOCALITY}..."
 
@@ -34,10 +39,8 @@ if [ "${VOLUME_COUNT}" -gt 10 ]; then
   echo "... and $((VOLUME_COUNT - 10)) more"
 fi
 echo ""
-echo "⚠️  NOTE: This will update the dataLocality setting without detaching volumes."
-echo "   Changes will take effect automatically on the next detach/reattach cycle"
-echo "   (e.g., when pods are restarted or volumes are reattached)."
-echo "   No downtime will occur during this update."
+echo "NOTE: Patches only succeed when the volume is detached. If workloads are still using the"
+echo "      volume, Longhorn will reject the patch until you scale down / detach."
 echo ""
 
 read -r -p "Update ${VOLUME_COUNT} volumes to dataLocality=${NEW_LOCALITY}? (yes/no): " confirm < /dev/tty
@@ -92,7 +95,6 @@ if [ "${FAILED}" -gt 0 ]; then
   echo "Failed: ${FAILED} volumes"
 fi
 echo ""
-echo "Note: Changes will take effect on the next detach/reattach cycle."
-echo "      For immediate effect, restart pods using these volumes."
+echo "Note: After patching detached volumes, reattach by scaling workloads back up."
 
 rm -f /tmp/volumes-to-update-locality.txt

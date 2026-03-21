@@ -2,7 +2,8 @@
 # Update existing Longhorn volumes to use the new snapshotMaxCount limit
 # This patches volumes that still have the old 250 limit to the new limit of 5
 
-set -euo pipefail
+# No -e: ((var++)) exits 1 when var was 0, killing the loop on the first volume.
+set -uo pipefail
 
 NAMESPACE="longhorn-system"
 NEW_LIMIT=5

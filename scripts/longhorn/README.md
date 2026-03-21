@@ -32,7 +32,7 @@ Updates existing volumes to use the new `snapshotMaxCount` limit. The global set
 
 ### `update-volume-replica-counts.sh`
 
-Updates existing volumes to match the configured replica count (default is 3). Longhorn will automatically add or remove replicas as needed after the patch.
+Updates existing volumes to match the configured replica count (**1** in the Longhorn HelmRelease and generic-app Longhorn defaults). Longhorn adds or removes replicas after the patch; lowering the count frees backing-store space once extra replicas drain.
 
 **Usage:**
 
@@ -42,7 +42,9 @@ Updates existing volumes to match the configured replica count (default is 3). L
 
 ### `update-volume-data-locality.sh`
 
-Updates volumes to `dataLocality: best-effort`, allowing replicas to be stored on different nodes for better availability. **Note:** Volumes must be detached during the change, which requires scaling down workloads.
+Updates volumes to `dataLocality: strict-local`, matching `defaultDataLocality` / `persistence.defaultDataLocality` in the Longhorn HelmRelease.
+
+Longhorn does **not** allow converting between `strict-local` and other locality modes while the volume is **attached**—the API returns an invalid request until the volume is detached (typically by scaling down the workload). The script issues merge patches; run it after volumes are detached, or rely on new volumes picking up defaults from the StorageClass.
 
 **Usage:**
 
@@ -212,26 +214,25 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 
 ### Data Locality Not Applied to Existing Volumes
 
-**Problem:** Changed `defaultDataLocality` to `best-effort` in HelmRelease, but existing volumes still have `dataLocality: strict-local` or `disabled`.
+**Problem:** `defaultDataLocality` in the HelmRelease does not retroactively change existing `Volume` CRs (for example after switching defaults to `strict-local`).
 
-**Root Cause:** The global setting only applies to new volumes created after the change.
+**Root Cause:** Global defaults apply to new volumes; existing volumes keep their prior `spec.dataLocality`.
 
 **Solution:**
 
-- Use `update-volume-data-locality.sh` to patch existing volumes
-- **Note:** Requires volumes to be detached, which means scaling down workloads
-- New volumes will automatically get `best-effort` from the StorageClass
+- Detach volumes (scale down consumers), run `update-volume-data-locality.sh`, then scale back up
+- Or leave existing volumes as-is; new PVCs inherit `strict-local` from defaults
 
 ### Replica Count Mismatch
 
-**Problem:** Changed `defaultReplicaCount` in HelmRelease, but existing volumes still have the old replica count.
+**Problem:** `defaultReplicaCount` / StorageClass replica defaults changed in Git, but existing volumes still use the old `spec.numberOfReplicas`.
 
-**Root Cause:** The global setting only applies to new volumes.
+**Root Cause:** Global defaults apply to new volumes only.
 
 **Solution:**
 
-- Use `update-volume-replica-counts.sh` to patch existing volumes
-- Longhorn will automatically add or remove replicas as needed after the patch
+- Use `update-volume-replica-counts.sh` to patch existing volumes (target count is **1**, aligned with the HelmRelease and generic-app Longhorn template defaults)
+- Longhorn removes surplus replicas after the patch, which recovers space
 
 ### Snapshot Limits Not Applied Retroactively
 
@@ -246,7 +247,7 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 
 ### Stopped Replicas Consuming Disk Space
 
-**Problem:** Nodes showing excessive disk usage with many stopped Longhorn replicas, even though volumes are configured for 3 replicas.
+**Problem:** Nodes showing excessive disk usage with many stopped Longhorn replicas, even though volumes are configured for the expected replica count.
 
 **Root Causes:**
 
@@ -332,12 +333,12 @@ Added `recurringJobSelector` to automatically label new volumes:
 
 ### Default Settings
 
-Key changes in HelmRelease:
+Key values in the Longhorn HelmRelease (see `flux/manifests/02-infrastructure/longhorn/helmrelease.yaml`):
 
-- `snapshotMaxCount: "5"` (down from 250)
-- `defaultReplicaCount: "3"` (default replica count for new volumes)
-- `defaultDataLocality: "best-effort"` (replicas can be on different nodes for better availability)
-- `replicaAutoBalance: "best-effort"` (automatic rebalancing)
+- `snapshotMaxCount: "5"` (down from Longhorn’s stock default)
+- `defaultReplicaCount: "1"` and `defaultClassReplicaCount: 1` (single replica by default; raise per volume or app when HA matters)
+- `defaultDataLocality: "strict-local"` (and matching `persistence.defaultDataLocality`)
+- `replicaAutoBalance: "best-effort"`
 
 ## Best Practices
 
@@ -360,13 +361,12 @@ If `kubectl patch` commands timeout:
 - Check if patches actually succeeded despite timeout errors
 - Scripts verify patches by checking the actual volume state
 
-### Volumes Can't Be Detached
+### Data Locality Patches Not Sticking
 
-If `update-volume-data-locality.sh` skips volumes:
+If `update-volume-data-locality.sh` fails with invalid request / locality conversion errors:
 
-- Volumes are attached to running pods
-- Scale down the workload first, then run the script
-- Or manually detach volumes in Longhorn UI
+- Longhorn requires the volume **detached** to switch between `strict-local` and `best-effort` (or `disabled`)
+- Scale down the workload using the volume, confirm `status.state` is detached on the `Volume`, rerun the script
 
 ### Snapshot Limits Can't Be Reduced
 
