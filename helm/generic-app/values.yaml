@@ -592,6 +592,9 @@ authentik:
 # HTTPRoute configuration
 # Use with OIDC mode or when not using Authentik proxy
 # Note: Don't enable with proxy mode (outpost creates its own HTTPRoute)
+#
+# httproute.gateway: parent Gateway for this HTTPRoute (cross-namespace allowed).
+# Defaults match main-gateway; set to a dedicated Gateway for a separate LB VIP/TLS front door.
 httproute:
   enabled: false
   hostname: demo.gateway.services.apocrathia.com

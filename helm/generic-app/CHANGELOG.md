@@ -1,6 +1,14 @@
 # Changelog
 
-## Version 0.0.66 (Latest)
+## Version 0.0.68 (Latest)
+
+- **Cilium IP pool API version**: Updated `CiliumLoadBalancerIPPool` manifests and template output to use `cilium.io/v2` instead of the deprecated `cilium.io/v2alpha1`.
+
+## Version 0.0.67
+
+- **HTTPRoute parent Gateway**: Documented `httproute.gateway` (`name`, `namespace`, `sectionName`) for attaching routes to a non-default Gateway (e.g. a dedicated Gateway with its own LoadBalancer IP).
+
+## Version 0.0.66
 
 - **Longhorn default replica count**: Chart default for `storage.longhorn.numberOfReplicas` is now **1** (was 2), matching a cluster-wide Longhorn `defaultReplicaCount` of 1. Set `numberOfReplicas: 2` on releases or per-volume for HA-critical workloads.
 
