@@ -9,7 +9,8 @@ Media server for streaming content from SMB storage shares with transcoding capa
 This deployment includes:
 
 - Plex Media Server with transcoding capabilities
-- Direct LoadBalancer access (no Authentik proxy)
+- HTTPS (and HTTP→HTTPS redirect) via a dedicated Gateway (`plex-gateway` in `cilium-system`) on the same LAN VIP as before; chart LoadBalancer disabled
+- HTTPRoute for `plex.services.apocrathia.com`
 - SMB mounts for media library access
 - Longhorn persistent storage for configuration
 - Resource optimization for transcoding workloads
@@ -33,18 +34,22 @@ This deployment includes:
 
 ### Access
 
-- **External URL**: `https://plex.services.apocrathia.com`
-- **Internal Service**: `http://plex.plex.svc.cluster.local:80`
+- **Public URL**: `https://plex.services.apocrathia.com` — DNS should resolve to the Gateway LoadBalancer IP (same VIP the chart LoadBalancer used previously).
+- **Cluster DNS**: `http://plex.plex.svc.cluster.local:80`
+
+TLS is cert-manager secret `plex-gateway-tls` (defined in `gateway.yaml`), SAN `plex.services.apocrathia.com`.
+
+NAT: forward to **443** (and optionally **80** for redirect) on that VIP, not only legacy plain HTTP to Plex directly.
 
 ## Authentication
 
-Direct access via LoadBalancer service - no Authentik proxy integration.
+Authentik bookmark only (no proxy). The generic-app chart emits `authentik-blueprint-plex` from `authentik.mode: bookmark` and the `authentik.*` values in `helmrelease.yaml` (launch URL, icon, meta fields).
 
 ## Security Considerations
 
-- **Direct Access**: No proxy authentication layer
-- **Resource Limits**: Optimized for transcoding workloads
-- **Storage Security**: Configuration stored on Longhorn volumes
+- **No proxy auth**: Plex is reached directly after TLS termination at the Gateway.
+- **Resource Limits**: tuned for transcoding.
+- **Storage**: configuration on Longhorn.
 
 ## Troubleshooting
 
@@ -79,8 +84,9 @@ kubectl -n plex get pods,svc,pvc
 # Plex application status
 kubectl -n plex get pods -l app.kubernetes.io/name=plex
 
-# Check LoadBalancer IP
-kubectl -n plex get svc plex
+# Gateway / app Service
+kubectl get gateway plex-gateway -n cilium-system
+kubectl get svc plex -n plex
 ```
 
 ## References

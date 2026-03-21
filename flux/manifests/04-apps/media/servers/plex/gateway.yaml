@@ -1,0 +1,108 @@
+---
+# Dedicated Gateway for Plex: same LAN VIP previously used by the chart LoadBalancer (10.100.1.98).
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: plex-gateway-pool
+spec:
+  blocks:
+    - cidr: "10.100.1.98/32"
+  serviceSelector:
+    matchLabels:
+      io.cilium.gateway/owning-gateway: plex-gateway
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: plex-gateway-l2-policy
+spec:
+  interfaces:
+    - eth0
+  serviceSelector:
+    matchLabels:
+      io.cilium.gateway/owning-gateway: plex-gateway
+  loadBalancerIPs: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: plex-gateway
+  namespace: cilium-system
+  annotations:
+    io.cilium/lb-ipam-ips: "10.100.1.98"
+    service.cilium.io/loadbalancer-mode: "hybrid"
+spec:
+  gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: "10.100.1.98"
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: plex-gateway-tls
+            namespace: cert-manager
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: plex-http-redirect
+  namespace: cilium-system
+spec:
+  parentRefs:
+    - name: plex-gateway
+      namespace: cilium-system
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: plex-gateway-tls
+  namespace: cert-manager
+spec:
+  commonName: plex.services.apocrathia.com
+  dnsNames:
+    - plex.services.apocrathia.com
+  duration: 2160h
+  renewBefore: 360h
+  secretName: plex-gateway-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  subject:
+    organizations:
+      - Apocrathia
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: cert-manager-plex-gateway-tls
+  namespace: cert-manager
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: cilium-system
+  to:
+    - group: ""
+      kind: Secret
+      name: plex-gateway-tls

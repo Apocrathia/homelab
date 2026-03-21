@@ -7,4 +7,5 @@ metadata:
 
 resources:
   - namespace.yaml
+  - gateway.yaml
   - helmrelease.yaml

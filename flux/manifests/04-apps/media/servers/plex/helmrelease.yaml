@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.65"
+      version: "0.0.67"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -35,7 +35,7 @@ spec:
                 name: plex-secrets
                 key: claim-token
           - name: ADVERTISE_IP
-            value: "http://plex.services.apocrathia.com"
+            value: "https://plex.services.apocrathia.com"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -139,21 +139,19 @@ spec:
       enabled: true
       mode: "bookmark"
       displayName: "Plex"
-      externalHost: "http://plex.services.apocrathia.com"
+      externalHost: "https://plex.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/plex/icon.svg"
       category: "Media"
       metaDescription: "Plex Media Server for streaming personal media collection"
       metaPublisher: "Plex Inc."
 
     httproute:
-      enabled: false
+      enabled: true
+      hostname: plex.services.apocrathia.com
+      gateway:
+        name: plex-gateway
+        namespace: cilium-system
+        sectionName: https
 
     loadbalancer:
-      enabled: true
-      ip: "10.100.1.98"
-      externalTrafficPolicy: Cluster
-      ports:
-        - name: http
-          port: 80
-          targetPort: 32400
-          protocol: TCP
+      enabled: false
