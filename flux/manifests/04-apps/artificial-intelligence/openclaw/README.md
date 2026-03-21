@@ -69,14 +69,23 @@ The Control UI will show "gateway token missing" - paste the token from step 1 i
 https://openclaw.gateway.services.apocrathia.com/?token=YOUR_TOKEN
 ```
 
-Device pairing is disabled via config (`controlUi.dangerouslyDisableDeviceAuth: true`).
+Device pairing is enabled. The first time you connect from a new browser profile, OpenClaw will require an approval for that device.
+
+To approve your device (once per browser profile):
+
+```bash
+kubectl exec -n openclaw -it deploy/openclaw -- openclaw devices list
+kubectl exec -n openclaw -it deploy/openclaw -- openclaw devices approve <requestId>
+```
+
+If you clear cookies/cache or switch browsers, you will likely need to approve again.
 
 ## Security Considerations
 
 - **Gateway Token**: Required for WebSocket access, stored in 1Password
 - **Authentik Proxy**: Network-layer authentication before reaching Gateway
 - **Non-root User**: Runs as node user (uid 1000)
-- **Device Auth Disabled**: Control UI device pairing disabled for ease of use behind Authentik
+- **Device Pairing Required**: First Control UI connection from a new browser profile needs `openclaw devices approve`
 - **DM Pairing**: Default DM policy requires pairing codes for unknown senders
 
 ## Troubleshooting
