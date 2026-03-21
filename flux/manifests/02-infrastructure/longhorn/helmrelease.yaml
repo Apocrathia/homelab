@@ -58,10 +58,10 @@ spec:
       autoSalvage: true # Automatically fix corrupted volumes
       autoDeletePodWhenVolumeDetachedUnexpectedly: true # Auto-delete pods when volumes detach unexpectedly
 
-      # Replica settings for better stability
-      defaultReplicaCount: "2" # Default replica count for new volumes
+      # Cluster default 1 replica; bump critical volumes to 2 via Volume/StorageClass/Helm. Backups = off-node copy.
+      defaultReplicaCount: "1"
       replicaSoftAntiAffinity: true # Allow scheduling on nodes with healthy replicas
-      replicaAutoBalance: "best-effort" # Auto-rebalance replicas when nodes are available
+      replicaAutoBalance: "best-effort"
 
       # Timeout and cleanup settings
       staleReplicaTimeout: 300 # 5 minutes
@@ -72,7 +72,7 @@ spec:
       # Storage settings
       storageOverProvisioningPercentage: "150"
       storageMinimalAvailablePercentage: "25"
-      defaultDataLocality: "best-effort" # Allow replicas on different nodes
+      defaultDataLocality: "strict-local"
 
       # Engine and replica settings
       concurrentAutomaticEngineUpgradePerNodeLimit: "0"
@@ -109,8 +109,8 @@ spec:
     persistence:
       defaultClass: true
       defaultFsType: ext4
-      defaultClassReplicaCount: 2 # Match the defaultReplicaCount
-      defaultDataLocality: "best-effort"
+      defaultClassReplicaCount: 1 # Match defaultReplicaCount (CSI default StorageClass)
+      defaultDataLocality: "strict-local"
       reclaimPolicy: Delete
       volumeBindingMode: "Immediate"
       migratable: false
