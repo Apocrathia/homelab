@@ -2,9 +2,11 @@
 alwaysApply: true
 description: General guidelines for the project
 ---
+
 # General Guidelines for Homelab Development
 
 ## Personality
+
 - **No-nonsense, peer-to-peer tone** - treat user as expert
 - **Terse yet accurate** - no unnecessary fluff, get straight to the point
 - **Humor welcome** - light, situational humor to keep things engaging
@@ -15,13 +17,14 @@ description: General guidelines for the project
 - **Default to asking, not acting** - ask for specifics before making changes when unclear
 - **Relevant tips only** - offer best practices only when directly applicable
 - **YAML-focused** - most code is YAML, conform to Prettier/yamllint rules
-- **Code presentation** - wrap snippets in fenced blocks (```yaml ```), include explanatory comments where helpful
+- **Code presentation** - wrap snippets in fenced code blocks with an explicit language tag (for example, yaml), include explanatory comments where helpful
 - **Validate links** - ensure referenced URLs are reachable and relevant before posting
 - **Iterate on feedback** - encourage user input and refine solutions accordingly
 - **Stay sharp** - maintain clarity and precision while being humorous and profanity-rich
 - **Evidence-based analysis** - require multiple data points before drawing conclusions; don't speculate or assume
 
 ## Project Structure
+
 - Maintain a clear and logical directory structure
 - Group related components and configurations together
 - Keep configuration separate from application code
@@ -31,6 +34,7 @@ description: General guidelines for the project
 - **Do not duplicate configuration info in README files** when config files are located adjacent to avoid updating versions in two places
 
 ## Security Best Practices
+
 - Never commit secrets or sensitive data to the repository
 - Use 1Password Item Custom Resources (CR) to manage secrets rather than creating native Kubernetes Secret resources
 - Follow the principle of least privilege
@@ -42,6 +46,7 @@ description: General guidelines for the project
 - Re-scan after applying fixes to verify issues are resolved
 
 ## Infrastructure Management
+
 - Use Infrastructure as Code (IaC) principles
 - Document infrastructure dependencies
 - Keep track of resource allocations
@@ -51,12 +56,17 @@ description: General guidelines for the project
 - **Clean out any old ingress resources** in favor of Gateway API
 
 ## Documentation Standards
+
 - High-level, concise overviews with minimal technical detail
 - Match the style and verbosity of existing project READMEs
 - Provide enough context to reorient future developers
 - Practical and actionable
 - Security-focused when appropriate
 - Include real examples and commands
+- **Any time `*.md` files are created or modified, run `prettier -w` on those changed markdown files before final response**
+- **Before marking markdown work complete, run `prettier --check` on changed `*.md` files and report result**
+- **If Prettier fails or is unavailable, report the exact command/error and stop; do not claim markdown changes are complete**
+- **Do not run repo-wide markdown formatting unless explicitly requested; format only markdown files changed in the current task**
 - **Avoid duplicating tunable configuration values** - resource limits, volume sizes, replica counts, etc. belong in manifests only
   - GitOps means manifests ARE the documentation for configuration - duplicating tunable values in documentation leads to inaccurate documentation.
   - Static values like URLs and hostnames are fine - they don't change once deployed
@@ -65,6 +75,7 @@ description: General guidelines for the project
 - Make writeups straightforward and context-independent
 
 ## Observability
+
 - Implement comprehensive monitoring
 - Establish logging standards
 - Define alerting criteria
@@ -73,6 +84,7 @@ description: General guidelines for the project
 - Track system health indicators
 
 ## Development Workflow
+
 - Use version control for all changes, with explicit approval from a human
 - Test changes before applying to live system
 - Write clear and descriptive commit messages using Conventional Commits specification
@@ -85,6 +97,7 @@ description: General guidelines for the project
 - **Do not write file contents in the chat window unless explicitly instructed** - update files directly instead
 
 ## GitOps Workflow
+
 - While the project uses Flux for GitOps, iterative development may require direct cluster testing
 - Have the user apply changes directly for testing when needed. Changes will be committed to the repository by the user.
 - This balances development efficiency with GitOps principles
@@ -93,6 +106,7 @@ description: General guidelines for the project
 - **Rule of thumb** - GitOps or GTFO
 
 ## Maintenance and Operations
+
 - Schedule regular system updates
 - Verify backup and restore procedures
 - Monitor system performance
@@ -102,6 +116,7 @@ description: General guidelines for the project
 - Keep inventory of hardware and software
 
 ## Quality Assurance
+
 - Test changes in a safe manner
 - **Validate manifests locally as much as possible** before applying to cluster
 - Maintain consistent standards across the project
@@ -118,6 +133,7 @@ description: General guidelines for the project
 - Run `prettier -w` to format code before presenting to the user
 
 ## MCP Tools Usage
+
 - **Use MCP tools wherever applicable before relying on CLI commands**
 - Use MCP tools when they provide value for the task at hand
 - Use these tools naturally rather than forcing their usage
@@ -130,6 +146,7 @@ description: General guidelines for the project
 - **Cursor can only use OAuth for SSE and HTTP connections** - direct header-based authentication won't work
 
 ## Helm and Configuration Validation
+
 - **Always validate all proposed Helm values against the defaults** when suggesting Helm configurations
 - **Do not create HTTPRoute when configuring services with authentik** - authentik manages it
 - **Use dashboard icons CDN (homarr-labs)** for blueprint icons

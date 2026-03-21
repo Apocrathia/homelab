@@ -60,6 +60,7 @@ New components go in the appropriate layer directory with a `flux-kustomization.
 - **Kustomize overlays, not duplication.** Reference existing resource directories instead of copying files.
 - **Conventional Commits.** All commit messages follow the spec.
 - **Manifests are the documentation.** Don't duplicate tunable configuration values (resource limits, replica counts, volume sizes) in docs. They belong in manifests only.
+- **Markdown touched = Prettier required.** For any changed `*.md` file, run `prettier -w` on changed markdown files, then `prettier --check` before claiming completion. If Prettier fails, report the error and stop.
 
 ## Validation
 
