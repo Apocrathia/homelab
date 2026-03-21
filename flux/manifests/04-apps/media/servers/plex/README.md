@@ -37,7 +37,7 @@ This deployment includes:
 - **Public URL**: `https://plex.services.apocrathia.com` — DNS should resolve to the Gateway LoadBalancer IP (same VIP the chart LoadBalancer used previously).
 - **Cluster DNS**: `http://plex.plex.svc.cluster.local:80`
 
-TLS is cert-manager secret `plex-gateway-tls` (defined in `gateway.yaml`), SAN `plex.services.apocrathia.com`.
+TLS is cert-manager-managed secret `plex-services-apocrathia-com-tls` in namespace `plex` (defined in `gateway.yaml`), SAN `plex.services.apocrathia.com`.
 
 NAT: forward to **443** (and optionally **80** for redirect) on that VIP, not only legacy plain HTTP to Plex directly.
 

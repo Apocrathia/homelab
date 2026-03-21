@@ -44,8 +44,8 @@ spec:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: plex-gateway-tls
-            namespace: cert-manager
+            name: plex-services-apocrathia-com-tls
+            namespace: plex
       allowedRoutes:
         namespaces:
           from: All
@@ -76,15 +76,15 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: plex-gateway-tls
-  namespace: cert-manager
+  name: plex-services-apocrathia-com-tls
+  namespace: plex
 spec:
   commonName: plex.services.apocrathia.com
   dnsNames:
     - plex.services.apocrathia.com
   duration: 2160h
   renewBefore: 360h
-  secretName: plex-gateway-tls
+  secretName: plex-services-apocrathia-com-tls
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
@@ -95,8 +95,8 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: cert-manager-plex-gateway-tls
-  namespace: cert-manager
+  name: plex-plex-services-apocrathia-com-tls
+  namespace: plex
 spec:
   from:
     - group: gateway.networking.k8s.io
@@ -105,4 +105,4 @@ spec:
   to:
     - group: ""
       kind: Secret
-      name: plex-gateway-tls
+      name: plex-services-apocrathia-com-tls
