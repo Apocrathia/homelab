@@ -82,6 +82,7 @@ spec:
   commonName: plex.services.apocrathia.com
   dnsNames:
     - plex.services.apocrathia.com
+    - plex.apocrathia.com
   duration: 2160h
   renewBefore: 360h
   secretName: plex-services-apocrathia-com-tls
@@ -95,7 +96,7 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: plex-plex-services-apocrathia-com-tls
+  name: plex
   namespace: plex
 spec:
   from:
