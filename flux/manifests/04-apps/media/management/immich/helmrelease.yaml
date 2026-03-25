@@ -40,7 +40,7 @@ spec:
           main:
             image:
               # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
-              tag: v2.6.1
+              tag: v2.6.2
             env:
               # Redis - using built-in Valkey
               REDIS_HOSTNAME: "immich-valkey"
