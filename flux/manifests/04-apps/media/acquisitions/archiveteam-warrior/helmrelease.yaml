@@ -20,7 +20,7 @@ spec:
     app:
       name: archiveteam-warrior
       # renovate: datasource=docker depName=atdr.meo.ws/archiveteam/warrior-dockerfile
-      image: atdr.meo.ws/archiveteam/warrior-dockerfile@sha256:7239f38cfdc62d1f883f602ef0527b6cb03f24be12e6353858f5bcc82ad02073
+      image: atdr.meo.ws/archiveteam/warrior-dockerfile@sha256:c50a2daa364a876fe07dc402679d856525f393598a2792401c39a3321c3e9663
       replicas: 4
       podAntiAffinity:
         enabled: true
