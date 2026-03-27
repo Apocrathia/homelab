@@ -20,7 +20,7 @@ spec:
     app:
       name: cleanuparr
       # renovate: datasource=docker depName=ghcr.io/cleanuparr/cleanuparr
-      image: ghcr.io/cleanuparr/cleanuparr:2.8.3
+      image: ghcr.io/cleanuparr/cleanuparr:2.9.0
       container:
         name: cleanuparr
         port: 11011
