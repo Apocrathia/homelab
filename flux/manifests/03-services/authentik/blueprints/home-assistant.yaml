@@ -16,7 +16,7 @@ entries:
       name: "Home Assistant"
       slug: "home-assistant"
       group: "Home"
-      meta_launch_url: "https://home.apocrathia.com:8123"
+      meta_launch_url: "https://home.apocrathia.com"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/home-assistant.svg"
       meta_description: "Home automation platform"
