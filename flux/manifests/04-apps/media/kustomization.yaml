@@ -24,11 +24,11 @@ resources:
   - management/huntarr2
   - management/icloudpd
   - management/immich
-  - management/lazylibrarian
+  # - management/lazylibrarian
   - management/lidarr
-  - management/maintainerr
-  - management/mylar
-  - management/mixarr
+  # - management/maintainerr
+  # - management/mylar
+  # - management/mixarr
   # - management/ombi
   # - management/overseerr
   - management/radarr
@@ -43,7 +43,7 @@ resources:
   - management/tdarr
   - management/whisparr
   - management/scripts
-  - servers/audiobookshelf
+  # - servers/audiobookshelf
   - servers/invidious
   # - servers/jellyfin
   - servers/komga
