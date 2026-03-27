@@ -304,6 +304,11 @@ The generic-app chart supports both proxy and OIDC authentication modes via `aut
   - Set `HOME` environment variable to writable volume mount if application uses `~` paths
   - Check application source code/documentation for default directory creation behavior
   - Configure application-specific paths (LOG_PATH, DATA_PATH, etc.) to writable volumes
+- **generic-app Longhorn + CloudNative-PG (`postgres.enabled`) — PV binding**:
+  - The chart’s `storage.longhorn` template creates a **named static** Kubernetes PV and PVC (for example `{app}-data` for volume key `data`) with a fixed capacity.
+  - CNPG creates a separate PVC (typically `{app}-postgres-1`) with the same `StorageClass` (e.g. `longhorn`) and a requested size from `postgres.storage.size`. The provisioner usually creates a **dynamically named** PV (e.g. `pvc-<uuid>`), but a Pending PVC can bind **any** matching **Available** PV: same storage class, compatible access modes, and capacity **≥** the request.
+  - If the static Longhorn PV (e.g. `{app}-data`, 10Gi) is still **Available** and CNPG’s PVC requests **10Gi** on that class, the scheduler may attach CNPG’s claim to **that** PV first. The app’s PVC then fails (e.g. “volume already bound to a different claim”). This is **not** CNPG naming its volume `{app}-data`; it is normal Kubernetes binding to a pre-created PV that fits the claim.
+  - **Mitigations**: Give `postgres.storage.size` and `storage.longhorn.volumes[].capacity` **different values** so the two claims do not target the same capacity profile (reduces collisions; not a guarantee in every edge case). Optionally use a **different volume key** than `data` (e.g. `app-data`) so the static PV name is not `{app}-data`, which helps avoid confusion and some races—pair with distinct sizes when both subsystems use Longhorn.
 
 ## Optional Components
 
