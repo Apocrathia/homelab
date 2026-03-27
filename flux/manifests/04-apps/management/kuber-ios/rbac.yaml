@@ -1,0 +1,70 @@
+---
+# Mobile client identity (Kuber / Kubenav bearer token). Not cluster-admin.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuber-ios
+  namespace: kuber-ios
+  labels:
+    app.kubernetes.io/name: kuber-ios
+    app.kubernetes.io/part-of: management
+---
+# Cluster-wide namespaced edit: workloads, config, delete pods, exec, etc.
+# Excludes cluster-scoped RBAC / quota manipulation (same tradeoffs as built-in edit).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuber-ios-edit
+  labels:
+    app.kubernetes.io/name: kuber-ios
+    app.kubernetes.io/part-of: management
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: kuber-ios
+    namespace: kuber-ios
+---
+# Flux HelmRelease: not part of default "edit" aggregation; required to delete/patch releases from mobile.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kuber-ios-flux-helm
+  labels:
+    app.kubernetes.io/name: kuber-ios
+    app.kubernetes.io/part-of: management
+rules:
+  - apiGroups: ["helm.toolkit.fluxcd.io"]
+    resources: ["helmreleases"]
+    verbs: ["get", "list", "watch", "patch", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuber-ios-flux-helm
+  labels:
+    app.kubernetes.io/name: kuber-ios
+    app.kubernetes.io/part-of: management
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kuber-ios-flux-helm
+subjects:
+  - kind: ServiceAccount
+    name: kuber-ios
+    namespace: kuber-ios
+---
+# Legacy SA token secret; controller fills data.token and data["ca.crt"].
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kuber-ios-token
+  namespace: kuber-ios
+  annotations:
+    kubernetes.io/service-account.name: kuber-ios
+  labels:
+    app.kubernetes.io/name: kuber-ios
+    app.kubernetes.io/part-of: management
+type: kubernetes.io/service-account-token

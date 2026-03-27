@@ -14,6 +14,10 @@ Developer portal for service catalog, documentation, and tooling.
 
 Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
+### [kuber-ios](./kuber-ios/README.md)
+
+Service account and External Secrets PushSecret for mobile Kubernetes clients (e.g. Kuber, Kubenav): cluster token synced to 1Password.
+
 ### [n8n](./n8n/README.md)
 
 Workflow automation platform for connecting services and APIs.
