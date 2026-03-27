@@ -71,6 +71,10 @@ spec:
           memory: 1Gi
       securityContext:
         readOnlyRootFilesystem: true
+      # n8n writes instance config under ~/.n8n; RO root requires a writable mount here
+      volumeMounts:
+        - name: data
+          mountPath: /home/node/.n8n
       service:
         port: 80
         targetPort: 5678
