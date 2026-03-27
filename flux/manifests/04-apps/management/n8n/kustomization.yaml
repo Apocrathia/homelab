@@ -7,20 +7,4 @@ metadata:
 
 resources:
   - namespace.yaml
-  - secret.yaml
-  - postgres.yaml
   - helmrelease.yaml
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: authentik-blueprint-n8n
-    namespace: n8n
-    files:
-      - n8n.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"

@@ -1,111 +1,52 @@
 # n8n
 
-Workflow automation platform with visual flow editor for complex workflows and internal tools.
+Workflow automation platform with visual flow editor and webhook support.
 
 > **Navigation**: [← Back to Management README](../README.md)
 
 ## Overview
 
-This deployment includes:
+This deployment uses the local `helm/generic-app` chart for:
 
-- n8n workflow automation platform with visual editor
-- PostgreSQL database for workflow persistence
-- Authentik SSO integration for secure access
-- Longhorn persistent storage for data and workflows
-- CloudNativePG PostgreSQL cluster management
+- n8n application runtime
+- CloudNativePG PostgreSQL cluster
+- 1Password item sync for credentials and encryption key
+- Authentik proxy provider and outpost
+- Gateway access at `https://n8n.gateway.services.apocrathia.com`
 
 ## Configuration
 
-### 1Password Secrets
+Create one 1Password item at `vaults/Secrets/items/n8n-secrets` with:
 
-Create a 1Password item:
+- `username`
+- `password`
+- `encryption-key`
 
-#### n8n-secrets (`vaults/Secrets/items/n8n-secrets`)
+The manifests wire these values into database auth and `N8N_ENCRYPTION_KEY`.
 
-- `username`: PostgreSQL username (e.g., n8n)
-- `password`: PostgreSQL password
+## Access
 
-### Storage
-
-- **Application Volume**: Longhorn persistent volume for n8n data and workflows
-- **Database Volume**: Longhorn persistent volume for PostgreSQL data
-
-### Database
-
-- **Engine**: PostgreSQL 16 (CloudNativePG)
-- **Connection**: Internal Kubernetes service (`n8n-postgres-rw.n8n.svc.cluster.local:5432`)
-- **Credentials**: Managed via 1Password Connect
-- **Features**: Automatic failover, monitoring, point-in-time recovery
-
-### Access
-
-- **External URL**: `https://n8n.gateway.services.apocrathia.com`
-- **Internal Service**: `http://n8n.n8n.svc.cluster.local:5678`
-
-## Authentication
-
-Authentication is handled through Authentik SSO:
-
-1. **Proxy Provider**: Authentik blueprint creates a proxy provider
-2. **No Basic Auth**: n8n configured with `N8N_BASIC_AUTH_ACTIVE=false`
-3. **Automatic Setup**: HTTPRoute and outpost created automatically
-4. **Clean Deployment**: Works with Authentik from day one
-
-## Security Considerations
-
-- **SSO Integration**: Complete authentication through Authentik proxy
-- **Database Security**: PostgreSQL credentials managed via 1Password
-- **Network Policies**: Cilium NetworkPolicy for traffic control
-- **No Local Auth**: Basic authentication disabled for security
+- External: `https://n8n.gateway.services.apocrathia.com`
+- In-cluster service: `http://n8n.n8n.svc.cluster.local:80`
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Database Connection Issues**
-
-   ```bash
-   # Check PostgreSQL cluster status
-   kubectl -n n8n get cluster n8n-postgres
-
-   # Test database connectivity
-   kubectl -n n8n exec -it deployment/n8n -- nc -zv n8n-postgres-rw 5432
-
-   # Check database connection from n8n
-   kubectl -n n8n exec -it n8n-postgres-1 -- psql -U n8n -d n8n -c "SELECT version();"
-   ```
-
-2. **Authentik Authentication Issues**
-
-   ```bash
-   # Check Authentik proxy provider
-   kubectl get authentikprovider proxyprovider n8n-proxy-provider -n n8n
-
-   # Check Authentik application
-   kubectl get authentikapplication -n n8n
-
-   # Check HTTPRoute configuration
-   kubectl get httproute -n authentik -l ak-outpost=n8n-outpost
-   ```
-
-### Health Checks
-
 ```bash
-# Overall status
-kubectl -n n8n get pods,svc,pvc
+# Deployment status
+kubectl get pods,svc,pvc -n n8n
 
-# n8n application status
-kubectl -n n8n get pods -l app.kubernetes.io/name=n8n
+# n8n logs
+kubectl logs -n n8n deployment/n8n
 
-# PostgreSQL cluster status
-kubectl -n n8n get cluster n8n-postgres
+# Database cluster status
+kubectl get cluster -n n8n n8n-postgres
 
-# Check Authentik outpost
-kubectl -n authentik get pods -l app.kubernetes.io/name=authentik-outpost
+# Authentik outpost route
+kubectl get httproute -n authentik -l ak-outpost=n8n-outpost
 ```
 
 ## References
 
-- **[n8n Documentation](https://docs.n8n.io/)** - Primary documentation source
-- **[n8n GitHub](https://github.com/n8n-io/n8n)** - Source code and issues
-- **[n8n Helm Chart](https://github.com/n8n-io/n8n-helm-chart)** - Deployment configuration
+- [n8n documentation](https://docs.n8n.io/)
+- [n8n GitHub](https://github.com/n8n-io/n8n)
+- [generic-app chart](../../../../../helm/generic-app/README.md)

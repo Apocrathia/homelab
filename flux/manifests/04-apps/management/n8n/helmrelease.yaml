@@ -8,38 +8,60 @@ spec:
   interval: 1h
   chart:
     spec:
-      chart: n8n
-      # renovate: datasource=helm registryUrl=https://community-charts.github.io/helm-charts depName=n8n
-      version: "1.16.33"
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.68"
       sourceRef:
-        kind: HelmRepository
-        name: community-charts
+        kind: GitRepository
+        name: homelab
         namespace: flux-system
-  # Pull PostgreSQL credentials and encryption key from secret
-  valuesFrom:
-    - kind: Secret
-      name: n8n-secrets
-      valuesKey: username
-      targetPath: externalPostgresql.username
-    - kind: Secret
-      name: n8n-secrets
-      valuesKey: password
-      targetPath: externalPostgresql.password
-    - kind: Secret
-      name: n8n-secrets
-      valuesKey: encryption-key
-      targetPath: encryptionKey
-
   values:
-    # Deployment strategy to prevent Multi-Attach volume errors
-    strategy:
-      type: Recreate
-
-    # Main node configuration
-    main:
-      count: 1
-
-      # Resources for the main container
+    app:
+      name: n8n
+      namespace: n8n
+      # renovate: datasource=docker depName=n8nio/n8n
+      image: n8nio/n8n:2.13.3
+      container:
+        name: n8n
+        port: 5678
+        env:
+          - name: DB_TYPE
+            value: "postgresdb"
+          - name: DB_POSTGRESDB_HOST
+            value: "n8n-postgres-rw.n8n.svc.cluster.local"
+          - name: DB_POSTGRESDB_PORT
+            value: "5432"
+          - name: DB_POSTGRESDB_DATABASE
+            value: "n8n"
+          - name: DB_POSTGRESDB_USER
+            valueFrom:
+              secretKeyRef:
+                name: n8n-secrets
+                key: username
+          - name: DB_POSTGRESDB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: n8n-secrets
+                key: password
+          - name: N8N_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: n8n-secrets
+                key: encryption-key
+          - name: N8N_HOST
+            value: "n8n.gateway.services.apocrathia.com"
+          - name: N8N_PROTOCOL
+            value: "http"
+          - name: N8N_PORT
+            value: "80"
+          - name: WEBHOOK_URL
+            value: "https://n8n.gateway.services.apocrathia.com/"
+          - name: N8N_BASIC_AUTH_ACTIVE
+            value: "false"
+          - name: N8N_PROXY_HOPS
+            value: "1"
+      replicas: 1
+      strategy: Recreate
       resources:
         requests:
           cpu: 100m
@@ -47,46 +69,69 @@ spec:
         limits:
           cpu: 500m
           memory: 1Gi
+      securityContext:
+        readOnlyRootFilesystem: true
+      service:
+        port: 80
+        targetPort: 5678
+      volumes:
+        emptyDir:
+          - name: cache
+            mountPath: /home/node/.cache
 
-      # Enable persistence with Longhorn
-      persistence:
-        enabled: true
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/n8n-secrets"
+
+    postgres:
+      enabled: true
+      imageName: ghcr.io/cloudnative-pg/postgresql:16
+      instances: 1
+      storage:
         storageClass: longhorn
-        size: 20Gi
+        size: 10Gi
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+        limits:
+          memory: "512Mi"
+          cpu: "500m"
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: true
+      database: "n8n"
+      owner: "n8n"
 
-      # Set external URL context so webhooks/redirects are correct behind TLS gateway
-      extraEnvVars:
-        N8N_HOST: n8n.gateway.services.apocrathia.com
-        N8N_PROTOCOL: http
-        N8N_PORT: "80"
-        WEBHOOK_URL: https://n8n.gateway.services.apocrathia.com/
-        N8N_BASIC_AUTH_ACTIVE: "false"
-        N8N_PROXY_HOPS: "1"
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 20Gi
 
-    # Service configuration
-    service:
-      port: 80
+    authentik:
+      enabled: true
+      mode: "proxy"
+      displayName: "n8n"
+      externalHost: "https://n8n.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/n8n/icon.svg"
+      category: "AI & Automation"
+      interceptHeaderAuth: true
+      metaDescription: "n8n workflow automation platform"
+      metaPublisher: "n8n"
 
-    # Database configuration - using external PostgreSQL
-    db:
-      type: postgresdb
-
-    # External PostgreSQL configuration
-    externalPostgresql:
-      host: n8n-postgres-rw.n8n.svc.cluster.local
-      port: 5432
-      database: n8n
-
-    # Security context for the main container
-    securityContext:
-      readOnlyRootFilesystem: true
-
-    # Additional volumes for cache directory
-    volumes:
-      - name: cache
-        emptyDir: {}
-
-    # Volume mounts for cache directory
-    volumeMounts:
-      - name: cache
-        mountPath: /home/node/.cache
+    httproute:
+      enabled: false
