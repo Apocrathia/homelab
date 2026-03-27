@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.68 (Latest)
+## Version 0.0.69 (Latest)
+
+- **SMB `createSubDir`**: Optional per-volume `createSubDir` on `storage.smb.volumes[]` is passed through to the SMB CSI driver `volumeAttributes` (e.g. `"true"`) so the `subDir` path can be created on the share when missing. Documented in README and `values.yaml` example.
+
+## Version 0.0.68
 
 - **Cilium IP pool API version**: Updated `CiliumLoadBalancerIPPool` manifests and template output to use `cilium.io/v2` instead of the deprecated `cilium.io/v2alpha1`.
 

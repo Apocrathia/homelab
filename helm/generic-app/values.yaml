@@ -454,6 +454,7 @@ storage:
     #     capacity: "100Gi"
     #     credentialsPath: "vaults/Secrets/items/smb-credentials"
     #     readOnly: true  # Set to false for read-write access
+    #     createSubDir: "true"  # optional; SMB CSI creates subDir on the server if missing
 
   # EmptyDir storage
   emptyDir:

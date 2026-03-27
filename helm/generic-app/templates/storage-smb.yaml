@@ -27,6 +27,9 @@ spec:
     volumeAttributes:
       source: {{ .source | quote }}
       subDir: {{ .subDir | quote }}
+      {{- if hasKey . "createSubDir" }}
+      createSubDir: {{ .createSubDir | quote }}
+      {{- end }}
 ---
 # SMB Persistent Volume Claim: {{ .name }}
 apiVersion: v1

@@ -728,6 +728,7 @@ storage:
   - `true` (default): Read-only access, uses `ReadOnlyMany` access mode
   - `false`: Read-write access, uses `ReadWriteMany` access mode
   - **Security Note**: Read-only mode is recommended for shared network storage to prevent accidental data modification
+- `createSubDir` (optional): When set to `"true"`, passed to the SMB CSI driver so the `subDir` path is created on the share if it does not exist (same idea as manual PVs using `createSubDir: "true"`).
 
 #### **Container-specific Storage** (`app.volumes` section)
 
