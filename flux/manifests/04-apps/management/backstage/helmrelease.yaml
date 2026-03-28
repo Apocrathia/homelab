@@ -37,7 +37,7 @@ spec:
         registry: ghcr.io
         repository: backstage/backstage
         # renovate: datasource=docker depName=ghcr.io/backstage/backstage
-        tag: "1.49.2"
+        tag: "1.49.3"
         pullPolicy: IfNotPresent
 
       # Resource configuration
