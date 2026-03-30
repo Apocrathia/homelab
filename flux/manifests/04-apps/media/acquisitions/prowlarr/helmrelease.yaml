@@ -20,7 +20,7 @@ spec:
     app:
       name: prowlarr
       # renovate: datasource=docker depName=ghcr.io/home-operations/prowlarr
-      image: ghcr.io/home-operations/prowlarr:2.3.4
+      image: ghcr.io/home-operations/prowlarr:2.3.5
       container:
         name: prowlarr
         port: 9696
