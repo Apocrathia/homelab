@@ -20,7 +20,7 @@ spec:
     app:
       name: reaparr
       # renovate: datasource=docker depName=reaparr/reaparr
-      image: reaparr/reaparr:0.36.0
+      image: reaparr/reaparr:0.37.0
       container:
         name: reaparr
         port: 7000
