@@ -20,7 +20,7 @@ spec:
     app:
       name: ideon
       # renovate: datasource=docker depName=ghcr.io/3xpyth0n/ideon
-      image: ghcr.io/3xpyth0n/ideon:v0.7.7
+      image: ghcr.io/3xpyth0n/ideon:0.8.0
       container:
         name: ideon
         port: 3000
