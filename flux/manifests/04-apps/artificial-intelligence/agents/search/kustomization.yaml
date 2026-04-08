@@ -5,6 +5,7 @@ metadata:
   name: search-agent
 
 resources:
+  - namespace.yaml
   - secret.yaml
   - modelconfig.yaml
   - remotemcpserver.yaml

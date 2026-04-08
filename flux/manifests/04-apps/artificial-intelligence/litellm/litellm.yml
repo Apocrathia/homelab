@@ -245,19 +245,19 @@ agent_list:
   - agent_name: "git-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/git-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
   - agent_name: "homelab-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent"
   - agent_name: "infrastructure-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/infrastructure-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
   - agent_name: "knowledge-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/knowledge-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
   - agent_name: "media-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
@@ -265,4 +265,4 @@ agent_list:
   - agent_name: "search-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/search-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"

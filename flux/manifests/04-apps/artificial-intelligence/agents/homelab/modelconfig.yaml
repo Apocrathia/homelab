@@ -3,7 +3,7 @@ apiVersion: kagent.dev/v1alpha2
 kind: ModelConfig
 metadata:
   name: homelab-agent-model
-  namespace: kagent
+  namespace: agent-homelab
 spec:
   provider: OpenAI
   model: qwen3.5-abliterated-medium

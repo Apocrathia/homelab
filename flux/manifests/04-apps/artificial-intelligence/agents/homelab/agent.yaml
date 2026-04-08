@@ -3,9 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: homelab-agent
-  namespace: kagent
+  namespace: agent-homelab
 spec:
   description: Homelab tech assistant - answers questions about self-hosting, Kubernetes, networking, and general tech topics
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: homelab-agent-model
@@ -134,25 +136,29 @@ spec:
             - messaging
             - announcements
     tools:
-      # Delegate to specialist agents (all same namespace now)
+      # Delegate to specialist agents (system agents in kagent; others in agent-* namespaces)
       - type: Agent
         agent:
           name: k8s-agent
+          namespace: kagent
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
         agent:
           name: helm-agent
+          namespace: kagent
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
         agent:
           name: cilium-manager-agent
+          namespace: kagent
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
         agent:
           name: observability-agent
+          namespace: kagent
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
@@ -164,16 +170,19 @@ spec:
       - type: Agent
         agent:
           name: infrastructure-agent
+          namespace: agent-infrastructure
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
         agent:
           name: git-agent
+          namespace: agent-git
           kind: Agent
           apiGroup: kagent.dev
       - type: Agent
         agent:
           name: knowledge-agent
+          namespace: agent-knowledge
           kind: Agent
           apiGroup: kagent.dev
     systemMessage: |

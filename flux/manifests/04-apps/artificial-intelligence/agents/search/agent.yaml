@@ -3,9 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: search-agent
-  namespace: kagent
+  namespace: agent-search
 spec:
   description: Search the web for current information, documentation, news, and technical details. Can also fetch and read specific URLs.
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: search-agent-model

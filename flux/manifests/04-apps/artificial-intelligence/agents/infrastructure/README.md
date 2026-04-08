@@ -29,10 +29,10 @@ Requires 1Password item `infrastructure-agent-secrets` in Secrets vault with:
 
 ```bash
 # Check agent status
-kubectl get agents -n kagent infrastructure-agent
+kubectl get agents infrastructure-agent --namespace agent-infrastructure
 
 # View agent logs
-kubectl logs -n kagent -l app.kubernetes.io/name=infrastructure-agent -f
+kubectl logs --namespace agent-infrastructure -l app.kubernetes.io/name=infrastructure-agent -f
 ```
 
 ## References

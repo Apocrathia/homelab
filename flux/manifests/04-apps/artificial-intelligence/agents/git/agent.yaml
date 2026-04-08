@@ -3,9 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: git-agent
-  namespace: kagent
+  namespace: agent-git
 spec:
   description: Git platform agent for GitHub and GitLab repository management
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: git-agent-model

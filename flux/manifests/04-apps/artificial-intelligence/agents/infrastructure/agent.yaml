@@ -3,9 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: infrastructure-agent
-  namespace: kagent
+  namespace: agent-infrastructure
 spec:
   description: Infrastructure management agent for Proxmox, TrueNAS, and UniFi network
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: infrastructure-agent-model

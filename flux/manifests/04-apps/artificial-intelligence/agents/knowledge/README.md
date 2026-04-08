@@ -40,16 +40,16 @@ The knowledge agent is designed to be called by other agents (like homelab-agent
 ## Configuration
 
 - **Model**: qwen3 (via LiteLLM)
-- **Namespace**: kagent
+- **Namespace**: `agent-knowledge`
 
 ## Troubleshooting
 
 ```bash
 # Check agent status
-kubectl get agents -n kagent knowledge-agent
+kubectl get agents knowledge-agent --namespace agent-knowledge
 
 # View agent logs
-kubectl logs -n kagent -l app.kubernetes.io/name=knowledge-agent -f
+kubectl logs --namespace agent-knowledge -l app.kubernetes.io/name=knowledge-agent -f
 ```
 
 ## References

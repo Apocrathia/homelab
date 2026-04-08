@@ -51,7 +51,7 @@ logger = logging.getLogger("discord-bridge")
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 KAGENT_URL = os.environ.get(
     "KAGENT_URL",
-    "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent",
+    "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent",
 )
 BOT_NAME = os.environ.get("BOT_NAME", "Homelab Agent")
 HISTORY_LIMIT = int(os.environ.get("HISTORY_LIMIT", "5"))

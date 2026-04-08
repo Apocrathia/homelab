@@ -5,6 +5,7 @@ metadata:
   name: homelab-agent
 
 resources:
+  - namespace.yaml
   - secret.yaml
   - modelconfig.yaml
   - agent.yaml

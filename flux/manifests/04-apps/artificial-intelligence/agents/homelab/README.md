@@ -56,7 +56,7 @@ Create a 1Password item:
 
 ### Access
 
-- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent`
+- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent`
 - **kagent UI**: `https://kagent.gateway.services.apocrathia.com`
 
 ## Troubleshooting
@@ -67,34 +67,33 @@ Create a 1Password item:
 
    ```bash
    # Check bridge logs
-   kubectl logs -n kagent -l app.kubernetes.io/name=discord-bridge
+   kubectl logs --namespace agent-homelab -l app.kubernetes.io/name=discord-bridge
 
    # Verify kagent agent is running
-   kubectl get agent homelab-agent -n kagent
+   kubectl get agent homelab-agent --namespace agent-homelab
    ```
 
 2. **Agent not responding**
 
    ```bash
    # Check agent pod status
-   kubectl get pods -n kagent -l kagent.dev/agent-name=homelab-agent
+   kubectl get pods --namespace agent-homelab -l kagent.dev/agent-name=homelab-agent
 
    # View agent logs
-   kubectl logs -n kagent -l kagent.dev/agent-name=homelab-agent
+   kubectl logs --namespace agent-homelab -l kagent.dev/agent-name=homelab-agent
    ```
 
 ### Health Checks
 
 ```bash
-# Overall status
-kubectl get pods,svc -n kagent
+# Homelab agent + bridge
+kubectl get pods,svc --namespace agent-homelab
 
-# Check kagent resources
-kubectl get agent,modelconfig -n kagent
+kubectl get agent,modelconfig --namespace agent-homelab
 
 # Test A2A endpoint
-kubectl exec -n kagent deploy/discord-bridge -- \
-  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/.well-known/agent-card.json
+kubectl exec --namespace agent-homelab deploy/discord-bridge -- \
+  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent/.well-known/agent-card.json
 ```
 
 ## References

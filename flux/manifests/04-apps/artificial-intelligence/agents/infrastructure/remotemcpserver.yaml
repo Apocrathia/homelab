@@ -3,11 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: proxmox-mcp
-  namespace: kagent
+  namespace: agent-infrastructure
   labels:
     app.kubernetes.io/name: proxmox-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-infrastructure
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -18,11 +18,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: truenas-mcp
-  namespace: kagent
+  namespace: agent-infrastructure
   labels:
     app.kubernetes.io/name: truenas-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-infrastructure
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -33,11 +33,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: unifi-mcp
-  namespace: kagent
+  namespace: agent-infrastructure
   labels:
     app.kubernetes.io/name: unifi-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-infrastructure
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

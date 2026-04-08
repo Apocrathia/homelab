@@ -6,7 +6,7 @@ Declarative AI agents orchestrated by kagent.
 
 ## Overview
 
-All agents run in the consolidated `kagent` namespace alongside the kagent controller and system agents.
+Custom agents each run in a dedicated `agent-*` namespace (for example `agent-homelab`, `agent-git`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace.
 
 **Custom Agents:**
 
@@ -43,9 +43,10 @@ flowchart TB
 ## Adding New Agents
 
 1. Create a new directory under `agents/`
-2. Define the Agent CRD with system prompt and model config (namespace: `kagent`)
-3. Add any necessary bridge components for external integrations
-4. Update this README with a link to the new agent
+2. Add a `Namespace` manifest (`agent-<name>`), `ModelConfig`, 1Password-backed secrets, and the `Agent` CRD in that namespace
+3. Register the agent in LiteLLM `agent_list` with A2A URL `/api/a2a/<namespace>/<agent-name>`
+4. Add any necessary bridge components for external integrations
+5. Update this README with a link to the new agent
 
 ## Writing System Prompts
 
@@ -78,14 +79,15 @@ systemMessage: |
 ## Troubleshooting
 
 ```bash
-# Check agent status
-kubectl get agents -n kagent
+# Custom agents (repeat per namespace as needed)
+kubectl get agents --namespace agent-homelab
 
-# View agent logs
-kubectl logs -n kagent deployment/kagent-controller -f
+# Controller and system agents
+kubectl get agents --namespace kagent
 
-# Check A2A gateway status
-kubectl get pods -n kagent -l app=a2a-gateway
+kubectl logs --namespace kagent deployment/kagent-controller -f
+
+kubectl get pods --namespace kagent -l app=a2a-gateway
 ```
 
 ## References

@@ -5,6 +5,7 @@ metadata:
   name: knowledge-agent
 
 resources:
+  - namespace.yaml
   - secret.yaml
   - modelconfig.yaml
   - remotemcpserver.yaml

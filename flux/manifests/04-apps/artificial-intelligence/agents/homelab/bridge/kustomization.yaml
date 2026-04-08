@@ -12,7 +12,7 @@ generatorOptions:
 
 configMapGenerator:
   - name: discord-bridge-src
-    namespace: kagent
+    namespace: agent-homelab
     files:
       - src/main.py
       - src/requirements.txt

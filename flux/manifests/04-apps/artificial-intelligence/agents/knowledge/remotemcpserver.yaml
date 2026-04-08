@@ -4,11 +4,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: qdrant-mcp
-  namespace: kagent
+  namespace: agent-knowledge
   labels:
     app.kubernetes.io/name: qdrant-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-knowledge
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -20,11 +20,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: openzim-mcp
-  namespace: kagent
+  namespace: agent-knowledge
   labels:
     app.kubernetes.io/name: openzim-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-knowledge
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -36,11 +36,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: deepwiki-mcp
-  namespace: kagent
+  namespace: agent-knowledge
   labels:
     app.kubernetes.io/name: deepwiki-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-knowledge
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

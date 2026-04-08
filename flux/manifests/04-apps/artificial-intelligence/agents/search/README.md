@@ -53,12 +53,12 @@ Create a 1Password item:
 
 ### Access
 
-- **kagent A2A Endpoint**: `http://kagent-controller.kagent-system.svc.cluster.local:8083/api/a2a/kagent-agents/search-agent`
+- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent`
 - **kagent UI**: `https://kagent.gateway.services.apocrathia.com`
 
 ## Agent-to-Agent Integration
 
-Other agents in `kagent-agents` can delegate to this agent by referencing it as a tool:
+Other agents can delegate to this agent by referencing it as a tool (set `namespace` to `agent-search`):
 
 ```yaml
 spec:
@@ -67,6 +67,7 @@ spec:
       - type: Agent
         agent:
           name: search-agent
+          namespace: agent-search
           kind: Agent
           apiGroup: kagent.dev
 ```
@@ -81,10 +82,10 @@ The calling agent's LLM sees the `spec.description` field to decide when to dele
 
    ```bash
    # Check agent status
-   kubectl get agent -n kagent-agents search-agent
+   kubectl get agent search-agent --namespace agent-search
 
    # Check agent pod status
-   kubectl get pods -n kagent-agents -l kagent.dev/agent-name=search-agent
+   kubectl get pods --namespace agent-search -l kagent.dev/agent-name=search-agent
    ```
 
 2. **MCP Server not working**
@@ -101,10 +102,10 @@ The calling agent's LLM sees the `spec.description` field to decide when to dele
 
 ```bash
 # Overall status
-kubectl get agent,modelconfig -n kagent-agents
+kubectl get agent,modelconfig --namespace agent-search
 
 # Test A2A endpoint
-curl -s http://kagent-controller.kagent-system.svc.cluster.local:8083/api/a2a/kagent-agents/search-agent/.well-known/agent-card.json
+curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent/.well-known/agent-card.json
 ```
 
 ## References

@@ -29,10 +29,10 @@ Requires 1Password item `git-agent-secrets` in Secrets vault with:
 
 ```bash
 # Check agent status
-kubectl get agents -n kagent git-agent
+kubectl get agents git-agent --namespace agent-git
 
 # View agent logs
-kubectl logs -n kagent -l app.kubernetes.io/name=git-agent -f
+kubectl logs --namespace agent-git -l app.kubernetes.io/name=git-agent -f
 ```
 
 ## References

@@ -3,7 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: discord-bridge
-  namespace: kagent
+  namespace: agent-homelab
 spec:
   interval: 1h
   chart:
@@ -20,7 +20,7 @@ spec:
   values:
     app:
       name: discord-bridge
-      namespace: kagent
+      namespace: agent-homelab
       podAnnotations:
         instrumentation.opentelemetry.io/inject-python: "otel-system/python"
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
@@ -49,7 +49,7 @@ spec:
 
           # kagent A2A endpoint (trailing slash required)
           - name: KAGENT_URL
-            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/"
+            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent/"
 
           # Bot configuration
           - name: BOT_NAME

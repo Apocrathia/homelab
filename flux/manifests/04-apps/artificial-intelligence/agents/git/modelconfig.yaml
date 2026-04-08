@@ -3,7 +3,7 @@ apiVersion: kagent.dev/v1alpha2
 kind: ModelConfig
 metadata:
   name: git-agent-model
-  namespace: kagent
+  namespace: agent-git
 spec:
   provider: OpenAI
   model: qwen3.5-abliterated-medium

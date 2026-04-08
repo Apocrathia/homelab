@@ -3,11 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: github-mcp
-  namespace: kagent
+  namespace: agent-git
   labels:
     app.kubernetes.io/name: github-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-git
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
@@ -18,11 +18,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: gitlab-mcp
-  namespace: kagent
+  namespace: agent-git
   labels:
     app.kubernetes.io/name: gitlab-mcp
     app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/part-of: agent-git
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP

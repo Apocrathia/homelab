@@ -20,9 +20,9 @@ AI agent orchestration platform for managing and deploying AI agents in Kubernet
 
 ## Caveats
 
-Currently, kagent does not support cross-namespace agent calls. Currently, [kagent issue #841](https://github.com/kagent-dev/kagent/issues/841) is open to track this issue and [kagent pull request #1136](https://github.com/kagent-dev/kagent/pull/1136) is a potential fix. Ideally, each agent and tool should be in its own namespace. While it's not a strong security isolation mechanism on it's own, it enables us to use more granular network and RBAC policies.
+Custom agents run in dedicated `agent-*` namespaces; the controller and system agents (`k8s-agent`, `helm-agent`, etc.) stay in `kagent`. Delegation and A2A require the target agent’s Kubernetes `namespace` on `Agent` tool references, and direct A2A URLs use `/api/a2a/{namespace}/{agent-name}`. See [kagent issue #841](https://github.com/kagent-dev/kagent/issues/841) for upstream discussion.
 
-Additionally, we are not using the kmcp feature of kagent due to the aforementioned issue. We are currently using the [ToolHive proxy](../mcp-servers/toolhive/README.md) to access MCP servers. However, this may change in the future if kagent supports cross-namespace agent calls.
+We use [ToolHive proxy](../mcp-servers/toolhive/README.md) for MCP servers where `RemoteMCPServer` references are enough, instead of kmcp.
 
 ## Access
 

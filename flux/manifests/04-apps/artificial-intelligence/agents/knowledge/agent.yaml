@@ -3,9 +3,11 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: knowledge-agent
-  namespace: kagent
+  namespace: agent-knowledge
 spec:
   description: Knowledge management agent - stores, retrieves, and searches information across vector stores, encyclopedic sources, and GitHub repository documentation
+  allowedNamespaces:
+    from: All
   type: Declarative
   declarative:
     modelConfig: knowledge-agent-model
@@ -44,6 +46,7 @@ spec:
       - type: Agent
         agent:
           name: search-agent
+          namespace: agent-search
           kind: Agent
           apiGroup: kagent.dev
     systemMessage: |
