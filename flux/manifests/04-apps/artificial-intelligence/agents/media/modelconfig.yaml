@@ -6,7 +6,7 @@ metadata:
   namespace: agent-media
 spec:
   provider: OpenAI
-  model: qwen3
+  model: qwen3.5-abliterated-medium
   openAI:
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
   apiKeySecret: media-agent-secrets

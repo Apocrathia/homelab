@@ -456,9 +456,18 @@ class DiscordBridge(commands.Bot):
                 channel_id = str(message.channel.id)
                 history = await self._get_channel_history(message.channel)
 
-                # Combine history with current message
+                # Combine history with current message.
+                # Tell the model explicitly that its reply is what gets posted to Discord,
+                # so "post to Discord" requests produce content instead of "I can't access Discord".
+                delivery_hint = (
+                    "[Delivery context: Discord bridge. Your final reply text is sent to this "
+                    f"channel (#{message.channel.name}) as the bot's message. "
+                    "When asked to post, announce, or share to Discord, put that content in your reply; "
+                    "there is no separate Discord tool.]\n\n"
+                )
                 prompt = (
-                    history
+                    delivery_hint
+                    + history
                     + f"Current message from {message.author.display_name}: {content}"
                 )
 

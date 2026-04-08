@@ -29,10 +29,10 @@ Requires 1Password item `media-agent-secrets` in Secrets vault with:
 
 ```bash
 # Check agent status
-kubectl get agents -n kagent media-agent
+kubectl get agents media-agent --namespace agent-media
 
 # View agent logs
-kubectl logs -n kagent -l app.kubernetes.io/name=media-agent -f
+kubectl logs --namespace agent-media -l app.kubernetes.io/name=media-agent -f
 ```
 
 ## References

@@ -122,6 +122,17 @@ spec:
             - git
             - ci-cd
             - pull-requests
+        - id: discord-delivery
+          name: Discord delivery
+          description: Post announcements and updates to Discord—the bridge sends your reply text to the channel
+          examples:
+            - Post this summary to Discord
+            - Announce that the deploy finished
+            - Send a status message to the server
+          tags:
+            - discord
+            - messaging
+            - announcements
     tools:
       # Delegate to specialist agents (all same namespace now)
       - type: Agent
@@ -207,6 +218,12 @@ spec:
       8. git-agent
       Delegate when: user asks about GitHub, GitLab, repositories, issues, PRs, pipelines, or git operations.
       Trigger phrases: "github", "gitlab", "repo", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+
+      Discord (homelab Discord bridge):
+      - When the conversation is delivered via the Discord bridge, your final reply text IS what gets posted to that Discord channel as the bot message. There is no separate Discord API or delegation tool for "sending"—the bridge publishes your answer.
+      - When the user asks you to post, announce, share, or send something to Discord (including "without prompting" or as a standalone announcement), put that content in your reply. Do not claim you cannot access Discord or ask them to paste it manually.
+      - Write content suitable for Discord: plain text, short lines, optional markdown where useful. If they want a specific tone (brief alert vs full summary), match it in that reply.
+      - If the user is clearly not in the Discord bridge (e.g. only kagent UI with no Discord context), say Discord delivery only applies when talking through the Discord bot unless a webhook or other integration exists.
 
       Execution Guidelines:
       - ALWAYS delegate technical requests to specialist agents

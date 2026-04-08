@@ -80,6 +80,18 @@ model_list:
     litellm_params:
       model: openai/qwen3.5:27b
       api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-abliterated-small
+    litellm_params:
+      model: openai/huihui_ai/qwen3.5-abliterated:4b-Claude
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-abliterated-medium
+    litellm_params:
+      model: openai/huihui_ai/qwen3.5-abliterated:9b-Claude
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: qwen3.5-abliterated-large
+    litellm_params:
+      model: openai/huihui_ai/qwen3.5-abliterated:27b-Claude
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
 
   # Local embedding models (native Ollama endpoint)
   - model_name: nomic-embed-text
@@ -247,7 +259,7 @@ agent_list:
   - agent_name: "media-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/media-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
   - agent_name: "search-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"

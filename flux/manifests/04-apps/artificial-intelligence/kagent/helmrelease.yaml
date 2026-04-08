@@ -82,7 +82,7 @@ spec:
       default: openAI
       openAI:
         provider: OpenAI
-        model: "qwen3" # Need a model capable of handling tools.
+        model: "qwen3.5-abliterated-medium" # 9b abliterated via LiteLLM; needs tool-capable model
         apiKeySecretRef: kagent-secrets
         apiKeySecretKey: litellm-api-key
         config:
