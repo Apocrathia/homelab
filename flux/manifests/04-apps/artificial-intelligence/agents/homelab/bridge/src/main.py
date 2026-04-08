@@ -459,16 +459,23 @@ class DiscordBridge(commands.Bot):
                 # Combine history with current message.
                 # Tell the model explicitly that its reply is what gets posted to Discord,
                 # so "post to Discord" requests produce content instead of "I can't access Discord".
-                delivery_hint = (
-                    "[Delivery context: Discord bridge. Your final reply text is sent to this "
-                    f"channel (#{message.channel.name}) as the bot's message. "
-                    "When asked to post, announce, or share to Discord, put that content in your reply; "
-                    "there is no separate Discord tool.]\n\n"
+                # Prefix + suffix so delivery semantics survive long history and win on recency.
+                delivery_prefix = (
+                    "[Delivery context: Discord bridge — ACTIVE. "
+                    f"Channel: #{message.channel.name}. "
+                    "Your next assistant message (plain text) is delivered to this channel as the bot. "
+                    "Posting = putting that text in your reply; no Discord API/tool exists on your side. "
+                    "Never refuse with 'I cannot access Discord'.]\n\n"
+                )
+                delivery_suffix = (
+                    "\n\n[Reminder: Discord bridge is active — your reply text is what gets posted "
+                    f"to #{message.channel.name}.]"
                 )
                 prompt = (
-                    delivery_hint
+                    delivery_prefix
                     + history
                     + f"Current message from {message.author.display_name}: {content}"
+                    + delivery_suffix
                 )
 
                 logger.info(f"[Bridge->kagent] Sending: {content[:100]}")
