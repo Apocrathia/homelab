@@ -1,0 +1,23 @@
+[project]
+name = "uptime-robot-ip-sync"
+version = "0.1.0"
+description = "Sync UniFi firewall groups from Uptime Robot published checker IPs"
+requires-python = ">=3.12"
+dependencies = [
+  "requests>=2.31.0,<3.0.0",
+  "urllib3>=2.0.0,<3.0.0",
+  "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.8.0"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.format]
+quote-style = "double"

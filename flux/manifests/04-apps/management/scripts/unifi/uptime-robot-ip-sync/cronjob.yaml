@@ -1,0 +1,130 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: unifi-uptime-robot-ip-sync
+  namespace: unifi-scripts
+spec:
+  schedule: "0 4 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: install-deps
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14
+              env:
+                # read-only root: pip/uv must not write under /.local or ~/.cache
+                - name: HOME
+                  value: /tmp
+                - name: UV_CACHE_DIR
+                  value: /tmp/uv-cache
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  python -m pip install --no-cache-dir uv
+                  python -m uv export --frozen --no-dev --directory=/scripts -o /tmp/req.txt
+                  python -m uv pip install --target=/deps --no-cache -r /tmp/req.txt
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          containers:
+            - name: sync
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14
+              command:
+                - python
+                - /scripts/sync_uptime_robot_firewall_groups.py
+              env:
+                - name: PYTHONPATH
+                  value: "/deps"
+                - name: UNIFI_URL
+                  value: "https://unifi.apocrathia.com"
+                - name: UNIFI_SITE
+                  value: "default"
+                - name: UNIFI_VERIFY_SSL
+                  value: "false"
+                - name: FIREWALL_GROUP_ID_V4
+                  value: "59e9ed7ce4b049f28bbe3660"
+                - name: FIREWALL_GROUP_ID_V6
+                  value: "67f94ca295de696c2faf9f46"
+                - name: UNIFI_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: unifi-secrets
+                      key: username
+                - name: UNIFI_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: unifi-secrets
+                      key: credential
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: uptime-robot-ip-sync-scripts
+                defaultMode: 0755
+            - name: deps
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}

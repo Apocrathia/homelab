@@ -26,6 +26,10 @@ Workflow automation platform for connecting services and APIs.
 
 UniFi network monitoring exporting metrics to Prometheus with Grafana dashboards.
 
+### [Scripts](./scripts/README.md)
+
+Scheduled jobs and helpers under `scripts/` (e.g. [UniFi](./scripts/unifi/README.md) automation).
+
 ## References
 
 - **[Generic-App Chart](../../../helm/generic-app/README.md)** - Application deployment template
