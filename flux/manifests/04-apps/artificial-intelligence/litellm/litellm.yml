@@ -80,18 +80,20 @@ model_list:
     litellm_params:
       model: openai/qwen3.5:27b
       api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  # Abliterated: use ollama_chat + native OLLAMA_API_BASE so namespaced model IDs
+  # (huihui_ai/...) are not split incorrectly by the openai/ compatible path.
   - model_name: qwen3.5-abliterated-small
     litellm_params:
-      model: openai/huihui_ai/qwen3.5-abliterated:4b-Claude
-      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+      model: ollama_chat/huihui_ai/qwen3.5-abliterated:4b-Claude
+      api_base: os.environ/OLLAMA_API_BASE
   - model_name: qwen3.5-abliterated-medium
     litellm_params:
-      model: openai/huihui_ai/qwen3.5-abliterated:9b-Claude
-      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+      model: ollama_chat/huihui_ai/qwen3.5-abliterated:9b-Claude
+      api_base: os.environ/OLLAMA_API_BASE
   - model_name: qwen3.5-abliterated-large
     litellm_params:
-      model: openai/huihui_ai/qwen3.5-abliterated:27b-Claude
-      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+      model: ollama_chat/huihui_ai/qwen3.5-abliterated:27b-Claude
+      api_base: os.environ/OLLAMA_API_BASE
 
   # Local embedding models (native Ollama endpoint)
   - model_name: nomic-embed-text
