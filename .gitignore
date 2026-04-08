@@ -25,11 +25,19 @@ dist/
 build/
 *.log
 
+# Python
 __pycache__/
+.venv/
+.ruff_cache/
+
+# Local training outputs (notebooks on GPU host)
+notebooks/outputs/
+notebooks/.venv/
 
 # Environment files
 .env
 .env.*
+!.env.example
 *.env
 .envrc
 
