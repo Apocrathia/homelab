@@ -14,6 +14,12 @@ spec:
         app: create-vector-store
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: create-vector-store
           # renovate: datasource=docker depName=curlimages/curl
