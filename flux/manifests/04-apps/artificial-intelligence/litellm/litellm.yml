@@ -146,6 +146,11 @@ mcp_servers:
     url: "https://mcp.deepwiki.com/mcp"
     transport: "http"
     auth_type: "none"
+  discord:
+    alias: "discord"
+    url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8085/mcp"
+    transport: "http"
+    auth_type: "none"
   firecrawl:
     alias: "firecrawl"
     url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"

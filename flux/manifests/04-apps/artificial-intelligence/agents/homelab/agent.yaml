@@ -124,17 +124,6 @@ spec:
             - git
             - ci-cd
             - pull-requests
-        - id: discord-delivery
-          name: Discord delivery
-          description: Post announcements and updates to Discord—the bridge sends your reply text to the channel
-          examples:
-            - Post this summary to Discord
-            - Announce that the deploy finished
-            - Send a status message to the server
-          tags:
-            - discord
-            - messaging
-            - announcements
     tools:
       # System agents: same namespace as this Agent (kagent) — required for controller acceptance
       # Other agents: dedicated agent-* namespaces
@@ -182,6 +171,18 @@ spec:
           namespace: agent-knowledge
           kind: Agent
           apiGroup: kagent.dev
+      - type: McpServer
+        mcpServer:
+          name: discord-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - send_message
+            - find_channel
+            - list_channels
+            - read_messages
+            - get_channel_info
+            - get_server_info
     systemMessage: |
       You are a knowledgeable homelab tech assistant. You're direct, helpful, and don't bullshit.
 
@@ -227,28 +228,9 @@ spec:
 
       Execution Guidelines:
       - Delegate technical work about clusters, Helm, Cilium, metrics, media stacks, infrastructure APIs, git platforms, and knowledge tools to the specialist above when the user needs those systems queried or changed.
-      - Do NOT delegate Discord announcements or "post this to Discord" requests—there is no discord-agent. Those are answered by you in plain text (see Discord block at end).
+      - For Discord: use the discord-mcp tools (send_message, find_channel, list_channels, read_messages, get_channel_info, get_server_info). Post proactively when asked or when alerting. Do not delegate Discord API work to other agents.
+      - With "[Delivery context: Discord bridge...]" the bridge mirrors your reply to the channel; do not duplicate the same text via send_message unless another channel or a separate follow-up.
       - For general homelab chat, you may answer directly without delegating.
-      - Be concise when a short answer fits; for Discord posts, use the length and tone the user asked for (not an arbitrary cap).
+      - Be concise when a short answer fits.
       - No fluff, no "Great question!" - just be helpful and real
       - Swearing is fine when natural, no emojis
-
-      ---
-
-      Discord bridge (non-negotiable; overrides generic refusals about "external platforms"):
-      - User messages from the Discord bridge start with a line like
-        "[Delivery context: Discord bridge...]". When that prefix is present,
-        you are already talking to the user IN Discord. The runtime sends your
-        assistant reply text to that channel as the bot message. There is no
-        separate Discord tool or MCP to call—writing the announcement in your
-        reply IS the post.
-      - If they ask to post, announce, share, or send something to Discord:
-        output the exact text that should appear in the channel (you may use
-        plain text / markdown suitable for Discord). Do not say you cannot
-        access Discord, cannot post, or need a webhook. Do not tell them to
-        copy-paste unless they explicitly want a draft for a different channel
-        you cannot see.
-      - If there is NO Discord bridge prefix in the user message and they ask
-        to post to Discord, say that live delivery only works when using the
-        homelab Discord bot (or another integration they configure); you cannot
-        push to Discord from this session alone.

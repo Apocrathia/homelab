@@ -111,6 +111,13 @@ Clients connect to LiteLLM at `https://litellm.gateway.services.apocrathia.com` 
 - **Backend**: Qdrant vector database (deployed separately in `qdrant` namespace)
 - **Source**: [qdrant/mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant)
 
+### Discord MCP Server
+
+- **Purpose**: Discord API via bot token—channels, messages, moderation (tool surface depends on agent allowlist)
+- **Auth**: Same bot token as the homelab Discord bridge (`homelab-agent-secrets` → `discord-token`)
+- **LiteLLM**: `mcp_servers.discord` (alias `discord`)
+- **Source**: [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp)
+
 ## External MCP Servers (via LiteLLM)
 
 ### DeepWiki

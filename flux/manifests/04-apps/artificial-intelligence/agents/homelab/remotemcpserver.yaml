@@ -1,0 +1,16 @@
+---
+# RemoteMCPServer must live in the same namespace as homelab-agent (kagent).
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: discord-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: discord-mcp
+    app.kubernetes.io/component: remote-mcp-server
+    app.kubernetes.io/part-of: homelab-agent
+    app.kubernetes.io/managed-by: flux
+spec:
+  protocol: STREAMABLE_HTTP
+  url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8085/mcp"
+  description: "Discord — send/read messages, resolve channels (SaseQ/discord-mcp)"

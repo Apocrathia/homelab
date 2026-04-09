@@ -9,6 +9,7 @@ The homelab tech assistant, accessible via Discord. Powered by kagent.
 This deployment includes:
 
 - Declarative kagent Agent CRD in the `kagent` namespace (same namespace as system agents for tool wiring)
+- Discord MCP (`mcp-discord`) for outbound messages and channel tools; `RemoteMCPServer` in `kagent`
 - Discord bridge in `agent-homelab` that forwards messages to kagent via A2A
 - Integration with LiteLLM for model access
 - Delegation to specialized agents via A2A:
