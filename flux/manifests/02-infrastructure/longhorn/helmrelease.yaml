@@ -69,9 +69,10 @@ spec:
       backupExecutionTimeout: "30" # 30 minutes (increased to allow large volume backups to complete)
       backupConcurrentLimit: "10" # Increased to match recurring job concurrency (75 volumes need higher throughput)
 
-      # Storage settings
-      storageOverProvisioningPercentage: "150"
+      # Storage settings — explicit Longhorn chart defaults (questions.yaml / values.yaml comments)
+      storageOverProvisioningPercentage: "100"
       storageMinimalAvailablePercentage: "25"
+      storageReservedPercentageForDefaultDisk: "30"
       defaultDataLocality: "strict-local"
 
       # Engine and replica settings
