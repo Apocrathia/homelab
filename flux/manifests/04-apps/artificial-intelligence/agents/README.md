@@ -6,11 +6,11 @@ Declarative AI agents orchestrated by kagent.
 
 ## Overview
 
-Custom agents each run in a dedicated `agent-*` namespace (for example `agent-homelab`, `agent-git`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace.
+Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`.
 
 **Custom Agents:**
 
-- **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface)
+- **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface; Agent CR in `kagent`, bridge in `agent-homelab`)
 - **[search](./search/)** - `search-agent`: Web search specialist using SearXNG
 - **[knowledge](./knowledge/)** - `knowledge-agent`: Knowledge management with OpenZIM and Qdrant
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
@@ -79,10 +79,10 @@ systemMessage: |
 ## Troubleshooting
 
 ```bash
-# Custom agents (repeat per namespace as needed)
-kubectl get agents --namespace agent-homelab
+# Custom agents in agent-* namespaces (repeat as needed)
+kubectl get agents --namespace agent-git
 
-# Controller and system agents
+# Controller, system agents, and homelab-agent
 kubectl get agents --namespace kagent
 
 kubectl logs --namespace kagent deployment/kagent-controller -f

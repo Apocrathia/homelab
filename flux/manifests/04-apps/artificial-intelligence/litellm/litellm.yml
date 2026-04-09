@@ -249,7 +249,7 @@ agent_list:
   - agent_name: "homelab-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"
-      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
   - agent_name: "infrastructure-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"

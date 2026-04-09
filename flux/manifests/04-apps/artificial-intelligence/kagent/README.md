@@ -20,7 +20,7 @@ AI agent orchestration platform for managing and deploying AI agents in Kubernet
 
 ## Caveats
 
-Custom agents run in dedicated `agent-*` namespaces; the controller and system agents (`k8s-agent`, `helm-agent`, etc.) stay in `kagent`. Delegation and A2A require the target agent’s Kubernetes `namespace` on `Agent` tool references, and direct A2A URLs use `/api/a2a/{namespace}/{agent-name}`. See [kagent issue #841](https://github.com/kagent-dev/kagent/issues/841) for upstream discussion.
+Most custom agents run in dedicated `agent-*` namespaces; the controller and system agents (`k8s-agent`, `helm-agent`, etc.) stay in `kagent`. `homelab-agent` is deployed in `kagent` so its `Agent` tools can reference system agents in the same namespace (the controller rejects `agent-*` → `kagent` tool references). Delegation and A2A use `/api/a2a/{namespace}/{agent-name}`. See [kagent issue #841](https://github.com/kagent-dev/kagent/issues/841) for upstream discussion.
 
 We use [ToolHive proxy](../mcp-servers/toolhive/README.md) for MCP servers where `RemoteMCPServer` references are enough, instead of kmcp.
 

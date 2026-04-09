@@ -49,7 +49,7 @@ spec:
 
           # kagent A2A endpoint (trailing slash required)
           - name: KAGENT_URL
-            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent/"
+            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/"
 
           # Bot configuration
           - name: BOT_NAME

@@ -8,8 +8,8 @@ The homelab tech assistant, accessible via Discord. Powered by kagent.
 
 This deployment includes:
 
-- Declarative kagent Agent CRD with system prompt and LLM configuration
-- Lightweight Discord bridge that forwards messages to kagent via A2A
+- Declarative kagent Agent CRD in the `kagent` namespace (same namespace as system agents for tool wiring)
+- Discord bridge in `agent-homelab` that forwards messages to kagent via A2A
 - Integration with LiteLLM for model access
 - Delegation to specialized agents via A2A:
   - `search-agent` - Web search and URL reading
@@ -56,7 +56,7 @@ Create a 1Password item:
 
 ### Access
 
-- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent`
+- **kagent A2A Endpoint**: `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent`
 - **kagent UI**: `https://kagent.gateway.services.apocrathia.com`
 
 ## Troubleshooting
@@ -70,30 +70,32 @@ Create a 1Password item:
    kubectl logs --namespace agent-homelab -l app.kubernetes.io/name=discord-bridge
 
    # Verify kagent agent is running
-   kubectl get agent homelab-agent --namespace agent-homelab
+   kubectl get agent homelab-agent --namespace kagent
    ```
 
 2. **Agent not responding**
 
    ```bash
    # Check agent pod status
-   kubectl get pods --namespace agent-homelab -l kagent.dev/agent-name=homelab-agent
+   kubectl get pods --namespace kagent -l kagent.dev/agent-name=homelab-agent
 
    # View agent logs
-   kubectl logs --namespace agent-homelab -l kagent.dev/agent-name=homelab-agent
+   kubectl logs --namespace kagent -l kagent.dev/agent-name=homelab-agent
    ```
 
 ### Health Checks
 
 ```bash
-# Homelab agent + bridge
+# Bridge
 kubectl get pods,svc --namespace agent-homelab
 
-kubectl get agent,modelconfig --namespace agent-homelab
+# homelab-agent CR + ModelConfig
+kubectl get agent homelab-agent --namespace kagent
+kubectl get modelconfig homelab-agent-model --namespace kagent
 
 # Test A2A endpoint
 kubectl exec --namespace agent-homelab deploy/discord-bridge -- \
-  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-homelab/homelab-agent/.well-known/agent-card.json
+  curl -s http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/.well-known/agent-card.json
 ```
 
 ## References
