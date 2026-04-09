@@ -37,6 +37,9 @@ spec:
       webhookBroadcastURL: "http://alloy.alloy-system.svc:8080/loki/api/v1/raw"
       webhookBroadcastTimeout: 30s
       webhookSendDeletedReports: true
+      # ClientServer mode via in-cluster Trivy server avoids SQLite cache lock
+      # contention when scan jobs run multiple containers in one pod.
+      builtInTrivyServer: true
     # Alternate report storage - prevents CRD creation in etcd
     # Reports are sent to Loki via webhook; local PVC is just scratch space
     alternateReportStorage:
@@ -103,6 +106,7 @@ spec:
           mountPath: /etc/cni/net.d/
           readOnly: true
     trivy:
+      storageClassName: longhorn
       # Remove --list-all-pkgs to reduce report size significantly
       listAllPackages: false
       # Increase timeout
