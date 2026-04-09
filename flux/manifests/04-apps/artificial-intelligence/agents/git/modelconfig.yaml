@@ -6,7 +6,7 @@ metadata:
   namespace: agent-git
 spec:
   provider: OpenAI
-  model: qwen3.5-abliterated-medium
+  model: qwen3.5-medium
   openAI:
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
   apiKeySecret: git-agent-secrets
