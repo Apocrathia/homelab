@@ -108,6 +108,8 @@ spec:
       grafana:
         # In-cluster kube-prometheus-stack Grafana (same as mcp-servers/grafana RemoteMCPServer)
         url: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
+        # Secret must provide GRAFANA_SERVICE_ACCOUNT_TOKEN (preferred) or GRAFANA_API_KEY.
+        secretRef: kagent-secrets
       image:
         registry: docker.io
         repository: grafana/mcp-grafana
