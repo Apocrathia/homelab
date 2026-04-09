@@ -105,6 +105,9 @@ spec:
 
     # Subchart overrides: pin grafana-mcp image (default is mcp/grafana:latest)
     grafana-mcp:
+      grafana:
+        # In-cluster kube-prometheus-stack Grafana (same as mcp-servers/grafana RemoteMCPServer)
+        url: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
       image:
         registry: docker.io
         repository: grafana/mcp-grafana
@@ -135,8 +138,14 @@ spec:
       cilium-debug-agent:
         enabled: true
 
+    # Agent OTLP: Alloy receives gRPC 4317 / HTTP 4318 (see observability/alloy/configmap.yaml)
     otel:
       tracing:
         enabled: false
       logging:
         enabled: true
+        exporter:
+          otlp:
+            endpoint: alloy.alloy-system.svc.cluster.local:4317
+            insecure: true
+            timeout: 15
