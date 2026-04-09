@@ -31,13 +31,38 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 
 Agents are defined using kagent's declarative Agent CRD, with optional bridge components for event-driven integrations.
 
+### Current agent delegation graph
+
 ```mermaid
-flowchart TB
-    kagent[kagent Controller] --> Agent[Agent CRD]
-    Agent --> A2A[A2A Gateway]
-    Bridge[Event Bridge] --> A2A
-    A2A --> LLM[LiteLLM]
-    Agent -->|delegate| Agent2[Other Agents]
+flowchart LR
+    H[homelab-agent]
+    K8S[k8s-agent]
+    HELM[helm-agent]
+    CILIUM_MGR[cilium-manager-agent]
+    OBS[observability-agent]
+    PROMQL[promql-agent]
+    KNOW[knowledge-agent]
+    SEARCH[search-agent]
+    MEDIA[media-agent]
+    INFRA[infrastructure-agent]
+    GIT[git-agent]
+    CILIUM_POLICY[cilium-policy-agent]
+    CILIUM_DEBUG[cilium-debug-agent]
+
+    H --> K8S
+    H --> HELM
+    H --> OBS
+    H --> MEDIA
+    H --> INFRA
+    H --> GIT
+    H --> KNOW
+
+    INFRA --> CILIUM_MGR
+    INFRA --> CILIUM_POLICY
+    INFRA --> CILIUM_DEBUG
+
+    KNOW --> SEARCH
+    OBS --> PROMQL
 ```
 
 ## Adding New Agents

@@ -57,7 +57,7 @@ spec:
             - upgrades
         - id: cilium-ops
           name: Cilium Operations
-          description: Manage Cilium CNI, network policies, and Hubble network observability
+          description: Route Cilium CNI, network policy, and Hubble requests through infrastructure-agent
           examples:
             - Check Cilium status
             - Create a network policy to block external traffic
@@ -142,11 +142,6 @@ spec:
           apiGroup: kagent.dev
       - type: Agent
         agent:
-          name: cilium-manager-agent
-          kind: Agent
-          apiGroup: kagent.dev
-      - type: Agent
-        agent:
           name: observability-agent
           kind: Agent
           apiGroup: kagent.dev
@@ -215,23 +210,19 @@ spec:
       Delegate when: user asks about Helm releases, HelmRelease, charts, values, upgrades, or Helm-related troubleshooting in a Flux/GitOps context.
       Trigger phrases: "helm", "HelmRelease", "release", "chart", "values", "upgrade", "rollback", "reconcile", etc.
 
-      4. cilium-manager-agent
-      Delegate when: user asks about Cilium networking, network policies, eBPF, or CNI issues.
-      Trigger phrases: "cilium", "network policy", "eBPF", "CNI", "hubble", etc.
-
-      5. observability-agent
+      4. observability-agent
       Delegate when: user asks about metrics, monitoring, alerts, dashboards, or Prometheus/Grafana.
       Trigger phrases: "metrics", "prometheus", "grafana", "dashboard", "alert", "monitoring", etc.
 
-      6. media-agent
+      5. media-agent
       Delegate when: user asks about Plex, media libraries, Sonarr, Radarr, downloads, or media management.
       Trigger phrases: "plex", "media", "movie", "tv show", "sonarr", "radarr", "download", "library", etc.
 
-      7. infrastructure-agent
-      Delegate when: user asks about VMs, Proxmox, TrueNAS storage, UniFi network, or physical infrastructure.
-      Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "network", "NAS", etc.
+      6. infrastructure-agent
+      Delegate when: user asks about VMs, Proxmox, TrueNAS storage, UniFi network, physical infrastructure, or Cilium networking.
+      Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "network", "NAS", "cilium", "network policy", "eBPF", "CNI", "hubble", etc.
 
-      8. git-agent
+      7. git-agent
       Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
       Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
 

@@ -12,6 +12,24 @@ spec:
   declarative:
     modelConfig: infrastructure-agent-model
     tools:
+      - type: Agent
+        agent:
+          name: cilium-manager-agent
+          namespace: kagent
+          kind: Agent
+          apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: cilium-policy-agent
+          namespace: kagent
+          kind: Agent
+          apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: cilium-debug-agent
+          namespace: kagent
+          kind: Agent
+          apiGroup: kagent.dev
       - type: McpServer
         mcpServer:
           name: proxmox-mcp
@@ -54,7 +72,7 @@ spec:
       You are an infrastructure management specialist for a homelab environment.
 
       Operational Protocol:
-      1. Identify which system the request targets (Proxmox, TrueNAS, or UniFi)
+      1. Identify which system the request targets (Proxmox, TrueNAS, UniFi, or Cilium networking)
       2. Use read-only operations first to gather information
       3. For destructive actions, confirm before executing
       4. Provide clear status summaries
@@ -98,6 +116,19 @@ spec:
       10. unifi_execute / unifi_batch
       Use when: user asks about network devices, clients, traffic, or WiFi status.
       Trigger phrases: "network", "unifi", "WiFi", "clients", "devices", etc.
+
+      CILIUM DELEGATION:
+      11. cilium-manager-agent
+      Use when: user asks about Cilium configuration, status, or lifecycle tasks.
+      Trigger phrases: "cilium", "cni", "cluster networking", "hubble", etc.
+
+      12. cilium-policy-agent
+      Use when: user asks to design, apply, or validate Cilium network policies.
+      Trigger phrases: "network policy", "allow traffic", "deny traffic", "egress", "ingress", etc.
+
+      13. cilium-debug-agent
+      Use when: user asks for Cilium connectivity troubleshooting or flow diagnostics.
+      Trigger phrases: "connectivity issue", "can't reach", "drop", "debug cilium", etc.
 
       Execution Guidelines:
       - Use read-only operations first, then modifications if needed
