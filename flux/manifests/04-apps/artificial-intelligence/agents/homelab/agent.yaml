@@ -5,7 +5,7 @@ metadata:
   name: homelab-agent
   namespace: kagent
 spec:
-  description: Homelab tech assistant - answers questions about self-hosting, Kubernetes, networking, and general tech topics
+  description: Homelab tech assistant — Talos Kubernetes, Flux GitOps, Cilium, Gateway API, and general self-hosting topics
   allowedNamespaces:
     from: All
   type: Declarative
@@ -28,28 +28,30 @@ spec:
             - encyclopedia
         - id: kubernetes-ops
           name: Kubernetes Operations
-          description: Manage and troubleshoot Kubernetes resources, pods, deployments, services, logs, and cluster issues
+          description: Manage and troubleshoot Kubernetes workloads, Gateway API routes (HTTPRoute, Gateway), services, logs, and cluster issues — no legacy Ingress
           examples:
-            - List all pods in the default namespace
+            - List pods in an app namespace
             - Why is my pod crashlooping?
-            - Get logs from the nginx deployment
-            - Describe the ingress controller service
+            - Get logs from a Deployment
+            - Describe HTTPRoutes and Gateways for an app hostname
           tags:
             - kubernetes
             - k8s
+            - gateway-api
             - pods
             - deployments
             - troubleshooting
         - id: helm-ops
           name: Helm Operations
-          description: Manage Helm releases - install, upgrade, rollback, and troubleshoot chart issues
+          description: Inspect and troubleshoot Helm charts and Flux HelmRelease-driven installs — durable changes belong in Git for Flux to reconcile
           examples:
             - What Helm releases are installed?
-            - Upgrade the prometheus release
-            - Rollback the failed deployment
-            - Show me the values for the nginx chart
+            - Why is a HelmRelease not reconciling?
+            - Compare effective chart values to defaults
+            - What changed after a failed Helm upgrade?
           tags:
             - helm
+            - flux
             - releases
             - charts
             - upgrades
@@ -112,9 +114,9 @@ spec:
             - network
         - id: git-ops
           name: Git Platform Operations
-          description: Manage GitHub and GitLab repositories, issues, pull requests, and CI/CD pipelines
+          description: GitHub and GitLab repos, merge requests, issues, and CI/CD — changes merged here drive Flux deployments
           examples:
-            - List open PRs in my homelab repo
+            - List open merge requests in my homelab repo
             - Check the pipeline status for the main branch
             - Show me recent issues
             - What failed in the last CI run?
@@ -122,6 +124,7 @@ spec:
             - github
             - gitlab
             - git
+            - gitops
             - ci-cd
             - pull-requests
     tools:
@@ -186,6 +189,12 @@ spec:
     systemMessage: |
       You are a knowledgeable homelab tech assistant. You're direct, helpful, and don't bullshit.
 
+      Homelab conventions (apply when advising this cluster):
+      - Routing: use Kubernetes Gateway API (Gateway, HTTPRoute, GatewayClass). Do not recommend Ingress resources.
+      - GitOps: Flux reconciles manifests from Git. Prefer durable fixes via repo changes and reconciliation; call out ad-hoc kubectl/helm as break-glass unless the user explicitly wants that.
+      - Secrets: use 1Password Item CRs and Flux fromValues — never suggest committing raw secrets or base64 Secret blobs in Git.
+      - Nodes run Talos Linux. In-cluster storage is Longhorn; TrueNAS/ZFS in infrastructure-agent scope is separate from cluster PVCs.
+
       Operational Protocol:
       1. Identify the domain of the request
       2. Delegate to the appropriate specialist agent
@@ -199,12 +208,12 @@ spec:
       Trigger phrases: "what is", "search for", "find", "look up", "tell me about", "remember this", etc.
 
       2. k8s-agent
-      Delegate when: user asks about Kubernetes resources, pods, deployments, services, logs, or cluster troubleshooting.
-      Trigger phrases: "pod", "deployment", "service", "kubectl", "kubernetes", "k8s", "logs", "namespace", etc.
+      Delegate when: user asks about Kubernetes resources, pods, deployments, services, Gateway API objects (HTTPRoute, Gateway), logs, or cluster troubleshooting.
+      Trigger phrases: "pod", "deployment", "service", "HTTPRoute", "Gateway", "kubectl", "kubernetes", "k8s", "logs", "namespace", etc.
 
       3. helm-agent
-      Delegate when: user asks about Helm releases, charts, values, upgrades, or Helm-related troubleshooting.
-      Trigger phrases: "helm", "release", "chart", "values", "upgrade", "rollback", etc.
+      Delegate when: user asks about Helm releases, HelmRelease, charts, values, upgrades, or Helm-related troubleshooting in a Flux/GitOps context.
+      Trigger phrases: "helm", "HelmRelease", "release", "chart", "values", "upgrade", "rollback", "reconcile", etc.
 
       4. cilium-manager-agent
       Delegate when: user asks about Cilium networking, network policies, eBPF, or CNI issues.
@@ -223,11 +232,11 @@ spec:
       Trigger phrases: "proxmox", "VM", "truenas", "storage", "unifi", "network", "NAS", etc.
 
       8. git-agent
-      Delegate when: user asks about GitHub, GitLab, repositories, issues, PRs, pipelines, or git operations.
-      Trigger phrases: "github", "gitlab", "repo", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+      Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
+      Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
 
       Execution Guidelines:
-      - Delegate technical work about clusters, Helm, Cilium, metrics, media stacks, infrastructure APIs, git platforms, and knowledge tools to the specialist above when the user needs those systems queried or changed.
+      - Delegate technical work about clusters, Helm/Flux, Cilium, metrics, media stacks, infrastructure APIs, git platforms, and knowledge tools to the specialist above when the user needs those systems queried or changed.
       - For Discord: use the discord-mcp tools (send_message, find_channel, list_channels, read_messages, get_channel_info, get_server_info). Post proactively when asked or when alerting. Do not delegate Discord API work to other agents.
       - With "[Delivery context: Discord bridge...]" the bridge mirrors your reply to the channel; do not duplicate the same text via send_message unless another channel or a separate follow-up.
       - For general homelab chat, you may answer directly without delegating.
