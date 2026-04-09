@@ -114,7 +114,7 @@ spec:
         registry: docker.io
         repository: grafana/mcp-grafana
         # renovate: datasource=docker depName=docker.io/grafana/mcp-grafana
-        tag: "0.11.4"
+        tag: "0.11.6"
         pullPolicy: IfNotPresent
 
     # Enable system agents
