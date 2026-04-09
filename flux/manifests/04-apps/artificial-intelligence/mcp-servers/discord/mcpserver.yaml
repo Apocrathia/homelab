@@ -17,7 +17,6 @@ spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
   image: docker.io/saseq/discord-mcp@sha256:4a030d93f6986f6b0cd8076678cba0d9eca0d438f6e6f484cf9e05369edf182a
   transport: streamable-http
-  # ToolHive injects MCP_PORT=8080; Spring must listen on the same port.
   port: 8080
   targetPort: 8080
   permissionProfile:
@@ -36,26 +35,40 @@ spec:
       securityContext:
         readOnlyRootFilesystem: false
       volumes:
-        - name: discord-mcp-logs
+        # ToolHive runs the container with read-only root; mount writable dirs.
+        - name: discord-mcp-data
+          emptyDir: {}
+        - name: discord-mcp-tmp
           emptyDir: {}
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
           image: docker.io/saseq/discord-mcp@sha256:4a030d93f6986f6b0cd8076678cba0d9eca0d438f6e6f484cf9e05369edf182a
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
-            - name: discord-mcp-logs
-              mountPath: /app/target/logs
+            - name: discord-mcp-data
+              mountPath: /data
+            - name: discord-mcp-tmp
+              mountPath: /tmp
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: http
             # Align with ToolHive proxy (see MCP_PORT on the pod).
             - name: SERVER_PORT
               value: "8080"
-            # Default logback path is under ./target/logs which is not writable in the image.
-            - name: LOGGING_FILE_NAME
-              value: /tmp/discord-mcp-server.log
+            # Upstream JAR sets logging.file.name=./target/logs/... (relative) and logging.pattern.console=
+            # (empty — breaks Logback). Flat JSON overrides application.properties before Logback starts.
+            - name: SPRING_APPLICATION_JSON
+              value: '{"logging.file.name":"/data/discord-mcp-server.log","logging.pattern.console":"%d{HH:mm:ss} %level %logger - %msg%n"}'
             - name: DISCORD_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: homelab-agent-secrets
                   key: discord-token
+            # Guild-scoped tools require a guild unless this is set (same 1Password item).
+            - name: DISCORD_GUILD_ID
+              valueFrom:
+                secretKeyRef:
+                  name: homelab-agent-secrets
+                  key: discord-guild-id

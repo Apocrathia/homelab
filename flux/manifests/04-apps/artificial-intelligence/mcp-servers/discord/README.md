@@ -7,13 +7,12 @@ homelab-agent references a subset of tools via `RemoteMCPServer` in the `kagent`
 ## Configuration
 
 - **Token**: Synced from 1Password (`homelab-agent-secrets`, field `discord-token`) — same application as the Discord bridge bot.
-- **Optional**: Set `DISCORD_GUILD_ID` on the MCPServer pod if you want guild-scoped tools to omit `guildId` (patch the `MCPServer` CR `podTemplateSpec`).
+- **Logging / filesystem**: The image ships `logging.file.name=./target/logs/...` and an empty `logging.pattern.console`, which breaks Logback. ToolHive uses a read-only root filesystem, so `SPRING_APPLICATION_JSON` points the log file at `/data/discord-mcp-server.log` on an `emptyDir`, and `/tmp` is a separate `emptyDir` for JVM scratch.
+- **Guild**: Optional field `discord-guild-id` on the same 1Password item — exposed as `DISCORD_GUILD_ID` so guild-scoped tools do not require `guildId` on every call.
 
 ## Internal URL
 
 `http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8080/mcp`
-
-Registered in LiteLLM (`litellm.yml` under `mcp_servers.discord`) for clients that use the proxy.
 
 ## References
 
