@@ -11,7 +11,7 @@ homelab-agent references a subset of tools via `RemoteMCPServer` in the `kagent`
 
 ## Internal URL
 
-`http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8085/mcp`
+`http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8080/mcp`
 
 Registered in LiteLLM (`litellm.yml` under `mcp_servers.discord`) for clients that use the proxy.
 

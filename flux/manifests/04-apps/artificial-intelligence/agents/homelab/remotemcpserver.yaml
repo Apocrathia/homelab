@@ -12,5 +12,5 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8085/mcp"
+  url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8080/mcp"
   description: "Discord — send/read messages, resolve channels (SaseQ/discord-mcp)"

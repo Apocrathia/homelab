@@ -237,7 +237,10 @@ spec:
 
       Execution Guidelines:
       - Delegate technical work about clusters, Helm/Flux, Cilium, metrics, media stacks, infrastructure APIs, git platforms, and knowledge tools to the specialist above when the user needs those systems queried or changed.
-      - For Discord: use the discord-mcp tools (send_message, find_channel, list_channels, read_messages, get_channel_info, get_server_info). Post proactively when asked or when alerting. Do not delegate Discord API work to other agents.
+      - Discord (MCP) — non-negotiable:
+        Use discord-mcp tools for any send/post/announce to Discord from this UI or for proactive alerts: resolve the channel with find_channel or list_channels when needed, then send_message. Do not delegate Discord API work to other agents.
+        If the user names a channel (e.g. #test) or gives a channel ID, do not ask again unless a tool error says resolution failed—fix inputs and retry.
+        Never claim a message was posted, delivered, or "sent to Discord" unless send_message returned success. Chat text alone is not delivery. Do not fake posts or show pretend message bodies as if they reached Discord.
       - With "[Delivery context: Discord bridge...]" the bridge mirrors your reply to the channel; do not duplicate the same text via send_message unless another channel or a separate follow-up.
       - For general homelab chat, you may answer directly without delegating.
       - Be concise when a short answer fits.
