@@ -50,16 +50,16 @@ flowchart LR
     CILIUM_DEBUG[cilium-debug-agent]
 
     H --> K8S
-    H --> HELM
     H --> OBS
     H --> MEDIA
     H --> INFRA
     H --> GIT
     H --> KNOW
 
-    INFRA --> CILIUM_MGR
-    INFRA --> CILIUM_POLICY
-    INFRA --> CILIUM_DEBUG
+    K8S --> HELM
+    K8S --> CILIUM_MGR
+    K8S --> CILIUM_POLICY
+    K8S --> CILIUM_DEBUG
 
     KNOW --> SEARCH
     OBS --> PROMQL
