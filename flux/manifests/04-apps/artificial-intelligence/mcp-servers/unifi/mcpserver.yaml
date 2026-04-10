@@ -60,3 +60,5 @@ spec:
               value: "default"
             - name: UNIFI_VERIFY_SSL
               value: "false"
+            - name: UNIFI_TOOL_REGISTRATION_MODE
+              value: "eager"

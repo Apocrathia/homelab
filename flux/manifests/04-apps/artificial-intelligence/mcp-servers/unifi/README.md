@@ -21,21 +21,32 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 
 ### Environment Variables
 
-| Variable           | Source                    | Description                     |
-| ------------------ | ------------------------- | ------------------------------- |
-| `UNIFI_HOST`       | Config                    | UniFi Controller hostname or IP |
-| `UNIFI_USERNAME`   | Secret                    | UniFi administrator username    |
-| `UNIFI_PASSWORD`   | Secret                    | UniFi administrator password    |
-| `UNIFI_PORT`       | Config (default: 443)     | HTTPS port of UniFi Controller  |
-| `UNIFI_SITE`       | Config (default: default) | Site name to manage             |
-| `UNIFI_VERIFY_SSL` | Config (default: false)   | Verify SSL certificates         |
+| Variable                       | Source                    | Description                                                                                     |
+| ------------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `UNIFI_HOST`                   | Secret (`host` key)       | Hostname or IP only (no `https://`)                                                             |
+| `UNIFI_TOOL_REGISTRATION_MODE` | Optional (default `lazy`) | `lazy` (meta-tools only at list time), `eager` (register many tools at startup), or `meta_only` |
+| `UNIFI_USERNAME`               | Secret                    | UniFi administrator username                                                                    |
+| `UNIFI_PASSWORD`               | Secret                    | UniFi administrator password                                                                    |
+| `UNIFI_PORT`                   | Config (default: 443)     | HTTPS port of UniFi Controller                                                                  |
+| `UNIFI_SITE`                   | Config (default: default) | Site name to manage                                                                             |
+| `UNIFI_VERIFY_SSL`             | Config (default: false)   | Verify SSL certificates                                                                         |
 
 ### Secrets
 
-Create a Kubernetes secret `unifi-mcp-secrets` in the `mcp-unifi` namespace with:
+The `OnePasswordItem` `unifi-mcp-secrets` supplies:
 
+- `host`: Controller hostname (not a full URL)
 - `username`: UniFi administrator username
 - `password`: UniFi administrator password
+
+### Tool lists (lazy vs eager)
+
+Upstream defaults to **`lazy`**: `tools/list` exposes only the **meta-tools** (`unifi_tool_index`, `unifi_execute`, `unifi_batch`, `unifi_batch_status`, `unifi_load_tools`). The remaining tools exist but are loaded when used. Gateways that expect dozens of named tools at once can look “empty” compared to other MCPs.
+
+- **Leave lazy** if clients support `unifi_execute` / `unifi_load_tools` (recommended for context size).
+- **Use eager** to populate `tools/list` broadly: set `UNIFI_TOOL_REGISTRATION_MODE=eager` and usually `UNIFI_ENABLED_CATEGORIES` (comma-separated) so you do not register all ~166 tools. See [upstream configuration](https://github.com/sirkirby/unifi-network-mcp/blob/main/apps/network/docs/configuration.md).
+
+**LiteLLM** may prefix tool names with the server key (for example `unifi_…`). **kagent** `infrastructure-agent` whitelists four UniFi tool names; that is intentional for lazy mode.
 
 ### Security
 
@@ -56,6 +67,8 @@ The UniFi Network MCP server provides tools for managing network resources:
 8. **System Operations** - System-level operations and monitoring
 
 ## Troubleshooting
+
+If logs show `https://https://…`, `UNIFI_HOST` incorrectly includes a scheme; use the bare hostname only.
 
 ```bash
 # Pod status
