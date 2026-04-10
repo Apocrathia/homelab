@@ -17,19 +17,22 @@ This deployment includes:
 
 ### Transport
 
-This server uses `transport: streamable-http` on the MCPServer (same pattern as Grafana/Discord). The UniFi image listens for MCP over HTTP; `UNIFI_MCP_PORT` matches `targetPort` (8080). ToolHive still exposes the usual in-cluster proxy service URL for LiteLLM and agents.
+The MCPServer uses **`transport: stdio`** with **`proxyMode: streamable-http`**. The ToolHive proxy terminates HTTP (port 8080 on the proxy `Service`) and speaks MCP to the UniFi container over stdio, so the container must have **`stdin: true`**.
+
+The UniFi image can start an in-container HTTP listener by default in some environments. This deployment sets **`UNIFI_MCP_HTTP_ENABLED=false`** so the process stays on stdio and matches ToolHive’s expectations. Clients (LiteLLM, kagent `RemoteMCPServer`, etc.) still use the proxy URL, for example `http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp`.
 
 ### Environment Variables
 
 | Variable                       | Source                    | Description                                                                                     |
 | ------------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------- |
 | `UNIFI_HOST`                   | Secret (`host` key)       | Hostname or IP only (no `https://`)                                                             |
-| `UNIFI_TOOL_REGISTRATION_MODE` | Optional (default `lazy`) | `lazy` (meta-tools only at list time), `eager` (register many tools at startup), or `meta_only` |
 | `UNIFI_USERNAME`               | Secret                    | UniFi administrator username                                                                    |
 | `UNIFI_PASSWORD`               | Secret                    | UniFi administrator password                                                                    |
 | `UNIFI_PORT`                   | Config (default: 443)     | HTTPS port of UniFi Controller                                                                  |
 | `UNIFI_SITE`                   | Config (default: default) | Site name to manage                                                                             |
 | `UNIFI_VERIFY_SSL`             | Config (default: false)   | Verify SSL certificates                                                                         |
+| `UNIFI_MCP_HTTP_ENABLED`       | Config (`false` here)     | Disables in-container HTTP so MCP runs over stdio with ToolHive                                 |
+| `UNIFI_TOOL_REGISTRATION_MODE` | Optional (default `lazy`) | `lazy` (meta-tools only at list time), `eager` (register many tools at startup), or `meta_only` |
 
 ### Secrets
 
@@ -71,15 +74,14 @@ The UniFi Network MCP server provides tools for managing network resources:
 If logs show `https://https://…`, `UNIFI_HOST` incorrectly includes a scheme; use the bare hostname only.
 
 ```bash
-# Pod status
-kubectl get pods -n mcp-unifi
+# Pod status (ToolHive runs a proxy Deployment and a StatefulSet for the MCP workload)
+kubectl get pods --namespace=mcp-unifi
 
-# MCP server logs
-kubectl logs -n mcp-unifi deployment/unifi-mcp -c mcp -f
+# MCP process logs (stdio container on the StatefulSet)
+kubectl logs statefulset/unifi-network-mcp --namespace=mcp-unifi -f
 
-# Test UniFi connectivity
-kubectl exec -n mcp-unifi deployment/unifi-mcp -- \
-  curl -s -k "https://$UNIFI_HOST:$UNIFI_PORT"
+# ToolHive proxy logs
+kubectl logs deployment/unifi-network-mcp --namespace=mcp-unifi -f
 ```
 
 ## References
