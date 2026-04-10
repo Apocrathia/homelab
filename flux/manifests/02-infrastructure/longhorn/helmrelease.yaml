@@ -57,9 +57,11 @@ spec:
       # Reliability and stability settings
       autoSalvage: true # Automatically fix corrupted volumes
       autoDeletePodWhenVolumeDetachedUnexpectedly: true # Auto-delete pods when volumes detach unexpectedly
+      # Rebuild replicas while volume is detached (needed when volumes are faulted / engines stopped)
+      offlineReplicaRebuilding: true
 
-      # Cluster default 1 replica; bump critical volumes to 2 via Volume/StorageClass/Helm. Backups = off-node copy.
-      defaultReplicaCount: "1"
+      # Cluster default 2 replicas for HA; requires healthy schedulable disks on multiple nodes.
+      defaultReplicaCount: "2"
       replicaSoftAntiAffinity: true # Allow scheduling on nodes with healthy replicas
       replicaAutoBalance: "best-effort"
 
@@ -110,7 +112,7 @@ spec:
     persistence:
       defaultClass: true
       defaultFsType: ext4
-      defaultClassReplicaCount: 1 # Match defaultReplicaCount (CSI default StorageClass)
+      defaultClassReplicaCount: 2 # Match defaultReplicaCount (CSI default StorageClass)
       defaultDataLocality: "best-effort"
       reclaimPolicy: Delete
       volumeBindingMode: "Immediate"
