@@ -14,8 +14,7 @@ metadata:
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
   image: ghcr.io/sirkirby/unifi-network-mcp:0.14.4
-  transport: stdio
-  proxyMode: streamable-http
+  transport: streamable-http
   port: 8080
   targetPort: 8080
   permissionProfile:
@@ -37,7 +36,6 @@ spec:
           image: ghcr.io/sirkirby/unifi-network-mcp:0.14.4
           securityContext:
             readOnlyRootFilesystem: false
-          stdin: true
           env:
             - name: UNIFI_HOST
               valueFrom:
@@ -60,5 +58,11 @@ spec:
               value: "default"
             - name: UNIFI_VERIFY_SSL
               value: "false"
+            - name: UNIFI_MCP_HTTP_ENABLED
+              value: "true"
+            - name: UNIFI_MCP_HTTP_TRANSPORT
+              value: "streamable-http"
+            - name: UNIFI_MCP_PORT
+              value: "8080"
             - name: UNIFI_TOOL_REGISTRATION_MODE
               value: "eager"

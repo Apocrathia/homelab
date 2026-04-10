@@ -17,7 +17,7 @@ This deployment includes:
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+This server uses `transport: streamable-http` on the MCPServer (same pattern as Grafana/Discord). The UniFi image listens for MCP over HTTP; `UNIFI_MCP_PORT` matches `targetPort` (8080). ToolHive still exposes the usual in-cluster proxy service URL for LiteLLM and agents.
 
 ### Environment Variables
 
