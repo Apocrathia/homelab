@@ -73,7 +73,7 @@ spec:
       storageOverProvisioningPercentage: "100"
       storageMinimalAvailablePercentage: "25"
       storageReservedPercentageForDefaultDisk: "30"
-      defaultDataLocality: "strict-local"
+      defaultDataLocality: "best-effort"
 
       # Engine and replica settings
       concurrentAutomaticEngineUpgradePerNodeLimit: "0"
@@ -111,7 +111,7 @@ spec:
       defaultClass: true
       defaultFsType: ext4
       defaultClassReplicaCount: 1 # Match defaultReplicaCount (CSI default StorageClass)
-      defaultDataLocality: "strict-local"
+      defaultDataLocality: "best-effort"
       reclaimPolicy: Delete
       volumeBindingMode: "Immediate"
       migratable: false
