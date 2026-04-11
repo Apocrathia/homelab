@@ -439,7 +439,7 @@ storage:
     enabled: false
     # Number of replicas for Longhorn volumes (align with cluster Longhorn default unless workload is HA-critical)
     # Can be overridden per-volume by setting numberOfReplicas on individual entries
-    numberOfReplicas: 1
+    numberOfReplicas: 2
     volumes: []
 
   # SMB storage for read-only files

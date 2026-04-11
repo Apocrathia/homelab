@@ -1,5 +1,7 @@
-{{- if .Values.udproute.enabled }}
-{{- range .Values.udproute.routes }}
+{{- /* reuse-values can omit keys added after a release was first installed */ -}}
+{{- $udproute := .Values.udproute | default dict }}
+{{- if $udproute.enabled }}
+{{- range ($udproute.routes | default list) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute

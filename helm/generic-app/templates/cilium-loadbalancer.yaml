@@ -1,14 +1,16 @@
-{{- if .Values.loadbalancer.enabled }}
+{{- $lb := .Values.loadbalancer | default dict }}
+{{- $cilium := $lb.cilium | default dict }}
+{{- if $lb.enabled }}
 ---
 # L2 Announcement Policy for LoadBalancer
 apiVersion: "cilium.io/v2alpha1"
 kind: CiliumL2AnnouncementPolicy
 metadata:
   name: {{ .Values.app.name }}-l2-policy
-  namespace: {{ .Values.loadbalancer.cilium.namespace | default "cilium-system" }}
+  namespace: {{ $cilium.namespace | default "cilium-system" }}
 spec:
   interfaces:
-    - {{ .Values.loadbalancer.cilium.interface | default "eth0" }}
+    - {{ $cilium.interface | default "eth0" }}
   serviceSelector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.app.name }}
@@ -19,10 +21,10 @@ apiVersion: "cilium.io/v2"
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: {{ .Values.app.name }}-pool
-  namespace: {{ .Values.loadbalancer.cilium.namespace | default "cilium-system" }}
+  namespace: {{ $cilium.namespace | default "cilium-system" }}
 spec:
   blocks:
-    - cidr: "{{ .Values.loadbalancer.ip }}/32"
+    - cidr: "{{ $lb.ip }}/32"
   serviceSelector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.app.name }}

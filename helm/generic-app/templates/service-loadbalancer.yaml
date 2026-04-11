@@ -1,4 +1,5 @@
-{{- if .Values.loadbalancer.enabled }}
+{{- $lb := .Values.loadbalancer | default dict }}
+{{- if $lb.enabled }}
 ---
 # Separate LoadBalancer service for external access
 apiVersion: v1
@@ -10,21 +11,21 @@ metadata:
     app: {{ .Values.app.name }}
     app.kubernetes.io/name: {{ .Values.app.name }}
     external: "true"
-    {{- with .Values.loadbalancer.labels }}
+    {{- with $lb.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   annotations:
-    io.cilium/lb-ipam-ips: "{{ .Values.loadbalancer.ip }}"
+    io.cilium/lb-ipam-ips: "{{ $lb.ip }}"
 spec:
   selector:
     app: {{ .Values.app.name }}
   ports:
-    {{- range .Values.loadbalancer.ports }}
+    {{- range ($lb.ports | default list) }}
     - name: {{ .name }}
       port: {{ .port }}
       targetPort: {{ .targetPort }}
       protocol: {{ .protocol | default "TCP" }}
     {{- end }}
   type: LoadBalancer
-  externalTrafficPolicy: {{ .Values.loadbalancer.externalTrafficPolicy | default "Local" }}
+  externalTrafficPolicy: {{ $lb.externalTrafficPolicy | default "Local" }}
 {{- end }}

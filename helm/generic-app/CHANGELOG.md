@@ -1,6 +1,14 @@
 # Changelog
 
-## Version 0.0.69 (Latest)
+## Version 0.0.71 (Latest)
+
+- **Nil-safe optional blocks (`helm upgrade --reuse-values`)**: `tcproute`, `udproute`, and `loadbalancer` templates guard with `| default dict` (and `default list` for route slices) so missing keys do not nil-dereference when the live release predates those values blocks.
+
+## Version 0.0.70
+
+- **Longhorn default replica count**: Chart default for `storage.longhorn.numberOfReplicas` is **2** again (was 1), aligned with cluster Longhorn `defaultReplicaCount` / StorageClass. Releases that set `numberOfReplicas: 1` per volume still override and stay single-replica until changed.
+
+## Version 0.0.69
 
 - **SMB `createSubDir`**: Optional per-volume `createSubDir` on `storage.smb.volumes[]` is passed through to the SMB CSI driver `volumeAttributes` (e.g. `"true"`) so the `subDir` path can be created on the share when missing. Documented in README and `values.yaml` example.
 

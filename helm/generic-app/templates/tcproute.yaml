@@ -1,5 +1,6 @@
-{{- if .Values.tcproute.enabled }}
-{{- range .Values.tcproute.routes }}
+{{- $tcproute := .Values.tcproute | default dict }}
+{{- if $tcproute.enabled }}
+{{- range ($tcproute.routes | default list) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
