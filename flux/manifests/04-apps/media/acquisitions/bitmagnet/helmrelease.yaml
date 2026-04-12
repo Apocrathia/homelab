@@ -31,6 +31,9 @@ spec:
         name: bitmagnet
         port: 3333
         env:
+          # Drop classifier result "unknown" (UI: Other) — typical uncategorized DHT noise
+          - name: CLASSIFIER_FLAGS_DELETE_CONTENT_TYPES
+            value: "unknown"
           - name: POSTGRES_HOST
             value: "bitmagnet-postgres-rw.bitmagnet.svc.cluster.local"
           - name: POSTGRES_PORT
