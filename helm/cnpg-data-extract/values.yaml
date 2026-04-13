@@ -74,6 +74,13 @@ podSecurityContext:
 volumePermissions:
   enabled: true
   image: docker.io/library/busybox:1.37
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
 
 containerSecurityContext:
   runAsUser: 26
