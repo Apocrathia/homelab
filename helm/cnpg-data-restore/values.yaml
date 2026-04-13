@@ -4,7 +4,7 @@ fullnameOverride: ""
 
 image:
   repository: ghcr.io/cloudnative-pg/postgresql
-  tag: "16"
+  tag: "18"
   pullPolicy: IfNotPresent
 
 # Target CNPG primary Service (DNS name).
