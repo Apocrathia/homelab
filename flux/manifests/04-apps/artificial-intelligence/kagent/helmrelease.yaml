@@ -45,6 +45,9 @@ spec:
       # URL injected via valuesFrom from kagent-secrets.postgres-url
       postgres:
         vectorEnabled: false
+        # CNPG Cluster (kagent-postgres) is the database; do not deploy chart bundled Postgres
+        bundled:
+          enabled: false
 
     controller:
       replicas: 1
