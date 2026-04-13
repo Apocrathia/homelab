@@ -1,0 +1,240 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: contextforge
+  namespace: contextforge
+spec:
+  interval: 15m
+  dependsOn:
+    - name: contextforge-redis
+      namespace: contextforge
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.71"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  timeout: 15m
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    app:
+      name: contextforge
+      namespace: contextforge
+      # renovate: datasource=docker depName=ghcr.io/ibm/mcp-context-forge
+      image: ghcr.io/ibm/mcp-context-forge:v1.0.0-RC2
+      replicas: 1
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -e
+          export DATABASE_URL="postgresql+psycopg://${DB_USERNAME}:$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['DB_PASSWORD'], safe=''))")@contextforge-postgres-rw.contextforge.svc.cluster.local:5432/contextforge"
+          export REDIS_URL="redis://contextforge-redis.contextforge.svc.cluster.local:6379/0"
+          export CACHE_TYPE="redis"
+          cd /app
+          exec ./docker-entrypoint.sh
+      container:
+        name: contextforge
+        port: 4444
+        env:
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: password
+          - name: HOST
+            value: "0.0.0.0"
+          - name: PORT
+            value: "4444"
+          - name: JWT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: jwt-secret-key
+          - name: AUTH_ENCRYPTION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: auth-encryption-secret
+          - name: PLATFORM_ADMIN_EMAIL
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: platform-admin-email
+          - name: PLATFORM_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: platform-admin-password
+          - name: APP_DOMAIN
+            value: "https://contextforge.gateway.services.apocrathia.com"
+          - name: ALLOWED_ORIGINS
+            value: '["https://contextforge.gateway.services.apocrathia.com"]'
+          - name: ENVIRONMENT
+            value: "production"
+          - name: SECURE_COOKIES
+            value: "true"
+          - name: MCPGATEWAY_UI_ENABLED
+            value: "true"
+          - name: MCPGATEWAY_ADMIN_API_ENABLED
+            value: "true"
+          - name: MCPGATEWAY_CATALOG_ENABLED
+            value: "true"
+          - name: LOG_LEVEL
+            value: "INFO"
+          - name: LOG_TO_FILE
+            value: "false"
+          - name: SSRF_ALLOW_LOCALHOST
+            value: "false"
+          - name: SSRF_ALLOW_PRIVATE_NETWORKS
+            value: "false"
+          - name: SSRF_DNS_FAIL_CLOSED
+            value: "true"
+          # Pod + Service CIDRs (Talos cluster); see talos/cilium-install.md
+          - name: SSRF_ALLOWED_NETWORKS
+            value: '["10.42.0.0/16","10.69.0.0/16"]'
+          # Authentik OAuth2 provider slug=contextforge — URLs match issuer discovery:
+          # .../application/o/contextforge/.well-known/openid-configuration
+          - name: SSO_ENABLED
+            value: "true"
+          - name: SSO_GENERIC_ENABLED
+            value: "true"
+          - name: SSO_GENERIC_PROVIDER_ID
+            value: "authentik"
+          - name: SSO_GENERIC_DISPLAY_NAME
+            value: "Authentik"
+          - name: SSO_GENERIC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: oidc-client-id
+                optional: true
+          - name: SSO_GENERIC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: contextforge-secrets
+                key: oidc-client-secret
+                optional: true
+          - name: SSO_GENERIC_AUTHORIZATION_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/authorize/"
+          - name: SSO_GENERIC_TOKEN_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/token/"
+          - name: SSO_GENERIC_USERINFO_URL
+            value: "https://auth.gateway.services.apocrathia.com/application/o/userinfo/"
+          - name: SSO_GENERIC_ISSUER
+            value: "https://auth.gateway.services.apocrathia.com/application/o/contextforge/"
+          - name: SSO_GENERIC_JWKS_URI
+            value: "https://auth.gateway.services.apocrathia.com/application/o/contextforge/jwks/"
+          - name: SSO_GENERIC_SCOPE
+            value: "openid email profile"
+          - name: SSO_TRUSTED_DOMAINS
+            value: '["apocrathia.com"]'
+          - name: SSO_PRESERVE_ADMIN_AUTH
+            value: "true"
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        readOnlyRootFilesystem: true
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 4444
+        portName: http
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 4444
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /ready
+            port: 4444
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 4444
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    postgres:
+      enabled: true
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 5Gi
+
+    authentik:
+      enabled: true
+      mode: oidc
+      category: "AI & Automation"
+      displayName: "ContextForge"
+      externalHost: "https://contextforge.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/contextforge/icon.svg"
+      metaDescription: "IBM ContextForge MCP and A2A gateway"
+      metaPublisher: "IBM"
+      oidc:
+        customScopeMappings:
+          - name: "contextforge-email-verified-mapping"
+            scopeName: "email"
+            description: "Email address with email_verified set to True for ContextForge"
+            expression: |
+              return {
+                  "email": request.user.email,
+                  "email_verified": True
+              }
+        redirectUris:
+          - url: "https://contextforge.gateway.services.apocrathia.com/auth/sso/callback/authentik"
+            matchingMode: "strict"
+
+    httproute:
+      enabled: true
+      hostname: "contextforge.gateway.services.apocrathia.com"
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/contextforge-secrets"

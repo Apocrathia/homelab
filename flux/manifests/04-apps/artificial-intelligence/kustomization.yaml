@@ -9,6 +9,7 @@ resources:
   - k8sgpt
   - kagent
   - agents
+  - contextforge
   - firecrawl
   # - flowise
   # - guardrails-ai

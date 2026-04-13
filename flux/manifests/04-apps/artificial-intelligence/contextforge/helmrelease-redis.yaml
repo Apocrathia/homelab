@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: contextforge-redis
+  namespace: contextforge
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.69"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    app:
+      name: contextforge-redis
+      namespace: contextforge
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/redis
+      image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+      replicas: 1
+      command: ["redis-server"]
+      container:
+        name: redis
+        port: 6379
+        args:
+          - "--save"
+          - ""
+          - "--appendonly"
+          - "no"
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 1000
+        fsGroup: 1000
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: redis
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 2
+          periodSeconds: 5
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
