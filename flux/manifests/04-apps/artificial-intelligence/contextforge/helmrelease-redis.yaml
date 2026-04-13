@@ -30,7 +30,7 @@ spec:
       name: contextforge-redis
       namespace: contextforge
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/redis
-      image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+      image: public.ecr.aws/docker/library/redis:7.4.8-alpine
       replicas: 1
       command: ["redis-server"]
       container:
