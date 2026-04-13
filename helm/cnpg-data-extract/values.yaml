@@ -73,7 +73,7 @@ podSecurityContext:
 # Longhorn/CNPG volumes sometimes land with a mode Postgres refuses (wants 0700 or 0750 on PGDATA).
 volumePermissions:
   enabled: true
-  image: docker.io/library/busybox:1.36
+  image: docker.io/library/busybox:1.37
 
 containerSecurityContext:
   runAsUser: 26
