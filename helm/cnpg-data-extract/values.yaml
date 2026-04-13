@@ -7,7 +7,7 @@ fullnameOverride: ""
 
 image:
   repository: ghcr.io/cloudnative-pg/postgresql
-  tag: "16"
+  tag: "18"
   pullPolicy: IfNotPresent
 
 # Existing CNPG instance PVC (RWO — nothing else may mount it).
