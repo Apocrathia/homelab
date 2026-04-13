@@ -42,6 +42,14 @@ Comprehensive security review prompt for analyzing the homelab Kubernetes projec
 - Structured finding format with severity classification
 - Remediation roadmaps and positive observations
 
+### [generic-app Longhorn restore](./generic-app-longhorn-restore.md)
+
+Agent-oriented runbook for restoring Longhorn-backed volumes for workloads deployed with **`generic-app`**: inputs, ordering (scale down, restore, re-apply PV/PVC/Longhorn CR from `helm template`), Flux suspend/resume, verification checklist, and pointers to `scripts/longhorn/` scripts whose assumptions differ for static chart-managed storage.
+
+### [CNPG logical database restore](./cnpg-logical-database-restore.md)
+
+**Single** runbook for **logical** CNPG recovery: Longhorn instance volume discipline, **`cnpg-data-extract`**, new **`Cluster`** from **`generic-app`** (`helm template`) or standalone manifests (`kubectl kustomize`, e.g. Authentik) **while Flux is suspended**, **`cnpg-data-restore`**, then **`flux resume`**. **`docs/infrastructure/cnpg-logical-migration-from-pvc.md`**.
+
 ### [Document Review](./document-review.md)
 
 Systematic documentation quality review prompt for maintaining consistency across the repository. Covers:
