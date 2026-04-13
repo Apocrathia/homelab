@@ -8,9 +8,14 @@ metadata:
     {{- with .Values.podLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with .Values.podAnnotations }}
+  {{- if or .Values.volumePermissions.enabled .Values.podAnnotations }}
   annotations:
+    {{- if .Values.volumePermissions.enabled }}
+    ignore-check.kube-linter.io/run-as-non-root: "pgdata-perms runs as root to chown PGDATA to UID 26 on volumes with wrong ownership"
+    {{- end }}
+    {{- with .Values.podAnnotations }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
 spec:
   ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
@@ -36,6 +41,8 @@ spec:
             runAsUser: 0
             runAsNonRoot: false
             readOnlyRootFilesystem: true
+          resources:
+            {{- toYaml .Values.volumePermissions.resources | nindent 12 }}
           command:
             - sh
             - -c
