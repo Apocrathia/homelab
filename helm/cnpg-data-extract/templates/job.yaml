@@ -1,0 +1,158 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cnpg-data-extract.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cnpg-data-extract.labels" . | nindent 4 }}
+    {{- with .Values.podLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.podAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+  activeDeadlineSeconds: {{ .Values.job.activeDeadlineSeconds }}
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "cnpg-data-extract.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
+      {{- if .Values.volumePermissions.enabled }}
+      initContainers:
+        - name: pgdata-perms
+          image: {{ .Values.volumePermissions.image | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: true
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              chown 26:26 {{ .Values.pgdata.dataDir | quote }} || true
+              chmod 0700 {{ .Values.pgdata.dataDir | quote }}
+          volumeMounts:
+            - name: pgdata
+              mountPath: {{ .Values.pgdata.volumeMountPath }}
+      {{- end }}
+      containers:
+        - name: extract
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: {{ .Values.containerSecurityContext.runAsUser }}
+          ports:
+            - containerPort: {{ .Values.postgres.port }}
+              name: postgres
+          env:
+            - name: PGDATA
+              value: {{ .Values.pgdata.dataDir | quote }}
+            - name: PGHOST
+              value: {{ .Values.postgres.listenAddress | quote }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | toString | quote }}
+            - name: DUMP_DATABASE
+              value: {{ .Values.dump.database | quote }}
+            - name: DUMP_OUTPUT_FILE
+              value: {{ .Values.dump.outputFile | default (printf "%s/%s" .Values.dump.mountPath .Values.dump.fileName) | quote }}
+            {{- if .Values.credentialsSecret.enabled }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "credentialsSecret.name is required when credentialsSecret.enabled is true" .Values.credentialsSecret.name }}
+                  key: {{ .Values.credentialsSecret.passwordKey }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentialsSecret.name }}
+                  key: {{ .Values.credentialsSecret.usernameKey }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              postgres \
+                -D "$PGDATA" \
+                -c "listen_addresses=${PGHOST}" \
+          {{- range .Values.postgres.extraArgs }}
+                {{ . | quote }} \
+          {{- end }}
+                &
+              PG_PID=$!
+              echo "Waiting for PostgreSQL (pid ${PG_PID})..."
+              i=0
+              while [ "$i" -lt 300 ]; do
+                if pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -q 2>/dev/null; then
+                  echo "PostgreSQL is accepting connections."
+                  break
+                fi
+                i=$((i + 1))
+                sleep 1
+              done
+              pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER"
+              echo "Running pg_dump to ${DUMP_OUTPUT_FILE}..."
+              pg_dump \
+                --host="$PGHOST" \
+                --port="$PGPORT" \
+                --dbname="$DUMP_DATABASE" \
+                --format=custom \
+                --file="$DUMP_OUTPUT_FILE"
+              echo "pg_dump finished; stopping PostgreSQL..."
+              kill -TERM "$PG_PID" 2>/dev/null || true
+              wait "$PG_PID" 2>/dev/null || true
+              echo "Extract complete."
+          volumeMounts:
+            - name: pgdata
+              mountPath: {{ .Values.pgdata.volumeMountPath }}
+            - name: dump
+              mountPath: {{ .Values.dump.mountPath }}
+              {{- if .Values.backupSmb.enabled }}
+              readOnly: {{ .Values.backupSmb.readOnly }}
+              {{- end }}
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      restartPolicy: Never
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: {{ required "pvc.claimName is required" .Values.pvc.claimName }}
+        - name: dump
+          {{- if .Values.backupSmb.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-backup-smb-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}

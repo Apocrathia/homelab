@@ -1,0 +1,59 @@
+---
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/cloudnative-pg/postgresql
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+# Target CNPG primary Service (DNS name).
+postgresql:
+  host: ""
+  port: 5432
+  database: ""
+
+credentialsSecret:
+  enabled: true
+  name: ""
+  usernameKey: username
+  passwordKey: password
+
+restore:
+  # Path inside the SMB mount (e.g. /backup/authentik.dump).
+  dumpFile: ""
+
+# Same SMB CSI + 1Password pattern as generic-app `storage.smb` and cnpg-data-extract `backupSmb`.
+# Mount is read-only: pg_restore only reads the dump file.
+backupSmb:
+  enabled: false
+  source: ""
+  subDir: ""
+  capacity: 10Gi
+  mountPath: /backup
+  credentialsPath: ""
+  # Optional: "true" so the SMB CSI driver creates subDir on the server (same as generic-app).
+  createSubDir: null
+
+podSecurityContext:
+  fsGroup: 26
+
+containerSecurityContext:
+  runAsUser: 26
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+# Job timeout and retention
+activeDeadlineSeconds: 7200
+ttlSecondsAfterFinished: 86400
+# One-off recovery: do not retry the Job pod on failure (aligns with cnpg-data-extract).
+backoffLimit: 0

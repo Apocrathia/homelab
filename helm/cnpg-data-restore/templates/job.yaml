@@ -1,0 +1,79 @@
+{{- if not .Values.backupSmb.enabled }}
+{{- fail "cnpg-data-restore requires backupSmb.enabled=true (dump must be read from the SMB share)" }}
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cnpg-data-restore.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cnpg-data-restore.labels" . | nindent 4 }}
+spec:
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "cnpg-data-restore.selectorLabels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
+      containers:
+        - name: pg-restore
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          env:
+            - name: PGHOST
+              value: {{ required "postgresql.host is required" .Values.postgresql.host | quote }}
+            - name: PGPORT
+              value: {{ .Values.postgresql.port | toString | quote }}
+            - name: PGDATABASE
+              value: {{ required "postgresql.database is required" .Values.postgresql.database | quote }}
+            - name: DUMP_FILE
+              value: {{ required "restore.dumpFile is required" .Values.restore.dumpFile | quote }}
+            {{- if .Values.credentialsSecret.enabled }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "credentialsSecret.name is required when credentialsSecret.enabled is true" .Values.credentialsSecret.name }}
+                  key: {{ .Values.credentialsSecret.passwordKey }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentialsSecret.name }}
+                  key: {{ .Values.credentialsSecret.usernameKey }}
+            {{- end }}
+          command:
+            - /bin/bash
+            - -lc
+            - |
+              set -euo pipefail
+              test -f "$DUMP_FILE"
+              exec pg_restore \
+                --host="$PGHOST" \
+                --port="$PGPORT" \
+                --username="$PGUSER" \
+                --dbname="$PGDATABASE" \
+                --clean \
+                --if-exists \
+                --no-owner \
+                "$DUMP_FILE"
+          volumeMounts:
+            - name: backup
+              mountPath: {{ .Values.backupSmb.mountPath }}
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: backup
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-restore-smb-pvc
+        - name: tmp
+          emptyDir: {}

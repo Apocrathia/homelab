@@ -1,0 +1,7 @@
+---
+pvc:
+  claimName: lint-placeholder
+credentialsSecret:
+  name: lint-placeholder
+dump:
+  database: lintdb

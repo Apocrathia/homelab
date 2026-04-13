@@ -1,0 +1,18 @@
+---
+# Example: Authentik CNPG instance PVC (single replica → <cluster>-1).
+# Full procedure: ../../README.md (End-to-end logical recovery + Authentik table).
+# Usage:
+#   helm template authentik-extract . -f examples/authentik.yaml --namespace authentik | kubectl apply -f -
+#   # or
+#   helm install authentik-extract . -f examples/authentik.yaml --namespace authentik
+fullnameOverride: authentik-postgres-extract
+pvc:
+  claimName: authentik-postgres-1
+credentialsSecret:
+  name: authentik-secrets
+  usernameKey: username
+  passwordKey: password
+image:
+  tag: "16"
+dump:
+  database: authentik

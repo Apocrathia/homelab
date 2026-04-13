@@ -1,0 +1,23 @@
+---
+# Same base as authentik.yaml plus SMB for durable dumps (credentialsPath matches generic-app smb-credentials).
+# Homelab convention: Library share, folder Homelab/Backups/cnpg (browse: Storage/Library/Homelab/Backups/cnpg).
+fullnameOverride: authentik-postgres-extract
+pvc:
+  claimName: authentik-postgres-1
+credentialsSecret:
+  name: authentik-secrets
+  usernameKey: username
+  passwordKey: password
+image:
+  tag: "16"
+dump:
+  mountPath: /backup
+  database: authentik
+  fileName: authentik.dump
+backupSmb:
+  enabled: true
+  source: "//storage.services.apocrathia.com/Library"
+  subDir: "Homelab/Backups/cnpg"
+  credentialsPath: "vaults/Secrets/items/smb-credentials"
+  readOnly: false
+  createSubDir: "true"

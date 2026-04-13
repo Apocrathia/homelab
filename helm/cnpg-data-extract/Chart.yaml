@@ -1,0 +1,16 @@
+---
+apiVersion: v2
+name: cnpg-data-extract
+description: >
+  One-off Job that starts PostgreSQL on an existing CloudNativePG instance PVC, runs pg_dump,
+  then exits (not managed by Flux).
+type: application
+version: 0.0.1
+keywords:
+  - homelab
+  - cloudnative-pg
+  - postgresql
+  - recovery
+home: https://github.com/apocrathia/homelab
+maintainers:
+  - name: Apocrathia

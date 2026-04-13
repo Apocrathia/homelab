@@ -1,0 +1,9 @@
+Release: {{ .Release.Name }}
+Job: {{ include "cnpg-data-extract.fullname" . }}
+Namespace: {{ .Release.Namespace }}
+
+  kubectl wait --namespace {{ .Release.Namespace }} --for=condition=complete job/{{ include "cnpg-data-extract.fullname" . }} --timeout=7200s
+
+The Job starts PostgreSQL, runs pg_dump to {{ .Values.dump.outputFile | default (printf "%s/%s" .Values.dump.mountPath .Values.dump.fileName) }}, then exits. With backup SMB, the dump is on the share; emptyDir-only flows may still use kubectl cp if you need a copy outside the cluster.
+
+Uninstall: helm uninstall {{ .Release.Name }} --namespace {{ .Release.Namespace }}

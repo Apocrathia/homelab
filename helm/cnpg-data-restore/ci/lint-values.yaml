@@ -1,0 +1,14 @@
+---
+postgresql:
+  host: lint-postgres-rw.example.svc.cluster.local
+  database: app
+credentialsSecret:
+  name: lint-db-secret
+restore:
+  dumpFile: /backup/dump.dump
+backupSmb:
+  enabled: true
+  source: "//lint-server/share"
+  subDir: "lint"
+  createSubDir: "true"
+  credentialsPath: vaults/Secrets/items/smb-credentials

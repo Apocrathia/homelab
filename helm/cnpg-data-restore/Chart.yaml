@@ -1,0 +1,16 @@
+---
+apiVersion: v2
+name: cnpg-data-restore
+description: >
+  One-off Job to pg_restore from a dump file on an SMB/CIFS volume (same pattern as generic-app
+  and cnpg-data-extract backupSmb).
+type: application
+version: 0.0.1
+keywords:
+  - homelab
+  - cloudnative-pg
+  - postgresql
+  - recovery
+home: https://github.com/apocrathia/homelab
+maintainers:
+  - name: Apocrathia

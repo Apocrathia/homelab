@@ -1,0 +1,4 @@
+# https://helm.sh/docs/chart_template_guide/helm_ignore_file/
+.DS_Store
+.git
+ci/

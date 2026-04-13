@@ -1,0 +1,44 @@
+{{- if .Values.pvc.staticLonghorn.enabled }}
+{{- $claim := required "pvc.claimName is required" .Values.pvc.claimName }}
+{{- $pvName := .Values.pvc.staticLonghorn.persistentVolumeName | default $claim }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $pvName }}
+  labels:
+    {{- include "cnpg-data-extract.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cnpg-instance-data
+spec:
+  capacity:
+    storage: {{ required "pvc.staticLonghorn.capacity is required when staticLonghorn is enabled" .Values.pvc.staticLonghorn.capacity }}
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ .Values.pvc.staticLonghorn.storageClassName }}
+  csi:
+    driver: driver.longhorn.io
+    fsType: ext4
+    volumeHandle: {{ required "pvc.staticLonghorn.volumeHandle is required when staticLonghorn is enabled" .Values.pvc.staticLonghorn.volumeHandle | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $claim }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cnpg-data-extract.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cnpg-instance-data
+    {{- with .Values.pvc.staticLonghorn.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pvc.staticLonghorn.capacity }}
+  storageClassName: {{ .Values.pvc.staticLonghorn.storageClassName }}
+  volumeName: {{ $pvName }}
+{{- end }}

@@ -1,0 +1,56 @@
+{{- if .Values.backupSmb.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-backup-smb-pv
+spec:
+  capacity:
+    storage: {{ .Values.backupSmb.capacity | default "10Gi" }}
+  accessModes:
+    {{- if .Values.backupSmb.readOnly }}
+    - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: {{ .Values.backupSmb.readOnly }}
+    volumeHandle: {{ .Release.Name }}-backup-smb-vol
+    nodeStageSecretRef:
+      name: {{ .Release.Name }}-backup-smb-credentials
+      namespace: {{ .Release.Namespace }}
+    volumeAttributes:
+      source: {{ required "backupSmb.source is required when backupSmb.enabled" .Values.backupSmb.source | quote }}
+      subDir: {{ .Values.backupSmb.subDir | default "" | quote }}
+      {{- with .Values.backupSmb.createSubDir }}
+      createSubDir: {{ . | quote }}
+      {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-backup-smb-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    {{- if .Values.backupSmb.readOnly }}
+    - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
+  storageClassName: ""
+  resources:
+    requests:
+      storage: {{ .Values.backupSmb.capacity | default "10Gi" }}
+  volumeName: {{ .Release.Name }}-backup-smb-pv
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: {{ .Release.Name }}-backup-smb-credentials
+  namespace: {{ .Release.Namespace }}
+spec:
+  itemPath: {{ required "backupSmb.credentialsPath is required when backupSmb.enabled" .Values.backupSmb.credentialsPath | quote }}
+{{- end }}

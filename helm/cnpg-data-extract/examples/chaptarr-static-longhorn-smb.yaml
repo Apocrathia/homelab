@@ -1,0 +1,32 @@
+---
+# Example: instance PVC was deleted with the Cluster; Longhorn volume still exists.
+# Set pvc.staticLonghorn.volumeHandle to the Longhorn Volume CR name
+# (`kubectl get volumes.longhorn.io -n longhorn-system`).
+# Match capacity and storageClassName to the rendered CNPG Cluster spec.storage.
+fullnameOverride: chaptarr-postgres-extract
+pvc:
+  claimName: chaptarr-postgres-1
+  staticLonghorn:
+    enabled: true
+    volumeHandle: chaptarr-postgres-1
+    capacity: 10Gi
+    storageClassName: longhorn
+    labels:
+      cnpg.io/cluster: chaptarr-postgres
+credentialsSecret:
+  name: chaptarr-secrets
+  usernameKey: username
+  passwordKey: password
+image:
+  tag: "17"
+dump:
+  mountPath: /backup
+  database: chaptarr
+  fileName: chaptarr.dump
+backupSmb:
+  enabled: true
+  source: "//storage.services.apocrathia.com/Library"
+  subDir: "Homelab/Backups/cnpg"
+  credentialsPath: "vaults/Secrets/items/smb-credentials"
+  readOnly: false
+  createSubDir: "true"

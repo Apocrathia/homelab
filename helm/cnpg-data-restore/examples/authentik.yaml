@@ -1,0 +1,24 @@
+---
+# Align source/subDir/credentialsPath with generic-app SMB backup (same 1Password item as smb-credentials).
+# Homelab convention: Library share, folder Homelab/Backups/cnpg (browse: Storage/Library/Homelab/Backups/cnpg).
+# createSubDir asks the SMB CSI driver to create the subDir path on the server if missing.
+# dumpFile must be under backupSmb.mountPath (default /backup).
+fullnameOverride: authentik-pg-restore
+postgresql:
+  host: authentik-postgres-rw.authentik.svc.cluster.local
+  port: 5432
+  database: authentik
+credentialsSecret:
+  name: authentik-secrets
+  usernameKey: username
+  passwordKey: password
+restore:
+  dumpFile: /backup/authentik.dump
+backupSmb:
+  enabled: true
+  # Set source and subDir to match your share layout (see generic-app storage.smb examples).
+  source: "//storage.services.apocrathia.com/Library"
+  subDir: "Homelab/Backups/cnpg"
+  createSubDir: "true"
+  mountPath: /backup
+  credentialsPath: "vaults/Secrets/items/smb-credentials"

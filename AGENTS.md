@@ -46,7 +46,7 @@ flux/manifests/
 ├── 04-apps/            # User-facing applications (media, AI, productivity, etc.)
 └── kustomization.yaml  # Root - references all flux-kustomization.yaml files
 talos/                  # Talos Linux cluster configuration
-helm/                   # Custom Helm charts (generic-app)
+helm/                   # Custom Helm charts (generic-app, cnpg-data-extract, cnpg-data-restore)
 ```
 
 New components go in the appropriate layer directory with a `flux-kustomization.yaml`, then get added to the root `kustomization.yaml`.

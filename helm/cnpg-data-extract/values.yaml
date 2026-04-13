@@ -1,0 +1,115 @@
+---
+# Target namespace: pass via `helm install -n <ns>` or `helm template --namespace <ns>`.
+# Pod name: `helm install <release>` → pod <release>-cnpg-data-extract unless fullnameOverride is set.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/cloudnative-pg/postgresql
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+# Existing CNPG instance PVC (RWO — nothing else may mount it).
+pvc:
+  claimName: ""
+  # After `kubectl delete cluster`, the operator often deletes the instance PVC while the
+  # Longhorn volume still exists (restored data). Enable this to create a static PV + PVC in
+  # the same Helm release, same shape as helm/generic-app `storage-longhorn.yaml` (without
+  # the Longhorn Volume CR — your volume should already exist in longhorn-system).
+  staticLonghorn:
+    enabled: false
+    # Longhorn volume name: PV spec.csi.volumeHandle — `kubectl get volumes.longhorn.io -n longhorn-system`
+    volumeHandle: ""
+    # Must match the CNPG Cluster spec.storage (see helm template on the app HelmRelease).
+    capacity: 10Gi
+    storageClassName: longhorn
+    # Optional; defaults to pvc.claimName so PV and PVC names align with generic-app static volumes.
+    persistentVolumeName: ""
+    # Optional labels on the PVC (e.g. cnpg.io/cluster: your-cluster-postgres).
+    labels: {}
+
+# CloudNativePG layout: volume at volumeMountPath, PGDATA in .../pgdata.
+pgdata:
+  volumeMountPath: /var/lib/postgresql/data
+  dataDir: /var/lib/postgresql/data/pgdata
+
+postgres:
+  port: 5432
+  # Loopback only; the Job runs pg_dump against this address after postgres is ready.
+  listenAddress: "127.0.0.1"
+  # CNPG-managed PGDATA often sets logging_collector and log_directory under /controller — paths
+  # that do not exist outside the operator. Disable log shipping so postgres can start in this pod.
+  # CNPG also points ssl_cert_file at /controller/certificates — disable TLS for local extract-only use.
+  # CNPG may set unix_socket_directories to /controller/run — use the chart's /var/run/postgresql mount.
+  # archive_command invokes /controller/manager wal-archive — absent outside the operator; disable archiving.
+  extraArgs:
+    - "-c"
+    - "logging_collector=off"
+    - "-c"
+    - "ssl=off"
+    - "-c"
+    - "unix_socket_directories=/var/run/postgresql"
+    - "-c"
+    - "archive_mode=off"
+
+# For pg_dump: load DB user/password from an existing Secret (same pattern as app Helm charts).
+credentialsSecret:
+  enabled: true
+  name: ""
+  usernameKey: username
+  passwordKey: password
+
+extraEnv: []
+extraVolumeMounts: []
+extraVolumes: []
+
+podLabels: {}
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 26
+
+# Longhorn/CNPG volumes sometimes land with a mode Postgres refuses (wants 0700 or 0750 on PGDATA).
+volumePermissions:
+  enabled: true
+  image: docker.io/library/busybox:1.36
+
+containerSecurityContext:
+  runAsUser: 26
+
+dump:
+  mountPath: /dump
+  # Database to pg_dump — override for every real workload (e.g. authentik, cannery).
+  database: postgres
+  # Output path inside the dump volume unless outputFile is set.
+  fileName: dump.dump
+  # Optional full path for the custom-format dump (overrides mountPath + fileName).
+  outputFile: ""
+
+# Job runs postgres, waits for ready, pg_dump, stops postgres, exits.
+job:
+  activeDeadlineSeconds: 7200
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+
+# Optional SMB/CIFS volume for durable dumps (same CSI + 1Password pattern as generic-app `storage.smb`).
+# When enabled, the dump volume uses this PVC instead of emptyDir — set dump.mountPath if you want a
+# different mount point (e.g. /backup). Share permissions must allow the Postgres UID or writes may fail.
+backupSmb:
+  enabled: false
+  source: ""
+  subDir: ""
+  capacity: 10Gi
+  readOnly: false
+  credentialsPath: ""
+  # Optional: "true" so the SMB driver creates subDir on the server (same as generic-app).
+  createSubDir: null
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
