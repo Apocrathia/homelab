@@ -36,15 +36,20 @@ spec:
       set +u  # Disable unbound variable check in the pod script
       apk add --no-cache findutils curl
 
-      # Install containerd/ctr if not available
+      # Install containerd/ctr if not available (Talos may use /usr/local/bin)
       if ! command -v ctr >/dev/null 2>&1; then
         echo "Installing containerd tools..."
-        # Download ctr from containerd releases (simplified - use host binary if available)
-        if [ -f /host/usr/bin/ctr ]; then
-          cp /host/usr/bin/ctr /usr/local/bin/ctr
-          chmod +x /usr/local/bin/ctr
-        else
-          echo "Warning: ctr not found, trying alternative cleanup methods"
+        for host_ctr in /host/usr/bin/ctr /host/usr/local/bin/ctr; do
+          if [ -f "\${host_ctr}" ] && [ -x "\${host_ctr}" ]; then
+            cp "\${host_ctr}" /usr/local/bin/ctr
+            chmod +x /usr/local/bin/ctr
+            echo "Using host ctr from \${host_ctr}"
+            break
+          fi
+        done
+        if ! command -v ctr >/dev/null 2>&1; then
+          echo "ERROR: ctr not found on host (/usr/bin or /usr/local/bin)." >&2
+          echo "Skipping ALL containerd store changes. Do not rm under /var/lib/containerd manually — it corrupts the snapshotter." >&2
         fi
       fi
 
@@ -59,12 +64,7 @@ spec:
       elif command -v crictl >/dev/null 2>&1; then
         crictl rmi --prune 2>&1 || echo "Note: Some images may be in use"
       else
-        echo "Warning: Neither ctr nor crictl available. Cleaning up manually..."
-        # Fallback: try to remove old/unused images from containerd directory
-        if [ -d "/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs" ]; then
-          echo "Attempting to clean containerd snapshots..."
-          find /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs -type d -mtime +30 -exec rm -rf {} + 2>/dev/null || true
-        fi
+        echo "Neither ctr nor crictl available — skipping containerd image/snapshot cleanup (safe default)."
       fi
 
       echo ""
@@ -89,9 +89,13 @@ spec:
 
       echo ""
       echo "=== Attempting containerd image cleanup ==="
-      # Try to use host's ctr if available
-      if [ -f "/host/usr/bin/ctr" ] && [ -S "/run/containerd/containerd.sock" ]; then
-        /host/usr/bin/ctr -a /run/containerd/containerd.sock -n k8s.io images prune -a 2>&1 | head -20 || echo "Image prune completed or had errors"
+      # Try host ctr + containerd socket (paths differ on Talos vs generic Linux)
+      HOST_CTR=""
+      for c in /host/usr/bin/ctr /host/usr/local/bin/ctr /usr/local/bin/ctr; do
+        if [ -f "\${c}" ] && [ -x "\${c}" ]; then HOST_CTR="\${c}"; break; fi
+      done
+      if [ -n "\${HOST_CTR}" ] && [ -S "/run/containerd/containerd.sock" ]; then
+        "\${HOST_CTR}" -a /run/containerd/containerd.sock -n k8s.io images prune -a 2>&1 | head -20 || echo "Image prune completed or had errors"
       elif [ -S "/run/containerd/containerd.sock" ]; then
         # Try crictl if available
         if command -v crictl >/dev/null 2>&1; then

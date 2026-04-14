@@ -1,13 +1,21 @@
 #!/bin/bash
-# Update existing Longhorn volumes to match cluster defaults (space-conscious single replica).
+# Update existing Longhorn volumes to match cluster defaults (numberOfReplicas).
 # Source of truth: flux/manifests/02-infrastructure/longhorn/helmrelease.yaml
 #   (defaultReplicaCount, defaultClassReplicaCount) and helm/generic-app defaults
 #   (storage.longhorn.numberOfReplicas, storage-longhorn.yaml template).
+#
+# Usage:
+#   ./update-volume-replica-counts.sh           # uses NEW_REPLICA_COUNT or defaults to 2
+#   NEW_REPLICA_COUNT=1 ./update-volume-replica-counts.sh
+#   ./update-volume-replica-counts.sh 3
 
 set -uo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_REPLICA_COUNT=1
+NEW_REPLICA_COUNT="${NEW_REPLICA_COUNT:-2}"
+if [ -n "${1:-}" ]; then
+  NEW_REPLICA_COUNT="$1"
+fi
 
 echo "Finding volumes with numberOfReplicas != ${NEW_REPLICA_COUNT}..."
 
@@ -117,6 +125,7 @@ if [ "${FAILED}" -gt 0 ]; then
   echo "Failed: ${FAILED} volumes"
 fi
 echo ""
-echo "Note: Longhorn will gradually remove the extra replicas. This may take a few minutes."
+echo "Note: If you increased the count, Longhorn will build new replicas (disk space + rebuild traffic)."
+echo "      If you decreased the count, it will remove surplus replicas over time."
 
 rm -f /tmp/volumes-to-update.txt

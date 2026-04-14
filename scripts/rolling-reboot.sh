@@ -1,45 +1,75 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Rolling reboot: drain → talosctl reboot → wait Ready → uncordon, one node at a time.
+# Bash 3.2+ (avoid mapfile for macOS /bin/bash).
+set -euo pipefail
+
+READY_TIMEOUT="${READY_TIMEOUT:-900s}"
+STABILIZE_SECS="${STABILIZE_SECS:-30}"
+# GitLab Runner (and similar) often leave pods with no controller; drain refuses without --force.
+DRAIN_FORCE="${DRAIN_FORCE:-1}"
+# PDBs (CloudNativePG, Tempo, Longhorn instance-manager, etc.) block eviction API forever with minAvailable=1.
+# --disable-eviction uses pod delete and skips PDB checks — appropriate for voluntary node maintenance, not for routine deploys.
+DRAIN_DISABLE_EVICTION="${DRAIN_DISABLE_EVICTION:-1}"
 
 echo "Starting rolling reboot of all cluster nodes..."
-echo "This will reboot nodes one at a time to minimize disruption."
+echo "Order: sorted node names, one at a time."
+if [ "${DRAIN_DISABLE_EVICTION}" = "1" ]; then
+  echo "Drain uses delete (PDBs bypassed). Set DRAIN_DISABLE_EVICTION=0 to enforce PDBs (may hang on single-replica DBs)."
+else
+  echo "Drain uses eviction API (respects PDBs); may retry indefinitely if PDB blocks."
+fi
+echo "Overrides: READY_TIMEOUT=${READY_TIMEOUT} STABILIZE_SECS=${STABILIZE_SECS} DRAIN_FORCE=${DRAIN_FORCE} DRAIN_DISABLE_EVICTION=${DRAIN_DISABLE_EVICTION}"
 echo ""
 
-for i in {1..4}; do
-  NODE_NUM=$(printf "%02d" "$i")
-  IP_LAST_OCTET=$((79 + i))
-  NODE_IP="10.100.1.${IP_LAST_OCTET}"
+NODES=()
+while IFS= read -r line; do
+  [ -n "${line}" ] && NODES+=("${line}")
+done < <(kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | sort)
+TOTAL="${#NODES[@]}"
 
-  echo "==> Rebooting node talos-${NODE_NUM} (${NODE_IP})..."
+if [ "${TOTAL}" -eq 0 ]; then
+  echo "No nodes found." >&2
+  exit 1
+fi
 
-  # Cordon the node to prevent new workloads
-  echo "  - Cordoning node..."
-  kubectl cordon "talos-${NODE_NUM}"
+for i in "${!NODES[@]}"; do
+  NODE="${NODES[$i]}"
+  NODE_IP="$(kubectl get node "${NODE}" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')"
 
-  # Reboot the node
-  echo "  - Initiating reboot..."
-  talosctl reboot --nodes "${NODE_IP}" || echo "    Reboot command completed"
-
-  # Wait for the node to come back online
-  echo "  - Waiting for node to become ready..."
-  while ! kubectl get node "talos-${NODE_NUM}" 2>/dev/null | grep -q Ready; do
-    echo "    Still waiting for talos-${NODE_NUM}..."
-    sleep 10
-  done
-
-  # Uncordon the node to allow scheduling
-  echo "  - Uncordoning node..."
-  kubectl uncordon "talos-${NODE_NUM}"
-
-  echo "  ✓ talos-${NODE_NUM} is back online and ready"
-
-  # Wait between reboots to allow cluster stabilization
-  if [ "$i" -lt 4 ]; then
-    echo "  - Waiting 30s for cluster stabilization before next reboot..."
-    sleep 30
+  if [ -z "${NODE_IP}" ]; then
+    echo "No InternalIP for ${NODE}; set talosctl --nodes manually or fix node addresses." >&2
+    exit 1
   fi
+
+  echo "==> ${NODE} (${NODE_IP}) — $((i + 1))/${TOTAL}"
+
+  echo "  - Draining (cordon + evict workloads)..."
+  DRAIN_OPTS=(--ignore-daemonsets --delete-emptydir-data)
+  if [ "${DRAIN_FORCE}" = "1" ]; then
+    DRAIN_OPTS+=(--force)
+  fi
+  if [ "${DRAIN_DISABLE_EVICTION}" = "1" ]; then
+    DRAIN_OPTS+=(--disable-eviction=true)
+  fi
+  kubectl drain "${NODE}" "${DRAIN_OPTS[@]}"
+
+  echo "  - Rebooting via talosctl..."
+  talosctl reboot --nodes "${NODE_IP}"
+
+  echo "  - Waiting for Ready..."
+  kubectl wait --for=condition=Ready "node/${NODE}" --timeout="${READY_TIMEOUT}"
+
+  echo "  - Uncordoning..."
+  kubectl uncordon "${NODE}"
+
+  echo "  ✓ ${NODE} is Ready and schedulable"
   echo ""
+
+  if [ "${i}" -lt $((TOTAL - 1)) ]; then
+    echo "  - Sleeping ${STABILIZE_SECS}s before next node..."
+    sleep "${STABILIZE_SECS}"
+    echo ""
+  fi
 done
 
-echo "==> Rolling reboot complete!"
-echo "All nodes have been rebooted successfully."
+echo "==> Rolling reboot complete (${TOTAL} nodes)."

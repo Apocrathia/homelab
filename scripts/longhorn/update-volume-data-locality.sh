@@ -1,17 +1,17 @@
 #!/bin/bash
-# Update dataLocality for Longhorn volumes to strict-local (keep data on the workload node).
-# Matches flux/.../longhorn/helmrelease.yaml defaultSettings.defaultDataLocality and
-# persistence.defaultDataLocality.
+# Patch dataLocality on existing Longhorn volumes (Helm defaults do not retrofit).
+# Default matches flux/.../longhorn/helmrelease.yaml (defaultSettings + persistence).
 #
-# Longhorn rejects converting between strict-local and any other locality while the volume is
-# attached ("data locality cannot be converted between strict-local and other modes when volume
-# is not detached"). Scale down workloads so volumes are detached, then run this script.
+# Override: NEW_LOCALITY=strict-local ./update-volume-data-locality.sh
+#
+# Longhorn rejects converting between strict-local and other modes while the volume is attached.
+# Scale down workloads so volumes detach, then run this script.
 
 # No -e: bash returns status 1 for ((var++)) when var was 0, which would kill the loop on first volume.
 set -uo pipefail
 
 NAMESPACE="longhorn-system"
-NEW_LOCALITY="strict-local"
+NEW_LOCALITY="${NEW_LOCALITY:-best-effort}"
 
 echo "Finding volumes with dataLocality != ${NEW_LOCALITY}..."
 
@@ -60,7 +60,6 @@ while IFS='|' read -r volume current_locality _state pod_name; do
   ((COUNTER++))
   echo -n "[${COUNTER}/${VOLUME_COUNT}] ${volume}... "
 
-  # Patch dataLocality directly (works on attached volumes)
   PATCH_OUTPUT=$(kubectl patch volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
     --type merge \
     -p "{\"spec\":{\"dataLocality\":\"${NEW_LOCALITY}\"}}" 2>&1)

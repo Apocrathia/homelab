@@ -6,6 +6,24 @@ This directory contains utility scripts for managing Longhorn volumes and addres
 
 ## Scripts Overview
 
+### `fix-disk-uuid-mismatch.sh`
+
+Helps recover from `DiskFilesystemChanged` / `record diskUUID doesn't match` (common after Talos EPHEMERAL wipe). Longhorn **blocks** removing a disk from `nodes.longhorn.io` until replicas are gone, so the script is split into **prepare** (disable scheduling + request eviction), **finish** (remove + re-add the same path so Longhorn records the new filesystem UUID), plus **rescan** and **status**.
+
+**Usage:**
+
+```bash
+./fix-disk-uuid-mismatch.sh rescan
+./fix-disk-uuid-mismatch.sh status
+./fix-disk-uuid-mismatch.sh prepare talos-01 talos-02
+# wait until each node shows 0 replicas in status
+./fix-disk-uuid-mismatch.sh finish talos-01 talos-02
+DRY_RUN=1 ./fix-disk-uuid-mismatch.sh finish talos-03
+LONGHORN_DISK_KEY=my-disk ./fix-disk-uuid-mismatch.sh finish talos-03
+```
+
+Disk selection: by default the script picks a disk whose `path` contains `longhorn`, otherwise the first disk key alphabetically. Override with `LONGHORN_DISK_KEY`.
+
 ### `cleanup-longhorn-snapshots.sh`
 
 Comprehensive snapshot cleanup that handles three types of cleanup:
@@ -32,7 +50,7 @@ Updates existing volumes to use the new `snapshotMaxCount` limit. The global set
 
 ### `update-volume-replica-counts.sh`
 
-Updates existing volumes to match the configured replica count (**1** in the Longhorn HelmRelease and generic-app Longhorn defaults). Longhorn adds or removes replicas after the patch; lowering the count frees backing-store space once extra replicas drain.
+Updates existing volumes to match the configured replica count (**2** by default in the Longhorn HelmRelease and generic-app Longhorn defaults; override with `NEW_REPLICA_COUNT` or `./update-volume-replica-counts.sh 1`). Longhorn adds or removes replicas after the patch; raising count uses more disk and rebuild bandwidth; lowering frees space once extras drain.
 
 **Usage:**
 
@@ -40,16 +58,52 @@ Updates existing volumes to match the configured replica count (**1** in the Lon
 ./update-volume-replica-counts.sh
 ```
 
+### `catalog-stuck-pods-and-volumes.sh`
+
+Prints a TSV of non-ready pods (Pending, CrashLoopBackOff, stuck init, etc.), their PVCs, Longhorn volume `state` / `robustness` / `dataLocality`, and the primary replica’s node and `currentState` / `desireState` / `hardNodeAffinity`. Use after incidents to see whether the blocker is scheduling, locality, or Longhorn health.
+
+**Usage:**
+
+```bash
+./catalog-stuck-pods-and-volumes.sh | tee /tmp/stuck-catalog.tsv
+```
+
+### `bulk-restore-from-backup.sh`
+
+Linear flow: consider each **candidate** Longhorn volume (see **`CANDIDATE_FILTER`**), confirm **`status.lastBackup`** resolves to a **Backup** CR with **`status.url`**, **delete PVC** then **delete Volume**, wait for the PVC to return, **patch** the new volume **`spec.fromBackup`**. Subcommands: **`list`** (same candidate filter as restore), **`restore`** (destructive).
+
+**`CANDIDATE_FILTER`:** **`workload-blocked`** (default) = **`robustness`** **faulted** or **degraded**, **or** **`Ready`** condition **`False`** (matches UI “not ready for workload” in many cases), **or** **`spec.fromBackup`** set, **or** **`Restore`** condition **`True`**. **`unhealthy`** = faulted + degraded only (stricter). **`faulted`** = faulted only.
+
+Have **schedulable Longhorn disks** before bulk restore. **Scale down workloads** (or otherwise release the PVC) before **`restore`**; PVC delete hangs if a pod still mounts it. The script skips volumes that still have pods using the PVC unless **`SKIP_PREFLIGHT=1`**.
+
+After PVC delete, **Flux** (or whatever owns the claim) recreates the PVC on its normal interval — the script **does not** call **`flux reconcile`** or annotate HelmReleases; it only **waits** up to **`RECREATE_PVC_WAIT_SEC`** for the PVC to exist again.
+
+**Usage:**
+
+```bash
+./bulk-restore-from-backup.sh list
+DRY_RUN=1 ./bulk-restore-from-backup.sh restore
+CANDIDATE_FILTER=unhealthy MAX_VOLUMES=3 I_AM_SURE=yes ./bulk-restore-from-backup.sh restore
+I_AM_SURE=yes ./bulk-restore-from-backup.sh restore
+```
+
+Long runs: redirect to a log and **`tail -f`**; output may be block-buffered when not a TTY.
+
+**PVC wait:** uses **`kubectl wait --for=jsonpath='{.status.phase}'=Bound`** (not **`condition=Bound`**) so claims without **`status.conditions`** do not hang.
+
+**Per-volume failures:** timeouts, missing PVC, or failed patch **log and continue**. **`SKIP_VOLUMES=vol1,vol2`** skips by Longhorn volume name.
+
 ### `update-volume-data-locality.sh`
 
-Updates volumes to `dataLocality: strict-local`, matching `defaultDataLocality` / `persistence.defaultDataLocality` in the Longhorn HelmRelease.
+Patches existing volumes to `dataLocality: best-effort` by default (matches the Longhorn HelmRelease). Lets Kubernetes schedule the workload without requiring a local replica on the same node—useful after node chaos or faulted strict-local volumes.
 
-Longhorn does **not** allow converting between `strict-local` and other locality modes while the volume is **attached**—the API returns an invalid request until the volume is detached (typically by scaling down the workload). The script issues merge patches; run it after volumes are detached, or rely on new volumes picking up defaults from the StorageClass.
+Longhorn does **not** allow converting between `strict-local` and other locality modes while the volume is **attached**. Detach first (scale down workloads), then run the script. To push `strict-local` again: `NEW_LOCALITY=strict-local ./update-volume-data-locality.sh`.
 
 **Usage:**
 
 ```bash
 ./update-volume-data-locality.sh
+NEW_LOCALITY=strict-local ./update-volume-data-locality.sh
 ```
 
 ### `cleanup-talos-ephemeral.sh`
@@ -206,22 +260,32 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 - `record diskUUID doesn't match the one on the disk`
 - Disk marked as not ready and not schedulable
 
-**Solution:**
+**Why naive remove fails:** The API returns _disable the disk and remove all replicas and backing images first_. You must **evacuate replicas** off that disk before Longhorn will let you remove its spec entry.
 
-1. Delete the disk configuration in Longhorn UI
-2. Re-add the disk with the same path and settings
-3. Longhorn will re-detect the new UUID and accept it
+**Order of operations:**
+
+1. **Optional:** `./fix-disk-uuid-mismatch.sh rescan` — sets `longhorn.io/force-disk-rescan` / `force-sync` on every `nodes.longhorn.io` (sometimes enough if metadata was only stale).
+2. **Check:** `./fix-disk-uuid-mismatch.sh status` — confirms whether **any** disk is `Schedulable` and shows replica counts per node.
+3. **Prepare:** `./fix-disk-uuid-mismatch.sh prepare NODE ...` — `allowScheduling: false` and `evictionRequested: true` on the chosen disk so replicas can move elsewhere.
+4. **Wait** until `status` shows **zero replicas** on each node you will `finish` (watch `kubectl get replicas.longhorn.io -n longhorn-system` if needed).
+5. **Finish:** `./fix-disk-uuid-mismatch.sh finish NODE ...` — JSON remove that disk key from `spec.disks`, wait, then merge the same disk config back so Longhorn records the **current** filesystem UUID.
+
+**Cluster-wide deadlock:** If **no** disk in the cluster is schedulable, eviction has nowhere to land; replica counts never drop and `finish` will keep refusing. Escape paths include: add a **second** Longhorn disk on one or more nodes (new path + fresh filesystem, schedulable), then run `prepare` on the broken disks so eviction targets the healthy path; restore from **Longhorn backups**; or follow Longhorn’s [orphaned replica recovery](https://longhorn.io/kb/restoring-data-from-an-orphaned-replica-directory/) if you are deliberately recovering data outside normal scheduling — understand data risk before deleting replica CRs.
+
+**UI equivalent:** Disable scheduling and request eviction on the disk, wait for replicas to drain, then delete the disk from the node and re-add the same path and settings.
+
+After disks are **Ready** and **Schedulable**, retry **Salvage** on faulted volumes and let workloads attach again.
 
 ### Data Locality Not Applied to Existing Volumes
 
-**Problem:** `defaultDataLocality` in the HelmRelease does not retroactively change existing `Volume` CRs (for example after switching defaults to `strict-local`).
+**Problem:** `defaultDataLocality` in the HelmRelease does not retroactively change existing `Volume` CRs (for example after switching defaults to `best-effort`).
 
 **Root Cause:** Global defaults apply to new volumes; existing volumes keep their prior `spec.dataLocality`.
 
 **Solution:**
 
 - Detach volumes (scale down consumers), run `update-volume-data-locality.sh`, then scale back up
-- Or leave existing volumes as-is; new PVCs inherit `strict-local` from defaults
+- Or leave existing volumes as-is; new PVCs inherit `best-effort` from defaults
 
 ### Replica Count Mismatch
 
@@ -231,7 +295,7 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 
 **Solution:**
 
-- Use `update-volume-replica-counts.sh` to patch existing volumes (target count is **1**, aligned with the HelmRelease and generic-app Longhorn template defaults)
+- Use `update-volume-replica-counts.sh` to patch existing volumes (default target **2**, aligned with the HelmRelease and generic-app Longhorn template defaults)
 - Longhorn removes surplus replicas after the patch, which recovers space
 
 ### Snapshot Limits Not Applied Retroactively
@@ -336,8 +400,8 @@ Added `recurringJobSelector` to automatically label new volumes:
 Key values in the Longhorn HelmRelease (see `flux/manifests/02-infrastructure/longhorn/helmrelease.yaml`):
 
 - `snapshotMaxCount: "5"` (down from Longhorn’s stock default)
-- `defaultReplicaCount: "1"` and `defaultClassReplicaCount: 1` (single replica by default; raise per volume or app when HA matters)
-- `defaultDataLocality: "strict-local"` (and matching `persistence.defaultDataLocality`)
+- `defaultReplicaCount: "2"` and `defaultClassReplicaCount: 2` (two replicas by default for HA; override per app/volume when space matters more)
+- `defaultDataLocality: "best-effort"` (and matching `persistence.defaultDataLocality`)
 - `replicaAutoBalance: "best-effort"`
 
 ## Best Practices
