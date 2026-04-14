@@ -80,6 +80,7 @@ flowchart TB
 - **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
+- **[ContextForge](./contextforge/README.md)** - IBM ContextForge MCP/A2A gateway
 
 ### ML Platform
 
