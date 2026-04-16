@@ -29,6 +29,7 @@ This deployment includes:
 - **Movies**: `/movies` → `//storage.services.apocrathia.com/Video/Movies`
 - **Anime**: `/anime` → `//storage.services.apocrathia.com/Video/Anime`
 - **Educational**: `/educational` → `//storage.services.apocrathia.com/Video/Educational`
+- **YouTube**: `/youtube` → `//storage.services.apocrathia.com/Video/YouTube`
 - **Music**: `/music` → `//storage.services.apocrathia.com/Audio/Music`
 - **Music Videos**: `/music-videos` → `//storage.services.apocrathia.com/Video/Music Videos`
 

@@ -83,6 +83,9 @@ spec:
         - name: music-videos
           mountPath: /music-videos
           readOnly: true
+        - name: youtube
+          mountPath: /youtube
+          readOnly: true
       volumes:
         emptyDir:
           - name: transcode
@@ -128,6 +131,11 @@ spec:
           - name: music-videos
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Music Videos"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: youtube
+            source: "//storage.services.apocrathia.com/Video"
+            subDir: "YouTube"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: true
 
