@@ -29,7 +29,7 @@ spec:
           containers:
             - name: updater
               # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
-              image: public.ecr.aws/docker/library/alpine:3.23.3
+              image: public.ecr.aws/docker/library/alpine:3.23.4
               command:
                 - sh
                 - -c
