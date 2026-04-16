@@ -75,6 +75,7 @@ Media applications are organized into three categories:
 
 - **[qBittorrent](./acquisitions/qbittorrent/README.md)** - BitTorrent client with Gluetun VPN and kill switch
 - **[Lidarr YouTube Downloader](./acquisitions/lidarr-youtube-downloader/README.md)** - Fetches missing Lidarr albums from YouTube as tagged MP3s
+- **[Pinchflat](./acquisitions/pinchflat/README.md)** - YouTube download manager with rule-based channel and playlist sync
 - **[SABnzbd](./acquisitions/sabnzbd/README.md)** - Usenet client with Gluetun VPN and kill switch
 - **[rdt-client](./acquisitions/rdt-client/README.md)** - Real-Debrid integration via qBittorrent API emulation for Sonarr/Radarr
 - **[Reaparr](./acquisitions/reaparr/README.md)** - Downloads content from remote Plex servers to local library
