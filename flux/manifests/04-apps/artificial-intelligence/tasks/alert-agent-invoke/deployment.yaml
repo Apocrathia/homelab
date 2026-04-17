@@ -1,0 +1,139 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-agent-invoke
+  namespace: agent-tasks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alert-agent-invoke
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: alert-agent-invoke
+    spec:
+      serviceAccountName: alert-agent-invoke
+      restartPolicy: Always
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: install-deps
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14
+          env:
+            - name: HOME
+              value: /tmp
+            - name: UV_CACHE_DIR
+              value: /tmp/uv-cache
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              python -m pip install --no-cache-dir uv
+              python -m uv export --frozen --no-dev --directory=/scripts -o /tmp/req.txt
+              python -m uv pip install --target=/deps --no-cache -r /tmp/req.txt
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: deps
+              mountPath: /deps
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: server
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14
+          command:
+            - python
+            - /scripts/server.py
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          env:
+            - name: PYTHONPATH
+              value: /deps
+            - name: PROMPT_TEMPLATE_PATH
+              value: /scripts/alert-template.md
+            - name: MAX_TURNS
+              value: "4"
+            - name: HTTP_TIMEOUT_S
+              value: "300"
+            - name: PORT
+              value: "8080"
+            - name: A2A_URL
+              value: http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: deps
+              mountPath: /deps
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: scripts
+          configMap:
+            name: alert-agent-invoke-scripts
+        - name: deps
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

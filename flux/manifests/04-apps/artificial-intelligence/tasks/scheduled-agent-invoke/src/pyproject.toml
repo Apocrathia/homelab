@@ -1,0 +1,23 @@
+[project]
+name = "scheduled-agent-invoke"
+version = "0.1.0"
+description = "CronJob runner: invoke kagent A2A (multi-turn orchestration TBD)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "a2a-sdk>=0.3.25",
+    "httpx>=0.28.0,<1.0.0",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.8.0"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "S", "C4"]
+
+[tool.ruff.format]
+quote-style = "double"

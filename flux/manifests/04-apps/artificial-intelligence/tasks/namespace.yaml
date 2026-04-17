@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-tasks
+  labels:
+    app.kubernetes.io/name: agent-tasks
+    app.kubernetes.io/managed-by: flux

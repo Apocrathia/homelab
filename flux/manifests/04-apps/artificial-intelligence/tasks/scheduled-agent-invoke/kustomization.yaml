@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: scheduled-agent-invoke
+
+resources:
+  - serviceaccount.yaml
+  - cronjob.yaml
+
+configMapGenerator:
+  - name: homelab-agent-task-template
+    namespace: agent-tasks
+    files:
+      - task.md=prompts/task.md
+      - continuation.md=prompts/continuation.md
+      - invoke.py=src/invoke.py
+      - pyproject.toml=src/pyproject.toml
+      - uv.lock=src/uv.lock
