@@ -75,7 +75,7 @@
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
-        "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^\"'\\s]+)[\"']"
+        "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^\"'\\s]+)[\"']"
       ],
       "extractVersionTemplate": "^x86_64-v(?<version>.*)$"
     },
