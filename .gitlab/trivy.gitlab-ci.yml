@@ -6,7 +6,7 @@ trivy:
   stage: test
   image:
     # renovate: datasource=docker depName=ghcr.io/aquasecurity/trivy
-    name: ghcr.io/aquasecurity/trivy:0.69.3
+    name: ghcr.io/aquasecurity/trivy:0.70.0
     entrypoint: [""]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
