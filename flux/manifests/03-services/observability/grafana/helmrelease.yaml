@@ -7,6 +7,10 @@ metadata:
   namespace: grafana-system
 spec:
   interval: 5m
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
   chart:
     spec:
       chart: grafana-operator
