@@ -6,6 +6,7 @@ metadata:
   name: grafana-alerting
 
 resources:
+  - notification-policy.yaml
   - discord.yaml
   - slack.yaml
   - pushover.yaml

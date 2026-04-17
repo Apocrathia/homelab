@@ -159,3 +159,18 @@ spec:
       labels:
         severity: critical
         team: platform
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: pvc-capacity-route
+  namespace: prometheus-system
+  labels:
+    grafana.alerting/policy: default
+spec:
+  receiver: Discord
+  object_matchers:
+    - - alertname
+      - =~
+      - "PVC usage.*"

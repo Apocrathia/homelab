@@ -20,3 +20,15 @@ spec:
         secretKeyRef:
           name: grafana-secrets
           key: slack-webhook-url
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: slack-route
+  namespace: prometheus-system
+  labels:
+    grafana.alerting/policy: default
+spec:
+  receiver: Slack
+  continue: true

@@ -25,3 +25,15 @@ spec:
         secretKeyRef:
           name: grafana-secrets
           key: pushover-app-key
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: pushover-route
+  namespace: prometheus-system
+  labels:
+    grafana.alerting/policy: default
+spec:
+  receiver: Pushover
+  continue: true
