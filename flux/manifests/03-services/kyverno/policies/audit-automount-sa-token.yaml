@@ -52,6 +52,15 @@ spec:
                 - gitlab-runner
                 - kagent
                 - renovate
+          # CNPG instance manager pods require API access for status
+          # updates, secret reading, failover coordination, and events
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchExpressions:
+                  - key: cnpg.io/cluster
+                    operator: Exists
       validate:
         message: >-
           automountServiceAccountToken should be set to false unless the Pod
