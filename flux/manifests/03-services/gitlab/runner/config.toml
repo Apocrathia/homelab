@@ -11,7 +11,7 @@
     resource_limits = ["cpu=4000m", "memory=4Gi"]
     resource_requests = ["cpu=100m", "memory=128Mi"]
     # renovate: datasource=docker registryUrl=https://registry.gitlab.com depName=gitlab-org/gitlab-runner/gitlab-runner-helper
-    helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v17.10.0"
+    helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-v18.11.0"
     helper_image_flavor = "alpine"
     cpu_limit = "4000m"
     memory_limit = "4Gi"
