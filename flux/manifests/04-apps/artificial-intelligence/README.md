@@ -75,6 +75,10 @@ flowchart TB
 - **[Flowise](./flowise/README.md)** - Visual AI agent and workflow builder
 - **[JupyterHub](./jupyterhub/README.md)** - Multi-user notebook server with Authentik SSO
 
+### Tasks
+
+- **[Tasks](./tasks/README.md)** - Scheduled task templates for recurring artificial intelligence workloads.
+
 ### Agent Orchestration
 
 - **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes

@@ -21,3 +21,4 @@ resources:
   - openclaw
   - openwebui
   - qdrant
+  - tasks
