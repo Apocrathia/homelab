@@ -20,12 +20,7 @@ RClone Manager provides a web-based interface to configure cloud storage remotes
 
 ## Configuration
 
-Configuration is done entirely through the web UI. The application stores:
-
-- Rclone remote configurations in `/home/rclone-manager/.config/rclone`
-- Application settings in `/home/rclone-manager/.local/share/com.rclone.manager.headless`
-
-Both directories are persisted via Longhorn volumes.
+Configuration is done entirely through the web UI. The container stores `rclone.conf` under `/config` and application data (downloads, cache, logs) under `/data`, matching the [upstream image](https://github.com/Zarestia-Dev/rclone-manager/blob/master/Dockerfile). Both paths use Longhorn volumes in this deployment.
 
 ## Authentication
 
@@ -33,11 +28,11 @@ Access is protected by Authentik proxy authentication.
 
 ## Storage
 
-| Volume     | Mount Path                                                      | Type                |
-| ---------- | --------------------------------------------------------------- | ------------------- |
-| `config`   | `/home/rclone-manager/.config/rclone`                           | Longhorn            |
-| `app-data` | `/home/rclone-manager/.local/share/com.rclone.manager.headless` | Longhorn            |
-| `cloud`    | `/data/cloud`                                                   | SMB (Library/Cloud) |
+| Volume     | Mount Path    | Type                |
+| ---------- | ------------- | ------------------- |
+| `config`   | `/config`     | Longhorn            |
+| `app-data` | `/data`       | Longhorn            |
+| `cloud`    | `/data/cloud` | SMB (Library/Cloud) |
 
 ## Troubleshooting
 

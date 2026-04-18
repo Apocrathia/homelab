@@ -20,7 +20,7 @@ spec:
       name: rclone
       namespace: rclone
       # renovate: datasource=docker depName=ghcr.io/zarestia-dev/rclone-manager
-      image: ghcr.io/zarestia-dev/rclone-manager:sha-5b25545
+      image: ghcr.io/zarestia-dev/rclone-manager@sha256:1045835d4884fe2d4afa0d2cf0013d44c04cc709b022c169db63f06f1d3afee9
       container:
         name: rclone
         port: 8080
@@ -33,15 +33,20 @@ spec:
       podAntiAffinity:
         enabled: false # Single replica
 
-      # Container runs Xvfb/GTK internally for headless Tauri app
-      # Needs flexibility for internal display server
+      # Container runs Xvfb/GTK internally for headless Tauri app.
+      # Entrypoint: root → gosu rclone-manager. generic-app defaults to capabilities.drop: [ALL], which breaks gosu
+      # unless SETUID/SETGID are added back.
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 0
+        runAsGroup: 0
         fsGroup: 1000
-        runAsNonRoot: true
+        runAsNonRoot: false
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: false # App needs write access for Xvfb/dbus
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
 
       resources:
         requests:
@@ -86,11 +91,13 @@ spec:
         targetPort: 8080
         portName: http
 
+      # Mounts align with upstream image: RCLONE_CONFIG=/config/rclone.conf,
+      # RCLONE_MANAGER_*_DIR=/data/... (see Zarestia-Dev/rclone-manager Dockerfile).
       volumeMounts:
         - name: config
-          mountPath: /home/rclone-manager/.config/rclone
+          mountPath: /config
         - name: app-data
-          mountPath: /home/rclone-manager/.local/share/com.rclone.manager.headless
+          mountPath: /data
         - name: cloud
           mountPath: /data/cloud
 
