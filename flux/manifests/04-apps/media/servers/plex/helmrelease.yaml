@@ -86,6 +86,8 @@ spec:
         - name: youtube
           mountPath: /youtube
           readOnly: true
+        - name: thumbnails
+          mountPath: /mnt/thumbnails
       volumes:
         emptyDir:
           - name: transcode
@@ -138,6 +140,12 @@ spec:
             subDir: "YouTube"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: true
+          - name: thumbnails
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Plex/Thumbnails"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            createSubDir: "true"
+            readOnly: false
 
     secrets:
       enabled: true
