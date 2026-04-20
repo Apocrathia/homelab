@@ -22,6 +22,7 @@ This deployment includes:
 - **Configuration Volume**: Longhorn volume at `/config`
 - **Transcoding Volume**: EmptyDir at `/transcode` for temporary files
 - **Media Libraries**: SMB mounts for content access
+- **BIF Thumbnails**: SMB mount at `/config/Library/Application Support/Plex Media Server/Media/localhost`. Plex's video preview thumbnails (the seek-bar scrubbing previews) are kept on the NAS instead of Longhorn so the config volume doesn't blow up.
 
 ### Media Libraries
 
@@ -32,6 +33,7 @@ This deployment includes:
 - **YouTube**: `/youtube` → `//storage.services.apocrathia.com/Video/YouTube`
 - **Music**: `/music` → `//storage.services.apocrathia.com/Audio/Music`
 - **Music Videos**: `/music-videos` → `//storage.services.apocrathia.com/Video/Music Videos`
+- **Thumbnails**: `/config/.../Media/localhost` → `//storage.services.apocrathia.com/Library/Plex/Thumbnails`
 
 ### Access
 
