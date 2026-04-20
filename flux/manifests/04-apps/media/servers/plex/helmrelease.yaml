@@ -87,7 +87,7 @@ spec:
           mountPath: /youtube
           readOnly: true
         - name: thumbnails
-          mountPath: /mnt/thumbnails
+          mountPath: /config/Library/Application Support/Plex Media Server/Media/localhost
       volumes:
         emptyDir:
           - name: transcode
