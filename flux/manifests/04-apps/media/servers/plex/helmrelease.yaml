@@ -35,7 +35,7 @@ spec:
                 name: plex-secrets
                 key: claim-token
           - name: ADVERTISE_IP
-            value: "https://plex.services.apocrathia.com"
+            value: "https://plex.services.apocrathia.com,http://plex.services.apocrathia.com:80"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -162,12 +162,7 @@ spec:
       metaPublisher: "Plex Inc."
 
     httproute:
-      enabled: true
-      hostname: plex.services.apocrathia.com
-      gateway:
-        name: plex-gateway
-        namespace: cilium-system
-        sectionName: https
+      enabled: false
 
     loadbalancer:
       enabled: false
