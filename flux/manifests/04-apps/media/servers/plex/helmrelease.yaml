@@ -35,7 +35,7 @@ spec:
                 name: plex-secrets
                 key: claim-token
           - name: ADVERTISE_IP
-            value: "https://plex.services.apocrathia.com,http://plex.services.apocrathia.com:80"
+            value: "https://plex.services.apocrathia.com,http://10.100.1.98:32400"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
