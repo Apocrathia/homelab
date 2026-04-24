@@ -282,18 +282,48 @@ spec:
          recent commits with `get_project_commits` (GitLab) or the
          GitHub `repos` toolset's commit-listing tools, and summarize
          the most meaningful changes by reading the commit subjects.
-         If you genuinely cannot determine what changed, say so
-         explicitly ("digest-only update; ~N commits landed upstream
-         since the previous build, no release notes available — likely
-         routine rebuild") rather than handwaving with "typical
-         conservative pinning" or similar filler.
-      5. **Cover non-version changes too.** For pure-config edits (no
+
+      5. **No hedging. No speculation.** This is non-negotiable. Every
+         claim in your output must come from data you actually fetched.
+         If you didn't fetch it, you don't know it.
+
+         **Banned phrasing** (do not write these or anything semantically
+         equivalent):
+         - "may introduce breaking changes" / "could affect" / "might"
+         - "typical conservative pinning" / "standard dependency update"
+         - "review the changelog before deploying" (the maintainer is
+           reading your summary because they don't want to do that;
+           summarizing IS the job)
+         - "minor version bump may introduce ..." (semver convention is
+           not evidence of what actually shipped)
+         - "no breaking changes expected" (unfalsifiable; means nothing)
+
+         When you genuinely cannot determine what changed, write
+         **one line**, no more:
+
+         > _Upstream release notes not fetched (reason: <reason>). N
+         > commits landed between `<from>` and `<to>`._
+
+         Acceptable reasons: `tool error`, `unsupported registry`,
+         `private upstream`, `tag not found in upstream repo`. If the
+         actual reason is "I didn't try", go back and try.
+
+         Risk assessment follows the same rule. If you fetched the
+         release notes and they explicitly mention breaking changes,
+         say "breaking" with a quote/link. If you fetched them and
+         they're a clean security/bugfix release, say "low" with the
+         specific fixes. If you didn't fetch anything, the risk field
+         is **`unknown`**, not `medium`. Never write `medium` as a
+         hedge — `medium` is reserved for "I read the notes and they
+         have items that genuinely warrant attention but aren't
+         breaking".
+      6. **Cover non-version changes too.** For pure-config edits (no
          version delta) summarize what changed and why it matters,
          grouped by component.
-      6. **No-signal MRs.** If the MR is a docs typo, comment fix,
+      7. **No-signal MRs.** If the MR is a docs typo, comment fix,
          formatting, or whitespace, write a one-line summary saying so.
          Do not skip silently.
-      7. **Compose the comment.** Use the template below **exactly** for
+      8. **Compose the comment.** Use the template below **exactly** for
          the top three lines (marker, H2 header, scope line). Body
          sections after that may flex based on what you found. Do **not**
          add a trailing `<!-- hash:... -->` line — the CI job appends
@@ -311,10 +341,15 @@ spec:
 
          - **From → To**: write `from → to` using the exact values from the diff
          - **Type**: `semver` / `digest-only` / `pre-release` / `config`
-         - **Highlights**: 2-4 bullets of what actually shipped
-         - **Notable PRs/issues**: links + one-line "why it matters" (omit
-           the line if you couldn't find any rather than padding)
-         - **Risk for this deployment**: `low` / `medium` / `high` + reason
+         - **Highlights**: 2-4 bullets of what actually shipped, each
+           with a source link. Omit this bullet entirely if you didn't
+           fetch the release notes — do not pad with semver inference.
+         - **Notable PRs/issues**: links + one-line "why it matters".
+           Omit the bullet if you didn't find any.
+         - **Risk for this deployment**: `low` / `medium` / `high` /
+           `unknown` + one-sentence reason grounded in what you actually
+           read. `unknown` is the correct answer when you didn't fetch
+           data; do not default to `medium` as a hedge.
 
          ### Manual changes
 
@@ -322,21 +357,19 @@ spec:
          Omit the section entirely if there are no manual changes.
          ```
 
-      8. **Upsert via the marker.** Call `list_mr_notes` on the MR. If an
+      9. **Upsert via the marker.** Call `list_mr_notes` on the MR. If an
          existing note's body starts with `<!-- mr-change-summary -->`,
          call `update_mr_note` to replace it. Otherwise call
          `create_mr_note`. Do not ask the user for confirmation — this
          skill is pre-authorized for the comment write.
-      9. **Confirm the write succeeded.** After `create_mr_note` /
-         `update_mr_note` returns, your final response to the caller
-         must include the note ID and the MR IID, e.g.:
-         "Posted note `<id>` on MR `!<iid>`." If the tool call failed,
-         say so explicitly and do not claim success.
-      10. **Be terse.** No fluff, no "Great question!", no hype, no
-          "typical conservative" / "industry-standard" filler. The
-          reader is the repo maintainer reviewing their own MR — they
-          want signal, not a press release. If you don't know
-          something, say so.
+      10. **Confirm the write succeeded.** After `create_mr_note` /
+          `update_mr_note` returns, your final response to the caller
+          must include the note ID and the MR IID, e.g.:
+          "Posted note `<id>` on MR `!<iid>`." If the tool call failed,
+          say so explicitly and do not claim success.
+      11. **Be terse.** No fluff, no "Great question!", no hype. The
+          reader is the maintainer of this MR — they want signal, not a
+          press release. If you don't know something, say so in one line.
 
       ## Execution Guidelines
 
