@@ -156,46 +156,29 @@ async def _update_note_body(
     mr_iid: str,
     note_id: int,
     body: str,
-    job_token: str,
-    private_token: str | None,
+    private_token: str,
     timeout_s: float,
-) -> tuple[bool, str]:
-    """PUT a new body onto an existing MR note. Tries JOB-TOKEN first;
-    falls back to PRIVATE-TOKEN if the runner's job token can't write
-    (most GitLab installs reject job-token writes for notes).
+) -> bool:
+    """PUT a new body onto an existing MR note via PRIVATE-TOKEN.
 
-    Returns (success, which_auth_used).
+    GitLab's CI_JOB_TOKEN cannot write MR notes (returns 401), so we use a
+    project PAT supplied as the AGENT_TOKEN CI variable instead. Convention
+    matches KUSTOMIZE_TOKEN / SCORECARD_TOKEN / TOFU_TOKEN.
     """
     url = f"{api_url.rstrip('/')}/projects/{project_id}/merge_requests/{mr_iid}/notes/{note_id}"
     payload = {"body": body}
     timeout = httpx.Timeout(timeout_s, connect=15.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.put(url, json=payload, headers={"JOB-TOKEN": job_token})
-        if resp.status_code < 400:
-            return True, "JOB-TOKEN"
-        LOG.info(
-            "JOB-TOKEN write to note %s returned %s; trying PRIVATE-TOKEN fallback",
-            note_id,
-            resp.status_code,
-        )
-        if not private_token:
-            LOG.error(
-                "JOB-TOKEN write rejected (%s) and MR_SUMMARY_TOKEN is not set. "
-                "Create a project PAT with `api` scope and store it as the "
-                "MR_SUMMARY_TOKEN CI/CD variable to enable trailer writes.",
-                resp.status_code,
-            )
-            return False, "JOB-TOKEN"
         resp = await client.put(url, json=payload, headers={"PRIVATE-TOKEN": private_token})
         if resp.status_code < 400:
-            return True, "PRIVATE-TOKEN"
+            return True
         LOG.error(
-            "PRIVATE-TOKEN write to note %s also failed: %s %s",
+            "PRIVATE-TOKEN write to note %s failed: %s %s",
             note_id,
             resp.status_code,
             resp.text[:200],
         )
-        return False, "PRIVATE-TOKEN"
+        return False
 
 
 async def run_agent(
@@ -292,7 +275,9 @@ async def main_async() -> int:
     project_id = os.environ.get("CI_PROJECT_ID", "").strip()
     mr_iid = os.environ.get("CI_MERGE_REQUEST_IID", "").strip()
     job_token = os.environ.get("CI_JOB_TOKEN", "").strip()
-    private_token = os.environ.get("MR_SUMMARY_TOKEN", "").strip() or None
+    # Project PAT with `api` scope. Required for the trailer-write step
+    # because CI_JOB_TOKEN cannot PUT MR notes on GitLab.com.
+    private_token = os.environ.get("AGENT_TOKEN", "").strip() or None
     force = os.environ.get("FORCE_RECOMPUTE", "").lower() in ("1", "true", "yes")
     skip_verify = os.environ.get("SKIP_COMMENT_VERIFY", "").lower() in ("1", "true", "yes")
 
@@ -398,22 +383,29 @@ async def main_async() -> int:
         )
         return 1
 
+    if not private_token:
+        LOG.error(
+            "AGENT_TOKEN is not set. Comment was posted by the agent but the "
+            "skip-cache trailer cannot be written. Create a project PAT with "
+            "`api` scope and store it as the AGENT_TOKEN CI/CD variable."
+        )
+        return 1
+
     new_body = _strip_trailing_hash(post_body) + "\n" + _hash_trailer(input_hash) + "\n"
     LOG.info("Appending hash trailer to note %s (hash=%s)...", post_note_id, input_hash)
-    success, used_auth = await _update_note_body(
+    success = await _update_note_body(
         api_url=api_url,
         project_id=project_id,
         mr_iid=mr_iid,
         note_id=post_note_id,
         body=new_body,
-        job_token=job_token,
         private_token=private_token,
         timeout_s=30.0,
     )
     if not success:
         LOG.error("Failed to append hash trailer to MR note %s.", post_note_id)
         return 1
-    LOG.info("Trailer written via %s (note id=%s, hash=%s)", used_auth, post_note_id, input_hash)
+    LOG.info("Trailer written (note id=%s, hash=%s)", post_note_id, input_hash)
     return 0
 
 
