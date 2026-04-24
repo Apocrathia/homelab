@@ -53,17 +53,22 @@ Runs on MRs that modify `flux/manifests/**/*`. Builds kustomize overlays for bot
 
 Runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
 
+**Energy gate**: before invoking the agent, the job hashes the diff and changed-files list and compares against the `<!-- hash:vN:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff become 0-cost no-ops.
+
 **How it works**:
 
 - `.gitlab/scripts/mr_change_summary_prompt.py` renders the prompt from `CI_*` env vars and the diff (avoids shell-quoting hazards).
-- `.gitlab/scripts/mr_change_summary_invoke.py` reuses the multi-turn A2A SDK pattern from `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
-- The agent finds an existing comment by the marker `<!-- mr-change-summary -->` and updates it on subsequent runs (idempotency lives agent-side, not in CI).
+- `.gitlab/scripts/mr_change_summary_invoke.py` computes the input hash, checks for an existing comment via the GitLab API (`JOB-TOKEN` read), and either skips the agent entirely or runs the multi-turn A2A SDK loop modelled on `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
+- After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:vN:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
+- Trailer writes try `CI_JOB_TOKEN` first; fall back to `MR_SUMMARY_TOKEN` (a project PAT) if the runner's job token can't write notes. See "Required CI/CD Variables" below.
+- Bumping `PROMPT_VERSION` in `mr_change_summary_invoke.py` (currently `v1`) force-busts every existing comment on the next run.
 
 **Requirements**:
 
 - The runner must be able to reach `kagent-controller.kagent.svc.cluster.local:8083` (in-cluster runner — already true for `gitlab-runner` in the `gitlab-runner` namespace).
 - `git-agent` must be deployed and have the gitlab-mcp tools `list_mr_notes`, `create_mr_note`, `update_mr_note` whitelisted.
 - The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`) must have `api` scope on the homelab project — used by the agent to post comments.
+- Either `CI_JOB_TOKEN` must accept note PUTs, or `MR_SUMMARY_TOKEN` must be set as a project CI variable with `api` scope.
 
 **Tunables (job-level CI variables)**:
 
@@ -71,6 +76,7 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 - `HTTP_TIMEOUT_S` — per-request HTTP timeout to kagent (default `600`)
 - `DIFF_MAX_BYTES` — diff payload cap fed to the agent (default `120000`)
 - `CHANGED_FILES_MAX_LINES` — file-list cap (default `500`)
+- `FORCE_RECOMPUTE` — set to `1` in a manual pipeline run to bypass the hash skip and re-invoke the agent
 
 ### OpenSSF Scorecard
 
@@ -142,15 +148,18 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 
 ## Required CI/CD Variables
 
-| Variable          | Purpose              | Scope          |
-| ----------------- | -------------------- | -------------- |
-| `KUSTOMIZE_TOKEN` | MR comment access    | kustomize-diff |
-| `SCORECARD_TOKEN` | MR comment access    | scorecard      |
-| `TOFU_TOKEN`      | MR comment access    | tofu-plan      |
-| `GITHUB_TOKEN`    | Scorecard API access | scorecard      |
-| `GITLAB_TOKEN`    | Git tag push access  | chart-tag      |
+| Variable           | Purpose                                                                                                                  | Scope             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| `KUSTOMIZE_TOKEN`  | MR comment access                                                                                                        | kustomize-diff    |
+| `SCORECARD_TOKEN`  | MR comment access                                                                                                        | scorecard         |
+| `TOFU_TOKEN`       | MR comment access                                                                                                        | tofu-plan         |
+| `GITHUB_TOKEN`     | Scorecard API access                                                                                                     | scorecard         |
+| `GITLAB_TOKEN`     | Git tag push access                                                                                                      | chart-tag         |
+| `MR_SUMMARY_TOKEN` | Optional PAT (`api` scope) for MR change-summary trailer writes; needed only if `CI_JOB_TOKEN` is rejected for note PUTs | mr-change-summary |
 
 Configure in **Settings > CI/CD > Variables**.
+
+`MR_SUMMARY_TOKEN` is opt-in: the job tries `CI_JOB_TOKEN` first and only falls back to this PAT if the job-token write is rejected. Watch the first run after enabling and add the PAT only if the trailer write fails.
 
 ## Troubleshooting
 

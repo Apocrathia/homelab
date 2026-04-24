@@ -62,6 +62,8 @@ mr-change-summary:
         python /tmp/work/build_prompt.py
 
       PROMPT_PATH=/tmp/work/prompt.md \
+      DIFF_PATH=/tmp/work/diff.patch \
+      CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
       A2A_URL="${A2A_URL}" \
       MAX_TURNS="${MAX_TURNS}" \
       HTTP_TIMEOUT_S="${HTTP_TIMEOUT_S}" \

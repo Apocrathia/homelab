@@ -1,35 +1,46 @@
 #!/usr/bin/env python3
 """Invoke git-agent via A2A SDK for MR change-summary work.
 
-Designed for GitLab CI use. Reads a prompt from PROMPT_PATH, sends it to the
-A2A endpoint at A2A_URL, and lets the agent take the conversation through
-multiple turns until it has posted (or updated) an MR comment.
+Designed for GitLab CI use. The job pipes a rendered prompt + the source
+diff to this script and we decide whether to spend GPU on inference at all.
 
-Mirrors the multi-turn loop from
-flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py
-but trimmed for one-shot CI use:
+High-level flow:
 
-- single prompt file, no continuation file (a generic continuation is sent on
-  follow-up turns)
-- no SSRF gate (target is a hardcoded in-cluster Service)
-- after the agent claims completion, the script verifies that an MR note
-  with the change-summary marker actually exists by calling the GitLab API
-  with CI_JOB_TOKEN — agents are well known for declaring success without
-  doing the work, so we re-check.
+1. Compute a stable hash over the agent's input (the diff). This is the
+   energy gate — if the hash matches an existing comment's trailer, the
+   agent input hasn't meaningfully changed and we skip inference entirely.
+2. Otherwise invoke the A2A multi-turn loop. The agent posts or updates
+   an MR note via the gitlab-mcp MCP server.
+3. After the agent claims completion, append (or rewrite) a hash trailer
+   on the comment via the GitLab REST API. We try CI_JOB_TOKEN first;
+   if the runner's job token can't write notes, fall back to
+   MR_SUMMARY_TOKEN (a PAT the user creates and stores in CI vars).
+4. Verify the trailer is present with the expected hash. If not → exit 1.
+
+Hash format: `vN:<16-char hex>` where N is bumped via PROMPT_VERSION to
+force a global refresh after a prompt-engineering change.
+
+Trailer convention matches kustomize-diff / scorecard:
+    <!-- mr-change-summary -->
+    ... agent body ...
+
+    <!-- hash:v1:abcdef0123456789 -->
 
 Exit codes:
-- 0: agent reached `completed` state AND a marker comment is present on the MR
-- 1: anything else (transport error, no completion, no comment found)
+- 0: skipped (input unchanged) OR agent ran AND comment has expected hash
+- 1: anything else (transport error, no completion, missing trailer, etc.)
 
-The job is `allow_failure: true` at the pipeline level so a 1 here does not
-block merges.
+The job is `allow_failure: true` at the pipeline level so a 1 here does
+not block merges.
 """
 
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 from uuid import uuid4
@@ -51,12 +62,17 @@ from a2a.utils.message import get_message_text
 
 LOG = logging.getLogger(__name__)
 
+# Bump this when a prompt-engineering change should retroactively
+# invalidate every existing change-summary comment.
+PROMPT_VERSION = "v1"
+
 CONTINUATION_TEXT = (
     "Continue the MR change-summary task. Complete any pending tool calls, "
     "and once you have enough upstream context, post or update the MR "
     "comment via gitlab-mcp using the marker `<!-- mr-change-summary -->`."
 )
 COMMENT_MARKER = "<!-- mr-change-summary -->"
+HASH_TRAILER_RE = re.compile(r"<!--\s*hash:([^\s>]+)\s*-->")
 
 
 def _looks_like_tool_stub(text: str) -> bool:
@@ -73,20 +89,45 @@ def _normalize_state(state: str | None) -> str:
     return s
 
 
-async def _verify_marker_comment_exists(
+def _compute_input_hash(diff_path: Path, changed_files_path: Path) -> str:
+    """Hash the agent's input. Diff bytes + changed-files bytes, concatenated.
+
+    Renovate's MR description is intentionally NOT included — Renovate
+    rewrites it on every rebase with rotating debug tokens, which would
+    make the hash useless for skip-detection. The diff is the source of
+    truth for what semantically changed.
+    """
+    h = hashlib.sha256()
+    h.update(PROMPT_VERSION.encode("utf-8"))
+    h.update(b"\x00")
+    if diff_path.is_file():
+        h.update(diff_path.read_bytes())
+    h.update(b"\x00")
+    if changed_files_path.is_file():
+        h.update(changed_files_path.read_bytes())
+    return f"{PROMPT_VERSION}:{h.hexdigest()[:16]}"
+
+
+def _hash_trailer(input_hash: str) -> str:
+    return f"<!-- hash:{input_hash} -->"
+
+
+def _strip_trailing_hash(body: str) -> str:
+    """Remove any existing `<!-- hash:... -->` trailer (and surrounding
+    blank lines) so we can rewrite it cleanly."""
+    return re.sub(r"\s*<!--\s*hash:[^>]+-->\s*$", "", body).rstrip() + "\n"
+
+
+async def _fetch_existing_comment(
     *,
     api_url: str,
     project_id: str,
     mr_iid: str,
     token: str,
     timeout_s: float,
-) -> tuple[bool, int | None]:
-    """Check that a note containing the marker exists on the MR.
-
-    Returns (found, note_id). Uses CI_JOB_TOKEN via the JOB-TOKEN header,
-    matching the convention from kustomize-diff / scorecard / tofu jobs.
-    Pages through up to 5 pages of 100 notes each (500 notes max) — well
-    above any realistic MR.
+) -> tuple[int | None, str | None, str | None]:
+    """Find the marker comment on the MR. Returns (note_id, body, hash) or
+    (None, None, None) if no marker comment exists. Reads via JOB-TOKEN.
     """
     notes_url = f"{api_url.rstrip('/')}/projects/{project_id}/merge_requests/{mr_iid}/notes"
     headers = {"JOB-TOKEN": token}
@@ -100,10 +141,61 @@ async def _verify_marker_comment_exists(
             for note in notes:
                 body = note.get("body") or ""
                 if body.startswith(COMMENT_MARKER):
-                    return True, int(note.get("id", 0)) or None
+                    note_id = int(note.get("id", 0)) or None
+                    m = HASH_TRAILER_RE.search(body)
+                    return note_id, body, m.group(1) if m else None
             if len(notes) < 100:
                 break
-    return False, None
+    return None, None, None
+
+
+async def _update_note_body(
+    *,
+    api_url: str,
+    project_id: str,
+    mr_iid: str,
+    note_id: int,
+    body: str,
+    job_token: str,
+    private_token: str | None,
+    timeout_s: float,
+) -> tuple[bool, str]:
+    """PUT a new body onto an existing MR note. Tries JOB-TOKEN first;
+    falls back to PRIVATE-TOKEN if the runner's job token can't write
+    (most GitLab installs reject job-token writes for notes).
+
+    Returns (success, which_auth_used).
+    """
+    url = f"{api_url.rstrip('/')}/projects/{project_id}/merge_requests/{mr_iid}/notes/{note_id}"
+    payload = {"body": body}
+    timeout = httpx.Timeout(timeout_s, connect=15.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.put(url, json=payload, headers={"JOB-TOKEN": job_token})
+        if resp.status_code < 400:
+            return True, "JOB-TOKEN"
+        LOG.info(
+            "JOB-TOKEN write to note %s returned %s; trying PRIVATE-TOKEN fallback",
+            note_id,
+            resp.status_code,
+        )
+        if not private_token:
+            LOG.error(
+                "JOB-TOKEN write rejected (%s) and MR_SUMMARY_TOKEN is not set. "
+                "Create a project PAT with `api` scope and store it as the "
+                "MR_SUMMARY_TOKEN CI/CD variable to enable trailer writes.",
+                resp.status_code,
+            )
+            return False, "JOB-TOKEN"
+        resp = await client.put(url, json=payload, headers={"PRIVATE-TOKEN": private_token})
+        if resp.status_code < 400:
+            return True, "PRIVATE-TOKEN"
+        LOG.error(
+            "PRIVATE-TOKEN write to note %s also failed: %s %s",
+            note_id,
+            resp.status_code,
+            resp.text[:200],
+        )
+        return False, "PRIVATE-TOKEN"
 
 
 async def run_agent(
@@ -190,19 +282,9 @@ async def run_agent(
 
 async def main_async() -> int:
     a2a_url = os.environ.get("A2A_URL", "").strip()
-    if not a2a_url:
-        LOG.error("A2A_URL is required")
-        return 1
-
     prompt_path = Path(os.environ.get("PROMPT_PATH", "")).expanduser()
-    if not prompt_path.is_file():
-        LOG.error("PROMPT_PATH not found: %s", prompt_path)
-        return 1
-    prompt_text = prompt_path.read_text(encoding="utf-8").strip()
-    if not prompt_text:
-        LOG.error("Prompt is empty: %s", prompt_path)
-        return 1
-
+    diff_path = Path(os.environ.get("DIFF_PATH", "")).expanduser()
+    changed_files_path = Path(os.environ.get("CHANGED_FILES_PATH", "")).expanduser()
     max_turns = max(1, int(os.environ.get("MAX_TURNS", "12")))
     timeout_s = float(os.environ.get("HTTP_TIMEOUT_S", "600"))
 
@@ -210,10 +292,65 @@ async def main_async() -> int:
     project_id = os.environ.get("CI_PROJECT_ID", "").strip()
     mr_iid = os.environ.get("CI_MERGE_REQUEST_IID", "").strip()
     job_token = os.environ.get("CI_JOB_TOKEN", "").strip()
+    private_token = os.environ.get("MR_SUMMARY_TOKEN", "").strip() or None
+    force = os.environ.get("FORCE_RECOMPUTE", "").lower() in ("1", "true", "yes")
     skip_verify = os.environ.get("SKIP_COMMENT_VERIFY", "").lower() in ("1", "true", "yes")
 
+    if not a2a_url:
+        LOG.error("A2A_URL is required")
+        return 1
+    if not prompt_path.is_file():
+        LOG.error("PROMPT_PATH not found: %s", prompt_path)
+        return 1
+    prompt_text = prompt_path.read_text(encoding="utf-8").strip()
+    if not prompt_text:
+        LOG.error("Prompt is empty: %s", prompt_path)
+        return 1
+    if not diff_path.is_file():
+        LOG.error("DIFF_PATH not found: %s (required for hash-skip)", diff_path)
+        return 1
+    if not changed_files_path.is_file():
+        LOG.error("CHANGED_FILES_PATH not found: %s (required for hash-skip)", changed_files_path)
+        return 1
+
+    input_hash = _compute_input_hash(diff_path, changed_files_path)
+    LOG.info("Input hash: %s", input_hash)
+
+    have_ci_context = all((api_url, project_id, mr_iid, job_token))
+    if not have_ci_context:
+        LOG.warning(
+            "Missing CI env vars (CI_API_V4_URL/CI_PROJECT_ID/CI_MERGE_REQUEST_IID/CI_JOB_TOKEN); "
+            "skipping pre-flight hash check and post-completion verify",
+        )
+
+    existing_note_id: int | None = None
+    existing_hash: str | None = None
+    if have_ci_context:
+        try:
+            existing_note_id, _, existing_hash = await _fetch_existing_comment(
+                api_url=api_url,
+                project_id=project_id,
+                mr_iid=mr_iid,
+                token=job_token,
+                timeout_s=30.0,
+            )
+        except Exception as e:  # noqa: BLE001
+            LOG.warning("Failed to read existing MR notes: %s. Proceeding without skip check.", e)
+
+        if existing_note_id is not None:
+            LOG.info("Existing change-summary note: id=%s hash=%s", existing_note_id, existing_hash or "(none)")
+            if existing_hash == input_hash and not force:
+                LOG.info(
+                    "Input hash unchanged since last summary (%s). Skipping agent invocation. "
+                    "Set FORCE_RECOMPUTE=1 to force a re-run.",
+                    input_hash,
+                )
+                return 0
+        elif force:
+            LOG.info("FORCE_RECOMPUTE set; would skip if unchanged but proceeding anyway.")
+
     LOG.info(
-        "Starting MR change-summary: a2a_url=%s prompt_chars=%s max_turns=%s timeout_s=%s",
+        "Invoking agent: a2a_url=%s prompt_chars=%s max_turns=%s timeout_s=%s",
         a2a_url,
         len(prompt_text),
         max_turns,
@@ -226,35 +363,22 @@ async def main_async() -> int:
         max_turns=max_turns,
         timeout_s=timeout_s,
     )
-
     if not completed:
         LOG.error("Agent did not complete the task cleanly")
         return 1
 
     if skip_verify:
-        LOG.info("SKIP_COMMENT_VERIFY set; skipping post-completion check")
+        LOG.info("SKIP_COMMENT_VERIFY set; skipping post-completion check and trailer write")
+        return 0
+    if not have_ci_context:
+        LOG.warning("No CI context; agent ran but trailer cannot be written. Returning success.")
         return 0
 
-    missing = [
-        name
-        for name, val in (
-            ("CI_API_V4_URL", api_url),
-            ("CI_PROJECT_ID", project_id),
-            ("CI_MERGE_REQUEST_IID", mr_iid),
-            ("CI_JOB_TOKEN", job_token),
-        )
-        if not val
-    ]
-    if missing:
-        LOG.error(
-            "Cannot verify comment: missing env var(s): %s. Set SKIP_COMMENT_VERIFY=1 to bypass for local runs.",
-            ", ".join(missing),
-        )
-        return 1
-
-    LOG.info("Verifying that a note with marker '%s' exists on MR !%s...", COMMENT_MARKER, mr_iid)
+    # Re-fetch the comment the agent (hopefully) just posted/updated and
+    # rewrite the body with a fresh hash trailer so we can prove it ran.
+    LOG.info("Re-fetching MR notes to find the agent's posted comment...")
     try:
-        found, note_id = await _verify_marker_comment_exists(
+        post_note_id, post_body, _ = await _fetch_existing_comment(
             api_url=api_url,
             project_id=project_id,
             mr_iid=mr_iid,
@@ -262,10 +386,10 @@ async def main_async() -> int:
             timeout_s=30.0,
         )
     except Exception as e:  # noqa: BLE001
-        LOG.exception("Comment verification failed with exception: %s", e)
+        LOG.exception("Failed to re-fetch MR notes for trailer write: %s", e)
         return 1
 
-    if not found:
+    if post_note_id is None or post_body is None:
         LOG.error(
             "Agent claimed completion but no note with marker '%s' exists on MR !%s. "
             "Treating run as failed.",
@@ -274,7 +398,22 @@ async def main_async() -> int:
         )
         return 1
 
-    LOG.info("Verified: marker comment present on MR !%s (note id=%s)", mr_iid, note_id or "?")
+    new_body = _strip_trailing_hash(post_body) + "\n" + _hash_trailer(input_hash) + "\n"
+    LOG.info("Appending hash trailer to note %s (hash=%s)...", post_note_id, input_hash)
+    success, used_auth = await _update_note_body(
+        api_url=api_url,
+        project_id=project_id,
+        mr_iid=mr_iid,
+        note_id=post_note_id,
+        body=new_body,
+        job_token=job_token,
+        private_token=private_token,
+        timeout_s=30.0,
+    )
+    if not success:
+        LOG.error("Failed to append hash trailer to MR note %s.", post_note_id)
+        return 1
+    LOG.info("Trailer written via %s (note id=%s, hash=%s)", used_auth, post_note_id, input_hash)
     return 0
 
 

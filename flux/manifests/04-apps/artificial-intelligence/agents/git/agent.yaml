@@ -295,7 +295,9 @@ spec:
          Do not skip silently.
       7. **Compose the comment.** Use the template below **exactly** for
          the top three lines (marker, H2 header, scope line). Body
-         sections after that may flex based on what you found.
+         sections after that may flex based on what you found. Do **not**
+         add a trailing `<!-- hash:... -->` line — the CI job appends
+         that after you post, and any hash you write will be overwritten.
 
          ```markdown
          <!-- mr-change-summary -->
