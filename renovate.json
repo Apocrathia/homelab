@@ -44,7 +44,7 @@
       "description": "GitLab CI variable versions",
       "managerFilePatterns": ["/^\\.gitlab/.*\\.ya?ml$/"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*[A-Z_]+: (?<currentValue>v?[0-9][^\\s]*)"
+        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)[ \\t]*\\n[ \\t]+[A-Z0-9_]+: [\"']?(?<currentValue>v?[0-9][^\"'\\s]*)[\"']?"
       ]
     },
     {

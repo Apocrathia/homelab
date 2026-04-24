@@ -9,6 +9,7 @@ include:
   # - local: .gitlab/renovate.gitlab-ci.yml
   - local: .gitlab/chart-tag.gitlab-ci.yml
   - local: .gitlab/kustomize-diff.gitlab-ci.yml
+  - local: .gitlab/mr-change-summary.gitlab-ci.yml
   - local: .gitlab/scorecard.gitlab-ci.yml
   - local: .gitlab/pages.gitlab-ci.yml
   - local: .gitlab/tofu.gitlab-ci.yml

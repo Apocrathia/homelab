@@ -10,18 +10,19 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 ### Pipeline Components
 
-| File                           | Stage         | Trigger                     | Purpose                                          |
-| ------------------------------ | ------------- | --------------------------- | ------------------------------------------------ |
-| `no-op.gitlab-ci.yml`          | test          | MR (fallback)               | Ensures pipeline passes when no other jobs apply |
-| `chart-tag.gitlab-ci.yml`      | deploy        | `Chart.yaml` changes        | Creates Git tags for Helm chart releases         |
-| `kustomize-diff.gitlab-ci.yml` | verify        | MR (manifest changes)       | Posts rendered manifest diffs to MR comments     |
-| `scorecard.gitlab-ci.yml`      | verify        | MR (manifest changes)       | Runs OpenSSF Scorecard on changed dependencies   |
-| `tofu.gitlab-ci.yml`           | verify/deploy | MR/main (terraform changes) | OpenTofu plan/apply for Proxmox VMs              |
-| `gitleaks.gitlab-ci.yml`       | test          | MR (all files)              | Secret scanning on MR commits                    |
-| `kube-linter.gitlab-ci.yml`    | test          | MR (manifest changes)       | Kubernetes manifest security linting             |
-| `trivy.gitlab-ci.yml`          | test          | MR (IaC changes)            | IaC security scanning for Terraform and K8s      |
-| `shellcheck.gitlab-ci.yml`     | test          | MR (shell script changes)   | Shell script static analysis                     |
-| `semgrep.gitlab-ci.yml`        | test          | MR (code changes)           | SAST for Python, Go, JS, TS                      |
+| File                              | Stage         | Trigger                     | Purpose                                          |
+| --------------------------------- | ------------- | --------------------------- | ------------------------------------------------ |
+| `no-op.gitlab-ci.yml`             | test          | MR (fallback)               | Ensures pipeline passes when no other jobs apply |
+| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes        | Creates Git tags for Helm chart releases         |
+| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)       | Posts rendered manifest diffs to MR comments     |
+| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                    | Invokes git-agent (A2A) to post a change summary |
+| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)       | Runs OpenSSF Scorecard on changed dependencies   |
+| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes) | OpenTofu plan/apply for Proxmox VMs              |
+| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)              | Secret scanning on MR commits                    |
+| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)       | Kubernetes manifest security linting             |
+| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)            | IaC security scanning for Terraform and K8s      |
+| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)   | Shell script static analysis                     |
+| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)           | SAST for Python, Go, JS, TS                      |
 
 ### Disabled Pipelines
 
@@ -47,6 +48,29 @@ Runs on MRs that modify `flux/manifests/**/*`. Builds kustomize overlays for bot
 **Requirements**:
 
 - `KUSTOMIZE_TOKEN` - Personal access token with API scope for posting comments
+
+### MR Change Summary
+
+Runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
+
+**How it works**:
+
+- `.gitlab/scripts/mr_change_summary_prompt.py` renders the prompt from `CI_*` env vars and the diff (avoids shell-quoting hazards).
+- `.gitlab/scripts/mr_change_summary_invoke.py` reuses the multi-turn A2A SDK pattern from `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
+- The agent finds an existing comment by the marker `<!-- mr-change-summary -->` and updates it on subsequent runs (idempotency lives agent-side, not in CI).
+
+**Requirements**:
+
+- The runner must be able to reach `kagent-controller.kagent.svc.cluster.local:8083` (in-cluster runner — already true for `gitlab-runner` in the `gitlab-runner` namespace).
+- `git-agent` must be deployed and have the gitlab-mcp tools `list_mr_notes`, `create_mr_note`, `update_mr_note` whitelisted.
+- The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`) must have `api` scope on the homelab project — used by the agent to post comments.
+
+**Tunables (job-level CI variables)**:
+
+- `MAX_TURNS` — A2A turn cap (default `12`)
+- `HTTP_TIMEOUT_S` — per-request HTTP timeout to kagent (default `600`)
+- `DIFF_MAX_BYTES` — diff payload cap fed to the agent (default `120000`)
+- `CHANGED_FILES_MAX_LINES` — file-list cap (default `500`)
 
 ### OpenSSF Scorecard
 

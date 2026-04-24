@@ -1,0 +1,71 @@
+---
+mr-change-summary:
+  stage: verify
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.14
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  variables:
+    A2A_URL: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent/"
+    MAX_TURNS: "12"
+    HTTP_TIMEOUT_S: "600"
+    DIFF_MAX_BYTES: "120000"
+    CHANGED_FILES_MAX_LINES: "500"
+    GIT_DEPTH: "200"
+    # renovate: datasource=pypi depName=a2a-sdk
+    A2A_SDK_VERSION: "0.3.25"
+    # renovate: datasource=pypi depName=httpx
+    HTTPX_VERSION: "0.28.1"
+  script:
+    - |
+      set -eu
+
+      echo "=== MR Change-Summary Started ==="
+      echo "Project: ${CI_PROJECT_PATH} (id=${CI_PROJECT_ID})"
+      echo "MR IID:  ${CI_MERGE_REQUEST_IID}"
+      echo "Branch:  ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME} -> ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+      echo "Author:  ${GITLAB_USER_LOGIN:-?}"
+
+      mkdir -p /tmp/work
+
+      # Fetch the merge target so we can compute a true MR diff
+      git fetch --quiet --depth="${GIT_DEPTH}" origin "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" || true
+
+      git diff --name-status \
+        "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" \
+        > /tmp/work/changed-files.txt
+
+      git diff --no-color \
+        "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" \
+        > /tmp/work/diff.patch
+
+      DIFF_BYTES=$(wc -c < /tmp/work/diff.patch | tr -d ' ')
+      CHANGED_FILE_COUNT=$(wc -l < /tmp/work/changed-files.txt | tr -d ' ')
+      echo "Diff: ${DIFF_BYTES} bytes across ${CHANGED_FILE_COUNT} changed files"
+
+      if [ "${DIFF_BYTES}" -eq 0 ] && [ "${CHANGED_FILE_COUNT}" -eq 0 ]; then
+        echo "No diff found vs origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}; skipping agent invocation"
+        exit 0
+      fi
+
+      python -m pip install --quiet --no-cache-dir \
+        "a2a-sdk==${A2A_SDK_VERSION}" "httpx==${HTTPX_VERSION}"
+
+      cp .gitlab/scripts/mr_change_summary_prompt.py /tmp/work/build_prompt.py
+      cp .gitlab/scripts/mr_change_summary_invoke.py /tmp/work/invoke.py
+
+      DIFF_PATH=/tmp/work/diff.patch \
+      CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
+      DIFF_MAX_BYTES="${DIFF_MAX_BYTES}" \
+      CHANGED_FILES_MAX_LINES="${CHANGED_FILES_MAX_LINES}" \
+      PROMPT_OUTPUT_PATH=/tmp/work/prompt.md \
+        python /tmp/work/build_prompt.py
+
+      PROMPT_PATH=/tmp/work/prompt.md \
+      A2A_URL="${A2A_URL}" \
+      MAX_TURNS="${MAX_TURNS}" \
+      HTTP_TIMEOUT_S="${HTTP_TIMEOUT_S}" \
+        python /tmp/work/invoke.py
+
+      echo "=== MR Change-Summary Completed ==="
+  allow_failure: true
