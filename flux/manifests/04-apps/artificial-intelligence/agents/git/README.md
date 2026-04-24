@@ -16,6 +16,7 @@ Git platform agent for GitHub and GitLab repository management.
 - CI/CD pipeline status
 - Branch and commit operations
 - Release management
+- **MR change-summary**: invoked from the GitLab CI job `mr-change-summary` (see [.gitlab/README.md](../../../../../../.gitlab/README.md#mr-change-summary)). The agent reads the MR diff and description, fetches upstream release / PR / issue context for each version delta, and posts a self-updating comment back to the MR using the marker `<!-- mr-change-summary -->`. Protocol lives in `agent.yaml` `systemMessage` under "MR Change-Summary Protocol".
 
 ## Secrets
 

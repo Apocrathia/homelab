@@ -44,7 +44,7 @@ spec:
                 secretKeyRef:
                   name: github-mcp-secrets
                   key: github-token
-            - name: GITHUB_DYNAMIC_TOOLSETS
-              value: "1"
+            - name: GITHUB_TOOLSETS
+              value: "context,repos,pull_requests,issues,users"
             - name: HOME
               value: "/tmp"

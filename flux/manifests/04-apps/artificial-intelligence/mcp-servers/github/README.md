@@ -33,10 +33,23 @@ The server provides tools for:
 - **Notifications**: List and manage notifications
 - **Security advisories**: List and search advisories
 
-### Dynamic Toolsets
+### Eager Toolsets
 
-This deployment uses `GITHUB_DYNAMIC_TOOLSETS=1` which enables dynamic tool discovery.
-Instead of loading all tools at once, tools are discovered based on user prompts.
+This deployment sets `GITHUB_TOOLSETS` to a scoped, read-leaning list so every
+tool in those toolsets is registered at startup. No `enable_toolset` runtime
+indirection — agents see the full surface area immediately.
+
+Currently registered toolsets:
+
+- `context` — auth identity helpers
+- `repos` — tags, releases, commits, file contents, branch listings
+- `pull_requests` — list/read/search PRs
+- `issues` — list/read/search issues
+- `users` — user lookups
+
+Write tools that ship inside these toolsets are still present at the server
+level. Agents must restrict what they actually call via `toolNames` on their
+`Agent` CR. The `git-agent` enumerates only read-side tools.
 
 ## Secrets
 
