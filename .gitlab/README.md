@@ -53,15 +53,15 @@ Runs on MRs that modify `flux/manifests/**/*`. Builds kustomize overlays for bot
 
 Runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
 
-**Energy gate**: before invoking the agent, the job hashes the diff and changed-files list and compares against the `<!-- hash:vN:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff become 0-cost no-ops.
+**Energy gate**: before invoking the agent, the job hashes the diff and changed-files list and compares against the `<!-- hash:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff become 0-cost no-ops.
 
 **How it works**:
 
 - `.gitlab/scripts/mr_change_summary_prompt.py` renders the prompt from `CI_*` env vars and the diff (avoids shell-quoting hazards).
 - `.gitlab/scripts/mr_change_summary_invoke.py` computes the input hash, checks for an existing comment via the GitLab API (`JOB-TOKEN` read), and either skips the agent entirely or runs the multi-turn A2A SDK loop modelled on `flux/manifests/04-apps/artificial-intelligence/tasks/scheduled-agent-invoke/src/invoke.py`.
-- After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:vN:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
+- After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
 - Trailer writes use `AGENT_TOKEN` (a project PAT with `api` scope) — GitLab.com rejects `CI_JOB_TOKEN` for MR note PUTs. See "Required CI/CD Variables" below.
-- Bumping `PROMPT_VERSION` in `mr_change_summary_invoke.py` (currently `v1`) force-busts every existing comment on the next run.
+- To force a refresh after a prompt-engineering change, manually delete the existing change-summary comment on the affected MR(s); the next pipeline will write a fresh one.
 
 **Requirements**:
 

@@ -17,14 +17,15 @@ High-level flow:
    MR_SUMMARY_TOKEN (a PAT the user creates and stores in CI vars).
 4. Verify the trailer is present with the expected hash. If not → exit 1.
 
-Hash format: `vN:<16-char hex>` where N is bumped via PROMPT_VERSION to
-force a global refresh after a prompt-engineering change.
-
 Trailer convention matches kustomize-diff / scorecard:
     <!-- mr-change-summary -->
     ... agent body ...
 
-    <!-- hash:v1:abcdef0123456789 -->
+    <!-- hash:abcdef0123456789 -->
+
+To force a refresh after a prompt change, delete the existing
+change-summary comment from the MR; the next pipeline run will
+write a fresh one.
 
 Exit codes:
 - 0: skipped (input unchanged) OR agent ran AND comment has expected hash
@@ -62,10 +63,6 @@ from a2a.utils.message import get_message_text
 
 LOG = logging.getLogger(__name__)
 
-# Bump this when a prompt-engineering change should retroactively
-# invalidate every existing change-summary comment.
-PROMPT_VERSION = "v1"
-
 CONTINUATION_TEXT = (
     "Continue the MR change-summary task. Complete any pending tool calls, "
     "and once you have enough upstream context, post or update the MR "
@@ -96,16 +93,17 @@ def _compute_input_hash(diff_path: Path, changed_files_path: Path) -> str:
     rewrites it on every rebase with rotating debug tokens, which would
     make the hash useless for skip-detection. The diff is the source of
     truth for what semantically changed.
+
+    To force a refresh after a prompt change, manually delete the existing
+    change-summary comment from the MR.
     """
     h = hashlib.sha256()
-    h.update(PROMPT_VERSION.encode("utf-8"))
-    h.update(b"\x00")
     if diff_path.is_file():
         h.update(diff_path.read_bytes())
     h.update(b"\x00")
     if changed_files_path.is_file():
         h.update(changed_files_path.read_bytes())
-    return f"{PROMPT_VERSION}:{h.hexdigest()[:16]}"
+    return h.hexdigest()[:16]
 
 
 def _hash_trailer(input_hash: str) -> str:
