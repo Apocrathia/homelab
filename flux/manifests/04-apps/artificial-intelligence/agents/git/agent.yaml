@@ -88,9 +88,30 @@ spec:
           kind: RemoteMCPServer
           apiGroup: kagent.dev
           toolNames:
-            - enable_toolset
-            - get_toolset_tools
-            - list_available_toolsets
+            # context toolset
+            - get_me
+            # repos toolset (read-only)
+            - search_repositories
+            - get_file_contents
+            - list_commits
+            - get_commit
+            - list_branches
+            - list_tags
+            - get_tag
+            - list_releases
+            - get_latest_release
+            - get_release_by_tag
+            - search_code
+            # issues toolset (read-only)
+            - issue_read
+            - search_issues
+            - list_issues
+            # pull_requests toolset (read-only)
+            - pull_request_read
+            - list_pull_requests
+            - search_pull_requests
+            # users toolset (read-only)
+            - search_users
       - type: McpServer
         mcpServer:
           name: gitlab-mcp
@@ -144,23 +165,55 @@ spec:
 
       ### GitHub
 
-      GitHub tools are loaded lazily — you must enable a toolset before its
-      tools become callable.
+      GitHub tools are eagerly loaded; pick the smallest tool that
+      answers the question.
 
-      - `list_available_toolsets`
-        - Use when: first accessing GitHub in a conversation.
-        - Lists the toolset categories you can enable.
-      - `enable_toolset`
-        - Use when: you need a specific GitHub capability (repos, pull
-          requests, issues, releases, code search, etc.).
-        - For Change Summary work on GitHub-hosted upstreams, enable
-          `repos`, `pull_requests`, and `issues`.
-      - `get_toolset_tools`
-        - Use when: you need to see which tools live inside an enabled
-          toolset.
+      **Identity**
 
-      Use the GitHub tools when: the request references `github.com` URLs,
-      GitHub repos, GitHub PRs, GitHub releases, or GitHub Actions.
+      - `get_me` — details of the authenticated user.
+
+      **Releases and tags** (the workhorses for Change Summary)
+
+      - `list_releases` — list releases for a repo.
+      - `get_latest_release` — get the most recent release for a repo.
+      - `get_release_by_tag` — get a specific release by its tag name.
+      - `list_tags` / `get_tag` — list or describe git tags directly.
+
+      **Commits**
+
+      - `list_commits` — list commits on a ref, optionally filtered by
+        path, author, or date range.
+      - `get_commit` — get details of a single commit, including the
+        diff and file list.
+
+      **Repository contents and search**
+
+      - `get_file_contents` — read a file (e.g. `CHANGELOG.md`) from a
+        repo at a ref.
+      - `search_repositories` / `search_code` — find repos or code by
+        query.
+      - `list_branches` — list branches in a repo.
+
+      **Pull requests** (read-only)
+
+      - `pull_request_read` — get details of a single PR.
+      - `list_pull_requests` — list PRs in a repo (filter by state,
+        head, base, etc.).
+      - `search_pull_requests` — search PRs by query.
+
+      **Issues** (read-only)
+
+      - `issue_read` — get details of a single issue.
+      - `list_issues` — list issues in a repo.
+      - `search_issues` — search issues by query.
+
+      **Users**
+
+      - `search_users` — find GitHub users by name or query.
+
+      Use the GitHub tools when: the request references `github.com`
+      URLs, GitHub repos, GitHub PRs, GitHub releases, or upstream
+      release notes for an image hosted on `ghcr.io`.
 
       ### GitLab
 
@@ -259,10 +312,11 @@ spec:
       3. **Identify the upstream source.** For each version delta, look at
          adjacent `# renovate: datasource=... depName=...` comments in the
          diff to figure out where the package lives. Routing:
-         - GitHub upstream (most common; image registry `ghcr.io/<owner>/<repo>`
-           maps to `github.com/<owner>/<repo>`) → enable `repos`,
-           `pull_requests`, and `issues` toolsets, then read releases /
-           PRs / issues between the two refs.
+         - GitHub upstream (most common; image registry
+           `ghcr.io/<owner>/<repo>` maps to `github.com/<owner>/<repo>`)
+           → use `get_release_by_tag` for both refs, then `list_commits`
+           between them, plus `pull_request_read` / `issue_read` for
+           anything called out in the release notes.
          - GitLab upstream → use `get_branch_diffs` and
            `get_project_commits` to compare refs directly.
          - Anything else → note in the summary that upstream lookup
@@ -279,9 +333,9 @@ spec:
 
          For digest-only or pre-release bumps where Renovate has no
          release notes: **do not give up**. Fetch the upstream repo's
-         recent commits with `get_project_commits` (GitLab) or the
-         GitHub `repos` toolset's commit-listing tools, and summarize
-         the most meaningful changes by reading the commit subjects.
+         recent commits with `get_project_commits` (GitLab) or
+         `list_commits` (GitHub), and summarize the most meaningful
+         changes by reading the commit subjects.
 
       5. **No hedging. No speculation.** This is non-negotiable. Every
          claim in your output must come from data you actually fetched.
