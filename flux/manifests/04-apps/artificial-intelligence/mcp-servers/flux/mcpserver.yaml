@@ -16,8 +16,8 @@ spec:
   image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.48.0
   serviceAccount: flux-mcp-sa
   transport: streamable-http
-  port: 8080
-  targetPort: 8080
+  proxyPort: 8080
+  mcpPort: 8080
   permissionProfile:
     type: builtin
     name: network

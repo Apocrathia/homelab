@@ -11,7 +11,7 @@ spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/osv-mcp/server
   image: ghcr.io/stackloklabs/osv-mcp/server:0.1.3
   transport: streamable-http
-  port: 8080
+  proxyPort: 8080
   permissionProfile:
     type: builtin
     name: network

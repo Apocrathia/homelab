@@ -17,8 +17,8 @@ spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
   image: docker.io/saseq/discord-mcp@sha256:5ae95ce6e9842327a27c43597461190234c6229577d035492becac9d93fce38b
   transport: streamable-http
-  port: 8080
-  targetPort: 8080
+  proxyPort: 8080
+  mcpPort: 8080
   permissionProfile:
     type: builtin
     name: network

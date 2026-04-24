@@ -11,8 +11,8 @@ spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/gofetch/server
   image: ghcr.io/stackloklabs/gofetch/server@sha256:64d78aa8a49e376a518aa2b2cf5a9b72cd30ae76c5e7092b3f998457371e427e
   transport: streamable-http
-  port: 8080
-  targetPort: 8080
+  proxyPort: 8080
+  mcpPort: 8080
   permissionProfile:
     type: builtin
     name: network
