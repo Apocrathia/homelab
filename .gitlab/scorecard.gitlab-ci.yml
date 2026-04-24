@@ -14,7 +14,7 @@ scorecard:
     GITLAB_AUTH_TOKEN: ${SCORECARD_GITLAB_AUTH_TOKEN}
     SCORECARD_MARKER: "<!-- openssf-scorecard -->"
     # renovate: datasource=github-releases depName=ossf/scorecard
-    SCORECARD_VERSION: v5.4.0
+    SCORECARD_VERSION: v5.5.0
   script:
     - |
       # Install scorecard to local bin (writable without root)
@@ -207,7 +207,7 @@ scorecard-badge:
   variables:
     GITLAB_AUTH_TOKEN: ${SCORECARD_GITLAB_AUTH_TOKEN}
     # renovate: datasource=github-releases depName=ossf/scorecard
-    SCORECARD_VERSION: v5.4.0
+    SCORECARD_VERSION: v5.5.0
   script:
     - |
       # Install scorecard
