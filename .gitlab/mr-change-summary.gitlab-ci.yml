@@ -13,7 +13,7 @@ mr-change-summary:
     CHANGED_FILES_MAX_LINES: "500"
     GIT_DEPTH: "200"
     # renovate: datasource=pypi depName=a2a-sdk
-    A2A_SDK_VERSION: "0.3.25"
+    A2A_SDK_VERSION: "0.3.26"
     # renovate: datasource=pypi depName=httpx
     HTTPX_VERSION: "0.28.1"
   script:
