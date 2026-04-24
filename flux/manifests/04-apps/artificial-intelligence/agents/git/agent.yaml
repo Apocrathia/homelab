@@ -11,6 +11,76 @@ spec:
   type: Declarative
   declarative:
     modelConfig: git-agent-model
+    a2aConfig:
+      skills:
+        - id: repo-inspection
+          name: Repository Inspection
+          description: Inspect GitHub and GitLab repositories — list projects, read project metadata, browse commits and diffs between refs
+          examples:
+            - Show me the project metadata for my homelab repo
+            - List recent commits on main
+            - Diff between v1.2.0 and v1.3.0 in the upstream chart repo
+            - Get the commit details for SHA abc1234
+          tags:
+            - github
+            - gitlab
+            - repos
+            - commits
+            - diffs
+        - id: merge-request-ops
+          name: Merge Request and Pull Request Operations
+          description: Find, read, diff, and comment on GitLab merge requests and GitHub pull requests
+          examples:
+            - List open MRs in the homelab repo
+            - Get the diff for MR !123
+            - Show me notes on this MR
+            - What's the status of PR 456 in owner/repo
+          tags:
+            - gitlab
+            - github
+            - merge-requests
+            - pull-requests
+            - reviews
+        - id: issue-ops
+          name: Issue Operations
+          description: List and read issues across GitHub and GitLab projects
+          examples:
+            - List open issues in the homelab repo
+            - "Show me issue #42"
+            - Find issues labelled bug in owner/repo
+            - Get details on the latest GitHub issue
+          tags:
+            - issues
+            - github
+            - gitlab
+            - tracking
+        - id: pipeline-ops
+          name: Pipeline Operations
+          description: Inspect GitLab CI pipelines and GitHub Actions runs to see status, jobs, and failures
+          examples:
+            - What's the pipeline status on main?
+            - List recent pipelines for this project
+            - Why did the last CI run fail?
+            - Get pipeline details for ID 12345
+          tags:
+            - ci-cd
+            - gitlab
+            - pipelines
+            - github-actions
+            - builds
+        - id: mr-change-summary
+          name: MR Change Summary
+          description: CI-invoked skill triggered by the [MR_CHANGE_SUMMARY] marker — analyzes a GitLab MR diff, fetches upstream release notes for any version bumps, and upserts a single change-summary comment on the MR
+          examples:
+            - "[MR_CHANGE_SUMMARY] project=ianyoung/homelab mr_iid=123 ..."
+            - Invoked automatically by .gitlab/mr-change-summary.gitlab-ci.yml
+            - Re-run the change-summary job on this MR
+          tags:
+            - ci
+            - mr-change-summary
+            - renovate
+            - changelog
+            - automation
     tools:
       - type: McpServer
         mcpServer:
@@ -166,34 +236,66 @@ spec:
       **Workflow**
 
       1. **Identify version deltas.** Parse the diff for any change to a
-         pinned version reference — image tags, Helm chart versions, git
-         tag refs, etc. Note the package, the old version, and the new
-         version for each.
-      2. **Identify the upstream source.** For each version delta, look at
+         pinned version reference — image tags, image digests, Helm chart
+         versions, git tag refs, etc. For each delta, capture three things
+         from the **diff itself**, not from the MR description prose:
+         - package / image name
+         - from-version (the value on the `-` line)
+         - to-version (the value on the `+` line)
+
+         Renovate's prose description sometimes renders the from-version
+         incorrectly (e.g. it may show the new version on both sides).
+         **The diff is the source of truth.** If they conflict, the diff
+         wins, and you must call out the discrepancy in your summary.
+      2. **Classify each delta.** A delta falls into one of:
+         - **Semver**: clean version like `v1.2.3 → v1.2.4`. Best case;
+           upstream usually has release notes.
+         - **Digest-only**: a Docker image digest pin like
+           `@sha256:abc... → @sha256:def...` with no semver change. Common
+           for Renovate when an upstream rebuilds on the same tag. Renovate
+           will not have a `### Release Notes` block for these.
+         - **Pre-release / commit ref**: tags like `main-vX.Y.Z` or refs
+           that point to a branch / SHA. Treat similarly to digest-only.
+      3. **Identify the upstream source.** For each version delta, look at
          adjacent `# renovate: datasource=... depName=...` comments in the
-         diff to figure out where the package lives:
-         - GitHub upstream → enable `repos`, `pull_requests`, and
-           `issues` toolsets, then read releases / PRs / issues between
-           the two tags.
+         diff to figure out where the package lives. Routing:
+         - GitHub upstream (most common; image registry `ghcr.io/<owner>/<repo>`
+           maps to `github.com/<owner>/<repo>`) → enable `repos`,
+           `pull_requests`, and `issues` toolsets, then read releases /
+           PRs / issues between the two refs.
          - GitLab upstream → use `get_branch_diffs` and
-           `get_project_commits` to compare tags directly.
-         - Anything else → note it in the summary and explain you
-           couldn't fetch upstream details.
-      3. **Go deeper than the changelog.** Use Renovate's snippet as a
-         starting point, then pull the actual PRs/MRs and issues that
-         were merged or resolved between the two tags. Form your own
-         opinion about what meaningfully changed for this homelab
-         deployment — security fixes, breaking config changes, default
-         behavior changes, deprecations.
-      4. **Cover non-version changes too.** For pure-config edits (no
+           `get_project_commits` to compare refs directly.
+         - Anything else → note in the summary that upstream lookup
+           wasn't possible and **why** (unsupported registry, private
+           upstream, etc.).
+      4. **Go deeper than Renovate.** Renovate's `### Release Notes` block
+         in the MR description is a *starting point*, never the answer.
+         **You must still call upstream tools** to:
+         - confirm the changelog is complete (Renovate sometimes truncates)
+         - pick out the specific PRs/MRs and issues that landed between
+           the two refs
+         - flag breaking config / default behavior changes that release
+           notes downplay
+
+         For digest-only or pre-release bumps where Renovate has no
+         release notes: **do not give up**. Fetch the upstream repo's
+         recent commits with `get_project_commits` (GitLab) or the
+         GitHub `repos` toolset's commit-listing tools, and summarize
+         the most meaningful changes by reading the commit subjects.
+         If you genuinely cannot determine what changed, say so
+         explicitly ("digest-only update; ~N commits landed upstream
+         since the previous build, no release notes available — likely
+         routine rebuild") rather than handwaving with "typical
+         conservative pinning" or similar filler.
+      5. **Cover non-version changes too.** For pure-config edits (no
          version delta) summarize what changed and why it matters,
          grouped by component.
-      5. **No-signal MRs.** If the MR is a docs typo, comment fix,
+      6. **No-signal MRs.** If the MR is a docs typo, comment fix,
          formatting, or whitespace, write a one-line summary saying so.
          Do not skip silently.
-      6. **Compose the comment.** The body MUST start with the marker
-         line `<!-- mr-change-summary -->` exactly as written so future
-         runs can find and update it. Suggested structure:
+      7. **Compose the comment.** Use the template below **exactly** for
+         the top three lines (marker, H2 header, scope line). Body
+         sections after that may flex based on what you found.
 
          ```markdown
          <!-- mr-change-summary -->
@@ -203,25 +305,36 @@ spec:
 
          ### Upstream changes
 
-         For each version delta, a short subsection with:
+         For each version delta, a short subsection (### or ####) with:
 
+         - **From → To**: write `from → to` using the exact values from the diff
+         - **Type**: `semver` / `digest-only` / `pre-release` / `config`
          - **Highlights**: 2-4 bullets of what actually shipped
-         - **Notable PRs/issues**: links + one-line "why it matters"
-         - **Risk for this deployment**: low / medium / high + reason
+         - **Notable PRs/issues**: links + one-line "why it matters" (omit
+           the line if you couldn't find any rather than padding)
+         - **Risk for this deployment**: `low` / `medium` / `high` + reason
 
          ### Manual changes
 
          Bullets grouped by component, only if there are non-version edits.
+         Omit the section entirely if there are no manual changes.
          ```
 
-      7. **Upsert via the marker.** Call `list_mr_notes` on the MR. If an
+      8. **Upsert via the marker.** Call `list_mr_notes` on the MR. If an
          existing note's body starts with `<!-- mr-change-summary -->`,
          call `update_mr_note` to replace it. Otherwise call
          `create_mr_note`. Do not ask the user for confirmation — this
          skill is pre-authorized for the comment write.
-      8. **Be terse.** No fluff, no "Great question!", no hype. The
-         reader is the repo maintainer reviewing their own MR — they
-         want signal, not a press release.
+      9. **Confirm the write succeeded.** After `create_mr_note` /
+         `update_mr_note` returns, your final response to the caller
+         must include the note ID and the MR IID, e.g.:
+         "Posted note `<id>` on MR `!<iid>`." If the tool call failed,
+         say so explicitly and do not claim success.
+      10. **Be terse.** No fluff, no "Great question!", no hype, no
+          "typical conservative" / "industry-standard" filler. The
+          reader is the repo maintainer reviewing their own MR — they
+          want signal, not a press release. If you don't know
+          something, say so.
 
       ## Execution Guidelines
 

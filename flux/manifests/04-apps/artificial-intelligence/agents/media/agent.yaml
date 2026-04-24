@@ -12,6 +12,77 @@ spec:
   type: Declarative
   declarative:
     modelConfig: media-agent-model
+    a2aConfig:
+      skills:
+        - id: plex-library
+          name: Plex Library Browse
+          description: Inspect Plex libraries, stats, recently added items, playlists, and collections, and search for or describe specific media
+          examples:
+            - List my Plex libraries
+            - What was recently added?
+            - Search for The Expanse in the library
+            - Get details on the movie Dune
+          tags:
+            - plex
+            - library
+            - media
+            - search
+            - playlists
+        - id: plex-now-playing
+          name: Plex Now Playing
+          description: Show currently active Plex sessions — who's watching what right now
+          examples:
+            - What's playing on Plex right now?
+            - Who's currently streaming?
+            - Show me active sessions
+            - Is anyone watching something?
+          tags:
+            - plex
+            - sessions
+            - streaming
+            - now-playing
+        - id: servarr-search-and-add
+          name: Sonarr and Radarr Search
+          description: Search Sonarr and Radarr for TV series and movies — first step before adding new content for download
+          examples:
+            - Search Sonarr for Severance
+            - Find the movie Sicario in Radarr
+            - Look up Foundation series
+            - Search for The Bear season 3
+          tags:
+            - sonarr
+            - radarr
+            - search
+            - tv
+            - movies
+        - id: servarr-queue-and-recents
+          name: Sonarr and Radarr Queue and Recents
+          description: Inspect the active download queue and recently grabbed series and movies in Sonarr and Radarr
+          examples:
+            - What's in the Sonarr download queue?
+            - Show recent Radarr movies
+            - List recently grabbed TV episodes
+            - Check Radarr queue progress
+          tags:
+            - sonarr
+            - radarr
+            - queue
+            - downloads
+            - recents
+        - id: servarr-calendar
+          name: Sonarr and Radarr Calendar
+          description: Show upcoming TV episodes and movie releases tracked by Sonarr and Radarr
+          examples:
+            - What's coming up on Sonarr this week?
+            - Show the Radarr release calendar
+            - When's the next episode of Severance?
+            - List upcoming movie releases
+          tags:
+            - sonarr
+            - radarr
+            - calendar
+            - upcoming
+            - releases
     tools:
       - type: McpServer
         mcpServer:

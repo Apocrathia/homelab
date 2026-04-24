@@ -11,6 +11,49 @@ spec:
   type: Declarative
   declarative:
     modelConfig: search-agent-model
+    a2aConfig:
+      skills:
+        - id: web-search
+          name: Web Search
+          description: Search the web via SearXNG for documentation, tutorials, news, and general information — primary entry point for any web lookup
+          examples:
+            - Search for Talos Linux upgrade guide
+            - Find the Cilium Gateway API docs
+            - Look up Renovate config for Helm charts
+            - Search recent posts about ZFS ARC tuning
+          tags:
+            - web
+            - search
+            - searxng
+            - documentation
+            - lookup
+        - id: url-fetch
+          name: URL Fetch
+          description: Fetch and read the content of a specific URL — used after a search returns a promising link, or when the user provides a URL directly
+          examples:
+            - Read https://docs.cilium.io/en/stable/network/concepts/routing/
+            - Fetch this blog post and summarize it
+            - Pull the contents of this GitHub README URL
+            - Open this URL and tell me what it says
+          tags:
+            - fetch
+            - url
+            - read
+            - scrape
+        - id: advanced-scrape
+          name: Advanced Scrape and Crawl
+          description: Firecrawl-backed scraping, mapping, crawling, and structured extraction — only used when basic search and fetch fall short or the user explicitly asks for crawling or extraction
+          examples:
+            - Crawl docs.example.com and extract all page titles
+            - Scrape this product page into structured fields
+            - Map the URLs under this documentation site
+            - Run firecrawl agent against this page
+          tags:
+            - firecrawl
+            - scrape
+            - crawl
+            - extract
+            - advanced
     tools:
       - type: McpServer
         mcpServer:

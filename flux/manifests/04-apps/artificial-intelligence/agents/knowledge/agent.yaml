@@ -11,6 +11,64 @@ spec:
   type: Declarative
   declarative:
     modelConfig: knowledge-agent-model
+    a2aConfig:
+      skills:
+        - id: encyclopedic-lookup
+          name: Encyclopedic Lookup
+          description: Search the offline OpenZIM Wikipedia mirror for definitions, factual answers, and background on people, places, and concepts — returns Kiwix viewer links to the full article
+          examples:
+            - What is a Kubernetes StatefulSet?
+            - Tell me about Immanuel Kant
+            - Define BGP
+            - Explain ZFS copy-on-write
+          tags:
+            - wikipedia
+            - openzim
+            - kiwix
+            - encyclopedia
+            - knowledge
+        - id: personal-memory
+          name: Personal Memory
+          description: Store and recall personal knowledge in the Qdrant vector store — semantic search over notes the user has asked to remember
+          examples:
+            - Remember that the NAS root password is in 1Password under "truenas-root"
+            - What did I tell you about my Plex transcode settings?
+            - Save this snippet for later
+            - Recall what I noted about my Cilium upgrade
+          tags:
+            - memory
+            - qdrant
+            - notes
+            - recall
+            - vector-store
+        - id: github-repo-docs
+          name: GitHub Repository Documentation
+          description: Use DeepWiki to read AI-generated docs and ask questions about a specific GitHub repository's architecture and codebase — only when the user names an owner/repo or links a github.com URL
+          examples:
+            - How does kubernetes/kubernetes handle leader election?
+            - Read the wiki structure for fluxcd/flux2
+            - Ask cilium/cilium how Hubble flows are exported
+            - What's the architecture of grafana/grafana?
+          tags:
+            - github
+            - deepwiki
+            - codebase
+            - documentation
+            - architecture
+        - id: web-search-fallback
+          name: Web Search Fallback
+          description: Delegate to search-agent for live web searches when offline sources don't have the answer or the user wants current information
+          examples:
+            - Search for the latest Talos Linux release notes
+            - Find recent news about Cilium 1.16
+            - Look up current Plex transcoder benchmarks
+            - What changed in Renovate this week?
+          tags:
+            - search
+            - web
+            - fallback
+            - current-info
+            - delegation
     tools:
       # Qdrant vector knowledge base
       - type: McpServer

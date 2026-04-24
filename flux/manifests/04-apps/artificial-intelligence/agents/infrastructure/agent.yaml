@@ -11,6 +11,51 @@ spec:
   type: Declarative
   declarative:
     modelConfig: infrastructure-agent-model
+    a2aConfig:
+      skills:
+        - id: proxmox-ops
+          name: Proxmox Operations
+          description: Inspect Proxmox cluster, node, VM, LXC, and storage state, and start, stop, or shut down VMs (destructive actions confirmed first)
+          examples:
+            - List all VMs on Proxmox
+            - Check node status for pve01
+            - Start the dev VM
+            - Show me Proxmox storage usage
+          tags:
+            - proxmox
+            - vms
+            - lxc
+            - cluster
+            - hypervisor
+        - id: truenas-storage
+          name: TrueNAS Storage
+          description: Inspect ZFS pools, datasets, snapshots, and SMB/NFS shares on TrueNAS — separate from in-cluster Longhorn storage
+          examples:
+            - Check the status of my ZFS pools
+            - List datasets on the tank pool
+            - Show recent snapshots for the media dataset
+            - List active SMB shares
+          tags:
+            - truenas
+            - zfs
+            - storage
+            - snapshots
+            - smb
+            - nfs
+        - id: unifi-network
+          name: UniFi Network
+          description: Query UniFi controller for sites, devices, clients, and WiFi state via the dynamic UniFi tool index
+          examples:
+            - Show me connected WiFi clients
+            - List UniFi devices on the main site
+            - Which clients are on the IoT VLAN?
+            - Get UniFi controller status
+          tags:
+            - unifi
+            - network
+            - wifi
+            - clients
+            - devices
     tools:
       - type: McpServer
         mcpServer:
