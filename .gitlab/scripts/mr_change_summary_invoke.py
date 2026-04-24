@@ -63,11 +63,6 @@ from a2a.utils.message import get_message_text
 
 LOG = logging.getLogger(__name__)
 
-CONTINUATION_TEXT = (
-    "Continue the MR change-summary task. Complete any pending tool calls, "
-    "and once you have enough upstream context, post or update the MR "
-    "comment via gitlab-mcp using the marker `<!-- mr-change-summary -->`."
-)
 COMMENT_MARKER = "<!-- mr-change-summary -->"
 HASH_TRAILER_RE = re.compile(r"<!--\s*hash:([^\s>]+)\s*-->")
 
@@ -187,7 +182,21 @@ async def run_agent(
     timeout_s: float,
 ) -> bool:
     """Drive the multi-turn A2A conversation. Returns True if the agent
-    eventually reached `completed` state with non-stub output."""
+    eventually reached `completed` state with non-stub output.
+
+    Two anti-drift measures (post-mortem from a real misfire on MR !2259):
+
+    1. **Always send the full prompt.** Earlier versions sent the prompt
+       on turn 0 only and a generic continuation thereafter. When turn 0
+       transiently failed before the model ingested the prompt, every
+       subsequent turn was context-less and the agent invented its own
+       task. Resending the full prompt every turn keeps the model
+       grounded at the cost of more tokens per retry.
+    2. **Reset contextId on failure.** A `state=failed` turn leaves the
+       conversation in an indeterminate state on the kagent side. Rather
+       than continue an already-broken context, we drop it and start a
+       fresh A2A conversation on the next attempt.
+    """
     timeout = httpx.Timeout(timeout_s, connect=15.0)
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as httpx_client:
         resolver = A2ACardResolver(httpx_client=httpx_client, base_url=a2a_url)
@@ -197,18 +206,26 @@ async def run_agent(
         context_id: str | None = None
 
         for turn in range(max_turns):
-            user_text = prompt_text if turn == 0 else CONTINUATION_TEXT
-            LOG.info("--- turn %s/%s contextId=%s ---", turn + 1, max_turns, context_id or "(new)")
+            LOG.info(
+                "--- turn %s/%s contextId=%s prompt_chars=%s ---",
+                turn + 1,
+                max_turns,
+                context_id or "(new)",
+                len(prompt_text),
+            )
 
+            # Always send the full prompt — never a generic continuation.
+            # See the docstring above for why.
             msg = Message(
                 message_id=str(uuid4()),
                 role=Role.user,
-                parts=[Part(root=TextPart(kind="text", text=user_text))],
+                parts=[Part(root=TextPart(kind="text", text=prompt_text))],
                 context_id=context_id,
             )
 
             last_state: str | None = None
             saw_non_stub = False
+            next_context_id: str | None = None
 
             try:
                 async for event in client.send_message(msg):
@@ -227,9 +244,9 @@ async def run_agent(
                     if isinstance(task, Task):
                         ctx = getattr(task, "context_id", None) or getattr(task, "contextId", None)
                         if isinstance(ctx, str) and ctx.strip():
-                            context_id = ctx.strip()
+                            next_context_id = ctx.strip()
                         elif hasattr(task, "id") and getattr(task, "id", None):
-                            context_id = str(task.id)
+                            next_context_id = str(task.id)
 
                     if isinstance(update, TaskArtifactUpdateEvent):
                         text = (get_artifact_text(update.artifact) or "").strip()
@@ -241,7 +258,12 @@ async def run_agent(
                         last_state = str(update.status.state)
                         LOG.info("status: %s", last_state)
             except Exception as e:  # noqa: BLE001
-                LOG.warning("turn %s transport error (retrying): %s", turn + 1, e)
+                LOG.warning(
+                    "turn %s transport error (resetting context, retrying): %s",
+                    turn + 1,
+                    e,
+                )
+                context_id = None
                 if turn >= max_turns - 1:
                     LOG.error("Final turn failed with transport error")
                     return False
@@ -252,10 +274,18 @@ async def run_agent(
                 LOG.info("Agent reached completed state with non-stub output on turn %s", turn + 1)
                 return True
             if state in ("failed", "canceled", "cancelled"):
-                LOG.warning("Turn %s ended with state=%s", turn + 1, state)
+                LOG.warning(
+                    "Turn %s ended with state=%s; resetting context and retrying with fresh conversation",
+                    turn + 1,
+                    state,
+                )
+                context_id = None
                 if turn >= max_turns - 1:
                     return False
                 continue
+
+            # Completed but no non-stub output — keep context, re-send prompt.
+            context_id = next_context_id
 
         LOG.warning("Exhausted %s turns without natural completion", max_turns)
         return False
