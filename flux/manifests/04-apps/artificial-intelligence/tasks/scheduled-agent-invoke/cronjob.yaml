@@ -4,10 +4,10 @@ kind: CronJob
 metadata:
   name: homelab-agent-scheduled-task-template
   namespace: agent-tasks
+  annotations:
+    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
 spec:
-  # Template default; clone and adjust per task.
   schedule: "0 * * * *"
-  # Safe default: do not run until explicitly enabled.
   suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
