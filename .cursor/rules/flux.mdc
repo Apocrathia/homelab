@@ -2,9 +2,11 @@
 globs: flux/*
 alwaysApply: false
 ---
+
 # Flux and Kustomize Deployment Guidelines
 
 ## Directory Structure
+
 ```
 flux/
 ├── manifests/
@@ -58,7 +60,9 @@ flux/
 
 1. Create or update manifests in the appropriate directory
 2. **Validate manifests locally as much as possible** using available tools or the command line (eg `kubectl kustomize`, `helm show values`, `helm template`)
-  - For HelmReleases, pipe values directly to helm template: `yq '.spec.values' <helmrelease.yaml> | helm template <release-name> <chart-path> -f -`
+
+- For HelmReleases, pipe values directly to helm template: `yq '.spec.values' <helmrelease.yaml> | helm template <release-name> <chart-path> -f -`
+
 3. For complex changes or when local validation is insufficient, apply changes to the cluster for testing before committing
 4. **Do not make any changes without first consulting the user**, presenting options, and obtaining explicit approval
 5. **Never make git commits directly** - all commits must be made by the user
@@ -94,6 +98,7 @@ flux/
    - If you see `latest` in a manifest, fix that shit immediately
    - Renovate handles version bumps - let it do its job
    - **Add Renovate comments** so versions get tracked:
+
      ```yaml
      # Docker images
      # renovate: datasource=docker depName=ghcr.io/org/image
@@ -103,6 +108,7 @@ flux/
      # renovate: datasource=helm registryUrl=https://charts.example.com depName=my-chart
      version: 1.2.3
      ```
+
 3. Implement progressive delivery
 4. Regular pruning of unused resources
 5. Maintain documentation
@@ -111,3 +117,7 @@ flux/
    - Use 1Password Item Custom Resources (CR) for secret management
    - Use Flux's fromValues function to reference secret values
    - Maintain clear documentation of secret references
+7. Authentik integration:
+   - **Do not create HTTPRoute when configuring services with the Authentik proxy provider** — Authentik manages routing via the outpost.
+   - HTTPRoute is required for Authentik OIDC mode, not proxy mode.
+   - **Clean out any old Ingress resources** in favor of Gateway API.

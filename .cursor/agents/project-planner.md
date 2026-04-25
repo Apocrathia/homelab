@@ -83,7 +83,13 @@ Before anything else, understand the idea well enough to ask good questions.
    - A scripts/CI change (touches `scripts/` or `.gitlab/`)
    - A doc or process change (touches `docs/`, `.cursor/`)
    - Something else — name it explicitly
-4. **Set depth expectations.** If the work is small and obvious, a 30-line plan is correct. If it spans multiple subsystems, plan for a deeper doc. Say which up front.
+4. **Declare the ceremony tier explicitly, up front.** State which tier the work fits and why, and let the operator override:
+
+   - **Light** — single-file or single-manifest change, well-understood, no cross-cutting impact. Skip the plan doc entirely; a chat-only checklist is enough. Examples: bumping a `replicas:` value, adding a Renovate ignore, fixing a typo in a README.
+   - **Standard** — multi-step but contained, follows an existing skill, touches one app or one slice of infrastructure. A plan doc is right-sized; keep it concise (40–120 lines). Examples: deploying a new app via `helm-deployment.md`, restructuring one app's storage, adding an MCP server.
+   - **Heavy** — touches multiple subsystems, has hard-to-reverse decisions, or introduces a new pattern. Full plan doc with explicit decisions section, risks/rollback for each unit, and a Phase 6 hand-off that names a specific implementer (operator or another agent). Examples: migrating an app's database engine, restructuring `flux/manifests/` layout, introducing a new infra component (Loki, a service mesh, etc.).
+
+   State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `.cursor/plans/`. Override?" If the operator overrides up or down, follow the override.
 
 ## Phase 2: Requirements clarification
 
