@@ -20,9 +20,9 @@ This prompt is the runbook for ordering: **suspend Flux → extract → new empt
 
 ## Related (narrower) prompts
 
-| Prompt                                        | Role                                                                                                                                                              |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`prompts/generic-app-longhorn-restore.md`** | PV/PVC **Retain**, **`fromBackup`**, **`helm template`** for **`storage.longhorn.volumes`** — **not** CNPG instance templates; reuse ideas for **RWO** CNPG PVCs. |
+| Prompt                                               | Role                                                                                                                                                              |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`.cursor/skills/generic-app-longhorn-restore.md`** | PV/PVC **Retain**, **`fromBackup`**, **`helm template`** for **`storage.longhorn.volumes`** — **not** CNPG instance templates; reuse ideas for **RWO** CNPG PVCs. |
 
 # Repository pointers (do not duplicate tunables here)
 
@@ -79,7 +79,7 @@ Confirm from Git: **`Cluster`** storage **size** (see below), class, **`bootstra
 3. **New `Cluster` while Flux is still suspended**: apply only the **`Cluster`** (from **`helm template`** or **`kustomize`**) so a new primary exists; do **not** rely on **`flux resume`** to create the cluster before restore.
 4. **Extract chart**: The **`Job`** runs **`pg_dump`** automatically (`helm/cnpg-data-extract/README.md`).
 5. **Restore chart**: **`pg_restore --clean --if-exists`** vs app migrations — see **Target database must be empty of app schema** in `helm/cnpg-data-restore/README.md`.
-6. **Longhorn PV/PVC**: **`volumeHandle`** must match the restored Longhorn **`Volume`**. For **Retain** / **Released** PV discipline, see **`prompts/generic-app-longhorn-restore.md`**. The **`generic-app`** chart does not emit instance PV/PVC for postgres, but **`cnpg-data-extract`** can emit the same static Longhorn shape via **`pvc.staticLonghorn`**.
+6. **Longhorn PV/PVC**: **`volumeHandle`** must match the restored Longhorn **`Volume`**. For **Retain** / **Released** PV discipline, see **`.cursor/skills/generic-app-longhorn-restore.md`**. The **`generic-app`** chart does not emit instance PV/PVC for postgres, but **`cnpg-data-extract`** can emit the same static Longhorn shape via **`pvc.staticLonghorn`**.
 7. **Agent boundaries**: **`[NAMESPACE]`** only for extract/restore/Cluster helpers; **read-only** in **`longhorn-system`** unless the operator delegates.
 8. **No recovery YAML in Git**: do not commit one-off recovery manifests. Prefer **`pvc.staticLonghorn`** on **`cnpg-data-extract`** (PV + PVC in the extract release). Manual PV/PVC under **`/tmp`** + **`kubectl apply`** is fallback only.
 9. **`kubectl delete cluster`** often deletes the instance PVC. If the claim is gone but Longhorn data is good, **recreate instance PV/PVC** (below) before extract — via the extract chart or manual apply.
@@ -91,7 +91,7 @@ Confirm from Git: **`Cluster`** storage **size** (see below), class, **`bootstra
 **Agents:** do **not** automate Longhorn **`fromBackup`** / destructive PV/Volume steps unless the operator explicitly names them. You will be given a volume name that has been restored from a backup that you will be working with.
 
 1. **Scale** **`[APP_DEPLOYS]`** to **0** when you are still in maintenance (may already be done).
-2. For a **full** Longhorn restore of the CNPG volume (same **Retain / delete / restore / rebind** ideas as **`prompts/generic-app-longhorn-restore.md`**, but for the **dynamically provisioned** instance PVC, not `storage.longhorn.volumes`):
+2. For a **full** Longhorn restore of the CNPG volume (same **Retain / delete / restore / rebind** ideas as **`.cursor/skills/generic-app-longhorn-restore.md`**, but for the **dynamically provisioned** instance PVC, not `storage.longhorn.volumes`):
    - Record **`[LONGHORN_VOL]`** from the PV **`volumeHandle`** or Longhorn UI before you delete the PV if you still need it.
    - Restore from backup; wait until the Longhorn volume is healthy.
 3. **What must exist before Phase 1 extract:** a healthy Longhorn **`Volume`** whose name matches **`[LONGHORN_VOL]`** (same value as PV **`spec.csi.volumeHandle`** / **`kubectl get volumes.longhorn.io --namespace longhorn-system`**). You do **not** need a pre-existing **`Bound`** **`[INSTANCE_PVC]`** when the claim was deleted with the **`Cluster`** — that is normal; only the restored Longhorn volume may exist. **`cnpg-data-extract`** with **`pvc.staticLonghorn.enabled: true`** creates the static PV + PVC that bind to **`[LONGHORN_VOL]`** in the **same** Helm install as the extract **Job** (see Phase 1). If an instance PVC is **already** **`Bound`** to the correct volume (no **`staticLonghorn`**), use **`pvc.claimName`** only and skip static PV/PVC in values.
@@ -220,5 +220,5 @@ Same ordering as **Phase 4** for the restore release: **`helm uninstall [RESTORE
 
 # See also
 
-- `prompts/generic-app-longhorn-restore.md` — Longhorn **Retain**, **`fromBackup`**, static PV/PVC patterns (adapt for CNPG instance PVC naming).
+- `.cursor/skills/generic-app-longhorn-restore.md` — Longhorn **Retain**, **`fromBackup`**, static PV/PVC patterns (adapt for CNPG instance PVC naming).
 - `scripts/longhorn/README.md` — Longhorn operations.

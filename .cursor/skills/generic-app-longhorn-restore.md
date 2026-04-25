@@ -8,7 +8,7 @@ This prompt is for **operators and other AI agents**. It does not replace readin
 
 - **In scope**: Apps using `generic-app` with `storage.longhorn.enabled` and one or more `storage.longhorn.volumes` entries.
 - **Out of scope**:
-  - **CNPG** instance PVCs (`*-postgres-1`): full logical flow (extract → new cluster → restore) lives in **`prompts/cnpg-logical-database-restore.md`**. This file still describes **PV/PVC / Longhorn** mechanics you reuse for that PVC; it does not cover **`pg_dump` / `pg_restore`**.
+  - **CNPG** instance PVCs (`*-postgres-1`): full logical flow (extract → new cluster → restore) lives in **`.cursor/skills/cnpg-logical-database-restore.md`**. This file still describes **PV/PVC / Longhorn** mechanics you reuse for that PVC; it does not cover **`pg_dump` / `pg_restore`**.
   - **SMB and other non-Longhorn** PVCs in the same namespace (often `*-pvc` with RWX). Do not delete or re-render those when working on Longhorn.
   - Non-Helm workloads.
 
