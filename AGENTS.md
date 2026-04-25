@@ -39,5 +39,6 @@ The `.cursor/` directory is the discovery surface. Each subdir has a `README.md`
 | `skills/`   | Project-specific procedural skills                     | When a recurring procedure is documented as a skill, follow it                   |
 | `commands/` | Cursor slash commands                                  | When the user invokes a slash command, or when a documented command fits the job |
 | `memories/` | Lessons learned and gotchas captured during prior work | Before working in a domain, check for relevant memories                          |
+| `plans/`    | Living plan documents produced by the project-planner  | When scoping new work or revisiting an in-flight plan                            |
 
 Start at [`.cursor/README.md`](./.cursor/README.md) for the full map.
