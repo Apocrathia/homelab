@@ -15,7 +15,7 @@ metadata:
     description: "Discord MCP — channels, messages (SaseQ/discord-mcp)"
 spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
-  image: docker.io/saseq/discord-mcp@sha256:5ae95ce6e9842327a27c43597461190234c6229577d035492becac9d93fce38b
+  image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
   transport: streamable-http
   proxyPort: 8080
   mcpPort: 8080
@@ -43,7 +43,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
-          image: docker.io/saseq/discord-mcp@sha256:5ae95ce6e9842327a27c43597461190234c6229577d035492becac9d93fce38b
+          image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
