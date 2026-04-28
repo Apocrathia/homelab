@@ -36,7 +36,7 @@ Deleting the CNPG **`Cluster`** often deletes the instance **`PersistentVolumeCl
 
 - **`pvc.staticLonghorn.enabled: true`**
 - **`pvc.staticLonghorn.volumeHandle`**: Longhorn volume name (`kubectl get volumes.longhorn.io --namespace longhorn-system` — same value as **`spec.csi.volumeHandle`** on the old PV if you still have it)
-- **`pvc.staticLonghorn.capacity`** and **`storageClassName`**: must match **`spec.storage`** on the app’s rendered **`Cluster`** (same `helm template` / `yq` query as in `prompts/cnpg-logical-database-restore.md`)
+- **`pvc.staticLonghorn.capacity`** and **`storageClassName`**: must match **`spec.storage`** on the app’s rendered **`Cluster`** (same `helm template` / `yq` query as in `.cursor/skills/cnpg-logical-database-restore.md`)
 
 The chart emits a **Retain** Longhorn PV and a PVC named **`pvc.claimName`**, same CSI shape as **`helm/generic-app/templates/storage-longhorn.yaml`** (it does **not** create a Longhorn **`Volume`** CR — that should already exist from restore). If a stale **`Released`** PV still exists with the same metadata name or **`volumeHandle`**, delete it first so the install can create a clean PV.
 
@@ -52,7 +52,7 @@ Restore from the share with the companion chart [`cnpg-data-restore`](../cnpg-da
 
 ## End-to-end logical recovery (generic)
 
-Single source of truth for ordering: [`prompts/cnpg-logical-database-restore.md`](../../prompts/cnpg-logical-database-restore.md). Substitute namespace, cluster name, Flux `Kustomization` name, database name, and paths. Examples: [`examples/authentik.yaml`](examples/authentik.yaml), [`examples/authentik-smb.yaml`](examples/authentik-smb.yaml), [`examples/chaptarr-static-longhorn-smb.yaml`](examples/chaptarr-static-longhorn-smb.yaml).
+Single source of truth for ordering: [`.cursor/skills/cnpg-logical-database-restore.md`](../../.cursor/skills/cnpg-logical-database-restore.md). Substitute namespace, cluster name, Flux `Kustomization` name, database name, and paths. Examples: [`examples/authentik.yaml`](examples/authentik.yaml), [`examples/authentik-smb.yaml`](examples/authentik-smb.yaml), [`examples/chaptarr-static-longhorn-smb.yaml`](examples/chaptarr-static-longhorn-smb.yaml).
 
 Summary (stay **suspended** until after **`cnpg-data-restore`** succeeds; **`flux resume`** only near the end):
 
