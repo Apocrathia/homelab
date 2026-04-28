@@ -336,43 +336,24 @@ spec:
            wasn't possible and **why** (unsupported registry, private
            upstream, etc.).
 
-         **When the obvious mapping fails.** A `ghcr.io/<owner>/<image>`
-         path is just a registry location; it does not guarantee a
-         `github.com/<owner>/<image>` repo exists. Common reasons the
-         lookup fails:
+         **When the obvious mapping fails.** `ghcr.io/<owner>/<image>`
+         is a registry path, not a promise of `github.com/<owner>/<image>`.
+         Empty `search_repositories` for the obvious name is **not** a
+         terminal answer. Before declaring upstream-not-found, you must:
 
-         - The image is a monorepo artifact — one upstream repo
-           publishes many images under the same owner.
-         - The image is a chart-built container shipped from a Helm
-           chart repo, not a per-image source repo.
-         - The image is a variant build (`-base`, `-debug`,
-           `-distroless`, etc.) of a primary image in a different repo.
+         1. Run `search_repositories` with `query: "user:<owner>
+            sort:stars"` and try the top-starred repos as candidates
+            (monorepo artifacts almost always ship from the owner's
+            flagship repo).
+         2. For each candidate, call `get_release_by_tag` (or
+            `get_tag`) with the bumped version. The first candidate
+            that has the tag is your upstream.
+         3. For non-`docker` Renovate datasources, the
+            `# renovate: depName=...` line in the diff often names the
+            real source repo — use it. (For `docker` datasources the
+            depName mirrors the registry path; ignore it.)
 
-         **An empty `search_repositories` result for the obvious name is
-         not a terminal answer — it's a prompt to look harder.** When
-         that happens, you must do at least the following before giving
-         up:
-
-         1. **Search the owner's other repos.** Run
-            `search_repositories` with `query: "user:<owner>
-            sort:stars"` to list everything that owner publishes. The
-            top-starred repo is almost always the flagship that ships
-            the artifact in question.
-         2. **Verify the version exists on the candidate repo.** Call
-            `get_release_by_tag` (or `get_tag` as a lighter check) on
-            the candidate repo with the bumped tag. If it exists, that's
-            your upstream. If not, try the next-most-starred candidate.
-         3. **Cross-reference Renovate's hint.** Re-read the
-            `# renovate: datasource=... depName=...` comment in the
-            diff. For non-`docker` datasources (e.g. `github-releases`,
-            `git-tags`, `helm`) the depName often names the actual
-            source repo and is a stronger signal than the registry
-            path. (For `datasource=docker`, the depName usually just
-            mirrors the registry path and won't tell you anything new.)
-
-         Only after all three steps fail to land a candidate is
-         `unknown` an acceptable answer. Do not declare upstream-not-
-         found after a single failed `search_repositories` call.
+         Only after all three fail is `unknown` correct.
 
          **Critical: tool errors crash the turn.** The current kagent
          runtime treats protocol-level MCP errors (404, 403, 500, etc.)
