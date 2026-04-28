@@ -41,6 +41,7 @@ resources:
   - kagent.yaml
   - kong.yaml
   - litellm.yaml
+  - grafana-community.yaml
   - llm-d-modelservice.yaml
   - backstage.yaml
   - windmill.yaml
