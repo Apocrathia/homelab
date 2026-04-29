@@ -28,7 +28,7 @@ spec:
           containers:
             - name: talos-01
               # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
-              image: ghcr.io/siderolabs/talosctl:v1.12.7
+              image: ghcr.io/siderolabs/talosctl:v1.13.0
               args:
                 - etcd
                 - defrag
@@ -58,7 +58,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-02
-              image: ghcr.io/siderolabs/talosctl:v1.12.7
+              image: ghcr.io/siderolabs/talosctl:v1.13.0
               args:
                 - etcd
                 - defrag
@@ -88,7 +88,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-03
-              image: ghcr.io/siderolabs/talosctl:v1.12.7
+              image: ghcr.io/siderolabs/talosctl:v1.13.0
               args:
                 - etcd
                 - defrag
@@ -118,7 +118,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-04
-              image: ghcr.io/siderolabs/talosctl:v1.12.7
+              image: ghcr.io/siderolabs/talosctl:v1.13.0
               args:
                 - etcd
                 - defrag
