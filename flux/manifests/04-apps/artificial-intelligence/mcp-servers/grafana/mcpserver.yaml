@@ -13,7 +13,7 @@ metadata:
     description: "Grafana MCP server for AI assistant integration"
 spec:
   # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-  image: docker.io/grafana/mcp-grafana:0.13.0
+  image: docker.io/grafana/mcp-grafana:0.13.1
   transport: streamable-http
   proxyPort: 8080
   mcpPort: 8080
@@ -33,7 +33,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-          image: docker.io/grafana/mcp-grafana:0.13.0
+          image: docker.io/grafana/mcp-grafana:0.13.1
           args:
             - -t
             - streamable-http
