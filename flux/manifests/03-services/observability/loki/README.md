@@ -1,136 +1,74 @@
 # Loki - Log Aggregation
 
-This directory contains the deployment configuration for Grafana Loki, which provides log aggregation and querying capabilities for the cluster.
+This directory contains the Flux manifests for Grafana Loki in `loki-system`.
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
-## Architecture
+## Deployment Model
 
-Loki is deployed in monolithic mode with the following components:
+Loki is deployed in **SimpleScalable** mode using the community chart and split components:
 
-- **Loki**: Core log aggregation and storage service
-- **MinIO**: Object storage backend for log data
-- **Grafana Agent Operator**: Manages log collection agents
-- **Rollout Operator**: Handles deployment rollouts
+- `read`
+- `write`
+- `backend`
+
+This keeps query and ingestion paths separate while staying lightweight for homelab usage.
+
+## Chart Source
+
+- **Chart**: `loki`
+- **Repository**: `https://grafana-community.github.io/helm-charts`
+- **Version Pinning**: Managed in `helmrelease.yaml`
 
 ## Storage Configuration
 
-Loki uses MinIO (deployed as a subchart) for object storage:
+Loki uses an **external S3-compatible endpoint** for object storage.
 
-- **Storage Type**: Object storage with MinIO backend
-- **Storage Class**: Longhorn
-- **Buckets**: `loki-data` (created automatically)
+- **Storage Type**: `s3`
+- **Endpoint**: `http://storage.services.apocrathia.com:9000`
+- **Buckets**: `loki` for chunks, ruler, and admin data
+- **Auth**: Credentials injected from `loki-secrets` via `valuesFrom`
 
-See `helmrelease.yaml` for storage sizing and retention configuration.
+The in-chart `minio` dependency is disabled.
 
-## 1Password Setup
+## Secrets and 1Password
 
-Before deploying Loki, you need to create the MinIO credentials in 1Password:
+The `OnePasswordItem` at `secret.yaml` syncs `loki-secrets` into `loki-system`.
 
-1. In your 1Password vault, create a new item called `lokid-minio-credentials`
-2. Add these fields:
-   - **Field Label**: `access_key_id` | **Value**: `loki-storage` (or your preferred username)
-   - **Field Label**: `secret_access_key` | **Value**: `your-secure-password-here`
-3. The 1Password Connect Operator will automatically create a Kubernetes secret with these values
-4. Flux will use `secretRef` to inject these values into the HelmRelease at deployment time
+Required keys:
 
-## Features
+- `access-key-id`
+- `access-key-secret`
 
-- **Log Collection**: Automatic collection of container logs via Grafana Agent Operator
-- **Query Interface**: LogQL query language support
-- **Retention Management**: Automatic log cleanup based on configured retention
-- **Monitoring**: Integrated with Prometheus stack via ServiceMonitor
-- **Security**: Non-root execution, proper security contexts
+These values are mapped into:
 
-## Access
+- `loki.storage.s3.accessKeyId`
+- `loki.storage.s3.secretAccessKey`
 
-- **Logs API**: `http://loki.loki-system.svc:3100`
-- **Grafana Integration**: Automatically configured as "Loki" datasource
-- **MinIO Console**: Available via port-forward to MinIO service on port 9001
+## Grafana Integration
 
-## Integration
+Grafana datasource config is defined in `grafana.yaml` and points to:
 
-### With Prometheus Stack
+- `http://loki-read.loki-system.svc:3100`
 
-- ServiceMonitor automatically created for Loki metrics
-- Metrics available in Grafana dashboards
-- Alerts can be configured for Loki health
-
-### With Grafana
-
-- Add Loki as a data source in Grafana
-- URL: `http://loki.loki-system.svc:3100`
-- No authentication required (auth_enabled: false)
-
-### With Existing Monitoring
-
-- Automatically configured in Grafana as "Loki" datasource
-- Integrates with your Prometheus stack
-- Follows your existing namespace and labeling conventions
-
-## Log Collection
-
-The Grafana Agent Operator will automatically:
-
-- Discover pods and services
-- Collect container logs
-- Forward logs to Loki
-- Handle log rotation and buffering
-
-## Configuration
-
-### Security
-
-- Non-root execution
-- Proper security contexts
-- Cluster-internal access only (ClusterIP service)
+That endpoint is expected for SimpleScalable deployments.
 
 ## Troubleshooting
 
-### Check Loki Status
-
 ```bash
 kubectl get pods -n loki-system
-kubectl logs -n loki-system deployment/loki
+kubectl get svc -n loki-system
+kubectl describe helmrelease loki -n loki-system
 ```
 
-### Check MinIO Status
-
 ```bash
-kubectl get pods -n loki-system -l app.kubernetes.io/name=minio
-kubectl port-forward -n loki-system svc/loki-minio 9001:9001
-```
-
-### Access Logs
-
-```bash
-# Query logs via kubectl
-kubectl exec -n loki-system deployment/loki -- logcli query '{job="kubelet"}'
-
-# Port forward to access Loki API
-kubectl port-forward -n loki-system svc/loki 3100:3100
+kubectl logs statefulset/loki-write -n loki-system
+kubectl logs deployment/loki-read -n loki-system
+kubectl logs statefulset/loki-backend -n loki-system
 ```
 
 ## References
 
-- **[Loki Documentation](https://grafana.com/docs/loki/)** - Primary documentation source
-- **[LogQL Reference](https://grafana.com/docs/loki/latest/logql/)** - Query language documentation
-
-## External Log Ingestion
-
-For external log sources (syslog, filebeat, etc.), you can:
-
-1. **Direct API**: Send logs to `http://loki.loki-system.svc:3100/loki/api/v1/push`
-2. **TCP/UDP Routes**: Create separate Gateway API routes for non-HTTP protocols
-3. **Log Agents**: Use Grafana Agent, Fluentd, or other agents to forward logs
-
-## Security Notes
-
-- MinIO credentials are stored in 1Password and referenced via 1Password Connect
-- The `loki-minio-credentials` item should be created in your 1Password vault with:
-  - `access_key_id`: The MinIO access key (e.g., `loki-storage`)
-  - `secret_access_key`: The MinIO secret access key
-- Flux `secretRef` automatically injects these values into the HelmRelease at deployment time
-- MinIO is configured with `insecure: true` for internal cluster communication
-- All S3 storage configuration is handled automatically by the chart when MinIO is enabled
-- No sensitive values are stored in the Git repository
+- [Loki Documentation](https://grafana.com/docs/loki/)
+- [Loki Helm Chart Migration](https://github.com/grafana/loki#%EF%B8%8F-helm-chart-migration)
+- [Grafana Community Loki Chart Package](https://github.com/grafana-community/helm-charts/pkgs/container/helm-charts%2Floki/826364855?tag=13.3.2)

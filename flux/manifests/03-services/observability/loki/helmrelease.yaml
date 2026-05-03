@@ -10,11 +10,11 @@ spec:
   chart:
     spec:
       chart: loki
-      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=loki
-      version: "6.55.0"
+      # renovate: datasource=helm registryUrl=https://grafana-community.github.io/helm-charts depName=loki
+      version: "13.3.2"
       sourceRef:
         kind: HelmRepository
-        name: grafana
+        name: grafana-community
         namespace: flux-system
       interval: 1m
   install:
@@ -38,6 +38,8 @@ spec:
       targetPath: loki.storage.s3.secretAccessKey
 
   values:
+    deploymentMode: SimpleScalable
+
     # Loki configuration
     loki:
       # Storage configuration - using external MinIO
