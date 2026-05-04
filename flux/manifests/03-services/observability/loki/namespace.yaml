@@ -5,3 +5,4 @@ metadata:
   name: loki-system
   labels:
     name: loki-system
+    images/dockerhub: "true"

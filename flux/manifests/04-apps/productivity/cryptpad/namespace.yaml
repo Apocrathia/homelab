@@ -5,3 +5,4 @@ metadata:
   name: cryptpad
   labels:
     app.kubernetes.io/name: cryptpad
+    images/dockerhub: "true"

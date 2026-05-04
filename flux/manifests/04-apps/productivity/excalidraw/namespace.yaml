@@ -5,3 +5,4 @@ metadata:
   name: excalidraw
   labels:
     app.kubernetes.io/name: excalidraw
+    images/dockerhub: "true"

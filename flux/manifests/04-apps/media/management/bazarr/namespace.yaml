@@ -5,3 +5,4 @@ metadata:
   name: bazarr
   labels:
     app.kubernetes.io/name: bazarr
+    images/dockerhub: "true"

@@ -5,3 +5,4 @@ metadata:
   name: mumble
   labels:
     app.kubernetes.io/name: mumble
+    images/dockerhub: "true"

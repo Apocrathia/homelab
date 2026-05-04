@@ -5,3 +5,4 @@ metadata:
   name: icloudpd
   labels:
     app.kubernetes.io/name: icloudpd
+    images/dockerhub: "true"

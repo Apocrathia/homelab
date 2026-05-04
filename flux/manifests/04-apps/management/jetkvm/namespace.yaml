@@ -6,3 +6,4 @@ metadata:
   labels:
     app.kubernetes.io/name: jetkvm
     app.kubernetes.io/part-of: jetkvm
+    images/dockerhub: "true"

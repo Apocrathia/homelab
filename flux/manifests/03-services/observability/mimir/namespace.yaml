@@ -7,3 +7,4 @@ metadata:
     app: mimir
     component: monitoring
     storage: long-term
+    images/dockerhub: "true"

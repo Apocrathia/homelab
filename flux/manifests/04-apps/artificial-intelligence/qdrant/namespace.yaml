@@ -7,3 +7,4 @@ metadata:
     app.kubernetes.io/name: qdrant
     app.kubernetes.io/component: vector-database
     app.kubernetes.io/part-of: artificial-intelligence
+    images/dockerhub: "true"

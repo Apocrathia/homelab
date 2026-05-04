@@ -6,3 +6,4 @@ metadata:
   labels:
     app.kubernetes.io/name: tempo
     app.kubernetes.io/component: tracing
+    images/dockerhub: "true"

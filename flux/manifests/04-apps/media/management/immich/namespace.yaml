@@ -5,3 +5,4 @@ metadata:
   name: immich
   labels:
     app.kubernetes.io/name: immich
+    images/dockerhub: "true"

@@ -5,3 +5,4 @@ metadata:
   name: cannery
   labels:
     app.kubernetes.io/name: cannery
+    images/dockerhub: "true"

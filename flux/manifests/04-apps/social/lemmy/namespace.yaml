@@ -5,3 +5,4 @@ metadata:
   name: lemmy
   labels:
     name: lemmy
+    images/dockerhub: "true"

@@ -7,3 +7,4 @@ metadata:
     app.kubernetes.io/name: komga
     app.kubernetes.io/component: media-server
     app.kubernetes.io/part-of: media
+    images/dockerhub: "true"

@@ -5,3 +5,4 @@ metadata:
   name: chaptarr
   labels:
     name: chaptarr
+    images/dockerhub: "true"

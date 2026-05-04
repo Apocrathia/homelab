@@ -5,3 +5,4 @@ metadata:
   name: openwebui
   labels:
     app.kubernetes.io/name: openwebui
+    images/dockerhub: "true"

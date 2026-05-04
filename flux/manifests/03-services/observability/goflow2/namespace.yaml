@@ -5,3 +5,4 @@ metadata:
   name: goflow2
   labels:
     app.kubernetes.io/name: goflow2
+    images/dockerhub: "true"

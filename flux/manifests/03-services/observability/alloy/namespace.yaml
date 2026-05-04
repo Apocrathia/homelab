@@ -5,3 +5,4 @@ metadata:
   name: alloy-system
   labels:
     name: alloy-system
+    images/dockerhub: "true"

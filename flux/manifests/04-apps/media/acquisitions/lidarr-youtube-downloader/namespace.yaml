@@ -5,3 +5,4 @@ metadata:
   name: lidarr-youtube-downloader
   labels:
     app.kubernetes.io/name: lidarr-youtube-downloader
+    images/dockerhub: "true"

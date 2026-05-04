@@ -7,3 +7,4 @@ metadata:
     app.kubernetes.io/name: kagent
     app.kubernetes.io/component: orchestration
     mcp-client: "true"
+    images/dockerhub: "true"
