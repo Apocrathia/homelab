@@ -6,6 +6,7 @@ metadata:
 resources:
   - audit-automount-sa-token.yaml
   - block-default-namespace.yaml
+  - sync-docker-io-imagepullsecret.yaml
   # - cleanup-replicasets.yaml
   # - cleanup-pods.yaml
   # - cleanup-jobs.yaml

@@ -7,5 +7,6 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - cleanup-rbac.yaml
+  - generate-rbac.yaml
   - policies/
   - policy-reporter/
