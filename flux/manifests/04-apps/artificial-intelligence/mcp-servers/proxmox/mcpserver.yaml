@@ -62,6 +62,9 @@ spec:
                 "security": {
                   "dev_mode": ${PROXMOX_DEV_MODE:-false}
                 },
+                "jobs": {
+                  "sqlite_path": "${PROXMOX_JOBS_SQLITE_PATH:-/tmp/proxmox-jobs.sqlite3}"
+                },
                 "logging": {
                   "level": "INFO"
                 }
@@ -101,3 +104,7 @@ spec:
             # the upstream guard that blocks startup with verify_ssl=false.
             - name: PROXMOX_DEV_MODE
               value: "true"
+            # Job tracking SQLite needs a writable path. /tmp is writable for the
+            # container's user; this state is pod-local and ephemeral by design.
+            - name: PROXMOX_JOBS_SQLITE_PATH
+              value: "/tmp/proxmox-jobs.sqlite3"
