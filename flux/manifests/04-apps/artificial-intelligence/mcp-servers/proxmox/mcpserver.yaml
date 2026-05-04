@@ -42,8 +42,10 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              # renovate: datasource=github-releases depName=RekklesNA/ProxmoxMCP-Plus
+              PROXMOX_MCP_VERSION="v0.4.6"
               export HOME=/tmp &&
-              pip install --quiet git+https://github.com/RekklesNA/ProxmoxMCP-Plus.git &&
+              pip install --quiet "git+https://github.com/RekklesNA/ProxmoxMCP-Plus.git@${PROXMOX_MCP_VERSION}" &&
               export PATH="$HOME/.local/bin:$PATH" &&
               cat > /tmp/config.json << EOF
               {
@@ -56,6 +58,9 @@ spec:
                   "user": "$PROXMOX_USER",
                   "token_name": "$PROXMOX_TOKEN_NAME",
                   "token_value": "$PROXMOX_TOKEN_VALUE"
+                },
+                "security": {
+                  "dev_mode": ${PROXMOX_DEV_MODE:-false}
                 },
                 "logging": {
                   "level": "INFO"
@@ -91,3 +96,8 @@ spec:
               value: "8006"
             - name: PROXMOX_VERIFY_SSL
               value: "false"
+            # Proxmox cert is valid but issued for the management FQDN; we connect
+            # via the services FQDN, so SSL verification can't pass. dev_mode satisfies
+            # the upstream guard that blocks startup with verify_ssl=false.
+            - name: PROXMOX_DEV_MODE
+              value: "true"

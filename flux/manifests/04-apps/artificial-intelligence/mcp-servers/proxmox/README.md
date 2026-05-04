@@ -21,14 +21,15 @@ This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolH
 
 ### Environment Variables
 
-| Variable              | Source | Description                              |
-| --------------------- | ------ | ---------------------------------------- |
-| `PROXMOX_HOST`        | Secret | Proxmox server hostname or IP            |
-| `PROXMOX_USER`        | Secret | Proxmox username (e.g., `user@pve`)      |
-| `PROXMOX_TOKEN_NAME`  | Secret | Proxmox API token ID                     |
-| `PROXMOX_TOKEN_VALUE` | Secret | Proxmox API token value                  |
-| `PROXMOX_PORT`        | Config | Proxmox API port (default: 8006)         |
-| `PROXMOX_VERIFY_SSL`  | Config | Verify SSL certificates (default: false) |
+| Variable              | Source | Description                                                                |
+| --------------------- | ------ | -------------------------------------------------------------------------- |
+| `PROXMOX_HOST`        | Secret | Proxmox server hostname or IP                                              |
+| `PROXMOX_USER`        | Secret | Proxmox username (e.g., `user@pve`)                                        |
+| `PROXMOX_TOKEN_NAME`  | Secret | Proxmox API token ID                                                       |
+| `PROXMOX_TOKEN_VALUE` | Secret | Proxmox API token value                                                    |
+| `PROXMOX_PORT`        | Config | Proxmox API port (default: 8006)                                           |
+| `PROXMOX_VERIFY_SSL`  | Config | Verify SSL certificates (default: false)                                   |
+| `PROXMOX_DEV_MODE`    | Config | Enable dev mode (required when `PROXMOX_VERIFY_SSL=false`; default: false) |
 
 ### Secrets
 
@@ -62,11 +63,11 @@ The Proxmox MCP Plus server provides tools for virtualization management:
 # Pod status
 kubectl get pods -n mcp-proxmox
 
-# MCP server logs
-kubectl logs -n mcp-proxmox deployment/proxmox-mcp -c mcp -f
+# MCP server logs (the underlying StatefulSet pod runs the actual server)
+kubectl logs proxmox-mcp-plus-0 -n mcp-proxmox -f
 
 # Test Proxmox connectivity
-kubectl exec -n mcp-proxmox deployment/proxmox-mcp -- \
+kubectl exec proxmox-mcp-plus-0 -n mcp-proxmox -- \
   curl -s -k "https://$PROXMOX_HOST:8006/api2/json/version"
 ```
 
