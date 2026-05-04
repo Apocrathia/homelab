@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Sync *arr application file metadata and naming"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["requests>=2.31.0,<3.0.0", "python-dotenv>=1.0.0"]
+dependencies = ["requests>=2.31.0,<3.0.0", "python-dotenv>=1.2.2"]
 
 [dependency-groups]
 dev = ["ruff>=0.8.0"]
