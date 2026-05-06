@@ -142,7 +142,7 @@ spec:
         registry: public.ecr.aws
         repository: bitnami/redis
         # renovate: datasource=docker depName=public.ecr.aws/bitnami/redis
-        tag: "8.6.2"
+        tag: "8.6.3"
 
     # Use the rbac.yaml service account
     serviceAccount:
