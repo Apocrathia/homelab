@@ -16,6 +16,9 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # Hard ceiling. Real runs complete in ~1h; this aborts pathological cases
+      # before they deadlock the cluster's nightly maintenance window.
+      activeDeadlineSeconds: 10800 # 3h
       template:
         spec:
           automountServiceAccountToken: false
@@ -42,6 +45,12 @@ spec:
                   : "${RETENTION_DAYS:=90}"
                   : "${VACUUM_FULL:=false}"
                   : "${CLEAN_ORPHANED_CONTENT:=false}"
+                  : "${QUEUE_JOBS_RETENTION_DAYS:=7}"
+                  : "${STATEMENT_TIMEOUT_MS:=3600000}"
+
+                  # Cap any individual statement so a runaway query can't hang
+                  # the whole job past activeDeadlineSeconds without feedback.
+                  export PGOPTIONS="-c statement_timeout=${STATEMENT_TIMEOUT_MS}"
 
                   echo "Database size before:"
                   psql -c "SELECT pg_size_pretty(pg_database_size(current_database()));"
@@ -56,6 +65,12 @@ spec:
                     LIMIT 10;
                   "
 
+                  # Stale stats wreck the planner on subsequent DELETEs (e.g. it
+                  # picks a Merge Anti Join across millions of torrent_contents
+                  # rows to delete a handful of orphans). Refresh first.
+                  echo "Refreshing planner statistics..."
+                  vacuumdb --analyze-only --verbose --dbname "$PGDATABASE"
+
                   echo "Deleting torrents not seen in ${RETENTION_DAYS} days..."
                   psql -c "
                     DELETE FROM torrents t
@@ -67,6 +82,22 @@ spec:
                     );
                   "
 
+                  echo "Pruning processed queue_jobs older than ${QUEUE_JOBS_RETENTION_DAYS} days..."
+                  psql -c "
+                    DELETE FROM queue_jobs
+                    WHERE status = 'processed'
+                    AND ran_at < NOW() - make_interval(days => ${QUEUE_JOBS_RETENTION_DAYS});
+                  "
+
+                  # Orphan-content cleanup is disabled by default. The DELETE
+                  # joins content (~135K rows) to torrent_contents (~6M rows) on
+                  # a 3-column composite key the planner can't cost accurately
+                  # without multi-column extended statistics, so it picks a Merge
+                  # Anti Join that scans 8 GB of torrent_contents to delete a
+                  # handful of true orphans (typically <20). Not worth the I/O
+                  # cost. Only flip the env var on for a one-shot cleanup if
+                  # orphan rows ever accumulate to a meaningful fraction of the
+                  # content table.
                   if [ "$CLEAN_ORPHANED_CONTENT" = "true" ]; then
                     echo "Cleaning up orphaned content metadata..."
                     psql -c "
@@ -113,10 +144,18 @@ spec:
                       key: password
                 - name: RETENTION_DAYS
                   value: "90"
+                # VACUUM FULL rewrites the entire heap — on torrent_files (~82M
+                # rows / 24 GB) that means rewriting 24 GB of data and indexes
+                # under an exclusive lock, while the DHT crawler keeps writing.
+                # The resulting WAL/memory pressure has crashed the CNPG primary
+                # repeatedly. With current 90-day retention deleting 0 rows per
+                # run there is nothing to compact, so this is pure waste. Flip
+                # to "true" only for a one-shot run after a retention change has
+                # actually deleted significant rows.
                 - name: VACUUM_FULL
-                  value: "true"
+                  value: "false"
                 - name: CLEAN_ORPHANED_CONTENT
-                  value: "true"
+                  value: "false"
               securityContext:
                 readOnlyRootFilesystem: true
                 runAsNonRoot: true
