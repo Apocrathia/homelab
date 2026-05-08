@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.71 (Latest)
+## Version 0.0.72 (Latest)
+
+- **`stdin` and `tty` passthroughs on main container and sidecars**: Added optional `app.container.stdin`/`app.container.tty` and per-sidecar `stdin`/`tty` fields. Renders the corresponding container spec fields when set, omitted otherwise. Enables CLI-as-server patterns where the workload reads from stdin and exits on EOF (e.g., DuckDB's `start_ui_server()`, which dies when the duckdb CLI's stdin closes). Strictly additive — no behavior change for existing releases.
+
+## Version 0.0.71
 
 - **Nil-safe optional blocks (`helm upgrade --reuse-values`)**: `tcproute`, `udproute`, and `loadbalancer` templates guard with `| default dict` (and `default list` for route slices) so missing keys do not nil-dereference when the live release predates those values blocks.
 

@@ -238,6 +238,12 @@ spec:
           {{- if .Values.app.args }}
           args: {{ .Values.app.args | toYaml | nindent 12 }}
           {{- end }}
+          {{- if .Values.app.container.stdin }}
+          stdin: {{ .Values.app.container.stdin }}
+          {{- end }}
+          {{- if .Values.app.container.tty }}
+          tty: {{ .Values.app.container.tty }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.app.container.port | default 80 }}
             {{- if .Values.app.container.extraPorts }}
@@ -451,6 +457,12 @@ spec:
           {{- end }}
           {{- if .args }}
           args: {{ .args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .stdin }}
+          stdin: {{ .stdin }}
+          {{- end }}
+          {{- if .tty }}
+          tty: {{ .tty }}
           {{- end }}
           {{- if .ports }}
           ports:

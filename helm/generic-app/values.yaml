@@ -14,6 +14,12 @@ app:
   container:
     name: nginx
     port: 80
+    # Optional: keep stdin open / allocate a TTY for the main container.
+    # Useful for "CLI-as-server" workloads that read from stdin and exit on
+    # EOF (e.g., DuckDB CLI with -cmd "CALL start_ui_server();" — without
+    # stdin: true the process exits as soon as the SQL completes).
+    # stdin: true
+    # tty: false
     # Optional: expose extra container ports
     # Optional: set environment variables
     # env:
@@ -144,6 +150,10 @@ app:
   #     image: nginx:alpine
   #     command: ["/bin/sh"]
   #     args: ["-c", "while true; do echo 'Sidecar running'; sleep 30; done"]
+  #     # Optional: keep stdin open / allocate a TTY for the sidecar (same
+  #     # CLI-as-server pattern as app.container.stdin/tty).
+  #     # stdin: true
+  #     # tty: false
   #     ports:
   #       - containerPort: 8080
   #         name: sidecar-port
