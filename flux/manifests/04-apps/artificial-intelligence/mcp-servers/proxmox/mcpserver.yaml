@@ -43,7 +43,7 @@ spec:
           args:
             - |
               # renovate: datasource=github-releases depName=RekklesNA/ProxmoxMCP-Plus
-              PROXMOX_MCP_VERSION="v0.4.6"
+              PROXMOX_MCP_VERSION="v0.4.7"
               export HOME=/tmp &&
               pip install --quiet "git+https://github.com/RekklesNA/ProxmoxMCP-Plus.git@${PROXMOX_MCP_VERSION}" &&
               export PATH="$HOME/.local/bin:$PATH" &&
