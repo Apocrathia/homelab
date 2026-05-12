@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.0.72 (Latest)
+## Version 0.0.73 (Latest)
+
+- **`hasKey` for boolean securityContext fields on initContainers and sidecars**: Truthy gates (`{{- if .X.Y }}`) on `readOnlyRootFilesystem`, `allowPrivilegeEscalation`, and `runAsNonRoot` silently dropped explicit `false` values because Go templates treat `false` as falsy. Switched to `hasKey` so explicit `false` is rendered. Also fixes `postgres.affinity.enablePodAntiAffinity` (CNPG default is `true`, so consumers couldn't actually disable pod anti-affinity). User-visible impact: consumer helmreleases that set `allowPrivilegeEscalation: false` on init containers (gluetun, install scripts, etc.) or `runAsNonRoot: false` / `readOnlyRootFilesystem: false` on sidecars will now actually emit those fields. Most affected: init containers that need `allowPrivilegeEscalation: false` — K8s default is `true`, so the bug left them able to escalate.
+
+## Version 0.0.72
 
 - **`stdin` and `tty` passthroughs on main container and sidecars**: Added optional `app.container.stdin`/`app.container.tty` and per-sidecar `stdin`/`tty` fields. Renders the corresponding container spec fields when set, omitted otherwise. Enables CLI-as-server patterns where the workload reads from stdin and exits on EOF (e.g., DuckDB's `start_ui_server()`, which dies when the duckdb CLI's stdin closes). Strictly additive — no behavior change for existing releases.
 

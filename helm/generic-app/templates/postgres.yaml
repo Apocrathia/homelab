@@ -52,7 +52,7 @@ spec:
   # Affinity settings for better performance (CloudNativePG-specific)
   {{- if .Values.postgres.affinity }}
   affinity:
-    {{- if .Values.postgres.affinity.enablePodAntiAffinity }}
+    {{- if hasKey .Values.postgres.affinity "enablePodAntiAffinity" }}
     enablePodAntiAffinity: {{ .Values.postgres.affinity.enablePodAntiAffinity }}
     {{- end }}
     {{- if .Values.postgres.affinity.podAntiAffinityType }}

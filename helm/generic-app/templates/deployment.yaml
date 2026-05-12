@@ -153,10 +153,10 @@ spec:
             {{- if hasKey .securityContext "runAsNonRoot" }}
             runAsNonRoot: {{ .securityContext.runAsNonRoot }}
             {{- end }}
-            {{- if .securityContext.readOnlyRootFilesystem }}
+            {{- if hasKey .securityContext "readOnlyRootFilesystem" }}
             readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
             {{- end }}
-            {{- if .securityContext.allowPrivilegeEscalation }}
+            {{- if hasKey .securityContext "allowPrivilegeEscalation" }}
             allowPrivilegeEscalation: {{ .securityContext.allowPrivilegeEscalation }}
             {{- end }}
             {{- if .securityContext.capabilities }}
@@ -487,7 +487,7 @@ spec:
           {{- end }}
           {{- if .securityContext }}
           securityContext:
-            {{- if .securityContext.allowPrivilegeEscalation }}
+            {{- if hasKey .securityContext "allowPrivilegeEscalation" }}
             allowPrivilegeEscalation: {{ .securityContext.allowPrivilegeEscalation }}
             {{- else }}
             allowPrivilegeEscalation: {{ $.Values.app.securityContext.allowPrivilegeEscalation | default false }}
@@ -532,7 +532,7 @@ spec:
                 - ALL
               {{- end }}
             {{- end }}
-            {{- if .securityContext.runAsNonRoot }}
+            {{- if hasKey .securityContext "runAsNonRoot" }}
             runAsNonRoot: {{ .securityContext.runAsNonRoot }}
             {{- else }}
             runAsNonRoot: {{ if (hasKey $.Values.app.securityContext "runAsNonRoot") }}{{ $.Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
@@ -542,7 +542,7 @@ spec:
             {{- else }}
             runAsUser: {{ .runAsUser | default 1000 }}
             {{- end }}
-            {{- if .securityContext.readOnlyRootFilesystem }}
+            {{- if hasKey .securityContext "readOnlyRootFilesystem" }}
             readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
             {{- else }}
             readOnlyRootFilesystem: {{ if (hasKey $.Values.app.securityContext "readOnlyRootFilesystem") }}{{ $.Values.app.securityContext.readOnlyRootFilesystem }}{{ else }}true{{ end }}
