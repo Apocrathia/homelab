@@ -1,0 +1,66 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: duckdb-mcp
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "DuckDB MCP server for SQL query execution against a persistent local database"
+spec:
+  # Use Python base image and install mcp-server-motherduck from PyPI at startup
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+  image: public.ecr.aws/docker/library/python:3.14-slim
+  transport: stdio
+  proxyMode: streamable-http
+  proxyPort: 8080
+  mcpPort: 8080
+  permissionProfile:
+    type: builtin
+    name: network
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  podTemplateSpec:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: mcp
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14-slim
+          securityContext:
+            readOnlyRootFilesystem: false
+          stdin: true
+          command: ["/bin/sh", "-c"]
+          # pip installs the console script under $HOME/.local/bin (since pip
+          # runs as a non-root user without --user); prepend it to PATH so
+          # the upstream-documented `mcp-server-motherduck` invocation works.
+          args:
+            - "export PATH=/tmp/.local/bin:$PATH && pip install --quiet mcp-server-motherduck && exec mcp-server-motherduck --db-path /data/duckdb.db --read-write"
+          env:
+            - name: HOME
+              value: "/tmp"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: shared
+              mountPath: /shared
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: duckdb-mcp-data
+        - name: shared
+          persistentVolumeClaim:
+            claimName: duckdb-mcp-shared
+        - name: tmp
+          emptyDir: {}

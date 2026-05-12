@@ -151,6 +151,11 @@ mcp_servers:
     url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
+  duckdb:
+    alias: "duckdb"
+    url: "http://mcp-duckdb-mcp-proxy.mcp-duckdb.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
   firecrawl:
     alias: "firecrawl"
     url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
@@ -251,6 +256,10 @@ agent_list:
     litellm_params:
       custom_llm_provider: "a2a_agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
+  - agent_name: "home-agent"
+    litellm_params:
+      custom_llm_provider: "a2a_agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
   - agent_name: "homelab-agent"
     litellm_params:
       custom_llm_provider: "a2a_agent"

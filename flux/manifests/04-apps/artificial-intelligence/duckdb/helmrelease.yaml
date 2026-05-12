@@ -1,0 +1,169 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: duckdb
+  namespace: duckdb
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.72"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: duckdb
+      namespace: duckdb
+      # renovate: datasource=docker depName=duckdb/duckdb
+      image: duckdb/duckdb:1.5.2
+
+      # The official duckdb image is the CLI binary in a distroless container.
+      # We start it with the UI extension loaded and start_ui_server() called.
+      # The UI HTTP server runs in a background thread on 127.0.0.1:4213.
+      # `stdin: true` keeps the duckdb process alive after the -cmd SQL
+      # completes — without it, duckdb hits stdin EOF and exits, killing
+      # the UI server thread along with it.
+      command: ["/duckdb"]
+      args:
+        - "/data/notebooks.duckdb"
+        - "-cmd"
+        - "INSTALL ui; LOAD ui; CALL start_ui_server();"
+
+      container:
+        name: duckdb
+        port: 4213
+        stdin: true
+        env:
+          # HOME steers ~/.duckdb (extension cache, ui notebook state) onto
+          # the persistent volume so it survives restarts.
+          - name: HOME
+            value: "/data"
+
+      service:
+        type: ClusterIP
+        port: 80
+        # nginx sidecar listens on 8080; service targets the sidecar, not duckdb.
+        targetPort: 8080
+        portName: http
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: shared
+          mountPath: /shared
+
+      sidecars:
+        # nginx reverse proxy bridges the cluster network to duckdb's
+        # localhost-only UI server and rewrites Origin/Referer headers
+        # to satisfy the upstream CSRF check.
+        # renovate: datasource=docker depName=nginxinc/nginx-unprivileged
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          securityContext:
+            runAsUser: 101
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumes:
+            emptyDir:
+              - name: nginx-tmp
+                mountPath: /tmp
+              - name: nginx-cache
+                mountPath: /var/cache/nginx
+            configMap:
+              - name: nginx-config
+                mountPath: /etc/nginx/conf.d
+                configMapName: duckdb-nginx-config
+                readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          healthChecks:
+            livenessProbe:
+              enabled: true
+              tcpSocket:
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 3
+              failureThreshold: 3
+            readinessProbe:
+              enabled: true
+              tcpSocket:
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 10Gi
+      # Shared SMB landing zone for Parquet/CSV/JSON/Arrow files. Read-write
+      # so notebooks can `COPY tbl TO '/shared/foo.parquet' (FORMAT PARQUET)`.
+      # Same path is mounted by the MCP server pod so agents can `read_parquet`
+      # the same files. Concurrent reads are trivially safe; concurrent writes
+      # to different files are fine. Don't write to the same file from both.
+      smb:
+        enabled: true
+        volumes:
+          - name: shared
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Databases/DuckDB"
+            capacity: 100Gi
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            createSubDir: "true"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "DuckDB"
+      externalHost: "https://duckdb.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/duckdb/icon.svg"
+      metaDescription: "In-process analytical database with notebook UI for ad-hoc SQL and data exploration"
+      metaPublisher: "DuckDB Foundation"
+
+    httproute:
+      enabled: false

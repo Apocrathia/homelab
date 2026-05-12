@@ -10,6 +10,7 @@ resources:
   - kagent
   - agents
   - contextforge
+  - duckdb
   - firecrawl
   # - flowise
   # - guardrails-ai
