@@ -1,0 +1,26 @@
+---
+# PyRIT runtime configuration loaded via:
+#   pyrit_backend --config-file /config/pyrit_conf.yaml
+#
+# Schema reference: https://github.com/microsoft/PyRIT/blob/main/.pyrit_conf_example
+#
+# This file is rendered into the `pyrit-config` ConfigMap by the kustomize
+# configMapGenerator in ./kustomization.yaml. Edit here, not in the rendered
+# ConfigMap. disableNameSuffixHash: true keeps the ConfigMap name stable so
+# the HelmRelease's static volume reference resolves.
+#
+# Initializer notes:
+#   - load_default_datasets: bundled JSONL datasets, no env required
+#   - scorer: pre-builds default LLM-as-judge scorers using OPENAI_CHAT_*
+#   - target: pre-registers concrete targets bound to OPENAI_CHAT_*
+#   Both `scorer` and `target` require OPENAI_CHAT_MODEL/_ENDPOINT/_KEY env
+#   vars at startup. The `simple` initializer is omitted; targets/scorers
+#   come from these initializers instead.
+initializers:
+  - name: load_default_datasets
+  - name: scorer
+  - name: target
+    args:
+      tags:
+        - default
+        - scorer

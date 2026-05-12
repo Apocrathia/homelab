@@ -21,5 +21,6 @@ resources:
   - openclaw
   - openwebui
   - promptfoo
+  - pyrit
   - qdrant
   - tasks

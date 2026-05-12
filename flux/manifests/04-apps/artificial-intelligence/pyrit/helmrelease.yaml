@@ -1,0 +1,237 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pyrit
+  namespace: pyrit
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.72"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    app:
+      name: pyrit
+      namespace: pyrit
+      # PyRIT 0.13.x wheel requires <3.14,>=3.10. Stay on 3.13 until upstream
+      # publishes cp314 wheels for transformers/pyodbc/av.
+      # Full (non-slim) image carries unixodbc + libgl1 that pyrit's pyodbc and
+      # av base deps need at import time.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.13
+      replicas: 1
+
+      command: ["/opt/venv/bin/pyrit_backend"]
+      args:
+        - "--host"
+        - "0.0.0.0"
+        - "--port"
+        - "8000"
+        - "--database"
+        - "SQLite"
+        - "--log-level"
+        - "INFO"
+        - "--config-file"
+        - "/config/pyrit_conf.yaml"
+
+      container:
+        name: pyrit
+        port: 8000
+        env:
+          - name: HOME
+            value: "/data"
+          - name: PATH
+            value: "/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: PYTHONDONTWRITEBYTECODE
+            value: "1"
+          # Default OpenAI-compatible endpoint (LiteLLM). PyRIT's `target`
+          # and `scorer` initializers require all three OPENAI_CHAT_* vars
+          # to be set at startup, otherwise they fail with "Environment
+          # variable OPENAI_CHAT_MODEL is required". OpenAIChatTarget falls
+          # back to these env vars when not given explicit args; the GUI's
+          # Target Configuration page can still override per-target.
+          # qwen3.5-abliterated-medium is a jailbroken local model routed by
+          # LiteLLM (see flux/manifests/04-apps/artificial-intelligence/
+          # litellm/litellm.yml) and gives realistic attack chains to score
+          # against. Frontier models would refuse most adversarial inputs.
+          - name: OPENAI_CHAT_ENDPOINT
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: OPENAI_CHAT_MODEL
+            value: "qwen3.5-abliterated-medium"
+          - name: OPENAI_CHAT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: pyrit-secrets
+                key: openai-chat-key
+
+      initContainers:
+        - name: install
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.13
+          command: ["/bin/bash", "-c"]
+          env:
+            # pyrit/common/path.py does DB_DATA_PATH.mkdir(...) at module import
+            # time. Without HOME set, that resolves to /.local/share/dbdata,
+            # which the read-only root FS rejects. HOME=/data lands the auto-
+            # mkdir inside the Longhorn mount where it belongs.
+            - name: HOME
+              value: "/data"
+          args:
+            - |
+              set -euo pipefail
+              echo "Creating venv at /opt/venv..."
+              python3 -m venv /opt/venv
+
+              echo "Upgrading pip..."
+              /opt/venv/bin/pip install --no-cache-dir --upgrade pip
+
+              # renovate: datasource=pypi depName=pyrit
+              PYRIT_VERSION="0.13.0"
+              echo "Installing pyrit==${PYRIT_VERSION}..."
+              /opt/venv/bin/pip install --no-cache-dir "pyrit==${PYRIT_VERSION}"
+
+              echo "Pre-creating config dir for future .env/.env.local/.pyrit_conf mounts..."
+              mkdir -p /data/.pyrit
+
+              echo "Verifying pyrit_backend entrypoint (imports trigger DB_DATA_PATH mkdir under HOME)..."
+              /opt/venv/bin/pyrit_backend --help > /dev/null
+
+              echo "Install complete."
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: venv
+              mountPath: /opt/venv
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8000
+        portName: http
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Chart default is readOnlyRootFilesystem: true. pyrit_backend writes
+        # to $HOME=/data (longhorn) and /tmp (emptyDir); the venv is at
+        # /opt/venv (emptyDir, populated by the install init container).
+        # Nothing needs to write to the container root FS at runtime.
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+      volumes:
+        emptyDir:
+          - name: venv
+            mountPath: /opt/venv
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          - name: pyrit-config
+            mountPath: /config
+            readOnly: true
+            configMapName: pyrit-config
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Startup is the long pole: pyrit imports transformers, azure-* SDKs,
+        # and runs alembic migrations against the sqlite db on first boot.
+        # Give it up to 5 minutes (30 * 10s) before the liveness probe trips.
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/pyrit-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "PyRIT"
+      externalHost: "https://pyrit.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/pyrit/icon.png"
+      metaDescription: "Microsoft AI Red Team framework for probing generative AI systems"
+      metaPublisher: "Microsoft AI Red Team"
+
+    httproute:
+      enabled: false

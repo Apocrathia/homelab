@@ -89,6 +89,7 @@ flowchart TB
 ### Evals & Red Teaming
 
 - **[Promptfoo](./promptfoo/README.md)** - LLM eval framework and red-teaming platform with declarative configs and a web UI
+- **[PyRIT](./pyrit/README.md)** - Microsoft AI Red Team framework for probing generative AI systems via the CoPyRIT web UI
 
 ### ML Platform
 
