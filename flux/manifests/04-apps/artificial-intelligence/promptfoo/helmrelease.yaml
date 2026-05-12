@@ -1,0 +1,271 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: promptfoo
+  namespace: promptfoo
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.73"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  values:
+    app:
+      name: promptfoo
+      namespace: promptfoo
+      # Upstream image is alpine (musl); modelaudit-picklescan is a Rust+PyO3
+      # wheel with no musllinux build, so installing modelaudit (any flavor)
+      # against alpine forces a source-build that needs a C+Rust toolchain
+      # the alpine image lacks. Switch to the official debian python image
+      # (matches pyrit's pattern), then bootstrap Node + promptfoo + modelaudit
+      # in the init container at first boot. No custom image, no third-party
+      # registries, just stock public.ecr.aws mirrors of docker library.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.13
+      replicas: 1
+
+      # Run promptfoo's server entry directly (matches the upstream Dockerfile
+      # CMD: `node dist/src/server/index.js`), not the `promptfoo` CLI wrapper
+      # which dispatches to subcommands.
+      command: ["/opt/promptfoo/node/bin/node"]
+      args:
+        - "/opt/promptfoo/npm/lib/node_modules/promptfoo/dist/src/server/index.js"
+
+      # Bootstrap Node, promptfoo (npm), and modelaudit (pip) into the
+      # /opt/promptfoo emptyDir on every pod start. ~3-5 min cold start;
+      # acceptable trade for using only stock images + declarative pinning.
+      # All three components are tracked by renovate.
+      initContainers:
+        - name: install
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.13
+          command: ["/bin/bash", "-c"]
+          env:
+            - name: HOME
+              value: "/data"
+            - name: PIP_DISABLE_PIP_VERSION_CHECK
+              value: "1"
+            - name: NPM_CONFIG_UPDATE_NOTIFIER
+              value: "false"
+          args:
+            - |
+              set -euo pipefail
+
+              # renovate: datasource=node-version depName=node
+              NODE_VERSION="24.15.0"
+              # renovate: datasource=npm depName=promptfoo
+              PROMPTFOO_VERSION="0.121.11"
+              # renovate: datasource=pypi depName=modelaudit
+              MODELAUDIT_VERSION="0.2.45"
+
+              OPT=/opt/promptfoo
+              mkdir -p "$OPT"
+
+              # emptyDir persists across init-container restarts within the
+              # same pod, so a partial install from a previous failed attempt
+              # would otherwise collide with this run (e.g. mv into existing
+              # node/ dir creates nested node/node-vX.Y.Z/ on the second try).
+              # Wipe and start fresh — re-downloading is cheap relative to
+              # debugging half-finished bootstrap state.
+              echo "==> Cleaning previous bootstrap state at $OPT..."
+              rm -rf "$OPT"/* "$OPT"/.[!.]* 2>/dev/null || true
+
+              echo "==> Downloading Node v${NODE_VERSION}..."
+              cd "$OPT"
+              curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+                | tar -xJ
+              mv "node-v${NODE_VERSION}-linux-x64" node
+
+              # npm is a JS script with `#!/usr/bin/env node` shebang. Calling
+              # it by absolute path works, but env still has to find node on
+              # PATH. Add node/bin to PATH so npm (and anything it spawns)
+              # finds the bundled node.
+              export PATH="$OPT/node/bin:$PATH"
+
+              echo "==> Installing promptfoo@${PROMPTFOO_VERSION} via npm..."
+              npm install --global \
+                --prefix "$OPT/npm" \
+                --omit=dev \
+                --no-audit \
+                --no-fund \
+                --loglevel=warn \
+                "promptfoo@${PROMPTFOO_VERSION}"
+
+              echo "==> Creating venv and installing modelaudit==${MODELAUDIT_VERSION}..."
+              python3 -m venv "$OPT/venv"
+              "$OPT/venv/bin/pip" install --no-cache-dir --quiet --upgrade pip
+              "$OPT/venv/bin/pip" install --no-cache-dir --quiet "modelaudit==${MODELAUDIT_VERSION}"
+
+              echo "==> Pre-creating promptfoo data dir on Longhorn PVC..."
+              mkdir -p /data/.promptfoo
+
+              echo "==> Smoke tests:"
+              "$OPT/node/bin/node" --version
+              "$OPT/venv/bin/modelaudit" --version
+              test -f "$OPT/npm/lib/node_modules/promptfoo/dist/src/server/index.js" \
+                && echo "promptfoo server entry: OK" \
+                || { echo "ERROR: promptfoo server entry missing"; exit 1; }
+
+              echo "==> Bootstrap complete."
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: opt
+              mountPath: /opt/promptfoo
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+
+      container:
+        name: promptfoo
+        port: 3000
+        env:
+          - name: PROMPTFOO_SELF_HOSTED
+            value: "1"
+          - name: API_PORT
+            value: "3000"
+          - name: HOST
+            value: "0.0.0.0"
+          # Steer ~/.promptfoo (sqlite db, blobs, eval results) onto the
+          # persistent volume so it survives pod restarts.
+          - name: HOME
+            value: "/data"
+          # Pick up node, npm-installed promptfoo CLI, and modelaudit binary
+          # from the bootstrapped /opt/promptfoo tree.
+          - name: PATH
+            value: "/opt/promptfoo/node/bin:/opt/promptfoo/npm/bin:/opt/promptfoo/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          # Lockdown: kill every outbound call promptfoo makes by default.
+          # See README "Privacy & lockdown" section for the rationale.
+          - name: PROMPTFOO_DISABLE_TELEMETRY
+            value: "1"
+          - name: PROMPTFOO_DISABLE_UPDATE
+            value: "1"
+          - name: PROMPTFOO_DISABLE_SHARING
+            value: "true"
+          - name: PROMPTFOO_DISABLE_REMOTE_GENERATION
+            value: "true"
+          - name: PROMPTFOO_DISABLE_REDTEAM_REMOTE_GENERATION
+            value: "true"
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # promptfoo writes to $HOME=/data (longhorn) and /tmp (emptyDir), reads
+        # from /opt/promptfoo (emptyDir, populated by init). Nothing needs to
+        # write the container root FS at runtime.
+        readOnlyRootFilesystem: true
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+      volumes:
+        emptyDir:
+          - name: opt
+            mountPath: /opt/promptfoo
+          - name: tmp
+            mountPath: /tmp
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 10Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "Promptfoo"
+      externalHost: "https://promptfoo.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/promptfoo/icon.svg"
+      metaDescription: "LLM eval framework and red-teaming platform for AI applications"
+      metaPublisher: "Promptfoo (OpenAI)"
+
+    httproute:
+      enabled: false

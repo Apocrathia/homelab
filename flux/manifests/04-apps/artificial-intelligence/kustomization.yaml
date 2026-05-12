@@ -20,5 +20,6 @@ resources:
   # - mlflow
   - openclaw
   - openwebui
+  - promptfoo
   - qdrant
   - tasks

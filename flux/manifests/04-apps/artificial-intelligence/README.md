@@ -86,6 +86,10 @@ flowchart TB
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
 - **[ContextForge](./contextforge/README.md)** - IBM ContextForge MCP/A2A gateway
 
+### Evals & Red Teaming
+
+- **[Promptfoo](./promptfoo/README.md)** - LLM eval framework and red-teaming platform with declarative configs and a web UI
+
 ### ML Platform
 
 - **[MLflow](./mlflow/README.md)** - Experiment tracking and model registry
