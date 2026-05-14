@@ -31,7 +31,7 @@ spec:
   # k8sgpt container image
   repository: ghcr.io/k8sgpt-ai/k8sgpt
   # renovate: datasource=docker depName=ghcr.io/k8sgpt-ai/k8sgpt
-  version: v0.4.32
+  version: v0.4.33
 
   # Resource limits for the k8sgpt pod
   resources:
