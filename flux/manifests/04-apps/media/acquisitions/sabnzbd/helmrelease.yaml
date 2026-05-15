@@ -20,7 +20,7 @@ spec:
     app:
       name: sabnzbd
       # renovate: datasource=docker depName=ghcr.io/home-operations/sabnzbd versioning=semver-coerced
-      image: ghcr.io/home-operations/sabnzbd:5.0.2
+      image: ghcr.io/home-operations/sabnzbd:5.0.3
       container:
         name: sabnzbd
         port: 8080
