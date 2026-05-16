@@ -11,7 +11,7 @@ spec:
     spec:
       chart: opentelemetry-operator
       # renovate: datasource=helm registryUrl=https://open-telemetry.github.io/opentelemetry-helm-charts depName=opentelemetry-operator
-      version: "0.112.1"
+      version: "0.113.1"
       sourceRef:
         kind: HelmRepository
         name: open-telemetry
