@@ -80,7 +80,7 @@ spec:
         # to satisfy the upstream CSRF check.
         # renovate: datasource=docker depName=nginxinc/nginx-unprivileged
         - name: nginx
-          image: nginxinc/nginx-unprivileged:1.27-alpine
+          image: nginxinc/nginx-unprivileged:1.31-alpine
           ports:
             - containerPort: 8080
               name: http
