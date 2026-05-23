@@ -96,7 +96,7 @@ spec:
         - name: install-plugins
           # Using busybox:glibc instead of Alpine due to musl DNS resolver issues with Kubernetes ndots:5
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/busybox
-          image: public.ecr.aws/docker/library/busybox:1.37.0-glibc
+          image: public.ecr.aws/docker/library/busybox:1.38.0-glibc
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

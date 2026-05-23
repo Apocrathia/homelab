@@ -35,7 +35,7 @@ spec:
           containers:
             - name: cleanup
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/busybox
-              image: public.ecr.aws/docker/library/busybox:1.37.0
+              image: public.ecr.aws/docker/library/busybox:1.38.0
               command:
                 - /bin/sh
                 - -c
