@@ -21,7 +21,7 @@ spec:
       name: openclaw
       namespace: openclaw
       # renovate: datasource=docker depName=ghcr.io/openclaw/openclaw
-      image: ghcr.io/openclaw/openclaw:2026.5.20
+      image: ghcr.io/openclaw/openclaw:2026.5.22
 
       container:
         name: openclaw
