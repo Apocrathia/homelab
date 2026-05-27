@@ -20,7 +20,7 @@ spec:
     app:
       name: qbittorrent
       # renovate: datasource=docker depName=ghcr.io/home-operations/qbittorrent versioning=semver-coerced
-      image: ghcr.io/home-operations/qbittorrent:5.2.0
+      image: ghcr.io/home-operations/qbittorrent:5.2.1
       container:
         name: qbittorrent
         port: 8080
