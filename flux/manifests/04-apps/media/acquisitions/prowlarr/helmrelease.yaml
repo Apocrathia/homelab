@@ -82,7 +82,7 @@ spec:
       sidecars:
         - name: flaresolverr
           # renovate: datasource=docker depName=ghcr.io/flaresolverr/flaresolverr
-          image: ghcr.io/flaresolverr/flaresolverr:v3.4.6
+          image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
           ports:
             - containerPort: 8191
               name: flaresolverr
