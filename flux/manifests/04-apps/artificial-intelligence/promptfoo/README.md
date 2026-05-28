@@ -60,7 +60,7 @@ The deployment disables every outbound call promptfoo makes by default:
 Both the init and main containers use the same image — `public.ecr.aws/docker/library/python:3.13` (the AWS ECR mirror of Docker library `python:3.13`). The init container runs as uid 1000 with a read-only root FS and dropped capabilities, then:
 
 1. Downloads the pinned Node.js binary tarball from `nodejs.org` and extracts it to `/opt/promptfoo/node`.
-2. `npm install --omit=dev` of `promptfoo@<version>` into `/opt/promptfoo/npm`.
+2. `npm install --omit=dev --ignore-scripts` of `promptfoo@<version>` into `/opt/promptfoo/npm` (25m timeout; scripts skipped to avoid hung native postinstalls).
 3. Creates a Python venv at `/opt/promptfoo/venv`.
 4. `pip install modelaudit==<version>` into the venv.
 5. Smoke-tests each binary and the promptfoo server entry path.

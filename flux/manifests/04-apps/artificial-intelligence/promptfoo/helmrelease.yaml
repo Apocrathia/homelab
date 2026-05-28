@@ -7,6 +7,17 @@ metadata:
   namespace: promptfoo
 spec:
   interval: 15m
+  # Bootstrap init routinely exceeds Flux's 5m default (Node + npm + pip).
+  timeout: 15m
+  install:
+    timeout: 15m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 15m
+    cleanupOnFail: true
+    remediation:
+      retries: 3
   chart:
     spec:
       chart: ./helm/generic-app
@@ -17,13 +28,6 @@ spec:
         name: homelab
         namespace: flux-system
       interval: 5m
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
 
   values:
     app:
@@ -99,9 +103,12 @@ spec:
               export PATH="$OPT/node/bin:$PATH"
 
               echo "==> Installing promptfoo@${PROMPTFOO_VERSION} via npm..."
-              npm install --global \
+              # Skip lifecycle scripts: native postinstalls (prebuild-install) can hang
+              # indefinitely; the server entry is plain JS and does not need them.
+              timeout 25m npm install --global \
                 --prefix "$OPT/npm" \
                 --omit=dev \
+                --ignore-scripts \
                 --no-audit \
                 --no-fund \
                 --loglevel=warn \
