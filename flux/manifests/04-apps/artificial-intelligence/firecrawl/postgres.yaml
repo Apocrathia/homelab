@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.73"
+      version: "0.0.74"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -28,6 +28,12 @@ spec:
         runAsNonRoot: false
         readOnlyRootFilesystem: false
         allowPrivilegeEscalation: false
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
       # renovate: datasource=docker depName=ghcr.io/firecrawl/nuq-postgres
       image: ghcr.io/firecrawl/nuq-postgres@sha256:f9388bd25ae2e1f1d034518236f993ce236173c1d8800ce24092ea6643a95a33
       container:
