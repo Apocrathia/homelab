@@ -67,6 +67,16 @@ spec:
               value: "1"
             - name: NPM_CONFIG_UPDATE_NOTIFIER
               value: "false"
+            # Keep npm metadata/cache off the Longhorn PVC; writing thousands of
+            # small files to /data during install has hung bootstrap for hours.
+            - name: NPM_CONFIG_CACHE
+              value: "/tmp/.npm"
+            - name: NPM_CONFIG_PREFER_ONLINE
+              value: "true"
+            - name: NPM_CONFIG_FETCH_TIMEOUT
+              value: "120000"
+            - name: NPM_CONFIG_MAXSOCKETS
+              value: "8"
           args:
             - |
               set -euo pipefail
