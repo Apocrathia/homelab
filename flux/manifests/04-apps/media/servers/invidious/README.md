@@ -31,7 +31,7 @@ Create a 1Password item:
 
 ### Invidious Companion
 
-Companion runs as a pod sidecar. The image is pinned by digest in `helmrelease.yaml` (Renovate bumps `quay.io/invidious/invidious-companion`). PO token refresh runs hourly via `JOBS_YOUTUBE_SESSION_FREQUENCY`. If YouTube blocks cluster egress, set sidecar env `PROXY` per [companion networking config](https://github.com/iv-org/invidious-companion/blob/master/config/config.example.toml).
+Companion runs as a pod sidecar. The image is pinned by **amd64** digest in `helmrelease.yaml` (Renovate bumps `quay.io/invidious/invidious-companion`). When resolving a digest locally, use `podman pull --platform linux/amd64` so Apple Silicon does not record an arm64 manifest. PO token refresh runs hourly via `JOBS_YOUTUBE_SESSION_FREQUENCY`. If YouTube blocks cluster egress, set sidecar env `PROXY` per [companion networking config](https://github.com/iv-org/invidious-companion/blob/master/config/config.example.toml).
 
 ### Storage
 
