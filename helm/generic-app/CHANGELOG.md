@@ -1,6 +1,16 @@
 # Changelog
 
-## Version 0.0.73 (Latest)
+## Version 0.0.74 (Latest)
+
+- **Falsy numeric and boolean defaults (`hasKey`)**: Several fields used `| default`, which treats `0` and `false` as empty in Go templates.
+  - Pod `fsGroup: 0` was rendered as `1000` (e.g. Firecrawl Postgres, Hashtopolis MySQL on fresh Longhorn volumes).
+  - `app.replicas: 0` was rendered as `2`.
+  - Longhorn `numberOfReplicas: 0` (per-volume or chart default) was replaced by the next default.
+  - Sidecar `runAsUser: 0` without `securityContext.runAsUser` fell back to `1000` instead of inheriting the app or sidecar value.
+  - Authentik `openInNewTab: false`, `authentikHostInsecure: false`, and OIDC `includeClaimsInIdToken: false` were rendered as `true` when omitted from values was not the issue — explicit `false` was.
+  - `interceptHeaderAuth: false` was already safe (`default false`) but aligned to `hasKey` for consistency.
+
+## Version 0.0.73
 
 - **`hasKey` for boolean securityContext fields on initContainers and sidecars**: Truthy gates (`{{- if .X.Y }}`) on `readOnlyRootFilesystem`, `allowPrivilegeEscalation`, and `runAsNonRoot` silently dropped explicit `false` values because Go templates treat `false` as falsy. Switched to `hasKey` so explicit `false` is rendered. Also fixes `postgres.affinity.enablePodAntiAffinity` (CNPG default is `true`, so consumers couldn't actually disable pod anti-affinity). User-visible impact: consumer helmreleases that set `allowPrivilegeEscalation: false` on init containers (gluetun, install scripts, etc.) or `runAsNonRoot: false` / `readOnlyRootFilesystem: false` on sidecars will now actually emit those fields. Most affected: init containers that need `allowPrivilegeEscalation: false` — K8s default is `true`, so the bug left them able to escalate.
 

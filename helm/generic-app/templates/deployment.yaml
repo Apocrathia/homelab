@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.app.name }}
   namespace: {{ .Values.app.namespace | default .Values.app.name }}
 spec:
-  replicas: {{ .Values.app.replicas | default 2 }}
+  replicas: {{ if (hasKey .Values.app "replicas") }}{{ .Values.app.replicas }}{{ else }}2{{ end }}
   strategy:
     {{- if and .Values.app.strategy (kindIs "map" .Values.app.strategy) (hasKey .Values.app.strategy "rollingUpdate") }}
     type: RollingUpdate
@@ -75,7 +75,7 @@ spec:
         runAsNonRoot: {{ if (hasKey .Values.app.securityContext "runAsNonRoot") }}{{ .Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
         runAsUser: {{ if (hasKey .Values.app.securityContext "runAsUser") }}{{ .Values.app.securityContext.runAsUser }}{{ else }}1000{{ end }}
         runAsGroup: {{ if (hasKey .Values.app.securityContext "runAsGroup") }}{{ .Values.app.securityContext.runAsGroup }}{{ else }}1000{{ end }}
-        fsGroup: {{ .Values.app.securityContext.fsGroup | default 1000 }}
+        fsGroup: {{ if (hasKey .Values.app.securityContext "fsGroup") }}{{ .Values.app.securityContext.fsGroup }}{{ else }}1000{{ end }}
         {{- if .Values.app.securityContext.fsGroupChangePolicy }}
         fsGroupChangePolicy: {{ .Values.app.securityContext.fsGroupChangePolicy }}
         {{- end }}
@@ -540,7 +540,7 @@ spec:
             {{- if hasKey .securityContext "runAsUser" }}
             runAsUser: {{ .securityContext.runAsUser }}
             {{- else }}
-            runAsUser: {{ .runAsUser | default 1000 }}
+            runAsUser: {{ if hasKey . "runAsUser" }}{{ .runAsUser }}{{ else if (hasKey $.Values.app.securityContext "runAsUser") }}{{ $.Values.app.securityContext.runAsUser }}{{ else }}1000{{ end }}
             {{- end }}
             {{- if hasKey .securityContext "readOnlyRootFilesystem" }}
             readOnlyRootFilesystem: {{ .securityContext.readOnlyRootFilesystem }}
@@ -574,7 +574,7 @@ spec:
                 - ALL
               {{- end }}
             runAsNonRoot: {{ if (hasKey $.Values.app.securityContext "runAsNonRoot") }}{{ $.Values.app.securityContext.runAsNonRoot }}{{ else }}true{{ end }}
-            runAsUser: {{ .runAsUser | default 1000 }}
+            runAsUser: {{ if hasKey . "runAsUser" }}{{ .runAsUser }}{{ else if (hasKey $.Values.app.securityContext "runAsUser") }}{{ $.Values.app.securityContext.runAsUser }}{{ else }}1000{{ end }}
             readOnlyRootFilesystem: {{ if (hasKey $.Values.app.securityContext "readOnlyRootFilesystem") }}{{ $.Values.app.securityContext.readOnlyRootFilesystem }}{{ else }}true{{ end }}
             seccompProfile:
               type: RuntimeDefault

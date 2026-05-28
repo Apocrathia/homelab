@@ -62,7 +62,7 @@ data:
             - !Find [authentik_providers_oauth2.scopemapping, [name, "{{ .name }}"]]
             {{- end }}
           sub_mode: "{{ .Values.authentik.oidc.subMode | default "user_username" }}"
-          include_claims_in_id_token: {{ .Values.authentik.oidc.includeClaimsInIdToken | default true }}
+          include_claims_in_id_token: {{ if (hasKey .Values.authentik.oidc "includeClaimsInIdToken") }}{{ .Values.authentik.oidc.includeClaimsInIdToken }}{{ else }}true{{ end }}
           issuer_mode: "{{ .Values.authentik.oidc.issuerMode | default "per_provider" }}"
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, "{{ .Values.authentik.oidc.signingKey | default "authentik Self-signed Certificate" }}"]]
           {{- if .Values.authentik.oidc.redirectUris }}
@@ -97,7 +97,7 @@ data:
           provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "{{ .Values.app.name }}-oidc-provider"]]
           launch_url: "{{ .Values.authentik.externalHost }}"
           group: "{{ .Values.authentik.category | default "Applications" }}"
-          open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
+          open_in_new_tab: {{ if (hasKey .Values.authentik "openInNewTab") }}{{ .Values.authentik.openInNewTab }}{{ else }}true{{ end }}
           {{- if .Values.authentik.icon }}
           icon: "{{ .Values.authentik.icon }}"
           {{- end }}

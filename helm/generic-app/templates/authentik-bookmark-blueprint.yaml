@@ -28,7 +28,7 @@ data:
           slug: "{{ .Values.app.name }}"
           group: "{{ .Values.authentik.category | default "Applications" }}"
           meta_launch_url: "{{ .Values.authentik.externalHost }}"
-          open_in_new_tab: {{ .Values.authentik.openInNewTab | default true }}
+          open_in_new_tab: {{ if (hasKey .Values.authentik "openInNewTab") }}{{ .Values.authentik.openInNewTab }}{{ else }}true{{ end }}
           {{- if .Values.authentik.icon }}
           icon: "{{ .Values.authentik.icon }}"
           {{- end }}
