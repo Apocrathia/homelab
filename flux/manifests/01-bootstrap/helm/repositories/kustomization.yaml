@@ -16,6 +16,7 @@ resources:
   - cilium.yaml
   - cnpg.yaml
   - community-charts.yaml
+  - datahub.yaml
   - csi-driver-smb.yaml
   - fluent.yaml
   - gitlab.yaml
