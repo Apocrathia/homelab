@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datahub
+  labels:
+    app.kubernetes.io/name: datahub
+    app.kubernetes.io/part-of: artificial-intelligence
+    # Opts the namespace in to the sync-docker-io-imagepullsecret Kyverno
+    # policy: docker-io-imagepullsecret is cloned from kube-system and pods
+    # are mutated to use it, lifting the unauthenticated Docker Hub pull rate
+    # limit. DataHub pulls acryldata/* from docker.io; prerequisites pulls
+    # bitnamilegacy/* and opensearchproject/* through docker.io as well.
+    images/dockerhub: "true"

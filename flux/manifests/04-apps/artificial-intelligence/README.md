@@ -97,6 +97,7 @@ flowchart TB
 
 ### ML Platform
 
+- **[DataHub](./datahub/README.md)** - Metadata platform for data discovery, lineage, and governance
 - **[MLflow](./mlflow/README.md)** - Experiment tracking and model registry
 - **[Firecrawl](./firecrawl/README.md)** - Web scraping and content extraction
 
