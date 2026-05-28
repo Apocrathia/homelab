@@ -1,8 +1,7 @@
 ---
-globs: "**/*.py"
+globs: **/*.py
 alwaysApply: false
 ---
-
 # Python Rules
 
 ## Toolchain

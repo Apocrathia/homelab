@@ -1,4 +1,5 @@
 ---
+description: Helm charts, templates, and values under helm/
 globs: helm/*
 alwaysApply: false
 ---

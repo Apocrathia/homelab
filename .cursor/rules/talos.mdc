@@ -1,6 +1,7 @@
 ---
-description:
+description: Talos Linux machine config, patches, and cluster bootstrap inputs
 globs: talos/*
+alwaysApply: false
 ---
 # Talos Linux Configuration Rules
 

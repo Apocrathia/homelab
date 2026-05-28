@@ -1,6 +1,6 @@
 ---
 description: Stop and ask before editing protected paths (agent context, cluster bootstrap, OS config, shared chart)
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Protected paths

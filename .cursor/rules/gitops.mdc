@@ -1,7 +1,7 @@
 ---
-globs: "flux/**"
-alwaysApply: false
 description: GitOps workflow principles for the homelab
+globs: flux/**
+alwaysApply: false
 ---
 
 # GitOps Workflow

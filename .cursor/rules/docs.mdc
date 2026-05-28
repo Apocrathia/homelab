@@ -1,7 +1,7 @@
 ---
-globs: "**/*.md"
+globs: **/*.md
 alwaysApply: false
-description: Documentation standards: style, formatting, prettier workflow, no duplicated tunables
+description: "Documentation standards: style, formatting, prettier workflow, no duplicated tunables"
 ---
 
 # Documentation standards

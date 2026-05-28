@@ -1,4 +1,5 @@
 ---
+description: Flux CD manifests, Kustomizations, and GitOps layout under flux/
 globs: flux/*
 alwaysApply: false
 ---
