@@ -66,7 +66,7 @@ spec:
       sidecars:
         - name: companion
           # renovate: datasource=docker depName=quay.io/invidious/invidious-companion
-          image: quay.io/invidious/invidious-companion:master-1786e15
+          image: quay.io/invidious/invidious-companion@sha256:1a6745fc46762773338c93a7f6ebd33ebacf46fbcb39ad8fba193e6d86a6e73e
           ports:
             - containerPort: 8282
               name: companion
@@ -76,10 +76,13 @@ spec:
                 secretKeyRef:
                   name: invidious-secrets
                   key: companion-key
+            # PO token refresh; default */5 hammers YouTube when validation fails
+            - name: JOBS_YOUTUBE_SESSION_FREQUENCY
+              value: "0 */1 * * *"
           volumes:
             emptyDir:
               - name: companion-cache
-                mountPath: /var/tmp/youtubei.js
+                mountPath: /var/tmp
           securityContext:
             runAsUser: 10001
             runAsGroup: 10001
@@ -91,11 +94,11 @@ spec:
                 - ALL
           resources:
             requests:
-              cpu: 50m
-              memory: 256Mi
+              cpu: 100m
+              memory: 512Mi
             limits:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 1000m
+              memory: 1536Mi
           healthChecks:
             livenessProbe:
               enabled: true
@@ -103,10 +106,10 @@ spec:
                 path: /healthz
                 port: 8282
                 scheme: HTTP
-              initialDelaySeconds: 30
-              periodSeconds: 30
-              timeoutSeconds: 5
-              failureThreshold: 3
+              initialDelaySeconds: 60
+              periodSeconds: 60
+              timeoutSeconds: 15
+              failureThreshold: 5
               successThreshold: 1
             readinessProbe:
               enabled: true
@@ -114,10 +117,10 @@ spec:
                 path: /healthz
                 port: 8282
                 scheme: HTTP
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              timeoutSeconds: 3
-              failureThreshold: 3
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 5
               successThreshold: 1
       podAntiAffinity:
         enabled: false # Single replica configuration

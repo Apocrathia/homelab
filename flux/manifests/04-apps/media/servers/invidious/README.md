@@ -29,6 +29,10 @@ Create a 1Password item:
 - `hmac-key`: HMAC signing key for tokens and cookies (generate with `pwgen 32 1`)
 - `companion-key`: Shared secret for Invidious ↔ Companion communication (must be **exactly 16 characters**, generate with `pwgen 16 1`)
 
+### Invidious Companion
+
+Companion runs as a pod sidecar. The image is pinned by digest in `helmrelease.yaml` (Renovate bumps `quay.io/invidious/invidious-companion`). PO token refresh runs hourly via `JOBS_YOUTUBE_SESSION_FREQUENCY`. If YouTube blocks cluster egress, set sidecar env `PROXY` per [companion networking config](https://github.com/iv-org/invidious-companion/blob/master/config/config.example.toml).
+
 ### Storage
 
 - **PostgreSQL**: 10GB Longhorn persistent volume for database storage
