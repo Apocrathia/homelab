@@ -84,7 +84,7 @@ spec:
               # renovate: datasource=node-version depName=node
               NODE_VERSION="24.16.0"
               # renovate: datasource=npm depName=promptfoo
-              PROMPTFOO_VERSION="0.121.12"
+              PROMPTFOO_VERSION="0.121.13"
               # renovate: datasource=pypi depName=modelaudit
               MODELAUDIT_VERSION="0.2.45"
 
