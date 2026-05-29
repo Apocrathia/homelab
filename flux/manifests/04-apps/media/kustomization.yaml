@@ -46,7 +46,7 @@ resources:
   - management/scripts
   # - servers/audiobookshelf
   - servers/invidious
-  # - servers/jellyfin
+  - servers/jellyfin
   - servers/komga
   - servers/plex
   - servers/tunarr
