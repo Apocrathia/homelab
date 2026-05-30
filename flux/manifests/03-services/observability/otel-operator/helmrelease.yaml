@@ -58,25 +58,6 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-    # kube-rbac-proxy configuration
-    kubeRBACProxy:
-      enabled: true
-      resources:
-        requests:
-          cpu: 5m
-          memory: 64Mi
-        limits:
-          cpu: 100m
-          memory: 128Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
-
     # Pod security context
     securityContext:
       runAsGroup: 65532
