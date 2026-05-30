@@ -1,0 +1,268 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: comfyui
+  namespace: comfyui
+spec:
+  interval: 15m
+  # First boot downloads ComfyUI + CPU PyTorch into the Longhorn PVC; cold
+  # start can exceed Flux's 5m default.
+  timeout: 15m
+  install:
+    timeout: 15m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 15m
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: comfyui
+      namespace: comfyui
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.13
+      replicas: 1
+
+      command: ["/data/app/venv/bin/python"]
+      args:
+        - "/data/app/ComfyUI/main.py"
+        - "--listen"
+        - "0.0.0.0"
+        - "--cpu"
+        - "--disable-api-nodes"
+        - "--base-directory"
+        - "/data/comfyui"
+        - "--extra-model-paths-config"
+        - "/config/extra_model_paths.yml"
+        - "--database-url"
+        - "sqlite:////data/comfyui/user/comfyui.db"
+
+      initContainers:
+        - name: install
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.13
+          command: ["/bin/bash", "-c"]
+          env:
+            - name: PIP_DISABLE_PIP_VERSION_CHECK
+              value: "1"
+            - name: PIP_NO_CACHE_DIR
+              value: "1"
+          args:
+            - |
+              set -euo pipefail
+
+              # renovate: datasource=github-releases depName=Comfy-Org/ComfyUI
+              COMFYUI_VERSION="v0.22.0"
+
+              APP=/data/app
+              REPO="$APP/ComfyUI"
+              VENV="$APP/venv"
+              BASE=/data/comfyui
+
+              mkdir -p "$APP" "$BASE"/{output,input,user,custom_nodes,temp} "$APP/.cache"
+
+              # Standard ComfyUI model folders on the SMB share (mounted at /models).
+              for dir in checkpoints text_encoders clip clip_vision configs controlnet \
+                diffusion_models unet embeddings loras upscale_models vae \
+                audio_encoders model_patches; do
+                mkdir -p "/models/$dir"
+              done
+
+              if [ -f "$APP/.installed" ] \
+                && [ "$(cat "$APP/.installed")" = "$COMFYUI_VERSION" ] \
+                && [ -f "$VENV/bin/python" ] \
+                && [ -f "$REPO/main.py" ]; then
+                echo "==> ComfyUI ${COMFYUI_VERSION} already installed, skipping bootstrap."
+              else
+                if [ -f "$APP/.installed" ] \
+                  && [ "$(cat "$APP/.installed")" != "$COMFYUI_VERSION" ]; then
+                  echo "==> Version change detected, removing old install..."
+                  rm -rf "$REPO" "$VENV"
+                fi
+
+                echo "==> Downloading ComfyUI ${COMFYUI_VERSION}..."
+                mkdir -p "$REPO"
+                curl -fsSL \
+                  "https://github.com/Comfy-Org/ComfyUI/archive/refs/tags/${COMFYUI_VERSION}.tar.gz" \
+                  | tar xz -C "$REPO" --strip-components=1
+
+                echo "==> Creating venv and installing CPU PyTorch..."
+                python3 -m venv "$VENV"
+                "$VENV/bin/pip" install --upgrade pip
+                "$VENV/bin/pip" install \
+                  torch torchvision torchaudio \
+                  --index-url https://download.pytorch.org/whl/cpu
+
+                echo "==> Installing ComfyUI requirements..."
+                "$VENV/bin/pip" install -r "$REPO/requirements.txt"
+
+                echo "$COMFYUI_VERSION" > "$APP/.installed"
+                echo "==> Bootstrap complete."
+              fi
+
+              echo "==> Smoke test:"
+              "$VENV/bin/python" -c "import torch; print(f'torch {torch.__version__}, cuda={torch.cuda.is_available()}')"
+              test -f "$REPO/main.py" \
+                && echo "main.py: OK" \
+                || { echo "ERROR: main.py missing"; exit 1; }
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: models
+              mountPath: /models
+            - name: tmp
+              mountPath: /tmp
+
+      container:
+        name: comfyui
+        port: 8188
+        env:
+          - name: HF_HUB_DISABLE_TELEMETRY
+            value: "1"
+          - name: DO_NOT_TRACK
+            value: "1"
+          # python:3.13 slim has no /etc/passwd entry for uid 1000; torch dynamo
+          # calls getpass.getuser() when resolving cache paths.
+          - name: USER
+            value: "comfyui"
+          - name: HOME
+            value: "/data"
+          - name: XDG_CACHE_HOME
+            value: "/data/app/.cache"
+          - name: TORCHINDUCTOR_CACHE_DIR
+            value: "/data/app/.cache/torchinductor"
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8188
+        portName: http
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: models
+          mountPath: /models
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          - name: model-paths
+            mountPath: /config
+            configMapName: comfyui-extra-model-paths
+            readOnly: true
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /features
+            port: 8188
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /features
+            port: 8188
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /features
+            port: 8188
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 60
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 25Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: models
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "AI Models/ComfyUI"
+            capacity: 500Gi
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            createSubDir: "true"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "ComfyUI"
+      externalHost: "https://comfyui.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/comfyui/icon.svg"
+      metaDescription: "Node-based diffusion model workflow UI and API"
+      metaPublisher: "Comfy Org"
+
+    httproute:
+      enabled: false

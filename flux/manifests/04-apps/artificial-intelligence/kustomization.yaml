@@ -9,6 +9,7 @@ resources:
   - k8sgpt
   - kagent
   - agents
+  - comfyui
   - contextforge
   - datahub
   - duckdb

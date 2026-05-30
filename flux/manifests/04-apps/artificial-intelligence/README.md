@@ -71,6 +71,7 @@ flowchart TB
 
 ### User Interfaces
 
+- **[ComfyUI](./comfyui/README.md)** - Node-graph diffusion workflow editor and API (CPU-only)
 - **[OpenWebUI](./openwebui/README.md)** - Chat interface for LLMs
 - **[Flowise](./flowise/README.md)** - Visual AI agent and workflow builder
 - **[JupyterHub](./jupyterhub/README.md)** - Multi-user notebook server with Authentik SSO
