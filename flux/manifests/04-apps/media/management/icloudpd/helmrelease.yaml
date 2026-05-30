@@ -20,7 +20,7 @@ spec:
     app:
       name: icloudpd
       # renovate: datasource=docker depName=icloudpd/icloudpd
-      image: icloudpd/icloudpd:1.32.2
+      image: icloudpd/icloudpd:1.32.3
       container:
         name: icloudpd
         # WebUI for authentication via port-forward
