@@ -82,6 +82,7 @@ flowchart TB
 
 ### Agent Orchestration
 
+- **[Hermes Agent](./hermes-agent/README.md)** - Nous Research personal AI agent (gateway, dashboard, skills) backed by LiteLLM
 - **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration

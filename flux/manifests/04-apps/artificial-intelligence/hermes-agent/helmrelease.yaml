@@ -1,0 +1,156 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hermes-agent
+  namespace: hermes-agent
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: hermes-agent
+      namespace: hermes-agent
+      # renovate: datasource=docker depName=nousresearch/hermes-agent
+      image: nousresearch/hermes-agent:v2026.5.29.2
+
+      # s6 /init must run as root to fix /run and remap UIDs; generic-app defaults
+      # to runAsUser 1000. Run gateway + dashboard directly as the image hermes user.
+      command: ["/bin/bash", "-lc"]
+      args:
+        - |
+          set -euo pipefail
+          export HOME=/opt/data
+          cd /opt/data
+          source /opt/hermes/.venv/bin/activate
+          insecure=""
+          case "${HERMES_DASHBOARD_INSECURE:-}" in 1|true|yes) insecure="--insecure" ;; esac
+          if [[ "${HERMES_DASHBOARD:-}" =~ ^(1|true|yes)$ ]]; then
+            hermes dashboard \
+              --host "${HERMES_DASHBOARD_HOST:-0.0.0.0}" \
+              --port "${HERMES_DASHBOARD_PORT:-9119}" \
+              --no-open ${insecure} &
+          fi
+          exec hermes gateway run --no-supervise
+
+      container:
+        name: hermes-agent
+        port: 9119
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: HERMES_HOME
+            value: "/opt/data"
+          - name: HOME
+            value: "/opt/data"
+          - name: HERMES_GATEWAY_NO_SUPERVISE
+            value: "1"
+          - name: HERMES_DASHBOARD
+            value: "1"
+          - name: HERMES_DASHBOARD_HOST
+            value: "0.0.0.0"
+          - name: HERMES_DASHBOARD_PORT
+            value: "9119"
+          # Authentik proxy sits in front; dashboard OAuth is not wired to Authentik.
+          - name: HERMES_DASHBOARD_INSECURE
+            value: "1"
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: litellm-api-key
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 9119
+        portName: http
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 1Gi
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+
+      securityContext:
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          - name: config
+            mountPath: /opt/data/config.yaml
+            configMapName: hermes-agent-config
+            subPath: config.yaml
+            readOnly: true
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 9119
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 9119
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          tcpSocket:
+            port: 9119
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+      volumeMounts:
+        - name: state
+          mountPath: /opt/data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: state
+            capacity: 10Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/hermes-agent-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "Hermes Agent"
+      externalHost: "https://hermes-agent.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/hermes-agent/icon.png"
+
+    httproute:
+      enabled: false
