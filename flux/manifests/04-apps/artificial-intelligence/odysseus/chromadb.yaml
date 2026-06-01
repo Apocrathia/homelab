@@ -1,0 +1,94 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: odysseus-chromadb
+  namespace: odysseus
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: odysseus-chromadb
+      namespace: odysseus
+      # renovate: datasource=docker depName=chromadb/chroma
+      image: docker.io/chromadb/chroma:1.0.6
+      container:
+        name: chromadb
+        port: 8000
+        env:
+          - name: ANONYMIZED_TELEMETRY
+            value: "FALSE"
+          - name: IS_PERSISTENT
+            value: "TRUE"
+          - name: PERSIST_DIRECTORY
+            value: "/data"
+      service:
+        type: ClusterIP
+        port: 8000
+        targetPort: 8000
+        portName: http
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v2/heartbeat
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v2/heartbeat
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 10Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false

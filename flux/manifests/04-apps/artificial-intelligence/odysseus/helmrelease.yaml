@@ -1,0 +1,316 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: odysseus
+  namespace: odysseus
+spec:
+  interval: 15m
+  # Bootstrap init (apt + git clone + pip) routinely exceeds Flux's 5m default.
+  timeout: 20m
+  install:
+    timeout: 20m
+    remediation:
+      retries: 3
+  upgrade:
+    timeout: 20m
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: odysseus
+      namespace: odysseus
+      # Upstream Dockerfile: FROM python:3.12-slim (no published image). Bootstrap
+      # clone + pip in init on the same base the project builds against.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.12-slim
+      replicas: 1
+
+      command: ["/bin/bash", "-lc"]
+      args:
+        - |
+          set -euo pipefail
+          export DATABASE_URL="postgresql+psycopg2://${DB_USERNAME}:$(python3 -c "import urllib.parse,os; print(urllib.parse.quote(os.environ['DB_PASSWORD'], safe=''))")@odysseus-postgres-rw.odysseus.svc.cluster.local:5432/odysseus"
+          cd /opt/odysseus
+          exec /opt/odysseus/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 7000
+
+      initContainers:
+        - name: install
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.12-slim
+          command: ["/bin/bash", "-c"]
+          env:
+            - name: PIP_DISABLE_PIP_VERSION_CHECK
+              value: "1"
+            - name: PIP_CACHE_DIR
+              value: "/tmp/.pip"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: odysseus-secrets
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: odysseus-secrets
+                  key: password
+            - name: ODYSSEUS_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: odysseus-secrets
+                  key: admin-password
+          args:
+            - |
+              set -euo pipefail
+
+              # renovate: datasource=github-releases depName=pewdiepie-archdaemon/odysseus
+              ODYSSEUS_REF="main"
+              REPO_URL="https://github.com/pewdiepie-archdaemon/odysseus.git"
+
+              OPT=/opt/odysseus
+              SRC=/tmp/odysseus-src
+
+              echo "==> Installing build dependencies..."
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                build-essential \
+                cmake \
+                curl \
+                git \
+                rsync
+              rm -rf /var/lib/apt/lists/*
+
+              echo "==> Cleaning previous bootstrap..."
+              rm -rf "${OPT:?}"/* "${OPT}"/.[!.]* "${SRC}" 2>/dev/null || true
+              mkdir -p "$OPT"
+
+              echo "==> Cloning Odysseus (${ODYSSEUS_REF})..."
+              git clone --depth 1 --branch "${ODYSSEUS_REF}" "$REPO_URL" "$SRC"
+              # Do not --delete over logs/ or data/: both are mount points under ${OPT}.
+              rsync -a --delete --exclude 'logs' --exclude 'data' "${SRC}/" "${OPT}/"
+
+              echo "==> Creating venv and installing Python dependencies..."
+              python3 -m venv "$OPT/venv"
+              "$OPT/venv/bin/pip" install --no-cache-dir --upgrade pip
+              timeout 25m "$OPT/venv/bin/pip" install --no-cache-dir -r "$OPT/requirements.txt"
+              "$OPT/venv/bin/pip" install --no-cache-dir psycopg2-binary
+
+              _db_py='import os,urllib.parse as p\n'
+              _db_py+='e=os.environ;h="odysseus-postgres-rw.odysseus.svc.cluster.local"\n'
+              _db_py+='print("postgresql+psycopg2://%s:%s@%s:5432/odysseus"%(\n'
+              _db_py+='p.quote(e["DB_USERNAME"],""),p.quote(e["DB_PASSWORD"]),h))'
+              export DATABASE_URL="$("$OPT/venv/bin/python" -c "$_db_py")"
+
+              echo "==> Waiting for PostgreSQL..."
+              for i in $(seq 1 60); do
+                if "$OPT/venv/bin/python" -c "import os; from sqlalchemy import create_engine, text; e=create_engine(os.environ['DATABASE_URL']); e.connect().execute(text('SELECT 1'))"; then
+                  echo "PostgreSQL is ready."
+                  break
+                fi
+                if [ "$i" -eq 60 ]; then
+                  echo "ERROR: PostgreSQL not ready after 5 minutes"
+                  exit 1
+                fi
+                sleep 5
+              done
+
+              echo "==> Preparing persistent data paths (PVC at /data)..."
+              mkdir -p /data/huggingface /data/local /data/ssh
+              mkdir -p "$OPT/logs" "$OPT/.cache"
+              ln -sfn /data "$OPT/data"
+              ln -sfn /data/huggingface "$OPT/.cache/huggingface"
+              ln -sfn /data/local "$OPT/.local"
+
+              echo "==> Running setup.py (database + admin user)..."
+              cd "$OPT"
+              "$OPT/venv/bin/python" setup.py
+
+              echo "==> Runtime writable paths (main container runs as uid 1000)..."
+              mkdir -p \
+                "$OPT/services/cache/search" \
+                "$OPT/services/cache/content" \
+                "$OPT/services/hwfit/cache"
+
+              echo "==> Fixing ownership (rsync + venv run as root in init)..."
+              chown -R 1000:1000 /opt/odysseus /data 2>/dev/null || true
+
+              echo "==> Smoke tests:"
+              test -f "$OPT/app.py"
+              "$OPT/venv/bin/python" -c "import fastapi, uvicorn"
+              echo "==> Bootstrap complete."
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          volumeMounts:
+            - name: opt
+              mountPath: /opt/odysseus
+            - name: data
+              mountPath: /data
+            - name: logs
+              mountPath: /opt/odysseus/logs
+            - name: tmp
+              mountPath: /tmp
+
+      container:
+        name: odysseus
+        port: 7000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: AUTH_ENABLED
+            value: "true"
+          - name: LOCALHOST_BYPASS
+            value: "false"
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: odysseus-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: odysseus-secrets
+                key: password
+          - name: SEARXNG_INSTANCE
+            value: "http://searxng.searxng.svc.cluster.local:8080"
+          - name: CHROMADB_HOST
+            value: "odysseus-chromadb"
+          - name: CHROMADB_PORT
+            value: "8000"
+          - name: ALLOWED_ORIGINS
+            value: "https://odysseus.gateway.services.apocrathia.com"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 7000
+        portName: http
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 4Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+      volumes:
+        emptyDir:
+          - name: opt
+            mountPath: /opt/odysseus
+          - name: logs
+            mountPath: /opt/odysseus/logs
+          - name: tmp
+            mountPath: /tmp
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 7000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 7000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 7000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 36
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 20Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/odysseus-secrets"
+
+    postgres:
+      enabled: true
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      database: odysseus
+      owner: odysseus
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "AI & Automation"
+      displayName: "Odysseus"
+      externalHost: "https://odysseus.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/odysseus/icon.svg"
+      metaDescription: "Self-hosted AI workspace — chat, agents, memory, and documents"
+      metaPublisher: "Odysseus"
+
+    httproute:
+      enabled: false
