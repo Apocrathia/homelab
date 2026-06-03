@@ -26,6 +26,11 @@ tofu-validate:
 tofu-plan:
   extends: .tofu-base
   stage: verify
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - terraform/**/*
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
     - |
       MARKER="<!-- tofu-plan -->"
@@ -43,6 +48,12 @@ tofu-plan:
       echo ""
       echo "=== Plan Summary ==="
       echo "$PLAN_SUMMARY"
+
+      # Only post to an MR when this is an MR pipeline (e.g. drift schedule has no MR)
+      if [ "$CI_PIPELINE_SOURCE" != "merge_request_event" ]; then
+        echo "Pipeline source is '${CI_PIPELINE_SOURCE}', not an MR — skipping MR comment."
+        exit ${PLAN_EXIT:-0}
+      fi
 
       # Build MR comment
       {
