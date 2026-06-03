@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: mcp-server
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/gofetch/server
-  image: ghcr.io/stackloklabs/gofetch/server@sha256:64d78aa8a49e376a518aa2b2cf5a9b72cd30ae76c5e7092b3f998457371e427e
+  image: ghcr.io/stackloklabs/gofetch/server@sha256:477844f269aa0700c4b00b2e90d916fba3067fd9e6548946ba20d4d818c489e9
   transport: streamable-http
   proxyPort: 8080
   mcpPort: 8080
@@ -29,6 +29,6 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/gofetch/server
-          image: ghcr.io/stackloklabs/gofetch/server@sha256:64d78aa8a49e376a518aa2b2cf5a9b72cd30ae76c5e7092b3f998457371e427e
+          image: ghcr.io/stackloklabs/gofetch/server@sha256:477844f269aa0700c4b00b2e90d916fba3067fd9e6548946ba20d4d818c489e9
           args:
             - "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
