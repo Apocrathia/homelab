@@ -20,7 +20,7 @@ spec:
     app:
       name: seerr
       # renovate: datasource=docker depName=ghcr.io/seerr-team/seerr
-      image: ghcr.io/seerr-team/seerr:v3.2.0
+      image: ghcr.io/seerr-team/seerr:v3.3.0
       container:
         name: seerr
         port: 5055
