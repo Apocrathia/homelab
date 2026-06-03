@@ -66,7 +66,7 @@ spec:
       sidecars:
         - name: companion
           # renovate: datasource=docker depName=quay.io/invidious/invidious-companion
-          image: quay.io/invidious/invidious-companion@sha256:82fbe75c5f07c4f629b6d518c8caed49b74fe42df90f3bf7b7d19a701a03d2d7
+          image: quay.io/invidious/invidious-companion@sha256:3569960520cb07f4625217f39b22114f32c8c5f01e4b7c173adae8b23562c5e6
           ports:
             - containerPort: 8282
               name: companion
