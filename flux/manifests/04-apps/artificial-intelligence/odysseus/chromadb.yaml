@@ -21,7 +21,7 @@ spec:
       name: odysseus-chromadb
       namespace: odysseus
       # renovate: datasource=docker depName=chromadb/chroma
-      image: docker.io/chromadb/chroma:1.0.6
+      image: docker.io/chromadb/chroma:1.5.9
       container:
         name: chromadb
         port: 8000
