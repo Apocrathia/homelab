@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "a2a-sdk>=0.3.25",
     "httpx>=0.28.0,<1.0.0",
-    "starlette>=0.45.0",
+    "starlette>=1.0.1",
     "uvicorn>=0.34.0",
 ]
 
