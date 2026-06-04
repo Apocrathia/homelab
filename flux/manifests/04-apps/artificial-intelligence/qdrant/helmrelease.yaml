@@ -10,7 +10,7 @@ spec:
     spec:
       chart: qdrant
       # renovate: datasource=helm registryUrl=https://qdrant.github.io/qdrant-helm depName=qdrant
-      version: "1.18.1"
+      version: "1.18.2"
       sourceRef:
         kind: HelmRepository
         name: qdrant
