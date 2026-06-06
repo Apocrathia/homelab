@@ -20,7 +20,7 @@ spec:
     app:
       name: rdt-client
       # renovate: datasource=docker depName=ghcr.io/rogerfar/rdtclient
-      image: ghcr.io/rogerfar/rdtclient:2.0.136
+      image: ghcr.io/rogerfar/rdtclient:2.0.138
       container:
         name: rdt-client
         port: 6500
