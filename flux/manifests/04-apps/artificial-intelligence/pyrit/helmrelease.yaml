@@ -104,7 +104,7 @@ spec:
               /opt/venv/bin/pip install --no-cache-dir --upgrade pip
 
               # renovate: datasource=pypi depName=pyrit
-              PYRIT_VERSION="0.13.0"
+              PYRIT_VERSION="0.14.0"
               echo "Installing pyrit==${PYRIT_VERSION}..."
               /opt/venv/bin/pip install --no-cache-dir "pyrit==${PYRIT_VERSION}"
 
