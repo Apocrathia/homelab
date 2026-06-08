@@ -20,7 +20,7 @@ spec:
     app:
       name: ombi
       # renovate: datasource=docker depName=ghcr.io/trueforge-org/ombi
-      image: ghcr.io/trueforge-org/ombi:4.53.5
+      image: ghcr.io/trueforge-org/ombi:4.53.10
       container:
         name: ombi
         port: 3579
