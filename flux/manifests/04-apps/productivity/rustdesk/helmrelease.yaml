@@ -166,7 +166,7 @@ spec:
     loadbalancer:
       enabled: true
       ip: "10.100.1.94"
-      externalTrafficPolicy: Local
+      externalTrafficPolicy: Cluster
       ports:
         - name: nat-test
           port: 21115
