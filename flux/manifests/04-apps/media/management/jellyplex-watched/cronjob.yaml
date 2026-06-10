@@ -1,0 +1,106 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jellyplex-watched
+  namespace: jellyplex-watched
+spec:
+  schedule: "0 */6 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: jellyplex-watched
+              # renovate: datasource=docker depName=ghcr.io/luigi311/jellyplex-watched
+              image: ghcr.io/luigi311/jellyplex-watched:8.5.3
+              env:
+                - name: PUID
+                  value: "1000"
+                - name: PGID
+                  value: "1000"
+                - name: RUN_ONLY_ONCE
+                  value: "True"
+                - name: DRYRUN
+                  value: "False"
+                - name: DEBUG_LEVEL
+                  value: "INFO"
+                - name: LOG_FILE
+                  value: "/data/log.log"
+                - name: MARK_FILE
+                  value: "/data/mark.log"
+                - name: PLEX_BASEURL
+                  value: "http://plex.plex.svc.cluster.local:80"
+                - name: PLEX_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: jellyplex-watched-secrets
+                      key: plex-token
+                - name: JELLYFIN_BASEURL
+                  value: "http://jellyfin.jellyfin.svc.cluster.local:80"
+                - name: JELLYFIN_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: jellyplex-watched-secrets
+                      key: jellyfin-token
+                - name: USER_MAPPING
+                  value: '{"apocrathia":"ianyoung"}'
+                - name: SYNC_FROM_PLEX_TO_JELLYFIN
+                  value: "True"
+                - name: SYNC_FROM_JELLYFIN_TO_PLEX
+                  value: "True"
+                - name: SYNC_FROM_PLEX_TO_PLEX
+                  value: "False"
+                - name: SYNC_FROM_JELLYFIN_TO_JELLYFIN
+                  value: "False"
+                - name: SYNC_FROM_PLEX_TO_EMBY
+                  value: "False"
+                - name: SYNC_FROM_JELLYFIN_TO_EMBY
+                  value: "False"
+                - name: SYNC_FROM_EMBY_TO_PLEX
+                  value: "False"
+                - name: SYNC_FROM_EMBY_TO_JELLYFIN
+                  value: "False"
+                - name: SYNC_FROM_EMBY_TO_EMBY
+                  value: "False"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 1000m
+                  memory: 512Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: jellyplex-watched-data
+            - name: tmp
+              emptyDir:
+                sizeLimit: 100Mi

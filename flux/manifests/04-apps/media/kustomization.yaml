@@ -25,6 +25,7 @@ resources:
   - management/huntarr2
   - management/icloudpd
   - management/immich
+  - management/jellyplex-watched
   # - management/lazylibrarian
   - management/lidarr
   # - management/maintainerr
