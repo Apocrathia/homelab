@@ -36,7 +36,7 @@ spec:
       # Upstream Dockerfile: FROM python:3.12-slim (no published image). Bootstrap
       # clone + pip in init on the same base the project builds against.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.12-slim
+      image: public.ecr.aws/docker/library/python:3.14-slim
       replicas: 1
 
       command: ["/bin/bash", "-lc"]
@@ -50,7 +50,7 @@ spec:
       initContainers:
         - name: install
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.12-slim
+          image: public.ecr.aws/docker/library/python:3.14-slim
           command: ["/bin/bash", "-c"]
           env:
             - name: PIP_DISABLE_PIP_VERSION_CHECK
