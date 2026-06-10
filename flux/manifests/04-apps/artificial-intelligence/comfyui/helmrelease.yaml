@@ -35,7 +35,7 @@ spec:
       name: comfyui
       namespace: comfyui
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.13
+      image: public.ecr.aws/docker/library/python:3.14
       replicas: 1
 
       command: ["/data/app/venv/bin/python"]
@@ -55,7 +55,7 @@ spec:
       initContainers:
         - name: install
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.13
+          image: public.ecr.aws/docker/library/python:3.14
           command: ["/bin/bash", "-c"]
           env:
             - name: PIP_DISABLE_PIP_VERSION_CHECK
