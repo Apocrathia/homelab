@@ -6,4 +6,5 @@ resources:
   - secret.yaml
   - snmp-exporter.yaml
   - etcd
+  - gaming-pc
   - snmp
