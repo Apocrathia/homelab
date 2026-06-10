@@ -44,7 +44,7 @@ spec:
         - "--listen"
         - "0.0.0.0"
         - "--cpu"
-        - "--disable-api-nodes"
+        - "--enable-assets"
         - "--base-directory"
         - "/data/comfyui"
         - "--extra-model-paths-config"

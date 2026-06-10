@@ -21,9 +21,14 @@ ComfyUI has no built-in auth. Authentik proxy provider sits in front of the web 
 
 ## Configuration
 
-All workflow and model configuration happens through the web UI after deployment. Place model files on the NAS under `Library/AI Models/ComfyUI/` in the standard subdirectories (`checkpoints/`, `loras/`, `vae/`, etc.). The init container creates those folders on the share; ComfyUI lists models from whatever files you put there — an empty share means no models in the UI.
+Workflow and model configuration happens through the web UI after deployment. Models can be added two ways:
 
-The SQLite database is stored at `/data/comfyui/user/comfyui.db` on Longhorn via `--database-url`. ComfyUI's default path points at the read-only app tree under `/data/app/ComfyUI/user/`, which does not exist after bootstrap.
+1. **UI download** — workflow templates can fetch missing models from external hosts (HuggingFace, etc.). Requires `--enable-assets` and no `--disable-api-nodes` (the latter blocks frontend internet access via CSP).
+2. **Manual** — copy files to the NAS under `Library/AI Models/ComfyUI/` in the standard subdirectories (`checkpoints/`, `loras/`, `vae/`, etc.). The init container creates those folders on the share.
+
+Downloaded models land on the SMB share via `extra_model_paths.yaml`. The asset seeder indexes `/models`, `/data/comfyui/input`, and `/data/comfyui/output` when `--enable-assets` is set.
+
+The SQLite database is stored at `/data/comfyui/user/comfyui.db` on Longhorn via `--database-url`. ComfyUI's default path points at the read-only app tree under `/data/app/ComfyUI/user/`, which does not exist after bootstrap. The asset system requires both `--database-url` and `--enable-assets`.
 
 The init container pins a ComfyUI release tag via Renovate. Bumping the tag triggers a reinstall on next pod start.
 
@@ -50,9 +55,9 @@ Subsequent pod restarts skip bootstrap when the installed version matches the pi
 
 Cold start on a fresh PVC: expect 10–20 minutes for PyTorch + deps. Upgrades that change the ComfyUI pin reinstall into the same PVC.
 
-## Privacy
+## Privacy and outbound access
 
-ComfyUI sets `HF_HUB_DISABLE_TELEMETRY` and `DO_NOT_TRACK` on startup. This deployment also passes `--disable-api-nodes` to block the optional paid cloud inference nodes.
+ComfyUI sets `HF_HUB_DISABLE_TELEMETRY` and `DO_NOT_TRACK` on startup. The UI can reach external model hosts for template downloads — Authentik proxy auth limits who can trigger that, but anyone with access can pull arbitrary model URLs through the ComfyUI frontend. To lock this down again, add `--disable-api-nodes` (blocks frontend internet and paid cloud inference API nodes).
 
 ## Troubleshooting
 
