@@ -21,7 +21,6 @@ resources:
   - management/chaptarr
   - management/cleanuparr
   # - management/daps
-  # - management/huntarr
   - management/huntarr2
   - management/icloudpd
   - management/immich
