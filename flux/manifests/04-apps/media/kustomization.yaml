@@ -42,6 +42,7 @@ resources:
   - management/suwayomi
   - management/taggarr
   - management/tautulli
+  - management/tracearr
   - management/tdarr
   - management/whisparr
   - management/scripts

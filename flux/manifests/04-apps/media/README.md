@@ -57,6 +57,7 @@ Media applications are organized into three categories:
 - **[Suwayomi](./management/suwayomi/README.md)** - Manga download manager using Tachiyomi extensions
 - **[Taggarr](./management/taggarr/README.md)** - Tags anime in Sonarr based on dubbed audio availability
 - **[Tautulli](./management/tautulli/README.md)** - Plex monitoring and statistics
+- **[Tracearr](./management/tracearr/README.md)** - Multi-server Plex, Jellyfin, and Emby monitoring with sharing detection
 - **[Tdarr](./management/tdarr/README.md)** - Distributed transcoding with DaemonSet worker nodes
 
 ### Utilities

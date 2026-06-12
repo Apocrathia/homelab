@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: tracearr
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "tracearr-proxy-provider"
+    attrs:
+      name: "tracearr-proxy-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: false
+      internal_host: "http://tracearr.tracearr.svc.cluster.local:3000"
+      external_host: "https://tracearr.gateway.services.apocrathia.com"
+
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "tracearr"
+    attrs:
+      name: "Tracearr"
+      slug: "tracearr"
+      group: "Media"
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "tracearr-proxy-provider"]]
+      launch_url: "https://tracearr.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/tracearr/icon.svg"
+      meta_description: "Real-time monitoring for Plex, Jellyfin, and Emby"
+      meta_publisher: "Tracearr"
+
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "tracearr-outpost"
+    attrs:
+      name: "tracearr-outpost"
+      type: "proxy"
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "tracearr-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
+        kubernetes_json_patches:
+          deployment:
+            - op: add
+              path: /spec/template/spec/automountServiceAccountToken
+              value: false

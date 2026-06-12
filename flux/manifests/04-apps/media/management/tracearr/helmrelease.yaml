@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tracearr
+  namespace: tracearr
+spec:
+  interval: 15m
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ./docker/helm/tracearr
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: tracearr
+        namespace: tracearr
+      interval: 1h
+  values:
+    secrets:
+      autoGenerate: false
+      existingSecret: tracearr-secrets
+
+    ingress:
+      enabled: false
+
+    tracearr:
+      env:
+        NODE_ENV: production
+        HOST: "0.0.0.0"
+        PORT: "3000"
+        LOG_LEVEL: info
+        TZ: America/Denver
+        CORS_ORIGIN: "https://tracearr.gateway.services.apocrathia.com"
+
+      backups:
+        storageClass: longhorn
+
+      imageCache:
+        storageClass: longhorn
+
+    timescale:
+      persistence:
+        storageClass: longhorn
+
+    redis:
+      persistence:
+        storageClass: longhorn
