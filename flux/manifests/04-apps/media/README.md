@@ -35,6 +35,7 @@ Media applications are organized into three categories:
 
 - **[Immich](./management/immich/README.md)** - Photo and video backup with ML face recognition and smart search
 - **[icloudpd](./management/icloudpd/README.md)** - Background service syncing iCloud Photos to NAS storage
+- **[JellyPlex-Watched](./management/jellyplex-watched/README.md)** - Syncs watched status between Plex and Jellyfin
 
 ### Media Tools
 
