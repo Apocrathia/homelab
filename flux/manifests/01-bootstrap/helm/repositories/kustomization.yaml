@@ -33,6 +33,7 @@ resources:
   - qdrant.yaml
   - renovate.yaml
   - toolhive.yaml
+  - tracearr.yaml
   - tuppr.yaml
   - external-secrets.yaml
   - flyte.yaml

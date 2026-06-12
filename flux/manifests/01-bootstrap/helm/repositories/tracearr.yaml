@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: tracearr
+  namespace: tracearr
+spec:
+  interval: 1h
+  url: https://github.com/connorgallopo/tracearr
+  ref:
+    # renovate: datasource=git-tags depName=https://github.com/connorgallopo/tracearr
+    tag: v1.4.28
+  timeout: 3m
