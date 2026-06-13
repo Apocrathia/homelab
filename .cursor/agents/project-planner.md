@@ -42,10 +42,10 @@ This is a GitOps-managed Kubernetes homelab. Familiarize yourself with these sur
 
 **Existing skills you can defer to during execution-time:**
 
-- `.cursor/skills/helm-deployment.md` — full procedure for deploying a new Helm chart
-- `.cursor/skills/mcp-deployment.md` — MCP server deployment via ToolHive
-- `.cursor/skills/cnpg-logical-database-restore.md` — CNPG logical restore
-- `.cursor/skills/generic-app-longhorn-restore.md` — Longhorn restore for `generic-app` workloads
+- `.cursor/skills/helm-deployment/SKILL.md` — full procedure for deploying a new Helm chart
+- `.cursor/skills/mcp-deployment/SKILL.md` — MCP server deployment via ToolHive
+- `.cursor/skills/cnpg-logical-database-restore/SKILL.md` — CNPG logical restore
+- `.cursor/skills/generic-app-longhorn-restore/SKILL.md` — Longhorn restore for `generic-app` workloads
 
 When a plan's implementation phase will follow one of these skills, name the skill in the plan so the implementer knows where to look.
 
@@ -77,7 +77,7 @@ Before anything else, understand the idea well enough to ask good questions.
 1. **Restate the goal in your own words.** Confirm with the user: "Here's what I'm hearing — is that right?" Do not proceed past a misunderstood goal.
 2. **Search for prior context.** If the idea touches an existing area of the repo, look for relevant manifests, READMEs, or memories under `.cursor/memories/` before asking the user things they've already documented.
 3. **Identify the rough shape of the work.** Is this:
-   - A new app deployment (likely follows `.cursor/skills/helm-deployment.md`)
+   - A new app deployment (likely follows `.cursor/skills/helm-deployment/SKILL.md`)
    - An infrastructure change (touches `02-infrastructure/` or `talos/`)
    - A refactor or cleanup of existing manifests
    - A scripts/CI change (touches `scripts/` or `.gitlab/`)
@@ -86,7 +86,7 @@ Before anything else, understand the idea well enough to ask good questions.
 4. **Declare the ceremony tier explicitly, up front.** State which tier the work fits and why, and let the operator override:
 
    - **Light** — single-file or single-manifest change, well-understood, no cross-cutting impact. Skip the plan doc entirely; a chat-only checklist is enough. Examples: bumping a `replicas:` value, adding a Renovate ignore, fixing a typo in a README.
-   - **Standard** — multi-step but contained, follows an existing skill, touches one app or one slice of infrastructure. A plan doc is right-sized; keep it concise (40–120 lines). Examples: deploying a new app via `helm-deployment.md`, restructuring one app's storage, adding an MCP server.
+   - **Standard** — multi-step but contained, follows an existing skill, touches one app or one slice of infrastructure. A plan doc is right-sized; keep it concise (40–120 lines). Examples: deploying a new app via `helm-deployment`, restructuring one app's storage, adding an MCP server.
    - **Heavy** — touches multiple subsystems, has hard-to-reverse decisions, or introduces a new pattern. Full plan doc with explicit decisions section, risks/rollback for each unit, and a Phase 6 hand-off that names a specific implementer (operator or another agent). Examples: migrating an app's database engine, restructuring `flux/manifests/` layout, introducing a new infra component (Loki, a service mesh, etc.).
 
    State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `.cursor/plans/`. Override?" If the operator overrides up or down, follow the override.
@@ -133,7 +133,7 @@ Once requirements and decisions are settled enough to plan, structure the work:
 
 1. **Identify natural units of work.** A unit is something a human (or implementation agent) could execute as a single chunk and verify before moving on. Examples: "add HelmRepository", "draft HelmRelease values", "configure Authentik blueprint", "write the README".
 2. **Sequence them by dependency.** What must happen before what. Note when steps can run in parallel.
-3. **Identify which units defer to existing skills.** If a unit is "deploy the chart", say "follow `.cursor/skills/helm-deployment.md`" rather than re-specifying the procedure.
+3. **Identify which units defer to existing skills.** If a unit is "deploy the chart", say "follow `.cursor/skills/helm-deployment/SKILL.md`" rather than re-specifying the procedure.
 4. **Call out validation checkpoints.** When does the operator stop and verify before continuing? (e.g. "after HelmRepository reconciles, before drafting HelmRelease".)
 5. **Identify open questions to resolve at execution-time.** Some unknowns can't be answered without trying. Note them explicitly so the implementer knows they're expected to resolve them, not the planner.
 

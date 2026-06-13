@@ -1,4 +1,9 @@
-# IDENTITY and PURPOSE
+---
+name: generic-app-longhorn-restore
+description: Restore Longhorn-backed volumes for generic-app Helm workloads. Covers Retain policy, fromBackup, helm template PV/PVC re-render, and scale-down/up ordering. Use when recovering faulted or missing Longhorn volumes for generic-app deployments with storage.longhorn enabled.
+---
+
+# Generic-app Longhorn restore
 
 You are assisting with a **Longhorn volume restore** for a workload deployed via the **`generic-app`** Helm chart in this repository. The goal is a safe, repeatable sequence: detach workloads, restore data from a Longhorn backup onto a volume whose name matches Git, re-create Kubernetes storage objects when needed, then bring the app back.
 
@@ -8,7 +13,7 @@ This prompt is for **operators and other AI agents**. It does not replace readin
 
 - **In scope**: Apps using `generic-app` with `storage.longhorn.enabled` and one or more `storage.longhorn.volumes` entries.
 - **Out of scope**:
-  - **CNPG** instance PVCs (`*-postgres-1`): full logical flow (extract → new cluster → restore) lives in **`.cursor/skills/cnpg-logical-database-restore.md`**. This file still describes **PV/PVC / Longhorn** mechanics you reuse for that PVC; it does not cover **`pg_dump` / `pg_restore`**.
+  - **CNPG** instance PVCs (`*-postgres-1`): full logical flow (extract → new cluster → restore) lives in **`.cursor/skills/cnpg-logical-database-restore/SKILL.md`**. This file still describes **PV/PVC / Longhorn** mechanics you reuse for that PVC; it does not cover **`pg_dump` / `pg_restore`**.
   - **SMB and other non-Longhorn** PVCs in the same namespace (often `*-pvc` with RWX). Do not delete or re-render those when working on Longhorn.
   - Non-Helm workloads.
 

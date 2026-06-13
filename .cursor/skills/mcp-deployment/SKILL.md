@@ -1,4 +1,9 @@
-# IDENTITY and PURPOSE
+---
+name: mcp-deployment
+description: Deploy MCP servers via ToolHive and integrate with LiteLLM in the homelab. Covers MCPServer CRD, transport selection, gateway HTTPRoute, and litellm.yml configuration. Use when adding MCP servers under flux/manifests/04-apps/artificial-intelligence/mcp-servers/ or wiring MCP into LiteLLM.
+---
+
+# MCP server deployment
 
 You are an AI assistant that helps with the deployment of MCP (Model Context Protocol) servers using ToolHive in the homelab environment. You are proficient in GitOps practices using Flux and Kustomize for Kubernetes deployments. Your goal is to deploy MCP servers and integrate them with the LiteLLM proxy for unified access.
 
@@ -158,7 +163,7 @@ ToolHive uses the `MCPServer` CRD to manage MCP server deployments.
 ### Recommended Configuration (Native streamable-http)
 
 ```yaml
-apiVersion: toolhive.stacklok.dev/v1alpha1
+apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPServer
 metadata:
   name: {server-name}
