@@ -27,6 +27,11 @@ spec:
       inCluster: true
       inClusterContextName: "home"
       enableHelm: true
+      watchPlugins: true
+      extraArgs:
+        # Prometheus ships in the Headlamp image under static-plugins; load it
+        # without putting it in pluginsManager's managed plugins-dir.
+        - "-user-plugins-dir=/headlamp/user-plugins"
       oidc:
         secret:
           create: true
@@ -36,6 +41,90 @@ spec:
         scopes: "openid email profile groups"
         callbackURL: "https://headlamp.gateway.services.apocrathia.com/oidc-callback"
         usePKCE: true
+    image:
+      # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
+      tag: v0.40.0
+    pluginsManager:
+      enabled: true
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+      baseImage: public.ecr.aws/docker/library/node:22-alpine
+      version: "0.1.1"
+      configContent: |
+        plugins:
+          - name: flux
+            source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_flux
+            version: 0.6.0
+          - name: cert-manager
+            source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_cert-manager
+            version: 0.1.1
+          - name: trivy
+            source: https://artifacthub.io/packages/headlamp/headlamp-trivy/headlamp_trivy
+            version: 0.3.2
+          - name: ai-assistant
+            source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp_ai_assistant
+            version: 0.2.0-alpha
+          - name: helm
+            source: https://artifacthub.io/packages/headlamp/helm-plugin/helm-plugin
+            version: 0.1.0
+        installOptions:
+          parallel: true
+          maxConcurrent: 3
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+    initContainers:
+      - name: user-plugins-init
+        # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
+        image: ghcr.io/headlamp-k8s/headlamp:v0.40.0
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /headlamp/user-plugins
+            if [ -d /headlamp/static-plugins/prometheus ]; then
+              cp -r /headlamp/static-plugins/prometheus /headlamp/user-plugins/
+            fi
+        volumeMounts:
+          - name: user-plugins
+            mountPath: /headlamp/user-plugins
+      - name: catalog-plugins-init
+        # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+        image: public.ecr.aws/docker/library/alpine:3.23.4
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            apk add --no-cache curl tar
+            curl -fsSL -o /tmp/app-catalog.tar.gz \
+              https://github.com/headlamp-k8s/plugins/releases/download/app-catalog-0.9.0/app-catalog-0.9.0.tar.gz
+            tar xzf /tmp/app-catalog.tar.gz -C /headlamp/user-plugins
+            curl -fsSL -o /tmp/plugin-catalog.tar.gz \
+              https://github.com/headlamp-k8s/plugins/releases/download/plugin-catalog-0.4.4/headlamp-k8s-plugin-catalog-0.4.4.tar.gz
+            tar xzf /tmp/plugin-catalog.tar.gz -C /headlamp/user-plugins
+        volumeMounts:
+          - name: user-plugins
+            mountPath: /headlamp/user-plugins
+      - name: user-plugins-perms
+        # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
+        image: ghcr.io/headlamp-k8s/headlamp:v0.40.0
+        command: ["/bin/sh", "-c"]
+        args:
+          - chown -R 100:101 /headlamp/user-plugins
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+          - name: user-plugins
+            mountPath: /headlamp/user-plugins
+    volumeMounts:
+      - name: user-plugins
+        mountPath: /headlamp/user-plugins
+    volumes:
+      - name: user-plugins
+        emptyDir: {}
     # Gateway API routing
     httpRoute:
       enabled: true
@@ -51,8 +140,8 @@ spec:
       clusterRoleName: view
     resources:
       requests:
-        cpu: 50m
-        memory: 64Mi
+        cpu: 100m
+        memory: 128Mi
       limits:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 500m
+        memory: 512Mi

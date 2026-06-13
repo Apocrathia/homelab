@@ -5,3 +5,4 @@ metadata:
   name: headlamp
   labels:
     name: headlamp
+    images/dockerhub: "true"
