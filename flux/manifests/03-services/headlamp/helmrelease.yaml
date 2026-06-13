@@ -92,7 +92,7 @@ spec:
             mountPath: /headlamp/user-plugins
       - name: catalog-plugins-init
         # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
-        image: public.ecr.aws/docker/library/alpine:3.23.4
+        image: public.ecr.aws/docker/library/alpine:3.24.0
         command: ["/bin/sh", "-c"]
         args:
           - |
