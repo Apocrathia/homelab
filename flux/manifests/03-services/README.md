@@ -31,7 +31,7 @@ Platform services that provide core functionality to the homelab cluster.
 
 ### Development and Operations
 
-- [**Dashboard**](dashboard/README.md) - Kubernetes web dashboard
+- [**Headlamp**](headlamp/README.md) - Kubernetes web UI
 - [**GitLab Integration**](gitlab/) - GitLab Agent and Runner
   - [**Agent**](gitlab/agent/README.md) - Kubernetes cluster agent
   - [**Runner**](gitlab/runner/README.md) - CI/CD runner
