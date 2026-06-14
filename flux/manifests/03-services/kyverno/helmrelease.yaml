@@ -94,6 +94,14 @@ spec:
         periodSeconds: 10
         timeoutSeconds: 10
         failureThreshold: 3
+    backgroundController:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
     cleanupController:
       resources:
         requests:
