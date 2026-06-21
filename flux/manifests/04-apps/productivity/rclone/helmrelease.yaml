@@ -20,7 +20,7 @@ spec:
       name: rclone
       namespace: rclone
       # renovate: datasource=docker depName=ghcr.io/zarestia-dev/rclone-manager
-      image: ghcr.io/zarestia-dev/rclone-manager@sha256:2046c02acb040225e6cb7dddb08659909f6b04911fbee2363f45fcc17b1d372b
+      image: ghcr.io/zarestia-dev/rclone-manager@sha256:f6fa1ac4107cb02ee8e12599dd6ac8fc405edf39e27724f46936f8a70b315dfd
       container:
         name: rclone
         port: 8080
