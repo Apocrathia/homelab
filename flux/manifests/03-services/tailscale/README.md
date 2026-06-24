@@ -8,7 +8,7 @@ Manages Tailscale resources in the cluster: ingress/egress proxies, subnet route
 
 This deployment installs the [Tailscale Kubernetes operator](https://tailscale.com/kb/1236/kubernetes-operator) via Helm. The operator talks to the Tailscale control plane and reconciles CRDs such as `Connector`, `ProxyClass`, and `ProxyGroup`.
 
-Proxy pods created by the operator run `tailscaled` in privileged mode by default (NET_ADMIN/TUN). The operator deployment itself does not need privileged access.
+Proxy pods created by the operator run `tailscaled` in privileged mode by default (NET_ADMIN/TUN). The `tailscale-system` namespace uses the `privileged` Pod Security standard so those proxies can start.
 
 ## Prerequisites
 
@@ -38,8 +38,8 @@ Not applicable. The operator authenticates to Tailscale with OAuth credentials f
 ## Troubleshooting
 
 ```bash
-kubectl get pods -n tailscale
-kubectl logs -n tailscale deployment/operator -f
+kubectl get pods -n tailscale-system
+kubectl logs -n tailscale-system deployment/operator -f
 kubectl get connectors,proxyclasses,proxygroups -A
 kubectl explain connector
 ```
@@ -47,8 +47,8 @@ kubectl explain connector
 If the operator pod crashes on startup, check that `tailscale-secrets` exists and contains `oauth-client-id` and `oauth-client-secret`:
 
 ```bash
-kubectl get onepassworditem -n tailscale tailscale-secrets
-kubectl get secret -n tailscale tailscale-secrets
+kubectl get onepassworditem -n tailscale-system tailscale-secrets
+kubectl get secret -n tailscale-system tailscale-secrets
 ```
 
 ### NextDNS blocks the control plane
@@ -60,7 +60,7 @@ Allow those hostnames in the NextDNS allowlist, then flush stale answers:
 ```bash
 dig +short controlplane.tailscale.com @45.90.28.214   # should be 192.200.0.x, not 0.0.0.0
 kubectl rollout restart deployment/coredns -n kube-system
-kubectl delete pod -n tailscale -l app=operator
+kubectl delete pod -n tailscale-system -l app=operator
 ```
 
 Cluster pods use CoreDNS, which may cache the old `0.0.0.0` response until the deployment restarts or the cache TTL expires.
