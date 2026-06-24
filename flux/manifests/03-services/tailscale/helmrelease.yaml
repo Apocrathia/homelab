@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale-operator
+  namespace: tailscale
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tailscale-operator
+      # renovate: datasource=helm registryUrl=https://pkgs.tailscale.com/helmcharts depName=tailscale-operator
+      version: "1.98.4"
+      sourceRef:
+        kind: HelmRepository
+        name: tailscale
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    installCRDs: true
+
+    # OAuth credentials from tailscale-secrets (oauth-client-id, oauth-client-secret).
+    # Chart expects files client_id/client_secret at mount path; map keys via items.
+    oauthSecretVolume:
+      secret:
+        secretName: tailscale-secrets
+        items:
+          - key: oauth-client-id
+            path: client_id
+          - key: oauth-client-secret
+            path: client_secret
+
+    operatorConfig:
+      image:
+        repository: ghcr.io/tailscale/k8s-operator
+        pullPolicy: IfNotPresent
+      defaultTags:
+        - "tag:k8s-operator"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+
+    proxyConfig:
+      image:
+        repository: ghcr.io/tailscale/tailscale
+      defaultTags: "tag:k8s"
+
+    apiServerProxyConfig:
+      mode: "false"
+      allowImpersonation: "false"

@@ -9,6 +9,7 @@ Platform services that provide core functionality to the homelab cluster.
 ### Core Services
 
 - [**Gateway**](gateway/README.md) - Gateway API implementation for traffic management
+- [**Tailscale**](tailscale/README.md) - Kubernetes operator for Tailscale ingress, egress, and subnet routing
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
 

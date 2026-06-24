@@ -19,7 +19,6 @@ resources:
   - 03-services/authentik/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
   # - 03-services/chaos-mesh/flux-kustomization.yaml
-  # - 03-services/dashboard/flux-kustomization.yaml
   - 03-services/external-secrets/flux-kustomization.yaml
   # - 03-services/flyte/flux-kustomization.yaml
   - 03-services/gateway/flux-kustomization.yaml
@@ -32,6 +31,7 @@ resources:
   - 03-services/observability/flux-kustomization.yaml
   - 03-services/postgresql/flux-kustomization.yaml
   - 03-services/renovate/flux-kustomization.yaml
+  - 03-services/tailscale/flux-kustomization.yaml
   - 03-services/toolhive/flux-kustomization.yaml
   - 03-services/trivy/flux-kustomization.yaml
   - 03-services/tuppr/flux-kustomization.yaml

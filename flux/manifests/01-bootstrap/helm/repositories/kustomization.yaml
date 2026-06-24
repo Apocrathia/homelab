@@ -31,6 +31,7 @@ resources:
   - prometheus-community.yaml
   - qdrant.yaml
   - renovate.yaml
+  - tailscale.yaml
   - toolhive.yaml
   - tracearr.yaml
   - tuppr.yaml
