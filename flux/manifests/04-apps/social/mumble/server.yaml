@@ -20,7 +20,7 @@ spec:
     app:
       name: mumble
       # renovate: datasource=docker depName=ghcr.io/mumble-voip/mumble-server
-      image: ghcr.io/mumble-voip/mumble-server:v1.5.857-1
+      image: ghcr.io/mumble-voip/mumble-server:v1.6.870-1
 
       container:
         name: mumble-server
