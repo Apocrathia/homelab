@@ -8,8 +8,8 @@
   variables:
     TF_IN_AUTOMATION: "true"
   before_script:
-    - . "${CI_PROJECT_DIR}/scripts/terraform/ci-curl.sh"
-    - ci_curl_bootstrap
+    - . "${CI_PROJECT_DIR}/scripts/terraform/ci-deps.sh"
+    - ci_deps_bootstrap
     - cd terraform/deployments
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -18,8 +18,8 @@
 
 .tofu-preflight:
   before_script:
-    - . "${CI_PROJECT_DIR}/scripts/terraform/ci-curl.sh"
-    - ci_curl_bootstrap
+    - . "${CI_PROJECT_DIR}/scripts/terraform/ci-deps.sh"
+    - ci_deps_bootstrap
     - cd terraform/deployments
     - |
       missing=""
