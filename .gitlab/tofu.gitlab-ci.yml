@@ -132,8 +132,9 @@ tofu-drift:
   script:
     - |
       echo "=== Running Terragrunt Drift Check ==="
+      echo "Read-only plan; skipping state lock (MR/PAT may lack lock write perms)"
 
-      PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
+      PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color -lock=false 2>&1) || PLAN_EXIT=$?
       PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | grep -E "Plan:|No changes" || echo "Plan output not found")
 
       echo "$PLAN_OUTPUT"

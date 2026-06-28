@@ -101,6 +101,78 @@ can_mask_gitlab_raw() {
   [[ "$value" =~ ^[^[:space:]]{8,}$ ]]
 }
 
+verify_state_auth() {
+  local username=$1
+  local password=$2
+  local label=$3
+  local probe_url="${TF_HTTP_ADDRESS}-proxmox-talos-cluster-talos-01"
+  local http_code body
+
+  http_code=$(curl -s -o /tmp/gitlab-state-probe.json -w '%{http_code}' \
+    -u "${username}:${password}" "$probe_url")
+  body=$(tr -d '\n' </tmp/gitlab-state-probe.json | head -c 240)
+
+  case "$http_code" in
+    401)
+      echo "ERROR: ${label} cannot read GitLab terraform state (HTTP 401)." >&2
+      echo "       ${body}" >&2
+      return 1
+      ;;
+    404)
+      echo "OK: ${label} authenticated (state missing or empty is fine for drift check)"
+      return 0
+      ;;
+    200)
+      echo "OK: ${label} authenticated and state reachable"
+      return 0
+      ;;
+    *)
+      echo "WARN: ${label} probe returned HTTP ${http_code}: ${body}" >&2
+      return 0
+      ;;
+  esac
+}
+
+verify_state_lock_auth() {
+  local username=$1
+  local password=$2
+  local probe_url="${TF_HTTP_ADDRESS}-proxmox-talos-cluster-talos-01/lock"
+  local http_code body
+
+  http_code=$(curl -s -o /tmp/gitlab-lock-probe.json -w '%{http_code}' \
+    -X POST -u "${username}:${password}" \
+    -H 'Content-Type: application/json' \
+    -d '{"ID":"sync-script-probe","Operation":"OperationTypePlan","Info":"","Who":"sync-script","Version":"1.0","Created":"2026-06-28T20:00:00Z","Path":""}' \
+    "$probe_url")
+  body=$(tr -d '\n' </tmp/gitlab-lock-probe.json | head -c 240)
+
+  case "$http_code" in
+    200 | 201 | 409)
+      curl -s -o /dev/null -X DELETE -u "${username}:${password}" "$probe_url" || true
+      echo "OK: ${1} can acquire terraform state locks (apply-ready token)"
+      return 0
+      ;;
+    403)
+      echo "WARN: token cannot lock terraform state (HTTP 403). Drift check uses -lock=false; apply needs Maintainer + api PAT." >&2
+      return 0
+      ;;
+    *)
+      echo "WARN: lock probe returned HTTP ${http_code}: ${body}" >&2
+      return 0
+      ;;
+  esac
+}
+
+if ! verify_state_auth "$TF_HTTP_USERNAME" "$TF_HTTP_PASSWORD" "TF_HTTP_PASSWORD"; then
+  if [[ -n "${TOFU_MR_TOKEN:-}" && "$TOFU_MR_TOKEN" != "$TF_HTTP_PASSWORD" ]] \
+    && verify_state_auth "$TF_HTTP_USERNAME" "$TOFU_MR_TOKEN" "TOFU_MR_TOKEN"; then
+    echo "hint: set TF_HTTP_PASSWORD to the same value as TOFU_MR_TOKEN in ${ENV_FILE}" >&2
+  fi
+  exit 1
+fi
+
+verify_state_lock_auth "$TF_HTTP_USERNAME" "$TF_HTTP_PASSWORD"
+
 var_exists() {
   local key=$1
   glab variable list -R "$REPO" --output json --per-page 100 |
