@@ -28,8 +28,9 @@ Recommended sections:
 
 ## Current personas
 
-| Persona                     | Purpose                                                                                                                                   | Triggers                                                                            |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `project-planner.md`        | Front-door planner: takes a rough idea, clarifies requirements interactively, and produces a living plan doc in `.cursor/plans/<slug>.md` | New work that needs scoping; vague ideas; multi-step changes that touch the cluster |
-| `security-analyst.md`       | Senior security analyst for adversarial review of the cluster, manifests, supply chain, and CI/CD                                         | Security audits, threat modeling, scan-driven investigations, attack-path analysis  |
-| `documentation-reviewer.md` | Documentation quality reviewer auditing READMEs and docs against `docs/documentation-standards.md` and the template                       | Periodic doc audits, before/after large changes, when standards drift is suspected  |
+| Persona                        | Purpose                                                                                                                                   | Triggers                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `project-planner.md`           | Front-door planner: takes a rough idea, clarifies requirements interactively, and produces a living plan doc in `.cursor/plans/<slug>.md` | New work that needs scoping; vague ideas; multi-step changes that touch the cluster           |
+| `security-analyst.md`          | Senior security analyst for adversarial review of the cluster, manifests, supply chain, and CI/CD                                         | Security audits, threat modeling, scan-driven investigations, attack-path analysis            |
+| `site-reliability-engineer.md` | SRE for incident response, observability investigations, alert tuning, capacity analysis, and postmortems                                 | Outages, CrashLoops, alert fires, Flux failures, performance degradation, reliability reviews |
+| `documentation-reviewer.md`    | Documentation quality reviewer auditing READMEs and docs against `docs/documentation-standards.md` and the template                       | Periodic doc audits, before/after large changes, when standards drift is suspected            |
