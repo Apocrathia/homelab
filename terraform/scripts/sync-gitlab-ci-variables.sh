@@ -2,17 +2,17 @@
 # Sync terraform/.env values to GitLab project CI/CD variables via glab.
 #
 # Usage:
-#   scripts/sync-gitlab-ci-variables.sh          # prompt before writing
-#   scripts/sync-gitlab-ci-variables.sh -y       # apply without prompt
-#   scripts/sync-gitlab-ci-variables.sh --dry-run
+#   terraform/scripts/sync-gitlab-ci-variables.sh          # prompt before writing
+#   terraform/scripts/sync-gitlab-ci-variables.sh -y       # apply without prompt
+#   terraform/scripts/sync-gitlab-ci-variables.sh --dry-run
 #
 # Requires: glab authenticated for the target project (glab auth status).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-ENV_FILE="${TERRAFORM_ENV_FILE:-${REPO_ROOT}/terraform/.env}"
+TF_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ENV_FILE="${TERRAFORM_ENV_FILE:-${TF_ROOT}/.env}"
 REPO="${GITLAB_REPO:-Apocrathia/homelab}"
 SCOPE='*'
 

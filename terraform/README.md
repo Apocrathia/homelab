@@ -183,8 +183,8 @@ source terraform/.env
 Sync from `terraform/.env` (values piped to glab; not echoed):
 
 ```bash
-./scripts/sync-gitlab-ci-variables.sh --dry-run   # preview
-./scripts/sync-gitlab-ci-variables.sh -y          # write
+./terraform/scripts/sync-gitlab-ci-variables.sh --dry-run   # preview
+./terraform/scripts/sync-gitlab-ci-variables.sh -y          # write
 ```
 
 The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab.

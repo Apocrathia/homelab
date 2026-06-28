@@ -1,6 +1,6 @@
 ---
 # ShellCheck - Shell script static analysis
-# Runs on shell scripts in scripts/ directory, fails on errors only
+# Runs on shell scripts in scripts/ and terraform/scripts/, fails on errors only
 shellcheck:
   stage: test
   image:
@@ -11,11 +11,12 @@ shellcheck:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - scripts/**/*.sh
+        - terraform/scripts/**/*.sh
         - "*.sh"
   script:
     - |
       echo "=== ShellCheck Static Analysis ==="
-      find scripts/ -name "*.sh" -type f -print0 | \
+      find scripts/ terraform/scripts/ -name "*.sh" -type f -print0 2>/dev/null | \
         xargs -0 shellcheck --severity=error
       echo "=== ShellCheck Complete ==="
   allow_failure: false
