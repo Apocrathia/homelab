@@ -10,7 +10,6 @@ resources:
   - kagent
   - agents
   - comfyui
-  - contextforge
   - datahub
   - duckdb
   - firecrawl
