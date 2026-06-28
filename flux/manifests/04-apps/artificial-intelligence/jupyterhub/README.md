@@ -2,7 +2,7 @@
 
 Multi-user Jupyter notebook server for interactive computing with Authentik OIDC authentication and shared SMB storage.
 
-> **Navigation**: [← Back to AI & Automation](../README.md)
+> **Navigation**: [← Back to Artificial Intelligence](../README.md)
 
 ## Overview
 

@@ -35,7 +35,7 @@ Companion (Stream Deck), Grocy, Mealie, Meshtastic, Transmission, Uptime Kuma.
 
 ### [Management](management/README.md)
 
-Backstage developer portal, JetKVM, n8n workflows, UnPoller.
+Backstage developer portal, JetKVM, UnPoller.
 
 ### [Media](media/README.md)
 
@@ -43,7 +43,7 @@ Plex, Jellyfin, full Arr stack, and download clients.
 
 ### [Productivity](productivity/README.md)
 
-ChangeDetection.io, Kiwix, Logseq, rclone, SearXNG, Wakapi, Windmill.
+ChangeDetection.io, Kiwix, Logseq, n8n, rclone, SearXNG, Wakapi, Windmill.
 
 ### [Web3](web3/README.md)
 

@@ -257,7 +257,7 @@ spec:
     authentik:
       enabled: true
       mode: "proxy"
-      category: "AI & Automation"
+      category: "Artificial Intelligence"
       displayName: "ComfyUI"
       externalHost: "https://comfyui.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/comfyui/icon.svg"

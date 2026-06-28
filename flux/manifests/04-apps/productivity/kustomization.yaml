@@ -6,6 +6,7 @@ metadata:
   name: productivity
 
 resources:
+  - n8n
   - changedetection-io
   - cryptpad
   - excalidraw

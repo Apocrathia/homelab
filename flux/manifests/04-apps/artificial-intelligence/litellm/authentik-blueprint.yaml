@@ -41,7 +41,7 @@ entries:
     attrs:
       name: "LiteLLM"
       slug: "litellm"
-      group: "AI & Automation"
+      group: "Artificial Intelligence"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "litellm-oidc-provider"]]
       launch_url: "https://ai.gateway.services.apocrathia.com/ui"
       open_in_new_tab: true

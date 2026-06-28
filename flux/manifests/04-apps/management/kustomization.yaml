@@ -8,6 +8,5 @@ metadata:
 resources:
   - jetkvm
   - kuber-ios
-  - n8n
   - scripts/unifi
   - unpoller

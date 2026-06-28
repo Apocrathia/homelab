@@ -43,7 +43,7 @@ entries:
       slug: "jupyterhub"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "jupyterhub-oidc-provider"]]
       launch_url: "https://jupyter.gateway.services.apocrathia.com"
-      group: "AI & Automation"
+      group: "Artificial Intelligence"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/jupyterhub/icon.svg"
       meta_description: "Multi-user Jupyter notebook server for interactive computing"

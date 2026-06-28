@@ -2,7 +2,7 @@
 
 Workflow automation platform with visual flow editor and webhook support.
 
-> **Navigation**: [← Back to Management README](../README.md)
+> **Navigation**: [← Back to Productivity README](../README.md)
 
 ## Overview
 

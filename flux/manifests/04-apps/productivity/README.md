@@ -30,6 +30,10 @@ Offline Wikipedia and content library server with automated ZIM updates.
 
 Knowledge management with block-based note-taking and bidirectional linking.
 
+### [n8n](./n8n/README.md)
+
+Workflow automation platform for connecting services and APIs.
+
 ### [Matrix (Element Web)](./matrix/README.md)
 
 Web client for the Matrix decentralized communication protocol.

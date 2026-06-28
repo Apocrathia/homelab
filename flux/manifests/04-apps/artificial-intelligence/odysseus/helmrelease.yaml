@@ -305,7 +305,7 @@ spec:
     authentik:
       enabled: true
       mode: "proxy"
-      category: "AI & Automation"
+      category: "Artificial Intelligence"
       displayName: "Odysseus"
       externalHost: "https://odysseus.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/odysseus/icon.svg"

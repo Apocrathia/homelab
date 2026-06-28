@@ -147,7 +147,7 @@ spec:
     authentik:
       enabled: true
       mode: "proxy"
-      category: "AI & Automation"
+      category: "Artificial Intelligence"
       displayName: "Hermes Agent"
       externalHost: "https://hermes-agent.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/hermes-agent/icon.png"
