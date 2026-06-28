@@ -22,7 +22,6 @@ resources:
   - management/jellyplex-watched
   - management/lidarr
   # - management/maintainerr
-  # - management/mixarr
   # - management/ombi
   - management/radarr
   - management/recyclarr
