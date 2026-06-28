@@ -1,9 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: mcp-duckdb
-  labels:
-    name: mcp-duckdb
-    mcp-server: "true"
-    images/dockerhub: "true"
