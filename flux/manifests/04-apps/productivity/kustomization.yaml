@@ -14,7 +14,6 @@ resources:
   - logseq
   - matrix
   - rclone
-  - rustdesk
   - searxng
   - wakapi
   # - windmill
