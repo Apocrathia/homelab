@@ -1,7 +1,7 @@
 ---
 # Purges stale torrents from the bitmagnet database to prevent unbounded growth.
 # Bitmagnet has no built-in retention (https://github.com/bitmagnet-io/bitmagnet/issues/187),
-# so this CronJob enforces a 90-day retention policy on torrents not re-seen by the DHT crawler.
+# so this CronJob enforces a 30-day retention policy on torrents not re-seen by the DHT crawler.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -42,7 +42,7 @@ spec:
 
                   echo "=== Bitmagnet DB Cleanup ==="
 
-                  : "${RETENTION_DAYS:=90}"
+                  : "${RETENTION_DAYS:=30}"
                   : "${VACUUM_FULL:=false}"
                   : "${CLEAN_ORPHANED_CONTENT:=false}"
                   : "${QUEUE_JOBS_RETENTION_DAYS:=7}"
@@ -143,15 +143,11 @@ spec:
                       name: bitmagnet-secrets
                       key: password
                 - name: RETENTION_DAYS
-                  value: "90"
-                # VACUUM FULL rewrites the entire heap — on torrent_files (~82M
-                # rows / 24 GB) that means rewriting 24 GB of data and indexes
-                # under an exclusive lock, while the DHT crawler keeps writing.
-                # The resulting WAL/memory pressure has crashed the CNPG primary
-                # repeatedly. With current 90-day retention deleting 0 rows per
-                # run there is nothing to compact, so this is pure waste. Flip
-                # to "true" only for a one-shot run after a retention change has
-                # actually deleted significant rows.
+                  value: "30"
+                # VACUUM FULL rewrites the entire heap under an exclusive lock
+                # while the DHT crawler keeps writing. WAL/memory pressure from
+                # that combination has crashed the CNPG primary before. Enable
+                # only for a one-shot run after a large DELETE, not on schedule.
                 - name: VACUUM_FULL
                   value: "false"
                 - name: CLEAN_ORPHANED_CONTENT
