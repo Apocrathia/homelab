@@ -6,7 +6,6 @@ metadata:
   name: management
 
 resources:
-  # - backstage
   - jetkvm
   - kuber-ios
   - n8n
