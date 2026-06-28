@@ -82,10 +82,7 @@ spec:
         enabled: true
       metrics:
         enabled: true
-        port: 8080
         secure: false
-      health:
-        port: 8081
 
     webhook:
       enabled: true

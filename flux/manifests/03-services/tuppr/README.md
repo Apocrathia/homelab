@@ -103,8 +103,8 @@ kubectl describe kubernetesupgrade kubernetes
 kubectl logs -f deployment/tuppr -n system-upgrade
 
 # Check metrics
-kubectl port-forward -n system-upgrade deployment/tuppr 8080:8080
-curl http://localhost:8080/metrics | grep tuppr_
+kubectl port-forward -n system-upgrade deployment/tuppr 8081:8081
+curl http://localhost:8081/metrics | grep tuppr_
 ```
 
 ### Suspending Upgrades
