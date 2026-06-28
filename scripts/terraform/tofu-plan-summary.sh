@@ -51,12 +51,8 @@ unit_has_resource_drift() {
 }
 
 summarize() {
-  local found=0 line unit plan saw_output_refresh=0
-  local show_output_refresh=0
-
-  if ! has_resource_changes; then
-    show_output_refresh=1
-  fi
+  local -a lines=()
+  local line unit plan
 
   while IFS= read -r line; do
     case "$line" in
@@ -64,45 +60,38 @@ summarize() {
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
         plan=$(printf '%s' "$line" | sed -nE 's/^.*terraform: (Plan:.*)$/\1/p')
         if [ -n "$unit" ]; then
-          printf '%s: %s\n' "$unit" "$plan"
+          lines+=("${unit}: ${plan}")
         else
-          printf '%s\n' "$plan"
+          lines+=("$plan")
         fi
-        found=1
         ;;
       *"terraform: No changes"*)
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
         if [ -n "$unit" ]; then
-          printf '%s: No changes\n' "$unit"
+          lines+=("${unit}: No changes")
         else
-          echo "No changes"
+          lines+=("No changes")
         fi
-        found=1
         ;;
       *"Changes to Outputs:"*)
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
         if [ -n "$unit" ] && unit_has_resource_drift "$unit"; then
           :
         elif [ -n "$unit" ]; then
-          printf '%s: Changes to Outputs only\n' "$unit"
+          lines+=("${unit}: Changes to Outputs only")
         else
-          echo "Changes to Outputs only"
+          lines+=("Changes to Outputs only")
         fi
-        found=1
-        ;;
-      *"without changing any real infrastructure"*)
-        if [ "$show_output_refresh" -eq 1 ] && [ "$saw_output_refresh" -eq 0 ]; then
-          echo "Output refresh only (no infrastructure changes)"
-          saw_output_refresh=1
-        fi
-        found=1
         ;;
     esac
   done <<<"$PLAN_TEXT"
 
-  if [ "$found" -eq 0 ]; then
-    grep -E '^Run Summary|Succeeded|Failed' <<<"$PLAN_TEXT" | tail -5 || echo "No plan summary lines found"
+  if ((${#lines[@]} > 0)); then
+    printf '%s\n' "${lines[@]}" | sort -u
+    return
   fi
+
+  grep -E '^Run Summary|Succeeded|Failed' <<<"$PLAN_TEXT" | tail -5 || echo "No plan summary lines found"
 }
 
 drift_status() {
