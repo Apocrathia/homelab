@@ -1,8 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: chaptarr
-  labels:
-    name: chaptarr
-    images/dockerhub: "true"
