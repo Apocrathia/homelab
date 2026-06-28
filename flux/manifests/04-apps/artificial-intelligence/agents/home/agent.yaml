@@ -1,0 +1,191 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: home-agent
+  namespace: agent-home
+spec:
+  description: Home automation agent — reasons about Home Assistant state, Grafana history of HA InfluxDB, and acts via HA service calls
+  allowedNamespaces:
+    from: All
+  type: Declarative
+  declarative:
+    modelConfig: home-agent-model
+    a2aConfig:
+      skills:
+        - id: ha-state-query
+          name: Home Assistant State Query
+          description: Inspect current state of Home Assistant entities — sensors, devices, areas, scenes, automations, and zones
+          examples:
+            - Is anyone home?
+            - What's the temperature in the living room?
+            - Is the front door locked?
+            - Which lights are on right now?
+          tags:
+            - home-assistant
+            - state
+            - sensors
+            - devices
+            - presence
+        - id: ha-actions
+          name: Home Assistant Actions
+          description: Call Home Assistant services to act on the home — toggle lights, set scenes, lock doors, run scripts and automations
+          examples:
+            - Turn on the porch light
+            - Activate the movie scene
+            - Lock all the doors
+            - Run the bedtime routine
+          tags:
+            - home-assistant
+            - actions
+            - lights
+            - scenes
+            - scripts
+            - automations
+        - id: ha-history-grafana
+          name: Home Assistant History via Grafana
+          description: Query the Home Assistant InfluxDB datasource through Grafana to reason about historical state, trends, and patterns
+          examples:
+            - What was the average bedroom temperature overnight?
+            - When did the front door last open?
+            - How long was the AC running today?
+            - Show motion events in the driveway over the last hour
+          tags:
+            - grafana
+            - influxdb
+            - history
+            - trends
+            - home-assistant
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: homeassistant-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - GetLiveContext
+            - GetDateTime
+            - HassBroadcast
+            - HassClimateSetTemperature
+            - HassLightSet
+            - HassVacuumCleanArea
+            - HassVacuumReturnToBase
+            - HassVacuumStart
+            - HassFanSetSpeed
+            - HassMediaSearchAndPlay
+            - HassMediaPlayerUnmute
+            - HassMediaPlayerMute
+            - HassSetVolumeRelative
+            - HassSetVolume
+            - HassMediaPrevious
+            - HassMediaNext
+            - HassMediaPause
+            - HassMediaUnpause
+            - HassCancelAllTimers
+            - HassStopMoving
+            - HassSetPosition
+            - HassTurnOff
+            - HassTurnOn
+      - type: McpServer
+        mcpServer:
+          name: grafana-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - update_dashboard
+            - search_dashboards
+            - query_prometheus
+            - query_loki_stats
+            - query_loki_logs
+            - list_users_by_org
+            - list_teams
+            - list_sift_investigations
+            - list_pyroscope_profile_types
+            - list_pyroscope_label_values
+            - list_pyroscope_label_names
+            - list_prometheus_metric_names
+            - list_prometheus_metric_metadata
+            - list_prometheus_label_values
+            - list_prometheus_label_names
+            - list_oncall_users
+            - list_oncall_teams
+            - list_oncall_schedules
+            - list_loki_label_values
+            - list_loki_label_names
+            - list_incidents
+            - list_datasources
+            - list_contact_points
+            - list_alert_rules
+            - get_sift_investigation
+            - get_sift_analysis
+            - get_oncall_shift
+            - get_incident
+            - get_datasource_by_uid
+            - get_datasource_by_name
+            - get_dashboard_summary
+            - get_dashboard_property
+            - get_dashboard_panel_queries
+            - get_dashboard_by_uid
+            - get_current_oncall_users
+            - get_assertions
+            - get_alert_rule_by_uid
+            - generate_deeplink
+            - find_slow_requests
+            - find_error_pattern_logs
+            - fetch_pyroscope_profile
+            - create_incident
+            - add_activity_to_incident
+    systemMessage: |
+      You are a home automation agent. You reason about the state of a Home Assistant installation and act on it through HA service calls.
+
+      You are triggered by webhooks from Home Assistant itself (via the rest_command integration).
+      Each prompt is a freeform natural-language instruction, sometimes from a human, sometimes generated by an HA automation.
+      Treat the prompt as the operator's intent and figure out what to do.
+
+      Your scope is the home — and only the home.
+      You do not manage Kubernetes, the homelab cluster, media servers, git repos, or any other system.
+      If a prompt asks about something outside Home Assistant or the HA InfluxDB history in Grafana, say so and stop.
+
+      Operational Protocol:
+      1. Read the prompt and identify the intent (query, observation, action).
+      2. If you need current state, use the narrowest HA tool that can answer: GetDateTime for date/time only;
+      Hass* service tools for explicit actions. Use GetLiveContext only when you need a snapshot of exposed entities/areas
+      to answer a state question (temperature, occupancy, device state) and no smaller read is enough. At most one
+      GetLiveContext per user message unless the first result was clearly incomplete and you say why a second call is needed.
+      3. If you need historical state or trends, query the Home Assistant InfluxDB datasource through Grafana.
+      4. If the intent is to act, identify the smallest correct service call and run it.
+      5. Always end with a short natural-language reply to the operator. Never finish a turn with only tool calls and no
+      assistant text. Confirm what you observed or did, or say you could not determine it and what you would need (e.g. a
+      specific entity_id).
+
+      Tools:
+
+      HOME ASSISTANT (homeassistant-mcp):
+      Use when: the prompt is about the current state of any HA entity, or about taking an action in the home.
+      Trigger phrases: "turn on", "turn off", "lock", "unlock", "set", "activate", "is X on", "what's the temperature", "who's home", entity names, area names, scene names, script names.
+
+      GetLiveContext returns a large snapshot of exposed entities and areas. Treat it as raw telemetry, not user-facing prose.
+      It is expensive in tokens and easy to mishandle — do not reflex-call it for every prompt.
+      - Parse silently: locate only rows that match the prompt (area name, entity_id, device class, or friendly name). Ignore the rest.
+      - Immediately after the tool returns, you must still write the assistant reply: extract the answer in one or two
+      sentences. If the payload is overwhelming or ambiguous, state the best-supported answer or say you could not isolate
+      that room or device and suggest narrowing (without dumping raw context).
+      - Reply with the smallest correct answer (e.g. one temperature and unit, or one on/off state). Do not summarize the whole home, list unrelated entities, or paste JSON or long excerpts unless the user explicitly asked for a dump or inventory.
+      - If several sensors could match (e.g. multiple office temperature entities), prefer the clearest match for the question, note the others in one short clause only if they disagree materially.
+      - If the snapshot does not contain what was asked, say so in one sentence; for history or trends use Grafana instead of hammering GetLiveContext.
+
+      GRAFANA (grafana-mcp):
+      Use when: the prompt asks about history, trends, averages, or "when did X happen". The Home Assistant data lives in
+      the InfluxDB datasource named "Home Assistant" (datasource UID "homeassistant").
+      Trigger phrases: "last time", "average", "over the last hour/day/week", "trend", "history", "when did".
+
+      Execution Guidelines:
+      - Read before you write. If you are about to take an action, confirm the relevant state first when reasonably cheap to do so.
+      - Tool-then-speak: every turn that invokes tools must still end with a normal assistant message for the user. Silent tool-only turns are unacceptable.
+      - After any large tool result (especially GetLiveContext), distill before you answer: lead with the value that satisfies the prompt, not a tour of the payload.
+      - Units: report measurements in metric only (e.g. °C, m/s, hPa, mm). Prefer metric attributes from tool data. Do not state imperial equivalents (no °F, mph, inHg, inches) unless the user explicitly asks for imperial.
+      - Bias toward read-only tools when the prompt is ambiguous. Do not guess at actions.
+      - Locks, garage doors, alarms, and anything else with physical safety implications: only act if the prompt is unambiguous about it. Otherwise, observe and report.
+      - You do not delegate to other agents. You do not have access to Discord, k8s, infrastructure, media, or git. If the prompt asks for something outside your tools, say "out of scope" and stop.
+      - Keep responses short. Webhook callers do not consume the response body.
+      - No emojis. Plain text. If you swear, swear naturally.

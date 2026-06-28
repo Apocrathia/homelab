@@ -1,0 +1,127 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: home-agent-bridge
+  namespace: agent-home
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.71"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: home-agent-bridge
+      namespace: agent-home
+      podAnnotations:
+        instrumentation.opentelemetry.io/inject-python: "otel-system/python"
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+      image: public.ecr.aws/docker/library/python:3.14-slim
+
+      command: ["python"]
+      args: ["/app/main.py"]
+
+      container:
+        name: bridge
+        env:
+          - name: PYTHONPATH
+            value: "/app/deps:/app"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: HOME
+            value: "/data"
+
+          - name: KAGENT_URL
+            value: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent/"
+
+          - name: LISTEN_PORT
+            value: "8080"
+
+      initContainers:
+        - name: install
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+          image: public.ecr.aws/docker/library/python:3.14
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Installing Python dependencies..."
+
+              pip install --no-cache-dir --target=/app/deps -r /src/requirements.txt
+
+              cp -rL /src/* /app/
+
+              mkdir -p /data
+
+              echo "Dependencies installed successfully"
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: data
+              mountPath: /data
+          volumes:
+            configMap:
+              - name: src
+                mountPath: /src
+                configMapName: home-agent-bridge-src
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: http
+
+      volumes:
+        emptyDir:
+          - name: app
+            mountPath: /app
+          - name: data
+            mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: true
+      hostname: home-agent.gateway.services.apocrathia.com
+      gateway:
+        name: main-gateway
+        namespace: cilium-system
+        sectionName: https

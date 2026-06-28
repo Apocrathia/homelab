@@ -10,6 +10,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 
 **Custom Agents:**
 
+- **[home](./home/)** - `home-agent`: Home Assistant automation (HA `rest_command` webhook bridge → A2A; HA + Grafana MCP)
 - **[homelab](./homelab/)** - `homelab-agent`: Tech assistant for homelab topics (Discord interface; Agent CR in `kagent`, bridge in `agent-homelab`)
 - **[search](./search/)** - `search-agent`: Web search specialist using SearXNG
 - **[knowledge](./knowledge/)** - `knowledge-agent`: Knowledge management with OpenZIM and Qdrant
@@ -48,6 +49,8 @@ flowchart LR
     GIT[git-agent]
     CILIUM_POLICY[cilium-policy-agent]
     CILIUM_DEBUG[cilium-debug-agent]
+    HOME[home-agent]
+    HA[Home Assistant]
 
     H --> K8S
     H --> OBS
@@ -63,6 +66,9 @@ flowchart LR
 
     KNOW --> SEARCH
     OBS --> PROMQL
+
+    HA -->|"webhook (rest_command)"| HOME
+    HOME -->|"service calls"| HA
 ```
 
 ## Adding New Agents

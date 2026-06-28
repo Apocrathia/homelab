@@ -5,6 +5,7 @@ metadata:
   name: agents
 
 resources:
+  - home
   - homelab
   - search
   - knowledge
