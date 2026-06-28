@@ -39,6 +39,8 @@ spec:
   values:
     # Use ghcr.io for release images (default cr.kagent.dev is for dev)
     registry: ghcr.io
+    # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/controller
+    tag: "0.9.10"
 
     database:
       type: postgres
