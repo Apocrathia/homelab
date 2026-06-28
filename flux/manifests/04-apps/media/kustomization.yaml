@@ -34,7 +34,6 @@ resources:
   - management/tdarr
   - management/whisparr
   - management/scripts
-  # - servers/audiobookshelf
   - servers/jellyfin
   - servers/komga
   - servers/plex
