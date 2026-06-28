@@ -9,7 +9,6 @@ resources:
   - acquisitions/archiveteam-warrior
   - acquisitions/bitmagnet
   - acquisitions/lidarr-youtube-downloader
-  - acquisitions/pinchflat
   - acquisitions/prowlarr
   - acquisitions/qbittorrent
   - acquisitions/rdt-client
