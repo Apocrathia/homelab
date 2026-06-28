@@ -10,7 +10,6 @@ resources:
   - kagent
   - agents
   - comfyui
-  - datahub
   - firecrawl
   - hermes-agent
   # - guardrails-ai
