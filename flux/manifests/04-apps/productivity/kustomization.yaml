@@ -10,7 +10,6 @@ resources:
   - cryptpad
   - excalidraw
   - kiwix
-  - logseq
   - rclone
   - searxng
   - wakapi
