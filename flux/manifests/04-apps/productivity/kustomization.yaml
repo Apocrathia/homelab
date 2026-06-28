@@ -12,7 +12,6 @@ resources:
   - ideon
   - kiwix
   - logseq
-  - matrix
   - rclone
   - searxng
   - wakapi
