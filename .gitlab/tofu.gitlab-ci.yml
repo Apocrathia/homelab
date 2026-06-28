@@ -8,6 +8,7 @@
   variables:
     TF_IN_AUTOMATION: "true"
   before_script:
+    - apk add --no-cache curl jq
     - cd terraform/deployments
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -16,6 +17,7 @@
 
 .tofu-preflight:
   before_script:
+    - apk add --no-cache curl jq
     - cd terraform/deployments
     - |
       missing=""

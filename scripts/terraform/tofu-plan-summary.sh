@@ -44,8 +44,19 @@ is_no_drift() {
   return 1
 }
 
+unit_has_resource_drift() {
+  local unit=$1
+  grep -F "[${unit}]" <<<"$PLAN_TEXT" | grep 'terraform: Plan:' |
+    grep -qvE 'Plan: 0 to add, 0 to change, 0 to destroy(\.|, 0 to replace\.)?'
+}
+
 summarize() {
   local found=0 line unit plan saw_output_refresh=0
+  local show_output_refresh=0
+
+  if ! has_resource_changes; then
+    show_output_refresh=1
+  fi
 
   while IFS= read -r line; do
     case "$line" in
@@ -70,7 +81,9 @@ summarize() {
         ;;
       *"Changes to Outputs:"*)
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
-        if [ -n "$unit" ]; then
+        if [ -n "$unit" ] && unit_has_resource_drift "$unit"; then
+          :
+        elif [ -n "$unit" ]; then
           printf '%s: Changes to Outputs only\n' "$unit"
         else
           echo "Changes to Outputs only"
@@ -78,7 +91,7 @@ summarize() {
         found=1
         ;;
       *"without changing any real infrastructure"*)
-        if [ "$saw_output_refresh" -eq 0 ]; then
+        if [ "$show_output_refresh" -eq 1 ] && [ "$saw_output_refresh" -eq 0 ]; then
           echo "Output refresh only (no infrastructure changes)"
           saw_output_refresh=1
         fi
