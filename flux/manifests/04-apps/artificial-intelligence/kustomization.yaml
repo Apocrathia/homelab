@@ -12,7 +12,6 @@ resources:
   - comfyui
   - contextforge
   - datahub
-  - duckdb
   - firecrawl
   - hermes-agent
   # - guardrails-ai
