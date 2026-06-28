@@ -13,7 +13,6 @@ resources:
   - acquisitions/qbittorrent
   - acquisitions/rdt-client
   - acquisitions/sabnzbd
-  - acquisitions/zilean
   - management/bazarr
   - management/cleanuparr
   - management/huntarr2
