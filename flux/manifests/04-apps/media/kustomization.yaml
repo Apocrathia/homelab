@@ -16,7 +16,6 @@ resources:
   # - acquisitions/reaparr
   - acquisitions/sabnzbd
   - acquisitions/zilean
-  - management/agregarr
   - management/bazarr
   - management/chaptarr
   - management/cleanuparr
