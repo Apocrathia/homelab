@@ -15,7 +15,6 @@ resources:
   - duckdb
   - firecrawl
   - hermes-agent
-  # - flowise
   # - guardrails-ai
   - jupyterhub
   - litellm
