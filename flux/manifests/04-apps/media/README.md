@@ -47,7 +47,6 @@ Media applications are organized into three categories:
 - **[Huntarr2](./management/huntarr2/README.md)** - Rewrite of Huntarr for automated missing content and quality upgrade searches
 - **[Maintainerr](./management/maintainerr/README.md)** - Removes stale Plex content based on configurable rules
 - **[Mylar](./management/mylar/README.md)** - Comic book collection manager with ComicVine integration
-- **[Mixarr](./management/mixarr/README.md)** - Music discovery for Lidarr with AI-powered recommendations
 - **[Ombi](./management/ombi/README.md)** - Media request management for Plex
 - **[Overseerr](./management/overseerr/README.md)** - Media request and discovery with Plex OAuth
 - **[Recommendarr](./management/recommendarr/README.md)** - AI-powered TV and movie recommendations
