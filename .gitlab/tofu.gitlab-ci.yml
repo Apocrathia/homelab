@@ -32,6 +32,7 @@
         echo "TF_HTTP_* is the GitLab remote state backend (see terraform/README.md)"
         exit 1
       fi
+      echo "Preflight OK (TF_HTTP_USERNAME length=${#TF_HTTP_USERNAME}, TF_HTTP_PASSWORD length=${#TF_HTTP_PASSWORD})"
 
 tofu-validate:
   extends: .tofu-base

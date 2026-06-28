@@ -117,7 +117,7 @@ upsert_variable() {
     cmd=update
   fi
 
-  local -a flags=(-R "$REPO" -p -s "$SCOPE")
+  local -a flags=(-R "$REPO" -p -r -s "$SCOPE")
   local mask_label=visible
 
   if can_mask_gitlab "$value"; then
@@ -127,7 +127,7 @@ upsert_variable() {
       flags+=(--hidden)
     fi
   elif can_mask_gitlab_raw "$value"; then
-    flags+=(-m -r)
+    flags+=(-m)
     mask_label=masked-raw
     echo "note: ${key} uses masked raw (Proxmox-style tokens include !, which GitLab cannot standard-mask)"
   elif [[ "$sensitive" == true ]]; then
