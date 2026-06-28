@@ -19,7 +19,6 @@ resources:
   - management/immich
   - management/jellyplex-watched
   - management/lidarr
-  # - management/mixarr
   - management/radarr
   - management/recyclarr
   - management/seerr
