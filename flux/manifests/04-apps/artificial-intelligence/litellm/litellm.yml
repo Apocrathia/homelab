@@ -151,11 +151,6 @@ mcp_servers:
     url: "http://mcp-discord-mcp-proxy.mcp-discord.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
-  duckdb:
-    alias: "duckdb"
-    url: "http://mcp-duckdb-mcp-proxy.mcp-duckdb.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
   firecrawl:
     alias: "firecrawl"
     url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"

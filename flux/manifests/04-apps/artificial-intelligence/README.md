@@ -89,10 +89,6 @@ flowchart TB
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
 - **[ContextForge](./contextforge/README.md)** - IBM ContextForge MCP/A2A gateway
 
-### Data & Analytics
-
-- **[DuckDB](./duckdb/README.md)** - In-process analytical database with the official notebook UI for ad-hoc SQL
-
 ### Evals & Red Teaming
 
 - **[Promptfoo](./promptfoo/README.md)** - LLM eval framework and red-teaming platform with declarative configs and a web UI
@@ -107,7 +103,6 @@ flowchart TB
 ### Demos
 
 - **[BeeAI Demo](./beeai/demo/README.md)** - Discord chatbot with BeeAI and A2A protocol
-- **[CrewAI Demo](./crewai/demo/README.md)** - Discord chatbot with CrewAI and A2A protocol
 
 ## Design Principles
 
