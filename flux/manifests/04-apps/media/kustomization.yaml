@@ -20,7 +20,6 @@ resources:
   - management/bazarr
   - management/chaptarr
   - management/cleanuparr
-  # - management/daps
   - management/huntarr2
   - management/icloudpd
   - management/immich
