@@ -84,7 +84,7 @@ spec:
     storage:
       longhorn:
         enabled: true
-        numberOfReplicas: 1
+        numberOfReplicas: 2
         volumes:
           - name: config
             capacity: 50Gi
