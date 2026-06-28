@@ -10,10 +10,10 @@ accept blocking runs when the script errors.
 **Check order matters:**
 1. Infra tools (kubectl, flux, …) run on ``infra`` = command with one leading
    ``sudo`` stripped—so ``sudo kubectl apply`` hits the kubectl mutation path,
-   not only a generic ``sudo`` hit from ``UNSAFE_SHELL``.
-2. Read-only kubectl exits **before** the broad ``UNSAFE_SHELL`` regex, so
+   not only a generic ``sudo`` hit from ``UNSAFE_CHECKS``.
+2. Read-only kubectl exits **before** ``UNSAFE_CHECKS``, so
    ``sudo kubectl get …`` allows without a redundant sudo prompt.
-3. ``UNSAFE_SHELL`` runs on the **original** command string so we still see
+3. ``UNSAFE_CHECKS`` runs on the **original** command string so we still see
    ``sudo`` when it is load-bearing (e.g. ``sudo curl``).
 """
 
@@ -45,50 +45,71 @@ def ask(user: str, agent: str) -> None:
             {
                 "permission": "ask",
                 "user_message": user,
-                # Docs say both are surfaced; several Cursor builds ignore them in the
-                # approval sheet anyway — still emit for when the client fixes this.
                 "agent_message": f"{user}\n\n{agent}",
             }
         ),
         flush=True,
     )
-    # Approval UI often omits hook messages (known product gap). Stderr is copied to
-    # the Hooks output channel so operators can read the rationale there.
+    # Stderr mirrors user_message in the Hooks output channel during approval.
     print(f"[homelab-shell-guard] {user}", file=sys.stderr, flush=True)
     sys.exit(0)
 
 
 # --- Broad unsafe patterns (see hooks README) -------------------------------
-# Single compiled regex for speed: every shell command hits this hook (no matcher
-# in hooks.json), so we want one scan, not a chain of dozens of separate passes.
-# (?ix) = case-insensitive, verbose (whitespace ignored in pattern—here we still
-# concatenate fragments for readability).
+# Ordered checks on the **original** command string (not ``infra``) so ``sudo`` still
+# triggers when the rest of the line was allow-listed (e.g. read-only kubectl).
+# First match wins — put more specific categories before broad ones (``sudo`` last).
 #
 # Intentionally **not** matched: generic ``docker ps`` / ``git pull`` / ``npm install``
-# (too noisy or ambiguous); extend this regex when your workflow needs more coverage.
-UNSAFE_SHELL = re.compile(
-    r"(?ix)"
-    # Exfil / supply chain: fetch arbitrary bytes or run downloaders.
-    r"\bcurl\b|\bwget\b|\baria2c\b|"
-    # Remote execution or bulk copy off-box.
-    r"\bssh\b|\bscp\b|\brsync\b|\bsftp\b|"
-    # Local destructive / permission changes. ``\brm\b`` does not match ``chmod``
-    # (no standalone ``rm`` token inside ``chmod``).
-    r"\brm\b|\bmv\b|\bchmod\b|\bchown\b|\bdd\b|"
-    # Classic bind-shell helpers; require nc/ncat/netcat followed by space or EOS
-    # to reduce junk matches inside longer tokens.
-    r"\b(nc|ncat|netcat)(\s|$)|"
-    # Privilege boundary—almost always worth a human glance in agent context.
-    r"\bsudo\b|"
-    # Container mutations (subset: day-to-day dangerous verbs only).
-    r"\bdocker(\s+compose)?\s+(up|down|run|exec|rm|rmi|stop|kill|pull|push|prune|build)\b|"
-    r"\bpodman\s+(up|down|run|exec|rm|stop|kill|pull|push|prune|build)\b|"
-    # Obfuscation / indirect execution.
-    r"\beval\s|"
-    # Git: align with repo AGENTS (no agent commits); push/merge/rebase/clean are
-    # high blast-radius even when the human intends them.
-    r"\b(git|gh)\s+push\b|\bgit\s+(commit|reset|merge|rebase|clean)\b|\bgit\s+stash\s+(pop|apply)\b"
-)
+# (too noisy or ambiguous); add a tuple here when your workflow needs more coverage.
+UNSAFE_CHECKS: list[tuple[re.Pattern[str], str, str]] = [
+    (
+        # Shell word ``eval``, not ``eval`` inside quoted search patterns (``rg 'eval '``).
+        re.compile(r"(?i)(?:^|[|;&]|&&|\|\|)\s*eval\s"),
+        "Shell eval (arbitrary code execution).",
+        "Homelab hook: eval invocation. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\b(nc|ncat|netcat)(\s|$)"),
+        "Netcat (raw network socket).",
+        "Homelab hook: netcat/nc detected. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\b(rm|mv|chmod|chown|dd)\b"),
+        "Destructive filesystem (rm/mv/chmod/chown/dd).",
+        "Homelab hook: rm/mv/chmod/chown/dd detected. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\b(curl|wget|aria2c)\b"),
+        "Remote download (curl/wget/aria2c).",
+        "Homelab hook: curl/wget/aria2c detected. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\b(ssh|scp|rsync|sftp)\b"),
+        "Remote access (ssh/scp/rsync/sftp).",
+        "Homelab hook: ssh/scp/rsync/sftp detected. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\bdocker(\s+compose)?\s+(up|down|run|exec|rm|rmi|stop|kill|pull|push|prune|build)\b"),
+        "Docker container/image change.",
+        "Homelab hook: docker lifecycle command. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\bpodman\s+(up|down|run|exec|rm|stop|kill|pull|push|prune|build)\b"),
+        "Podman container/image change.",
+        "Homelab hook: podman lifecycle command. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\b((git|gh)\s+push|git\s+(commit|reset|merge|rebase|clean)|git\s+stash\s+(pop|apply))\b"),
+        "Sensitive git operation.",
+        "Homelab hook: git push/commit/reset or similar. Confirm operator approval.",
+    ),
+    (
+        re.compile(r"(?i)\bsudo\b"),
+        "Elevated privileges (sudo).",
+        "Homelab hook: sudo detected. Confirm operator approval.",
+    ),
+]
 
 
 def main() -> None:
@@ -120,7 +141,7 @@ def main() -> None:
         print(json.dumps(ALLOW))
         sys.exit(0)
 
-    # --- Kubernetes read path (exit before UNSAFE_SHELL) ----------------------
+    # --- Kubernetes read path (exit before UNSAFE_CHECKS) ---------------------
     # ``kubectl get/describe/…`` is the bread and butter of debugging; allow list
     # must stay conservative—anything that can exec into pods or mutate is listed
     # in the negated second regex.
@@ -141,7 +162,7 @@ def main() -> None:
         infra,
     ):
         ask(
-            "This shell command may change the Kubernetes cluster. Approve only if you intend to run it.",
+            "Kubernetes cluster mutation.",
             (
                 "Homelab hook: kubectl command may mutate cluster state. Confirm with the operator "
                 "before proceeding, or use manifest edits + GitOps flow instead."
@@ -151,14 +172,14 @@ def main() -> None:
     # --- Flux (cluster-facing; not ``flux build`` which is local compile) -----
     if re.search(r"^flux\s+", infra) and re.search(r"\b(reconcile|suspend|resume|delete|install)\b", infra):
         ask(
-            "This flux command may change reconciliation or cluster state. Approve if intentional.",
+            "Flux reconciliation change.",
             "Homelab hook: flux command may affect GitOps reconciliation. Confirm operator approval.",
         )
 
     # --- Helm releases --------------------------------------------------------
     if re.search(r"^helm\s+", infra) and re.search(r"\b(upgrade|install|uninstall|rollback|test)\b", infra):
         ask(
-            "This helm command may change releases on the cluster. Approve if intentional.",
+            "Helm release change.",
             "Homelab hook: helm may mutate cluster releases. Confirm operator approval.",
         )
 
@@ -169,30 +190,21 @@ def main() -> None:
         infra,
     ):
         ask(
-            "This talosctl command may change Talos nodes or bootstrap state. Approve if intentional.",
+            "Talos node/bootstrap change.",
             "Homelab hook: talosctl may mutate Talos machine state. Confirm operator approval.",
         )
 
     # --- OpenTofu / Terraform apply -------------------------------------------
     if re.search(r"^(tofu|terraform)\s+apply\b", infra):
         ask(
-            "Infrastructure apply may change real resources. Approve if intentional.",
+            "Infrastructure apply (tofu/terraform).",
             "Homelab hook: tofu/terraform apply can mutate infrastructure. Confirm operator approval.",
         )
 
     # --- Broad shell risk (network, disk, sudo, git, …) -----------------------
-    # Uses ``cmd`` (not ``infra``) so ``sudo`` still triggers when the rest of the
-    # line was already allow-listed via kubectl read path above.
-    if UNSAFE_SHELL.search(cmd):
-        ask(
-            "This shell command looks like network fetch, remote access, privilege escalation, "
-            "destructive filesystem work, container changes, or a sensitive git operation. "
-            "Approve only if you intend to run it.",
-            (
-                "Homelab hook: command matched risky shell patterns (e.g. curl/wget, ssh, rm, sudo, "
-                "docker/podman mutations, git push/commit/reset). Confirm operator approval."
-            ),
-        )
+    for pattern, user_msg, agent_msg in UNSAFE_CHECKS:
+        if pattern.search(cmd):
+            ask(user_msg, agent_msg)
 
     print(json.dumps(ALLOW))
     sys.exit(0)
