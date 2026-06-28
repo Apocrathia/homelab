@@ -15,6 +15,10 @@ spec:
         kind: HelmRepository
         name: tuppr
         namespace: flux-system
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
   postRenderers:
     - kustomize:
         patches:
