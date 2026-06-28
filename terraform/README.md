@@ -6,7 +6,7 @@ Infrastructure as Code for Proxmox VMs using OpenTofu and Terragrunt.
 
 ## Overview
 
-OpenTofu configurations for managing Proxmox virtual machines running the Talos Kubernetes cluster.
+OpenTofu configurations for Proxmox virtual machines: the Talos Kubernetes cluster and other cluster workloads.
 
 | Tool                                                                           | Purpose                                                            |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
@@ -14,24 +14,23 @@ OpenTofu configurations for managing Proxmox virtual machines running the Talos 
 | [Terragrunt](https://terragrunt.gruntwork.io/)                                 | Thin wrapper for DRY configurations and multi-module orchestration |
 | [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs) | Proxmox provider for OpenTofu                                      |
 
-### Current Scope
+### Managed VMs
 
-| Resource  | Count | Description                                     |
-| --------- | ----- | ----------------------------------------------- |
-| Talos VMs | 4     | Control plane nodes (talos-01 through talos-04) |
+| Deployment | VMID | Module       | Placement                                        |
+| ---------- | ---- | ------------ | ------------------------------------------------ |
+| talos-01   | 801  | `talos-vm`   | Pinned to `node-01`                              |
+| talos-02   | 802  | `talos-vm`   | Pinned to `node-02`                              |
+| talos-03   | 803  | `talos-vm`   | Pinned to `node-03`                              |
+| talos-04   | 804  | `talos-vm`   | Pinned to `node-04`                              |
+| home       | 100  | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
+| game       | 103  | `proxmox-vm` | Cluster-portable (`initial_node` at import only) |
 
-### VM Inventory
+Talos nodes are pinned one VM per physical host. Home and Game use the `proxmox-vm` module, which ignores `node_name` drift so Proxmox HA and live migration can move them without Terraform fighting placement.
 
-| VM       | VMID | Proxmox Node | IP Address  |
-| -------- | ---- | ------------ | ----------- |
-| talos-01 | 801  | node-01      | 10.100.1.80 |
-| talos-02 | 802  | node-02      | 10.100.1.81 |
-| talos-03 | 803  | node-03      | 10.100.1.82 |
-| talos-04 | 804  | node-04      | 10.100.1.83 |
+Per-VM CPU, memory, disk, and network settings live in each deployment's `terragrunt.hcl`.
 
 ### Future Scope
 
-- Additional VMs (storage, utility nodes)
 - Proxmox cluster configuration
 - Network/VLAN configuration
 - DNS records
@@ -44,9 +43,18 @@ HashiCorp switched Terraform to BSL 1.1 in August 2023. OpenTofu is the Linux Fo
 
 ### Why Terragrunt?
 
-Terragrunt wraps OpenTofu to reduce duplication. Define common settings once in parent configs and override per-VM. Backend configuration is automatic - no copy-paste of backend blocks across deployments.
+Terragrunt wraps OpenTofu to reduce duplication. Backend configuration is automatic — no copy-paste of backend blocks across deployments.
 
 Terragrunt auto-detects OpenTofu when both are installed.
+
+### Modules
+
+| Module       | Use case                                                           |
+| ------------ | ------------------------------------------------------------------ |
+| `talos-vm`   | Talos Kubernetes nodes; node placement is intentional and enforced |
+| `proxmox-vm` | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+
+The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
 ### State Backend
 
@@ -75,7 +83,7 @@ remote_state {
 }
 ```
 
-This creates unique state files per VM (e.g., `homelab-deployments-proxmox-talos-cluster-talos-01`).
+State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-proxmox-home`).
 
 ## Directory Structure
 
@@ -84,16 +92,18 @@ terraform/
 ├── README.md
 ├── root.hcl                            # Root config (backend, provider)
 ├── modules/
-│   └── talos-vm/
-│       ├── main.tf                     # VM resource definition
-│       ├── variables.tf                # Input variables
-│       └── outputs.tf                  # Outputs (VM ID, IPs, etc.)
+│   ├── talos-vm/                       # Pinned Talos nodes
+│   └── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 └── deployments/
     └── proxmox/
+        ├── home/
+        │   └── terragrunt.hcl
+        ├── game/
+        │   └── terragrunt.hcl
         └── talos-cluster/
-            ├── common.hcl              # Shared inputs (CPU, RAM, network)
+            ├── common.hcl              # Shared Talos inputs
             ├── talos-01/
-            │   └── terragrunt.hcl      # VM-specific: hostname, VMID, MAC
+            │   └── terragrunt.hcl
             ├── talos-02/
             │   └── terragrunt.hcl
             ├── talos-03/
@@ -104,22 +114,20 @@ terraform/
 
 ### Configuration Hierarchy
 
+**Talos** (shared defaults via `common.hcl`):
+
 ```
 root.hcl
-    └── Backend config (GitLab HTTP state with dynamic keys)
-    └── Provider config (Proxmox API via env vars)
-            │
-            ▼
-deployments/proxmox/talos-cluster/common.hcl
-    └── Shared VM inputs (CPU, RAM, disk size, storage pool)
-            │
-            ▼
-deployments/proxmox/talos-cluster/talos-XX/terragrunt.hcl
-    └── Per-VM inputs (hostname, VMID, Proxmox node, MAC address)
-    └── terraform { source = "../../../../modules/talos-vm" }
+    └── deployments/proxmox/talos-cluster/common.hcl
+            └── talos-XX/terragrunt.hcl  → modules/talos-vm
 ```
 
-Each VM runs on a dedicated Proxmox node, so `proxmox_node` is a per-VM input.
+**Home / Game** (self-contained `terragrunt.hcl` per VM):
+
+```
+root.hcl
+    └── deployments/proxmox/{home,game}/terragrunt.hcl  → modules/proxmox-vm
+```
 
 ## Prerequisites
 
@@ -130,7 +138,7 @@ tofu version          # >= 1.6.0
 terragrunt --version  # >= 0.52.0
 ```
 
-### Installation (macOS)
+### Installation
 
 ```bash
 brew install opentofu terragrunt
@@ -178,6 +186,8 @@ Source before running terragrunt:
 source terraform/.env
 ```
 
+When using `curl`, strip a trailing slash from `PROXMOX_API_URL` or use `${PROXMOX_API_URL%/}/api2/...`.
+
 ### GitLab CI/CD Variables
 
 Sync from `terraform/.env` (values piped to glab; not echoed):
@@ -213,6 +223,8 @@ terragrunt plan
 terragrunt apply
 ```
 
+Home and Game follow the same pattern under `deployments/proxmox/home` and `deployments/proxmox/game`.
+
 ### All Deployments
 
 Use `run --all` from the deployments directory:
@@ -223,11 +235,11 @@ cd terraform/deployments
 # Plan all
 terragrunt run --all -- plan
 
-# Apply all (MUST use --parallelism 1 for control plane nodes!)
+# Apply all (MUST use --parallelism 1 when Talos nodes are included!)
 terragrunt run --all --parallelism 1 --non-interactive -- apply -auto-approve
 ```
 
-> **⚠️ CRITICAL**: Always use `--parallelism 1` when applying to control plane nodes. Parallel applies will reboot all nodes simultaneously, causing cluster outage and potential etcd quorum loss.
+> **⚠️ CRITICAL**: Always use `--parallelism 1` when applying Talos control plane nodes. Parallel applies will reboot all nodes simultaneously, causing cluster outage and potential etcd quorum loss. Home and Game can be applied individually without that constraint.
 
 ### Validate Configuration
 
@@ -235,25 +247,29 @@ terragrunt run --all --parallelism 1 --non-interactive -- apply -auto-approve
 cd terraform
 terragrunt hcl fmt --check
 
-cd deployments/proxmox/talos-cluster/talos-01
-terragrunt validate
+cd deployments
+terragrunt run --all -- validate
 ```
 
 ## Import Strategy
 
-VMs already exist in Proxmox - import them into state rather than recreate.
+VMs already exist in Proxmox — import them into state rather than recreate.
 
 ### Step 1: Capture Current VM Configuration
 
 ```bash
 curl -sk \
   -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
-  "${PROXMOX_API_URL}/api2/json/nodes/{node}/qemu/{vmid}/config" | jq
+  "${PROXMOX_API_URL%/}/api2/json/nodes/{node}/qemu/{vmid}/config" | jq
 ```
+
+Use the node where the VM is running at import time. For cluster-portable VMs, that is bootstrap metadata only; Terraform ignores placement drift afterward.
 
 ### Step 2: Import Existing Resources
 
-Import ID format: `node_name/vm_id` (e.g., `node-01/801`)
+VM import ID format: `{node}/{vmid}` (e.g. `node-01/801`).
+
+**Talos example:**
 
 ```bash
 cd deployments/proxmox/talos-cluster/talos-01
@@ -261,7 +277,24 @@ terragrunt init -lock=false
 terragrunt import -lock=false proxmox_virtual_environment_vm.this node-01/801
 ```
 
-Batch import all VMs:
+**Home** (VM + HA resource):
+
+```bash
+cd deployments/proxmox/home
+terragrunt init -lock=false
+terragrunt import -lock=false proxmox_virtual_environment_vm.this node-02/100
+terragrunt import -lock=false 'proxmox_haresource.this[0]' vm:100
+```
+
+**Game:**
+
+```bash
+cd deployments/proxmox/game
+terragrunt init -lock=false
+terragrunt import -lock=false proxmox_virtual_environment_vm.this node-03/103
+```
+
+Batch import Talos VMs:
 
 ```bash
 for i in 1 2 3 4; do
@@ -281,14 +314,18 @@ done
 terragrunt plan
 ```
 
-Expected drift after import (intentional additions):
+Tune the deployment's `terragrunt.hcl` until the plan shows no unintended changes. Common acceptable drift after import:
 
-| Attribute         | Change                           | Notes                    |
-| ----------------- | -------------------------------- | ------------------------ |
-| `tags`            | Adding `["talos", "kubernetes"]` | Organizational tags      |
-| `keyboard_layout` | Adding `en-us`                   | Provider default         |
-| `agent.type`      | Adding `virtio`                  | Transport type (default) |
-| `cdrom`           | Explicit block                   | Matches existing config  |
+| Attribute          | Change                        | Notes                                    |
+| ------------------ | ----------------------------- | ---------------------------------------- |
+| `tags`             | Adding organizational tags    | Talos only; proxmox-vm ignores tag drift |
+| `keyboard_layout`  | Adding `en-us`                | Provider default                         |
+| `agent.type`       | Adding `virtio`               | Transport type (default)                 |
+| `cdrom`            | Explicit block                | Matches existing config                  |
+| `description`      | Removing installer HTML notes | Home (community-scripts template)        |
+| `haresource.group` | Assigning HA group            | Home if group was unset in API           |
+
+Apply minor normalization changes when the plan is understood and low risk.
 
 ### Step 4: Commit Lock Files
 
@@ -368,6 +405,12 @@ terragrunt state list
 terragrunt state rm proxmox_virtual_environment_vm.this
 ```
 
+For Home, also remove the HA resource if re-importing:
+
+```bash
+terragrunt state rm 'proxmox_haresource.this[0]'
+```
+
 ### Provider Authentication
 
 Test Proxmox API access:
@@ -375,7 +418,7 @@ Test Proxmox API access:
 ```bash
 curl -sk \
   -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
-  "${PROXMOX_API_URL}/api2/json/version" | jq
+  "${PROXMOX_API_URL%/}/api2/json/version" | jq
 ```
 
 ### Terragrunt Cache Issues
@@ -393,13 +436,14 @@ If plan shows unexpected changes, capture the actual VM config:
 qm config 801  # On the Proxmox node
 ```
 
-Match module inputs exactly to the output, paying attention to:
+Match module inputs in the deployment's `terragrunt.hcl` to the output, paying attention to:
 
-- `cpu` type (e.g., `host`, `x86-64-v2-AES`)
+- `cpu` type (e.g. `host`, `x86-64-v2-AES`)
 - `scsihw` (SCSI controller type)
 - `boot` order
 - `memory` and `balloon` settings
 - `disk.cache` (often `none` after import)
+- `bios` / `efidisk` for UEFI VMs (Home)
 
 ## References
 
@@ -407,5 +451,6 @@ Match module inputs exactly to the output, paying attention to:
 - [Terragrunt Documentation](https://terragrunt.gruntwork.io/docs/)
 - [Terragrunt CLI Redesign Migration](https://terragrunt.gruntwork.io/docs/migrate/cli-redesign/)
 - [bpg/proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
+- [bpg/proxmox Multi-Node Guide](https://registry.terraform.io/providers/bpg/proxmox/latest/docs/guides/multi-node)
 - [GitLab Terraform State](https://docs.gitlab.com/ee/user/infrastructure/iac/terraform_state.html)
 - [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/)
