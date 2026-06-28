@@ -21,7 +21,6 @@ resources:
   - litellm
   - llm-d
   - mcp-servers
-  # - mlflow
   - openclaw
   - openwebui
   - odysseus
