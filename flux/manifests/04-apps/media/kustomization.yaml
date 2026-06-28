@@ -36,7 +36,6 @@ resources:
   - management/recommendarr
   - management/recyclarr
   - management/seerr
-  - management/shinkro
   - management/sonarr
   - management/suwayomi
   - management/taggarr
