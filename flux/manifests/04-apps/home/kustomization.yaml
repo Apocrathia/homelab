@@ -8,7 +8,6 @@ metadata:
 resources:
   - cannery
   - companion
-  - grocy
   - mealie
   - meshtastic
   - transmission
