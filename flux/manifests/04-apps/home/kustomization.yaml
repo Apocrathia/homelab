@@ -7,7 +7,6 @@ metadata:
 
 resources:
   - companion
-  - grocy
   - mealie
   - meshtastic
   - uptime-kuma
