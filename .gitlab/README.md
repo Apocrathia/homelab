@@ -89,18 +89,22 @@ Runs on MRs that modify manifests or `renovate.json`. Extracts GitHub/GitLab rep
 
 ### OpenTofu/Terragrunt
 
-Manages Proxmox VM infrastructure. Runs validation and plan on MRs, manual apply on main branch.
+Manages Proxmox VM infrastructure. Runs validation and plan on MRs, drift check on schedule, manual apply on main branch.
 
 **Jobs**:
 
 - `tofu-validate` - Validates Terragrunt configuration
 - `tofu-plan` - Runs plan and posts output to MR
+- `tofu-drift` - Scheduled drift detection; notifies only, does not apply (`allow_failure: true`, does not block Pages/scorecard)
 - `tofu-apply` - Manual apply on main branch (uses `resource_group` to prevent concurrent applies)
 
 **Requirements**:
 
-- `TOFU_TOKEN` - Personal access token for posting MR comments
-- Proxmox credentials configured in Terragrunt
+- `TOFU_TOKEN` - Personal access token for posting MR comments and drift issue notes
+- `TF_HTTP_ADDRESS`, `TF_HTTP_USERNAME`, `TF_HTTP_PASSWORD` - GitLab HTTP remote state backend (see `terraform/README.md`)
+- `PROXMOX_VE_*` - Proxmox API credentials for plan/apply
+- `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord-compatible webhook for drift notifications
+- `TOFU_DRIFT_ISSUE_IID` (optional) - GitLab issue number to post drift notes to
 
 ### Chart Tagging
 
@@ -148,14 +152,21 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 
 ## Required CI/CD Variables
 
-| Variable          | Purpose                                                                                                                   | Scope             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `KUSTOMIZE_TOKEN` | MR comment access                                                                                                         | kustomize-diff    |
-| `SCORECARD_TOKEN` | MR comment access                                                                                                         | scorecard         |
-| `TOFU_TOKEN`      | MR comment access                                                                                                         | tofu-plan         |
-| `GITHUB_TOKEN`    | Scorecard API access                                                                                                      | scorecard         |
-| `GITLAB_TOKEN`    | Git tag push access                                                                                                       | chart-tag         |
-| `AGENT_TOKEN`     | Project PAT (`api` scope) for change-summary skip-cache trailer writes — `CI_JOB_TOKEN` cannot PUT MR notes on GitLab.com | mr-change-summary |
+| Variable                 | Purpose                                                                                                                   | Scope                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `KUSTOMIZE_TOKEN`        | MR comment access                                                                                                         | kustomize-diff                    |
+| `SCORECARD_TOKEN`        | MR comment access                                                                                                         | scorecard                         |
+| `TOFU_TOKEN`             | MR comment and drift issue note access                                                                                    | tofu-plan, tofu-drift             |
+| `TF_HTTP_ADDRESS`        | GitLab remote state base URL                                                                                              | tofu-drift, tofu-plan, tofu-apply |
+| `TF_HTTP_USERNAME`       | GitLab username for state backend                                                                                         | tofu-drift, tofu-plan, tofu-apply |
+| `TF_HTTP_PASSWORD`       | GitLab token (`api` scope) for state backend                                                                              | tofu-drift, tofu-plan, tofu-apply |
+| `PROXMOX_VE_ENDPOINT`    | Proxmox API URL                                                                                                           | tofu-drift, tofu-plan, tofu-apply |
+| `PROXMOX_VE_API_TOKEN`   | Proxmox API token                                                                                                         | tofu-drift, tofu-plan, tofu-apply |
+| `TOFU_DRIFT_WEBHOOK_URL` | Drift notification webhook (optional)                                                                                     | tofu-drift                        |
+| `TOFU_DRIFT_ISSUE_IID`   | GitLab issue to post drift notes (optional)                                                                               | tofu-drift                        |
+| `GITHUB_TOKEN`           | Scorecard API access                                                                                                      | scorecard                         |
+| `GITLAB_TOKEN`           | Git tag push access                                                                                                       | chart-tag                         |
+| `AGENT_TOKEN`            | Project PAT (`api` scope) for change-summary skip-cache trailer writes — `CI_JOB_TOKEN` cannot PUT MR notes on GitLab.com | mr-change-summary                 |
 
 Configure in **Settings > CI/CD > Variables**.
 

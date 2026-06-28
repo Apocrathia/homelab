@@ -14,6 +14,25 @@
       changes:
         - terraform/**/*
 
+.tofu-preflight:
+  before_script:
+    - cd terraform/deployments
+    - |
+      missing=""
+      for var in TF_HTTP_ADDRESS TF_HTTP_USERNAME TF_HTTP_PASSWORD \
+        PROXMOX_VE_ENDPOINT PROXMOX_VE_API_TOKEN; do
+        eval "value=\${$var-}"
+        if [ -z "$value" ]; then
+          missing="${missing} ${var}"
+        fi
+      done
+      if [ -n "$missing" ]; then
+        echo "Missing required CI/CD variables:${missing}"
+        echo "Configure in GitLab: Settings → CI/CD → Variables"
+        echo "TF_HTTP_* is the GitLab remote state backend (see terraform/README.md)"
+        exit 1
+      fi
+
 tofu-validate:
   extends: .tofu-base
   stage: verify
@@ -30,7 +49,6 @@ tofu-plan:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - terraform/**/*
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
     - |
       MARKER="<!-- tofu-plan -->"
@@ -38,10 +56,8 @@ tofu-plan:
 
       echo "=== Running Terragrunt Plan ==="
 
-      # Run plan and capture output
       PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
 
-      # Extract plan summaries
       PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | grep -E "Plan:|No changes" || echo "Plan output not found")
 
       echo "$PLAN_OUTPUT"
@@ -49,13 +65,6 @@ tofu-plan:
       echo "=== Plan Summary ==="
       echo "$PLAN_SUMMARY"
 
-      # Only post to an MR when this is an MR pipeline (e.g. drift schedule has no MR)
-      if [ "$CI_PIPELINE_SOURCE" != "merge_request_event" ]; then
-        echo "Pipeline source is '${CI_PIPELINE_SOURCE}', not an MR — skipping MR comment."
-        exit ${PLAN_EXIT:-0}
-      fi
-
-      # Build MR comment
       {
         echo "$MARKER"
         echo "## 🏗️ OpenTofu Plan"
@@ -79,7 +88,6 @@ tofu-plan:
 
       COMMENT_BODY=$(cat "$PLAN_FILE")
 
-      # Post or update MR comment
       echo "Posting plan to MR..."
       NOTES=$(curl --silent --show-error --fail \
         --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
@@ -109,6 +117,99 @@ tofu-plan:
       echo "✅ Plan complete"
       exit ${PLAN_EXIT:-0}
   allow_failure: false
+
+# Scheduled drift detection — notify only, never apply. Non-blocking for Pages/scorecard.
+tofu-drift:
+  extends:
+    - .tofu-base
+    - .tofu-preflight
+  stage: deploy
+  needs: []
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  allow_failure: true
+  script:
+    - |
+      echo "=== Running Terragrunt Drift Check ==="
+
+      PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
+      PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | grep -E "Plan:|No changes" || echo "Plan output not found")
+
+      echo "$PLAN_OUTPUT"
+      echo ""
+      echo "=== Plan Summary ==="
+      echo "$PLAN_SUMMARY"
+
+      NOTIFY_REASON=""
+      if [ "${PLAN_EXIT:-0}" -ne 0 ]; then
+        NOTIFY_REASON="plan_failed"
+      elif echo "$PLAN_OUTPUT" | grep -qiE 'No changes'; then
+        echo "No drift detected."
+        exit 0
+      elif echo "$PLAN_OUTPUT" | grep -qE 'Plan: [0-9]+ to (add|change|destroy)'; then
+        NOTIFY_REASON="drift_detected"
+      else
+        NOTIFY_REASON="plan_unclear"
+      fi
+
+      MARKER="<!-- tofu-drift -->"
+      {
+        echo "$MARKER"
+        echo "## OpenTofu drift check"
+        echo ""
+        echo "**Status:** ${NOTIFY_REASON}"
+        echo "**Pipeline:** ${CI_PIPELINE_URL}"
+        echo ""
+        echo "### Summary"
+        echo ""
+        echo '```'
+        echo "$PLAN_SUMMARY"
+        echo '```'
+        echo ""
+        echo "<details><summary>Full plan output</summary>"
+        echo ""
+        echo '```hcl'
+        echo "$PLAN_OUTPUT"
+        echo '```'
+        echo ""
+        echo "</details>"
+      } > /tmp/drift-notify.md
+      NOTIFY_BODY=$(cat /tmp/drift-notify.md)
+
+      notify_webhook() {
+        [ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ] || return 0
+        curl --silent --show-error --fail --request POST \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n \
+            --arg content "OpenTofu ${NOTIFY_REASON} on ${CI_PROJECT_PATH}
+      ${PLAN_SUMMARY}
+      ${CI_PIPELINE_URL}" \
+            '{content: $content}')" \
+          "$TOFU_DRIFT_WEBHOOK_URL"
+      }
+
+      notify_issue() {
+        [ -n "${TOFU_DRIFT_ISSUE_IID:-}" ] || return 0
+        [ -n "${TOFU_TOKEN:-}" ] || {
+          echo "TOFU_DRIFT_ISSUE_IID is set but TOFU_TOKEN is missing; skipping issue note"
+          return 0
+        }
+        curl --silent --show-error --fail --request POST \
+          --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data "$(jq -n --arg body "$NOTIFY_BODY" '{body: $body}')" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/issues/${TOFU_DRIFT_ISSUE_IID}/notes"
+      }
+
+      if [ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ] || [ -n "${TOFU_DRIFT_ISSUE_IID:-}" ]; then
+        notify_webhook || echo "⚠️ Webhook notification failed"
+        notify_issue || echo "⚠️ Issue notification failed"
+      else
+        echo "No TOFU_DRIFT_WEBHOOK_URL or TOFU_DRIFT_ISSUE_IID configured; skipping notification"
+      fi
+
+      exit ${PLAN_EXIT:-0}
+  resource_group: terraform-plan
 
 tofu-apply:
   extends: .tofu-base

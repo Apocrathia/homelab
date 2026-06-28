@@ -180,16 +180,26 @@ source terraform/.env
 
 ### GitLab CI/CD Variables
 
-Configure in GitLab (Settings → CI/CD → Variables):
+Sync from `terraform/.env` (values piped to glab; not echoed):
+
+```bash
+./scripts/sync-gitlab-ci-variables.sh --dry-run   # preview
+./scripts/sync-gitlab-ci-variables.sh -y          # write
+```
+
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab.
 
 | Variable               | Type     | Protected | Masked |
 | ---------------------- | -------- | --------- | ------ |
-| `TF_HTTP_ADDRESS`      | Variable | Yes       | No     |
-| `TF_HTTP_USERNAME`     | Variable | Yes       | No     |
+| `TF_HTTP_ADDRESS`      | Variable | Yes       | Yes    |
+| `TF_HTTP_USERNAME`     | Variable | Yes       | Yes    |
 | `TF_HTTP_PASSWORD`     | Variable | Yes       | Yes    |
-| `PROXMOX_VE_ENDPOINT`  | Variable | Yes       | No     |
+| `PROXMOX_VE_ENDPOINT`  | Variable | Yes       | Yes    |
 | `PROXMOX_VE_API_TOKEN` | Variable | Yes       | Yes    |
 | `PROXMOX_VE_INSECURE`  | Variable | Yes       | No     |
+| `TOFU_TOKEN`           | Variable | Yes       | Yes    |
+
+Manual setup: GitLab → Settings → CI/CD → Variables.
 
 ## Local Development
 
@@ -314,11 +324,12 @@ pre-commit run --all-files
 
 Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 
-| Stage  | Job             | Trigger              | Description                         |
-| ------ | --------------- | -------------------- | ----------------------------------- |
-| verify | `tofu-validate` | MRs (terraform/\*\*) | Syntax and configuration validation |
-| verify | `tofu-plan`     | MRs (terraform/\*\*) | Plan posted as MR comment           |
-| deploy | `tofu-apply`    | Manual (main only)   | Apply with `--parallelism 1`        |
+| Stage  | Job             | Trigger              | Description                                  |
+| ------ | --------------- | -------------------- | -------------------------------------------- |
+| verify | `tofu-validate` | MRs (terraform/\*\*) | Syntax and configuration validation          |
+| verify | `tofu-plan`     | MRs (terraform/\*\*) | Plan posted as MR comment                    |
+| deploy | `tofu-drift`    | Schedule (daily)     | Drift detection; notifies only, non-blocking |
+| deploy | `tofu-apply`    | Manual (main only)   | Apply with `--parallelism 1`                 |
 
 ### Required CI/CD Variables
 
