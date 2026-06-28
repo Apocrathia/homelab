@@ -29,7 +29,6 @@ resources:
   - management/seerr
   - management/sonarr
   - management/suwayomi
-  - management/taggarr
   - management/tracearr
   - management/tdarr
   - management/whisparr
