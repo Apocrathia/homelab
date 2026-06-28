@@ -1,9 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: zilean
-  labels:
-    name: zilean
-    app.kubernetes.io/name: zilean
-    images/dockerhub: "true"
