@@ -100,11 +100,10 @@ Manages Proxmox VM infrastructure. Runs validation and plan on MRs, drift check 
 
 **Requirements**:
 
-- `TOFU_TOKEN` - Personal access token for posting MR comments and drift issue notes
+- `TOFU_TOKEN` - Personal access token for posting MR comments
 - `TF_HTTP_ADDRESS`, `TF_HTTP_USERNAME`, `TF_HTTP_PASSWORD` - GitLab HTTP remote state backend (see `terraform/README.md`)
 - `PROXMOX_VE_*` - Proxmox API credentials for plan/apply
-- `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord-compatible webhook for drift notifications
-- `TOFU_DRIFT_ISSUE_IID` (optional) - GitLab issue number to post drift notes to
+- `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord webhook for drift notifications
 
 ### Chart Tagging
 
@@ -156,14 +155,13 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | `KUSTOMIZE_TOKEN`        | MR comment access                                                                                                         | kustomize-diff                    |
 | `SCORECARD_TOKEN`        | MR comment access                                                                                                         | scorecard                         |
-| `TOFU_TOKEN`             | MR comment and drift issue note access                                                                                    | tofu-plan, tofu-drift             |
+| `TOFU_TOKEN`             | MR comment access                                                                                                         | tofu-plan, tofu-drift             |
 | `TF_HTTP_ADDRESS`        | GitLab remote state base URL                                                                                              | tofu-drift, tofu-plan, tofu-apply |
 | `TF_HTTP_USERNAME`       | GitLab username for state backend                                                                                         | tofu-drift, tofu-plan, tofu-apply |
 | `TF_HTTP_PASSWORD`       | GitLab token (`api` scope) for state backend                                                                              | tofu-drift, tofu-plan, tofu-apply |
 | `PROXMOX_VE_ENDPOINT`    | Proxmox API URL                                                                                                           | tofu-drift, tofu-plan, tofu-apply |
 | `PROXMOX_VE_API_TOKEN`   | Proxmox API token                                                                                                         | tofu-drift, tofu-plan, tofu-apply |
-| `TOFU_DRIFT_WEBHOOK_URL` | Drift notification webhook (optional)                                                                                     | tofu-drift                        |
-| `TOFU_DRIFT_ISSUE_IID`   | GitLab issue to post drift notes (optional)                                                                               | tofu-drift                        |
+| `TOFU_DRIFT_WEBHOOK_URL` | Discord webhook for drift notifications (optional)                                                                        | tofu-drift                        |
 | `GITHUB_TOKEN`           | Scorecard API access                                                                                                      | scorecard                         |
 | `GITLAB_TOKEN`           | Git tag push access                                                                                                       | chart-tag                         |
 | `AGENT_TOKEN`            | Project PAT (`api` scope) for change-summary skip-cache trailer writes — `CI_JOB_TOKEN` cannot PUT MR notes on GitLab.com | mr-change-summary                 |

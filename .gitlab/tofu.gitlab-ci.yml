@@ -57,7 +57,7 @@ tofu-plan:
 
       echo "=== Running Terragrunt Plan ==="
 
-      PLAN_PARSER="${CI_PROJECT_DIR}/terraform/scripts/tofu-plan-summary.sh"
+      PLAN_PARSER="${CI_PROJECT_DIR}/scripts/terraform/tofu-plan-summary.sh"
       PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
 
       PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | "$PLAN_PARSER" summarize)
@@ -135,7 +135,7 @@ tofu-drift:
       echo "=== Running Terragrunt Drift Check ==="
       echo "Read-only plan; skipping state lock (MR/PAT may lack lock write perms)"
 
-      PLAN_PARSER="${CI_PROJECT_DIR}/terraform/scripts/tofu-plan-summary.sh"
+      PLAN_PARSER="${CI_PROJECT_DIR}/scripts/terraform/tofu-plan-summary.sh"
       PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color -lock=false 2>&1) || PLAN_EXIT=$?
       PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | "$PLAN_PARSER" summarize)
 
@@ -163,32 +163,7 @@ tofu-drift:
         esac
       fi
 
-      MARKER="<!-- tofu-drift -->"
-      {
-        echo "$MARKER"
-        echo "## OpenTofu drift check"
-        echo ""
-        echo "**Status:** ${NOTIFY_REASON}"
-        echo "**Pipeline:** ${CI_PIPELINE_URL}"
-        echo ""
-        echo "### Summary"
-        echo ""
-        echo '```'
-        echo "$PLAN_SUMMARY"
-        echo '```'
-        echo ""
-        echo "<details><summary>Full plan output</summary>"
-        echo ""
-        echo '```hcl'
-        echo "$PLAN_OUTPUT"
-        echo '```'
-        echo ""
-        echo "</details>"
-      } > /tmp/drift-notify.md
-      NOTIFY_BODY=$(cat /tmp/drift-notify.md)
-
-      notify_webhook() {
-        [ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ] || return 0
+      if [ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]; then
         curl --silent --show-error --fail --request POST \
           --header "Content-Type: application/json" \
           --data "$(jq -n \
@@ -196,27 +171,9 @@ tofu-drift:
       ${PLAN_SUMMARY}
       ${CI_PIPELINE_URL}" \
             '{content: $content}')" \
-          "$TOFU_DRIFT_WEBHOOK_URL"
-      }
-
-      notify_issue() {
-        [ -n "${TOFU_DRIFT_ISSUE_IID:-}" ] || return 0
-        [ -n "${TOFU_TOKEN:-}" ] || {
-          echo "TOFU_DRIFT_ISSUE_IID is set but TOFU_TOKEN is missing; skipping issue note"
-          return 0
-        }
-        curl --silent --show-error --fail --request POST \
-          --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
-          --header "Content-Type: application/json" \
-          --data "$(jq -n --arg body "$NOTIFY_BODY" '{body: $body}')" \
-          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/issues/${TOFU_DRIFT_ISSUE_IID}/notes"
-      }
-
-      if [ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ] || [ -n "${TOFU_DRIFT_ISSUE_IID:-}" ]; then
-        notify_webhook || echo "⚠️ Webhook notification failed"
-        notify_issue || echo "⚠️ Issue notification failed"
+          "$TOFU_DRIFT_WEBHOOK_URL" || echo "⚠️ Webhook notification failed"
       else
-        echo "No TOFU_DRIFT_WEBHOOK_URL or TOFU_DRIFT_ISSUE_IID configured; skipping notification"
+        echo "No TOFU_DRIFT_WEBHOOK_URL configured; skipping notification"
       fi
 
       exit ${PLAN_EXIT:-0}

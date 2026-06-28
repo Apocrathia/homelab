@@ -2,16 +2,17 @@
 # Sync terraform/.env values to GitLab project CI/CD variables via glab.
 #
 # Usage:
-#   terraform/scripts/sync-gitlab-ci-variables.sh          # prompt before writing
-#   terraform/scripts/sync-gitlab-ci-variables.sh -y       # apply without prompt
-#   terraform/scripts/sync-gitlab-ci-variables.sh --dry-run
+#   scripts/terraform/sync-gitlab-ci-variables.sh          # prompt before writing
+#   scripts/terraform/sync-gitlab-ci-variables.sh -y       # apply without prompt
+#   scripts/terraform/sync-gitlab-ci-variables.sh --dry-run
 #
 # Requires: glab authenticated for the target project (glab auth status).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TF_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+TF_ROOT="${REPO_ROOT}/terraform"
 ENV_FILE="${TERRAFORM_ENV_FILE:-${TF_ROOT}/.env}"
 REPO="${GITLAB_REPO:-Apocrathia/homelab}"
 SCOPE='*'
@@ -218,6 +219,9 @@ upsert_variable() {
 echo "Target: ${REPO}"
 echo "Source: ${ENV_FILE}"
 echo "Keys:   ${required[*]}"
+if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
+  echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
+fi
 echo
 
 if ! $ASSUME_YES && ! $DRY_RUN; then
@@ -235,6 +239,9 @@ upsert_variable PROXMOX_VE_ENDPOINT "$PROXMOX_VE_ENDPOINT" false
 upsert_variable PROXMOX_VE_API_TOKEN "$PROXMOX_VE_API_TOKEN" true
 upsert_variable PROXMOX_VE_INSECURE "$PROXMOX_VE_INSECURE" false
 upsert_variable TOFU_TOKEN "$TOFU_TOKEN" true
+if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
+  upsert_variable TOFU_DRIFT_WEBHOOK_URL "$TOFU_DRIFT_WEBHOOK_URL" true
+fi
 
 echo
 if $DRY_RUN; then

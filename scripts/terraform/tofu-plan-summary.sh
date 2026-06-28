@@ -2,8 +2,8 @@
 # Parse terragrunt run --all plan output (ANSI prefixes, per-unit blocks).
 #
 # Usage:
-#   terragrunt run --all -- plan ... 2>&1 | terraform/scripts/tofu-plan-summary.sh summarize
-#   terragrunt run --all -- plan ... 2>&1 | terraform/scripts/tofu-plan-summary.sh drift-status
+#   terragrunt run --all -- plan ... 2>&1 | scripts/terraform/tofu-plan-summary.sh summarize
+#   terragrunt run --all -- plan ... 2>&1 | scripts/terraform/tofu-plan-summary.sh drift-status
 #
 # drift-status prints: no_drift | output_only | drift_detected | plan_unclear
 set -euo pipefail

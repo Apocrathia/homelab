@@ -183,21 +183,22 @@ source terraform/.env
 Sync from `terraform/.env` (values piped to glab; not echoed):
 
 ```bash
-./terraform/scripts/sync-gitlab-ci-variables.sh --dry-run   # preview
-./terraform/scripts/sync-gitlab-ci-variables.sh -y          # write
+./scripts/terraform/sync-gitlab-ci-variables.sh --dry-run   # preview
+./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts).
 
-| Variable               | Type     | Protected | Masked |
-| ---------------------- | -------- | --------- | ------ |
-| `TF_HTTP_ADDRESS`      | Variable | Yes       | Yes    |
-| `TF_HTTP_USERNAME`     | Variable | Yes       | Yes    |
-| `TF_HTTP_PASSWORD`     | Variable | Yes       | Yes    |
-| `PROXMOX_VE_ENDPOINT`  | Variable | Yes       | Yes    |
-| `PROXMOX_VE_API_TOKEN` | Variable | Yes       | Yes    |
-| `PROXMOX_VE_INSECURE`  | Variable | Yes       | No     |
-| `TOFU_TOKEN`           | Variable | Yes       | Yes    |
+| Variable                 | Type     | Protected | Masked |
+| ------------------------ | -------- | --------- | ------ |
+| `TF_HTTP_ADDRESS`        | Variable | Yes       | Yes    |
+| `TF_HTTP_USERNAME`       | Variable | Yes       | Yes    |
+| `TF_HTTP_PASSWORD`       | Variable | Yes       | Yes    |
+| `PROXMOX_VE_ENDPOINT`    | Variable | Yes       | Yes    |
+| `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
+| `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
+| `TOFU_TOKEN`             | Variable | Yes       | Yes    |
+| `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
 
 Manual setup: GitLab → Settings → CI/CD → Variables.
 
