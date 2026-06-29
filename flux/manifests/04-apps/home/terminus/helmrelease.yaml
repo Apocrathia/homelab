@@ -1,0 +1,221 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: terminus
+  namespace: terminus
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: terminus
+      # renovate: datasource=docker depName=ghcr.io/usetrmnl/terminus
+      image: ghcr.io/usetrmnl/terminus:latest
+      container:
+        name: terminus
+        port: 2300
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: APP_SETUP
+            value: "true"
+          - name: HANAMI_PORT
+            value: "2300"
+          - name: API_URI
+            value: "https://terminus.gateway.services.apocrathia.com"
+          - name: KEYVALUE_URL
+            value: "redis://terminus-valkey.terminus.svc.cluster.local:6379"
+          - name: RACK_ATTACK_ALLOWED_SUBNETS
+            value: "10.42.0.0/16,10.69.0.0/16"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: terminus-secrets
+                key: database-url
+          - name: APP_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: terminus-secrets
+                key: app-secret
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 2300
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /up
+            port: 2300
+            scheme: HTTP
+          initialDelaySeconds: 45
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /up
+            port: 2300
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: uploads
+          mountPath: /app/public/uploads
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /app/tmp
+          - name: log
+            mountPath: /app/log
+      sidecars:
+        - name: sidekiq
+          image: ghcr.io/usetrmnl/terminus:latest
+          command:
+            - bundle
+            - exec
+            - sidekiq
+            - -r
+            - ./config/sidekiq.rb
+          env:
+            - name: TZ
+              value: "America/Denver"
+            - name: API_URI
+              value: "https://terminus.gateway.services.apocrathia.com"
+            - name: KEYVALUE_URL
+              value: "redis://terminus-valkey.terminus.svc.cluster.local:6379"
+            - name: RACK_ATTACK_ALLOWED_SUBNETS
+              value: "10.42.0.0/16,10.69.0.0/16"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: terminus-secrets
+                  key: database-url
+            - name: APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: terminus-secrets
+                  key: app-secret
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/public/uploads
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          healthChecks:
+            livenessProbe:
+              enabled: true
+              exec:
+                command:
+                  - pgrep
+                  - -f
+                  - sidekiq
+              initialDelaySeconds: 45
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 3
+            readinessProbe:
+              enabled: true
+              exec:
+                command:
+                  - pgrep
+                  - -f
+                  - sidekiq
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: uploads
+            capacity: 10Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/terminus-secrets"
+
+    postgres:
+      enabled: true
+      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      instances: 1
+      database: terminus
+      owner: terminus
+      storage:
+        storageClass: longhorn
+        size: 5Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Home"
+      displayName: "Terminus"
+      externalHost: "https://terminus.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/terminus/icon.svg"
+      metaDescription: "Self-hosted TRMNL BYOS server for e-ink devices"
+      metaPublisher: "TRMNL"
+      skipPathRegex:
+        - "^/api/"
+        - "^/up"
+
+    httproute:
+      enabled: false

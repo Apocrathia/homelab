@@ -1,0 +1,89 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: terminus-valkey
+  namespace: terminus
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: terminus-valkey
+      namespace: terminus
+      # renovate: datasource=docker depName=valkey/valkey
+      image: valkey/valkey:9-alpine
+      args:
+        - valkey-server
+        - --maxmemory
+        - 512mb
+        - --maxmemory-policy
+        - noeviction
+      container:
+        name: valkey
+        port: 6379
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: valkey
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false

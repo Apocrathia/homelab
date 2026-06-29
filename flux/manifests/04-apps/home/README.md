@@ -26,6 +26,10 @@ Recipe manager and meal planning with Authentik SSO.
 
 LoRa mesh networking node management and monitoring.
 
+### [Terminus](./terminus/README.md)
+
+Self-hosted TRMNL BYOS server for e-ink device management.
+
 ### [Transmission](./transmission/README.md)
 
 Torrent client with VPN integration via Gluetun.

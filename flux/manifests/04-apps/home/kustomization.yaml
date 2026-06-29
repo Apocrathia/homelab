@@ -9,4 +9,5 @@ resources:
   - companion
   - mealie
   - meshtastic
+  - terminus
   - uptime-kuma
