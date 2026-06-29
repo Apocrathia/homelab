@@ -12,6 +12,7 @@ spec:
   policy:
     debug: true
     force: false
+    nodrain: true
     rebootMode: default
     placement: soft
 
