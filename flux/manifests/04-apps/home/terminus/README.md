@@ -43,7 +43,7 @@ URL-encode special characters in the password if needed.
 
 ## Authentication
 
-**Authentik** handles perimeter access via proxy provider. Device paths bypass Authentik: `/api/`, `/assets/`, `/uploads/`, `/fonts/`, and `/up`. TRMNL devices authenticate with MAC address headers on API routes and fetch screen images from `/uploads/` without SSO.
+**Authentik** handles perimeter access via proxy provider. Device and API paths bypass Authentik: `/api/`, `/api/jwt`, `/assets/`, `/uploads/`, `/fonts/`, `/login`, and `/up`.
 
 **Rodauth** is Terminus's built-in user authentication (register, login, sessions). Terminus does not support OIDC or trusted-header SSO, so Authentik cannot replace Rodauth for app-level accounts. After Authentik, you still register or log in inside Terminus. The first registered user is auto-verified and becomes the admin.
 
