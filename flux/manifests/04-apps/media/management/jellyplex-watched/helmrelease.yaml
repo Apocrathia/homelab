@@ -1,0 +1,121 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jellyplex-watched
+  namespace: jellyplex-watched
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: jellyplex-watched
+      # renovate: datasource=docker depName=ghcr.io/luigi311/jellyplex-watched
+      image: ghcr.io/luigi311/jellyplex-watched:8.5.3
+      container:
+        name: jellyplex-watched
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: RUN_ONLY_ONCE
+            value: "False"
+          - name: SLEEP_DURATION
+            value: "900"
+          - name: DRYRUN
+            value: "False"
+          - name: DEBUG_LEVEL
+            value: "INFO"
+          - name: LOG_FILE
+            value: "/data/log.log"
+          - name: MARK_FILE
+            value: "/data/mark.log"
+          - name: PLEX_BASEURL
+            value: "http://plex.plex.svc.cluster.local:80"
+          - name: PLEX_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: jellyplex-watched-secrets
+                key: plex-token
+          - name: JELLYFIN_BASEURL
+            value: "http://jellyfin.jellyfin.svc.cluster.local:80"
+          - name: JELLYFIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: jellyplex-watched-secrets
+                key: jellyfin-token
+          - name: USER_MAPPING
+            value: '{"apocrathia":"ianyoung"}'
+          - name: SYNC_FROM_PLEX_TO_JELLYFIN
+            value: "True"
+          - name: SYNC_FROM_JELLYFIN_TO_PLEX
+            value: "True"
+          - name: SYNC_FROM_PLEX_TO_PLEX
+            value: "False"
+          - name: SYNC_FROM_JELLYFIN_TO_JELLYFIN
+            value: "False"
+          - name: SYNC_FROM_PLEX_TO_EMBY
+            value: "False"
+          - name: SYNC_FROM_JELLYFIN_TO_EMBY
+            value: "False"
+          - name: SYNC_FROM_EMBY_TO_PLEX
+            value: "False"
+          - name: SYNC_FROM_EMBY_TO_JELLYFIN
+            value: "False"
+          - name: SYNC_FROM_EMBY_TO_EMBY
+            value: "False"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/jellyplex-watched-secrets"
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
