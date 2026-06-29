@@ -215,6 +215,9 @@ spec:
       metaPublisher: "TRMNL"
       skipPathRegex:
         - "^/api/"
+        - "^/assets/"
+        - "^/uploads/"
+        - "^/fonts/"
         - "^/up"
 
     httproute:
