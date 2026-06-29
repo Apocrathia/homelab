@@ -34,7 +34,7 @@ resource "proxmox_virtual_environment_vm" "this" {
     interface    = "scsi0"
     size         = var.disk_size
     cache        = var.disk_cache
-    discard      = var.disk_discard ? "on" : "off"
+    discard      = var.disk_discard ? "on" : "ignore"
     iothread     = var.disk_iothread
     ssd          = var.disk_ssd
   }
