@@ -16,8 +16,8 @@
         "api": "openai-completions",
         "models": [
           {
-            "id": "qwen3",
-            "name": "Qwen3 (Local)",
+            "id": "qwen3.6-prime",
+            "name": "Qwen3.6 Prime",
             "reasoning": true,
             "input": ["text", "image"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
@@ -29,7 +29,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "litellm/qwen3"
+        "primary": "litellm/qwen3.6-prime"
       }
     }
   }

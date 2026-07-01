@@ -3,5 +3,5 @@
 # /opt/data (HERMES_HOME). LiteLLM model id must match litellm.yml model_name.
 model:
   provider: custom
-  default: qwen3.5-medium
+  default: qwen3.6-prime
   base_url: http://litellm.litellm.svc.cluster.local:4000/v1
