@@ -61,10 +61,6 @@ spec:
       targetPath: envVars.PRIME_TEAM_ID
     - kind: Secret
       name: litellm-secrets
-      valuesKey: vector-store-api-key
-      targetPath: envVars.VECTOR_STORE_API_KEY
-    - kind: Secret
-      name: litellm-secrets
       valuesKey: redis-password
       targetPath: global.redis.password
     - kind: Secret
@@ -75,10 +71,6 @@ spec:
       name: litellm-secrets
       valuesKey: homeassistant-token
       targetPath: envVars.HOMEASSISTANT_TOKEN
-    - kind: Secret
-      name: litellm-secrets
-      valuesKey: vector-store-id
-      targetPath: envVars.VECTOR_STORE_ID
     - kind: Secret
       name: litellm-secrets
       valuesKey: oidc-client-id
@@ -197,9 +189,6 @@ spec:
       general_settings:
         # Database configuration
         store_model_in_db: true
-
-        # Allow client-side credentials for vector store registration
-        allow_client_side_credentials: true
 
         # Rate limiting
         default_max_tokens: 4096

@@ -13,7 +13,6 @@ resources:
   - helmrelease.yaml
   - httproute.yaml
   - rbac.yaml
-  - pgvector
 
 generatorOptions:
   disableNameSuffixHash: true
