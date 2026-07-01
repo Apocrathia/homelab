@@ -53,6 +53,14 @@ spec:
       targetPath: envVars.OPENAI_API_KEY
     - kind: Secret
       name: litellm-secrets
+      valuesKey: prime-api-key
+      targetPath: envVars.PRIME_API_KEY
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: prime-team-id
+      targetPath: envVars.PRIME_TEAM_ID
+    - kind: Secret
+      name: litellm-secrets
       valuesKey: vector-store-api-key
       targetPath: envVars.VECTOR_STORE_API_KEY
     - kind: Secret

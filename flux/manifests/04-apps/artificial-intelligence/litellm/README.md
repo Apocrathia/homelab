@@ -26,6 +26,8 @@ Create a 1Password item:
 - `password`: Database and UI password (shared)
 - `model-config`: YAML array containing the model_list configuration
 - `ollama-api-base`: Ollama API base URL for local LLM integration
+- `prime-api-key`: Prime Inference API key for cloud model routes
+- `prime-team-id`: Prime team ID for `X-Prime-Team-ID` billing header
 - `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
 - `oidc-client-secret`: Authentik OIDC provider Client Secret
 
