@@ -10,7 +10,7 @@ This deployment includes:
 
 - Gateway + web dashboard (`generic-app`, upstream `nousresearch/hermes-agent` image)
 - Longhorn-backed state at `HERMES_HOME` (`/opt/data`)
-- Seed `config.yaml` for LiteLLM (custom OpenAI-compatible provider)
+- Static `config.yaml` reconciled into runtime config on every pod start
 - Authentik proxy in front of the dashboard
 
 ## Access
@@ -19,7 +19,7 @@ This deployment includes:
 
 ## Configuration
 
-- **Bootstrap**: Seed `config.yaml` (ConfigMap) for LiteLLM URL and default model; runtime edits persist on the PVC
+- **Static config**: `config.yaml` (ConfigMap) is the source of truth for keys defined in git; reconciled into the PVC on every pod start. Runtime-only settings from the UI/CLI persist across restarts.
 - **Secrets**: LiteLLM virtual key as `OPENAI_API_KEY` (see below)
 - **Channels** (Telegram, Discord, etc.): Dashboard or `hermes` CLI inside the pod after deploy
 

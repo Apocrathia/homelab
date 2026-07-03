@@ -95,12 +95,50 @@ spec:
         emptyDir:
           - name: tmp
             mountPath: /tmp
-        configMap:
-          - name: config
-            mountPath: /opt/data/config.yaml
-            configMapName: hermes-agent-config
-            subPath: config.yaml
-            readOnly: true
+
+      initContainers:
+        - name: reconcile-config
+          # renovate: datasource=docker depName=ghcr.io/trueforge-org/go-yq
+          image: ghcr.io/trueforge-org/go-yq:4.53.3
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              static=/static/config.yaml
+              runtime=/opt/data/config.yaml
+
+              if [ ! -f "$static" ]; then
+                echo "ERROR: static config missing at $static"
+                exit 1
+              fi
+
+              if [ ! -f "$runtime" ]; then
+                echo "No runtime config — copying static config"
+                cp "$static" "$runtime"
+              else
+                echo "Reconciling static config into runtime config"
+                tmp=$(mktemp)
+                yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+                  "$runtime" "$static" > "$tmp"
+                yq eval '.' "$tmp" > /dev/null
+                mv "$tmp" "$runtime"
+              fi
+
+              chown 10000:10000 "$runtime"
+              echo "config.yaml ready"
+          volumeMounts:
+            - name: state
+              mountPath: /opt/data
+          volumes:
+            configMap:
+              - name: static-config
+                mountPath: /static
+                configMapName: hermes-agent-config
+                readOnly: true
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
 
       healthChecks:
         livenessProbe:

@@ -1,6 +1,7 @@
 ---
-# Seed config for first boot. Runtime changes persist on the Longhorn volume at
-# /opt/data (HERMES_HOME). LiteLLM model id must match litellm.yml model_name.
+# Static config — reconciled into /opt/data/config.yaml on every pod start.
+# Keys defined here are enforced; additional runtime keys (UI/CLI) are preserved.
+# LiteLLM model id must match litellm.yml model_name.
 model:
   provider: custom
   default: qwen3.6-prime
