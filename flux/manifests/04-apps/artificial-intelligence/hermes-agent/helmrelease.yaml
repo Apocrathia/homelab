@@ -38,7 +38,9 @@ spec:
             hermes dashboard \
               --host "${HERMES_DASHBOARD_HOST:-0.0.0.0}" \
               --port "${HERMES_DASHBOARD_PORT:-9119}" \
-              --no-open ${insecure} &
+              --no-open \
+              --tui \
+              ${insecure} &
           fi
           exec hermes gateway run --no-supervise
 
