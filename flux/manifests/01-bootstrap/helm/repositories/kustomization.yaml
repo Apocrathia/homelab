@@ -18,7 +18,6 @@ resources:
   - community-charts.yaml
   - datahub.yaml
   - csi-driver-smb.yaml
-  - fluent.yaml
   - gitlab.yaml
   - grafana.yaml
   - headlamp.yaml
@@ -36,7 +35,6 @@ resources:
   - tracearr.yaml
   - tuppr.yaml
   - external-secrets.yaml
-  - flyte.yaml
   - immich.yaml
   - jupyterhub.yaml
   - k8sgpt.yaml

@@ -167,7 +167,6 @@ spec:
     # Additional environment variables
     envVars:
       CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
-      GUARDRAILS_AI_API_BASE: "http://guardrails.guardrails-ai.svc.cluster.local:8000"
       # OpenTelemetry configuration for tracing
       OTEL_EXPORTER: "otlp_grpc"
       OTEL_ENDPOINT: "http://alloy.alloy-system.svc.cluster.local:4317"

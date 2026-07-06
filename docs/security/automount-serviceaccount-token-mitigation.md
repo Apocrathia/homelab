@@ -98,7 +98,6 @@ Add these namespaces to the policy's exclude list:
 | `lws-system`              | lws-controller-manager                     | LeaderWorkerSet controller                       |
 | `pasture-system`          | pasture-operator                           | Custom operator                                  |
 | `toolhive-system`         | toolhive-operator                          | MCP server operator                              |
-| `fluent-system`           | fluent-operator                            | Manages Fluent Bit/Fluentd                       |
 | `system-upgrade`          | tuppr                                      | Manages node upgrades                            |
 | `renovate`                | renovate-mend-renovate-ce                  | Repository automation                            |
 | `gitlab-runner`           | gitlab-runner                              | Spawns job pods, needs API access                |
@@ -114,7 +113,6 @@ Check each chart's `values.yaml` for settings like:
 | Namespace      | Chart                     | How to Fix                                        |
 | -------------- | ------------------------- | ------------------------------------------------- |
 | `alloy-system` | grafana/alloy             | Check `alloy.mount.automount.serviceAccountToken` |
-| `fluentbit`    | fluent/fluentbit          | Set in pod spec values                            |
 | `loki-system`  | grafana/loki              | Check individual component values                 |
 | `mimir-system` | grafana/mimir-distributed | Check individual component values                 |
 | `tempo-system` | grafana/tempo             | Check individual component values                 |
@@ -246,7 +244,6 @@ spec:
                 - lws-system
                 - pasture-system
                 - toolhive-system
-                - fluent-system
                 - system-upgrade
                 - renovate
                 - gitlab-runner

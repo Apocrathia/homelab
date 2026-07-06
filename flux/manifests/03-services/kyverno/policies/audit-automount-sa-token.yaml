@@ -47,7 +47,6 @@ spec:
                 - lws-system
                 - pasture-system
                 - toolhive-system
-                - fluent-system
                 - system-upgrade
                 - gitlab-runner
                 - kagent

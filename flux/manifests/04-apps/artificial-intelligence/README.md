@@ -6,7 +6,7 @@ AI and ML applications for the homelab.
 
 ## Data Flow Patterns
 
-External clients interact with the AI proxy through the Gateway API. The proxy routes requests to the appropriate LLM provider, agent, or tool service. We're using LiteLLM as the proxy, but the architecture is designed to support alternatives (Kong is viable but lacks LiteLLM's discovery endpoints).
+External clients interact with the AI proxy through the Gateway API. The proxy routes requests to the appropriate LLM provider, agent, or tool service. LiteLLM is the proxy.
 
 Direct communication between agents and tools is not favored but has valid use cases. When sensitive data flows between components, even within the trusted cluster boundary, leaks are possible if not properly secured. Egress traffic from agents and tools is proxied through LiteLLM for observability and control.
 
@@ -22,7 +22,6 @@ flowchart TB
     subgraph AIServices["AI Services"]
         direction TB
         Proxy["AI Proxy"]
-        Guard["Guardrails"]
         Backends["LLM<br/>Providers"]
     end
 
@@ -49,7 +48,6 @@ flowchart TB
     WebUI <--> Proxy
     Agent <--> Proxy
 
-    Proxy <--> Guard
     Proxy <--> Backends
 
     Proxy <--> AgentServices & ToolsServices
@@ -66,7 +64,6 @@ flowchart TB
 
 - **[LiteLLM](./litellm/README.md)** - Unified proxy for 100+ LLM providers with OpenAI-compatible API
 - **[llm-d](./llm-d/README.md)** - Kubernetes-native distributed LLM inference with vLLM
-- **[Guardrails AI](./guardrails-ai/README.md)** - LLM output validation and safety checks
 - **[Qdrant](./qdrant/README.md)** - Vector database for embeddings and semantic search
 
 ### User Interfaces
@@ -111,7 +108,6 @@ flowchart TB
 - **TLS Termination**: Gateway handles encryption, internal traffic can be plaintext
 - **Namespace Isolation**: Each service runs in its own namespace
 - **Protocol Compatibility**: LLM proxy exposes OpenAI-compatible API
-- **Composable Validation**: Optional guardrails integrate transparently
 - **Distributed Tracing**: OpenTelemetry traces captured via Tempo
 
 ## References

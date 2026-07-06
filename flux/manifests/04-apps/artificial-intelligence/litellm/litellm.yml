@@ -121,16 +121,6 @@ model_list:
       model: openai/llm-d/inference-sim
       api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000/v1
 
-guardrails:
-  - guardrail_name: "gibberish-guard"
-    litellm_params:
-      guardrail: guardrails_ai
-      guard_name: "gibberish-guard"
-      mode: "post_call"
-      guardrails_ai_api_input_format: "llmOutput"
-      api_base: os.environ/GUARDRAILS_AI_API_BASE
-      default_on: false # Disabled until Guardrails AI is fixed
-
 mcp_servers:
   a2a:
     alias: "a2a"
