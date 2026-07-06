@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "https://home.apocrathia.com:8123/api/mcp"
+  url: "https://home.services.apocrathia.com:8123/api/mcp"
   description: "Home Assistant - read state of devices/sensors/areas and call services to act on them"
   headersFrom:
     - name: Authorization

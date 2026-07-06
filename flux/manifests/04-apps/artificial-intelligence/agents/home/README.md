@@ -9,7 +9,7 @@ The home automation agent, triggered by Home Assistant webhooks. Powered by kage
 This deployment includes:
 
 - Declarative kagent `Agent` CR in the `agent-home` namespace
-- `RemoteMCPServer` for Home Assistant (`homeassistant-mcp`, upstream HTTPS at `home.apocrathia.com:8123/api/mcp`, bearer token injected via `headersFrom` from a 1Password-backed Secret)
+- `RemoteMCPServer` for Home Assistant (`homeassistant-mcp`, upstream HTTPS at `home.services.apocrathia.com:8123/api/mcp`, bearer token injected via `headersFrom` from a 1Password-backed Secret)
 - `RemoteMCPServer` for Grafana (`grafana-mcp`, cluster-internal proxy in `mcp-grafana`)
 - `home-agent-bridge` HelmRelease (`generic-app`) — a small Python HTTP server that accepts `POST /` with `{"prompt": "..."}` from Home Assistant's [`rest_command`](https://www.home-assistant.io/integrations/rest_command/) integration and forwards it to the agent via A2A
 - `HTTPRoute` on the LAN-internal Cilium gateway (`main-gateway` on the private RFC1918 LB IP) at `home-agent.gateway.services.apocrathia.com`

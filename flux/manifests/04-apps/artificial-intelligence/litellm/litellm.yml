@@ -187,7 +187,7 @@ mcp_servers:
       - "X-Grafana-API-Key"
   homeassistant:
     alias: "homeassistant"
-    url: "https://home.apocrathia.com:8123/api/mcp"
+    url: "https://home.services.apocrathia.com:8123/api/mcp"
     transport: "http"
     auth_type: "none"
     # Static HA Long-Lived Access Token for initialization
