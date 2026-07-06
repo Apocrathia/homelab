@@ -47,6 +47,12 @@ spec:
               secretKeyRef:
                 name: terminus-secrets
                 key: app-secret
+          - name: API_ACCESS_TOKEN_PERIOD
+            value: "86400"
+          - name: SESSION_LIFETIME_LIMIT
+            value: "86400"
+          - name: SESSION_INACTIVITY_LIMIT
+            value: "86400"
       replicas: 1
       podAntiAffinity:
         enabled: false
