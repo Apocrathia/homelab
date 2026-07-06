@@ -91,6 +91,9 @@ spec:
             port: 64738
 
       volumes:
+        emptyDir:
+          - name: var-log
+            mountPath: /var/log
         secret:
           - name: mumble-tls
             mountPath: /certs
