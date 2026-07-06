@@ -18,25 +18,13 @@ End-to-end encrypted collaboration suite with real-time document editing.
 
 Virtual whiteboard for sketching diagrams and hand-drawn visuals.
 
-### [Ideon](./ideon/README.md)
-
-Visual workspace for project organization with spatial layouts and real-time collaboration.
-
 ### [Kiwix](./kiwix/README.md)
 
 Offline Wikipedia and content library server with automated ZIM updates.
 
-### [Logseq](./logseq/README.md)
-
-Knowledge management with block-based note-taking and bidirectional linking.
-
 ### [n8n](./n8n/README.md)
 
 Workflow automation platform for connecting services and APIs.
-
-### [Matrix (Element Web)](./matrix/README.md)
-
-Web client for the Matrix decentralized communication protocol.
 
 ### [rclone](./rclone/README.md)
 
@@ -49,10 +37,6 @@ Privacy-respecting metasearch engine aggregating multiple providers.
 ### [Wakapi](./wakapi/README.md)
 
 Coding time tracking compatible with WakaTime.
-
-### [Windmill](./windmill/README.md)
-
-Developer platform for scripts, workflows, and internal tools.
 
 ## References
 

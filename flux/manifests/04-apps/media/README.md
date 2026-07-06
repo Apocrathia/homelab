@@ -14,8 +14,6 @@ Media applications are organized into three categories:
 
 ## Servers
 
-- **[Audiobookshelf](./servers/audiobookshelf/README.md)** - Audiobook and podcast server with mobile app support and progress sync
-- **[Invidious](./servers/invidious/README.md)** - Privacy-focused YouTube frontend without ads or tracking
 - **[Jellyfin](./servers/jellyfin/README.md)** - Open-source media server with SSO plugin for Authentik
 - **[Komga](./servers/komga/README.md)** - Media server for comics, manga, magazines, and eBooks with OPDS support
 - **[Plex](./servers/plex/README.md)** - Media server with transcoding and direct LoadBalancer access
@@ -39,23 +37,11 @@ Media applications are organized into three categories:
 
 ### Media Tools
 
-- **[Agregarr](./management/agregarr/README.md)** - Plex collection manager using Trakt, IMDb, TMDB, and other list sources
-- **[Chaptarr](./management/chaptarr/README.md)** - Ebook/audiobook collection manager (Readarr successor)
 - **[Cleanuparr](./management/cleanuparr/README.md)** - Monitors and removes blocked/stalled downloads from Arr apps
-- **[LazyLibrarian](./management/lazylibrarian/README.md)** - Book and audiobook metadata management for digital libraries
-- **[DAPS](./management/daps/README.md)** - Poster management and Arr automation scripts
-- **[Huntarr2](./management/huntarr2/README.md)** - Rewrite of Huntarr for automated missing content and quality upgrade searches
-- **[Maintainerr](./management/maintainerr/README.md)** - Removes stale Plex content based on configurable rules
-- **[Mylar](./management/mylar/README.md)** - Comic book collection manager with ComicVine integration
-- **[Ombi](./management/ombi/README.md)** - Media request management for Plex
-- **[Overseerr](./management/overseerr/README.md)** - Media request and discovery with Plex OAuth
-- **[Recommendarr](./management/recommendarr/README.md)** - AI-powered TV and movie recommendations
+- **[Huntarr2](./management/huntarr2/README.md)** - Automated missing content and quality upgrade searches
 - **[Recyclarr](./management/recyclarr/README.md)** - TRaSH Guides sync for quality profiles
 - **[Seerr](./management/seerr/README.md)** - Media request and discovery for Plex, Jellyfin, and Emby
-- **[Shinkro](./management/shinkro/README.md)** - Syncs Plex watch status to MyAnimeList
 - **[Suwayomi](./management/suwayomi/README.md)** - Manga download manager using Tachiyomi extensions
-- **[Taggarr](./management/taggarr/README.md)** - Tags anime in Sonarr based on dubbed audio availability
-- **[Tautulli](./management/tautulli/README.md)** - Plex monitoring and statistics
 - **[Tracearr](./management/tracearr/README.md)** - Multi-server Plex, Jellyfin, and Emby monitoring with sharing detection
 - **[Tdarr](./management/tdarr/README.md)** - Distributed transcoding with DaemonSet worker nodes
 
@@ -69,16 +55,12 @@ Media applications are organized into three categories:
 
 - **[Prowlarr](./acquisitions/prowlarr/README.md)** - Centralized indexer manager with Flaresolverr sidecar for CloudFlare bypass
 - **[Bitmagnet](./acquisitions/bitmagnet/README.md)** - DHT crawler and torrent search engine with Torznab API
-- **[Zilean](./acquisitions/zilean/README.md)** - Aggregates DebridMediaManager metadata, serves Torznab API to Prowlarr
 
 ### Download Clients
 
 - **[qBittorrent](./acquisitions/qbittorrent/README.md)** - BitTorrent client with Gluetun VPN and kill switch
 - **[Lidarr YouTube Downloader](./acquisitions/lidarr-youtube-downloader/README.md)** - Fetches missing Lidarr albums from YouTube as tagged MP3s
-- **[Pinchflat](./acquisitions/pinchflat/README.md)** - YouTube download manager with rule-based channel and playlist sync
 - **[SABnzbd](./acquisitions/sabnzbd/README.md)** - Usenet client with Gluetun VPN and kill switch
-- **[rdt-client](./acquisitions/rdt-client/README.md)** - Real-Debrid integration via qBittorrent API emulation for Sonarr/Radarr
-- **[Reaparr](./acquisitions/reaparr/README.md)** - Downloads content from remote Plex servers to local library
 
 ### Community
 
@@ -113,10 +95,8 @@ All media applications integrate with:
 
 Arr applications communicate via internal Kubernetes services:
 
-- Prowlarr → All Arr apps for indexer sync
-- Sonarr/Radarr → rdt-client for debrid downloads, qBittorrent/SABnzbd for direct downloads
-- Zilean → Prowlarr for debrid media indexing
-- Tautulli → Plex for monitoring
+- Prowlarr → Arr apps for indexer sync
+- Sonarr/Radarr → qBittorrent and SABnzbd for downloads
 
 ## References
 

@@ -71,12 +71,12 @@ flowchart TB
 - **[ComfyUI](./comfyui/README.md)** - Node-graph diffusion workflow editor and API (CPU-only)
 - **[OpenWebUI](./openwebui/README.md)** - Chat interface for LLMs
 - **[Odysseus](./odysseus/README.md)** - Self-hosted AI workspace (chat, agents, memory, documents)
-- **[Flowise](./flowise/README.md)** - Visual AI agent and workflow builder
+- **[OpenClaw](./openclaw/README.md)** - Personal AI assistant gateway
 - **[JupyterHub](./jupyterhub/README.md)** - Multi-user notebook server with Authentik SSO
 
 ### Tasks
 
-- **[Tasks](./tasks/README.md)** - Scheduled task templates for recurring artificial intelligence workloads.
+- **[Tasks](./tasks/README.md)** - Scheduled task templates for recurring artificial intelligence workloads
 
 ### Agent Orchestration
 
@@ -84,22 +84,16 @@ flowchart TB
 - **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
-- **[ContextForge](./contextforge/README.md)** - IBM ContextForge MCP/A2A gateway
 
 ### Evals & Red Teaming
 
 - **[Promptfoo](./promptfoo/README.md)** - LLM eval framework and red-teaming platform with declarative configs and a web UI
 - **[PyRIT](./pyrit/README.md)** - Microsoft AI Red Team framework for probing generative AI systems via the CoPyRIT web UI
 
-### ML Platform
+### Data & Tooling
 
-- **[DataHub](./datahub/README.md)** - Metadata platform for data discovery, lineage, and governance
-- **[MLflow](./mlflow/README.md)** - Experiment tracking and model registry
 - **[Firecrawl](./firecrawl/README.md)** - Web scraping and content extraction
-
-### Demos
-
-- **[BeeAI Demo](./beeai/demo/README.md)** - Discord chatbot with BeeAI and A2A protocol
+- **[k8sgpt](./k8sgpt/README.md)** - Kubernetes diagnostics with LLM-backed analysis
 
 ## Design Principles
 

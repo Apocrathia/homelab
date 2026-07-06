@@ -6,10 +6,6 @@ Administrative tools and developer infrastructure.
 
 ## Applications
 
-### [Backstage](./backstage/README.md)
-
-Developer portal for service catalog, documentation, and tooling.
-
 ### [JetKVM](./jetkvm/README.md)
 
 Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.

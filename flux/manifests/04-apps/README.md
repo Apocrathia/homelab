@@ -14,6 +14,7 @@ Applications are organized by functional category:
 - **Management**: Administrative tools and dashboards
 - **Media**: Servers, Arr stack, download clients
 - **Productivity**: Workflow automation, search, notes
+- **Social**: Community and chat services
 
 ## Components
 
@@ -23,7 +24,7 @@ Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB stor
 
 ### [Artificial Intelligence](artificial-intelligence/README.md)
 
-OpenWebUI, LiteLLM, kagent, Flowise, and MCP servers.
+LiteLLM, OpenWebUI, kagent, Hermes Agent, MCP servers, and related tooling.
 
 ### [Games](games/README.md)
 
@@ -31,23 +32,23 @@ ArchiSteamFarm for card farming, ROMM for retro game management.
 
 ### [Home](home/README.md)
 
-Companion (Stream Deck), Grocy, Mealie, Meshtastic, Transmission, Uptime Kuma.
+Companion, Mealie, Meshtastic, Terminus, and Uptime Kuma.
 
 ### [Management](management/README.md)
 
-Backstage developer portal, JetKVM, UnPoller.
+JetKVM, kuber-ios, UnPoller, and operational scripts.
 
 ### [Media](media/README.md)
 
-Plex, Jellyfin, full Arr stack, and download clients.
+Plex, Jellyfin, the Arr stack, and download clients.
 
 ### [Productivity](productivity/README.md)
 
-ChangeDetection.io, Kiwix, Logseq, n8n, rclone, SearXNG, Wakapi, Windmill.
+ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakapi.
 
-### [Web3](web3/README.md)
+### [Social](social/README.md)
 
-Blockchain and decentralized application services.
+Hypermind, Lemmy, Mumble, and The Lounge.
 
 ## Deployment
 
