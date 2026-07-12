@@ -4,7 +4,7 @@
 
 .tofu-base:
   image:
-    name: alpine/terragrunt:1.15.7
+    name: alpine/terragrunt:1.15.8
   variables:
     TF_IN_AUTOMATION: "true"
   before_script:
