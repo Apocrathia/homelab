@@ -86,7 +86,7 @@ Confirm from Git: **`Cluster`** storage **size** (see below), class, **`bootstra
 5. **Restore chart**: **`pg_restore --clean --if-exists`** vs app migrations — see **Target database must be empty of app schema** in `helm/cnpg-data-restore/README.md`.
 6. **Longhorn PV/PVC**: **`volumeHandle`** must match the restored Longhorn **`Volume`**. For **Retain** / **Released** PV discipline, see **`.cursor/skills/generic-app-longhorn-restore/SKILL.md`**. The **`generic-app`** chart does not emit instance PV/PVC for postgres, but **`cnpg-data-extract`** can emit the same static Longhorn shape via **`pvc.staticLonghorn`**.
 7. **Agent boundaries**: **`[NAMESPACE]`** only for extract/restore/Cluster helpers; **read-only** in **`longhorn-system`** unless the operator delegates.
-8. **No recovery YAML in Git**: do not commit one-off recovery manifests. Prefer **`pvc.staticLonghorn`** on **`cnpg-data-extract`** (PV + PVC in the extract release). Manual PV/PVC under **`/tmp`** + **`kubectl apply`** is fallback only.
+8. **No recovery YAML in Git**: do not commit one-off recovery manifests. Prefer **`pvc.staticLonghorn`** on **`cnpg-data-extract`** (PV + PVC in the extract release). Manual PV/PVC under **`.scratch/`** + **`kubectl apply`** is fallback only.
 9. **`kubectl delete cluster`** often deletes the instance PVC. If the claim is gone but Longhorn data is good, **recreate instance PV/PVC** (below) before extract — via the extract chart or manual apply.
 
 # Procedure
@@ -116,8 +116,8 @@ Use **`pvc.staticLonghorn`** when **only** the Longhorn volume exists (no instan
 **`helm`** (generic-app):
 
 ```bash
-yq '.spec.values' [HELMRELEASE_PATH] > /tmp/[APP]-helm-values.yaml
-helm template [HELMRELEASE_NAME] helm/generic-app -f /tmp/[APP]-helm-values.yaml --namespace [NAMESPACE] \
+yq '.spec.values' [HELMRELEASE_PATH] > .scratch/[APP]-helm-values.yaml
+helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP]-helm-values.yaml --namespace [NAMESPACE] \
   | yq 'select(.kind == "Cluster" and .metadata.name == "[CLUSTER_NAME]") | .spec.storage'
 ```
 
@@ -129,7 +129,7 @@ kubectl kustomize [KUSTOMIZE_DIR] | yq 'select(.kind == "Cluster" and .metadata.
 
 The chart installs the static PV + PVC in the **same** release as the extract **Job** (see **`helm/cnpg-data-extract/README.md`** and **`helm/cnpg-data-extract/examples/`**).
 
-**Manual fallback:** **`kubectl apply`** of PV + PVC with the same shape as **`helm/generic-app/templates/storage-longhorn.yaml`** under **`/tmp`** only — do not commit recovery YAML.
+**Manual fallback:** **`kubectl apply`** of PV + PVC with the same shape as **`helm/generic-app/templates/storage-longhorn.yaml`** under **`.scratch/`** only — do not commit recovery YAML.
 
 4. **`helm install [EXTRACT_RELEASE_NAME]`** `helm/cnpg-data-extract` with **`pvc.claimName`**, optional **`pvc.staticLonghorn`**, **`image.tag`**, **`dump.database`**, **`dump.mountPath`** / **`fileName`** / **`outputFile`** matching **`[DUMP_PATH]`**, **`credentialsSecret`**, optional **`backupSmb`**.
 5. **`kubectl wait --namespace [NAMESPACE] --for=condition=complete job/[EXTRACT_JOB_NAME] --timeout=7200s`**
@@ -145,8 +145,8 @@ Apply **only** the **`postgresql.cnpg.io/v1` `Cluster`** from Git so a new prima
 ### A — From `generic-app` `HelmRelease`
 
 ```bash
-yq '.spec.values' [HELMRELEASE_PATH] > /tmp/[APP]-helm-values.yaml
-helm template [HELMRELEASE_NAME] helm/generic-app -f /tmp/[APP]-helm-values.yaml --namespace [NAMESPACE] \
+yq '.spec.values' [HELMRELEASE_PATH] > .scratch/[APP]-helm-values.yaml
+helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP]-helm-values.yaml --namespace [NAMESPACE] \
   | yq ea 'select(.kind == "Cluster" and .apiVersion == "postgresql.cnpg.io/v1")' - \
   | kubectl apply -f -
 ```
@@ -214,7 +214,7 @@ Same ordering as **Phase 4** for the restore release: **`helm uninstall [RESTORE
 ### Other hygiene
 
 - **`backupSmb`**: dump lives on the **share** from the extract **Job** — no laptop **`kubectl cp`** unless you used **emptyDir** only.
-- **`/tmp`** manifests are ephemeral — **no cleanup step**.
+- **`.scratch/`** manifests are ephemeral — **no cleanup step** required (contents are gitignored).
 - Do not commit dumps or recovery YAML into **git**.
 
 # Verification

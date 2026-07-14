@@ -15,6 +15,7 @@ Project-wide personality, structure, workflow, validation steps, and non-negotia
 - Install dev dependencies locally
 - Run security scans
 - Propose changes and present options
+- Use [`.scratch/`](./.scratch/README.md) for temporary files (prefer it over `/tmp`)
 
 **Requires explicit permission:**
 

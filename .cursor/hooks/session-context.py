@@ -33,6 +33,12 @@ CONTEXT = "\n".join(
             "`.cursor/rules/` load per Cursor's scoping — `AGENTS.md` is the "
             "human-oriented hub that tells you how to navigate them."
         ),
+        "",
+        (
+            "Ephemeral files: use [`.scratch/`](./.scratch/README.md) at the repo root "
+            "(not `/tmp`) for helm values dumps, rendered manifests, chart pulls, and "
+            "similar throwaways. Contents are gitignored; do not commit them or store secrets there."
+        ),
     ]
 )
 

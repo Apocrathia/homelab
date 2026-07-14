@@ -71,8 +71,8 @@ Confirm from Git:
 From the repo root, using the **Git** HelmRelease file as the source of values (adjust paths):
 
 ```bash
-yq '.spec.values' [HELMRELEASE_PATH] > /tmp/[APP_NAME]-helm-values.yaml
-helm template [HELMRELEASE_NAME] helm/generic-app -f /tmp/[APP_NAME]-helm-values.yaml --namespace [NAMESPACE] \
+yq '.spec.values' [HELMRELEASE_PATH] > .scratch/[APP_NAME]-helm-values.yaml
+helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP_NAME]-helm-values.yaml --namespace [NAMESPACE] \
   | yq ea 'select(
       (.kind == "PersistentVolume" or .kind == "PersistentVolumeClaim" or (.kind == "Volume" and .apiVersion == "longhorn.io/v1beta2"))
       and .metadata.name == "[LONGHORN_VOL]"
@@ -82,7 +82,7 @@ helm template [HELMRELEASE_NAME] helm/generic-app -f /tmp/[APP_NAME]-helm-values
 **PV + PVC only** (typical after restore when the Longhorn `Volume` CR already exists; avoids clobbering Volume spec):
 
 ```bash
-helm template [HELMRELEASE_NAME] helm/generic-app -f /tmp/[APP_NAME]-helm-values.yaml --namespace [NAMESPACE] \
+helm template [HELMRELEASE_NAME] helm/generic-app -f .scratch/[APP_NAME]-helm-values.yaml --namespace [NAMESPACE] \
   | yq ea 'select((.kind == "PersistentVolume" or .kind == "PersistentVolumeClaim") and .metadata.name == "[LONGHORN_VOL]")' - \
   | kubectl apply -f -
 ```

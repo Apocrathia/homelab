@@ -23,7 +23,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 # Actions
 
 - Start by reviewing the deployments adjacent to the [DIRECTORY] to understand the existing deployment structure and values.
-- Now, pull the chart and/or repository into the /tmp directory.
+- Now, pull the chart and/or repository into `.scratch/` (see [`.scratch/README.md`](../../../.scratch/README.md); not `/tmp`).
 - Next, you will thoroughly review the chart and/or repository to understand the deployment structure and values.
   - Leverage DeepWiki whenever possible to further understand the chart and/or repository.
   - **Run DeepWiki antipattern checks** per `.cursor/rules/deepwiki.mdc` — probe for privacy, security, and general fuckery before writing any manifests.

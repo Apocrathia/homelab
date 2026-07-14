@@ -69,3 +69,7 @@ tmp/
 temp/
 .cache/
 TODO.md
+
+# Agent ephemeral workspace (see .scratch/README.md)
+.scratch/*
+!.scratch/README.md

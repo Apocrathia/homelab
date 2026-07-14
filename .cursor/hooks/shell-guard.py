@@ -13,7 +13,9 @@ accept blocking runs when the script errors.
    not only a generic ``sudo`` hit from ``UNSAFE_CHECKS``.
 2. Read-only kubectl exits **before** ``UNSAFE_CHECKS``, so
    ``sudo kubectl get …`` allows without a redundant sudo prompt.
-3. ``UNSAFE_CHECKS`` runs on the **original** command string so we still see
+3. Pure ``rm``/``mv`` with every path under repo ``.scratch/`` allows before
+   ``UNSAFE_CHECKS`` (ephemeral cleanup; ``..`` escapes still ask).
+4. ``UNSAFE_CHECKS`` runs on the **original** command string so we still see
    ``sudo`` when it is load-bearing (e.g. ``sudo curl``).
 """
 
@@ -21,7 +23,9 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import sys
+from pathlib import Path
 
 # --- Hook contract (stdout JSON) --------------------------------------------
 # beforeShellExecution output: permission (+ optional user_message, agent_message).
@@ -36,6 +40,47 @@ def strip_leading_sudo(s: str) -> str:
     keeps the regex cheap and matches how humans type wrappers.
     """
     return re.sub(r"^\s*sudo\s+", "", s, count=1)
+
+
+def is_scratch_confined_rm_or_mv(cmd: str, cwd: str) -> bool:
+    """True when the command is a pure ``rm``/``mv`` with every path under ``.scratch/``.
+
+    Compound shells (``&&``, pipes, ``;``) return False so other verbs stay gated.
+    ``Path.resolve()`` collapses ``..`` escapes, so ``.scratch/../flux`` is not allowed.
+    """
+    if re.search(r"[|;&]|&&|\|\|", cmd):
+        return False
+    try:
+        tokens = shlex.split(cmd)
+    except ValueError:
+        return False
+
+    i = 0
+    # Skip leading ``VAR=value`` assignments so ``FOO=1 rm .scratch/x`` still classifies.
+    while i < len(tokens) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tokens[i]):
+        i += 1
+    if i >= len(tokens) or tokens[i] not in ("rm", "mv"):
+        return False
+
+    paths: list[str] = []
+    for arg in tokens[i + 1 :]:
+        if arg == "--":
+            continue
+        if arg.startswith("-") and arg != "-":
+            continue
+        paths.append(arg)
+    if not paths:
+        return False
+
+    scratch_root = (Path(cwd) / ".scratch").resolve()
+    for raw in paths:
+        candidate = Path(raw)
+        resolved = candidate.resolve() if candidate.is_absolute() else (Path(cwd) / candidate).resolve()
+        try:
+            resolved.relative_to(scratch_root)
+        except ValueError:
+            return False
+    return True
 
 
 def ask(user: str, agent: str) -> None:
@@ -126,10 +171,18 @@ def main() -> None:
         print(json.dumps(ALLOW))
         sys.exit(0)
 
+    cwd = (data.get("cwd") or "").strip() or str(Path.cwd())
     lower = cmd.lower()
     # Infra classification uses ``infra``; broad unsafe uses full ``cmd``/``lower``
     # as described in the module docstring.
     infra = strip_leading_sudo(lower)
+
+    # --- Scratch-confined cleanup (before UNSAFE_CHECKS rm/mv) -----------------
+    # Agents use ``.scratch/`` for ephemeral files; allow pure rm/mv there so the
+    # destructive-filesystem check does not spam approvals for temp cleanup.
+    if is_scratch_confined_rm_or_mv(cmd, cwd):
+        print(json.dumps(ALLOW))
+        sys.exit(0)
 
     # --- Safe planning paths (tofu/terraform) ---------------------------------
     # Dry-run and read-only plan operations should not nag—operators use these
