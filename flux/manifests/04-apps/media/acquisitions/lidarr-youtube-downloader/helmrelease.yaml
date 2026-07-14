@@ -44,10 +44,10 @@ spec:
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
           memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -64,10 +64,12 @@ spec:
         targetPort: 5000
         portName: http
       healthChecks:
+        # Cheap process check only — /api/test-connection talks to Lidarr and
+        # times out under download load, which was crashlooping the pod.
         livenessProbe:
           enabled: true
           httpGet:
-            path: /api/test-connection
+            path: /
             port: 5000
             scheme: HTTP
           initialDelaySeconds: 30
@@ -78,7 +80,7 @@ spec:
         readinessProbe:
           enabled: true
           httpGet:
-            path: /api/test-connection
+            path: /
             port: 5000
             scheme: HTTP
           initialDelaySeconds: 10
@@ -89,10 +91,14 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+        - name: music
+          mountPath: /music
       volumes:
         emptyDir:
           - name: downloads
             mountPath: /downloads
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:
@@ -101,6 +107,14 @@ spec:
         volumes:
           - name: config
             capacity: 5Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: music
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Music"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
 
     secrets:
       enabled: true
