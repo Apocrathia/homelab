@@ -11,7 +11,7 @@ This deployment includes:
 - Gateway + web dashboard (`generic-app`, upstream `nousresearch/hermes-agent` image)
 - Longhorn-backed state at `HERMES_HOME` (`/opt/data`)
 - Static `config.yaml` reconciled into runtime config on every pod start
-- Authentik proxy in front of the dashboard
+- Authentik OIDC (public PKCE client) for dashboard auth, Gateway HTTPRoute for ingress
 
 ## Access
 
@@ -20,7 +20,7 @@ This deployment includes:
 ## Configuration
 
 - **Static config**: `config.yaml` (ConfigMap) is the source of truth for keys defined in git; reconciled into the PVC on every pod start. Runtime-only settings from the UI/CLI persist across restarts.
-- **Secrets**: LiteLLM virtual key as `OPENAI_API_KEY` (see below)
+- **OIDC**: Env vars in `helmrelease.yaml` (`HERMES_DASHBOARD_OIDC_*`), client id from 1Password
 - **Channels** (Telegram, Discord, etc.): Dashboard or `hermes` CLI inside the pod after deploy
 
 See `helmrelease.yaml` for deployment values.
@@ -30,25 +30,42 @@ See `helmrelease.yaml` for deployment values.
 Create the 1Password item at the path in `helmrelease.yaml`:
 
 - `litellm-api-key` — LiteLLM virtual key for the custom provider endpoint
+- `oidc-client-id` — Authentik OIDC provider Client ID (from provider after blueprint apply)
+
+Hermes only supports a **public** PKCE client — no `oidc-client-secret`. Set `authentik.oidc.clientType: public` so Authentik generates a public client; copy the Client ID into 1Password.
 
 Optional channel tokens belong in 1Password, not git. Wire them in `helmrelease.yaml` only after confirming env var names in [Hermes environment variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables).
 
 ## Authentication
 
-Authentik **proxy** provider handles SSO. Dashboard OAuth is disabled in the deployment because access is already gated upstream.
+`generic-app` `authentik.mode: oidc` creates the OAuth2 provider + Authentik application. Hermes dashboard SSO uses self-hosted OIDC:
+
+- Issuer: `https://auth.gateway.services.apocrathia.com/application/o/hermes-agent/`
+- Callback: `https://hermes-agent.gateway.services.apocrathia.com/auth/callback`
 
 ## Initial setup
 
-1. Create the 1Password item and reconcile Flux
-2. Open the URL and sign in through Authentik
-3. Confirm the default model in the dashboard or CLI (`hermes model`) — it must exist in `litellm.yml`
+1. Create the 1Password item and reconcile Flux (or apply locally)
+2. Confirm the Authentik blueprint created `hermes-agent-oidc-provider` with client type **public**
+3. Copy the provider Client ID into `oidc-client-id` in 1Password; wait for the secret to sync
+4. Open the URL → Hermes login → Sign in with Self-Hosted OIDC → Authentik
+5. Confirm the default model in the dashboard or CLI (`hermes model`) — it must exist in `litellm.yml`
 
 ## Troubleshooting
 
 ```bash
-kubectl get pods -n hermes-agent
-kubectl logs -n hermes-agent deployment/hermes-agent -f
-kubectl exec -n hermes-agent deploy/hermes-agent -- hermes doctor
+kubectl get pods --namespace hermes-agent
+kubectl logs --namespace hermes-agent deployment/hermes-agent -f
+kubectl exec --namespace hermes-agent deploy/hermes-agent -- hermes doctor
+```
+
+Check the auth gate and provider registration:
+
+```bash
+curl -s https://hermes-agent.gateway.services.apocrathia.com/api/status \
+  | jq '.auth_required, .auth_providers'
+# true
+# ["self-hosted"]
 ```
 
 If the UI loads but chat fails, check LiteLLM reachability and that the default model in `/opt/data/config.yaml` matches a `model_name` in `litellm.yml`.
@@ -56,4 +73,5 @@ If the UI loads but chat fails, check LiteLLM reachability and that the default 
 ## References
 
 - **[Hermes Agent documentation](https://hermes-agent.nousresearch.com/docs/)** — Primary documentation
+- **[Hermes web dashboard / auth](https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard)** — OIDC provider setup
 - **[GitHub — NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)** — Source and issues

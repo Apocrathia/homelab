@@ -2,6 +2,7 @@
 # Static config — reconciled into /opt/data/config.yaml on every pod start.
 # Keys defined here are enforced; additional runtime keys (UI/CLI) are preserved.
 # LiteLLM model id must match litellm.yml model_name.
+# Dashboard OIDC is env-driven (see helmrelease) — same pattern as other generic-app OIDC apps.
 model:
   provider: custom
   default: qwen3.6-prime

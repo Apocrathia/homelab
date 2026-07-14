@@ -32,15 +32,12 @@ spec:
           export HOME=/opt/data
           cd /opt/data
           source /opt/hermes/.venv/bin/activate
-          insecure=""
-          case "${HERMES_DASHBOARD_INSECURE:-}" in 1|true|yes) insecure="--insecure" ;; esac
           if [[ "${HERMES_DASHBOARD:-}" =~ ^(1|true|yes)$ ]]; then
             hermes dashboard \
               --host "${HERMES_DASHBOARD_HOST:-0.0.0.0}" \
               --port "${HERMES_DASHBOARD_PORT:-9119}" \
               --no-open \
-              --tui \
-              ${insecure} &
+              --tui &
           fi
           exec hermes gateway run --no-supervise
 
@@ -62,9 +59,18 @@ spec:
             value: "0.0.0.0"
           - name: HERMES_DASHBOARD_PORT
             value: "9119"
-          # Authentik proxy sits in front; dashboard OAuth is not wired to Authentik.
-          - name: HERMES_DASHBOARD_INSECURE
-            value: "1"
+          - name: HERMES_DASHBOARD_PUBLIC_URL
+            value: "https://hermes-agent.gateway.services.apocrathia.com"
+          # Self-hosted OIDC via Authentik (public PKCE — Hermes has no client_secret support)
+          - name: HERMES_DASHBOARD_OIDC_ISSUER
+            value: "https://auth.gateway.services.apocrathia.com/application/o/hermes-agent/"
+          - name: HERMES_DASHBOARD_OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: oidc-client-id
+          - name: HERMES_DASHBOARD_OIDC_SCOPES
+            value: "openid profile email"
           - name: OPENAI_API_KEY
             valueFrom:
               secretKeyRef:
@@ -186,11 +192,19 @@ spec:
 
     authentik:
       enabled: true
-      mode: "proxy"
+      mode: oidc
       category: "Artificial Intelligence"
       displayName: "Hermes Agent"
       externalHost: "https://hermes-agent.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/hermes-agent/icon.png"
+      oidc:
+        # Hermes only supports public PKCE clients (no client_secret).
+        # Copy Authentik-generated Client ID into 1Password as oidc-client-id.
+        clientType: public
+        redirectUris:
+          - url: "https://hermes-agent.gateway.services.apocrathia.com/auth/callback"
+            matchingMode: "strict"
 
     httproute:
-      enabled: false
+      enabled: true
+      hostname: "hermes-agent.gateway.services.apocrathia.com"
