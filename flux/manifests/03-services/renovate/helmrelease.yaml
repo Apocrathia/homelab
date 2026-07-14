@@ -73,7 +73,7 @@ spec:
       # avoiding Docker Hub's anonymous pull rate limit.
       config: |
         module.exports = {
-          binarySource: "install",
+          binarySource: "global",
           onboarding: false,
           requireConfig: "optional",
           detectHostRulesFromEnv: true,
@@ -98,7 +98,7 @@ spec:
     cachePersistence:
       enabled: false
     cacheInMemory:
-      enabled: true
+      enabled: false
 
     # PostgreSQL configuration
     postgresql:
