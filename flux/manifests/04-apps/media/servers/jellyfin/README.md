@@ -78,7 +78,7 @@ SSO login creates a new Jellyfin user. To link SSO to an existing account (e.g.,
 
 ## Media Libraries
 
-Media is mounted read-only from the NAS:
+Media is mounted read-write from the NAS (trickplay and other sidecar metadata):
 
 | Mount Point     | Content      |
 | --------------- | ------------ |

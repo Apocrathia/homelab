@@ -58,22 +58,16 @@ spec:
           mountPath: /config
         - name: tv
           mountPath: /tv
-          readOnly: true
         - name: movies
           mountPath: /movies
-          readOnly: true
         - name: anime
           mountPath: /anime
-          readOnly: true
         - name: educational
           mountPath: /educational
-          readOnly: true
         - name: music
           mountPath: /music
-          readOnly: true
         - name: music-videos
           mountPath: /music-videos
-          readOnly: true
       volumes:
         emptyDir:
           - name: cache
@@ -95,32 +89,32 @@ spec:
             source: "//storage.services.apocrathia.com/Video"
             subDir: "TV Shows"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: movies
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Movies"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: anime
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Anime"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: educational
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Educational"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: music
             source: "//storage.services.apocrathia.com/Audio"
             subDir: "Music"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
           - name: music-videos
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Music Videos"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
-            readOnly: true
+            readOnly: false
 
     secrets:
       enabled: false
