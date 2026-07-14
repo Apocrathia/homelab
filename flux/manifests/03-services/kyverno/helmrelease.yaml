@@ -102,6 +102,14 @@ spec:
         limits:
           cpu: 2000m
           memory: 2Gi
+    reportsController:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
     cleanupController:
       resources:
         requests:
