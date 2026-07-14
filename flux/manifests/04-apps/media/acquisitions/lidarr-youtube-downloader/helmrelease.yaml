@@ -106,7 +106,7 @@ spec:
         numberOfReplicas: 1
         volumes:
           - name: config
-            capacity: 5Gi
+            capacity: 10Gi
       smb:
         enabled: true
         volumes:
