@@ -11,7 +11,7 @@ This deployment includes:
 - Gateway + web dashboard (`generic-app`, upstream `nousresearch/hermes-agent` image)
 - Longhorn-backed state at `HERMES_HOME` (`/opt/data`)
 - Static `config.yaml` reconciled into runtime config on every pod start
-- Authentik OIDC (public PKCE client) for dashboard auth, Gateway HTTPRoute for ingress
+- Authentik OIDC for dashboard auth, Gateway HTTPRoute for ingress
 
 ## Access
 
@@ -31,14 +31,13 @@ Create the 1Password item at the path in `helmrelease.yaml`:
 
 - `litellm-api-key` — LiteLLM virtual key for the custom provider endpoint
 - `oidc-client-id` — Authentik OIDC provider Client ID (from provider after blueprint apply)
-
-Hermes only supports a **public** PKCE client — no `oidc-client-secret`. Set `authentik.oidc.clientType: public` so Authentik generates a public client; copy the Client ID into 1Password.
+- `oidc-client-secret` — Authentik OIDC provider Client Secret
 
 Optional channel tokens belong in 1Password, not git. Wire them in `helmrelease.yaml` only after confirming env var names in [Hermes environment variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables).
 
 ## Authentication
 
-`generic-app` `authentik.mode: oidc` creates the OAuth2 provider + Authentik application. Hermes dashboard SSO uses self-hosted OIDC:
+`generic-app` `authentik.mode: oidc` creates the OAuth2 provider + Authentik application. Hermes dashboard SSO uses self-hosted OIDC (confidential client + PKCE):
 
 - Issuer: `https://auth.gateway.services.apocrathia.com/application/o/hermes-agent/`
 - Callback: `https://hermes-agent.gateway.services.apocrathia.com/auth/callback`
@@ -46,8 +45,8 @@ Optional channel tokens belong in 1Password, not git. Wire them in `helmrelease.
 ## Initial setup
 
 1. Create the 1Password item and reconcile Flux (or apply locally)
-2. Confirm the Authentik blueprint created `hermes-agent-oidc-provider` with client type **public**
-3. Copy the provider Client ID into `oidc-client-id` in 1Password; wait for the secret to sync
+2. Confirm the Authentik blueprint created `hermes-agent-oidc-provider`
+3. Copy the provider Client ID and Client Secret into 1Password; wait for the secret to sync
 4. Open the URL → Hermes login → Sign in with Self-Hosted OIDC → Authentik
 5. Confirm the default model in the dashboard or CLI (`hermes model`) — it must exist in `litellm.yml`
 

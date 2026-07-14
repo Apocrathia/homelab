@@ -61,7 +61,7 @@ spec:
             value: "9119"
           - name: HERMES_DASHBOARD_PUBLIC_URL
             value: "https://hermes-agent.gateway.services.apocrathia.com"
-          # Self-hosted OIDC via Authentik (public PKCE — Hermes has no client_secret support)
+          # Self-hosted OIDC via Authentik (PKCE + confidential client secret)
           - name: HERMES_DASHBOARD_OIDC_ISSUER
             value: "https://auth.gateway.services.apocrathia.com/application/o/hermes-agent/"
           - name: HERMES_DASHBOARD_OIDC_CLIENT_ID
@@ -69,6 +69,11 @@ spec:
               secretKeyRef:
                 name: hermes-agent-secrets
                 key: oidc-client-id
+          - name: HERMES_DASHBOARD_OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: oidc-client-secret
           - name: HERMES_DASHBOARD_OIDC_SCOPES
             value: "openid profile email"
           - name: OPENAI_API_KEY
@@ -198,9 +203,8 @@ spec:
       externalHost: "https://hermes-agent.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/hermes-agent/icon.png"
       oidc:
-        # Hermes only supports public PKCE clients (no client_secret).
-        # Copy Authentik-generated Client ID into 1Password as oidc-client-id.
-        clientType: public
+        # Confidential + PKCE — same pattern as other generic-app OIDC apps.
+        # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
         redirectUris:
           - url: "https://hermes-agent.gateway.services.apocrathia.com/auth/callback"
             matchingMode: "strict"
