@@ -19,8 +19,8 @@ spec:
   values:
     app:
       name: hypermind
-      # renovate: datasource=docker depName=ghcr.io/lklynet/hypermind
-      image: ghcr.io/lklynet/hypermind:1.0.1
+      # renovate: datasource=docker depName=ghcr.io/lklynet/hypermind-swarm
+      image: ghcr.io/lklynet/hypermind-swarm:1.5.0
       replicas: 1
       container:
         name: hypermind
@@ -30,12 +30,14 @@ spec:
             value: "America/Denver"
           - name: PORT
             value: "3000"
-          - name: ENABLE_CHAT
-            value: "true"
-          - name: ENABLE_MAP
-            value: "true"
-          - name: ENABLE_THEMES
-            value: "true"
+          - name: STORAGE_PATH
+            value: "/tmp/storage"
+          - name: DEVICE_PERSISTENCE
+            value: "false"
+      volumes:
+        emptyDir:
+          - name: storage
+            mountPath: /tmp/storage
       service:
         port: 80
         targetPort: 3000
