@@ -16,6 +16,13 @@
         "api": "openai-completions",
         "models": [
           {
+            "id": "glm-5.2-prime",
+            "name": "GLM 5.2 Prime",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+          },
+          {
             "id": "qwen3.6-prime",
             "name": "Qwen3.6 Prime",
             "reasoning": true,
@@ -29,7 +36,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "litellm/qwen3.6-prime"
+        "primary": "litellm/glm-5.2-prime"
       }
     }
   }

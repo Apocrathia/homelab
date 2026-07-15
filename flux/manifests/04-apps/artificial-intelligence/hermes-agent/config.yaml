@@ -5,5 +5,5 @@
 # Dashboard OIDC is env-driven (see helmrelease) — same pattern as other generic-app OIDC apps.
 model:
   provider: custom
-  default: qwen3.6-prime
+  default: glm-5.2-prime
   base_url: http://litellm.litellm.svc.cluster.local:4000/v1
