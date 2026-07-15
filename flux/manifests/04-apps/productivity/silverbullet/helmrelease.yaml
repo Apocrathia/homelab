@@ -1,0 +1,130 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: silverbullet
+  namespace: silverbullet
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: silverbullet
+      # renovate: datasource=docker depName=ghcr.io/silverbulletmd/silverbullet
+      image: ghcr.io/silverbulletmd/silverbullet:2.9.0
+      container:
+        name: silverbullet
+        port: 3000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: SB_HOSTNAME
+            value: "0.0.0.0"
+          - name: SB_PORT
+            value: "3000"
+          - name: SB_FOLDER
+            value: "/space"
+          # Authentik proxy handles access; leave SB_USER unset
+          - name: SB_SHELL_BACKEND
+            value: "off"
+          # Skip Obsidian/sync/agent sidecars in the Notes vault
+          - name: SB_SPACE_IGNORE
+            value: |
+              .obsidian/
+              .stfolder/
+              .cursor/
+              .gitlab/
+              .DS_Store
+              **/.DS_Store
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /.ping
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /.ping
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+      volumeMounts:
+        - name: space
+          mountPath: /space
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: true
+        volumes:
+          - name: space
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Notes"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Productivity"
+      displayName: "SilverBullet"
+      externalHost: "https://notes.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/silverbullet/icon.png"
+      # Static client/PWA assets must bypass SSO (redirects break ServiceWorker)
+      # https://silverbullet.md/Authentication%20Proxy
+      skipPathRegex:
+        - "^/service_worker\\.js$"
+        - "^/\\.client/"
+
+    httproute:
+      enabled: false

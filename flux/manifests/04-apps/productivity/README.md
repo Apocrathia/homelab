@@ -34,6 +34,10 @@ Cloud storage synchronization and management.
 
 Privacy-respecting metasearch engine aggregating multiple providers.
 
+### [SilverBullet](./silverbullet/README.md)
+
+Browser-based markdown notes on a folder of plain files, including nested paths.
+
 ### [Wakapi](./wakapi/README.md)
 
 Coding time tracking compatible with WakaTime.
