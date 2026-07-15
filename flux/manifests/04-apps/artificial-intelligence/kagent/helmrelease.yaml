@@ -119,7 +119,7 @@ spec:
         registry: docker.io
         repository: grafana/mcp-grafana
         # renovate: datasource=docker depName=docker.io/grafana/mcp-grafana
-        tag: "0.17.1"
+        tag: "0.17.2"
         pullPolicy: IfNotPresent
 
     # Built-in agent subcharts (top-level keys; agents.*.enabled does not control these)
