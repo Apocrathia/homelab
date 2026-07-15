@@ -211,8 +211,15 @@ def tracked_lookup(md_files):
     return exact, folded
 
 
+INLINE_CODE = re.compile(r"`[^`]*`")
+
+
 def link_targets(text):
-    """Yield relative link targets, skipping fenced code blocks."""
+    """Yield relative link targets, skipping fenced blocks and inline code.
+
+    Example markdown in tables (`` `[text](../README.md)` ``) and fenced samples
+    must not fail reconcile; only live prose links are checked.
+    """
     in_fence = False
     for line in text.splitlines():
         if line.strip().startswith("```"):
@@ -220,7 +227,8 @@ def link_targets(text):
             continue
         if in_fence:
             continue
-        for target in LINK.findall(line):
+        stripped = INLINE_CODE.sub("", line)
+        for target in LINK.findall(stripped):
             yield target
 
 
