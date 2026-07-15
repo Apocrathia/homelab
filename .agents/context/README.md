@@ -17,6 +17,9 @@ manual chores. Not a fake enterprise platform.
 | `talos/`          | Node OS / machine config                                         |
 | `flux/manifests/` | Cluster workloads and bootstrap (GitOps)                         |
 | `helm/`           | Charts (including shared `generic-app`)                          |
+| `terraform/`      | OpenTofu/Terragrunt for Proxmox VMs and related infra            |
+| `secrets/`        | Local operator secrets (gitignored credentials; not GitOps CRs)  |
+| `scripts/`        | Operator helper scripts                                          |
 | `docs/`           | Human docs; do not put tunable limits/versions here              |
 | `.agents/`        | Portable agent config (this tree)                                |
 | `.cursor/`        | Cursor adapter: rules, hooks, slash commands, discovery symlinks |

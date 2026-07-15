@@ -2,9 +2,10 @@
 """Check that intra-repo markdown links and #anchors in the context surface
 resolve. Exit 0 if all good, 1 if any are broken. Safe to run from a hook.
 
-Default surface: AGENTS.md, CLAUDE.md, .agents/README.md,
-.agents/context/*.md, and tracked .cursor/**/*.md. Pass --all to check every
-tracked markdown file in the repo instead.
+Default surface: AGENTS.md, .agents/README.md, and every markdown file under
+.agents/. Discovery symlinks under .cursor/ / .claude/ are not re-checked in
+default mode (the .agents SoT already covers that content). Pass --all to
+check every tracked markdown file in the repo instead.
 """
 
 import os
@@ -253,7 +254,10 @@ def main():
     bad = [entry for entry in read_bad if entry[0] in surface_set]
     already_bad = {f for f, _, _ in bad}
     for f in surface_files:
-        base = os.path.dirname(f)
+        # Resolve relative links from the real file, not a discovery symlink
+        # path (.cursor/agents/foo.md → .agents/agents/foo/agent.md). Otherwise
+        # ../../context/constraints.md looks for repo-root context/ and fails.
+        base = os.path.dirname(os.path.realpath(f))
         text, why = read_markdown(f)
         if text is None:
             if f not in already_bad:
