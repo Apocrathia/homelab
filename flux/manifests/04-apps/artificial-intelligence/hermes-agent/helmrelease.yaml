@@ -120,13 +120,15 @@ spec:
               static=/static/config.yaml
               runtime=/opt/data/config.yaml
 
-              if [ ! -f "$static" ]; then
-                echo "ERROR: static config missing at $static"
+              if [ ! -f "$static" ] || [ ! -s "$static" ]; then
+                echo "ERROR: static config missing or empty at $static"
                 exit 1
               fi
 
-              if [ ! -f "$runtime" ]; then
-                echo "No runtime config — copying static config"
+              # Zero-byte runtime is a trap: yq merge of empty+static can rewrite
+              # emptiness and leave Hermes with no model config forever.
+              if [ ! -f "$runtime" ] || [ ! -s "$runtime" ]; then
+                echo "No/empty runtime config — copying static config"
                 cp "$static" "$runtime"
               else
                 echo "Reconciling static config into runtime config"
@@ -134,11 +136,16 @@ spec:
                 yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
                   "$runtime" "$static" > "$tmp"
                 yq eval '.' "$tmp" > /dev/null
+                if [ ! -s "$tmp" ]; then
+                  echo "ERROR: merge produced empty config — refusing to overwrite"
+                  rm -f "$tmp"
+                  exit 1
+                fi
                 mv "$tmp" "$runtime"
               fi
 
               chown 10000:10000 "$runtime"
-              echo "config.yaml ready"
+              echo "config.yaml ready ($(wc -c < "$runtime") bytes)"
           volumeMounts:
             - name: state
               mountPath: /opt/data
