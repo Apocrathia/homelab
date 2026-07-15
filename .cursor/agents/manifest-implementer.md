@@ -1,0 +1,1 @@
+../../.agents/agents/manifest-implementer/agent.md

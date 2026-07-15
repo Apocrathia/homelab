@@ -1,0 +1,12 @@
+---
+description: Scannable reply structure — answer first, evidence second, bulk in files
+alwaysApply: true
+---
+
+# Response shape
+
+Follow [`.agents/context/output.md`](../../.agents/context/output.md).
+
+First 1–3 sentences: answer or what changed. Match length to the task. Put
+plans and bulky output in files (`.cursor/plans/`, `.scratch/`), not a chat dump.
+When subagents return, summarize — do not paste their full output.

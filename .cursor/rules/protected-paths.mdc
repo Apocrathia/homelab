@@ -13,8 +13,10 @@ Do not proceed until the operator explicitly confirms (e.g. "yes", "approved", "
 
 ## Protected paths
 
-- `.cursor/**` — agent context (rules, agents, skills, commands, memories, plans). Silent edits here change how every future agent behaves.
-- `AGENTS.md` — top-level agent orientation. Same reason.
+- `.agents/**` — portable agent config (context, skills, personas, memories). Silent edits change how every harness behaves.
+- `.cursor/**` — Cursor adapter (rules, hooks, commands, plans, discovery symlinks).
+- `.claude/**` — Claude Code adapter (discovery symlinks). Same blast radius for Claude sessions.
+- `AGENTS.md` / `CLAUDE.md` — top-level agent router (`CLAUDE.md` is a symlink to `AGENTS.md`).
 - `talos/**` — Talos Linux node configuration and patches. Bricking nodes lives here.
 - `helm/generic-app/**` — the shared application chart. A silent change here breaks every workload that uses it.
 - `flux/manifests/01-bootstrap/**` — bootstrap order and CRDs. Cluster-wide blast radius.

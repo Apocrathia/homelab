@@ -59,4 +59,4 @@ alwaysApply: false
 ## Icons
 
 - **Use the dashboard-icons CDN (homarr-labs)** for chart and blueprint icons: `https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/{svg|png}/{service-name}.{ext}`.
-- For deployment-local icons (icons committed to the repo), use the GitLab raw URL pattern documented in `.cursor/skills/helm-deployment/SKILL.md`.
+- For deployment-local icons (icons committed to the repo), use the GitLab raw URL pattern documented in `.agents/skills/helm-deployment/SKILL.md`.

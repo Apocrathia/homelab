@@ -1,6 +1,8 @@
 # `.cursor/plans/` — Project plans
 
-Living plan documents produced by the `project-planner` agent (`.cursor/agents/project-planner.md`). Each plan captures a piece of work from rough idea to actionable breakdown, and is updated as decisions evolve.
+Living plan documents produced by the `project-planner` persona
+(`.agents/agents/project-planner/agent.md`). Each plan captures a piece of work
+from rough idea to actionable breakdown, and is updated as decisions evolve.
 
 This directory is also Cursor's native plans surface — plans created here are visible to the IDE's planning UI.
 
@@ -18,7 +20,7 @@ Smaller, obvious changes do not need a plan doc — a chat-only sketch is fine.
 .cursor/plans/<slug>.md
 ```
 
-Slug is `kebab-case` and reflects the work, not the date (e.g. `migrate-immich-to-cnpg.md`, `add-grafana-loki.md`). The agent's plan template lives in `.cursor/agents/project-planner.md`.
+Slug is `kebab-case` and reflects the work, not the date (e.g. `migrate-immich-to-cnpg.md`, `add-grafana-loki.md`). The plan template lives in `.agents/agents/project-planner/agent.md`.
 
 ## Lifecycle
 
@@ -26,7 +28,7 @@ Plans are **living documents**:
 
 - Updated as decisions change or new constraints surface.
 - Kept in sync with reality during the work.
-- After the work ships, prune to a short summary or move durable lessons to `docs/`, `.cursor/memories/`, or wherever the institutional knowledge belongs.
+- After the work ships, prune to a short summary or move durable lessons to `docs/`, `.agents/memories/`, or wherever the institutional knowledge belongs.
 
 A stale plan is worse than no plan. If a plan no longer reflects how things actually work, fix it or delete it.
 

@@ -14,14 +14,17 @@ Cursor loads these `.mdc` files based on their frontmatter. This README is a hum
 
 ### Always-on
 
-| File                     | Summary                                                                                         |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `general.mdc`            | Personality, hard non-negotiables (no commits, no cluster mutations), cross-cutting decisions   |
-| `security.mdc`           | Scan-on-change workflow + core security principles (1Password CRs, least privilege)             |
-| `protected-paths.mdc`    | Stop and ask before editing high-blast-radius paths (`.cursor/`, `talos/`, `helm/generic-app/`) |
-| `stop-loss.mdc`          | After 3 failed attempts at the same approach, stop and surface the problem                      |
-| `clarify-dont-guess.mdc` | Ask when ambiguous; distinguish advice from action; permission-question discipline              |
-| `question-format.mdc`    | Canonical Context → Ask → Suggestion → Gaps format for non-trivial questions                    |
+| File                     | Summary                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `general.mdc`            | Personality, hard non-negotiables (no commits, no cluster mutations), cross-cutting decisions      |
+| `security.mdc`           | Scan-on-change workflow + core security principles (1Password CRs, least privilege)                |
+| `protected-paths.mdc`    | Stop and ask before editing `.agents/`, `.cursor/`, `.claude/`, `talos/`, `generic-app`, bootstrap |
+| `stop-loss.mdc`          | After 3 failed attempts at the same approach, stop and surface the problem                         |
+| `clarify-dont-guess.mdc` | Ask when ambiguous; distinguish advice from action; permission-question discipline                 |
+| `question-format.mdc`    | Canonical Context → Ask → Suggestion → Gaps format for non-trivial questions                       |
+| `response-shape.mdc`     | Inverted-pyramid replies; bulk out of chat                                                         |
+| `subagents.mdc`          | Prefer defined personas for plan / implement / verify / SRE / security / docs                      |
+| `ponytail.mdc`           | Lazy-senior YAGNI / minimal-code bias                                                              |
 
 ### Glob-scoped (load when matching files are touched)
 

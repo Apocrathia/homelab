@@ -1,36 +1,15 @@
-# `.cursor/agents/` — Persona definitions
+# `.cursor/agents/` — Cursor discovery for personas
 
-Agent personas for tasks that benefit from a focused charter (system prompt, scope, success criteria, guardrails). When a task fits a defined persona, adopt it.
-
-## When to define a persona
-
-- The task recurs and benefits from a consistent approach across sessions.
-- The task needs a narrower scope or stricter guardrails than the default agent behavior.
-- Multiple agents/operators should converge on the same approach when doing this work.
-
-If a persona is only useful once, write a one-shot prompt instead.
-
-## File convention
-
-Each persona is a single markdown file:
-
-```
-.cursor/agents/<persona-name>.md
-```
-
-Recommended sections:
-
-- **Purpose** — one-sentence charter.
-- **When to adopt** — triggers, file patterns, task types.
-- **Scope** — what's in, what's out.
-- **Process** — how the persona operates step by step.
-- **Guardrails** — what the persona must never do.
+Canonical personas live under [`.agents/agents/<id>/agent.md`](../../.agents/agents/).
+Each `.md` file here is a symlink into that tree.
 
 ## Current personas
 
-| Persona                        | Purpose                                                                                                                                   | Triggers                                                                                      |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `project-planner.md`           | Front-door planner: takes a rough idea, clarifies requirements interactively, and produces a living plan doc in `.cursor/plans/<slug>.md` | New work that needs scoping; vague ideas; multi-step changes that touch the cluster           |
-| `security-analyst.md`          | Senior security analyst for adversarial review of the cluster, manifests, supply chain, and CI/CD                                         | Security audits, threat modeling, scan-driven investigations, attack-path analysis            |
-| `site-reliability-engineer.md` | SRE for incident response, observability investigations, alert tuning, capacity analysis, and postmortems                                 | Outages, CrashLoops, alert fires, Flux failures, performance degradation, reliability reviews |
-| `documentation-reviewer.md`    | Documentation quality reviewer auditing READMEs and docs against `docs/documentation-standards.md` and the template                       | Periodic doc audits, before/after large changes, when standards drift is suspected            |
+| Persona                     | SoT                                                                 | Purpose                                   |
+| --------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
+| `project-planner`           | [agent.md](../../.agents/agents/project-planner/agent.md)           | Clarify → living plan in `.cursor/plans/` |
+| `manifest-implementer`      | [agent.md](../../.agents/agents/manifest-implementer/agent.md)      | Flux/Helm/Kustomize edits in-tree         |
+| `manifest-verifier`         | [agent.md](../../.agents/agents/manifest-verifier/agent.md)         | Local validation evidence                 |
+| `security-analyst`          | [agent.md](../../.agents/agents/security-analyst/agent.md)          | Adversarial security review               |
+| `site-reliability-engineer` | [agent.md](../../.agents/agents/site-reliability-engineer/agent.md) | Incidents, obs, Flux health               |
+| `documentation-reviewer`    | [agent.md](../../.agents/agents/documentation-reviewer/agent.md)    | Doc standards audit                       |

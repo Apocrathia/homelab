@@ -19,25 +19,23 @@ CONTEXT = "\n".join(
         "## Workspace entry (from .cursor/hooks)",
         "",
         (
-            "**Treat [`AGENTS.md`](./AGENTS.md) at the repo root as the entrypoint** "
-            "for this repository's agent context: what this repo is, what you may do "
-            "without asking versus what requires explicit operator permission, and the "
-            "non-negotiables (including commits and live cluster changes). Always orient "
-            "from there first; it links into the rest of the system."
+            "**Treat [`AGENTS.md`](./AGENTS.md) as the router** — permissions, "
+            "hard rules, and a task→module table. Portable config lives under "
+            "[`.agents/`](./.agents/README.md) (context, skills, personas, memories). "
+            "`.cursor/` is the Cursor adapter (rules, hooks, commands, discovery "
+            "symlinks)."
         ),
         "",
         (
-            "From `AGENTS.md`: stack and architecture are in [`README.md`](./README.md); "
-            "the `.cursor/` discovery map starts at [`.cursor/README.md`](./.cursor/README.md) "
-            "(rules, skills, agents, commands, memories, plans). Project rules under "
-            "`.cursor/rules/` load per Cursor's scoping — `AGENTS.md` is the "
-            "human-oriented hub that tells you how to navigate them."
+            "Before fuzzy or wide work, prefer the `alignment` skill. After editing "
+            "agent context files, run `reconcile-context`. Manifest changes: "
+            "`manifest-implementer` then `manifest-verifier`. Never commit; never "
+            "mutate the live cluster without explicit ask."
         ),
         "",
         (
-            "Ephemeral files: use [`.scratch/`](./.scratch/README.md) at the repo root "
-            "(not `/tmp`) for helm values dumps, rendered manifests, chart pulls, and "
-            "similar throwaways. Contents are gitignored; do not commit them or store secrets there."
+            "Ephemeral files: use [`.scratch/`](./.scratch/README.md) (not `/tmp`) "
+            "for renders and dumps. Gitignored — no secrets there."
         ),
     ]
 )

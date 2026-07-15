@@ -2,44 +2,87 @@
 
 ## What this is
 
-A Kubernetes homelab managed through GitOps. Full stack and architecture in [README.md](./README.md).
+A Kubernetes homelab managed through GitOps. Stack and architecture:
+[`README.md`](./README.md). Portable agent config lives under
+[`.agents/`](./.agents/README.md) ([.agents Protocol](https://dotagentsprotocol.com/)
+layout). This file is a **router**, not a full manual.
 
-Project-wide personality, structure, workflow, validation steps, and non-negotiable decisions are encoded in the always-on rules under `.cursor/rules/` (`general.mdc`, `security.mdc`, `secrets.mdc`). They load automatically — this file does not duplicate them.
+For lab context, start at
+[`.agents/context/README.md`](./.agents/context/README.md), then open the module
+your task needs.
 
 ## What you can and can't do
 
 **Do freely:**
 
-- Read files, explore the codebase, search for anything
-- Run shell commands (validation, linting, scanning, querying)
-- Install dev dependencies locally
-- Run security scans
+- Read files, explore, search
+- Run validation, linting, scanning, local renders
+- Install local dev dependencies
 - Propose changes and present options
-- Use [`.scratch/`](./.scratch/README.md) for temporary files (prefer it over `/tmp`)
+- Use [`.scratch/`](./.scratch/README.md) for throwaways (prefer it over `/tmp`)
 
 **Requires explicit permission:**
 
-- Modifying live cluster resources (`kubectl apply`, `kubectl delete`, `flux reconcile`, etc.)
+- Live cluster mutation (`kubectl apply` / `delete`, `flux reconcile`, etc.)
 - Pushing to remote
-- Any destructive or irreversible action
+- Anything destructive or irreversible
 
-**Never, under any circumstances:**
+**Never:**
 
-- Make git commits. Commits come from the operator. Stage changes if asked, propose a commit message, but never run `git commit`. No exceptions, no "I'll just do it real quick," no amending. The operator commits.
+- Make git commits. The operator commits. Stage and propose a message if asked;
+  do not run `git commit`.
 
-The line is simple: explore and validate all you want. Don't touch anything live without asking. Don't ever commit.
+Explore and validate all you want. Do not touch anything live without asking. Do
+not commit.
 
-## Where to find context
+## Always in force
 
-The `.cursor/` directory is the discovery surface. Each subdir has a `README.md` with the convention and current index.
+Full text: [`.agents/context/constraints.md`](./.agents/context/constraints.md).
+Tone: [`.agents/context/voice.md`](./.agents/context/voice.md) (peer-to-peer,
+terse, humor OK, **profanity encouraged**).
 
-| Path        | What it holds                                          | When to consult                                                                  |
-| ----------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `rules/`    | `.mdc` rule files with scoping frontmatter             | Native Cursor system loads always-on and glob-scoped rules automatically         |
-| `agents/`   | Persona definitions (charters, system prompts)         | When a task fits a defined persona, adopt it                                     |
-| `skills/`   | Project-specific procedural skills                     | When a recurring procedure is documented as a skill, follow it                   |
-| `commands/` | Cursor slash commands                                  | When the user invokes a slash command, or when a documented command fits the job |
-| `memories/` | Lessons learned and gotchas captured during prior work | Before working in a domain, check for relevant memories                          |
-| `plans/`    | Living plan documents produced by the project-planner  | When scoping new work or revisiting an in-flight plan                            |
+- GitOps manifests are the source of truth for tunable config
+- Gateway API only (no Ingress)
+- 1Password Item CRs for secrets (not bare managed Secret YAML)
+- Protected paths need confirmation before edit (see constraints)
+- Never commit; never cluster-mutate without ask
 
-Start at [`.cursor/README.md`](./.cursor/README.md) for the full map.
+## Routing
+
+Start at [`.agents/context/README.md`](./.agents/context/README.md). Skip detail:
+[`.agents/context/loading.md`](./.agents/context/loading.md).
+
+| If you're…                            | Then read (after the context README)                                                       |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| New here / unsure                     | [`.agents/context/README.md`](./.agents/context/README.md) only                            |
+| Starting non-trivial work             | [`traps.md`](./.agents/context/traps.md)                                                   |
+| Scope is fuzzy                        | [`alignment`](./.agents/skills/alignment/SKILL.md)                                         |
+| Deploying a Helm app                  | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                             |
+| Adding an MCP server                  | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                               |
+| CNPG logical restore                  | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md) |
+| Longhorn volume restore (generic-app) | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)   |
+| Editing Flux/Helm manifests           | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                   |
+| Validating manifest diffs             | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                         |
+| Incident / reliability                | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)         |
+| Security review                       | [`security-analyst`](./.agents/agents/security-analyst/agent.md)                           |
+| Planning multi-step work              | [`project-planner`](./.agents/agents/project-planner/agent.md)                             |
+| Doc quality pass                      | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)               |
+| Choosing MCP vs CLI                   | [`tools.md`](./.agents/context/tools.md)                                                   |
+| Writing docs / agent tone             | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)       |
+| Reconciling agent context drift       | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                         |
+| Cursor-only rules / hooks / commands  | [`.cursor/README.md`](./.cursor/README.md)                                                 |
+| Claude Code adapter                   | [`.claude/README.md`](./.claude/README.md)                                                 |
+
+## Where things live
+
+| Path                                                | Role                                                              |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| [`.agents/context/`](./.agents/context/README.md)   | Living context (hub + modules)                                    |
+| [`.agents/skills/`](./.agents/README.md)            | Procedural skills (source of truth)                               |
+| [`.agents/agents/`](./.agents/README.md)            | Personas (source of truth)                                        |
+| [`.agents/memories/`](./.agents/memories/README.md) | Cross-session lessons                                             |
+| [`.cursor/`](./.cursor/README.md)                   | Cursor adapter (rules, hooks, slash commands, discovery symlinks) |
+| [`.claude/`](./.claude/README.md)                   | Claude Code adapter (discovery symlinks)                          |
+| [`CLAUDE.md`](./CLAUDE.md)                          | Symlink → [`AGENTS.md`](./AGENTS.md)                              |
+
+Portable tree map: [`.agents/README.md`](./.agents/README.md).
