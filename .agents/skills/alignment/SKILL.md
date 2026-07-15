@@ -1,10 +1,11 @@
 ---
 name: alignment
 description: >-
-  Interview the operator about a topic until shared understanding, walking each
-  branch of the decision tree one at a time. Use when stress-testing an idea,
-  design, or requirement; resolving open questions before acting; or when the
-  user says alignment, /alignment, or wants to get aligned.
+  Interview the operator until shared understanding. Gated branches one at a
+  time; independent discrete choices may share one structured-question turn.
+  Use when stress-testing an idea, design, or requirement; resolving open
+  questions before acting; or when the user says alignment, /alignment, or
+  wants to get aligned.
 disable-model-invocation: true
 ---
 
@@ -13,13 +14,14 @@ disable-model-invocation: true
 Read-only. Do not edit files, apply to the cluster, or implement until alignment
 is reached and the operator explicitly asks to proceed.
 
-Interview relentlessly until shared understanding, one decision branch at a
-time ([grill-me](https://www.aihero.dev/my-grill-me-skill-has-gone-viral)
-pattern). Explore the tree when that answers the question; do not ask the
-operator to repeat what the repo already shows.
+Interview relentlessly until shared understanding
+([grill-me](https://www.aihero.dev/my-grill-me-skill-has-gone-viral) pattern).
+Walk gated branches one at a time; independent discrete choices may share one
+structured-question turn. Explore the tree when that answers the question; do
+not ask the operator to repeat what the repo already shows.
 
-For each question, use **Context → Ask → Suggestion → Gaps/concerns** (omit Gaps
-when none). On Cursor, that is `question-format.mdc`.
+Question channel: [`.agents/context/questions.md`](../../context/questions.md).
+Harness adapters name the concrete tool (Cursor: `question-format.mdc`).
 
 ## When to run
 

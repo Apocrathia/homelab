@@ -5,7 +5,7 @@ description: When a request is ambiguous, ask. Do not silently pick the most lik
 
 # Clarify, don't guess
 
-When the operator's request has two or more reasonable interpretations, **do not guess**. Surface the ambiguity and ask using the format in `question-format.mdc`.
+When the operator's request has two or more reasonable interpretations, **do not guess**. Ask per [`.agents/context/questions.md`](../../.agents/context/questions.md) and `question-format.mdc` (prefer **`AskQuestion`** when it is in the tool list).
 
 ## Triggers
 

@@ -93,7 +93,10 @@ Before anything else, understand the idea well enough to ask good questions.
 
 ## Phase 2: Requirements clarification
 
-Surface the unknowns that matter. Ask one question at a time when the answers gate later questions; batch when they don't.
+Surface the unknowns that matter. Follow
+[`.agents/context/questions.md`](../../context/questions.md): batch independent
+discrete choices only via the harness structured-question tool; if an answer
+gates later asks, ask one and wait; prose fallback is exactly one Ask per turn.
 
 Ask about, in roughly this order:
 
@@ -109,10 +112,11 @@ Not every question applies to every plan. Skip questions that obviously don't ap
 
 **Question style:**
 
-- Use the platform's structured-question tool (`AskQuestion`) when offering discrete options. It's faster than free-form back-and-forth.
+- Prefer the harness structured-question tool for discrete options. Do not
+  dump multiple Ask blocks as chat markdown.
 - Offer 2–4 concrete options when you can. "Authentik proxy vs. Authentik OIDC vs. no auth" beats "how do you want auth to work?"
-- When a question has no obvious options, just ask it plainly.
-- After every batch of answers, restate what you've learned and what's still unknown.
+- Open-ended / tool missing → one prose Ask, then stop.
+- After answers land, restate what you've learned and what's still unknown — briefly.
 
 ## Phase 3: Surface tradeoffs and options
 

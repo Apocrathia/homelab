@@ -35,6 +35,8 @@ planner", "add a skill") count as confirmation; summarize the change first.
 
 - After **three** failed attempts at the same approach, stop and surface what
   failed (see stop-loss rule when using Cursor).
-- Do not guess when there are two reasonable interpretations; ask.
+- Do not guess when there are two reasonable interpretations; ask per
+  [`questions.md`](./questions.md) (structured tool when available; else one
+  prose Ask).
 - Advice language ("considering", "what should I do") means **advise only**, do
   not implement until asked.

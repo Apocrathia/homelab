@@ -20,6 +20,14 @@ Prefer the smallest tool that answers the question.
 | Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths         |
 | Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` |
 
+## Operator interview
+
+Prefer the harness **structured-question / interview tool** when it appears in
+the current tool list (discrete options). Full contract:
+[questions.md](./questions.md).
+
+Do not search the repo or MCP catalog for a missing interview tool.
+
 ## Scratch
 
 Use [`.scratch/`](../../.scratch/README.md) for rendered manifests and dumps.

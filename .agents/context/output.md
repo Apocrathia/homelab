@@ -1,31 +1,27 @@
 # Output shape
 
-The operator cannot read at agent speed. Default to scannable output.
+Default: short and scannable. The operator reads slower than you type.
 
-## Inverted pyramid
+## Hard limits
 
-First 1–3 sentences: answer, verdict, or what changed. Supporting detail after,
-only if needed.
+- **Lead:** 1–3 sentences that answer or state what changed. No preamble.
+- **Body:** Prefer bullets / compact tables over prose. Cut anything that does
+  not change the operator’s next action.
+- **Ceiling:** If a reply needs more than ~half a screen of explanation, put the
+  bulk in `.cursor/plans/` or `.scratch/` and link it. Chat is the index.
+- **Questions:** Follow [`questions.md`](./questions.md). Do not interview in a
+  wall of markdown.
 
 ## Length by task
 
 | Task                | Shape                                            |
 | ------------------- | ------------------------------------------------ |
-| Trivial lookup      | Short paragraph                                  |
-| Implementation done | Summary + paths + how you verified               |
-| Exploration         | Bullets: path, finding. Not a prose tour.        |
+| Trivial lookup      | One short paragraph or a few bullets             |
+| Implementation done | What changed + paths + how verified              |
+| Exploration         | Bullets: path → finding                          |
 | Review              | Numbered findings with severity                  |
-| Multi-step          | Summary + bullets. Not a tool-call play-by-play. |
-
-## Bulk out of chat
-
-- Plans → `.cursor/plans/` (or a doc), not a wall of text in the thread
-- Large reviews → numbered findings
-- Heavy data → a file under `.scratch/` or a canvas when available
-
-Chat is the index, not the warehouse.
+| Multi-step / advice | Verdict first; options as a short list; no essay |
 
 ## Subagents
 
-When a persona or child agent returns, summarize for the operator. Do not paste
-their full dump.
+Summarize. Do not paste a child agent’s full dump.

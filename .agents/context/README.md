@@ -21,6 +21,7 @@ manual chores. Not a fake enterprise platform.
 | `secrets/`        | Local operator secrets (gitignored credentials; not GitOps CRs)  |
 | `scripts/`        | Operator helper scripts                                          |
 | `docs/`           | Human docs; do not put tunable limits/versions here              |
+| `.gitlab/`        | GitLab CI/CD pipelines and related config                        |
 | `.agents/`        | Portable agent config (this tree)                                |
 | `.cursor/`        | Cursor adapter: rules, hooks, slash commands, discovery symlinks |
 | `.claude/`        | Claude Code adapter: discovery symlinks                          |
@@ -47,6 +48,7 @@ Reconcile this inventory when adding or removing modules
 | [`traps.md`](./traps.md)               | Recurring footguns           | Repeat known failures              |
 | [`nomenclature.md`](./nomenclature.md) | Naming vocabulary            | Inconsistent resource / path names |
 | [`tools.md`](./tools.md)               | MCP and CLI preferences      | Wrong tool, noisy ops              |
+| [`questions.md`](./questions.md)       | How to ask the operator      | Markdown question walls / guessing |
 | [`voice.md`](./voice.md)               | Chat tone + doc prose        | Sterile or fake-corporate agents   |
 | [`output.md`](./output.md)             | How agents structure replies | Unreadable dump replies            |
 

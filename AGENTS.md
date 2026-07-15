@@ -68,6 +68,7 @@ Start at [`.agents/context/README.md`](./.agents/context/README.md). Skip detail
 | Planning multi-step work              | [`project-planner`](./.agents/agents/project-planner/agent.md)                             |
 | Doc quality pass                      | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)               |
 | Choosing MCP vs CLI                   | [`tools.md`](./.agents/context/tools.md)                                                   |
+| Clarifying with the operator          | [`questions.md`](./.agents/context/questions.md)                                           |
 | Writing docs / agent tone             | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)       |
 | Reconciling agent context drift       | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                         |
 | Cursor-only rules / hooks / commands  | [`.cursor/README.md`](./.cursor/README.md)                                                 |

@@ -65,7 +65,7 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
   - Understand how database connection is configured (env vars, config files, service discovery)
   - For PostgreSQL with generic-app: Connection uses service name pattern `{app-name}-postgres-rw.{namespace}.svc.cluster.local`
 - Take a step back and think about what values need to be set for the deployment to be successful in our environment.
-  - If you are unsure about authentication, networking, or component requirements, ask the user for clarification.
+  - If you are unsure about authentication, networking, or component requirements, ask per `.agents/context/questions.md` (structured-question tool when in the tool list). Do not dump a multi-Ask markdown wall.
 - Determine if the helm chart's repository is already added to the Flux repository list.
   - If not, add it to the repository list.
   - If it is, skip this step.
