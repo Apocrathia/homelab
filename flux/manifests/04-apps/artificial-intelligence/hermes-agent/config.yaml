@@ -3,7 +3,14 @@
 # Keys defined here are enforced; additional runtime keys (UI/CLI) are preserved.
 # LiteLLM model id must match litellm.yml model_name.
 # Dashboard OIDC is env-driven (see helmrelease) — same pattern as other generic-app OIDC apps.
+#
+# Bare provider: custom ignores OPENAI_API_KEY unless base_url is openai.com (#28660).
+# Named custom_providers + key_env is required for cluster LiteLLM.
 model:
-  provider: custom
+  provider: litellm
   default: glm-5.2-prime
-  base_url: http://litellm.litellm.svc.cluster.local:4000/v1
+
+custom_providers:
+  - name: litellm
+    base_url: http://litellm.litellm.svc.cluster.local:4000/v1
+    key_env: OPENAI_API_KEY
