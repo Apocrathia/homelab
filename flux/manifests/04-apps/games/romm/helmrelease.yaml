@@ -69,6 +69,8 @@ spec:
             value: "authentik"
           - name: DISABLE_USERPASS_LOGIN
             value: "true"
+          - name: OIDC_ALLOW_REGISTRATION
+            value: "false"
           - name: OIDC_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -149,14 +151,10 @@ spec:
             value: "true"
           - name: SCHEDULED_CONVERT_IMAGES_TO_WEBP_CRON
             value: "0 1 * * *" # Daily at 1 AM
-
-          # Emulation Configuration
-          - name: EMULATION_ENABLED
+          - name: ENABLE_SCHEDULED_RETROACHIEVEMENTS_PROGRESS_SYNC
             value: "true"
-          - name: EMULATION_ENGINE
-            value: "emulatorjs"
-          - name: EMULATION_ENGINE_URL
-            value: "https://romm.gateway.services.apocrathia.com/emulator"
+          - name: SCHEDULED_RETROACHIEVEMENTS_PROGRESS_SYNC_CRON
+            value: "0 2 * * *" # Daily at 2 AM
 
       replicas: 1
 
@@ -181,6 +179,60 @@ spec:
         fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
         allowPrivilegeEscalation: false
+
+      # Merge git-managed config.yml onto the PVC before RomM starts.
+      # RomM may rewrite the file at runtime; this re-asserts desired keys on each boot.
+      initContainers:
+        - name: reconcile-config
+          # renovate: datasource=docker depName=ghcr.io/trueforge-org/go-yq
+          image: ghcr.io/trueforge-org/go-yq:4.53.3
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              desired=/desired/config.yml
+              runtime=/romm/config/config.yml
+
+              if [ ! -f "$desired" ] || [ ! -s "$desired" ]; then
+                echo "ERROR: desired config missing or empty at $desired"
+                exit 1
+              fi
+
+              mkdir -p /romm/config
+
+              if [ ! -f "$runtime" ] || [ ! -s "$runtime" ]; then
+                echo "No/empty runtime config — seeding from desired state"
+                cp "$desired" "$runtime"
+              else
+                echo "Reconciling desired config into runtime config"
+                tmp=$(mktemp)
+                yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+                  "$runtime" "$desired" > "$tmp"
+                yq eval '.' "$tmp" > /dev/null
+                if [ ! -s "$tmp" ]; then
+                  echo "ERROR: merge produced empty config — refusing to overwrite"
+                  rm -f "$tmp"
+                  exit 1
+                fi
+                mv "$tmp" "$runtime"
+              fi
+
+              echo "config.yml ready ($(wc -c < "$runtime") bytes)"
+          volumeMounts:
+            - name: config
+              mountPath: /romm/config
+          volumes:
+            configMap:
+              - name: desired-config
+                mountPath: /desired
+                configMapName: romm-config-desired
+                readOnly: true
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
 
       # Additional writable directories for ROMM
       volumes:

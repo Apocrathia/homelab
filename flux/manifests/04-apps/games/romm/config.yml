@@ -107,6 +107,8 @@ exclude:
         - systeminfo.txt
         - systems.txt
         - desktop.ini
+        - md5.txt
+        - sha1.txt
 
 filesystem:
   firmware_folder: bios
@@ -120,6 +122,7 @@ scan:
       - ss
       - ra
       - launchbox
+      - libretro
       - gamelist
       - hasheous
       - tgdb
@@ -145,6 +148,16 @@ scan:
       - ss
       - eu
       - jp
+  # Media assets to download (Screenscraper / ES-DE gamelist).
+  # box2d_side enables interactive 3D boxart on detail pages.
+  media:
+    - box2d
+    - box3d
+    - box2d_side
+    - physical
+    - screenshot
+    - title_screen
+    - manual
 
 system:
   platforms:

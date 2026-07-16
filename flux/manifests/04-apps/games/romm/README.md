@@ -16,6 +16,11 @@ This deployment includes:
 
 ## Configuration
 
+`config.yml` in this directory is the desired-state overlay. A `reconcile-config`
+init container deep-merges it into the Longhorn config PVC (`/romm/config/config.yml`)
+on every pod start. RomM may rewrite the runtime file; git wins for keys present
+in the overlay.
+
 ### 1Password Secrets
 
 Create a 1Password item:
