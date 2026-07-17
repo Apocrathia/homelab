@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# Fleet DM SAML IdP — users SSO via Authentik; agents still hit Fleet directly (no proxy).
+# After apply: copy Metadata URL from the provider into Fleet SSO settings (see README).
+version: 1
+metadata:
+  name: fleetdm
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  - model: authentik_providers_saml.samlprovider
+    state: present
+    identifiers:
+      name: "fleetdm-saml-provider"
+    attrs:
+      name: "fleetdm-saml-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      acs_url: "https://fleet.gateway.services.apocrathia.com/api/v1/fleet/sso/callback"
+      audience: "https://fleet.gateway.services.apocrathia.com"
+      # Fleet Authentik guide uses Issuer "authentik" (EntityID/Issuer override)
+      issuer_override: "authentik"
+      sp_binding: "post"
+      sign_assertion: true
+      sign_response: true
+      signing_kp: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      name_id_mapping: !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/email"]]
+      property_mappings:
+        - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/email"]]
+        - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/name"]]
+        - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/username"]]
+
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "fleetdm"
+    attrs:
+      name: "Fleet DM"
+      slug: "fleetdm"
+      provider: !Find [authentik_providers_saml.samlprovider, [name, "fleetdm-saml-provider"]]
+      # IdP-initiated SSO (requires enable_sso_idp_login in config/sso.yaml)
+      meta_launch_url: "https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/init/"
+      open_in_new_tab: true
+      group: "Home"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/icon.svg"
+      meta_description: "Device management (osquery) — inventory, queries, vulnerabilities"
+      meta_publisher: "Fleet"

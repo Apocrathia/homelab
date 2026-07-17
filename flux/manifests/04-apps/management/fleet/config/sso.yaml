@@ -1,0 +1,21 @@
+---
+# Fleet org config — apply with fleetctl:
+#   fleetctl config set --address https://fleet.gateway.services.apocrathia.com
+#   fleetctl login
+#   fleetctl apply -f config/sso.yaml
+#
+# Entity ID must match Authentik SAML audience on fleetdm-saml-provider.
+# Requires FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS=true so Fleet can
+# fetch metadata_url (auth.gateway resolves to RFC1918 in-cluster).
+apiVersion: v1
+kind: config
+spec:
+  sso_settings:
+    enable_sso: true
+    idp_name: Authentik
+    idp_image_url: https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/config/authentik.svg
+    entity_id: https://fleet.gateway.services.apocrathia.com
+    issuer_uri: authentik
+    metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/
+    enable_sso_idp_login: true
+    enable_jit_provisioning: false

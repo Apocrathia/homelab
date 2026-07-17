@@ -6,6 +6,10 @@ Administrative tools and developer infrastructure.
 
 ## Applications
 
+### [Fleet](./fleet/README.md)
+
+Open-source device management (osquery) for endpoint inventory, queries, and vulnerability visibility.
+
 ### [JetKVM](./jetkvm/README.md)
 
 Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.

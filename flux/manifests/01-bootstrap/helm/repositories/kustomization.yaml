@@ -30,6 +30,7 @@ resources:
   - tracearr.yaml
   - tuppr.yaml
   - external-secrets.yaml
+  - fleet.yaml
   - immich.yaml
   - jupyterhub.yaml
   - k8sgpt.yaml

@@ -1,0 +1,108 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fleet
+  namespace: fleet
+spec:
+  interval: 15m
+  timeout: 10m
+  chart:
+    spec:
+      chart: fleet
+      # renovate: datasource=helm depName=fleet registryUrl=https://fleetdm.github.io/fleet/charts
+      version: "v7.0.13"
+      sourceRef:
+        kind: HelmRepository
+        name: fleet
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    hostName: fleet.gateway.services.apocrathia.com
+    replicas: 1
+
+    # renovate: datasource=docker depName=fleetdm/fleet
+    imageTag: v4.89.1
+
+    ingress:
+      enabled: false
+
+    fleet:
+      listenPort: 8080
+      # Gateway terminates TLS; Fleet serves plain HTTP in-cluster
+      tls:
+        enabled: false
+      autoApplySQLMigrations: true
+
+    # Allow SSO metadata_url / other integrations to RFC1918 (Authentik is
+    # on the private gateway VIP). Loopback and link-local stay blocked.
+    environments:
+      FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
+
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+    # Offload vuln DB work so the main pod does not need 4Gi
+    vulnProcessing:
+      dedicated: true
+      schedule: "0 * * * *"
+      resources:
+        limits:
+          cpu: "1"
+          memory: 2Gi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+
+    osquery:
+      logging:
+        statusPlugin: filesystem
+        resultPlugin: filesystem
+        filesystem:
+          volumeSize: 5Gi
+
+    database:
+      secretName: fleetdm-secrets
+      address: fleet-mysql:3306
+      database: fleet
+      username: fleet
+      passwordKey: mysql-password
+
+    cache:
+      address: fleet-valkey:6379
+      database: "0"
+      usePassword: false
+
+    # Chart MySQL subchart (dev/test). Passwords come from OnePasswordItem fleetdm-secrets.
+    mysql:
+      enabled: true
+      auth:
+        username: fleet
+        database: fleet
+        existingSecret: fleetdm-secrets
+      primary:
+        persistence:
+          enabled: true
+          size: 8Gi
+          storageClass: longhorn
+
+    # Chart Valkey subchart (redis.enabled is the condition key)
+    redis:
+      enabled: true
+
+    valkey:
+      replica:
+        enabled: false
+      auth:
+        enabled: false
