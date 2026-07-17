@@ -58,6 +58,12 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
   `policies:` / `reports:` in `default.yml` or a team file
 - **Team-scoped controls / policies** → `teams/home.yml` (hosts enroll globally,
   then transfer into Home in the UI)
+- **macOS CIS Level 1 (macOS 26 Tahoe)** →
+  `lib/macos/policies/cis-macos-26-l1.yml` (from Fleet
+  [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);
+  see [CIS Benchmarks](https://fleetdm.com/guides/cis-benchmarks)). Assessment
+  only — many checks need MDM profiles to pass. FileVault enforcement:
+  `controls.enable_disk_encryption` on Home.
 
 Secrets and tokens are never committed. The global enroll secret is stored in
 1Password as `fleetdm-secrets` → `enroll-secret`, injected into the Fleet pod as

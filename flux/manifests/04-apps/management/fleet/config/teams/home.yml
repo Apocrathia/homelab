@@ -4,11 +4,16 @@
 #
 # No team enroll secret — hosts enroll with the global secret, then transfer
 # into Home in the UI.
+#
+# macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
+# enable_disk_encryption pairs with CIS FileVault checks (key escrow to Fleet).
 name: Home
 policies:
+  - path: ../lib/macos/policies/cis-macos-26-l1.yml
 reports:
 agent_options:
 controls:
+  enable_disk_encryption: true
 software:
 settings:
   secrets: []
