@@ -11,6 +11,9 @@
 #   FLEET_API_TOKEN            — API-only user token (GitOps role / admin on Free)
 #   FLEET_GLOBAL_ENROLL_SECRET — global enroll secret referenced in default.yml
 #   FLEET_GITOPS_SCHEDULE      — set to "true" on the Fleet hourly schedule only
+#
+# Runner note: in-cluster Kubernetes executor is non-root — no apt-get.
+# fleetctl is installed to a job-local npm prefix; version via Node fetch.
 ---
 .fleet-gitops-base:
   stage: deploy
@@ -20,9 +23,8 @@
     FLEET_DRY_RUN_ONLY: "true"
     FLEET_GITOPS_DIR: $CI_PROJECT_DIR/flux/manifests/04-apps/management/fleet/config
     FLEET_CUSTOM_HEADERS: ""
+    FLEETCTL_PREFIX: $CI_PROJECT_DIR/.fleetctl-tools
   before_script:
-    - apt-get -qq update
-    - apt-get install -y jq
     - |
       missing=""
       for var in FLEET_URL FLEET_API_TOKEN FLEET_GLOBAL_ENROLL_SECRET; do
@@ -37,27 +39,46 @@
         exit 1
       fi
     - |
-      CURL_HEADER_ARGS=()
+      FLEET_VERSION="$(node <<'NODE'
+      const headers = { Authorization: `Bearer ${process.env.FLEET_API_TOKEN}` };
+      const raw = process.env.FLEET_CUSTOM_HEADERS || "";
+      for (const part of raw.split(",").map((s) => s.trim()).filter(Boolean)) {
+        const i = part.indexOf(":");
+        if (i > 0) headers[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+      }
+      fetch(`${process.env.FLEET_URL}/api/v1/fleet/version`, { headers })
+        .then(async (r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const j = await r.json();
+          process.stdout.write(j.version || "");
+        })
+        .catch((e) => {
+          console.error(`version lookup failed: ${e.message}`);
+          process.exit(0);
+        });
+      NODE
+      )"
+      mkdir -p "$FLEETCTL_PREFIX"
+      if [ -n "$FLEET_VERSION" ]; then
+        echo "Installing fleetctl@${FLEET_VERSION}"
+        npm install --prefix "$FLEETCTL_PREFIX" "fleetctl@${FLEET_VERSION}" \
+          || npm install --prefix "$FLEETCTL_PREFIX" fleetctl
+      else
+        echo "Installing latest fleetctl"
+        npm install --prefix "$FLEETCTL_PREFIX" fleetctl
+      fi
+      export PATH="${FLEETCTL_PREFIX}/node_modules/.bin:${PATH}"
+      fleetctl --version
+
       FLEETCTL_HEADER_ARGS=()
       if [ -n "${FLEET_CUSTOM_HEADERS:-}" ]; then
         IFS=',' read -ra _CUSTOM_HEADERS <<< "$FLEET_CUSTOM_HEADERS"
         for _header in "${_CUSTOM_HEADERS[@]}"; do
-          CURL_HEADER_ARGS+=(--header "$_header")
           FLEETCTL_HEADER_ARGS+=(--custom-header "$_header")
         done
       fi
-    - |
-      FLEET_VERSION="$(curl "$FLEET_URL/api/v1/fleet/version" \
-        --header "Authorization: Bearer $FLEET_API_TOKEN" \
-        "${CURL_HEADER_ARGS[@]}" \
-        --fail --silent | jq --raw-output '.version')"
-      if [ -n "$FLEET_VERSION" ]; then
-        npm install -g "fleetctl@$FLEET_VERSION" || npm install -g fleetctl
-      else
-        echo "Failed to get Fleet version from $FLEET_URL; installing latest fleetctl"
-        npm install -g fleetctl
-      fi
-    - fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN" "${FLEETCTL_HEADER_ARGS[@]}"
+      fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN" \
+        "${FLEETCTL_HEADER_ARGS[@]}"
 
 fleet-gitops:
   extends: .fleet-gitops-base
@@ -75,5 +96,6 @@ fleet-gitops:
       variables:
         FLEET_DRY_RUN_ONLY: "false"
   script:
+    - export PATH="${FLEETCTL_PREFIX}/node_modules/.bin:${PATH}"
     - chmod +x "$FLEET_GITOPS_DIR/gitops.sh"
     - "$FLEET_GITOPS_DIR/gitops.sh"
