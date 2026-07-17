@@ -23,13 +23,14 @@ See `helmrelease.yaml` for deployment values. Fleet org settings live under `con
 
 Create a 1Password item at `vaults/Secrets/items/fleetdm-secrets` with:
 
-| Field                 | Description                 |
-| --------------------- | --------------------------- |
-| `mysql-root-password` | MySQL root password         |
-| `mysql-password`      | MySQL `fleet` user password |
-| `license-key`         | Fleet Premium license key   |
+| Field                 | Description                                            |
+| --------------------- | ------------------------------------------------------ |
+| `mysql-root-password` | MySQL root password                                    |
+| `mysql-password`      | MySQL `fleet` user password                            |
+| `license-key`         | Fleet Premium license key                              |
+| `private-key`         | `FLEET_SERVER_PRIVATE_KEY` (`openssl rand -base64 32`) |
 
-The OnePasswordItem creates Secret `fleetdm-secrets`, consumed by MySQL, Fleet, and the Premium license.
+The OnePasswordItem creates Secret `fleetdm-secrets`, consumed by MySQL, Fleet, and the Premium license. `private-key` is required before Apple MDM / `fleetctl generate mdm-apple`.
 
 ## Authentication
 

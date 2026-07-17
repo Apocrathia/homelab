@@ -48,6 +48,15 @@ spec:
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
 
+    # MDM needs FLEET_SERVER_PRIVATE_KEY (openssl rand -base64 32).
+    # Field lives on OnePasswordItem fleetdm-secrets as private-key.
+    envsFrom:
+      - name: FLEET_SERVER_PRIVATE_KEY
+        valueFrom:
+          secretKeyRef:
+            name: fleetdm-secrets
+            key: private-key
+
     resources:
       limits:
         cpu: "1"
