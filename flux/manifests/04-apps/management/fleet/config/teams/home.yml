@@ -1,0 +1,14 @@
+---
+# Homelab devices (Mac, iPhone, Linux, …).
+# Applied by fleetctl gitops via config/.gitlab-ci.yml.
+#
+# No team enroll secret — hosts enroll with the global secret, then transfer
+# into Home in the UI.
+name: Home
+policies:
+reports:
+agent_options:
+controls:
+software:
+settings:
+  secrets: []

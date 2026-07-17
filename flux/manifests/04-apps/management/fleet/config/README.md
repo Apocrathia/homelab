@@ -34,15 +34,16 @@ config/
 │   ├── linux/
 │   ├── ios/
 │   └── ipados/
-└── teams/                  # Team YAML (empty until teams exist)
+└── teams/
+    └── home.yml            # Single team for homelab devices
 ```
 
-| Path          | Role                                                               |
-| ------------- | ------------------------------------------------------------------ |
-| `default.yml` | Server URL, org info, enroll secrets, SSO, global policies/queries |
-| `lib/**`      | Shared assets; reference from YAML with `path:` / `paths:`         |
-| `teams/*.yml` | Per-team policies, controls, software, enroll secrets              |
-| `gitops.sh`   | Invoked by CI; set `FLEET_DRY_RUN_ONLY=true` for validation only   |
+| Path             | Role                                                               |
+| ---------------- | ------------------------------------------------------------------ |
+| `default.yml`    | Server URL, org info, enroll secrets, SSO, global policies/queries |
+| `lib/**`         | Shared assets; reference from YAML with `path:` / `paths:`         |
+| `teams/home.yml` | Home team policies, controls, software (no team enroll secret)     |
+| `gitops.sh`      | Invoked by CI; set `FLEET_DRY_RUN_ONLY=true` for validation only   |
 
 Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
 `.keep` when you add real content.
@@ -55,13 +56,14 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
   `sso_settings.idp_image_url`)
 - **Policies / queries shared across teams** → `lib/…` and list them under
   `policies:` / `reports:` in `default.yml` or a team file
-- **Team-scoped enroll secrets and controls** → `teams/<name>.yml`
+- **Team-scoped controls / policies** → `teams/home.yml` (hosts enroll globally,
+  then transfer into Home in the UI)
 
 Secrets and tokens are never committed. The global enroll secret is stored in
 1Password as `fleetdm-secrets` → `enroll-secret`, injected into the Fleet pod as
 `FLEET_PACKAGING_GLOBAL_ENROLL_SECRET`, and into CI as
 `FLEET_GLOBAL_ENROLL_SECRET` (referenced from `default.yml`). Use the same value
-in all three places.
+in all three places. Home has no team enroll secret.
 
 Other CI variables: `FLEET_URL`, `FLEET_API_TOKEN`. See the
 [parent README](../README.md#ci-apply) for schedule setup.
