@@ -201,6 +201,9 @@ scorecard-badge:
   image:
     name: alpine/k8s:1.36.2
   rules:
+    # Fleet hourly schedule must not rebuild the scorecard badge
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $FLEET_GITOPS_SCHEDULE == "true"'
+      when: never
     # Run on schedule or manual trigger on default branch
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
     - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

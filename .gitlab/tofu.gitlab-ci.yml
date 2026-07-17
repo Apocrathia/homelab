@@ -132,6 +132,9 @@ tofu-drift:
   stage: deploy
   needs: []
   rules:
+    # Fleet hourly schedule must not run tofu drift
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $FLEET_GITOPS_SCHEDULE == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   allow_failure: true
   script:

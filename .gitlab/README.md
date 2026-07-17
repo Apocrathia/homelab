@@ -127,7 +127,7 @@ Applies Fleet org/team YAML via `fleetctl gitops`. Job definition lives next to 
 - `FLEET_URL` — Fleet server URL
 - `FLEET_API_TOKEN` — API-only user token (GitOps role)
 - `FLEET_GLOBAL_ENROLL_SECRET` — global enroll secret referenced in `default.yml`
-- `FLEET_GITOPS_SCHEDULE=true` — set only on the Fleet pipeline schedule so other schedules skip this job
+- `FLEET_GITOPS_SCHEDULE=true` — set only on the Fleet pipeline schedule; other scheduled jobs (`pages`, `tofu-drift`, `scorecard-badge`) skip when this is set
 
 See `flux/manifests/04-apps/management/fleet/README.md` for layout and schedule setup.
 
