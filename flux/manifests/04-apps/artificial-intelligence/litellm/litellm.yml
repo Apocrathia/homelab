@@ -169,6 +169,9 @@ mcp_servers:
     url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
+    # Forward caller Authorization; do not inject a shared PAT here.
+    extra_headers:
+      - "Authorization"
   gofetch:
     alias: "gofetch"
     url: "http://mcp-gofetch-proxy.mcp-gofetch.svc.cluster.local:8080/mcp"

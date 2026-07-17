@@ -26,6 +26,14 @@ Requires 1Password item `git-agent-secrets` in Secrets vault with:
 | ----------------- | --------------- |
 | `litellm-api-key` | LiteLLM API key |
 
+Also syncs `github-mcp-secrets` into this namespace as `github-mcp-client-secrets`.
+The git-agent RemoteMCPServer sends that value as the `Authorization` header on
+every call to github-mcp (the MCP server itself stores no PAT).
+
+| Field           | Description                                                           |
+| --------------- | --------------------------------------------------------------------- |
+| `authorization` | GitHub PAT **including the `Bearer ` prefix** (e.g. `Bearer ghp_...`) |
+
 ## Troubleshooting
 
 ```bash

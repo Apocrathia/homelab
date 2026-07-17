@@ -12,9 +12,11 @@ metadata:
   annotations:
     description: "GitHub MCP server for repository and issue management"
 spec:
+  # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
   image: ghcr.io/github/github-mcp-server:v1.6.0
-  transport: stdio
-  proxyMode: streamable-http
+  # Native streamable-http (stateless). Avoids stdio session reuse that
+  # go-sdk ≥1.7 rejects as duplicate initialize.
+  transport: streamable-http
   proxyPort: 8080
   mcpPort: 8080
   permissionProfile:
@@ -34,17 +36,15 @@ spec:
         readOnlyRootFilesystem: false
       containers:
         - name: mcp
+          # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
           image: ghcr.io/github/github-mcp-server:v1.6.0
-          stdin: true
-          stdinOnce: false
-          tty: false
+          args:
+            - http
+            - --port
+            - "8080"
+            - --toolsets
+            - context,repos,pull_requests,issues,users
           env:
-            - name: GITHUB_PERSONAL_ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-mcp-secrets
-                  key: github-token
-            - name: GITHUB_TOOLSETS
-              value: "context,repos,pull_requests,issues,users"
+            # No GitHub PAT here — clients must send Authorization.
             - name: HOME
               value: "/tmp"

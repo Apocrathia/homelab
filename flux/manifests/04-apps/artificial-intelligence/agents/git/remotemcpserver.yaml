@@ -13,6 +13,13 @@ spec:
   protocol: STREAMABLE_HTTP
   url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
   description: "GitHub - repositories, issues, pull requests, code search"
+  # Native HTTP mode requires Authorization on every request (no env-PAT fallback).
+  headersFrom:
+    - name: Authorization
+      valueFrom:
+        type: Secret
+        name: github-mcp-client-secrets
+        key: authorization
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer

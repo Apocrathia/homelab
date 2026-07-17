@@ -20,6 +20,14 @@ External Clients → LiteLLM Proxy → MCP Servers (internal)
 
 Clients connect to LiteLLM at `https://litellm.gateway.services.apocrathia.com` which routes requests to the appropriate MCP server.
 
+### Auth
+
+Prefer **client-supplied credentials**. Do not bake provider PATs/API keys into
+MCP server pods so ClusterIP reachability becomes an open upstream proxy.
+Servers that speak native HTTP should reject unauthenticated requests; callers
+(`RemoteMCPServer` `headersFrom`, LiteLLM `static_headers`, end-user tokens)
+own the secret.
+
 ## Internal MCP Servers
 
 ### OSV Vulnerability Scanner
