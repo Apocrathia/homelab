@@ -18,4 +18,4 @@ spec:
     issuer_uri: authentik
     metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/
     enable_sso_idp_login: true
-    enable_jit_provisioning: false
+    enable_jit_provisioning: true

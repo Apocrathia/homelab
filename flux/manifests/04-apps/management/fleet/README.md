@@ -27,14 +27,17 @@ Create a 1Password item at `vaults/Secrets/items/fleetdm-secrets` with:
 | --------------------- | --------------------------- |
 | `mysql-root-password` | MySQL root password         |
 | `mysql-password`      | MySQL `fleet` user password |
+| `license-key`         | Fleet Premium license key   |
 
-The OnePasswordItem creates Secret `fleetdm-secrets`, which both the MySQL subchart and Fleet server consume.
+The OnePasswordItem creates Secret `fleetdm-secrets`, consumed by MySQL, Fleet, and the Premium license.
 
 ## Authentication
 
 Users authenticate with Authentik via SAML (`authentik-blueprint.yaml`). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
 
-SSO is free; JIT user provisioning is Fleet Premium only. Without JIT, create each Fleet user first (or invite them), set their auth method to SSO, then they can log in through Authentik.
+SSO uses Authentik SAML (`authentik-blueprint.yaml`). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
+
+With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true` in `config/sso.yaml`).
 
 ### Apply SSO settings
 

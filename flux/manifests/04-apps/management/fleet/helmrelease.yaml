@@ -39,6 +39,9 @@ spec:
       tls:
         enabled: false
       autoApplySQLMigrations: true
+      license:
+        secretName: fleetdm-secrets
+        licenseKey: license-key
 
     # Allow SSO metadata_url / other integrations to RFC1918 (Authentik is
     # on the private gateway VIP). Loopback and link-local stay blocked.
