@@ -45,8 +45,11 @@ spec:
 
     # Allow SSO metadata_url / other integrations to RFC1918 (Authentik is
     # on the private gateway VIP). Loopback and link-local stay blocked.
+    # Chart defaults FLEET_SERVER_PRIVATE_KEY: "" — null it so envsFrom is
+    # the only source (duplicate env keys break server-side apply).
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
+      FLEET_SERVER_PRIVATE_KEY: null
 
     # MDM needs FLEET_SERVER_PRIVATE_KEY (openssl rand -base64 32).
     # Field lives on OnePasswordItem fleetdm-secrets as private-key.
