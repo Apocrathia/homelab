@@ -52,13 +52,20 @@ spec:
       FLEET_SERVER_PRIVATE_KEY: null
 
     # MDM needs FLEET_SERVER_PRIVATE_KEY (openssl rand -base64 32).
-    # Field lives on OnePasswordItem fleetdm-secrets as private-key.
+    # Global enroll secret seeds/overwrites the DB secret on pod start —
+    # keep it identical to GitOps $FLEET_GLOBAL_ENROLL_SECRET / default.yml.
+    # Fields on OnePasswordItem fleetdm-secrets: private-key, enroll-secret.
     envsFrom:
       - name: FLEET_SERVER_PRIVATE_KEY
         valueFrom:
           secretKeyRef:
             name: fleetdm-secrets
             key: private-key
+      - name: FLEET_PACKAGING_GLOBAL_ENROLL_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: fleetdm-secrets
+            key: enroll-secret
 
     resources:
       limits:

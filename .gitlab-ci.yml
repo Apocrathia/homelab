@@ -13,6 +13,7 @@ include:
   - local: .gitlab/scorecard.gitlab-ci.yml
   - local: .gitlab/pages.gitlab-ci.yml
   - local: .gitlab/tofu.gitlab-ci.yml
+  - local: flux/manifests/04-apps/management/fleet/config/.gitlab-ci.yml
   # Security scanning
   - local: .gitlab/gitleaks.gitlab-ci.yml
   - local: .gitlab/kube-linter.gitlab-ci.yml

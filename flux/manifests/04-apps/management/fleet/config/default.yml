@@ -1,0 +1,28 @@
+# Global Fleet GitOps config ("All teams").
+# Applied by fleetctl gitops via config/.gitlab-ci.yml.
+#
+# Required CI/CD variables (masked):
+#   FLEET_URL, FLEET_API_TOKEN, FLEET_GLOBAL_ENROLL_SECRET
+#
+# Docs: https://fleetdm.com/docs/using-fleet/gitops
+---
+policies:
+reports:
+agent_options:
+controls:
+org_settings:
+  server_settings:
+    server_url: $FLEET_URL
+  org_info:
+    org_name: Homelab
+  secrets:
+    - secret: "$FLEET_GLOBAL_ENROLL_SECRET"
+  sso_settings:
+    enable_sso: true
+    idp_name: Authentik
+    idp_image_url: https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/config/lib/all/icons/authentik.svg
+    entity_id: https://fleet.gateway.services.apocrathia.com
+    issuer_uri: authentik
+    metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/
+    enable_sso_idp_login: true
+    enable_jit_provisioning: true

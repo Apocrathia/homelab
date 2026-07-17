@@ -1,0 +1,79 @@
+# Fleet GitOps — apply org/team YAML via fleetctl gitops.
+# Included from the repo root .gitlab-ci.yml.
+#
+# Triggers:
+#   - MR touching this config tree → dry-run
+#   - Push to default branch touching this tree → apply
+#   - Pipeline schedule with FLEET_GITOPS_SCHEDULE=true → apply (hourly)
+#
+# CI/CD variables (Settings → CI/CD → Variables, mask secrets):
+#   FLEET_URL                  — https://fleet.gateway.services.apocrathia.com
+#   FLEET_API_TOKEN            — API-only user token (GitOps role / admin on Free)
+#   FLEET_GLOBAL_ENROLL_SECRET — global enroll secret referenced in default.yml
+#   FLEET_GITOPS_SCHEDULE      — set to "true" on the Fleet hourly schedule only
+---
+.fleet-gitops-base:
+  stage: deploy
+  image: node:22
+  needs: []
+  variables:
+    FLEET_DRY_RUN_ONLY: "true"
+    FLEET_GITOPS_DIR: $CI_PROJECT_DIR/flux/manifests/04-apps/management/fleet/config
+    FLEET_CUSTOM_HEADERS: ""
+  before_script:
+    - apt-get -qq update
+    - apt-get install -y jq
+    - |
+      missing=""
+      for var in FLEET_URL FLEET_API_TOKEN FLEET_GLOBAL_ENROLL_SECRET; do
+        eval "value=\${$var-}"
+        if [ -z "$value" ]; then
+          missing="${missing} ${var}"
+        fi
+      done
+      if [ -n "$missing" ]; then
+        echo "Missing required CI/CD variables:${missing}"
+        echo "Configure in GitLab: Settings → CI/CD → Variables"
+        exit 1
+      fi
+    - |
+      CURL_HEADER_ARGS=()
+      FLEETCTL_HEADER_ARGS=()
+      if [ -n "${FLEET_CUSTOM_HEADERS:-}" ]; then
+        IFS=',' read -ra _CUSTOM_HEADERS <<< "$FLEET_CUSTOM_HEADERS"
+        for _header in "${_CUSTOM_HEADERS[@]}"; do
+          CURL_HEADER_ARGS+=(--header "$_header")
+          FLEETCTL_HEADER_ARGS+=(--custom-header "$_header")
+        done
+      fi
+    - |
+      FLEET_VERSION="$(curl "$FLEET_URL/api/v1/fleet/version" \
+        --header "Authorization: Bearer $FLEET_API_TOKEN" \
+        "${CURL_HEADER_ARGS[@]}" \
+        --fail --silent | jq --raw-output '.version')"
+      if [ -n "$FLEET_VERSION" ]; then
+        npm install -g "fleetctl@$FLEET_VERSION" || npm install -g fleetctl
+      else
+        echo "Failed to get Fleet version from $FLEET_URL; installing latest fleetctl"
+        npm install -g fleetctl
+      fi
+    - fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN" "${FLEETCTL_HEADER_ARGS[@]}"
+
+fleet-gitops:
+  extends: .fleet-gitops-base
+  resource_group: fleet-gitops
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - flux/manifests/04-apps/management/fleet/config/**/*
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $FLEET_GITOPS_SCHEDULE == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        FLEET_DRY_RUN_ONLY: "false"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+      changes:
+        - flux/manifests/04-apps/management/fleet/config/**/*
+      variables:
+        FLEET_DRY_RUN_ONLY: "false"
+  script:
+    - chmod +x "$FLEET_GITOPS_DIR/gitops.sh"
+    - "$FLEET_GITOPS_DIR/gitops.sh"
