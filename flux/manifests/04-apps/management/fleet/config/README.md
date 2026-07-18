@@ -64,6 +64,12 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
   see [CIS Benchmarks](https://fleetdm.com/guides/cis-benchmarks)). Assessment
   only — many checks need MDM profiles to pass. FileVault enforcement:
   `controls.enable_disk_encryption` on Home.
+- **macOS CIS MDM profiles (macOS 26)** →
+  `lib/macos/configuration-profiles/cis-macos-26/` (from Fleet
+  [`ee/cis/macos-26/test/profiles`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26/test/profiles)).
+  Vendored only — reference individual `.mobileconfig` paths from
+  `teams/home.yml` `controls.apple_settings.configuration_profiles` when ready
+  to enforce.
 
 Secrets and tokens are never committed. The global enroll secret is stored in
 1Password as `fleetdm-secrets` → `enroll-secret`, injected into the Fleet pod as
