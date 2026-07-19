@@ -81,7 +81,12 @@ SSO settings live in `config/default.yml` under `org_settings.sso_settings` (app
 
 With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true`).
 
-Fleet blocks outbound fetches to private IPs by default (SSRF). This cluster’s gateway hostnames resolve to RFC1918, so the HelmRelease sets `FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS=true`.
+Fleet blocks outbound fetches to private IPs by default (SSRF). This cluster’s
+gateway hostnames resolve to RFC1918, so the HelmRelease sets
+`FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS=true`.
+`FLEET_SERVER_PRIVATE_KEY` comes from `fleetdm-secrets` via a Helm
+`postRenderers` kustomize patch (the chart’s empty default cannot be nulled
+through Flux inline values).
 
 After the first successful GitOps apply: edit your user → Authentication → Single sign-on, then test SSO before disabling password auth.
 

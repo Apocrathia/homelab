@@ -23,6 +23,96 @@ spec:
   upgrade:
     remediation:
       retries: 3
+  # Chart defaults environments.FLEET_SERVER_PRIVATE_KEY: "". Putting the same
+  # key in envsFrom duplicates the env list and SSA rejects the apply. Flux also
+  # strips YAML null from inline values, so we can't delete the chart default
+  # that way. postRenderers replace the empty env with a secretKeyRef after
+  # helm template (Deployment + dedicated vuln CronJob).
+  postRenderers:
+    - kustomize:
+        patches:
+          # Two patches: strategic-merge delete+add in one doc drops both under
+          # the same env name merge key. Delete first, then add secretKeyRef.
+          - target:
+              version: v1
+              kind: Deployment
+              name: fleet
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: fleet
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: fleet
+                        env:
+                          - name: FLEET_SERVER_PRIVATE_KEY
+                            $patch: delete
+          - target:
+              version: v1
+              kind: Deployment
+              name: fleet
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: fleet
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: fleet
+                        env:
+                          - name: FLEET_SERVER_PRIVATE_KEY
+                            valueFrom:
+                              secretKeyRef:
+                                name: fleetdm-secrets
+                                key: private-key
+          - target:
+              group: batch
+              version: v1
+              kind: CronJob
+              name: fleet-vulnprocessing
+            patch: |-
+              apiVersion: batch/v1
+              kind: CronJob
+              metadata:
+                name: fleet-vulnprocessing
+              spec:
+                jobTemplate:
+                  spec:
+                    template:
+                      spec:
+                        containers:
+                          - name: fleet-vulnprocessing
+                            env:
+                              - name: FLEET_SERVER_PRIVATE_KEY
+                                $patch: delete
+          - target:
+              group: batch
+              version: v1
+              kind: CronJob
+              name: fleet-vulnprocessing
+            patch: |-
+              apiVersion: batch/v1
+              kind: CronJob
+              metadata:
+                name: fleet-vulnprocessing
+              spec:
+                jobTemplate:
+                  spec:
+                    template:
+                      spec:
+                        containers:
+                          - name: fleet-vulnprocessing
+                            env:
+                              - name: FLEET_SERVER_PRIVATE_KEY
+                                valueFrom:
+                                  secretKeyRef:
+                                    name: fleetdm-secrets
+                                    key: private-key
   values:
     hostName: fleet.gateway.services.apocrathia.com
     replicas: 1
@@ -45,22 +135,15 @@ spec:
 
     # Allow SSO metadata_url / other integrations to RFC1918 (Authentik is
     # on the private gateway VIP). Loopback and link-local stay blocked.
-    # Chart defaults FLEET_SERVER_PRIVATE_KEY: "" — null it so envsFrom is
-    # the only source (duplicate env keys break server-side apply).
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
-      FLEET_SERVER_PRIVATE_KEY: null
 
-    # MDM needs FLEET_SERVER_PRIVATE_KEY (openssl rand -base64 32).
-    # Global enroll secret seeds/overwrites the DB secret on pod start —
-    # keep it identical to GitOps $FLEET_GLOBAL_ENROLL_SECRET / default.yml.
+    # MDM needs FLEET_SERVER_PRIVATE_KEY — injected via postRenderers above
+    # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB
+    # secret on pod start — keep it identical to GitOps
+    # $FLEET_GLOBAL_ENROLL_SECRET / default.yml.
     # Fields on OnePasswordItem fleetdm-secrets: private-key, enroll-secret.
     envsFrom:
-      - name: FLEET_SERVER_PRIVATE_KEY
-        valueFrom:
-          secretKeyRef:
-            name: fleetdm-secrets
-            key: private-key
       - name: FLEET_PACKAGING_GLOBAL_ENROLL_SECRET
         valueFrom:
           secretKeyRef:
