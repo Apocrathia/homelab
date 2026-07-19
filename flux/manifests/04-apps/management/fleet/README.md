@@ -100,6 +100,19 @@ The blueprint creates `fleetdm-scim-provider` as a **backchannel** on the Fleet 
 
 Authentik workers must reach `https://fleet.gateway.services.apocrathia.com` (in-cluster egress to the gateway VIP).
 
+## Logs
+
+Osquery status and result logs go to Fleet container stdout (`statusPlugin` /
+`resultPlugin: stdout`), which Alloy scrapes into Loki.
+
+```logql
+{namespace="fleet",container="fleet"}
+```
+
+Server process logs use the same stream. Audit/activity history lives in the
+Fleet UI / API (not a separate Loki stream unless you enable Fleet's audit log
+plugin).
+
 ## Troubleshooting
 
 ```bash
@@ -119,5 +132,6 @@ Health check path: `/healthz` (also used by the chart probes).
 - [Fleet SSO (Authentik)](https://fleetdm.com/docs/deploy/single-sign-on-sso#authentik)
 - [Foreign vitals / SCIM](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts)
 - [Authentik SCIM provider](https://docs.goauthentik.io/add-secure-apps/providers/scim/)
+- [Log destinations](https://fleetdm.com/guides/log-destinations)
 - [fleetdm/fleet-gitops](https://github.com/fleetdm/fleet-gitops)
 - [fleetdm/fleet](https://github.com/fleetdm/fleet)

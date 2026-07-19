@@ -87,12 +87,13 @@ spec:
           cpu: 100m
           memory: 256Mi
 
+    # stdout → Alloy scrapes container logs → Loki (filesystem and
+    # emptyDir /logs never reach observability).
+    # https://fleetdm.com/guides/log-destinations
     osquery:
       logging:
-        statusPlugin: filesystem
-        resultPlugin: filesystem
-        filesystem:
-          volumeSize: 5Gi
+        statusPlugin: stdout
+        resultPlugin: stdout
 
     database:
       secretName: fleetdm-secrets
