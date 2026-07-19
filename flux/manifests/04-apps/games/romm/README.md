@@ -41,9 +41,9 @@ Create a 1Password item:
 
 ### Storage
 
-- **Application Data**: Longhorn persistent volume for ROM metadata, covers, and screenshots (`/romm/resources`)
-- **ROM Library**: SMB mount for game files (`/romm/library`)
-- **User Assets**: EmptyDir volume for user uploads (`/romm/assets`) - **Note**: Data lost on pod restart
+- **Resources**: SMB mount for scraped covers, screenshots, and manuals (`/romm/resources` → `Emulation/romm/resources` on the Games share)
+- **ROM Library**: SMB mount for game files (`/romm/library` → `Emulation`)
+- **Config / Assets**: Longhorn volumes for runtime config and user assets
 
 ### Database
 
