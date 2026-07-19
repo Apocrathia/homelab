@@ -1,7 +1,10 @@
 ---
 # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
-# Fleet DM SAML IdP — users SSO via Authentik; agents still hit Fleet directly (no proxy).
-# After apply: copy Metadata URL from the provider into Fleet SSO settings (see README).
+# Fleet DM SAML IdP (SSO) + SCIM backchannel (IdP username/groups/department on hosts).
+# Agents still hit Fleet directly (no Authentik proxy).
+#
+# SCIM token is set in Authentik UI after apply — do not put the Fleet API token here
+# (blueprint reconciles would overwrite a committed placeholder).
 version: 1
 metadata:
   name: fleetdm
@@ -9,6 +12,56 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
+  # Fleet's SCIM schema only accepts a small attribute set; the default Authentik
+  # mapping also sends displayName/photos/locale/name.formatted and gets 400'd.
+  # userName must match SAML NameID (email) so MDM enrollment maps to SCIM users.
+  - model: authentik_providers_scim.scimmapping
+    state: present
+    identifiers:
+      name: "Fleet DM SCIM User"
+    attrs:
+      name: "Fleet DM SCIM User"
+      expression: |
+        # Fleet requires non-empty givenName and familyName.
+        givenName = request.user.name or request.user.username
+        familyName = " "
+        if " " in (request.user.name or ""):
+            givenName, _, familyName = request.user.name.partition(" ")
+
+        emails = []
+        if request.user.email:
+            emails = [{
+                "value": request.user.email,
+                "type": "other",
+                "primary": True,
+            }]
+
+        return {
+            "userName": request.user.email or request.user.username,
+            "name": {
+                "givenName": givenName,
+                "familyName": familyName,
+            },
+            "active": request.user.is_active,
+            "emails": emails,
+        }
+
+  - model: authentik_providers_scim.scimprovider
+    state: present
+    identifiers:
+      name: "fleetdm-scim-provider"
+    attrs:
+      name: "fleetdm-scim-provider"
+      url: "https://fleet.gateway.services.apocrathia.com/api/v1/fleet/scim"
+      auth_mode: token
+      # token: paste Fleet API-only user token in Authentik UI (see README). Omit here.
+      verify_certificates: true
+      exclude_users_service_account: true
+      property_mappings:
+        - !Find [authentik_providers_scim.scimmapping, [name, "Fleet DM SCIM User"]]
+      property_mappings_group:
+        - !Find [authentik_providers_scim.scimmapping, [managed, "goauthentik.io/providers/scim/group"]]
+
   - model: authentik_providers_saml.samlprovider
     state: present
     identifiers:
@@ -39,6 +92,8 @@ entries:
       name: "Fleet DM"
       slug: "fleetdm"
       provider: !Find [authentik_providers_saml.samlprovider, [name, "fleetdm-saml-provider"]]
+      backchannel_providers:
+        - !Find [authentik_providers_scim.scimprovider, [name, "fleetdm-scim-provider"]]
       # IdP-initiated SSO (requires enable_sso_idp_login in config/sso.yaml)
       meta_launch_url: "https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/init/"
       open_in_new_tab: true

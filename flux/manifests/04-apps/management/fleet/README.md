@@ -9,7 +9,7 @@ Open-source device management platform built on osquery. Inventory, queries, and
 - Fleet server via the official Helm chart
 - MySQL and Valkey from the chart's bundled subcharts (dev/test posture)
 - Gateway API access; TLS terminated at the gateway
-- Authentik SAML for user SSO (no proxy — agents need open API paths)
+- Authentik SAML for user SSO; SCIM backchannel for IdP vitals on hosts (no proxy — agents need open API paths)
 - Org settings managed as GitOps under `config/` (`fleetctl gitops`)
 
 ## Access
@@ -87,6 +87,19 @@ After the first successful GitOps apply: edit your user → Authentication → S
 
 Optional: enable UI GitOps mode under **Settings → Integrations → Change management** so the UI cannot drift settings that GitOps owns.
 
+### SCIM (IdP vitals on hosts)
+
+Premium feature. Authentik pushes users/groups to Fleet over SCIM so hosts can show IdP full name, groups, and department ([Fleet guide](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts#other-idps)). This is separate from SAML SSO — keep both.
+
+The blueprint creates `fleetdm-scim-provider` as a **backchannel** on the Fleet DM application, plus a trimmed user property mapping (Fleet's SCIM schema rejects Authentik's default extra attributes). Token is **not** in the blueprint.
+
+1. In Fleet, create an [API-only user](https://fleetdm.com/docs/using-fleet/fleetctl-cli#create-api-only-user) with **Maintainer** (access to `/scim/*`). Copy its API token.
+2. In Authentik: **Applications → Providers → fleetdm-scim-provider → Edit**. Paste the token into **Token**, save.
+3. Trigger a sync (provider page → sync) or wait for Authentik's hourly sync. Confirm under Fleet **Settings → Integrations → Identity provider (IdP)**.
+4. Hosts get IdP vitals when an end user authenticates during MDM enrollment (or when you set IdP username on the host). `userName` is the user's email to match SAML NameID.
+
+Authentik workers must reach `https://fleet.gateway.services.apocrathia.com` (in-cluster egress to the gateway VIP).
+
 ## Troubleshooting
 
 ```bash
@@ -104,5 +117,7 @@ Health check path: `/healthz` (also used by the chart probes).
 - [Deploy Fleet on Kubernetes](https://fleetdm.com/guides/deploy-fleet-on-kubernetes)
 - [Fleet GitOps](https://fleetdm.com/docs/using-fleet/gitops)
 - [Fleet SSO (Authentik)](https://fleetdm.com/docs/deploy/single-sign-on-sso#authentik)
+- [Foreign vitals / SCIM](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts)
+- [Authentik SCIM provider](https://docs.goauthentik.io/add-secure-apps/providers/scim/)
 - [fleetdm/fleet-gitops](https://github.com/fleetdm/fleet-gitops)
 - [fleetdm/fleet](https://github.com/fleetdm/fleet)
