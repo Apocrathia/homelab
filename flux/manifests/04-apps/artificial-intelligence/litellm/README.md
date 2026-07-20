@@ -51,6 +51,9 @@ Admin UI uses native LiteLLM SSO (OIDC) with Authentik as the IdP. Traffic is ro
 - **Master Key Access**: Single master key controls API access
 - **Database Security**: PostgreSQL credentials managed through 1Password
 - **Network Policies**: Cilium NetworkPolicy for traffic control
+- **Prompt secret masking**: `secret-mask` guardrail (`litellm_content_filter`,
+  `pre_call`, `default_on`) redacts credential-shaped strings in prompts before
+  any provider call. Patterns live in `litellm.yml` under `guardrails`.
 
 ## Troubleshooting
 

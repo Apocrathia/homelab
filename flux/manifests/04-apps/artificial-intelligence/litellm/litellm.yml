@@ -128,6 +128,37 @@ model_list:
       model: openai/llm-d/inference-sim
       api_base: http://llm-d-modelservice.llm-d.svc.cluster.local:8000/v1
 
+# Mask credentials in prompts before any provider call (local or remote).
+# Add custom entries with pattern_type: regex (pattern, name, action).
+# Docs: https://docs.litellm.ai/docs/proxy/guardrails/litellm_content_filter
+guardrails:
+  - guardrail_name: "secret-mask"
+    litellm_params:
+      guardrail: litellm_content_filter
+      mode: "pre_call"
+      default_on: true
+      pattern_redaction_format: "[{pattern_name}_REDACTED]"
+      patterns:
+        - pattern_type: "prebuilt"
+          pattern_name: "aws_access_key"
+          action: "MASK"
+        - pattern_type: "prebuilt"
+          pattern_name: "aws_secret_key"
+          action: "MASK"
+        - pattern_type: "prebuilt"
+          pattern_name: "github_token"
+          action: "MASK"
+        - pattern_type: "prebuilt"
+          pattern_name: "slack_token"
+          action: "MASK"
+        - pattern_type: "prebuilt"
+          pattern_name: "generic_api_key"
+          action: "MASK"
+        - pattern_type: "regex"
+          pattern: '\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b'
+          name: "jwt"
+          action: "MASK"
+
 mcp_servers:
   a2a:
     alias: "a2a"
