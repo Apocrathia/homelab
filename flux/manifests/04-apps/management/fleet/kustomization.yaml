@@ -10,6 +10,7 @@ resources:
   - secret.yaml
   - helmrelease.yaml
   - httproute.yaml
+  - grafana/
 
 generatorOptions:
   disableNameSuffixHash: true

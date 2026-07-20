@@ -118,6 +118,13 @@ Server process logs use the same stream. Audit/activity history lives in the
 Fleet UI / API (not a separate Loki stream unless you enable Fleet's audit log
 plugin).
 
+Grafana dashboard: `GrafanaDashboard/fleet-dm` (Security folder), defined
+under `grafana/` (`dashboard.json` → ConfigMap `fleet-dm-dashboard`).
+
+HTTP panels filter with `|= "component=http "` (trailing space). Alloy already
+sets stream label `component=alloy`, so `| logfmt | component="http"` never
+matches — Loki renames the line field to `component_extracted`.
+
 ## Troubleshooting
 
 ```bash
