@@ -29,7 +29,7 @@ spec:
         readOnlyRootFilesystem: false
         allowPrivilegeEscalation: false
       # renovate: datasource=docker depName=ghcr.io/firecrawl/playwright-service
-      image: ghcr.io/firecrawl/playwright-service@sha256:48ac2b8210d93dca44577406a52d92cced676750ce20d0f7cef444249f7e1804
+      image: ghcr.io/firecrawl/playwright-service@sha256:bd504f4f1068bbba36599bea38f4971d4d2e6b09a030a8b19baf0021ddbaedbc
       container:
         name: playwright
         port: 3000
