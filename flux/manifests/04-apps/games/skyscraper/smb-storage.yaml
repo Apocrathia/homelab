@@ -1,0 +1,48 @@
+---
+# Emulation library share (roms / gamelists / media trees)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: skyscraper-emulation-pv
+  labels:
+    app.kubernetes.io/name: skyscraper
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: skyscraper-emulation-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Games"
+      subDir: "Emulation"
+    nodeStageSecretRef:
+      name: skyscraper-smb-credentials
+      namespace: skyscraper
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: skyscraper-emulation
+  namespace: skyscraper
+  labels:
+    app.kubernetes.io/name: skyscraper
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: skyscraper-emulation-pv
+  resources:
+    requests:
+      storage: 10Ti

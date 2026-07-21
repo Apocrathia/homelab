@@ -1,0 +1,168 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: skyscraper-esde
+  namespace: skyscraper
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "compile init and apt runtime deps need a writable rootfs"
+    ignore-check.kube-linter.io/run-as-non-root: "compile init installs packages as root"
+spec:
+  # Weekly Sunday 0300 America/Denver
+  schedule: "0 3 * * 0"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # Don't retry full-library scrapes — ScreenScraper quota + multi-hour burn.
+      backoffLimit: 0
+      # Gamelist/metadata only — still rate-limited by ScreenScraper
+      activeDeadlineSeconds: 172800
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: ensure-binary
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/ubuntu
+              image: public.ecr.aws/docker/library/ubuntu:24.04
+              command:
+                - bash
+                - /scripts/ensure-binary.sh
+              env:
+                - name: DEBIAN_FRONTEND
+                  value: noninteractive
+                - name: TZ
+                  value: America/Denver
+                # renovate: datasource=github-releases depName=Gemba/skyscraper
+                - name: SKYSCRAPER_VERSION
+                  value: "3.20.0"
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  cpu: "4"
+                  memory: 4Gi
+              securityContext:
+                runAsNonRoot: false
+                runAsUser: 0
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                  add:
+                    - CHOWN
+                    - FOWNER
+                    - DAC_OVERRIDE
+                    - SETUID
+                    - SETGID
+              volumeMounts:
+                - name: cache
+                  mountPath: /cache
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          containers:
+            - name: scrape
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/ubuntu
+              image: public.ecr.aws/docker/library/ubuntu:24.04
+              command:
+                - bash
+                - -c
+                - |
+                  set -euo pipefail
+                  export DEBIAN_FRONTEND=noninteractive
+                  # Root only for apt; binary runs unprivileged afterward.
+                  apt-get update
+                  apt-get install -y --no-install-recommends \
+                    ca-certificates \
+                    libqt6core6t64 \
+                    libqt6gui6t64 \
+                    libqt6network6t64 \
+                    libqt6sql6t64 \
+                    libqt6sql6-sqlite \
+                    libqt6xml6t64 \
+                    p7zip-full \
+                    findutils
+                  # Run as root: ubuntu image has no uid 1000 user; SMB mount uses
+                  # uid/gid=1000 noperm so writes still land correctly on the share.
+                  exec bash /scripts/scrape.sh
+              env:
+                - name: TZ
+                  value: America/Denver
+                - name: HOME
+                  value: /cache
+                - name: SKYSCRAPER_BIN
+                  value: /cache/bin/Skyscraper
+                - name: SCREENSCRAPER_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: skyscraper-secrets
+                      key: screenscraper-username
+                - name: SCREENSCRAPER_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: skyscraper-secrets
+                      key: screenscraper-password
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  cpu: "2"
+                  memory: 2Gi
+              securityContext:
+                runAsNonRoot: false
+                runAsUser: 0
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                  add:
+                    # apt drops to _apt via setuid/setgid
+                    - SETUID
+                    - SETGID
+                    - DAC_OVERRIDE
+                    - FOWNER
+                    - CHOWN
+              volumeMounts:
+                - name: emulation
+                  mountPath: /emulation
+                - name: cache
+                  mountPath: /cache
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: emulation
+              persistentVolumeClaim:
+                claimName: skyscraper-emulation
+            - name: cache
+              # Ephemeral: compiled binary + runtime config only.
+              # Resource cache lives on the Emulation SMB share.
+              emptyDir:
+                sizeLimit: 4Gi
+            - name: config
+              configMap:
+                name: skyscraper-config
+            - name: scripts
+              configMap:
+                name: skyscraper-scripts
+                defaultMode: 0755
+            - name: tmp
+              emptyDir:
+                sizeLimit: 16Gi
