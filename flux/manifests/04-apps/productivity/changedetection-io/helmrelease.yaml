@@ -59,6 +59,10 @@ spec:
             value: "C.UTF-8"
           - name: LANG
             value: "C.UTF-8"
+          # Allow LLM API base URLs that resolve to private/cluster IPs (e.g. in-cluster LiteLLM).
+          # changedetection.io blocks IANA-restricted addresses by default as SSRF protection.
+          - name: ALLOW_IANA_RESTRICTED_ADDRESSES
+            value: "true"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
