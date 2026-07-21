@@ -40,8 +40,10 @@ spec:
       # (matches pyrit's pattern), then bootstrap Node + promptfoo + modelaudit
       # in the init container at first boot. No custom image, no third-party
       # registries, just stock public.ecr.aws mirrors of docker library.
+      # Stay on 3.13: modelaudit declares Requires-Python >=3.10,<3.14, so
+      # 3.14 breaks the init-container bootstrap. Deny renovate's 3.14 bump.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.14
+      image: public.ecr.aws/docker/library/python:3.13
       replicas: 1
 
       # Run promptfoo's server entry directly (matches the upstream Dockerfile
@@ -58,7 +60,7 @@ spec:
       initContainers:
         - name: install
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14
+          image: public.ecr.aws/docker/library/python:3.13
           command: ["/bin/bash", "-c"]
           env:
             - name: HOME
