@@ -35,6 +35,14 @@ inputs = {
   network_bridge = "vmbr1"
   firewall       = false
 
+  additional_network_devices = [
+    {
+      bridge      = "vmbr1"
+      mac_address = "BC:24:11:A9:63:47"
+      vlan_id     = 42
+    }
+  ]
+
   on_boot    = true
   protection = true
   qemu_agent = true

@@ -9,14 +9,14 @@ resource "proxmox_virtual_environment_vm" "this" {
   name      = var.name
   node_name = var.initial_node
 
-  on_boot         = var.on_boot
-  protection      = var.protection
-  started         = true
-  tablet_device   = var.tablet_device
-  bios            = var.bios
-  scsi_hardware   = var.scsi_hardware
-  boot_order      = var.boot_order
-  tags            = var.tags
+  on_boot       = var.on_boot
+  protection    = var.protection
+  started       = true
+  tablet_device = var.tablet_device
+  bios          = var.bios
+  scsi_hardware = var.scsi_hardware
+  boot_order    = var.boot_order
+  tags          = var.tags
 
   cpu {
     cores   = var.cores
@@ -62,6 +62,18 @@ resource "proxmox_virtual_environment_vm" "this" {
     model       = "virtio"
     mac_address = var.mac_address
     firewall    = var.firewall
+  }
+
+  dynamic "network_device" {
+    for_each = var.additional_network_devices
+
+    content {
+      bridge      = network_device.value.bridge
+      model       = "virtio"
+      mac_address = network_device.value.mac_address
+      vlan_id     = network_device.value.vlan_id
+      firewall    = network_device.value.firewall
+    }
   }
 
   agent {

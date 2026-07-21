@@ -154,6 +154,17 @@ variable "firewall" {
   default     = false
 }
 
+variable "additional_network_devices" {
+  description = "Extra network interfaces after the primary (net1, net2, ...)"
+  type = list(object({
+    bridge      = string
+    mac_address = string
+    vlan_id     = optional(number)
+    firewall    = optional(bool, false)
+  }))
+  default = []
+}
+
 variable "on_boot" {
   description = "Start VM on host boot"
   type        = bool
