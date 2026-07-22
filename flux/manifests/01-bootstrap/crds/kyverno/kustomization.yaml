@@ -8,7 +8,7 @@ metadata:
 resources:
   # Core Kyverno CRDs
   # renovate: datasource=github-releases depName=kyverno/kyverno
-  - https://github.com/kyverno/kyverno/releases/download/v1.17.0/kyverno.io_cleanuppolicies.yaml
+  - https://github.com/kyverno/kyverno/releases/download/v1.18.2/kyverno.io_cleanuppolicies.yaml
   - https://github.com/kyverno/kyverno/releases/download/v1.17.0/kyverno.io_clustercleanuppolicies.yaml
   - https://github.com/kyverno/kyverno/releases/download/v1.17.0/kyverno.io_clusterpolicies.yaml
   - https://github.com/kyverno/kyverno/releases/download/v1.17.0/kyverno.io_globalcontextentries.yaml
