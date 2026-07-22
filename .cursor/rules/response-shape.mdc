@@ -16,3 +16,12 @@ Follow [`.agents/context/output.md`](../../.agents/context/output.md).
 - **Questions:** [`.agents/context/questions.md`](../../.agents/context/questions.md)
   / `question-format.mdc`. No multi-Ask markdown dumps.
 - **Subagents:** summarize; never paste the full child output.
+- **Structured output** (JSON/YAML/fixed schema): emit the payload only — no
+  prose prepend unless the schema asks for it.
+
+## Omit from final replies
+
+- Tool-call narration ("I read X, then grep'd Y…")
+- File-by-file diff replay when a summary suffices
+- Repeated restatement of the user's question
+- Sections that only announce what the next section will say

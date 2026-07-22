@@ -15,4 +15,4 @@ Surface to the operator:
 
 Cosmetic flag tweaks count as the same approach. Genuinely different tactics (different tool, different framing, asking the operator) do not.
 
-Transient flakes (network timeout, rate limit) where the next attempt is the same call, not a new approach, are exempt.
+Transient flakes (network timeout, rate limit) where the next attempt is the same call, not a new approach, are exempt from the "different tactic" rule. They are **not** exempt from the 3-attempt limit: after 3 consecutive failures of the same call (even if each looks transient), stop and surface.

@@ -61,3 +61,13 @@ repos:
         files: ^\.cursor/hooks/.*\.py$
       - id: ruff-format
         files: ^\.cursor/hooks/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: context-links
+        name: context links
+        entry: python3 .agents/skills/reconcile-context/scripts/check_links.py
+        language: system
+        pass_filenames: false
+        files: ^(AGENTS\.md|CLAUDE\.md|\.agents/.*\.md)$
+        stages: [pre-commit, pre-push]

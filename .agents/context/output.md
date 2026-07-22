@@ -22,6 +22,22 @@ Default: short and scannable. The operator reads slower than you type.
 | Review              | Numbered findings with severity                  |
 | Multi-step / advice | Verdict first; options as a short list; no essay |
 
+Match depth to complexity. A one-line fix does not need five paragraphs of
+context. Chat is the index, not the warehouse.
+
+## Structured output
+
+When the caller or task requires strict structured output (JSON, YAML, fixed
+schema), follow that format. Do not prepend prose or wrap the payload in
+markdown unless the schema asks for it.
+
+## Omit from final replies
+
+- Tool-call narration ("I read X, then grep'd Y…")
+- File-by-file diff replay when a summary suffices
+- Repeated restatement of the user's question
+- Sections that only announce what the next section will say
+
 ## Subagents
 
 Summarize. Do not paste a child agent’s full dump.

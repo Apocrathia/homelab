@@ -13,12 +13,12 @@ Prefer the smallest tool that answers the question.
 
 ## Common local checks
 
-| Intent                 | Typical command                                                   |
-| ---------------------- | ----------------------------------------------------------------- |
-| Render a chart         | `helm template` into `.scratch/`                                  |
-| YAML / markdown format | Prettier; yamllint where the repo already uses it                 |
-| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths         |
-| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` |
+| Intent                 | Typical command                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| Render a chart         | `helm template` into `.scratch/`                                                                        |
+| YAML / markdown format | Prettier; yamllint where the repo already uses it                                                       |
+| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                               |
+| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit) |
 
 ## Operator interview
 

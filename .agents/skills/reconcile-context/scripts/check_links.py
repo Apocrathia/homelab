@@ -190,12 +190,26 @@ def surface(check_all, md_files):
         return md_files
     # Default: portable agent surface only. Cursor discovery trees are often
     # symlinks; checking the .agents SoT covers the same content.
+    # Match relative to ROOT so a parent directory literally named `.agents`
+    # (e.g. /tmp/.agents/repo) does not pull unrelated docs into the surface.
     files = [
         os.path.join(ROOT, "AGENTS.md"),
         os.path.join(ROOT, ".agents", "README.md"),
     ]
-    files += [f for f in md_files if os.sep + ".agents" + os.sep in f]
-    return [f for f in files if os.path.lexists(f)]
+    for f in md_files:
+        try:
+            rel = os.path.relpath(f, ROOT)
+        except ValueError:
+            continue
+        if rel == ".agents" or rel.startswith(".agents" + os.sep):
+            files.append(f)
+    seen = set()
+    out = []
+    for f in files:
+        if f not in seen and os.path.lexists(f):
+            seen.add(f)
+            out.append(f)
+    return out
 
 
 def tracked_lookup(md_files):
