@@ -14,7 +14,7 @@ Overrides any conflicting pattern. Full lab constraints:
 
 | Constraint                | Implication                                                                                                                                                                                    |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Never `git commit` / push | Ship stops at draft-commit (stage + Conventional Commit draft + optional draft MR). Operator commits.                                                                                          |
+| Never `git commit` / push | Ship stops at [`draft-commit`](../skills/draft-commit/SKILL.md) (propose Conventional Commit + optional draft MR; stage only if operator asked). Operator commits.                             |
 | Ask before cluster mutate | No auto `kubectl apply`, `flux reconcile`, or mutating MCP without explicit ask. Unattended = read-only scouts.                                                                                |
 | Protected paths           | `.agents/**`, `.cursor/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`, `helm/generic-app/**`, `flux/manifests/01-bootstrap/**` → **stop / skip** unattended unless operator confirmed. |
 | Advice ≠ implement        | Consultative language → options only until asked to build.                                                                                                                                     |
@@ -157,19 +157,19 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 
 ## Related skills
 
-| Skill / persona                                             | Role in the loop                                 |
-| ----------------------------------------------------------- | ------------------------------------------------ |
-| [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs          |
-| [`run-loop`](../skills/run-loop/SKILL.md)                   | Unattended/constant loop; select brief → fork    |
-| [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)        |
-| [`autoresearch`](../skills/autoresearch/SKILL.md)           | Idle tier-8 research; docs-only ship             |
-| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`              |
-| [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff     |
-| [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans    |
-| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves |
-| [`review-loop`](../skills/review-loop/SKILL.md)             | Local gates before ship                          |
-| [`draft-commit`](../skills/draft-commit/SKILL.md)           | Stage + commit/MR draft; operator commits        |
-| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                     |
+| Skill / persona                                             | Role in the loop                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------ |
+| [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs                |
+| [`run-loop`](../skills/run-loop/SKILL.md)                   | Unattended/constant loop; select brief → fork          |
+| [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)              |
+| [`autoresearch`](../skills/autoresearch/SKILL.md)           | Idle tier-8 research; docs-only ship                   |
+| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`                    |
+| [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff           |
+| [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans          |
+| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves       |
+| [`review-loop`](../skills/review-loop/SKILL.md)             | Local gates before ship                                |
+| [`draft-commit`](../skills/draft-commit/SKILL.md)           | Commit/MR draft; stage only if asked; operator commits |
+| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                           |
 
 ## Out of scope
 

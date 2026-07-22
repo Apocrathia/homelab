@@ -292,8 +292,8 @@ Redact secrets in `error`. Never paste raw `run.log` into JSON or chat.
    applicable.
 3. [`review-loop`](../review-loop/SKILL.md) on the **docs** diff.
 4. [`reconcile-context`](../reconcile-context/SKILL.md) if links/routing moved.
-5. [`draft-commit`](../draft-commit/SKILL.md) — stage docs only; propose
-   `docs(research): <slug> — <one-line conclusion>`.
+5. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit for
+   the docs diff (stage only if the operator asked to stage); never commit.
 6. **Stop.** Operator commits. Do not file issues in the same unattended lap
    unless the operator asked.
 

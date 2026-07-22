@@ -24,8 +24,9 @@ Suggested sections: **Context**, **Lesson**, **References**. Keep it short.
 
 ## Current memories
 
-_None yet._
-
-| Topic | Summary |
-| ----- | ------- |
-| —     | —       |
+| Topic                                                           | Summary                                               |
+| --------------------------------------------------------------- | ----------------------------------------------------- |
+| [`draft-commit-no-auto-stage`](./draft-commit-no-auto-stage.md) | Propose commit text; stage only if operator asked     |
+| [`watch-mr-action-specific`](./watch-mr-action-specific.md)     | Babysit ≠ merge/approve/push; name the exact act      |
+| [`grafana-metrics-need-live`](./grafana-metrics-need-live.md)   | Autoresearch Grafana metrics only see applied cluster |
+| [`run-loop-cron-scout-only`](./run-loop-cron-scout-only.md)     | In-cluster Cron is scout; no checkout ship path       |
