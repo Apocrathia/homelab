@@ -49,16 +49,16 @@ scouts; mark `Dedupe: unverified` when identity is uncertain.
 
 ## Tiers (debt-first)
 
-| Tier | Class                    | Homelab examples                                                                                 |
-| ---- | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL               |
-| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                |
-| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts) — [`watch-mr`](../watch-mr/SKILL.md) |
-| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                  |
-| 5    | Features                 | Ready feature / roadmap work                                                                     |
-| 6    | Scoping                  | Needs alignment; feature plan stubs                                                              |
-| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                     |
-| 8    | Autoresearch             | Only when 1–7 empty + complete research contract + budgets (Wave 6)                              |
+| Tier | Class                    | Homelab examples                                                                                               |
+| ---- | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL                             |
+| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                              |
+| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts) — [`watch-mr`](../watch-mr/SKILL.md)               |
+| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                                |
+| 5    | Features                 | Ready feature / roadmap work                                                                                   |
+| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                            |
+| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                   |
+| 8    | Autoresearch             | Only when 1–7 empty + approved seed / complete contract + budgets ([`autoresearch`](../autoresearch/SKILL.md)) |
 
 **Within tier:** severity (`blocker` > `high` > `medium` > `low`) → **FIFO by
 `found_at`**. Queue, not stack.
@@ -72,6 +72,8 @@ scouts; mark `Dedupe: unverified` when identity is uncertain.
 - Partial scout failure → omit implement briefs; mark `dedupe unverified`.
 - If all briefs ineligible or queue empty → one-line empty-queue report and
   **stop** (do not invent busywork).
+- Tier 8 (`autoresearch`) only when tiers 1–7 are empty **and** an approved
+  seed / complete research contract exists — never invent hypotheses.
 
 Protected paths (confirm before any future edit; find-work never edits):
 `.agents/**`, `.cursor/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`,
@@ -105,6 +107,7 @@ Discover is read-only. Build only after the brief is selected.
 | Plan authoring               | [`project-planner`](../../agents/project-planner/agent.md)                            |
 | One Launch-brief lap         | [`implement-change`](../implement-change/SKILL.md)                                    |
 | Babysit open MR              | [`watch-mr`](../watch-mr/SKILL.md)                                                    |
+| Idle research (tier 8)       | [`autoresearch`](../autoresearch/SKILL.md) — only when 1–7 empty + approved contract  |
 | Constant / unattended parent | [`run-loop`](../run-loop/SKILL.md) (selects briefs; do not invent busywork)           |
 | Local verify / ship handoff  | [`review-loop`](../review-loop/SKILL.md) → [`draft-commit`](../draft-commit/SKILL.md) |
 | Ops / prod signal triage     | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)        |
@@ -222,6 +225,19 @@ auth) and continue. Note skips in the report.
   `file-issue` over silent implement.
 - **Default tier:** After triage — often 2/4; promote to 1 if prod breakage.
 - **On failure:** Skip if unavailable.
+
+### Research ledger
+
+- **Look at:** [`docs/research/README.md`](../../../docs/research/README.md)
+  seed table (`status: approved`) and open questions in shipped writeups that
+  already carry a complete research contract.
+- **How:** Read seeds + writeups; emit tier **8** only when tiers 1–7 have
+  **zero** eligible rows. Brief must include the full research contract +
+  budgets. `Invoke: autoresearch`. Do **not** invent hypotheses or promote
+  `status: seed` rows.
+- **Default tier:** 8 (idle-only).
+- **On failure / no approved seed:** Omit; empty queue if nothing else
+  eligible — do not fabricate research work.
 
 ## Output format
 

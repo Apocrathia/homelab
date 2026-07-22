@@ -35,7 +35,7 @@ find-work (read-only)
        watch-mr                     → maintain open MR
        reconcile-context            → steward / skill
        file-issue                   → docs backlog
-       autoresearch                 → idle-only (later)
+       autoresearch                 → idle-only tier 8 (docs-only)
   → (shipping path)
        review-loop → reconcile-docs → reconcile-context → draft-commit
   → operator commit + push (+ optional local apply to observe)
@@ -52,6 +52,16 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
   → reconcile-docs → reconcile-context → draft-commit → operator merge
 ```
 
+Research (idle-only; writeups **persist** — not delete-on-ship):
+
+```
+approved seed / Launch brief with full contract
+  → autoresearch (bounded experiments)
+  → docs/research/<slug>.md + experiments/<slug>/
+  → review-loop → draft-commit → operator merge
+  → recommendations → future file-issue (separate lap)
+```
+
 ## Work types / fork targets
 
 ### Available now
@@ -66,6 +76,7 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
 | Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md) — selects briefs; walks 1→N; stop gates ironclad                |
 | One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                 |
 | Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md) — threads / CI / conflicts; never merge                         |
+| Idle research (tier 8)     | [`autoresearch`](../skills/autoresearch/SKILL.md) → [`docs/research/`](../../docs/research/README.md)     |
 | Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                     |
 | Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                           |
 | Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (never commit)                                          |
@@ -76,26 +87,25 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
 
 Lap reports: `.scratch/laps/` (see that dir’s README; ephemeral; Discord
 notify-only, not SoT). Hot-MR locks: `.scratch/watch-mr/locks/` (skip if another
-session owns the MR).
+session owns the MR). Research sandbox: `.scratch/research/<slug>/` (gitignored;
+default experiment in-scope).
 
-### Wave 6 (not a skill yet — do not invent)
-
-`autoresearch` — idle-only tier 8; docs-only ship with hard budgets.
-
-Ship-path and loop skills above are live; never auto-commit.
+Research laps are self-contained: experiment locally, ship
+`docs/research/<slug>.md` + experiment log via draft-commit; operator commits;
+recommendations become future issues, not GitOps changes. Never auto-commit.
 
 ## Ranking (debt-first)
 
-| Tier | Class                    | Examples                                                                    |
-| ---- | ------------------------ | --------------------------------------------------------------------------- |
-| 1    | Production / correctness | Flux NotReady, critical alerts, red CI on default branch, security CRITICAL |
-| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift, stale plans   |
-| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts)                 |
-| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                             |
-| 5    | Features                 | Ready feature / roadmap                                                     |
-| 6    | Scoping                  | Needs alignment; feature plan stubs                                         |
-| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                |
-| 8    | Autoresearch             | Only when 1–7 empty + research contract + budgets                           |
+| Tier | Class                    | Examples                                                                                                     |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| 1    | Production / correctness | Flux NotReady, critical alerts, red CI on default branch, security CRITICAL                                  |
+| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift, stale plans                                    |
+| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts)                                                  |
+| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                              |
+| 5    | Features                 | Ready feature / roadmap                                                                                      |
+| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                          |
+| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                 |
+| 8    | Autoresearch             | Only when 1–7 empty + approved seed / contract + budgets ([`docs/research/`](../../docs/research/README.md)) |
 
 Within tier: severity (`blocker` > `high` > `medium` > `low`) → FIFO by
 `found_at`. Queue, not stack.
@@ -152,6 +162,7 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 | [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs          |
 | [`run-loop`](../skills/run-loop/SKILL.md)                   | Unattended/constant loop; select brief → fork    |
 | [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)        |
+| [`autoresearch`](../skills/autoresearch/SKILL.md)           | Idle tier-8 research; docs-only ship             |
 | [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`              |
 | [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff     |
 | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans    |

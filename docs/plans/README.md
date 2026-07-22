@@ -118,5 +118,6 @@ Copy from [`_template.md`](./_template.md):
 - [`_template.md`](./_template.md) — copy when authoring
 - [project-planner](../../.agents/agents/project-planner/agent.md) — plan authoring persona
 - [docs/issues/](../issues/README.md) — what / desired state
+- [docs/research/](../research/README.md) — findings (persist; not delete-on-ship)
 - [`.cursor/plans/`](../../.cursor/plans/README.md) — Cursor IDE interactive surface
 - [development-loop](../../.agents/context/development-loop.md) — find → plan → ship

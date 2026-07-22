@@ -89,7 +89,9 @@ rows, read each.
 | Draft commit/MR handoff                    | [`draft-commit`](./.agents/skills/draft-commit/SKILL.md)                                                                               |
 | Constant / unattended loop                 | [`run-loop`](./.agents/skills/run-loop/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                       |
 | Babysit open MR                            | [`watch-mr`](./.agents/skills/watch-mr/SKILL.md)                                                                                       |
+| Idle research / autoresearch               | [`autoresearch`](./.agents/skills/autoresearch/SKILL.md), [`docs/research/README.md`](./docs/research/README.md)                       |
 | Plans backlog                              | [`docs/plans/README.md`](./docs/plans/README.md)                                                                                       |
+| Research ledger                            | [`docs/research/README.md`](./docs/research/README.md)                                                                                 |
 | Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
 | Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
 | Incident / reliability                     | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |

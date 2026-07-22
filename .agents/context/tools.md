@@ -6,6 +6,10 @@ Prefer the smallest tool that answers the question.
 
 - Prefer MCP when a server is configured for the job (Flux, Grafana, Kubernetes
   inventory, docs) and you need structured reads.
+- Prefer Grafana MCP (`query_prometheus`, `query_prometheus_histogram`,
+  Loki query/stats) for [`autoresearch`](../skills/autoresearch/SKILL.md)
+  runtime metrics — read-only, explicit time ranges; never scrape with
+  embedded credentials.
 - Prefer GitLab MCP for MR / CI / pipeline reads (`watch-mr`, `find-work` Open
   MRs / CI scouts) over `glab` / raw API when the server is configured.
 - Prefer CLI (`kubectl`, `flux`, `helm`, `talosctl`) when you need exact flags,
@@ -26,7 +30,9 @@ Prefer the smallest tool that answers the question.
 
 File gaps under [`docs/issues/`](../../docs/issues/README.md) via
 [`file-issue`](../skills/file-issue/SKILL.md). Plans:
-[`docs/plans/README.md`](../../docs/plans/README.md).
+[`docs/plans/README.md`](../../docs/plans/README.md). Research (idle-only):
+[`docs/research/README.md`](../../docs/research/README.md) /
+[`autoresearch`](../skills/autoresearch/SKILL.md).
 
 ## Operator interview
 

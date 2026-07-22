@@ -79,8 +79,9 @@ def tracked_md():
             paths.append(full)
             seen.add(os.path.realpath(full))
     # Include untracked portable + adapter markdown so reconcile works before
-    # the first commit of those trees.
-    for rel in (".agents", ".claude"):
+    # the first commit of those trees. Same for agent backlog / research ledgers
+    # under docs/ (issues, plans, research).
+    for rel in (".agents", ".claude", "docs/issues", "docs/plans", "docs/research"):
         extra_root = os.path.join(ROOT, rel)
         if not os.path.isdir(extra_root):
             continue

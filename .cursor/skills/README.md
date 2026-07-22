@@ -24,6 +24,7 @@ For when to write a skill and frontmatter conventions, see
 | `review-loop`                   | [`.agents/skills/review-loop`](../../.agents/skills/review-loop/SKILL.md)                                     | Local verify before draft-commit (≤5 iters)     |
 | `run-loop`                      | [`.agents/skills/run-loop`](../../.agents/skills/run-loop/SKILL.md)                                           | Constant / unattended loop orchestrator         |
 | `watch-mr`                      | [`.agents/skills/watch-mr`](../../.agents/skills/watch-mr/SKILL.md)                                           | Babysit open MR (threads, CI, conflicts)        |
+| `autoresearch`                  | [`.agents/skills/autoresearch`](../../.agents/skills/autoresearch/SKILL.md)                                   | Idle tier-8 research; docs-only ship            |
 
 ## Adding one
 

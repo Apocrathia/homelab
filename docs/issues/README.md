@@ -114,4 +114,5 @@ Copy from [`_template.md`](./_template.md):
 - [file-issue](../../.agents/skills/file-issue/SKILL.md) — file / update / delete-on-ship
 - [alignment](../../.agents/skills/alignment/SKILL.md) — fuzzy scope before filing
 - [project-planner](../../.agents/agents/project-planner/agent.md) — how / plans
+- [docs/research/README.md](../research/README.md) — findings; recommendations may become issues
 - [reconcile-context](../../.agents/skills/reconcile-context/SKILL.md) — agent context drift after behavior moves

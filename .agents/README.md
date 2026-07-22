@@ -39,4 +39,6 @@ lives under [`docs/issues/`](../docs/issues/README.md). Rank next work with
 [`find-work`](./skills/find-work/SKILL.md) and
 [`context/development-loop.md`](./context/development-loop.md). Unattended laps
 use [`run-loop`](./skills/run-loop/SKILL.md); open-MR maintenance uses
-[`watch-mr`](./skills/watch-mr/SKILL.md).
+[`watch-mr`](./skills/watch-mr/SKILL.md). Idle research uses
+[`autoresearch`](./skills/autoresearch/SKILL.md) and
+[`docs/research/`](../docs/research/README.md).
