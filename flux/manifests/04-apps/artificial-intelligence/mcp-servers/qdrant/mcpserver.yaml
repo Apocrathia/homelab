@@ -13,8 +13,9 @@ metadata:
     description: "Qdrant MCP server for knowledge storage and semantic search"
 spec:
   # Official Qdrant MCP server - runs via uvx
+  # Pin <3.14: mcp-server-qdrant pins pydantic<2.12 (no cp314 wheels for pydantic-core).
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14-slim
+  image: public.ecr.aws/docker/library/python:3.13-slim
   transport: stdio
   proxyMode: streamable-http
   proxyPort: 8080
@@ -35,7 +36,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14-slim
+          image: public.ecr.aws/docker/library/python:3.13-slim
           securityContext:
             readOnlyRootFilesystem: false
           stdin: true
