@@ -40,17 +40,18 @@ still follow the constraints and the skill they invoked.
 Reconcile this inventory when adding or removing modules
 ([`reconcile-context`](../skills/reconcile-context/SKILL.md)).
 
-| File                                   | Purpose                      | If wrong                           |
-| -------------------------------------- | ---------------------------- | ---------------------------------- |
-| [`README.md`](./README.md)             | Hub: orientation + this map  | Agents miss the entrypoint         |
-| [`loading.md`](./loading.md)           | Load vs skip                 | Context bloat or missing cues      |
-| [`constraints.md`](./constraints.md)   | Non-negotiables              | Unsafe cluster or GitOps behavior  |
-| [`traps.md`](./traps.md)               | Recurring footguns           | Repeat known failures              |
-| [`nomenclature.md`](./nomenclature.md) | Naming vocabulary            | Inconsistent resource / path names |
-| [`tools.md`](./tools.md)               | MCP and CLI preferences      | Wrong tool, noisy ops              |
-| [`questions.md`](./questions.md)       | How to ask the operator      | Markdown question walls / guessing |
-| [`voice.md`](./voice.md)               | Chat tone + doc prose        | Sterile or fake-corporate agents   |
-| [`output.md`](./output.md)             | How agents structure replies | Unreadable dump replies            |
+| File                                           | Purpose                           | If wrong                                  |
+| ---------------------------------------------- | --------------------------------- | ----------------------------------------- |
+| [`README.md`](./README.md)                     | Hub: orientation + this map       | Agents miss the entrypoint                |
+| [`loading.md`](./loading.md)                   | Load vs skip                      | Context bloat or missing cues             |
+| [`constraints.md`](./constraints.md)           | Non-negotiables                   | Unsafe cluster or GitOps behavior         |
+| [`traps.md`](./traps.md)                       | Recurring footguns                | Repeat known failures                     |
+| [`nomenclature.md`](./nomenclature.md)         | Naming vocabulary                 | Inconsistent resource / path names        |
+| [`tools.md`](./tools.md)                       | MCP and CLI preferences           | Wrong tool, noisy ops                     |
+| [`questions.md`](./questions.md)               | How to ask the operator           | Markdown question walls / guessing        |
+| [`voice.md`](./voice.md)                       | Chat tone + doc prose             | Sterile or fake-corporate agents          |
+| [`output.md`](./output.md)                     | How agents structure replies      | Unreadable dump replies                   |
+| [`development-loop.md`](./development-loop.md) | Find → rank → Launch brief → ship | Agents invent busywork or skip stop gates |
 
 This README is excluded from "must appear in every routing row"; it is the map.
 

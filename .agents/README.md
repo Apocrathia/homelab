@@ -35,4 +35,6 @@ Discovery parity:
 Follow the routing table in [`AGENTS.md`](../AGENTS.md). For what to skip, see
 [`context/loading.md`](./context/loading.md). Keep context modules thin; link
 into `docs/` and manifests instead of copying tunable values. Agent backlog
-lives under [`docs/issues/`](../docs/issues/README.md).
+lives under [`docs/issues/`](../docs/issues/README.md). Rank next work with
+[`find-work`](./skills/find-work/SKILL.md) and
+[`context/development-loop.md`](./context/development-loop.md).

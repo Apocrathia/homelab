@@ -67,35 +67,37 @@ Start at [`.agents/context/README.md`](./.agents/context/README.md). Skip detail
 [`.agents/context/loading.md`](./.agents/context/loading.md). When a task spans
 rows, read each.
 
-| If you're…                            | Then read (after the context README)                                                                                                   |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| New here / unsure                     | [`.agents/context/README.md`](./.agents/context/README.md) only                                                                        |
-| Starting non-trivial work             | [`traps.md`](./.agents/context/traps.md)                                                                                               |
-| Unsure what to load vs skip           | [`loading.md`](./.agents/context/loading.md)                                                                                           |
-| Any work that could mutate GitOps     | [`constraints.md`](./.agents/context/constraints.md)                                                                                   |
-| Naming resources, dirs, or apps       | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                 |
-| Scope is fuzzy                        | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                     |
-| Deploying a Helm app                  | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                         |
-| Adding an MCP server                  | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                           |
-| CNPG logical restore                  | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                             |
-| Longhorn volume restore (generic-app) | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                               |
-| Filing a gap / local issue            | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                               |
-| Browsing the agent backlog            | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                     |
-| Editing Flux/Helm manifests           | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
-| Validating manifest diffs             | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
-| Incident / reliability                | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |
-| Security review                       | [`security-analyst`](./.agents/agents/security-analyst/agent.md)                                                                       |
-| Planning multi-step work              | [`project-planner`](./.agents/agents/project-planner/agent.md)                                                                         |
-| Doc quality pass                      | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)                                                           |
-| Context drift detect (propose-only)   | [`context-steward`](./.agents/agents/context-steward/agent.md)                                                                         |
-| Choosing MCP vs CLI                   | [`tools.md`](./.agents/context/tools.md)                                                                                               |
-| Clarifying with the operator          | [`questions.md`](./.agents/context/questions.md)                                                                                       |
-| Writing a reply or asking a question  | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md), [`questions.md`](./.agents/context/questions.md) |
-| Writing docs / agent tone             | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)                                                   |
-| Reconciling agent context drift       | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                     |
-| Portable behavioral rules             | [`.agents/rules/`](./.agents/rules/README.md)                                                                                          |
-| Cursor-only rules / hooks / commands  | [`.cursor/README.md`](./.cursor/README.md)                                                                                             |
-| Claude Code adapter                   | [`.claude/README.md`](./.claude/README.md)                                                                                             |
+| If you're…                                 | Then read (after the context README)                                                                                                   |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| New here / unsure                          | [`.agents/context/README.md`](./.agents/context/README.md) only                                                                        |
+| Starting non-trivial work                  | [`traps.md`](./.agents/context/traps.md)                                                                                               |
+| Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                           |
+| Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                   |
+| Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                 |
+| Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                     |
+| Deploying a Helm app                       | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                         |
+| Adding an MCP server                       | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                           |
+| CNPG logical restore                       | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                             |
+| Longhorn volume restore (generic-app)      | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                               |
+| Filing a gap / local issue                 | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                               |
+| Browsing the agent backlog                 | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                     |
+| Finding / prioritizing next work           | [`find-work`](./.agents/skills/find-work/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                     |
+| Development loop / ranking / Launch briefs | [`development-loop.md`](./.agents/context/development-loop.md)                                                                         |
+| Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
+| Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
+| Incident / reliability                     | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |
+| Security review                            | [`security-analyst`](./.agents/agents/security-analyst/agent.md)                                                                       |
+| Planning multi-step work                   | [`project-planner`](./.agents/agents/project-planner/agent.md)                                                                         |
+| Doc quality pass                           | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)                                                           |
+| Context drift detect (propose-only)        | [`context-steward`](./.agents/agents/context-steward/agent.md)                                                                         |
+| Choosing MCP vs CLI                        | [`tools.md`](./.agents/context/tools.md)                                                                                               |
+| Clarifying with the operator               | [`questions.md`](./.agents/context/questions.md)                                                                                       |
+| Writing a reply or asking a question       | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md), [`questions.md`](./.agents/context/questions.md) |
+| Writing docs / agent tone                  | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)                                                   |
+| Reconciling agent context drift            | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                     |
+| Portable behavioral rules                  | [`.agents/rules/`](./.agents/rules/README.md)                                                                                          |
+| Cursor-only rules / hooks / commands       | [`.cursor/README.md`](./.cursor/README.md)                                                                                             |
+| Claude Code adapter                        | [`.claude/README.md`](./.claude/README.md)                                                                                             |
 
 ## Where things live
 
