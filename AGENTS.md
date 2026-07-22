@@ -79,6 +79,8 @@ rows, read each.
 | Adding an MCP server                  | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                           |
 | CNPG logical restore                  | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                             |
 | Longhorn volume restore (generic-app) | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                               |
+| Filing a gap / local issue            | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                               |
+| Browsing the agent backlog            | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                     |
 | Editing Flux/Helm manifests           | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
 | Validating manifest diffs             | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
 | Incident / reliability                | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |

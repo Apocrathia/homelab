@@ -16,7 +16,7 @@ Helm, Talos, …) stay as real `.mdc` files under `.cursor/rules/`.
 | `clarify-dont-guess.md` | Ask when ambiguous; advice vs action; permission discipline |
 | `question-format.md`    | AskQuestion-first; points at `context/questions.md`         |
 | `response-shape.md`     | Short replies; half-screen rule                             |
-| `subagents.md`          | Prefer defined personas                                     |
+| `subagents.md`          | Prefer defined personas; fan out for multi-domain work      |
 | `ponytail.md`           | YAGNI / minimal-code + surgical touch discipline            |
 
 ## Glob-scoped (portable)

@@ -28,6 +28,7 @@ as real files.
 
 Follow the routing table in [`AGENTS.md`](../AGENTS.md). For what to skip, see
 [`context/loading.md`](./context/loading.md). Keep context modules thin; link
-into `docs/` and manifests instead of copying tunable values.
+into `docs/` and manifests instead of copying tunable values. Agent backlog
+lives under [`docs/issues/`](../docs/issues/README.md).
 
 Drift checks: [`skills/reconcile-context/SKILL.md`](./skills/reconcile-context/SKILL.md).

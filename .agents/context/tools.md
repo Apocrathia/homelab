@@ -20,6 +20,9 @@ Prefer the smallest tool that answers the question.
 | Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                               |
 | Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit) |
 
+File gaps under [`docs/issues/`](../../docs/issues/README.md) via
+[`file-issue`](../skills/file-issue/SKILL.md).
+
 ## Operator interview
 
 Prefer the harness **structured-question / interview tool** when it appears in

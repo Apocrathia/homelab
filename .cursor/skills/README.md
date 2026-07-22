@@ -11,6 +11,7 @@ For when to write a skill and frontmatter conventions, see
 | Skill                           | SoT                                                                                                           | Purpose                                   |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | `alignment`                     | [`.agents/skills/alignment`](../../.agents/skills/alignment/SKILL.md)                                         | Grill-me interview until scope is shared  |
+| `file-issue`                    | [`.agents/skills/file-issue`](../../.agents/skills/file-issue/SKILL.md)                                       | File/update gaps under `docs/issues/`     |
 | `helm-deployment`               | [`.agents/skills/helm-deployment`](../../.agents/skills/helm-deployment/SKILL.md)                             | Deploy Helm/Flux apps end-to-end          |
 | `mcp-deployment`                | [`.agents/skills/mcp-deployment`](../../.agents/skills/mcp-deployment/SKILL.md)                               | ToolHive MCP → LiteLLM                    |
 | `cnpg-logical-database-restore` | [`.agents/skills/cnpg-logical-database-restore`](../../.agents/skills/cnpg-logical-database-restore/SKILL.md) | CNPG logical dump/restore                 |
