@@ -3,7 +3,8 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    "security:openssf-scorecard"
+    "security:openssf-scorecard",
+    "docker:pinDigests"
   ],
   "vulnerabilityAlerts": {
     "enabled": true
@@ -41,10 +42,14 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "GitLab CI variable versions",
-      "managerFilePatterns": ["/^\\.gitlab/.*\\.ya?ml$/"],
+      "description": "Renovate comment + next-line value (yaml/CI/shell/env-list/toml) or GitHub URL",
+      "managerFilePatterns": [
+        "/^flux/manifests/.*\\.ya?ml$/",
+        "/^\\.gitlab/.*\\.ya?ml$/"
+      ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)[ \\t]*\\n[ \\t]+[A-Z0-9_]+: [\"']?(?<currentValue>v?[0-9][^\"'\\s]*)[\"']?"
+        "# renovate:(?: datasource=(?<datasource>\\S+)| registryUrl=(?<registryUrl>\\S+)| depName=(?<depName>\\S+)| packageName=(?<packageName>\\S+)| versioning=(?<versioning>\\S+)| \\S+=\\S+)+\\s*\\n\\s*(?:- name:\\s+\\S+\\s*\\n\\s+value:\\s*|[A-Za-z_][\\w.-]*:\\s*|[A-Z][A-Z0-9_]*=|[A-Za-z_][\\w.-]*\\s*=\\s*)[\"']?(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
+        "# renovate:(?: datasource=(?<datasource>\\S+)| registryUrl=(?<registryUrl>\\S+)| depName=(?<depName>\\S+)| packageName=(?<packageName>\\S+)| versioning=(?<versioning>\\S+)| \\S+=\\S+)+\\s*\\n\\s*-?\\s*https://(?:github\\.com/[^/]+/[^/]+/releases/download/v|raw\\.githubusercontent\\.com/[^/]+/[^/]+/)(?<currentValue>[^/\\s]+)"
       ]
     },
     {
@@ -58,7 +63,7 @@
     },
     {
       "customType": "regex",
-      "description": "Generic App Chart versions from Git tags",
+      "description": "generic-app Chart versions from Git tags",
       "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
       "datasourceTemplate": "git-tags",
       "depNameTemplate": "https://gitlab.com/Apocrathia/homelab.git",
@@ -75,7 +80,7 @@
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
-        "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^\"'\\s]+)[\"']"
+        "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ],
       "extractVersionTemplate": "^x86_64-v(?<version>.*)$"
     },
@@ -87,32 +92,7 @@
       ],
       "datasourceTemplate": "docker",
       "matchStrings": [
-        "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^\"'\\s]+)[\"']"
-      ]
-    },
-    {
-      "customType": "regex",
-      "description": "LiteLLM database image with main-v tag format",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "datasourceTemplate": "docker",
-      "matchStrings": [
-        "# renovate: datasource=docker depName=(?<depName>ghcr\\.io/berriai/litellm-database)\\s*\\n[\\s\\S]*?tag: [\"']?(?<currentValue>main-v[^\"'\\s]+-stable)[\"']?"
-      ],
-      "extractVersionTemplate": "^main-v(?<version>.*)-stable$"
-    },
-    {
-      "customType": "regex",
-      "description": "Flux and other dependencies",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"],
-      "matchStrings": [
-        "apiVersion: (?<depName>apiextensions\\.k8s\\.io)/(?<currentValue>v1beta1)",
-        "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n[\\s\\S]*?helper_image = [\"'][^:]+:(?<currentValue>[^\"'\\s]+)[\"']",
-        "# renovate: datasource=github-releases depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://github\\.com/[^/]+/[^/]+/releases/download/v(?<currentValue>[^/\\s]+)/[^\\s]*",
-        "# renovate: datasource=github-tags depName=(?<depName>[^\\s]+)\\s*\\n[\\s\\S]*?https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/(?<currentValue>[^/\\s]+)/[^\\s]+",
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*version: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*image: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
-        "# renovate: datasource=(?<datasource>\\S+) (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*tag: [\"']?(?<currentValue>[^\"'\\s]+)[\"']?",
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*[A-Z_]+=[\"']?(?<currentValue>v?[0-9][^\"'\\s]*)[\"']?"
+        "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ]
     }
   ],
