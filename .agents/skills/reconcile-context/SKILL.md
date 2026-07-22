@@ -62,7 +62,9 @@ the format spec, not a real note — skip it.
 
 Keep modules thin. Link to `docs/` and skills; do not paste tunable config.
 `.agents/**`, `.cursor/**`, and `AGENTS.md` are protected; summarize and get
-confirmation unless the operator already ordered this reconcile.
+confirmation unless the operator already ordered this reconcile. For a
+readonly detect-only pass, prefer the [`context-steward`](../../agents/context-steward/agent.md)
+persona (propose edits; do not write).
 
 ### 5. Re-run and report
 
@@ -88,5 +90,6 @@ If nothing drifted, say so in one line and stop.
 
 The link check runs from pre-commit and pre-push via the `context-links` hook in
 [`.pre-commit-config.yaml`](../../../.pre-commit-config.yaml) on changes to
-`AGENTS.md`, `CLAUDE.md`, and `.agents/**/*.md`. Keep the full reconcile
-(steps 2–4) as an explicit invocation.
+`AGENTS.md`, `CLAUDE.md`, and `.agents/**/*.md`. CI runs the same script from
+[`.gitlab/context-links.gitlab-ci.yml`](../../../.gitlab/context-links.gitlab-ci.yml).
+Keep the full reconcile (steps 2–4) as an explicit invocation.

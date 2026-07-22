@@ -1,6 +1,12 @@
 # `.cursor/rules/` — Rule index
 
-Cursor loads these `.mdc` files based on their frontmatter. This README is a human- and agent-readable index — it does not change loading behavior.
+Cursor loads these `.mdc` files based on their frontmatter. This README is a
+human- and agent-readable index — it does not change loading behavior.
+
+**Portable behavioral rules** live under
+[`.agents/rules/`](../../.agents/rules/README.md) as Markdown (`.md`) and
+appear here as `.mdc` **symlinks**. **Domain GitOps rules** are real `.mdc`
+files in this directory.
 
 ## Frontmatter scoping
 
@@ -12,7 +18,7 @@ Cursor loads these `.mdc` files based on their frontmatter. This README is a hum
 
 ## Current rules
 
-### Always-on
+### Always-on (SoT: `.agents/rules/*.md` → symlink `*.mdc` here)
 
 | File                     | Summary                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
@@ -23,22 +29,22 @@ Cursor loads these `.mdc` files based on their frontmatter. This README is a hum
 | `clarify-dont-guess.mdc` | Ask when ambiguous; prefer AskQuestion; advice vs action; permission discipline                    |
 | `question-format.mdc`    | AskQuestion-first; prose = one Ask; points at `.agents/context/questions.md`                       |
 | `response-shape.mdc`     | Ultra-short replies; half-screen rule; no interview walls                                          |
-| `subagents.mdc`          | Prefer defined personas for plan / implement / verify / SRE / security / docs                      |
-| `ponytail.mdc`           | Lazy-senior YAGNI / minimal-code bias                                                              |
+| `subagents.mdc`          | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
+| `ponytail.mdc`           | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
 
 ### Glob-scoped (load when matching files are touched)
 
-| File            | Glob                                                           | Summary                                                                       |
-| --------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `flux.mdc`      | `flux/*`                                                       | Flux/Kustomize directory structure, deployment process, Authentik integration |
-| `gitops.mdc`    | `flux/**`                                                      | GitOps workflow principles (fromValues, explicit config, iterative testing)   |
-| `helm.mdc`      | `helm/*`                                                       | Template logic, volume management, values structure, validation, icons        |
-| `talos.mdc`     | `talos/*`                                                      | Talos Linux configuration, networking, security baseline, maintenance         |
-| `renovate.mdc`  | `renovate.json`                                                | Renovate bot configuration, regex manager format                              |
-| `python.mdc`    | `**/*.py`                                                      | Toolchain (uv/ruff), style, type hints, async patterns, security              |
-| `docs.mdc`      | `**/*.md`                                                      | Documentation style, prettier workflow, no duplicated tunables                |
-| `humanizer.mdc` | `**/*.md`                                                      | Removing AI writing patterns from documentation                               |
-| `secrets.mdc`   | `**/*.{yaml,yml,tf,tfvars,env,json,sh,conf,config,properties}` | Secret patterns to flag, file types to check, 1Password best practices        |
+| File            | Glob                                                           | SoT                          | Summary                                                                       |
+| --------------- | -------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------- |
+| `flux.mdc`      | `flux/*`                                                       | this dir                     | Flux/Kustomize directory structure, deployment process, Authentik integration |
+| `gitops.mdc`    | `flux/**`                                                      | this dir                     | GitOps workflow principles (fromValues, explicit config, iterative testing)   |
+| `helm.mdc`      | `helm/*`                                                       | this dir                     | Template logic, volume management, values structure, validation, icons        |
+| `talos.mdc`     | `talos/*`                                                      | this dir                     | Talos Linux configuration, networking, security baseline, maintenance         |
+| `renovate.mdc`  | `renovate.json`                                                | this dir                     | Renovate bot configuration, regex manager format                              |
+| `python.mdc`    | `**/*.py`                                                      | this dir                     | Toolchain (uv/ruff), style, type hints, async patterns, security              |
+| `docs.mdc`      | `**/*.md`                                                      | this dir                     | Documentation style, prettier workflow, no duplicated tunables                |
+| `humanizer.mdc` | `**/*.md`                                                      | `.agents/rules/humanizer.md` | Removing AI writing patterns from documentation                               |
+| `secrets.mdc`   | `**/*.{yaml,yml,tf,tfvars,env,json,sh,conf,config,properties}` | this dir                     | Secret patterns to flag, file types to check, 1Password best practices        |
 
 ### Agent-requestable (load on demand)
 
@@ -53,6 +59,9 @@ Cursor loads these `.mdc` files based on their frontmatter. This README is a hum
 
 ## Adding a rule
 
-1. Create `<name>.mdc` with frontmatter (`alwaysApply`, `globs`, or `description`).
-2. Add a row to the table above.
+1. **Portable / behavioral:** create `.agents/rules/<name>.md`, symlink
+   `<name>.mdc` → that file from here, update
+   [`.agents/rules/README.md`](../../.agents/rules/README.md) and this index.
+2. **Domain (Flux/Helm/Talos/…):** create `<name>.mdc` here with frontmatter,
+   add a row above.
 3. Keep rule content focused — one concern per file.

@@ -13,3 +13,4 @@ Each `.md` file here is a symlink into that tree.
 | `security-analyst`          | [agent.md](../../.agents/agents/security-analyst/agent.md)          | Adversarial security review               |
 | `site-reliability-engineer` | [agent.md](../../.agents/agents/site-reliability-engineer/agent.md) | Incidents, obs, Flux health               |
 | `documentation-reviewer`    | [agent.md](../../.agents/agents/documentation-reviewer/agent.md)    | Doc standards audit                       |
+| `context-steward`           | [agent.md](../../.agents/agents/context-steward/agent.md)           | Context drift detect; propose-only        |

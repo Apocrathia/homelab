@@ -1,0 +1,17 @@
+---
+# Context link check — AGENTS.md / .agents markdown links and anchors
+context-links:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=python
+    name: python:3.14-alpine
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - AGENTS.md
+        - CLAUDE.md
+        - .agents/**/*.md
+  script:
+    - python3 .agents/skills/reconcile-context/scripts/check_links.py
+  allow_failure: false

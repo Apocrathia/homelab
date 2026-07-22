@@ -21,7 +21,7 @@ the tool allows multiple items. If an answer **gates** the next ask, ask one,
 wait, then continue.
 
 Harness adapters may name the concrete tool and UI quirks (e.g. Cursor:
-[`.cursor/rules/question-format.mdc`](../../.cursor/rules/question-format.mdc)).
+[`.agents/rules/question-format.md`](../rules/question-format.md)).
 This file stays harness-neutral.
 
 ## Anti-pattern
