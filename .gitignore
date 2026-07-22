@@ -71,6 +71,7 @@ temp/
 TODO.md
 
 # Claude
+.claude/settings.local.json
 
 # Agent ephemeral workspace (see .scratch/README.md)
 .scratch/*
