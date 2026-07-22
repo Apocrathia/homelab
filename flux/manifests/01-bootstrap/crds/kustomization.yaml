@@ -14,9 +14,12 @@ resources:
   # - ./cilium
   # Longhorn (managed by Helm chart)
   # - ./longhorn
-  # Gateway API
+  # Gateway API — pinned to v1.4.1 until Cilium >=1.20 (operator needs TLSRoute v1alpha2).
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
-  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml
+  # Experimental TLSRoute so v1alpha2 is served (standard channel omits it at 1.4.1).
+  # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
+  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
   # Gateway API Inference Extension (for InferencePool)
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api-inference-extension
   - https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.5.0/manifests.yaml
