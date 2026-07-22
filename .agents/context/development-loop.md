@@ -40,7 +40,7 @@ find-work (read-only)
        review-loop → reconcile-docs → reconcile-context → draft-commit
   → operator commit + push (+ optional local apply to observe)
   → Flux reconciles pushed truth
-  → clock-out / lap-report → find-work again (or stop if empty)
+  → lap-report → find-work again (or stop if empty)
 ```
 
 Issue → plan → code (anti-rot: delete satisfied issues/plans; no `closed/`):

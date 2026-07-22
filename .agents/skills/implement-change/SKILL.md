@@ -73,7 +73,7 @@ After edits land and verify is green enough to ship-propose:
 1. [`review-loop`](../review-loop/SKILL.md) — local gates / fix iters
 2. [`reconcile-docs`](../reconcile-docs/SKILL.md) — behavior docs; delete satisfied issues/plans
 3. [`reconcile-context`](../reconcile-context/SKILL.md) — agent context / links
-4. [`draft-commit`](../draft-commit/SKILL.md) — stage + Conventional Commit draft + optional draft MR; **never** commit/push
+4. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit + optional draft MR (stage only if the operator asked); **never** commit/push
 
 Those sibling skills may not exist yet in the same session — keep the paths;
 do not fabricate their procedures here.
