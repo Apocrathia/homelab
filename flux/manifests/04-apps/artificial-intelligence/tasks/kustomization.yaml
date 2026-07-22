@@ -7,4 +7,5 @@ metadata:
 resources:
   - namespace.yaml
   - scheduled-agent-invoke
+  - run-loop-agent-invoke
   - alert-agent-invoke

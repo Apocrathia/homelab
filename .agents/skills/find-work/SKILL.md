@@ -10,7 +10,8 @@ disable-model-invocation: true
 
 Rank candidate work from the local backlog and live signals. Emit a ranked
 report plus pasteable Launch briefs. Parent/operator picks; this skill does
-not execute.
+not execute. [`run-loop`](../run-loop/SKILL.md) is the usual unattended parent
+that selects a brief and forks.
 
 Loop context: [`.agents/context/development-loop.md`](../../context/development-loop.md).
 
@@ -48,16 +49,16 @@ scouts; mark `Dedupe: unverified` when identity is uncertain.
 
 ## Tiers (debt-first)
 
-| Tier | Class                    | Homelab examples                                                                        |
-| ---- | ------------------------ | --------------------------------------------------------------------------------------- |
-| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL      |
-| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans       |
-| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts) — `watch-mr` when it exists |
-| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                         |
-| 5    | Features                 | Ready feature / roadmap work                                                            |
-| 6    | Scoping                  | Needs alignment; feature plan stubs                                                     |
-| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                            |
-| 8    | Autoresearch             | Only when 1–7 empty + complete research contract + budgets (Wave 6)                     |
+| Tier | Class                    | Homelab examples                                                                                 |
+| ---- | ------------------------ | ------------------------------------------------------------------------------------------------ |
+| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL               |
+| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                |
+| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts) — [`watch-mr`](../watch-mr/SKILL.md) |
+| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                  |
+| 5    | Features                 | Ready feature / roadmap work                                                                     |
+| 6    | Scoping                  | Needs alignment; feature plan stubs                                                              |
+| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                     |
+| 8    | Autoresearch             | Only when 1–7 empty + complete research contract + budgets (Wave 6)                              |
 
 **Within tier:** severity (`blocker` > `high` > `medium` > `low`) → **FIFO by
 `found_at`**. Queue, not stack.
@@ -94,23 +95,21 @@ Each actionable row must emit a pasteable brief:
 
 Discover is read-only. Build only after the brief is selected.
 
-### Invoke targets (Wave 3)
+### Invoke targets
 
-Honest mapping until Wave 4 ship-path skills land:
-
-| Situation                          | Invoke                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| File/update a gap                  | [`file-issue`](../file-issue/SKILL.md)                                                                 |
-| Scope fuzzy / HITL                 | [`alignment`](../alignment/SKILL.md) (skip unattended)                                                 |
-| Context / link drift               | [`reconcile-context`](../reconcile-context/SKILL.md) / `context-steward`                               |
-| Plan authoring                     | [`project-planner`](../../agents/project-planner/agent.md)                                             |
-| Ops / prod signal triage           | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)                         |
-| Security signal triage             | [`security-analyst`](../../agents/security-analyst/agent.md)                                           |
-| Manifest implement                 | Manual under operator, or `manifest-implementer` — **Wave 4:** prefer `implement-change` when it lands |
-| Ship / propose commit / MR babysit | **Wave 4+** (`draft-commit`, `watch-mr`, `review-loop`) — do not fake those skills                     |
-
-Do not invent `implement-change` / `draft-commit` bodies. Point parent to Wave 4
-for the closed ship path.
+| Situation                    | Invoke                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| File/update a gap            | [`file-issue`](../file-issue/SKILL.md)                                                |
+| Scope fuzzy / HITL           | [`alignment`](../alignment/SKILL.md) (skip unattended)                                |
+| Context / link drift         | [`reconcile-context`](../reconcile-context/SKILL.md) / `context-steward`              |
+| Plan authoring               | [`project-planner`](../../agents/project-planner/agent.md)                            |
+| One Launch-brief lap         | [`implement-change`](../implement-change/SKILL.md)                                    |
+| Babysit open MR              | [`watch-mr`](../watch-mr/SKILL.md)                                                    |
+| Constant / unattended parent | [`run-loop`](../run-loop/SKILL.md) (selects briefs; do not invent busywork)           |
+| Local verify / ship handoff  | [`review-loop`](../review-loop/SKILL.md) → [`draft-commit`](../draft-commit/SKILL.md) |
+| Ops / prod signal triage     | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)        |
+| Security signal triage       | [`security-analyst`](../../agents/security-analyst/agent.md)                          |
+| Manifest implement (domain)  | `manifest-implementer` (usually via `implement-change`)                               |
 
 ## Scout adapters (read-only)
 
@@ -128,8 +127,8 @@ auth) and continue. Note skips in the report.
 
 ### Plans ledger
 
-- **Look at:** `.cursor/plans/` unchecked boxes / stubs. `docs/plans/` may not
-  exist yet — skip that path if absent.
+- **Look at:** [`docs/plans/`](../../../docs/plans/README.md) unchecked boxes /
+  stubs; also `.cursor/plans/` for IDE drafts.
 - **How:** Glob + read; note linked issue severity when present.
 - **Default tier:** 2 if stale / refresh debt; 6 for feature stubs; 7 for
   low-priority authoring when higher tiers empty.
@@ -209,10 +208,12 @@ auth) and continue. Note skips in the report.
 ### Open MRs
 
 - **Look at:** Threads, failing CI, conflicts on open MRs.
-- **How:** GitLab MCP MR list / discussions / pipeline status.
+- **How:** GitLab MCP MR list / discussions / pipeline status — **light list
+  only**; do not deep-dive here.
 - **Default tier:** 3. Gate: clear these before tier 4–5 feature work.
-- **On failure:** Skip; do not invent `watch-mr` skill calls (Wave 5). Suggest
-  manual MR triage or SRE/parent until `watch-mr` exists.
+- **Invoke:** [`watch-mr`](../watch-mr/SKILL.md) (exists). find-work only
+  surfaces maintain-eligible MRs; `watch-mr` owns the babysit lap.
+- **On failure:** Skip; do not invent MR triage work.
 
 ### k8sgpt
 

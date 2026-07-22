@@ -22,6 +22,8 @@ For when to write a skill and frontmatter conventions, see
 | `reconcile-context`             | [`.agents/skills/reconcile-context`](../../.agents/skills/reconcile-context/SKILL.md)                         | Sync AGENTS.md + `.agents/context/` drift       |
 | `reconcile-docs`                | [`.agents/skills/reconcile-docs`](../../.agents/skills/reconcile-docs/SKILL.md)                               | Behavior docs + delete satisfied issues/plans   |
 | `review-loop`                   | [`.agents/skills/review-loop`](../../.agents/skills/review-loop/SKILL.md)                                     | Local verify before draft-commit (≤5 iters)     |
+| `run-loop`                      | [`.agents/skills/run-loop`](../../.agents/skills/run-loop/SKILL.md)                                           | Constant / unattended loop orchestrator         |
+| `watch-mr`                      | [`.agents/skills/watch-mr`](../../.agents/skills/watch-mr/SKILL.md)                                           | Babysit open MR (threads, CI, conflicts)        |
 
 ## Adding one
 

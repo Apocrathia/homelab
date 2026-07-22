@@ -16,4 +16,5 @@ folder after the README.
 | Helm / MCP / restore skills                           | Matching deploy or recover tasks                               | Unrelated domains                            |
 | `alignment` skill                                     | Scope fuzzy; before a plan or wide manifest change             | Acceptance already clear                     |
 | [`development-loop.md`](./development-loop.md)        | Finding / prioritizing work; constant-loop; find-work; ranking | Single-issue implement with clear acceptance |
+| `run-loop` skill                                      | Unattended / constant loop; walk Launch briefs                 | One-shot attended implement                  |
 | `manifest-implementer` / `manifest-verifier`          | Changing or checking Flux/Helm YAML                            | Docs-only or incident triage                 |

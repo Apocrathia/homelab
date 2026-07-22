@@ -6,6 +6,8 @@ Prefer the smallest tool that answers the question.
 
 - Prefer MCP when a server is configured for the job (Flux, Grafana, Kubernetes
   inventory, docs) and you need structured reads.
+- Prefer GitLab MCP for MR / CI / pipeline reads (`watch-mr`, `find-work` Open
+  MRs / CI scouts) over `glab` / raw API when the server is configured.
 - Prefer CLI (`kubectl`, `flux`, `helm`, `talosctl`) when you need exact flags,
   pipes, or local render (`helm template`).
 - Mutating MCP calls still need the same permission bar as mutating CLI. Ask

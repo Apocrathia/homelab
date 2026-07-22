@@ -62,7 +62,10 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
 | File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                             |
 | Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                           |
 | Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT); `.cursor/plans/` OK for IDE drafts |
+| Rank / pick next work      | [`find-work`](../skills/find-work/SKILL.md) (read-only)                                                   |
+| Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md) — selects briefs; walks 1→N; stop gates ironclad                |
 | One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                 |
+| Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md) — threads / CI / conflicts; never merge                         |
 | Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                     |
 | Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                           |
 | Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (never commit)                                          |
@@ -71,11 +74,15 @@ gap → (alignment if fuzzy) → file-issue (docs/issues/)
 | Doc audits                 | `documentation-reviewer`                                                                                  |
 | Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                       |
 
-### Wave 5+ (not skills yet — do not invent)
+Lap reports: `.scratch/laps/` (see that dir’s README; ephemeral; Discord
+notify-only, not SoT). Hot-MR locks: `.scratch/watch-mr/locks/` (skip if another
+session owns the MR).
 
-`watch-mr`, constant-loop orchestrator, `autoresearch`.
+### Wave 6 (not a skill yet — do not invent)
 
-Ship-path skills above are live; never auto-commit.
+`autoresearch` — idle-only tier 8; docs-only ship with hard budgets.
+
+Ship-path and loop skills above are live; never auto-commit.
 
 ## Ranking (debt-first)
 
@@ -143,6 +150,8 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 | Skill / persona                                             | Role in the loop                                 |
 | ----------------------------------------------------------- | ------------------------------------------------ |
 | [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs          |
+| [`run-loop`](../skills/run-loop/SKILL.md)                   | Unattended/constant loop; select brief → fork    |
+| [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)        |
 | [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`              |
 | [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff     |
 | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans    |

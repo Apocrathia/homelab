@@ -73,8 +73,9 @@ reading the full diff). Bugs: repro encouraged, not mandatory.
 When acceptance is met, **delete** `docs/issues/<slug>.md` in the same change
 set as the fix, and fix backlinks in linked plans/docs.
 
-`reconcile-docs` does not exist yet — parent agent or operator owns closure
-until that skill lands. Do not leave satisfied issue files around.
+Closure is owned by [`reconcile-docs`](../reconcile-docs/SKILL.md) on the ship
+path (or the parent/operator if that skill is not in play). Do not leave
+satisfied issue files around.
 
 ## Homelab constraints
 

@@ -87,6 +87,8 @@ rows, read each.
 | Docs/issue/plan closure after a change     | [`reconcile-docs`](./.agents/skills/reconcile-docs/SKILL.md)                                                                           |
 | Local verify before ship                   | [`review-loop`](./.agents/skills/review-loop/SKILL.md)                                                                                 |
 | Draft commit/MR handoff                    | [`draft-commit`](./.agents/skills/draft-commit/SKILL.md)                                                                               |
+| Constant / unattended loop                 | [`run-loop`](./.agents/skills/run-loop/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                       |
+| Babysit open MR                            | [`watch-mr`](./.agents/skills/watch-mr/SKILL.md)                                                                                       |
 | Plans backlog                              | [`docs/plans/README.md`](./docs/plans/README.md)                                                                                       |
 | Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
 | Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
