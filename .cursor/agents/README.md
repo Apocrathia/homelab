@@ -14,3 +14,16 @@ Each `.md` file here is a symlink into that tree.
 | `site-reliability-engineer` | [agent.md](../../.agents/agents/site-reliability-engineer/agent.md) | Incidents, obs, Flux health               |
 | `documentation-reviewer`    | [agent.md](../../.agents/agents/documentation-reviewer/agent.md)    | Doc standards audit                       |
 | `context-steward`           | [agent.md](../../.agents/agents/context-steward/agent.md)           | Context drift detect; propose-only        |
+
+## Adding one
+
+1. Create `.agents/agents/<id>/agent.md`.
+2. Symlink both adapters:
+   ```bash
+   ln -s ../../.agents/agents/<id>/agent.md .cursor/agents/<id>.md
+   ln -s ../../.agents/agents/<id>/agent.md .claude/agents/<id>.md
+   ```
+3. Add a row to the table above.
+
+Parity:
+[`check_discovery.py`](../../.agents/skills/reconcile-context/scripts/check_discovery.py).

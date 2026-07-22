@@ -33,11 +33,15 @@ true and thin. Stale context text is confidently wrong.
 
 ```bash
 python3 .agents/skills/reconcile-context/scripts/check_links.py
+python3 .agents/skills/reconcile-context/scripts/check_discovery.py
 ```
 
 Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
 
-Hook-safe: no side effects, nonzero exit on broken links.
+`check_discovery.py` verifies Cursor/Claude discovery symlinks against the
+`.agents/` source of truth (agent/skill links, `.claude/skills`, `CLAUDE.md`).
+
+Hook-safe: no side effects, nonzero exit on broken links or discovery drift.
 
 ### 2. Structural drift
 
@@ -46,7 +50,7 @@ Hook-safe: no side effects, nonzero exit on broken links.
   except `README.md` appears in a routing or loading row.
 - **loading.md** surfaces still exist.
 - **Skill / persona indexes**: `.agents` README and Cursor README tables match
-  directories on disk.
+  directories on disk, and `check_discovery.py` must pass.
 
 ### 3. Drift notes
 
