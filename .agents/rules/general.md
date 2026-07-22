@@ -21,7 +21,7 @@ Cursor keeps this always-on summary:
 
 ## Hard non-negotiables
 
-- **Never make git commits.** All commits come from the operator. Stage changes if asked, propose a commit message, but never run `git commit`.
+- **No commit or push without authorization.** Soft ship language or explicit `commit`/`push` authorizes for that lap; hooks always run; hard stops apply. Full policy: [`constraints.md`](../context/constraints.md#commit-and-ship).
 - **Do not alter the cluster without permission.** Confirm before running any destructive `kubectl`, `flux`, or `helm` commands. Cluster mutations are operator-led.
 - **Do not make changes without first consulting the operator** — present options, get explicit approval. Do not make implicit changes; only modify when explicitly instructed.
 - **Do not write file contents in the chat window unless explicitly instructed** — update files directly instead.

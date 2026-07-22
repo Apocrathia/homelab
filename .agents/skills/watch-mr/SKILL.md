@@ -2,8 +2,9 @@
 name: watch-mr
 description: >-
   Babysit one open GitLab MR: unresolved threads, failing CI, conflicts,
-  approvals, draft status. Prefer GitLab MCP. Never merge, push, or approve
-  unless the operator explicitly asked. Use for tier-3 MR maintenance laps.
+  approvals, draft status. Prefer GitLab MCP. Never merge or approve without
+  explicit ask; commit/push/undraft only when ship-authorized. Use for tier-3
+  MR maintenance laps.
 disable-model-invocation: true
 ---
 
@@ -35,16 +36,16 @@ Loop contract:
 This skill maintains; it does **not** land the MR unless the operator named
 that exact action.
 
-| Action                                        | Allowed?                                              |
-| --------------------------------------------- | ----------------------------------------------------- |
-| Read MR / pipelines / discussions / approvals | Yes                                                   |
-| Reply on a thread                             | Only if operator asked                                |
-| Resolve a thread                              | Only if operator asked                                |
-| Retry / play a failed job                     | Only if operator asked                                |
-| Approve                                       | **Never** unless operator asked for that approve      |
-| Merge / undraft / mark ready                  | **Never** unless operator asked for that specific act |
-| `git push` / `git commit`                     | **Never** unless operator asked for that specific act |
-| Cluster mutate                                | **Never** without explicit ask                        |
+| Action                                           | Allowed?                                                                                                                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read MR / pipelines / discussions / approvals    | Yes                                                                                                                                                                                                                       |
+| Reply on a thread                                | Only if operator asked                                                                                                                                                                                                    |
+| Resolve a thread                                 | Only if operator asked                                                                                                                                                                                                    |
+| Retry / play a failed job                        | Only if operator asked                                                                                                                                                                                                    |
+| Approve                                          | **Never** unless operator asked for that approve                                                                                                                                                                          |
+| Merge                                            | **Never** unless operator asked for that specific act                                                                                                                                                                     |
+| Undraft / mark ready / `git push` / `git commit` | Ship-authorized for this lap only — soft ship language or explicit `commit`/`push` ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)); not on a bare "ready the MR" / "undraft" ask alone |
+| Cluster mutate                                   | **Never** without explicit ask                                                                                                                                                                                            |
 
 Default posture: **read + report**. Mutating GitLab or git only when the
 operator (or a Launch brief that explicitly authorizes that action) said so.
@@ -149,8 +150,11 @@ Pasteable block; keep chat the index.
 
 ## Homelab constraints
 
-- Never `git commit` / push / merge unless the operator explicitly asked for
-  that specific action.
+- Merge / approve: **never** unless the operator explicitly asked for that
+  specific action.
+- `git commit` / push / undraft / mark ready: ship-authorized for this lap
+  only — soft ship language or explicit `commit`/`push`; see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Ask before cluster mutate — this skill does not apply or reconcile.
 - Protected paths: do not expand MR fixes into unconfirmed protected edits.
 - Advice ≠ implement: consultative language → options only until asked.

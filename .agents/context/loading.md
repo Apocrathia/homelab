@@ -16,6 +16,14 @@ folder after the README.
 | Helm / MCP / restore skills                           | Matching deploy or recover tasks                               | Unrelated domains                            |
 | `alignment` skill                                     | Scope fuzzy; before a plan or wide manifest change             | Acceptance already clear                     |
 | [`development-loop.md`](./development-loop.md)        | Finding / prioritizing work; constant-loop; find-work; ranking | Single-issue implement with clear acceptance |
+| `find-work` skill                                     | "what's next" / "find something to do" / start-of-lap ranking  | Operator already handed a scoped brief       |
 | `run-loop` skill                                      | Unattended / constant loop; walk Launch briefs                 | One-shot attended implement                  |
 | `autoresearch` skill                                  | Idle tier-8 research; approved contract                        | Tiers 1–7 still eligible                     |
+| SRE / debug / implement / heavy skills                | After a Launch brief is selected (or operator names that work) | "what's next" ranking-only startup           |
 | `manifest-implementer` / `manifest-verifier`          | Changing or checking Flux/Helm YAML                            | Docs-only or incident triage                 |
+
+**Slim startup:** for "what's next" / "find something to do", required load is
+`find-work` plus the thin loop context it points at. Do not dump SRE, debug, or
+implement skills until a brief is selected. Repo loading owns startup — do not
+document third-party always-invoke plugins in portable context (they may be
+absent).

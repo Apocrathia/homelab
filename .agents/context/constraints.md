@@ -8,8 +8,32 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
 - **Explore freely:** read, search, validate, lint, scan.
 - **Ask before** live cluster mutation (`kubectl apply/delete`, `flux reconcile`,
   destructive helm, infra changes).
-- **Never commit.** The operator commits. Stage and propose messages if asked.
-- **Never push** unless explicitly told.
+- **Commit / push:** default is no commit or push. See
+  [Commit and ship](#commit-and-ship) below for authorization and hard stops.
+
+## Commit and ship
+
+- **Default:** agents do not commit or push. The operator ships.
+- **Authorization:** soft ship language ("ship it", "LGTM", "looks good", "go
+  ahead") **or** explicit `commit` / `push` authorizes shipping for that lap.
+  Authorization on a different topic earlier in the session does not carry
+  forward.
+- **Hooks always run.** Never bypass with `--no-verify` or equivalent, even
+  when authorized.
+- **Hard stops even when authorized:**
+  - Secrets / credential-looking files.
+  - Force-push to `main` / `master`.
+  - Amending someone else's commit, or a commit already pushed.
+  - Staging clearly unrelated WIP.
+- **Advisory, not a stop:** messy or incomplete-looking diffs — warn, proceed
+  if authorized.
+- **Attribution (soft):** prefer
+  `Co-authored-by: Composer <composer@cursor.com>` on agent-shipped commits;
+  missing it is not a hard stop.
+- **Ship target + diverged-main recipe:** attended vs autonomous targets, and
+  the diverged-main stash/rebase/push recipe, live once in
+  [`development-loop.md`](./development-loop.md) and
+  [`draft-commit`](../skills/draft-commit/SKILL.md) — do not duplicate here.
 
 ## GitOps and platform choices
 

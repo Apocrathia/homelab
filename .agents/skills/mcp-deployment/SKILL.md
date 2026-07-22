@@ -40,7 +40,9 @@ Your task is to deploy [MCP_SERVER] using ToolHive and integrate it with LiteLLM
 
 # Restrictions
 
-- Never create git commits - user handles all commits
+- Default: no commit/push (operator commits); ship only when authorized for
+  this lap — see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never alter cluster without explicit permission
 - Always present options and get approval BEFORE making changes
 - Use MCP tools over CLI commands when available

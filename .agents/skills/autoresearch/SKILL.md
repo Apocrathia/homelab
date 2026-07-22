@@ -106,7 +106,8 @@ Phase 2: Experiment loop (until stop)
 Phase 3: Ship (docs only)
   → finalize docs/research/<slug>.md + experiments/<slug>/
   → review-loop → reconcile-context (if links) → draft-commit
-  → operator commits; recommendations → future file-issue
+  → commit/ship per authorization ([`draft-commit`](../draft-commit/SKILL.md));
+    recommendations → future file-issue
 ```
 
 ## Phase 1: Setup
@@ -293,9 +294,10 @@ Redact secrets in `error`. Never paste raw `run.log` into JSON or chat.
 3. [`review-loop`](../review-loop/SKILL.md) on the **docs** diff.
 4. [`reconcile-context`](../reconcile-context/SKILL.md) if links/routing moved.
 5. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit for
-   the docs diff (stage only if the operator asked to stage); never commit.
-6. **Stop.** Operator commits. Do not file issues in the same unattended lap
-   unless the operator asked.
+   the docs diff (stage only if asked); commit/push only when authorized —
+   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
+6. **Stop.** Do not file issues in the same unattended lap unless the operator
+   asked.
 
 Cleanup: delete or leave `.scratch/research/<slug>/` (gitignored). Do not leave
 experimental GitOps edits in the working tree.

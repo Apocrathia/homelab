@@ -26,7 +26,10 @@ Loop contract:
 
 ## Homelab non-negotiables
 
-- Never `git commit` / push — hand off to ship path; operator commits.
+- Never `git commit` / push directly. Hand off to
+  [`draft-commit`](../draft-commit/SKILL.md) — draft by default, ships only
+  when the operator authorizes
+  ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)).
 - Ask before cluster mutate (`kubectl apply` / `delete`, `flux reconcile`,
   mutating MCP).
 - Protected paths need confirm before edit (operator request counts;
@@ -73,7 +76,7 @@ After edits land and verify is green enough to ship-propose:
 1. [`review-loop`](../review-loop/SKILL.md) — local gates / fix iters
 2. [`reconcile-docs`](../reconcile-docs/SKILL.md) — behavior docs; delete satisfied issues/plans
 3. [`reconcile-context`](../reconcile-context/SKILL.md) — agent context / links
-4. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit + optional draft MR (stage only if the operator asked); **never** commit/push
+4. [`draft-commit`](../draft-commit/SKILL.md) — propose Conventional Commit + optional draft MR; commits/pushes only when the operator authorizes that lap ([`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship))
 
 Those sibling skills may not exist yet in the same session — keep the paths;
 do not fabricate their procedures here.

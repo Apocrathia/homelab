@@ -1,32 +1,42 @@
 # Tooling
 
-Prefer the smallest tool that answers the question.
+Prefer the smallest tool that answers the question. Prefer the path that spends
+fewer tokens for the same answer.
 
-## MCP vs CLI
+## MCP-first for live systems
 
-- Prefer MCP when a server is configured for the job (Flux, Grafana, Kubernetes
-  inventory, docs) and you need structured reads.
+For Flux, Grafana, GitLab, Trivy, k8sgpt, Kubernetes inventory, and similar live
+systems: use MCP when a server is configured for the job.
+
 - Prefer Grafana MCP (`query_prometheus`, `query_prometheus_histogram`,
   Loki query/stats) for [`autoresearch`](../skills/autoresearch/SKILL.md)
   runtime metrics — read-only, explicit time ranges; never scrape with
   embedded credentials.
 - Prefer GitLab MCP for MR / CI / pipeline reads (`watch-mr`, `find-work` Open
   MRs / CI scouts) over `glab` / raw API when the server is configured.
+- Prefer Flux / Kubernetes MCP for inventory and status reads when configured.
 - Prefer CLI (`kubectl`, `flux`, `helm`, `talosctl`) when you need exact flags,
-  pipes, or local render (`helm template`).
+  pipes, or local render (`helm template`) — or when MCP is unavailable.
+- Local filesystem / git / renders: Shell, Read, Grep (not MCP).
 - Mutating MCP calls still need the same permission bar as mutating CLI. Ask
   first.
 
+### Sandbox and dual-path
+
+- Sandbox failure is not "tool dead." Escalate out of sandbox / request
+  approval and retry.
+- Do **not** dual-path the same read after MCP already returned usable data.
+
 ## Common local checks
 
-| Intent                 | Typical command                                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Render a chart         | `helm template` into `.scratch/`                                                                                                |
-| YAML / markdown format | Prettier; yamllint where the repo already uses it                                                                               |
-| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                                                       |
-| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit)                         |
-| Rank next work         | [`find-work`](../skills/find-work/SKILL.md) (read-only) before implementing; see [`development-loop.md`](./development-loop.md) |
-| Draft commit / MR      | [`draft-commit`](../skills/draft-commit/SKILL.md) — draft only; never commit/push                                               |
+| Intent                 | Typical command                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Render a chart         | `helm template` into `.scratch/`                                                                                                                                   |
+| YAML / markdown format | Prettier; yamllint where the repo already uses it                                                                                                                  |
+| Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                                                                                          |
+| Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit)                                                            |
+| Rank next work         | [`find-work`](../skills/find-work/SKILL.md) (read-only) before implementing; see [`development-loop.md`](./development-loop.md)                                    |
+| Draft commit / MR      | [`draft-commit`](../skills/draft-commit/SKILL.md) — draft by default; ships when authorized ([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)) |
 
 File gaps under [`docs/issues/`](../../docs/issues/README.md) via
 [`file-issue`](../skills/file-issue/SKILL.md). Plans:

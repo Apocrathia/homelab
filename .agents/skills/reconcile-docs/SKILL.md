@@ -36,7 +36,10 @@ Do not fold context work into this skill.
 - **Delete-on-ship** — no `closed/` archives. Git history is the archive.
 - **Acceptance gate** — if acceptance is not met, **do not delete** the issue
   or plan; surface what remains.
-- Never `git commit` / push. Never cluster-mutate.
+- This skill does not ship (no commit/push). Hand off to
+  [`draft-commit`](../draft-commit/SKILL.md) when authorized — see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
+  Never cluster-mutate.
 
 ## When to run
 
@@ -111,7 +114,8 @@ If nothing needed reconcile, say so in one line and stop.
 
 ## Homelab constraints
 
-- Never `git commit` / push (operator commits).
+- This skill does not ship (no commit/push). Ship via `draft-commit` when
+  authorized — [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never cluster-mutate as part of reconcile-docs.
 - No secrets in doc or issue bodies.
 - Protected paths still need confirmation unless the operator already ordered

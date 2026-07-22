@@ -154,7 +154,9 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 
 # Restrictions
 
-- Never create git commits - user handles all commits
+- Default: no commit/push (operator commits); ship only when authorized for
+  this lap — see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never alter cluster without explicit permission
 - Always present options and get approval BEFORE making changes
 - Use MCP tools over CLI commands when available

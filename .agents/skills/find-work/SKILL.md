@@ -27,8 +27,13 @@ Loop context: [`.agents/context/development-loop.md`](../../context/development-
 | Trigger          | Examples                                              |
 | ---------------- | ----------------------------------------------------- |
 | Start of a lap   | Constant-loop / session preamble needs a ranked queue |
-| Operator asks    | "what's next", prioritize, pick a lap                 |
+| Operator asks    | "what's next", "find something to do", prioritize     |
 | Unattended scout | Cron / scheduled find — report only, no implement     |
+
+For **"what's next" / "find something to do"**: load this skill plus the thin
+loop context it points at ([`development-loop.md`](../../context/development-loop.md)).
+Do **not** preload SRE / debug / implement skills until a Launch brief is
+selected. See [`loading.md`](../../context/loading.md).
 
 Skip when the operator already handed you a single scoped brief. Do not re-scout
 tightly in a loop after an empty-queue stop.
@@ -96,6 +101,18 @@ Each actionable row must emit a pasteable brief:
 ```
 
 Discover is read-only. Build only after the brief is selected.
+
+### Vertical slices
+
+Scout laps **find** work; they do not own remediation end-to-end. Ranked Launch
+briefs are agent-sized vertical slices — docs, review, authoring, plan,
+implement, research, reconcile — not implement-only.
+
+**Broad findings default to document:** e.g. whole-repo Trivy CRITICAL/HIGH →
+`Invoke: file-issue` (findings ledger). Plan and implement are later laps once
+ledger rows exist. Direct `implement-change` only when the finding is already
+one slice: named feedback loop + single-PR-sized. Soft heuristic; no hard
+numeric cost thresholds.
 
 ### Invoke targets
 
@@ -174,11 +191,16 @@ auth) and continue. Note skips in the report.
 
 ### Trivy
 
-- **Look at:** CRITICAL / HIGH findings (changed paths, image, or cluster scan
-  surfaces this session can reach).
+- **Look at:** CRITICAL / HIGH findings (changed paths, image, whole-repo, or
+  cluster scan surfaces this session can reach). Keep the full scout catalog,
+  including whole-repo scans.
 - **How:** Trivy MCP (`scan_filesystem` / `findings_list` / etc.) or project CI
-  artifacts — read-only.
+  artifacts — read-only. Prefer cheaper/scoped scans first; whole-repo as an
+  explicit escalate when hunting debt.
 - **Default tier:** 1 (CRITICAL → blocker; HIGH → high).
+- **Default Invoke:** [`file-issue`](../file-issue/SKILL.md) for broad/multi-finding
+  results. `implement-change` only when already one vertical slice (named
+  feedback loop + single-PR-sized).
 - **On failure:** Skip; mark `dedupe unverified` if a ledger row already claims
   the same CVE without fresh evidence.
 
@@ -254,7 +276,8 @@ Then stop.
 
 ## Homelab constraints
 
-- Never `git commit` / push (operator commits).
+- **Non-shipping by design:** this skill never commits/pushes, even if soft
+  ship language appears in the parent chat. Rank and brief only.
 - Never cluster-mutate as part of find-work.
 - Never put secrets in briefs or reports.
 - GitOps manifests remain SoT for tunable config; Gateway API only; 1Password

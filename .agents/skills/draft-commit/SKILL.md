@@ -3,14 +3,17 @@ name: draft-commit
 description: >-
   Handoff a green-enough lap: confirm review evidence, analyze git status/diff,
   draft Conventional Commit + optional draft MR body, list include/exclude
-  files. Never commit, push, or merge. Operator owns commit.
+  files. Draft-only by default; commits/pushes only when the operator
+  authorizes this lap.
 disable-model-invocation: true
 ---
 
 # Draft commit
 
-Last step on the ship path before the operator commits. Produce a **ready-to-
-paste** Conventional Commit message (and optional draft MR body). Stop there.
+Last step on the ship path. Default: produce a **ready-to-paste** Conventional
+Commit message (and optional draft MR body) and stop there — operator
+commits. When the operator authorizes shipping this lap, may run the
+commit/push per mode (see CRITICAL below).
 
 Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
@@ -21,22 +24,60 @@ plus the quality bar below (same bar as
 [`.cursor/commands/commit-message.md`](../../../.cursor/commands/commit-message.md)
 for staged-diff quick drafts).
 
-## CRITICAL — operator owns commit
+## CRITICAL — draft by default, ship only when authorized
 
-**Never** run `git commit`, `git push`, or create a **non-draft** merge /
-merge request that lands on the default branch.
+**Default (no authorization):** never run `git commit`, `git push`, or create
+a **non-draft** merge / MR. Draft the message, stop, hand off.
 
-| Action                          | Allowed?                                       |
-| ------------------------------- | ---------------------------------------------- |
-| `git status` / `git diff` / log | Yes (read-only)                                |
-| Draft commit message            | Yes                                            |
-| `git add` / stage               | Only if operator explicitly asked to stage     |
-| `git commit` / `git push`       | **Never**                                      |
-| Create draft MR (GitLab)        | Only if operator explicitly asked; still draft |
-| Merge / approve / undraft MR    | **Never**                                      |
+**Authorized** — soft ship language ("ship it", "LGTM", "looks good", "go
+ahead") or explicit `commit` / `push`; full contract:
+[`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
+Authorization from earlier in the session on a different topic does not carry
+forward. When authorized, may commit/push per mode:
 
-Prefer **draft the message first**. Stage only when asked. Even after staging:
-**do not commit**.
+| Mode           | May do                                                                                                                                                                                                                                                   | Never                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **Attended**   | Commit + push to `main`. Diverged `main` → stash/rebase/push recipe below                                                                                                                                                                                | Force-push to `main`                         |
+| **Autonomous** | Create/use a feature branch; commit; open a **draft** MR when shipping is authorized. Ready/undraft only when ship is authorized for this lap (same soft ship language or explicit `commit`/`push`) — not on a bare "ready the MR" / "undraft" ask alone | Commit/push directly to `main`; merge the MR |
+
+Regardless of mode: **never merge or approve the MR** — that's always the
+operator's call.
+
+Hard stops even when authorized (full list in
+[`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)):
+secrets / credential-looking files, force-push to `main`/`master`, amending
+someone else's or an already-pushed commit, staging unrelated WIP. Hooks
+always run — never `--no-verify`. Attribution (soft, not a hard stop): prefer
+`Co-authored-by: Composer <composer@cursor.com>` on agent-shipped commits.
+
+### Diverged-main recipe (attended)
+
+When `origin/main` moved since the branch started, and unrelated WIP is
+dirty in the tree:
+
+```bash
+git stash push -u -m "wip: unrelated changes"   # only if unrelated WIP is dirty
+git fetch origin main
+git rebase origin/main
+git push origin main
+git stash pop                                    # restore WIP, if stashed
+```
+
+No force-push to `main` — resolve rebase conflicts normally. If the rebase
+gets messy, stop and surface instead of forcing.
+
+| Action                          | Allowed?                                                                                                                                                                                                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `git status` / `git diff` / log | Yes (read-only), always                                                                                                                                                                                                                                                                                 |
+| Draft commit message            | Yes, always                                                                                                                                                                                                                                                                                             |
+| `git add` / stage               | Only when asked, or as part of an authorized ship                                                                                                                                                                                                                                                       |
+| `git commit`                    | Only when authorized (see modes above)                                                                                                                                                                                                                                                                  |
+| `git push`                      | Only when authorized (see modes above)                                                                                                                                                                                                                                                                  |
+| Create draft MR (GitLab)        | When asked, or as part of an authorized autonomous ship                                                                                                                                                                                                                                                 |
+| Ready / undraft MR              | Only when ship is authorized for this lap (soft ship language or explicit `commit`/`push`). Bare "ready the MR" / "undraft" without ship auth → refuse; point at [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship); operator can ready in the UI or authorize ship first |
+| Merge, approve MR               | **Never** — operator's call, always                                                                                                                                                                                                                                                                     |
+
+Not authorized → draft the message and stop.
 
 ## When to run
 
@@ -56,9 +97,11 @@ enough. This skill is the full include/exclude + evidence gate.
 - [ ] 1. Confirm review-loop / verifier evidence is green enough (or surface blockers)
 - [ ] 2. git status + git diff (+ recent log for message style) — read-only
 - [ ] 3. Draft Conventional Commit message (HEREDOC-ready)
-- [ ] 4. Optional: draft MR body (Summary + Test plan) — do not push/create unless asked
-- [ ] 5. List include vs exclude files; warn on secrets / .env / unrelated dirty trees
-- [ ] 6. Hand off: "Ready for you to commit" with the message
+- [ ] 4. Check authorization (soft ship language / explicit `commit`/`push`); default is draft-only
+- [ ] 5. Optional: draft MR body (Summary + Test plan) — do not push/create unless asked or authorized
+- [ ] 6. List include vs exclude files; warn on secrets / .env / unrelated dirty trees
+- [ ] 7. Not authorized → hand off "Ready for you to commit" with the message.
+         Authorized → commit/push per mode (see CRITICAL); report what shipped
 ```
 
 ### 1. Evidence gate
@@ -117,7 +160,9 @@ EOF
 )"
 ```
 
-Do **not** run that command.
+Do **not** run that command unless the operator authorized shipping this lap
+(see CRITICAL). If authorized attended, run it against `main` (rebase first if
+diverged); if authorized autonomous, run it against the feature branch.
 
 ### 4. Optional draft MR (GitLab)
 
@@ -133,8 +178,14 @@ When useful (or asked), draft:
 - [ ] …
 ```
 
-Do **not** push or create the MR unless the operator explicitly asks. If they
-ask: create **draft** only; never merge.
+Do **not** push or create the MR unless the operator explicitly asks, or it is
+part of an authorized autonomous ship — **draft** MR by default when shipping
+is authorized. Ready/undraft only when ship is authorized for this lap (same
+soft ship language or explicit `commit`/`push`); a bare "ready the MR" /
+"undraft" ask without ship authorization → refuse and point at
+[`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)
+— operator can ready in the UI, or authorize ship first. Never merge or
+approve — that stays the operator's call, always.
 
 ### 5. Include / exclude
 
@@ -154,12 +205,16 @@ Lead with blockers if any; else:
 2. Include / exclude file lists.
 3. HEREDOC commit message.
 4. Optional draft MR body.
-5. Exact closer: **Ready for you to commit** (operator runs commit).
+5. Closer: not authorized → **Ready for you to commit**. Authorized → run the
+   commit/push per mode, then report what shipped (commit SHA / branch / MR
+   link).
 
 ## Homelab constraints
 
-- Never `git commit` / push / non-draft merge (operator commits).
+- Default: no commit/push (operator commits). Authorized (see CRITICAL) →
+  commit/push per mode; never force-push `main`, never touch someone else's
+  or an already-pushed commit, never stage unrelated WIP.
 - Ask before cluster mutate — this skill does not apply or reconcile.
 - Protected paths: do not expand the ship set into unconfirmed protected edits.
-- Advice language from the operator earlier in the session does not authorize
-  commit or push.
+- Advice language, or authorization from earlier in the session on a
+  different topic, does not authorize commit or push.

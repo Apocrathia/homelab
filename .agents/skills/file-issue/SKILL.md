@@ -79,7 +79,8 @@ satisfied issue files around.
 
 ## Homelab constraints
 
-- Never `git commit` / push (operator commits).
+- **Non-shipping by design:** this skill never commits/pushes (ledger edits
+  only). Ship the issue file via `draft-commit` when authorized.
 - Never put secrets or credential material in issue bodies.
 - Never cluster-mutate as part of filing (`kubectl apply`, `flux reconcile`,
   mutating MCP, etc.).

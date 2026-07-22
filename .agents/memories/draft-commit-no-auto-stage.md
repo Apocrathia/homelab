@@ -11,7 +11,10 @@ off to [`draft-commit`](../skills/draft-commit/SKILL.md). Early wording said
 
 `draft-commit` **proposes** a Conventional Commit message (and optional draft
 MR body). Run `git add` / stage **only** when the operator explicitly asked to
-stage. Never `git commit` / push. Docs-only research laps follow the same rule.
+stage. Commit/push follow ship authorization
+([`constraints.md#commit-and-ship`](../context/constraints.md#commit-and-ship))
+— never assume it carries over from earlier in the session. Docs-only research
+laps follow the same rule.
 
 ## References
 

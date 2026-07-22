@@ -24,16 +24,16 @@ your task needs.
 **Requires explicit permission:**
 
 - Live cluster mutation (`kubectl apply` / `delete`, `flux reconcile`, etc.)
-- Pushing to remote
 - Anything destructive or irreversible
 
-**Never:**
+**Commit / push:**
 
-- Make git commits. The operator commits. Stage and propose a message if asked;
-  do not run `git commit`.
+- Default: no commit or push. Soft ship language ("ship it", "LGTM", "looks
+  good", "go ahead") or explicit `commit` / `push` authorizes it for that lap.
+  Full policy + hard stops:
+  [`constraints.md`](./.agents/context/constraints.md#commit-and-ship).
 
-Explore and validate all you want. Do not touch anything live without asking. Do
-not commit.
+Explore and validate all you want. Do not touch anything live without asking.
 
 ## Always in force
 
@@ -44,7 +44,8 @@ terse, humor OK, **profanity encouraged**).
 - GitOps manifests are the source of truth for tunable config
 - Gateway API only (no Ingress)
 - 1Password Item CRs for secrets (not bare managed Secret YAML)
-- Never commit; never cluster-mutate without ask
+- No commit/push without authorization; never cluster-mutate without ask
+  ([`constraints.md`](./.agents/context/constraints.md#commit-and-ship))
 - Confirm before editing protected paths
   ([`protected-paths.md`](./.agents/rules/protected-paths.md))
 - Answer first; keep chat the index

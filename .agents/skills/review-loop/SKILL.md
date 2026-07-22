@@ -20,7 +20,9 @@ Loop context:
 
 ## Hard rules
 
-- **Never** `git commit` / push.
+- **This skill does not ship.** Never `git commit` / push here — hand off to
+  [`draft-commit`](../draft-commit/SKILL.md) (ships only when authorized; see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)).
 - **Never** cluster-mutate (`kubectl apply` / `delete`, `flux reconcile`,
   mutating MCP, etc.). Read-only cluster queries are fine when useful.
 - **Stop-loss:** after **3 identical failures** of the same approach, stop and
@@ -98,7 +100,8 @@ Cosmetic flag tweaks on the same failing command count as the same approach.
 
 ## Homelab constraints
 
-- Never `git commit` / push (operator commits).
+- This skill does not ship (no commit/push). Ship via `draft-commit` when
+  authorized — [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Never cluster-mutate as part of review-loop.
 - Fail loud on scanner/tool errors or timeouts — do not assume success.
 - Security: after dep/manifest changes, scan changed paths; apply only

@@ -223,7 +223,9 @@ kubectl get pods -n authentik | grep [app-name]
 
 # Restrictions
 
-- Never create git commits - user handles all commits
+- Default: no commit/push (operator commits); ship only when authorized for
+  this lap — see
+  [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
 - Always present findings and get approval before making changes
 - Preserve useful content when restructuring
 - Don't remove sections that provide unique value even if not in template
