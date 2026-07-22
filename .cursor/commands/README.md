@@ -20,9 +20,9 @@ The body of the file is the prompt that runs when the command is invoked.
 
 ## Current commands
 
-| Command           | Description                                               |
-| ----------------- | --------------------------------------------------------- |
-| `/commit-message` | Generate a conventional commit message for staged changes |
+| Command           | Description                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/commit-message` | Generate a conventional commit message for staged changes (thin path; full lap handoff → [`draft-commit`](../../.agents/skills/draft-commit/SKILL.md)) |
 
 ## Adding a command
 

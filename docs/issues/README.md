@@ -22,11 +22,12 @@ Slug is `kebab-case` and names the gap, not the date
 | Surface        | Holds                                                         |
 | -------------- | ------------------------------------------------------------- |
 | `docs/issues/` | **What** — problem / desired state, acceptance, feedback loop |
-| Plans          | **How** — steps, checkboxes, implementation detail            |
+| `docs/plans/`  | **How** — steps, checkboxes, implementation detail            |
 
-Plans are forthcoming. Until `docs/plans/` exists, use
-[project-planner](../../.agents/agents/project-planner/agent.md) and write living
-plans under [`.cursor/plans/`](../../.cursor/plans/README.md). Do not bury a
+Plans live under [`docs/plans/`](../plans/README.md) (durable / agent loop);
+[`.cursor/plans/`](../../.cursor/plans/README.md) is fine for Cursor IDE-only
+sessions. Author via
+[project-planner](../../.agents/agents/project-planner/agent.md). Do not bury a
 full plan inside an issue — link it via optional `plan:` frontmatter when you
 have one.
 
@@ -90,7 +91,7 @@ Optional:
 | `found_by`  | Agent or human id                                                                                               |
 | `area`      | `flux` \| `helm` \| `talos` \| `observability` \| `security` \| `apps` \| `networking` \| `storage` \| `agents` |
 | `slice`     | `afk` (unattended-safe) \| `hitl` (needs human)                                                                 |
-| `plan`      | Path to living plan (`.cursor/plans/…` or later `docs/plans/…`)                                                 |
+| `plan`      | Path to living plan (`docs/plans/…` preferred; `.cursor/plans/…` for IDE-only)                                  |
 | `gitlab`    | URL when promoted                                                                                               |
 | `branch`    | Work branch when `in-flight`                                                                                    |
 | `closed_by` | MR / commit while still on disk                                                                                 |

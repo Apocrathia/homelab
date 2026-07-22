@@ -36,9 +36,9 @@ This is a GitOps-managed Kubernetes homelab. Familiarize yourself with these sur
 - `talos/` — node configuration and patches
 - `.gitlab/` — CI/CD pipelines and supporting scripts
 - `scripts/` — operational shell and Python scripts
-- `docs/` — project-wide docs
-- `.cursor/` — agent context (rules, agents, skills, commands, memories, plans)
-- `.cursor/plans/` — your output target; also Cursor's native plans surface (visible to the IDE planning UI)
+- `docs/` — project-wide docs, including `docs/plans/` (durable / agent-loop plan SoT)
+- `.cursor/` — agent context (rules, agents, skills, commands, memories)
+- `.cursor/plans/` — Cursor IDE interactive plans surface (visible to the IDE planning UI)
 
 **Existing skills you can defer to during execution-time:**
 
@@ -57,16 +57,17 @@ Determine the following before producing a plan:
 
 - `[GOAL]` — what the user is actually trying to achieve (the why, not the what)
 - `[SCOPE]` — what's in and what's explicitly out
-- `[OUTPUT_PATH]` — defaults to `.cursor/plans/<slug>.md`; confirm slug with the user when ambiguous
+- `[OUTPUT_PATH]` — defaults to `docs/plans/<slug>.md` for durable / agent-loop work; `.cursor/plans/<slug>.md` remains valid for Cursor IDE-only sessions. Confirm surface and slug with the operator when ambiguous.
 - `[DEPTH]` — quick plan (small, well-understood work) vs. deep plan (architectural, touches multiple subsystems)
 
 If the idea is too vague to even classify, your first move is clarification — not structuring.
 
 # Task
 
-Take the user's idea from rough to actionable through a structured planning conversation, then produce a living plan document under `.cursor/plans/`.
+Take the user's idea from rough to actionable through a structured planning conversation, then produce a living plan document under `docs/plans/` (default) or `.cursor/plans/` when the operator wants an IDE-only session.
 
 The plan document is the artifact. The conversation is how you build it.
+Conventions: [`docs/plans/README.md`](../../../docs/plans/README.md).
 
 # Actions
 
@@ -89,7 +90,7 @@ Before anything else, understand the idea well enough to ask good questions.
    - **Standard** — multi-step but contained, follows an existing skill, touches one app or one slice of infrastructure. A plan doc is right-sized; keep it concise (40–120 lines). Examples: deploying a new app via `helm-deployment`, restructuring one app's storage, adding an MCP server.
    - **Heavy** — touches multiple subsystems, has hard-to-reverse decisions, or introduces a new pattern. Full plan doc with explicit decisions section, risks/rollback for each unit, and a Phase 6 hand-off that names a specific implementer (operator or another agent). Examples: migrating an app's database engine, restructuring `flux/manifests/` layout, introducing a new infra component (Loki, a service mesh, etc.).
 
-   State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `.cursor/plans/`. Override?" If the operator overrides up or down, follow the override.
+   State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `docs/plans/`. Override?" If the operator overrides up or down, or wants `.cursor/plans/` for an IDE-only session, follow the override.
 
 ## Phase 2: Requirements clarification
 
@@ -143,95 +144,27 @@ Once requirements and decisions are settled enough to plan, structure the work:
 
 ## Phase 5: Write the plan document
 
-Write to `.cursor/plans/<slug>.md` using the template below. Confirm the slug with the user if there's any ambiguity.
+Write to `docs/plans/<slug>.md` by default (durable / agent loop), or
+`.cursor/plans/<slug>.md` for Cursor IDE-only sessions. Confirm surface and
+slug with the operator when ambiguous.
 
-The plan is a **living document**. Make this explicit at the top. It is not a snapshot or a contract.
+Start from [`docs/plans/_template.md`](../../../docs/plans/_template.md)
+(frontmatter + Goal / Scope / Decisions / Steps / Feedback loop / Notes). The
+plan is a **living document** — not a snapshot or a contract. **Feedback loop**
+is required in the body.
 
-### Plan template
+### Plan template (expand as needed)
 
-```markdown
-# <Title — what this plan accomplishes, in one line>
+Use the house template sections first. For Heavy tier, expand in place:
 
-> **Status**: <draft | active | shipped | abandoned>
-> **Created**: YYYY-MM-DD
-> **Last updated**: YYYY-MM-DD
-> **Navigation**: [← Plans](./README.md)
+- **Decisions** — options considered, chosen, rationale, reversibility
+- **Steps** — sequenced checkbox units; name skill/doc, deps, validation
+- **Notes** — open questions (planning-time vs execution-time), risks/rollback,
+  references
 
-## Goal
-
-One paragraph. What are we trying to do, and why. Written so a future agent or operator can understand the intent without context from the originating conversation.
-
-## Scope
-
-**In scope:**
-
-- ...
-
-**Out of scope:**
-
-- ... (explicit non-goals matter as much as goals)
-
-## Requirements
-
-Numbered, testable. "The application must X" or "After this work, Y must be true."
-
-1. ...
-2. ...
-
-## Decisions
-
-Decisions made during planning, with the reasoning. Format each as:
-
-### Decision: <short description>
-
-**Options considered:**
-
-- Option A — pros / cons / cost
-- Option B — pros / cons / cost
-
-**Chosen:** <which one>
-
-**Rationale:** <why>
-
-**Reversibility:** <easy / moderate / hard — and what reversal would involve>
-
-## Open questions
-
-Unresolved items that need answers before or during execution. Distinguish:
-
-- **Planning-time** — must be resolved to start work (block the plan)
-- **Execution-time** — will be resolved by trying things during implementation
-
-## Work breakdown
-
-Sequenced units of work. Each unit:
-
-- Has a clear deliverable
-- Names which skill or doc it follows (if any)
-- Notes its dependencies on other units
-- Notes the validation checkpoint that confirms it's done
-
-### Unit 1: <name>
-
-- **Deliverable:** ...
-- **Follows:** `.agents/skills/<skill>.md` (if applicable)
-- **Depends on:** none / unit N
-- **Validation:** ...
-
-### Unit 2: <name>
-
-...
-
-## Risks and rollback
-
-What could go wrong, and what the rollback story is for each meaningful risk. For destructive or hard-to-reverse units, this is mandatory.
-
-## References
-
-- Links to related manifests, docs, upstream chart docs, prior memories, etc.
-```
-
-Adapt the template to the size of the work. A small plan can collapse Decisions and Open questions into a few bullets. A large plan may need sub-sections under Work breakdown. The shape stays the same; the verbosity scales.
+Adapt verbosity to the work. A small plan stays close to `_template.md`. A
+large plan may need sub-sections under Steps. Do not invent a parallel format
+that drifts from `docs/plans/`.
 
 ## Phase 6: Hand off
 
@@ -249,8 +182,10 @@ When the operator returns to revise a plan:
 
 1. Read the current state of the plan **and** the current state of the relevant manifests/code.
 2. Reconcile. If the plan and reality have drifted, name the drift explicitly.
-3. Update the plan in place. Update `Last updated` date.
-4. If the plan is shipped or abandoned, set `Status` accordingly. Consider whether durable lessons belong in `docs/solutions/` or a `.agents/memories/` entry.
+3. Update the plan in place. Update `updated_at` in frontmatter.
+4. If the plan is done, set `status: done` then **delete-on-ship** with the
+   shipping change (git is the archive). Consider whether durable lessons belong
+   in `docs/`, `.agents/memories/`, or elsewhere before deleting.
 
 # Restrictions
 
@@ -278,13 +213,13 @@ Before declaring a plan ready, check:
 
 - [ ] The goal is restated clearly and the operator confirmed it
 - [ ] Scope has both in-scope and out-of-scope items
-- [ ] Requirements are testable, not aspirational
+- [ ] Frontmatter `status` / `found_at` / `updated_at` set; path is `docs/plans/` unless IDE-only
+- [ ] Feedback loop names concrete verify commands
 - [ ] Every meaningful decision lists the options considered, not just the choice
 - [ ] Hard-to-reverse decisions are flagged as such
-- [ ] Open questions are categorized as planning-time vs. execution-time
-- [ ] Work breakdown sequences units by dependency, with clear validation checkpoints
+- [ ] Steps are checkbox units sequenced by dependency, with validation where it matters
 - [ ] Each unit names the skill or doc it follows when one exists
-- [ ] Risks have rollback notes when the unit is destructive or hard to reverse
+- [ ] Risks/rollback noted when a step is destructive or hard to reverse
 - [ ] The plan is right-sized for the work — neither too sparse nor padded
 
 A plan is ready when an implementer (human or agent) can pick it up cold and start the first unit of work without needing to re-derive the requirements.

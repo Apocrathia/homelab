@@ -14,7 +14,7 @@ Overrides any conflicting pattern. Full lab constraints:
 
 | Constraint                | Implication                                                                                                                                                                                    |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Never `git commit` / push | Ship stops at propose-ship (stage + Conventional Commit draft + optional draft MR). Operator commits.                                                                                          |
+| Never `git commit` / push | Ship stops at draft-commit (stage + Conventional Commit draft + optional draft MR). Operator commits.                                                                                          |
 | Ask before cluster mutate | No auto `kubectl apply`, `flux reconcile`, or mutating MCP without explicit ask. Unattended = read-only scouts.                                                                                |
 | Protected paths           | `.agents/**`, `.cursor/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`, `helm/generic-app/**`, `flux/manifests/01-bootstrap/**` → **stop / skip** unattended unless operator confirmed. |
 | Advice ≠ implement        | Consultative language → options only until asked to build.                                                                                                                                     |
@@ -37,7 +37,7 @@ find-work (read-only)
        file-issue                   → docs backlog
        autoresearch                 → idle-only (later)
   → (shipping path)
-       review-loop → reconcile-docs → reconcile-context → propose-ship
+       review-loop → reconcile-docs → reconcile-context → draft-commit
   → operator commit + push (+ optional local apply to observe)
   → Flux reconciles pushed truth
   → clock-out / lap-report → find-work again (or stop if empty)
@@ -49,32 +49,33 @@ Issue → plan → code (anti-rot: delete satisfied issues/plans; no `closed/`):
 gap → (alignment if fuzzy) → file-issue (docs/issues/)
   → plan authoring
   → implement-change (one MR / lap)
-  → reconcile-docs → reconcile-context → propose-ship → operator merge
+  → reconcile-docs → reconcile-context → draft-commit → operator merge
 ```
 
 ## Work types / fork targets
 
 ### Available now
 
-| Fork                       | Invoke                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                     |
-| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                   |
-| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward` |
-| Plan authoring             | `project-planner` → `.cursor/plans/` today                                      |
-| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                    |
-| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                |
-| Doc audits                 | `documentation-reviewer`                                                        |
-| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                             |
+| Fork                       | Invoke                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                                               |
+| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                             |
+| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                           |
+| Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT); `.cursor/plans/` OK for IDE drafts |
+| One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                 |
+| Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                     |
+| Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                           |
+| Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (never commit)                                          |
+| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                                              |
+| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                                          |
+| Doc audits                 | `documentation-reviewer`                                                                                  |
+| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                       |
 
-### Wave 4+ (not skills yet — do not invent)
+### Wave 5+ (not skills yet — do not invent)
 
-`find-work` (Wave 3, parallel), `implement-change`, `review-loop`,
-`reconcile-docs`, `propose-ship`, `watch-mr`, constant-loop orchestrator,
-`autoresearch`.
+`watch-mr`, constant-loop orchestrator, `autoresearch`.
 
-Until those land: discover and file/rank via existing skills; implement with
-personas above when the operator selects a brief; never auto-commit.
+Ship-path skills above are live; never auto-commit.
 
 ## Ranking (debt-first)
 
@@ -139,13 +140,16 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 
 ## Related skills
 
-| Skill / persona                                             | Role in the loop                                  |
-| ----------------------------------------------------------- | ------------------------------------------------- |
-| `find-work` (Wave 3)                                        | Read-only scouts → ranked Launch briefs           |
-| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`               |
-| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves  |
-| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                      |
-| `implement-change` / `propose-ship`                         | Wave 4 — orchestrate implement → verify → handoff |
+| Skill / persona                                             | Role in the loop                                 |
+| ----------------------------------------------------------- | ------------------------------------------------ |
+| [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs          |
+| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`              |
+| [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff     |
+| [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans    |
+| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves |
+| [`review-loop`](../skills/review-loop/SKILL.md)             | Local gates before ship                          |
+| [`draft-commit`](../skills/draft-commit/SKILL.md)           | Stage + commit/MR draft; operator commits        |
+| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                     |
 
 ## Out of scope
 

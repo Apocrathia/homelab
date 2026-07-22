@@ -107,9 +107,9 @@ Honest mapping until Wave 4 ship-path skills land:
 | Ops / prod signal triage           | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)                         |
 | Security signal triage             | [`security-analyst`](../../agents/security-analyst/agent.md)                                           |
 | Manifest implement                 | Manual under operator, or `manifest-implementer` — **Wave 4:** prefer `implement-change` when it lands |
-| Ship / propose commit / MR babysit | **Wave 4+** (`propose-ship`, `watch-mr`, `review-loop`) — do not fake those skills                     |
+| Ship / propose commit / MR babysit | **Wave 4+** (`draft-commit`, `watch-mr`, `review-loop`) — do not fake those skills                     |
 
-Do not invent `implement-change` / `propose-ship` bodies. Point parent to Wave 4
+Do not invent `implement-change` / `draft-commit` bodies. Point parent to Wave 4
 for the closed ship path.
 
 ## Scout adapters (read-only)

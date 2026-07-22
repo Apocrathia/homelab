@@ -9,10 +9,11 @@ disable-model-invocation: true
 # File issue
 
 Record a problem or desired state under [`docs/issues/`](../../../docs/issues/).
-Issues define **what**; plans define **how**. Until `docs/plans/` exists, plans
-go through [`project-planner`](../../agents/project-planner/agent.md) into
-[`.cursor/plans/`](../../../.cursor/plans/). Do not invent a plan in the issue
-body.
+Issues define **what**; plans define **how**. Plans live under
+[`docs/plans/`](../../../docs/plans/) (and optionally
+[`.cursor/plans/`](../../../.cursor/plans/) for IDE-only sessions) via
+[`project-planner`](../../agents/project-planner/agent.md). Do not invent a
+plan in the issue body.
 
 Do **not** create GitLab issues unless the operator explicitly asks. Local
 `docs/issues/` is the default backlog.
@@ -60,7 +61,7 @@ Match [`docs/issues/_template.md`](../../../docs/issues/_template.md):
 | `found_by` | Optional                                                                                                             |
 | `area`     | e.g. `flux` \| `helm` \| `talos` \| `observability` \| `security` \| `apps` \| `networking` \| `storage` \| `agents` |
 | `slice`    | Optional: `afk` \| `hitl`                                                                                            |
-| `plan`     | Optional path (`.cursor/plans/…` or later `docs/plans/…`)                                                            |
+| `plan`     | Optional path (`docs/plans/…` preferred; `.cursor/plans/…` for IDE-only)                                             |
 | `gitlab`   | Optional URL when operator-promoted                                                                                  |
 | `branch`   | Optional when `in-flight`                                                                                            |
 

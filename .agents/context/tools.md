@@ -20,9 +20,11 @@ Prefer the smallest tool that answers the question.
 | Secrets / vulns        | Project scanners (gitleaks, Trivy, etc.) on changed paths                                                                       |
 | Context link health    | `python3 .agents/skills/reconcile-context/scripts/check_links.py` (also via `context-links` pre-commit)                         |
 | Rank next work         | [`find-work`](../skills/find-work/SKILL.md) (read-only) before implementing; see [`development-loop.md`](./development-loop.md) |
+| Draft commit / MR      | [`draft-commit`](../skills/draft-commit/SKILL.md) — draft only; never commit/push                                               |
 
 File gaps under [`docs/issues/`](../../docs/issues/README.md) via
-[`file-issue`](../skills/file-issue/SKILL.md).
+[`file-issue`](../skills/file-issue/SKILL.md). Plans:
+[`docs/plans/README.md`](../../docs/plans/README.md).
 
 ## Operator interview
 

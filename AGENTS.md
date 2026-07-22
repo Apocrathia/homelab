@@ -83,6 +83,11 @@ rows, read each.
 | Browsing the agent backlog                 | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                     |
 | Finding / prioritizing next work           | [`find-work`](./.agents/skills/find-work/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                     |
 | Development loop / ranking / Launch briefs | [`development-loop.md`](./.agents/context/development-loop.md)                                                                         |
+| Implementing a Launch brief / one lap      | [`implement-change`](./.agents/skills/implement-change/SKILL.md)                                                                       |
+| Docs/issue/plan closure after a change     | [`reconcile-docs`](./.agents/skills/reconcile-docs/SKILL.md)                                                                           |
+| Local verify before ship                   | [`review-loop`](./.agents/skills/review-loop/SKILL.md)                                                                                 |
+| Draft commit/MR handoff                    | [`draft-commit`](./.agents/skills/draft-commit/SKILL.md)                                                                               |
+| Plans backlog                              | [`docs/plans/README.md`](./docs/plans/README.md)                                                                                       |
 | Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
 | Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
 | Incident / reliability                     | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |
