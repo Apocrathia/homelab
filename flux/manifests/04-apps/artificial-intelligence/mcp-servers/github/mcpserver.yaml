@@ -13,7 +13,7 @@ metadata:
     description: "GitHub MCP server for repository and issue management"
 spec:
   # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
-  image: ghcr.io/github/github-mcp-server:v1.6.0
+  image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
   # Native streamable-http (stateless). Avoids stdio session reuse that
   # go-sdk ≥1.7 rejects as duplicate initialize.
   transport: streamable-http
@@ -37,7 +37,7 @@ spec:
       containers:
         - name: mcp
           # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
-          image: ghcr.io/github/github-mcp-server:v1.6.0
+          image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
           args:
             - http
             - --port
