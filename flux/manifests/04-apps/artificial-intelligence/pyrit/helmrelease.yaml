@@ -29,8 +29,7 @@ spec:
     app:
       name: pyrit
       namespace: pyrit
-      # PyRIT 0.13.x wheel requires <3.14,>=3.10. Stay on 3.13 until upstream
-      # publishes cp314 wheels for transformers/pyodbc/av.
+      # PyRIT >=0.14 / 1.x: requires_python <3.15,>=3.10 (cp314 wheels OK).
       # Full (non-slim) image carries unixodbc + libgl1 that pyrit's pyodbc and
       # av base deps need at import time.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
@@ -38,13 +37,13 @@ spec:
       replicas: 1
 
       command: ["/opt/venv/bin/pyrit_backend"]
+      # pyrit_backend CLI (1.x): --host --port --config-file --log-level [--reload]
+      # --database was removed upstream; passing it CrashLoops the container.
       args:
         - "--host"
         - "0.0.0.0"
         - "--port"
         - "8000"
-        - "--database"
-        - "SQLite"
         - "--log-level"
         - "INFO"
         - "--config-file"
