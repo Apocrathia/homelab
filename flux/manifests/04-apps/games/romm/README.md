@@ -41,7 +41,7 @@ Create a 1Password item:
 
 ### Storage
 
-- **Resources**: SMB mount for scraped covers, screenshots, and manuals (`/romm/resources` → `Emulation/romm/resources` on the Games share)
+- **Resources**: SMB mount for scraped covers, screenshots, and manuals (`/romm/resources` → `Emulation/tools/romm/resources` on the Games share)
 - **ROM Library**: SMB mount for game files (`/romm/library` → `Emulation`)
 - **Config / Assets**: Longhorn volumes for runtime config and user assets
 
