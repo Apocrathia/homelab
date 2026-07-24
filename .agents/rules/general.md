@@ -37,4 +37,4 @@ Cursor keeps this always-on summary:
 
 ## Where to find more
 
-For situational guidance, the rules under `.cursor/rules/` carry domain-specific content that loads when relevant (`docs.mdc` when editing markdown, `gitops.mdc` in `flux/`, `helm.mdc` in `helm/`, etc.). Skills and personas live under `.agents/` (Cursor and Claude discover them via symlinks). See `AGENTS.md` / `CLAUDE.md` and `.agents/README.md` for the map.
+For situational guidance, the rules under `.agents/rules/` carry domain-specific content that loads when relevant (`docs.md` when editing markdown, `gitops.md` in `flux/`, `helm.md` in `helm/`, etc. — Cursor loads them via `.cursor/rules/*.mdc` symlinks). Skills and personas live under `.agents/` (Cursor and Claude discover them via symlinks). See `AGENTS.md` / `CLAUDE.md` and `.agents/README.md` for the map.

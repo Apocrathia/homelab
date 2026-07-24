@@ -109,7 +109,7 @@ Discover upstream skills dynamically. Templatized set (scaffold classification):
 
 Homelab-only (leave alone): `security.md`, `ponytail.md`, `helm-deployment`,
 `mcp-deployment`, restore skills, `draft-commit`, `watch-mr`, `run-loop`, all
-personas, domain `.cursor/rules/*.mdc`.
+personas, domain rules (`flux.md`, `gitops.md`, `helm.md`, `talos.md`, etc.).
 
 Do **not** adopt upstream `worktrees.md` or `ship-work` / `self-improve` /
 `clock-out` unless the operator explicitly asks — this repo's ship model is

@@ -31,9 +31,9 @@ manual chores. Not a fake enterprise platform.
 
 Permissions and hard stops: root [`AGENTS.md`](../../AGENTS.md) and
 [`constraints.md`](./constraints.md). Tone (yes, including profanity):
-[`voice.md`](./voice.md). Domain detail is in Cursor `.mdc` rules
-(Flux, Helm, Talos, secrets) when that harness is active; other agents should
-still follow the constraints and the skill they invoked.
+[`voice.md`](./voice.md). Domain detail is in [`../rules/`](../rules/README.md)
+(Flux, Helm, Talos, secrets) — Cursor glob-loads it via `.mdc` symlinks; other
+agents should still follow the constraints and the skill they invoked.
 
 ## Modules
 

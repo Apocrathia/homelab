@@ -7,24 +7,22 @@ router.
 
 **SoT-edit rule:** edit under `.agents/` for portable skills, personas, rules,
 memories, and context. Never duplicate those bodies under `.cursor/`. This tree
-holds discovery symlinks (plus Cursor-only domain rules, hooks, commands,
-plans).
+holds discovery symlinks (plus Cursor-only hooks, commands, plans).
 
-`skills/` and `agents/` here are **symlinks** into `.agents/`. Behavioral
-rules under `rules/` are **per-file `.mdc` symlinks** into `.agents/rules/*.md`;
-domain GitOps rules are real `.mdc` files here.
+`skills/` and `agents/` here are **symlinks** into `.agents/`. All rules under
+`rules/` are **per-file `.mdc` symlinks** into `.agents/rules/*.md`.
 
 ## Subdirectories
 
-| Path        | What it holds                               | Notes                                      |
-| ----------- | ------------------------------------------- | ------------------------------------------ |
-| `rules/`    | Domain `.mdc` + symlinks → `.agents/rules/` | [rules/README.md](./rules/README.md)       |
-| `skills/`   | Symlinks → `.agents/skills/`                | [skills/README.md](./skills/README.md)     |
-| `agents/`   | Symlinks → `.agents/agents/*/agent.md`      | [agents/README.md](./agents/README.md)     |
-| `commands/` | Slash commands                              | [commands/README.md](./commands/README.md) |
-| `memories/` | Symlink README → `.agents/memories/`        | Content under `.agents/memories/`          |
-| `plans/`    | Living plans from project-planner           | Still Cursor-local for now                 |
-| `hooks/`    | Lifecycle guards                            | [hooks/README.md](./hooks/README.md)       |
+| Path        | What it holds                          | Notes                                      |
+| ----------- | -------------------------------------- | ------------------------------------------ |
+| `rules/`    | `.mdc` symlinks → `.agents/rules/*.md` | [rules/README.md](./rules/README.md)       |
+| `skills/`   | Symlinks → `.agents/skills/`           | [skills/README.md](./skills/README.md)     |
+| `agents/`   | Symlinks → `.agents/agents/*/agent.md` | [agents/README.md](./agents/README.md)     |
+| `commands/` | Slash commands                         | [commands/README.md](./commands/README.md) |
+| `memories/` | Symlink README → `.agents/memories/`   | Content under `.agents/memories/`          |
+| `plans/`    | Living plans from project-planner      | Still Cursor-local for now                 |
+| `hooks/`    | Lifecycle guards                       | [hooks/README.md](./hooks/README.md)       |
 
 ## Adding a skill
 
@@ -46,10 +44,9 @@ Claude link. See [`.claude/README.md`](../.claude/README.md).
 
 ## Adding other content
 
-- **Portable context / behavioral rules / memories:** add under `.agents/`, then
-  symlink from here if Cursor should auto-discover it.
-- **Domain rules / hooks / commands:** add under `.cursor/` and update the
-  matching README.
+- **Context / rules / memories:** add under `.agents/`, then symlink from here
+  if Cursor should auto-discover it.
+- **Hooks / commands:** add under `.cursor/` and update the matching README.
 
 ## Parity
 

@@ -113,21 +113,21 @@ rows, read each.
 | Writing a reply or asking a question       | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md), [`questions.md`](./.agents/context/questions.md)                                     |
 | Writing docs / agent tone                  | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)                                                                                       |
 | Reconciling agent context drift            | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                                                         |
-| Portable behavioral rules                  | [`.agents/rules/`](./.agents/rules/README.md)                                                                                                                              |
+| Agent rules (behavioral + domain)          | [`.agents/rules/`](./.agents/rules/README.md)                                                                                                                              |
 | Cursor-only rules / hooks / commands       | [`.cursor/README.md`](./.cursor/README.md)                                                                                                                                 |
 | Claude Code adapter                        | [`.claude/README.md`](./.claude/README.md)                                                                                                                                 |
 
 ## Where things live
 
-| Path                                                | Role                                                      |
-| --------------------------------------------------- | --------------------------------------------------------- |
-| [`.agents/context/`](./.agents/context/README.md)   | Living context (hub + modules)                            |
-| [`.agents/skills/`](./.agents/README.md)            | Procedural skills (source of truth)                       |
-| [`.agents/agents/`](./.agents/README.md)            | Personas (source of truth)                                |
-| [`.agents/rules/`](./.agents/rules/README.md)       | Portable behavioral rules (Cursor discovers via symlinks) |
-| [`.agents/memories/`](./.agents/memories/README.md) | Cross-session lessons                                     |
-| [`.cursor/`](./.cursor/README.md)                   | Cursor adapter (domain rules, hooks, commands, discovery) |
-| [`.claude/`](./.claude/README.md)                   | Claude Code adapter (discovery symlinks)                  |
-| [`CLAUDE.md`](./CLAUDE.md)                          | Symlink → [`AGENTS.md`](./AGENTS.md)                      |
+| Path                                                | Role                                                   |
+| --------------------------------------------------- | ------------------------------------------------------ |
+| [`.agents/context/`](./.agents/context/README.md)   | Living context (hub + modules)                         |
+| [`.agents/skills/`](./.agents/README.md)            | Procedural skills (source of truth)                    |
+| [`.agents/agents/`](./.agents/README.md)            | Personas (source of truth)                             |
+| [`.agents/rules/`](./.agents/rules/README.md)       | All agent rules (Cursor discovers via `.mdc` symlinks) |
+| [`.agents/memories/`](./.agents/memories/README.md) | Cross-session lessons                                  |
+| [`.cursor/`](./.cursor/README.md)                   | Cursor adapter (hooks, commands, discovery symlinks)   |
+| [`.claude/`](./.claude/README.md)                   | Claude Code adapter (discovery symlinks)               |
+| [`CLAUDE.md`](./CLAUDE.md)                          | Symlink → [`AGENTS.md`](./AGENTS.md)                   |
 
 Portable tree map: [`.agents/README.md`](./.agents/README.md).
