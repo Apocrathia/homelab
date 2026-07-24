@@ -8,7 +8,7 @@
 
 There is no published PyRIT container image. The deployment installs `pyrit` from PyPI into a venv on pod start via an init container, then runs `pyrit_backend` against a SQLite memory store on Longhorn. The PyPI wheel ships the prebuilt React/Fluent UI as static assets, so no Node toolchain is involved.
 
-Pod restarts re-run the pip install (the venv lives on an `emptyDir`). The SQLite database, attack history, and uploaded artifacts persist on Longhorn at `/data/.local/share/pyrit/dbdata/pyrit.db`. Pinning Python to 3.13 — PyRIT's PyPI wheel requires `<3.14,>=3.10` until upstream publishes cp314 wheels for `transformers`, `pyodbc`, and `av`.
+Pod restarts re-run the pip install (the venv lives on an `emptyDir`). The SQLite database, attack history, and uploaded artifacts persist on Longhorn at `/data/.local/share/pyrit/dbdata/pyrit.db`. Python image tag tracks PyRIT's `requires_python` (1.x: `<3.15,>=3.10`).
 
 ## Access
 
