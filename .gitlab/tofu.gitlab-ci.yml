@@ -96,7 +96,9 @@ tofu-plan:
         echo "<!-- pipeline:${CI_PIPELINE_ID} -->"
       } > "$PLAN_FILE"
 
-      COMMENT_BODY=$(cat "$PLAN_FILE")
+      # Avoid ARG_MAX: never pass the plan body via shell argv (--arg / $(jq)).
+      COMMENT_JSON="/tmp/plan-comment.json"
+      jq -n --rawfile body "$PLAN_FILE" '{body: $body}' > "$COMMENT_JSON"
 
       echo "Posting plan to MR..."
       NOTES=$(curl --silent --show-error --fail \
@@ -113,14 +115,14 @@ tofu-plan:
         curl --silent --show-error --fail --request PUT \
           --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
           --header "Content-Type: application/json" \
-          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          --data-binary @"$COMMENT_JSON" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes/${EXISTING_NOTE_ID}" > /dev/null || true
       else
         echo "Posting new comment..."
         curl --silent --show-error --fail --request POST \
           --header "PRIVATE-TOKEN: ${TOFU_TOKEN}" \
           --header "Content-Type: application/json" \
-          --data "$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')" \
+          --data-binary @"$COMMENT_JSON" \
           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes" > /dev/null || true
       fi
 
