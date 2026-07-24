@@ -23,15 +23,15 @@ Question channel when acceptance is fuzzy:
 
 ## When to file
 
-| Situation                                           | Action                                                |
-| --------------------------------------------------- | ----------------------------------------------------- |
-| Fixable in the current change                       | Fix it — no issue                                     |
-| Out of scope for current change                     | File (or update duplicate)                            |
-| Duplicate of an existing open issue                 | Update that file                                      |
-| Feature / spec / multi-path bug; acceptance unclear | [`alignment`](../alignment/SKILL.md) first, then file |
-| Single intentional shortcut                         | `ponytail:` in code, not here                         |
-| Clustered `ponytail:` debt (a theme)                | File one issue for the theme                          |
-| Architecture friction                               | File with `kind: architecture`                        |
+| Situation                                           | Action                                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Fixable in the current change                       | Fix it — no issue                                                                         |
+| Out of scope for current change                     | File (or update duplicate)                                                                |
+| Duplicate of an existing open issue                 | Update that file                                                                          |
+| Feature / spec / multi-path bug; acceptance unclear | [`alignment`](../alignment/SKILL.md) first, then file                                     |
+| Single intentional shortcut                         | `ponytail:` in code, not here                                                             |
+| Clustered `ponytail:` debt (a theme)                | File one issue for the theme                                                              |
+| Architecture friction                               | [`architecture-review`](../architecture-review/SKILL.md) then file (`kind: architecture`) |
 
 ## Workflow
 

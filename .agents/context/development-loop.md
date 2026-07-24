@@ -21,6 +21,21 @@ Overrides any conflicting pattern. Full lab constraints:
 | Discover is read-only       | `find-work` does not edit. Build only after a Launch brief is selected.                                                                                                                                                                                                                                                                                                                                                         |
 | Empty queue                 | Lap-report and **stop**. No busywork, no tight-loop find-work.                                                                                                                                                                                                                                                                                                                                                                  |
 | Stop-loss                   | 3 identical failures → stop and surface.                                                                                                                                                                                                                                                                                                                                                                                        |
+| Ship model (locked)         | Homelab uses [`draft-commit`](../skills/draft-commit/SKILL.md) + [`watch-mr`](../skills/watch-mr/SKILL.md) + [`run-loop`](../skills/run-loop/SKILL.md). Do **not** adopt upstream `ship-work`, `self-improve`, or `clock-out`. Operator commits; agents draft. See [Ship model](#ship-model) below.                                                                                                                             |
+
+## Ship model
+
+Locked against prime-context's autonomous ship loop:
+
+| Upstream (prime-context)                 | Homelab                                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| `ship-work` (agent commits/pushes/PR)    | [`draft-commit`](../skills/draft-commit/SKILL.md) — propose only unless authorized |
+| `self-improve` (autonomous orchestrator) | [`run-loop`](../skills/run-loop/SKILL.md) — scouts + briefs; same unattended gates |
+| `watch-pr`                               | [`watch-mr`](../skills/watch-mr/SKILL.md) (GitLab)                                 |
+| `clock-out` / worktrees                  | Not used — workspace-root edits; no teardown ceremony                              |
+
+Revisit only with an explicit operator decision. `integrate-upstream` must leave
+these alone unless asked.
 
 ## State machine
 
@@ -38,6 +53,7 @@ find-work (read-only)
        autoresearch                 → idle-only tier 8 (docs-only)
   → (shipping path)
        review-loop → reconcile-docs → reconcile-context → draft-commit
+       (optional retrospective → learning-loop / enforcement proposals)
   → commit/ship per authorization (draft-commit;
     constraints.md#commit-and-ship) + optional local apply to observe
   → Flux reconciles pushed truth

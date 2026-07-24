@@ -33,6 +33,7 @@ files in this directory.
 | `response-shape.mdc`                | Ultra-short replies; half-screen rule; no interview walls                                          |
 | `subagents.mdc`                     | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
 | `ponytail.mdc`                      | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
+| `surgical-edits.mdc`                | Simplicity-first + touch-only-what-you-must (pairs with ponytail)                                  |
 
 ### Glob-scoped (load when matching files are touched)
 

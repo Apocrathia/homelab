@@ -52,6 +52,9 @@ Reconcile this inventory when adding or removing modules
 | [`voice.md`](./voice.md)                       | Chat tone + doc prose             | Sterile or fake-corporate agents          |
 | [`output.md`](./output.md)                     | How agents structure replies      | Unreadable dump replies                   |
 | [`development-loop.md`](./development-loop.md) | Find → rank → Launch brief → ship | Agents invent busywork or skip stop gates |
+| [`vertical-slices.md`](./vertical-slices.md)   | How to size plans / briefs / MRs  | Horizontal layer dumps                    |
+| [`learning-loop.md`](./learning-loop.md)       | Patterns → rules → enforcement    | Lessons lost; no promotion path           |
+| [`enforcement.md`](./enforcement.md)           | Hooks/CI over hope                | Rules without mechanical teeth            |
 
 This README is excluded from "must appear in every routing row"; it is the map.
 

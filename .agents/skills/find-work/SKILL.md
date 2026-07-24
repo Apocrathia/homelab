@@ -106,7 +106,8 @@ Discover is read-only. Build only after the brief is selected.
 
 Scout laps **find** work; they do not own remediation end-to-end. Ranked Launch
 briefs are agent-sized vertical slices — docs, review, authoring, plan,
-implement, research, reconcile — not implement-only.
+implement, research, reconcile — not implement-only. Sizing contract:
+[`.agents/context/vertical-slices.md`](../../context/vertical-slices.md).
 
 **Broad findings default to document:** e.g. whole-repo Trivy CRITICAL/HIGH →
 `Invoke: file-issue` (findings ledger). Plan and implement are later laps once

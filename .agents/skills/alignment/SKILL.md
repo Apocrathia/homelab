@@ -35,8 +35,23 @@ Harness adapters name the concrete tool (Cursor: `question-format.mdc`).
 **Skip** when acceptance is already explicit. Do not re-run in the same thread
 if a summary already exists.
 
+## Next step (after proceed)
+
+Pasteable enough for an issue (**Problem**, **Acceptance**) or plan (**Goal**,
+slice checkboxes). Suggested fork:
+
+| Next                           | Invoke                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| File the gap                   | [`file-issue`](../file-issue/SKILL.md)                                     |
+| Plan the how                   | [`project-planner`](../../agents/project-planner/agent.md) → `docs/plans/` |
+| Implement a clear Launch brief | [`implement-change`](../implement-change/SKILL.md)                         |
+| Restore / deploy domain work   | matching skill (`helm-deployment`, restore skills, …)                      |
+| Still fuzzy                    | more alignment (or stop if unattended)                                     |
+
+Do **not** route to upstream `ship-work` / worktrees — ship via
+[`draft-commit`](../draft-commit/SKILL.md) per
+[`development-loop.md#ship-model`](../../context/development-loop.md#ship-model).
+
 ## Output
 
-Short summary: decisions made, open items, suggested next step (plan →
-`project-planner`, implement → `manifest-implementer`, recover → matching
-restore skill, still fuzzy → more alignment).
+Short summary: decisions made, open items, suggested next step (table above).

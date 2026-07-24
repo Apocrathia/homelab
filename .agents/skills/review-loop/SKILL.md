@@ -18,6 +18,18 @@ Deeper evidence when manifests are non-trivial: hand off to
 Loop context:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
 
+## Non-Cursor / optional reviewers
+
+Homelab SoT for this skill is the **local GitOps gate table** below (Prettier,
+yamllint, helm/kustomize → `.scratch/`, Trivy, context checks). That is enough
+for a clean pass.
+
+If Macroscope, Codex CLI, or Cursor Bugbot are available, you may run them as
+**extra** reviewers after local gates are green. They are optional. Without them,
+do not invent a Macroscope/Bugbot/Codex loop — hand off to
+[`draft-commit`](../draft-commit/SKILL.md). Non-Cursor harnesses run the local
+checks directly in the shell (no Task orchestration required).
+
 ## Hard rules
 
 - **This skill does not ship.** Never `git commit` / push here — hand off to

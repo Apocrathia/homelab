@@ -20,6 +20,7 @@ Helm, Talos, …) stay as real `.mdc` files under `.cursor/rules/`.
 | `response-shape.md`                | Short replies; half-screen rule                             |
 | `subagents.md`                     | Prefer defined personas; fan out for multi-domain work      |
 | `ponytail.md`                      | YAGNI / minimal-code + surgical touch discipline            |
+| `surgical-edits.md`                | Simplicity-first + touch-only-what-you-must edit contract   |
 
 ## Glob-scoped (portable)
 

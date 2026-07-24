@@ -34,6 +34,9 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
   the diverged-main stash/rebase/push recipe, live once in
   [`development-loop.md`](./development-loop.md) and
   [`draft-commit`](../skills/draft-commit/SKILL.md) — do not duplicate here.
+- **Ship model:** do not adopt upstream `ship-work` / `self-improve` /
+  `clock-out`. Homelab stays on draft-commit + watch-mr + run-loop
+  ([`development-loop.md`](./development-loop.md#ship-model)).
 
 ## GitOps and platform choices
 

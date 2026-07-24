@@ -60,7 +60,8 @@ terse, humor OK, **profanity encouraged**).
 - Stop after 3 failed attempts at the same approach
   ([`stop-loss.md`](./.agents/rules/stop-loss.md))
 - Write the minimum; touch only what the request requires
-  ([`ponytail.md`](./.agents/rules/ponytail.md))
+  ([`ponytail.md`](./.agents/rules/ponytail.md),
+  [`surgical-edits.md`](./.agents/rules/surgical-edits.md))
 - Delegate early; summarize child output
   ([`subagents.md`](./.agents/rules/subagents.md))
 
@@ -70,50 +71,51 @@ Start at [`.agents/context/README.md`](./.agents/context/README.md). Skip detail
 [`.agents/context/loading.md`](./.agents/context/loading.md). When a task spans
 rows, read each.
 
-| If you're…                                 | Then read (after the context README)                                                                                                   |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| New here / unsure                          | [`.agents/context/README.md`](./.agents/context/README.md) only                                                                        |
-| Starting non-trivial work                  | [`traps.md`](./.agents/context/traps.md)                                                                                               |
-| Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                           |
-| Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                   |
-| Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                 |
-| Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                     |
-| Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                 |
-| Throwaway prototype for a design question  | [`prototype`](./.agents/skills/prototype/SKILL.md)                                                                                     |
-| Post-lap / session retrospective           | [`retrospective`](./.agents/skills/retrospective/SKILL.md)                                                                             |
-| Sync shared .agents/ from prime-context    | [`integrate-upstream`](./.agents/skills/integrate-upstream/SKILL.md)                                                                   |
-| Deploying a Helm app                       | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                         |
-| Adding an MCP server                       | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                           |
-| CNPG logical restore                       | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                             |
-| Longhorn volume restore (generic-app)      | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                               |
-| Filing a gap / local issue                 | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                               |
-| Browsing the agent backlog                 | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                     |
-| Finding / prioritizing next work           | [`find-work`](./.agents/skills/find-work/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                     |
-| Development loop / ranking / Launch briefs | [`development-loop.md`](./.agents/context/development-loop.md)                                                                         |
-| Implementing a Launch brief / one lap      | [`implement-change`](./.agents/skills/implement-change/SKILL.md)                                                                       |
-| Docs/issue/plan closure after a change     | [`reconcile-docs`](./.agents/skills/reconcile-docs/SKILL.md)                                                                           |
-| Local verify before ship                   | [`review-loop`](./.agents/skills/review-loop/SKILL.md)                                                                                 |
-| Draft commit/MR handoff                    | [`draft-commit`](./.agents/skills/draft-commit/SKILL.md)                                                                               |
-| Constant / unattended loop                 | [`run-loop`](./.agents/skills/run-loop/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                       |
-| Babysit open MR                            | [`watch-mr`](./.agents/skills/watch-mr/SKILL.md)                                                                                       |
-| Idle research / autoresearch               | [`autoresearch`](./.agents/skills/autoresearch/SKILL.md), [`docs/research/README.md`](./docs/research/README.md)                       |
-| Plans backlog                              | [`docs/plans/README.md`](./docs/plans/README.md)                                                                                       |
-| Research ledger                            | [`docs/research/README.md`](./docs/research/README.md)                                                                                 |
-| Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                               |
-| Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                     |
-| Incident / reliability                     | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                     |
-| Security review                            | [`security-analyst`](./.agents/agents/security-analyst/agent.md)                                                                       |
-| Planning multi-step work                   | [`project-planner`](./.agents/agents/project-planner/agent.md)                                                                         |
-| Doc quality pass                           | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)                                                           |
-| Context drift detect (propose-only)        | [`context-steward`](./.agents/agents/context-steward/agent.md)                                                                         |
-| Choosing MCP vs CLI                        | [`tools.md`](./.agents/context/tools.md)                                                                                               |
-| Clarifying with the operator               | [`questions.md`](./.agents/context/questions.md)                                                                                       |
-| Writing a reply or asking a question       | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md), [`questions.md`](./.agents/context/questions.md) |
-| Writing docs / agent tone                  | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)                                                   |
-| Reconciling agent context drift            | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                     |
-| Portable behavioral rules                  | [`.agents/rules/`](./.agents/rules/README.md)                                                                                          |
-| Cursor-only rules / hooks / commands       | [`.cursor/README.md`](./.cursor/README.md)                                                                                             |
-| Claude Code adapter                        | [`.claude/README.md`](./.claude/README.md)                                                                                             |
+| If you're…                                 | Then read (after the context README)                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New here / unsure                          | [`.agents/context/README.md`](./.agents/context/README.md) only                                                                                                            |
+| Starting non-trivial work                  | [`traps.md`](./.agents/context/traps.md)                                                                                                                                   |
+| Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                                                               |
+| Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                                                       |
+| Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                                                     |
+| Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                                                         |
+| Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                                                     |
+| Throwaway prototype for a design question  | [`prototype`](./.agents/skills/prototype/SKILL.md)                                                                                                                         |
+| Post-lap / session retrospective           | [`retrospective`](./.agents/skills/retrospective/SKILL.md)                                                                                                                 |
+| Sync shared .agents/ from prime-context    | [`integrate-upstream`](./.agents/skills/integrate-upstream/SKILL.md)                                                                                                       |
+| Deploying a Helm app                       | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                                                             |
+| Adding an MCP server                       | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                                                               |
+| CNPG logical restore                       | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                                                                 |
+| Longhorn volume restore (generic-app)      | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                                                                   |
+| Filing a gap / local issue                 | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                                                                   |
+| Browsing the agent backlog                 | [`docs/issues/README.md`](./docs/issues/README.md)                                                                                                                         |
+| Finding / prioritizing next work           | [`find-work`](./.agents/skills/find-work/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                                                         |
+| Development loop / ranking / Launch briefs | [`development-loop.md`](./.agents/context/development-loop.md), [`vertical-slices.md`](./.agents/context/vertical-slices.md)                                               |
+| Post-lap learning / enforcement promotion  | [`retrospective`](./.agents/skills/retrospective/SKILL.md), [`learning-loop.md`](./.agents/context/learning-loop.md), [`enforcement.md`](./.agents/context/enforcement.md) |
+| Implementing a Launch brief / one lap      | [`implement-change`](./.agents/skills/implement-change/SKILL.md)                                                                                                           |
+| Docs/issue/plan closure after a change     | [`reconcile-docs`](./.agents/skills/reconcile-docs/SKILL.md)                                                                                                               |
+| Local verify before ship                   | [`review-loop`](./.agents/skills/review-loop/SKILL.md)                                                                                                                     |
+| Draft commit/MR handoff                    | [`draft-commit`](./.agents/skills/draft-commit/SKILL.md)                                                                                                                   |
+| Constant / unattended loop                 | [`run-loop`](./.agents/skills/run-loop/SKILL.md), [`development-loop.md`](./.agents/context/development-loop.md)                                                           |
+| Babysit open MR                            | [`watch-mr`](./.agents/skills/watch-mr/SKILL.md)                                                                                                                           |
+| Idle research / autoresearch               | [`autoresearch`](./.agents/skills/autoresearch/SKILL.md), [`docs/research/README.md`](./docs/research/README.md)                                                           |
+| Plans backlog                              | [`docs/plans/README.md`](./docs/plans/README.md)                                                                                                                           |
+| Research ledger                            | [`docs/research/README.md`](./docs/research/README.md)                                                                                                                     |
+| Editing Flux/Helm manifests                | [`manifest-implementer`](./.agents/agents/manifest-implementer/agent.md)                                                                                                   |
+| Validating manifest diffs                  | [`manifest-verifier`](./.agents/agents/manifest-verifier/agent.md)                                                                                                         |
+| Incident / reliability                     | [`site-reliability-engineer`](./.agents/agents/site-reliability-engineer/agent.md)                                                                                         |
+| Security review                            | [`security-analyst`](./.agents/agents/security-analyst/agent.md)                                                                                                           |
+| Planning multi-step work                   | [`project-planner`](./.agents/agents/project-planner/agent.md)                                                                                                             |
+| Doc quality pass                           | [`documentation-reviewer`](./.agents/agents/documentation-reviewer/agent.md)                                                                                               |
+| Context drift detect (propose-only)        | [`context-steward`](./.agents/agents/context-steward/agent.md)                                                                                                             |
+| Choosing MCP vs CLI                        | [`tools.md`](./.agents/context/tools.md)                                                                                                                                   |
+| Clarifying with the operator               | [`questions.md`](./.agents/context/questions.md)                                                                                                                           |
+| Writing a reply or asking a question       | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md), [`questions.md`](./.agents/context/questions.md)                                     |
+| Writing docs / agent tone                  | [`voice.md`](./.agents/context/voice.md), [`output.md`](./.agents/context/output.md)                                                                                       |
+| Reconciling agent context drift            | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                                                         |
+| Portable behavioral rules                  | [`.agents/rules/`](./.agents/rules/README.md)                                                                                                                              |
+| Cursor-only rules / hooks / commands       | [`.cursor/README.md`](./.cursor/README.md)                                                                                                                                 |
+| Claude Code adapter                        | [`.claude/README.md`](./.claude/README.md)                                                                                                                                 |
 
 ## Where things live
 

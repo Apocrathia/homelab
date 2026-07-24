@@ -113,7 +113,8 @@ personas, domain `.cursor/rules/*.mdc`.
 
 Do **not** adopt upstream `worktrees.md` or `ship-work` / `self-improve` /
 `clock-out` unless the operator explicitly asks — this repo's ship model is
-operator-gated on the workspace root.
+operator-gated on the workspace root
+([`development-loop.md`](../../context/development-loop.md#ship-model)).
 
 ### 4–6. Diff and reconcile
 

@@ -57,7 +57,8 @@ Do not fold context work into this skill.
 - [ ] 4. Check acceptance on linked docs/plans/<slug>.md and/or .cursor/plans/
 - [ ] 5. If met → delete those files; if not → keep and list remaining gaps
 - [ ] 6. Fix backlinks (other docs, plans, issues that pointed at deleted paths)
-- [ ] 7. Report what changed / what stayed / blockers
+- [ ] 7. Repo-wide link check (`check_links.py --all`)
+- [ ] 8. Report what changed / what stayed / blockers
 ```
 
 ### Behavior docs
@@ -89,6 +90,18 @@ new doc trees. Tunable config stays in manifests (GitOps SoT).
 After deletes, grep for the old paths/slugs and fix or drop links in remaining
 docs, issues, and plans. Broken links left behind are unfinished reconcile.
 
+### Link check
+
+Default `check_links.py` covers the agent context surface only. After doc /
+issue / plan deletes, run repo-wide so backlinks elsewhere do not rot:
+
+```bash
+python3 .agents/skills/reconcile-context/scripts/check_links.py --all
+```
+
+Do not fold full `reconcile-context` into this skill — only the `--all` link
+pass. Hand agent-tree drift to [`reconcile-context`](../reconcile-context/SKILL.md).
+
 ## Output format
 
 ```markdown
@@ -108,6 +121,8 @@ docs, issues, and plans. Broken links left behind are unfinished reconcile.
 **Backlinks fixed:** <paths or none>
 
 **Hand off:** reconcile-context if AGENTS / `.agents/` drifted; else draft-commit
+
+**Link check (`--all`):** <pass | N fixed>
 ```
 
 If nothing needed reconcile, say so in one line and stop.

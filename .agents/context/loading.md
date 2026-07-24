@@ -20,6 +20,9 @@ folder after the README.
 | `retrospective` skill                                 | Session-end / post-lap "what did we learn"                     | Mid-lap implementation                       |
 | `integrate-upstream` skill                            | Sync shared rules/skills from prime-context                    | Homelab-only domain edits                    |
 | [`development-loop.md`](./development-loop.md)        | Finding / prioritizing work; constant-loop; find-work; ranking | Single-issue implement with clear acceptance |
+| [`vertical-slices.md`](./vertical-slices.md)          | Sizing plans, Launch briefs, MRs                               | Already one obvious vertical slice           |
+| [`learning-loop.md`](./learning-loop.md)              | Post-lap lessons / retrospective routing                       | Mid-lap implementation                       |
+| [`enforcement.md`](./enforcement.md)                  | What hooks/CI enforce vs behavioral rules                      | Pure prose Q&A                               |
 | `find-work` skill                                     | "what's next" / "find something to do" / start-of-lap ranking  | Operator already handed a scoped brief       |
 | `run-loop` skill                                      | Unattended / constant loop; walk Launch briefs                 | One-shot attended implement                  |
 | `autoresearch` skill                                  | Idle tier-8 research; approved contract                        | Tiers 1–7 still eligible                     |
