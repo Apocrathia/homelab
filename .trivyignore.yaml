@@ -3,15 +3,17 @@
 # Experimental: CI must pass --ignorefile .trivyignore.yaml explicitly.
 #
 # Note: for Kubernetes YAML, Trivy reports Target as the basename only, so
-# paths cannot pin a full repo path. Matching "cronjob.yaml" scopes AVD-KSV-0014
-# to files with that name (not every manifest in the repo).
+# paths cannot pin a full repo path. Matching "cronjob.yaml" / "daemonset.yaml"
+# scopes AVD-KSV-0014 to files with those names (not every manifest in the repo).
 
 misconfigurations:
   - id: AVD-KSV-0014
     paths:
       - "cronjob.yaml"
+      - "daemonset.yaml"
     statement: >-
-      Some CronJobs intentionally leave the root filesystem writable (e.g. apt
-      install or compile steps in the job). Prefer fixing with
-      readOnlyRootFilesystem plus emptyDir mounts when practical; until then
-      suppress by basename for cronjob.yaml only.
+      Some CronJobs and DaemonSets intentionally leave the root filesystem
+      writable (e.g. apt/compile steps in jobs, or tdarr-node transcoding).
+      Prefer fixing with readOnlyRootFilesystem plus emptyDir mounts when
+      practical; until then suppress by basename for cronjob.yaml and
+      daemonset.yaml only.
