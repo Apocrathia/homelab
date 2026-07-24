@@ -209,6 +209,5 @@ tofu-apply:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
       changes:
         - terraform/**/*
-      when: manual
   allow_failure: false
   resource_group: terraform-apply
