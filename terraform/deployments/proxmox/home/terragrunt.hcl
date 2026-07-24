@@ -6,6 +6,10 @@ include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
+include "provider" {
+  path = "${dirname(find_in_parent_folders("root.hcl"))}/providers/proxmox.hcl"
+}
+
 terraform {
   source = "../../../modules/proxmox-vm"
 }

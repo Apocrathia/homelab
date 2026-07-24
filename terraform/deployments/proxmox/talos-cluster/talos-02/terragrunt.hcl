@@ -2,9 +2,13 @@
 # Talos-02 VM Configuration
 # -----------------------------------------------------------------------------
 
-# Include root config (backend + provider)
+# Include root config (backend) + Proxmox provider
 include "root" {
   path = find_in_parent_folders("root.hcl")
+}
+
+include "provider" {
+  path = "${dirname(find_in_parent_folders("root.hcl"))}/providers/proxmox.hcl"
 }
 
 # Read common inputs
