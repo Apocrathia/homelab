@@ -62,11 +62,7 @@ spec:
     - kind: Secret
       name: litellm-secrets
       valuesKey: redis-password
-      targetPath: global.redis.password
-    - kind: Secret
-      name: litellm-secrets
-      valuesKey: redis-password
-      targetPath: redis.auth.password
+      targetPath: envVars.REDIS_PASSWORD
     - kind: Secret
       name: litellm-secrets
       valuesKey: homeassistant-token
@@ -81,11 +77,6 @@ spec:
       targetPath: envVars.GENERIC_CLIENT_SECRET
 
   values:
-    # Allow ECR-hosted Bitnami images (they're mirrors of Docker Hub)
-    global:
-      security:
-        allowInsecureImages: true
-
     # Use the database-optimized image
     image:
       repository: ghcr.io/berriai/litellm-database
@@ -133,16 +124,9 @@ spec:
     postgresql:
       enabled: false
 
-    # Enable redis for caching
+    # Cache is litellm-valkey (generic-app); chart Redis/Bitnami subchart off
     redis:
-      enabled: true
-      auth:
-        enabled: true
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/redis
-        # renovate: datasource=docker depName=bitnamilegacy/redis
-        tag: "8.2.1"
+      enabled: false
 
     # Use the rbac.yaml service account
     serviceAccount:
@@ -167,6 +151,9 @@ spec:
     # Additional environment variables
     envVars:
       CONFIG_FILE_PATH: "/etc/litellm/config.yaml"
+      # Valkey (Redis protocol) for response cache — see valkey.yaml
+      REDIS_HOST: litellm-valkey
+      REDIS_PORT: "6379"
       # OpenTelemetry configuration for tracing
       OTEL_EXPORTER: "otlp_grpc"
       OTEL_ENDPOINT: "http://alloy.alloy-system.svc.cluster.local:4317"

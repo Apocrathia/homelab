@@ -1,0 +1,97 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: litellm-valkey
+  namespace: litellm
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: litellm-valkey
+      namespace: litellm
+      # renovate: datasource=docker depName=valkey/valkey
+      image: valkey/valkey:9-alpine
+      # Shell so --requirepass can read REDIS_PASSWORD from litellm-secrets
+      command:
+        - /bin/sh
+        - -c
+      args:
+        - >-
+          exec valkey-server --bind 0.0.0.0 --maxmemory 192mb
+          --maxmemory-policy allkeys-lru --save "" --appendonly no
+          --requirepass "$REDIS_PASSWORD"
+      container:
+        name: valkey
+        port: 6379
+        env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: redis-password
+          # valkey-cli reads this for probes (no -a on the command line)
+          - name: REDISCLI_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: litellm-secrets
+                key: redis-password
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: valkey
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false

@@ -10,7 +10,7 @@ This deployment includes:
 
 - Universal LLM proxy supporting 100+ providers with OpenAI-compatible API
 - PostgreSQL database for model configurations and usage tracking
-- MLflow integration for experiment tracking and observability
+- Valkey for exact response caching (Redis protocol; `REDIS_HOST=litellm-valkey`)
 - Master key-based API access control
 
 ## Configuration
@@ -28,13 +28,15 @@ Create a 1Password item:
 - `ollama-api-base`: Ollama API base URL for local LLM integration
 - `prime-api-key`: Prime Inference API key for cloud model routes
 - `prime-team-id`: Prime team ID for `X-Prime-Team-ID` billing header
+- `redis-password`: Shared password for Valkey (`litellm-valkey`) and LiteLLM `REDIS_PASSWORD`
 - `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
 - `oidc-client-secret`: Authentik OIDC provider Client Secret
 
 ### Storage
 
 - **Database Storage**: CloudNativePG PostgreSQL cluster for model configurations
-- **Configuration Volume**: Model configuration mounted from 1Password secret
+- **Cache**: Valkey (`litellm-valkey`) — in-memory only, no PVC; LRU eviction
+- **Configuration Volume**: Model configuration mounted from ConfigMap (`litellm.yml`)
 
 ### Access
 
@@ -90,6 +92,9 @@ kubectl -n litellm get pods -l app.kubernetes.io/name=litellm
 
 # PostgreSQL cluster status
 kubectl -n litellm get cluster litellm-postgres -o wide
+
+# Valkey cache
+kubectl get pods,svc -n litellm -l app=litellm-valkey
 ```
 
 ## References

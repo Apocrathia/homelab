@@ -9,6 +9,7 @@ resources:
   - namespace.yaml
   - secret.yaml
   - postgres.yaml
+  - valkey.yaml
   - podmonitor.yaml
   - helmrelease.yaml
   - httproute.yaml
