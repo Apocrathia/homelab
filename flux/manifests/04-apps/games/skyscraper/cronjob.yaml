@@ -42,7 +42,7 @@ spec:
                   value: America/Denver
                 # renovate: datasource=github-releases depName=Gemba/skyscraper
                 - name: SKYSCRAPER_VERSION
-                  value: "3.20.0"
+                  value: "3.20.1"
               resources:
                 requests:
                   cpu: 500m
