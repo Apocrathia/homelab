@@ -83,14 +83,15 @@ spec:
                   export DEBIAN_FRONTEND=noninteractive
                   # Root only for apt; binary runs unprivileged afterward.
                   apt-get update
+                  # Ubuntu 26.04 (resolute) dropped the t64 transitional names.
                   apt-get install -y --no-install-recommends \
                     ca-certificates \
-                    libqt6core6t64 \
-                    libqt6gui6t64 \
-                    libqt6network6t64 \
-                    libqt6sql6t64 \
+                    libqt6core6 \
+                    libqt6gui6 \
+                    libqt6network6 \
+                    libqt6sql6 \
                     libqt6sql6-sqlite \
-                    libqt6xml6t64 \
+                    libqt6xml6 \
                     p7zip-full \
                     findutils
                   # Run as root: ubuntu image has no uid 1000 user; SMB mount uses
