@@ -219,6 +219,11 @@ upsert_variable() {
 echo "Target: ${REPO}"
 echo "Source: ${ENV_FILE}"
 echo "Keys:   ${required[*]}"
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  echo "Optional: CLOUDFLARE_API_TOKEN (will sync)"
+else
+  echo "Optional: CLOUDFLARE_API_TOKEN unset — Cloudflare deployments will fail plan/apply until set"
+fi
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
 fi
@@ -239,6 +244,9 @@ upsert_variable PROXMOX_VE_ENDPOINT "$PROXMOX_VE_ENDPOINT" false
 upsert_variable PROXMOX_VE_API_TOKEN "$PROXMOX_VE_API_TOKEN" true
 upsert_variable PROXMOX_VE_INSECURE "$PROXMOX_VE_INSECURE" false
 upsert_variable TOFU_TOKEN "$TOFU_TOKEN" true
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  upsert_variable CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN" true
+fi
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   upsert_variable TOFU_DRIFT_WEBHOOK_URL "$TOFU_DRIFT_WEBHOOK_URL" true
 fi
