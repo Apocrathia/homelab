@@ -1,14 +1,14 @@
 # Terraform (OpenTofu + Terragrunt)
 
-Infrastructure as Code for Proxmox VMs and Cloudflare DNS using OpenTofu and
-Terragrunt.
+Infrastructure as Code for Proxmox VMs, Cloudflare DNS, and Okta using OpenTofu
+and Terragrunt.
 
 > **Navigation**: [← Home](../README.md) | [Talos Setup →](../talos/README.md)
 
 ## Overview
 
 OpenTofu configurations for Proxmox virtual machines (Talos Kubernetes cluster
-and other cluster workloads) and Cloudflare DNS zones.
+and other cluster workloads), Cloudflare DNS zones, and Okta org settings.
 
 | Tool                                                                                   | Purpose                                                            |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -16,6 +16,7 @@ and other cluster workloads) and Cloudflare DNS zones.
 | [Terragrunt](https://terragrunt.gruntwork.io/)                                         | Thin wrapper for DRY configurations and multi-module orchestration |
 | [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)         | Proxmox provider for OpenTofu                                      |
 | [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) | Cloudflare provider for OpenTofu                                   |
+| [okta/okta](https://registry.terraform.io/providers/okta/okta)                         | Okta provider for OpenTofu                                         |
 
 ### Managed VMs
 
@@ -44,12 +45,22 @@ manage cert-manager `_acme-challenge` records for other names here — the
 cluster owns those. Okta's own `_acme-challenge.okta` challenge is an exception
 (vendor-owned verification).
 
+### Managed Okta
+
+| Deployment | Module     | Notes                                                 |
+| ---------- | ---------- | ----------------------------------------------------- |
+| `okta/org` | `okta-org` | Scaffold stack (no resources yet); org settings later |
+
+Org name and base URL live in `providers/okta.hcl`. The API token stays in
+1Password → `terraform/.env` / GitLab CI (`OKTA_API_TOKEN`).
+
 ### Future Scope
 
 - Proxmox cluster configuration
 - Network/VLAN configuration
 - Import remaining handmade Cloudflare records
 - Additional Cloudflare zones as needed
+- Okta authenticator / policy / app resources
 
 ## Architecture
 
@@ -70,6 +81,7 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `talos-vm`       | Talos Kubernetes nodes; node placement is intentional and enforced |
 | `proxmox-vm`     | General cluster VMs; optional Proxmox HA; ignores placement drift  |
 | `cloudflare-dns` | Zone lookup + `for_each` DNS records (explicit map only)           |
+| `okta-org`       | Okta org settings (scaffold; resources added over time)            |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
@@ -81,6 +93,7 @@ The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = tru
 | -------------------------- | --------------------------- |
 | `providers/proxmox.hcl`    | `deployments/proxmox/**`    |
 | `providers/cloudflare.hcl` | `deployments/cloudflare/**` |
+| `providers/okta.hcl`       | `deployments/okta/**`       |
 
 ### State Backend
 
@@ -109,7 +122,7 @@ remote_state {
 }
 ```
 
-State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-cloudflare-dns`).
+State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-cloudflare-dns`, `homelab-deployments-okta-org`).
 
 ## Directory Structure
 
@@ -119,11 +132,13 @@ terraform/
 ├── root.hcl                            # Remote state only
 ├── providers/
 │   ├── proxmox.hcl                     # bpg/proxmox provider generate
-│   └── cloudflare.hcl                  # cloudflare/cloudflare provider generate
+│   ├── cloudflare.hcl                  # cloudflare/cloudflare provider generate
+│   └── okta.hcl                        # okta/okta provider generate
 ├── modules/
 │   ├── talos-vm/                       # Pinned Talos nodes
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
-│   └── cloudflare-dns/                 # Zone + explicit DNS records
+│   ├── cloudflare-dns/                 # Zone + explicit DNS records
+│   └── okta-org/                       # Okta org settings (scaffold)
 └── deployments/
     ├── proxmox/
     │   ├── home/
@@ -140,8 +155,11 @@ terraform/
     │       │   └── terragrunt.hcl
     │       └── talos-04/
     │           └── terragrunt.hcl
-    └── cloudflare/
-        └── dns/
+    ├── cloudflare/
+    │   └── dns/
+    │       └── terragrunt.hcl
+    └── okta/
+        └── org/
             └── terragrunt.hcl
 ```
 
@@ -167,6 +185,13 @@ root.hcl + providers/proxmox.hcl
 ```
 root.hcl + providers/cloudflare.hcl
     └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
+```
+
+**Okta org**:
+
+```
+root.hcl + providers/okta.hcl
+    └── deployments/okta/org/terragrunt.hcl  → modules/okta-org
 ```
 
 ## Prerequisites
@@ -211,6 +236,12 @@ Restrict the token to the target zone. Prefer a dedicated token for Terraform
 (separate from the cert-manager DNS-01 token in the cluster). Store the token
 in 1Password — not in git. Public DNS RRsets belong in the deployment HCL.
 
+### Okta API Token
+
+Create an API token in Okta (Security → API → Tokens). Store it in 1Password —
+not in git. Org name and base URL live in `providers/okta.hcl` (same identity
+already present in the Cloudflare CNAME for the custom domain).
+
 ## Environment Variables
 
 ### Local Development
@@ -231,6 +262,9 @@ export PROXMOX_VE_INSECURE=true
 
 # Cloudflare Provider (token only — zone/records are in deployment HCL)
 export CLOUDFLARE_API_TOKEN=
+
+# Okta Provider (token only — org_name/base_url are in providers/okta.hcl)
+export OKTA_API_TOKEN=
 
 # GitLab HTTP State Backend
 export TF_HTTP_USERNAME=your-gitlab-username
@@ -268,6 +302,7 @@ The script upserts these keys with **Protected** and scope `*`. Values that meet
 | `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
 | `CLOUDFLARE_API_TOKEN`   | Variable | Yes       | Yes    |
+| `OKTA_API_TOKEN`         | Variable | Yes       | Yes    |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
 
@@ -296,6 +331,17 @@ terragrunt plan
 ```
 
 Edit public records in that deployment's `terragrunt.hcl`.
+
+### Okta org
+
+```bash
+source terraform/.env   # OKTA_API_TOKEN from 1Password
+cd terraform/deployments/okta/org
+terragrunt init
+terragrunt plan
+```
+
+Scaffold stack — no Okta resources yet. Add settings in later changes.
 
 ### All Deployments
 
@@ -465,6 +511,7 @@ Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 | `PROXMOX_VE_API_TOKEN` | Full Proxmox API token          |
 | `PROXMOX_VE_INSECURE`  | `true` for self-signed certs    |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token (DNS Edit) |
+| `OKTA_API_TOKEN`       | Okta SSWS API token             |
 | `TOFU_MR_TOKEN`        | Token for posting MR comments   |
 
 ## Troubleshooting
@@ -514,6 +561,13 @@ curl -s -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
   "https://api.cloudflare.com/client/v4/zones?name=apocrathia.com" | jq
 ```
 
+Test Okta API token:
+
+```bash
+curl -s -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+  "https://integrator-5477892.okta.com/api/v1/users/me" | jq
+```
+
 ### Terragrunt Cache Issues
 
 ```bash
@@ -546,5 +600,6 @@ Match module inputs in the deployment's `terragrunt.hcl` to the output, paying a
 - [bpg/proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
 - [bpg/proxmox Multi-Node Guide](https://registry.terraform.io/providers/bpg/proxmox/latest/docs/guides/multi-node)
 - [Cloudflare Provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
+- [Okta Provider](https://registry.terraform.io/providers/okta/okta/latest/docs)
 - [GitLab Terraform State](https://docs.gitlab.com/ee/user/infrastructure/iac/terraform_state.html)
 - [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/)
