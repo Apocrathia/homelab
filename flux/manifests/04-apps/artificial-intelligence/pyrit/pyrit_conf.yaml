@@ -9,18 +9,21 @@
 # ConfigMap. disableNameSuffixHash: true keeps the ConfigMap name stable so
 # the HelmRelease's static volume reference resolves.
 #
-# Initializer notes:
-#   - load_default_datasets: bundled JSONL datasets, no env required
+# Initializer notes (PyRIT 1.x):
+#   - technique: registers attack technique factories (required before datasets)
+#   - load_default_datasets: bundled JSONL datasets; needs technique first
 #   - scorer: pre-builds default LLM-as-judge scorers using OPENAI_CHAT_*
 #   - target: pre-registers concrete targets bound to OPENAI_CHAT_*
 #   Both `scorer` and `target` require OPENAI_CHAT_MODEL/_ENDPOINT/_KEY env
-#   vars at startup. The `simple` initializer is omitted; targets/scorers
-#   come from these initializers instead.
+#   vars at startup.
+memory_db_type: sqlite
+
 initializers:
-  - name: load_default_datasets
-  - name: scorer
   - name: target
     args:
       tags:
         - default
         - scorer
+  - name: scorer
+  - name: technique
+  - name: load_default_datasets
