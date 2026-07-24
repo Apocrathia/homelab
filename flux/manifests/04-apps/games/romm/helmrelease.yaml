@@ -274,7 +274,7 @@ spec:
           # Scraped covers/manuals/screenshots — lives on the Games share.
           - name: resources
             source: "//storage.services.apocrathia.com/Games"
-            subDir: "Emulation/romm/resources"
+            subDir: "Emulation/tools/romm/resources"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
             createSubDir: "true"
