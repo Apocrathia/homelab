@@ -11,7 +11,7 @@ misconfigurations:
     paths:
       - "cronjob.yaml"
     statement: >-
-      skyscraper CronJob: ensure-binary compiles Skyscraper and scrape installs
-      Qt/apt runtime deps; both need a writable rootfs (parity with kube-linter
-      ignore on that CronJob). Trivy K8s targets are basenames, so this also
-      applies to other cronjob.yaml files that fail the same check.
+      Some CronJobs intentionally leave the root filesystem writable (e.g. apt
+      install or compile steps in the job). Prefer fixing with
+      readOnlyRootFilesystem plus emptyDir mounts when practical; until then
+      suppress by basename for cronjob.yaml only.
