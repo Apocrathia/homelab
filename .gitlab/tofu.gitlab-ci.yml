@@ -39,7 +39,9 @@
       echo "Preflight OK (TF_HTTP_USERNAME length=${#TF_HTTP_USERNAME}, TF_HTTP_PASSWORD length=${#TF_HTTP_PASSWORD})"
 
 tofu-validate:
-  extends: .tofu-base
+  extends:
+    - .tofu-base
+    - .tofu-preflight
   stage: verify
   script:
     - |
@@ -48,7 +50,9 @@ tofu-validate:
   allow_failure: false
 
 tofu-plan:
-  extends: .tofu-base
+  extends:
+    - .tofu-base
+    - .tofu-preflight
   stage: verify
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
