@@ -54,6 +54,8 @@ terse, humor OK, **profanity encouraged**).
 - Ask structured questions when ambiguous; don't guess
   ([`question-format.md`](./.agents/rules/question-format.md),
   [`clarify-dont-guess.md`](./.agents/rules/clarify-dont-guess.md),
+  [`ground-before-asking.md`](./.agents/rules/ground-before-asking.md),
+  [`ambiguity-goes-back-to-source.md`](./.agents/rules/ambiguity-goes-back-to-source.md),
   [`questions.md`](./.agents/context/questions.md))
 - Stop after 3 failed attempts at the same approach
   ([`stop-loss.md`](./.agents/rules/stop-loss.md))
@@ -76,6 +78,10 @@ rows, read each.
 | Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                   |
 | Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                 |
 | Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                     |
+| Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                 |
+| Throwaway prototype for a design question  | [`prototype`](./.agents/skills/prototype/SKILL.md)                                                                                     |
+| Post-lap / session retrospective           | [`retrospective`](./.agents/skills/retrospective/SKILL.md)                                                                             |
+| Sync shared .agents/ from prime-context    | [`integrate-upstream`](./.agents/skills/integrate-upstream/SKILL.md)                                                                   |
 | Deploying a Helm app                       | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                         |
 | Adding an MCP server                       | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                           |
 | CNPG logical restore                       | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                             |

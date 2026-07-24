@@ -5,7 +5,7 @@ description: When a request is ambiguous, ask. Do not silently pick the most lik
 
 # Clarify, don't guess
 
-When the operator's request has two or more reasonable interpretations, **do not guess**. Ask per [`.agents/context/questions.md`](../context/questions.md) and `question-format.mdc` (prefer the structured-question tool when it is in the tool list).
+When the operator's request has two or more reasonable interpretations, **do not guess**. Ask per [`.agents/context/questions.md`](../context/questions.md) and `question-format.mdc` (prefer the structured-question tool when it is in the tool list). Prove what you can first ([`ground-before-asking.md`](./ground-before-asking.md)); flag irreducible ambiguity with `[NEEDS CLARIFICATION]` ([`ambiguity-goes-back-to-source.md`](./ambiguity-goes-back-to-source.md)).
 
 ## Triggers
 

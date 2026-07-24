@@ -7,17 +7,19 @@ Helm, Talos, …) stay as real `.mdc` files under `.cursor/rules/`.
 
 ## Always-on
 
-| File                    | Summary                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `general.md`            | Personality, hard non-negotiables, cross-cutting decisions  |
-| `security.md`           | Scan-on-change + core security principles                   |
-| `protected-paths.md`    | Confirm before editing high blast-radius paths              |
-| `stop-loss.md`          | After 3 failed attempts at the same approach, stop          |
-| `clarify-dont-guess.md` | Ask when ambiguous; advice vs action; permission discipline |
-| `question-format.md`    | AskQuestion-first; points at `context/questions.md`         |
-| `response-shape.md`     | Short replies; half-screen rule                             |
-| `subagents.md`          | Prefer defined personas; fan out for multi-domain work      |
-| `ponytail.md`           | YAGNI / minimal-code + surgical touch discipline            |
+| File                               | Summary                                                     |
+| ---------------------------------- | ----------------------------------------------------------- |
+| `general.md`                       | Personality, hard non-negotiables, cross-cutting decisions  |
+| `security.md`                      | Scan-on-change + core security principles                   |
+| `protected-paths.md`               | Confirm before editing high blast-radius paths              |
+| `stop-loss.md`                     | After 3 failed attempts at the same approach, stop          |
+| `clarify-dont-guess.md`            | Ask when ambiguous; advice vs action; permission discipline |
+| `ground-before-asking.md`          | Prove from repo/data before asking the operator             |
+| `ambiguity-goes-back-to-source.md` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`     |
+| `question-format.md`               | AskQuestion-first; points at `context/questions.md`         |
+| `response-shape.md`                | Short replies; half-screen rule                             |
+| `subagents.md`                     | Prefer defined personas; fan out for multi-domain work      |
+| `ponytail.md`                      | YAGNI / minimal-code + surgical touch discipline            |
 
 ## Glob-scoped (portable)
 

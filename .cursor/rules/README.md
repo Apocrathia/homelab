@@ -20,17 +20,19 @@ files in this directory.
 
 ### Always-on (SoT: `.agents/rules/*.md` → symlink `*.mdc` here)
 
-| File                     | Summary                                                                                            |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| `general.mdc`            | Personality, hard non-negotiables (no commits, no cluster mutations), cross-cutting decisions      |
-| `security.mdc`           | Scan-on-change workflow + core security principles (1Password CRs, least privilege)                |
-| `protected-paths.mdc`    | Stop and ask before editing `.agents/`, `.cursor/`, `.claude/`, `talos/`, `generic-app`, bootstrap |
-| `stop-loss.mdc`          | After 3 failed attempts at the same approach, stop and surface the problem                         |
-| `clarify-dont-guess.mdc` | Ask when ambiguous; prefer AskQuestion; advice vs action; permission discipline                    |
-| `question-format.mdc`    | AskQuestion-first; prose = one Ask; points at `.agents/context/questions.md`                       |
-| `response-shape.mdc`     | Ultra-short replies; half-screen rule; no interview walls                                          |
-| `subagents.mdc`          | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
-| `ponytail.mdc`           | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
+| File                                | Summary                                                                                            |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `general.mdc`                       | Personality, hard non-negotiables (no commits, no cluster mutations), cross-cutting decisions      |
+| `security.mdc`                      | Scan-on-change workflow + core security principles (1Password CRs, least privilege)                |
+| `protected-paths.mdc`               | Stop and ask before editing `.agents/`, `.cursor/`, `.claude/`, `talos/`, `generic-app`, bootstrap |
+| `stop-loss.mdc`                     | After 3 failed attempts at the same approach, stop and surface the problem                         |
+| `clarify-dont-guess.mdc`            | Ask when ambiguous; prefer AskQuestion; advice vs action; permission discipline                    |
+| `ground-before-asking.mdc`          | Prove from repo/data before asking the operator                                                    |
+| `ambiguity-goes-back-to-source.mdc` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`                                            |
+| `question-format.mdc`               | AskQuestion-first; prose = one Ask; points at `.agents/context/questions.md`                       |
+| `response-shape.mdc`                | Ultra-short replies; half-screen rule; no interview walls                                          |
+| `subagents.mdc`                     | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
+| `ponytail.mdc`                      | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
 
 ### Glob-scoped (load when matching files are touched)
 

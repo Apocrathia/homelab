@@ -15,6 +15,10 @@ folder after the README.
 | [`voice.md`](./voice.md) / [`output.md`](./output.md) | Any substantive reply, or writing docs                         | Pure throwaway one-liners                    |
 | Helm / MCP / restore skills                           | Matching deploy or recover tasks                               | Unrelated domains                            |
 | `alignment` skill                                     | Scope fuzzy; before a plan or wide manifest change             | Acceptance already clear                     |
+| `architecture-review` skill                           | Design-debt / coupling exploration before large refactors      | Clear implement brief already in hand        |
+| `prototype` skill                                     | Need a throwaway to answer a design question                   | Production change with known shape           |
+| `retrospective` skill                                 | Session-end / post-lap "what did we learn"                     | Mid-lap implementation                       |
+| `integrate-upstream` skill                            | Sync shared rules/skills from prime-context                    | Homelab-only domain edits                    |
 | [`development-loop.md`](./development-loop.md)        | Finding / prioritizing work; constant-loop; find-work; ranking | Single-issue implement with clear acceptance |
 | `find-work` skill                                     | "what's next" / "find something to do" / start-of-lap ranking  | Operator already handed a scoped brief       |
 | `run-loop` skill                                      | Unattended / constant loop; walk Launch briefs                 | One-shot attended implement                  |
