@@ -1,18 +1,21 @@
 # Terraform (OpenTofu + Terragrunt)
 
-Infrastructure as Code for Proxmox VMs using OpenTofu and Terragrunt.
+Infrastructure as Code for Proxmox VMs and Cloudflare DNS using OpenTofu and
+Terragrunt.
 
 > **Navigation**: [← Home](../README.md) | [Talos Setup →](../talos/README.md)
 
 ## Overview
 
-OpenTofu configurations for Proxmox virtual machines: the Talos Kubernetes cluster and other cluster workloads.
+OpenTofu configurations for Proxmox virtual machines (Talos Kubernetes cluster
+and other cluster workloads) and Cloudflare DNS zones.
 
-| Tool                                                                           | Purpose                                                            |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| [OpenTofu](https://opentofu.org/)                                              | Infrastructure as Code engine (Linux Foundation fork of Terraform) |
-| [Terragrunt](https://terragrunt.gruntwork.io/)                                 | Thin wrapper for DRY configurations and multi-module orchestration |
-| [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs) | Proxmox provider for OpenTofu                                      |
+| Tool                                                                                   | Purpose                                                            |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [OpenTofu](https://opentofu.org/)                                                      | Infrastructure as Code engine (Linux Foundation fork of Terraform) |
+| [Terragrunt](https://terragrunt.gruntwork.io/)                                         | Thin wrapper for DRY configurations and multi-module orchestration |
+| [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)         | Proxmox provider for OpenTofu                                      |
+| [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) | Cloudflare provider for OpenTofu                                   |
 
 ### Managed VMs
 
@@ -29,11 +32,24 @@ Talos nodes are pinned one VM per physical host. Home and Game use the `proxmox-
 
 Per-VM CPU, memory, disk, and network settings live in each deployment's `terragrunt.hcl`.
 
+### Managed DNS
+
+| Deployment       | Module           | Notes                                                        |
+| ---------------- | ---------------- | ------------------------------------------------------------ |
+| `cloudflare/dns` | `cloudflare-dns` | Zone + public RRsets in HCL; handmade records stay unmanaged |
+
+Public DNS records (Okta custom domain, etc.) live in the deployment
+`terragrunt.hcl`. The API token stays in 1Password → `terraform/.env`. Do not
+manage cert-manager `_acme-challenge` records for other names here — the
+cluster owns those. Okta's own `_acme-challenge.okta` challenge is an exception
+(vendor-owned verification).
+
 ### Future Scope
 
 - Proxmox cluster configuration
 - Network/VLAN configuration
-- DNS records
+- Import remaining handmade Cloudflare records
+- Additional Cloudflare zones as needed
 
 ## Architecture
 
@@ -49,12 +65,22 @@ Terragrunt auto-detects OpenTofu when both are installed.
 
 ### Modules
 
-| Module       | Use case                                                           |
-| ------------ | ------------------------------------------------------------------ |
-| `talos-vm`   | Talos Kubernetes nodes; node placement is intentional and enforced |
-| `proxmox-vm` | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+| Module           | Use case                                                           |
+| ---------------- | ------------------------------------------------------------------ |
+| `talos-vm`       | Talos Kubernetes nodes; node placement is intentional and enforced |
+| `proxmox-vm`     | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+| `cloudflare-dns` | Zone lookup + `for_each` DNS records (explicit map only)           |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
+
+### Providers
+
+`root.hcl` configures remote state only. Each stack includes the provider it needs:
+
+| Include                    | Used by                     |
+| -------------------------- | --------------------------- |
+| `providers/proxmox.hcl`    | `deployments/proxmox/**`    |
+| `providers/cloudflare.hcl` | `deployments/cloudflare/**` |
 
 ### State Backend
 
@@ -83,33 +109,40 @@ remote_state {
 }
 ```
 
-State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-proxmox-home`).
+State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-cloudflare-dns`).
 
 ## Directory Structure
 
 ```
 terraform/
 ├── README.md
-├── root.hcl                            # Root config (backend, provider)
+├── root.hcl                            # Remote state only
+├── providers/
+│   ├── proxmox.hcl                     # bpg/proxmox provider generate
+│   └── cloudflare.hcl                  # cloudflare/cloudflare provider generate
 ├── modules/
 │   ├── talos-vm/                       # Pinned Talos nodes
-│   └── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
+│   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
+│   └── cloudflare-dns/                 # Zone + explicit DNS records
 └── deployments/
-    └── proxmox/
-        ├── home/
-        │   └── terragrunt.hcl
-        ├── game/
-        │   └── terragrunt.hcl
-        └── talos-cluster/
-            ├── common.hcl              # Shared Talos inputs
-            ├── talos-01/
-            │   └── terragrunt.hcl
-            ├── talos-02/
-            │   └── terragrunt.hcl
-            ├── talos-03/
-            │   └── terragrunt.hcl
-            └── talos-04/
-                └── terragrunt.hcl
+    ├── proxmox/
+    │   ├── home/
+    │   │   └── terragrunt.hcl
+    │   ├── game/
+    │   │   └── terragrunt.hcl
+    │   └── talos-cluster/
+    │       ├── common.hcl              # Shared Talos inputs
+    │       ├── talos-01/
+    │       │   └── terragrunt.hcl
+    │       ├── talos-02/
+    │       │   └── terragrunt.hcl
+    │       ├── talos-03/
+    │       │   └── terragrunt.hcl
+    │       └── talos-04/
+    │           └── terragrunt.hcl
+    └── cloudflare/
+        └── dns/
+            └── terragrunt.hcl
 ```
 
 ### Configuration Hierarchy
@@ -117,7 +150,7 @@ terraform/
 **Talos** (shared defaults via `common.hcl`):
 
 ```
-root.hcl
+root.hcl + providers/proxmox.hcl
     └── deployments/proxmox/talos-cluster/common.hcl
             └── talos-XX/terragrunt.hcl  → modules/talos-vm
 ```
@@ -125,8 +158,15 @@ root.hcl
 **Home / Game** (self-contained `terragrunt.hcl` per VM):
 
 ```
-root.hcl
+root.hcl + providers/proxmox.hcl
     └── deployments/proxmox/{home,game}/terragrunt.hcl  → modules/proxmox-vm
+```
+
+**Cloudflare DNS**:
+
+```
+root.hcl + providers/cloudflare.hcl
+    └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
 ```
 
 ## Prerequisites
@@ -157,11 +197,26 @@ Create an API token in Proxmox (Datacenter → Permissions → API Tokens → Ad
 | `/vms`     | `PVEVMAdmin`       |
 | `/storage` | `PVEDatastoreUser` |
 
+### Cloudflare API Token
+
+Create a scoped API token (My Profile → API Tokens → Create Token):
+
+| Permission                        | Access |
+| --------------------------------- | ------ |
+| Zone → DNS                        | Edit   |
+| Zone → Zone                       | Read   |
+| Account → Cloudflare Zones (opt.) | Read   |
+
+Restrict the token to the target zone. Prefer a dedicated token for Terraform
+(separate from the cert-manager DNS-01 token in the cluster). Store the token
+in 1Password — not in git. Public DNS RRsets belong in the deployment HCL.
+
 ## Environment Variables
 
 ### Local Development
 
-Create a `.env` file in the `terraform/` directory (gitignored):
+Create a `.env` file in the `terraform/` directory (gitignored), filled from
+1Password:
 
 ```bash
 # Proxmox API (for curl commands)
@@ -174,11 +229,16 @@ export PROXMOX_VE_ENDPOINT=${PROXMOX_API_URL}
 export PROXMOX_VE_API_TOKEN=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}
 export PROXMOX_VE_INSECURE=true
 
+# Cloudflare Provider (token only — zone/records are in deployment HCL)
+export CLOUDFLARE_API_TOKEN=
+
 # GitLab HTTP State Backend
 export TF_HTTP_USERNAME=your-gitlab-username
 export TF_HTTP_PASSWORD=glpat-your-token-here
 export TF_HTTP_ADDRESS=https://gitlab.com/api/v4/projects/PROJECT_ID/terraform/state/homelab
 ```
+
+Template: [`terraform/.env.example`](./.env.example).
 
 Source before running terragrunt:
 
@@ -197,7 +257,7 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts).
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` is synced when present.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
@@ -207,6 +267,7 @@ The script upserts these keys with **Protected** and scope `*`. Values that meet
 | `PROXMOX_VE_ENDPOINT`    | Variable | Yes       | Yes    |
 | `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
+| `CLOUDFLARE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
 
@@ -224,6 +285,17 @@ terragrunt apply
 ```
 
 Home and Game follow the same pattern under `deployments/proxmox/home` and `deployments/proxmox/game`.
+
+### Cloudflare DNS
+
+```bash
+source terraform/.env   # CLOUDFLARE_API_TOKEN from 1Password
+cd terraform/deployments/cloudflare/dns
+terragrunt init
+terragrunt plan
+```
+
+Edit public records in that deployment's `terragrunt.hcl`.
 
 ### All Deployments
 
@@ -253,9 +325,11 @@ terragrunt run --all -- validate
 
 ## Import Strategy
 
+### Proxmox VMs
+
 VMs already exist in Proxmox — import them into state rather than recreate.
 
-### Step 1: Capture Current VM Configuration
+#### Step 1: Capture Current VM Configuration
 
 ```bash
 curl -sk \
@@ -265,7 +339,7 @@ curl -sk \
 
 Use the node where the VM is running at import time. For cluster-portable VMs, that is bootstrap metadata only; Terraform ignores placement drift afterward.
 
-### Step 2: Import Existing Resources
+#### Step 2: Import Existing Resources
 
 VM import ID format: `{node}/{vmid}` (e.g. `node-01/801`).
 
@@ -308,7 +382,7 @@ for i in 1 2 3 4; do
 done
 ```
 
-### Step 3: Verify Plan
+#### Step 3: Verify Plan
 
 ```bash
 terragrunt plan
@@ -327,10 +401,21 @@ Tune the deployment's `terragrunt.hcl` until the plan shows no unintended change
 
 Apply minor normalization changes when the plan is understood and low risk.
 
-### Step 4: Commit Lock Files
+#### Step 4: Commit Lock Files
 
 ```bash
 git add deployments/**/.terraform.lock.hcl
+```
+
+### Cloudflare DNS records
+
+Handmade records stay out of state until you add them to `dns_records` in the
+deployment `terragrunt.hcl` and import:
+
+```bash
+cd terraform/deployments/cloudflare/dns
+# Import ID format for cloudflare_dns_record: <zone_id>/<record_id>
+terragrunt import 'cloudflare_dns_record.this["okta-cname"]' ZONE_ID/RECORD_ID
 ```
 
 ## Pre-commit Hooks
@@ -379,6 +464,7 @@ Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 | `PROXMOX_VE_ENDPOINT`  | Proxmox API URL                 |
 | `PROXMOX_VE_API_TOKEN` | Full Proxmox API token          |
 | `PROXMOX_VE_INSECURE`  | `true` for self-signed certs    |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token (DNS Edit) |
 | `TOFU_MR_TOKEN`        | Token for posting MR comments   |
 
 ## Troubleshooting
@@ -421,6 +507,13 @@ curl -sk \
   "${PROXMOX_API_URL%/}/api2/json/version" | jq
 ```
 
+Test Cloudflare token (lists zones the token can see):
+
+```bash
+curl -s -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  "https://api.cloudflare.com/client/v4/zones?name=apocrathia.com" | jq
+```
+
 ### Terragrunt Cache Issues
 
 ```bash
@@ -452,5 +545,6 @@ Match module inputs in the deployment's `terragrunt.hcl` to the output, paying a
 - [Terragrunt CLI Redesign Migration](https://terragrunt.gruntwork.io/docs/migrate/cli-redesign/)
 - [bpg/proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
 - [bpg/proxmox Multi-Node Guide](https://registry.terraform.io/providers/bpg/proxmox/latest/docs/guides/multi-node)
+- [Cloudflare Provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
 - [GitLab Terraform State](https://docs.gitlab.com/ee/user/infrastructure/iac/terraform_state.html)
 - [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/)
