@@ -1,0 +1,17 @@
+---
+# Path-scoped Trivy suppressions for IaC misconfigs.
+# Experimental: CI must pass --ignorefile .trivyignore.yaml explicitly.
+#
+# Note: for Kubernetes YAML, Trivy reports Target as the basename only, so
+# paths cannot pin a full repo path. Matching "cronjob.yaml" scopes AVD-KSV-0014
+# to files with that name (not every manifest in the repo).
+
+misconfigurations:
+  - id: AVD-KSV-0014
+    paths:
+      - "cronjob.yaml"
+    statement: >-
+      skyscraper CronJob: ensure-binary compiles Skyscraper and scrape installs
+      Qt/apt runtime deps; both need a writable rootfs (parity with kube-linter
+      ignore on that CronJob). Trivy K8s targets are basenames, so this also
+      applies to other cronjob.yaml files that fail the same check.
