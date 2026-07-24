@@ -54,7 +54,6 @@ Media applications are organized into three categories:
 ### Indexers
 
 - **[Prowlarr](./acquisitions/prowlarr/README.md)** - Centralized indexer manager with Flaresolverr sidecar for CloudFlare bypass
-- **[Bitmagnet](./acquisitions/bitmagnet/README.md)** - DHT crawler and torrent search engine with Torznab API
 
 ### Download Clients
 
