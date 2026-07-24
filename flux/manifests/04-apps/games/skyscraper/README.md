@@ -45,8 +45,10 @@ SMB uses the shared `vaults/Secrets/items/smb-credentials` item (same as RomM).
 | Gamelists      | `Emulation/gamelists/<system>/gamelist.xml` |
 | Resource cache | `Emulation/tools/skyscraper/cache/`         |
 
-`mediaFolder` in `config.ini` still points at `Emulation/media/` so gamelist
-paths stay ES-DE-compatible; nothing is downloaded there in this mode.
+`mediaFolder` in `config.ini` still points at `Emulation/media/` so media
+layout stays ES-DE-compatible; nothing is downloaded there in this mode.
+`relativePaths=true` so `<path>` tags are `./rom.ext` (ES-DE-readable), not
+absolute container paths under `/emulation/...`.
 
 ## Notes
 
