@@ -43,38 +43,108 @@ tightly in a loop after an empty-queue stop.
 ```
 - [ ] 1. Run available scouts (skip if MCP/kube/CLI unavailable; continue others)
 - [ ] 2. Normalize candidates (source, evidence, severity, found_at, constraints)
-- [ ] 3. Apply autonomous gates (drop ineligible)
-- [ ] 4. Rank by tier → severity → FIFO by found_at
-- [ ] 5. Emit ranked report + Launch briefs for eligible rows
-- [ ] 6. Stop — operator/parent selects; do not auto-implement
+- [ ] 3. Merge results; note scout skips / dedupe gaps
+- [ ] 4. Apply autonomous gates (drop ineligible)
+- [ ] 5. Rank by tier → (tier-3 sub-sort) → severity → FIFO by found_at
+- [ ] 6. Emit ranked report + Launch briefs for eligible rows
+- [ ] 7. Stop — operator/parent selects; do not auto-implement
 ```
 
-Partial scout failure ≠ invent work. Omit implement-oriented briefs from failed
-scouts; mark `Dedupe: unverified` when identity is uncertain.
+### Scout failure and dedupe
+
+Partial scout failure ≠ invent work. Rules:
+
+- **Skip unavailable scouts** (no MCP, kube, or GitLab auth); continue others;
+  list skips in the report.
+- **Omit implement-oriented briefs** whose identity or open-MR overlap you
+  could not verify. Prefer `Dedupe: unverified` over a confident false
+  `not in flight`.
+- **MR maintenance (`watch-mr`)** needs GitLab scout data only. When GitLab
+  succeeded, maintain-eligible MRs still rank even if Flux/Grafana/Trivy/etc.
+  failed.
+- When **GitLab failed**, omit `watch-mr` briefs and mark implement / plan /
+  `file-issue` rows that need "no open MR on this slice" as
+  `Dedupe: unverified` (or omit those briefs).
+- Do not invent busywork to replace a failed scout's surface.
 
 ## Tiers (debt-first)
 
-| Tier | Class                    | Homelab examples                                                                                               |
-| ---- | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL                             |
-| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                              |
-| 3    | MR maintenance           | Maintain-eligible open MRs (threads, failing CI, conflicts) — [`watch-mr`](../watch-mr/SKILL.md)               |
-| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                                |
-| 5    | Features                 | Ready feature / roadmap work                                                                                   |
-| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                            |
-| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                   |
-| 8    | Autoresearch             | Only when 1–7 empty + approved seed / complete contract + budgets ([`autoresearch`](../autoresearch/SKILL.md)) |
+| Tier | Class                    | Homelab examples                                                                                                              |
+| ---- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Production / correctness | Flux NotReady, firing critical alerts, red CI on default branch, security CRITICAL                                            |
+| 2    | Tech debt / architecture | Ready bugs/arch issues, clustered `ponytail:`, context drift markers, stale plans                                             |
+| 3    | MR maintenance           | **Maintain-eligible** open MRs only — [`watch-mr`](../watch-mr/SKILL.md); see [Maintain-eligible MRs](#maintain-eligible-mrs) |
+| 4    | Issues                   | Ready implement / plan / plan-refresh (not 1–3)                                                                               |
+| 5    | Features                 | Ready feature / roadmap work                                                                                                  |
+| 6    | Scoping                  | Needs alignment; feature plan stubs                                                                                           |
+| 7    | Authoring tail           | New gaps / low-priority plans when 1–6 empty                                                                                  |
+| 8    | Autoresearch             | Only when 1–7 empty + approved seed / complete contract + budgets ([`autoresearch`](../autoresearch/SKILL.md))                |
 
-**Within tier:** severity (`blocker` > `high` > `medium` > `low`) → **FIFO by
-`found_at`**. Queue, not stack.
+### FIFO within tier
+
+Backlog rows are a **queue**, not a stack. Within the same tier (and, when
+severity is an explicit sub-sort, within the same `severity` band), pick
+**oldest eligible work first**. Do not prefer the newest issue or the most
+recently scouted path.
+
+Order: **tier → (tier-3 sub-sort when applicable) → severity
+(`blocker` > `high` > `medium` > `low`) → FIFO by age**.
+
+| Work type              | Primary age                            | Fallback when missing                              |
+| ---------------------- | -------------------------------------- | -------------------------------------------------- |
+| Issue (plan/implement) | `found_at:` frontmatter (`YYYY-MM-DD`) | First commit that added the file on default branch |
+| Plan (no issue link)   | Linked issue `found_at`                | First commit of the plan file on default branch    |
+| Open MR (`watch-mr`)   | Oldest head activity / created         | Note `age: unknown` if unavailable                 |
+| Alert / Flux / CI      | Signal time from scout                 | Tier + severity only                               |
+
+Sort ascending by resolved age (oldest → rank 1). Rows with `age: unknown`
+sort **after** dated rows in the same tier/severity band; note unknown in the
+report. After age ties: prefer named paths in the plan; smaller scope last.
+
+### Maintain-eligible MRs
+
+Rank **maintain-eligible** open MRs only under tier 3. Emit `watch-mr` Launch
+briefs only for those rows.
+
+**Maintain-eligible** (any one is enough):
+
+- Unresolved discussion threads
+- Failing pipeline / required checks on HEAD
+- Merge conflicts / non-mergeable state
+- Explicit changes-requested / blocking review state (when GitLab surfaces it)
+
+**Not maintain-eligible (merge-ready-only):** clean CI, no conflicts, no
+unresolved threads, no blocking review — still list under Open MRs for
+visibility, but they do **not** occupy a tier-3 ranking slot, do **not** gate
+tiers 4–5, and do **not** get a `watch-mr` brief.
+
+**Tier-3 sub-sort** (then FIFO by oldest head activity within each band):
+
+1. Unresolved threads (higher count first; bot/review threads outrank nit-only
+   when counts tie)
+2. Blocking review / changes-requested
+3. Failing CI on HEAD
+4. Merge conflicts / non-mergeable
+
+Record thread count and CI/merge state in **Evidence** for Launch briefs.
 
 ## Autonomous gates
 
+Apply after tier sort, severity, and FIFO:
+
 - Tiers 1–2 outrank `watch-mr` / MR maintenance.
-- Tiers 4–5 require zero eligible `watch-mr` (finish in-flight MRs first).
-- Skip `slice: hitl`, protected-path edits, and `alignment` when unattended.
+- Tiers 4–5 require **zero maintain-eligible** `watch-mr` rows (finish
+  in-flight MRs first). Merge-ready-only MRs do **not** count toward this gate.
+- When any maintain-eligible MR exists, reserve at least one Launch slot for
+  `watch-mr` before tier-4 implement briefs.
+- Skip `slice: hitl`, protected-path edits, and `alignment` when unattended
+  (fall through to the next eligible brief).
 - Skip `status: blocked` / `in-flight` for new implement briefs.
-- Partial scout failure → omit implement briefs; mark `dedupe unverified`.
+- Cap unattended plan-authoring and `file-issue` briefs at **one each** per
+  report; zero when any tier-3 maintain-eligible or tier-4 implement row is
+  eligible.
+- Partial scout failure → omit unverified implement briefs; mark
+  `Dedupe: unverified` (see [Scout failure and dedupe](#scout-failure-and-dedupe)).
 - If all briefs ineligible or queue empty → one-line empty-queue report and
   **stop** (do not invent busywork).
 - Tier 8 (`autoresearch`) only when tiers 1–7 are empty **and** an approved
@@ -86,21 +156,28 @@ Protected paths (confirm before any future edit; find-work never edits):
 
 ## Launch brief
 
-Each actionable row must emit a pasteable brief:
+Each actionable row must emit a pasteable brief. Discover is read-only; build
+only after the brief is selected. No worktrees — branch is optional metadata.
 
 ```text
 ## Launch N — <title>
-- Source: <issue path | alert | Flux object | MR>
-- Evidence: <paths / queries / links>
-- Acceptance: <observable done>
-- Feedback loop: <verify command(s)>
-- Worktree / branch: <optional>
+- Source: <issue path | alert | Flux object | MR !N>
+- Evidence: <paths / queries / links; for MRs include threads/CI/merge>
+- Acceptance: <observable done>  (alignment: use Open questions instead)
+- Open questions: <bullets; alignment briefs only>
+- Feedback loop: <verify command(s); required for implement>
+- Research contract: <hypothesis, paths, eval, metric, runtime; autoresearch only>
+- Likely paths: <when known from plan/issue>
+- Branch: <type/slug | MR source branch | n/a>
 - Dedupe: <not in flight | skip:… | unverified>
 - Constraints: <protected | HITL | no cluster mutate | …>
 - Invoke: <skill or persona>
 ```
 
-Discover is read-only. Build only after the brief is selected.
+If you cannot name a feedback loop for implement work (`kustomize build`,
+`helm template`, Trivy, Flux MCP read, yamllint, …), the work is not scoped →
+`alignment` (skip when unattended). Prefer thin slices; one implement lap =
+one MR.
 
 ### Vertical slices
 
@@ -233,13 +310,17 @@ auth) and continue. Note skips in the report.
 
 ### Open MRs
 
-- **Look at:** Threads, failing CI, conflicts on open MRs.
+- **Look at:** Open MRs; classify per [Maintain-eligible MRs](#maintain-eligible-mrs)
+  (threads, failing CI, conflicts, blocking review vs merge-ready-only).
 - **How:** GitLab MCP MR list / discussions / pipeline status — **light list
-  only**; do not deep-dive here.
-- **Default tier:** 3. Gate: clear these before tier 4–5 feature work.
-- **Invoke:** [`watch-mr`](../watch-mr/SKILL.md) (exists). find-work only
-  surfaces maintain-eligible MRs; `watch-mr` owns the babysit lap.
-- **On failure:** Skip; do not invent MR triage work.
+  only**; do not deep-dive here (`watch-mr` owns the babysit lap).
+- **Default tier:** 3 for maintain-eligible only. Merge-ready-only: visibility
+  note, no tier-3 slot, no gate on tiers 4–5, no `watch-mr` brief.
+- **Gate:** Clear maintain-eligible MRs before tier 4–5 feature work.
+- **Invoke:** [`watch-mr`](../watch-mr/SKILL.md) for maintain-eligible rows.
+- **On failure:** Skip; omit `watch-mr` briefs; mark implement / plan /
+  `file-issue` overlap checks `Dedupe: unverified` when GitLab was required.
+  Do not invent MR triage work.
 
 ### k8sgpt
 
@@ -264,10 +345,14 @@ auth) and continue. Note skips in the report.
 
 ## Output format
 
-1. **Ranked list** — tier, severity, one-line title, source, gate notes /
-   scout skips.
-2. **Launch briefs** — pasteable blocks for eligible rows (template above).
-3. **Empty queue** — if nothing eligible:
+1. **Ranked list** — tier, severity, age/`found_at`, one-line title, source,
+   gate notes / scout skips / `Dedupe` gaps.
+2. **Open MRs (visibility)** — maintain-eligible vs merge-ready-only; thread
+   counts and CI/merge when known.
+3. **Launch briefs** — pasteable blocks for eligible rows (template above).
+   Default a few top rows; when maintain-eligible MRs exist, reserve at least
+   one `watch-mr` brief before tier-4 implement.
+4. **Empty queue** — if nothing eligible:
 
 ```text
 find-work: empty queue — no eligible Launch briefs; stopping.

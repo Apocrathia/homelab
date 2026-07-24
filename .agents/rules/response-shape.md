@@ -18,10 +18,5 @@ Follow [`.agents/context/output.md`](../context/output.md).
 - **Subagents:** summarize; never paste the full child output.
 - **Structured output** (JSON/YAML/fixed schema): emit the payload only — no
   prose prepend unless the schema asks for it.
-
-## Omit from final replies
-
-- Tool-call narration ("I read X, then grep'd Y…")
-- File-by-file diff replay when a summary suffices
-- Repeated restatement of the user's question
-- Sections that only announce what the next section will say
+- **Omit:** tool narration, diff replay, question restatement, announcement
+  sections — full list in [`output.md`](../context/output.md).

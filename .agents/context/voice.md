@@ -14,6 +14,19 @@ How agents talk here, and how durable markdown should read.
 - Evidence over vibes: do not speculate; use more than one data point before
   concluding.
 
+Reply structure (length, bulk routing, omit list): [`output.md`](./output.md).
+
+## Chat pre-send checklist
+
+Before sending user-facing prose (not code, diffs, or config):
+
+- Cut engagement bait ("let me know if…", "happy to help", "here's what you
+  need to know").
+- Cut significance inflation and promotional adjectives.
+- No em dashes or en dashes in prose; restructure instead.
+- Vary sentence length; delete announcement paragraphs that restate the heading.
+- End on substance, not a generic closer.
+
 ## Docs and durable markdown
 
 Sound like a human who runs a lab: direct, specific, a little rough around the

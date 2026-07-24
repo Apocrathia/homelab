@@ -60,8 +60,9 @@ Recommendations become [`file-issue`](../file-issue/SKILL.md) candidates
 
 ## Budgets (defaults)
 
-Persist in `meta.json` `budgets`. Operator may tighten; do not loosen past these
-defaults without explicit ask.
+Hard caps for the lap. Persist in `meta.json` `budgets`. Operator may tighten;
+do **not** loosen past these defaults without explicit ask. Hitting a budget
+sets `status: budget` and ships what you have — no “just one more.”
 
 | Budget                  | Default                                                                |
 | ----------------------- | ---------------------------------------------------------------------- |
@@ -71,6 +72,10 @@ defaults without explicit ask.
 | Per-eval timeout        | **2×** measured baseline duration (min 10s)                            |
 | Eval allowlist          | Grafana MCP reads + local/read-only — see below                        |
 | Eval denylist           | `kubectl apply/delete`, `flux reconcile`, mutating MCP, live prod data |
+
+Before Phase 2: confirm the contract names hypothesis, slug, metric, eval (or
+Grafana block), budgets, and approval. Incomplete → stop; do not invent missing
+fields.
 
 **Eval allowlist:**
 
@@ -117,22 +122,31 @@ contract (then skip second confirmation).
 
 ### Research contract
 
-| Field                 | What it is                                                                    |
-| --------------------- | ----------------------------------------------------------------------------- |
-| **Hypothesis**        | Testable claim                                                                |
-| **Slug**              | 2–3 kebab-case words; names the topic                                         |
-| **In-scope paths**    | Paths experimental edits may touch (sandbox preferred)                        |
-| **Eval command**      | How to produce / observe the sample (shell → `run.log`, **or** Grafana MCP)   |
-| **Metric name**       | Numeric metric to optimize                                                    |
-| **Metric direction**  | `lower` or `higher`                                                           |
-| **Expected runtime**  | Approx one eval (e.g. `30s`, `5m`) → drives 2× timeout                        |
-| **Metric extract**    | How to get a single number (shell from `run.log`, **or** PromQL/LogQL result) |
-| **Grafana** (runtime) | Datasource uid/name, query, range, step — required when metric is live        |
-| **Budgets**           | max experiments, wall-clock seconds, allowlist confirmation                   |
-| **Approved by**       | Operator (or Launch brief that names approval)                                |
+| Field                 | What it is                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Hypothesis**        | Testable claim                                                                                                                     |
+| **Slug**              | 2–3 kebab-case words; names the topic                                                                                              |
+| **In-scope paths**    | Paths experimental edits may touch (sandbox preferred)                                                                             |
+| **Eval command**      | How to produce / observe the sample (shell → `run.log`, **or** Grafana MCP)                                                        |
+| **Metric name**       | Numeric metric to optimize                                                                                                         |
+| **Metric direction**  | `lower` or `higher`                                                                                                                |
+| **Expected runtime**  | Approx one eval (e.g. `30s`, `5m`) → drives 2× timeout                                                                             |
+| **Metric extract**    | How to get a single number (shell from `run.log`, **or** PromQL/LogQL result)                                                      |
+| **Grafana** (runtime) | Datasource uid/name, query, range, step — required when metric is live                                                             |
+| **Budgets**           | max experiments, wall-clock seconds, allowlist confirmation                                                                        |
+| **Constraints**       | Optional soft ceilings (`{name, soft_limit, measurement}`) — memory, API calls, query cost, etc. Omit when only wall-clock matters |
+| **Approved by**       | Operator (or Launch brief that names approval)                                                                                     |
 
+This contract is ground truth for the lap. Fix in-scope paths before the run
+(narrowest dirs that may gain files; never the repo root). Bookkeeping
+(`docs/research/<slug>.md`, `experiments/<slug>/`, `run.log`) is always writable.
 Do **not** change the contract mid-run. Evolve hypothesis → stop, ship partial,
 new run.
+
+When defining constraints, ask what the eval consumes that has a ceiling
+(Grafana query cost, scrape volume, peak memory, binary/render size). Soft:
+modest breach OK when the metric gain justifies it; dramatic breach → discard
+even if simpler. Constraint checks run before the simplicity criterion.
 
 ### Grafana as the metric source
 
@@ -215,6 +229,7 @@ Sandbox (optional but preferred):
       "step": "30s",
       "extract": "<scalar rule>"
     },
+    "constraints": [],
     "started_at": "<ISO>"
   },
   "budgets": {
@@ -247,7 +262,8 @@ One iteration:
 3. Edit **in-scope paths only**.
 4. Run eval (shell under 2× baseline-duration timeout, **or** Grafana query
    with the contracted range); extract one metric number.
-5. Classify **keep** / **discard** / **crash** (simplicity matters — not metric alone).
+5. Classify **keep** / **discard** / **crash** (constraints → simplicity →
+   metric; see below).
 6. On discard/crash: revert experimental edits (path-scoped clean; **never**
    `git reset --hard` — that can wipe untracked writeup/logs).
 7. Append `exp-NNN.json`; update `best` on improvement.
@@ -257,6 +273,50 @@ One iteration:
 **No commits during the loop.** Homelab agents never `git commit`. Keep
 experimental diffs local; discard by restoring files.
 
+### Generating experiments
+
+Each change is specific and hypothesis-driven. Read in-scope paths, prior
+`exp-*.json`, and the writeup before inventing the next try. Near-miss
+discards are the strongest signal for a variation.
+
+Stuck? Use these (do not spray random knobs):
+
+- **Near-miss variation** — same idea, different parameter / scope / assumption
+- **Combine two discards** — each failed alone; together might net positive
+- **Inverse of a keep** — if raising X helped, does lowering X hurt? Bounds the
+  causal claim
+- **Untested implication** — re-read the hypothesis; probe the non-obvious path
+- **Design notes / TODOs** — comments and docs often name prior trade-offs
+- **Different architecture** — only after incremental ideas are exhausted
+- **Log patterns** — skim `change_category` / `observation` for dead-end clusters
+
+### Simplicity criterion
+
+Metric alone does not decide keep. Weigh complexity cost against improvement:
+
+- Tiny gain + ugly complexity → discard
+- Tiny gain from deleting code → keep
+- Flat within noise + substantially simpler → keep
+
+Log the judgment in `description` / `observation`. If the contract defines
+constraints: dramatic breach discards even when simpler; modest breach needs
+metric improvement, not just simplification.
+
+### Classification gate
+
+When eval returns a metric:
+
+1. **Constraints first** (if any) — record `constraint_values`; dramatic breach
+   → discard; modest breach only if metric gain justifies it
+2. **Improvement** — candidate beats current `best` for the contracted direction
+3. **Keep** when the improvement justifies its complexity, or metric is flat
+   within noise and the code is substantially simpler (after constraints pass)
+4. **Discard** otherwise
+
+Crash path: empty/unreadable metric, timeout, or fundamentally broken eval →
+`crash`. Dumb fixable typos may be corrected and re-eval'd once before
+classifying crash; do not burn the experiment budget on endless amend cycles.
+
 ### `exp-NNN.json` schema
 
 ```json
@@ -264,26 +324,43 @@ experimental diffs local; discard by restoring files.
   "id": 1,
   "timestamp": "<ISO>",
   "description": "<what this tried>",
+  "change_category": "architecture | hyperparameter | simplification | algorithm | configuration | other",
+  "rationale": "<why this probe>",
   "metric_value": 0,
   "delta_from_baseline": 0,
   "delta_from_best": 0,
+  "constraint_values": {},
   "status": "keep",
+  "observation": "<finding beyond keep/discard>",
+  "related_experiments": [],
   "duration_seconds": 0,
   "error": null
 }
 ```
 
-Redact secrets in `error`. Never paste raw `run.log` into JSON or chat.
+Deltas: positive means improvement (`candidate - reference` for `higher`,
+`reference - candidate` for `lower`). Omit `constraint_values` when the
+contract has none. Prefer a one-line redacted `error` cause over a log dump.
+Never paste raw `run.log` into JSON or chat.
+
+Structured fields exist so a later agent can reason over the corpus:
+`change_category` aggregates what helps; `rationale` records intent;
+`observation` captures findings on discards; `related_experiments` traces
+paths.
 
 ### Stop conditions
 
-| Status        | When                                                            |
-| ------------- | --------------------------------------------------------------- |
-| `proven`      | Hypothesis holds; kept state re-runs ≥2 times with same timeout |
-| `disproven`   | Evidence against; no plausible keep path left                   |
-| `exhausted`   | Max experiments hit without prove/disprove                      |
-| `budget`      | Wall-clock or consecutive-crash budget hit                      |
-| `interrupted` | Operator interrupt                                              |
+| Status        | When                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `proven`      | Enough evidence to argue the claim in the writeup; re-run kept state ≥2× with same timeout |
+| `disproven`   | Evidence against; no plausible keep path left; writeup can explain why                     |
+| `exhausted`   | Max experiments / reasonable approaches tried without prove/disprove                       |
+| `budget`      | Wall-clock or consecutive-crash budget hit                                                 |
+| `interrupted` | Operator interrupt                                                                         |
+
+One keep does not prove a hypothesis. Proven means the writeup can make the
+case — one strong result or several pointing the same way. Set `status`,
+`conclusion`, and `ended_at` in `meta.json` when stopping.
 
 ## Phase 3: Ship (docs only)
 
