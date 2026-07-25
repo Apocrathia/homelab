@@ -32,6 +32,11 @@ Rollback artifacts kept on disk but **not** in the active kustomization:
 ## Access
 
 - **Primary**: kagent UI → AgentHarness `openclaw` (full OpenClaw Control UI)
+- **Authentik dashboard**: `authentik-blueprint.yaml` publishes a bookmark
+  application pointing straight at the harness gateway
+  (`https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway`).
+  It carries no provider — SSO comes from the kagent proxy provider that already
+  covers `kagent.gateway.services.apocrathia.com`.
 - Former Gateway URL `https://openclaw.gateway.services.apocrathia.com` is
   retired with the generic-app HelmRelease
 

@@ -14,3 +14,18 @@ resources:
 # Rollback artifacts kept on disk (not active):
 # - helmrelease.yaml (former generic-app OpenClaw)
 # - openclaw.json (former ConfigMap payload)
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Authentik blueprint as ConfigMap
+configMapGenerator:
+  - name: authentik-blueprint-openclaw
+    namespace: authentik
+    files:
+      - openclaw.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

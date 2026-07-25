@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# Dashboard shortcut only - SSO is enforced by the kagent proxy provider
+version: 1
+metadata:
+  name: openclaw
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Application for OpenClaw (bookmark into the kagent harness gateway)
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "openclaw"
+    attrs:
+      name: "OpenClaw"
+      slug: "openclaw"
+      group: "Artificial Intelligence"
+      # Explicitly unset - the retired generic-app proxy provider no longer exists
+      provider: null
+      meta_launch_url: "https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway"
+      open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/openclaw/icon.svg"
+      meta_description: "OpenClaw coding harness on Agent Substrate"
+      meta_publisher: "OpenClaw"
