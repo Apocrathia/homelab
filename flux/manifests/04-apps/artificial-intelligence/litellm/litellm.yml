@@ -182,7 +182,7 @@ mcp_servers:
     auth_type: "none"
   firecrawl:
     alias: "firecrawl"
-    url: "http://mcp-firecrawl-mcp-proxy.mcp-firecrawl.svc.cluster.local:8080/mcp"
+    url: "http://firecrawl.mcp-firecrawl.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   flux:
@@ -259,7 +259,7 @@ mcp_servers:
     auth_type: "none"
   searxng:
     alias: "searxng"
-    url: "http://mcp-searxng-mcp-proxy.mcp-searxng.svc.cluster.local:8080/mcp"
+    url: "http://searxng.mcp-searxng.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   servarr:
