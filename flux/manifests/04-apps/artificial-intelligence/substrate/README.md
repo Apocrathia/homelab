@@ -11,7 +11,8 @@ talks to it over in-cluster gRPC (no Gateway exposure).
 This deployment installs:
 
 - `substrate-crds` — `WorkerPool` / `ActorTemplate` (`ate.dev/v1alpha1`)
-- `substrate` — ate-api-server, ate-controller, atelet, atenet, Valkey, RustFS
+- `substrate` — ate-api-server, ate-controller, atelet, atenet, and Valkey
+- `ate-cache` — dedicated RustFS hot cache for regenerable actor snapshots
 - `WorkerPool/kagent-default` — platform capacity for kagent (privileged ateom
   pods; kept here so PSA baseline in `kagent` does not block them)
 
@@ -29,9 +30,19 @@ Internal only. API endpoint used by kagent:
 Helm values in `helmrelease.yaml`. Auth mode is JWT with projected ServiceAccount
 tokens; the chart generates TLS and session-signing material.
 
-RustFS uses chart-default credentials for the initial smoke. Replace before
-treating this as durable — see
-`docs/issues/substrate-rustfs-credentials.md`.
+### RustFS credentials
+
+`HelmRelease/ate-cache` stores actor snapshots in the `ate-snapshots` bucket.
+The substrate chart's bundled RustFS is disabled. Both RustFS and `atelet` read
+the root keys from `OnePasswordItem/agent-substrate-secrets` with
+`secretKeyRef`; credentials are never rendered into Helm values.
+
+1Password item: `vaults/Secrets/items/agent-substrate-secrets`
+
+| Field               | Maps to                                       |
+| ------------------- | --------------------------------------------- |
+| `access-key-id`     | `RUSTFS_ACCESS_KEY` / `AWS_ACCESS_KEY_ID`     |
+| `access-key-secret` | `RUSTFS_SECRET_KEY` / `AWS_SECRET_ACCESS_KEY` |
 
 See upstream:
 

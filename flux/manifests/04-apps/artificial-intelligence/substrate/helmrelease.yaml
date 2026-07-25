@@ -10,11 +10,16 @@ spec:
   dependsOn:
     - name: substrate-crds
       namespace: ate-system
+    # Snapshot store must exist before atelet starts writing to it.
+    - name: ate-cache
+      namespace: ate-system
   chart:
     spec:
       chart: substrate
+      # Held at 0.0.6: 0.0.10 fails to roll out ate-api-server.
+      # See docs/issues/substrate-0-0-10-rollout-failure.md before bumping.
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
-      version: "0.0.10"
+      version: "0.0.6"
       sourceRef:
         kind: HelmRepository
         name: substrate
@@ -43,13 +48,35 @@ spec:
         bootstrap:
           enabled: true
 
-    # Pin component images with the chart appVersion (v0.0.6)
+    # Pin component images with the chart appVersion
     image:
       registry: ghcr.io/kagent-dev/substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      tag: "v0.0.10"
+      tag: "v0.0.6"
 
-    # ponytail: RustFS inline chart defaults for smoke only — harden via
-    # docs/issues/substrate-rustfs-credentials.md before treating as durable.
+    # Snapshots live in ate-cache (cache-helmrelease.yaml), not the bundled
+    # RustFS. The bundled Deployment is RollingUpdate on a ReadWriteOnce
+    # Longhorn PVC and its bucket-init Job template is immutable, so any upgrade
+    # touching either one deadlocks the release.
     rustfs:
-      enabled: true
+      enabled: false
+
+    atelet:
+      storageBackend: s3
+      extraEnv:
+        - name: AWS_ENDPOINT_URL
+          value: "http://ate-cache.ate-system.svc.cluster.local:9000"
+        - name: AWS_S3_USE_PATH_STYLE
+          value: "true"
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: agent-substrate-secrets
+              key: access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: agent-substrate-secrets
+              key: access-key-secret
