@@ -2,7 +2,7 @@
 title: "Migrate MCP hosting from ToolHive to kmcp"
 status: active
 found_at: 2026-07-24
-updated_at: 2026-07-24
+updated_at: 2026-07-25
 related_issue: docs/issues/migrate-toolhive-to-kmcp.md
 area: agents
 ---
@@ -37,256 +37,264 @@ plan so the next migration is cheaper.
 
 ## Decisions
 
-- First migration (Phase 1 pilot) — **osv** — only true baseline: native
-  `streamable-http`, dedicated image, no env/args/secrets/RBAC/PVC; LiteLLM-only
-  (no `RemoteMCPServer`); probe via `query_vulnerability` / batch tools.
-  Runner-up: `gofetch`. Do **not** pilot `searxng` / `firecrawl` / `a2a` first —
-  they use ToolHive stdio+proxyMode and/or runtime package install.
+- Scope trim (2026-07-25) — **`osv`, `gofetch`, `mkp` will be decommissioned,
+  not migrated** — operator has observed zero agent usage. Coverage: searxng
+  `web_url_read` + firecrawl replace gofetch; flux MCP covers mkp's k8s reads.
+  Decommission is a dedicated later lap (see Decommission lap below); until
+  then they keep running as-is.
+- First migration (Phase 1) — **osv** — client cutover **done**; pattern
+  proven: native `http` transport, LiteLLM-only. osv itself is now slated for
+  decommission; no soak/ToolHive-delete lap needed.
 - Cutover — **phased dual-run** — ToolHive and kmcp coexist until each server
   proves out; reverse by flipping LiteLLM / RemoteMCPServer URLs back.
-- Target API — **`kagent.dev/v1alpha1` `MCPServer`** — controller is
-  **kagent-bundled** (`kmcp.enabled: true` on kagent HelmRelease), not a
-  standalone kmcp operator. Live: `kagent-kmcp-controller-manager` (kmcp 0.3.0).
-- Dual-run naming — kmcp CR/Service name **must not** be
-  `osv-vulnerability-scanner` (ToolHive already owns that Deployment). Prefer
-  CR name `osv` → LiteLLM flip target
-  `http://osv.mcp-osv.svc.cluster.local:8080/mcp`. Set `deployment.port` /
-  `httpTransport` to **8080** + path `/mcp`; set `MCP_PORT` / `FASTMCP_PORT` /
-  `MCP_TRANSPORT` env as needed (kmcp does not inject ToolHive defaults).
-- Namespace layout — **keep `mcp-{name}` namespaces** — Cilium already keys off
-  `mcp-server=true` NS labels; avoid mass re-labeling. kmcp CR must land in
-  `mcp-{name}` (not the controller NS).
-- Isolation — **kmcp has no `permissionProfile`** and **no
-  `automountServiceAccountToken` field** on the CR (confirmed against
-  `mcpservers.kagent.dev`). Compensate with `deployment.securityContext` /
-  `podSecurityContext` (drop ALL caps, no privilege escalation, RuntimeDefault
-  seccomp) + Cilium NS labels; verify SA token mount on the live pod before
-  LiteLLM flip. Keep `toolhive-system` Cilium allow until Phase 8. Do not claim
-  sandbox parity with ToolHive.
-- Client model — **keep LiteLLM + RemoteMCPServer URL pointers** until a later
-  lap evaluates kmcp-native discovery; do not invent a second registry mid-
-  migration. _(Revisit after Phase 1 refine.)_
-- ToolHive retain — **default none** — any server kmcp cannot host gets an
-  explicit exception in Decisions + a follow-up issue. _(Confirm per-server in
-  Phase 0.)_
-- Phase 2 non-pilots — migrate **gofetch first** as SSRF/isolation canary after
-  the hosting pattern is proven; then searxng → firecrawl → a2a. Do not promote
-  gofetch/searxng into Phase 1.
-- Grafana — **migrate `mcp-servers/grafana` independently** of kagent's
-  built-in `grafana-mcp` subchart; document overlap in Phase 6 refine.
-- Discord MCP — **migrate in its own late phase**; bridge A2A work can land
-  before or after, but note coupling in Phase 7.
+- Target API — **`kagent.dev/v1alpha1` `MCPServer`** — kagent-bundled
+  (`kmcp.enabled: true`), not standalone. Controller
+  `kagent-kmcp-controller-manager` (kmcp 0.3.0). Use FQDN kinds:
+  `mcpserver.kagent.dev` vs `mcpserver.toolhive.stacklok.dev`.
+- Dual-run naming — kmcp CR/Service name **≠** ToolHive Deployment name —
+  **hard rule, proven the hard way**: kmcp names its Deployment after the CR,
+  and the apply fails with immutable-selector `DeploymentFailed` when ToolHive
+  already owns a Deployment of that name (hit on `gofetch`, whose ToolHive CR
+  is the bare short name; `*-mcp`-named ToolHive CRs are safe). If the short
+  name is taken, suffix the kmcp CR (e.g. `<name>-kmcp`) and rename after
+  ToolHive delete. Prefer short CR name → Service DNS
+  `http://{cr}.{ns}.svc.cluster.local:8080/mcp`.
+- File naming — during dual-run: ToolHive stays `mcpserver.yaml`; kmcp is
+  `mcpserver-kmcp.yaml` in the same directory. After ToolHive delete, rename
+  kmcp file to `mcpserver.yaml` (optional cleanup lap).
+- Namespace layout — **keep `mcp-{name}`** with `mcp-server=true`; kmcp CR
+  lands in that NS (not `kagent`).
+- Isolation — kmcp has **no** `permissionProfile` and **no**
+  `automountServiceAccountToken` on the CR. **Accept mounted SA token**
+  (Kyverno `audit-automount-sa-token` will fire). Compensate with
+  `deployment.securityContext` / `podSecurityContext` (drop ALL caps, no
+  privilege escalation, RuntimeDefault seccomp) + Cilium NS labels. Keep
+  `toolhive-system` Cilium allow until Phase 8. Do not claim ToolHive sandbox
+  parity.
+- Client model — keep LiteLLM + RemoteMCPServer URL pointers mid-migration;
+  no second registry.
+- Phase 2 split — 2a (`gofetch`) dropped by scope trim; **2b stdio+proxy**
+  (`searxng` → `firecrawl` → `a2a`). stdio pattern proven: kmcp
+  `transportType: stdio` injects an agentgateway adapter that spawns
+  `deployment.cmd`/`args` over stdio and serves streamable HTTP `/mcp` on
+  `deployment.port` — same shape as ToolHive `proxyMode: streamable-http`.
+  Caveat: agentgateway replaces the image ENTRYPOINT; restate it in `cmd`/
+  `args`. It also **requires `mcp-session-id`** on non-initialize requests
+  (LiteLLM handles sessions; raw curl probes must replay the header).
+- Grafana / Discord — late phases; see inventory.
+- ToolHive retain — default none; exceptions go in Decisions + follow-up issue.
+
+## Proven pattern (copy for Phase 2+)
+
+Reference implementation:
+`flux/manifests/04-apps/artificial-intelligence/mcp-servers/osv/mcpserver-kmcp.yaml`
+
+```yaml
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: <short-name> # ≠ ToolHive Deployment name
+  namespace: mcp-<name>
+spec:
+  transportType: http # ToolHive streamable-http → http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    image: <same as ToolHive>
+    port: 8080
+    env:
+      MCP_PORT: "8080"
+      FASTMCP_PORT: "8080"
+      MCP_TRANSPORT: streamable-http # when the image expects it
+    # resources: match ToolHive
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+```
+
+LiteLLM flip target: `http://<short-name>.mcp-<name>.svc.cluster.local:8080/mcp`
+
+## Per-server cutover checklist
+
+1. Add `mcpserver-kmcp.yaml` in the same `mcp-*` NS (dual-run); wire into
+   `kustomization.yaml`
+2. Local: `kustomize build` + prettier + Trivy on touched paths
+3. Apply (operator): `kubectl apply -k …/mcp-servers/<name>`
+4. Wait `mcpserver.kagent.dev/<cr>` Ready; confirm Service name = CR name
+5. Probe **kmcp URL directly** from `litellm` NS (curl MCP initialize /
+   tools/list / one tool) before touching clients
+6. Edit `litellm/litellm.yml` URL; for iterative apply also patch ConfigMap
+   `litellm-config` key `models.yaml` and
+   `kubectl rollout restart deployment/litellm -n litellm` (Flux alone is slow
+   for lap feedback)
+7. If the server has agent RemoteMCPServers: flip those URLs too (FQDN). Files
+   under `flux/.../agents/*/remotemcpserver.yaml`
+8. Re-probe via LiteLLM MCP tool (e.g. `osv-query_vulnerability`)
+9. Soak (see exit criteria), then delete ToolHive `MCPServer`; confirm no
+   orphaned `*-proxy` Service
+10. Tick plan checkbox; refine Notes if anything hurt
+
+**Cilium:** keep `mcp-server` / `mcp-client` labels. Negative probe (unlabeled
+NS deny) — once per phase or when networking changes; not a per-server gate.
 
 ## Inventory (all 18)
 
-| Server    | Complexity signals                                                         | Phase |
-| --------- | -------------------------------------------------------------------------- | ----- |
-| osv       | true baseline: streamable-http, dedicated image, no env/args; LiteLLM-only | 1     |
-| gofetch   | near-baseline: streamable-http + user-agent arg; + search RemoteMCPServer  | 2     |
-| searxng   | stdio + proxyMode; `SEARXNG_URL` dep; RemoteMCPServer                      | 2     |
-| firecrawl | stdio + proxyMode; node/npx runtime; Firecrawl dep; RemoteMCPServer        | 2     |
-| a2a       | stdio + proxyMode; python/pip runtime; A2A bridge role                     | 2     |
-| unifi     | secret                                                                     | 3     |
-| gitlab    | secret                                                                     | 3     |
-| github    | auth (PAT / headers; no local secret.yaml)                                 | 3     |
-| servarr   | secret                                                                     | 3     |
-| plex      | secret                                                                     | 3     |
-| truenas   | secret                                                                     | 3     |
-| proxmox   | secret                                                                     | 3     |
-| qdrant    | secret + external vector DB                                                | 3     |
-| mkp       | cluster RBAC                                                               | 4     |
-| flux      | cluster RBAC                                                               | 4     |
-| openzim   | PVC/SMB + OnePasswordItem + pip runtime                                    | 5     |
-| grafana   | header auth (no local secret.yaml) + kagent built-in overlap               | 6     |
-| discord   | secret + Discord A2A coupling                                              | 7     |
-
-Phase 2 order: **gofetch → searxng → firecrawl → a2a**.
+| Server    | Complexity signals                                                  | Phase  |
+| --------- | ------------------------------------------------------------------- | ------ |
+| osv       | pilot done (kmcp cutover live); unused → retire both CRs            | decomm |
+| gofetch   | unused; redundant w/ searxng `web_url_read` + firecrawl; name clash | decomm |
+| mkp       | unused; flux MCP covers k8s reads                                   | decomm |
+| searxng   | dual-run Ready + probed (4 tools); client flip pending              | 2b     |
+| firecrawl | dual-run Ready + probed (26 tools); client flip pending             | 2b     |
+| a2a       | stdio + proxyMode; pip runtime; A2A bridge                          | 2b     |
+| unifi     | secret                                                              | 3      |
+| gitlab    | secret                                                              | 3      |
+| github    | auth (PAT / headers; no local secret.yaml)                          | 3      |
+| servarr   | secret                                                              | 3      |
+| plex      | secret                                                              | 3      |
+| truenas   | secret                                                              | 3      |
+| proxmox   | secret                                                              | 3      |
+| qdrant    | secret + external vector DB                                         | 3      |
+| flux      | cluster RBAC                                                        | 4      |
+| openzim   | PVC/SMB + OnePasswordItem + pip runtime                             | 5      |
+| grafana   | header auth + kagent built-in overlap                               | 6      |
+| discord   | secret + Discord A2A coupling                                       | 7      |
 
 ## Steps
 
-### Phase 0 — Foundations (before cutting any traffic)
+### Phase 0 — Foundations
 
-- [x] Confirm kmcp controller/CRDs live — **kagent-bundled**
-      (`kmcp.enabled: true`); API **`kagent.dev/v1alpha1`**; controller
-      `kagent-kmcp-controller-manager` @ kmcp 0.3.0; zero `kagent.dev`
-      MCPServers today. Use FQDN kinds
-      (`mcpserver.kagent.dev` vs `mcpserver.toolhive.stacklok.dev`).
-- [x] Diff ToolHive vs kmcp fields used here:
-      `image` → `deployment.image`; `streamable-http` → `transportType: http`;
-      ToolHive `mcp-{name}-proxy` Service vs kmcp Service **named as CR**;
-      env `secretKeyRef` → kmcp `secretRefs` (volume mounts, not env inject);
-      `serviceAccount` → `deployment.serviceAccountName`; volumes via
-      `deployment.volumes` / `volumeMounts`; **no** `permissionProfile`.
-- [x] Dual-run Service DNS shape — distinct CR/Service name (e.g. `osv`);
-      LiteLLM one-URL flip to `http://osv.mcp-osv.svc.cluster.local:8080/mcp`;
-      no temporary alias required if the name is intentional.
-- [ ] Draft per-server cutover checklist (apply kmcp CR → Ready → probe tool →
-      flip clients → delete ToolHive CR → refine plan); add “set
-      `kagent.dev/discovery=disabled` if avoiding auto-discovery”
-- [ ] Note Cilium: keep `mcp-server` / `mcp-client` NS labels; schedule
-      `toolhive-system` ingress allow removal for Phase 8
-- [ ] Phase 0 security gates (block client flip until done):
-  - [ ] kmcp `MCPServer` deploys into `mcp-{name}` with `mcp-server=true`
-  - [ ] Compensating isolation fields present (`automountServiceAccountToken:
-false`, non-root / drop caps / seccomp where CR allows)
-  - [ ] Distinct Services — no shared Endpoints mixing ToolHive proxy + kmcp
-  - [ ] Assert kmcp does **not** create Gateway/HTTPRoute for MCP
-  - [ ] Document secretRef pattern for Phase 3 (volume vs env) — dry-run from
-        Phase 1 refine; do not learn it on live Phase 3 creds
-- [ ] **Refine this plan:** fill remaining CRD gaps into later phases; mark
-      servers kmcp cannot host; adjust phase order if needed
+- [x] kmcp live via kagent-bundled; API `kagent.dev/v1alpha1`
+- [x] Field diff ToolHive ↔ kmcp (image, transport, Service naming, secrets,
+      SA, volumes; no permissionProfile / no automountSA on CR)
+- [x] Dual-run DNS shape (CR-named Service; LiteLLM one-URL flip)
+- [x] Isolation Decision: accept mounted SA; require container hardening
+- [x] Cutover checklist + proven pattern captured (this refine)
+- [ ] Optional once: Cilium negative probe unlabeled NS → `osv` Service deny;
+      `litellm` allow
+- [ ] Before Phase 3: dry-run / document kmcp `secretRefs` (volume) vs ToolHive
+      `secretKeyRef` (env) — do not learn on live Phase 3 creds
 
-### Phase 1 — Pilot vertical slice: `osv`
+### Phase 1 — Pilot: `osv` (client cutover done)
 
-- [x] Author kmcp `MCPServer` named `osv` in `mcp-osv` beside ToolHive CR
-      (`mcpserver-kmcp.yaml`; port 8080, path `/mcp`, env as needed)
-- [x] Dual-run applied: both Ready; Service `osv` + Deployment `osv` up;
-      direct probe from `litellm` NS — `initialize` / `tools/list` /
-      `query_vulnerability` (lodash npm 4.17.15) returned GHSA vulns on
-      `http://osv.mcp-osv.svc.cluster.local:8080/mcp`. No auto
-      `RemoteMCPServer` for osv observed.
-- [ ] Cilium gate: unlabeled NS cannot reach kmcp Service; `mcp-client` can
-- [x] SA token is mounted (Kyverno `audit-automount-sa-token` PolicyViolation);
-      accepted for kmcp because kagent is Kubernetes-integrated and the CRD
-      cannot set `automountServiceAccountToken: false`. Container hardening
-      remains required.
-- [x] Flip **only**
-      `flux/manifests/04-apps/artificial-intelligence/litellm/litellm.yml`
-      `mcp_servers.osv.url` from
-      `http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp`
-      to `http://osv.mcp-osv.svc.cluster.local:8080/mcp` — no RemoteMCPServer
-      refs for osv
-- [x] Re-probe via LiteLLM after rollout; `osv-query_vulnerability` returned
-      expected GHSA results through the kmcp endpoint
-- [ ] After soak, delete ToolHive `MCPServer` for osv; confirm no orphaned proxy
-      Service still serving
-- [ ] Update `mcp-deployment` skill with the proven pattern (kmcp-first draft)
-- [ ] **Refine this plan:** capture gotchas (labels, ports, paths, probes,
-      renovate image pins, secretRef dry-run notes for Phase 3); tighten Phase
-      2 checklist from what hurt
+- [x] Author `mcpserver-kmcp.yaml`; dual-run Ready; direct + LiteLLM probes
+- [x] Flip LiteLLM `mcp_servers.osv.url` →
+      `http://osv.mcp-osv.svc.cluster.local:8080/mcp`
+- [x] Re-probe after push (`osv-query_vulnerability` / lodash npm 4.17.15)
+- ~~Soak exit / ToolHive CR delete~~ — superseded: osv moves to the
+  Decommission lap (both CRs go)
+- [ ] Draft kmcp-first update to `.agents/skills/mcp-deployment/SKILL.md`
+      (do not wait for Phase 8)
 
-### Phase 2 — Stateless peers (ordered)
+### Phase 2a — `gofetch` (dropped)
 
-- [ ] `gofetch` — migrate + LiteLLM + `agents/search/remotemcpserver.yaml` flip + ToolHive CR delete (SSRF/isolation canary)
-- [ ] `searxng` — same; normalize RemoteMCPServer short DNS to FQDN on flip
-- [ ] `firecrawl` — migrate + client flip + ToolHive CR delete
-- [ ] `a2a` — migrate + client flip + ToolHive CR delete (last: runtime install + bridge blast)
-- [ ] **Refine this plan:** collapse repeated steps into a short playbook
-      section; note any a2a-specific surprises for agents using A2A tools
+Skipped by scope trim. The 2026-07-25 apply attempt also proved the naming
+hard rule (kmcp Deployment `gofetch` vs ToolHive-owned Deployment `gofetch`,
+immutable selector). Draft reverted from the repo; failed kmcp CR
+`mcpserver.kagent.dev/gofetch` still needs deleting on-cluster (Decommission
+lap). ToolHive gofetch keeps serving clients until decommission.
+
+### Phase 2b — Stdio + proxyMode peers
+
+- [x] `searxng` — dual-run applied 2026-07-25; Ready; direct probe from
+      `litellm` NS OK (initialize + 4 tools via `mcp-session-id` replay)
+- [x] `firecrawl` — dual-run applied 2026-07-25; Ready; direct probe OK
+      (26 tools)
+- [ ] Flip clients for both: LiteLLM `litellm.yml` **and**
+      `flux/.../agents/search/remotemcpserver.yaml` (`searxng-mcp`,
+      `firecrawl-mcp`); normalize short DNS to FQDN; re-probe via LiteLLM
+- [ ] Delete ToolHive CRs (`searxng-mcp`, `firecrawl-mcp`) after soak;
+      confirm no orphaned `*-proxy` Services
+- [ ] `a2a` — last; pip runtime + bridge blast; LiteLLM-only URL count but
+      higher operational risk
+- [ ] **Refine:** stdio playbook snippet; a2a surprises
 
 ### Phase 3 — Secret-backed servers
 
-- [ ] `unifi`
-- [ ] `gitlab`
-- [ ] `github`
-- [ ] `servarr`
-- [ ] `plex`
-- [ ] `truenas`
-- [ ] `proxmox`
-- [ ] `qdrant`
-- [ ] For each: 1Password Item / kmcp `secretRefs` wiring matches ToolHive
-      intent; probe one authenticated tool; flip LiteLLM + RemoteMCPServer;
-      delete ToolHive CR
-- [ ] **Refine this plan:** document canonical secretRef pattern for kmcp;
-      call out any server that needed ToolHive-only permission profiles
+- [ ] `unifi`, `gitlab`, `github`, `servarr`, `plex`, `truenas`, `proxmox`,
+      `qdrant`
+- [ ] For each: 1Password Item + kmcp `secretRefs` matches ToolHive intent;
+      probe one authenticated tool; flip clients; delete ToolHive CR
+- [ ] **Refine:** canonical secretRef pattern
 
 ### Phase 4 — Cluster RBAC servers
 
-- [ ] `mkp` — port ServiceAccount / Role / RoleBinding (or ClusterRole) to
-      kmcp serviceAccount model; least privilege preserved
-- [ ] `flux` — same for Flux CR access
-- [ ] Probe read-only list tools; flip clients; delete ToolHive CRs
-- [ ] **Refine this plan:** RBAC checklist for future MCP with cluster access;
-      flag if kmcp SA model forced a privilege change
+- [ ] `flux` — port SA / Role(Binding) / ClusterRole to kmcp
+      `serviceAccountName`; least privilege (`mkp` dropped by scope trim)
+- [ ] Probe list tools; flip; delete ToolHive CR
+- [ ] **Refine:** RBAC checklist
 
-### Phase 5 — Persistent storage: `openzim`
+### Phase 5 — `openzim` (PVC)
 
-- [ ] Map ToolHive PVC / volume mounts to kmcp volumes + volumeMounts
-- [ ] Confirm ZIM data path survives cutover (no silent empty volume)
-- [ ] Flip clients; delete ToolHive CR
-- [ ] **Refine this plan:** storage playbook snippet; note reclaim / mount
-      gotchas for any future PVC-backed MCP
+- [ ] Map volumes/mounts; confirm ZIM path survives; flip; delete ToolHive CR
+- [ ] **Refine:** storage playbook
 
-### Phase 6 — `grafana` (overlap with kagent built-in)
+### Phase 6 — `grafana`
 
-- [ ] Inventory callers: LiteLLM `grafana`, agent RemoteMCPServers, kagent
-      `tools.grafana-mcp` / subchart
-- [ ] Migrate `mcp-servers/grafana` to kmcp without assuming the built-in
-      subchart replaces it
-- [ ] Flip clients; delete ToolHive CR
-- [ ] **Refine this plan:** decide whether kagent built-in grafana-mcp stays,
-      consolidates, or gets a follow-up issue
+- [ ] Inventory LiteLLM / agent remotes / kagent `grafana-mcp` subchart
+- [ ] Migrate without assuming built-in replaces it; flip; delete ToolHive CR
+- [ ] **Refine:** keep / consolidate / follow-up issue for built-in
 
-### Phase 7 — `discord` (coordinate with A2A issue)
+### Phase 7 — `discord`
 
-- [ ] Check status of `docs/issues/discord-integration-upstream-a2a.md`; note
-      shared bot token / bridge assumptions
-- [ ] Migrate Discord MCP to kmcp; keep outbound tools working for homelab
-      agent
-- [ ] Flip clients; delete ToolHive CR
-- [ ] **Refine this plan:** record bridge coupling; open follow-ups on the
-      Discord A2A issue if needed (do not expand this plan into bridge rewrite)
+- [ ] Coordinate with `docs/issues/discord-integration-upstream-a2a.md`
+- [ ] Migrate; flip; delete ToolHive CR
+- [ ] **Refine:** bridge coupling notes only (no bridge rewrite in this plan)
+
+### Decommission lap — `osv`, `gofetch`, `mkp` (scheduled, before Phase 8)
+
+Dedicated cleanup lap; servers keep running as-is until then.
+
+- [ ] `gofetch` — delete failed kmcp CR `mcpserver.kagent.dev/gofetch`
+      (mcp-gofetch); remove LiteLLM `mcp_servers.gofetch`, `gofetch-mcp`
+      RemoteMCPServer (agent-search), manifests dir + parent kustomization
+      entry; delete ToolHive CR + namespace
+- [ ] `mkp` — remove LiteLLM `mcp_servers.mkp`; manifests dir + parent
+      kustomization; delete ToolHive CR + namespace (+ its RBAC)
+- [ ] `osv` — remove LiteLLM `mcp_servers.osv`; delete kmcp CR `osv` and
+      ToolHive CR `osv-vulnerability-scanner`; manifests dir + parent
+      kustomization; delete namespace
+- [ ] Verify no agent/LiteLLM references remain (grep litellm.yml,
+      remotemcpserver.yaml, kagent agent configs)
+- [ ] **Refine:** none expected; this shrinks Phases 3–8 surface
 
 ### Phase 8 — ToolHive teardown and docs
 
-- [ ] Confirm zero ToolHive `MCPServer` CRs remain (or listed exceptions)
+- [ ] Zero ToolHive MCPServers (or listed exceptions)
 - [ ] Remove / suspend ToolHive HelmRelease under `03-services/toolhive/`
-- [ ] Drop Cilium allow for `toolhive-system` from `mcp-server-isolation`
-- [ ] Finish `mcp-deployment` skill + `mcp-servers/README.md` +
-      `kagent/README.md` (kmcp-first; no ToolHive-first guidance)
-- [ ] File delete-follow-up issue only if CRDs/operator must linger briefly
-- [ ] **Refine this plan → done:** tick related issue acceptance; delete this
-      plan file on ship (ledger delete-on-ship)
-
-## Per-server cutover checklist (living)
-
-Copy for each server; amend in Phase refine steps:
-
-1. Add kmcp CR in same `mcp-*` namespace (dual-run with ToolHive); CR name ≠
-   ToolHive Deployment name
-2. Wait Ready; `kustomize build` + yamllint + Trivy on touched paths
-3. Probe one tool via LiteLLM (and kagent RemoteMCPServer if applicable)
-4. Flip LiteLLM URL; flip RemoteMCPServer URL(s) when present
-5. Re-probe; Cilium negative probe still holds
-6. Delete ToolHive `MCPServer` for that server; confirm no orphaned proxy
-7. Update this plan checkbox + refine notes
+- [ ] Drop Cilium `toolhive-system` allow from `mcp-server-isolation`
+- [ ] Finish skill + `mcp-servers/README.md` + `kagent/README.md` (kmcp-first)
+- [ ] Follow-up issue only if CRDs must linger
+- [ ] **Done:** tick issue acceptance; delete this plan on ship
 
 ## Feedback loop
 
-- `kustomize build flux/manifests/04-apps/artificial-intelligence/mcp-servers`
-- `yamllint` on changed manifests
-- Trivy on changed paths (`user-trivy` / project scanner)
-- Read-only: list kmcp + ToolHive MCP CRs (`mcpserver.kagent.dev` /
-  `mcpserver.toolhive.stacklok.dev`); HelmRelease status for kagent /
-  toolhive
-- Functional: one tool call per migrated server via LiteLLM (and critical
-  agent paths); no cluster mutate without ask
-- Security probes:
-  - Unauthorized ingress deny (unlabeled NS → MCP Service)
-  - Authorized ingress allow (`litellm` / `kagent`)
-  - No Gateway/HTTPRoute owned by osv/kmcp in `mcp-osv`
-  - Pod inspect: no automounted SA token; no unexpected secret volumes on osv
+- `kustomize build` on touched `mcp-servers/<name>` and (when flipping)
+  `litellm/`
+- prettier / yamllint on changed manifests
+- Trivy on changed paths (`user-trivy`)
+- Read-only: `mcpserver.kagent.dev` + `mcpserver.toolhive.stacklok.dev`;
+  HelmRelease kagent / toolhive
+- Functional: one LiteLLM MCP tool call per migrated server; agent RemoteMCP
+  path when applicable
+- Security (per migrate, not fantasy SA-off):
+  - Caps / seccomp present on kmcp Deployment
+  - No Gateway/HTTPRoute for the MCP Service
+  - Cilium labels intact; optional unlabeled-NS deny probe per phase
 
 ## Notes
 
-- Likely paths: `flux/.../mcp-servers/`, `03-services/toolhive/`,
-  `.agents/skills/mcp-deployment/SKILL.md`, agent `remotemcpserver.yaml`s,
-  `litellm/litellm.yml`
+- Paths: `flux/.../mcp-servers/`, `03-services/toolhive/`,
+  `.agents/skills/mcp-deployment/SKILL.md`,
+  `agents/*/remotemcpserver.yaml`, `litellm/litellm.yml`
 - Related: `docs/issues/discord-integration-upstream-a2a.md`
 - Upstream: [kmcp / kagent docs](https://kagent.dev/docs/)
 - Implement via `implement-change` / `manifest-implementer` +
-  `manifest-verifier` per phase; HITL throughout
-- Skill + kagent README still ToolHive-first until Phase 1 refine lands
-
-### Director refine (2026-07-24)
-
-Fan-out locked Phase 1 on **osv**: inventory (complexity rank), kmcp
-foundations (API + dual-run DNS), client wiring (LiteLLM-only flip), security
-(isolation gap + Cilium gates).
-
-Apply (2026-07-24): kmcp `osv` Ready in ~10s; env/`port`/`path` worked first
-try; LiteLLM-NS curl tool call succeeded; no osv `RemoteMCPServer` auto-
-created. Kyverno audit fail: SA token mounted via SA `osv` — CRD gap remains.
-Follow-ups before LiteLLM flip: Cilium negative probe; decide SA-token
-compensation (upstream kmcp field, Kyverno mutate, or accept + document).
-`runAsNonRoot` / `readOnlyRootFilesystem` still deferred.
+  `manifest-verifier`; HITL for apply
+- Next lap: flip searxng + firecrawl clients (LiteLLM + RemoteMCPServers),
+  or run the Decommission lap (osv / gofetch / mkp)

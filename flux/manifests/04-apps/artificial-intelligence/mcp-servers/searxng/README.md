@@ -13,11 +13,19 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Connection to internal SearXNG instance
 
+During the kmcp migration this namespace runs two MCPServer CRs side by side:
+the ToolHive CR `searxng-mcp` (`mcpserver.yaml`) and the kmcp CR `searxng`
+(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). The kmcp CR is served at
+`http://searxng.mcp-searxng.svc.cluster.local:8080/mcp`. LiteLLM and
+RemoteMCPServer still point at ToolHive until cutover.
+
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode. This avoids HTTP 400 errors from strict MCP session handling that can break LiteLLM's MCP client.
+ToolHive uses `transport: stdio` with `proxyMode: streamable-http`. The kmcp
+dual-run CR uses `transportType: stdio`; agentgateway wraps the MCP process
+over stdio and exposes HTTP `/mcp` (and `/sse`) on port 8080.
 
 ### Environment Variables
 
