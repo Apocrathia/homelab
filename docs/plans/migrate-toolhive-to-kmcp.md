@@ -81,6 +81,25 @@ plan so the next migration is cheaper.
   Caveat: agentgateway replaces the image ENTRYPOINT; restate it in `cmd`/
   `args`. It also **requires `mcp-session-id`** on non-initialize requests
   (LiteLLM handles sessions; raw curl probes must replay the header).
+- agentgateway stdio gotchas (2026-07-25, hit on proxmox/a2a/plex) — the
+  adapter is not a plain shell exec; three failure modes to design around:
+  1. **Premature `$VAR` expansion** — agentgateway interpolates `$FOO` in its
+     generated adapter config before the stdio shell runs, so `export
+FOO="$(cat /secret)"` then referencing `$FOO` later yields empty. Fix:
+     read the secret file **inline** where the value is used (proxmox writes
+     `$(cat /var/run/secrets/mcp/...)` straight into its `config.json`
+     heredoc).
+  2. **Service-link env clash** — a kmcp Service named `<x>` makes kubelet
+     inject `X_PORT=tcp://<ip>:8080`; agentgateway inherits it into the child.
+     CR `deployment.env` does **not** win (CRD has no `enableServiceLinks`).
+     Fix: `export X_PORT=<real>` in the startup command (a2a needed
+     `A2A_PORT=41241`). Watch any app reading an env var named after its
+     Service. Tracked: `docs/issues/kmcp-service-port-decoupling.md`.
+  3. **Per-session respawn, persistent `/tmp`** — agentgateway respawns
+     `cmd`/`args` per MCP session while the pod filesystem persists, so
+     startup steps must be idempotent. `git clone` fails on the 2nd session
+     with "destination path already exists"; guard it (plex uses
+     `{ [ -d repo ] || git clone …; }`).
 - Grafana / Discord — late phases; see inventory.
 - ToolHive retain — default none; exceptions go in Decisions + follow-up issue.
 
@@ -147,25 +166,33 @@ NS deny) — once per phase or when networking changes; not a per-server gate.
 
 ## Inventory
 
-| Server    | Complexity signals                                                   | Phase |
-| --------- | -------------------------------------------------------------------- | ----- |
-| searxng   | dual-run Ready; LiteLLM + RemoteMCP on kmcp                          | 2b    |
-| firecrawl | dual-run Ready; LiteLLM + RemoteMCP on kmcp                          | 2b    |
-| a2a       | Git draft Ready; CR `a2a`; client URL drafted                        | 2b    |
-| unifi     | Git draft; CR `unifi-kmcp` (name collision avoid); secret volume map | 3     |
-| gitlab    | Git draft; CR `gitlab`; secret volume map                            | 3     |
-| github    | Git draft; CR `github`; header auth only (no pod secret)             | 3     |
-| servarr   | Git draft; CR `servarr`; secret volume map                           | 3     |
-| plex      | Git draft; CR `plex-kmcp`; secret volume map                         | 3     |
-| truenas   | Git draft; CR `truenas-kmcp`; secret volume map                      | 3     |
-| proxmox   | Git draft; CR `proxmox-kmcp`; secret volume map                      | 3     |
-| qdrant    | Git draft; CR `qdrant`; secret volume map                            | 3     |
-| flux      | Git draft; CR `flux-kmcp`; SA `flux-mcp-sa`                          | 4     |
-| openzim   | Git draft; CR `openzim`; PVC `/data` + `/tmp`                        | 5     |
-| grafana   | Git draft; CR `grafana`; header auth; built-in overlap noted         | 6     |
-| discord   | Git draft; CR `discord`; secret volume map; bridge untouched         | 7     |
+| Server    | Complexity signals                                               | Phase | kmcp probe (2026-07-25) |
+| --------- | ---------------------------------------------------------------- | ----- | ----------------------- |
+| searxng   | LiteLLM + RemoteMCP on kmcp                                      | 2b    | OK                      |
+| firecrawl | LiteLLM + RemoteMCP on kmcp                                      | 2b    | OK                      |
+| a2a       | CR `a2a`; stdio; needed `A2A_PORT` export (service-link clash)   | 2b    | 7 tools                 |
+| unifi     | CR `unifi-kmcp` (name collision avoid); secret volume map        | 3     | 185 tools               |
+| gitlab    | CR `gitlab`; secret volume map                                   | 3     | 50 tools                |
+| github    | CR `github`; header auth only (no pod secret)                    | 3     | 401 (header auth)       |
+| servarr   | CR `servarr`; secret volume map                                  | 3     | 14 tools                |
+| plex      | CR `plex-kmcp`; stdio git clone; secret volume map               | 3     | 55 tools                |
+| truenas   | CR `truenas-kmcp`; secret volume map                             | 3     | 27 tools                |
+| proxmox   | CR `proxmox-kmcp`; inline secret reads (agentgateway var expand) | 3     | 42 tools                |
+| qdrant    | CR `qdrant`; secret volume map                                   | 3     | 2 tools                 |
+| flux      | CR `flux-kmcp`; SA `flux-mcp-sa`                                 | 4     | 15 tools                |
+| openzim   | CR `openzim`; PVC `/data` + `/tmp`                               | 5     | 8 tools                 |
+| grafana   | CR `grafana`; header auth; built-in overlap noted                | 6     | 403 (header auth)       |
+| discord   | CR `discord`; secret volume map; bridge untouched                | 7     | 75 tools                |
 
 Retired (decommission lap): `osv`, `gofetch`, `mkp`.
+
+**Rollout status (2026-07-25):** all 13 kmcp CRs applied and Ready; every
+server probed from the `litellm` NS. 11 return tools; `github` (401) and
+`grafana` (403) reject server-side because they carry no creds by design —
+LiteLLM forwards caller `Authorization` / `X-Grafana-API-Key`, so they only
+validate through a client with a token. LiteLLM `litellm.yml` + all agent
+`remotemcpserver.yaml` URLs already point at the kmcp Services. Remaining
+work is soak → ToolHive CR deletes (Phase 2b/3-7 tails) + Phase 8 teardown.
 
 **Apply-order hard rule (2026-07-25):** all remaining LiteLLM + RemoteMCP
 URLs already point at kmcp Services in Git. **Do not push/apply client flips
@@ -197,8 +224,7 @@ read-only volume and export env vars to preserve ToolHive names.
 - [x] Author `mcpserver-kmcp.yaml`; dual-run Ready; direct + LiteLLM probes
 - [x] Flip LiteLLM `mcp_servers.osv.url` → kmcp Service
 - [x] Re-probe after push
-- [x] Decommissioned (Git) — see Decommission lap; on-cluster delete pending
-      apply
+- [x] Decommissioned (Git + on-cluster) — see Decommission lap
 - [ ] Draft kmcp-first update to `.agents/skills/mcp-deployment/SKILL.md`
       (do not wait for Phase 8)
 
@@ -216,42 +242,53 @@ Skipped by scope trim. Naming hard rule proven on apply (kmcp Deployment
       → kmcp FQDN; `gofetch-mcp` removed from agent-search
 - [ ] Delete ToolHive CRs (`searxng-mcp`, `firecrawl-mcp`) after soak;
       confirm no orphaned `*-proxy` Services
-- [x] `a2a` — Git dual-run draft (CR `a2a`); LiteLLM URL drafted
-- [ ] Apply/probe `a2a` kmcp; then let LiteLLM flip land; delete ToolHive CR
-      after soak
-- [ ] **Refine:** stdio playbook snippet; a2a surprises
+- [x] `a2a` — applied; Ready; 7 tools via LiteLLM. Needed an `A2A_PORT` export
+      in the startup command (service-link clash, see Decisions)
+- [ ] Delete ToolHive CR `a2a-mcp-server` after soak
+- [x] **Refine:** stdio playbook snippet; a2a surprises → agentgateway
+      service-link gotcha captured in Decisions
 
 ### Phase 3 — Secret-backed servers
 
 - [x] Git drafts for `unifi-kmcp`, `gitlab`, `github`, `servarr`, `plex-kmcp`,
       `truenas-kmcp`, `proxmox-kmcp`, `qdrant` + LiteLLM/RemoteMCP URL drafts
-- [ ] Apply/probe each kmcp CR (start with one secret server); then allow
-      client flips; delete ToolHive CRs after soak
+- [x] Apply/probe each kmcp CR — all Ready; tool counts in Inventory. `github`
+      401 (header auth, expected). `proxmox-kmcp` needed inline secret reads
+      (agentgateway var-expand, see Decisions). `plex-kmcp` needed idempotent
+      git clone.
+- [ ] Delete ToolHive CRs after soak (`unifi-network-mcp`, `gitlab-mcp`,
+      `github-mcp-server`, `servarr-mcp`, `plex-mcp-server`, `truenas-mcp`,
+      `proxmox-mcp-plus`, `qdrant-mcp` — confirm exact names on delete)
 - [x] **Refine:** hyphenated keys need volume mount + export (not bare
       `secretRefs`/`envFrom`)
 
 ### Phase 4 — Cluster RBAC servers
 
 - [x] `flux` Git draft — CR `flux-kmcp`, `serviceAccountName: flux-mcp-sa`
-- [ ] Apply/probe; flip live; delete ToolHive CR
-- [ ] **Refine:** RBAC checklist
+- [x] Applied; Ready; 15 tools via LiteLLM; clients on kmcp
+- [ ] Delete ToolHive CR after soak
+- [ ] **Refine:** RBAC checklist (SA mount worked; no extra steps hit)
 
 ### Phase 5 — `openzim` (PVC)
 
 - [x] Git draft — CR `openzim`; PVC `/data` RO + `/tmp` emptyDir
-- [ ] Apply/probe ZIM path; flip live; delete ToolHive CR
-- [ ] **Refine:** storage playbook
+- [x] Applied; Ready; 8 tools via LiteLLM; clients on kmcp
+- [ ] Delete ToolHive CR after soak
+- [ ] **Refine:** storage playbook (RO PVC mount worked as drafted)
 
 ### Phase 6 — `grafana`
 
 - [x] Git draft — CR `grafana`; built-in overlap documented in README
-- [ ] Apply/probe; flip live; delete ToolHive CR
+- [x] Applied; Ready; server-side probe 403 (header auth, expected — validates
+      only with caller `X-Grafana-API-Key`); clients on kmcp
+- [ ] Delete ToolHive CR after soak
 - [ ] **Refine:** keep / consolidate / follow-up issue for built-in
 
 ### Phase 7 — `discord`
 
 - [x] Git draft — CR `discord`; secret volume map; bridge untouched
-- [ ] Apply/probe; flip live; delete ToolHive CR
+- [x] Applied; Ready; 75 tools via LiteLLM; clients on kmcp
+- [ ] Delete ToolHive CR after soak
 - [ ] **Refine:** bridge coupling notes only (no bridge rewrite in this plan)
 
 ### Decommission lap — `osv`, `gofetch`, `mkp`
@@ -260,11 +297,10 @@ Skipped by scope trim. Naming hard rule proven on apply (kmcp Deployment
       `gofetch-mcp` RemoteMCPServer + agent tool binding; drop
       `mcp-servers/{osv,gofetch,mkp}/` and parent kustomization entries;
       trim mcpo `config.json` + READMEs
-- [ ] On-cluster (operator apply): delete failed
-      `mcpserver.kagent.dev/gofetch` (mcp-gofetch); delete namespaces
-      `mcp-osv`, `mcp-gofetch`, `mcp-mkp` (or delete CRs then NS); confirm
-      ClusterRole/Binding for mkp gone with NS teardown
-- [ ] Verify no live refs remain after Flux reconcile
+- [x] On-cluster (verified 2026-07-25): namespaces `mcp-osv`, `mcp-gofetch`,
+      `mcp-mkp` already gone; no leftover kmcp/ToolHive CRs; no mkp
+      ClusterRole/Binding; LiteLLM config clean of all three
+- [x] Verify no live refs remain
 - [x] **Refine:** decommission shrinks Phase inventory; proven-pattern ref
       retargeted to searxng/firecrawl
 
@@ -301,6 +337,14 @@ Skipped by scope trim. Naming hard rule proven on apply (kmcp Deployment
 - Upstream: [kmcp / kagent docs](https://kagent.dev/docs/)
 - Implement via `implement-change` / `manifest-implementer` +
   `manifest-verifier`; HITL for apply
-- Next lap: **apply kmcp dual-run CRs first** (batch by phase), probe Ready,
-  then push/apply LiteLLM + RemoteMCP flips; decommission NS deletes still
-  pending on-cluster (`mcp-osv`, `mcp-gofetch`, `mcp-mkp`)
+- Ship commits to **`main`**, not a feature branch — Flux tracks `main`, so a
+  cutover commit on another branch is invisible on-cluster and a later
+  `main`-reconcile silently reverts a direct `kubectl apply` back to the old
+  spec. (Hit 2026-07-25: a2a/plex fix landed on `feat/…` first and got
+  clobbered; cherry-picked to `main` to stick.)
+- Next lap: **soak in progress** (started 2026-07-25) — agents hitting kmcp
+  tools via LiteLLM/RemoteMCP. After soak: delete ToolHive CRs for every
+  migrated server (2b/3-7 tails), confirm no orphaned `*-proxy` Services,
+  then Phase 8 teardown. Note `apps-ai` Kustomization is DependencyNotReady
+  (`services-cert-manager`) — kmcp applies stay operator-driven until it
+  resumes.

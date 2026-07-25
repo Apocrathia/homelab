@@ -249,8 +249,8 @@ ate-api-server / ate-controller / atenet DNS+router + atelet DaemonSet (×nodes)
 - [ ] Defer Hermes AgentHarness until stable kagent 0.10. kagent 0.9.12 accepts
       the CRD shape but the substrate controller returns `BackendUnavailable`
       for `backend: hermes`.
-- [ ] Keep Flux `apps-ai` suspended until commit+push of the resident harness
-      migration; resume only after that revision is on the remote.
+- [x] Flux `apps-ai` resumed after commit+push of the resident harness
+      migration.
 
 ### Phase 5 — Docs
 
