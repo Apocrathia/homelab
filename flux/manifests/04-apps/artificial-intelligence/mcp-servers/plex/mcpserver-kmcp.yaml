@@ -26,7 +26,9 @@ spec:
         export PLEX_TOKEN="$(cat /var/run/secrets/mcp/plex-token)" &&
         export PLEX_USERNAME="$(cat /var/run/secrets/mcp/plex-username 2>/dev/null || true)" &&
         cd /tmp &&
-        git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git &&
+        # agentgateway respawns this command per MCP session; the clone
+        # must be idempotent because /tmp persists across spawns.
+        { [ -d plex-mcp-server ] || git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git; } &&
         cd plex-mcp-server &&
         pip install --quiet -r requirements.txt aiohttp &&
         exec python plex_mcp_server.py --transport stdio
