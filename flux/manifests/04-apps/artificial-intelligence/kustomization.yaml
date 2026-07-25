@@ -22,4 +22,5 @@ resources:
   - promptfoo
   - pyrit
   - qdrant
+  - substrate
   - tasks

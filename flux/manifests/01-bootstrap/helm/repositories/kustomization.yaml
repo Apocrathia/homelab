@@ -35,6 +35,7 @@ resources:
   - jupyterhub.yaml
   - k8sgpt.yaml
   - kagent.yaml
+  - substrate.yaml
   - litellm.yaml
   - grafana-community.yaml
   - llm-d-modelservice.yaml

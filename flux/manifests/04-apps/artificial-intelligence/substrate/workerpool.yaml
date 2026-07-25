@@ -1,0 +1,15 @@
+---
+apiVersion: ate.dev/v1alpha1
+kind: WorkerPool
+metadata:
+  name: kagent-default
+  namespace: ate-system
+  labels:
+    app.kubernetes.io/name: substrate
+    app.kubernetes.io/component: worker-pool
+    # Owned by kagent platform capacity, hosted in ate-system for PSA privileged
+    kagent.dev/worker-pool: kagent-default
+spec:
+  replicas: 2
+  # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateom-gvisor
+  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.6

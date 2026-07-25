@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: substrate
+  namespace: ate-system
+spec:
+  interval: 30m
+  dependsOn:
+    - name: substrate-crds
+      namespace: ate-system
+  chart:
+    spec:
+      chart: substrate
+      # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
+      version: "0.0.6"
+      sourceRef:
+        kind: HelmRepository
+        name: substrate
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+
+  values:
+    # Namespace owned by namespace.yaml (PSA privileged + dockerhub pull secret)
+    createNamespace: false
+
+    # JWT via projected SA tokens; chart bootstraps TLS + session pools
+    auth:
+      mode: jwt
+      jwt:
+        # Talos kube-apiserver SA issuer (not kind's kubernetes.default.svc default)
+        issuer: https://kubernetes.apocrathia.com:6443
+        audience: api.ate-system.svc
+        bootstrap:
+          enabled: true
+
+    # Pin component images with the chart appVersion (v0.0.6)
+    image:
+      registry: ghcr.io/kagent-dev/substrate
+      # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
+      tag: "v0.0.6"
+
+    # ponytail: RustFS inline chart defaults for smoke only — harden via
+    # docs/issues/substrate-rustfs-credentials.md before treating as durable.
+    rustfs:
+      enabled: true
