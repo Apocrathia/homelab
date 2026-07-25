@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/name: kubernetes-mcp
     app.kubernetes.io/component: mcp-server
 spec:
-  # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp
+  # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp/server
   image: ghcr.io/stackloklabs/mkp/server:0.4.3
   serviceAccount: kubernetes-mcp-sa
   transport: streamable-http
@@ -28,5 +28,5 @@ spec:
     spec:
       containers:
         - name: mcp
-          # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp
+          # renovate: datasource=docker registryUrl=https://ghcr.io depName=stackloklabs/mkp/server
           image: ghcr.io/stackloklabs/mkp/server:0.4.3
