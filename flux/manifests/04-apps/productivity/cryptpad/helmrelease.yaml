@@ -20,7 +20,7 @@ spec:
     app:
       name: cryptpad
       # renovate: datasource=docker depName=cryptpad/cryptpad
-      image: cryptpad/cryptpad:version-2025.9.0
+      image: cryptpad/cryptpad:version-2025.9.0@sha256:353d98ac893158b699dcf345b6c8271dea9200d1015a9d367441625c046486e4
       container:
         name: cryptpad
         port: 3000
