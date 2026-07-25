@@ -1,0 +1,20 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: AgentHarness
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/component: harness
+spec:
+  backend: openclaw
+  runtime: substrate
+  description: Resident OpenClaw coding harness on Agent Substrate
+  modelConfigRef: openclaw-model
+  substrate:
+    # Omit workerPoolRef — controller default is ate-system/kagent-default.
+    # Secret key must be "token" (CRD-hardcoded).
+    gatewayTokenSecretRef:
+      name: openclaw-harness-secrets

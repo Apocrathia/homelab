@@ -11,6 +11,7 @@ resources:
   - postgres.yaml
   - crds-helmrelease.yaml
   - helmrelease.yaml
+  - hello-substrate.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

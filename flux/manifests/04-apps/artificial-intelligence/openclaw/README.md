@@ -1,137 +1,47 @@
 # OpenClaw
 
-Personal AI assistant that runs on your own devices, providing AI agent capabilities through various messaging platforms like WhatsApp, Telegram, and Discord.
+Resident OpenClaw coding harness on Agent Substrate (`AgentHarness`), accessed
+through the kagent UI.
 
 > **Navigation**: [<- Back to AI Applications README](../README.md)
 
 ## Overview
 
-This deployment includes:
+- `AgentHarness/openclaw` — substrate runtime, OpenClaw backend
+- `ModelConfig/openclaw-model` — LiteLLM (`qwen3.6-prime`)
+- `OnePasswordItem/openclaw-harness-secrets` — gateway token + LiteLLM API key
+- Role/RoleBinding `openclaw-ate-api-env-sources` — lets
+  `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
+  namespace (same grant kagent's chart installs in `kagent`)
 
-- OpenClaw Gateway server for AI agent control plane
-- WebSocket + HTTP endpoints on port 18789
-- Control UI and WebChat interfaces
-- Authentik proxy for secure access
+Rollback artifacts kept on disk but **not** in the active kustomization:
 
-## Configuration
+- `helmrelease.yaml` — former generic-app Deployment
+- `openclaw.json` — former ConfigMap payload
 
-### 1Password Secrets
+## Secrets
 
-Create a 1Password item:
+1Password item: `vaults/Secrets/items/openclaw-secrets`
 
-#### openclaw-secrets (`vaults/Secrets/items/openclaw-secrets`)
+| Field             | Used by                                                           |
+| ----------------- | ----------------------------------------------------------------- |
+| `token`           | AgentHarness `gatewayTokenSecretRef` (CRD requires this key name) |
+| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist       |
+| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                      |
 
-- `gateway-token`: Authentication token for Gateway access
-- `litellm-api-key`: API key for LiteLLM proxy
+## Access
 
-Optional secrets for channel integrations:
+- **Primary**: kagent UI → AgentHarness `openclaw` (full OpenClaw Control UI)
+- Former Gateway URL `https://openclaw.gateway.services.apocrathia.com` is
+  retired with the generic-app HelmRelease
 
-- `discord-bot-token`: Discord bot token (if using Discord channel)
-- `telegram-bot-token`: Telegram bot token (if using Telegram channel)
-- `slack-bot-token`: Slack bot token (if using Slack channel)
+## Worker pool
 
-### Storage
-
-- **State Volume**: Longhorn volume for `~/.openclaw` (config, credentials, sessions, workspace)
-
-### Access
-
-- **External URL**: `https://openclaw.gateway.services.apocrathia.com`
-- **Internal Service**: `http://openclaw.openclaw.svc.cluster.local:80`
-- **Gateway Port**: 18789 (WebSocket + HTTP)
-
-## Configuration Method
-
-OpenClaw can be configured through:
-
-- **Environment Variables**: Gateway settings, directory paths, channel tokens
-- **Config File**: `~/.openclaw/openclaw.json` for detailed configuration
-- **CLI**: `openclaw onboard` wizard for initial setup (run inside pod)
-- **Web UI**: Control UI for runtime configuration
-
-## Post-Deployment Setup
-
-After initial deployment, complete these steps to access the Control UI:
-
-### 1. Get the Gateway Token
-
-```bash
-kubectl get secret openclaw-secrets -n openclaw -o jsonpath='{.data.gateway-token}' | base64 -d
-```
-
-### 2. Access the Control UI
-
-Navigate to `https://openclaw.gateway.services.apocrathia.com` and authenticate via Authentik.
-
-The Control UI will show "gateway token missing" - paste the token from step 1 into the settings (gear icon) or use a tokenized URL:
-
-```
-https://openclaw.gateway.services.apocrathia.com/?token=YOUR_TOKEN
-```
-
-Device pairing is enabled. The first time you connect from a new browser profile, OpenClaw will require an approval for that device.
-
-To approve your device (once per browser profile):
-
-```bash
-kubectl exec -n openclaw -it deploy/openclaw -- openclaw devices list
-kubectl exec -n openclaw -it deploy/openclaw -- openclaw devices approve <requestId>
-```
-
-If you clear cookies/cache or switch browsers, you will likely need to approve again.
-
-## Security Considerations
-
-- **Gateway Token**: Required for WebSocket access, stored in 1Password
-- **Authentik Proxy**: Network-layer authentication before reaching Gateway
-- **Non-root User**: Runs as node user (uid 1000)
-- **Device Pairing Required**: First Control UI connection from a new browser profile needs `openclaw devices approve`
-- **DM Pairing**: Default DM policy requires pairing codes for unknown senders
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Gateway Connection Issues**
-
-   ```bash
-   # Check pod logs
-   kubectl logs -n openclaw -l app=openclaw
-
-   # Verify Gateway is listening
-   kubectl port-forward -n openclaw svc/openclaw 18789:80
-   curl http://localhost:18789
-   ```
-
-2. **Storage Permission Issues**
-
-   ```bash
-   # Check volume mounts
-   kubectl exec -n openclaw -it deploy/openclaw -- ls -la /home/node/.openclaw
-   ```
-
-3. **Channel Integration Issues**
-
-   ```bash
-   # Check channel status via CLI
-   kubectl exec -n openclaw -it deploy/openclaw -- openclaw channels status
-   ```
-
-### Health Checks
-
-```bash
-# Overall status
-kubectl get pods,svc,pvc -n openclaw
-
-# Pod status
-kubectl get pods -n openclaw -l app=openclaw
-
-# Gateway logs
-kubectl logs -n openclaw -l app=openclaw --tail=100
-```
+Harness uses the controller default pool `ate-system/kagent-default` (omit
+`workerPoolRef`). Each Ready harness pins a pool slot.
 
 ## References
 
-- **[OpenClaw Documentation](https://docs.openclaw.ai)** - Primary documentation source
-- **[OpenClaw GitHub Repository](https://github.com/openclaw/openclaw)** - Source code and issues
-- **[OpenClaw DeepWiki](https://deepwiki.com/openclaw/openclaw)** - In-depth repository documentation
+- [OpenClaw Documentation](https://docs.openclaw.ai)
+- [Agent Substrate rollout plan](../../../../docs/plans/agent-substrate-rollout.md)
+- [kagent](../kagent/README.md) / [substrate](../substrate/README.md)

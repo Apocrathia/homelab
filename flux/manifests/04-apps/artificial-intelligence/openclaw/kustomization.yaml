@@ -7,12 +7,10 @@ metadata:
 
 resources:
   - namespace.yaml
-  - helmrelease.yaml
-
-configMapGenerator:
-  - name: openclaw-config
-    namespace: openclaw
-    files:
-      - openclaw.json
-    options:
-      disableNameSuffixHash: true
+  - rbac-ate-api.yaml
+  - secret.yaml
+  - modelconfig.yaml
+  - agentharness.yaml
+# Rollback artifacts kept on disk (not active):
+# - helmrelease.yaml (former generic-app OpenClaw)
+# - openclaw.json (former ConfigMap payload)

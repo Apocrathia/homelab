@@ -1,0 +1,35 @@
+---
+# Substrate ate-api-server resolves ActorTemplate env secretKeyRefs.
+# kagent's Helm chart installs an equivalent Role in the kagent namespace;
+# harnesses outside that namespace need the same grant locally.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openclaw-ate-api-env-sources
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/component: rbac
+rules:
+  - apiGroups: [""]
+    resources: [secrets, configmaps]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openclaw-ate-api-env-sources
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openclaw-ate-api-env-sources
+subjects:
+  - kind: ServiceAccount
+    name: ate-api-server
+    namespace: ate-system

@@ -1,0 +1,24 @@
+---
+apiVersion: kagent.dev/v1alpha2
+kind: SandboxAgent
+metadata:
+  name: hello-substrate
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: hello-substrate
+    app.kubernetes.io/part-of: kagent
+    app.kubernetes.io/component: smoke
+spec:
+  type: Declarative
+  description: Disposable Go smoke agent on Agent Substrate (gVisor actor)
+  # Required — default is agent-sandbox; WorkerPool lives in ate-system
+  platform: substrate
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a friendly assistant living inside an Agent Substrate sandbox.
+      When asked who you are, say "I am hello-substrate, a Go ADK declarative
+      agent running inside a gVisor actor."
+  # Omit substrate.workerPoolRef: name-only resolves in the agent namespace
+  # (kagent). Controller defaultWorkerPool points at ate-system/kagent-default.
