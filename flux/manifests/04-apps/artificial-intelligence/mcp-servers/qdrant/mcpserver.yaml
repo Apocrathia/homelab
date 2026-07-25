@@ -13,9 +13,12 @@ spec:
   transportType: stdio
   stdioTransport: {}
   deployment:
-    # Pin <3.14: mcp-server-qdrant pins pydantic<2.12 (no cp314 pydantic-core wheels).
+    # Must stay <3.14: mcp-server-qdrant pins pydantic<2.12, whose pydantic-core
+    # ships no cp314 wheels — 3.14 forces a source build that dies on a missing
+    # C toolchain (`linker cc not found`) in the slim image. Enforced by an
+    # allowedVersions rule in renovate.json; do not bump the major here.
     # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-    image: public.ecr.aws/docker/library/python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
+    image: public.ecr.aws/docker/library/python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91
     port: 8080
     cmd: /bin/sh
     args:

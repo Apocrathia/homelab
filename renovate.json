@@ -42,6 +42,14 @@
     {
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
+    },
+    {
+      "description": "qdrant MCP: mcp-server-qdrant pins pydantic<2.12 (no cp314 pydantic-core wheels)",
+      "matchPackageNames": ["docker/library/python"],
+      "matchFileNames": [
+        "flux/manifests/04-apps/artificial-intelligence/mcp-servers/qdrant/**"
+      ],
+      "allowedVersions": "<3.14"
     }
   ],
   "customManagers": [
