@@ -16,8 +16,6 @@ spec:
   chart:
     spec:
       chart: substrate
-      # Held at 0.0.6: 0.0.10 fails to roll out ate-api-server.
-      # See docs/issues/substrate-0-0-10-rollout-failure.md before bumping.
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
       version: "0.0.10"
       sourceRef:
@@ -33,6 +31,30 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+
+  postRenderers:
+    - kustomize:
+        patches:
+          # v0.0.10 treats non-default Kubernetes issuers as external and uses
+          # system roots for OIDC discovery. Trust Talos' mounted API CA.
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: ate-api-server-deployment
+            patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: ate-api-server-deployment
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: ate-api-server
+                        env:
+                          - name: SSL_CERT_FILE
+                            value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 
   values:
     # Namespace owned by namespace.yaml (PSA privileged + dockerhub pull secret)
