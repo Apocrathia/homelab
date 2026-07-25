@@ -20,7 +20,7 @@ spec:
     app:
       name: suwayomi
       # renovate: datasource=docker depName=ghcr.io/suwayomi/suwayomi-server
-      image: ghcr.io/suwayomi/suwayomi-server:v2.3.2243
+      image: ghcr.io/suwayomi/suwayomi-server:v2.3.2259@sha256:2556d81e3370ddf76af028bb5d49b6857a839aea10b5d027a11e74a44d1fe83e
       container:
         name: suwayomi
         port: 4567
