@@ -47,7 +47,7 @@ spec:
     image:
       registry: ghcr.io/kagent-dev/substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      tag: "v0.0.6"
+      tag: "v0.0.10"
 
     # ponytail: RustFS inline chart defaults for smoke only — harden via
     # docs/issues/substrate-rustfs-credentials.md before treating as durable.
