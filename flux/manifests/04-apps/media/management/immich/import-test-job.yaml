@@ -71,7 +71,7 @@ spec:
       containers:
         - name: immich-cli
           # renovate: datasource=docker depName=ghcr.io/immich-app/immich-cli
-          image: ghcr.io/immich-app/immich-cli:3.0.3
+          image: ghcr.io/immich-app/immich-cli:3.0.3@sha256:d22d58bb5c1ccb3c4b4cfa4c571a5226a476ddd37fbc66df6b49b273eacd9977
           # The immich-cli image has immich as the entrypoint, invoke directly
           args:
             - upload
