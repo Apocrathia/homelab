@@ -42,14 +42,28 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Renovate comment + next-line value (yaml/CI/shell/env-list/toml) or GitHub URL",
+      "description": "Renovate comment + image ref (bare, tag, digest, or tag@digest)",
+      "managerFilePatterns": [
+        "/^flux/manifests/.*\\.ya?ml$/",
+        "/^\\.gitlab/.*\\.ya?ml$/"
+      ],
+      "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}latest{{/if}}",
+      "autoReplaceStringTemplate": "# renovate: datasource={{{datasource}}}{{#if registryUrl}} registryUrl={{{registryUrl}}}{{/if}}{{#if depName}} depName={{{depName}}}{{/if}}{{#if packageName}} packageName={{{packageName}}}{{/if}}{{#if versioning}} versioning={{{versioning}}}{{/if}}\n{{{indentation}}}{{{key}}}: {{{imageRef}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)(?<key>image|imageName|baseImage|ateomImage):[ \\t]*[\"']?(?<imageRef>[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
+        "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)(?<key>name):[ \\t]*[\"']?(?<imageRef>[^\\s\"'@:]+/[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Renovate comment + plain version (yaml/CI/shell/env-list) or GitHub URL",
       "managerFilePatterns": [
         "/^flux/manifests/.*\\.ya?ml$/",
         "/^\\.gitlab/.*\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate:(?: datasource=(?<datasource>\\S+)| registryUrl=(?<registryUrl>\\S+)| depName=(?<depName>\\S+)| packageName=(?<packageName>\\S+)| versioning=(?<versioning>\\S+)| \\S+=\\S+)+\\s*\\n\\s*(?:- name:\\s+\\S+\\s*\\n\\s+value:\\s*|[A-Za-z_][\\w.-]*:\\s*|[A-Z][A-Z0-9_]*=|[A-Za-z_][\\w.-]*\\s*=\\s*)[\"']?(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
-        "# renovate:(?: datasource=(?<datasource>\\S+)| registryUrl=(?<registryUrl>\\S+)| depName=(?<depName>\\S+)| packageName=(?<packageName>\\S+)| versioning=(?<versioning>\\S+)| \\S+=\\S+)+\\s*\\n\\s*-?\\s*https://(?:github\\.com/[^/]+/[^/]+/releases/download/v|raw\\.githubusercontent\\.com/[^/]+/[^/]+/)(?<currentValue>[^/\\s]+)"
+        "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:- name:\\s+\\S+\\s*\\n\\s+value:\\s*|(?:version|tag|imageTag):\\s*|[A-Z][A-Z0-9_]*[:=]\\s*|[A-Za-z_][\\w.-]*\\s*=\\s*)[\"']?(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
+        "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*-?\\s*https://(?:github\\.com/[^/]+/[^/]+/releases/download/v|raw\\.githubusercontent\\.com/[^/]+/[^/]+/)(?<currentValue>[^/\\s]+)"
       ]
     },
     {
