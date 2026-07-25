@@ -19,13 +19,13 @@ spec:
     cmd: /bin/sh
     args:
       - -c
-      - export HOME=/tmp && mkdir -p /tmp/a2a-data && pip install --quiet a2a-mcp-server && exec python -m a2a_mcp_server
+      # Service name "a2a" injects A2A_PORT=tcp://... via service links.
+      # agentgateway inherits that into the stdio child, so pin the port
+      # with an explicit export in the shell (env block alone is not enough).
+      - export HOME=/tmp && export A2A_PORT=41241 && mkdir -p /tmp/a2a-data && pip install --quiet a2a-mcp-server && exec python -m a2a_mcp_server
     env:
       HOME: /tmp
       A2A_MCP_DATA_DIR: /tmp/a2a-data
-      # The Service is named "a2a", so kubelet injects a service-link var
-      # A2A_PORT=tcp://<ip>:8080 which the app parses as an int. Explicit
-      # env takes precedence over service links; restate the default port.
       A2A_PORT: "41241"
     resources:
       limits:
