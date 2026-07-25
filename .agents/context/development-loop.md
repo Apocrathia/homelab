@@ -62,6 +62,12 @@ find-work (read-only)
   → lap-report → find-work again (or stop if empty)
 ```
 
+**Observation vs durable state:** a local apply is short-lived when it differs
+from Git — Flux will reassert the repository on the next reconcile. Durable
+desired state is commit + push (then Flux). Do not rely on child suspends or
+re-applies to keep uncommitted cluster state; see
+[`traps.md`](./traps.md#gitops--flux).
+
 Issue → plan → code (anti-rot: delete satisfied issues/plans; no `closed/`):
 
 ```

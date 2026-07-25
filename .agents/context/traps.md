@@ -8,6 +8,12 @@ non-trivial work.
 - Local edits do nothing until applied or pushed. Flux will not see unpushed
   commits. The usual loop here is: edit → validate → apply to observe → operator
   commits when happy.
+- Do not fight Flux. A direct apply that differs from Git is temporary — the
+  next reconciliation reasserts repository state. Commit and push validated
+  desired state before expecting it to persist.
+- Suspending only a child Kustomization may not hold: a parent that manages
+  that object can restore it and reapply Git. Preserve uncommitted desired
+  state via commit/push, not repeated apply/suspend.
 - Do not put resource limits, image tags, or volume sizes in README prose;
   they drift. Manifests win.
 - Bootstrap and CRD order under `flux/manifests/01-bootstrap/` is sacred.
