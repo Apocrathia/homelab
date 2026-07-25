@@ -31,7 +31,7 @@ spec:
           initContainers:
             - name: ensure-binary
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/ubuntu
-              image: public.ecr.aws/docker/library/ubuntu:26.04
+              image: public.ecr.aws/docker/library/ubuntu:26.10@sha256:694b773ee7e0d0b55ca74c095ac3309055589e7cbfaf3100f0b226c38c6936fa
               command:
                 - bash
                 - /scripts/ensure-binary.sh
@@ -74,7 +74,7 @@ spec:
           containers:
             - name: scrape
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/ubuntu
-              image: public.ecr.aws/docker/library/ubuntu:26.04
+              image: public.ecr.aws/docker/library/ubuntu:26.10@sha256:694b773ee7e0d0b55ca74c095ac3309055589e7cbfaf3100f0b226c38c6936fa
               command:
                 - bash
                 - -c
