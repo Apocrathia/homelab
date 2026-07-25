@@ -15,7 +15,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[search](./search/)** - `search-agent`: Web search specialist using SearXNG
 - **[knowledge](./knowledge/)** - `knowledge-agent`: Knowledge management with OpenZIM and Qdrant
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
-- **[media](./media/)** - `media-agent`: Plex and Servarr (Sonarr/Radarr) management
+- **[media](./media/)** - `media-agent`: Servarr (Sonarr/Radarr) management
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
 
 **System Agents (managed by kagent helm chart):**

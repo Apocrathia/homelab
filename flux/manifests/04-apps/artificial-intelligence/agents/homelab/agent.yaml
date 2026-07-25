@@ -85,14 +85,13 @@ spec:
             - monitoring
         - id: media-ops
           name: Media Operations
-          description: Manage Plex media libraries and Sonarr/Radarr automation for TV shows and movies
+          description: Manage Sonarr/Radarr automation for TV shows and movies
           examples:
-            - What's playing on Plex right now?
             - Add the new season of Severance to Sonarr
-            - Search for a movie in my library
+            - Search Radarr for a movie
             - What's in the download queue?
+            - What's coming up on Sonarr this week?
           tags:
-            - plex
             - sonarr
             - radarr
             - media

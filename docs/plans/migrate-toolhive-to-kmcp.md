@@ -175,7 +175,6 @@ NS deny) — once per phase or when networking changes; not a per-server gate.
 | gitlab    | CR `gitlab`; secret volume map                         | 3     | 50 tools                |
 | github    | CR `github`; header auth only                          | 3     | 401 (header auth)       |
 | servarr   | CR `servarr`; secret volume map                        | 3     | 14 tools                |
-| plex      | CR `plex` (was `plex-kmcp`); idempotent git clone      | 3     | 55 tools                |
 | truenas   | CR `truenas` (was `truenas-kmcp`); secret volume map   | 3     | 27 tools                |
 | proxmox   | CR `proxmox` (was `proxmox-kmcp`); inline secret reads | 3     | 42 tools                |
 | qdrant    | CR `qdrant`; install/`cc` still broken                 | 3     | flaky                   |
@@ -184,11 +183,12 @@ NS deny) — once per phase or when networking changes; not a per-server gate.
 | grafana   | CR `grafana`; header auth                              | 6     | 403 (header auth)       |
 | discord   | CR `discord`; secret volume map; bridge untouched      | 7     | 75 tools                |
 
-Retired (decommission lap): `osv`, `gofetch`, `mkp`.
+Retired (decommission lap): `osv`, `gofetch`, `mkp`, `plex` (OOM under
+agentgateway per-session `pip install`; removed 2026-07-25).
 
 **Rollout status (2026-07-25 evening):** ToolHive MCPServer CRs deleted
 on-cluster; kmcp is sole intended host. Short-name rename done for
-`flux`/`plex`/`proxmox`/`truenas`/`unifi` (was `*-kmcp`); LiteLLM + RemoteMCP
+`flux`/`proxmox`/`truenas`/`unifi` (was `*-kmcp`); LiteLLM + RemoteMCP
 URLs updated to match. Git promotes each `mcpserver-kmcp.yaml` →
 `mcpserver.yaml` and drops ToolHive manifests. **Push required:** `apps-ai`
 went Ready mid-lap and re-applied `main`, resurrecting ToolHive CRs +

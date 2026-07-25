@@ -13,7 +13,6 @@ resources:
   - unifi/
   - gitlab/
   - servarr/
-  - plex/
   - truenas/
   - proxmox/
   - firecrawl/

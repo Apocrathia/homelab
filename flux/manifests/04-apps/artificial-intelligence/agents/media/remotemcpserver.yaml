@@ -2,21 +2,6 @@
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
-  name: plex-mcp
-  namespace: agent-media
-  labels:
-    app.kubernetes.io/name: plex-mcp
-    app.kubernetes.io/component: remote-mcp-server
-    app.kubernetes.io/part-of: agent-media
-    app.kubernetes.io/managed-by: flux
-spec:
-  protocol: STREAMABLE_HTTP
-  url: "http://plex.mcp-plex.svc.cluster.local:8080/mcp"
-  description: "Plex Media Server - library management, playback control, media search"
----
-apiVersion: kagent.dev/v1alpha2
-kind: RemoteMCPServer
-metadata:
   name: servarr-mcp
   namespace: agent-media
   labels:

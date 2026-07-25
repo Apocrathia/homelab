@@ -5,7 +5,7 @@ metadata:
   name: media-agent
   namespace: agent-media
 spec:
-  description: Media management agent for Plex library and Sonarr/Radarr automation
+  description: Media management agent for Sonarr/Radarr automation
   # Allow cross-namespace access from any namespace (secured via Cilium NetworkPolicy)
   allowedNamespaces:
     from: All
@@ -14,33 +14,6 @@ spec:
     modelConfig: media-agent-model
     a2aConfig:
       skills:
-        - id: plex-library
-          name: Plex Library Browse
-          description: Inspect Plex libraries, stats, recently added items, playlists, and collections, and search for or describe specific media
-          examples:
-            - List my Plex libraries
-            - What was recently added?
-            - Search for The Expanse in the library
-            - Get details on the movie Dune
-          tags:
-            - plex
-            - library
-            - media
-            - search
-            - playlists
-        - id: plex-now-playing
-          name: Plex Now Playing
-          description: Show currently active Plex sessions — who's watching what right now
-          examples:
-            - What's playing on Plex right now?
-            - Who's currently streaming?
-            - Show me active sessions
-            - Is anyone watching something?
-          tags:
-            - plex
-            - sessions
-            - streaming
-            - now-playing
         - id: servarr-search-and-add
           name: Sonarr and Radarr Search
           description: Search Sonarr and Radarr for TV series and movies — first step before adding new content for download
@@ -86,20 +59,6 @@ spec:
     tools:
       - type: McpServer
         mcpServer:
-          name: plex-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - library_list
-            - library_get_stats
-            - library_get_recently_added
-            - media_search
-            - media_get_details
-            - sessions_get_active
-            - playlist_list
-            - collection_list
-      - type: McpServer
-        mcpServer:
           name: servarr-mcp
           kind: RemoteMCPServer
           apiGroup: kagent.dev
@@ -116,46 +75,25 @@ spec:
       You are a media management specialist for a homelab media server setup.
 
       Operational Protocol:
-      1. Identify if the request is about Plex (library/playback) or Servarr (downloads/automation)
+      1. Identify the request as Servarr (Sonarr/Radarr downloads and automation)
       2. Use search tools to find content before taking actions
       3. When adding content, confirm the correct match
       4. Provide clear status summaries
 
-      Tools (organized by system):
+      Tools (Sonarr/Radarr):
 
-      PLEX TOOLS:
-      1. library_list / library_get_stats
-      Use when: user asks about available libraries, library size, or overall statistics.
-      Trigger phrases: "libraries", "how much", "stats", "library size", etc.
-
-      2. library_get_recently_added
-      Use when: user asks what was recently added or new content.
-      Trigger phrases: "recently added", "new", "latest", "just added", etc.
-
-      3. media_search / media_get_details
-      Use when: user asks to find specific content or get details about a movie/show.
-      Trigger phrases: "find", "search", "do we have", "is X in the library", etc.
-
-      4. sessions_get_active
-      Use when: user asks what's currently playing or who's watching.
-      Trigger phrases: "playing", "watching", "active", "streaming", "sessions", etc.
-
-      5. playlist_list / collection_list
-      Use when: user asks about playlists or collections.
-
-      SERVARR TOOLS (Sonarr/Radarr):
-      6. sonarr_search_series / radarr_search_movies
+      1. sonarr_search_series / radarr_search_movies
       Use when: user wants to find or add TV shows or movies.
       Trigger phrases: "add", "download", "get", "request", TV show names, movie names, etc.
 
-      7. sonarr_get_recent_series / radarr_get_recent_movies
+      2. sonarr_get_recent_series / radarr_get_recent_movies
       Use when: user asks about recently grabbed/downloaded content.
 
-      8. sonarr_get_queue / radarr_get_queue
+      3. sonarr_get_queue / radarr_get_queue
       Use when: user asks about download status or queue.
       Trigger phrases: "downloading", "queue", "status", "progress", etc.
 
-      9. sonarr_get_calendar / radarr_get_calendar
+      4. sonarr_get_calendar / radarr_get_calendar
       Use when: user asks about upcoming releases or what's coming soon.
       Trigger phrases: "upcoming", "calendar", "coming soon", "next episode", etc.
 

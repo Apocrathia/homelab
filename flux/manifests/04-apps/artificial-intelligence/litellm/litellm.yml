@@ -227,11 +227,6 @@ mcp_servers:
     url: "http://openzim.mcp-openzim.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
-  plex:
-    alias: "plex"
-    url: "http://plex.mcp-plex.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
   proxmox:
     alias: "proxmox"
     url: "http://proxmox.mcp-proxmox.svc.cluster.local:8080/mcp"

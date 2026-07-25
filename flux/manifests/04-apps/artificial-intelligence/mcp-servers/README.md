@@ -65,11 +65,6 @@ own the secret.
 - **Purpose**: Sonarr and Radarr media management
 - **Tools**: Media search, queue management, library operations
 
-### Plex MCP Server
-
-- **Purpose**: Plex Media Server integration
-- **Tools**: Library browsing, media playback control, user management
-
 ### TrueNAS MCP Server
 
 - **Purpose**: TrueNAS Core/SCALE storage management

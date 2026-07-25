@@ -1,21 +1,19 @@
 # Media Agent
 
-Media management agent for Plex and Servarr (Sonarr/Radarr) integration.
+Media management agent for Servarr (Sonarr/Radarr) integration.
 
 > **Navigation**: [← Back to Agents README](../README.md)
 
 ## Tools
 
-- **plex-mcp**: Plex Media Server integration
 - **servarr-mcp**: Sonarr and Radarr integration
 
 ## Capabilities
 
-- Browse and search media libraries
-- Check playback status and user sessions
 - Add TV shows and movies to monitoring
 - Check download queue status
 - Manage quality profiles
+- Inspect upcoming release calendars
 
 ## Secrets
 
@@ -37,5 +35,4 @@ kubectl logs --namespace agent-media -l app.kubernetes.io/name=media-agent -f
 
 ## References
 
-- **[Plex MCP Server](../../../mcp-servers/plex/README.md)** - Plex integration
 - **[Servarr MCP Server](../../../mcp-servers/servarr/README.md)** - Sonarr/Radarr integration
