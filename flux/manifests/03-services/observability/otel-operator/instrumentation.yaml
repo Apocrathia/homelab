@@ -17,7 +17,7 @@ spec:
     argument: "1" # Sample 100% of traces (adjust for high-volume apps)
   python:
     # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:0.53b1
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:0.53b1@sha256:1fe31f53171ffaa5eb8267ba4ba481197bb186821caec2d711a4697bf05550b0
 ---
 # Java auto-instrumentation
 apiVersion: opentelemetry.io/v1alpha1
