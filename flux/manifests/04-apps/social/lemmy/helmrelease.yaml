@@ -20,7 +20,7 @@ spec:
     app:
       name: lemmy
       # renovate: datasource=docker depName=dessalines/lemmy-ui
-      image: dessalines/lemmy-ui:0.19.20
+      image: dessalines/lemmy-ui:0.19.20@sha256:ee4c620d8e933ab0266b8aaf0e78247455ab70a90eeb86f1548b7e2aa87c9d40
       container:
         name: lemmy-ui
         port: 1234
