@@ -20,7 +20,7 @@ spec:
     app:
       name: hypermind
       # renovate: datasource=docker depName=ghcr.io/lklynet/hypermind-swarm
-      image: ghcr.io/lklynet/hypermind-swarm:1.5.0
+      image: ghcr.io/lklynet/hypermind-swarm:1.5.0@sha256:62f5b81b5e007060ec4068ffa11fc28019c5600cd8bd620c0e404faa9658cc6f
       replicas: 1
       container:
         name: hypermind
