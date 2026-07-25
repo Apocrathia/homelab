@@ -83,7 +83,7 @@ flowchart TD
 
 ### Flow 4: Output and notification
 
-File replacement and service notifications. Handles cross-device file moves (EXDEV) with a fallback path. Each notification node handles "not found" gracefully — Radarr ignores TV shows, Sonarr ignores movies, and the flow continues regardless.
+File replacement and service notifications. Handles cross-device file moves (EXDEV) with a fallback path. Each notification node handles "not found" gracefully — Radarr ignores TV shows, Sonarr ignores movies, and the flow continues regardless. The Jellyfin refresh uses the native `Send Web Request` (`webRequest`) flow plugin to call Jellyfin's `POST /Library/Refresh` API, which rescans all libraries in one call.
 
 ```mermaid
 flowchart TD
@@ -93,28 +93,23 @@ flowchart TD
     Fallback --> Wait
     Wait --> Radarr["Notify Radarr"]
     Radarr --> Sonarr["Notify Sonarr"]
-    Sonarr --> PlexWait["Wait 10s"]
-    PlexWait --> PlexMovies["Plex refresh: Movies"]
-    PlexMovies --> PlexTV["Plex refresh: TV"]
-    PlexTV --> PlexAnime["Plex refresh: Anime"]
-    PlexAnime --> Done["Complete"]
+    Sonarr --> JellyfinWait["Wait 10s"]
+    JellyfinWait --> JellyfinRefresh["Jellyfin refresh: all libraries"]
+    JellyfinRefresh --> Done["Complete"]
 ```
 
 ## Variable configuration
 
 ### Global variables
 
-| Variable                 | Value                                    | Purpose                   |
-| ------------------------ | ---------------------------------------- | ------------------------- |
-| `plex_url`               | `http://plex.plex.svc.cluster.local`     | Plex server URL           |
-| `plex_token`             | `[from 1password]`                       | Plex authentication token |
-| `plex_libraryKey_movies` | `1`                                      | Plex Movies library ID    |
-| `plex_libraryKey_tv`     | `2`                                      | Plex TV Shows library ID  |
-| `plex_libraryKey_anime`  | `3`                                      | Plex Anime library ID     |
-| `url_radarr`             | `http://radarr.radarr.svc.cluster.local` | Radarr service URL        |
-| `url_sonarr`             | `http://sonarr.sonarr.svc.cluster.local` | Sonarr service URL        |
-| `api_key_radarr`         | `[from 1password]`                       | Radarr API key            |
-| `api_key_sonarr`         | `[from 1password]`                       | Sonarr API key            |
+| Variable           | Value                                        | Purpose                                 |
+| ------------------ | -------------------------------------------- | --------------------------------------- |
+| `url_jellyfin`     | `http://jellyfin.jellyfin.svc.cluster.local` | Jellyfin server URL (no trailing slash) |
+| `api_key_jellyfin` | `[from Jellyfin admin API keys]`             | Jellyfin API key (`X-Emby-Token`)       |
+| `url_radarr`       | `http://radarr.radarr.svc.cluster.local`     | Radarr service URL                      |
+| `url_sonarr`       | `http://sonarr.sonarr.svc.cluster.local`     | Sonarr service URL                      |
+| `api_key_radarr`   | `[from 1password]`                           | Radarr API key                          |
+| `api_key_sonarr`   | `[from 1password]`                           | Sonarr API key                          |
 
 ### Library variables
 
@@ -219,7 +214,7 @@ def insert_var(key, value, vtype, db_path):
         conn.close()
 
 db = '/app/server/Tdarr/DB2/SQL/database.db'
-insert_var('plex_url', 'http://plex.plex.svc.cluster.local', 'global', db)
+insert_var('url_jellyfin', 'http://jellyfin.jellyfin.svc.cluster.local', 'global', db)
 insert_var('quality_level', '20', 'library:LIBRARY_ID', db)
 ```
 
@@ -278,11 +273,8 @@ time.sleep(0.5)
 
 # Step 2: insert global variables
 globals_to_insert = {
-    'plex_url': 'http://plex.plex.svc.cluster.local',
-    'plex_token': 'REPLACE_WITH_PLEX_TOKEN',
-    'plex_libraryKey_movies': '1',
-    'plex_libraryKey_tv': '2',
-    'plex_libraryKey_anime': '3',
+    'url_jellyfin': 'http://jellyfin.jellyfin.svc.cluster.local',
+    'api_key_jellyfin': 'REPLACE_WITH_JELLYFIN_API_KEY',
     'url_radarr': 'http://radarr.radarr.svc.cluster.local',
     'url_sonarr': 'http://sonarr.sonarr.svc.cluster.local',
     'api_key_radarr': 'REPLACE_WITH_RADARR_API_KEY',
