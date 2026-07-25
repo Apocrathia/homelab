@@ -20,7 +20,9 @@ The deployment uses a 1Password item called `renovate-secrets` containing:
 
 - License key for Mend Renovate Community Edition
 - GitLab Personal Access Token for repository access
-- GitHub token for public repository changelog access
+- GitHub token (`github-token`) for changelogs and GHCR pulls (`read:packages`)
+- GitHub username (`github-username`) matching the PAT owner (GHCR docker auth)
+- Docker Hub username (`dockerhub-username`) and access token (`dockerhub-token`)
 - Webhook secret for incoming GitLab events
 - Admin API secret for authentication
 - PostgreSQL database password

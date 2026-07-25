@@ -68,9 +68,8 @@ spec:
       logFormat: "json"
 
       # Global self-hosted configuration
-      # detectHostRulesFromEnv lets Renovate build hostRules from
-      # DOCKER_DOCKER_IO_USERNAME / DOCKER_DOCKER_IO_PASSWORD below,
-      # avoiding Docker Hub's anonymous pull rate limit.
+      # detectHostRulesFromEnv builds hostRules from DOCKER_* env vars
+      # below (Hub access token + GHCR via GitHub PAT).
       config: |
         module.exports = {
           binarySource: "global",
@@ -79,8 +78,9 @@ spec:
           detectHostRulesFromEnv: true,
         }
 
-      # Docker Hub credentials sourced from the renovate-secrets
-      # OnePasswordItem. Consumed by detectHostRulesFromEnv above.
+      # Registry credentials from renovate-secrets OnePasswordItem.
+      # Hub: username + access token (not account password).
+      # GHCR: GitHub username + same PAT as github-token (read:packages).
       extraEnvVars:
         - name: DOCKER_DOCKER_IO_USERNAME
           valueFrom:
@@ -91,7 +91,17 @@ spec:
           valueFrom:
             secretKeyRef:
               name: renovate-secrets
-              key: dockerhub-password
+              key: dockerhub-token
+        - name: DOCKER_GHCR_IO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: renovate-secrets
+              key: github-username
+        - name: DOCKER_GHCR_IO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: renovate-secrets
+              key: github-token
 
     # Cache persistence - disabled since we're using PostgreSQL
     # Cache is ephemeral and can be rebuilt on restart
