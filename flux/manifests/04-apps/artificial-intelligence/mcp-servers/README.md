@@ -30,21 +30,6 @@ own the secret.
 
 ## Internal MCP Servers
 
-### OSV Vulnerability Scanner
-
-- **Purpose**: Query Open Source Vulnerability database for security vulnerabilities
-- **Tools**: Vulnerability queries, batch scanning, detailed vulnerability information
-
-### GoFetch Web Content Server
-
-- **Purpose**: Retrieve and process web content from URLs
-- **Tools**: Web content fetching, markdown conversion, content extraction
-
-### MKP Kubernetes Server
-
-- **Purpose**: Direct Kubernetes cluster access and management
-- **Tools**: Resource listing, getting, applying, and pod execution
-
 ### Grafana MCP Server
 
 - **Purpose**: Grafana dashboard and data source management

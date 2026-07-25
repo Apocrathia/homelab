@@ -13,6 +13,13 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Dynamic agent registration and communication
 
+During the kmcp migration this namespace runs two MCPServer CRs side by side:
+the ToolHive CR `a2a-mcp-server` (`mcpserver.yaml`) and the kmcp CR `a2a`
+(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). Clients continue to use the
+ToolHive proxy until cutover. The kmcp endpoint is
+`http://a2a.mcp-a2a.svc.cluster.local:8080/mcp`. The ToolHive CR remains
+available for rollback during the soak.
+
 ## Configuration
 
 ### Transport

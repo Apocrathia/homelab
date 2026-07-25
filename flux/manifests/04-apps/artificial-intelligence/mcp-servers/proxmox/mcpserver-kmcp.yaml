@@ -1,0 +1,84 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's proxmox-mcp-plus Deployment during dual-run.
+  name: proxmox-kmcp
+  namespace: mcp-proxmox
+  labels:
+    app.kubernetes.io/name: proxmox-kmcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp &&
+        export PROXMOX_HOST="$(cat /var/run/secrets/mcp/proxmox-host)" &&
+        export PROXMOX_USER="$(cat /var/run/secrets/mcp/proxmox-user)" &&
+        export PROXMOX_TOKEN_NAME="$(cat /var/run/secrets/mcp/proxmox-token-name)" &&
+        export PROXMOX_TOKEN_VALUE="$(cat /var/run/secrets/mcp/proxmox-token-value)" &&
+        pip install --quiet "git+https://github.com/RekklesNA/ProxmoxMCP-Plus.git@v0.5.10" &&
+        export PATH="$HOME/.local/bin:$PATH" &&
+        cat > /tmp/config.json << EOF
+        {
+          "proxmox": {
+            "host": "$PROXMOX_HOST",
+            "port": ${PROXMOX_PORT:-8006},
+            "verify_ssl": ${PROXMOX_VERIFY_SSL:-false}
+          },
+          "auth": {
+            "user": "$PROXMOX_USER",
+            "token_name": "$PROXMOX_TOKEN_NAME",
+            "token_value": "$PROXMOX_TOKEN_VALUE"
+          },
+          "security": {
+            "dev_mode": ${PROXMOX_DEV_MODE:-false}
+          },
+          "jobs": {
+            "sqlite_path": "${PROXMOX_JOBS_SQLITE_PATH:-/tmp/proxmox-jobs.sqlite3}"
+          },
+          "logging": {
+            "level": "INFO"
+          }
+        }
+        EOF
+        export PROXMOX_MCP_CONFIG=/tmp/config.json &&
+        exec python -m proxmox_mcp.server
+    env:
+      PROXMOX_DEV_MODE: "true"
+      PROXMOX_JOBS_SQLITE_PATH: /tmp/proxmox-jobs.sqlite3
+      PROXMOX_PORT: "8006"
+      PROXMOX_VERIFY_SSL: "false"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: proxmox-mcp-secrets

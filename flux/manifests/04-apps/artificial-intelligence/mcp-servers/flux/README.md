@@ -10,6 +10,7 @@ This deployment includes:
 
 - Flux MCP server for GitOps pipeline management
 - ToolHive proxy for secure communication
+- kmcp `flux-kmcp` MCPServer for the migration dual run
 - Internal access only via LiteLLM proxy
 - RBAC for Flux resource access
 
@@ -34,7 +35,11 @@ The deployment includes a dedicated ServiceAccount with ClusterRole permissions 
 ### Security
 
 - **Permission Profile**: Network access for Kubernetes API
-- **Authentication**: In-cluster ServiceAccount
+- **Authentication**: The ToolHive and kmcp deployments use the `flux-mcp-sa`
+  in-cluster ServiceAccount. kmcp references it through
+  `deployment.serviceAccountName`.
+- **Container Hardening**: kmcp uses RuntimeDefault seccomp, disallows privilege
+  escalation, and drops all Linux capabilities.
 
 ## Access
 

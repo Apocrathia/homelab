@@ -8,3 +8,4 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - mcpserver.yaml
+  - mcpserver-kmcp.yaml

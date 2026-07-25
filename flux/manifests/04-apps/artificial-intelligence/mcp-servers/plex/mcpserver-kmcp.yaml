@@ -1,0 +1,58 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's plex-mcp-server Deployment during dual-run.
+  name: plex-kmcp
+  namespace: mcp-plex
+  labels:
+    app.kubernetes.io/name: plex-kmcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp &&
+        export PLEX_URL="$(cat /var/run/secrets/mcp/plex-url)" &&
+        export PLEX_TOKEN="$(cat /var/run/secrets/mcp/plex-token)" &&
+        export PLEX_USERNAME="$(cat /var/run/secrets/mcp/plex-username 2>/dev/null || true)" &&
+        cd /tmp &&
+        git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git &&
+        cd plex-mcp-server &&
+        pip install --quiet -r requirements.txt aiohttp &&
+        exec python plex_mcp_server.py --transport stdio
+    env:
+      HOME: /tmp
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: plex-mcp-secrets

@@ -1,0 +1,62 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's servarr-mcp Deployment during dual-run.
+  name: servarr
+  namespace: mcp-servarr
+  labels:
+    app.kubernetes.io/name: servarr
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  # ToolHive stdio + streamable-http proxy maps to kmcp's stdio adapter.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp
+        export SONARR_URL="$(cat /var/run/secrets/servarr-mcp/sonarr-url)"
+        export SONARR_API_KEY="$(cat /var/run/secrets/servarr-mcp/sonarr-api-key)"
+        export RADARR_URL="$(cat /var/run/secrets/servarr-mcp/radarr-url)"
+        export RADARR_API_KEY="$(cat /var/run/secrets/servarr-mcp/radarr-api-key)"
+        cd /tmp
+        git clone --depth 1 https://github.com/bdfrost/mcp-servarr.git
+        cd mcp-servarr
+        pip install --quiet -r requirements.txt
+        exec python src/server.py
+    env:
+      HOME: /tmp
+      REQUEST_TIMEOUT: "30"
+    volumes:
+      - name: servarr-mcp-secrets
+        secret:
+          secretName: servarr-mcp-secrets
+    volumeMounts:
+      - name: servarr-mcp-secrets
+        mountPath: /var/run/secrets/servarr-mcp
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # The process clones and installs its runtime dependencies at startup.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

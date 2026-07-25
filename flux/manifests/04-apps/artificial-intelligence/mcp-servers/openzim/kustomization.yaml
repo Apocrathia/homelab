@@ -8,3 +8,4 @@ resources:
   - namespace.yaml
   - storage.yaml
   - mcpserver.yaml
+  - mcpserver-kmcp.yaml

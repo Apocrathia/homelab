@@ -1,0 +1,57 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's unifi-network-mcp Deployment during dual-run.
+  name: unifi-kmcp
+  namespace: mcp-unifi
+  labels:
+    app.kubernetes.io/name: unifi-kmcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.24.1
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export UNIFI_HOST="$(cat /var/run/secrets/mcp/host)" &&
+        export UNIFI_USERNAME="$(cat /var/run/secrets/mcp/username)" &&
+        export UNIFI_PASSWORD="$(cat /var/run/secrets/mcp/password)" &&
+        exec unifi-network-mcp
+    env:
+      UNIFI_MCP_HTTP_ENABLED: "false"
+      UNIFI_PORT: "443"
+      UNIFI_SITE: default
+      UNIFI_TOOL_REGISTRATION_MODE: eager
+      UNIFI_VERIFY_SSL: "false"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: unifi-mcp-secrets

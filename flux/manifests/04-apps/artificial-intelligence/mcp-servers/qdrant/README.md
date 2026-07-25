@@ -4,6 +4,11 @@ MCP server for knowledge storage and semantic search via Qdrant vector database.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
+During the kmcp migration, this namespace runs ToolHive `qdrant-mcp`
+(`mcpserver.yaml`) and kmcp `qdrant` (`mcpserver-kmcp.yaml`) side by side. The
+kmcp endpoint is `http://qdrant.mcp-qdrant.svc.cluster.local:8080/mcp`;
+ToolHive remains available for rollback during soak.
+
 ## Overview
 
 Provides semantic memory and knowledge retrieval capabilities:
@@ -38,6 +43,11 @@ Uses same secret as Qdrant database (`vaults/Secrets/items/qdrant-secrets`):
 | Field     | Description                       |
 | --------- | --------------------------------- |
 | `api-key` | API key for Qdrant authentication |
+
+kmcp `secretRefs` injects complete Secrets through `envFrom` and cannot map
+`api-key` to `QDRANT_API_KEY`. The kmcp CR mounts the existing Secret read-only
+and exports that file to `QDRANT_API_KEY` at startup, preserving the ToolHive
+`secretKeyRef` mapping without changing the OnePassword item.
 
 ## Usage Examples
 

@@ -16,7 +16,14 @@ This deployment includes:
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+During the kmcp migration, ToolHive and kmcp run the server side by side. Both
+use stdio with an HTTP adapter; kmcp exposes the `openzim` Service on `/mcp`.
+
+### Storage
+
+The OpenZIM process reads ZIM archives from `/data`. The `openzim-zim` PVC
+mounts the read-only SMB-backed storage defined in `storage.yaml`; the
+OnePasswordItem there supplies SMB credentials to the CSI driver.
 
 ### Environment Variables
 

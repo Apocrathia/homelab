@@ -4,6 +4,11 @@ Self-hosted GitHub MCP server for repository and issue management.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
+During the kmcp migration, this namespace runs ToolHive `github-mcp-server`
+(`mcpserver.yaml`) and kmcp `github` (`mcpserver-kmcp.yaml`) side by side. The
+kmcp endpoint is `http://github.mcp-github.svc.cluster.local:8080/mcp`;
+ToolHive remains available for rollback during soak.
+
 ## Access
 
 Internal only via LiteLLM gateway - no external HTTPRoute.
@@ -66,6 +71,9 @@ ClusterIP reachability into an open GitHub proxy.
 Client wiring (kagent `RemoteMCPServer` `headersFrom`, LiteLLM
 `static_headers`) lives with the callers. The shared vault item is
 `vaults/Secrets/items/github-mcp-secrets`:
+
+kmcp receives no `secretRefs` or mounted Secret for GitHub. It preserves the
+ToolHive header-auth model: callers supply `Authorization` on each request.
 
 | Field           | Description                                                    |
 | --------------- | -------------------------------------------------------------- |

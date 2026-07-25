@@ -1,0 +1,65 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's discord-mcp Deployment during dual-run.
+  name: discord
+  namespace: mcp-discord
+  labels:
+    app.kubernetes.io/name: discord
+    app.kubernetes.io/component: mcp-server
+spec:
+  # ToolHive streamable-http → kmcp native HTTP.
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
+    image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export DISCORD_TOKEN="$(cat /var/run/secrets/discord-mcp/discord-token)"
+        export DISCORD_GUILD_ID="$(cat /var/run/secrets/discord-mcp/discord-guild-id)"
+        exec java -jar /app/app.jar
+    env:
+      SPRING_PROFILES_ACTIVE: http
+      SERVER_PORT: "8080"
+      SPRING_APPLICATION_JSON: '{"logging.file.name":"/data/discord-mcp-server.log","logging.pattern.console":"%d{HH:mm:ss} %level %logger - %msg%n"}'
+    volumes:
+      - name: discord-mcp-data
+        emptyDir: {}
+      - name: discord-mcp-tmp
+        emptyDir: {}
+      # Preserve ToolHive's individual secretKeyRef mapping. kmcp secretRefs
+      # injects envFrom, which cannot rename discord-token to DISCORD_TOKEN.
+      - name: discord-mcp-secrets
+        secret:
+          secretName: homelab-agent-secrets
+    volumeMounts:
+      - name: discord-mcp-data
+        mountPath: /data
+      - name: discord-mcp-tmp
+        mountPath: /tmp
+      - name: discord-mcp-secrets
+        mountPath: /var/run/secrets/discord-mcp
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "768Mi"
+      requests:
+        cpu: "100m"
+        memory: "384Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

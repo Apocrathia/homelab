@@ -1,0 +1,42 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: a2a
+  namespace: mcp-a2a
+  labels:
+    app.kubernetes.io/name: a2a
+    app.kubernetes.io/component: mcp-server
+spec:
+  # ToolHive transport: stdio + proxyMode: streamable-http → kmcp stdio.
+  # agentgateway replaces the image entrypoint; restate the MCP process here.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14-slim
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - export HOME=/tmp && pip install --quiet a2a-mcp-server && exec python -m a2a_mcp_server
+    env:
+      HOME: /tmp
+      A2A_MCP_DATA_DIR: /tmp/a2a-data
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # pip installs at startup into a writable filesystem (matches ToolHive CR).
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

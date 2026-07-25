@@ -65,13 +65,6 @@ spec:
             - web_url_read
       - type: McpServer
         mcpServer:
-          name: gofetch-mcp
-          kind: RemoteMCPServer
-          apiGroup: kagent.dev
-          toolNames:
-            - fetch
-      - type: McpServer
-        mcpServer:
           name: firecrawl-mcp
           kind: RemoteMCPServer
           apiGroup: kagent.dev
@@ -107,11 +100,7 @@ spec:
       Use this tool when: you have a URL from search results and need to read its content, or the user provides a specific URL to read.
       This should be called after searxng_web_search to read promising results.
 
-      3. fetch
-      Alternative URL fetcher with content verification.
-      Use this tool when: web_url_read fails or returns incomplete content.
-
-      4. firecrawl_* tools
+      3. firecrawl_* tools
       Advanced web scraping and crawling tools.
       DO NOT use these unless: the user EXPLICITLY requests "scraping", "crawling", "structured extraction", OR all other tools have failed.
       These are resource-intensive and not suitable for simple searches or page reads.

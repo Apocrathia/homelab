@@ -1,0 +1,60 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's qdrant-mcp Deployment during dual-run.
+  name: qdrant
+  namespace: mcp-qdrant
+  labels:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  # ToolHive stdio + streamable-http proxy maps to kmcp's stdio adapter.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # Pin <3.14: mcp-server-qdrant pins pydantic<2.12 (no cp314 pydantic-core wheels).
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.13-slim
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        pip install --quiet uv
+        export PATH="/tmp/.local/bin:$PATH"
+        export QDRANT_API_KEY="$(cat /var/run/secrets/qdrant/api-key)"
+        exec uvx mcp-server-qdrant --transport stdio
+    env:
+      QDRANT_URL: http://qdrant.qdrant.svc.cluster.local:6333
+      COLLECTION_NAME: knowledge
+      EMBEDDING_PROVIDER: fastembed
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      HOME: /tmp
+    volumes:
+      - name: qdrant-secrets
+        secret:
+          secretName: qdrant-secrets
+    volumeMounts:
+      - name: qdrant-secrets
+        mountPath: /var/run/secrets/qdrant
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # pip and uv install their runtime under /tmp at startup.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

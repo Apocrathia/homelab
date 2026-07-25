@@ -1,0 +1,55 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's gitlab-mcp-server Deployment during dual-run.
+  name: gitlab
+  namespace: mcp-gitlab
+  labels:
+    app.kubernetes.io/name: gitlab
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  # ToolHive stdio + streamable-http proxy maps to kmcp's stdio adapter.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+    image: public.ecr.aws/docker/library/node:24-slim
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp
+        export NPM_CONFIG_TOKEN="$(cat /var/run/secrets/gitlab-mcp/gitlab-token)"
+        exec npx -y @alosies/gitlab-mcp-server
+    env:
+      HOME: /tmp
+      GITLAB_BASE_URL: https://gitlab.com
+    volumes:
+      - name: gitlab-mcp-secrets
+        secret:
+          secretName: gitlab-mcp-secrets
+    volumeMounts:
+      - name: gitlab-mcp-secrets
+        mountPath: /var/run/secrets/gitlab-mcp
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # npx writes its cache under /tmp at startup (matches ToolHive CR).
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

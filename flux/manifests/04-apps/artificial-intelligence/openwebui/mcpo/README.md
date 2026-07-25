@@ -20,9 +20,6 @@ The MCPO configuration uses a static ConfigMap with hot-reload enabled:
 
 The bridge connects to the configured MCP servers with `streamable-http` transport:
 
-- **OSV**: `https://mcp.gateway.services.apocrathia.com/osv`
-- **GoFetch**: `https://mcp.gateway.services.apocrathia.com/gofetch`
-- **MKP**: `https://mcp.gateway.services.apocrathia.com/mkp`
 - **Grafana**: `https://mcp.gateway.services.apocrathia.com/grafana`
 
 ### Access Points

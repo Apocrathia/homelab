@@ -6,9 +6,6 @@ metadata:
 
 resources:
   - network-policy.yaml
-  - osv/
-  - gofetch/
-  - mkp/
   - grafana/
   - searxng/
   - flux/

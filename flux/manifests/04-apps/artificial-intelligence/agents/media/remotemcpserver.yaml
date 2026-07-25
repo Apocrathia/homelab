@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-plex-mcp-server-proxy.mcp-plex.svc.cluster.local:8080/mcp"
+  url: "http://plex-kmcp.mcp-plex.svc.cluster.local:8080/mcp"
   description: "Plex Media Server - library management, playback control, media search"
 ---
 apiVersion: kagent.dev/v1alpha2
@@ -26,5 +26,5 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-servarr-mcp-proxy.mcp-servarr.svc.cluster.local:8080/mcp"
+  url: "http://servarr.mcp-servarr.svc.cluster.local:8080/mcp"
   description: "Servarr - Sonarr and Radarr integration for TV and movie management"

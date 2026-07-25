@@ -1,0 +1,43 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's grafana-mcp Deployment during dual-run.
+  name: grafana
+  namespace: mcp-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: mcp-server
+spec:
+  # ToolHive streamable-http → kmcp native HTTP.
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
+    image: docker.io/grafana/mcp-grafana:0.17.2
+    port: 8080
+    args:
+      - -t
+      - streamable-http
+      - --address
+      - "0.0.0.0:8080"
+      - --debug
+    env:
+      GRAFANA_URL: http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

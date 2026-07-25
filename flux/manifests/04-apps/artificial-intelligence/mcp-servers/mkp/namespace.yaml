@@ -1,7 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: mcp-mkp
-  labels:
-    mcp-server: "true"

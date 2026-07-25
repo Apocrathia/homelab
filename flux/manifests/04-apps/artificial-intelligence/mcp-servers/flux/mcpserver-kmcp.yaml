@@ -1,0 +1,43 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must not match ToolHive's flux-mcp Deployment during the dual run.
+  name: flux-kmcp
+  namespace: mcp-flux
+  labels:
+    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  transportType: http
+  httpTransport:
+    path: /mcp
+    targetPort: 8080
+  deployment:
+    # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
+    image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.56.0@sha256:7c19497974f01129336a09818290243b51acd18c42cfd2b47ac715c400e7cf37
+    port: 8080
+    args:
+      - serve
+      - --transport
+      - http
+      - --port
+      - "8080"
+    serviceAccountName: flux-mcp-sa
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

@@ -13,6 +13,11 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Connection to TrueNAS Core or SCALE instance
 
+During the kmcp migration, this namespace runs ToolHive `truenas-mcp-server`
+and kmcp `truenas-kmcp` side by side. Clients remain on the ToolHive endpoint
+until cutover; the kmcp endpoint is
+`http://truenas-kmcp.mcp-truenas.svc.cluster.local:8080/mcp`.
+
 ## Configuration
 
 ### Transport
@@ -34,6 +39,12 @@ Create a Kubernetes secret `truenas-mcp-secrets` in the `mcp-truenas` namespace 
 
 - `truenas-url`: TrueNAS server URL (e.g., `https://truenas.local`)
 - `truenas-api-key`: TrueNAS API key (created in Settings → API Keys)
+
+kmcp `secretRefs` exposes every Secret key through `envFrom`, without
+per-key environment-variable renaming. The kmcp draft instead mounts the same
+generated Secret at `/var/run/secrets/mcp` and maps `truenas-url` and
+`truenas-api-key` to the required `TRUENAS_*` variables before the MCP process
+starts.
 
 ### Security
 

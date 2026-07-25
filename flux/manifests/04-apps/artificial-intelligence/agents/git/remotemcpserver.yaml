@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp"
+  url: "http://github.mcp-github.svc.cluster.local:8080/mcp"
   description: "GitHub - repositories, issues, pull requests, code search"
   # Native HTTP mode requires Authorization on every request (no env-PAT fallback).
   headersFrom:
@@ -33,5 +33,5 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-gitlab-mcp-server-proxy.mcp-gitlab.svc.cluster.local:8080/mcp"
+  url: "http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp"
   description: "GitLab - projects, merge requests, issues, pipelines"

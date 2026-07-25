@@ -1,0 +1,57 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  # Must differ from ToolHive's truenas-mcp-server Deployment during dual-run.
+  name: truenas-kmcp
+  namespace: mcp-truenas
+  labels:
+    app.kubernetes.io/name: truenas-kmcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14-slim
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp &&
+        export TRUENAS_URL="$(cat /var/run/secrets/mcp/truenas-url)" &&
+        export TRUENAS_API_KEY="$(cat /var/run/secrets/mcp/truenas-api-key)" &&
+        pip install --quiet truenas-mcp-server &&
+        export PATH="$HOME/.local/bin:$PATH" &&
+        exec truenas-mcp-server
+    env:
+      HOME: /tmp
+      TRUENAS_LOG_LEVEL: INFO
+      TRUENAS_VERIFY_SSL: "false"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: truenas-mcp-secrets

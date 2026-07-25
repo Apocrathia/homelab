@@ -15,9 +15,10 @@ This deployment includes:
 
 During the kmcp migration this namespace runs two MCPServer CRs side by side:
 the ToolHive CR `searxng-mcp` (`mcpserver.yaml`) and the kmcp CR `searxng`
-(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). The kmcp CR is served at
-`http://searxng.mcp-searxng.svc.cluster.local:8080/mcp`. LiteLLM and
-RemoteMCPServer still point at ToolHive until cutover.
+(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). Clients (LiteLLM and
+`agents/search` RemoteMCPServer) point at
+`http://searxng.mcp-searxng.svc.cluster.local:8080/mcp`. The ToolHive CR
+remains temporarily as rollback until soak delete.
 
 ## Configuration
 

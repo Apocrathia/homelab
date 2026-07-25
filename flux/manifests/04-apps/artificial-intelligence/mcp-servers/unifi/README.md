@@ -13,6 +13,11 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Connection to internal UniFi Controller instance
 
+During the kmcp migration, this namespace runs ToolHive
+`unifi-network-mcp` and kmcp `unifi-kmcp` side by side. Clients remain on the
+ToolHive endpoint until cutover; the kmcp endpoint is
+`http://unifi-kmcp.mcp-unifi.svc.cluster.local:8080/mcp`.
+
 ## Configuration
 
 ### Transport
@@ -41,6 +46,11 @@ The `OnePasswordItem` `unifi-mcp-secrets` supplies:
 - `host`: Controller hostname (not a full URL)
 - `username`: UniFi administrator username
 - `password`: UniFi administrator password
+
+kmcp `secretRefs` exposes every Secret key through `envFrom`, without
+per-key environment-variable renaming. The kmcp draft instead mounts the same
+generated Secret at `/var/run/secrets/mcp` and maps `host`, `username`, and
+`password` to the required `UNIFI_*` variables before the MCP process starts.
 
 ### Tool lists (lazy vs eager)
 

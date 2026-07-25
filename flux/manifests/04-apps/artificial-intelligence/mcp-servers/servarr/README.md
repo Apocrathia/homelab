@@ -4,6 +4,11 @@ The Servarr MCP server provides Sonarr and Radarr integration through the Model 
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
+During the kmcp migration, this namespace runs ToolHive `servarr-mcp`
+(`mcpserver.yaml`) and kmcp `servarr` (`mcpserver-kmcp.yaml`) side by side. The
+kmcp endpoint is `http://servarr.mcp-servarr.svc.cluster.local:8080/mcp`;
+ToolHive remains available for rollback during soak.
+
 ## Overview
 
 This deployment includes:
@@ -39,6 +44,11 @@ Create a Kubernetes secret `servarr-mcp-secrets` in the `mcp-servarr` namespace 
 - `radarr-api-key`: Radarr API key
 
 **Note**: At least one service (Sonarr or Radarr) must be configured.
+
+kmcp `secretRefs` injects complete Secrets through `envFrom` and cannot rename
+individual keys. The existing hyphenated keys are mounted read-only and exported
+as the four MCP environment variables by the kmcp startup command, preserving
+the ToolHive `secretKeyRef` mapping without changing the OnePassword item.
 
 ### Security
 

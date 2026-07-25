@@ -13,6 +13,11 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Connection to Proxmox VE cluster
 
+During the kmcp migration, this namespace runs ToolHive `proxmox-mcp-plus`
+and kmcp `proxmox-kmcp` side by side. Clients remain on the ToolHive endpoint
+until cutover; the kmcp endpoint is
+`http://proxmox-kmcp.mcp-proxmox.svc.cluster.local:8080/mcp`.
+
 ## Configuration
 
 ### Transport
@@ -39,6 +44,11 @@ Create a Kubernetes secret `proxmox-mcp-secrets` in the `mcp-proxmox` namespace 
 - `proxmox-user`: Proxmox username (e.g., `admin@pve`)
 - `proxmox-token-name`: Proxmox API token ID
 - `proxmox-token-value`: Proxmox API token value
+
+kmcp `secretRefs` exposes every Secret key through `envFrom`, without
+per-key environment-variable renaming. The kmcp draft instead mounts the same
+generated Secret at `/var/run/secrets/mcp` and maps the four `proxmox-*` keys
+to the required `PROXMOX_*` variables before the MCP process starts.
 
 ### Security
 

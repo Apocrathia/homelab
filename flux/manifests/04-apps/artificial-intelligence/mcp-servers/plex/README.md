@@ -13,6 +13,11 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Connection to internal Plex Media Server instance
 
+During the kmcp migration, this namespace runs ToolHive `plex-mcp-server` and
+kmcp `plex-kmcp` side by side. Clients remain on the ToolHive endpoint until
+cutover; the kmcp endpoint is
+`http://plex-kmcp.mcp-plex.svc.cluster.local:8080/mcp`.
+
 ## Configuration
 
 ### Transport
@@ -34,6 +39,12 @@ Create a Kubernetes secret `plex-mcp-secrets` in the `mcp-plex` namespace with:
 - `plex-url`: Plex Media Server URL (e.g., `http://plex.media.svc.cluster.local:32400`)
 - `plex-token`: Plex authentication token (Long-Lived Access Token)
 - `plex-username`: Plex username (optional)
+
+kmcp `secretRefs` exposes every Secret key through `envFrom`, without
+per-key environment-variable renaming. The kmcp draft instead mounts the same
+generated Secret at `/var/run/secrets/mcp` and maps `plex-url`, `plex-token`,
+and optional `plex-username` to the required `PLEX_*` variables before the MCP
+process starts.
 
 ### Security
 

@@ -19,12 +19,28 @@ The Grafana MCP server provides a bridge between AI assistants and Grafana's eco
 
 ## Architecture
 
-The deployment uses the Toolhive MCPServer pattern and includes:
+The deployment dual-runs ToolHive and kmcp MCPServer resources during migration:
 
 - **Namespace**: `mcp-grafana` for isolation
-- **Transport**: stdio with streamable-http proxy
+- **Transport**: Native streamable HTTP
 - **Access**: Internal only via LiteLLM proxy
 - **Security**: Non-root containers, network policy restricted
+
+The kmcp resource is named `grafana`, distinct from ToolHive's `grafana-mcp`
+deployment. Its Service is `grafana.mcp-grafana.svc.cluster.local`.
+
+## kmcp authentication
+
+kmcp uses the same request-header authentication path as ToolHive. LiteLLM
+forwards `X-Grafana-API-Key` from callers; the kmcp manifest has no shared
+Grafana credential. Preserve that `extra_headers` behavior until an explicit
+authentication design replaces it.
+
+## kagent Grafana MCP inventory
+
+kagent ships a Grafana MCP integration. This deployment remains separately
+inventoried during dual-run; do not assume the built-in integration replaces
+this server without proving feature and authentication parity.
 
 ## Prerequisites
 

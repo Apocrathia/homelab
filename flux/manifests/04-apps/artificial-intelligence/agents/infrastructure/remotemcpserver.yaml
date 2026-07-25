@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-proxmox-mcp-plus-proxy.mcp-proxmox.svc.cluster.local:8080/mcp"
+  url: "http://proxmox-kmcp.mcp-proxmox.svc.cluster.local:8080/mcp"
   description: "Proxmox VE - VM and container management, cluster status"
 ---
 apiVersion: kagent.dev/v1alpha2
@@ -26,7 +26,7 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-truenas-mcp-server-proxy.mcp-truenas.svc.cluster.local:8080/mcp"
+  url: "http://truenas-kmcp.mcp-truenas.svc.cluster.local:8080/mcp"
   description: "TrueNAS - storage pools, datasets, shares, and system status"
 ---
 apiVersion: kagent.dev/v1alpha2
@@ -41,5 +41,5 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp"
+  url: "http://unifi-kmcp.mcp-unifi.svc.cluster.local:8080/mcp"
   description: "UniFi Network - network devices, clients, traffic, and configuration"

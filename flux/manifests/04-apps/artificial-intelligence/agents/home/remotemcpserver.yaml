@@ -32,5 +32,5 @@ metadata:
     app.kubernetes.io/managed-by: flux
 spec:
   protocol: STREAMABLE_HTTP
-  url: "http://mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8080/mcp"
+  url: "http://grafana.mcp-grafana.svc.cluster.local:8080/mcp"
   description: "Grafana - query Home Assistant InfluxDB datasource for historical state and trends"
