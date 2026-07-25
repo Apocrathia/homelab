@@ -71,7 +71,7 @@ spec:
         # server-side apply on every upgrade that changed its env.
         - name: bucket-init
           # renovate: datasource=docker depName=amazon/aws-cli
-          image: amazon/aws-cli:2.17.0
+          image: amazon/aws-cli:2.36.8@sha256:7e1b11a3c93bc5af81f496de0662f666b2352a4a6666e8ebae904fe102b131b6
           command: ["/bin/sh", "-c"]
           args:
             - |
