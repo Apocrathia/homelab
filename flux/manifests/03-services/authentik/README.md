@@ -39,6 +39,8 @@ Create a 1Password item called `authentik-secrets` with the following fields:
 
 The 1Password Connect Operator will automatically create a Kubernetes secret with these values.
 
+Okta OAuth source client id/secret are entered in the Authentik UI (Directory → Federation and Social login → Okta), not via this item.
+
 ## Authentication
 
 Authentik uses self-hosted authentication. The first user created on initial access becomes the admin user.

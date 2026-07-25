@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: okta
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Okta upstream IdP (OAuth source). Slug must match Okta redirect/login paths.
+  # consumer_key / consumer_secret are set in the Authentik UI (Directory →
+  # Federation and Social login). Do not add them here — reconcile would
+  # overwrite the UI values.
+  - model: authentik_sources_oauth.oauthsource
+    id: okta-source
+    state: present
+    identifiers:
+      slug: okta
+    attrs:
+      name: Okta
+      slug: okta
+      enabled: true
+      provider_type: okta
+      authorization_url: "https://okta.apocrathia.com/oauth2/v1/authorize"
+      access_token_url: "https://okta.apocrathia.com/oauth2/v1/token"
+      profile_url: "https://okta.apocrathia.com/oauth2/v1/userinfo"
+      oidc_well_known_url: "https://okta.apocrathia.com/.well-known/openid-configuration"
+      oidc_jwks_url: "https://okta.apocrathia.com/oauth2/v1/keys"
+      user_matching_mode: email_link
+      authentication_flow: !Find [authentik_flows.flow, [slug, default-source-authentication]]
+      enrollment_flow: !Find [authentik_flows.flow, [slug, default-source-enrollment]]

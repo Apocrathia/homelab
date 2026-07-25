@@ -45,6 +45,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - 1password.yaml
+  - name: authentik-blueprint-okta
+    namespace: authentik
+    files:
+      - okta.yaml
 
 labels:
   - includeSelectors: true
