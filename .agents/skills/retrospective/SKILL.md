@@ -27,8 +27,9 @@ normal confirmation.
 - After merges outside the session — catch up on context-relevant changes.
 - Standalone — `/retrospective` or "do a retro."
 
-This repo does not use agent worktrees or `clock-out`. Retrospectives run in the
-normal working tree.
+This repo does not use `clock-out`. Run the retrospective while the lap
+worktree still exists when there is one (diff may be needed). Session-end /
+read-only capture may use the workspace root.
 
 ## What it produces
 

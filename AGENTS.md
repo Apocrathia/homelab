@@ -15,11 +15,15 @@ your task needs.
 
 **Do freely:**
 
-- Read files, explore, search
+- Read files, explore, search (workspace root OK)
 - Run validation, linting, scanning, local renders
 - Install local dev dependencies
 - Propose changes and present options
 - Use [`.scratch/`](./.scratch/README.md) for throwaways (prefer it over `/tmp`)
+
+**Before editing files:** open or create a git worktree under `.worktrees/` —
+see [`.agents/rules/worktrees.md`](./.agents/rules/worktrees.md). Do not edit
+the workspace root checkout unless the operator authorizes it for that lap.
 
 **Requires explicit permission:**
 
@@ -48,6 +52,8 @@ terse, humor OK, **profanity encouraged**).
   ([`constraints.md`](./.agents/context/constraints.md#commit-and-ship))
 - Confirm before editing protected paths
   ([`protected-paths.md`](./.agents/rules/protected-paths.md))
+- Edit in a worktree, not the workspace root
+  ([`worktrees.md`](./.agents/rules/worktrees.md))
 - Answer first; keep chat the index
   ([`response-shape.md`](./.agents/rules/response-shape.md),
   [`output.md`](./.agents/context/output.md))
@@ -77,6 +83,7 @@ rows, read each.
 | Starting non-trivial work                  | [`traps.md`](./.agents/context/traps.md)                                                                                                                                   |
 | Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                                                               |
 | Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                                                       |
+| Making any file edit (code or docs)        | [`worktrees.md`](./.agents/rules/worktrees.md)                                                                                                                             |
 | Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                                                     |
 | Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                                                         |
 | Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                                                     |

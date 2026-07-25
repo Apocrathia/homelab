@@ -73,4 +73,5 @@ Do not paste a full plan; link a plan later via [`project-planner`](../../agents
 - Edit production manifests or app code in this skill (exploration until issues are filed)
 - Open GitLab issues unless the operator directs
 - File vague "refactor X" without a named feedback loop
-- Require worktrees or branches — this repo usually works in the workspace root
+- Create a worktree for this skill — exploration is read-only; worktrees belong
+  to a later implement lap

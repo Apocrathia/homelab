@@ -76,3 +76,6 @@ TODO.md
 # Agent ephemeral workspace (see .scratch/README.md)
 .scratch/*
 !.scratch/README.md
+
+# Agent git worktrees (see .agents/rules/worktrees.md)
+.worktrees/

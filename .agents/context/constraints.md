@@ -5,7 +5,10 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
 
 ## Permissions
 
-- **Explore freely:** read, search, validate, lint, scan.
+- **Explore freely:** read, search, validate, lint, scan (workspace root OK).
+- **Edit in a worktree:** file changes go under `.worktrees/<type>/<slug>` on a
+  dedicated branch — not the workspace root checkout. See
+  [`worktrees.md`](../rules/worktrees.md).
 - **Ask before** live cluster mutation (`kubectl apply/delete`, `flux reconcile`,
   destructive helm, infra changes).
 - **Commit / push:** default is no commit or push. See

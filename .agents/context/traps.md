@@ -36,3 +36,12 @@ non-trivial work.
 - Skills and personas live under `.agents/`. `.cursor/` and `.claude/` hold
   discovery symlinks for those harnesses; edit the `.agents/` copy.
 - Leave `<!-- drift: … -->` notes if you spot stale context links and cannot fix them now.
+
+## Worktrees / parallel agents
+
+- Agents edit under `.worktrees/<type>/<slug>`, not the workspace root. See
+  [`worktrees.md`](../rules/worktrees.md). Root checkout fights are how you get
+  dirty indexes and "already checked out" errors.
+- Git allows one checkout per branch. Always create with `-b type/slug`; never
+  reuse the branch the human has checked out in root.
+- After merge, `git worktree remove` — never `rm -rf` a worktree path.

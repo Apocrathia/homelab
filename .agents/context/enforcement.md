@@ -22,9 +22,10 @@ both exist, the hook is the enforcement and the rule is the explanation.
 | GitLab CI            | Lint, Trivy, context-links, tofu, …             | `.gitlab/`                                                        |
 | Commit hard stops    | Secrets, force-push to main, bad amends         | [`constraints.md`](./constraints.md) + hooks                      |
 
-This repo does **not** use an agent worktrees rule. Agents usually edit the
-workspace root; ship is operator-gated via
-[`draft-commit`](../skills/draft-commit/SKILL.md).
+Agent file edits require a git worktree under `.worktrees/`
+([`worktrees.md`](../rules/worktrees.md)). Ship stays operator-gated via
+[`draft-commit`](../skills/draft-commit/SKILL.md). Promote to a Write/shell
+hook if root-checkout edits keep slipping through.
 
 ## Promotion path
 

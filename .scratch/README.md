@@ -5,6 +5,7 @@ Use this directory for temporary files during agent work: extracted Helm values,
 ## Rules
 
 - Prefer **`.scratch/`** over **`/tmp`**. Files here stay in the workspace, so shell sandboxing and review stay sane.
+- In a linked worktree, use **that worktree's** `.scratch/` (same gitignore rules apply).
 - Do **not** commit contents of this directory. Git ignores everything under `.scratch/` except this README.
 - Clean up when finished (`rm` / `mv` confined to `.scratch/` is allowed by the shell guard without an extra approval). Prefer leaving clutter over deleting paths outside `.scratch/`.
 - Do **not** put secrets here. Prefer 1Password Item CRs and never write credentials to disk for convenience.

@@ -10,10 +10,11 @@ disable-model-invocation: true
 
 # Draft commit
 
-Last step on the ship path. Default: produce a **ready-to-paste** Conventional
-Commit message (and optional draft MR body) and stop there — operator
-commits. When the operator authorizes shipping this lap, may run the
-commit/push per mode (see CRITICAL below).
+Last step on the ship path. Run from the lap **worktree** (not the workspace
+root) so status/diff reflect the change under review. Default: produce a
+**ready-to-paste** Conventional Commit message (and optional draft MR body) and
+stop there — operator commits. When the operator authorizes shipping this lap,
+may run the commit/push per mode (see CRITICAL below).
 
 Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).

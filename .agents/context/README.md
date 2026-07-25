@@ -26,6 +26,7 @@ manual chores. Not a fake enterprise platform.
 | `.cursor/`        | Cursor adapter: rules, hooks, slash commands, discovery symlinks                               |
 | `.claude/`        | Claude Code adapter: discovery symlinks                                                        |
 | `.scratch/`       | Throwaway renders and dumps (gitignored)                                                       |
+| `.worktrees/`     | Linked git worktrees for agent edits (gitignored; see [`worktrees.md`](../rules/worktrees.md)) |
 
 ## How agents should behave here
 

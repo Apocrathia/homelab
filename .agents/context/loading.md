@@ -8,6 +8,7 @@ folder after the README.
 | Surface                                               | Load when                                                      | Leave it                                     |
 | ----------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------- |
 | [`constraints.md`](./constraints.md)                  | Any work that could mutate cluster, secrets, or GitOps truth   | Pure Q&A with no edits                       |
+| [`.agents/rules/worktrees.md`](../rules/worktrees.md) | Before any file edit (code or docs)                            | Read-only exploration / find-work            |
 | [`traps.md`](./traps.md)                              | Starting non-trivial change or restore                         | One-line typo / comment fix                  |
 | [`nomenclature.md`](./nomenclature.md)                | Naming resources, dirs, or apps                                | Names already fixed in the diff              |
 | [`tools.md`](./tools.md)                              | Choosing MCP vs CLI, or Flux/kubectl workflow                  | Unrelated prose edits                        |

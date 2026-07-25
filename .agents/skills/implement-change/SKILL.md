@@ -31,6 +31,9 @@ Ship model (locked): draft-commit, not upstream `ship-work` — see
 
 ## Homelab non-negotiables
 
+- Open a worktree before editing
+  ([`worktrees.md`](../../rules/worktrees.md)). Isolation does not authorize
+  ship.
 - Never `git commit` / push directly. Hand off to
   [`draft-commit`](../draft-commit/SKILL.md) — draft by default, ships only
   when the operator authorizes
@@ -69,6 +72,7 @@ executable plans for the lap live under `docs/plans/`.
 ## Workflow
 
 ```
+- [ ] 0. Open or create a worktree on a dedicated branch (do not edit workspace root)
 - [ ] 1. Confirm Launch brief (or operator scope): acceptance + named feedback loop
 - [ ] 2. If fuzzy → alignment; stop if unattended and still fuzzy
 - [ ] 3. If no executable plan → project-planner → docs/plans/<slug>.md
@@ -80,6 +84,13 @@ executable plans for the lap live under `docs/plans/`.
          review-loop → reconcile-docs → reconcile-context → draft-commit
 - [ ] 9. Stop — do not commit, push, merge, or invent the next lap
 ```
+
+### 0. Worktree
+
+Before any file edit, open or create a git worktree under `.worktrees/` on the
+brief's `Branch:` (or a new `type/slug`). Do not edit the workspace root
+checkout. See [`.agents/rules/worktrees.md`](../../rules/worktrees.md). Pass the
+worktree absolute path to every implement/verify Task.
 
 ### 4. Implement
 

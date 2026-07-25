@@ -22,6 +22,7 @@ lives inside each `.md` and is read through the symlink.
 | `subagents.md`                     | Prefer defined personas; fan out for multi-domain work      |
 | `ponytail.md`                      | YAGNI / minimal-code + surgical touch discipline            |
 | `surgical-edits.md`                | Simplicity-first + touch-only-what-you-must edit contract   |
+| `worktrees.md`                     | Agent edits only in `.worktrees/` on a dedicated branch     |
 
 ## Glob-scoped
 

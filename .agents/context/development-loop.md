@@ -27,15 +27,17 @@ Overrides any conflicting pattern. Full lab constraints:
 
 Locked against prime-context's autonomous ship loop:
 
-| Upstream (prime-context)                 | Homelab                                                                            |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- |
-| `ship-work` (agent commits/pushes/PR)    | [`draft-commit`](../skills/draft-commit/SKILL.md) — propose only unless authorized |
-| `self-improve` (autonomous orchestrator) | [`run-loop`](../skills/run-loop/SKILL.md) — scouts + briefs; same unattended gates |
-| `watch-pr`                               | [`watch-mr`](../skills/watch-mr/SKILL.md) (GitLab)                                 |
-| `clock-out` / worktrees                  | Not used — workspace-root edits; no teardown ceremony                              |
+| Upstream (prime-context)                 | Homelab                                                                                                                           |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `ship-work` (agent commits/pushes/PR)    | [`draft-commit`](../skills/draft-commit/SKILL.md) — propose only unless authorized                                                |
+| `self-improve` (autonomous orchestrator) | [`run-loop`](../skills/run-loop/SKILL.md) — scouts + briefs; same unattended gates                                                |
+| `watch-pr`                               | [`watch-mr`](../skills/watch-mr/SKILL.md) (GitLab)                                                                                |
+| `clock-out`                              | Not used — no automated teardown ceremony; remove worktrees explicitly when done                                                  |
+| Agent worktrees                          | **Required** for file edits — `.worktrees/<type>/<slug>` per [`worktrees.md`](../rules/worktrees.md). Isolation ≠ ship authority. |
 
 Revisit only with an explicit operator decision. `integrate-upstream` must leave
-these alone unless asked.
+the ship-model lock alone unless asked; it **should** consume upstream
+`worktrees.md` updates.
 
 ## State machine
 

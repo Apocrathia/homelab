@@ -24,9 +24,9 @@ upstream changes in while preserving homelab domain content (layer 3).
 
 Homelab notes:
 
-- This repo does **not** use agent worktrees. Edit in the normal working tree
-  on a `chore/integrate-upstream-*` branch if you open one; otherwise stay on
-  the current branch with operator approval.
+- Edit in a git worktree on a `chore/integrate-upstream-*` branch under
+  `.worktrees/` ([`worktrees.md`](../../rules/worktrees.md)). Do not edit the
+  workspace root checkout.
 - Ship via [`draft-commit`](../draft-commit/SKILL.md) (operator commits) — not
   upstream `ship-work`.
 - Do **not** write an `.agents/upstream-ref` file. If a prior sync revision is
@@ -111,10 +111,10 @@ Homelab-only (leave alone): `security.md`, `ponytail.md`, `helm-deployment`,
 `mcp-deployment`, restore skills, `draft-commit`, `watch-mr`, `run-loop`, all
 personas, domain rules (`flux.md`, `gitops.md`, `helm.md`, `talos.md`, etc.).
 
-Do **not** adopt upstream `worktrees.md` or `ship-work` / `self-improve` /
-`clock-out` unless the operator explicitly asks — this repo's ship model is
-operator-gated on the workspace root
+Do **not** adopt upstream `ship-work` / `self-improve` / `clock-out` unless the
+operator explicitly asks — ship stays operator-gated
 ([`development-loop.md`](../../context/development-loop.md#ship-model)).
+Do adopt / reconcile upstream `worktrees.md` (homelab requires agent worktrees).
 
 ### 4–6. Diff and reconcile
 

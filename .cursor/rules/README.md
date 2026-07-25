@@ -34,6 +34,7 @@ the `.md` files, not these links.
 | `subagents.mdc`                     | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
 | `ponytail.mdc`                      | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
 | `surgical-edits.mdc`                | Simplicity-first + touch-only-what-you-must (pairs with ponytail)                                  |
+| `worktrees.mdc`                     | Agent edits only in `.worktrees/` on a dedicated branch; root checkout is for the human            |
 
 ### Glob-scoped (load when matching files are touched)
 

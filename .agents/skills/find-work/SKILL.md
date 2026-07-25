@@ -157,7 +157,8 @@ Protected paths (confirm before any future edit; find-work never edits):
 ## Launch brief
 
 Each actionable row must emit a pasteable brief. Discover is read-only; build
-only after the brief is selected. No worktrees — branch is optional metadata.
+only after the brief is selected. Find-work does not create worktrees; the
+`Branch:` field is the intended worktree branch for the implement lap.
 
 ```text
 ## Launch N — <title>
