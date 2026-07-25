@@ -17,7 +17,8 @@ trivy:
   script:
     - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
     - |
-      CHANGED=$(git diff --name-only "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" -- terraform/ flux/ helm/ | grep -E '\.(yaml|yml|tf)$' || true)
+      # --diff-filter=d: deleted paths are gone from the checkout; trivy exits fatal on lstat
+      CHANGED=$(git diff --name-only --diff-filter=d "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD" -- terraform/ flux/ helm/ | grep -E '\.(yaml|yml|tf)$' || true)
       if [ -z "$CHANGED" ]; then
         echo "No scannable files changed"
         exit 0
