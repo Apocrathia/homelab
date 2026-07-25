@@ -91,7 +91,7 @@ kubectl -n litellm get pods,svc,pvc
 kubectl -n litellm get pods -l app.kubernetes.io/name=litellm
 
 # PostgreSQL cluster status
-kubectl -n litellm get cluster litellm-postgres -o wide
+kubectl get cluster litellm-postgres -n litellm -o wide
 
 # Valkey cache
 kubectl get pods,svc -n litellm -l app=litellm-valkey
