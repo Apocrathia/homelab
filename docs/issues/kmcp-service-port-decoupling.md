@@ -8,7 +8,6 @@ found_at: 2026-07-25
 found_by: ian
 area: agents
 slice: hitl
-plan: docs/plans/migrate-toolhive-to-kmcp.md
 ---
 
 # kmcp: allow the generated Service port to differ from the container port
@@ -90,6 +89,6 @@ The enhancement is to source `Port` from a new optional field and keep
   distinctly if pursued): HTTP-transport images get no auto `PORT`/`MCP_PORT`
   env injection and no declared `containerPort`, so port wiring is manual.
 - `spec.deployment.port` itself is configurable (upstream default `3000`); the
-  lab pins `8080` as a ToolHive-cutover convention. This issue is strictly
+  lab pins `8080` as a cutover convention. This issue is strictly
   about the Service-vs-container port split, not "stuck on 8080."
-- Migration context: `docs/plans/migrate-toolhive-to-kmcp.md`.
+  Context: closed issue `docs/issues/migrate-toolhive-to-kmcp.md`.

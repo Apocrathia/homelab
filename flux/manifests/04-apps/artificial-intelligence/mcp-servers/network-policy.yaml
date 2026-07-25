@@ -40,7 +40,3 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: kube-system
-    # Allow traffic from toolhive-system for operator management
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: toolhive-system

@@ -63,7 +63,7 @@ independent Tasks in one parent message; serialize only on real dependencies.
 | Security-sensitive change   | [`security-analyst`](../../agents/security-analyst/agent.md)                            |
 | Incident / Flux health      | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)          |
 | New / changed Helm app      | [`helm-deployment`](../helm-deployment/SKILL.md)                                        |
-| MCP / ToolHive / LiteLLM    | [`mcp-deployment`](../mcp-deployment/SKILL.md)                                          |
+| MCP / kmcp / LiteLLM        | [`mcp-deployment`](../mcp-deployment/SKILL.md)                                          |
 | Domain restore              | matching restore skill                                                                  |
 
 Interactive IDE drafts may still land under `.cursor/plans/`; durable

@@ -97,7 +97,6 @@ Add these namespaces to the policy's exclude list:
 | `onepassword-system`      | connect-operator                           | Syncs 1Password items to secrets                 |
 | `lws-system`              | lws-controller-manager                     | LeaderWorkerSet controller                       |
 | `pasture-system`          | pasture-operator                           | Custom operator                                  |
-| `toolhive-system`         | toolhive-operator                          | MCP server operator                              |
 | `system-upgrade`          | tuppr                                      | Manages node upgrades                            |
 | `renovate`                | renovate-mend-renovate-ce                  | Repository automation                            |
 | `gitlab-runner`           | gitlab-runner                              | Spawns job pods, needs API access                |
@@ -121,11 +120,13 @@ Check each chart's `values.yaml` for settings like:
 
 For charts without explicit support, use `podLabels` or `podAnnotations` + Kyverno mutation, or open upstream issues.
 
-### 4. MCP Servers (~20 namespaces)
+### 4. MCP Servers (`mcp-*` namespaces)
 
-**Pattern**: `mcp-*` namespaces with toolhive-managed MCP server deployments
+**Pattern**: kmcp-managed MCP server Deployments in `mcp-*` namespaces.
 
-**Fix**: Update the toolhive operator or base deployment templates to include:
+**Fix**: Set `automountServiceAccountToken: false` on the Deployment pod
+template when the server does not need Kubernetes API access (most do not;
+`flux` MCP is an exception via its dedicated SA).
 
 ```yaml
 spec:
@@ -188,7 +189,7 @@ Qdrant StatefulSet doesn't need API access.
 
 3. **Phase 3 - MCP Servers**
 
-   - Update toolhive operator or base templates
+   - Harden kmcp `MCPServer` deployment templates (SA mount off when unused)
 
 4. **Phase 4 - Third-Party Charts**
 
@@ -243,7 +244,6 @@ spec:
                 - onepassword-system
                 - lws-system
                 - pasture-system
-                - toolhive-system
                 - system-upgrade
                 - renovate
                 - gitlab-runner

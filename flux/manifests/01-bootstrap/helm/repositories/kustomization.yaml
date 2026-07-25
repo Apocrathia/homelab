@@ -26,7 +26,6 @@ resources:
   - qdrant.yaml
   - renovate.yaml
   - tailscale.yaml
-  - toolhive.yaml
   - tracearr.yaml
   - tuppr.yaml
   - external-secrets.yaml

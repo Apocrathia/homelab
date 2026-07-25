@@ -43,7 +43,7 @@ This is a GitOps-managed Kubernetes homelab. Familiarize yourself with these sur
 **Existing skills you can defer to during execution-time:**
 
 - `.agents/skills/helm-deployment/SKILL.md` — full procedure for deploying a new Helm chart
-- `.agents/skills/mcp-deployment/SKILL.md` — MCP server deployment via ToolHive
+- `.agents/skills/mcp-deployment/SKILL.md` — MCP server deployment via kmcp
 - `.agents/skills/cnpg-logical-database-restore/SKILL.md` — CNPG logical restore
 - `.agents/skills/generic-app-longhorn-restore/SKILL.md` — Longhorn restore for `generic-app` workloads
 

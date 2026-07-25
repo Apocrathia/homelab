@@ -148,14 +148,14 @@ metadata:
 1. **Server Deployment Issues**
 
    ```bash
-   # View all MCP servers
-   kubectl get mcpservers --all-namespaces
+   # View all MCP servers (kmcp)
+   kubectl get mcpserver.kagent.dev --all-namespaces
 
    # Check specific server
-   kubectl get mcpserver <name> -n <namespace>
+   kubectl get mcpserver.kagent.dev <name> -n mcp-<name>
 
    # Check MCPServer status
-   kubectl get mcpserver -n mcp-<server>
+   kubectl get mcpserver.kagent.dev -n mcp-<server>
    ```
 
 2. **LiteLLM Routing Issues**
@@ -172,7 +172,7 @@ metadata:
 
 ```bash
 # Check MCP server CRs
-kubectl get mcpservers --all-namespaces
+kubectl get mcpserver.kagent.dev --all-namespaces
 
 # Check services
 kubectl get svc --all-namespaces | grep mcp-

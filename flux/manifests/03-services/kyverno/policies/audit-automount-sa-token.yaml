@@ -46,7 +46,6 @@ spec:
                 - onepassword-system
                 - lws-system
                 - pasture-system
-                - toolhive-system
                 - system-upgrade
                 - gitlab-runner
                 - kagent
