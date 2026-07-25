@@ -20,7 +20,7 @@ spec:
     app:
       name: searxng
       # renovate: datasource=docker depName=ghcr.io/searxng/searxng
-      image: ghcr.io/searxng/searxng:2025.12.2-fb089ae29
+      image: ghcr.io/searxng/searxng:2025.12.2-fb089ae29@sha256:277cb4b82fbdd69d88812089a5755860d379de907f09fb511443ff03d35191af
       container:
         name: searxng
         port: 8080
