@@ -126,7 +126,7 @@ own the secret.
 ## Security Considerations
 
 - **Network Isolation**: Each server runs in its own namespace with Cilium network policy
-- **Minimal Permissions**: ToolHive operator creates least-privilege RBAC
+- **Minimal Permissions**: Per-server RBAC where required (e.g. Flux MCP ServiceAccount)
 - **Internal Access Only**: No direct external access to MCP servers
 - **Centralized Auth**: All access through LiteLLM proxy
 
@@ -136,7 +136,7 @@ MCP servers are protected by a `CiliumClusterwideNetworkPolicy` that restricts i
 
 - **Target**: Namespaces with `mcp-server: "true"` label
 - **Allowed Sources**: Namespaces with `mcp-client: "true"` label (litellm, kagent)
-- **System Access**: kube-system and toolhive-system are allowed for health checks and operator management
+- **System Access**: kube-system is allowed for DNS and health checks
 
 To allow a new namespace to access MCP servers, add the label:
 
@@ -159,8 +159,8 @@ metadata:
    # Check specific server
    kubectl get mcpserver <name> -n <namespace>
 
-   # Check operator status
-   kubectl get pods -n toolhive-system
+   # Check MCPServer status
+   kubectl get mcpserver -n mcp-<server>
    ```
 
 2. **LiteLLM Routing Issues**
@@ -176,10 +176,7 @@ metadata:
 ### Health Checks
 
 ```bash
-# Check ToolHive operator
-kubectl get pods -n toolhive-system
-
-# Check MCP server deployments
+# Check MCP server CRs
 kubectl get mcpservers --all-namespaces
 
 # Check services
@@ -188,5 +185,5 @@ kubectl get svc --all-namespaces | grep mcp-
 
 ## References
 
-- **[ToolHive Documentation](https://docs.stacklok.com/toolhive/)** - Primary documentation source
+- **[kagent MCPServer](https://kagent.dev/docs/)** - kmcp operator and MCPServer CR
 - **[MCP Specification](https://spec.modelcontextprotocol.io/)** - Protocol specification

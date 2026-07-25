@@ -1,66 +1,56 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: unifi-network-mcp
+  name: unifi
   namespace: mcp-unifi
   labels:
-    app.kubernetes.io/name: unifi-network-mcp
+    app.kubernetes.io/name: unifi
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "UniFi Network MCP server for network management"
 spec:
-  # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
-  image: ghcr.io/sirkirby/unifi-network-mcp:0.24.1
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
-          image: ghcr.io/sirkirby/unifi-network-mcp:0.24.1
-          securityContext:
-            readOnlyRootFilesystem: false
-          stdin: true
-          env:
-            - name: UNIFI_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: unifi-mcp-secrets
-                  key: host
-            - name: UNIFI_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: unifi-mcp-secrets
-                  key: username
-            - name: UNIFI_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: unifi-mcp-secrets
-                  key: password
-            - name: UNIFI_PORT
-              value: "443"
-            - name: UNIFI_SITE
-              value: "default"
-            - name: UNIFI_VERIFY_SSL
-              value: "false"
-            - name: UNIFI_MCP_HTTP_ENABLED
-              value: "false"
-            - name: UNIFI_TOOL_REGISTRATION_MODE
-              value: "eager"
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.24.1
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export UNIFI_HOST="$(cat /var/run/secrets/mcp/host)" &&
+        export UNIFI_USERNAME="$(cat /var/run/secrets/mcp/username)" &&
+        export UNIFI_PASSWORD="$(cat /var/run/secrets/mcp/password)" &&
+        exec unifi-network-mcp
+    env:
+      UNIFI_MCP_HTTP_ENABLED: "false"
+      UNIFI_PORT: "443"
+      UNIFI_SITE: default
+      UNIFI_TOOL_REGISTRATION_MODE: eager
+      UNIFI_VERIFY_SSL: "false"
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: unifi-mcp-secrets

@@ -9,20 +9,17 @@ The Plex MCP server provides Plex Media Server integration through the Model Con
 This deployment includes:
 
 - Plex MCP server for media library management
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`plex`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to internal Plex Media Server instance
 
-During the kmcp migration, this namespace runs ToolHive `plex-mcp-server` and
-kmcp `plex-kmcp` side by side. Clients remain on the ToolHive endpoint until
-cutover; the kmcp endpoint is
-`http://plex-kmcp.mcp-plex.svc.cluster.local:8080/mcp`.
+**Endpoint:** `http://plex.mcp-plex.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -40,11 +37,7 @@ Create a Kubernetes secret `plex-mcp-secrets` in the `mcp-plex` namespace with:
 - `plex-token`: Plex authentication token (Long-Lived Access Token)
 - `plex-username`: Plex username (optional)
 
-kmcp `secretRefs` exposes every Secret key through `envFrom`, without
-per-key environment-variable renaming. The kmcp draft instead mounts the same
-generated Secret at `/var/run/secrets/mcp` and maps `plex-url`, `plex-token`,
-and optional `plex-username` to the required `PLEX_*` variables before the MCP
-process starts.
+The Secret is mounted at `/var/run/secrets/mcp` and maps `plex-url`, `plex-token`, and optional `plex-username` to the required `PLEX_*` variables before the MCP process starts.
 
 ### Security
 
@@ -71,10 +64,10 @@ The Plex MCP server provides tools for media library management:
 kubectl get pods -n mcp-plex
 
 # MCP server logs
-kubectl logs -n mcp-plex deployment/plex-mcp -c mcp -f
+kubectl logs -n mcp-plex deployment/plex -f
 
 # Test Plex connectivity
-kubectl exec -n mcp-plex deployment/plex-mcp -- \
+kubectl exec -n mcp-plex deployment/plex -- \
   curl -s -H "X-Plex-Token: $PLEX_TOKEN" "$PLEX_URL/identity"
 ```
 

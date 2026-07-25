@@ -1,75 +1,60 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: servarr-mcp
+  name: servarr
   namespace: mcp-servarr
   labels:
-    app.kubernetes.io/name: servarr-mcp
+    app.kubernetes.io/name: servarr
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Servarr MCP server for Sonarr and Radarr integration"
 spec:
-  # Use Python base image (not slim) which includes git for git-based installs
-  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14
-          securityContext:
-            readOnlyRootFilesystem: false
-          stdin: true
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              export HOME=/tmp &&
-              cd /tmp &&
-              git clone --depth 1 https://github.com/bdfrost/mcp-servarr.git &&
-              cd mcp-servarr &&
-              pip install --quiet -r requirements.txt &&
-              exec python src/server.py
-          env:
-            - name: HOME
-              value: "/tmp"
-            - name: SONARR_URL
-              valueFrom:
-                secretKeyRef:
-                  name: servarr-mcp-secrets
-                  key: sonarr-url
-            - name: SONARR_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: servarr-mcp-secrets
-                  key: sonarr-api-key
-            - name: RADARR_URL
-              valueFrom:
-                secretKeyRef:
-                  name: servarr-mcp-secrets
-                  key: radarr-url
-            - name: RADARR_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: servarr-mcp-secrets
-                  key: radarr-api-key
-            - name: REQUEST_TIMEOUT
-              value: "30"
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp
+        export SONARR_URL="$(cat /var/run/secrets/servarr-mcp/sonarr-url)"
+        export SONARR_API_KEY="$(cat /var/run/secrets/servarr-mcp/sonarr-api-key)"
+        export RADARR_URL="$(cat /var/run/secrets/servarr-mcp/radarr-url)"
+        export RADARR_API_KEY="$(cat /var/run/secrets/servarr-mcp/radarr-api-key)"
+        cd /tmp
+        git clone --depth 1 https://github.com/bdfrost/mcp-servarr.git
+        cd mcp-servarr
+        pip install --quiet -r requirements.txt
+        exec python src/server.py
+    env:
+      HOME: /tmp
+      REQUEST_TIMEOUT: "30"
+    volumes:
+      - name: servarr-mcp-secrets
+        secret:
+          secretName: servarr-mcp-secrets
+    volumeMounts:
+      - name: servarr-mcp-secrets
+        mountPath: /var/run/secrets/servarr-mcp
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # The process clones and installs its runtime dependencies at startup.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

@@ -1,69 +1,59 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: plex-mcp-server
+  name: plex
   namespace: mcp-plex
   labels:
-    app.kubernetes.io/name: plex-mcp-server
+    app.kubernetes.io/name: plex
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Plex MCP server for Plex Media Server integration"
 spec:
-  # Use Python base image (not slim) which includes git for git-based installs
-  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14
-          securityContext:
-            readOnlyRootFilesystem: false
-          stdin: true
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              export HOME=/tmp &&
-              cd /tmp &&
-              git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git &&
-              cd plex-mcp-server &&
-              pip install --quiet -r requirements.txt aiohttp &&
-              exec python plex_mcp_server.py --transport stdio
-          env:
-            - name: HOME
-              value: "/tmp"
-            - name: PLEX_URL
-              valueFrom:
-                secretKeyRef:
-                  name: plex-mcp-secrets
-                  key: plex-url
-            - name: PLEX_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: plex-mcp-secrets
-                  key: plex-token
-            - name: PLEX_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: plex-mcp-secrets
-                  key: plex-username
-                  optional: true
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export HOME=/tmp &&
+        export PLEX_URL="$(cat /var/run/secrets/mcp/plex-url)" &&
+        export PLEX_TOKEN="$(cat /var/run/secrets/mcp/plex-token)" &&
+        export PLEX_USERNAME="$(cat /var/run/secrets/mcp/plex-username 2>/dev/null || true)" &&
+        cd /tmp &&
+        # agentgateway respawns this command per MCP session; the clone
+        # must be idempotent because /tmp persists across spawns.
+        { [ -d plex-mcp-server ] || git clone --depth 1 https://github.com/vladimir-tutin/plex-mcp-server.git; } &&
+        cd plex-mcp-server &&
+        pip install --quiet -r requirements.txt aiohttp &&
+        exec python plex_mcp_server.py --transport stdio
+    env:
+      HOME: /tmp
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: credentials
+        mountPath: /var/run/secrets/mcp
+        readOnly: true
+    volumes:
+      - name: credentials
+        secret:
+          secretName: plex-mcp-secrets

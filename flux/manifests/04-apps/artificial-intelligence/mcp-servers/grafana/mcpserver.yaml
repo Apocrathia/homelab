@@ -1,47 +1,41 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: grafana-mcp
+  name: grafana
   namespace: mcp-grafana
   labels:
-    app.kubernetes.io/name: grafana-mcp
+    app.kubernetes.io/name: grafana
     app.kubernetes.io/component: mcp-server
-    app.kubernetes.io/part-of: artificial-intelligence
-    app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Grafana MCP server for AI assistant integration"
 spec:
-  # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-  image: docker.io/grafana/mcp-grafana:0.17.2
-  transport: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "200m"
-      memory: "256Mi"
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-          image: docker.io/grafana/mcp-grafana:0.17.2
-          args:
-            - -t
-            - streamable-http
-            - --address
-            - "0.0.0.0:8080"
-            - --debug
-          env:
-            # Default Grafana URL (can be overridden via X-Grafana-URL header)
-            - name: GRAFANA_URL
-              value: "http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local"
-              # Token passed via X-Grafana-API-Key header from client through LiteLLM
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
+    image: docker.io/grafana/mcp-grafana:0.17.2
+    port: 8080
+    args:
+      - -t
+      - streamable-http
+      - --address
+      - "0.0.0.0:8080"
+      - --debug
+    env:
+      GRAFANA_URL: http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

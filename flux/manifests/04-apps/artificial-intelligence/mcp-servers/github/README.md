@@ -4,10 +4,7 @@ Self-hosted GitHub MCP server for repository and issue management.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-During the kmcp migration, this namespace runs ToolHive `github-mcp-server`
-(`mcpserver.yaml`) and kmcp `github` (`mcpserver-kmcp.yaml`) side by side. The
-kmcp endpoint is `http://github.mcp-github.svc.cluster.local:8080/mcp`;
-ToolHive remains available for rollback during soak.
+**Endpoint:** `http://github.mcp-github.svc.cluster.local:8080/mcp`
 
 ## Access
 
@@ -27,9 +24,7 @@ Internal only via LiteLLM gateway - no external HTTPRoute.
 
 ## Transport
 
-Native `streamable-http` via the image `http` subcommand (stateless MCP
-sessions). ToolHive fronts the pod on port 8080; clients use the proxy URL
-`http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp`.
+`transportType: http` — native `streamable-http` via the image `http` subcommand (stateless MCP sessions).
 
 ## Available Tools
 
@@ -72,8 +67,7 @@ Client wiring (kagent `RemoteMCPServer` `headersFrom`, LiteLLM
 `static_headers`) lives with the callers. The shared vault item is
 `vaults/Secrets/items/github-mcp-secrets`:
 
-kmcp receives no `secretRefs` or mounted Secret for GitHub. It preserves the
-ToolHive header-auth model: callers supply `Authorization` on each request.
+The server holds no mounted Secret for GitHub. Callers supply `Authorization` on each request.
 
 | Field           | Description                                                    |
 | --------------- | -------------------------------------------------------------- |
@@ -95,13 +89,13 @@ For full functionality, the PAT should have these scopes:
 # Pod status
 kubectl get pods -n mcp-github
 
-# MCP server logs (container name is mcp)
-kubectl logs -n mcp-github -l app.kubernetes.io/name=github-mcp-server -c mcp -f
+# MCP server logs
+kubectl logs -n mcp-github deployment/github -f
 
-# Proxy reachability from inside the cluster
+# Reachability from inside the cluster
 kubectl run -n mcp-github --rm -it --restart=Never curl --image=curlimages/curl -- \
   curl -sS -o /dev/null -w '%{http_code}\n' \
-  http://mcp-github-mcp-server-proxy.mcp-github.svc.cluster.local:8080/mcp
+  http://github.mcp-github.svc.cluster.local:8080/mcp
 ```
 
 ## References

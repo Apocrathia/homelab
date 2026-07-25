@@ -9,20 +9,17 @@ The TrueNAS MCP server provides TrueNAS Core and SCALE management through the Mo
 This deployment includes:
 
 - TrueNAS MCP server for storage and system management
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`truenas`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to TrueNAS Core or SCALE instance
 
-During the kmcp migration, this namespace runs ToolHive `truenas-mcp-server`
-and kmcp `truenas-kmcp` side by side. Clients remain on the ToolHive endpoint
-until cutover; the kmcp endpoint is
-`http://truenas-kmcp.mcp-truenas.svc.cluster.local:8080/mcp`.
+**Endpoint:** `http://truenas.mcp-truenas.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -40,11 +37,7 @@ Create a Kubernetes secret `truenas-mcp-secrets` in the `mcp-truenas` namespace 
 - `truenas-url`: TrueNAS server URL (e.g., `https://truenas.local`)
 - `truenas-api-key`: TrueNAS API key (created in Settings → API Keys)
 
-kmcp `secretRefs` exposes every Secret key through `envFrom`, without
-per-key environment-variable renaming. The kmcp draft instead mounts the same
-generated Secret at `/var/run/secrets/mcp` and maps `truenas-url` and
-`truenas-api-key` to the required `TRUENAS_*` variables before the MCP process
-starts.
+The Secret is mounted at `/var/run/secrets/mcp` and maps `truenas-url` and `truenas-api-key` to the required `TRUENAS_*` variables before the MCP process starts.
 
 ### Security
 
@@ -76,10 +69,10 @@ The TrueNAS MCP server provides tools for storage and system management:
 kubectl get pods -n mcp-truenas
 
 # MCP server logs
-kubectl logs -n mcp-truenas deployment/truenas-mcp -c mcp -f
+kubectl logs -n mcp-truenas deployment/truenas -f
 
 # Test TrueNAS connectivity
-kubectl exec -n mcp-truenas deployment/truenas-mcp -- \
+kubectl exec -n mcp-truenas deployment/truenas -- \
   curl -s -k -H "Authorization: Bearer $TRUENAS_API_KEY" "$TRUENAS_URL/api/v2.0/system/info"
 ```
 

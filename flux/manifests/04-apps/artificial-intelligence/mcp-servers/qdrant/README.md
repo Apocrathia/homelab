@@ -4,10 +4,7 @@ MCP server for knowledge storage and semantic search via Qdrant vector database.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-During the kmcp migration, this namespace runs ToolHive `qdrant-mcp`
-(`mcpserver.yaml`) and kmcp `qdrant` (`mcpserver-kmcp.yaml`) side by side. The
-kmcp endpoint is `http://qdrant.mcp-qdrant.svc.cluster.local:8080/mcp`;
-ToolHive remains available for rollback during soak.
+**Endpoint:** `http://qdrant.mcp-qdrant.svc.cluster.local:8080/mcp`
 
 ## Overview
 
@@ -44,10 +41,7 @@ Uses same secret as Qdrant database (`vaults/Secrets/items/qdrant-secrets`):
 | --------- | --------------------------------- |
 | `api-key` | API key for Qdrant authentication |
 
-kmcp `secretRefs` injects complete Secrets through `envFrom` and cannot map
-`api-key` to `QDRANT_API_KEY`. The kmcp CR mounts the existing Secret read-only
-and exports that file to `QDRANT_API_KEY` at startup, preserving the ToolHive
-`secretKeyRef` mapping without changing the OnePassword item.
+The MCPServer mounts the existing Secret read-only and exports the `api-key` file to `QDRANT_API_KEY` at startup.
 
 ## Usage Examples
 
@@ -72,14 +66,14 @@ Find information about Kubernetes storage
 kubectl get mcpserver -n mcp-qdrant
 
 # Pod logs
-kubectl logs -n mcp-qdrant -l app.kubernetes.io/name=qdrant-mcp
+kubectl logs -n mcp-qdrant deployment/qdrant -f
 ```
 
 ### Test Connection to Qdrant
 
 ```bash
 # From MCP server pod
-kubectl exec -n mcp-qdrant -l app.kubernetes.io/name=qdrant-mcp -- \
+kubectl exec -n mcp-qdrant deployment/qdrant -- \
   curl -s http://qdrant.qdrant.svc.cluster.local:6333/readyz
 ```
 

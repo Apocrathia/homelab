@@ -9,15 +9,16 @@ The OpenZIM MCP server provides offline knowledge base querying through ZIM form
 This deployment includes:
 
 - OpenZIM MCP server for querying ZIM knowledge bases
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`openzim`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
+
+**Endpoint:** `http://openzim.mcp-openzim.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-During the kmcp migration, ToolHive and kmcp run the server side by side. Both
-use stdio with an HTTP adapter; kmcp exposes the `openzim` Service on `/mcp`.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Storage
 

@@ -1,74 +1,62 @@
 ---
-# SaseQ Discord MCP — native streamable-http (Spring); ToolHive proxy fronts the pod.
-# https://github.com/SaseQ/discord-mcp
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: discord-mcp
+  name: discord
   namespace: mcp-discord
   labels:
-    app.kubernetes.io/name: discord-mcp
+    app.kubernetes.io/name: discord
     app.kubernetes.io/component: mcp-server
-    app.kubernetes.io/part-of: artificial-intelligence
-    app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Discord MCP — channels, messages (SaseQ/discord-mcp)"
 spec:
-  # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
-  image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
-  transport: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "768Mi"
-    requests:
-      cpu: "100m"
-      memory: "384Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      securityContext:
-        readOnlyRootFilesystem: false
-      volumes:
-        # ToolHive runs the container with read-only root; mount writable dirs.
-        - name: discord-mcp-data
-          emptyDir: {}
-        - name: discord-mcp-tmp
-          emptyDir: {}
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
-          image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
-          securityContext:
-            allowPrivilegeEscalation: false
-          volumeMounts:
-            - name: discord-mcp-data
-              mountPath: /data
-            - name: discord-mcp-tmp
-              mountPath: /tmp
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: http
-            # Align with ToolHive proxy (see MCP_PORT on the pod).
-            - name: SERVER_PORT
-              value: "8080"
-            # Upstream JAR sets logging.file.name=./target/logs/... (relative) and logging.pattern.console=
-            # (empty — breaks Logback). Flat JSON overrides application.properties before Logback starts.
-            - name: SPRING_APPLICATION_JSON
-              value: '{"logging.file.name":"/data/discord-mcp-server.log","logging.pattern.console":"%d{HH:mm:ss} %level %logger - %msg%n"}'
-            - name: DISCORD_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: homelab-agent-secrets
-                  key: discord-token
-            # Guild-scoped tools require a guild unless this is set (same 1Password item).
-            - name: DISCORD_GUILD_ID
-              valueFrom:
-                secretKeyRef:
-                  name: homelab-agent-secrets
-                  key: discord-guild-id
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
+    image: docker.io/saseq/discord-mcp@sha256:c2b195a01c60d7a55bed38d153ba13302cfa7df7fdb98e4dc36c5846f5d4aa8c
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export DISCORD_TOKEN="$(cat /var/run/secrets/discord-mcp/discord-token)"
+        export DISCORD_GUILD_ID="$(cat /var/run/secrets/discord-mcp/discord-guild-id)"
+        exec java -jar /app/app.jar
+    env:
+      SPRING_PROFILES_ACTIVE: http
+      SERVER_PORT: "8080"
+      SPRING_APPLICATION_JSON: '{"logging.file.name":"/data/discord-mcp-server.log","logging.pattern.console":"%d{HH:mm:ss} %level %logger - %msg%n"}'
+    volumes:
+      - name: discord-mcp-data
+        emptyDir: {}
+      - name: discord-mcp-tmp
+        emptyDir: {}
+      # injects envFrom, which cannot rename discord-token to DISCORD_TOKEN.
+      - name: discord-mcp-secrets
+        secret:
+          secretName: homelab-agent-secrets
+    volumeMounts:
+      - name: discord-mcp-data
+        mountPath: /data
+      - name: discord-mcp-tmp
+        mountPath: /tmp
+      - name: discord-mcp-secrets
+        mountPath: /var/run/secrets/discord-mcp
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "768Mi"
+      requests:
+        cpu: "100m"
+        memory: "384Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

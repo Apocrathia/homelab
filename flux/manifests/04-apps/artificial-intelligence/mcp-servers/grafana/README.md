@@ -19,28 +19,19 @@ The Grafana MCP server provides a bridge between AI assistants and Grafana's eco
 
 ## Architecture
 
-The deployment dual-runs ToolHive and kmcp MCPServer resources during migration:
-
 - **Namespace**: `mcp-grafana` for isolation
-- **Transport**: Native streamable HTTP
+- **Transport**: `transportType: http` — native streamable HTTP on port 8080
 - **Access**: Internal only via LiteLLM proxy
 - **Security**: Non-root containers, network policy restricted
+- **Endpoint**: `http://grafana.mcp-grafana.svc.cluster.local:8080/mcp`
 
-The kmcp resource is named `grafana`, distinct from ToolHive's `grafana-mcp`
-deployment. Its Service is `grafana.mcp-grafana.svc.cluster.local`.
+## Authentication
 
-## kmcp authentication
-
-kmcp uses the same request-header authentication path as ToolHive. LiteLLM
-forwards `X-Grafana-API-Key` from callers; the kmcp manifest has no shared
-Grafana credential. Preserve that `extra_headers` behavior until an explicit
-authentication design replaces it.
+LiteLLM forwards `X-Grafana-API-Key` from callers; the MCPServer manifest has no shared Grafana credential. Preserve that `extra_headers` behavior until an explicit authentication design replaces it.
 
 ## kagent Grafana MCP inventory
 
-kagent ships a Grafana MCP integration. This deployment remains separately
-inventoried during dual-run; do not assume the built-in integration replaces
-this server without proving feature and authentication parity.
+kagent ships a Grafana MCP integration. This deployment remains separately inventoried; do not assume the built-in integration replaces this server without proving feature and authentication parity.
 
 ## Prerequisites
 
@@ -90,7 +81,7 @@ kubectl apply -k .
 
 The server is accessible only through LiteLLM proxy:
 
-- **Internal**: `mcp-grafana-mcp-proxy.mcp-grafana.svc.cluster.local:8080/mcp`
+- **Internal**: `http://grafana.mcp-grafana.svc.cluster.local:8080/mcp`
 - **Via LiteLLM**: Configured in `litellm.yml` as `grafana` MCP server
 
 ### Available Tools
@@ -121,7 +112,7 @@ The deployment includes health checks:
 View server logs:
 
 ```bash
-kubectl logs -n mcp-grafana grafana-mcp-0 -c mcp
+kubectl logs -n mcp-grafana deployment/grafana -f
 ```
 
 ### Metrics
@@ -152,10 +143,10 @@ The deployment runs in an isolated namespace with:
 kubectl get pods -n mcp-grafana
 
 # MCP server logs
-kubectl logs -n mcp-grafana grafana-mcp-0 -c mcp -f
+kubectl logs -n mcp-grafana deployment/grafana -f
 
 # Check health endpoint
-kubectl exec -n mcp-grafana grafana-mcp-0 -- curl -s localhost:8080/health
+kubectl exec -n mcp-grafana deployment/grafana -- curl -s localhost:8080/health
 ```
 
 ## References

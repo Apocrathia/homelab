@@ -1,68 +1,58 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: qdrant-mcp
+  name: qdrant
   namespace: mcp-qdrant
   labels:
-    app.kubernetes.io/name: qdrant-mcp
+    app.kubernetes.io/name: qdrant
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Qdrant MCP server for knowledge storage and semantic search"
 spec:
-  # Official Qdrant MCP server - runs via uvx
-  # Pin <3.14: mcp-server-qdrant pins pydantic<2.12 (no cp314 wheels for pydantic-core).
-  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "1Gi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
-          securityContext:
-            readOnlyRootFilesystem: false
-          stdin: true
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              pip install --quiet uv && \
-              export PATH="/tmp/.local/bin:$PATH" && \
-              exec uvx mcp-server-qdrant --transport stdio
-          env:
-            # Qdrant connection
-            - name: QDRANT_URL
-              value: "http://qdrant.qdrant.svc.cluster.local:6333"
-            - name: QDRANT_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: qdrant-secrets
-                  key: api-key
-            # Default collection for knowledge storage
-            - name: COLLECTION_NAME
-              value: "knowledge"
-            # Embedding model - uses FastEmbed (local, no external API)
-            - name: EMBEDDING_PROVIDER
-              value: "fastembed"
-            - name: EMBEDDING_MODEL
-              value: "sentence-transformers/all-MiniLM-L6-v2"
-            # Writable home for pip/uv cache
-            - name: HOME
-              value: "/tmp"
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # Pin <3.14: mcp-server-qdrant pins pydantic<2.12 (no cp314 pydantic-core wheels).
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        pip install --quiet uv
+        export PATH="/tmp/.local/bin:$PATH"
+        export QDRANT_API_KEY="$(cat /var/run/secrets/qdrant/api-key)"
+        exec uvx mcp-server-qdrant --transport stdio
+    env:
+      QDRANT_URL: http://qdrant.qdrant.svc.cluster.local:6333
+      COLLECTION_NAME: knowledge
+      EMBEDDING_PROVIDER: fastembed
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      HOME: /tmp
+    volumes:
+      - name: qdrant-secrets
+        secret:
+          secretName: qdrant-secrets
+    volumeMounts:
+      - name: qdrant-secrets
+        mountPath: /var/run/secrets/qdrant
+        readOnly: true
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # pip and uv install their runtime under /tmp at startup.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

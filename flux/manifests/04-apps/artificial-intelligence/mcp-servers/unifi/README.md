@@ -9,22 +9,19 @@ The UniFi Network MCP server provides network management capabilities through th
 This deployment includes:
 
 - UniFi Network MCP server for network management operations
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`unifi`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to internal UniFi Controller instance
 
-During the kmcp migration, this namespace runs ToolHive
-`unifi-network-mcp` and kmcp `unifi-kmcp` side by side. Clients remain on the
-ToolHive endpoint until cutover; the kmcp endpoint is
-`http://unifi-kmcp.mcp-unifi.svc.cluster.local:8080/mcp`.
+**Endpoint:** `http://unifi.mcp-unifi.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-The MCPServer uses **`transport: stdio`** with **`proxyMode: streamable-http`**. The ToolHive proxy terminates HTTP (port 8080 on the proxy `Service`) and speaks MCP to the UniFi container over stdio, so the container must have **`stdin: true`**.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080). The container must have `stdin: true`.
 
-The UniFi image can start an in-container HTTP listener by default in some environments. This deployment sets **`UNIFI_MCP_HTTP_ENABLED=false`** so the process stays on stdio and matches ToolHive’s expectations. Clients (LiteLLM, kagent `RemoteMCPServer`, etc.) still use the proxy URL, for example `http://mcp-unifi-network-mcp-proxy.mcp-unifi.svc.cluster.local:8080/mcp`.
+The UniFi image can start an in-container HTTP listener by default in some environments. This deployment sets **`UNIFI_MCP_HTTP_ENABLED=false`** so the process stays on stdio.
 
 ### Environment Variables
 
@@ -36,7 +33,7 @@ The UniFi image can start an in-container HTTP listener by default in some envir
 | `UNIFI_PORT`                   | Config (default: 443)     | HTTPS port of UniFi Controller                                                                  |
 | `UNIFI_SITE`                   | Config (default: default) | Site name to manage                                                                             |
 | `UNIFI_VERIFY_SSL`             | Config (default: false)   | Verify SSL certificates                                                                         |
-| `UNIFI_MCP_HTTP_ENABLED`       | Config (`false` here)     | Disables in-container HTTP so MCP runs over stdio with ToolHive                                 |
+| `UNIFI_MCP_HTTP_ENABLED`       | Config (`false` here)     | Disables in-container HTTP so MCP runs over stdio with agentgateway                             |
 | `UNIFI_TOOL_REGISTRATION_MODE` | Optional (default `lazy`) | `lazy` (meta-tools only at list time), `eager` (register many tools at startup), or `meta_only` |
 
 ### Secrets
@@ -47,10 +44,7 @@ The `OnePasswordItem` `unifi-mcp-secrets` supplies:
 - `username`: UniFi administrator username
 - `password`: UniFi administrator password
 
-kmcp `secretRefs` exposes every Secret key through `envFrom`, without
-per-key environment-variable renaming. The kmcp draft instead mounts the same
-generated Secret at `/var/run/secrets/mcp` and maps `host`, `username`, and
-`password` to the required `UNIFI_*` variables before the MCP process starts.
+The Secret is mounted at `/var/run/secrets/mcp` and maps `host`, `username`, and `password` to the required `UNIFI_*` variables before the MCP process starts.
 
 ### Tool lists (lazy vs eager)
 
@@ -84,14 +78,11 @@ The UniFi Network MCP server provides tools for managing network resources:
 If logs show `https://https://…`, `UNIFI_HOST` incorrectly includes a scheme; use the bare hostname only.
 
 ```bash
-# Pod status (ToolHive runs a proxy Deployment and a StatefulSet for the MCP workload)
+# Pod status
 kubectl get pods --namespace=mcp-unifi
 
-# MCP process logs (stdio container on the StatefulSet)
-kubectl logs statefulset/unifi-network-mcp --namespace=mcp-unifi -f
-
-# ToolHive proxy logs
-kubectl logs deployment/unifi-network-mcp --namespace=mcp-unifi -f
+# MCP server logs
+kubectl logs deployment/unifi --namespace=mcp-unifi -f
 ```
 
 ## References

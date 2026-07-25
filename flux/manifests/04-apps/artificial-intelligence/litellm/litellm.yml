@@ -187,7 +187,7 @@ mcp_servers:
     auth_type: "none"
   flux:
     alias: "flux"
-    url: "http://flux-kmcp.mcp-flux.svc.cluster.local:8080/mcp"
+    url: "http://flux.mcp-flux.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   gitlab:
@@ -229,12 +229,12 @@ mcp_servers:
     auth_type: "none"
   plex:
     alias: "plex"
-    url: "http://plex-kmcp.mcp-plex.svc.cluster.local:8080/mcp"
+    url: "http://plex.mcp-plex.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   proxmox:
     alias: "proxmox"
-    url: "http://proxmox-kmcp.mcp-proxmox.svc.cluster.local:8080/mcp"
+    url: "http://proxmox.mcp-proxmox.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   qdrant:
@@ -254,12 +254,12 @@ mcp_servers:
     auth_type: "none"
   truenas:
     alias: "truenas"
-    url: "http://truenas-kmcp.mcp-truenas.svc.cluster.local:8080/mcp"
+    url: "http://truenas.mcp-truenas.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   unifi:
     alias: "unifi"
-    url: "http://unifi-kmcp.mcp-unifi.svc.cluster.local:8080/mcp"
+    url: "http://unifi.mcp-unifi.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
 

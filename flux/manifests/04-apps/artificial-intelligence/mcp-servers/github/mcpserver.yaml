@@ -1,50 +1,44 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: github-mcp-server
+  name: github
   namespace: mcp-github
   labels:
-    app.kubernetes.io/name: github-mcp-server
+    app.kubernetes.io/name: github
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "GitHub MCP server for repository and issue management"
 spec:
-  # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
-  image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
-  # Native streamable-http (stateless). Avoids stdio session reuse that
-  # go-sdk ≥1.7 rejects as duplicate initialize.
-  transport: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      securityContext:
-        readOnlyRootFilesystem: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
-          image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
-          args:
-            - http
-            - --port
-            - "8080"
-            - --toolsets
-            - context,repos,pull_requests,issues,users
-          env:
-            # No GitHub PAT here — clients must send Authorization.
-            - name: HOME
-              value: "/tmp"
+  transportType: http
+  httpTransport:
+    path: /mcp
+    targetPort: 8080
+  deployment:
+    # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
+    image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
+    port: 8080
+    args:
+      - http
+      - --port
+      - "8080"
+      - --toolsets
+      - context,repos,pull_requests,issues,users
+    env:
+      HOME: /tmp
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

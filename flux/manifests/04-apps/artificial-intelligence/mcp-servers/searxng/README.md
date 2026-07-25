@@ -9,24 +9,17 @@ The SearXNG MCP server provides web search capabilities through the Model Contex
 This deployment includes:
 
 - SearXNG MCP server for web search queries
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`searxng`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to internal SearXNG instance
 
-During the kmcp migration this namespace runs two MCPServer CRs side by side:
-the ToolHive CR `searxng-mcp` (`mcpserver.yaml`) and the kmcp CR `searxng`
-(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). Clients (LiteLLM and
-`agents/search` RemoteMCPServer) point at
-`http://searxng.mcp-searxng.svc.cluster.local:8080/mcp`. The ToolHive CR
-remains temporarily as rollback until soak delete.
+**Endpoint:** `http://searxng.mcp-searxng.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-ToolHive uses `transport: stdio` with `proxyMode: streamable-http`. The kmcp
-dual-run CR uses `transportType: stdio`; agentgateway wraps the MCP process
-over stdio and exposes HTTP `/mcp` (and `/sse`) on port 8080.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -65,10 +58,10 @@ The SearXNG MCP server provides these tools:
 kubectl get pods -n mcp-searxng
 
 # MCP server logs
-kubectl logs -n mcp-searxng deployment/searxng-mcp -c mcp -f
+kubectl logs -n mcp-searxng deployment/searxng -f
 
 # Test SearXNG connectivity
-kubectl exec -n mcp-searxng deployment/searxng-mcp -- \
+kubectl exec -n mcp-searxng deployment/searxng -- \
   curl -s http://searxng.searxng.svc.cluster.local:8080/healthz
 ```
 

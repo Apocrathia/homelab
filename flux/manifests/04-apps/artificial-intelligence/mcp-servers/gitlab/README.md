@@ -4,24 +4,21 @@ The GitLab MCP server provides GitLab API integration through the Model Context 
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-During the kmcp migration, this namespace runs ToolHive `gitlab-mcp-server`
-(`mcpserver.yaml`) and kmcp `gitlab` (`mcpserver-kmcp.yaml`) side by side. The
-kmcp endpoint is `http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp`;
-ToolHive remains available for rollback during soak.
-
 ## Overview
 
 This deployment includes:
 
 - GitLab MCP server for GitLab operations
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`gitlab`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
+
+**Endpoint:** `http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -36,10 +33,7 @@ Create a Kubernetes secret `gitlab-mcp-secrets` in the `mcp-gitlab` namespace wi
 
 - `gitlab-token`: GitLab Personal Access Token with `api`, `read_user`, and `read_repository` scopes
 
-kmcp `secretRefs` injects every Secret key as an environment variable and cannot
-rename individual keys. The existing `gitlab-token` key is mounted read-only and
-exported as `NPM_CONFIG_TOKEN` by the kmcp startup command, preserving the
-ToolHive `secretKeyRef` mapping without changing the OnePassword item.
+The `gitlab-token` key is mounted read-only and exported as `NPM_CONFIG_TOKEN` by the startup command.
 
 ### Security
 

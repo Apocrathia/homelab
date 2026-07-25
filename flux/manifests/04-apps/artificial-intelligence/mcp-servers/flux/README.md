@@ -9,10 +9,11 @@ The Flux MCP server provides GitOps pipeline management through the Model Contex
 This deployment includes:
 
 - Flux MCP server for GitOps pipeline management
-- ToolHive proxy for secure communication
-- kmcp `flux-kmcp` MCPServer for the migration dual run
+- kmcp MCPServer (`flux`) with native HTTP transport
 - Internal access only via LiteLLM proxy
 - RBAC for Flux resource access
+
+**Endpoint:** `http://flux.mcp-flux.svc.cluster.local:8080/mcp`
 
 ## Features
 
@@ -32,14 +33,15 @@ The deployment includes a dedicated ServiceAccount with ClusterRole permissions 
 - Read notification resources (Alerts, Providers, Receivers)
 - Read core resources (pods, events, deployments)
 
+### Transport
+
+`transportType: http` — native streamable HTTP on port 8080.
+
 ### Security
 
 - **Permission Profile**: Network access for Kubernetes API
-- **Authentication**: The ToolHive and kmcp deployments use the `flux-mcp-sa`
-  in-cluster ServiceAccount. kmcp references it through
-  `deployment.serviceAccountName`.
-- **Container Hardening**: kmcp uses RuntimeDefault seccomp, disallows privilege
-  escalation, and drops all Linux capabilities.
+- **Authentication**: The deployment uses the `flux-mcp-sa` ServiceAccount via `deployment.serviceAccountName`.
+- **Container Hardening**: RuntimeDefault seccomp, disallows privilege escalation, and drops all Linux capabilities.
 
 ## Access
 

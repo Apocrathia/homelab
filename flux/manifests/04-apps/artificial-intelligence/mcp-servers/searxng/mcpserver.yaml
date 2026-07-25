@@ -1,44 +1,38 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: searxng-mcp
+  name: searxng
   namespace: mcp-searxng
   labels:
-    app.kubernetes.io/name: searxng-mcp
+    app.kubernetes.io/name: searxng
     app.kubernetes.io/component: mcp-server
-    app.kubernetes.io/part-of: artificial-intelligence
-    app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "SearXNG MCP server for web search capabilities"
 spec:
-  # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
-  image: docker.io/isokoliuk/mcp-searxng:1.11
-  # Use stdio transport with streamable-http proxy mode
-  # This runs mcp-searxng in stdio mode while ToolHive proxy handles HTTP/session management
-  # Exposes /mcp endpoint, compatible with LiteLLM's transport: "http"
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "200m"
-      memory: "256Mi"
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
-          image: docker.io/isokoliuk/mcp-searxng:1.11
-          stdin: true
-          env:
-            - name: SEARXNG_URL
-              value: "http://searxng.searxng.svc.cluster.local:8080"
+  # agentgateway wraps the image entrypoint over stdio and serves HTTP /mcp + /sse.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
+    image: docker.io/isokoliuk/mcp-searxng:1.11
+    port: 8080
+    # Image ENTRYPOINT is replaced by agentgateway; restate the MCP process here.
+    cmd: node
+    args:
+      - dist/cli.js
+    env:
+      SEARXNG_URL: "http://searxng.searxng.svc.cluster.local:8080"
+    resources:
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

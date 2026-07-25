@@ -9,20 +9,17 @@ The Proxmox MCP Plus server provides Proxmox virtualization management through t
 This deployment includes:
 
 - Proxmox MCP Plus server for virtualization management
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`proxmox`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to Proxmox VE cluster
 
-During the kmcp migration, this namespace runs ToolHive `proxmox-mcp-plus`
-and kmcp `proxmox-kmcp` side by side. Clients remain on the ToolHive endpoint
-until cutover; the kmcp endpoint is
-`http://proxmox-kmcp.mcp-proxmox.svc.cluster.local:8080/mcp`.
+**Endpoint:** `http://proxmox.mcp-proxmox.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -45,10 +42,7 @@ Create a Kubernetes secret `proxmox-mcp-secrets` in the `mcp-proxmox` namespace 
 - `proxmox-token-name`: Proxmox API token ID
 - `proxmox-token-value`: Proxmox API token value
 
-kmcp `secretRefs` exposes every Secret key through `envFrom`, without
-per-key environment-variable renaming. The kmcp draft instead mounts the same
-generated Secret at `/var/run/secrets/mcp` and maps the four `proxmox-*` keys
-to the required `PROXMOX_*` variables before the MCP process starts.
+The Secret is mounted at `/var/run/secrets/mcp` and maps the four `proxmox-*` keys to the required `PROXMOX_*` variables before the MCP process starts.
 
 ### Security
 
@@ -73,11 +67,11 @@ The Proxmox MCP Plus server provides tools for virtualization management:
 # Pod status
 kubectl get pods -n mcp-proxmox
 
-# MCP server logs (the underlying StatefulSet pod runs the actual server)
-kubectl logs proxmox-mcp-plus-0 -n mcp-proxmox -f
+# MCP server logs
+kubectl logs -n mcp-proxmox deployment/proxmox -f
 
 # Test Proxmox connectivity
-kubectl exec proxmox-mcp-plus-0 -n mcp-proxmox -- \
+kubectl exec -n mcp-proxmox deployment/proxmox -- \
   curl -s -k "https://$PROXMOX_HOST:8006/api2/json/version"
 ```
 

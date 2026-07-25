@@ -1,48 +1,43 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: firecrawl-mcp
+  name: firecrawl
   namespace: mcp-firecrawl
   labels:
-    app.kubernetes.io/name: firecrawl-mcp
+    app.kubernetes.io/name: firecrawl
     app.kubernetes.io/component: mcp-server
-    app.kubernetes.io/part-of: artificial-intelligence
-    app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Firecrawl MCP server for web scraping and content extraction"
 spec:
-  # Use Node.js image and run via npx
-  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-  image: public.ecr.aws/docker/library/node:24-slim
-  transport: stdio
-  proxyMode: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  podTemplateSpec:
-    spec:
-      automountServiceAccountToken: false
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: public.ecr.aws/docker/library/node:24-slim
-          securityContext:
-            readOnlyRootFilesystem: false
-          stdin: true
-          command: ["/bin/sh", "-c"]
-          args: ["export HOME=/tmp && exec npx -y firecrawl-mcp"]
-          env:
-            - name: HOME
-              value: "/tmp"
-            - name: FIRECRAWL_API_URL
-              value: "http://firecrawl.firecrawl.svc.cluster.local:3002"
+  # stdio: kmcp injects an agentgateway init container; the adapter spawns
+  # cmd/args as a stdio subprocess and serves streamable HTTP on
+  # deployment.port at /mcp (and /sse).
+  transportType: stdio
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+    image: public.ecr.aws/docker/library/node:24-slim
+    port: 8080
+    cmd: npx
+    args:
+      - "-y"
+      - firecrawl-mcp
+    env:
+      # npx cache needs a writable HOME; env reaches both the container and
+      # the stdio subprocess via the adapter config.
+      HOME: /tmp
+      FIRECRAWL_API_URL: http://firecrawl.firecrawl.svc.cluster.local:3002
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL

@@ -9,32 +9,27 @@ Bridge between Model Context Protocol (MCP) and Agent-to-Agent (A2A) protocol.
 This deployment includes:
 
 - A2A MCP server for bridging MCP and A2A protocols
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`a2a`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Dynamic agent registration and communication
 
-During the kmcp migration this namespace runs two MCPServer CRs side by side:
-the ToolHive CR `a2a-mcp-server` (`mcpserver.yaml`) and the kmcp CR `a2a`
-(`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). Clients continue to use the
-ToolHive proxy until cutover. The kmcp endpoint is
-`http://a2a.mcp-a2a.svc.cluster.local:8080/mcp`. The ToolHive CR remains
-available for rollback during the soak.
+**Endpoint:** `http://a2a.mcp-a2a.svc.cluster.local:8080/mcp`
 
 ## Configuration
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
-| Variable           | Value             | Description                                |
-| ------------------ | ----------------- | ------------------------------------------ |
-| `MCP_TRANSPORT`    | `streamable-http` | Transport type (handled by ToolHive proxy) |
-| `MCP_HOST`         | `0.0.0.0`         | Host address                               |
-| `MCP_PORT`         | `8080`            | Port for HTTP transport                    |
-| `MCP_PATH`         | `/mcp`            | Endpoint path                              |
-| `A2A_MCP_DATA_DIR` | `/tmp/a2a-data`   | Data directory (ephemeral)                 |
+| Variable           | Value             | Description                       |
+| ------------------ | ----------------- | --------------------------------- |
+| `MCP_TRANSPORT`    | `streamable-http` | Transport type (via agentgateway) |
+| `MCP_HOST`         | `0.0.0.0`         | Host address                      |
+| `MCP_PORT`         | `8080`            | Port for HTTP transport           |
+| `MCP_PATH`         | `/mcp`            | Endpoint path                     |
+| `A2A_MCP_DATA_DIR` | `/tmp/a2a-data`   | Data directory (ephemeral)        |
 
 ### Security
 

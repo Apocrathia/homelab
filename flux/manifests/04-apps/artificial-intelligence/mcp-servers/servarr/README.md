@@ -4,17 +4,14 @@ The Servarr MCP server provides Sonarr and Radarr integration through the Model 
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
-During the kmcp migration, this namespace runs ToolHive `servarr-mcp`
-(`mcpserver.yaml`) and kmcp `servarr` (`mcpserver-kmcp.yaml`) side by side. The
-kmcp endpoint is `http://servarr.mcp-servarr.svc.cluster.local:8080/mcp`;
-ToolHive remains available for rollback during soak.
+**Endpoint:** `http://servarr.mcp-servarr.svc.cluster.local:8080/mcp`
 
 ## Overview
 
 This deployment includes:
 
 - Servarr MCP server for Sonarr and Radarr operations
-- ToolHive proxy for secure communication
+- kmcp MCPServer (`servarr`) with agentgateway HTTP adapter
 - Internal access only via LiteLLM proxy
 - Connection to internal Sonarr and Radarr instances
 
@@ -22,7 +19,7 @@ This deployment includes:
 
 ### Transport
 
-This server uses `transport: stdio` with `proxyMode: streamable-http`. The ToolHive proxy handles HTTP/session management while the MCP server runs in stdio mode.
+`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
 
 ### Environment Variables
 
@@ -45,10 +42,7 @@ Create a Kubernetes secret `servarr-mcp-secrets` in the `mcp-servarr` namespace 
 
 **Note**: At least one service (Sonarr or Radarr) must be configured.
 
-kmcp `secretRefs` injects complete Secrets through `envFrom` and cannot rename
-individual keys. The existing hyphenated keys are mounted read-only and exported
-as the four MCP environment variables by the kmcp startup command, preserving
-the ToolHive `secretKeyRef` mapping without changing the OnePassword item.
+The hyphenated Secret keys are mounted read-only and exported as the four MCP environment variables by the startup command.
 
 ### Security
 
@@ -86,10 +80,10 @@ The Servarr MCP server provides tools for media management:
 kubectl get pods -n mcp-servarr
 
 # MCP server logs
-kubectl logs -n mcp-servarr deployment/servarr-mcp -c mcp -f
+kubectl logs -n mcp-servarr deployment/servarr -f
 
 # Test Sonarr/Radarr connectivity
-kubectl exec -n mcp-servarr deployment/servarr-mcp -- \
+kubectl exec -n mcp-servarr deployment/servarr -- \
   curl -s -H "X-Api-Key: $SONARR_API_KEY" "$SONARR_URL/api/v3/system/status"
 ```
 

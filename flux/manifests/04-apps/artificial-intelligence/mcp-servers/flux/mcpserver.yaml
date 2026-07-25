@@ -1,42 +1,42 @@
 ---
-apiVersion: toolhive.stacklok.dev/v1beta1
+apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: flux-mcp
+  name: flux
   namespace: mcp-flux
   labels:
-    app.kubernetes.io/name: flux-mcp
+    app.kubernetes.io/name: flux
     app.kubernetes.io/component: mcp-server
     app.kubernetes.io/part-of: artificial-intelligence
     app.kubernetes.io/managed-by: flux
-  annotations:
-    description: "Flux MCP server for GitOps pipeline management"
 spec:
-  # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
-  image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.56.0@sha256:7c19497974f01129336a09818290243b51acd18c42cfd2b47ac715c400e7cf37
-  serviceAccount: flux-mcp-sa
-  transport: streamable-http
-  proxyPort: 8080
-  mcpPort: 8080
-  permissionProfile:
-    type: builtin
-    name: network
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-  podTemplateSpec:
-    spec:
-      containers:
-        - name: mcp
-          # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
-          image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.56.0@sha256:7c19497974f01129336a09818290243b51acd18c42cfd2b47ac715c400e7cf37
-          args:
-            - serve
-            - --transport
-            - http
-            - --port
-            - "8080"
+  transportType: http
+  httpTransport:
+    path: /mcp
+    targetPort: 8080
+  deployment:
+    # renovate: datasource=docker registryUrl=https://ghcr.io depName=controlplaneio-fluxcd/flux-operator-mcp
+    image: ghcr.io/controlplaneio-fluxcd/flux-operator-mcp:v0.56.0@sha256:7c19497974f01129336a09818290243b51acd18c42cfd2b47ac715c400e7cf37
+    port: 8080
+    args:
+      - serve
+      - --transport
+      - http
+      - --port
+      - "8080"
+    serviceAccountName: flux-mcp-sa
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
