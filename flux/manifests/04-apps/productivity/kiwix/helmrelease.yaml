@@ -20,7 +20,7 @@ spec:
     app:
       name: kiwix
       # renovate: datasource=docker depName=ghcr.io/kiwix/kiwix-serve
-      image: ghcr.io/kiwix/kiwix-serve:3.8.2
+      image: ghcr.io/kiwix/kiwix-serve:3.8.2@sha256:57baa553c46cd30770905df15a9a687258aa5471c30c8edaefe278f1784e1aa8
       container:
         name: kiwix-serve
         port: 80
