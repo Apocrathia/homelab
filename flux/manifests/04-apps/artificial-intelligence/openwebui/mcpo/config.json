@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "grafana": {
-      "type": "sse",
-      "url": "https://mcp.gateway.services.apocrathia.com/grafana/mcp"
-    }
-  }
-}
