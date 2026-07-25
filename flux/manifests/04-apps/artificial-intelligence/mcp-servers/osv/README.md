@@ -13,6 +13,12 @@ This deployment includes:
 - Internal access only via LiteLLM proxy
 - Network permission profile for database access
 
+During the kmcp migration this namespace runs two MCPServer CRs side by side:
+the ToolHive CR `osv-vulnerability-scanner` (`mcpserver.yaml`) and the kmcp CR
+`osv` (`mcpserver-kmcp.yaml`, `kagent.dev/v1alpha1`). The kmcp CR is served at
+`http://osv.mcp-osv.svc.cluster.local:8080/mcp`. LiteLLM points at kmcp; the
+ToolHive CR remains temporarily as rollback during the initial soak.
+
 ## Configuration
 
 ### Security

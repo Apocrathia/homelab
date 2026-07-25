@@ -239,7 +239,7 @@ mcp_servers:
     auth_type: "none"
   osv:
     alias: "osv"
-    url: "http://mcp-osv-vulnerability-scanner-proxy.mcp-osv.svc.cluster.local:8080/mcp"
+    url: "http://osv.mcp-osv.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
   plex:
