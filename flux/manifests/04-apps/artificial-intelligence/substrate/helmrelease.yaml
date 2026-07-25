@@ -52,7 +52,7 @@ spec:
     image:
       registry: ghcr.io/kagent-dev/substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      tag: "v0.0.6"
+      tag: "v0.0.10"
 
     # Snapshots live in ate-cache (cache-helmrelease.yaml), not the bundled
     # RustFS. The bundled Deployment is RollingUpdate on a ReadWriteOnce
