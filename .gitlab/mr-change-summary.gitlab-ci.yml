@@ -2,7 +2,7 @@
 mr-change-summary:
   stage: verify
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14
+  image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
