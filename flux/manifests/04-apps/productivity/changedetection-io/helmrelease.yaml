@@ -91,7 +91,7 @@ spec:
       sidecars:
         - name: sockpuppet
           # renovate: datasource=docker depName=dgtlmoon/sockpuppetbrowser
-          image: dgtlmoon/sockpuppetbrowser:0.0.3
+          image: dgtlmoon/sockpuppetbrowser:0.0.3@sha256:23a7be698216407648b6c78fc55de0411bde550635edc30347373c86a5176fad
           ports:
             - containerPort: 3000
               name: sockpuppet
