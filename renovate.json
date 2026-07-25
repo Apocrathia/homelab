@@ -28,6 +28,11 @@
       "enabled": true
     },
     {
+      "description": "One MR per digest pin/refresh — override default Pin Dependencies grouping",
+      "matchUpdateTypes": ["pin", "pinDigest", "digest"],
+      "groupName": null
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": false,
@@ -111,7 +116,7 @@
     }
   ],
   "timezone": "America/Denver",
-  "prHourlyLimit": 5,
+  "prHourlyLimit": 100,
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
   "rangeStrategy": "replace",
