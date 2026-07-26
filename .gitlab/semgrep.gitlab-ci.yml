@@ -21,6 +21,11 @@ semgrep:
   script:
     - |
       echo "=== Semgrep SAST Scanning ==="
-      semgrep scan --config auto --error
+      # Fail only on findings introduced by this MR (not the pre-existing backlog).
+      if ! git cat-file -e "${CI_MERGE_REQUEST_DIFF_BASE_SHA}^{commit}" 2>/dev/null; then
+        git fetch --depth=1 origin "${CI_MERGE_REQUEST_DIFF_BASE_SHA}"
+      fi
+      semgrep scan --config auto --error \
+        --baseline-commit "${CI_MERGE_REQUEST_DIFF_BASE_SHA}"
       echo "=== Semgrep Scan Complete ==="
   allow_failure: false
