@@ -31,7 +31,7 @@ spec:
       GITLAB_API_URL: "https://gitlab.com/api/v4"
       # Read/write notes for change-summary; no delete tools.
       GITLAB_PERMISSION_MODE: "modify"
-      GITLAB_TOOLSETS: "merge_requests,projects,issues,pipelines,repository"
+      GITLAB_TOOLSETS: "merge_requests,projects,issues,pipelines,repositories"
     resources:
       limits:
         cpu: "1"

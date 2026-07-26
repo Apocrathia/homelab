@@ -24,14 +24,14 @@ concurrency; stdio session leaks under Renovate change-summary load.
 
 ### Environment Variables
 
-| Variable                 | Value                                                 | Description                                            |
-| ------------------------ | ----------------------------------------------------- | ------------------------------------------------------ |
-| `STREAMABLE_HTTP`        | `true`                                                | Enable streamable HTTP                                 |
-| `MCP_SERVER_URL`         | `http://gitlab.mcp-gitlab.svc.cluster.local:8080`     | Allowed `/mcp` Host (cluster DNS; DNS-rebinding guard) |
-| `REMOTE_AUTHORIZATION`   | `true`                                                | Require per-request GitLab token                       |
-| `GITLAB_API_URL`         | `https://gitlab.com/api/v4`                           | GitLab API base                                        |
-| `GITLAB_PERMISSION_MODE` | `modify`                                              | Allow create/update; block deletes                     |
-| `GITLAB_TOOLSETS`        | `merge_requests,projects,issues,pipelines,repository` | Enabled tool groups                                    |
+| Variable                 | Value                                                   | Description                                            |
+| ------------------------ | ------------------------------------------------------- | ------------------------------------------------------ |
+| `STREAMABLE_HTTP`        | `true`                                                  | Enable streamable HTTP                                 |
+| `MCP_SERVER_URL`         | `http://gitlab.mcp-gitlab.svc.cluster.local:8080`       | Allowed `/mcp` Host (cluster DNS; DNS-rebinding guard) |
+| `REMOTE_AUTHORIZATION`   | `true`                                                  | Require per-request GitLab token                       |
+| `GITLAB_API_URL`         | `https://gitlab.com/api/v4`                             | GitLab API base                                        |
+| `GITLAB_PERMISSION_MODE` | `modify`                                                | Allow create/update; block deletes                     |
+| `GITLAB_TOOLSETS`        | `merge_requests,projects,issues,pipelines,repositories` | Enabled tool groups                                    |
 
 ### Secrets
 
