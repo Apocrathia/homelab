@@ -4,7 +4,7 @@ context-links:
   stage: test
   image:
     # renovate: datasource=docker depName=python
-    name: python:3.14-alpine
+    name: python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
     entrypoint: [""]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
