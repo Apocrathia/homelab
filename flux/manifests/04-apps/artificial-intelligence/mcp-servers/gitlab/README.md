@@ -1,16 +1,16 @@
 # GitLab MCP Server
 
-The GitLab MCP server provides GitLab API integration through the Model Context Protocol.
+GitLab API integration via Model Context Protocol (native streamable HTTP).
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
 ## Overview
 
-This deployment includes:
-
-- GitLab MCP server for GitLab operations
-- kmcp MCPServer (`gitlab`) with agentgateway HTTP adapter
-- Internal access only via LiteLLM proxy
+- kmcp `MCPServer` (`gitlab`) running `zereight050/gitlab-mcp` with native
+  streamable-http on `/mcp`
+- Callers authenticate per-request with a GitLab PAT (`Private-Token` or
+  `Authorization: Bearer`) — no server-side env PAT
+- Internal access only (LiteLLM / kagent); no Gateway HTTPRoute
 
 **Endpoint:** `http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp`
 
@@ -18,40 +18,36 @@ This deployment includes:
 
 ### Transport
 
-`transportType: stdio` — agentgateway wraps the MCP process and exposes streamable HTTP on `/mcp` (port 8080).
+`transportType: http` — native streamable-http (`STREAMABLE_HTTP=true`,
+`REMOTE_AUTHORIZATION=true`). Prefer this over stdio/agentgateway for
+concurrency; stdio session leaks under Renovate change-summary load.
 
 ### Environment Variables
 
-| Variable           | Source | Description                                         |
-| ------------------ | ------ | --------------------------------------------------- |
-| `NPM_CONFIG_TOKEN` | Secret | GitLab Personal Access Token                        |
-| `GITLAB_API_URL`   | Config | GitLab API URL (default: https://gitlab.com/api/v4) |
+| Variable                 | Value                                                 | Description                        |
+| ------------------------ | ----------------------------------------------------- | ---------------------------------- |
+| `STREAMABLE_HTTP`        | `true`                                                | Enable streamable HTTP             |
+| `REMOTE_AUTHORIZATION`   | `true`                                                | Require per-request GitLab token   |
+| `GITLAB_API_URL`         | `https://gitlab.com/api/v4`                           | GitLab API base                    |
+| `GITLAB_PERMISSION_MODE` | `modify`                                              | Allow create/update; block deletes |
+| `GITLAB_TOOLSETS`        | `merge_requests,projects,issues,pipelines,repository` | Enabled tool groups                |
 
 ### Secrets
 
-Create a Kubernetes secret `gitlab-mcp-secrets` in the `mcp-gitlab` namespace with:
-
-- `gitlab-token`: GitLab Personal Access Token with `api`, `read_user`, and `read_repository` scopes
-
-The `gitlab-token` key is mounted read-only and exported as `NPM_CONFIG_TOKEN` by the startup command.
+The 1Password item `gitlab-mcp-secrets` still holds `gitlab-token` (PAT with
+`api`, `read_user`, `read_repository`). With remote authorization the MCP pod
+does not mount that secret — kagent's `RemoteMCPServer` injects it as
+`Private-Token` (see `agents/git/remotemcpserver.yaml` /
+`agents/git/secret.yaml`). LiteLLM forwards `Private-Token` /
+`Authorization` from the caller.
 
 ### Security
 
-- **Permission Profile**: Network access for GitLab API
-- **Authentication**: GitLab PAT via Kubernetes secrets
-
-## Available MCP Tools
-
-The GitLab MCP server provides tools for GitLab operations:
-
-1. **Project Management** - List, create, fork repositories
-2. **Issue Management** - Create, list, get issues
-3. **Merge Requests** - Create, list, comment on merge requests
-4. **File Operations** - Read, create, update files
-5. **Branch Management** - Create and manage branches
+- Network: Cilium CCNP `mcp-server-isolation` gates ingress
+- Auth: per-request GitLab PAT; no shared server-side token in the pod env
 
 ## References
 
-- [gitlab-mcp-server](https://github.com/Alosies/gitlab-mcp-server) - MCP server repository
-- [GitLab API](https://docs.gitlab.com/ee/api/) - GitLab API documentation
-- [MCP Specification](https://spec.modelcontextprotocol.io/) - Model Context Protocol documentation
+- [zereight/gitlab-mcp](https://github.com/zereight/gitlab-mcp) — MCP server
+- [GitLab API](https://docs.gitlab.com/ee/api/) — GitLab API documentation
+- [MCP Specification](https://spec.modelcontextprotocol.io/) — Model Context Protocol

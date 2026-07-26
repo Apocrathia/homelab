@@ -63,17 +63,20 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 - After the agent posts/updates the comment, CI rewrites the body to append a `<!-- hash:abcdef... -->` trailer. The trailer is the cache key for the next run and the verification token for this run.
 - Trailer writes use `AGENT_TOKEN` (a project PAT with `api` scope) — GitLab.com rejects `CI_JOB_TOKEN` for MR note PUTs. See "Required CI/CD Variables" below.
 - To force a refresh after a prompt-engineering change, manually delete the existing change-summary comment on the affected MR(s); the next pipeline will write a fresh one.
+- Jobs use `resource_group: mr-change-summary` so only one change-summary runs cluster-wide at a time (avoids stampeding gitlab-mcp).
+- Hard A2A failures (transport errors / `failed` state) abort after `MAX_CONSECUTIVE_FAILURES` instead of burning the full turn budget.
 
 **Requirements**:
 
 - The runner must be able to reach `kagent-controller.kagent.svc.cluster.local:8083` (in-cluster runner — already true for `gitlab-runner` in the `gitlab-runner` namespace).
-- `git-agent` must be deployed and have the gitlab-mcp tools `list_mr_notes`, `create_mr_note`, `update_mr_note` whitelisted.
-- The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`) must have `api` scope on the homelab project — used by the agent to post comments.
+- `git-agent` must be deployed and have the gitlab-mcp tools `get_merge_request_notes`, `create_merge_request_note`, `update_merge_request_note` whitelisted.
+- The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`, forwarded as `Private-Token` on RemoteMCPServer) must have `api` scope on the homelab project — used by the agent to post comments.
 - `AGENT_TOKEN` must be set as a project CI variable with `api` scope.
 
 **Tunables (job-level CI variables)**:
 
 - `MAX_TURNS` — A2A turn cap (default `12`)
+- `MAX_CONSECUTIVE_FAILURES` — abort after this many consecutive transport/`failed` turns (default `3`)
 - `HTTP_TIMEOUT_S` — per-request HTTP timeout to kagent (default `600`)
 - `DIFF_MAX_BYTES` — diff payload cap fed to the agent (default `120000`)
 - `CHANGED_FILES_MAX_LINES` — file-list cap (default `500`)
