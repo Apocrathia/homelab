@@ -21,7 +21,7 @@ spec:
       name: mumble-web
       namespace: mumble
       # renovate: datasource=docker depName=rankenstein/mumble-web
-      image: rankenstein/mumble-web:0.5
+      image: rankenstein/mumble-web:0.5@sha256:a142ad156214e79eafdf1973bab68c1f9e762e3d3a6dce50121b5973cf9150e5
 
       container:
         name: mumble-web
