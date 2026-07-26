@@ -20,7 +20,7 @@ spec:
     app:
       name: demo-app
       # renovate: datasource=docker depName=nginx
-      image: public.ecr.aws/nginx/nginx:alpine@sha256:238132c0a2231df8741a1dc77b362584b8a2169050686d85968aebc24fb9a71d
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
       volumeMounts:
         - name: data
           mountPath: /app
