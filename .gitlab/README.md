@@ -69,7 +69,7 @@ Runs on every MR. Builds a prompt from the MR title, description, changed files,
 **Requirements**:
 
 - The runner must be able to reach `kagent-controller.kagent.svc.cluster.local:8083` (in-cluster runner — already true for `gitlab-runner` in the `gitlab-runner` namespace).
-- `git-agent` must be deployed and have the gitlab-mcp tools `get_merge_request_notes`, `create_merge_request_note`, `update_merge_request_note` whitelisted.
+- `git-agent` must be deployed and have the gitlab-mcp tools `list_mr_notes`, `create_mr_note`, `update_mr_note` whitelisted.
 - The gitlab-mcp PAT (`gitlab-mcp-secrets.gitlab-token`, forwarded as `Private-Token` on RemoteMCPServer) must have `api` scope on the homelab project — used by the agent to post comments.
 - `AGENT_TOKEN` must be set as a project CI variable with `api` scope.
 

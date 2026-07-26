@@ -56,8 +56,16 @@ mr-change-summary:
       python -m pip install --quiet --no-cache-dir \
         "a2a-sdk==${A2A_SDK_VERSION}" "httpx==${HTTPX_VERSION}"
 
-      cp .gitlab/scripts/mr_change_summary_prompt.py /tmp/work/build_prompt.py
-      cp .gitlab/scripts/mr_change_summary_invoke.py /tmp/work/invoke.py
+      # Prefer scripts from the merge target so prompt/tool-name fixes on
+      # main apply on job retry without rebasing every Renovate branch.
+      TARGET_REF="origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+      if git cat-file -e "${TARGET_REF}:.gitlab/scripts/mr_change_summary_prompt.py" 2>/dev/null; then
+        git show "${TARGET_REF}:.gitlab/scripts/mr_change_summary_prompt.py" > /tmp/work/build_prompt.py
+        git show "${TARGET_REF}:.gitlab/scripts/mr_change_summary_invoke.py" > /tmp/work/invoke.py
+      else
+        cp .gitlab/scripts/mr_change_summary_prompt.py /tmp/work/build_prompt.py
+        cp .gitlab/scripts/mr_change_summary_invoke.py /tmp/work/invoke.py
+      fi
 
       DIFF_PATH=/tmp/work/diff.patch \
       CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
