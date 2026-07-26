@@ -127,9 +127,9 @@ spec:
             - get_merge_request_diffs
             - list_merge_request_diffs
             # MR notes (top-level comments) — used by change-summary skill
-            - get_merge_request_notes
-            - create_merge_request_note
-            - update_merge_request_note
+            - list_mr_notes
+            - create_mr_note
+            - update_mr_note
             # Issues
             - list_issues
             - get_issue
@@ -138,7 +138,7 @@ spec:
             - get_pipeline
             # Diffs and commits between refs (used to inspect what changed between tags)
             - get_branch_diffs
-            - list_commits
+            - get_project_commits
             - get_commit
             - get_commit_diff
     systemMessage: |
@@ -232,10 +232,10 @@ spec:
 
       **MR comments (top-level notes)**
 
-      - `get_merge_request_notes` — read existing comments. Always call this before
+      - `list_mr_notes` — read existing comments. Always call this before
         writing if the skill uses a marker for idempotent upserts.
-      - `create_merge_request_note` — post a new top-level MR comment.
-      - `update_merge_request_note` — edit an existing MR comment in place.
+      - `create_mr_note` — post a new top-level MR comment.
+      - `update_mr_note` — edit an existing MR comment in place.
 
       **Issues**
 
@@ -250,7 +250,7 @@ spec:
 
       - `get_branch_diffs` — diff between any two refs (branches, tags,
         SHAs).
-      - `list_commits` — list commits on a ref with filters.
+      - `get_project_commits` — list commits on a ref with filters.
       - `get_commit` / `get_commit_diff` — describe a single commit or its
         diff.
 
@@ -331,7 +331,7 @@ spec:
               between them, plus `pull_request_read` / `issue_read` for
               anything called out in the release notes.
          - **GitLab upstream** → use `get_branch_diffs` and
-           `list_commits` to compare refs directly.
+           `get_project_commits` to compare refs directly.
          - **Anything else** → note in the summary that upstream lookup
            wasn't possible and **why** (unsupported registry, private
            upstream, etc.).
@@ -373,7 +373,7 @@ spec:
 
          For digest-only or pre-release bumps where Renovate has no
          release notes: **do not give up**. Fetch the upstream repo's
-         recent commits with `list_commits` (GitLab) or
+         recent commits with `get_project_commits` (GitLab) or
          `list_commits` (GitHub), and summarize the most meaningful
          changes by reading the commit subjects.
 
@@ -451,13 +451,13 @@ spec:
          Omit the section entirely if there are no manual changes.
          ```
 
-      9. **Upsert via the marker.** Call `get_merge_request_notes` on the MR. If an
+      9. **Upsert via the marker.** Call `list_mr_notes` on the MR. If an
          existing note's body starts with `<!-- mr-change-summary -->`,
-         call `update_merge_request_note` to replace it. Otherwise call
-         `create_merge_request_note`. Do not ask the user for confirmation — this
+         call `update_mr_note` to replace it. Otherwise call
+         `create_mr_note`. Do not ask the user for confirmation — this
          skill is pre-authorized for the comment write.
-      10. **Confirm the write succeeded.** After `create_merge_request_note` /
-          `update_merge_request_note` returns, your final response to the caller
+      10. **Confirm the write succeeded.** After `create_mr_note` /
+          `update_mr_note` returns, your final response to the caller
           must include the note ID and the MR IID, e.g.:
           "Posted note `<id>` on MR `!<iid>`." If the tool call failed,
           say so explicitly and do not claim success.

@@ -9,7 +9,6 @@ resources:
   - namespace.yaml
   - secret.yaml
   - helmrelease.yaml
-  - mcpo/
 
 generatorOptions:
   disableNameSuffixHash: true
