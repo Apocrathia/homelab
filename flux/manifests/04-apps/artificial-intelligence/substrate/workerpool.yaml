@@ -12,4 +12,5 @@ metadata:
 spec:
   replicas: 2
   # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateom-gvisor
-  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.10@sha256:5f03a239fc0c89ff5a54ab37356f361c4631c2c0c05c0d0caf29f8047b6567a4
+  # Held with substrate chart — see docs/issues/substrate-kagent-version-skew.md.
+  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.6

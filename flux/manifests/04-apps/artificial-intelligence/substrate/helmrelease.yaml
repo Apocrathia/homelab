@@ -17,7 +17,10 @@ spec:
     spec:
       chart: substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/helm/substrate
-      version: "0.0.10"
+      # Held at 0.0.6 until kagent vendors a matching client and JWT issuer
+      # discovery works on Talos — see docs/issues/substrate-kagent-version-skew.md.
+      # Close Renovate bumps until that issue's acceptance criteria pass.
+      version: "0.0.6"
       sourceRef:
         kind: HelmRepository
         name: substrate
@@ -31,30 +34,6 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-
-  postRenderers:
-    - kustomize:
-        patches:
-          # v0.0.10 treats non-default Kubernetes issuers as external and uses
-          # system roots for OIDC discovery. Trust Talos' mounted API CA.
-          - target:
-              group: apps
-              version: v1
-              kind: Deployment
-              name: ate-api-server-deployment
-            patch: |-
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: ate-api-server-deployment
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: ate-api-server
-                        env:
-                          - name: SSL_CERT_FILE
-                            value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 
   values:
     # Namespace owned by namespace.yaml (PSA privileged + dockerhub pull secret)
@@ -74,7 +53,8 @@ spec:
     image:
       registry: ghcr.io/kagent-dev/substrate
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateapi
-      tag: "v0.0.10"
+      # Held with the chart — see version comment above.
+      tag: "v0.0.6"
 
     # Snapshots live in ate-cache (cache-helmrelease.yaml), not the bundled
     # RustFS. The bundled Deployment is RollingUpdate on a ReadWriteOnce

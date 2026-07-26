@@ -10,7 +10,7 @@ deployed with `helm/generic-app` into `ate-system`. Credentials come from
 ## Why
 
 The bundled RustFS cannot survive a Helm upgrade that touches its pod template
-(`docs/issues/substrate-0-0-10-rollout-failure.md`):
+(`substrate-0-0-10-rollout-failure.md`, now closed — see git history):
 
 - `Deployment/rustfs` is `RollingUpdate` on a ReadWriteOnce Longhorn PVC, so the
   replacement pod hits `Multi-Attach error` and the rollout never converges.
@@ -99,13 +99,16 @@ Resulting names: `Deployment/ate-cache`, `Service/ate-cache`
    Reconcile.
 5. **Verify substrate.** `atelet` DaemonSet rolls with the new env; suspend and
    resume `AgentHarness/openclaw` and confirm a fresh snapshot object lands in
-   the new bucket.
+   the new bucket. **Blocked on 0.0.10** — pinned back to `0.0.6` so agents can
+   run; re-verify after a paired kagent lands. See
+   `docs/issues/substrate-kagent-version-skew.md`.
 6. **Retest the version bump.** With RustFS out of the release, retry chart
-   `0.0.10` + `image.tag: v0.0.10`. If it converges, remove the version hold and
-   close `substrate-0-0-10-rollout-failure.md`.
-7. **Reconcile docs.** Update `substrate/README.md`,
-   `docs/issues/substrate-rustfs-credentials.md`, and
-   `docs/plans/agent-substrate-rollout.md`.
+   `0.0.10` + `image.tag: v0.0.10`. **Done for converge** — the release holds
+   Ready without the RustFS deadlock, but agents cannot use it (proto + JWT).
+   Chart/image held at `0.0.6` until the skew issue clears.
+7. **Reconcile docs.** **Done** — README updated, resolved issues deleted, the
+   remaining upstream gap is tracked in
+   `docs/issues/substrate-kagent-version-skew.md`.
 
 ## Rollback
 
@@ -116,21 +119,23 @@ nothing to restore.
 
 ## Current cluster state
 
-- `HelmRelease/substrate` is pinned to chart `0.0.6` / `image.tag v0.0.6`.
+- `HelmRelease/substrate` and `substrate-crds` are pinned to chart `0.0.6` /
+  `image.tag v0.0.6` (close Renovate bumps until
+  `docs/issues/substrate-kagent-version-skew.md` acceptance passes).
 - `HelmRelease/ate-cache` owns the snapshot store in `ate-system`.
 - The bundled RustFS is disabled and `atelet` uses
   `ate-cache.ate-system.svc.cluster.local:9000`.
 - `OnePasswordItem/agent-substrate-secrets` supplies both server and client
   credentials through `secretKeyRef`.
+- Agents should become Ready again once Flux applies the `0.0.6` pin.
 
 ## Open risks
 
 - RustFS is `1.0.0-beta.3`. Beta object store holding agent state — acceptable
   for snapshots (regenerable, agents cold-start if lost), not for anything
   authoritative.
-- Whether chart `0.0.10` converges once RustFS is external is unverified. Step 6
-  is a test, not a guarantee; the `ate-api-server` timeout may have an
-  independent cause.
+- Chart `0.0.10` converges with external RustFS but cannot drive agents until
+  the skew in `docs/issues/substrate-kagent-version-skew.md` clears.
 - The leaked credential values remain in Kubernetes Events and Helm release
   history in `ate-system` until they age out. Operator accepted this; the keys
   never took effect and RustFS is not reachable outside the cluster.

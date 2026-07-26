@@ -19,6 +19,13 @@ This deployment installs:
 kagent controller substrate flags live on the [kagent](../kagent/README.md)
 HelmRelease. Keep that chart's bundled `substrate.enabled` off.
 
+kagent releases vendor a specific substrate client version (the
+`replace github.com/agent-substrate/substrate` line in kagent's `go/go.mod`).
+Keep the deployed substrate chart at or below that version. Chart and CRDs are
+held at `0.0.6` (paired with kagent `0.9.12`); close Renovate bumps until
+[`docs/issues/substrate-kagent-version-skew.md`](../../../../../docs/issues/substrate-kagent-version-skew.md)
+acceptance passes.
+
 ## Access
 
 Internal only. API endpoint used by kagent:
