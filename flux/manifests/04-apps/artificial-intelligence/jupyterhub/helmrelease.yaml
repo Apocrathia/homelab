@@ -104,7 +104,7 @@ spec:
           description: "Jupyter notebook environment with PyTorch and scientific Python stack"
           default: true
           kubespawner_override:
-            image: quay.io/jupyter/pytorch-notebook:2025-12-10
+            image: quay.io/jupyter/pytorch-notebook:2025-12-10@sha256:b7a5b1c177ec3835a8fa9a060ef253b5434a426e27591c16efcb4d46a71b145c
             default_url: /lab
         - display_name: "VS Code (code-server)"
           description: "VS Code in your browser"
