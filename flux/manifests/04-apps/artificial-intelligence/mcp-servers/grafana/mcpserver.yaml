@@ -14,7 +14,7 @@ spec:
     path: /mcp
   deployment:
     # renovate: datasource=docker registryUrl=https://docker.io depName=grafana/mcp-grafana
-    image: docker.io/grafana/mcp-grafana:0.17.2
+    image: docker.io/grafana/mcp-grafana:0.17.2@sha256:d5b51db0c8eaafc6ed3fede5bfcc8d67b2384a40cf3d493086e378855ceba882
     port: 8080
     args:
       - -t
