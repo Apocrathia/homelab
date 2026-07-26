@@ -68,7 +68,7 @@ spec:
                   mountPath: /tmp
             - name: update-library
               # renovate: datasource=docker depName=ghcr.io/kiwix/kiwix-tools
-              image: ghcr.io/kiwix/kiwix-tools:3.8.2
+              image: ghcr.io/kiwix/kiwix-tools:3.8.2@sha256:40ab5f450231836321d6a1e417006033db5883f883d08e85b246d2ecf8840a75
               command:
                 - sh
                 - -c
