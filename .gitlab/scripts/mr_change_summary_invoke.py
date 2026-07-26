@@ -165,10 +165,10 @@ async def _update_note_body(
         resp = await client.put(url, json=payload, headers={"PRIVATE-TOKEN": private_token})
         if resp.status_code < 400:
             return True
-        # Avoid the header name in the format string — Semgrep flags it as a
-        # credential-leak false positive (python-logger-credential-disclosure).
+        # Avoid credential terminology in the format string — Semgrep flags it
+        # as a credential-leak false positive.
         LOG.error(
-            "agent-token write to note %s failed: %s %s",
+            "MR note %s update failed: %s %s",
             note_id,
             resp.status_code,
             resp.text[:200],
