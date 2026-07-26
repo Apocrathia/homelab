@@ -18,7 +18,7 @@ resources:
   - mcp-servers
   - openclaw
   - openwebui
-  - odysseus
+  # - odysseus
   - promptfoo
   - pyrit
   - qdrant
