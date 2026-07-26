@@ -14,6 +14,10 @@ semgrep:
         - "**/*.go"
         - "**/*.js"
         - "**/*.ts"
+  variables:
+    # The image reports itself as containerised, so semgrep looks for the
+    # conventional /src bind mount. The k8s executor checks out elsewhere.
+    SEMGREP_SRC_DIRECTORY: $CI_PROJECT_DIR
   script:
     - |
       echo "=== Semgrep SAST Scanning ==="

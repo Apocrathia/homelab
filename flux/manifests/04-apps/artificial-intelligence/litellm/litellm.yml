@@ -195,6 +195,10 @@ mcp_servers:
     url: "http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
+    # Forward caller GitLab PAT (REMOTE_AUTHORIZATION on the MCP server).
+    extra_headers:
+      - "Private-Token"
+      - "Authorization"
   github:
     alias: "github"
     url: "http://github.mcp-github.svc.cluster.local:8080/mcp"

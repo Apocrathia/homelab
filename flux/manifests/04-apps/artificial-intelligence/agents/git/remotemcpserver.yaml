@@ -35,3 +35,10 @@ spec:
   protocol: STREAMABLE_HTTP
   url: "http://gitlab.mcp-gitlab.svc.cluster.local:8080/mcp"
   description: "GitLab - projects, merge requests, issues, pipelines"
+  # zereight gitlab-mcp REMOTE_AUTHORIZATION: Private-Token > JOB-TOKEN > Bearer.
+  headersFrom:
+    - name: Private-Token
+      valueFrom:
+        type: Secret
+        name: gitlab-mcp-client-secrets
+        key: gitlab-token

@@ -34,6 +34,14 @@ every call to github-mcp (the MCP server itself stores no PAT).
 | --------------- | --------------------------------------------------------------------- |
 | `authorization` | GitHub PAT **including the `Bearer ` prefix** (e.g. `Bearer ghp_...`) |
 
+Also syncs `gitlab-mcp-secrets` into this namespace as `gitlab-mcp-client-secrets`.
+The RemoteMCPServer sends `gitlab-token` as the `Private-Token` header on every
+call to gitlab-mcp (REMOTE_AUTHORIZATION; the MCP pod holds no PAT).
+
+| Field          | Description                         |
+| -------------- | ----------------------------------- |
+| `gitlab-token` | GitLab PAT with `api` / read scopes |
+
 ## Troubleshooting
 
 ```bash

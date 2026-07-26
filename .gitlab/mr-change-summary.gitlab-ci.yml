@@ -1,6 +1,9 @@
 ---
 mr-change-summary:
   stage: verify
+  # Serialize across MRs — concurrent runs stampede the single gitlab-mcp replica
+  # into hung streamable-HTTP sessions and trip kagent's ~180s A2A deadline.
+  resource_group: mr-change-summary
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
   image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
   rules:
@@ -8,6 +11,8 @@ mr-change-summary:
   variables:
     A2A_URL: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent/"
     MAX_TURNS: "12"
+    # Bail after N consecutive transport errors / failed states (not soft stub retries).
+    MAX_CONSECUTIVE_FAILURES: "3"
     HTTP_TIMEOUT_S: "600"
     DIFF_MAX_BYTES: "120000"
     CHANGED_FILES_MAX_LINES: "500"
@@ -66,6 +71,7 @@ mr-change-summary:
       CHANGED_FILES_PATH=/tmp/work/changed-files.txt \
       A2A_URL="${A2A_URL}" \
       MAX_TURNS="${MAX_TURNS}" \
+      MAX_CONSECUTIVE_FAILURES="${MAX_CONSECUTIVE_FAILURES}" \
       HTTP_TIMEOUT_S="${HTTP_TIMEOUT_S}" \
         python /tmp/work/invoke.py
 
