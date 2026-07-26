@@ -20,7 +20,7 @@ spec:
     app:
       name: silverbullet
       # renovate: datasource=docker depName=ghcr.io/silverbulletmd/silverbullet
-      image: ghcr.io/silverbulletmd/silverbullet:2.9.0
+      image: ghcr.io/silverbulletmd/silverbullet:2.9.0@sha256:82e76a800920370d83e2f50c6946d3c420954b0bd417dbb96f7911513fa05620
       container:
         name: silverbullet
         port: 3000
