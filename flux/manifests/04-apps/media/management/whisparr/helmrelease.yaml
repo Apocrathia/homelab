@@ -20,7 +20,7 @@ spec:
     app:
       name: whisparr
       # renovate: datasource=docker depName=ghcr.io/home-operations/whisparr
-      image: ghcr.io/home-operations/whisparr:2.0.0
+      image: ghcr.io/home-operations/whisparr:2.0.0@sha256:d3bccbe50d4ecd980bfa8f0d61f51367452018b76fd438dfea44a2efde302234
       container:
         name: whisparr
         port: 6969
