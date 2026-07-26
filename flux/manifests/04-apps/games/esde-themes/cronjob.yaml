@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: esde-themes-sync
+  namespace: esde-themes
+  annotations:
+    ignore-check.kube-linter.io/no-read-only-root-fs: "apk needs a writable rootfs to install git/jq"
+    ignore-check.kube-linter.io/run-as-non-root: "apk runs as root; SMB mount uses uid/gid=1000 noperm"
+spec:
+  # Weekly Sunday 0400 America/Denver (after skyscraper-esde at 0300)
+  schedule: "0 4 * * 0"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      # Full clone/unshallow of ~64 themes can take a while on first conversion.
+      activeDeadlineSeconds: 28800
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: sync
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+              image: public.ecr.aws/docker/library/alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+              command:
+                - sh
+                - -c
+                - |
+                  set -euo pipefail
+                  apk add --no-cache bash git jq ca-certificates
+                  # Run as root: alpine image has no uid 1000 user; SMB mount uses
+                  # uid/gid=1000 noperm so writes still land correctly on the share.
+                  exec bash /scripts/sync-themes.sh
+              env:
+                - name: TZ
+                  value: America/Denver
+                - name: THEMES_ROOT
+                  value: /emulation/themes
+                - name: HOME
+                  value: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "2"
+                  memory: 1Gi
+              securityContext:
+                runAsNonRoot: false
+                runAsUser: 0
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                  add:
+                    # apk drops privileges via setuid/setgid
+                    - SETUID
+                    - SETGID
+                    - DAC_OVERRIDE
+                    - FOWNER
+                    - CHOWN
+              volumeMounts:
+                - name: emulation
+                  mountPath: /emulation
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: emulation
+              persistentVolumeClaim:
+                claimName: esde-themes-emulation
+            - name: scripts
+              configMap:
+                name: esde-themes-scripts
+                defaultMode: 0755
+            - name: tmp
+              emptyDir:
+                sizeLimit: 1Gi

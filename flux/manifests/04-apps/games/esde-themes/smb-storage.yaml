@@ -1,0 +1,48 @@
+---
+# Emulation share root (themes live under Emulation/themes/)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: esde-themes-emulation-pv
+  labels:
+    app.kubernetes.io/name: esde-themes
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+    - dir_mode=0755
+    - file_mode=0644
+    - uid=1000
+    - gid=1000
+    - noperm
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: esde-themes-emulation-pv
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Games"
+      subDir: "Emulation"
+    nodeStageSecretRef:
+      name: esde-themes-smb-credentials
+      namespace: esde-themes
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: esde-themes-emulation
+  namespace: esde-themes
+  labels:
+    app.kubernetes.io/name: esde-themes
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: esde-themes-emulation-pv
+  resources:
+    requests:
+      storage: 10Ti
