@@ -21,7 +21,7 @@ spec:
       name: litellm-valkey
       namespace: litellm
       # renovate: datasource=docker depName=valkey/valkey
-      image: valkey/valkey:9-alpine
+      image: valkey/valkey:9-alpine@sha256:ee91f7a174ac4d6a6b0685b3a60e321f0a9dbbb691f9b0e285be2ba1d1be8328
       # Shell so --requirepass can read REDIS_PASSWORD from litellm-secrets
       command:
         - /bin/sh
