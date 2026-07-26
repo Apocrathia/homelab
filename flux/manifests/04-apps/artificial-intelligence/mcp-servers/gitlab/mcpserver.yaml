@@ -24,6 +24,8 @@ spec:
       HOST: "0.0.0.0"
       PORT: "8080"
       STREAMABLE_HTTP: "true"
+      # Non-loopback /mcp Host allowlist (kagent cluster DNS).
+      MCP_SERVER_URL: "http://gitlab.mcp-gitlab.svc.cluster.local:8080"
       # Callers (kagent RemoteMCPServer / LiteLLM) supply Private-Token per request.
       REMOTE_AUTHORIZATION: "true"
       GITLAB_API_URL: "https://gitlab.com/api/v4"
