@@ -20,7 +20,7 @@ spec:
     app:
       name: jellyfin
       # renovate: datasource=docker depName=ghcr.io/trueforge-org/jellyfin
-      image: ghcr.io/trueforge-org/jellyfin:10.11.11
+      image: ghcr.io/trueforge-org/jellyfin:10.11.11@sha256:7f5325bd23b7445a8fda17b6d2d24033e3935536789f682aed63698b7b3a97c6
       container:
         name: jellyfin
         port: 8096
