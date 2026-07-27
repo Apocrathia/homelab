@@ -21,7 +21,7 @@
   needs: []
   variables:
     FLEET_DRY_RUN_ONLY: "true"
-    FLEET_GITOPS_DIR: $CI_PROJECT_DIR/flux/manifests/04-apps/management/fleet/config
+    FLEET_GITOPS_DIR: $CI_PROJECT_DIR/fleet
     FLEET_CUSTOM_HEADERS: ""
     FLEETCTL_PREFIX: $CI_PROJECT_DIR/.fleetctl-tools
   before_script:
@@ -86,13 +86,13 @@ fleet-gitops:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        - flux/manifests/04-apps/management/fleet/config/**/*
+        - fleet/**/*
     - if: $CI_PIPELINE_SOURCE == "schedule" && $FLEET_GITOPS_SCHEDULE == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       variables:
         FLEET_DRY_RUN_ONLY: "false"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
       changes:
-        - flux/manifests/04-apps/management/fleet/config/**/*
+        - fleet/**/*
       variables:
         FLEET_DRY_RUN_ONLY: "false"
   script:
