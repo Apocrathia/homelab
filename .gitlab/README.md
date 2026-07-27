@@ -130,6 +130,7 @@ Applies Fleet org/team YAML via `fleetctl gitops`. Job definition lives next to 
 - `FLEET_URL` — Fleet server URL
 - `FLEET_API_TOKEN` — API-only user token (GitOps role)
 - `FLEET_GLOBAL_ENROLL_SECRET` — global enroll secret referenced in `default.yml`
+- `FLEET_HOME_ENROLL_SECRET` — Home team enroll secret referenced in `teams/home.yml`
 - `FLEET_GITOPS_SCHEDULE=true` — set only on the Fleet pipeline schedule; other scheduled jobs (`pages`, `tofu-drift`, `scorecard-badge`) skip when this is set
 
 See `flux/manifests/04-apps/management/fleet/README.md` for layout and schedule setup.
@@ -189,6 +190,7 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 | `FLEET_URL`                  | Fleet server URL                                                                                                          | fleet-gitops                      |
 | `FLEET_API_TOKEN`            | Fleet API-only user token (GitOps role)                                                                                   | fleet-gitops                      |
 | `FLEET_GLOBAL_ENROLL_SECRET` | Global osquery enroll secret                                                                                              | fleet-gitops                      |
+| `FLEET_HOME_ENROLL_SECRET`   | Home team osquery enroll secret                                                                                           | fleet-gitops                      |
 | `FLEET_GITOPS_SCHEDULE`      | Set to `true` on the Fleet hourly schedule only                                                                           | fleet-gitops (schedule)           |
 
 Configure in **Settings > CI/CD > Variables**.

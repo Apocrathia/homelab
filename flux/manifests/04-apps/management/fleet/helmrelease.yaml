@@ -142,13 +142,14 @@ spec:
     # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB
     # secret on pod start — keep it identical to GitOps
     # $FLEET_GLOBAL_ENROLL_SECRET / default.yml.
-    # Fields on OnePasswordItem fleetdm-secrets: private-key, enroll-secret.
+    # Fields on OnePasswordItem fleetdm-secrets: private-key,
+    # global-enroll-secret.
     envsFrom:
       - name: FLEET_PACKAGING_GLOBAL_ENROLL_SECRET
         valueFrom:
           secretKeyRef:
             name: fleetdm-secrets
-            key: enroll-secret
+            key: global-enroll-secret
 
     resources:
       limits:

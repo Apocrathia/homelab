@@ -32,11 +32,12 @@ Layout and upstream pattern: [`fleet/README.md`](../../../../../fleet/README.md)
 
 Required CI/CD variables (masked):
 
-| Variable                     | Purpose                                                       |
-| ---------------------------- | ------------------------------------------------------------- |
-| `FLEET_URL`                  | `https://fleet.gateway.services.apocrathia.com`               |
-| `FLEET_API_TOKEN`            | API-only user token (GitOps role; admin on Fleet Free)        |
-| `FLEET_GLOBAL_ENROLL_SECRET` | Global enroll secret (`default.yml` → `org_settings.secrets`) |
+| Variable                     | Purpose                                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| `FLEET_URL`                  | `https://fleet.gateway.services.apocrathia.com`                 |
+| `FLEET_API_TOKEN`            | API-only user token (GitOps role; admin on Fleet Free)          |
+| `FLEET_GLOBAL_ENROLL_SECRET` | Global enroll secret (`default.yml` → `org_settings.secrets`)   |
+| `FLEET_HOME_ENROLL_SECRET`   | Home team enroll secret (`teams/home.yml` → `settings.secrets`) |
 
 Create an [API-only user](https://fleetdm.com/docs/using-fleet/fleetctl-cli#create-api-only-user), then add a pipeline schedule:
 
@@ -51,6 +52,7 @@ Local dry-run:
 export FLEET_URL=https://fleet.gateway.services.apocrathia.com
 export FLEET_API_TOKEN=...
 export FLEET_GLOBAL_ENROLL_SECRET=...
+export FLEET_HOME_ENROLL_SECRET=...
 fleetctl config set --address "$FLEET_URL" --token "$FLEET_API_TOKEN"
 FLEET_DRY_RUN_ONLY=true ./fleet/gitops.sh
 ```
@@ -59,19 +61,21 @@ FLEET_DRY_RUN_ONLY=true ./fleet/gitops.sh
 
 Create a 1Password item at `vaults/Secrets/items/fleetdm-secrets` with:
 
-| Field                 | Description                                                                  |
-| --------------------- | ---------------------------------------------------------------------------- |
-| `mysql-root-password` | MySQL root password                                                          |
-| `mysql-password`      | MySQL `fleet` user password                                                  |
-| `license-key`         | Fleet Premium license key                                                    |
-| `private-key`         | Fleet server private key (`openssl rand -base64 32`; required for MDM)       |
-| `enroll-secret`       | Global osquery enroll secret (same value as CI `FLEET_GLOBAL_ENROLL_SECRET`) |
+| Field                  | Description                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| `mysql-root-password`  | MySQL root password                                                          |
+| `mysql-password`       | MySQL `fleet` user password                                                  |
+| `license-key`          | Fleet Premium license key                                                    |
+| `private-key`          | Fleet server private key (`openssl rand -base64 32`; required for MDM)       |
+| `global-enroll-secret` | Global osquery enroll secret (same value as CI `FLEET_GLOBAL_ENROLL_SECRET`) |
+| `home-enroll-secret`   | Home team enroll secret (same value as CI `FLEET_HOME_ENROLL_SECRET`)        |
 
 The OnePasswordItem creates Secret `fleetdm-secrets`. MySQL, license, and
 `FLEET_SERVER_PRIVATE_KEY` / `FLEET_PACKAGING_GLOBAL_ENROLL_SECRET` all read from it.
 
-`enroll-secret` must match the GitOps enroll secret: Helm seeds it on pod start;
-`fleet/default.yml` applies it via `$FLEET_GLOBAL_ENROLL_SECRET` in CI.
+`global-enroll-secret` must match the GitOps enroll secret: Helm seeds it on pod
+start; `fleet/default.yml` applies it via `$FLEET_GLOBAL_ENROLL_SECRET` in CI.
+`home-enroll-secret` matches `$FLEET_HOME_ENROLL_SECRET` in `fleet/teams/home.yml`.
 
 ## Authentication
 

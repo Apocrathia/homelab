@@ -2,7 +2,8 @@
 # Applied by fleetctl gitops via fleet/.gitlab-ci.yml.
 #
 # Required CI/CD variables (masked):
-#   FLEET_URL, FLEET_API_TOKEN, FLEET_GLOBAL_ENROLL_SECRET
+#   FLEET_URL, FLEET_API_TOKEN, FLEET_GLOBAL_ENROLL_SECRET,
+#   FLEET_HOME_ENROLL_SECRET (teams/home.yml)
 #
 # Docs: https://fleetdm.com/docs/using-fleet/gitops
 ---
