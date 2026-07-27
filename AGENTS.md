@@ -84,6 +84,7 @@ rows, read each.
 | Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                                                               |
 | Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                                                       |
 | Making any file edit (code or docs)        | [`worktrees.md`](./.agents/rules/worktrees.md)                                                                                                                             |
+| Cleaning up unused worktrees / branches    | [`cleanup-worktrees`](./.agents/skills/cleanup-worktrees/SKILL.md)                                                                                                         |
 | Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                                                     |
 | Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                                                         |
 | Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                                                     |

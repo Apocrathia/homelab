@@ -86,6 +86,8 @@ plan numbers or status.
 After merge (or when abandoning the lap), `git worktree remove` the tree and
 delete the branch. Never `rm -rf` a worktree path. There is no `clock-out`
 ceremony — cleanup is explicit when the operator (or an authorized lap) is done.
+Bulk / inventory cleanup:
+[`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md).
 
 ## Exceptions
 

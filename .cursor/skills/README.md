@@ -29,6 +29,7 @@ For when to write a skill and frontmatter conventions, see
 | `run-loop`                      | [`.agents/skills/run-loop`](../../.agents/skills/run-loop/SKILL.md)                                           | Constant / unattended loop orchestrator          |
 | `watch-mr`                      | [`.agents/skills/watch-mr`](../../.agents/skills/watch-mr/SKILL.md)                                           | Babysit open MR (threads, CI, conflicts)         |
 | `autoresearch`                  | [`.agents/skills/autoresearch`](../../.agents/skills/autoresearch/SKILL.md)                                   | Idle tier-8 research; docs-only ship             |
+| `cleanup-worktrees`             | [`.agents/skills/cleanup-worktrees`](../../.agents/skills/cleanup-worktrees/SKILL.md)                         | Remove merged/stale worktrees + local branches   |
 
 ## Adding one
 
