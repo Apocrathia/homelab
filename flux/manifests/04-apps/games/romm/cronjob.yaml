@@ -1,0 +1,72 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: romm-nightly-metadata-scan
+  namespace: romm
+  annotations:
+    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in rbac.yaml"
+spec:
+  # 0300 America/Denver — after built-in maintenance tasks finish
+  schedule: "0 3 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        spec:
+          serviceAccountName: romm-scan-trigger
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: trigger-scan
+              # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
+              image: ghcr.io/trueforge-org/kubectl:1.31.1@sha256:3fe41544c20b22cd8676f7a420e3efd6f6a51bdb6f4b7591a4b6468366243a5c
+              command:
+                - /bin/sh
+                - /scripts/trigger.sh
+              env:
+                - name: SCAN_TYPE
+                  # unmatched = ROMs missing provider IDs; update = refresh matched metadata
+                  value: "unmatched,update"
+                - name: SCAN_METADATA_SOURCES
+                  value: "igdb,ss,ra,launchbox,hasheous,playmatch,sgdb"
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1001
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: romm-scan-scripts
+                defaultMode: 0755
+            - name: tmp
+              emptyDir: {}

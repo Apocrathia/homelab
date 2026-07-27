@@ -56,6 +56,18 @@ Create a 1Password item:
 - **External URL**: `https://romm.gateway.services.apocrathia.com`
 - **Internal Service**: `http://romm.romm.svc.cluster.local:8080`
 
+### Nightly metadata scan
+
+`romm-nightly-metadata-scan` runs at 03:00 America/Denver and enqueues **Unmatched** then **Update** scans (fill gaps, then refresh already-matched metadata). Built-in scheduled rescans use Quick mode and only pick up new files.
+
+The CronJob uses a namespaced ServiceAccount to `kubectl exec` into the romm pod and enqueue the scan on RomM's local RQ/Valkey queue. No HTTP/OIDC credentials required.
+
+```bash
+kubectl get cronjob -n romm romm-nightly-metadata-scan
+kubectl create job -n romm --from=cronjob/romm-nightly-metadata-scan romm-nightly-metadata-scan-manual
+kubectl logs -n romm job/romm-nightly-metadata-scan-manual
+```
+
 ## Authentication
 
 Authentication is handled through Authentik OIDC:

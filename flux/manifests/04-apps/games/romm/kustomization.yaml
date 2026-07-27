@@ -10,11 +10,23 @@ resources:
   - namespace.yaml
   - postgres.yaml
   - helmrelease.yaml
+  - rbac.yaml
+  - cronjob.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
 
 configMapGenerator:
   - name: romm-config-desired
     namespace: romm
     files:
       - config.yml
+    options:
+      disableNameSuffixHash: true
+  - name: romm-scan-scripts
+    namespace: romm
+    files:
+      - src/trigger.sh
+      - src/enqueue-scan.py
     options:
       disableNameSuffixHash: true
