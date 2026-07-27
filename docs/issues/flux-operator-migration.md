@@ -8,7 +8,7 @@ found_at: 2026-07-26
 found_by: operator
 area: flux
 slice: hitl
-# plan: # file in a later session — docs/plans/flux-operator-migration.md
+plan: docs/plans/flux-operator-migration.md
 ---
 
 # Migrate Flux from vendored gotk to Flux Operator
@@ -84,8 +84,11 @@ protected-paths rules.
 
 ## Notes
 
-- Plan authoring is deferred to a separate session; link via `plan:` when
-  `docs/plans/flux-operator-migration.md` exists.
+- Plan: `docs/plans/flux-operator-migration.md` (Phase A = this issue’s
+  acceptance; Phase B = hypermind GitLab MR ResourceSet pilot — label
+  `deploy/flux-preview` — so Renovate bumps can be smoked on-cluster before
+  merge). Upstream:
+  https://fluxoperator.dev/docs/resourcesets/gitlab-merge-requests/
 - Cluster evidence (2026-07-26): root `flux-system` and `manifests`
   Kustomizations created `2025-11-15` with `prune: true`. Several child KS
   show much newer `creationTimestamp`s (2026-01 through 2026-06), which
@@ -94,4 +97,4 @@ protected-paths rules.
   policy) before emptying or replacing bootstrap ownership.
 - Related: `docs/issues/trivy-scan-noise-deferred.md` (gotk vendor noise).
 - Out of scope for this issue’s acceptance: repo layout redesign, OCI sync,
-  Terraform bootstrap module, auth model changes.
+  Terraform bootstrap module, auth model changes, multi-app preview platform.
