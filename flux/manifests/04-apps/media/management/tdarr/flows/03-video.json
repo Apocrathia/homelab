@@ -1,7 +1,7 @@
 {
   "_id": "custom_03_video",
   "name": "03 - Video Transcoding",
-  "description": "HEVC x265 10-bit CPU encoding with correct libx265 argument construction.",
+  "description": "HEVC x265 CPU encoding. SD: CRF 26/28 8-bit; HD+: library CRF + 10-bit. No-grow size verify 2-99%.",
   "tags": "",
   "flowPlugins": [
     {
@@ -47,20 +47,20 @@
       "pluginName": "ffmpegCommandStart",
       "version": "1.0.0",
       "id": "vid005",
-      "position": { "x": 400, "y": 250 },
+      "position": { "x": 400, "y": 220 },
       "fpEnabled": true
     },
     {
-      "name": "Set container to MKV",
+      "name": "Set container to MKV (drop unsupported subs)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandSetContainer",
       "version": "1.0.0",
       "inputsDB": {
         "container": "mkv",
-        "forceConform": "false"
+        "forceConform": "true"
       },
       "id": "vid006",
-      "position": { "x": 400, "y": 350 },
+      "position": { "x": 400, "y": 300 },
       "fpEnabled": true
     },
     {
@@ -72,11 +72,62 @@
         "languages": "eng,und,jpn"
       },
       "id": "vid006r",
-      "position": { "x": 400, "y": 400 },
+      "position": { "x": 400, "y": 380 },
       "fpEnabled": true
     },
     {
-      "name": "Set video encoder to HEVC (CPU)",
+      "name": "Resolution for encode path",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoResolution",
+      "version": "1.0.0",
+      "id": "vid_res",
+      "position": { "x": 400, "y": 460 },
+      "fpEnabled": true
+    },
+    {
+      "name": "SD: already HEVC? (re-shrink vs first pass)",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoCodec",
+      "version": "1.0.0",
+      "inputsDB": {
+        "codec": "hevc"
+      },
+      "id": "vid_sd_codec",
+      "position": { "x": 150, "y": 560 },
+      "fpEnabled": true
+    },
+    {
+      "name": "SD first pass: HEVC CRF 26 8-bit",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetVideoEncoder",
+      "version": "1.0.0",
+      "inputsDB": {
+        "outputCodec": "hevc",
+        "ffmpegPreset": "{{{args.userVariables.library.ffmpeg_preset}}}",
+        "ffmpegQuality": "26",
+        "hardwareEncoding": "false"
+      },
+      "id": "vid007sd26",
+      "position": { "x": 0, "y": 680 },
+      "fpEnabled": true
+    },
+    {
+      "name": "SD re-shrink: HEVC CRF 28 8-bit",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandSetVideoEncoder",
+      "version": "1.0.0",
+      "inputsDB": {
+        "outputCodec": "hevc",
+        "ffmpegPreset": "{{{args.userVariables.library.ffmpeg_preset}}}",
+        "ffmpegQuality": "28",
+        "hardwareEncoding": "false"
+      },
+      "id": "vid007sd28",
+      "position": { "x": 250, "y": 680 },
+      "fpEnabled": true
+    },
+    {
+      "name": "HD+: Set video encoder to HEVC (CPU)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandSetVideoEncoder",
       "version": "1.0.0",
@@ -87,16 +138,16 @@
         "hardwareEncoding": "false"
       },
       "id": "vid007",
-      "position": { "x": 400, "y": 500 },
+      "position": { "x": 550, "y": 560 },
       "fpEnabled": true
     },
     {
-      "name": "Set 10-bit output",
+      "name": "HD+: Set 10-bit output",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommand10BitVideo",
       "version": "1.0.0",
       "id": "vid008",
-      "position": { "x": 400, "y": 550 },
+      "position": { "x": 550, "y": 640 },
       "fpEnabled": true
     },
     {
@@ -109,7 +160,7 @@
         "value": "true"
       },
       "id": "vid_anim",
-      "position": { "x": 400, "y": 625 },
+      "position": { "x": 400, "y": 780 },
       "fpEnabled": true
     },
     {
@@ -121,7 +172,7 @@
         "outputArguments": "-x265-params lookahead=64:frame-threads=2:deblock=-1,-1:psy-rd=1.1:psy-rdoq=1:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
       },
       "id": "vid009",
-      "position": { "x": 250, "y": 725 },
+      "position": { "x": 250, "y": 880 },
       "fpEnabled": true
     },
     {
@@ -133,7 +184,7 @@
         "outputArguments": "-tune animation -bf 3 -x265-params lookahead=64:frame-threads=2:deblock=-2,-2:psy-rd=1:psy-rdoq=0.5:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
       },
       "id": "vid009a",
-      "position": { "x": 550, "y": 725 },
+      "position": { "x": 550, "y": 880 },
       "fpEnabled": true
     },
     {
@@ -142,21 +193,21 @@
       "pluginName": "ffmpegCommandExecute",
       "version": "1.0.0",
       "id": "vid010",
-      "position": { "x": 400, "y": 850 },
+      "position": { "x": 400, "y": 1000 },
       "fpEnabled": true
     },
     {
-      "name": "Verify output file size (8-200% of original)",
+      "name": "Verify output file size (2-99% of original)",
       "sourceRepo": "Community",
       "pluginName": "runClassicTranscodePlugin",
       "version": "2.0.0",
       "inputsDB": {
         "pluginSourceId": "Community:Tdarr_Plugin_a9he_New_file_size_check",
-        "lowerBound": "8",
-        "upperBound": "200"
+        "lowerBound": "2",
+        "upperBound": "99"
       },
       "id": "vid011",
-      "position": { "x": 400, "y": 950 },
+      "position": { "x": 400, "y": 1100 },
       "fpEnabled": true
     },
     {
@@ -168,7 +219,7 @@
         "flowId": "custom_04_output"
       },
       "id": "vid012",
-      "position": { "x": 400, "y": 1100 },
+      "position": { "x": 400, "y": 1250 },
       "fpEnabled": true
     },
     {
@@ -177,7 +228,7 @@
       "pluginName": "comment",
       "version": "1.0.0",
       "id": "vid013",
-      "position": { "x": 700, "y": 950 },
+      "position": { "x": 700, "y": 1100 },
       "fpEnabled": true
     },
     {
@@ -186,7 +237,7 @@
       "pluginName": "comment",
       "version": "1.0.0",
       "id": "vid014",
-      "position": { "x": 700, "y": 800 },
+      "position": { "x": 700, "y": 950 },
       "fpEnabled": true
     }
   ],
@@ -229,9 +280,100 @@
     {
       "source": "vid006r",
       "sourceHandle": "1",
-      "target": "vid007",
+      "target": "vid_res",
       "targetHandle": null,
       "id": "ve006r"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "1",
+      "target": "vid_sd_codec",
+      "targetHandle": null,
+      "id": "ve_res_480p"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "2",
+      "target": "vid_sd_codec",
+      "targetHandle": null,
+      "id": "ve_res_576p"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "3",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_720p"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "4",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_1080p"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "5",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_1440p"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "6",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_4k"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "7",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_dci4k"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "8",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_8k"
+    },
+    {
+      "source": "vid_res",
+      "sourceHandle": "9",
+      "target": "vid007",
+      "targetHandle": null,
+      "id": "ve_res_other"
+    },
+    {
+      "source": "vid_sd_codec",
+      "sourceHandle": "1",
+      "target": "vid007sd28",
+      "targetHandle": null,
+      "id": "ve_sd_hevc"
+    },
+    {
+      "source": "vid_sd_codec",
+      "sourceHandle": "2",
+      "target": "vid007sd26",
+      "targetHandle": null,
+      "id": "ve_sd_not_hevc"
+    },
+    {
+      "source": "vid007sd26",
+      "sourceHandle": "1",
+      "target": "vid_anim",
+      "targetHandle": null,
+      "id": "ve_sd26_anim"
+    },
+    {
+      "source": "vid007sd28",
+      "sourceHandle": "1",
+      "target": "vid_anim",
+      "targetHandle": null,
+      "id": "ve_sd28_anim"
     },
     {
       "source": "vid007",

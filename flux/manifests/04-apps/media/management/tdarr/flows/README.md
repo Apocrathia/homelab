@@ -21,7 +21,9 @@ Entry point. Determines whether the file needs video transcoding, sets the `need
 
 ```mermaid
 flowchart TD
-    Start[inputFile] --> SizeCheck["File size check (10MB-200GB)"]
+    Start[inputFile] --> ExtCheck{".iso / .m2ts"?}
+    ExtCheck -->|yes| SkipDisk["Skip disc image"]
+    ExtCheck -->|no| SizeCheck["File size check (10MB-200GB)"]
     SizeCheck --> CodecCheck{Video codec is HEVC?}
     CodecCheck -->|no| NeedsTranscode["Set needs_transcode = true"]
     CodecCheck -->|yes| ResCheck["Check resolution"]
@@ -33,10 +35,13 @@ flowchart TD
 
 Overall bitrate thresholds for HEVC skip logic (uses `checkOverallBitrate` since per-stream video bitrate is unavailable on VBR x265 MKV files):
 
-- 720p and below: skip if under 4 Mbps
+- SD (480p / 576p): skip if under **0.75 Mbps** (re-queues grown low-bitrate HEVC for CRF 28 re-shrink)
+- 720p: skip if under 4 Mbps
 - 1080p: skip if under 10 Mbps
 - 4K: skip if under 25 Mbps
 - 8K and other resolutions: always transcode
+
+`.iso` / `.m2ts` end the pipeline immediately (no encode).
 
 ### Flow 2: Audio normalization
 
@@ -58,28 +63,35 @@ Audio track selection for AAC creation:
 
 ### Flow 3: Video transcoding
 
-HEVC encoding with correct libx265 CPU argument construction. Includes stream reordering and animation-aware tuning.
+HEVC encoding with correct libx265 CPU argument construction. SD and HD+ take different CRF / bit-depth paths. Includes stream reordering and animation-aware tuning.
 
 ```mermaid
 flowchart TD
-    Start["Flow entry"] --> NeedsTranscode{needs_transcode tag?}
+    Start["Flow entry"] --> NeedsTranscode{needs_transcode?}
     NeedsTranscode -->|no| GoToF4["goToFlow: Output"]
     NeedsTranscode -->|yes| StartCmd["Begin ffmpeg command"]
-    StartCmd --> SetContainer["Set container: MKV"]
+    StartCmd --> SetContainer["Set container: MKV forceConform"]
     SetContainer --> Reorder["Reorder streams (eng preferred)"]
-    Reorder --> SetEncoder["Set encoder: libx265"]
-    SetEncoder --> Set10Bit["Set 10-bit output"]
-    Set10Bit --> AnimCheck{is_animated?}
+    Reorder --> Res{Resolution}
+    Res -->|480p/576p| SdCodec{Already HEVC?}
+    SdCodec -->|no| Sd26["libx265 CRF 26 8-bit"]
+    SdCodec -->|yes| Sd28["libx265 CRF 28 8-bit"]
+    Res -->|720p+| HdEnc["libx265 library CRF + 10-bit"]
+    Sd26 --> AnimCheck{is_animated?}
+    Sd28 --> AnimCheck
+    HdEnc --> AnimCheck
     AnimCheck -->|yes| AnimArgs["Animation x265 tuning"]
     AnimCheck -->|no| StdArgs["Standard x265 tuning"]
     AnimArgs --> Execute["Execute encode"]
     StdArgs --> Execute
-    Execute --> FileSizeCheck{Output size OK?}
+    Execute --> FileSizeCheck{"Output 2-99% of original?"}
     FileSizeCheck -->|yes| GoToF4
     FileSizeCheck -->|no| Error["Hold for review"]
 ```
 
 `-preset` is a top-level ffmpeg option, NOT inside `-x265-params`. `lookahead` goes inside `-x265-params`.
+
+Size verify is **2%–99%** (sanity floor + no-grow). `forceConform` on MKV drops containers/subs that cannot mux (e.g. `mov_text`).
 
 ### Flow 4: Output and notification
 

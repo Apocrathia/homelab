@@ -1,7 +1,7 @@
 {
   "_id": "custom_01_input",
   "name": "01 - Input and Validation",
-  "description": "Entry point. File validation, codec detection, resolution tagging, and skip logic.",
+  "description": "Entry point. File validation, disc-image skip, codec detection, resolution tagging, and skip logic.",
   "tags": "",
   "flowPlugins": [
     {
@@ -17,6 +17,27 @@
       "fpEnabled": true
     },
     {
+      "name": "Disc image? (.iso / .m2ts)",
+      "sourceRepo": "Community",
+      "pluginName": "checkFileExtension",
+      "version": "1.0.0",
+      "inputsDB": {
+        "extensions": "iso,m2ts"
+      },
+      "id": "inp_ext",
+      "position": { "x": 400, "y": 80 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Skip disc image (out of scope)",
+      "sourceRepo": "Community",
+      "pluginName": "comment",
+      "version": "1.0.0",
+      "id": "inp_skip_disk",
+      "position": { "x": 700, "y": 80 },
+      "fpEnabled": true
+    },
+    {
       "name": "File size check (10MB - 200GB)",
       "sourceRepo": "Community",
       "pluginName": "runClassicTranscodePlugin",
@@ -27,7 +48,7 @@
         "upperBound": "200"
       },
       "id": "inp002",
-      "position": { "x": 400, "y": 100 },
+      "position": { "x": 400, "y": 180 },
       "fpEnabled": true
     },
     {
@@ -39,7 +60,7 @@
         "codec": "hevc"
       },
       "id": "inp003",
-      "position": { "x": 400, "y": 250 },
+      "position": { "x": 400, "y": 300 },
       "fpEnabled": true
     },
     {
@@ -52,7 +73,7 @@
         "value": "true"
       },
       "id": "inp004",
-      "position": { "x": 200, "y": 350 },
+      "position": { "x": 200, "y": 400 },
       "fpEnabled": true
     },
     {
@@ -61,11 +82,24 @@
       "pluginName": "checkVideoResolution",
       "version": "1.0.0",
       "id": "inp005",
-      "position": { "x": 600, "y": 350 },
+      "position": { "x": 600, "y": 400 },
       "fpEnabled": true
     },
     {
-      "name": "720p or below: overall bitrate < 4 Mbps?",
+      "name": "SD (480p/576p): overall bitrate < 0.75 Mbps?",
+      "sourceRepo": "Community",
+      "pluginName": "checkOverallBitrate",
+      "version": "1.0.0",
+      "inputsDB": {
+        "lessThan": "0.75",
+        "unit": "mbps"
+      },
+      "id": "inp006sd",
+      "position": { "x": 150, "y": 550 },
+      "fpEnabled": true
+    },
+    {
+      "name": "720p: overall bitrate < 4 Mbps?",
       "sourceRepo": "Community",
       "pluginName": "checkOverallBitrate",
       "version": "1.0.0",
@@ -74,7 +108,7 @@
         "unit": "mbps"
       },
       "id": "inp006",
-      "position": { "x": 300, "y": 500 },
+      "position": { "x": 400, "y": 550 },
       "fpEnabled": true
     },
     {
@@ -87,7 +121,7 @@
         "unit": "mbps"
       },
       "id": "inp007",
-      "position": { "x": 600, "y": 500 },
+      "position": { "x": 650, "y": 550 },
       "fpEnabled": true
     },
     {
@@ -100,7 +134,7 @@
         "unit": "mbps"
       },
       "id": "inp008",
-      "position": { "x": 900, "y": 500 },
+      "position": { "x": 900, "y": 550 },
       "fpEnabled": true
     },
     {
@@ -109,7 +143,7 @@
       "pluginName": "comment",
       "version": "1.0.0",
       "id": "inp009",
-      "position": { "x": 600, "y": 650 },
+      "position": { "x": 600, "y": 700 },
       "fpEnabled": true
     },
     {
@@ -122,7 +156,7 @@
         "value": "true"
       },
       "id": "inp010",
-      "position": { "x": 200, "y": 650 },
+      "position": { "x": 200, "y": 700 },
       "fpEnabled": true
     },
     {
@@ -134,7 +168,7 @@
         "flowId": "custom_02_audio"
       },
       "id": "inp011",
-      "position": { "x": 200, "y": 800 },
+      "position": { "x": 200, "y": 850 },
       "fpEnabled": true
     }
   ],
@@ -142,9 +176,23 @@
     {
       "source": "inp001",
       "sourceHandle": "1",
-      "target": "inp002",
+      "target": "inp_ext",
       "targetHandle": null,
       "id": "e001"
+    },
+    {
+      "source": "inp_ext",
+      "sourceHandle": "1",
+      "target": "inp_skip_disk",
+      "targetHandle": null,
+      "id": "e_ext_match"
+    },
+    {
+      "source": "inp_ext",
+      "sourceHandle": "2",
+      "target": "inp002",
+      "targetHandle": null,
+      "id": "e_ext_continue"
     },
     {
       "source": "inp002",
@@ -177,14 +225,14 @@
     {
       "source": "inp005",
       "sourceHandle": "1",
-      "target": "inp006",
+      "target": "inp006sd",
       "targetHandle": null,
       "id": "e005_480p"
     },
     {
       "source": "inp005",
       "sourceHandle": "2",
-      "target": "inp006",
+      "target": "inp006sd",
       "targetHandle": null,
       "id": "e005_576p"
     },
@@ -229,6 +277,27 @@
       "target": "inp010",
       "targetHandle": null,
       "id": "e005_other"
+    },
+    {
+      "source": "inp005",
+      "sourceHandle": "9",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e005_other9"
+    },
+    {
+      "source": "inp006sd",
+      "sourceHandle": "1",
+      "target": "inp009",
+      "targetHandle": null,
+      "id": "e006sd_under"
+    },
+    {
+      "source": "inp006sd",
+      "sourceHandle": "2",
+      "target": "inp010",
+      "targetHandle": null,
+      "id": "e006sd_over"
     },
     {
       "source": "inp006",
