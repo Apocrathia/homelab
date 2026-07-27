@@ -1,5 +1,5 @@
 ---
-# Prunes alternate report storage files older than 24h
+# Prunes alternate report storage files older than 6h
 # Reports are shipped to Loki via webhook; local PVC is scratch space only
 apiVersion: batch/v1
 kind: CronJob
@@ -7,7 +7,7 @@ metadata:
   name: trivy-report-cleanup
   namespace: trivy-system
 spec:
-  schedule: "0 3 * * *"
+  schedule: "37 * * * *"
   timeZone: "America/Denver"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -42,7 +42,7 @@ spec:
                 - |
                   echo "Disk usage before cleanup:"
                   df -h /mnt/data/trivy-operator
-                  find /mnt/data/trivy-operator -type f -mtime +1 -delete
+                  find /mnt/data/trivy-operator -type f -mmin +360 -delete
                   echo "Disk usage after cleanup:"
                   df -h /mnt/data/trivy-operator
               securityContext:
