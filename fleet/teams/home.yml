@@ -2,8 +2,8 @@
 # Homelab devices (Mac, iPhone, Linux, …).
 # Applied by fleetctl gitops via fleet/.gitlab-ci.yml.
 #
-# No team enroll secret — hosts enroll with the global secret, then transfer
-# into Home in the UI.
+# Home enroll secret: CI FLEET_HOME_ENROLL_SECRET (same value as 1Password
+# fleetdm-secrets → home-enroll-secret).
 #
 # macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
 # enable_disk_encryption pairs with CIS FileVault checks (key escrow to Fleet).
@@ -16,4 +16,5 @@ controls:
   enable_disk_encryption: true
 software:
 settings:
-  secrets: []
+  secrets:
+    - secret: "$FLEET_HOME_ENROLL_SECRET"

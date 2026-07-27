@@ -10,6 +10,7 @@
 #   FLEET_URL                  — https://fleet.gateway.services.apocrathia.com
 #   FLEET_API_TOKEN            — API-only user token (GitOps role / admin on Free)
 #   FLEET_GLOBAL_ENROLL_SECRET — global enroll secret referenced in default.yml
+#   FLEET_HOME_ENROLL_SECRET   — Home team enroll secret referenced in teams/home.yml
 #   FLEET_GITOPS_SCHEDULE      — set to "true" on the Fleet hourly schedule only
 #
 # Runner note: in-cluster Kubernetes executor is non-root — no apt-get.
@@ -27,7 +28,7 @@
   before_script:
     - |
       missing=""
-      for var in FLEET_URL FLEET_API_TOKEN FLEET_GLOBAL_ENROLL_SECRET; do
+      for var in FLEET_URL FLEET_API_TOKEN FLEET_GLOBAL_ENROLL_SECRET FLEET_HOME_ENROLL_SECRET; do
         eval "value=\${$var-}"
         if [ -z "$value" ]; then
           missing="${missing} ${var}"
