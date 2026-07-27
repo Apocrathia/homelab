@@ -242,13 +242,31 @@ auth) and continue. Note skips in the report.
 - **Default tier:** 1 (blocker/high if prod app).
 - **On failure:** Skip if unavailable; mark related backlog `dedupe unverified`.
 
-### Grafana
+### Grafana / Prometheus alerts
 
-- **Look at:** Firing alerts.
-- **How:** Grafana MCP (`list_alert_groups` / alert tooling); severity from the
-  alert. Deeplink evidence when useful.
-- **Default tier:** 1 for critical/firing prod; otherwise from alert severity.
-- **On failure:** Skip if unavailable.
+- **Look at:** Firing alert **families** (group by `alertname`), not every
+  instance. Include both PrometheusRule / Alertmanager firings and
+  Grafana-managed rules.
+- **How (prefer in order; all read-only Grafana MCP):**
+  1. `query_prometheus` on datasource uid `prometheus` (fallback `mimir`):
+     `ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}`
+     (instant). Severity from the `severity` label.
+  2. Optional detail: `grafana_api_request` GET
+     `/api/alertmanager/alertmanager/api/v2/alerts` — skip silenced; keep
+     `startsAt` for FIFO age.
+  3. Grafana-managed rules: `alerting_manage_rules` `operation=list`
+     `states=["firing"]` (then `get` per uid for instances when needed).
+  - Do **not** use OnCall `list_alert_groups` unless OnCall is actually
+    configured (this lab's settings API 404s).
+  - Deeplink evidence when useful (`generate_deeplink`).
+- **Default tier:** 1 for `critical` / prod-impacting; else map
+  `severity` (`warning` → high/medium, `info` → low — often skip
+  `CPUThrottlingHigh`-class noise unless operator-scoped).
+- **Default Invoke:** `site-reliability-engineer` for triage; prefer
+  [`file-issue`](../file-issue/SKILL.md) (`source: alert`) when the family is
+  chronic or not yet one vertical slice. Direct `implement-change` only when
+  already single-PR-sized with a named feedback loop.
+- **On failure:** Skip if Grafana MCP / Prometheus datasource unavailable.
 
 ### Scheduled health
 
