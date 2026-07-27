@@ -10,6 +10,9 @@
     # In-cluster Connect Service (runners are on the cluster). Token is a CI var.
     OP_CONNECT_HOST: "http://onepassword-connect.onepassword-system.svc:8080"
   before_script:
+    # 1Password provider is glibc-linked; Alpine needs gcompat or exec fails with
+    # "no such file or directory" after a successful install.
+    - apk add --no-cache gcompat
     - . "${CI_PROJECT_DIR}/scripts/terraform/ci-deps.sh"
     - ci_deps_bootstrap
     - cd terraform/deployments
@@ -20,6 +23,7 @@
 
 .tofu-preflight:
   before_script:
+    - apk add --no-cache gcompat
     - . "${CI_PROJECT_DIR}/scripts/terraform/ci-deps.sh"
     - ci_deps_bootstrap
     - cd terraform/deployments
