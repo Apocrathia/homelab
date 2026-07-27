@@ -18,7 +18,7 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 | `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                        | Invokes git-agent (A2A) to post a change summary |
 | `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)           | Runs OpenSSF Scorecard on changed dependencies   |
 | `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)     | OpenTofu plan/apply for Proxmox VMs              |
-| `fleet/config/.gitlab-ci.yml`     | deploy        | MR/main/schedule (fleet config) | Fleet GitOps (`fleetctl gitops`)                 |
+| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config) | Fleet GitOps (`fleetctl gitops`)                 |
 | `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                  | Secret scanning on MR commits                    |
 | `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)           | Kubernetes manifest security linting             |
 | `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                | IaC security scanning for Terraform and K8s      |
@@ -119,11 +119,11 @@ Creates Git tags when `helm/generic-app/Chart.yaml` version changes. Tag format:
 
 ### Fleet GitOps
 
-Applies Fleet org/team YAML via `fleetctl gitops`. Job definition lives next to the config tree at `flux/manifests/04-apps/management/fleet/config/.gitlab-ci.yml` (included from the root pipeline).
+Applies Fleet org/team YAML via `fleetctl gitops`. Job definition lives next to the config tree at `fleet/.gitlab-ci.yml` (included from the root pipeline).
 
 **Jobs**:
 
-- `fleet-gitops` — dry-run on MRs that touch `config/**`; apply on default-branch pushes to that tree and on the Fleet hourly schedule
+- `fleet-gitops` — dry-run on MRs that touch `fleet/**`; apply on default-branch pushes to that tree and on the Fleet hourly schedule
 
 **Requirements**:
 

@@ -3,7 +3,7 @@
 Declarative Fleet org settings, policies, queries, and team definitions. Applied
 with `fleetctl gitops` by the CI job in [`.gitlab-ci.yml`](./.gitlab-ci.yml).
 
-> **Navigation**: [← Back to Fleet README](../README.md)
+> **Navigation**: [← Back to Fleet deployment README](../flux/manifests/04-apps/management/fleet/README.md)
 
 ## Upstream pattern
 
@@ -23,7 +23,7 @@ first team file.
 ## Layout
 
 ```
-config/
+fleet/
 ├── .gitlab-ci.yml          # CI job (included from repo root)
 ├── gitops.sh               # fleetctl gitops wrapper
 ├── default.yml             # Global org settings
@@ -78,7 +78,7 @@ Secrets and tokens are never committed. The global enroll secret is stored in
 in all three places. Home has no team enroll secret.
 
 Other CI variables: `FLEET_URL`, `FLEET_API_TOKEN`. See the
-[parent README](../README.md#ci-apply) for schedule setup.
+[Fleet deployment README](../flux/manifests/04-apps/management/fleet/README.md#ci-apply) for schedule setup.
 
 ## Local dry-run
 
