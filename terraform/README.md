@@ -1,14 +1,15 @@
 # Terraform (OpenTofu + Terragrunt)
 
-Infrastructure as Code for Proxmox VMs, Cloudflare DNS, and Okta using OpenTofu
-and Terragrunt.
+Infrastructure as Code for Proxmox VMs, Cloudflare DNS, Okta, and GitLab using
+OpenTofu and Terragrunt.
 
 > **Navigation**: [← Home](../README.md) | [Talos Setup →](../talos/README.md)
 
 ## Overview
 
 OpenTofu configurations for Proxmox virtual machines (Talos Kubernetes cluster
-and other cluster workloads), Cloudflare DNS zones, and Okta org settings.
+and other cluster workloads), Cloudflare DNS zones, Okta org settings, and a
+GitLab project scaffold (1Password ephemeral → GitLab provider).
 
 | Tool                                                                                   | Purpose                                                            |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -17,6 +18,8 @@ and other cluster workloads), Cloudflare DNS zones, and Okta org settings.
 | [bpg/proxmox](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)         | Proxmox provider for OpenTofu                                      |
 | [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) | Cloudflare provider for OpenTofu                                   |
 | [okta/okta](https://registry.terraform.io/providers/okta/okta)                         | Okta provider for OpenTofu                                         |
+| [gitlabhq/gitlab](https://registry.terraform.io/providers/gitlabhq/gitlab)             | GitLab provider for OpenTofu                                       |
+| [1Password/onepassword](https://registry.terraform.io/providers/1Password/onepassword) | Read vault items (ephemeral) for provider credentials              |
 
 ### Managed VMs
 
@@ -54,6 +57,30 @@ cluster owns those. Okta's own `_acme-challenge.okta` challenge is an exception
 Org name and base URL live in `providers/okta.hcl`. The API token stays in
 1Password → `terraform/.env` / GitLab CI (`OKTA_API_TOKEN`).
 
+### Managed GitLab
+
+| Deployment       | Module           | Notes                                                                  |
+| ---------------- | ---------------- | ---------------------------------------------------------------------- |
+| `gitlab/homelab` | `gitlab-project` | Pattern spike: 1Password ephemeral → GitLab token; project label later |
+
+Auth for this stack: **1Password Connect** (no `op` CLI). Set
+`OP_CONNECT_HOST` (CI default:
+`http://onepassword-connect.onepassword-system.svc:8080` — in-cluster
+Service; runners are on the cluster) and `OP_CONNECT_TOKEN`. Vault is looked
+up by **name** (`Secrets` — no UUID in git). Put the GitLab PAT in a 1Password
+API Credential item **credential** field and set
+`onepassword_gitlab_pat_item_title` in the deployment `terragrunt.hcl`. Do not
+export `GITLAB_TOKEN`. See
+[`docs/plans/tofu-1password-provider.md`](../docs/plans/tofu-1password-provider.md).
+
+```bash
+# From a pod/runner on the cluster (same as CI). Local: port-forward first.
+export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
+export OP_CONNECT_TOKEN=…
+export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
+cd terraform/deployments/gitlab/homelab && terragrunt plan
+```
+
 ### Future Scope
 
 - Proxmox cluster configuration
@@ -61,6 +88,8 @@ Org name and base URL live in `providers/okta.hcl`. The API token stays in
 - Import remaining handmade Cloudflare records
 - Additional Cloudflare zones as needed
 - Okta authenticator / policy / app resources
+- Broader GitLab project settings after the label spike
+- Wire Cloudflare / Proxmox / Okta through the same 1Password ephemeral pattern
 
 ## Architecture
 
@@ -82,6 +111,7 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `proxmox-vm`     | General cluster VMs; optional Proxmox HA; ignores placement drift  |
 | `cloudflare-dns` | Zone lookup + `for_each` DNS records (explicit map only)           |
 | `okta-org`       | Okta org settings (scaffold; resources added over time)            |
+| `gitlab-project` | Existing GitLab project lookup + optional ownership label          |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
@@ -94,6 +124,7 @@ The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = tru
 | `providers/proxmox.hcl`    | `deployments/proxmox/**`    |
 | `providers/cloudflare.hcl` | `deployments/cloudflare/**` |
 | `providers/okta.hcl`       | `deployments/okta/**`       |
+| `providers/gitlab.hcl`     | `deployments/gitlab/**`     |
 
 ### State Backend
 
@@ -133,12 +164,14 @@ terraform/
 ├── providers/
 │   ├── proxmox.hcl                     # bpg/proxmox provider generate
 │   ├── cloudflare.hcl                  # cloudflare/cloudflare provider generate
-│   └── okta.hcl                        # okta/okta provider generate
+│   ├── okta.hcl                        # okta/okta provider generate
+│   └── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
 ├── modules/
 │   ├── talos-vm/                       # Pinned Talos nodes
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
-│   └── okta-org/                       # Okta org settings (scaffold)
+│   ├── okta-org/                       # Okta org settings (scaffold)
+│   └── gitlab-project/                 # Project data + optional label
 └── deployments/
     ├── proxmox/
     │   ├── home/
@@ -158,8 +191,11 @@ terraform/
     ├── cloudflare/
     │   └── dns/
     │       └── terragrunt.hcl
-    └── okta/
-        └── org/
+    ├── okta/
+    │   └── org/
+    │       └── terragrunt.hcl
+    └── gitlab/
+        └── homelab/
             └── terragrunt.hcl
 ```
 
@@ -194,12 +230,19 @@ root.hcl + providers/okta.hcl
     └── deployments/okta/org/terragrunt.hcl  → modules/okta-org
 ```
 
+**GitLab project**:
+
+```
+root.hcl + providers/gitlab.hcl
+    └── deployments/gitlab/homelab/terragrunt.hcl  → modules/gitlab-project
+```
+
 ## Prerequisites
 
 ### Version Requirements
 
 ```bash
-tofu version          # >= 1.6.0
+tofu version          # >= 1.11.0 (ephemeral resources; gitlab stack)
 terragrunt --version  # >= 0.52.0
 ```
 

@@ -7,6 +7,8 @@
     name: alpine/terragrunt:1.15.8@sha256:2bcad74598a6dbcdedf743f08984712444dd919bbe14a1231190c1f000718bfb
   variables:
     TF_IN_AUTOMATION: "true"
+    # In-cluster Connect Service (runners are on the cluster). Token is a CI var.
+    OP_CONNECT_HOST: "http://onepassword-connect.onepassword-system.svc:8080"
   before_script:
     - . "${CI_PROJECT_DIR}/scripts/terraform/ci-deps.sh"
     - ci_deps_bootstrap
@@ -24,7 +26,8 @@
     - |
       missing=""
       for var in TF_HTTP_ADDRESS TF_HTTP_USERNAME TF_HTTP_PASSWORD \
-        PROXMOX_VE_ENDPOINT PROXMOX_VE_API_TOKEN; do
+        PROXMOX_VE_ENDPOINT PROXMOX_VE_API_TOKEN \
+        OP_CONNECT_HOST OP_CONNECT_TOKEN; do
         eval "value=\${$var-}"
         if [ -z "$value" ]; then
           missing="${missing} ${var}"
@@ -34,9 +37,10 @@
         echo "Missing required CI/CD variables:${missing}"
         echo "Configure in GitLab: Settings → CI/CD → Variables"
         echo "TF_HTTP_* is the GitLab remote state backend (see terraform/README.md)"
+        echo "OP_CONNECT_* is 1Password Connect for tofu (see docs/plans/tofu-1password-provider.md)"
         exit 1
       fi
-      echo "Preflight OK (TF_HTTP_USERNAME length=${#TF_HTTP_USERNAME}, TF_HTTP_PASSWORD length=${#TF_HTTP_PASSWORD})"
+      echo "Preflight OK (TF_HTTP_USERNAME length=${#TF_HTTP_USERNAME}, OP_CONNECT_TOKEN length=${#OP_CONNECT_TOKEN})"
 
 tofu-validate:
   extends:

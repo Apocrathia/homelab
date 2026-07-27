@@ -107,6 +107,8 @@ Manages Proxmox VM infrastructure. Runs validation and plan on MRs, drift check 
 - `TOFU_TOKEN` - Personal access token for posting MR comments
 - `TF_HTTP_ADDRESS`, `TF_HTTP_USERNAME`, `TF_HTTP_PASSWORD` - GitLab HTTP remote state backend (see `terraform/README.md`)
 - `PROXMOX_VE_*` - Proxmox API credentials for plan/apply
+- `OP_CONNECT_HOST` - 1Password Connect URL (CI default set in tofu YAML)
+- `OP_CONNECT_TOKEN` - 1Password Connect API token for tofu (see `docs/plans/tofu-1password-provider.md`)
 - `TOFU_DRIFT_WEBHOOK_URL` (optional) - Discord webhook for drift notifications
 
 ### Chart Tagging
@@ -183,6 +185,8 @@ The `agents/homelab/config.yaml` configures the GitLab Kubernetes Agent for:
 | `TF_HTTP_PASSWORD`           | GitLab token (`api` scope) for state backend                                                                              | tofu-drift, tofu-plan, tofu-apply |
 | `PROXMOX_VE_ENDPOINT`        | Proxmox API URL                                                                                                           | tofu-drift, tofu-plan, tofu-apply |
 | `PROXMOX_VE_API_TOKEN`       | Proxmox API token                                                                                                         | tofu-drift, tofu-plan, tofu-apply |
+| `OP_CONNECT_HOST`            | 1Password Connect URL (optional override; CI YAML has lab default)                                                        | tofu-drift, tofu-plan, tofu-apply |
+| `OP_CONNECT_TOKEN`           | 1Password Connect API token (read vault used by tofu)                                                                     | tofu-drift, tofu-plan, tofu-apply |
 | `TOFU_DRIFT_WEBHOOK_URL`     | Discord webhook for drift notifications (optional)                                                                        | tofu-drift                        |
 | `GITHUB_TOKEN`               | Scorecard API access                                                                                                      | scorecard                         |
 | `GITLAB_TOKEN`               | Git tag push access                                                                                                       | chart-tag                         |

@@ -50,6 +50,7 @@ notebooks/.venv/
 # Terraform / OpenTofu / Terragrunt
 .terraform/
 .terragrunt-cache/
+.ci-bin/
 *.tfstate
 *.tfstate.*
 *.tfvars

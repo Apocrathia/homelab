@@ -80,6 +80,6 @@ ci_deps_bootstrap() {
   ci_jq_bootstrap
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]:-}" == "${0:-}" ]]; then
   ci_deps_bootstrap
 fi
