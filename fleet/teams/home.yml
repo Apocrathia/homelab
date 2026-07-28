@@ -7,15 +7,22 @@
 #
 # macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
 # Disk encryption + scripts live in lib/controls/home.yml.
+# Slack (FMA) is macOS-only via labels_include_any; patch policy keeps it current.
 name: Home
 policies:
   - path: ../lib/macos/policies/cis-macos-26-l1.yml
+  - path: ../lib/macos/policies/slack.yml
   - path: ../lib/all/policies/fleet-dm-was-here.yml
 reports:
 agent_options:
 controls:
   path: ../lib/controls/home.yml
 software:
+  fleet_maintained_apps:
+    - slug: slack/darwin
+      self_service: true
+      labels_include_any:
+        - macOS
 settings:
   secrets:
     - secret: "$FLEET_HOME_ENROLL_SECRET"

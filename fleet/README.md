@@ -65,6 +65,11 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
   `teams/`, not `lib/controls/` — fleetctl quirk). Policy
   `lib/all/policies/fleet-dm-was-here.yml` fails when the Desktop/home marker
   is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly cadence).
+- **Team software (Fleet-maintained apps)** → `software.fleet_maintained_apps`
+  in `teams/home.yml`. Slack (`slack/darwin`) is scoped with
+  `labels_include_any: [macOS]` and self-service. Patch policy
+  `lib/macos/policies/slack.yml` fails when Slack is missing/outdated and
+  installs via `install_software: true`.
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `lib/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);

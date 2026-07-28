@@ -1,0 +1,15 @@
+# Slack: keep Fleet-maintained version installed on macOS hosts.
+# Requires slack/darwin under software.fleet_maintained_apps on the same team.
+---
+- name: macOS - Slack up to date
+  description: >
+    Fails when Slack is missing or behind the Fleet-maintained app metadata.
+  resolution: >
+    Fleet installs or updates Slack (slack/darwin). Prefer Fleet over Homebrew
+    for this app so installs and uninstalls stay consistent.
+  type: patch
+  fleet_maintained_app_slug: slack/darwin
+  install_software: true
+  critical: false
+  labels_include_any:
+    - macOS
