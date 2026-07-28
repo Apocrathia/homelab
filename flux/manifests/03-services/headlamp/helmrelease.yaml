@@ -79,7 +79,7 @@ spec:
     initContainers:
       - name: user-plugins-init
         # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
-        image: ghcr.io/headlamp-k8s/headlamp:v0.43.0
+        image: ghcr.io/headlamp-k8s/headlamp:v0.43.0@sha256:5d03caa26df7a715079405df2949907160518750b9b62b6bf4de8d1a6142c541
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -109,7 +109,7 @@ spec:
             mountPath: /headlamp/user-plugins
       - name: user-plugins-perms
         # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
-        image: ghcr.io/headlamp-k8s/headlamp:v0.43.0
+        image: ghcr.io/headlamp-k8s/headlamp:v0.43.0@sha256:5d03caa26df7a715079405df2949907160518750b9b62b6bf4de8d1a6142c541
         command: ["/bin/sh", "-c"]
         args:
           - chown -R 100:101 /headlamp/user-plugins

@@ -4,7 +4,7 @@
   [runners.kubernetes]
     namespace = "{{.Release.Namespace}}"
     # renovate: datasource=docker depName=public.ecr.aws/docker/library/alpine
-    image = "public.ecr.aws/docker/library/alpine:3.24.1"
+    image = "public.ecr.aws/docker/library/alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
     privileged = false
     service_account = "gitlab-runner"
     poll_timeout = 600

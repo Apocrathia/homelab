@@ -33,6 +33,11 @@
       "groupName": null
     },
     {
+      "description": "No digest pins for version/tag/imageTag/helper_image fields — nowhere to attach @sha256",
+      "matchDepTypes": ["version-field", "helper-image"],
+      "pinDigests": false
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": false,
@@ -52,6 +57,7 @@
         "/^flux/manifests/.*\\.ya?ml$/",
         "/^\\.gitlab/.*\\.ya?ml$/"
       ],
+      "depTypeTemplate": "image",
       "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}latest{{/if}}",
       "autoReplaceStringTemplate": "{{#if currentDigest}}{{{replace currentDigest newDigest (replace currentValue newValue replaceString)}}}{{else}}{{#if (containsString replaceString currentValue)}}{{{replace currentValue newValue replaceString}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{else}}{{{replaceString}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}{{/if}}{{/if}}",
       "matchStrings": [
@@ -66,6 +72,7 @@
         "/^flux/manifests/.*\\.ya?ml$/",
         "/^\\.gitlab/.*\\.ya?ml$/"
       ],
+      "depTypeTemplate": "version-field",
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:- name:\\s+\\S+\\s*\\n\\s+value:\\s*|(?:version|tag|imageTag):\\s*|[A-Z][A-Z0-9_]*[:=]\\s*|[A-Za-z_][\\w.-]*\\s*=\\s*)[\"']?(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?",
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*-?\\s*https://(?:github\\.com/[^/]+/[^/]+/releases/download/v|raw\\.githubusercontent\\.com/[^/]+/[^/]+/)(?<currentValue>[^/\\s]+)"
@@ -98,6 +105,7 @@
         "/^flux/manifests/03-services/gitlab/runner/config\\.toml$/"
       ],
       "datasourceTemplate": "docker",
+      "depTypeTemplate": "helper-image",
       "matchStrings": [
         "# renovate: datasource=docker (?:registryUrl=(?<registryUrl>\\S+) )?depName=(?<depName>\\S+)\\s*\\n\\s*helper_image = [\"'](?:[^:]+:)?(?<currentValue>x86_64-v[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ],
@@ -110,6 +118,7 @@
         "/^flux/manifests/03-services/gitlab/runner/config\\.toml$/"
       ],
       "datasourceTemplate": "docker",
+      "depTypeTemplate": "image",
       "matchStrings": [
         "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ]
