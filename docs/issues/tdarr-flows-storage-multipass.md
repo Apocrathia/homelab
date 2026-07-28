@@ -49,8 +49,8 @@ undermined today:
 | Rule                       | Policy                                                                                                                                              |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Primary goal               | Storage savings                                                                                                                                     |
-| No-grow                    | Keep output only if smaller than original (**&lt;100%**)                                                                                            |
-| Size verify                | **2% / 99%** (sanity floor + no-grow ceiling)                                                                                                       |
+| No-grow                    | Keep output only if not meaningfully larger (**≤101%**; blocks runaway growth)                                                                      |
+| Size verify                | **2% / 101%** (sanity floor + remux wiggle; reject real growth)                                                                                     |
 | HD+ first pass             | Existing path: CRF from library `quality_level` (typically **20**), `veryslow`; 10-bit allowed when source warrants it                              |
 | SD first pass              | Height **≤576**: start CRF **26**, profile **main** / **8-bit** (no `main10`/`p010le`); same `veryslow`                                             |
 | Done (HD+)                 | Already HEVC **and** overall bitrate under per-resolution cap (720p≤4 / 1080p≤10 / 4K≤25 Mbps — keep current table)                                 |
@@ -85,10 +85,10 @@ Evidence: e.g. footprint `Aug7Oc3ZlY` — “New file has size 268.181 MB which 
 
 ## Acceptance
 
-- Flow 3 size check uses **lowerBound 2** and **upperBound 99** (or equivalent
-  no-grow + tiny-output sanity check). Successful sub-8% remux compressions
+- Flow 3 size check uses **lowerBound 2** and **upperBound 101** (or equivalent
+  sanity floor + tiny remux wiggle). Successful sub-8% remux compressions
   proceed to Flow 4 and replace the original.
-- Outputs ≥100% of original size are rejected (original kept).
+- Outputs **>101%** of original size are rejected (original kept).
 - SD (height ≤576) first encodes use CRF **≥26** and **8-bit main**; they do
   not use `main10`/`p010le` by default.
 - Re-scanning does not re-encode HD+ HEVC under the existing bitrate caps;
@@ -136,7 +136,8 @@ re-shrink and remains an implementation detail left open by alignment.
 - Do not retune HD bitrate caps (4/10/25 Mbps) in the same lap as the
   size-guard fix — keep until there is before/after evidence. SD “done” is
   CRF-floor-based, not a new Mbps row, unless later evidence says otherwise.
-- Related failure classes seen in recent jobs (not all blocked by the size
-  bound alone): BR-DISK ffmpeg 0-frame failures; MP4 `mov_text` → MKV mux
-  (`Subtitle codec 94213 is not supported`); rare "original 0 MB" mid-job
-  races when \*arr replaces the source.
+- Related failure classes (7d sample ~339 Transcode errors, 2026-07-27):
+  `mov_text`→MKV (~209); HEVC/`gbrp` cover as 2nd video (~84 — codec-name
+  drop misses these); old 8% size rejects (~13, fixed by 2% floor); ffprobe
+  unreadable / disc; exotic audio (`adpcm_ima_qt`, `pcm_bluray`); 0-byte
+  source size check; rare Plex notify false errors.
