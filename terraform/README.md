@@ -43,9 +43,11 @@ Per-VM CPU, memory, disk, and network settings live in each deployment's `terrag
 | `cloudflare/dns` | `cloudflare-dns` | Zone + public RRsets in HCL; handmade records stay unmanaged |
 
 Public DNS records (Okta custom domain, etc.) live in the deployment
-`terragrunt.hcl`. The API token stays in 1Password → `terraform/.env`. Do not
-manage cert-manager `_acme-challenge` records for other names here — the
-cluster owns those. Okta's own `_acme-challenge.okta` challenge is an exception
+`terragrunt.hcl`. Auth is **1Password Connect** → ephemeral item
+`cloudflare-terraform-secrets` (API Credential **credential** field) — same
+pattern as GitLab. Do not export `CLOUDFLARE_API_TOKEN`. Do not manage
+cert-manager `_acme-challenge` records for other names here — the cluster owns
+those. Okta's own `_acme-challenge.okta` challenge is an exception
 (vendor-owned verification).
 
 ### Managed Okta
@@ -89,7 +91,7 @@ cd terraform/deployments/gitlab/homelab && terragrunt plan
 - Additional Cloudflare zones as needed
 - Okta authenticator / policy / app resources
 - Broader GitLab project settings after the label spike
-- Wire Cloudflare / Proxmox / Okta through the same 1Password ephemeral pattern
+- Wire Proxmox / Okta through the same 1Password ephemeral pattern
 
 ## Architecture
 
@@ -163,7 +165,7 @@ terraform/
 ├── root.hcl                            # Remote state only
 ├── providers/
 │   ├── proxmox.hcl                     # bpg/proxmox provider generate
-│   ├── cloudflare.hcl                  # cloudflare/cloudflare provider generate
+│   ├── cloudflare.hcl                  # cloudflare + onepassword (ephemeral token)
 │   ├── okta.hcl                        # okta/okta provider generate
 │   └── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
 ├── modules/
@@ -303,8 +305,8 @@ export PROXMOX_VE_ENDPOINT=${PROXMOX_API_URL}
 export PROXMOX_VE_API_TOKEN=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}
 export PROXMOX_VE_INSECURE=true
 
-# Cloudflare Provider (token only — zone/records are in deployment HCL)
-export CLOUDFLARE_API_TOKEN=
+# Cloudflare: Connect only (no CLOUDFLARE_API_TOKEN). See Managed DNS / .env.example.
+# export OP_CONNECT_HOST=… OP_CONNECT_TOKEN=…
 
 # Okta Provider (token only — org_name/base_url are in providers/okta.hcl)
 export OKTA_API_TOKEN=
@@ -334,7 +336,7 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` is synced when present.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` is **not** synced — Cloudflare uses Connect ephemeral.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
@@ -344,10 +346,10 @@ The script upserts these keys with **Protected** and scope `*`. Values that meet
 | `PROXMOX_VE_ENDPOINT`    | Variable | Yes       | Yes    |
 | `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
-| `CLOUDFLARE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `OKTA_API_TOKEN`         | Variable | Yes       | Yes    |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
+| `OP_CONNECT_TOKEN`       | Variable | Yes       | Yes    |
 
 Manual setup: GitLab → Settings → CI/CD → Variables.
 
@@ -367,13 +369,16 @@ Home and Game follow the same pattern under `deployments/proxmox/home` and `depl
 ### Cloudflare DNS
 
 ```bash
-source terraform/.env   # CLOUDFLARE_API_TOKEN from 1Password
+# Connect auth (same as GitLab stack). Local: port-forward Connect first.
+export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
+export OP_CONNECT_TOKEN=…
+export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
 cd terraform/deployments/cloudflare/dns
-terragrunt init
 terragrunt plan
 ```
 
-Edit public records in that deployment's `terragrunt.hcl`.
+Edit public records in that deployment's `terragrunt.hcl`. Do not export
+`CLOUDFLARE_API_TOKEN`.
 
 ### Okta org
 
@@ -545,17 +550,17 @@ Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 
 ### Required CI/CD Variables
 
-| Variable               | Description                     |
-| ---------------------- | ------------------------------- |
-| `TF_HTTP_ADDRESS`      | GitLab state base URL           |
-| `TF_HTTP_USERNAME`     | GitLab username                 |
-| `TF_HTTP_PASSWORD`     | GitLab access token (api scope) |
-| `PROXMOX_VE_ENDPOINT`  | Proxmox API URL                 |
-| `PROXMOX_VE_API_TOKEN` | Full Proxmox API token          |
-| `PROXMOX_VE_INSECURE`  | `true` for self-signed certs    |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token (DNS Edit) |
-| `OKTA_API_TOKEN`       | Okta SSWS API token             |
-| `TOFU_MR_TOKEN`        | Token for posting MR comments   |
+| Variable               | Description                          |
+| ---------------------- | ------------------------------------ |
+| `TF_HTTP_ADDRESS`      | GitLab state base URL                |
+| `TF_HTTP_USERNAME`     | GitLab username                      |
+| `TF_HTTP_PASSWORD`     | GitLab access token (api scope)      |
+| `PROXMOX_VE_ENDPOINT`  | Proxmox API URL                      |
+| `PROXMOX_VE_API_TOKEN` | Full Proxmox API token               |
+| `PROXMOX_VE_INSECURE`  | `true` for self-signed certs         |
+| `OP_CONNECT_TOKEN`     | 1Password Connect token (vault read) |
+| `OKTA_API_TOKEN`       | Okta SSWS API token (until migrated) |
+| `TOFU_TOKEN`           | Token for posting MR comments        |
 
 ## Troubleshooting
 
@@ -597,10 +602,11 @@ curl -sk \
   "${PROXMOX_API_URL%/}/api2/json/version" | jq
 ```
 
-Test Cloudflare token (lists zones the token can see):
+Test Cloudflare token (lists zones; pull from 1Password, not `.env`):
 
 ```bash
-curl -s -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+TOKEN=$(op read 'op://Secrets/cloudflare-terraform-secrets/credential')
+curl -s -H "Authorization: Bearer ${TOKEN}" \
   "https://api.cloudflare.com/client/v4/zones?name=apocrathia.com" | jq
 ```
 

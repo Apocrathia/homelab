@@ -1,8 +1,14 @@
 # -----------------------------------------------------------------------------
 # Cloudflare DNS
 # -----------------------------------------------------------------------------
-# Public DNS RRsets live here (they're public once published). Auth only:
-#   CLOUDFLARE_API_TOKEN — Zone:DNS:Edit + Zone:Zone:Read (1Password → .env)
+# Public DNS RRsets live here (they're public once published).
+#
+# Auth (1Password Connect — no CLOUDFLARE_API_TOKEN in env):
+#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN — Connect API token with read on the vault
+#   TF_HTTP_*        — state backend
+#
+# Do NOT export CLOUDFLARE_API_TOKEN. Do NOT commit vault UUIDs.
 #
 # Leave cert-manager _acme-challenge records for other names out of this map.
 # Okta's _acme-challenge.okta is vendor verification for the custom domain.
@@ -20,6 +26,9 @@ terraform {
 }
 
 inputs = {
+  onepassword_vault_name                   = "Secrets"
+  onepassword_cloudflare_token_item_title = "cloudflare-terraform-secrets"
+
   zone_name = "apocrathia.com"
 
   dns_records = {
