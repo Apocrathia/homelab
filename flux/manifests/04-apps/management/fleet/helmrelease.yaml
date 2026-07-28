@@ -135,8 +135,11 @@ spec:
 
     # Allow SSO metadata_url / other integrations to RFC1918 (Authentik is
     # on the private gateway VIP). Loopback and link-local stay blocked.
+    # Policy interval: chart has no policyUpdateInterval value (only label/
+    # detail); set via env. Default is 1h.
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
+      FLEET_OSQUERY_POLICY_UPDATE_INTERVAL: "30m"
 
     # MDM needs FLEET_SERVER_PRIVATE_KEY — injected via postRenderers above
     # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB
@@ -174,7 +177,11 @@ spec:
     # stdout → Alloy scrapes container logs → Loki (filesystem and
     # emptyDir /logs never reach observability).
     # https://fleetdm.com/guides/log-destinations
+    # label/detail intervals: chart defaults are already 30m; set explicitly.
+    # Policy interval is environments.FLEET_OSQUERY_POLICY_UPDATE_INTERVAL.
     osquery:
+      labelUpdateInterval: 30m
+      detailUpdateInterval: 30m
       logging:
         statusPlugin: stdout
         resultPlugin: stdout
