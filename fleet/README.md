@@ -28,8 +28,9 @@ fleet/
 ├── gitops.sh               # fleetctl gitops wrapper
 ├── default.yml             # Global org settings
 ├── lib/
-│   ├── all/                # Cross-platform: labels, queries, agent-options, icons
-│   ├── macos/              # Profiles, policies, scripts, software, …
+│   ├── all/                # Cross-platform: labels, queries, scripts, icons
+│   ├── controls/           # Team controls bundles (path: from teams/*.yml)
+│   ├── macos/              # Profiles, policies, platform scripts, …
 │   ├── windows/
 │   ├── linux/
 │   ├── ios/
@@ -42,6 +43,7 @@ fleet/
 | ---------------- | ------------------------------------------------------------------ |
 | `default.yml`    | Server URL, org info, enroll secrets, SSO, global policies/queries |
 | `lib/**`         | Shared assets; reference from YAML with `path:` / `paths:`         |
+| `lib/controls/`  | Controls bundles for teams (`controls.path` in `teams/*.yml`)      |
 | `teams/home.yml` | Home team policies, controls, software                             |
 | `gitops.sh`      | Invoked by CI; set `FLEET_DRY_RUN_ONLY=true` for validation only   |
 
@@ -57,19 +59,23 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
 - **Policies / queries shared across teams** → `lib/…` and list them under
   `policies:` / `reports:` in `default.yml` or a team file
 - **Team-scoped controls / policies** → `teams/home.yml` (hosts can enroll
-  directly into Home with the team enroll secret)
+  directly into Home with the team enroll secret). Controls live in
+  `lib/controls/home.yml` (`controls.path`); scripts under `lib/all/scripts/`
+  are registered via a `paths:` glob (paths in that bundle are relative to
+  `teams/`, not `lib/controls/` — fleetctl quirk). Policy
+  `lib/all/policies/fleet-dm-was-here.yml` fails when the Desktop/home marker
+  is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly cadence).
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `lib/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);
   see [CIS Benchmarks](https://fleetdm.com/guides/cis-benchmarks)). Assessment
   only — many checks need MDM profiles to pass. FileVault enforcement:
-  `controls.enable_disk_encryption` on Home.
+  `enable_disk_encryption` in `lib/controls/home.yml`.
 - **macOS CIS MDM profiles (macOS 26)** →
   `lib/macos/configuration-profiles/cis-macos-26/` (from Fleet
   [`ee/cis/macos-26/test/profiles`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26/test/profiles)).
-  Vendored only — reference individual `.mobileconfig` paths from
-  `teams/home.yml` `controls.apple_settings.configuration_profiles` when ready
-  to enforce.
+  Vendored only — add under `apple_settings.configuration_profiles` in the Home
+  controls bundle when ready to enforce.
 
 Secrets and tokens are never committed. Enroll secrets live in 1Password
 `fleetdm-secrets` and matching GitLab CI variables:

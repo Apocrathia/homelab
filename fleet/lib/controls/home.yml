@@ -1,0 +1,9 @@
+# Home team controls bundle. Referenced from teams/home.yml via controls.path.
+#
+# Path quirk: fleetctl resolves scripts/profiles here relative to the *team*
+# YAML (teams/), not this file — see processControlsPathIfNeeded in fleet.
+# Use paths as if authored next to teams/home.yml.
+---
+enable_disk_encryption: true
+scripts:
+  - paths: ../lib/all/scripts/*.sh
