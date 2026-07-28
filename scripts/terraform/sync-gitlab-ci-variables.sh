@@ -219,7 +219,7 @@ upsert_variable() {
 echo "Target: ${REPO}"
 echo "Source: ${ENV_FILE}"
 echo "Keys:   ${required[*]}"
-echo "Note:   CLOUDFLARE_API_TOKEN is not synced — Cloudflare uses Connect ephemeral (see providers/cloudflare.hcl)"
+echo "Note:   CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synced — Connect ephemeral (providers/cloudflare.hcl, okta.hcl)"
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
 fi

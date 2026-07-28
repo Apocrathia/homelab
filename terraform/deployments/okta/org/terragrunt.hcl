@@ -1,8 +1,14 @@
 # -----------------------------------------------------------------------------
 # Okta org
 # -----------------------------------------------------------------------------
-# OIDC web apps + Everyone assignment. Auth:
-#   OKTA_API_TOKEN (1Password → .env / GitLab CI)
+# OIDC web apps + Everyone assignment.
+#
+# Auth (1Password Connect — no OKTA_API_TOKEN in env):
+#   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
+#   OP_CONNECT_TOKEN — Connect API token with read on the vault
+#   TF_HTTP_*        — state backend
+#
+# Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
 #
 # Client secrets are omit_secret=true — read once from Okta Admin UI into
 # 1Password (not TF outputs).
@@ -20,6 +26,9 @@ terraform {
 }
 
 inputs = {
+  onepassword_vault_name            = "Secrets"
+  onepassword_okta_token_item_title = "okta-terraform-secrets"
+
   oauth_apps = {
     authentik = {
       label        = "Authentik"

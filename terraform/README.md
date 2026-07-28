@@ -52,12 +52,14 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 ### Managed Okta
 
-| Deployment | Module     | Notes                                                 |
-| ---------- | ---------- | ----------------------------------------------------- |
-| `okta/org` | `okta-org` | Scaffold stack (no resources yet); org settings later |
+| Deployment | Module     | Notes                                               |
+| ---------- | ---------- | --------------------------------------------------- |
+| `okta/org` | `okta-org` | OIDC apps + Everyone assignment; org settings later |
 
-Org name and base URL live in `providers/okta.hcl`. The API token stays in
-1Password → `terraform/.env` / GitLab CI (`OKTA_API_TOKEN`).
+Org name and base URL live in `providers/okta.hcl`. Auth is **1Password
+Connect** → ephemeral item `okta-terraform-secrets` (API Credential
+**credential** field) — same pattern as GitLab / Cloudflare. Do not export
+`OKTA_API_TOKEN`.
 
 ### Managed GitLab
 
@@ -283,9 +285,11 @@ in 1Password — not in git. Public DNS RRsets belong in the deployment HCL.
 
 ### Okta API Token
 
-Create an API token in Okta (Security → API → Tokens). Store it in 1Password —
-not in git. Org name and base URL live in `providers/okta.hcl` (same identity
-already present in the Cloudflare CNAME for the custom domain).
+Create an API token in Okta (Security → API → Tokens). Store it in the
+`okta-terraform-secrets` API Credential **credential** field (vault
+`Secrets`) — not in git or GitLab CI. Org name and base URL live in
+`providers/okta.hcl` (same identity already present in the Cloudflare CNAME
+for the custom domain).
 
 ## Environment Variables
 
@@ -305,11 +309,8 @@ export PROXMOX_VE_ENDPOINT=${PROXMOX_API_URL}
 export PROXMOX_VE_API_TOKEN=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}
 export PROXMOX_VE_INSECURE=true
 
-# Cloudflare: Connect only (no CLOUDFLARE_API_TOKEN). See Managed DNS / .env.example.
+# GitLab / Cloudflare / Okta: Connect only (no provider PATs). See .env.example.
 # export OP_CONNECT_HOST=… OP_CONNECT_TOKEN=…
-
-# Okta Provider (token only — org_name/base_url are in providers/okta.hcl)
-export OKTA_API_TOKEN=
 
 # GitLab HTTP State Backend
 export TF_HTTP_USERNAME=your-gitlab-username
@@ -336,7 +337,7 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` is **not** synced — Cloudflare uses Connect ephemeral.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` and `OKTA_API_TOKEN` are **not** synced — those stacks use Connect ephemeral.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
@@ -346,7 +347,6 @@ The script upserts these keys with **Protected** and scope `*`. Values that meet
 | `PROXMOX_VE_ENDPOINT`    | Variable | Yes       | Yes    |
 | `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
 | `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
-| `OKTA_API_TOKEN`         | Variable | Yes       | Yes    |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
 | `OP_CONNECT_TOKEN`       | Variable | Yes       | Yes    |
@@ -383,13 +383,15 @@ Edit public records in that deployment's `terragrunt.hcl`. Do not export
 ### Okta org
 
 ```bash
-source terraform/.env   # OKTA_API_TOKEN from 1Password
+# Connect auth (same as GitLab / Cloudflare). Local: port-forward Connect first.
+export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
+export OP_CONNECT_TOKEN=…
+export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
 cd terraform/deployments/okta/org
-terragrunt init
 terragrunt plan
 ```
 
-Scaffold stack — no Okta resources yet. Add settings in later changes.
+Do not export `OKTA_API_TOKEN`.
 
 ### All Deployments
 
@@ -559,7 +561,6 @@ Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 | `PROXMOX_VE_API_TOKEN` | Full Proxmox API token               |
 | `PROXMOX_VE_INSECURE`  | `true` for self-signed certs         |
 | `OP_CONNECT_TOKEN`     | 1Password Connect token (vault read) |
-| `OKTA_API_TOKEN`       | Okta SSWS API token (until migrated) |
 | `TOFU_TOKEN`           | Token for posting MR comments        |
 
 ## Troubleshooting
@@ -610,10 +611,11 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
   "https://api.cloudflare.com/client/v4/zones?name=apocrathia.com" | jq
 ```
 
-Test Okta API token:
+Test Okta API token (pull from 1Password, not `.env`):
 
 ```bash
-curl -s -H "Authorization: SSWS ${OKTA_API_TOKEN}" \
+TOKEN=$(op read 'op://Secrets/okta-terraform-secrets/credential')
+curl -s -H "Authorization: SSWS ${TOKEN}" \
   "https://integrator-5477892.okta.com/api/v1/users/me" | jq
 ```
 
