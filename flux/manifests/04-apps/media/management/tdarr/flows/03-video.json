@@ -1,7 +1,7 @@
 {
   "_id": "custom_03_video",
   "name": "03 - Video Transcoding",
-  "description": "HEVC x265 CPU encoding. SD: CRF 26/28 8-bit; HD+: library CRF + 10-bit. No-grow size verify 2-99%.",
+  "description": "HEVC x265 CPU encoding. SD: CRF 26/28 8-bit; HD+: library CRF + 10-bit. Size verify 2-101%.",
   "tags": "",
   "flowPlugins": [
     {
@@ -61,6 +61,20 @@
       },
       "id": "vid006",
       "position": { "x": 400, "y": 300 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Drop embedded cover/image streams",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandRemoveStreamByProperty",
+      "version": "1.0.0",
+      "inputsDB": {
+        "propertyToCheck": "codec_name",
+        "valuesToRemove": "mjpeg,mjpg,png,gif",
+        "condition": "includes"
+      },
+      "id": "vid_drop_img",
+      "position": { "x": 400, "y": 340 },
       "fpEnabled": true
     },
     {
@@ -197,14 +211,14 @@
       "fpEnabled": true
     },
     {
-      "name": "Verify output file size (2-99% of original)",
+      "name": "Verify output file size (2-101% of original)",
       "sourceRepo": "Community",
       "pluginName": "runClassicTranscodePlugin",
       "version": "2.0.0",
       "inputsDB": {
         "pluginSourceId": "Community:Tdarr_Plugin_a9he_New_file_size_check",
         "lowerBound": "2",
-        "upperBound": "99"
+        "upperBound": "101"
       },
       "id": "vid011",
       "position": { "x": 400, "y": 1100 },
@@ -273,9 +287,16 @@
     {
       "source": "vid006",
       "sourceHandle": "1",
-      "target": "vid006r",
+      "target": "vid_drop_img",
       "targetHandle": null,
       "id": "ve006"
+    },
+    {
+      "source": "vid_drop_img",
+      "sourceHandle": "1",
+      "target": "vid006r",
+      "targetHandle": null,
+      "id": "ve_drop_img"
     },
     {
       "source": "vid006r",

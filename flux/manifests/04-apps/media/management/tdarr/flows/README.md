@@ -71,7 +71,8 @@ flowchart TD
     NeedsTranscode -->|no| GoToF4["goToFlow: Output"]
     NeedsTranscode -->|yes| StartCmd["Begin ffmpeg command"]
     StartCmd --> SetContainer["Set container: MKV forceConform"]
-    SetContainer --> Reorder["Reorder streams (eng preferred)"]
+    SetContainer --> DropImg["Drop mjpeg/png/gif covers"]
+    DropImg --> Reorder["Reorder streams (eng preferred)"]
     Reorder --> Res{Resolution}
     Res -->|480p/576p| SdCodec{Already HEVC?}
     SdCodec -->|no| Sd26["libx265 CRF 26 8-bit"]
@@ -84,14 +85,17 @@ flowchart TD
     AnimCheck -->|no| StdArgs["Standard x265 tuning"]
     AnimArgs --> Execute["Execute encode"]
     StdArgs --> Execute
-    Execute --> FileSizeCheck{"Output 2-99% of original?"}
+    Execute --> FileSizeCheck{"Output 2-101% of original?"}
     FileSizeCheck -->|yes| GoToF4
     FileSizeCheck -->|no| Error["Hold for review"]
 ```
 
 `-preset` is a top-level ffmpeg option, NOT inside `-x265-params`. `lookahead` goes inside `-x265-params`.
 
-Size verify is **2%–99%** (sanity floor + no-grow). `forceConform` on MKV drops containers/subs that cannot mux (e.g. `mov_text`).
+Size verify is **2%–101%** (sanity floor + allow tiny remux wiggle, block real
+growth). `forceConform` on MKV drops
+containers/subs that cannot mux (e.g. `mov_text`). Embedded cover/image streams
+(`mjpeg` / `png` / `gif`) are removed before encode — sidecars cover artwork.
 
 ### Flow 4: Output and notification
 
