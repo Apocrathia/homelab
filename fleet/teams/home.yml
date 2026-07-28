@@ -6,14 +6,15 @@
 # fleetdm-secrets → home-enroll-secret).
 #
 # macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
-# enable_disk_encryption pairs with CIS FileVault checks (key escrow to Fleet).
+# Disk encryption + scripts live in lib/controls/home.yml.
 name: Home
 policies:
   - path: ../lib/macos/policies/cis-macos-26-l1.yml
+  - path: ../lib/all/policies/fleet-dm-was-here.yml
 reports:
 agent_options:
 controls:
-  enable_disk_encryption: true
+  path: ../lib/controls/home.yml
 software:
 settings:
   secrets:

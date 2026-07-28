@@ -1,0 +1,7 @@
+# Home team controls bundle. Referenced from teams/home.yml via controls.path.
+# Scripts: drop .sh under lib/all/scripts/ — picked up by the glob.
+# Policy run_script paths must resolve to the same absolute file as a listed script.
+---
+enable_disk_encryption: true
+scripts:
+  - paths: ../all/scripts/*.sh

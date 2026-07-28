@@ -1,0 +1,32 @@
+# Empty marker on Desktop (or home). Fails → run_script creates it; delete to re-test.
+---
+- name: Fleet DM Was Here marker present
+  description: >
+    Checks for a 0-byte file named "Fleet DM Was Here" on a normal user's
+    Desktop (or home directory). Proves Home-team script automation.
+  resolution: >
+    Fleet runs fleet-dm-was-here.sh on fail. Delete the marker to watch it
+    return on the next policy cycle (default ~hourly).
+  platform: darwin,linux
+  critical: false
+  query: |
+    SELECT 1 WHERE
+      EXISTS (
+        SELECT 1 FROM file WHERE path = '/tmp/Fleet DM Was Here'
+      )
+      OR EXISTS (
+        SELECT 1 FROM users u
+        WHERE (u.directory LIKE '/Users/%' OR u.directory LIKE '/home/%')
+          AND (
+            EXISTS (
+              SELECT 1 FROM file
+              WHERE path = u.directory || '/Desktop/Fleet DM Was Here'
+            )
+            OR EXISTS (
+              SELECT 1 FROM file
+              WHERE path = u.directory || '/Fleet DM Was Here'
+            )
+          )
+      );
+  run_script:
+    path: ../scripts/fleet-dm-was-here.sh
