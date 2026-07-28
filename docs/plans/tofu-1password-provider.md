@@ -18,7 +18,7 @@ Pattern:
 1. **Bootstrap** — GitLab (and local) hold **Connect** credentials only:
    `OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`. No `op` CLI in CI.
 2. **Resolve** — OpenTofu `1Password/onepassword` **ephemeral** items feed
-   other providers (GitLab + Cloudflare + Okta done; Proxmox next).
+   other providers (GitLab + Cloudflare + Okta + Proxmox done).
 3. **Migrate** — delete duplicated GitLab CI secrets as each consumer moves.
 
 **Prove first** on the GitLab stack (read-only project data, then
@@ -99,9 +99,9 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
       (`cloudflare-terraform-secrets` credential field); strip from sync script
 - [x] Okta: Connect + ephemeral → `okta` provider
       (`okta-terraform-secrets` credential field); strip from docs/sync note
-- [ ] Same pattern for Proxmox provider secrets
-- [ ] Strip Proxmox keys from GitLab CI vars and from the sync script
-- [ ] Delete obsolete `OKTA_API_TOKEN` GitLab CI variable (operator)
+- [x] Proxmox: Connect + ephemeral → `proxmox` provider
+      (`proxmox-terraform-secrets` credential field); strip from sync script + CI preflight
+- [ ] Delete obsolete `PROXMOX_VE_*` / `OKTA_API_TOKEN` GitLab CI variables (operator)
 
 ### Phase 3 — CI bootstrap cleanup
 
@@ -145,16 +145,16 @@ Do **not** commit vault UUIDs — vault **name** in HCL only.
 
 ### Inventory (fill in)
 
-| Consumer           | Today                  | 1Password item                   | Field        | Mechanism            |
-| ------------------ | ---------------------- | -------------------------------- | ------------ | -------------------- |
-| GitLab provider    | (Connect only)         | `gitlab-terraform-secrets`       | `credential` | ephemeral → provider |
-| Cloudflare         | (Connect only)         | `cloudflare-terraform-secrets`   | `credential` | ephemeral → provider |
-| Okta               | (Connect only)         | `okta-terraform-secrets`         | `credential` | ephemeral → provider |
-| Proxmox            | `PROXMOX_VE_API_TOKEN` | _(no `*-terraform-secrets` yet)_ |              | ephemeral → provider |
-| Connect bootstrap  | `OP_CONNECT_TOKEN`     | `1password-terraform-secrets`    | `credential` | CI / local env       |
-| HTTP state (CI)    | `TF_HTTP_PASSWORD`     | —                                | —            | `CI_JOB_TOKEN`       |
-| HTTP state (local) | `TF_HTTP_PASSWORD`     | (PAT item)                       |              | local env only       |
-| MR comments (CI)   | `TOFU_TOKEN`           | —                                | —            | prefer job token     |
+| Consumer           | Today              | 1Password item                 | Field        | Mechanism            |
+| ------------------ | ------------------ | ------------------------------ | ------------ | -------------------- |
+| GitLab provider    | (Connect only)     | `gitlab-terraform-secrets`     | `credential` | ephemeral → provider |
+| Cloudflare         | (Connect only)     | `cloudflare-terraform-secrets` | `credential` | ephemeral → provider |
+| Okta               | (Connect only)     | `okta-terraform-secrets`       | `credential` | ephemeral → provider |
+| Proxmox            | (Connect only)     | `proxmox-terraform-secrets`    | `credential` | ephemeral → provider |
+| Connect bootstrap  | `OP_CONNECT_TOKEN` | `1password-terraform-secrets`  | `credential` | CI / local env       |
+| HTTP state (CI)    | `TF_HTTP_PASSWORD` | —                              | —            | `CI_JOB_TOKEN`       |
+| HTTP state (local) | `TF_HTTP_PASSWORD` | (PAT item)                     |              | local env only       |
+| MR comments (CI)   | `TOFU_TOKEN`       | —                              | —            | prefer job token     |
 
 Ephemeral `onepassword_item` only exposes built-in attrs (`credential`,
 `password`, …) — put provider tokens in the API Credential **credential**

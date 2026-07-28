@@ -33,7 +33,6 @@
     - |
       missing=""
       for var in TF_HTTP_ADDRESS TF_HTTP_USERNAME TF_HTTP_PASSWORD \
-        PROXMOX_VE_ENDPOINT PROXMOX_VE_API_TOKEN \
         OP_CONNECT_HOST OP_CONNECT_TOKEN; do
         eval "value=\${$var-}"
         if [ -z "$value" ]; then

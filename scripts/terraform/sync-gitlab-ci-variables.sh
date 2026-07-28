@@ -74,9 +74,6 @@ required=(
   TF_HTTP_ADDRESS
   TF_HTTP_USERNAME
   TF_HTTP_PASSWORD
-  PROXMOX_VE_ENDPOINT
-  PROXMOX_VE_API_TOKEN
-  PROXMOX_VE_INSECURE
   TOFU_TOKEN
 )
 
@@ -219,7 +216,7 @@ upsert_variable() {
 echo "Target: ${REPO}"
 echo "Source: ${ENV_FILE}"
 echo "Keys:   ${required[*]}"
-echo "Note:   CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synced — Connect ephemeral (providers/cloudflare.hcl, okta.hcl)"
+echo "Note:   PROXMOX_VE_* / CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synced — Connect ephemeral (providers/*.hcl)"
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
 fi
@@ -236,9 +233,6 @@ fi
 upsert_variable TF_HTTP_ADDRESS "$TF_HTTP_ADDRESS" false
 upsert_variable TF_HTTP_USERNAME "$TF_HTTP_USERNAME" false
 upsert_variable TF_HTTP_PASSWORD "$TF_HTTP_PASSWORD" true
-upsert_variable PROXMOX_VE_ENDPOINT "$PROXMOX_VE_ENDPOINT" false
-upsert_variable PROXMOX_VE_API_TOKEN "$PROXMOX_VE_API_TOKEN" true
-upsert_variable PROXMOX_VE_INSECURE "$PROXMOX_VE_INSECURE" false
 upsert_variable TOFU_TOKEN "$TOFU_TOKEN" true
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   upsert_variable TOFU_DRIFT_WEBHOOK_URL "$TOFU_DRIFT_WEBHOOK_URL" true

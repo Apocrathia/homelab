@@ -34,7 +34,7 @@ GitLab project scaffold (1Password ephemeral → GitLab provider).
 
 Talos nodes are pinned one VM per physical host. Home and Game use the `proxmox-vm` module, which ignores `node_name` drift so Proxmox HA and live migration can move them without Terraform fighting placement.
 
-Per-VM CPU, memory, disk, and network settings live in each deployment's `terragrunt.hcl`.
+Per-VM CPU, memory, disk, and network settings live in each deployment's `terragrunt.hcl`. Auth is **1Password Connect** → ephemeral item `proxmox-terraform-secrets` (API Credential **credential** field; value format `user@pam!tokenname=secret`). Endpoint and `insecure` live in `providers/proxmox.hcl`. Do not export `PROXMOX_VE_API_TOKEN`.
 
 ### Managed DNS
 
@@ -259,6 +259,9 @@ brew install opentofu terragrunt
 ### Proxmox API Token
 
 Create an API token in Proxmox (Datacenter → Permissions → API Tokens → Add).
+Store the full token (`user@pam!tokenname=secret`) in the
+`proxmox-terraform-secrets` API Credential **credential** field (vault
+`Secrets`) — not in git or GitLab CI.
 
 **Option A**: Uncheck "Privilege Separation" to inherit user permissions.
 
@@ -299,17 +302,10 @@ Create a `.env` file in the `terraform/` directory (gitignored), filled from
 1Password:
 
 ```bash
-# Proxmox API (for curl commands)
-export PROXMOX_API_URL=https://pve.example.com:8006
-export PROXMOX_API_TOKEN_ID=serviceaccount@pam!terraform
-export PROXMOX_API_TOKEN_SECRET=your-secret-here
+# Proxmox API (optional curl helpers only — provider uses Connect)
+export PROXMOX_API_URL=https://node-01.services.apocrathia.com:8006
 
-# Proxmox Provider (bpg/proxmox reads these directly)
-export PROXMOX_VE_ENDPOINT=${PROXMOX_API_URL}
-export PROXMOX_VE_API_TOKEN=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}
-export PROXMOX_VE_INSECURE=true
-
-# GitLab / Cloudflare / Okta: Connect only (no provider PATs). See .env.example.
+# All provider stacks: Connect only (no PROXMOX_VE_* / CLOUDFLARE / OKTA / GITLAB PATs).
 # export OP_CONNECT_HOST=… OP_CONNECT_TOKEN=…
 
 # GitLab HTTP State Backend
@@ -337,16 +333,13 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; Proxmox API tokens use **masked raw** (`!` is not allowed in standard masks). Tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `CLOUDFLARE_API_TOKEN` and `OKTA_API_TOKEN` are **not** synced — those stacks use Connect ephemeral.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). Provider tokens (`PROXMOX_VE_*`, `CLOUDFLARE_API_TOKEN`, `OKTA_API_TOKEN`, GitLab PAT) are **not** synced — those stacks use Connect ephemeral.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
 | `TF_HTTP_ADDRESS`        | Variable | Yes       | Yes    |
 | `TF_HTTP_USERNAME`       | Variable | Yes       | Yes    |
 | `TF_HTTP_PASSWORD`       | Variable | Yes       | Yes    |
-| `PROXMOX_VE_ENDPOINT`    | Variable | Yes       | Yes    |
-| `PROXMOX_VE_API_TOKEN`   | Variable | Yes       | Yes    |
-| `PROXMOX_VE_INSECURE`    | Variable | Yes       | No     |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
 | `OP_CONNECT_TOKEN`       | Variable | Yes       | Yes    |
@@ -358,13 +351,15 @@ Manual setup: GitLab → Settings → CI/CD → Variables.
 ### Single VM Operations
 
 ```bash
+# Connect auth (same as other stacks). Local: port-forward Connect first.
+export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
+export OP_CONNECT_TOKEN=…
+export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
 cd terraform/deployments/proxmox/talos-cluster/talos-01
-terragrunt init
 terragrunt plan
-terragrunt apply
 ```
 
-Home and Game follow the same pattern under `deployments/proxmox/home` and `deployments/proxmox/game`.
+Do not export `PROXMOX_VE_API_TOKEN`. Home and Game follow the same pattern under `deployments/proxmox/home` and `deployments/proxmox/game`.
 
 ### Cloudflare DNS
 
@@ -428,9 +423,10 @@ VMs already exist in Proxmox — import them into state rather than recreate.
 #### Step 1: Capture Current VM Configuration
 
 ```bash
+TOKEN=$(op read 'op://Secrets/proxmox-terraform-secrets/credential')
 curl -sk \
-  -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
-  "${PROXMOX_API_URL%/}/api2/json/nodes/{node}/qemu/{vmid}/config" | jq
+  -H "Authorization: PVEAPIToken=${TOKEN}" \
+  "https://node-01.services.apocrathia.com:8006/api2/json/nodes/{node}/qemu/{vmid}/config" | jq
 ```
 
 Use the node where the VM is running at import time. For cluster-portable VMs, that is bootstrap metadata only; Terraform ignores placement drift afterward.
@@ -552,16 +548,13 @@ Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 
 ### Required CI/CD Variables
 
-| Variable               | Description                          |
-| ---------------------- | ------------------------------------ |
-| `TF_HTTP_ADDRESS`      | GitLab state base URL                |
-| `TF_HTTP_USERNAME`     | GitLab username                      |
-| `TF_HTTP_PASSWORD`     | GitLab access token (api scope)      |
-| `PROXMOX_VE_ENDPOINT`  | Proxmox API URL                      |
-| `PROXMOX_VE_API_TOKEN` | Full Proxmox API token               |
-| `PROXMOX_VE_INSECURE`  | `true` for self-signed certs         |
-| `OP_CONNECT_TOKEN`     | 1Password Connect token (vault read) |
-| `TOFU_TOKEN`           | Token for posting MR comments        |
+| Variable           | Description                          |
+| ------------------ | ------------------------------------ |
+| `TF_HTTP_ADDRESS`  | GitLab state base URL                |
+| `TF_HTTP_USERNAME` | GitLab username                      |
+| `TF_HTTP_PASSWORD` | GitLab access token (api scope)      |
+| `OP_CONNECT_TOKEN` | 1Password Connect token (vault read) |
+| `TOFU_TOKEN`       | Token for posting MR comments        |
 
 ## Troubleshooting
 
@@ -595,12 +588,13 @@ terragrunt state rm 'proxmox_haresource.this[0]'
 
 ### Provider Authentication
 
-Test Proxmox API access:
+Test Proxmox API access (pull token from 1Password, not `.env`):
 
 ```bash
+TOKEN=$(op read 'op://Secrets/proxmox-terraform-secrets/credential')
 curl -sk \
-  -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
-  "${PROXMOX_API_URL%/}/api2/json/version" | jq
+  -H "Authorization: PVEAPIToken=${TOKEN}" \
+  "https://node-01.services.apocrathia.com:8006/api2/json/version" | jq
 ```
 
 Test Cloudflare token (lists zones; pull from 1Password, not `.env`):

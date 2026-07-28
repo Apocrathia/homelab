@@ -6,6 +6,9 @@
 
 # Common inputs for all Talos VMs
 inputs = {
+  onepassword_vault_name               = "Secrets"
+  onepassword_proxmox_token_item_title = "proxmox-terraform-secrets"
+
   # CPU
   cores    = 4
   sockets  = 4

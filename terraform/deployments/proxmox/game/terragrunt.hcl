@@ -1,6 +1,9 @@
 # -----------------------------------------------------------------------------
 # Game VM
 # -----------------------------------------------------------------------------
+# Auth (1Password Connect — no PROXMOX_VE_API_TOKEN in env):
+#   OP_CONNECT_HOST / OP_CONNECT_TOKEN + TF_HTTP_*
+#   Item: proxmox-terraform-secrets (credential field)
 
 include "root" {
   path = find_in_parent_folders("root.hcl")
@@ -15,6 +18,9 @@ terraform {
 }
 
 inputs = {
+  onepassword_vault_name               = "Secrets"
+  onepassword_proxmox_token_item_title = "proxmox-terraform-secrets"
+
   vm_id        = 103
   name         = "Game"
   initial_node = "node-03"
