@@ -1,5 +1,6 @@
 # Slack: keep Fleet-maintained version installed on macOS hosts.
 # Requires slack/darwin under software.fleet_maintained_apps on the same team.
+# Do not use built-in labels (e.g. macOS) — fleetctl gitops rejects them.
 ---
 - name: macOS - Slack up to date
   description: >
@@ -10,6 +11,5 @@
   type: patch
   fleet_maintained_app_slug: slack/darwin
   install_software: true
+  platform: darwin
   critical: false
-  labels_include_any:
-    - macOS
