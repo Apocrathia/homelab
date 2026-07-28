@@ -91,7 +91,7 @@ model_list:
         X-Prime-Team-ID: os.environ/PRIME_TEAM_ID
   - model_name: glm-5.2-prime
     litellm_params:
-      model: openai/z-ai/glm-5.2
+      model: openai/internal/glm-5.2-fast
       api_base: https://api.pinference.ai/api/v1
       api_key: os.environ/PRIME_API_KEY
       extra_headers:
