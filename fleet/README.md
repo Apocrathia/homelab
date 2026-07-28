@@ -61,7 +61,8 @@ Empty `lib/` directories keep a `.keep` file so git retains the skeleton. Drop
 - **Team-scoped controls / policies** → `teams/home.yml` (hosts can enroll
   directly into Home with the team enroll secret). Controls live in
   `lib/controls/home.yml` (`controls.path`); scripts under `lib/all/scripts/`
-  are registered via a `paths:` glob. Policy
+  are registered via a `paths:` glob (paths in that bundle are relative to
+  `teams/`, not `lib/controls/` — fleetctl quirk). Policy
   `lib/all/policies/fleet-dm-was-here.yml` fails when the Desktop/home marker
   is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly cadence).
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
