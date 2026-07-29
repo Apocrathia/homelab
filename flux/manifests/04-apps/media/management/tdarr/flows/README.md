@@ -45,14 +45,18 @@ Overall bitrate thresholds for HEVC skip logic (uses `checkOverallBitrate` since
 
 ### Flow 2: Audio normalization
 
-Ensures a stereo AAC 2.0 track exists and cleans stream titles. Stream reordering is handled in the video flow to avoid unnecessary remuxing.
+Ensures a stereo AAC 2.0 track exists, drops embedded covers/images (so HEVC-skip
+paths don't blow up on CleanTitle remux), and cleans stream titles. Stream
+reordering is handled in the video flow to avoid unnecessary remuxing.
 
 ```mermaid
 flowchart TD
-    Start["Flow entry"] --> HasStereoAAC{Stereo AAC track exists?}
-    HasStereoAAC -->|yes| CleanTitles["Clean stream titles"]
+    Start["Flow entry"] --> DropImg["Drop mjpeg/png/gif + attached_pic"]
+    DropImg --> HasStereoAAC{Stereo AAC track exists?}
+    HasStereoAAC -->|yes| Execute["Execute remux"]
     HasStereoAAC -->|no| CreateAAC["Create stereo AAC 2.0 at 256k"]
-    CreateAAC --> CleanTitles
+    CreateAAC --> Execute
+    Execute --> CleanTitles["Clean stream titles"]
     CleanTitles --> GoToF3["goToFlow: Video"]
 ```
 
@@ -60,6 +64,9 @@ Audio track selection for AAC creation:
 
 - Downmixes from the first audio track
 - All original audio streams are kept untouched
+
+Image/cover streams are removed **before** Execute so Migz CleanTitle never
+stream-copies broken attachments on already-HEVC files.
 
 ### Flow 3: Video transcoding
 

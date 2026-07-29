@@ -1,7 +1,7 @@
 {
   "_id": "custom_02_audio",
   "name": "02 - Audio Normalization",
-  "description": "Ensure stereo AAC 2.0 track exists and clean titles. Stream reordering handled in video flow.",
+  "description": "Ensure stereo AAC 2.0, drop covers/images, clean titles. Stream reordering in video flow.",
   "tags": "",
   "flowPlugins": [
     {
@@ -39,6 +39,34 @@
       "fpEnabled": true
     },
     {
+      "name": "Drop embedded cover/image streams",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandRemoveStreamByProperty",
+      "version": "1.0.0",
+      "inputsDB": {
+        "propertyToCheck": "codec_name",
+        "valuesToRemove": "mjpeg,mjpg,png,gif",
+        "condition": "includes"
+      },
+      "id": "aud_drop_img",
+      "position": { "x": 400, "y": 280 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Drop attached_pic disposition streams",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandRemoveStreamByProperty",
+      "version": "1.0.0",
+      "inputsDB": {
+        "propertyToCheck": "disposition.attached_pic",
+        "valuesToRemove": "1",
+        "condition": "includes"
+      },
+      "id": "aud_drop_pic",
+      "position": { "x": 400, "y": 340 },
+      "fpEnabled": true
+    },
+    {
       "name": "Ensure stereo AAC track exists (256k)",
       "sourceRepo": "Community",
       "pluginName": "ffmpegCommandEnsureAudioStream",
@@ -50,7 +78,16 @@
         "position": "first"
       },
       "id": "aud005",
-      "position": { "x": 400, "y": 400 },
+      "position": { "x": 400, "y": 420 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Execute audio processing",
+      "sourceRepo": "Community",
+      "pluginName": "ffmpegCommandExecute",
+      "version": "1.0.0",
+      "id": "aud007",
+      "position": { "x": 400, "y": 520 },
       "fpEnabled": true
     },
     {
@@ -62,16 +99,7 @@
         "pluginSourceId": "Community:Tdarr_Plugin_MC93_Migz2CleanTitle"
       },
       "id": "aud006",
-      "position": { "x": 400, "y": 500 },
-      "fpEnabled": true
-    },
-    {
-      "name": "Execute audio processing",
-      "sourceRepo": "Community",
-      "pluginName": "ffmpegCommandExecute",
-      "version": "1.0.0",
-      "id": "aud007",
-      "position": { "x": 400, "y": 600 },
+      "position": { "x": 400, "y": 620 },
       "fpEnabled": true
     },
     {
@@ -92,7 +120,7 @@
       "pluginName": "resetFlowError",
       "version": "1.0.0",
       "id": "aud009",
-      "position": { "x": 650, "y": 650 },
+      "position": { "x": 650, "y": 560 },
       "fpEnabled": true
     }
   ],
@@ -114,42 +142,42 @@
     {
       "source": "aud003",
       "sourceHandle": "1",
-      "target": "aud005",
+      "target": "aud_drop_img",
       "targetHandle": null,
       "id": "ae003"
     },
     {
+      "source": "aud_drop_img",
+      "sourceHandle": "1",
+      "target": "aud_drop_pic",
+      "targetHandle": null,
+      "id": "ae_drop_img"
+    },
+    {
+      "source": "aud_drop_pic",
+      "sourceHandle": "1",
+      "target": "aud005",
+      "targetHandle": null,
+      "id": "ae_drop_pic"
+    },
+    {
       "source": "aud005",
       "sourceHandle": "1",
-      "target": "aud006",
+      "target": "aud007",
       "targetHandle": null,
       "id": "ae005"
     },
     {
-      "source": "aud006",
-      "sourceHandle": "1",
-      "target": "aud007",
-      "targetHandle": null,
-      "id": "ae006_process"
-    },
-    {
-      "source": "aud006",
-      "sourceHandle": "2",
-      "target": "aud007",
-      "targetHandle": null,
-      "id": "ae006_noprocess"
-    },
-    {
       "source": "aud007",
       "sourceHandle": "1",
-      "target": "aud008",
+      "target": "aud006",
       "targetHandle": null,
       "id": "ae007_success"
     },
     {
       "source": "aud007",
       "sourceHandle": "2",
-      "target": "aud008",
+      "target": "aud006",
       "targetHandle": null,
       "id": "ae007_noprocess"
     },
@@ -159,6 +187,20 @@
       "target": "aud009",
       "targetHandle": null,
       "id": "ae008_error"
+    },
+    {
+      "source": "aud006",
+      "sourceHandle": "1",
+      "target": "aud008",
+      "targetHandle": null,
+      "id": "ae006_process"
+    },
+    {
+      "source": "aud006",
+      "sourceHandle": "2",
+      "target": "aud008",
+      "targetHandle": null,
+      "id": "ae006_noprocess"
     },
     {
       "source": "aud009",
