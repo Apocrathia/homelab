@@ -16,7 +16,7 @@
     "enabled": true
   },
   "kubernetes": {
-    "managerFilePatterns": ["/^flux/manifests/.*\\.yaml$/"]
+    "enabled": false
   },
   "packageRules": [
     {

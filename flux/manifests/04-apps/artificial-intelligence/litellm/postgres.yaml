@@ -6,6 +6,7 @@ metadata:
   namespace: litellm
 spec:
   # PostgreSQL version
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
   imageName: ghcr.io/cloudnative-pg/postgresql:17
 
   # Number of instances

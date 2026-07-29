@@ -51,6 +51,7 @@ spec:
       namespace: jetkvm
 
       # Base image for Node.js runtime
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
       image: node:24@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059
 
       container:
@@ -97,6 +98,7 @@ spec:
       # Init containers: clone repo, install deps, run migrations
       initContainers:
         - name: clone-and-build
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
           image: node:24@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059
           command: ["/bin/bash", "-c"]
           args:
@@ -179,6 +181,7 @@ spec:
               memory: 1Gi
 
         - name: run-migrations
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
           image: node:24@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059
           command: ["/bin/bash", "-c"]
           args:

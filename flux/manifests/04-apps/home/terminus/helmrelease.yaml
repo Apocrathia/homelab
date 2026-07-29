@@ -110,6 +110,7 @@ spec:
             mountPath: /app/log
       sidecars:
         - name: sidekiq
+          # renovate: datasource=docker depName=ghcr.io/usetrmnl/terminus
           image: ghcr.io/usetrmnl/terminus:latest@sha256:b5f84176ad6f874d2e68e49af02396e2e55f961f9637d997a300c2970fc8ed52
           command:
             - bundle
@@ -195,6 +196,7 @@ spec:
 
     postgres:
       enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
       imageName: ghcr.io/cloudnative-pg/postgresql:17
       instances: 1
       database: terminus

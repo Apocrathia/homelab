@@ -2,6 +2,7 @@
 # Build and publish GitLab Pages using MkDocs
 pages:
   stage: deploy
+  # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
   image: python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
   needs:
     - job: scorecard-badge

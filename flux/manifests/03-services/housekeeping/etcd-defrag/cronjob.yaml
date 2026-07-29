@@ -58,6 +58,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-02
+              # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
               image: ghcr.io/siderolabs/talosctl:v1.13.7@sha256:e824808e0a9c8138c2f7b17f21cfebee2f1442a336d812eb0034c9c897059302
               args:
                 - etcd
@@ -88,6 +89,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-03
+              # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
               image: ghcr.io/siderolabs/talosctl:v1.13.7@sha256:e824808e0a9c8138c2f7b17f21cfebee2f1442a336d812eb0034c9c897059302
               args:
                 - etcd
@@ -118,6 +120,7 @@ spec:
                   mountPath: /talos
                   readOnly: true
             - name: talos-04
+              # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
               image: ghcr.io/siderolabs/talosctl:v1.13.7@sha256:e824808e0a9c8138c2f7b17f21cfebee2f1442a336d812eb0034c9c897059302
               args:
                 - etcd
