@@ -14,3 +14,27 @@ custom_providers:
   - name: litellm
     base_url: http://litellm.litellm.svc.cluster.local:4000/v1
     key_env: OPENAI_API_KEY
+
+mcp_servers:
+  litellm:
+    url: "http://litellm.litellm.svc.cluster.local:4000/mcp"
+    headers:
+      x-litellm-api-key: "Bearer ${OPENAI_API_KEY}"
+      x-mcp-x-grafana-api-key: "${GRAFANA_API_KEY}"
+      x-mcp-x-home-assistant-authorization: "${HA_TOKEN}"
+    timeout: 180
+  musicassistant:
+    # No in-cluster Service — Music Assistant runs on the HA host.
+    url: "http://home.services.apocrathia.com:8095/mcp/v1"
+    headers:
+      Authorization: "Bearer ${MA_TOKEN}"
+    timeout: 180
+  n8n:
+    url: "http://n8n.n8n.svc.cluster.local/mcp-server/http"
+    headers:
+      Authorization: "Bearer ${N8N_API_KEY}"
+    timeout: 180
+  deepwiki:
+    url: "https://mcp.deepwiki.com/mcp"
+  context7:
+    url: "https://mcp.context7.com/mcp"

@@ -29,9 +29,13 @@ See `helmrelease.yaml` for deployment values.
 
 Create the 1Password item at the path in `helmrelease.yaml`:
 
-- `litellm-api-key` — LiteLLM virtual key for the custom provider endpoint
+- `litellm-api-key` — LiteLLM virtual key for the custom provider endpoint and MCP gateway
 - `oidc-client-id` — Authentik OIDC provider Client ID (from provider after blueprint apply)
 - `oidc-client-secret` — Authentik OIDC provider Client Secret
+- `grafana-api-key` — Grafana service account token (LiteLLM `x-mcp-x-grafana-api-key`)
+- `ha-token` — Home Assistant long-lived access token (LiteLLM HA MCP header)
+- `ma-token` — Music Assistant MCP bearer token
+- `n8n-api-key` — n8n MCP HTTP bearer token
 
 Optional channel tokens belong in 1Password, not git. Wire them in `helmrelease.yaml` only after confirming env var names in [Hermes environment variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables).
 

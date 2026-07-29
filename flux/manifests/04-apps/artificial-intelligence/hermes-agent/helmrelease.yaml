@@ -81,6 +81,27 @@ spec:
               secretKeyRef:
                 name: hermes-agent-secrets
                 key: litellm-api-key
+          # MCP header substitution for config.yaml mcp_servers
+          - name: GRAFANA_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: grafana-api-key
+          - name: HA_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: ha-token
+          - name: MA_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: ma-token
+          - name: N8N_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: n8n-api-key
 
       service:
         type: ClusterIP
