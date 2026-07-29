@@ -22,6 +22,7 @@ mcp_servers:
       x-litellm-api-key: "Bearer ${OPENAI_API_KEY}"
       x-mcp-x-grafana-api-key: "${GRAFANA_API_KEY}"
       x-mcp-x-home-assistant-authorization: "${HA_TOKEN}"
+      x-mcp-gitlab-private-token: "${GITLAB_TOKEN}"
     timeout: 180
   musicassistant:
     # No in-cluster Service — Music Assistant runs on the HA host.

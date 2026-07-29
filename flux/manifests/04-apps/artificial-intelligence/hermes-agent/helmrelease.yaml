@@ -102,6 +102,11 @@ spec:
               secretKeyRef:
                 name: hermes-agent-secrets
                 key: n8n-api-key
+          - name: GITLAB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: gitlab-token
 
       service:
         type: ClusterIP

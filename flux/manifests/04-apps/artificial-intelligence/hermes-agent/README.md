@@ -36,6 +36,7 @@ Create the 1Password item at the path in `helmrelease.yaml`:
 - `ha-token` — Home Assistant long-lived access token (LiteLLM HA MCP header)
 - `ma-token` — Music Assistant MCP bearer token
 - `n8n-api-key` — n8n MCP HTTP bearer token
+- `gitlab-token` — GitLab PAT for LiteLLM GitLab MCP (`x-mcp-gitlab-private-token`)
 
 Optional channel tokens belong in 1Password, not git. Wire them in `helmrelease.yaml` only after confirming env var names in [Hermes environment variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables).
 
