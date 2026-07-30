@@ -12,6 +12,11 @@ context-links:
         - AGENTS.md
         - CLAUDE.md
         - .agents/**/*.md
+        - .gitlab/context-links.gitlab-ci.yml
+        - .agents/skills/reconcile-context/scripts/check_links.py
+  before_script:
+    # check_links.py enumerates tracked files via git ls-files
+    - apk add --no-cache git
   script:
     - python3 .agents/skills/reconcile-context/scripts/check_links.py
   allow_failure: false
