@@ -32,12 +32,12 @@ Layout and upstream pattern: [`fleet/README.md`](../../../../../fleet/README.md)
 
 Required CI/CD variables (masked):
 
-| Variable                     | Purpose                                                         |
-| ---------------------------- | --------------------------------------------------------------- |
-| `FLEET_URL`                  | `https://fleet.gateway.services.apocrathia.com`                 |
-| `FLEET_API_TOKEN`            | API-only user token (GitOps role; admin on Fleet Free)          |
-| `FLEET_GLOBAL_ENROLL_SECRET` | Global enroll secret (`default.yml` → `org_settings.secrets`)   |
-| `FLEET_HOME_ENROLL_SECRET`   | Home team enroll secret (`teams/home.yml` → `settings.secrets`) |
+| Variable                     | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `FLEET_URL`                  | `https://fleet.gateway.services.apocrathia.com`                   |
+| `FLEET_API_TOKEN`            | API-only user token (GitOps role; admin on Fleet Free)            |
+| `FLEET_GLOBAL_ENROLL_SECRET` | Global enroll secret (`default.yml` → `org_settings.secrets`)     |
+| `FLEET_HOME_ENROLL_SECRET`   | Home fleet enroll secret (`fleets/home.yml` → `settings.secrets`) |
 
 Create an [API-only user](https://fleetdm.com/docs/using-fleet/fleetctl-cli#create-api-only-user), then add a pipeline schedule:
 
@@ -68,20 +68,20 @@ Create a 1Password item at `vaults/Secrets/items/fleetdm-secrets` with:
 | `license-key`          | Fleet Premium license key                                                    |
 | `private-key`          | Fleet server private key (`openssl rand -base64 32`; required for MDM)       |
 | `global-enroll-secret` | Global osquery enroll secret (same value as CI `FLEET_GLOBAL_ENROLL_SECRET`) |
-| `home-enroll-secret`   | Home team enroll secret (same value as CI `FLEET_HOME_ENROLL_SECRET`)        |
+| `home-enroll-secret`   | Home fleet enroll secret (same value as CI `FLEET_HOME_ENROLL_SECRET`)       |
 
 The OnePasswordItem creates Secret `fleetdm-secrets`. MySQL, license, and
 `FLEET_SERVER_PRIVATE_KEY` / `FLEET_PACKAGING_GLOBAL_ENROLL_SECRET` all read from it.
 
 `global-enroll-secret` must match the GitOps enroll secret: Helm seeds it on pod
 start; `fleet/default.yml` applies it via `$FLEET_GLOBAL_ENROLL_SECRET` in CI.
-`home-enroll-secret` matches `$FLEET_HOME_ENROLL_SECRET` in `fleet/teams/home.yml`.
+`home-enroll-secret` matches `$FLEET_HOME_ENROLL_SECRET` in `fleet/fleets/home.yml`.
 
 ## Authentication
 
 Users authenticate with Authentik via SAML (`authentik-blueprint.yaml`). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
 
-SSO settings live in `fleet/default.yml` under `org_settings.sso_settings` (applied by GitOps). IdP icon: `fleet/lib/all/icons/authentik.svg`.
+SSO settings live in `fleet/default.yml` under `org_settings.sso_settings` (applied by GitOps). IdP icon: `fleet/platforms/all/icons/authentik.svg`.
 
 With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true`).
 
@@ -144,7 +144,7 @@ Health check path: `/healthz` (also used by the chart probes).
 ## References
 
 - [Deploy Fleet on Kubernetes](https://fleetdm.com/guides/deploy-fleet-on-kubernetes)
-- [Fleet GitOps](https://fleetdm.com/docs/using-fleet/gitops)
+- [Fleet YAML files (GitOps)](https://fleetdm.com/docs/configuration/yaml-files)
 - [Fleet SSO (Authentik)](https://fleetdm.com/docs/deploy/single-sign-on-sso#authentik)
 - [Foreign vitals / SCIM](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts)
 - [Authentik SCIM provider](https://docs.goauthentik.io/add-secure-apps/providers/scim/)

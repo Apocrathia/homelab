@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Apply Fleet GitOps YAML (adapted from fleetdm/fleet-gitops).
-# https://github.com/fleetdm/fleet-gitops/blob/main/gitops.sh
+# Apply Fleet GitOps YAML (adapted from fleetctl new / fleetdm/fleet-gitops).
+# https://fleetdm.com/docs/configuration/yaml-files
 
 set -euo pipefail
 
@@ -17,10 +17,10 @@ else
   FLEET_DELETE_OTHER_FLEETS=false
 fi
 
-if compgen -G "$FLEET_GITOPS_DIR"/teams/*.yml > /dev/null; then
-  # Validate unique team names (assumes `name: <team_name>` lines).
-  if perl -nle 'print $1 if /^name:\s*(.+)$/' "$FLEET_GITOPS_DIR"/teams/*.yml | sort | uniq -d | grep . -cq; then
-    echo "Duplicate team names found under $FLEET_GITOPS_DIR/teams/" >&2
+if compgen -G "$FLEET_GITOPS_DIR"/fleets/*.yml > /dev/null; then
+  # Validate unique fleet names (assumes `name: <fleet_name>` lines).
+  if perl -nle 'print $1 if /^name:\s*(.+)$/' "$FLEET_GITOPS_DIR"/fleets/*.yml | sort | uniq -d | grep . -cq; then
+    echo "Duplicate fleet names found under $FLEET_GITOPS_DIR/fleets/" >&2
     exit 1
   fi
 fi
@@ -30,9 +30,9 @@ if [ -f "$FLEET_GLOBAL_FILE" ]; then
   args=(-f "$FLEET_GLOBAL_FILE")
 fi
 
-for team_file in "$FLEET_GITOPS_DIR"/teams/*.yml; do
-  if [ -f "$team_file" ]; then
-    args+=(-f "$team_file")
+for fleet_file in "$FLEET_GITOPS_DIR"/fleets/*.yml; do
+  if [ -f "$fleet_file" ]; then
+    args+=(-f "$fleet_file")
   fi
 done
 if [ "$FLEET_DELETE_OTHER_FLEETS" = true ]; then

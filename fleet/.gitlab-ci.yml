@@ -10,7 +10,7 @@
 #   FLEET_URL                  — https://fleet.gateway.services.apocrathia.com
 #   FLEET_API_TOKEN            — API-only user token (GitOps role / admin on Free)
 #   FLEET_GLOBAL_ENROLL_SECRET — global enroll secret referenced in default.yml
-#   FLEET_HOME_ENROLL_SECRET   — Home team enroll secret referenced in teams/home.yml
+#   FLEET_HOME_ENROLL_SECRET   — Home fleet enroll secret referenced in fleets/home.yml
 #   FLEET_GITOPS_SCHEDULE      — set to "true" on the Fleet hourly schedule only
 #
 # Runner note: in-cluster Kubernetes executor is non-root — no apt-get.

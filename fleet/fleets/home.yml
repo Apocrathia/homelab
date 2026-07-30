@@ -6,17 +6,18 @@
 # fleetdm-secrets → home-enroll-secret).
 #
 # macOS CIS Level 1 (Tahoe / macOS 26) from Fleet ee/cis — assessment policies.
-# Disk encryption + scripts live in lib/controls/home.yml.
-# Slack (FMA): slug is darwin-only; GitOps rejects built-in labels like macOS.
+# Disk encryption + scripts are inlined under controls below.
 name: Home
 policies:
-  - path: ../lib/macos/policies/cis-macos-26-l1.yml
-  - path: ../lib/macos/policies/slack.yml
-  - path: ../lib/all/policies/fleet-dm-was-here.yml
+  - path: ../platforms/macos/policies/cis-macos-26-l1.yml
+  - path: ../platforms/macos/policies/slack.yml
+  - path: ../platforms/all/policies/fleet-dm-was-here.yml
 reports:
 agent_options:
 controls:
-  path: ../lib/controls/home.yml
+  enable_disk_encryption: true
+  scripts:
+    - paths: ../platforms/all/scripts/*.sh
 software:
   fleet_maintained_apps:
     - slug: slack/darwin

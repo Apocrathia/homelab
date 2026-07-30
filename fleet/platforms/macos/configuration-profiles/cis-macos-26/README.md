@@ -6,8 +6,8 @@ Vendored from Fleet
 (e.g. `2.2.1-and-2.2.2.mobileconfig`).
 
 These files are **not** applied until listed under
-`controls.apple_settings.configuration_profiles` in a team YAML (e.g.
-`teams/home.yml`). Assessment policies live in
-`lib/macos/policies/cis-macos-26-l1.yml`.
+`controls.apple_settings.configuration_profiles` in a fleet YAML (e.g.
+`fleets/home.yml`). Assessment policies live in
+`platforms/macos/policies/cis-macos-26-l1.yml`.
 
 Guide: [CIS Benchmarks](https://fleetdm.com/guides/cis-benchmarks).
