@@ -65,8 +65,10 @@ Drop `.keep` when you add real content.
 - **Fleet software (Fleet-maintained apps)** → `software.fleet_maintained_apps`
   in `fleets/home.yml`. Slack (`slack/darwin`) is self-service; the `/darwin`
   slug scopes it to macOS (GitOps rejects built-in labels like `macOS`).
-  Patch policy `platforms/macos/policies/slack.yml` fails when Slack is
-  missing/outdated and installs via `install_software: true`.
+  Policies in `platforms/macos/policies/slack.yml`: install when missing
+  (`install_software.fleet_maintained_app_slug`), and patch when outdated
+  (`type: patch` + `install_software: true`). Patch alone does not fail on
+  missing apps.
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `platforms/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);
