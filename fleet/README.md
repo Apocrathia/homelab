@@ -66,10 +66,13 @@ Drop `.keep` when you add real content.
   in `fleets/home.yml`. The `/darwin` slug scopes each app to macOS (GitOps
   rejects built-in labels like `macOS`). Install+patch (presence policy +
   `type: patch`): 1Password, Ableton Live Suite, Claude, Cursor, Fleet Desktop,
-  iTerm2, Slack under `platforms/macos/policies/`. Home loads every platform
-  policy tree via `paths: ../platforms/**/policies/**/*.yml` — drop a new
-  `.yml` under any `platforms/*/policies/` and GitOps picks it up. Overlapping
-  globs that match the same file will fail GitOps (ambiguous).
+  iTerm2, Slack under `platforms/macos/policies/`. Self-service only (My Device,
+  no auto-install): Blender, ChatGPT, Discord, GitHub Desktop, HandBrake, OBS,
+  Obsidian, Podman Desktop, Rectangle, Spotify, Steam, Syncthing, Tailscale,
+  VLC, Zoom. Home loads every platform policy tree via
+  `paths: ../platforms/**/policies/**/*.yml` — drop a new `.yml` under any
+  `platforms/*/policies/` and GitOps picks it up. Overlapping globs that match
+  the same file will fail GitOps (ambiguous).
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `platforms/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);

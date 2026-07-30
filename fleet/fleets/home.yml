@@ -33,6 +33,37 @@ software:
       self_service: true
     - slug: slack/darwin
       self_service: true
+    # Self-service only (My Device; no auto-install policies).
+    - slug: blender/darwin
+      self_service: true
+    - slug: chatgpt/darwin
+      self_service: true
+    - slug: discord/darwin
+      self_service: true
+    - slug: github/darwin
+      self_service: true
+    - slug: handbrake-app/darwin
+      self_service: true
+    - slug: obs/darwin
+      self_service: true
+    - slug: obsidian/darwin
+      self_service: true
+    - slug: podman-desktop/darwin
+      self_service: true
+    - slug: rectangle/darwin
+      self_service: true
+    - slug: spotify/darwin
+      self_service: true
+    - slug: steam/darwin
+      self_service: true
+    - slug: syncthing-app/darwin
+      self_service: true
+    - slug: tailscale-app/darwin
+      self_service: true
+    - slug: vlc/darwin
+      self_service: true
+    - slug: zoom/darwin
+      self_service: true
 settings:
   secrets:
     - secret: "$FLEET_HOME_ENROLL_SECRET"
