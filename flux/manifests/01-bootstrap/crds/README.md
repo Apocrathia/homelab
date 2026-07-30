@@ -8,9 +8,9 @@ CRDs applied during bootstrap. Only **Gateway API** CRDs live here; Cilium, Kyve
 
 This layer installs Gateway API CRDs so they exist before any controller that uses them (e.g. Cilium). Everything else comes from the Helm chart that deploys that component.
 
-- **Gateway API (standard + experimental TLSRoute)** — routing CRDs: `Gateway`,
-  `HTTPRoute`, and related types. Version is capped to what the in-cluster Cilium
-  release supports; see `kustomization.yaml`.
+- **Gateway API (standard channel)** — routing CRDs: `Gateway`, `HTTPRoute`,
+  `TLSRoute`, and related types. Keep this at or above the version Cilium's
+  Gateway API controller requires; see `kustomization.yaml`.
 - **Gateway API Inference Extension** — `InferencePool` and related resources for
   inference workloads
 - Versions and manifest URLs are in `kustomization.yaml`; Renovate tracks them
