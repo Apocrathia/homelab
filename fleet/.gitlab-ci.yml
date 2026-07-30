@@ -18,7 +18,7 @@
 ---
 .fleet-gitops-base:
   stage: deploy
-  image: node:22@sha256:7725a5c2c83eed1d36258c66efae14b1ceccd021db9ed1d9559d3335ed3d68ed
+  image: node:24@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059
   needs: []
   variables:
     FLEET_DRY_RUN_ONLY: "true"
