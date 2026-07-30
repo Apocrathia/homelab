@@ -26,6 +26,15 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+  valuesFrom:
+    - kind: Secret
+      name: flux-operator-secrets
+      valuesKey: oidc-client-id
+      targetPath: web.config.authentication.oauth2.clientID
+    - kind: Secret
+      name: flux-operator-secrets
+      valuesKey: oidc-client-secret
+      targetPath: web.config.authentication.oauth2.clientSecret
   values:
     nameOverride: ""
     fullnameOverride: ""
@@ -47,10 +56,27 @@ spec:
       # Enable the Flux Status web server on port 9080.
       # https://fluxoperator.dev/web-ui/
       enabled: true
-      # Web Config API spec.
+      # Web Config API — OIDC SSO + K8s impersonation.
       # https://fluxoperator.dev/docs/web-ui/web-config-api/
-      config: {}
-      # Existing Secret with key config.yaml for the Web Config API.
+      # clientID / clientSecret injected via valuesFrom from flux-operator-secrets.
+      config:
+        baseURL: "https://flux.gateway.services.apocrathia.com"
+        authentication:
+          type: OAuth2
+          oauth2:
+            provider: OIDC
+            issuerURL: "https://auth.gateway.services.apocrathia.com/application/o/flux-operator-oidc/"
+            scopes:
+              - openid
+              - email
+              - profile
+              - groups
+            validations:
+              - expression: "'flux-admins' in claims.groups"
+                message: "user must be a member of flux-admins"
+            impersonation:
+              username: "claims.email"
+              groups: "claims.groups"
       configSecretName: ""
       userActions:
         # Impersonated (default) or FineGrained.

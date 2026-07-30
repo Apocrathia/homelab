@@ -8,6 +8,8 @@ resources:
   - manifests.yaml
   - helmrepository.yaml
   - helmrelease.yaml
+  - secret.yaml
+  - rbac.yaml
 
 # Labels merge onto the Namespace already defined in gotk-components.yaml
 # (listing a second Namespace resource would fail kustomize accumulate).

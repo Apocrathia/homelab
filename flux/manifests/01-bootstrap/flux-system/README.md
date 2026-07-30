@@ -40,16 +40,21 @@ Strategic-merge patch onto the Namespace already defined in
 `gotk-components.yaml` (a second Namespace resource would fail accumulate).
 Adds instance / part-of labels and PSA warn.
 
-### Flux Operator (`helmrepository.yaml`, `helmrelease.yaml`)
+### Flux Operator (`helmrepository.yaml`, `helmrelease.yaml`, `secret.yaml`, `rbac.yaml`)
 
 Manages the [Flux Operator](https://fluxoperator.dev/) via Helm (not Kustomize
 `helmCharts` — Flux's kustomize-controller does not pass `--enable-helm`).
 
 - **HelmRepository**: OCI source `oci://ghcr.io/controlplaneio-fluxcd/charts`
 - **HelmRelease**: chart `flux-operator` with values inline (lab pattern)
-- **Authentik**: proxy blueprint for the Status UI at
-  `https://flux.gateway.services.apocrathia.com` (outpost owns the HTTPRoute;
-  chart `web.httpRoute` stays disabled)
+- **Secrets**: `OnePasswordItem` `flux-operator-secrets` (`secret.yaml`) for
+  OIDC client id/secret
+- **Web RBAC**: `ClusterRoleBinding` `flux-web-admins` maps Authentik group
+  `flux-admins` → `flux-web-admin`
+- **Authentik (double login)**:
+  - Outer: proxy app + outpost at `https://flux.gateway.services.apocrathia.com`
+  - Inner: OIDC app `flux-operator-oidc` (library-hidden); Flux Status SSO +
+    K8s impersonation. Only `flux-admins` pass CEL validation.
 
 No `FluxInstance` yet — gotk still owns the controllers. The operator runs
 alongside until cutover.
@@ -59,15 +64,21 @@ alongside until cutover.
 1. Bootstrap classic Flux (gotk) so `source-controller`, `kustomize-controller`,
    and `helm-controller` are running and syncing this repo (existing
    `gotk-components.yaml` + `gotk-sync.yaml` path).
-2. Push this directory's HelmRepository + HelmRelease. After
-   `Kustomization/flux-system` reconciles:
+2. Create 1Password item `flux-operator-secrets` in vault **Secrets** with
+   fields `oidc-client-id` and `oidc-client-secret` (placeholders OK until
+   Authentik instantiates the OIDC provider).
+3. Push this directory. After `Kustomization/flux-system` reconciles:
    ```bash
    flux get helmrelease flux-operator -n flux-system
    kubectl get deploy flux-operator -n flux-system
    ```
-3. Confirm Status UI via Authentik at
-   `https://flux.gateway.services.apocrathia.com` once the outpost is Ready.
-4. Only after the operator is healthy: soften root KS prune, remove gotk from
+4. In Authentik: add your user to group `flux-admins`. Open the OIDC provider
+   **Flux OIDC** / `flux-operator-oidc`, copy Client ID and Client Secret into
+   the 1Password item fields above. Wait for the OnePasswordItem to sync.
+5. Confirm double login at `https://flux.gateway.services.apocrathia.com` —
+   Authentik proxy, then Flux OIDC. Profile → Identity should show SSO and
+   Kubernetes RBAC enabled.
+6. Only after the operator is healthy: soften root KS prune, remove gotk from
    desired state, then apply a `FluxInstance` (see
    `docs/plans/flux-operator-migration.md`). Do **not** create `FluxInstance`
    while gotk is still applied to the same controller Deployments.
