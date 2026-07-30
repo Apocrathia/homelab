@@ -83,7 +83,8 @@ Drop `.keep` when you add real content.
   `platforms/macos/configuration-profiles/cis-macos-26/` (from Fleet
   [`ee/cis/macos-26/test/profiles`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26/test/profiles)).
   Vendored only — add under `apple_settings.configuration_profiles` in Home
-  controls when ready to enforce.
+  controls when ready to enforce. Currently enforcing:
+  - `2.1.1.3` — iCloud Drive Document and Desktop Sync Is Disabled (L2).
 
 Secrets and tokens are never committed. Enroll secrets live in 1Password
 `fleetdm-secrets` and matching GitLab CI variables:

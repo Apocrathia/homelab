@@ -14,6 +14,11 @@ reports:
 agent_options:
 controls:
   enable_disk_encryption: true
+  apple_settings:
+    configuration_profiles:
+      # CIS 2.1.1.3 — Ensure iCloud Drive Document and Desktop Sync Is Disabled.
+      # Prevents files on the Desktop and in Documents from syncing to iCloud.
+      - path: ../platforms/macos/configuration-profiles/cis-macos-26/2.1.1.3.mobileconfig
   scripts:
     - paths: ../platforms/all/scripts/*.sh
 software:

@@ -1,0 +1,40 @@
+# CIS Apple macOS 26 Tahoe Benchmark v1.0.0 — Level 2, single control.
+#
+# 2.1.1.3 — Ensure iCloud Drive Document and Desktop Sync Is Disabled (MDM Required)
+# Source: https://github.com/fleetdm/fleet/blob/main/ee/cis/macos-26/cis-policy-queries.yml
+# Guide: https://fleetdm.com/guides/cis-benchmarks
+#
+# Pair with the MDM profile at:
+#   platforms/macos/configuration-profiles/cis-macos-26/2.1.1.3.mobileconfig
+# (listed under controls.apple_settings.configuration_profiles in fleets/home.yml)
+---
+- name: CIS - Ensure iCloud Drive Document and Desktop Sync Is Disabled (MDM Required)
+  description: |-
+    With macOS 10.12, Apple introduced the capability to have a user's Desktop
+    and Documents folders automatically synchronize to the user's iCloud Drive.
+    Enterprise users may not be allowed to store Enterprise information in a
+    third-party public cloud. Automated Document synchronization should be
+    planned and controlled to approved storage.
+  resolution: |-
+    Profile Method:
+    Create or edit a configuration profile with the following information:
+      - PayloadType: com.apple.applicationaccess
+      - Key: allowCloudDesktopAndDocuments
+      - Value: <false/>
+  query: |-
+    SELECT 1 WHERE
+      EXISTS (
+        SELECT 1 FROM managed_policies WHERE
+          domain = 'com.apple.applicationaccess' AND
+          name = 'allowCloudDesktopAndDocuments' AND
+          (value = 0 OR value = 'false') AND
+          username = ''
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM managed_policies WHERE
+          domain = 'com.apple.applicationaccess' AND
+          name = 'allowCloudDesktopAndDocuments' AND
+          (value != 0 AND value != 'false')
+      );
+  platform: darwin
+  critical: false
