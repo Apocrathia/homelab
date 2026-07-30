@@ -63,12 +63,13 @@ Drop `.keep` when you add real content.
   marker is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly
   cadence).
 - **Fleet software (Fleet-maintained apps)** → `software.fleet_maintained_apps`
-  in `fleets/home.yml`. Slack (`slack/darwin`) is self-service; the `/darwin`
-  slug scopes it to macOS (GitOps rejects built-in labels like `macOS`).
-  Policies in `platforms/macos/policies/slack.yml`: install when missing
-  (`install_software.fleet_maintained_app_slug`), and patch when outdated
-  (`type: patch` + `install_software: true`). Patch alone does not fail on
-  missing apps.
+  in `fleets/home.yml`. The `/darwin` slug scopes each app to macOS (GitOps
+  rejects built-in labels like `macOS`). Install+patch (presence policy +
+  `type: patch`): 1Password, Ableton Live Suite, Claude, Cursor, Fleet Desktop,
+  iTerm2, Slack under `platforms/macos/policies/`. Home loads every platform
+  policy tree via `paths: ../platforms/**/policies/**/*.yml` — drop a new
+  `.yml` under any `platforms/*/policies/` and GitOps picks it up. Overlapping
+  globs that match the same file will fail GitOps (ambiguous).
 - **macOS CIS Level 1 (macOS 26 Tahoe)** →
   `platforms/macos/policies/cis-macos-26-l1.yml` (from Fleet
   [`ee/cis/macos-26`](https://github.com/fleetdm/fleet/tree/main/ee/cis/macos-26);
