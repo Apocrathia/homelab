@@ -197,7 +197,7 @@ spec:
     postgres:
       enabled: true
       # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
-      imageName: ghcr.io/cloudnative-pg/postgresql:17
+      imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:04aa5d1157637716ef2d990fb623a33a59e321429365685c3338309ab5ad2266
       instances: 1
       database: terminus
       owner: terminus
