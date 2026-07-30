@@ -1,0 +1,28 @@
+# Fleet Desktop: install when missing, then keep Fleet-maintained version current.
+# Requires fleet-desktop/darwin under software.fleet_maintained_apps on the same
+# fleet.
+#
+# Patch policies only fail when the app is installed and outdated — missing
+# hosts pass. The install policy covers first-time install.
+---
+- name: macOS - Fleet Desktop installed
+  description: >
+    Fails when Fleet Desktop is not installed.
+  resolution: >
+    Fleet installs Fleet Desktop (fleet-desktop/darwin).
+  platform: darwin
+  query: "SELECT 1 FROM apps WHERE bundle_identifier = 'com.fleetdm.fleet-desktop'"
+  install_software:
+    fleet_maintained_app_slug: fleet-desktop/darwin
+  critical: false
+- name: macOS - Fleet Desktop up to date
+  description: >
+    Fails when Fleet Desktop is installed but behind the Fleet-maintained app
+    metadata.
+  resolution: >
+    Fleet updates Fleet Desktop (fleet-desktop/darwin).
+  type: patch
+  fleet_maintained_app_slug: fleet-desktop/darwin
+  install_software: true
+  platform: darwin
+  critical: false

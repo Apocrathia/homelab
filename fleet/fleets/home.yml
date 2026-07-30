@@ -9,9 +9,7 @@
 # Disk encryption + scripts are inlined under controls below.
 name: Home
 policies:
-  - path: ../platforms/macos/policies/cis-macos-26-l1.yml
-  - path: ../platforms/macos/policies/slack.yml
-  - path: ../platforms/all/policies/fleet-dm-was-here.yml
+  - paths: ../platforms/**/policies/**/*.yml
 reports:
 agent_options:
 controls:
@@ -20,6 +18,19 @@ controls:
     - paths: ../platforms/all/scripts/*.sh
 software:
   fleet_maintained_apps:
+    # Install + patch via policies (also listed in My Device).
+    - slug: 1password/darwin
+      self_service: true
+    - slug: ableton-live-suite/darwin
+      self_service: true
+    - slug: claude/darwin
+      self_service: true
+    - slug: cursor/darwin
+      self_service: true
+    - slug: fleet-desktop/darwin
+      self_service: true
+    - slug: iterm2/darwin
+      self_service: true
     - slug: slack/darwin
       self_service: true
 settings:

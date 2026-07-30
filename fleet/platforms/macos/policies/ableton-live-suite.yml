@@ -1,0 +1,30 @@
+# Ableton Live Suite: install when missing, then keep Fleet-maintained version
+# current. Requires ableton-live-suite/darwin under software.fleet_maintained_apps
+# on the same fleet.
+#
+# Patch policies only fail when the app is installed and outdated — missing
+# hosts pass. The install policy covers first-time install.
+---
+- name: macOS - Ableton Live Suite installed
+  description: >
+    Fails when Ableton Live Suite is not installed.
+  resolution: >
+    Fleet installs Ableton Live Suite (ableton-live-suite/darwin). Prefer Fleet
+    over Homebrew for this app so installs and uninstalls stay consistent.
+  platform: darwin
+  query: "SELECT 1 FROM apps WHERE bundle_identifier = 'com.ableton.live'"
+  install_software:
+    fleet_maintained_app_slug: ableton-live-suite/darwin
+  critical: false
+- name: macOS - Ableton Live Suite up to date
+  description: >
+    Fails when Ableton Live Suite is installed but behind the Fleet-maintained
+    app metadata.
+  resolution: >
+    Fleet updates Ableton Live Suite (ableton-live-suite/darwin). Prefer Fleet
+    over Homebrew for this app so installs and uninstalls stay consistent.
+  type: patch
+  fleet_maintained_app_slug: ableton-live-suite/darwin
+  install_software: true
+  platform: darwin
+  critical: false
