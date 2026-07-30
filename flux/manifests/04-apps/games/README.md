@@ -10,6 +10,11 @@ Game support services for managing, organizing, and playing games in the homelab
 
 Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration and secure configuration management.
 
+### [rom-audit](./rom-audit/README.md)
+
+Weekly CronJob that audits ROM files on the Emulation share against No-Intro
+DATs and reports `matched` / `wrong_name` / `unknown` per system.
+
 ### [ROMM](./romm/README.md)
 
 ROM Manager for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation.

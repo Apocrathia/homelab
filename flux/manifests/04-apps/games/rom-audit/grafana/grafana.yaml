@@ -1,0 +1,17 @@
+---
+# Custom rom-audit dashboard (Alloy → Loki: {namespace="rom-audit",container="rom-audit"}).
+# JSON lives in ConfigMap rom-audit-dashboard (generated from dashboard.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: rom-audit
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: rom-audit-dashboard
+    key: dashboard.json
+  folder: Games

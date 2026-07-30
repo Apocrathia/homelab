@@ -1,0 +1,32 @@
+[project]
+name = "rom-audit"
+version = "0.1.0"
+description = "Report-only auditor comparing ROM files on disk against No-Intro DATs"
+requires-python = ">=3.12"
+dependencies = [
+  "pyyaml>=6.0,<7.0",
+  "defusedxml>=0.7,<1.0",
+]
+
+[project.scripts]
+rom-audit = "rom_audit.__main__:main"
+
+[dependency-groups]
+dev = ["ruff>=0.8.0", "pytest>=8.0.0"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"

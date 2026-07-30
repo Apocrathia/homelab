@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+  <header>
+    <name>Nintendo - Nintendo Entertainment System (Headered)</name>
+    <description>Nintendo - Nintendo Entertainment System (Headered)</description>
+    <version>20260101</version>
+  </header>
+  <game name="Test Game (World)">
+    <description>Test Game (World)</description>
+    <rom name="Test Game (World).nes" size="16" crc="d445f698" sha1="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+  </game>
+  <game name="Another Game (World)">
+    <description>Another Game (World)</description>
+    <rom name="Another Game (World).nes" size="16" crc="deadbeef" sha1="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" />
+  </game>
+</datafile>

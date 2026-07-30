@@ -8,5 +8,6 @@ metadata:
 resources:
   - archisteamfarm
   - esde-themes
+  - rom-audit
   - romm
   - skyscraper

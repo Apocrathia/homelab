@@ -1,0 +1,10 @@
+---
+# One-shot / inventory-only config for --system 3do.
+# Share SoT (Emulation/tools/rom-audit/systems.yaml) stays the Sunday CronJob config.
+library_root: /emulation
+dats_dir: dats
+roms_dir: roms
+systems:
+  3do:
+    enabled: true
+    provider: inventory

@@ -1,0 +1,143 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rom-audit
+  namespace: rom-audit
+spec:
+  # Weekly Sunday 0600 America/Denver (after skyscraper-esde at 0300)
+  schedule: "0 6 * * 0"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 86400
+      template:
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: install-deps
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
+              env:
+                # read-only root: pip/uv must not write under /.local or ~/.cache
+                - name: HOME
+                  value: /tmp
+                - name: UV_CACHE_DIR
+                  value: /tmp/uv-cache
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  python -m pip install --no-cache-dir uv
+                  # --no-emit-project: package lives on PYTHONPATH via ConfigMap, not as -e .
+                  python -m uv export --frozen --no-dev --no-emit-project --directory=/scripts -o /tmp/req.txt
+                  python -m uv pip install --target=/deps --no-cache -r /tmp/req.txt
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          containers:
+            - name: rom-audit
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
+              command:
+                - python
+                - -m
+                - rom_audit
+              args:
+                - --config
+                - /emulation/tools/rom-audit/systems.yaml
+                - --json
+              env:
+                - name: PYTHONPATH
+                  value: "/scripts:/deps"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 2Gi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: emulation
+                  mountPath: /emulation
+                  readOnly: true
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: emulation
+              persistentVolumeClaim:
+                claimName: rom-audit-emulation
+            - name: scripts
+              configMap:
+                name: rom-audit-scripts
+                defaultMode: 0644
+                items:
+                  - key: __init__.py
+                    path: rom_audit/__init__.py
+                  - key: __main__.py
+                    path: rom_audit/__main__.py
+                  - key: dat.py
+                    path: rom_audit/dat.py
+                  - key: hash.py
+                    path: rom_audit/hash.py
+                  - key: scan.py
+                    path: rom_audit/scan.py
+                  - key: emit.py
+                    path: rom_audit/emit.py
+                  - key: pyproject.toml
+                    path: pyproject.toml
+                  - key: uv.lock
+                    path: uv.lock
+                  - key: systems-3do.yaml
+                    path: systems-3do.yaml
+            - name: deps
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}

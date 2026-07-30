@@ -29,6 +29,7 @@ build/
 __pycache__/
 .venv/
 .ruff_cache/
+.pytest_cache/
 
 # Local training outputs (notebooks on GPU host)
 notebooks/outputs/
