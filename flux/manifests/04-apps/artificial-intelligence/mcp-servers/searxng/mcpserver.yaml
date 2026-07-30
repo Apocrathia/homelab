@@ -13,7 +13,7 @@ spec:
   stdioTransport: {}
   deployment:
     # renovate: datasource=docker registryUrl=https://docker.io depName=isokoliuk/mcp-searxng
-    image: docker.io/isokoliuk/mcp-searxng:1.12@sha256:731664897bd460d4b0fe8a8901cd73aa3a9493ada03567ab442842fe0f8ab0f8
+    image: docker.io/isokoliuk/mcp-searxng:1.12@sha256:4b305aaeb8b5d091cd4d4e8471b013b9474d02a6c642e48c4c8d0abb7d5bc853
     port: 8080
     # Image ENTRYPOINT is replaced by agentgateway; restate the MCP process here.
     cmd: node
