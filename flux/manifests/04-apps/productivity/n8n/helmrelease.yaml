@@ -90,7 +90,7 @@ spec:
     postgres:
       enabled: true
       # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
-      imageName: ghcr.io/cloudnative-pg/postgresql:16
+      imageName: ghcr.io/cloudnative-pg/postgresql:16@sha256:51e1f280076dd6eafd4e2ccc16edbeb8cb62c9b2623e79ed0609965151e79bd6
       instances: 1
       storage:
         storageClass: longhorn
