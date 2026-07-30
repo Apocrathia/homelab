@@ -12,6 +12,10 @@ context-links:
         - AGENTS.md
         - CLAUDE.md
         - .agents/**/*.md
+        - .gitlab/context-links.gitlab-ci.yml
+        - .agents/skills/reconcile-context/scripts/check_links.py
   script:
+    # Rootless runners cannot apk-install git; check_links.py walks the tree
+    # when git is missing.
     - python3 .agents/skills/reconcile-context/scripts/check_links.py
   allow_failure: false
