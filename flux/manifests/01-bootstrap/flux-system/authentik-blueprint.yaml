@@ -32,6 +32,7 @@ entries:
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "flux-operator-proxy-provider"]]
       launch_url: "https://flux.gateway.services.apocrathia.com"
       open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/01-bootstrap/flux-system/icon.svg"
       meta_description: "Flux Operator Status web UI"
       meta_publisher: "ControlPlane"
 
