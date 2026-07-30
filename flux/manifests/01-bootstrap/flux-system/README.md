@@ -34,6 +34,47 @@ Deploys the core Flux controllers:
 - **Resources**: `Provider`, `Alert`, `Receiver`
 - **Function**: Sends notifications for GitOps events and failures
 
+### Namespace (`namespace.yaml`)
+
+Strategic-merge patch onto the Namespace already defined in
+`gotk-components.yaml` (a second Namespace resource would fail accumulate).
+Adds instance / part-of labels and PSA warn.
+
+### Flux Operator (`helmrepository.yaml`, `helmrelease.yaml`)
+
+Manages the [Flux Operator](https://fluxoperator.dev/) via Helm (not Kustomize
+`helmCharts` — Flux's kustomize-controller does not pass `--enable-helm`).
+
+- **HelmRepository**: OCI source `oci://ghcr.io/controlplaneio-fluxcd/charts`
+- **HelmRelease**: chart `flux-operator` with values inline (lab pattern)
+- **Authentik**: proxy blueprint for the Status UI at
+  `https://flux.gateway.services.apocrathia.com` (outpost owns the HTTPRoute;
+  chart `web.httpRoute` stays disabled)
+
+No `FluxInstance` yet — gotk still owns the controllers. The operator runs
+alongside until cutover.
+
+#### Bootstrap / first-time setup
+
+1. Bootstrap classic Flux (gotk) so `source-controller`, `kustomize-controller`,
+   and `helm-controller` are running and syncing this repo (existing
+   `gotk-components.yaml` + `gotk-sync.yaml` path).
+2. Push this directory's HelmRepository + HelmRelease. After
+   `Kustomization/flux-system` reconciles:
+   ```bash
+   flux get helmrelease flux-operator -n flux-system
+   kubectl get deploy flux-operator -n flux-system
+   ```
+3. Confirm Status UI via Authentik at
+   `https://flux.gateway.services.apocrathia.com` once the outpost is Ready.
+4. Only after the operator is healthy: soften root KS prune, remove gotk from
+   desired state, then apply a `FluxInstance` (see
+   `docs/plans/flux-operator-migration.md`). Do **not** create `FluxInstance`
+   while gotk is still applied to the same controller Deployments.
+
+Do not use Kustomize `helmCharts` for this install — it fails in-cluster with
+`must specify --enable-helm`.
+
 ### Git Repository Configuration (`gotk-sync.yaml`)
 
 Configures the source Git repository that Flux monitors:

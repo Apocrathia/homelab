@@ -1,0 +1,180 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: flux-operator
+  namespace: flux-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: flux-operator
+      # renovate: datasource=docker depName=ghcr.io/controlplaneio-fluxcd/charts/flux-operator
+      version: 0.57.0
+      sourceRef:
+        kind: HelmRepository
+        name: flux-operator
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    nameOverride: ""
+    fullnameOverride: ""
+
+    # Enable multitenancy lockdown for the ResourceSet APIs.
+    # https://fluxoperator.dev/docs/crd/resourceset/#role-based-access-control
+    multitenancy:
+      enabled: false
+      enabledForWorkloadIdentity: false
+      defaultServiceAccount: "flux-operator"
+      defaultWorkloadIdentityServiceAccount: "flux-operator"
+
+    # Flux reporting settings.
+    # https://fluxoperator.dev/docs/crd/fluxreport/
+    reporting:
+      interval: 5m
+
+    web:
+      # Enable the Flux Status web server on port 9080.
+      # https://fluxoperator.dev/web-ui/
+      enabled: true
+      # Web Config API spec.
+      # https://fluxoperator.dev/docs/web-ui/web-config-api/
+      config: {}
+      # Existing Secret with key config.yaml for the Web Config API.
+      configSecretName: ""
+      userActions:
+        # Impersonated (default) or FineGrained.
+        access: Impersonated
+      networkPolicy:
+        create: true
+      # Standard roles for user access management.
+      # https://fluxoperator.dev/docs/web-ui/user-management/
+      rbac:
+        createRoles: true
+        createAggregation: false
+      # Standalone web deployment (requires a dedicated Helm release).
+      serverOnly: false
+      serverReplicas: 1
+      ingress:
+        enabled: false
+        className: ""
+        annotations: {}
+        hosts: []
+        tls: []
+      # HTTPRoute owned by Authentik outpost instead; keep chart route off.
+      httpRoute:
+        enabled: false
+        annotations: {}
+        parentRefs: []
+        hostnames: []
+
+    installCRDs: true
+
+    commonAnnotations: {}
+    commonLabels: {}
+
+    image:
+      repository: ghcr.io/controlplaneio-fluxcd/flux-operator
+      # renovate: datasource=docker imageName=ghcr.io/controlplaneio-fluxcd/flux-operator
+      tag: "v0.57.0@sha256:7baa2697d3c4d81007c02302c55a8601f02ad2052df5952b95f8a6708c7be131"
+      pullSecrets: []
+      imagePullPolicy: IfNotPresent
+
+    priorityClassName: "system-cluster-critical"
+
+    # Kubernetes API priority and fairness.
+    # https://kubernetes.io/docs/concepts/cluster-administration/flow-control/
+    apiPriority:
+      enabled: false
+      level: workload-high
+      extraServiceAccounts: []
+
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+      initialDelaySeconds: 15
+      periodSeconds: 20
+
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8081
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+    serviceAccount:
+      create: true
+      automount: true
+      name: ""
+
+    rbac:
+      # cluster-admin on the operator SA (required for Flux Instance deployment).
+      create: true
+      # Grant view/edit/admin aggregation access to ResourceSet APIs.
+      createAggregation: true
+
+    podSecurityContext: {}
+
+    # Compliant with the pod security restricted profile.
+    securityContext:
+      runAsNonRoot: true
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      seccompProfile:
+        type: "RuntimeDefault"
+
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+
+    tolerations: []
+    nodeSelector: {}
+    strategy: {}
+    hostNetwork: false
+    extraVolumes: []
+    extraEnvs: []
+    extraArgs: []
+    extraVolumeMounts: []
+    logLevel: "info"
+
+    serviceMonitor:
+      create: false
+      interval: 60s
+      scrapeTimeout: 30s
+      labels: {}
+
+    service:
+      ipFamilyPolicy: ""
+
+    marketplace:
+      type: ""
+      license: ""
+      account: ""

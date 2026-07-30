@@ -44,9 +44,10 @@ Upstream pattern:
   cutover still finishes before preview CRs. Splitting files rejected.
 - Sequencing — **strict serial (A then B)** — no dual ownership of controller
   Deployments; no ResourceSet pilot until `FluxInstance` is Ready.
-- Operator bootstrap — **break-glass install, then GitOps-adopt** — same class
-  as today’s manual bootstrap; no `FluxInstance` until gotk is out of desired
-  state.
+- Operator bootstrap — **GitOps `HelmRelease` + OCI `HelmRepository` under
+  `flux-system/`** (after classic gotk bootstrap). Not Kustomize `helmCharts`
+  (kustomize-controller lacks `--enable-helm`). No `FluxInstance` until gotk is
+  out of desired state.
 - Root KS safety — **`prune: false` + `deletionPolicy: Orphan` before emptying
   gotk** — prior KS loss with prune-on cascaded into restore hell.
 - Preview shape — **side-by-side canary only** — not live object identity.
@@ -64,10 +65,9 @@ Upstream pattern:
 
 ### Phase A — Operator cutover
 
-- [ ] Break-glass install Flux Operator (Helm/manifest apply). Leave gotk alone.
-      Confirm operator pods Ready; no `FluxInstance` yet.
-- [ ] GitOps-adopt the operator only (`HelmRelease` / chart source in-repo).
-      Still no `FluxInstance`.
+- [ ] Ship operator-only GitOps (`HelmRepository` + `HelmRelease` under
+      `flux-system/`). Leave gotk alone; no `FluxInstance` yet. Confirm HR and
+      operator Deployment Ready.
 - [ ] On root `flux-system` Kustomization: set `prune: false` and
       `deletionPolicy: Orphan` (or equivalent). Reconcile / confirm before
       emptying gotk desired state.

@@ -99,6 +99,17 @@ flux get sources git
 kubectl get pods -n onepassword-system
 ```
 
+## Bootstrap sequence
+
+1. **Classic Flux (gotk)** — apply / sync `flux-system` so the four controllers
+   and root Git sync exist (`gotk-components.yaml`, `gotk-sync.yaml`).
+2. **Flux Operator** — GitOps `HelmRepository` + `HelmRelease` under
+   `flux-system/` (see [flux-system README](flux-system/README.md)). Operator
+   only; no `FluxInstance` until gotk cutover.
+3. **CRDs / Helm repos / 1Password** — remaining bootstrap children via the
+   `manifests` Kustomization.
+4. **Infrastructure → services → apps** — layered Flux Kustomizations.
+
 ## References
 
 - **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
