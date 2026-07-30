@@ -18,6 +18,7 @@ manual chores. Not a fake enterprise platform.
 | `flux/manifests/` | Cluster workloads and bootstrap (GitOps)                                                       |
 | `helm/`           | Charts (including shared `generic-app`)                                                        |
 | `terraform/`      | OpenTofu/Terragrunt for Proxmox VMs and related infra                                          |
+| `fleet/`          | Fleet DM GitOps YAML (org settings, policies; applied via `fleetctl gitops` CI)                |
 | `secrets/`        | Local operator secrets (gitignored credentials; not GitOps CRs)                                |
 | `scripts/`        | Operator helper scripts                                                                        |
 | `docs/`           | Human docs + agent ledgers (`issues/`, `plans/`, `research/`); no tunable limits/versions here |
