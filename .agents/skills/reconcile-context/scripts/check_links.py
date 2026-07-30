@@ -81,7 +81,6 @@ def _md_paths_from_walk():
     """Fallback when git is unavailable (e.g. rootless CI images without apk)."""
     skip_dirs = {
         ".git",
-        ".scratch",
         ".worktrees",
         "node_modules",
         "__pycache__",
