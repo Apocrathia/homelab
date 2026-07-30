@@ -1,0 +1,14 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: amp-exporter
+  namespace: amp-exporter
+  labels:
+    app.kubernetes.io/name: amp-exporter
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+  - grafana.yaml
+  - servicemonitor.yaml

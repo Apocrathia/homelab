@@ -1,0 +1,101 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: amp-exporter
+  namespace: amp-exporter
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.74"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: amp-exporter
+      # renovate: datasource=docker depName=ghcr.io/soynx/amp-cubecoders-exporter
+      image: ghcr.io/soynx/amp-cubecoders-exporter:0.1.0@sha256:69154b351258608e9830ff5c4e54230ff4cd66ccc77cc2ad8cb36db691ef6ed2
+      container:
+        name: amp-exporter
+        port: 9822
+        env:
+          - name: AMP_URL
+            value: "http://game.apocrathia.com:8080/"
+          - name: AMP_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: amp-exporter-secrets
+                key: username
+          - name: AMP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: amp-exporter-secrets
+                key: credential
+      service:
+        type: ClusterIP
+        port: 9822
+        targetPort: 9822
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 9822
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 9822
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      podSecurityContext:
+        fsGroup: 65532
+
+    authentik:
+      enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/amp-exporter-secrets"
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    tcproute:
+      enabled: false
+    loadbalancer:
+      enabled: false

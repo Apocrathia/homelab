@@ -6,6 +6,11 @@ Game support services for managing, organizing, and playing games in the homelab
 
 ## Applications
 
+### [AMP Exporter](./amp-exporter/README.md)
+
+Prometheus exporter for CubeCoders AMP game servers, with a Grafana dashboard
+in the Games folder.
+
 ### [ArchiSteamFarm](./archisteamfarm/README.md)
 
 Steam card farming application for idling multiple accounts simultaneously with Authentik SSO integration and secure configuration management.
@@ -33,11 +38,13 @@ Weekly CronJob that mirrors the official ES-DE themes list into
 ## Overview
 
 Game support services cover ROM management, web emulation helpers, ES-DE
-gamelist scraping, and theme mirroring. Deployed via Flux; game server hosting
-stays on `game.apocrathia.com` via [AMP](https://cubecoders.com/AMP).
+gamelist scraping, theme mirroring, and AMP metrics export. Deployed via Flux;
+game server hosting stays on `game.apocrathia.com` via
+[AMP](https://cubecoders.com/AMP).
 
 ## References
 
+- **[amp-cubecoders-exporter](https://github.com/soynx/amp-cubecoders-exporter)** - AMP Prometheus exporter
 - **[ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)** - Steam card farming
 - **[ROMM](https://github.com/rommapp/romm)** - ROM management
 - **[Skyscraper](https://github.com/Gemba/skyscraper)** - ES-DE gamelist scraping
