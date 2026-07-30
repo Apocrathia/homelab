@@ -52,19 +52,15 @@ def slug(heading: str) -> str:
     return s.replace(" ", "-").strip("-")
 
 
-def tracked_md():
-    try:
-        proc = subprocess.run(
-            ["git", "ls-files", "-z"],
-            cwd=ROOT,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise SystemExit(
-            f"could not enumerate tracked files with git ls-files: {exc}"
-        ) from exc
+def _md_paths_from_git():
+    """Return (paths, seen_realpaths) from git ls-files. Raises OSError/CalledProcessError."""
+    proc = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     # git ls-files reports slash-separated names on every platform; split and
     # rejoin so the paths use the OS separator. Without this, surface() matching
     # on os.sep would miss .agents/context files on Windows.
@@ -78,6 +74,42 @@ def tracked_md():
             full = os.path.join(ROOT, *name.split("/"))
             paths.append(full)
             seen.add(os.path.realpath(full))
+    return paths, seen
+
+
+def _md_paths_from_walk():
+    """Fallback when git is unavailable (e.g. rootless CI images without apk)."""
+    skip_dirs = {
+        ".git",
+        ".scratch",
+        ".worktrees",
+        "node_modules",
+        "__pycache__",
+        ".venv",
+        "vendor",
+    }
+    paths = []
+    seen = set()
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+        for name in filenames:
+            if not is_markdown_target(name):
+                continue
+            full = os.path.join(dirpath, name)
+            real = os.path.realpath(full)
+            if real not in seen:
+                paths.append(full)
+                seen.add(real)
+    return paths, seen
+
+
+def tracked_md():
+    try:
+        paths, seen = _md_paths_from_git()
+    except (OSError, subprocess.CalledProcessError):
+        # Rootless runners often ship python images without git and without
+        # permission to apk/apt install it. Walk the checkout instead.
+        paths, seen = _md_paths_from_walk()
     # Include untracked portable + adapter markdown so reconcile works before
     # the first commit of those trees. Same for agent backlog / research ledgers
     # under docs/ (issues, plans, research).
