@@ -182,11 +182,11 @@ Library IDs can be retrieved from the database by querying the `librarysettingsj
 import sqlite3
 import json
 
-db = '/app/server/Tdarr/DB2/SQL/database.db'
+db = "/app/server/Tdarr/DB2/SQL/database.db"
 conn = sqlite3.connect(db)
 cur = conn.cursor()
 
-cur.execute('SELECT id, json_data FROM librarysettingsjsondb')
+cur.execute("SELECT id, json_data FROM librarysettingsjsondb")
 for lib_id, json_data in cur.fetchall():
     data = json.loads(json_data)
     print(f"ID: {lib_id}, Name: {data['name']}")
@@ -205,28 +205,25 @@ import random
 import string
 import time
 
+
 def insert_var(key, value, vtype, db_path):
     """Insert a single variable in its own transaction."""
     conn = sqlite3.connect(db_path, timeout=10.0)
     try:
         cur = conn.cursor()
-        cur.execute('BEGIN IMMEDIATE TRANSACTION')
+        cur.execute("BEGIN IMMEDIATE TRANSACTION")
 
-        var_id = ''.join(random.choices(string.ascii_letters + string.digits, k=9))
+        var_id = "".join(random.choices(string.ascii_letters + string.digits, k=9))
         ts_sec = int(time.time())
         ts_ms = int(time.time() * 1000)
 
-        jdata = json.dumps({
-            'key': key,
-            'value': value,
-            'type': vtype,
-            'date': ts_ms,
-            '_id': var_id
-        })
+        jdata = json.dumps(
+            {"key": key, "value": value, "type": vtype, "date": ts_ms, "_id": var_id}
+        )
 
         cur.execute(
-            'INSERT INTO variablesjsondb (id, timestamp, json_data) VALUES (?, ?, ?)',
-            (var_id, ts_sec, jdata)
+            "INSERT INTO variablesjsondb (id, timestamp, json_data) VALUES (?, ?, ?)",
+            (var_id, ts_sec, jdata),
         )
         conn.commit()
         return True
@@ -236,9 +233,10 @@ def insert_var(key, value, vtype, db_path):
     finally:
         conn.close()
 
-db = '/app/server/Tdarr/DB2/SQL/database.db'
-insert_var('url_jellyfin', 'http://jellyfin.jellyfin.svc.cluster.local', 'global', db)
-insert_var('quality_level', '20', 'library:LIBRARY_ID', db)
+
+db = "/app/server/Tdarr/DB2/SQL/database.db"
+insert_var("url_jellyfin", "http://jellyfin.jellyfin.svc.cluster.local", "global", db)
+insert_var("quality_level", "20", "library:LIBRARY_ID", db)
 ```
 
 - Always use `BEGIN IMMEDIATE TRANSACTION` for proper locking when Tdarr is running
@@ -256,23 +254,23 @@ import random
 import string
 import time
 
-db = '/app/server/Tdarr/DB2/SQL/database.db'
+db = "/app/server/Tdarr/DB2/SQL/database.db"
+
 
 def insert_var(key, value, vtype):
     conn = sqlite3.connect(db, timeout=10.0)
     try:
         cur = conn.cursor()
-        cur.execute('BEGIN IMMEDIATE TRANSACTION')
-        var_id = ''.join(random.choices(string.ascii_letters + string.digits, k=9))
+        cur.execute("BEGIN IMMEDIATE TRANSACTION")
+        var_id = "".join(random.choices(string.ascii_letters + string.digits, k=9))
         ts_sec = int(time.time())
         ts_ms = int(time.time() * 1000)
-        jdata = json.dumps({
-            'key': key, 'value': value, 'type': vtype,
-            'date': ts_ms, '_id': var_id
-        })
+        jdata = json.dumps(
+            {"key": key, "value": value, "type": vtype, "date": ts_ms, "_id": var_id}
+        )
         cur.execute(
-            'INSERT INTO variablesjsondb (id, timestamp, json_data) VALUES (?, ?, ?)',
-            (var_id, ts_sec, jdata)
+            "INSERT INTO variablesjsondb (id, timestamp, json_data) VALUES (?, ?, ?)",
+            (var_id, ts_sec, jdata),
         )
         conn.commit()
     except Exception as e:
@@ -282,58 +280,59 @@ def insert_var(key, value, vtype):
         conn.close()
     time.sleep(0.1)
 
+
 # Step 1: wipe all existing variables
 conn = sqlite3.connect(db, timeout=10.0)
 try:
     cur = conn.cursor()
-    cur.execute('BEGIN IMMEDIATE TRANSACTION')
-    cur.execute('DELETE FROM variablesjsondb')
+    cur.execute("BEGIN IMMEDIATE TRANSACTION")
+    cur.execute("DELETE FROM variablesjsondb")
     conn.commit()
-    print('Wiped all existing variables')
+    print("Wiped all existing variables")
 finally:
     conn.close()
 time.sleep(0.5)
 
 # Step 2: insert global variables
 globals_to_insert = {
-    'url_jellyfin': 'http://jellyfin.jellyfin.svc.cluster.local',
-    'api_key_jellyfin': 'REPLACE_WITH_JELLYFIN_API_KEY',
-    'url_radarr': 'http://radarr.radarr.svc.cluster.local',
-    'url_sonarr': 'http://sonarr.sonarr.svc.cluster.local',
-    'api_key_radarr': 'REPLACE_WITH_RADARR_API_KEY',
-    'api_key_sonarr': 'REPLACE_WITH_SONARR_API_KEY',
+    "url_jellyfin": "http://jellyfin.jellyfin.svc.cluster.local",
+    "api_key_jellyfin": "REPLACE_WITH_JELLYFIN_API_KEY",
+    "url_radarr": "http://radarr.radarr.svc.cluster.local",
+    "url_sonarr": "http://sonarr.sonarr.svc.cluster.local",
+    "api_key_radarr": "REPLACE_WITH_RADARR_API_KEY",
+    "api_key_sonarr": "REPLACE_WITH_SONARR_API_KEY",
 }
 
 for key, value in globals_to_insert.items():
-    insert_var(key, value, 'global')
-    print(f'Inserted global: {key}')
+    insert_var(key, value, "global")
+    print(f"Inserted global: {key}")
 
 # Step 3: insert library variables
 # Replace these with actual library IDs from the query above
 libraries = {
-    'Movies': 'REPLACE_WITH_MOVIES_LIBRARY_ID',
-    'TV Shows': 'REPLACE_WITH_TV_LIBRARY_ID',
-    'Anime': 'REPLACE_WITH_ANIME_LIBRARY_ID',
+    "Movies": "REPLACE_WITH_MOVIES_LIBRARY_ID",
+    "TV Shows": "REPLACE_WITH_TV_LIBRARY_ID",
+    "Anime": "REPLACE_WITH_ANIME_LIBRARY_ID",
 }
 
 lib_vars = {
-    'quality_level': '20',
-    'ffmpeg_preset': 'veryslow',
-    'video_codec': 'libx265',
-    'is_animated': 'false',
+    "quality_level": "20",
+    "ffmpeg_preset": "veryslow",
+    "video_codec": "libx265",
+    "is_animated": "false",
 }
 
 anime_overrides = {
-    'is_animated': 'true',
+    "is_animated": "true",
 }
 
 for lib_name, lib_id in libraries.items():
-    merged = {**lib_vars, **(anime_overrides if lib_name == 'Anime' else {})}
+    merged = {**lib_vars, **(anime_overrides if lib_name == "Anime" else {})}
     for key, value in merged.items():
-        insert_var(key, value, f'library:{lib_id}')
-        print(f'Inserted {lib_name}: {key}={value}')
+        insert_var(key, value, f"library:{lib_id}")
+        print(f"Inserted {lib_name}: {key}={value}")
 
-print('Migration complete')
+print("Migration complete")
 ```
 
 ### Database corruption recovery

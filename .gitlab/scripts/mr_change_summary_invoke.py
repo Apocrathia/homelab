@@ -122,11 +122,17 @@ async def _fetch_existing_comment(
     """Find the marker comment on the MR. Returns (note_id, body, hash) or
     (None, None, None) if no marker comment exists. Reads via JOB-TOKEN.
     """
-    notes_url = f"{api_url.rstrip('/')}/projects/{project_id}/merge_requests/{mr_iid}/notes"
+    notes_url = (
+        f"{api_url.rstrip('/')}/projects/{project_id}/merge_requests/{mr_iid}/notes"
+    )
     headers = {"JOB-TOKEN": token}
-    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_s, connect=15.0)) as client:
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(timeout_s, connect=15.0)
+    ) as client:
         for page in range(1, 6):
-            resp = await client.get(notes_url, params={"per_page": 100, "page": page}, headers=headers)
+            resp = await client.get(
+                notes_url, params={"per_page": 100, "page": page}, headers=headers
+            )
             resp.raise_for_status()
             notes = resp.json()
             if not isinstance(notes, list) or not notes:
@@ -162,7 +168,9 @@ async def _update_note_body(
     payload = {"body": body}
     timeout = httpx.Timeout(timeout_s, connect=15.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.put(url, json=payload, headers={"PRIVATE-TOKEN": private_token})
+        resp = await client.put(
+            url, json=payload, headers={"PRIVATE-TOKEN": private_token}
+        )
         if resp.status_code < 400:
             return True
         # Avoid credential terminology in the format string — Semgrep flags it
@@ -205,10 +213,14 @@ async def run_agent(
        like a hung CI job; stop after `max_consecutive_failures` instead.
     """
     timeout = httpx.Timeout(timeout_s, connect=15.0)
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as httpx_client:
+    async with httpx.AsyncClient(
+        timeout=timeout, follow_redirects=True
+    ) as httpx_client:
         resolver = A2ACardResolver(httpx_client=httpx_client, base_url=a2a_url)
         agent_card = await resolver.get_agent_card()
-        client = ClientFactory(config=ClientConfig(httpx_client=httpx_client)).create(card=agent_card)
+        client = ClientFactory(config=ClientConfig(httpx_client=httpx_client)).create(
+            card=agent_card
+        )
 
         context_id: str | None = None
         consecutive_failures = 0
@@ -251,7 +263,9 @@ async def run_agent(
 
                     task, update = event[0], event[1]
                     if isinstance(task, Task):
-                        ctx = getattr(task, "context_id", None) or getattr(task, "contextId", None)
+                        ctx = getattr(task, "context_id", None) or getattr(
+                            task, "contextId", None
+                        )
                         if isinstance(ctx, str) and ctx.strip():
                             next_context_id = ctx.strip()
                         elif hasattr(task, "id") and getattr(task, "id", None):
@@ -290,7 +304,10 @@ async def run_agent(
 
             state = _normalize_state(last_state)
             if state == "completed" and saw_non_stub:
-                LOG.info("Agent reached completed state with non-stub output on turn %s", turn + 1)
+                LOG.info(
+                    "Agent reached completed state with non-stub output on turn %s",
+                    turn + 1,
+                )
                 return True
             if state in ("failed", "canceled", "cancelled"):
                 consecutive_failures += 1
@@ -329,7 +346,9 @@ async def main_async() -> int:
     diff_path = Path(os.environ.get("DIFF_PATH", "")).expanduser()
     changed_files_path = Path(os.environ.get("CHANGED_FILES_PATH", "")).expanduser()
     max_turns = max(1, int(os.environ.get("MAX_TURNS", "12")))
-    max_consecutive_failures = max(1, int(os.environ.get("MAX_CONSECUTIVE_FAILURES", "3")))
+    max_consecutive_failures = max(
+        1, int(os.environ.get("MAX_CONSECUTIVE_FAILURES", "3"))
+    )
     timeout_s = float(os.environ.get("HTTP_TIMEOUT_S", "600"))
 
     api_url = os.environ.get("CI_API_V4_URL", "").strip()
@@ -340,7 +359,11 @@ async def main_async() -> int:
     # because CI_JOB_TOKEN cannot PUT MR notes on GitLab.com.
     private_token = os.environ.get("AGENT_TOKEN", "").strip() or None
     force = os.environ.get("FORCE_RECOMPUTE", "").lower() in ("1", "true", "yes")
-    skip_verify = os.environ.get("SKIP_COMMENT_VERIFY", "").lower() in ("1", "true", "yes")
+    skip_verify = os.environ.get("SKIP_COMMENT_VERIFY", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     if not a2a_url:
         LOG.error("A2A_URL is required")
@@ -356,7 +379,10 @@ async def main_async() -> int:
         LOG.error("DIFF_PATH not found: %s (required for hash-skip)", diff_path)
         return 1
     if not changed_files_path.is_file():
-        LOG.error("CHANGED_FILES_PATH not found: %s (required for hash-skip)", changed_files_path)
+        LOG.error(
+            "CHANGED_FILES_PATH not found: %s (required for hash-skip)",
+            changed_files_path,
+        )
         return 1
 
     input_hash = _compute_input_hash(diff_path, changed_files_path)
@@ -381,10 +407,17 @@ async def main_async() -> int:
                 timeout_s=30.0,
             )
         except Exception as e:  # noqa: BLE001
-            LOG.warning("Failed to read existing MR notes: %s. Proceeding without skip check.", e)
+            LOG.warning(
+                "Failed to read existing MR notes: %s. Proceeding without skip check.",
+                e,
+            )
 
         if existing_note_id is not None:
-            LOG.info("Existing change-summary note: id=%s hash=%s", existing_note_id, existing_hash or "(none)")
+            LOG.info(
+                "Existing change-summary note: id=%s hash=%s",
+                existing_note_id,
+                existing_hash or "(none)",
+            )
             if existing_hash == input_hash and not force:
                 LOG.info(
                     "Input hash unchanged since last summary (%s). Skipping agent invocation. "
@@ -393,7 +426,9 @@ async def main_async() -> int:
                 )
                 return 0
         elif force:
-            LOG.info("FORCE_RECOMPUTE set; would skip if unchanged but proceeding anyway.")
+            LOG.info(
+                "FORCE_RECOMPUTE set; would skip if unchanged but proceeding anyway."
+            )
 
     LOG.info(
         "Invoking agent: a2a_url=%s prompt_chars=%s max_turns=%s "
@@ -417,10 +452,14 @@ async def main_async() -> int:
         return 1
 
     if skip_verify:
-        LOG.info("SKIP_COMMENT_VERIFY set; skipping post-completion check and trailer write")
+        LOG.info(
+            "SKIP_COMMENT_VERIFY set; skipping post-completion check and trailer write"
+        )
         return 0
     if not have_ci_context:
-        LOG.warning("No CI context; agent ran but trailer cannot be written. Returning success.")
+        LOG.warning(
+            "No CI context; agent ran but trailer cannot be written. Returning success."
+        )
         return 0
 
     # Re-fetch the comment the agent (hopefully) just posted/updated and
@@ -474,7 +513,9 @@ async def main_async() -> int:
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout)
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout
+    )
     return asyncio.run(main_async())
 
 

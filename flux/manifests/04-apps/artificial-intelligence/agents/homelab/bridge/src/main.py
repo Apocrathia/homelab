@@ -534,7 +534,9 @@ class DiscordBridge(commands.Bot):
             logger.info(f"Splitting response into {len(chunks)} chunks")
 
             for i, chunk in enumerate(chunks):
-                logger.debug(f"Sending chunk {i + 1}/{len(chunks)} ({len(chunk)} chars)")
+                logger.debug(
+                    f"Sending chunk {i + 1}/{len(chunks)} ({len(chunk)} chars)"
+                )
                 if i == 0:
                     await message.reply(chunk, mention_author=False)
                 else:

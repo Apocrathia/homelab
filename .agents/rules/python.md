@@ -23,6 +23,8 @@ alwaysApply: false
 ```python
 def process(items: list[dict[str, str]], cb: Callable[[str], None]) -> bool: ...
 def get_user(id: int) -> User | None: ...
+
+
 type MessageContext = list[dict[str, str | bool]]  # type alias
 ```
 
@@ -30,6 +32,7 @@ type MessageContext = list[dict[str, str | bool]]  # type alias
 
 ```python
 """Module: brief description of purpose."""
+
 
 class Service:
     """Purpose and key capabilities."""
@@ -64,47 +67,63 @@ logger.error(f"Failed: {e}", exc_info=True)  # always exc_info for errors
 try:
     result = await agent.run(prompt)
 except ValueError as e:  # catch specific
-    logger.error(f"Invalid input: {e}"); raise
+    logger.error(f"Invalid input: {e}")
+    raise
 except ConnectionError:
     return await retry_with_backoff()
 except Exception as e:  # service layer: log + domain exception
     logger.error(f"Unexpected: {e}", exc_info=True)
     raise ServiceError("Processing failed") from e
 
+
 # API layer: format for user
 async def handler(req) -> Response:
-    try: return Response(data=await service.process(req.data))
-    except ServiceError as e: return Response(error=str(e), status=500)
+    try:
+        return Response(data=await service.process(req.data))
+    except ServiceError as e:
+        return Response(error=str(e), status=500)
 ```
 
 ## Async
 
 ```python
 # Lock for shared state
-async with self.processing_lock: return await self._do_work(data)
+async with self.processing_lock:
+    return await self._do_work(data)
 
 # Concurrent tasks (3.11+)
 async with asyncio.TaskGroup() as tg:
     tasks = [tg.create_task(fetch(url)) for url in urls]
 
 # Timeout (3.11+)
-async with asyncio.timeout(10.0): return await fetch(url)
+async with asyncio.timeout(10.0):
+    return await fetch(url)
 
 # Cancellation: cleanup before re-raising CancelledError
 
+
 # Entry point
-async def main_async(): await service.run()
+async def main_async():
+    await service.run()
+
+
 def main():
-    try: asyncio.run(main_async())
-    except KeyboardInterrupt: logger.info("Shutting down...")
-if __name__ == "__main__": main()
+    try:
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        logger.info("Shutting down...")
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ## Environment Config
 
 ```python
 API_KEY = os.environ.get("API_KEY")
-if not API_KEY: raise ValueError("API_KEY required")
+if not API_KEY:
+    raise ValueError("API_KEY required")
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 PORT = int(os.environ.get("PORT", "8080"))
@@ -144,11 +163,14 @@ testpaths = ["tests"]
 class DataRecord(BaseModel):
     id: str
     value: float = Field(ge=0)
+
     @field_validator("id")
     @classmethod
     def validate_id(cls, v):
-        if not v.startswith("rec_"): raise ValueError("ID must start with 'rec_'")
+        if not v.startswith("rec_"):
+            raise ValueError("ID must start with 'rec_'")
         return v
+
 
 @dataclass
 class ProcessingResult:
@@ -164,9 +186,14 @@ class ProcessingResult:
 @asynccontextmanager
 async def get_db_session():
     session = AsyncSessionLocal()
-    try: yield session; await session.commit()
-    except: await session.rollback(); raise
-    finally: await session.close()
+    try:
+        yield session
+        await session.commit()
+    except:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
 ```
 
 ## Agentic Patterns
@@ -180,6 +207,8 @@ async def get_db_session():
 ```python
 @retry_with_backoff(max_retries=3, base_delay=1.0)
 async def call_api(prompt: str) -> str: ...
+
+
 # Decorator catches ConnectionError/TimeoutError, sleeps with jitter, retries
 ```
 
@@ -207,14 +236,20 @@ async def call_api(prompt: str) -> str: ...
 @pytest.fixture
 def mock_api():
     with respx.mock:
-        respx.get("https://api.example.com/users/123").mock(return_value=httpx.Response(200, json={"id": 123}))
+        respx.get("https://api.example.com/users/123").mock(
+            return_value=httpx.Response(200, json={"id": 123})
+        )
         yield
 
+
 @pytest.mark.asyncio
-async def test_fetch(mock_api): assert (await fetch_user(123))["id"] == 123
+async def test_fetch(mock_api):
+    assert (await fetch_user(123))["id"] == 123
+
 
 @pytest.mark.parametrize("input,expected", [("valid", True), ("", False)])
-def test_validate(input, expected): assert validate(input) == expected
+def test_validate(input, expected):
+    assert validate(input) == expected
 ```
 
 Commands: `uv run pytest [-v] [-k name] [--cov=src] [tests/unit]`

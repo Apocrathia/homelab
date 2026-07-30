@@ -36,6 +36,7 @@ import sys
 import os
 import argparse
 
+
 def test_renovate_regex(pattern, file_path, verbose=False):
     """
     Test a Renovate regex pattern against a file to verify it works correctly.
@@ -70,7 +71,7 @@ def test_renovate_regex(pattern, file_path, verbose=False):
     # Read the entire file content into memory
     # Note: This assumes files are reasonably sized (< 100MB)
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
     except UnicodeDecodeError:
         print(f"❌ Unable to read file (encoding issue): {file_path}")
@@ -125,29 +126,32 @@ def test_renovate_regex(pattern, file_path, verbose=False):
             # Find all Renovate comments in the file to help user understand
             # what patterns might be available to match against
             print("Renovate comments found in file:")
-            lines = content.split('\n')
+            lines = content.split("\n")
             found_renovate = False
 
             for i, line in enumerate(lines):
                 # Look for any line containing 'renovate:' (case insensitive)
-                if 'renovate:' in line.lower():
+                if "renovate:" in line.lower():
                     found_renovate = True
-                    print(f"  Line {i+1}: {repr(line.strip())}")
+                    print(f"  Line {i + 1}: {repr(line.strip())}")
 
                     # Show the next few lines for context
                     # This helps see the structure Renovate needs to match
                     for j in range(1, 4):
-                        if i+j < len(lines):
-                            context_line = lines[i+j].strip()
+                        if i + j < len(lines):
+                            context_line = lines[i + j].strip()
                             if context_line:  # Only show non-empty lines
-                                print(f"  Line {i+j+1}: {repr(context_line)}")
+                                print(f"  Line {i + j + 1}: {repr(context_line)}")
                     print()  # Add blank line between different Renovate comments
 
             if not found_renovate:
                 print("  No renovate comments found in file")
-                print("  Tip: Add a renovate comment like '# renovate: datasource=helm depName=myapp'")
+                print(
+                    "  Tip: Add a renovate comment like '# renovate: datasource=helm depName=myapp'"
+                )
 
         return False
+
 
 def main():
     """
@@ -186,16 +190,28 @@ Tips:
   - Common group names: depName, currentValue, datasource, registryUrl
   - Use -v/--verbose flag to see debugging information when patterns fail
   - Test patterns before adding them to renovate.json to save time
-        """
+        """,
     )
 
     # Define required and optional command line arguments
-    parser.add_argument('-p', '--pattern', required=True,
-                        help='Regex pattern to test (use double backslashes for escaping)')
-    parser.add_argument('-f', '--file', required=True,
-                        help='File path to test against (relative to project root)')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Show verbose debugging information')
+    parser.add_argument(
+        "-p",
+        "--pattern",
+        required=True,
+        help="Regex pattern to test (use double backslashes for escaping)",
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        required=True,
+        help="File path to test against (relative to project root)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show verbose debugging information",
+    )
 
     # Parse command line arguments
     args = parser.parse_args()
@@ -206,7 +222,7 @@ Tips:
     # Auto-detect project root if running from scripts/ directory
     # This allows the script to work regardless of where it's called from
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(script_dir) == 'scripts':
+    if os.path.basename(script_dir) == "scripts":
         project_root = os.path.dirname(script_dir)
         os.chdir(project_root)
         print(f"Changed to project root: {project_root}")
@@ -230,6 +246,7 @@ Tips:
         print("- Named capture groups missing or incorrectly named")
         print("- Pattern too specific or too generic for the actual file content")
         sys.exit(1)  # Error exit code
+
 
 if __name__ == "__main__":
     # Entry point when script is run directly

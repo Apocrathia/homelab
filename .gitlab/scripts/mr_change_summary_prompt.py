@@ -94,7 +94,9 @@ def _strip_renovate_chrome(desc: str, max_chars: int) -> tuple[str, int, bool]:
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout)
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout
+    )
 
     output_path = Path(os.environ.get("PROMPT_OUTPUT_PATH", "")).expanduser()
     if not output_path:
@@ -105,7 +107,9 @@ def main() -> int:
     files_path = Path(os.environ.get("CHANGED_FILES_PATH", "")).expanduser()
 
     diff_max_bytes = int(os.environ.get("DIFF_MAX_BYTES", str(DEFAULT_DIFF_MAX_BYTES)))
-    files_max_lines = int(os.environ.get("CHANGED_FILES_MAX_LINES", str(DEFAULT_FILES_MAX_LINES)))
+    files_max_lines = int(
+        os.environ.get("CHANGED_FILES_MAX_LINES", str(DEFAULT_FILES_MAX_LINES))
+    )
     desc_max_chars = int(os.environ.get("DESC_MAX_CHARS", str(DEFAULT_DESC_MAX_CHARS)))
 
     diff_text, diff_bytes, diff_truncated = _read_truncated(diff_path, diff_max_bytes)
@@ -212,7 +216,7 @@ def main() -> int:
         "   body=<your composed comment>)`.",
         "5. **Confirm.** Your final response to the caller must include",
         "   the note ID returned by the create/update tool, e.g.",
-        f"   \"Posted note <id> on MR !{mr_iid}.\" If the tool call failed,",
+        f'   "Posted note <id> on MR !{mr_iid}." If the tool call failed,',
         "   say so explicitly with the error message — do not claim",
         "   success.",
         "",

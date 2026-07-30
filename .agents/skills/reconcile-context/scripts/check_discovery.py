@@ -38,14 +38,15 @@ def _sot_ids(parent: str) -> list[str]:
     if not os.path.isdir(parent):
         return []
     return sorted(
-        name
-        for name in os.listdir(parent)
-        if os.path.isdir(os.path.join(parent, name))
+        name for name in os.listdir(parent) if os.path.isdir(os.path.join(parent, name))
     )
 
 
 def _check_symlink(
-    path: str, expected: str, kind: str, failures: list[tuple[str, str, str, str | None]]
+    path: str,
+    expected: str,
+    kind: str,
+    failures: list[tuple[str, str, str, str | None]],
 ) -> None:
     """Require path to be a symlink whose realpath matches expected."""
     rel = _rel(path)
