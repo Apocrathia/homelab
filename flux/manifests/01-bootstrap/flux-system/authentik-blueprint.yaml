@@ -7,7 +7,6 @@ metadata:
     blueprints.goauthentik.io/instantiate: "true"
 context: {}
 entries:
-  # Outer gate: Authentik proxy in front of Flux Status.
   - model: authentik_core.group
     state: present
     identifiers:
@@ -15,6 +14,7 @@ entries:
     attrs:
       name: "flux-admins"
 
+  # Outer gate — Authentik proxy (Longhorn / Grafana pattern)
   - model: authentik_providers_proxy.proxyprovider
     state: present
     identifiers:
@@ -72,7 +72,7 @@ entries:
               path: /spec/template/spec/automountServiceAccountToken
               value: false
 
-  # Inner gate: Flux Status native OIDC (confidential client).
+  # Inner gate — native OIDC client (Immich provider shape + kube-auth library hide)
   - model: authentik_providers_oauth2.oauth2provider
     state: present
     identifiers:
@@ -86,7 +86,7 @@ entries:
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "email"]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "profile"]]
         - !Find [authentik_providers_oauth2.scopemapping, [scope_name, "groups"]]
-      sub_mode: "user_username"
+      sub_mode: "user_email"
       include_claims_in_id_token: true
       issuer_mode: "per_provider"
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
@@ -104,11 +104,12 @@ entries:
     identifiers:
       slug: "flux-operator-oidc"
     attrs:
-      name: "Flux OIDC"
+      name: "Flux Operator OIDC"
       slug: "flux-operator-oidc"
       group: "Platform"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "flux-operator-oidc-provider"]]
-      # Hidden from library — Flux redirects here; launch tile stays on proxy app.
-      meta_launch_url: "blank"
+      # Hidden from library — proxy app is the launch tile (same as kube-auth / Headlamp split)
+      meta_launch_url: "blank://blank"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/01-bootstrap/flux-system/icon.svg"
       meta_description: "OIDC client for Flux Status SSO"
       meta_publisher: "ControlPlane"
