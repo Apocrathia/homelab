@@ -8,7 +8,7 @@ variables:
 
 .renovate:
   image:
-    name: ghcr.io/renovatebot/renovate:latest@sha256:bf0df5fca519fdac7705853603f6fe6a58dcd9f743e3ec82b6dfc0ba1e023ee0
+    name: ghcr.io/renovatebot/renovate:latest@sha256:3813f70a49b1984fccb3b1ee4b24e866ed7c635883c750f2de02ce03efbd8bb5
   script:
     - renovate
 
