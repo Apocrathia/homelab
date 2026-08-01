@@ -1,7 +1,6 @@
 ---
-# Held out of kustomization.yaml until gotk-components is commented out.
-# Enabling this while gotk still applies the same controller Deployments
-# causes field-manager contention.
+# Operator-managed Flux controllers and root Git sync. The sync uses the
+# 1Password-backed pull secret and keeps the root Kustomization orphan-safe.
 apiVersion: fluxcd.controlplane.io/v1
 kind: FluxInstance
 metadata:

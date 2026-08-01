@@ -3,7 +3,6 @@ title: "Migrate Flux to Operator + GitLab MR ResourceSet pilot"
 status: active
 found_at: 2026-07-26
 updated_at: 2026-08-01
-related_issue: docs/issues/flux-operator-migration.md
 area: flux
 ---
 
@@ -28,7 +27,7 @@ Upstream pattern:
 - Phase B — after Ready instance: hypermind-only MR preview via
   `ResourceSetInputProvider` + `ResourceSet`, label `deploy/flux-preview`
 - Bootstrap docs for break-glass install + GitOps steady state
-- Revisit gotk Trivy deferral once the vendor file is gone
+- Clean up the security scan ledger after deleting the vendor files
 
 **Out of scope:**
 
@@ -48,14 +47,11 @@ Upstream pattern:
   `flux-system/`** (after classic gotk bootstrap). Not Kustomize `helmCharts`
   (kustomize-controller lacks `--enable-helm`). No live `FluxInstance` until
   gotk is out of desired state.
-- Cutover mechanism — **kustomization resource toggles** — keep manifests in
-  tree; comment/uncomment lines in `flux-system/kustomization.yaml` (gotk out,
-  `flux-instance.yaml` in). `FluxInstance` manifest is present but commented
-  out until cutover.
-- Root KS safety — **`prune: false` + `deletionPolicy: Orphan` before emptying
-  gotk** — prior KS loss with prune-on cascaded into restore hell. Soften the
-  live gotk-sync KS first; `FluxInstance` ships the same on its generated KS
-  via `spec.kustomize.patches`.
+- Cutover result — **FluxInstance owns controllers and sync** — the vendored
+  gotk component and sync manifests were deleted after operator adoption.
+- Root KS safety — **`prune: false` + `deletionPolicy: Orphan`** —
+  `FluxInstance.spec.kustomize.patches` keeps the generated root
+  Kustomization orphan-safe.
 - Status UI auth — **Authentik double login** (proxy + native OIDC) with
   `flux-admins` only; OIDC + Git SSH both live in `flux-operator-secrets`.
 - Preview shape — **side-by-side canary only** — not live object identity.
@@ -101,10 +97,12 @@ Upstream pattern:
 - [x] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
       sync mirrors gotk-sync (GitLab SSH, `main`, path
       `./flux/manifests/01-bootstrap`, pullSecret `flux-operator-secrets`).
-- [x] Comment out `gotk-sync.yaml`; sync owned by the instance.
-- [ ] Update bootstrap READMEs for steady state after cutover.
-- [ ] Revisit `docs/issues/trivy-scan-noise-deferred.md` gotk CRITICAL bucket
-      once the vendor file is unreferenced / gone.
+- [x] Delete `gotk-components.yaml` and `gotk-sync.yaml`; the instance owns
+      controllers and sync.
+- [x] Update bootstrap READMEs for steady state after cutover.
+- [x] Remove the gotk CRITICAL bucket from
+      `docs/issues/trivy-scan-noise-deferred.md`; both vendor files are
+      deleted.
 
 **Phase A gate (must pass before Phase B):** Flux MCP `get_flux_instance`
 Ready / Installed; `flux check` OK; controllers Ready; no gotk reference in
@@ -147,10 +145,8 @@ Phase B:
 
 ## Notes
 
-- Issue SoT for Phase A acceptance:
-  `docs/issues/flux-operator-migration.md`. Phase B is this plan’s extension
-  of the migration motive; promote acceptance onto the issue when Phase B
-  ships or file a follow-on issue if scope splits later.
+- Phase A acceptance is complete and its issue was deleted on ship. Phase B
+  remains tracked by this plan.
 - Cluster evidence (2026-07-26): root `flux-system` / `manifests` KS created
   `2025-11-15` with `prune: true`; newer child KS timestamps match prior
   recreate pain after KS loss.
