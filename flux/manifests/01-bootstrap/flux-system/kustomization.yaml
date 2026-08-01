@@ -10,7 +10,7 @@ resources:
   # 4. Comment gotk-sync.yaml — sync owned by FluxInstance.
   # - gotk-components.yaml
   - gotk-sync.yaml
-  # - flux-instance.yaml
+  - flux-instance.yaml
   - namespace.yaml
   - manifests.yaml
   - helmrepository.yaml
