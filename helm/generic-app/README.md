@@ -28,6 +28,7 @@ A generic Helm chart for deploying applications in the homelab environment with 
   - Optional HTTPRoute for direct Gateway API access (when not using Authentik)
   - TCP routes for additional ports
   - LoadBalancer service for direct external access with multiple ports
+  - Optional Gatus in-cluster uptime probe annotations on the ClusterIP Service
 
 ## Values Reference
 
@@ -125,6 +126,13 @@ All available configuration values for the chart:
 | `loadbalancer.labels`                          | object | `{}`                                              | Custom labels for LoadBalancer service (e.g., for Cilium IP pool selection) |
 | `loadbalancer.cilium.interface`                | string | `eth0`                                            | Network interface for L2 announcements                                      |
 | `loadbalancer.cilium.namespace`                | string | `cilium-system`                                   | Namespace for Cilium resources                                              |
+| `gatus.enabled`                                | bool   | `false`                                           | Stamp gatus-sidecar annotations on the ClusterIP Service                    |
+| `gatus.group`                                  | string | `""`                                              | Endpoint group (defaults to `app.name`)                                     |
+| `gatus.url`                                    | string | `""`                                              | Probe URL (defaults to in-cluster HTTP Service URL)                         |
+| `gatus.path`                                   | string | `""`                                              | Optional path appended to `gatus.url`                                       |
+| `gatus.interval`                               | string | `""`                                              | Optional check interval (sidecar default when empty)                        |
+| `gatus.conditions`                             | array  | `["[STATUS] == 200"]`                             | Gatus endpoint conditions                                                   |
+| `gatus.endpoint`                               | object | `{}`                                              | Merge arbitrary keys into the endpoint annotation YAML                      |
 | `postgres.enabled`                             | bool   | `false`                                           | Enable PostgreSQL database (CloudNativePG)                                  |
 | `postgres.imageName`                           | string | `ghcr.io/cloudnative-pg/postgresql:17`            | PostgreSQL image version                                                    |
 | `postgres.instances`                           | int    | `1`                                               | Number of PostgreSQL instances                                              |
@@ -1056,6 +1064,29 @@ tcproute:
 - Creates TCPRoute resources for external access
 - Auto-generates unique section names if not specified
 
+### Gatus Uptime Probe
+
+Opt-in annotations for
+[gatus-sidecar](https://github.com/home-operations/gatus-sidecar) on the
+ClusterIP Service. Probes stay in-cluster (bypass Authentik). Default off.
+
+```yaml
+gatus:
+  enabled: true
+  group: demo # defaults to app.name when empty
+  # url defaults to http://{{ app.name }}.{{ namespace }}.svc:{{ service.port }}
+  # path: /health
+  # interval: 1m
+  conditions:
+    - "[STATUS] == 200"
+  # endpoint: # merge escape hatch for headers, client, etc.
+  #   headers:
+  #     Authorization: "Bearer …"
+```
+
+Without an explicit `url`, the chart forces `http://` so status conditions
+work — gatus-sidecar otherwise derives `tcp://` from Service ports.
+
 ### LoadBalancer Configuration
 
 ```yaml
@@ -1207,6 +1238,7 @@ For a complete working example, see the [Companion app configuration](../../flux
 ### Networking
 
 - `tcproute.yaml`: TCP routes for additional ports (conditional)
+- `service-clusterip.yaml`: ClusterIP Service (optional Gatus annotations when `gatus.enabled`)
 - `service-loadbalancer.yaml`: LoadBalancer service for direct external access with configurable external traffic policy (conditional)
 - `loadbalancer.yaml`: Cilium L2 announcement and IP pool configuration (conditional)
 

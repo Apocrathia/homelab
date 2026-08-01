@@ -33,8 +33,8 @@ generic-app values (after phase 2 chart support). Stay opt-in —
 
 ## Implementation hint
 
-Blocked on [`generic-app-gatus-values`](./generic-app-gatus-values.md). Prefer
-simple HTTP health first. No `--auto-*` discovery.
+Use `generic-app` `gatus:` values (chart ≥ 0.0.75). Prefer simple HTTP health
+first. No `--auto-*` discovery.
 
 ## Notes
 

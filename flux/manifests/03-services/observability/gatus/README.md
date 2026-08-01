@@ -33,7 +33,19 @@ sidecar — not from the ConfigMap.
 
 ### Opt in a Service
 
-Annotate the Service (not the Deployment):
+Prefer `generic-app` values (chart ≥ 0.0.75):
+
+```yaml
+gatus:
+  enabled: true
+  group: demo # optional; defaults to app.name
+```
+
+That stamps ClusterIP Service annotations with an in-cluster HTTP URL and
+`[STATUS] == 200`. See `helm/generic-app` for `url` / `path` / `conditions` /
+`endpoint` overrides.
+
+Raw annotations (non-generic-app workloads):
 
 ```yaml
 metadata:

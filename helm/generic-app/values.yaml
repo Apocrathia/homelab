@@ -652,6 +652,24 @@ loadbalancer:
     # Namespace where Cilium resources should be created
     namespace: cilium-system
 
+# Gatus in-cluster uptime probe (gatus-sidecar Service annotations)
+# Opt-in only — stamps ClusterIP Service annotations when enabled.
+gatus:
+  enabled: false
+  # Endpoint group (defaults to app.name)
+  group: ""
+  # Probe URL. Empty → http://{{ app.name }}.{{ namespace }}.svc:{{ service.port }}
+  # Service ports default to tcp:// in gatus-sidecar unless url forces http/https.
+  url: ""
+  # Optional path appended to url (e.g. /health)
+  path: ""
+  # Optional check interval (sidecar default when empty)
+  interval: ""
+  conditions:
+    - "[STATUS] == 200"
+  # Escape hatch: merge arbitrary gatus endpoint keys (headers, client, etc.)
+  endpoint: {}
+
 # PostgreSQL database support (CloudNativePG)
 postgres:
   enabled: false

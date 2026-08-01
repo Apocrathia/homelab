@@ -30,15 +30,12 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 - Sidecar `--enable-service` (annotation opt-in only)
 - ServiceMonitor + Grafana dashboard 24379 + endpoint-down alert (5m → Discord)
 - Kustomize-owned base ConfigMap
-- First consumer: `demo-app` (postRenderer until generic-app gains Service
-  annotations)
+- First consumer: `demo-app` via `generic-app` `gatus:` values
 
 **Follow-on (issues, not this lap):**
 
-- Phase 2: [`generic-app-gatus-values`](../issues/generic-app-gatus-values.md) —
-  chart `gatus:` block (default off) + demo-app bump
 - Phase 3: [`gatus-annotate-app-wave`](../issues/gatus-annotate-app-wave.md) —
-  enable on more apps
+  enable on more apps (after chart `gatus:` support)
 
 ## Decisions
 
@@ -57,7 +54,7 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 | First target                | `demo-app` Service annotation                    | Prove in-cluster Service probe path                                                                |
 | Flux wiring                 | Own Kustomization `services-gatus`               | Avoid hanging all of `services-observability` on CNPG                                              |
 | Helm source                 | Reuse `tuppr` OCI HelmRepository                 | Same `oci://ghcr.io/home-operations/charts` registry                                               |
-| demo-app annotations        | HelmRelease `postRenderers` patch                | Temporary until generic-app Service annotation hook                                                |
+| demo-app annotations        | `generic-app` `gatus:` values (≥ 0.0.75)         | Chart stamps Service annotations; postRenderer retired                                             |
 
 ## Layout on disk
 
