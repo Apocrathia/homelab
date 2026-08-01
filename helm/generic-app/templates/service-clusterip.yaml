@@ -1,4 +1,13 @@
-{{- $gatus := .Values.gatus | default dict }}
+{{- /* Nil-safe: missing gatus or non-map (reuse-values / bad --set) → no annotations. */}}
+{{- $gatusRaw := .Values.gatus | default dict }}
+{{- $gatus := dict }}
+{{- if kindIs "map" $gatusRaw }}
+{{- $gatus = $gatusRaw }}
+{{- end }}
+{{- $service := .Values.app.service | default dict }}
+{{- if not (kindIs "map" $service) }}
+{{- $service = dict }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -7,29 +16,35 @@ metadata:
   namespace: {{ .Values.app.namespace | default .Values.app.name }}
   labels:
     app: {{ .Values.app.name }}
-  {{- if and (hasKey $gatus "enabled") $gatus.enabled }}
+  {{- /* enabled must be explicitly true (bool or string); false/0/""/missing → off */}}
+  {{- if and (hasKey $gatus "enabled") (eq ($gatus.enabled | toString | lower) "true") }}
   {{- $ns := .Values.app.namespace | default .Values.app.name }}
-  {{- $port := .Values.app.service.port | default 80 }}
+  {{- $port := 80 }}
+  {{- if hasKey $service "port" }}
+  {{- $port = $service.port }}
+  {{- end }}
   {{- $url := printf "http://%s.%s.svc:%v" .Values.app.name $ns $port }}
-  {{- if and (hasKey $gatus "url") (ne $gatus.url "") }}
+  {{- if and (hasKey $gatus "url") (kindIs "string" $gatus.url) (ne $gatus.url "") }}
   {{- $url = $gatus.url }}
   {{- end }}
-  {{- if and (hasKey $gatus "path") (ne $gatus.path "") }}
+  {{- if and (hasKey $gatus "path") (kindIs "string" $gatus.path) (ne $gatus.path "") }}
   {{- $url = printf "%s%s" $url $gatus.path }}
   {{- end }}
   {{- $group := .Values.app.name }}
-  {{- if and (hasKey $gatus "group") (ne $gatus.group "") }}
+  {{- if and (hasKey $gatus "group") (kindIs "string" $gatus.group) (ne $gatus.group "") }}
   {{- $group = $gatus.group }}
   {{- end }}
   {{- $conditions := list "[STATUS] == 200" }}
-  {{- if hasKey $gatus "conditions" }}
+  {{- if and (hasKey $gatus "conditions") (kindIs "slice" $gatus.conditions) (gt (len $gatus.conditions) 0) }}
   {{- $conditions = $gatus.conditions }}
   {{- end }}
   {{- $endpoint := dict "group" $group "url" $url "conditions" $conditions }}
-  {{- if and (hasKey $gatus "interval") (ne $gatus.interval "") }}
+  {{- if and (hasKey $gatus "interval") (kindIs "string" $gatus.interval) (ne $gatus.interval "") }}
   {{- $_ := set $endpoint "interval" $gatus.interval }}
   {{- end }}
-  {{- $endpoint = mergeOverwrite $endpoint ($gatus.endpoint | default dict) }}
+  {{- if and (hasKey $gatus "endpoint") (kindIs "map" $gatus.endpoint) }}
+  {{- $endpoint = mergeOverwrite $endpoint $gatus.endpoint }}
+  {{- end }}
   annotations:
     gatus.home-operations.com/enabled: "true"
     gatus.home-operations.com/endpoint: |
@@ -39,9 +54,9 @@ spec:
   selector:
     app: {{ .Values.app.name }}
   ports:
-    - name: {{ .Values.app.service.portName | default "http" }}
-      port: {{ .Values.app.service.port | default 80 }}
-      targetPort: {{ .Values.app.service.targetPort | default 80 }}
+    - name: {{ $service.portName | default "http" }}
+      port: {{ $service.port | default 80 }}
+      targetPort: {{ $service.targetPort | default 80 }}
       protocol: TCP
     {{- if .Values.app.extraServicePorts }}
     {{- range .Values.app.extraServicePorts }}
@@ -51,4 +66,4 @@ spec:
       protocol: {{ .protocol | default "TCP" }}
     {{- end }}
     {{- end }}
-  type: {{ .Values.app.service.type | default "ClusterIP" }}
+  type: {{ $service.type | default "ClusterIP" }}

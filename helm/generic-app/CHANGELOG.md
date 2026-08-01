@@ -7,7 +7,8 @@
   ClusterIP Service for [gatus-sidecar](https://github.com/home-operations/gatus-sidecar).
   Defaults to an in-cluster HTTP URL and `[STATUS] == 200`. Overrides for
   `group`, `url`, `path`, `interval`, `conditions`, plus an `endpoint` merge
-  escape hatch.
+  escape hatch. Template guards use `kindIs` / `hasKey` / non-empty string
+  checks so missing blocks, bad types, and empty defaults stay quiet.
 
 ## Version 0.0.74
 
