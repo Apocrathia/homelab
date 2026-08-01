@@ -1,0 +1,36 @@
+---
+# Held out of kustomization.yaml until gotk-components is commented out.
+# Enabling this while gotk still applies the same controller Deployments
+# causes field-manager contention.
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    # Track current flux2 minor; operator reconciles patch releases.
+    version: "2.9.x"
+    registry: "ghcr.io/fluxcd"
+  sync:
+    kind: GitRepository
+    url: "ssh://git@gitlab.com/apocrathia/homelab"
+    ref: "refs/heads/main"
+    path: "./flux/manifests/01-bootstrap"
+    # OnePasswordItem flux-operator-secrets (identity + known_hosts).
+    # Do not use the bootstrap-created Secret named flux-system.
+    pullSecret: "flux-operator-secrets"
+    interval: 1m
+  kustomize:
+    patches:
+      # Keep root sync orphan-safe (same contract as pre-cutover soften).
+      - target:
+          kind: Kustomization
+          name: flux-system
+        patch: |
+          - op: replace
+            path: /spec/prune
+            value: false
+          - op: add
+            path: /spec/deletionPolicy
+            value: Orphan

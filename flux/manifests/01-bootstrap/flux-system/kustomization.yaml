@@ -3,8 +3,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  # --- Operator cutover toggles (comment/uncomment; do not dual-own controllers) ---
+  # 1. Soften root KS prune/Orphan in gotk-sync.yaml (live object) first.
+  # 2. Comment gotk-components.yaml — controllers stay in-cluster until adopted.
+  # 3. Uncomment flux-instance.yaml — operator adopts via SSA.
+  # 4. Comment gotk-sync.yaml — sync owned by FluxInstance.
   - gotk-components.yaml
   - gotk-sync.yaml
+  # - flux-instance.yaml
   - manifests.yaml
   - helmrepository.yaml
   - helmrelease.yaml
@@ -13,6 +19,8 @@ resources:
 
 # Labels merge onto the Namespace already defined in gotk-components.yaml
 # (listing a second Namespace resource would fail kustomize accumulate).
+# After gotk-components is commented out, promote namespace.yaml to resources
+# (or keep this patch targeting the Namespace the FluxInstance creates).
 patches:
   - path: namespace.yaml
     target:
