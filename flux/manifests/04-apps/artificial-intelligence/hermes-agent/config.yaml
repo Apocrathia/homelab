@@ -6,6 +6,12 @@
 #
 # Bare provider: custom ignores OPENAI_API_KEY unless base_url is openai.com (#28660).
 # Named custom_providers + key_env is required for cluster LiteLLM.
+#
+# Model tiers (all via LiteLLM → Prime):
+#   main  = glm-5.2-prime          (default agent thinking)
+#   hard  = kimi-k3-prime          (/model hard or /model hard --once)
+#   smol  = llama3.1-8b-prime      (auxiliary side-jobs + /model smol)
+# Hermes does not auto-route by difficulty — escalate hard with /model.
 model:
   provider: litellm
   default: glm-5.2-prime
@@ -14,6 +20,47 @@ custom_providers:
   - name: litellm
     base_url: http://litellm.litellm.svc.cluster.local:4000/v1
     key_env: OPENAI_API_KEY
+
+model_aliases:
+  hard:
+    model: kimi-k3-prime
+    provider: litellm
+  smol:
+    model: llama3.1-8b-prime
+    provider: litellm
+
+# Cheap side-jobs — titles, compression, approval, etc. Vision stays auto
+# (Llama 3.1 8B is text-only; escalate vision via a multimodal model later).
+auxiliary:
+  title_generation:
+    provider: litellm
+    model: llama3.1-8b-prime
+  compression:
+    provider: litellm
+    model: llama3.1-8b-prime
+  approval:
+    provider: litellm
+    model: llama3.1-8b-prime
+  web_extract:
+    provider: litellm
+    model: llama3.1-8b-prime
+  skills_hub:
+    provider: litellm
+    model: llama3.1-8b-prime
+  mcp:
+    provider: litellm
+    model: llama3.1-8b-prime
+  triage_specifier:
+    provider: litellm
+    model: llama3.1-8b-prime
+  profile_describer:
+    provider: litellm
+    model: llama3.1-8b-prime
+
+# Error/capacity fallback for the main agent — not the same as /model hard.
+fallback_providers:
+  - provider: litellm
+    model: kimi-k3-prime
 
 mcp_servers:
   litellm:
