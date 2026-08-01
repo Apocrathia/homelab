@@ -177,7 +177,7 @@ spec:
         store_model_in_db: true
 
         # Rate limiting
-        default_max_tokens: 4096
+        default_max_tokens: 1000000
         default_tpm_limit: 60000
         default_rpm_limit: 600
 
