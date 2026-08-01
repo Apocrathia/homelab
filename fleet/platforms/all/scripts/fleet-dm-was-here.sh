@@ -1,6 +1,7 @@
 #!/bin/sh
-# Empty marker for the console/login user (macOS + Linux).
+# Empty marker on the console/login user's Desktop (macOS + Linux).
 # Triggered by policy "Fleet DM Was Here marker present" via run_script.
+# Fails closed if no interactive user — never writes /tmp or $HOME.
 set -eu
 
 MARKER='Fleet DM Was Here'
@@ -16,7 +17,15 @@ if [ "$(uname -s)" = Darwin ]; then
     home=$(dscl . -read "/Users/$user" NFSHomeDirectory | awk '{print $2}')
   fi
 else
-  user=$(logname 2>/dev/null || true)
+  # fleetd has no TTY — logname fails; use the active seat session.
+  session=$(loginctl show-seat seat0 -p ActiveSession --value 2>/dev/null || true)
+  if [ -n "$session" ]; then
+    user=$(loginctl show-session "$session" -p Name --value 2>/dev/null || true)
+  fi
+  if [ -z "$user" ]; then
+    user=$(loginctl list-sessions --no-legend 2>/dev/null \
+      | awk 'NF >= 3 && $3 != "" && $3 != "root" { print $3; exit }' || true)
+  fi
   case "$user" in
     '' | root) user='' ;;
   esac
@@ -25,19 +34,13 @@ else
   fi
 fi
 
-if [ -z "$home" ] || [ ! -d "$home" ]; then
-  home=/tmp
-  user=''
+if [ -z "$user" ] || [ -z "$home" ] || [ ! -d "$home" ]; then
+  echo "no interactive user Desktop to write" >&2
+  exit 1
 fi
 
-if [ -d "$home/Desktop" ]; then
-  dest="$home/Desktop"
-else
-  dest="$home"
-fi
-
+dest="$home/Desktop"
+mkdir -p "$dest"
 # Truncate so re-runs stay 0 bytes if something wrote into it.
 : >"$dest/$MARKER"
-if [ -n "$user" ]; then
-  chown "$user" "$dest/$MARKER"
-fi
+chown "$user" "$dest/$MARKER"
