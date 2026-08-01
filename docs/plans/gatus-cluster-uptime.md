@@ -32,10 +32,14 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 - Kustomize-owned base ConfigMap
 - First consumer: `demo-app` via `generic-app` `gatus:` values
 
-**Follow-on (issues, not this lap):**
+**Phases (post-ship):**
 
-- Phase 3: [`gatus-annotate-app-wave`](../issues/gatus-annotate-app-wave.md) —
-  enable on more apps (after chart `gatus:` support)
+| Phase | Scope                                             | Status                                                                      |
+| ----- | ------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1     | Gatus + chart `gatus:` (default false) + demo-app | Done                                                                        |
+| 2     | First wave on selected generic-app apps           | [`gatus-annotate-app-wave`](../issues/gatus-annotate-app-wave.md)           |
+| 3     | Flip chart default to `enabled: true` (opt-out)   | [`gatus-generic-app-default-on`](../issues/gatus-generic-app-default-on.md) |
+| 4     | Non-generic-app Helm gaps                         | [`gatus-non-generic-app-gaps`](../issues/gatus-non-generic-app-gaps.md)     |
 
 ## Decisions
 
@@ -93,7 +97,7 @@ demo-app Service (+ annotation)
 - [x] Confirm OCI/Helm source (reuse `tuppr` HelmRepository)
 - [x] Scaffold `observability/gatus/`
 - [x] Add `services-gatus` Flux Kustomization + root registration
-- [x] Annotate `demo-app` (postRenderer); verify green + alert on scale-to-0
+- [x] Annotate `demo-app` via `generic-app` `gatus:`; verify green + alert on scale-to-0
 - [x] ServiceMonitor + Grafana dashboard 24379 + 5m Discord alert
 - [x] Operator README
 - [x] File follow-on issues (generic-app `gatus:` values, app wave)
