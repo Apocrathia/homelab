@@ -2,7 +2,8 @@
 name: cleanup-worktrees
 description: >-
   Inventory and remove unused git worktrees and local branches that are fully
-  merged (or content-equivalent) on main. Use when the user asks to clean up
+  merged (or content-equivalent) on main. Required before creating a new
+  worktree (see worktrees.md). Also use when the user asks to clean up
   worktrees, prune merged branches, remove stale worktrees, or tidy .worktrees/.
 ---
 
@@ -11,9 +12,11 @@ description: >-
 Housekeeping for agent worktrees under `.worktrees/` and leftover local
 branches. Complements
 [`.agents/rules/worktrees.md`](../../rules/worktrees.md) (create/use rules);
-this skill is the **remove** path.
+this skill is the **remove** path. Agents run it **before creating a new
+worktree**, not only when the operator asks for a tidy-up.
 
 Operator ask to clean up is authorization to remove **safe** candidates only.
+When running as the pre-create step, the same safe/keep/ask rules apply.
 Do not touch the workspace-root checkout's uncommitted WIP. Never delete
 `main`. Never `rm -rf` a worktree path.
 
