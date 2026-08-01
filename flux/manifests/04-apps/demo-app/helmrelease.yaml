@@ -16,6 +16,25 @@ spec:
         name: homelab
         namespace: flux-system
       interval: 5m
+  # generic-app has no Service annotation hook yet — patch for gatus-sidecar opt-in.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Service
+              name: demo-app
+            patch: |-
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: demo-app
+                annotations:
+                  gatus.home-operations.com/enabled: "true"
+                  gatus.home-operations.com/endpoint: |
+                    group: demo
+                    url: http://demo-app.demo-app.svc:80
+                    conditions:
+                      - "[STATUS] == 200"
   values:
     app:
       name: demo-app

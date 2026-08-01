@@ -1,0 +1,37 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: gatus-postgres
+  namespace: gatus
+spec:
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:04aa5d1157637716ef2d990fb623a33a59e321429365685c3338309ab5ad2266
+
+  instances: 1
+
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+  bootstrap:
+    initdb:
+      database: gatus
+      owner: gatus
+      secret:
+        name: gatus-secrets
+
+  postgresql:
+    parameters:
+      max_connections: "50"
+      shared_buffers: "64MB"
+      effective_cache_size: "128MB"
+      maintenance_work_mem: "32MB"

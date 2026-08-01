@@ -26,3 +26,8 @@ metadata:
 spec:
   receiver: Homelab Agent
   continue: true
+  # Opt-in only — rules must set label agent_invoke: "true"
+  object_matchers:
+    - - agent_invoke
+      - "="
+      - "true"

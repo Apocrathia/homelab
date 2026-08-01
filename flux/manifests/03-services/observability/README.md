@@ -102,6 +102,13 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - SNMP Exporter for network device monitoring (UPS, NAS, switches)
   - etcd ScrapeConfig for Talos cluster metrics
 
+### 10. **Gatus** (`gatus/`) — separate Flux Kustomization
+
+- **Purpose**: In-cluster synthetic uptime checks (complements Uptime Kuma / Uptime Robot)
+- **Deployment**: Official `gatus-sidecar` chart via Flux Kustomization `services-gatus`
+- **Not** included in `services-observability` (depends on CNPG)
+- **Details**: See [`gatus/README.md`](./gatus/README.md)
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
