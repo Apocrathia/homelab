@@ -1,0 +1,23 @@
+---
+# yamllint - YAML lint (matches pre-commit yamllint --strict)
+yamllint:
+  stage: test
+  image:
+    # renovate: datasource=docker depName=python
+    name: python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
+    entrypoint: [""]
+  variables:
+    # renovate: datasource=pypi depName=yamllint
+    YAMLLINT_VERSION: "1.38.0"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "**/*.yaml"
+        - "**/*.yml"
+        - .yamllint
+        - .gitlab/yamllint.gitlab-ci.yml
+  script:
+    # Rootless runners cannot apk-install; PEP 668 needs an explicit override.
+    - pip install --quiet --break-system-packages "yamllint==${YAMLLINT_VERSION}"
+    - yamllint -c .yamllint --strict .
+  allow_failure: false
