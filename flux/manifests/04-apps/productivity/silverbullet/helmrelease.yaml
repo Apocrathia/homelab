@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.75"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -125,6 +125,11 @@ spec:
       skipPathRegex:
         - "^/service_worker\\.js$"
         - "^/\\.client/"
+
+    gatus:
+      enabled: true
+      group: productivity
+      path: /.ping
 
     httproute:
       enabled: false

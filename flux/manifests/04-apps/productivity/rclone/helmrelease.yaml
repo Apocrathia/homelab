@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.75"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -128,6 +128,11 @@ spec:
       displayName: "RClone Manager"
       externalHost: "https://rclone.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/rclone/icon.svg"
+
+    gatus:
+      enabled: true
+      group: productivity
+      path: /health
 
     httproute:
       enabled: false
