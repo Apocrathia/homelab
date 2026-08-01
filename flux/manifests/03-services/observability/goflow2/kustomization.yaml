@@ -9,4 +9,4 @@ resources:
   - helmrelease.yaml
   - service-ingest.yaml
   - servicemonitor.yaml
-  - grafana.yaml
+  - grafana

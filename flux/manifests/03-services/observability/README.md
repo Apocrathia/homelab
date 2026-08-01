@@ -84,7 +84,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - sFlow v5 support
   - Prometheus metrics export for flow data
 - **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
-- **Dashboard**: NetFlow Exporter Overview (Grafana dashboard ID 11408)
+- **Dashboard**: goflow2 Collector (Network folder; `goflow2/grafana/`)
 
 ### 8. **Shared Ingest Pool** (`ingest/`)
 
