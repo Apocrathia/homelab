@@ -8,24 +8,15 @@ resources:
   # 2. Comment gotk-components.yaml — controllers stay in-cluster until adopted.
   # 3. Uncomment flux-instance.yaml — operator adopts via SSA.
   # 4. Comment gotk-sync.yaml — sync owned by FluxInstance.
-  - gotk-components.yaml
+  # - gotk-components.yaml
   - gotk-sync.yaml
   # - flux-instance.yaml
+  - namespace.yaml
   - manifests.yaml
   - helmrepository.yaml
   - helmrelease.yaml
   - secret.yaml
   - rbac.yaml
-
-# Labels merge onto the Namespace already defined in gotk-components.yaml
-# (listing a second Namespace resource would fail kustomize accumulate).
-# After gotk-components is commented out, promote namespace.yaml to resources
-# (or keep this patch targeting the Namespace the FluxInstance creates).
-patches:
-  - path: namespace.yaml
-    target:
-      kind: Namespace
-      name: flux-system
 
 generatorOptions:
   disableNameSuffixHash: true
