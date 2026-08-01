@@ -46,7 +46,10 @@ repos:
     hooks:
       - id: kube-linter
         files: ^flux/.*\.(yaml|yml)$
-        args: ["--config", ".kube-linter.yaml"]
+        # Directory lint so cross-object checks (e.g. ServiceAccount refs) see
+        # the full set. Filename batches miss siblings and false-fail.
+        args: ["--config", ".kube-linter.yaml", "flux/"]
+        pass_filenames: false
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1

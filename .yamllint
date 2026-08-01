@@ -1,6 +1,13 @@
 ---
 extends: default
 
+# Match pre-commit yamllint exclude (Helm templates are not valid YAML).
+# Skip local agent scratch / worktree dirs so `yamllint .` stays usable.
+ignore: |
+  helm/**/templates/*.yaml
+  .scratch/**
+  .worktrees/**
+
 rules:
   line-length:
     max: 256

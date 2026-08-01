@@ -93,6 +93,7 @@ done
 ## Implementation hint
 
 The bridge mismatch may be fixable via:
+
 1. An HTTPRoute rewrite rule on the kagent Gateway API route that rewrites
    `/.well-known/agent.json` → `/.well-known/agent-card.json`
 2. A LiteLLM bridge config option to set the well-known path

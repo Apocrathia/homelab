@@ -1,5 +1,6 @@
+---
 user_access:
-    access_as:
-        agent: {}
-    projects:
-        - id: Apocrathia/homelab
+  access_as:
+    agent: {}
+  projects:
+    - id: Apocrathia/homelab
