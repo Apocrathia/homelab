@@ -95,7 +95,7 @@ Upstream pattern:
 - [x] Soften root `flux-system` Kustomization: `prune: false` and
       `deletionPolicy: Orphan` in `gotk-sync.yaml` (live object). Reconcile /
       confirm before commenting out gotk.
-- [ ] Comment out `gotk-components.yaml` in `kustomization.yaml`. Controllers
+- [x] Comment out `gotk-components.yaml` in `kustomization.yaml`. Controllers
       remain in-cluster until adopted. **Do not** uncomment `flux-instance.yaml`
       while gotk-components is still listed.
 - [ ] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
