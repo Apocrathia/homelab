@@ -21,23 +21,45 @@ Overrides any conflicting pattern. Full lab constraints:
 | Discover is read-only       | `find-work` does not edit. Build only after a Launch brief is selected.                                                                                                                                                                                                                                                                                                                                                         |
 | Empty queue                 | Lap-report and **stop**. No busywork, no tight-loop find-work.                                                                                                                                                                                                                                                                                                                                                                  |
 | Stop-loss                   | 3 identical failures → stop and surface.                                                                                                                                                                                                                                                                                                                                                                                        |
-| Ship model (locked)         | Homelab uses [`draft-commit`](../skills/draft-commit/SKILL.md) + [`watch-mr`](../skills/watch-mr/SKILL.md) + [`run-loop`](../skills/run-loop/SKILL.md). Do **not** adopt upstream `ship-work`, `self-improve`, or `clock-out`. Operator commits; agents draft. See [Ship model](#ship-model) below.                                                                                                                             |
+| Ship model                  | Hybrid: unauthorized → [`draft-commit`](../skills/draft-commit/SKILL.md); authorized contribute → [`ship-work`](../skills/ship-work/SKILL.md) (commit → push → MR → [`watch-mr`](../skills/watch-mr/SKILL.md)). Full graph: [`self-improve`](../skills/self-improve/SKILL.md). Scout/AFK: [`run-loop`](../skills/run-loop/SKILL.md). Teardown: [`clock-out`](../skills/clock-out/SKILL.md). See [Ship model](#ship-model).      |
 
 ## Ship model
 
-Locked against prime-context's autonomous ship loop:
+Hybrid with prime-context's work graph. Authorization still gates commits
+([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)).
 
-| Upstream (prime-context)                 | Homelab                                                                                                                           |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `ship-work` (agent commits/pushes/PR)    | [`draft-commit`](../skills/draft-commit/SKILL.md) — propose only unless authorized                                                |
-| `self-improve` (autonomous orchestrator) | [`run-loop`](../skills/run-loop/SKILL.md) — scouts + briefs; same unattended gates                                                |
-| `watch-pr`                               | [`watch-mr`](../skills/watch-mr/SKILL.md) (GitLab)                                                                                |
-| `clock-out`                              | Not used — no automated teardown ceremony; remove worktrees explicitly when done                                                  |
-| Agent worktrees                          | **Required** for file edits — `.worktrees/<type>/<slug>` per [`worktrees.md`](../rules/worktrees.md). Isolation ≠ ship authority. |
+```mermaid
+flowchart TD
+  discover["`**find-work**<br/>read-only scouts → ranked backlog<br/>+ launch briefs`"]
+  discover --> pick["Pick a brief<br/>(operator or autonomous)"]
+  pick --> alignment["`**alignment** - if scope is fuzzy<br/>interview operator, narrow scope`"]
+  alignment --> execute["`**implement-change**<br/>open worktree, build via subagents`"]
+  execute --> review["`**review-loop**<br/>local verify until clean`"]
+  review --> recdocs["`**reconcile-docs**<br/>docs, plans, issues match the change`"]
+  recdocs --> recctx["`**reconcile-context**<br/>AGENTS.md + .agents/ match the repo`"]
+  recctx --> shipAuth{Ship authorized?}
+  shipAuth -->|no| draft["`**draft-commit**<br/>propose message + handoff`"]
+  shipAuth -->|yes| ship["`**ship-work**<br/>commit → push → MR → watch-mr`"]
+  ship --> retro["`**retrospective**<br/>mine git history, extract lessons`"]
+  retro --> cleanup["`**clock-out**<br/>teardown worktree`"]
 
-Revisit only with an explicit operator decision. `integrate-upstream` must leave
-the ship-model lock alone unless asked; it **should** consume upstream
-`worktrees.md` updates.
+  classDef skill fill:#e8f0fe,stroke:#4285f4,stroke-width:2px,color:#1a1a2e
+  class discover,alignment,execute,review,recdocs,recctx,draft,ship,retro,cleanup skill
+```
+
+| Skill                                             | Role                                                                                                                                          |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`ship-work`](../skills/ship-work/SKILL.md)       | Authorized contribute: commit → push → open MR → hard-gate [`watch-mr`](../skills/watch-mr/SKILL.md) until merged / dismissed / blocked       |
+| [`draft-commit`](../skills/draft-commit/SKILL.md) | Default when **not** authorized — propose Conventional Commit + optional draft MR body; may still ship when authorized (attended → `main` OK) |
+| [`self-improve`](../skills/self-improve/SKILL.md) | Full discover → execute → reconcile → ship → retro → clock-out orchestrator                                                                   |
+| [`run-loop`](../skills/run-loop/SKILL.md)         | Scout / cron / AFK brief walker (complementary; not the full contribute graph)                                                                |
+| [`watch-mr`](../skills/watch-mr/SKILL.md)         | GitLab MR babysit (threads, CI, conflicts); never merge                                                                                       |
+| [`clock-out`](../skills/clock-out/SKILL.md)       | Session teardown after merge                                                                                                                  |
+| Agent worktrees                                   | **Required** for file edits — `.worktrees/<type>/<slug>` per [`worktrees.md`](../rules/worktrees.md). Isolation ≠ ship authority.             |
+
+**Autonomous / self-improve:** never direct `main` — feature branch + MR; human
+merges. **Attended** soft-ship may still push `main` via `draft-commit` when
+explicitly that mode.
 
 ## State machine
 
@@ -54,12 +76,12 @@ find-work (read-only)
        file-issue                   → docs backlog (default for broad scout findings)
        autoresearch                 → idle-only tier 8 (docs-only)
   → (shipping path)
-       review-loop → reconcile-docs → reconcile-context → draft-commit
-       (optional retrospective → learning-loop / enforcement proposals)
-  → commit/ship per authorization (draft-commit;
-    constraints.md#commit-and-ship) + optional local apply to observe
+       review-loop → reconcile-docs → reconcile-context
+       → draft-commit (not authorized) | ship-work (authorized: MR + watch-mr)
+       → retrospective → clock-out (after merge)
+  → optional local apply to observe
   → Flux reconciles pushed truth
-  → lap-report → find-work again (or stop if empty)
+  → lap-report → find-work / self-improve again (or stop if empty)
 ```
 
 **Observation vs durable state:** a local apply is short-lived when it differs
@@ -74,8 +96,9 @@ Issue → plan → code (anti-rot: delete satisfied issues/plans; no `closed/`):
 gap → (alignment if fuzzy) → file-issue (docs/issues/)
   → plan authoring
   → implement-change (one MR / lap)
-  → reconcile-docs → reconcile-context → draft-commit → ship per
-    authorization (attended: push `main`; autonomous: MR — human merges)
+  → reconcile-docs → reconcile-context
+  → draft-commit (not authorized) | ship-work (authorized MR path)
+  → clock-out after merge
 ```
 
 Research (idle-only; writeups **persist** — not delete-on-ship):
@@ -84,8 +107,7 @@ Research (idle-only; writeups **persist** — not delete-on-ship):
 approved seed / Launch brief with full contract
   → autoresearch (bounded experiments)
   → docs/research/<slug>.md + experiments/<slug>/
-  → review-loop → draft-commit → ship per authorization (attended: push
-    `main`; autonomous: MR — human merges)
+  → review-loop → draft-commit | ship-work (per authorization)
   → recommendations → future file-issue (separate lap)
 ```
 
@@ -93,24 +115,27 @@ approved seed / Launch brief with full contract
 
 ### Available now
 
-| Fork                       | Invoke                                                                                                                                                                      |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                                                                                                                 |
-| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                                                                                               |
-| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                                                                                             |
-| Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT); `.cursor/plans/` OK for IDE drafts                                                                   |
-| Rank / pick next work      | [`find-work`](../skills/find-work/SKILL.md) (read-only)                                                                                                                     |
-| Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md) — selects briefs; walks 1→N; stop gates ironclad                                                                                  |
-| One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                                                                                   |
-| Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md) — threads / CI / conflicts; never merge                                                                                           |
-| Idle research (tier 8)     | [`autoresearch`](../skills/autoresearch/SKILL.md) → [`docs/research/`](../../docs/research/README.md)                                                                       |
-| Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                                                                                       |
-| Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                                                                                             |
-| Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (draft by default; ships when operator authorizes — [`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)) |
-| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                                                                                                                |
-| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                                                                                                            |
-| Doc audits                 | `documentation-reviewer`                                                                                                                                                    |
-| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                                                                                         |
+| Fork                       | Invoke                                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Fuzzy scope / HITL         | [`alignment`](../skills/alignment/SKILL.md)                                                                    |
+| File / update / close gaps | [`file-issue`](../skills/file-issue/SKILL.md)                                                                  |
+| Context / link drift       | [`reconcile-context`](../skills/reconcile-context/SKILL.md) + `context-steward`                                |
+| Plan authoring             | `project-planner` → [`docs/plans/`](../../docs/plans/README.md) (SoT); `.cursor/plans/` OK for IDE drafts      |
+| Rank / pick next work      | [`find-work`](../skills/find-work/SKILL.md) (read-only)                                                        |
+| Constant / unattended loop | [`run-loop`](../skills/run-loop/SKILL.md) — scout/AFK brief walker; stop gates ironclad                        |
+| Full contribute graph      | [`self-improve`](../skills/self-improve/SKILL.md) — find → execute → reconcile → ship-work → retro → clock-out |
+| One Launch-brief lap       | [`implement-change`](../skills/implement-change/SKILL.md)                                                      |
+| Babysit open MR            | [`watch-mr`](../skills/watch-mr/SKILL.md) — threads / CI / conflicts; never merge                              |
+| Idle research (tier 8)     | [`autoresearch`](../skills/autoresearch/SKILL.md) → [`docs/research/`](../../docs/research/README.md)          |
+| Docs / issue / plan close  | [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)                                                          |
+| Local verify before ship   | [`review-loop`](../skills/review-loop/SKILL.md)                                                                |
+| Commit / MR handoff        | [`draft-commit`](../skills/draft-commit/SKILL.md) (default when not authorized)                                |
+| Authorized ship (MR)       | [`ship-work`](../skills/ship-work/SKILL.md) — commit → push → MR → watch-mr                                    |
+| Post-merge teardown        | [`clock-out`](../skills/clock-out/SKILL.md)                                                                    |
+| Manifest edit / verify     | `manifest-implementer` / `manifest-verifier`                                                                   |
+| Ops / security signals     | `site-reliability-engineer` / `security-analyst`                                                               |
+| Doc audits                 | `documentation-reviewer`                                                                                       |
+| Domain deploy / restore    | `helm-deployment`, `mcp-deployment`, restore skills                                                            |
 
 Lap reports: `.scratch/laps/` (see that dir’s README; ephemeral; Discord
 notify-only, not SoT). Hot-MR locks: `.scratch/watch-mr/locks/` (skip if another
@@ -118,9 +143,9 @@ session owns the MR). Research sandbox: `.scratch/research/<slug>/` (gitignored;
 default experiment in-scope).
 
 Research laps are self-contained: experiment locally, ship
-`docs/research/<slug>.md` + experiment log via draft-commit (ship per
+`docs/research/<slug>.md` + experiment log via draft-commit or ship-work (per
 authorization); recommendations become future issues, not GitOps changes.
-Never auto-commit.
+Never auto-merge.
 
 ## Ranking (debt-first)
 
@@ -186,25 +211,28 @@ slices (~1000 absolute changed lines / MR). One implement lap = one MR.
 
 ## Related skills
 
-| Skill / persona                                             | Role in the loop                                                                                                                     |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs                                                                                              |
-| [`run-loop`](../skills/run-loop/SKILL.md)                   | Unattended/constant loop; select brief → fork                                                                                        |
-| [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)                                                                                            |
-| [`autoresearch`](../skills/autoresearch/SKILL.md)           | Idle tier-8 research; docs-only ship                                                                                                 |
-| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`                                                                                                  |
-| [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff                                                                                         |
-| [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans                                                                                        |
-| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves                                                                                     |
-| [`review-loop`](../skills/review-loop/SKILL.md)             | Local gates before ship                                                                                                              |
-| [`draft-commit`](../skills/draft-commit/SKILL.md)           | Commit/MR draft; stage only if asked; ships per authorization ([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)) |
-| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                                                                                                         |
+| Skill / persona                                             | Role in the loop                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [`find-work`](../skills/find-work/SKILL.md)                 | Read-only scouts → ranked Launch briefs                                        |
+| [`run-loop`](../skills/run-loop/SKILL.md)                   | Scout/cron/AFK brief walker                                                    |
+| [`self-improve`](../skills/self-improve/SKILL.md)           | Full contribute work graph                                                     |
+| [`watch-mr`](../skills/watch-mr/SKILL.md)                   | Maintain open MR (threads, CI, conflicts)                                      |
+| [`autoresearch`](../skills/autoresearch/SKILL.md)           | Idle tier-8 research; docs-only ship                                           |
+| [`file-issue`](../skills/file-issue/SKILL.md)               | Backlog ledger under `docs/issues/`                                            |
+| [`implement-change`](../skills/implement-change/SKILL.md)   | One lap: plan → implement → verify → handoff                                   |
+| [`reconcile-docs`](../skills/reconcile-docs/SKILL.md)       | Behavior docs + delete satisfied issues/plans                                  |
+| [`reconcile-context`](../skills/reconcile-context/SKILL.md) | Agent context / link health after behavior moves                               |
+| [`review-loop`](../skills/review-loop/SKILL.md)             | Local gates before ship                                                        |
+| [`draft-commit`](../skills/draft-commit/SKILL.md)           | Propose-only handoff when not authorized; attended `main` ship when authorized |
+| [`ship-work`](../skills/ship-work/SKILL.md)                 | Authorized MR contribute path                                                  |
+| [`clock-out`](../skills/clock-out/SKILL.md)                 | Post-merge worktree teardown                                                   |
+| [`alignment`](../skills/alignment/SKILL.md)                 | Fuzzy scope; skip unattended                                                   |
 
 ## Out of scope
 
 Permanent — not deferred trackers.
 
-- Auto-commit / auto-push / auto-merge
+- Auto-merge / auto-approve MRs (human merges)
 - Auto-allow protected paths or cluster mutation
 - Unbounded overnight research without budgets
 - Discord as system of record

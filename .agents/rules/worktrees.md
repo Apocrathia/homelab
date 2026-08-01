@@ -7,10 +7,11 @@ alwaysApply: true
 
 The workspace root checkout is for the human. Agents do not edit files there.
 
-Ship stays operator-gated (`draft-commit` / watch-mr / run-loop). Worktrees
-isolate checkouts — they do **not** authorize commit, push, or
-`ship-work` / `clock-out`. See
-[`.agents/context/development-loop.md`](../context/development-loop.md#ship-model).
+Ship stays authorization-gated ([`constraints.md#commit-and-ship`](../context/constraints.md#commit-and-ship)).
+Worktrees isolate checkouts — they do **not** by themselves authorize commit,
+push, or merge. Authorized contribute uses [`ship-work`](../skills/ship-work/SKILL.md);
+unauthorized handoff uses [`draft-commit`](../skills/draft-commit/SKILL.md).
+See [`.agents/context/development-loop.md`](../context/development-loop.md#ship-model).
 
 ## Primary repo root vs current worktree
 
@@ -103,13 +104,12 @@ plan numbers or status.
 
 ## Cleanup
 
+After merge (or when abandoning the lap), tear down via
+[`clock-out`](../skills/clock-out/SKILL.md) (session worktree) or
+`git worktree remove` + delete the branch. Never `rm -rf` a worktree path.
 Also run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) before
-creating a **new** worktree (step 4 under Before any file change).
-
-After merge (or when abandoning the lap), `git worktree remove` the tree and
-delete the branch. Never `rm -rf` a worktree path. There is no `clock-out`
-ceremony — cleanup is explicit when the operator (or an authorized lap) is done.
-Bulk / inventory cleanup uses the same skill.
+creating a **new** worktree (step 4 under Before any file change). Bulk /
+inventory cleanup uses that skill.
 
 ## Exceptions
 

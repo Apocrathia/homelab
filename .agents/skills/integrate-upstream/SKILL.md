@@ -27,8 +27,8 @@ Homelab notes:
 - Edit in a git worktree on a `chore/integrate-upstream-*` branch under
   `.worktrees/` ([`worktrees.md`](../../rules/worktrees.md)). Do not edit the
   workspace root checkout.
-- Ship via [`draft-commit`](../draft-commit/SKILL.md) (operator commits) — not
-  upstream `ship-work`.
+- Ship via [`draft-commit`](../draft-commit/SKILL.md) (operator commits) when
+  unauthorized; authorized contribute uses [`ship-work`](../ship-work/SKILL.md).
 - Do **not** write an `.agents/upstream-ref` file. If a prior sync revision is
   unknown, degrade to 2-way diff and say so.
 
@@ -111,10 +111,11 @@ Homelab-only (leave alone): `security.md`, `ponytail.md`, `helm-deployment`,
 `mcp-deployment`, restore skills, `draft-commit`, `watch-mr`, `run-loop`, all
 personas, domain rules (`flux.md`, `gitops.md`, `helm.md`, `talos.md`, etc.).
 
-Do **not** adopt upstream `ship-work` / `self-improve` / `clock-out` unless the
-operator explicitly asks — ship stays operator-gated
-([`development-loop.md`](../../context/development-loop.md#ship-model)).
-Do adopt / reconcile upstream `worktrees.md` (homelab requires agent worktrees).
+Adopt / reconcile upstream `ship-work` / `self-improve` / `clock-out` with
+GitLab adaptations (`watch-mr`, no direct `main` on autonomous laps) per
+[`development-loop.md#ship-model`](../../context/development-loop.md#ship-model).
+Keep `draft-commit` as the unauthorized default. Do adopt / reconcile upstream
+`worktrees.md` (homelab requires agent worktrees).
 
 ### 4–6. Diff and reconcile
 

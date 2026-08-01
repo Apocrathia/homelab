@@ -17,11 +17,15 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
 
 ## Commit and ship
 
-- **Default:** agents do not commit or push. The operator ships.
+- **Default:** agents do not commit or push. Use
+  [`draft-commit`](../skills/draft-commit/SKILL.md) for propose-only handoff.
 - **Authorization:** soft ship language ("ship it", "LGTM", "looks good", "go
-  ahead") **or** explicit `commit` / `push` authorizes shipping for that lap.
-  Authorization on a different topic earlier in the session does not carry
-  forward.
+  ahead") **or** explicit `commit` / `push` / `/ship-work` / `/self-improve`
+  authorizes shipping for that lap. Authorization on a different topic earlier
+  in the session does not carry forward.
+- **Authorized contribute path:** [`ship-work`](../skills/ship-work/SKILL.md)
+  (commit → push → MR → [`watch-mr`](../skills/watch-mr/SKILL.md)). Autonomous
+  / self-improve never direct `main` — feature branch + MR; human merges.
 - **Hooks always run.** Never bypass with `--no-verify` or equivalent, even
   when authorized.
 - **Hard stops even when authorized:**
@@ -29,6 +33,7 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
   - Force-push to `main` / `master`.
   - Amending someone else's commit, or a commit already pushed.
   - Staging clearly unrelated WIP.
+  - Merge or approve an MR without an explicit operator ask.
 - **Advisory, not a stop:** messy or incomplete-looking diffs — warn, proceed
   if authorized.
 - **Attribution (soft):** prefer
@@ -38,9 +43,10 @@ Non-negotiables for every harness. Detail for Cursor also lives in always-on
   the diverged-main stash/rebase/push recipe, live once in
   [`development-loop.md`](./development-loop.md) and
   [`draft-commit`](../skills/draft-commit/SKILL.md) — do not duplicate here.
-- **Ship model:** do not adopt upstream `ship-work` / `self-improve` /
-  `clock-out`. Homelab stays on draft-commit + watch-mr + run-loop
-  ([`development-loop.md`](./development-loop.md#ship-model)).
+- **Ship model:** hybrid work graph — see
+  [`development-loop.md#ship-model`](./development-loop.md#ship-model)
+  (`ship-work` / `self-improve` / `clock-out` adopted; `draft-commit` remains
+  the unauthorized default; `run-loop` remains scout/AFK).
 
 ## GitOps and platform choices
 
