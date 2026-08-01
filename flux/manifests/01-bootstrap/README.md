@@ -38,7 +38,9 @@ field names and verification commands.
 
 - A Kubernetes cluster with Cilium CNI.
 - Read access to this Git repository.
-- A 1Password account and Connect deployment.
+- A 1Password account and Connect deployment (Connect credentials are still
+  created manually today; `op`-driven bootstrap is tracked in
+  [`docs/issues/onepassword-bootstrap-op-cli.md`](../../../docs/issues/onepassword-bootstrap-op-cli.md)).
 - Outbound access to configured Helm and container registries.
 
 ## Security
