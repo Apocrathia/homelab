@@ -20,6 +20,12 @@ custom_providers:
   - name: litellm
     base_url: http://litellm.litellm.svc.cluster.local:4000/v1
     key_env: OPENAI_API_KEY
+    # Curated catalog for the dashboard picker — skip live /v1/models dump.
+    discover_models: false
+    models:
+      - glm-5.2-prime
+      - kimi-k3-prime
+      - llama3.1-8b-prime
 
 model_aliases:
   hard:
