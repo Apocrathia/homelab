@@ -47,26 +47,36 @@ Manages the [Flux Operator](https://fluxoperator.dev/) via Helm (not Kustomize
 
 - **HelmRepository**: OCI source `oci://ghcr.io/controlplaneio-fluxcd/charts`
 - **HelmRelease**: chart `flux-operator` with values inline (lab pattern)
-- **Secrets**: `OnePasswordItem` `flux-operator-secrets` (`secret.yaml`) for
-  OIDC client id/secret
+- **Secrets**: `OnePasswordItem` `flux-operator-secrets` (`secret.yaml`) —
+  shared Secret for Status UI OIDC (`oidc-client-id`, `oidc-client-secret`)
+  and GitLab SSH sync (`identity`, `known_hosts`). Phase B ResourceSet PAT
+  stays a separate item later.
 - **Web RBAC**: `ClusterRoleBinding` `flux-web-admins` maps Authentik group
   `flux-admins` → `flux-web-admin`
 - **Authentik (double login)**:
   - Outer: proxy app + outpost at `https://flux.gateway.services.apocrathia.com`
   - Inner: OIDC app `flux-operator-oidc` (library-hidden); Flux Status SSO +
     K8s impersonation. Only `flux-admins` pass CEL validation.
-
-No `FluxInstance` yet — gotk still owns the controllers. The operator runs
-alongside until cutover.
+- **FluxInstance** (`flux-instance.yaml`): staged in-tree, commented out of
+  `kustomization.yaml` until gotk is dropped. Cutover is comment/uncomment
+  toggles in that file (see header comments). `spec.sync.pullSecret` is
+  `flux-operator-secrets` (1Password), not the bootstrap-created
+  `flux-system` Secret.
 
 #### Bootstrap / first-time setup
 
 1. Bootstrap classic Flux (gotk) so `source-controller`, `kustomize-controller`,
    and `helm-controller` are running and syncing this repo (existing
    `gotk-components.yaml` + `gotk-sync.yaml` path).
-2. Create 1Password item `flux-operator-secrets` in vault **Secrets** with
-   fields `oidc-client-id` and `oidc-client-secret` (placeholders OK until
-   Authentik instantiates the OIDC provider).
+2. Create 1Password item `flux-operator-secrets` in vault **Secrets** with:
+   - `oidc-client-id` / `oidc-client-secret` (placeholders OK until Authentik
+     instantiates the OIDC provider)
+   - `identity` / `known_hosts` — GitLab deploy key (SSH) for
+     `FluxInstance` sync. Labels become Secret keys 1:1; Flux requires
+     the underscore form `known_hosts` (not `known-hosts`). Copy from the
+     live bootstrap Secret before cutover:
+     `kubectl get secret flux-system -n flux-system -o jsonpath='{.data.identity}' | base64 -d`
+     (same for `known_hosts`; optional `identity.pub`).
 3. Push this directory. After `Kustomization/flux-system` reconciles:
    ```bash
    flux get helmrelease flux-operator -n flux-system
@@ -78,10 +88,13 @@ alongside until cutover.
 5. Confirm double login at `https://flux.gateway.services.apocrathia.com` —
    Authentik proxy, then Flux OIDC. Profile → Identity should show SSO and
    Kubernetes RBAC enabled.
-6. Only after the operator is healthy: soften root KS prune, remove gotk from
-   desired state, then apply a `FluxInstance` (see
-   `docs/plans/flux-operator-migration.md`). Do **not** create `FluxInstance`
-   while gotk is still applied to the same controller Deployments.
+6. Before cutover: confirm `flux-operator-secrets` has `identity` +
+   `known_hosts` and the OnePasswordItem Secret is synced. Then follow
+   `docs/plans/flux-operator-migration.md` / comments in `kustomization.yaml`:
+   soften root KS prune/Orphan in `gotk-sync.yaml`, comment out
+   `gotk-components.yaml`, uncomment `flux-instance.yaml`, then comment out
+   `gotk-sync.yaml`. Do **not** enable `FluxInstance` while gotk-components
+   is still listed.
 
 Do not use Kustomize `helmCharts` for this install — it fails in-cluster with
 `must specify --enable-helm`.
@@ -183,7 +196,9 @@ The Flux controllers run with minimal permissions:
 
 ### Secret Management
 
-- **Git Access**: SSH key stored in `flux-system` secret
+- **Git Access**: SSH deploy key in `flux-operator-secrets` (`identity`,
+  `known_hosts`) via 1Password Connect; bootstrap Secret `flux-system` is
+  legacy until cutover
 - **1Password Integration**: External secrets managed via 1Password Connect
 - **In-Cluster Secrets**: Managed through Git with encryption where needed
 

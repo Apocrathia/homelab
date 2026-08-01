@@ -1,8 +1,8 @@
 ---
 title: "Migrate Flux to Operator + GitLab MR ResourceSet pilot"
-status: draft
+status: active
 found_at: 2026-07-26
-updated_at: 2026-07-26
+updated_at: 2026-07-30
 related_issue: docs/issues/flux-operator-migration.md
 area: flux
 ---
@@ -34,7 +34,7 @@ Upstream pattern:
 
 - Multi-app preview platform or Renovate auto-select
 - Shadowing live object names/namespaces from MR tips
-- OCI sync, Terraform bootstrap module, auth model changes
+- OCI sync, Terraform bootstrap module
 - Preview Gateway / DNS polish beyond whatever hypermind needs to come Ready
 - Cluster mutate or git commit without operator authorization
 
@@ -46,18 +46,35 @@ Upstream pattern:
   Deployments; no ResourceSet pilot until `FluxInstance` is Ready.
 - Operator bootstrap — **GitOps `HelmRelease` + OCI `HelmRepository` under
   `flux-system/`** (after classic gotk bootstrap). Not Kustomize `helmCharts`
-  (kustomize-controller lacks `--enable-helm`). No `FluxInstance` until gotk is
-  out of desired state.
+  (kustomize-controller lacks `--enable-helm`). No live `FluxInstance` until
+  gotk is out of desired state.
+- Cutover mechanism — **kustomization resource toggles** — keep manifests in
+  tree; comment/uncomment lines in `flux-system/kustomization.yaml` (gotk out,
+  `flux-instance.yaml` in). `FluxInstance` manifest is present but commented
+  out until cutover.
 - Root KS safety — **`prune: false` + `deletionPolicy: Orphan` before emptying
-  gotk** — prior KS loss with prune-on cascaded into restore hell.
+  gotk** — prior KS loss with prune-on cascaded into restore hell. Soften the
+  live gotk-sync KS first; `FluxInstance` ships the same on its generated KS
+  via `spec.kustomize.patches`.
+- Status UI auth — **Authentik double login** (proxy + native OIDC) with
+  `flux-admins` only; OIDC + Git SSH both live in `flux-operator-secrets`.
 - Preview shape — **side-by-side canary only** — not live object identity.
 - Canary — **hypermind** — `generic-app` HelmRelease, no DB, low blast radius.
 - MR trigger — **manual label `deploy/flux-preview` only** — opt-in; predictable
   teardown.
 - Preview namespace — **`hypermind-preview`** — namespaced SA; admin RoleBinding
   in that ns only.
-- Secrets — **1Password Item → GitLab PAT Secret** — read MR/repo; widen only if
-  MR-comment provider needs it. No secrets in plan bodies.
+- Secrets —
+  - **Git sync + Status UI OIDC** — 1Password item `flux-operator-secrets`
+    → Secret of the same name. Fields: `oidc-client-id`, `oidc-client-secret`,
+    `identity`, `known_hosts` (Flux SSH key name is underscore
+    `known_hosts`, not kebab `known-hosts`).
+    `FluxInstance.spec.sync.pullSecret: flux-operator-secrets`.
+    Do **not** rely on the bootstrap-created `flux-system` Secret after
+    cutover.
+  - **Phase B GitLab PAT** — separate 1Password Item into
+    `hypermind-preview` at implement time (API token for MR polling, not
+    the deploy key).
 - Protected path — **`flux/manifests/01-bootstrap/**` needs explicit confirm\*\*
   at implement time.
 
@@ -65,22 +82,29 @@ Upstream pattern:
 
 ### Phase A — Operator cutover
 
-- [ ] Ship operator-only GitOps (`HelmRepository` + `HelmRelease` under
-      `flux-system/`). Leave gotk alone; no `FluxInstance` yet. Confirm HR and
-      operator Deployment Ready.
-- [ ] On root `flux-system` Kustomization: set `prune: false` and
-      `deletionPolicy: Orphan` (or equivalent). Reconcile / confirm before
-      emptying gotk desired state.
-- [ ] Remove `gotk-components.yaml` from bootstrap kustomization / Git.
-      Controllers remain in-cluster until adopted. **Do not** apply
-      `FluxInstance` while gotk is still applied to the same Deployments.
-- [ ] Apply `FluxInstance` `flux` in `flux-system` with `spec.sync` mirroring
-      current gotk-sync (GitLab SSH, `main`, path `./flux/manifests/01-bootstrap`,
-      secret `flux-system`). Operator adopts via SSA.
-- [ ] Remove `gotk-sync.yaml`; sync owned by the instance.
-- [ ] Update bootstrap READMEs (break-glass + GitOps steady state).
+- [x] Ship operator-only GitOps (`HelmRepository` + `HelmRelease` under
+      `flux-system/`). Leave gotk alone; no live `FluxInstance` yet. Confirm HR
+      and operator Deployment Ready.
+- [x] Status UI double-login SSO (Authentik proxy + OIDC) + `flux-admins` RBAC + `flux-operator-secrets` OIDC fields.
+- [x] Stage `flux-instance.yaml` in-tree; keep commented out in
+      `kustomization.yaml` until gotk is dropped. `pullSecret` →
+      `flux-operator-secrets` (SSH via 1Password).
+- [ ] Populate `identity` + `known_hosts` on the 1Password item
+      `flux-operator-secrets` (deploy key; confirm Secret sync) before enabling
+      the instance.
+- [ ] Soften root `flux-system` Kustomization: `prune: false` and
+      `deletionPolicy: Orphan` in `gotk-sync.yaml` (live object). Reconcile /
+      confirm before commenting out gotk.
+- [ ] Comment out `gotk-components.yaml` in `kustomization.yaml`. Controllers
+      remain in-cluster until adopted. **Do not** uncomment `flux-instance.yaml`
+      while gotk-components is still listed.
+- [ ] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
+      sync mirrors gotk-sync (GitLab SSH, `main`, path
+      `./flux/manifests/01-bootstrap`, pullSecret `flux-operator-secrets`).
+- [ ] Comment out `gotk-sync.yaml`; sync owned by the instance.
+- [ ] Update bootstrap READMEs for steady state after cutover.
 - [ ] Revisit `docs/issues/trivy-scan-noise-deferred.md` gotk CRITICAL bucket
-      once the vendor file is gone.
+      once the vendor file is unreferenced / gone.
 
 **Phase A gate (must pass before Phase B):** Flux MCP `get_flux_instance`
 Ready / Installed; `flux check` OK; controllers Ready; no gotk reference in
@@ -132,8 +156,7 @@ Phase B:
   recreate pain after KS loss.
 - Implementer: confirm protected-path edits before touching
   `flux/manifests/01-bootstrap/**`. Planning is not authorize-to-mutate.
-- Execution-time opens: exact operator chart/version pin; 1Password Item
-  name; whether webhook + MR-comment providers ship in the first B lap or
-  immediately after the first successful labeled deploy.
+- Execution-time opens: whether webhook + MR-comment providers ship in the
+  first B lap or immediately after the first successful labeled deploy.
 - Reference:
   https://fluxoperator.dev/docs/resourcesets/gitlab-merge-requests/

@@ -24,16 +24,18 @@ because editing that file by hand is a protected-path trap.
 
 Desired end state:
 
-- Flux Operator installed once via break-glass (manual Helm/manifest apply —
-  same class of bootstrap we already do by hand).
-- Operator then GitOps-owned (`HelmRelease` / `ResourceSet` in-repo).
+- Flux Operator GitOps-owned (`HelmRepository` + `HelmRelease` under
+  `flux-system/`; Status UI SSO already live).
 - A `FluxInstance` named `flux` in `flux-system` owns controller lifecycle and
   sync (`FluxInstance.spec.sync` mirrors current `gotk-sync.yaml`: GitLab SSH,
-  `main`, path `./flux/manifests/01-bootstrap`, existing `flux-system` secret).
-- Vendored `gotk-components.yaml` and classic `gotk-sync.yaml` are gone from
-  Git once the CR owns those objects.
-- No long-lived dual ownership: `FluxInstance` is not created while gotk is
-  still being applied to the same controller Deployments.
+  `main`, path `./flux/manifests/01-bootstrap`, pullSecret
+  `flux-operator-secrets` from 1Password — not the bootstrap-created
+  `flux-system` Secret).
+- Cutover via `kustomization.yaml` resource toggles (gotk commented out,
+  `flux-instance.yaml` uncommented); manifests stay in tree until post-cutover
+  cleanup.
+- No long-lived dual ownership: do not enable `FluxInstance` while
+  gotk-components is still listed in the kustomization.
 
 ## Acceptance
 
@@ -41,12 +43,14 @@ Desired end state:
   operator (Flux MCP `get_flux_instance` succeeds).
 - `gotk-components.yaml` is not a resource in the bootstrap kustomization;
   controllers remain Ready under operator ownership.
-- Root sync matches today’s contract (same Git URL, branch, path, pull secret
-  name) via `FluxInstance.spec.sync`, not a separate hand-edited gotk-sync.
-- Operator chart is reconciled from Git after the initial break-glass install.
-- Bootstrap docs describe break-glass install + GitOps steady state; Trivy
-  gotk deferral in `trivy-scan-noise-deferred.md` is revisited once the vendor
-  file is gone.
+- Root sync matches today’s contract (same Git URL, branch, path) via
+  `FluxInstance.spec.sync`, with pull credentials from 1Password
+  (`flux-operator-secrets`: `identity` + `known_hosts`), not a separate
+  hand-edited gotk-sync / bootstrap Secret.
+- Operator chart is reconciled from Git (HelmRelease).
+- Bootstrap docs describe cutover toggles + GitOps steady state; Trivy gotk
+  deferral in `trivy-scan-noise-deferred.md` is revisited once the vendor
+  file is unreferenced / gone.
 
 ## Feedback loop
 
@@ -64,17 +68,15 @@ Desired end state:
 
 Phased strict handoff (detail belongs in a plan, not here):
 
-1. Break-glass install operator; leave gotk alone (true parallel).
-2. GitOps-adopt the operator only; still no `FluxInstance`.
-3. Set root `flux-system` Kustomization `prune: false` (and consider
-   `deletionPolicy: Orphan`) **before** removing gotk from desired state so
-   controller objects are not GC’d if the KS is deleted or emptied.
-4. Remove `gotk-components` from Git; controllers remain in-cluster.
-5. Apply `FluxInstance` (with sync mirroring gotk-sync); operator adopts via
-   SSA.
-6. Remove `gotk-sync.yaml`; tidy docs / Trivy deferral.
+1. GitOps operator HelmRelease (done); Status UI SSO (done); stage
+   `flux-instance.yaml` commented out of kustomization (done).
+2. Soften root `flux-system` KS `prune: false` + `deletionPolicy: Orphan` in
+   `gotk-sync.yaml` **before** commenting out gotk.
+3. Comment out `gotk-components.yaml`; controllers remain in-cluster.
+4. Uncomment `flux-instance.yaml`; operator adopts via SSA.
+5. Comment out `gotk-sync.yaml`; tidy docs / Trivy deferral.
 
-Do not apply `FluxInstance` while kustomize-controller is still applying
+Do not enable `FluxInstance` while kustomize-controller is still applying
 gotk to the same Deployments — the operator takes field ownership and that
 overlap is contention, not a soft parallel.
 
