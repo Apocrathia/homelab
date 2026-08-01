@@ -1,0 +1,220 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: uptime-alerts
+  namespace: prometheus-system
+spec:
+  title: Uptime
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: gatus
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  datasources:
+    - datasourceName: Prometheus
+      inputName: DS_PROMETHEUS
+  grafanaCom:
+    id: 24379
+  folder: Uptime
+
+---
+# Firing-only Discord for uptime (no resolve noise).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: discord-uptime
+  namespace: prometheus-system
+spec:
+  name: Discord - Uptime
+  type: discord
+  disableResolveMessage: true
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  settings:
+    title: "Gatus"
+    message: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+  valuesFrom:
+    - targetPath: url
+      valueFrom:
+        secretKeyRef:
+          name: grafana-secrets
+          key: discord-webhook-url
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: gatus-endpoints
+  namespace: prometheus-system
+spec:
+  name: Gatus Endpoints
+  folderRef: uptime-alerts
+  interval: 1m
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: gatus-endpoint-down
+      title: Gatus endpoint down
+      condition: C
+      for: 5m
+      execErrState: Alerting
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            datasource:
+              type: prometheus
+              uid: prometheus
+            expr: gatus_results_endpoint_success
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: lt
+                  params:
+                    - 1
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "{{ $labels.group }}/{{ $labels.name }} is down"
+        description: >-
+          Gatus probe for {{ $labels.group }}/{{ $labels.name }}
+          ({{ $labels.type }}) has been failing for 5 minutes.
+      labels:
+        severity: warning
+        team: platform
+
+    - uid: gatus-endpoint-down-prolonged
+      title: Gatus endpoint down prolonged
+      condition: C
+      for: 1h
+      execErrState: Alerting
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: prometheus
+          model:
+            datasource:
+              type: prometheus
+              uid: prometheus
+            expr: gatus_results_endpoint_success
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 300
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: lt
+                  params:
+                    - 1
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "{{ $labels.group }}/{{ $labels.name }} still down after 1h"
+        description: >-
+          Gatus probe for {{ $labels.group }}/{{ $labels.name }}
+          ({{ $labels.type }}) has been failing for 1 hour — investigate.
+      labels:
+        severity: critical
+        team: platform
+        agent_invoke: "true"
+
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: gatus-endpoints-route
+  namespace: prometheus-system
+  labels:
+    grafana.alerting/policy: default
+spec:
+  receiver: Discord - Uptime
+  object_matchers:
+    - - alertname
+      - "="
+      - Gatus endpoint down

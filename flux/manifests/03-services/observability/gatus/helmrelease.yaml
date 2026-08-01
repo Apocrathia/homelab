@@ -1,0 +1,94 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gatus
+  namespace: gatus
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: gatus-sidecar
+      # renovate: datasource=docker depName=ghcr.io/home-operations/charts/gatus-sidecar
+      version: "0.4.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tuppr
+        namespace: flux-system
+  values:
+    # Keep Service DNS as gatus.gatus.svc (Authentik internal_host).
+    fullnameOverride: gatus
+
+    replicaCount: 1
+
+    # Persistence off — history lives in CNPG; sidecar config is emptyDir.
+    strategy:
+      type: RollingUpdate
+
+    persistence:
+      enabled: false
+
+    httpRoute:
+      enabled: false
+
+    ingress:
+      enabled: false
+
+    config:
+      existingConfigMap: gatus-config
+      items:
+        - key: config.yaml
+          path: config.yaml
+
+    gatus:
+      delayStartSeconds: "10"
+      extraEnv:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: gatus-secrets
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gatus-secrets
+              key: password
+
+    sidecar:
+      enabled: true
+      # Watch all namespaces; apps opt in via annotation.
+      namespace: ""
+      defaultInterval: 1m
+      kinds:
+        service:
+          enable: true
+          auto: false
+        httproute:
+          enable: false
+          auto: false
+        ingress:
+          enable: false
+          auto: false
+        ingressroute:
+          enable: false
+          auto: false
+
+    rbac:
+      create: true
+      type: ClusterRole
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+
+    monitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 30s
+        scrapeTimeout: 10s
+        path: /metrics
+        labels:
+          release: kube-prometheus-stack

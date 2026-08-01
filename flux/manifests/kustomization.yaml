@@ -27,6 +27,7 @@ resources:
   - 03-services/kyverno/flux-kustomization.yaml
   - 03-services/leaderworkerset/flux-kustomization.yaml
   - 03-services/observability/flux-kustomization.yaml
+  - 03-services/observability/gatus/flux-kustomization.yaml
   - 03-services/postgresql/flux-kustomization.yaml
   - 03-services/renovate/flux-kustomization.yaml
   - 03-services/tailscale/flux-kustomization.yaml
