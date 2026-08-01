@@ -7,18 +7,27 @@ metadata:
   namespace: {{ .Values.app.namespace | default .Values.app.name }}
   labels:
     app: {{ .Values.app.name }}
-  {{- if $gatus.enabled }}
+  {{- if and (hasKey $gatus "enabled") $gatus.enabled }}
   {{- $ns := .Values.app.namespace | default .Values.app.name }}
   {{- $port := .Values.app.service.port | default 80 }}
-  {{- $url := $gatus.url | default (printf "http://%s.%s.svc:%v" .Values.app.name $ns $port) }}
-  {{- if $gatus.path }}
+  {{- $url := printf "http://%s.%s.svc:%v" .Values.app.name $ns $port }}
+  {{- if and (hasKey $gatus "url") (ne $gatus.url "") }}
+  {{- $url = $gatus.url }}
+  {{- end }}
+  {{- if and (hasKey $gatus "path") (ne $gatus.path "") }}
   {{- $url = printf "%s%s" $url $gatus.path }}
   {{- end }}
-  {{- $group := $gatus.group | default .Values.app.name }}
-  {{- $conditions := $gatus.conditions | default (list "[STATUS] == 200") }}
+  {{- $group := .Values.app.name }}
+  {{- if and (hasKey $gatus "group") (ne $gatus.group "") }}
+  {{- $group = $gatus.group }}
+  {{- end }}
+  {{- $conditions := list "[STATUS] == 200" }}
+  {{- if hasKey $gatus "conditions" }}
+  {{- $conditions = $gatus.conditions }}
+  {{- end }}
   {{- $endpoint := dict "group" $group "url" $url "conditions" $conditions }}
-  {{- with $gatus.interval }}
-  {{- $_ := set $endpoint "interval" . }}
+  {{- if and (hasKey $gatus "interval") (ne $gatus.interval "") }}
+  {{- $_ := set $endpoint "interval" $gatus.interval }}
   {{- end }}
   {{- $endpoint = mergeOverwrite $endpoint ($gatus.endpoint | default dict) }}
   annotations:
