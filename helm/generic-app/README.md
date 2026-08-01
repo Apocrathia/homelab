@@ -1066,22 +1066,30 @@ tcproute:
 
 ### Gatus Uptime Probe
 
-Opt-in annotations for
+Annotations for
 [gatus-sidecar](https://github.com/home-operations/gatus-sidecar) on the
-ClusterIP Service. Probes stay in-cluster (bypass Authentik). Default off.
+ClusterIP Service. Probes stay in-cluster (bypass Authentik). **Default on**
+(chart ≥ 0.0.76).
 
 ```yaml
 gatus:
-  enabled: true
+  # enabled: true   # chart default — set false to opt out
   group: demo # defaults to app.name when empty
   # url defaults to http://{{ app.name }}.{{ namespace }}.svc:{{ service.port }}
-  # path: /health
+  path: /health # set when / is not a valid health check
   # interval: 1m
   conditions:
     - "[STATUS] == 200"
   # endpoint: # merge escape hatch for headers, client, etc.
   #   headers:
   #     Authorization: "Bearer …"
+```
+
+**Opt out** when the workload has no useful HTTP surface (or is too noisy):
+
+```yaml
+gatus:
+  enabled: false
 ```
 
 Without an explicit `url`, the chart forces `http://` so status conditions

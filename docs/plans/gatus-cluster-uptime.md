@@ -34,12 +34,12 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 
 **Phases (post-ship):**
 
-| Phase | Scope                                             | Status                                                                      |
-| ----- | ------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1     | Gatus + chart `gatus:` (default false) + demo-app | Done                                                                        |
-| 2     | First wave on selected generic-app apps           | [`gatus-annotate-app-wave`](../issues/gatus-annotate-app-wave.md)           |
-| 3     | Flip chart default to `enabled: true` (opt-out)   | [`gatus-generic-app-default-on`](../issues/gatus-generic-app-default-on.md) |
-| 4     | Non-generic-app Helm gaps                         | [`gatus-non-generic-app-gaps`](../issues/gatus-non-generic-app-gaps.md)     |
+| Phase | Scope                                             | Status                                                                  |
+| ----- | ------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1     | Gatus + chart `gatus:` (default false) + demo-app | Done                                                                    |
+| 2     | First wave on selected generic-app apps           | Done                                                                    |
+| 3     | Flip chart default to `enabled: true` (opt-out)   | Done (chart ≥ 0.0.76)                                                   |
+| 4     | Non-generic-app Helm gaps                         | [`gatus-non-generic-app-gaps`](../issues/gatus-non-generic-app-gaps.md) |
 
 ## Decisions
 
@@ -59,6 +59,7 @@ visible behind Authentik. Prove the pattern on `demo-app`, then expand.
 | Flux wiring                 | Own Kustomization `services-gatus`               | Avoid hanging all of `services-observability` on CNPG                                              |
 | Helm source                 | Reuse `tuppr` OCI HelmRepository                 | Same `oci://ghcr.io/home-operations/charts` registry                                               |
 | demo-app annotations        | `generic-app` `gatus:` values (≥ 0.0.75)         | Chart stamps Service annotations; postRenderer retired                                             |
+| Chart gatus default         | `enabled: true` (≥ 0.0.76)                       | Opt-out with `enabled: false`; set `path:` when `/` is wrong                                       |
 
 ## Layout on disk
 
