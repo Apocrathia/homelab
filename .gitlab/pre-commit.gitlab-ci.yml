@@ -25,6 +25,8 @@ pre-commit:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     # Rootless runners cannot apt-get; bookworm image already has git.
+    # Non-root pip lands scripts in ~/.local/bin — put that on PATH.
     - pip install --quiet --break-system-packages "pre-commit==${PRE_COMMIT_VERSION}"
+    - export PATH="${HOME}/.local/bin:${PATH}"
     - pre-commit run --all-files --show-diff-on-failure
   allow_failure: false
