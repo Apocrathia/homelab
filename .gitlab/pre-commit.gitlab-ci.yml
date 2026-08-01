@@ -1,22 +1,30 @@
 ---
 # pre-commit — same hooks as local (.pre-commit-config.yaml)
 # Catches agents/devs who skipped or misconfigured pre-commit.
+# Use bookworm (glibc + git via buildpack-deps). Alpine breaks the
+# nodeenv Prettier ships (musl cannot relocate the glibc Node binary).
 pre-commit:
   stage: test
   image:
-    # renovate: datasource=docker depName=burakince/pre-commit
-    name: burakince/pre-commit:4.6.1@sha256:fbc0a12dee5fc09084a60b52132a5d6f930d44c05b565784a1cb422152921e2e
+    # renovate: datasource=docker depName=python
+    name: python:3.14-bookworm@sha256:5dcba30b5f8fbd97e2f35dd1b140b3c94db70bd01b39ed88365732f8db8f68b5
     entrypoint: [""]
   variables:
     PRE_COMMIT_HOME: $CI_PROJECT_DIR/.cache/pre-commit
+    # renovate: datasource=pypi depName=pre-commit
+    PRE_COMMIT_VERSION: "4.6.1"
   cache:
+    # Suffix invalidates Alpine-built nodeenv caches (glibc Node cannot run on musl).
     key:
       files:
         - .pre-commit-config.yaml
+      prefix: pre-commit-bookworm
     paths:
       - .cache/pre-commit/
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
+    # Rootless runners cannot apt-get; bookworm image already has git.
+    - pip install --quiet --break-system-packages "pre-commit==${PRE_COMMIT_VERSION}"
     - pre-commit run --all-files --show-diff-on-failure
   allow_failure: false
