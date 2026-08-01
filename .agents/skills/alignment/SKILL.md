@@ -48,10 +48,11 @@ slice checkboxes). Suggested fork:
 | Restore / deploy domain work   | matching skill (`helm-deployment`, restore skills, …)                      |
 | Still fuzzy                    | more alignment (or stop if unattended)                                     |
 
-Do **not** route to upstream `ship-work` / `clock-out` — ship via
-[`draft-commit`](../draft-commit/SKILL.md) per
-[`development-loop.md#ship-model`](../../context/development-loop.md#ship-model).
-Alignment itself is read-only; later implement laps use worktrees
+After proceed, ship via the hybrid model
+([`development-loop.md#ship-model`](../../context/development-loop.md#ship-model)):
+unauthorized → [`draft-commit`](../draft-commit/SKILL.md); authorized →
+[`ship-work`](../ship-work/SKILL.md) then [`clock-out`](../clock-out/SKILL.md)
+after merge. Alignment itself is read-only; later implement laps use worktrees
 ([`worktrees.md`](../../rules/worktrees.md)).
 
 ## Output

@@ -23,13 +23,16 @@ For when to write a skill and frontmatter conventions, see
 | `cnpg-logical-database-restore` | [`.agents/skills/cnpg-logical-database-restore`](../../.agents/skills/cnpg-logical-database-restore/SKILL.md) | CNPG logical dump/restore                        |
 | `generic-app-longhorn-restore`  | [`.agents/skills/generic-app-longhorn-restore`](../../.agents/skills/generic-app-longhorn-restore/SKILL.md)   | Longhorn restore for generic-app                 |
 | `draft-commit`                  | [`.agents/skills/draft-commit`](../../.agents/skills/draft-commit/SKILL.md)                                   | Commit/MR handoff; never commit                  |
+| `ship-work`                     | [`.agents/skills/ship-work`](../../.agents/skills/ship-work/SKILL.md)                                         | Authorized commit → push → MR → watch-mr         |
 | `reconcile-context`             | [`.agents/skills/reconcile-context`](../../.agents/skills/reconcile-context/SKILL.md)                         | Sync AGENTS.md + `.agents/context/` drift        |
 | `reconcile-docs`                | [`.agents/skills/reconcile-docs`](../../.agents/skills/reconcile-docs/SKILL.md)                               | Behavior docs + delete satisfied issues/plans    |
 | `review-loop`                   | [`.agents/skills/review-loop`](../../.agents/skills/review-loop/SKILL.md)                                     | Local verify before draft-commit (≤5 iters)      |
 | `run-loop`                      | [`.agents/skills/run-loop`](../../.agents/skills/run-loop/SKILL.md)                                           | Constant / unattended loop orchestrator          |
+| `self-improve`                  | [`.agents/skills/self-improve`](../../.agents/skills/self-improve/SKILL.md)                                   | Full contribute work graph                       |
 | `watch-mr`                      | [`.agents/skills/watch-mr`](../../.agents/skills/watch-mr/SKILL.md)                                           | Babysit open MR (threads, CI, conflicts)         |
 | `autoresearch`                  | [`.agents/skills/autoresearch`](../../.agents/skills/autoresearch/SKILL.md)                                   | Idle tier-8 research; docs-only ship             |
 | `cleanup-worktrees`             | [`.agents/skills/cleanup-worktrees`](../../.agents/skills/cleanup-worktrees/SKILL.md)                         | Remove merged/stale worktrees + local branches   |
+| `clock-out`                     | [`.agents/skills/clock-out`](../../.agents/skills/clock-out/SKILL.md)                                         | Post-merge session worktree teardown             |
 
 ## Adding one
 

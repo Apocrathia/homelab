@@ -15,7 +15,8 @@ target.
 
 Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
-Ship model (locked): draft-commit, not upstream `ship-work` — see
+Ship model (hybrid): unauthorized → [`draft-commit`](../draft-commit/SKILL.md);
+authorized MR contribute → [`ship-work`](../ship-work/SKILL.md) — see
 [Ship model](../../context/development-loop.md#ship-model).
 
 ## Preconditions

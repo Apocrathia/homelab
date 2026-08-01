@@ -60,9 +60,11 @@ Skip when the operator already handed a single scoped brief — go straight to
          attended   → operator may pick / waive; alignment OK; confirm protected
                       (autoresearch OK with contract confirm)
 - [ ] 5. On win by Invoke:
-         implement-change → review-loop → reconcile-docs → reconcile-context → draft-commit
+         implement-change → review-loop → reconcile-docs → reconcile-context
+                            → draft-commit (not authorized) | ship-work (authorized)
          watch-mr         → maintain path (no GitOps ship)
-         autoresearch     → skill owns docs ship → review-loop → draft-commit
+         autoresearch     → skill owns docs ship → review-loop → draft-commit | ship-work
+         self-improve     → full graph (see that skill)
 - [ ] 6. Write lap report under .scratch/laps/; Discord notify-only if configured
 - [ ] 7. STOP — no tight re-find after empty / ineligible stop
 ```

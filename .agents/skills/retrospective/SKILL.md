@@ -21,15 +21,16 @@ normal confirmation.
 
 ## When to run
 
-- After a shipping lap — after [`draft-commit`](../draft-commit/SKILL.md) handoff
-  (and optional [`watch-mr`](../watch-mr/SKILL.md) if an MR was opened).
+- After a shipping lap — after [`ship-work`](../ship-work/SKILL.md) (or
+  [`draft-commit`](../draft-commit/SKILL.md) handoff) and before
+  [`clock-out`](../clock-out/SKILL.md) when an MR merged.
 - At session-end — operator asks "what did we learn?"
 - After merges outside the session — catch up on context-relevant changes.
 - Standalone — `/retrospective` or "do a retro."
 
-This repo does not use `clock-out`. Run the retrospective while the lap
-worktree still exists when there is one (diff may be needed). Session-end /
-read-only capture may use the workspace root.
+Run the retrospective while the lap worktree still exists when there is one
+(diff may be needed). Session-end / read-only capture may use the workspace
+root. `clock-out` tears down the session worktree after merge — retro first.
 
 ## What it produces
 
