@@ -52,6 +52,20 @@ existence checks.
 5. Run shell commands that mutate the tree, and edit files, only inside the
    worktree directory. Pass the worktree **absolute path** to subagents.
 
+## Cite files with absolute paths
+
+The IDE workspace root is usually the primary checkout (`main`), not the agent
+worktree. Repo-relative paths (`flux/...`, `.agents/...`) resolve there and open
+the wrong tree (or a file that does not have your edits).
+
+When the lap is in a worktree, **always surface the full absolute path** in chat,
+code citations, tool args, and subagent prompts — e.g.
+`/Users/…/homelab/.worktrees/chore/slug/flux/…`, not `flux/…`.
+
+Same rule for operator-facing links and "see file X" references. Relative is
+fine only for read-only exploration that intentionally uses the workspace root
+(see Exceptions).
+
 ## Branch lock (one checkout per branch)
 
 Git allows only one checkout per branch. If the workspace root already has

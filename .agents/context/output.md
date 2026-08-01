@@ -19,13 +19,13 @@ only if needed.
 
 ## Length by task
 
-| Task                | Shape                                                 |
-| ------------------- | ----------------------------------------------------- |
-| Trivial lookup      | One short paragraph or a few bullets                  |
-| Implementation done | What changed + paths + how verified                   |
-| Exploration         | Bullets: path, line range, finding. Not a prose tour. |
-| Review              | Numbered findings with severity. No preamble essay.   |
-| Multi-step / advice | Verdict first; options as a short list; no essay      |
+| Task                | Shape                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Trivial lookup      | One short paragraph or a few bullets                                                                                                                         |
+| Implementation done | What changed + paths + how verified. In a worktree lap, paths are **absolute** (see [`worktrees.md`](../rules/worktrees.md#cite-files-with-absolute-paths)). |
+| Exploration         | Bullets: path, line range, finding. Not a prose tour. Worktree edits → absolute paths.                                                                       |
+| Review              | Numbered findings with severity. No preamble essay.                                                                                                          |
+| Multi-step / advice | Verdict first; options as a short list; no essay                                                                                                             |
 
 Match depth to complexity. A one-line fix does not need five paragraphs of
 context.

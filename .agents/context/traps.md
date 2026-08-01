@@ -50,4 +50,7 @@ non-trivial work.
   dirty indexes and "already checked out" errors.
 - Git allows one checkout per branch. Always create with `-b type/slug`; never
   reuse the branch the human has checked out in root.
+- When citing files from a worktree lap, use the **absolute** path. Relative
+  paths resolve to the workspace root (`main`), not the worktree — operators
+  (and agents) open the wrong copy.
 - After merge, `git worktree remove` — never `rm -rf` a worktree path.
