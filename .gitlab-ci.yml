@@ -20,6 +20,5 @@ include:
   - local: .gitlab/trivy.gitlab-ci.yml
   - local: .gitlab/shellcheck.gitlab-ci.yml
   - local: .gitlab/semgrep.gitlab-ci.yml
-  - local: .gitlab/prettier.gitlab-ci.yml
-  - local: .gitlab/yamllint.gitlab-ci.yml
+  - local: .gitlab/pre-commit.gitlab-ci.yml
   - local: .gitlab/context-links.gitlab-ci.yml
