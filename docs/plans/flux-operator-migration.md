@@ -98,7 +98,7 @@ Upstream pattern:
 - [x] Comment out `gotk-components.yaml` in `kustomization.yaml`. Controllers
       remain in-cluster until adopted. **Do not** uncomment `flux-instance.yaml`
       while gotk-components is still listed.
-- [ ] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
+- [x] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
       sync mirrors gotk-sync (GitLab SSH, `main`, path
       `./flux/manifests/01-bootstrap`, pullSecret `flux-operator-secrets`).
 - [ ] Comment out `gotk-sync.yaml`; sync owned by the instance.
