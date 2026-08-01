@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.74 (Latest)
+## Version 0.0.75 (Latest)
+
+- **Gatus uptime probe values**: Optional top-level `gatus:` block (default
+  `enabled: false`) stamps `gatus.home-operations.com/*` annotations on the
+  ClusterIP Service for [gatus-sidecar](https://github.com/home-operations/gatus-sidecar).
+  Defaults to an in-cluster HTTP URL and `[STATUS] == 200`. Overrides for
+  `group`, `url`, `path`, `interval`, `conditions`, plus an `endpoint` merge
+  escape hatch.
+
+## Version 0.0.74
 
 - **Falsy numeric and boolean defaults (`hasKey`)**: Several fields used `| default`, which treats `0` and `false` as empty in Go templates.
   - Pod `fsGroup: 0` was rendered as `1000` (e.g. Firecrawl Postgres, Hashtopolis MySQL on fresh Longhorn volumes).
