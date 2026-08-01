@@ -52,8 +52,8 @@ terse, humor OK, **profanity encouraged**).
   ([`constraints.md`](./.agents/context/constraints.md#commit-and-ship))
 - Confirm before editing protected paths
   ([`protected-paths.md`](./.agents/rules/protected-paths.md))
-- Edit in a worktree, not the workspace root
-  ([`worktrees.md`](./.agents/rules/worktrees.md))
+- Edit in a worktree, not the workspace root; cite worktree files with absolute
+  paths ([`worktrees.md`](./.agents/rules/worktrees.md))
 - Answer first; keep chat the index
   ([`response-shape.md`](./.agents/rules/response-shape.md),
   [`output.md`](./.agents/context/output.md))
