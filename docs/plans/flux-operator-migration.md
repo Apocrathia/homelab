@@ -101,7 +101,7 @@ Upstream pattern:
 - [x] Uncomment `flux-instance.yaml`. Operator adopts controllers via SSA;
       sync mirrors gotk-sync (GitLab SSH, `main`, path
       `./flux/manifests/01-bootstrap`, pullSecret `flux-operator-secrets`).
-- [ ] Comment out `gotk-sync.yaml`; sync owned by the instance.
+- [x] Comment out `gotk-sync.yaml`; sync owned by the instance.
 - [ ] Update bootstrap READMEs for steady state after cutover.
 - [ ] Revisit `docs/issues/trivy-scan-noise-deferred.md` gotk CRITICAL bucket
       once the vendor file is unreferenced / gone.

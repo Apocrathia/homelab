@@ -77,6 +77,11 @@ Manages the [Flux Operator](https://fluxoperator.dev/) via Helm (not Kustomize
      live bootstrap Secret before cutover:
      `kubectl get secret flux-system -n flux-system -o jsonpath='{.data.identity}' | base64 -d`
      (same for `known_hosts`; optional `identity.pub`).
+
+   Store `identity` (and preferably `identity.pub`) in multiline,
+   non-concealed 1Password fields. Concealed fields strip newlines, causing Flux
+   to fail with `ssh: no key found`. `known_hosts` is fine as a single-line
+   field.
 3. Push this directory. After `Kustomization/flux-system` reconciles:
    ```bash
    flux get helmrelease flux-operator -n flux-system
