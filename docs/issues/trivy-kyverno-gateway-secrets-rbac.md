@@ -35,8 +35,6 @@ Trivy ignore / policy exception scoped to those files (and why).
 
 - For each of the three files: either RBAC no longer triggers AVD-KSV-0041, or
   an in-repo ignore/exception records the justified secrets access.
-- No change to `flux/manifests/01-bootstrap/**` as part of this issue
-  (gotk findings are deferred separately).
 
 ## Feedback loop
 
@@ -58,5 +56,3 @@ documented exception over blind removal.
 ## Notes
 
 - Source batch: `7c5f1d25-bff3-4a6f-8eb6-651a069002a5`.
-- Same rule on `gotk-components.yaml` is deferred (protected bootstrap) —
-  `trivy-scan-noise-deferred.md`.

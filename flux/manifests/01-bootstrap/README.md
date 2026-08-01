@@ -1,141 +1,64 @@
 # Bootstrap Configuration
 
-Initial Flux configuration and core components needed to bootstrap the cluster.
+Foundational GitOps resources required to reconcile the homelab cluster.
 
 > **Navigation**: [← Back to Flux README](../README.md)
 
-## Overview
-
-The bootstrap layer provides the foundational components required to establish GitOps-based cluster management:
-
-- **Flux System**: Core GitOps toolkit components and controllers
-- **Helm Repositories**: Chart repository definitions for all components
-- **Custom Resource Definitions**: CRDs for extended Kubernetes APIs
-- **1Password Connect**: Secrets management and operator deployment
-
 ## Components
 
-### Core Infrastructure
+- [**Flux System**](flux-system/README.md) — Flux Operator, FluxInstance, root
+  Git sync, Status UI authentication, and RBAC.
+- [**1Password Connect**](1password/README.md) — secrets operator and setup.
+- [**Helm Repositories**](helm/README.md) — shared chart sources.
+- [**Custom Resource Definitions**](crds/README.md) — extended Kubernetes APIs.
 
-- [**Flux System**](flux-system/README.md) - GitOps toolkit components and Git repository configuration
-- [**1Password Connect**](1password/README.md) - Secrets management operator and setup guide
+## Steady-state reconciliation
 
-### Package Management
+1. Flux Operator reconciles the Flux controller distribution declared by the
+   `FluxInstance`.
+2. The FluxInstance Git sync reads `main` from this repository using the
+   1Password-backed `flux-operator-secrets` SSH credentials.
+3. The root Kustomization reconciles bootstrap children, then infrastructure,
+   services, and applications follow their declared dependencies.
 
-- [**Helm Repositories**](helm/README.md) - Chart repository configuration and management
-- [**Custom Resource Definitions**](crds/README.md) - Extended Kubernetes API definitions
+## First-time bootstrap
 
-## Architecture
+1. Run classic Flux bootstrap once to start the toolkit controllers and Git
+   reconciliation.
+2. Let GitOps install the Flux Operator from `flux-system/`.
+3. Populate `flux-operator-secrets`, then reconcile the `FluxInstance` so the
+   operator owns controllers and root sync.
+4. Verify the FluxInstance and bootstrap Kustomizations are Ready before
+   continuing with infrastructure, services, and applications.
 
-The bootstrap process follows this sequence:
-
-1. **Flux System Deployment**: Core controllers and Git repository configuration
-2. **CRD Installation**: Custom resource definitions for extended APIs
-3. **Helm Repository Setup**: Chart repository definitions for package management
-4. **1Password Integration**: Secrets management operator deployment
-5. **Root Kustomization**: Bootstrap of all other layers
+See the [Flux System README](flux-system/README.md) for the required 1Password
+field names and verification commands.
 
 ## Dependencies
 
-- **Kubernetes Cluster**: Running cluster with Cilium CNI
-- **Git Repository**: Accessible Git repository for configuration storage
-- **1Password Account**: 1Password account for secrets management
-- **Network Access**: Outbound access to Helm repositories and container registries
+- A Kubernetes cluster with Cilium CNI.
+- Read access to this Git repository.
+- A 1Password account and Connect deployment.
+- Outbound access to configured Helm and container registries.
 
-## Security Considerations
+## Security
 
-- **Git Access**: SSH key-based authentication for Git repository access
-- **Secrets Management**: 1Password integration for secure secret storage
-- **RBAC**: Minimal required permissions for bootstrap operations
-- **Network Security**: Controlled access to external resources
+- Git authentication uses the SSH key in `flux-operator-secrets`.
+- Secrets are sourced from 1Password rather than stored in Git.
+- RBAC grants only the access required by bootstrap components.
 
-## Troubleshooting
-
-### Common Bootstrap Issues
-
-1. **Git Repository Access**
-
-   ```bash
-   # Check Git repository connectivity
-   kubectl exec -n flux-system deployment/source-controller -- ssh -T git@gitlab.com
-
-   # Verify SSH key configuration
-   kubectl get secret flux-system -n flux-system -o yaml
-   ```
-
-2. **CRD Installation Failures**
-
-   ```bash
-   # Check CRD status
-   kubectl get crd | grep -E "(flux|onepassword|kyverno|longhorn|cilium)"
-
-   # Verify CRD installation order
-   kubectl get kustomizations -n flux-system
-   ```
-
-3. **1Password Integration Issues**
-
-   ```bash
-   # Check 1Password operator status
-   kubectl get pods -n onepassword-system
-
-   # Verify credentials secret
-   kubectl get secret 1password-credentials -n onepassword-system
-   ```
-
-### Verification Commands
+## Verification
 
 ```bash
-# Check overall bootstrap status
 flux check
-
-# Verify Flux system components
-kubectl get pods -n flux-system
-
-# Check Git repository status
-flux get sources git
-
-# Verify 1Password operator
+flux get all
+kubectl get fluxinstance,fluxreport -n flux-system
+kubectl get kustomizations -n flux-system
 kubectl get pods -n onepassword-system
 ```
 
-## Bootstrap sequence
-
-1. **Classic Flux (gotk)** — apply / sync `flux-system` so the four controllers
-   and root Git sync exist (`gotk-components.yaml`, `gotk-sync.yaml`).
-2. **Flux Operator** — GitOps `HelmRepository` + `HelmRelease` under
-   `flux-system/` (see [flux-system README](flux-system/README.md)). Operator
-   only; no `FluxInstance` until gotk cutover.
-3. **CRDs / Helm repos / 1Password** — remaining bootstrap children via the
-   `manifests` Kustomization.
-4. **Infrastructure → services → apps** — layered Flux Kustomizations.
-
 ## References
 
-- **[Flux Bootstrap](https://fluxcd.io/flux/installation/bootstrap/)** - Bootstrap guide
-- **[GitOps Toolkit](https://fluxcd.io/flux/)** - Flux documentation
-- **[1Password Connect](https://developer.1password.com/docs/connect)** - Secrets operator
-
-## Best Practices
-
-### Bootstrap Configuration
-
-1. **Minimal Footprint**: Include only essential components
-2. **Security First**: Secure Git access and secrets management
-3. **Documentation**: Document all manual setup steps
-4. **Testing**: Test bootstrap process in development environment
-
-### Maintenance
-
-1. **Version Updates**: Keep Flux components updated
-2. **Security Audits**: Regular security review of bootstrap components
-3. **Backup Strategy**: Backup bootstrap configurations
-4. **Monitoring**: Monitor bootstrap component health
-
-## Next Steps
-
-After successful bootstrap:
-
-1. **Infrastructure Layer**: Deploy storage, networking, and monitoring
-2. **Services Layer**: Deploy platform services and applications
-3. **Applications Layer**: Deploy user-facing applications
+- [Flux bootstrap](https://fluxcd.io/flux/installation/bootstrap/)
+- [Flux Operator](https://fluxoperator.dev/)
+- [1Password Connect](https://developer.1password.com/docs/connect)
