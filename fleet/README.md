@@ -59,7 +59,7 @@ Drop `.keep` when you add real content.
 - **Fleet-scoped controls / policies** → `fleets/home.yml` (hosts can enroll
   directly into Home with the fleet enroll secret). Controls are inlined under
   `controls:` in that file (disk encryption + script library globs). Policy
-  `platforms/all/policies/fleet-dm-was-here.yml` fails when the Desktop/home
+  `platforms/all/policies/fleet-dm-was-here.yml` fails when the Desktop
   marker is missing and runs `fleet-dm-was-here.sh` (pass→fail only; ~hourly
   cadence).
 - **Fleet software (Fleet-maintained apps)** → `software.fleet_maintained_apps`
