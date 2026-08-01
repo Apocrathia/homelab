@@ -11,7 +11,7 @@ goflow2 is deployed as a single-replica Deployment:
 - **goflow2**: NetFlow/IPFIX/sFlow collector with Prometheus metrics export
 - **LoadBalancer Service**: Shared ingest IP for external IPFIX ingestion
 - **ServiceMonitor**: Prometheus scraping for flow metrics
-- **Grafana Dashboard**: NetFlow Exporter Overview (ID 11408)
+- **Grafana Dashboard**: goflow2 Collector (Network folder; see [`grafana/`](./grafana/))
 
 ## Flow Collection
 
@@ -42,22 +42,23 @@ Configure IPFIX export in UniFi Network Console:
 
 ## Prometheus Metrics
 
-goflow2 exports the following metrics when flows are received:
+goflow2 exposes collector metrics under the `goflow2` namespace (for example
+`goflow2_flow_traffic_bytes_total`, `goflow2_flow_process_nf_*`). Series appear
+after flow packets are received. Prometheus scrapes them via the ServiceMonitor.
 
-- `flow_traffic_bytes` - Bytes per flow (labeled by exporter, protocol, etc.)
-- `flow_traffic_packets` - Packets per flow
-- `flow_traffic_summary_size_bytes` - Flow size distribution
-
-Metrics are scraped by Prometheus via the ServiceMonitor.
+These metrics describe collector health and ingest rates by exporter — not
+per-flow top talkers (src/dst host/port). Flow records follow the configured
+transport (currently discarded to `/dev/null`).
 
 ## Grafana Dashboard
 
-The NetFlow Exporter Overview dashboard (ID 11408) provides:
+[`grafana/dashboard.json`](./grafana/dashboard.json) is a NetFlow-focused
+adaptation of the upstream GoFlow Internals dashboard. It is provisioned as
+ConfigMap `goflow2-dashboard` and `GrafanaDashboard/goflow2-collector` in the
+Network folder. The datasource variable defaults to Mimir.
 
-- Top source/destination hosts
-- Protocol distribution
-- Traffic volume over time
-- Top ports and services
+Panels cover UDP ingest rates, NetFlow/IPFIX decode/process stats, templates,
+errors, and latency.
 
 ## Troubleshooting
 
@@ -87,4 +88,4 @@ kubectl logs -n goflow2 -l app=goflow2 --tail=5
 
 - [goflow2 GitHub](https://github.com/netsampler/goflow2)
 - [IPFIX RFC 7011](https://datatracker.ietf.org/doc/html/rfc7011)
-- [NetFlow Exporter Dashboard](https://grafana.com/grafana/dashboards/11408)
+- [Upstream GoFlow Internals dashboard](https://github.com/netsampler/goflow2/blob/main/compose/kcg/grafana/dashboards/perfs.json)

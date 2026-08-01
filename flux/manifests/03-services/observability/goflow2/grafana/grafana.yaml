@@ -1,17 +1,17 @@
 ---
+# goflow2 collector dashboard (Prometheus goflow2_flow_* metrics).
+# JSON lives in ConfigMap goflow2-dashboard (generated from dashboard.json).
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: goflow2-netflow
+  name: goflow2-collector
   namespace: prometheus-system
 spec:
   instanceSelector:
     matchLabels:
       app.kubernetes.io/name: grafana
       app.kubernetes.io/instance: kube-prometheus-stack
-  datasources:
-    - datasourceName: Prometheus
-      inputName: DS_PROMETHEUS
-  grafanaCom:
-    id: 11408
+  configMapRef:
+    name: goflow2-dashboard
+    key: dashboard.json
   folder: Network
