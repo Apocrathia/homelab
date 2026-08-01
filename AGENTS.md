@@ -52,8 +52,10 @@ terse, humor OK, **profanity encouraged**).
   ([`constraints.md`](./.agents/context/constraints.md#commit-and-ship))
 - Confirm before editing protected paths
   ([`protected-paths.md`](./.agents/rules/protected-paths.md))
-- Edit in a worktree, not the workspace root; cite worktree files with absolute
-  paths ([`worktrees.md`](./.agents/rules/worktrees.md))
+- Edit in a worktree, not the workspace root; run
+  [`cleanup-worktrees`](./.agents/skills/cleanup-worktrees/SKILL.md) before
+  creating a new one; cite worktree files with absolute paths
+  ([`worktrees.md`](./.agents/rules/worktrees.md))
 - Answer first; keep chat the index
   ([`response-shape.md`](./.agents/rules/response-shape.md),
   [`output.md`](./.agents/context/output.md))
@@ -83,8 +85,8 @@ rows, read each.
 | Starting non-trivial work                  | [`traps.md`](./.agents/context/traps.md)                                                                                                                                   |
 | Unsure what to load vs skip                | [`loading.md`](./.agents/context/loading.md)                                                                                                                               |
 | Any work that could mutate GitOps          | [`constraints.md`](./.agents/context/constraints.md)                                                                                                                       |
-| Making any file edit (code or docs)        | [`worktrees.md`](./.agents/rules/worktrees.md)                                                                                                                             |
-| Cleaning up unused worktrees / branches    | [`cleanup-worktrees`](./.agents/skills/cleanup-worktrees/SKILL.md)                                                                                                         |
+| Making any file edit (code or docs)        | [`worktrees.md`](./.agents/rules/worktrees.md) (includes cleanup before a new worktree)                                                                                    |
+| Cleaning up unused worktrees / branches    | [`cleanup-worktrees`](./.agents/skills/cleanup-worktrees/SKILL.md) (also before creating a new worktree)                                                                   |
 | Naming resources, dirs, or apps            | [`nomenclature.md`](./.agents/context/nomenclature.md)                                                                                                                     |
 | Scope is fuzzy                             | [`alignment`](./.agents/skills/alignment/SKILL.md)                                                                                                                         |
 | Architecture friction / design-debt issues | [`architecture-review`](./.agents/skills/architecture-review/SKILL.md)                                                                                                     |

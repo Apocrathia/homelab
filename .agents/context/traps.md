@@ -48,6 +48,9 @@ non-trivial work.
 - Agents edit under `.worktrees/<type>/<slug>`, not the workspace root. See
   [`worktrees.md`](../rules/worktrees.md). Root checkout fights are how you get
   dirty indexes and "already checked out" errors.
+- Before creating a **new** worktree, run
+  [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) so merged trees
+  do not pile up under `.worktrees/`.
 - Git allows one checkout per branch. Always create with `-b type/slug`; never
   reuse the branch the human has checked out in root.
 - When citing files from a worktree lap, use the **absolute** path. Relative

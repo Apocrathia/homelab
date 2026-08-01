@@ -45,11 +45,17 @@ existence checks.
    unclear, **stop and ask** — do not guess. Do not switch the workspace root
    checkout.
 
-4. Create one on a **new** branch (never reuse whatever branch the human has in
+4. Run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) **before**
+   creating a new worktree. Remove safe (merged / content-equivalent) trees and
+   orphan branches so `.worktrees/` does not accumulate cruft. Skip when
+   resuming an existing worktree for this task (step 2). Keep or ask on unique
+   WIP / dirty trees per that skill — do not block the lap waiting on ask-only
+   candidates.
+5. Create one on a **new** branch (never reuse whatever branch the human has in
    the workspace root):
    - `cd "$repo_root"` then `mkdir -p .worktrees/<type>` and
      `git worktree add -b <type>/<slug> .worktrees/<type>/<slug> <base>`.
-5. Run shell commands that mutate the tree, and edit files, only inside the
+6. Run shell commands that mutate the tree, and edit files, only inside the
    worktree directory. Pass the worktree **absolute path** to subagents.
 
 ## Cite files with absolute paths
@@ -97,11 +103,13 @@ plan numbers or status.
 
 ## Cleanup
 
+Also run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) before
+creating a **new** worktree (step 4 under Before any file change).
+
 After merge (or when abandoning the lap), `git worktree remove` the tree and
 delete the branch. Never `rm -rf` a worktree path. There is no `clock-out`
 ceremony — cleanup is explicit when the operator (or an authorized lap) is done.
-Bulk / inventory cleanup:
-[`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md).
+Bulk / inventory cleanup uses the same skill.
 
 ## Exceptions
 
