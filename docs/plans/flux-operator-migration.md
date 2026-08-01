@@ -2,7 +2,7 @@
 title: "Migrate Flux to Operator + GitLab MR ResourceSet pilot"
 status: active
 found_at: 2026-07-26
-updated_at: 2026-07-30
+updated_at: 2026-08-01
 related_issue: docs/issues/flux-operator-migration.md
 area: flux
 ---
@@ -89,10 +89,10 @@ Upstream pattern:
 - [x] Stage `flux-instance.yaml` in-tree; keep commented out in
       `kustomization.yaml` until gotk is dropped. `pullSecret` →
       `flux-operator-secrets` (SSH via 1Password).
-- [ ] Populate `identity` + `known_hosts` on the 1Password item
+- [x] Populate `identity` + `known_hosts` on the 1Password item
       `flux-operator-secrets` (deploy key; confirm Secret sync) before enabling
       the instance.
-- [ ] Soften root `flux-system` Kustomization: `prune: false` and
+- [x] Soften root `flux-system` Kustomization: `prune: false` and
       `deletionPolicy: Orphan` in `gotk-sync.yaml` (live object). Reconcile /
       confirm before commenting out gotk.
 - [ ] Comment out `gotk-components.yaml` in `kustomization.yaml`. Controllers
