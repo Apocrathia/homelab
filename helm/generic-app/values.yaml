@@ -653,9 +653,10 @@ loadbalancer:
     namespace: cilium-system
 
 # Gatus in-cluster uptime probe (gatus-sidecar Service annotations)
-# Opt-in only — stamps ClusterIP Service annotations when enabled.
+# Default on — stamps ClusterIP Service annotations. Opt out with enabled: false
+# (Jobs-ish / no-HTTP / noisy apps). Set path: when / is not a valid health check.
 gatus:
-  enabled: false
+  enabled: true
   # Endpoint group (defaults to app.name)
   group: ""
   # Probe URL. Empty → http://{{ app.name }}.{{ namespace }}.svc:{{ service.port }}

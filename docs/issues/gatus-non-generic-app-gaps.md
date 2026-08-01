@@ -14,9 +14,9 @@ plan: docs/plans/gatus-cluster-uptime.md
 
 ## Problem / desired state
 
-Phase 3 covers `generic-app` by default. Foreign Helm charts (Authentik,
-LiteLLM, Headlamp, Immich, Open WebUI, …) stay dark unless annotated
-another way.
+`generic-app` defaults `gatus.enabled: true` (chart ≥ 0.0.76). Foreign Helm
+charts (Authentik, LiteLLM, Headlamp, Immich, Open WebUI, …) stay dark unless
+annotated another way.
 
 Desired (phase 4): fill gaps on selected non-`generic-app` HelmReleases.
 
@@ -34,9 +34,7 @@ Desired (phase 4): fill gaps on selected non-`generic-app` HelmReleases.
 
 ## Implementation hint
 
-Blocked on phase 3
-([`gatus-generic-app-default-on`](./gatus-generic-app-default-on.md)) so the
-remaining set is truly "gaps", not the whole catalog.
+Phases 1–3 are done. Remaining set is truly "gaps", not the whole catalog.
 
 Candidates (not committed): `litellm`, `openwebui`, `headlamp`, `immich`,
 `qdrant`, `renovate`.

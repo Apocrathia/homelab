@@ -1,6 +1,13 @@
 # Changelog
 
-## Version 0.0.75 (Latest)
+## Version 0.0.76 (Latest)
+
+- **Gatus default on**: `gatus.enabled` now defaults to `true`. ClusterIP
+  Service annotations are stamped unless a release sets `enabled: false`.
+  Set `path:` (or `url:`) when the app's health check is not `/`. Opt out
+  Jobs-ish / no-HTTP / noisy workloads explicitly.
+
+## Version 0.0.75
 
 - **Gatus uptime probe values**: Optional top-level `gatus:` block (default
   `enabled: false`) stamps `gatus.home-operations.com/*` annotations on the

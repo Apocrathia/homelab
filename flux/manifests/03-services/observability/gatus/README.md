@@ -33,17 +33,19 @@ sidecar — not from the ConfigMap.
 
 ### Opt in a Service
 
-Prefer `generic-app` values (chart ≥ 0.0.75):
+Prefer `generic-app` values (chart ≥ 0.0.76 defaults `gatus.enabled: true`):
 
 ```yaml
 gatus:
-  enabled: true
+  # enabled: true  # chart default — set false to opt out
   group: demo # optional; defaults to app.name
+  # path: /health  # set when / is not a valid health check
 ```
 
 That stamps ClusterIP Service annotations with an in-cluster HTTP URL and
 `[STATUS] == 200`. See `helm/generic-app` for `url` / `path` / `conditions` /
-`endpoint` overrides.
+`endpoint` overrides. Releases still on older chart versions need an explicit
+`enabled: true` (or a chart bump).
 
 Raw annotations (non-generic-app workloads):
 
