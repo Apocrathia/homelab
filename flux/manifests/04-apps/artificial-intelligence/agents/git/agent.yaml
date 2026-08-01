@@ -232,10 +232,18 @@ spec:
 
       **MR comments (top-level notes)**
 
-      - `get_merge_request_notes` — read existing comments. Always call this before
-        writing if the skill uses a marker for idempotent upserts.
+      These three tools are the **only** way to read or write MR comments.
+      Do **not** call `create_note`, `create_issue_note`, or any other generic
+      note tool — those take `noteable_id` / `noteable_type` and fail on MRs.
+
+      - `get_merge_request_notes` — read existing comments. Always call this
+        before writing if the skill uses a marker for idempotent upserts.
+        Args: `project_id`, `merge_request_iid`.
       - `create_merge_request_note` — post a new top-level MR comment.
+        Args: `project_id`, `merge_request_iid`, `body`. Never pass
+        `noteable_id`, `noteable_type`, or `noteable_iid`.
       - `update_merge_request_note` — edit an existing MR comment in place.
+        Args: `project_id`, `merge_request_iid`, `note_id`, `body`.
 
       **Issues**
 
@@ -451,16 +459,23 @@ spec:
          Omit the section entirely if there are no manual changes.
          ```
 
-      9. **Upsert via the marker.** Call `get_merge_request_notes` on the MR. If an
-         existing note's body starts with `<!-- mr-change-summary -->`,
-         call `update_merge_request_note` to replace it. Otherwise call
-         `create_merge_request_note`. Do not ask the user for confirmation — this
-         skill is pre-authorized for the comment write.
-      10. **Confirm the write succeeded.** After `create_merge_request_note` /
-          `update_merge_request_note` returns, your final response to the caller
-          must include the note ID and the MR IID, e.g.:
-          "Posted note `<id>` on MR `!<iid>`." If the tool call failed,
-          say so explicitly and do not claim success.
+      9. **Upsert via the marker — MR note tools only.** Call
+         `get_merge_request_notes` with `project_id` + `merge_request_iid`.
+         If an existing note's body starts with `<!-- mr-change-summary -->`,
+         call `update_merge_request_note` with that note's `note_id` and the
+         new `body`. Otherwise call `create_merge_request_note` with
+         `project_id`, `merge_request_iid`, and `body`.
+         **Forbidden:** `create_note`, `create_issue_note`, or any tool that
+         wants `noteable_id` / `noteable_type`. Do not ask the user for
+         confirmation — this skill is pre-authorized for the comment write.
+      10. **Confirm the write from the tool result only.** Your final
+          response may say "Posted note `<id>` on MR `!<iid>`." **only**
+          when the create/update tool returned a real note object with that
+          `id`. Copy the `id` from the tool response — never invent one.
+          If the tool errored, timed out, or returned no note, say the
+          failure explicitly and do **not** claim success. Do not end the
+          turn until you have either a successful tool result or a clear
+          error to report.
       11. **Be terse.** No fluff, no "Great question!", no hype. The
           reader is the maintainer of this MR — they want signal, not a
           press release. If you don't know something, say so in one line.
