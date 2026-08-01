@@ -1,0 +1,107 @@
+---
+# Ansible host GitOps — lint/syntax always; check/apply when deploy key is set.
+# Included from the repo root .gitlab-ci.yml (same pattern as fleet/).
+#
+# Triggers:
+#   - MR touching ansible/** → validate (+ check if ANSIBLE_SSH_PRIVATE_KEY set)
+#   - Push to default branch touching ansible/** → validate (+ apply if key set)
+#
+# CI/CD variables (Settings → CI/CD → Variables; mask secrets):
+#   ANSIBLE_SSH_PRIVATE_KEY  — deploy key with access to inventory hosts
+#   ANSIBLE_SSH_KNOWN_HOSTS  — optional known_hosts blob (recommended)
+#
+# Runner note: in-cluster Kubernetes executor is non-root — use pip/venv, no apt.
+---
+.ansible-base:
+  image: python:3.12-bookworm
+  needs: []
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    ANSIBLE_CONFIG: "$CI_PROJECT_DIR/ansible/ansible.cfg"
+    ANSIBLE_COLLECTIONS_PATH: "$CI_PROJECT_DIR/ansible/collections"
+    ANSIBLE_ROLES_PATH: "$CI_PROJECT_DIR/ansible/roles"
+  cache:
+    key: "ansible-pip-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .cache/pip
+      - ansible/collections
+  before_script:
+    - python -m venv "$CI_PROJECT_DIR/.venv"
+    - source "$CI_PROJECT_DIR/.venv/bin/activate"
+    - pip install --upgrade pip
+    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0"
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-galaxy collection install -r requirements.yml -p collections
+    - ansible --version
+    - ansible-lint --version
+
+.ansible-ssh-setup:
+  extends: .ansible-base
+  before_script:
+    # Duplicated from .ansible-base — avoid GitLab !reference (breaks check-yaml).
+    - python -m venv "$CI_PROJECT_DIR/.venv"
+    - source "$CI_PROJECT_DIR/.venv/bin/activate"
+    - pip install --upgrade pip
+    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0"
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-galaxy collection install -r requirements.yml -p collections
+    - ansible --version
+    - ansible-lint --version
+    - |
+      if [ -z "${ANSIBLE_SSH_PRIVATE_KEY:-}" ]; then
+        echo "ANSIBLE_SSH_PRIVATE_KEY is required for this job"
+        exit 1
+      fi
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      printf '%s\n' "$ANSIBLE_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+      chmod 600 ~/.ssh/id_ed25519
+      if [ -n "${ANSIBLE_SSH_KNOWN_HOSTS:-}" ]; then
+        printf '%s\n' "$ANSIBLE_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
+      else
+        echo "WARN: ANSIBLE_SSH_KNOWN_HOSTS unset; StrictHostKeyChecking=accept-new"
+        printf '%s\n' "Host *" "  StrictHostKeyChecking accept-new" "  UserKnownHostsFile ~/.ssh/known_hosts" > ~/.ssh/config
+        chmod 600 ~/.ssh/config
+      fi
+
+ansible-validate:
+  extends: .ansible-base
+  stage: test
+  script:
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-playbook --syntax-check playbooks/site.yml
+    - ansible-playbook --syntax-check playbooks/bootstrap.yml
+    - ansible-playbook --syntax-check playbooks/common.yml
+    - ansible-lint playbooks roles inventory
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - ansible/**/*
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - ansible/**/*
+
+ansible-check:
+  extends: .ansible-ssh-setup
+  stage: deploy
+  resource_group: ansible-gitops
+  script:
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-playbook --check --diff playbooks/site.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $ANSIBLE_SSH_PRIVATE_KEY
+      changes:
+        - ansible/**/*
+
+ansible-apply:
+  extends: .ansible-ssh-setup
+  stage: deploy
+  resource_group: ansible-gitops
+  script:
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-playbook playbooks/site.yml
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $ANSIBLE_SSH_PRIVATE_KEY
+      changes:
+        - ansible/**/*

@@ -1,0 +1,6 @@
+---
+# Overridable defaults; prefer inventory/group_vars for site-wide values.
+common_unattended_upgrades: true
+common_manage_hostname: true
+common_manage_timezone: true
+common_fetch_github_keys: true

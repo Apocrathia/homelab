@@ -1,0 +1,12 @@
+---
+# Day-0 touch: create login user + GitHub keys. Prefer running as root
+# (or another bootstrap account) once; afterwards use playbooks/common.yml
+# with SSH key auth + passwordless sudo.
+- name: Bootstrap login user on managed hosts
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - role: common
+      tags:
+        - user

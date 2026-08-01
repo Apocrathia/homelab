@@ -1,0 +1,20 @@
+---
+# Non-secret defaults for every managed host.
+timezone: America/Denver
+github_username: Apocrathia
+
+# Primary login user created/managed by roles/common (user tag).
+username: ianyoung
+
+# Packages installed by roles/common (packages tag). Keep boring and portable.
+common_packages:
+  - curl
+  - git
+  - htop
+  - jq
+  - nano
+  - net-tools
+  - sudo
+  - tmux
+  - vim-tiny
+  - zsh

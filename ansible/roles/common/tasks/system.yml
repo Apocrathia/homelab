@@ -1,0 +1,12 @@
+---
+- name: Set hostname to inventory hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+  when:
+    - common_manage_hostname | bool
+    - ansible_hostname != inventory_hostname
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+  when: common_manage_timezone | bool

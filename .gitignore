@@ -64,6 +64,8 @@ terraform/provider.tf
 # Ansible
 *.retry
 ansible/*.vault
+ansible/collections/
+ansible/.venv/
 vault.key
 
 # Misc

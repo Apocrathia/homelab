@@ -14,6 +14,7 @@ include:
   - local: .gitlab/pages.gitlab-ci.yml
   - local: .gitlab/tofu.gitlab-ci.yml
   - local: fleet/.gitlab-ci.yml
+  - local: ansible/.gitlab-ci.yml
   # Security scanning
   - local: .gitlab/gitleaks.gitlab-ci.yml
   - local: .gitlab/kube-linter.gitlab-ci.yml
