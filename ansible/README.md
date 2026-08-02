@@ -1,8 +1,10 @@
 # Ansible host GitOps
 
-Declarative config for non-Kubernetes Linux hosts (game host, gaming PC,
-signage, UniFi NUC, …). Fleet stays the inventory/compliance plane; this tree
-owns package/user/system desired state.
+Declarative config for non-Kubernetes Linux hosts (Debian game host, Fedora
+gaming PC, signage, UniFi NUC when staged, …). Fleet stays the
+inventory/compliance plane; this tree owns package/user/system desired state.
+`roles/common` branches on `ansible_os_family` (Debian apt /
+unattended-upgrades vs RedHat dnf / dnf-automatic).
 
 Archaeology: earlier patterns lived in `homelab.gh/Ansible/` (compose-era docker
 roles, k3s bootstrap, vaulted local `secrets`). Do **not** port those — compose
@@ -38,7 +40,7 @@ ansible-playbook playbooks/common.yml --limit game --check --diff
 Day-0 (create user + keys), often as root once:
 
 ```bash
-ansible-playbook playbooks/bootstrap.yml --limit unifi-nuc -u root
+ansible-playbook playbooks/bootstrap.yml --limit game -u root
 ```
 
 ## CI

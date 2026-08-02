@@ -3,7 +3,7 @@
   ansible.builtin.user:
     name: "{{ username }}"
     shell: /bin/zsh
-    groups: sudo
+    groups: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
     append: true
     create_home: true
     state: present

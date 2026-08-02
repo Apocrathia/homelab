@@ -1,0 +1,26 @@
+---
+- name: Install common packages
+  ansible.builtin.dnf:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Install QEMU guest agent on KVM guests
+  ansible.builtin.dnf:
+    name: qemu-guest-agent
+    state: present
+  when:
+    - ansible_virtualization_type | default('') == 'kvm'
+    - ansible_virtualization_role | default('') == 'guest'
+
+- name: Install dnf-automatic
+  ansible.builtin.dnf:
+    name: dnf-automatic
+    state: present
+  when: common_unattended_upgrades | bool
+
+- name: Ensure dnf-automatic timer is enabled
+  ansible.builtin.service:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+  when: common_unattended_upgrades | bool

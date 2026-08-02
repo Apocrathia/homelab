@@ -1,0 +1,98 @@
+---
+# apt check mode needs python3-apt already present; the apt module can
+# auto-install it only on a real (non-check) run.
+- name: Ensure python3-apt for apt module
+  ansible.builtin.raw: |
+    set -e
+    if python3 -c 'import apt' 2>/dev/null; then
+      echo PRESENT
+      exit 0
+    fi
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq
+    apt-get install -y -qq python3-apt
+    echo INSTALLED
+  register: common_python3_apt
+  changed_when: "'INSTALLED' in common_python3_apt.stdout"
+  check_mode: false
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name: "{{ common_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install QEMU guest agent on KVM guests
+  ansible.builtin.apt:
+    name: qemu-guest-agent
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when:
+    - ansible_virtualization_type | default('') == 'kvm'
+    - ansible_virtualization_role | default('') == 'guest'
+
+- name: Disable APT recommends and suggests
+  ansible.builtin.blockinfile:
+    path: /etc/apt/apt.conf.d/02norecommends
+    mode: "0644"
+    create: true
+    block: |
+      APT::Install-Recommends "false";
+      APT::Install-Suggests "false";
+      APT::Get::Install-Recommends "false";
+      APT::Get::Install-Suggests "false";
+
+- name: Remove snapd when present
+  ansible.builtin.apt:
+    name: snapd
+    state: absent
+    autoremove: true
+    purge: true
+
+- name: Install unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: common_unattended_upgrades | bool
+
+- name: Enable periodic unattended upgrades
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+    content: |
+      APT::Periodic::Enable "1";
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Download-Upgradeable-Packages "1";
+      APT::Periodic::AutocleanInterval "7";
+      APT::Periodic::Unattended-Upgrade "1";
+  when: common_unattended_upgrades | bool
+
+- name: Configure unattended-upgrades policy
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: "0644"
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "false";
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+      Unattended-Upgrade::MinimalSteps "true";
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}";
+          "${distro_id}:${distro_codename}-security";
+          "${distro_id}ESMApps:${distro_codename}-apps-security";
+          "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::DevRelease "false";
+      Unattended-Upgrade::SyslogEnable "true";
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+  when: common_unattended_upgrades | bool
+
+- name: Ensure unattended-upgrades service is enabled
+  ansible.builtin.service:
+    name: unattended-upgrades
+    enabled: true
+    state: started
+  when: common_unattended_upgrades | bool

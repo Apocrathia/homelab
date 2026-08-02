@@ -7,7 +7,8 @@ github_username: Apocrathia
 username: ianyoung
 ansible_user: ianyoung
 
-# Packages installed by roles/common (packages tag). Keep boring and portable.
+# Packages installed by roles/common (packages tag). Names must exist on both
+# Debian (game) and Fedora (desktops); OS-specific bits live in packages_*.yml.
 common_packages:
   - curl
   - git
@@ -17,5 +18,5 @@ common_packages:
   - net-tools
   - sudo
   - tmux
-  - vim-tiny
+  - vim
   - zsh
