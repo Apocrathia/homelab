@@ -36,7 +36,7 @@
     - python -m venv "$CI_PROJECT_DIR/.venv"
     - source "$CI_PROJECT_DIR/.venv/bin/activate"
     - pip install --upgrade pip
-    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0"
+    - pip install -r "$CI_PROJECT_DIR/ansible/ci/requirements.txt"
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-galaxy collection install -r requirements.yml -p collections
     - ansible --version
@@ -49,7 +49,7 @@
     - python -m venv "$CI_PROJECT_DIR/.venv"
     - source "$CI_PROJECT_DIR/.venv/bin/activate"
     - pip install --upgrade pip
-    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0" "onepasswordconnectsdk>=2.0.0,<3.0.0" "paramiko>=3.0.0,<4.0.0"
+    - pip install -r "$CI_PROJECT_DIR/ansible/ci/requirements.txt"
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-galaxy collection install -r requirements.yml -p collections
     - ansible --version
