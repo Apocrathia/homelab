@@ -17,20 +17,24 @@
 #
 # Runner note: Kubernetes executor forces uid 1000 (non-root, no apt). Stock
 # python images lack a passwd entry for that uid, so OpenSSH aborts. This job
-# image includes vscode (uid 1000) + openssh-client; HOME matches pw_dir.
+# image includes vscode (uid 1000) + openssh-client. Keep runner HOME
+# (/home/gitlab-runner emptyDir) — overriding HOME breaks helper gitconfig.
+# Pass absolute IdentityFile / UserKnownHostsFile so OpenSSH does not use
+# pw_dir (/home/vscode) for keys.
 ---
 .ansible-base:
   # renovate: datasource=docker registryUrl=https://mcr.microsoft.com depName=devcontainers/python
   image: mcr.microsoft.com/devcontainers/python:3.12@sha256:729bc20302313ef1159ec1e670ca53a2969ed8c720e023fc2bdda95f1644a8e0
   needs: []
   variables:
-    # Match passwd home for uid 1000 (vscode). Runner default HOME=/home/gitlab-runner
-    # would diverge from OpenSSH tilde expansion.
-    HOME: "/home/vscode"
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     ANSIBLE_CONFIG: "$CI_PROJECT_DIR/ansible/ansible.cfg"
     ANSIBLE_COLLECTIONS_PATH: "$CI_PROJECT_DIR/ansible/collections"
     ANSIBLE_ROLES_PATH: "$CI_PROJECT_DIR/ansible/roles"
+    # Keys land under runner HOME (/home/gitlab-runner emptyDir); passwd home is
+    # /home/vscode — pass absolute paths so OpenSSH does not use pw_dir.
+    ANSIBLE_PRIVATE_KEY_FILE: "/home/gitlab-runner/.ssh/id_ed25519"
+    ANSIBLE_SSH_ARGS: "-o UserKnownHostsFile=/home/gitlab-runner/.ssh/known_hosts -o IdentitiesOnly=yes"
     # In-cluster Connect Service (runners are on the cluster). Same as tofu CI.
     OP_CONNECT_HOST: "http://onepassword-connect.onepassword-system.svc:8080"
   cache:
