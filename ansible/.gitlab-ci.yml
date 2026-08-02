@@ -96,7 +96,8 @@ ansible-check:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    - ansible-playbook --check --diff
+    # -c paramiko_ssh: plugin id in ansible-core 2.18 (not bare "paramiko").
+    - ansible-playbook -c paramiko_ssh --check --diff
       --become-password-file "$HOME/.ansible/become_password"
       playbooks/site.yml
   rules:
@@ -110,7 +111,7 @@ ansible-apply:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    - ansible-playbook
+    - ansible-playbook -c paramiko_ssh
       --become-password-file "$HOME/.ansible/become_password"
       playbooks/site.yml
   rules:
