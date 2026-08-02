@@ -10,6 +10,24 @@
     state: present
   when: common_unattended_upgrades | bool
 
+# Stock automatic.conf is download-only; mirror Debian unattended-upgrades
+# (security origins) by applying security updates automatically.
+- name: Configure dnf-automatic to apply security updates
+  community.general.ini_file:
+    path: /etc/dnf/automatic.conf
+    section: commands
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: "0644"
+  loop:
+    - option: upgrade_type
+      value: security
+    - option: download_updates
+      value: "yes"
+    - option: apply_updates
+      value: "yes"
+  when: common_unattended_upgrades | bool
+
 - name: Ensure dnf-automatic timer is enabled
   ansible.builtin.service:
     name: dnf-automatic.timer
