@@ -1,0 +1,213 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: semaphore
+  namespace: semaphore
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: semaphore
+      namespace: semaphore
+      # renovate: datasource=docker depName=semaphoreui/semaphore
+      image: semaphoreui/semaphore:v2.18.29@sha256:7c7504614c4795b0e0670fb2d4400d35e2302204609664943cb16308b7a6f1e4
+      container:
+        name: semaphore
+        port: 3000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # Override K8s service-link SEMAPHORE_PORT=tcp://…:80 collision
+          - name: SEMAPHORE_PORT
+            value: ":3000"
+          - name: SEMAPHORE_DB_DIALECT
+            value: "postgres"
+          - name: SEMAPHORE_DB_HOST
+            value: "semaphore-postgres-rw.semaphore.svc.cluster.local"
+          - name: SEMAPHORE_DB_PORT
+            value: "5432"
+          - name: SEMAPHORE_DB
+            value: "semaphore"
+          - name: SEMAPHORE_DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: username
+          - name: SEMAPHORE_DB_PASS
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: password
+          - name: SEMAPHORE_DB_OPTIONS
+            value: '{"sslmode":"disable"}'
+          - name: SEMAPHORE_WEB_ROOT
+            value: "https://semaphore.gateway.services.apocrathia.com"
+          - name: SEMAPHORE_PLAYBOOK_PATH
+            value: "/var/lib/semaphore"
+          - name: SEMAPHORE_TMP_PATH
+            value: "/var/lib/semaphore/tmp"
+          - name: SEMAPHORE_CONFIG_PATH
+            value: "/var/lib/semaphore/config"
+          - name: SEMAPHORE_ADMIN
+            value: "admin"
+          - name: SEMAPHORE_ADMIN_NAME
+            value: "Admin"
+          - name: SEMAPHORE_ADMIN_EMAIL
+            value: "admin@apocrathia.com"
+          - name: SEMAPHORE_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: admin-password
+          - name: SEMAPHORE_COOKIE_HASH
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: cookie-hash
+          - name: SEMAPHORE_COOKIE_ENCRYPTION
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: cookie-encryption
+          - name: SEMAPHORE_ACCESS_KEY_ENCRYPTION
+            valueFrom:
+              secretKeyRef:
+                name: semaphore-secrets
+                key: access-key-encryption
+          # Non-secret OIDC config; client id/secret come from mounted files
+          - name: SEMAPHORE_OIDC_PROVIDERS
+            value: >-
+              {"authentik":{"display_name":"Authentik","provider_url":"https://auth.gateway.services.apocrathia.com/application/o/semaphore/","client_id_file":"/etc/semaphore/oidc/client-id","client_secret_file":"/etc/semaphore/oidc/client-secret","redirect_url":"https://semaphore.gateway.services.apocrathia.com/api/auth/oidc/authentik/redirect"}}
+      replicas: 1
+      strategy: Recreate
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        readOnlyRootFilesystem: false
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/semaphore
+      volumes:
+        secret:
+          - name: oidc-client-id
+            mountPath: /etc/semaphore/oidc/client-id
+            subPath: oidc-client-id
+            readOnly: true
+            secretName: semaphore-secrets
+          - name: oidc-client-secret
+            mountPath: /etc/semaphore/oidc/client-secret
+            subPath: oidc-client-secret
+            readOnly: true
+            secretName: semaphore-secrets
+      service:
+        port: 80
+        targetPort: 3000
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/ping
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/ping
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/ping
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/semaphore-secrets"
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:16@sha256:51e1f280076dd6eafd4e2ccc16edbeb8cb62c9b2623e79ed0609965151e79bd6
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+        limits:
+          memory: "512Mi"
+          cpu: "500m"
+      postgresql:
+        parameters:
+          max_connections: "100"
+          track_io_timing: "on"
+          track_functions: "all"
+          log_statement: "ddl"
+          log_min_duration_statement: "1000ms"
+          log_min_messages: "INFO"
+      affinity:
+        enablePodAntiAffinity: true
+        podAntiAffinityType: "preferred"
+        topologyKey: "kubernetes.io/hostname"
+      monitoring:
+        enabled: true
+      database: "semaphore"
+      owner: "semaphore"
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # Distinct from postgres.storage.size to avoid PV bind collisions
+          - name: data
+            capacity: 15Gi
+
+    authentik:
+      enabled: true
+      mode: "oidc"
+      displayName: "Semaphore"
+      externalHost: "https://semaphore.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/semaphore/icon.svg"
+      category: "Management"
+      metaDescription: "Semaphore UI for Ansible, Terraform, OpenTofu, and shell automation"
+      metaPublisher: "Semaphore UI"
+      oidc:
+        redirectUris:
+          - url: "https://semaphore.gateway.services.apocrathia.com/api/auth/oidc/authentik/redirect"
+            matchingMode: "strict"
+
+    httproute:
+      enabled: true
+      hostname: "semaphore.gateway.services.apocrathia.com"
