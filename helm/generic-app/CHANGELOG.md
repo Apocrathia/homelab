@@ -1,6 +1,12 @@
 # Changelog
 
-## Version 0.0.76 (Latest)
+## Version 0.0.77 (Latest)
+
+- **OIDC provider grant types**: OAuth2/OIDC blueprints set `grant_types` to
+  `authorization_code` and `refresh_token` on the Authentik oauth2provider
+  entry (required for Authentik 2026.5+ token exchange).
+
+## Version 0.0.76
 
 - **Gatus default on**: `gatus.enabled` now defaults to `true`. ClusterIP
   Service annotations are stamped unless a release sets `enabled: false`.
