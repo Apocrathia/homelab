@@ -30,7 +30,7 @@ spec:
       namespace: prometheus-system
       replicas: 1
       # renovate: datasource=docker depName=quay.io/prometheus/snmp-exporter
-      image: quay.io/prometheus/snmp-exporter:v0.30.1@sha256:b14e51528c2f429eb72127de33986f6f9f86f32cbf981635b028d9f7440e4bee
+      image: quay.io/prometheus/snmp-exporter:v0.30.1@sha256:9ad5309a6deb7cbe94b7bc5e5dfa8db7b682c6a3c0fa7c029a7e827e505ef43c
       args:
         - --config.file=/etc/snmp_exporter/snmp.yml
         - --config.file=/etc/snmp_exporter/modules/snmp.yml
