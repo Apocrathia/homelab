@@ -3,4 +3,4 @@
 ansible-core==2.18.18
 ansible-lint==26.6.0
 onepasswordconnectsdk==2.1.0
-paramiko==3.5.1
+paramiko==5.0.0
