@@ -9,7 +9,7 @@ metadata:
 spec:
   # Pin major=17 — CNPG in-place major upgrades break Immich/vectorchord.
   # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>17)-(?<minor>\d+)\.(?<patch>\d+)(?:\.(?<build>\d+))?$
-  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-0.4.3
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-1.1.1@sha256:f22538c11c6d0e9ade44d3224f2dccd6bad9b2e60034b2e118804f9ad35f59bf
   instances: 1
   storage:
     size: 20Gi
