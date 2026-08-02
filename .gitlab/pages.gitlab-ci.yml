@@ -137,8 +137,9 @@ pages:
         cp scorecard/scorecard-details.md docs/
       fi
 
+      # Avoid `ls | head` under pipefail — head closes early → SIGPIPE (exit 141).
       echo "Documentation files:"
-      ls docs/*.md | head -30
+      python -c "from pathlib import Path; print('\n'.join(str(p) for p in sorted(Path('docs').glob('*.md'))[:30]))"
 
       echo "Building documentation site..."
       mkdocs build
