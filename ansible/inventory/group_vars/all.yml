@@ -16,6 +16,7 @@ common_packages:
   - jq
   - nano
   - net-tools
+  - podman
   - sudo
   - tmux
   - vim

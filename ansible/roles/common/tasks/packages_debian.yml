@@ -23,16 +23,6 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Install QEMU guest agent on KVM guests
-  ansible.builtin.apt:
-    name: qemu-guest-agent
-    state: present
-    update_cache: true
-    cache_valid_time: 3600
-  when:
-    - ansible_virtualization_type | default('') == 'kvm'
-    - ansible_virtualization_role | default('') == 'guest'
-
 - name: Disable APT recommends and suggests
   ansible.builtin.blockinfile:
     path: /etc/apt/apt.conf.d/02norecommends
