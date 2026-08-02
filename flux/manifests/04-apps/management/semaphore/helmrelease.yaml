@@ -200,7 +200,7 @@ spec:
       displayName: "Semaphore"
       externalHost: "https://semaphore.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/semaphore/icon.svg"
-      category: "Management"
+      category: "Platform"
       metaDescription: "Semaphore UI for Ansible, Terraform, OpenTofu, and shell automation"
       metaPublisher: "Semaphore UI"
       oidc:
