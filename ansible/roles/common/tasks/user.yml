@@ -16,13 +16,12 @@
     group: "{{ username }}"
     mode: "0700"
 
-- name: Install authorized_keys from GitHub
-  ansible.builtin.get_url:
-    url: "https://github.com/{{ github_username }}.keys"
-    dest: "/home/{{ username }}/.ssh/authorized_keys"
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    mode: "0600"
+- name: Authorize GitHub user keys
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    key: "https://github.com/{{ github_username }}.keys"
+    state: present
+    exclusive: false
   when: common_fetch_github_keys | bool
 
 - name: Allow passwordless sudo for primary user
@@ -34,3 +33,4 @@
     content: |
       {{ username }} ALL=(ALL) NOPASSWD:ALL
     validate: "visudo -cf %s"
+  when: common_passwordless_sudo | bool

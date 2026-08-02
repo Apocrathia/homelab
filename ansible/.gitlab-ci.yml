@@ -9,6 +9,7 @@
 # Secrets (1Password item `ansible-secrets` in vault `Secrets`):
 #   ansible_gitops_ed25519       — deploy private key (multiline text field)
 #   ansible_gitops_known_hosts   — known_hosts blob (multiline text field)
+#   sudo-password                — sudo password for ansible_user (text field)
 #
 # CI/CD variables:
 #   OP_CONNECT_TOKEN — Connect API token (shared with tofu; vault must include Secrets)
@@ -91,7 +92,9 @@ ansible-check:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    - ansible-playbook --check --diff playbooks/site.yml
+    - ansible-playbook --check --diff
+      --become-password-file "$HOME/.ansible/become_password"
+      playbooks/site.yml
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $OP_CONNECT_TOKEN
       changes:
@@ -103,7 +106,9 @@ ansible-apply:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    - ansible-playbook playbooks/site.yml
+    - ansible-playbook
+      --become-password-file "$HOME/.ansible/become_password"
+      playbooks/site.yml
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $OP_CONNECT_TOKEN
       changes:

@@ -55,22 +55,25 @@ SSH material is **not** stored as GitLab CI variables. Check/apply jobs call
 [`ci/fetch_op_ssh.py`](./ci/fetch_op_ssh.py) against in-cluster 1Password
 Connect (same `OP_CONNECT_*` bootstrap as tofu).
 
-| Source   | Value                                                                       |
-| -------- | --------------------------------------------------------------------------- |
-| Vault    | `Secrets`                                                                   |
-| Item     | `ansible-secrets`                                                           |
-| Fields   | `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline **text**) |
-| Optional | `ansible_gitops_ed25519.pub`                                                |
+| Source   | Value                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------- |
+| Vault    | `Secrets`                                                                                    |
+| Item     | `ansible-secrets`                                                                            |
+| Fields   | `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline **text**), `sudo-password` |
+| Optional | `ansible_gitops_ed25519.pub`                                                                 |
 
 GitLab only needs `OP_CONNECT_TOKEN` (already used by tofu). `OP_CONNECT_HOST`
 defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
 
+Check/apply use `--become-password-file` from Connect field `sudo-password`
+(same password for `ianyoung` on managed hosts; split later if they diverge).
+
 ## Secrets
 
-1Password is the SoT for the deploy key. Use multiline text fields (not
-concealed) for PEM / `known_hosts`. Install the matching public key on managed
-hosts for `ansible_user` (`ianyoung` today). Local laptop runs can use
-`~/.ssh/ansible_gitops_ed25519` directly; that is not the CI path.
+1Password is the SoT for the deploy key and sudo password. Use multiline text
+fields (not concealed) for PEM / `known_hosts`. Install the matching public key
+on managed hosts for `ansible_user` (`ianyoung` today). Local laptop runs can
+use `~/.ssh/ansible_gitops_ed25519` directly; that is not the CI path.
 
 ## Related
 

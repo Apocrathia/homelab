@@ -4,3 +4,5 @@ common_unattended_upgrades: true
 common_manage_hostname: true
 common_manage_timezone: true
 common_fetch_github_keys: true
+# CI uses sudo-password from 1Password; do not force NOPASSWD.
+common_passwordless_sudo: false

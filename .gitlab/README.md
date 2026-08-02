@@ -152,7 +152,7 @@ Applies Ansible playbooks for non-Kubernetes Linux hosts. Job definition lives a
 - `OP_CONNECT_TOKEN` — 1Password Connect token that can read vault `Secrets` item `ansible-secrets` (shared with tofu)
 - `OP_CONNECT_HOST` — optional; CI defaults to the in-cluster Connect Service
 
-Deploy SSH key material lives in 1Password fields `ansible_gitops_ed25519` and `ansible_gitops_known_hosts` (not GitLab CI variables). See `ansible/README.md`.
+Deploy SSH + become material lives in 1Password fields `ansible_gitops_ed25519`, `ansible_gitops_known_hosts`, and `sudo-password` (not GitLab CI variables). See `ansible/README.md`.
 
 ### No-Op
 

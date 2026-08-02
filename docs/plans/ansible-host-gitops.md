@@ -39,14 +39,13 @@ NUC (BLKNUC7i7DNK1E).
 - **Execution** — GitLab CI push over SSH, not AWX — mirrors `fleet/` gitops;
   reversible later with Semaphore if a UI is needed.
 - **Secrets** — 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
-  via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Field
-  labels match former filenames: `ansible_gitops_ed25519`,
-  `ansible_gitops_known_hosts` (multiline text, not concealed). No committed
-  vault file.
+  via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Fields:
+  `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline text),
+  `sudo-password`. No committed vault file / no GitLab SSH vars.
 - **Layout** — lowercase `ansible/`; purpose inventory groups; thin playbooks +
   `site.yml`; minimal `ansible.cfg` (not a dumped defaults file).
-- **Become** — passwordless sudo for managed `username` is the CI contract;
-  no become-password-from-vault in the GitOps path.
+- **Become** — `--become-password-file` from Connect `sudo-password`;
+  `common_passwordless_sudo` defaults false.
 - **Port from homelab.gh** — `common` tags, GitHub `.keys` authorized_keys,
   timezone/`github_username` group vars, `requirements.yml`. Drop
   `ignore_errors: true`, k8s/docker/proxmox roles, compose files.
@@ -56,8 +55,8 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Scaffold `ansible/` + `roles/common` + inventory stubs
 - [x] Wire `ansible/.gitlab-ci.yml` and root `include`
 - [x] Document keep/drop from `homelab.gh` in README + this plan
-- [x] Fetch deploy key + known_hosts from 1Password Connect in CI
-- [ ] Confirm Connect token can read `Secrets` / `ansible-secrets`
+- [x] Fetch deploy key + known_hosts + `sudo-password` from 1Password Connect
+- [x] Confirm Connect token can read `Secrets` / `ansible-secrets`
 - [ ] Install deploy pubkey on hosts; MR `ansible-check` green
 - [ ] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`
 - [ ] Stage UniFi NUC + Track A cutover (links to related issue)
