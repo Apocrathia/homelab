@@ -3,12 +3,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: management
+  name: semaphore
+  namespace: semaphore
 
 resources:
-  - fleet
-  - jetkvm
-  - kuber-ios
-  - scripts/unifi
-  - semaphore
-  - unpoller
+  - namespace.yaml
+  - helmrelease.yaml

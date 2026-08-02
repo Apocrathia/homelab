@@ -18,6 +18,10 @@ Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
 Service account and External Secrets PushSecret for mobile Kubernetes clients (e.g. Kuber, Kubenav): cluster token synced to 1Password.
 
+### [Semaphore](./semaphore/README.md)
+
+Web UI and API for Ansible, Terraform/OpenTofu, and shell automation with Authentik OIDC.
+
 ### [UnPoller](./unpoller/README.md)
 
 UniFi network monitoring exporting metrics to Prometheus with Grafana dashboards.
