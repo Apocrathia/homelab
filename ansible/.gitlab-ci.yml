@@ -15,12 +15,18 @@
 #   OP_CONNECT_TOKEN — Connect API token (shared with tofu; vault must include Secrets)
 #   OP_CONNECT_HOST  — optional override; default is in-cluster Connect Service
 #
-# Runner note: in-cluster Kubernetes executor is non-root — use pip/venv, no apt.
+# Runner note: Kubernetes executor forces uid 1000 (non-root, no apt). Stock
+# python images lack a passwd entry for that uid, so OpenSSH aborts. This job
+# image includes vscode (uid 1000) + openssh-client; HOME matches pw_dir.
 ---
 .ansible-base:
-  image: python:3.12-bookworm
+  # renovate: datasource=docker registryUrl=https://mcr.microsoft.com depName=devcontainers/python
+  image: mcr.microsoft.com/devcontainers/python:3.12@sha256:729bc20302313ef1159ec1e670ca53a2969ed8c720e023fc2bdda95f1644a8e0
   needs: []
   variables:
+    # Match passwd home for uid 1000 (vscode). Runner default HOME=/home/gitlab-runner
+    # would diverge from OpenSSH tilde expansion.
+    HOME: "/home/vscode"
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
     ANSIBLE_CONFIG: "$CI_PROJECT_DIR/ansible/ansible.cfg"
     ANSIBLE_COLLECTIONS_PATH: "$CI_PROJECT_DIR/ansible/collections"
@@ -92,8 +98,7 @@ ansible-check:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    # -c paramiko_ssh: plugin id in ansible-core 2.18 (not bare "paramiko").
-    - ansible-playbook -c paramiko_ssh --check --diff
+    - ansible-playbook --check --diff
       --become-password-file "$HOME/.ansible/become_password"
       playbooks/site.yml
   rules:
@@ -107,7 +112,7 @@ ansible-apply:
   resource_group: ansible-gitops
   script:
     - cd "$CI_PROJECT_DIR/ansible"
-    - ansible-playbook -c paramiko_ssh
+    - ansible-playbook
       --become-password-file "$HOME/.ansible/become_password"
       playbooks/site.yml
   rules:
