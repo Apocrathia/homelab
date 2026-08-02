@@ -5,7 +5,7 @@ description = "Sync UniFi firewall groups from Uptime Robot published checker IP
 requires-python = ">=3.12"
 dependencies = [
   "requests>=2.31.0,<3.0.0",
-  "urllib3>=2.0.0,<3.0.0",
+  "urllib3>=2.7.0,<3.0.0",
   "python-dotenv>=1.0.0",
 ]
 
