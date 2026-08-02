@@ -72,6 +72,10 @@ data:
               matching_mode: "{{ .matchingMode | default "strict" }}"
             {{- end }}
           {{- end }}
+          # Authentik 2026.5+: empty grant_types rejects authorization_code (invalid_request).
+          grant_types:
+            - authorization_code
+            - refresh_token
           access_code_validity: "{{ .Values.authentik.oidc.accessCodeValidity | default "minutes=1" }}"
           access_token_validity: "{{ .Values.authentik.oidc.accessTokenValidity | default "minutes=5" }}"
           refresh_token_validity: "{{ .Values.authentik.oidc.refreshTokenValidity | default "days=30" }}"
