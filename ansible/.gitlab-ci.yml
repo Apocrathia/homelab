@@ -44,12 +44,16 @@
 
 .ansible-ssh-setup:
   extends: .ansible-base
+  variables:
+    # K8s runner uid 1000 has no /etc/passwd entry → OpenSSH fails with
+    # "No user exists for uid 1000". Paramiko avoids the system ssh client.
+    ANSIBLE_CONNECTION: paramiko
   before_script:
     # Duplicated from .ansible-base — avoid GitLab !reference (breaks check-yaml).
     - python -m venv "$CI_PROJECT_DIR/.venv"
     - source "$CI_PROJECT_DIR/.venv/bin/activate"
     - pip install --upgrade pip
-    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0" "onepasswordconnectsdk>=2.0.0,<3.0.0"
+    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0" "onepasswordconnectsdk>=2.0.0,<3.0.0" "paramiko>=3.0.0,<4.0.0"
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-galaxy collection install -r requirements.yml -p collections
     - ansible --version

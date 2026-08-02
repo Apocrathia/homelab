@@ -67,6 +67,8 @@ defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
 
 Check/apply use `--become-password-file` from Connect field `sudo-password`
 (same password for `ianyoung` on managed hosts; split later if they diverge).
+CI sets `ANSIBLE_CONNECTION=paramiko` because the Kubernetes runner has no
+`/etc/passwd` entry for uid 1000 and OpenSSH refuses to start.
 
 ## Secrets
 
