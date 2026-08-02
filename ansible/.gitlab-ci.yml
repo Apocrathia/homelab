@@ -44,10 +44,6 @@
 
 .ansible-ssh-setup:
   extends: .ansible-base
-  variables:
-    # K8s runner uid 1000 has no /etc/passwd entry → OpenSSH fails with
-    # "No user exists for uid 1000". Paramiko avoids the system ssh client.
-    ANSIBLE_CONNECTION: paramiko
   before_script:
     # Duplicated from .ansible-base — avoid GitLab !reference (breaks check-yaml).
     - python -m venv "$CI_PROJECT_DIR/.venv"
