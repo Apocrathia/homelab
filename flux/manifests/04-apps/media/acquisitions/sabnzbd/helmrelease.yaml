@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.76"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -199,3 +199,8 @@ spec:
       displayName: "SABnzbd"
       externalHost: "https://sabnzbd.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/sabnzbd/icon.svg"
+
+    gatus:
+      enabled: true
+      conditions:
+        - "[STATUS] < 500"

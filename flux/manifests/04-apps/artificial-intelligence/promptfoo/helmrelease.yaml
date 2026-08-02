@@ -22,7 +22,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.76"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -286,5 +286,8 @@ spec:
       metaDescription: "LLM eval framework and red-teaming platform for AI applications"
       metaPublisher: "Promptfoo (OpenAI)"
 
+    gatus:
+      enabled: true
+      path: /health
     httproute:
       enabled: false

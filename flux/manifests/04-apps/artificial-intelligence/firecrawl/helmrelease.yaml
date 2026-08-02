@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.76"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -143,5 +143,8 @@ spec:
       enabled: false
 
     # No HTTPRoute - Authentik proxy handles routing
+    gatus:
+      enabled: true
+      path: /v0/health/liveness
     httproute:
       enabled: false

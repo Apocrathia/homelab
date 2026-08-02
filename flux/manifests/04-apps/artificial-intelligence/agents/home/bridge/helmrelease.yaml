@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.76"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -118,6 +118,10 @@ spec:
     authentik:
       enabled: false
 
+    gatus:
+      enabled: true
+      conditions:
+        - "[STATUS] < 500"
     httproute:
       enabled: true
       hostname: home-agent.gateway.services.apocrathia.com

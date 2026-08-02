@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.74"
+      version: "0.0.76"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -153,6 +153,9 @@ spec:
       metaDescription: "Plex Media Server for streaming personal media collection"
       metaPublisher: "Plex Inc."
 
+    gatus:
+      enabled: true
+      path: /identity
     httproute:
       enabled: true
       hostname: plex.gateway.services.apocrathia.com
