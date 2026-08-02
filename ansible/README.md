@@ -71,8 +71,9 @@ defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
 Check/apply use `--become-password-file` from Connect field `sudo-password`
 (same password for `ianyoung` on managed hosts; split later if they diverge).
 Jobs use `mcr.microsoft.com/devcontainers/python:3.12` so uid 1000 has a
-passwd entry (`vscode`) and OpenSSH can start under the non-root runner. `HOME`
-is `/home/vscode` to match that passwd home.
+passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
+Runner `HOME` stays `/home/gitlab-runner` (writable emptyDir); ansible gets
+absolute `IdentityFile` / `UserKnownHostsFile` under that path.
 
 ## Secrets
 
