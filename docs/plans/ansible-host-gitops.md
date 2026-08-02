@@ -21,7 +21,7 @@ NUC (BLKNUC7i7DNK1E).
 **In scope:**
 
 - `ansible/` tree at repo root (cfg, inventory, playbooks, `roles/common`)
-- GitLab CI: lint/syntax always; `--check` / apply when deploy SSH key is set
+- GitLab CI: lint/syntax always; `--check` / apply via 1Password Connect
 - Learnings from `homelab.gh/Ansible/` kept selectively (see Decisions)
 
 **Out of scope:**
@@ -32,13 +32,17 @@ NUC (BLKNUC7i7DNK1E).
   OpenTofu own that)
 - UniFi OS Server install play (Track A consumer — after NUC is staged)
 - Full CIS / `devsec.hardening` on day one
+- Storing deploy keys as GitLab CI variables (Connect is the bus)
 
 ## Decisions
 
 - **Execution** — GitLab CI push over SSH, not AWX — mirrors `fleet/` gitops;
   reversible later with Semaphore if a UI is needed.
-- **Secrets** — CI deploy key + optional `known_hosts`; no committed vault file
-  (old `Ansible/secrets` was plaintext gitignored — do not repeat).
+- **Secrets** — 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
+  via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Field
+  labels match former filenames: `ansible_gitops_ed25519`,
+  `ansible_gitops_known_hosts` (multiline text, not concealed). No committed
+  vault file.
 - **Layout** — lowercase `ansible/`; purpose inventory groups; thin playbooks +
   `site.yml`; minimal `ansible.cfg` (not a dumped defaults file).
 - **Become** — passwordless sudo for managed `username` is the CI contract;
@@ -52,8 +56,9 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Scaffold `ansible/` + `roles/common` + inventory stubs
 - [x] Wire `ansible/.gitlab-ci.yml` and root `include`
 - [x] Document keep/drop from `homelab.gh` in README + this plan
-- [ ] Set GitLab `ANSIBLE_SSH_PRIVATE_KEY` (+ `ANSIBLE_SSH_KNOWN_HOSTS`)
-- [ ] Fill `ansible_host` for first live target; MR check against it
+- [x] Fetch deploy key + known_hosts from 1Password Connect in CI
+- [ ] Confirm Connect token can read `Secrets` / `ansible-secrets`
+- [ ] Install deploy pubkey on hosts; MR `ansible-check` green
 - [ ] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`
 - [ ] Stage UniFi NUC + Track A cutover (links to related issue)
 - [ ] Expand roles only when a host needs them (no speculative roles)
@@ -69,9 +74,9 @@ NUC (BLKNUC7i7DNK1E).
 
 - Hardware for UniFi: BLKNUC7i7DNK1E, 32 GiB RAM, 1 TB NVMe — overkill for UOS
   Server; hosting tier was the IPFIX gate, not CPU.
-- Inventory stubs: `game-host` → `game.apocrathia.com`; `signage-01` /
-  `gaming-pc` / `unifi-nuc` need `ansible_host` when SSH is reachable from the
-  runner.
+- Inventory (current): `game` → `game.services.apocrathia.com`,
+  `ians-gaming-pc` → `ians-gaming-pc.access.apocrathia.com`,
+  `unifi-nuc` → `unifi.apocrathia.com`.
 - Local verify (2026-08-01): syntax-check + `ansible-lint` production profile
   clean (Homebrew Python 3.14 + ansible-core 2.20). CI image is Python 3.12 +
   ansible-core 2.16+.

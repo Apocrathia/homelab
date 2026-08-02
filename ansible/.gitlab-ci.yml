@@ -1,14 +1,18 @@
 ---
-# Ansible host GitOps — lint/syntax always; check/apply when deploy key is set.
+# Ansible host GitOps — lint/syntax always; check/apply via 1Password Connect.
 # Included from the repo root .gitlab-ci.yml (same pattern as fleet/).
 #
 # Triggers:
-#   - MR touching ansible/** → validate (+ check if ANSIBLE_SSH_PRIVATE_KEY set)
-#   - Push to default branch touching ansible/** → validate (+ apply if key set)
+#   - MR touching ansible/** → validate (+ check if OP_CONNECT_TOKEN set)
+#   - Push to default branch touching ansible/** → validate (+ apply if token set)
 #
-# CI/CD variables (Settings → CI/CD → Variables; mask secrets):
-#   ANSIBLE_SSH_PRIVATE_KEY  — deploy key with access to inventory hosts
-#   ANSIBLE_SSH_KNOWN_HOSTS  — optional known_hosts blob (recommended)
+# Secrets (1Password item `ansible-secrets` in vault `Secrets`):
+#   ansible_gitops_ed25519       — deploy private key (multiline text field)
+#   ansible_gitops_known_hosts   — known_hosts blob (multiline text field)
+#
+# CI/CD variables:
+#   OP_CONNECT_TOKEN — Connect API token (shared with tofu; vault must include Secrets)
+#   OP_CONNECT_HOST  — optional override; default is in-cluster Connect Service
 #
 # Runner note: in-cluster Kubernetes executor is non-root — use pip/venv, no apt.
 ---
@@ -20,6 +24,8 @@
     ANSIBLE_CONFIG: "$CI_PROJECT_DIR/ansible/ansible.cfg"
     ANSIBLE_COLLECTIONS_PATH: "$CI_PROJECT_DIR/ansible/collections"
     ANSIBLE_ROLES_PATH: "$CI_PROJECT_DIR/ansible/roles"
+    # In-cluster Connect Service (runners are on the cluster). Same as tofu CI.
+    OP_CONNECT_HOST: "http://onepassword-connect.onepassword-system.svc:8080"
   cache:
     key: "ansible-pip-${CI_COMMIT_REF_SLUG}"
     paths:
@@ -42,28 +48,25 @@
     - python -m venv "$CI_PROJECT_DIR/.venv"
     - source "$CI_PROJECT_DIR/.venv/bin/activate"
     - pip install --upgrade pip
-    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0"
+    - pip install "ansible-core>=2.16,<2.19" "ansible-lint>=24.0.0,<26.0.0" "onepasswordconnectsdk>=2.0.0,<3.0.0"
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-galaxy collection install -r requirements.yml -p collections
     - ansible --version
     - ansible-lint --version
     - |
-      if [ -z "${ANSIBLE_SSH_PRIVATE_KEY:-}" ]; then
-        echo "ANSIBLE_SSH_PRIVATE_KEY is required for this job"
+      missing=""
+      for var in OP_CONNECT_HOST OP_CONNECT_TOKEN; do
+        eval "value=\${$var-}"
+        if [ -z "$value" ]; then
+          missing="${missing} ${var}"
+        fi
+      done
+      if [ -n "$missing" ]; then
+        echo "Missing required CI/CD variables:${missing}"
+        echo "OP_CONNECT_* is 1Password Connect (same token as tofu; see ansible/README.md)"
         exit 1
       fi
-      mkdir -p ~/.ssh
-      chmod 700 ~/.ssh
-      printf '%s\n' "$ANSIBLE_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-      chmod 600 ~/.ssh/id_ed25519
-      if [ -n "${ANSIBLE_SSH_KNOWN_HOSTS:-}" ]; then
-        printf '%s\n' "$ANSIBLE_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-        chmod 644 ~/.ssh/known_hosts
-      else
-        echo "WARN: ANSIBLE_SSH_KNOWN_HOSTS unset; StrictHostKeyChecking=accept-new"
-        printf '%s\n' "Host *" "  StrictHostKeyChecking accept-new" "  UserKnownHostsFile ~/.ssh/known_hosts" > ~/.ssh/config
-        chmod 600 ~/.ssh/config
-      fi
+    - python "$CI_PROJECT_DIR/ansible/ci/fetch_op_ssh.py"
 
 ansible-validate:
   extends: .ansible-base
@@ -90,7 +93,7 @@ ansible-check:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook --check --diff playbooks/site.yml
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $ANSIBLE_SSH_PRIVATE_KEY
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $OP_CONNECT_TOKEN
       changes:
         - ansible/**/*
 
@@ -102,6 +105,6 @@ ansible-apply:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook playbooks/site.yml
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $ANSIBLE_SSH_PRIVATE_KEY
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $OP_CONNECT_TOKEN
       changes:
         - ansible/**/*

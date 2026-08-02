@@ -5,6 +5,7 @@ github_username: Apocrathia
 
 # Primary login user created/managed by roles/common (user tag).
 username: ianyoung
+ansible_user: ianyoung
 
 # Packages installed by roles/common (packages tag). Keep boring and portable.
 common_packages:
