@@ -5,6 +5,7 @@ resources:
   # - namespace.yaml
   - secret.yaml
   - snmp-exporter.yaml
+  - servicemonitor.yaml
   - etcd
   - gaming-pc
   - snmp

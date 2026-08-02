@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: snmp-exporter
+  namespace: prometheus-system
+  labels:
+    app.kubernetes.io/name: snmp-exporter
+    app.kubernetes.io/component: metrics
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: snmp-exporter
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
