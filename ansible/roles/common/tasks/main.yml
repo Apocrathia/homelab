@@ -1,0 +1,15 @@
+---
+- name: Configure packages
+  ansible.builtin.import_tasks: packages.yml
+  tags:
+    - packages
+
+- name: Configure system
+  ansible.builtin.import_tasks: system.yml
+  tags:
+    - system
+
+- name: Configure user
+  ansible.builtin.import_tasks: user.yml
+  tags:
+    - user

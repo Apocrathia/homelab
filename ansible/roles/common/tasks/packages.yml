@@ -1,0 +1,8 @@
+---
+- name: Configure packages (Debian)
+  ansible.builtin.import_tasks: packages_debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Configure packages (RedHat)
+  ansible.builtin.import_tasks: packages_redhat.yml
+  when: ansible_os_family == "RedHat"

@@ -1,0 +1,36 @@
+---
+- name: Ensure primary user exists
+  ansible.builtin.user:
+    name: "{{ username }}"
+    shell: /bin/zsh
+    groups: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
+    append: true
+    create_home: true
+    state: present
+
+- name: Ensure user .ssh directory exists
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0700"
+
+- name: Authorize GitHub user keys
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    key: "https://github.com/{{ github_username }}.keys"
+    state: present
+    exclusive: false
+  when: common_fetch_github_keys | bool
+
+- name: Allow passwordless sudo for primary user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ username }}"
+    mode: "0440"
+    owner: root
+    group: root
+    content: |
+      {{ username }} ALL=(ALL) NOPASSWD:ALL
+    validate: "visudo -cf %s"
+  when: common_passwordless_sudo | bool

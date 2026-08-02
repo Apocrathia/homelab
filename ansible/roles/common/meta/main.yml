@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  role_name: common
+  author: apocrathia
+  description: Baseline packages, hostname/timezone, and login user for Debian-family hosts.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+dependencies: []

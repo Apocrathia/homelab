@@ -1,0 +1,23 @@
+---
+# Non-secret defaults for every managed host.
+timezone: America/Denver
+github_username: Apocrathia
+
+# Primary login user created/managed by roles/common (user tag).
+username: ianyoung
+ansible_user: ianyoung
+
+# Packages installed by roles/common (packages tag). Names must exist on both
+# Debian (game) and Fedora (desktops); OS-specific bits live in packages_*.yml.
+common_packages:
+  - curl
+  - git
+  - htop
+  - jq
+  - nano
+  - net-tools
+  - podman
+  - sudo
+  - tmux
+  - vim
+  - zsh
