@@ -67,7 +67,7 @@ spec:
               set -euo pipefail
 
               # renovate: datasource=github-releases depName=Comfy-Org/ComfyUI
-              COMFYUI_VERSION="v0.29.2"
+              COMFYUI_VERSION="v0.30.0"
 
               APP=/data/app
               REPO="$APP/ComfyUI"
