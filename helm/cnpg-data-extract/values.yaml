@@ -7,7 +7,7 @@ fullnameOverride: ""
 
 image:
   repository: ghcr.io/cloudnative-pg/postgresql
-  tag: "18@sha256:2b124b4c9e9710a449b868fc72ae59bcb2907386d48ddb3e7a7f82491ac0d1e1"
+  tag: "18@sha256:7af186660aead1b948d827ef1c52c20a8d2cb7b2a4089424b8f612e0a61dc2f9"
   pullPolicy: IfNotPresent
 
 # Existing CNPG instance PVC (RWO — nothing else may mount it).
