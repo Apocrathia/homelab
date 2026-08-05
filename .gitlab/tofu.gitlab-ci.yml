@@ -7,7 +7,7 @@
     # glibc base: 1Password provider is dynamically linked against glibc. Alpine
     # musl cannot exec it, and runners force uid 1000 so apk/gcompat is impossible.
     # tofu + terragrunt are bootstrapped into .ci-bin (see ci-deps.sh).
-    name: buildpack-deps:bookworm-curl@sha256:001d0ec7cc18a4e3d7c62706a04016c7baac489af1cc0be0c4363bf575559c9a
+    name: buildpack-deps:bookworm-curl@sha256:00597ff108f63db163fdbc31a830ce9e0a51cd9da548f0b318e03267a0594eb4
   variables:
     TF_IN_AUTOMATION: "true"
     CI_OPENTOFU_VERSION: "1.12.5"
