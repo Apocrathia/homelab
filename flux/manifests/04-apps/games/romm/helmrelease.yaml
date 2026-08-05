@@ -185,7 +185,7 @@ spec:
       initContainers:
         - name: reconcile-config
           # renovate: datasource=docker depName=ghcr.io/trueforge-org/go-yq
-          image: ghcr.io/trueforge-org/go-yq:4.53.3@sha256:e3a0e416c7c74853bc44bc4fd45236c474d56166a19faf3788c061ced84e5bcc
+          image: ghcr.io/trueforge-org/go-yq:4.53.3@sha256:0d43763adb5ba2eee0af3b67dbc40bf52887df92ef02d05a8699234a5983a4e9
           command: ["sh", "-c"]
           args:
             - |
