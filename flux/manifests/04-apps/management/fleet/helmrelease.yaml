@@ -118,7 +118,7 @@ spec:
     replicas: 1
 
     # renovate: datasource=docker depName=fleetdm/fleet
-    imageTag: v4.89.2
+    imageTag: v4.90.0
 
     ingress:
       enabled: false
