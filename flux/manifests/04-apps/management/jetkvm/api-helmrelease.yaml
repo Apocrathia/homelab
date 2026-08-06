@@ -52,7 +52,7 @@ spec:
 
       # Base image for Node.js runtime
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-      image: node:24@sha256:19cd848a0e073d34bd8cd5545a1b6b4d28489b3e3b607366621ced442bd5f6b4
+      image: node:24@sha256:934240a162082fd8b8a2f90cd5114446443f1eba1c5378f6687167ca405e6584
 
       container:
         name: api
@@ -99,7 +99,7 @@ spec:
       initContainers:
         - name: clone-and-build
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: node:24@sha256:19cd848a0e073d34bd8cd5545a1b6b4d28489b3e3b607366621ced442bd5f6b4
+          image: node:24@sha256:934240a162082fd8b8a2f90cd5114446443f1eba1c5378f6687167ca405e6584
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -182,7 +182,7 @@ spec:
 
         - name: run-migrations
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: node:24@sha256:19cd848a0e073d34bd8cd5545a1b6b4d28489b3e3b607366621ced442bd5f6b4
+          image: node:24@sha256:934240a162082fd8b8a2f90cd5114446443f1eba1c5378f6687167ca405e6584
           command: ["/bin/bash", "-c"]
           args:
             - |
