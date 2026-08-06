@@ -27,7 +27,7 @@ spec:
           initContainers:
             - name: install-deps
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
+              image: public.ecr.aws/docker/library/python:3.14@sha256:3a9d2dd3f18e5c7a9d8de7b3659418a4ab848ccd409fb9e91ef9d7a6a3520ba7
               env:
                 # read-only root: pip/uv must not write under /.local or ~/.cache
                 - name: HOME
@@ -68,7 +68,7 @@ spec:
           containers:
             - name: sync
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.14@sha256:5f1cdbcab9a50594a79502dd73e885456d2a2fc31f1a1fa18484815b37ee9152
+              image: public.ecr.aws/docker/library/python:3.14@sha256:3a9d2dd3f18e5c7a9d8de7b3659418a4ab848ccd409fb9e91ef9d7a6a3520ba7
               command:
                 - python
                 - /scripts/sync_uptime_robot_firewall_groups.py
