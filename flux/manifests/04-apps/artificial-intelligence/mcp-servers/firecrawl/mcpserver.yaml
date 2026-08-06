@@ -14,7 +14,7 @@ spec:
   transportType: stdio
   deployment:
     # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-    image: public.ecr.aws/docker/library/node:24-slim@sha256:235600a8101ab264e117b1768e925532262668dc9b581ef1dd7d96ced463b8e7
+    image: public.ecr.aws/docker/library/node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
     port: 8080
     cmd: npx
     args:
