@@ -39,8 +39,10 @@ spec:
             value: "chromium"
           - name: PLAYWRIGHT_SERVICE_WORKERS
             value: "allow"
+          # Keep at or below sockpuppet MAX_CONCURRENT_CHROME_PROCESSES.
+          # Oversubscription wedges the CDP endpoint (connect_over_cdp timeouts).
           - name: FETCH_WORKERS
-            value: "10"
+            value: "5"
           - name: MINIMUM_SECONDS_RECHECK_TIME
             value: "3"
           - name: USE_X_SETTINGS
@@ -95,6 +97,8 @@ spec:
           ports:
             - containerPort: 3000
               name: sockpuppet
+            - containerPort: 8080
+              name: sockpuppet-stats
           env:
             - name: SCREEN_WIDTH
               value: "1920"
@@ -118,13 +122,24 @@ spec:
             capabilities:
               add:
                 - SYS_ADMIN
+          # Stats HTTP on :8080 (CDP WS on :3000 still accepts TCP when wedged).
+          healthChecks:
+            livenessProbe:
+              enabled: true
+              httpGet:
+                path: /stats
+                port: 8080
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 5
           resources:
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: 200m
+              memory: 1Gi
             limits:
-              cpu: 1000m
-              memory: 2Gi
+              cpu: 2000m
+              memory: 4Gi
 
       resources:
         requests:
