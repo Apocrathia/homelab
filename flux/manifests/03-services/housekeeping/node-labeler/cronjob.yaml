@@ -8,6 +8,8 @@ spec:
   schedule: "0 */2 * * *" # Every 2 hours
   timeZone: "America/Denver"
   concurrencyPolicy: Forbid # Prevent overlapping jobs
+  # Suspended to confirm Talos keeps control-plane labels without this job.
+  suspend: true
   jobTemplate:
     spec:
       backoffLimit: 3
