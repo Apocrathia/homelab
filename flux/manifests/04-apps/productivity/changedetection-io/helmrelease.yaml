@@ -98,7 +98,7 @@ spec:
             - containerPort: 3000
               name: sockpuppet
             - containerPort: 8080
-              name: sockpuppet-stats
+              name: stats
           env:
             - name: SCREEN_WIDTH
               value: "1920"
