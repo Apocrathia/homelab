@@ -13,9 +13,6 @@ spec:
     # Snapshot store must exist before atelet starts writing to it.
     - name: ate-cache
       namespace: ate-system
-    # Valkey for ate-api (valkey-helmrelease.yaml), not chart-bundled Valkey.
-    - name: ate-valkey
-      namespace: ate-system
   chart:
     spec:
       chart: substrate
@@ -37,6 +34,42 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+
+  # Chart Valkey conf has no announce-hostname knobs; after StatefulSet IP churn
+  # nodes.conf keeps dead pod IPs and ate-api's ClusterClient follows them.
+  # Announce stable headless DNS + prefer hostname endpoints so CLUSTER SLOTS
+  # survives restarts. Headless Service name is chart-fixed (valkey-cluster-service).
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              version: v1
+              kind: StatefulSet
+              name: valkey-cluster
+            patch: |
+              - op: replace
+                path: /spec/template/spec/containers/0/command
+                value:
+                  - /bin/sh
+                  - -c
+                  - >-
+                    exec valkey-server /etc/valkey/valkey.conf
+                    --cluster-announce-hostname
+                    "${POD_NAME}.valkey-cluster-service.${POD_NAMESPACE}.svc.cluster.local"
+                    --cluster-preferred-endpoint-type hostname
+                    --cluster-announce-port 6379
+                    --cluster-announce-bus-port 16379
+              - op: add
+                path: /spec/template/spec/containers/0/env
+                value:
+                  - name: POD_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.name
+                  - name: POD_NAMESPACE
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.namespace
 
   values:
     # Namespace owned by namespace.yaml (PSA privileged + dockerhub pull secret)
@@ -65,14 +98,6 @@ spec:
     # touching either one deadlocks the release.
     rustfs:
       enabled: false
-
-    # Persistence is HelmRelease/ate-valkey (generic-app). Bundled Valkey is a
-    # 6-node cluster that announces pod IPs into nodes.conf and fails after IP churn.
-    valkey:
-      enabled: false
-
-    redis:
-      clusterAddress: ate-valkey.ate-system.svc:6379
 
     atelet:
       storageBackend: s3

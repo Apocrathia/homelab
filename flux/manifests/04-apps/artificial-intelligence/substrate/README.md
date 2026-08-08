@@ -11,9 +11,7 @@ talks to it over in-cluster gRPC (no Gateway exposure).
 This deployment installs:
 
 - `substrate-crds` — `WorkerPool` / `ActorTemplate` (`ate.dev/v1alpha1`)
-- `substrate` — ate-api-server, ate-controller, atelet, and atenet (bundled
-  Valkey and RustFS are disabled)
-- `ate-valkey` — Valkey for ate-api persistence (`generic-app`)
+- `substrate` — ate-api-server, ate-controller, atelet, atenet, and Valkey
 - `ate-cache` — dedicated RustFS hot cache for regenerable actor snapshots
 - `WorkerPool/kagent-default` — platform capacity for kagent (privileged ateom
   pods; kept here so PSA baseline in `kagent` does not block them)
@@ -41,10 +39,18 @@ tokens; the chart generates TLS and session-signing material.
 
 ### Valkey
 
-`HelmRelease/ate-valkey` (`generic-app`) is the Redis endpoint for ate-api
-(`redis.clusterAddress`). The substrate chart's bundled Valkey is disabled.
-Service: `ate-valkey.ate-system.svc:6379` (ClusterIP, plaintext, no AUTH —
-same posture as the chart default under JWT auth mode).
+Bundled chart Valkey (`valkey-cluster` StatefulSet) is the Redis Cluster endpoint
+for ate-api. The chart does not expose announce-hostname settings, so
+`HelmRelease/substrate` uses a `postRenderers` patch that starts each node with:
+
+- `cluster-announce-hostname` =
+  `<pod>.valkey-cluster-service.<ns>.svc.cluster.local`
+- `cluster-preferred-endpoint-type hostname`
+
+That keeps CLUSTER node ads on headless DNS instead of churning pod IPs. After
+any PVC wipe / re-init, confirm with
+`valkey-cli -h valkey-cluster-0.valkey-cluster-service.ate-system.svc cluster nodes`
+(hostnames in the address field, `cluster_state:ok`).
 
 ### RustFS credentials
 
@@ -83,9 +89,12 @@ kubectl get crd workerpools.ate.dev actortemplates.ate.dev
 kubectl get ds -n ate-system
 kubectl describe ds -n ate-system atelet
 
-# Valkey (ate-api persistence)
-kubectl get deploy,pods,svc -n ate-system -l app=ate-valkey
-kubectl exec -n ate-system deploy/ate-valkey -- valkey-cli ping
+# Valkey Cluster (ate-api persistence)
+kubectl get sts,pods,svc -n ate-system -l app=valkey-cluster
+kubectl exec -n ate-system valkey-cluster-0 -- \
+  valkey-cli cluster info
+kubectl exec -n ate-system valkey-cluster-0 -- \
+  valkey-cli cluster nodes
 
 # Init jobs
 kubectl get jobs -n ate-system
