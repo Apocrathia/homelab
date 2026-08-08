@@ -10,5 +10,6 @@ resources:
   - secret.yaml
   - crds-helmrelease.yaml
   - cache-helmrelease.yaml
+  - valkey-helmrelease.yaml
   - helmrelease.yaml
   - workerpool.yaml

@@ -11,7 +11,9 @@ talks to it over in-cluster gRPC (no Gateway exposure).
 This deployment installs:
 
 - `substrate-crds` — `WorkerPool` / `ActorTemplate` (`ate.dev/v1alpha1`)
-- `substrate` — ate-api-server, ate-controller, atelet, atenet, and Valkey
+- `substrate` — ate-api-server, ate-controller, atelet, and atenet (bundled
+  Valkey and RustFS are disabled)
+- `ate-valkey` — Valkey for ate-api persistence (`generic-app`)
 - `ate-cache` — dedicated RustFS hot cache for regenerable actor snapshots
 - `WorkerPool/kagent-default` — platform capacity for kagent (privileged ateom
   pods; kept here so PSA baseline in `kagent` does not block them)
@@ -36,6 +38,13 @@ Internal only. API endpoint used by kagent:
 
 Helm values in `helmrelease.yaml`. Auth mode is JWT with projected ServiceAccount
 tokens; the chart generates TLS and session-signing material.
+
+### Valkey
+
+`HelmRelease/ate-valkey` (`generic-app`) is the Redis endpoint for ate-api
+(`redis.clusterAddress`). The substrate chart's bundled Valkey is disabled.
+Service: `ate-valkey.ate-system.svc:6379` (ClusterIP, plaintext, no AUTH —
+same posture as the chart default under JWT auth mode).
 
 ### RustFS credentials
 
@@ -73,6 +82,10 @@ kubectl get crd workerpools.ate.dev actortemplates.ate.dev
 # atelet DaemonSet (privileged; needs PSA privileged on the namespace)
 kubectl get ds -n ate-system
 kubectl describe ds -n ate-system atelet
+
+# Valkey (ate-api persistence)
+kubectl get deploy,pods,svc -n ate-system -l app=ate-valkey
+kubectl exec -n ate-system deploy/ate-valkey -- valkey-cli ping
 
 # Init jobs
 kubectl get jobs -n ate-system

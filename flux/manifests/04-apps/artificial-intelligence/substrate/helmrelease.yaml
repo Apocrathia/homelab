@@ -13,6 +13,9 @@ spec:
     # Snapshot store must exist before atelet starts writing to it.
     - name: ate-cache
       namespace: ate-system
+    # Valkey for ate-api (valkey-helmrelease.yaml), not chart-bundled Valkey.
+    - name: ate-valkey
+      namespace: ate-system
   chart:
     spec:
       chart: substrate
@@ -62,6 +65,14 @@ spec:
     # touching either one deadlocks the release.
     rustfs:
       enabled: false
+
+    # Persistence is HelmRelease/ate-valkey (generic-app). Bundled Valkey is a
+    # 6-node cluster that announces pod IPs into nodes.conf and fails after IP churn.
+    valkey:
+      enabled: false
+
+    redis:
+      clusterAddress: ate-valkey.ate-system.svc:6379
 
     atelet:
       storageBackend: s3
