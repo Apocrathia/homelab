@@ -9,6 +9,7 @@ Each `.md` file here is a symlink into that tree.
 | --------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
 | `project-planner`           | [agent.md](../../.agents/agents/project-planner/agent.md)           | Clarify → living plan in `.cursor/plans/` |
 | `manifest-implementer`      | [agent.md](../../.agents/agents/manifest-implementer/agent.md)      | Flux/Helm/Kustomize edits in-tree         |
+| `reviewer`                  | [agent.md](../../.agents/agents/reviewer/agent.md)                  | Acceptance Bar judge (`pass` \| `gap`)    |
 | `manifest-verifier`         | [agent.md](../../.agents/agents/manifest-verifier/agent.md)         | Local validation evidence                 |
 | `security-analyst`          | [agent.md](../../.agents/agents/security-analyst/agent.md)          | Adversarial security review               |
 | `site-reliability-engineer` | [agent.md](../../.agents/agents/site-reliability-engineer/agent.md) | Incidents, obs, Flux health               |

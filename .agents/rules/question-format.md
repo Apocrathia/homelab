@@ -20,15 +20,20 @@ answer gates later asks, ask one, wait, continue.
 If no structured-question tool is in the tool list, do not fake the call. Use
 one prose Ask (below) and stop.
 
+Trivial single-concern factual questions ("did you mean `foo.yaml` or
+`bar.yaml`?") don't need the full structure.
+
 ## Prose fallback (exactly one Ask per turn)
 
-**Context:** Why it matters. 1–3 sentences.
+Order is fixed.
 
-**Ask:** The question. **Bold**, own line.
+**Context:** Why it matters. 1–3 sentences. What's at stake.
+
+**Ask:** The question. **Bold**, own line, never buried in a paragraph.
 
 **Suggestion:** Recommendation + brief why, or no preference.
 
-**Gaps/concerns:** Only if real. Omit when empty.
+**Gaps/concerns:** Only if real. Omit when empty; don't write "none".
 
 ## Forbidden
 

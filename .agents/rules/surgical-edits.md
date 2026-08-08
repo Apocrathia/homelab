@@ -6,7 +6,9 @@ description: Write the minimum code that solves the problem; touch only what the
 # Surgical edits
 
 Two discipline rules for code changes (simplicity first + touch only what you
-must). Complements [`ponytail.md`](./ponytail.md) — that rule is the YAGNI
+must), derived from [Andrej Karpathy's
+observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding
+pitfalls. Complements [`ponytail.md`](./ponytail.md) — that rule is the YAGNI
 ladder and lazy-senior voice; this rule is the edit-scope contract.
 
 Pairs with [`clarify-dont-guess.md`](./clarify-dont-guess.md) (think before
@@ -35,7 +37,8 @@ Then apply these constraints to whatever you write:
 - No features beyond what was asked.
 - No abstractions for single-use code.
 - No flexibility or configurability that wasn't requested.
-- No speculative branches for states that can't occur.
+- No speculative branches for states that can't occur (dead `if`/`else`, unused
+  YAML keys, defensive match arms for impossible inputs).
 - If you write 200 lines and it could be 50, rewrite your own new code.
 - Push back when a simpler approach exists; say so before implementing.
 
@@ -65,7 +68,8 @@ The test: every changed line should trace directly to the request.
 **Simplicity first** applies to code you are writing now (introduced in the
 current change). **Surgical changes** applies to existing code you are touching.
 You may rewrite aggressively within your own new code; touch surgically when
-editing code that was already there.
+editing code that was already there. "Your own new code" means code introduced
+in the current change, not just the current file.
 
 ## When this applies
 

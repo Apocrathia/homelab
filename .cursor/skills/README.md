@@ -33,6 +33,8 @@ For when to write a skill and frontmatter conventions, see
 | `autoresearch`                  | [`.agents/skills/autoresearch`](../../.agents/skills/autoresearch/SKILL.md)                                   | Idle tier-8 research; docs-only ship             |
 | `cleanup-worktrees`             | [`.agents/skills/cleanup-worktrees`](../../.agents/skills/cleanup-worktrees/SKILL.md)                         | Remove merged/stale worktrees + local branches   |
 | `clock-out`                     | [`.agents/skills/clock-out`](../../.agents/skills/clock-out/SKILL.md)                                         | Post-merge session worktree teardown             |
+| `create-agent`                  | [`.agents/skills/create-agent`](../../.agents/skills/create-agent/SKILL.md)                                   | Author a new `.agents/agents/<id>/agent.md`      |
+| `create-skill`                  | [`.agents/skills/create-skill`](../../.agents/skills/create-skill/SKILL.md)                                   | Author a new `.agents/skills/<id>/SKILL.md`      |
 
 ## Adding one
 

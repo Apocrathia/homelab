@@ -5,7 +5,25 @@ alwaysApply: true
 
 # Response shape
 
-Follow [`.agents/context/output.md`](../context/output.md).
+Follow [`.agents/context/output.md`](../context/output.md). The operator cannot
+read at agent speed. Default to scannable output.
+
+## Inverted pyramid
+
+First 1–3 sentences: answer, verdict, or what changed. Supporting detail after,
+only if needed.
+
+## Length by task type
+
+| Task                            | Shape                                                 |
+| ------------------------------- | ----------------------------------------------------- |
+| Trivial (yes/no, single lookup) | Short paragraph                                       |
+| Implementation done             | Summary + paths touched + verification result         |
+| Exploration                     | Bullets: path, line range, finding. Not a prose tour. |
+| Review                          | Numbered findings with severity. No preamble essay.   |
+| Multi-step work                 | Summary + bullets. Not a play-by-play of tool calls.  |
+
+Match depth to complexity. A one-line fix does not need five paragraphs of context.
 
 ## Non-negotiables
 

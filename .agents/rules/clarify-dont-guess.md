@@ -17,7 +17,7 @@ When the operator's request has two or more reasonable interpretations, **do not
 
 ## Distinguish advice from action
 
-When the operator uses consultative language — "advice", "please advise", "what should I do", "considering", "thinking about" — provide options and recommendations only. **Do not implement or mutate repo state** (no edits, commits, or staging). Read-only investigation is allowed: read files, run diagnostics, reproduce behavior. Wait for an explicit request to implement.
+When the operator uses consultative language — "advice", "please advise", "what should I do", "considering", "thinking about" — provide options and recommendations only. **Do not implement or mutate repo state** (no edits, commits, staging, or worktree creation). Read-only investigation is allowed: read files, run diagnostics, reproduce behavior. Wait for an explicit request to implement.
 
 An explicit implement instruction in the same message overrides consultative phrasing (e.g. "please advise, then fix it" → fix it).
 

@@ -43,8 +43,9 @@ existence checks.
    ```
 
    If local `main` has diverged from `origin/main` in a way that makes the base
-   unclear, **stop and ask** — do not guess. Do not switch the workspace root
-   checkout.
+   unclear, **stop and ask** — do not guess. Never invent a base from a stale
+   local `main` when the fetch failed or the divergence is unclear. Do not
+   switch the workspace root checkout.
 
 4. Run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) **before**
    creating a new worktree. Remove safe (merged / content-equivalent) trees and
@@ -83,9 +84,15 @@ checked out".
   root's branch name.
 - **Existing remote branch** (e.g. an MR head) when that name is locked in root:
   fetch the ref and add a worktree with a **distinct local branch** that tracks
-  it:
-  `git fetch origin <headRefName>` then
+  it. Same-repo (force-update the remote-tracking ref):
+  `git fetch origin +refs/heads/<headRefName>:refs/remotes/origin/<headRefName>`
+  then
   `git worktree add -b mr/<iid>-review .worktrees/mr/<iid>-review origin/<headRefName>`.
+  Fork / head not on `origin` (GitLab MR ref):
+  `git fetch origin +refs/merge-requests/<iid>/head:refs/heads/mr-<iid>-head`
+  then
+  `git worktree add -b mr/<iid>-review .worktrees/mr/<iid>-review mr-<iid>-head`.
+  Prefer GitLab MCP / `glab` to resolve the head ref when available.
   Re-entering that worktree: fetch again and rebase onto the current MR head
   before editing. Do not `git switch` in the root checkout to release the lock
   unless the operator explicitly asks.
@@ -100,7 +107,7 @@ root. That branch may be someone else's WIP or an unrelated feature.
 
 Mirror the branch path under `.worktrees/`. Use `type/short-slug` branch names
 (`feat/…`, `fix/…`, `chore/…`, `docs/…`). Slug describes **what changes**, not
-plan numbers or status.
+plan numbers, phases, or status. Put plan and issue refs in the MR body.
 
 ## Cleanup
 

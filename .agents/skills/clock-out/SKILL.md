@@ -62,9 +62,9 @@ explicitly stopped it.
 **Background shells (Shell tool):**
 
 - Read the terminals folder for shells you started: commands launched with
-  `block_until_ms: 0`, dev servers (`make run`, `cargo run`, gateway binds),
-  long Macroscope/Codex reviews, or anything else still attached to a terminal
-  file.
+  `block_until_ms: 0`, dev servers (`make run`, language `run` targets, gateway
+  binds), long Macroscope/Codex reviews, or anything else still attached to a
+  terminal file.
 - In each terminal file you started, check whether the job is still live:
   - **Running:** header includes `command` and `running_for_ms`, and the file
     has no trailing footer block with `ended_at`.
@@ -263,8 +263,8 @@ Keep it short. No new tasks, no "want me to..." offers.
 
 **User:** `merged. good work. clean up your workspace and clock out.`
 
-**Agent:** Interrupts a background `/rust-verifier` Task still running, stops a
-`make run` shell from verification, identifies
+**Agent:** Interrupts a background `/manifest-verifier` Task still running,
+stops a `make run` shell from verification, identifies
 `.worktrees/fix/reprovision-crash-fix`, removes its Macroscope sandbox, removes
 the worktree, deletes `fix/reprovision-crash-fix`, prunes, reports, stops.
 

@@ -54,8 +54,9 @@ git branch -vv
 git branch --merged "$base"
 ```
 
-Optional: check open MRs for each branch name (`glab mr list` / GitLab MCP)
-before deleting anything that still has an open MR head.
+Optional: check open MRs for each branch name (`glab mr list` / GitLab MCP, or
+`gh pr list` / GitHub MCP when the host is GitHub) before deleting anything that
+still has an open MR/PR head. Homelab defaults to **MR** / GitLab.
 
 ### 3. Classify each non-main worktree / local branch
 
@@ -67,7 +68,7 @@ For each candidate branch `B` (skip `main` and the primary checkout):
 | Content-equivalent | Unique patch already on `$base` (same file hunk under a different SHA — cherry-pick / recommit) | Treat as safe; tip need not be an ancestor |
 | Unique WIP         | `git log --oneline "$base..$B"` has commits whose **tree/diff** is not on `$base`               | **Keep** or ask                            |
 | Dirty worktree     | `git -C <path> status --porcelain`                                                              | See force rules                            |
-| Open MR            | MR still open for that head                                                                     | **Keep** unless operator says abandon      |
+| Open MR/PR         | MR (or PR) still open for that head                                                             | **Keep** unless operator says abandon      |
 
 **Force remove (`git worktree remove --force`) only when:**
 

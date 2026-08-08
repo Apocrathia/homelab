@@ -1,17 +1,21 @@
 ---
 name: implement-change
 description: >-
-  Orchestrate one Launch-brief lap: plan if needed, implement, verify,
-  security when warranted. Use after find-work selects a brief.
+  Orchestrate one Launch-brief lap: plan if needed, implement↔reviewer pair,
+  verifier arbiter, domain review when warranted. Use after find-work selects a
+  brief.
 disable-model-invocation: true
 ---
 
 # Implement change
 
-One Launch-brief lap: plan if needed → implement → verify → security when
-warranted. The parent orchestrates only: frame scope, fan out Tasks, gate on
-results. Do not paste persona/skill bodies here — invoke by path and read the
-target.
+One Launch-brief lap: plan if needed → implementer↔reviewer pair → verifier
+arbiter → domain review when warranted. The parent orchestrates only: frame
+scope, fan out Tasks, gate on results. Do not paste persona/skill bodies here —
+invoke by path and read the target.
+
+Prompt contract (Slice / Goal / Bar / Role / Artifact / Return):
+[`.agents/rules/subagents.md`](../../rules/subagents.md).
 
 Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
@@ -45,27 +49,32 @@ authorized MR contribute → [`ship-work`](../ship-work/SKILL.md) — see
   summarize first). Without confirmation, leave the finding **blocked**.
 - Ponytail / surgical: touch only what the brief requires. No scope creep
   beyond acceptance.
-- Stop-loss: 3 identical failures → stop and surface. Also stop folding when
-  reviews are clean, every remaining finding is **Wrong**, any **Unsure**
-  remains, a fix fails, or a **Valid** finding is **blocked** on a protected
-  path.
+- Stop-loss: 3 identical failures → stop and surface. Also stop the pair /
+  verify loops when reviewers are clean, a fix fails repeatedly, stop-loss
+  fires, a **Valid** finding is **blocked** on a protected path, or the
+  operator stops the run.
 
-## Orchestration map
+## Roles
 
-Invoke by path; read the target, do not invent parallel procedures. Launch
-independent Tasks in one parent message; serialize only on real dependencies.
+Homelab persona names (update this table if personas rename):
 
-| When                        | Invoke                                                                                  |
-| --------------------------- | --------------------------------------------------------------------------------------- |
-| Scope fuzzy / HITL          | [`alignment`](../alignment/SKILL.md)                                                    |
-| Plan missing or stale       | [`project-planner`](../../agents/project-planner/agent.md) → **`docs/plans/`** (D1 SoT) |
-| Manifest / Flux / Kustomize | [`manifest-implementer`](../../agents/manifest-implementer/agent.md)                    |
-| Local verify evidence       | [`manifest-verifier`](../../agents/manifest-verifier/agent.md)                          |
-| Security-sensitive change   | [`security-analyst`](../../agents/security-analyst/agent.md)                            |
-| Incident / Flux health      | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md)          |
-| New / changed Helm app      | [`helm-deployment`](../helm-deployment/SKILL.md)                                        |
-| MCP / kmcp / LiteLLM        | [`mcp-deployment`](../mcp-deployment/SKILL.md)                                          |
-| Domain restore              | matching restore skill                                                                  |
+| Job       | Subagent                                                                                                                                    | Parent does                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Plan      | [`project-planner`](../../agents/project-planner/agent.md)                                                                                  | Spawn when plan missing/stale; read the plan     |
+| Implement | [`manifest-implementer`](../../agents/manifest-implementer/agent.md) (or parent for non-manifest)                                           | Spawn per independent unit                       |
+| Review    | [`reviewer`](../../agents/reviewer/agent.md)                                                                                                | Spawn after each implementer (pair; gap loop)    |
+| Verify    | [`manifest-verifier`](../../agents/manifest-verifier/agent.md)                                                                              | Spawn after every unit's reviewers return `pass` |
+| Domain    | [`security-analyst`](../../agents/security-analyst/agent.md), [`documentation-reviewer`](../../agents/documentation-reviewer/agent.md), SRE | Role=`reviewer` splits; after acceptance `pass`  |
+
+Also invoke by path when the surface matches:
+
+| When                 | Invoke                                                                         |
+| -------------------- | ------------------------------------------------------------------------------ |
+| Scope fuzzy / HITL   | [`alignment`](../alignment/SKILL.md)                                           |
+| New / changed Helm   | [`helm-deployment`](../helm-deployment/SKILL.md)                               |
+| MCP / kmcp / LiteLLM | [`mcp-deployment`](../mcp-deployment/SKILL.md)                                 |
+| Domain restore       | matching restore skill                                                         |
+| Incident / Flux      | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md) |
 
 Interactive IDE drafts may still land under `.cursor/plans/`; durable
 executable plans for the lap live under `docs/plans/`.
@@ -77,13 +86,13 @@ executable plans for the lap live under `docs/plans/`.
 - [ ] 1. Confirm Launch brief (or operator scope): acceptance + named feedback loop
 - [ ] 2. If fuzzy → alignment; stop if unattended and still fuzzy
 - [ ] 3. If no executable plan → project-planner → docs/plans/<slug>.md
-- [ ] 4. Implement via domain skill/persona (parallel where independent)
-- [ ] 5. Verify via named feedback loop + manifest-verifier when manifests moved
-- [ ] 6. Domain review: security-analyst / SRE / Trivy when the surface warrants
-- [ ] 7. Fold valid findings back into implement + verify; triage Unsure/blocked
-- [ ] 8. Report review-ready; hand off Wave 4 siblings in order:
+- [ ] 4. Implement via manifest-implementer / parent (parallel where independent)
+- [ ] 5. Review via reviewer (acceptance + domain as needed), then verify via
+         manifest-verifier
+- [ ] 6. Fold gaps / verifier issues back into implement → review → verify
+- [ ] 7. Report review-ready; hand off Wave 4 siblings in order:
          review-loop → reconcile-docs → reconcile-context → draft-commit
-- [ ] 9. Stop — do not commit, push, merge, or invent the next lap
+- [ ] 8. Stop — do not commit, push, merge, or invent the next lap
 ```
 
 ### 0. Worktree
@@ -91,47 +100,122 @@ executable plans for the lap live under `docs/plans/`.
 Before any file edit, open or create a git worktree under `.worktrees/` on the
 brief's `Branch:` (or a new `type/slug`). Do not edit the workspace root
 checkout. See [`.agents/rules/worktrees.md`](../../rules/worktrees.md). Pass the
-worktree absolute path to every implement/verify Task.
+worktree **absolute path** to every implement / review / verify Task.
 
 ### 4. Implement
 
-One Task per independent unit. Parallelize units that touch different files;
-serialize overlaps. Prompt shape:
+One implementer Task per **independent** unit (see
+[`subagents.md`](../../rules/subagents.md)). Parallelize units that touch
+different files; serialize coupled surfaces. Prefer
+[`manifest-implementer`](../../agents/manifest-implementer/agent.md) for
+Flux/Helm/Kustomize; parent may implement trivial non-manifest units in the
+worktree. Each implementer may smoke-check locally; **pass against the Bar is
+the reviewer's job**, not self-grading.
 
 ```text
-Implement one vertical slice of this change.
-
-Goal: <one sentence — end-to-end behavior>
-Acceptance: <testable conditions; name the feedback loop / verify step>
-Paths: <files / HelmReleases / namespaces>
+Slice: <short id for this unit>
+Role: implementer
+Goal: Produce this unit so a reviewer can judge it against the Bar.
+Bar: <acceptance / named feedback loop / inspectable conditions from the brief>
+Artifact: <files / HelmReleases / namespaces this unit owns>
+Worktree: <absolute path>
+Feedback loop: <named check from the brief — failing check first when behavior changes>
 Constraints: <protected paths, GitOps, from the plan>
-Findings: <relevant explore output>
+Findings: <relevant explore output only — facts, not prior agent narrative>
 
 Return: summary, paths touched, commands run and outcome, open questions,
-whether security-analyst or SRE should run.
+whether reviewer / security-analyst / documentation-reviewer / SRE should run.
 ```
 
 A single known file with an obvious edit may skip planner and run in the
 parent — protected paths still need confirm.
 
-### 5. Verify
+### 5. Review and verify
 
-After implementers return, run the brief's named feedback loop. Spawn
-[`manifest-verifier`](../../agents/manifest-verifier/agent.md) when Flux/Helm
-manifests moved. On failure, loop back to step 4 with the failure (stop-loss
-applies).
+After implementers return, run the **acceptance reviewer gap loop**, then any
+applicable **domain reviewers**, then the **verifier arbiter**. When step 4
+launched parallel implementers in the same worktree, wait for **all** of them
+to finish before starting review — and wait for **every** unit's acceptance and
+applicable domain reviewers to reach `pass` before verification.
 
-### 6–7. Domain review and fold
+#### Reviewer gap loop
 
-Spawn security-analyst (or Trivy on changed paths) when the diff touches auth,
-secrets, RBAC, network policy, or trust boundaries. Spawn SRE when the lap is
-incident / Flux-health / capacity. Skip when neither surface is touched.
+For each implementer unit, spawn a **new**
+[`reviewer`](../../agents/reviewer/agent.md) Task (fresh context) with the same
+Slice, Bar, and Artifact. Do not pass implementer rationale.
 
-Triage each finding: **Valid**, **Wrong**, or **Unsure**. For Valid: fix via
-the matching implementer/skill, then re-verify. Before any protected-path fix,
-name the path, summarize the change, wait for confirm — else leave **blocked**
-(still Valid). Treat Unsure, failed fixes, and blocked items as blocked in the
-report.
+```text
+Slice: <same id>
+Role: reviewer
+Goal: Judge the Artifact against the Bar. Return pass or the single biggest gap.
+Bar: <same as implementer>
+Artifact: <same as implementer — surfaces this unit owns>
+Worktree: <absolute path>
+
+Return: pass | gap: <one miss>; evidence.
+```
+
+On `gap`, spawn a **new** implementer (step 4) with only the gap + Bar +
+Artifact, then a **new** reviewer. Repeat until `pass` or stop-loss / operator
+stop.
+
+#### Domain review
+
+Domain personas fill the same **reviewer** pair slot (see
+[`subagents.md`](../../rules/subagents.md)); they are not a post-verify stage.
+
+After the acceptance reviewer returns **pass** for a unit, spawn a **new**
+domain reviewer Task when the diff warrants it:
+
+| Surface                                         | Persona                                                   |
+| ----------------------------------------------- | --------------------------------------------------------- |
+| Auth, secrets, RBAC, network policy, trust edge | `security-analyst`                                        |
+| Docs / README standards                         | `documentation-reviewer`                                  |
+| Incident / Flux health / capacity               | `site-reliability-engineer` (unpaired unless given a Bar) |
+
+Skip when none apply. Goal is always judge-against-Bar (`pass` | `gap`); do not
+inherit implementer narrative. On `gap`, spawn a **new** implementer (step 4)
+with only the gap + that reviewer's Bar + Artifact, then a **new** Task for the
+**same** domain persona. After any domain-gap recovery that changed the
+Artifact, re-run **that unit's** acceptance reviewer gap loop (then applicable
+domain reviewers) before verify.
+
+Before any protected-path fix, name the path, summarize the change, wait for
+confirm — else leave **blocked** (still a gap against the Bar).
+
+#### Verifier arbiter
+
+After **every** unit's acceptance reviewer returns `pass`, and after every
+applicable domain reviewer for those units also returns `pass`, spawn a **new**
+[`manifest-verifier`](../../agents/manifest-verifier/agent.md) Task (fresh
+context) with the **cumulative** Artifact — union of every unit's touched
+paths, including gap-round edits — but **no Slice**, and a distinct Bar: the
+brief's named feedback loop / local gates for touched surfaces (not the pair's
+acceptance Bar). Do not start the verifier while any sibling unit is still in a
+gap round.
+
+Also run the brief's named feedback loop (Prettier/yamllint/`helm template`/
+Trivy/etc. as applicable). Prefer verifier evidence over vibes.
+
+```text
+Role: verifier
+Goal: Independently verify the Artifact against the named feedback loop / local gates.
+Bar: <named feedback loop + local checks for touched surfaces>
+Artifact: <worktree path + union of all units' touched paths>
+Worktree: <absolute path>
+
+Return: pass | issue: <what failed>; commands run and outcome.
+```
+
+On `issue`, map the failure to affected unit(s) from the verifier's evidence.
+Spawn a **new** implementer (step 4) **per affected unit** with the issue +
+that unit's acceptance Bar + Artifact, then re-run **that unit's** reviewer gap
+loop (acceptance, then applicable domain). When every recovered unit has
+returned `pass`, spawn a **new** verifier with the cumulative Artifact. If no
+unit's Artifact overlaps the failing paths, open a **new**
+implementer↔reviewer pair scoped to the failing evidence, or stop / escalate —
+do not re-enter verification with an empty affected set. Repeat until `pass` or
+stop-loss / operator stop.
 
 ### Sibling handoffs (Wave 4)
 
@@ -158,12 +242,12 @@ do not fabricate their procedures here.
 
 - plan: <done | skipped>
 - implement: <units, paths>
+- review: <acceptance + domain: pass | gaps folded | n/a>
 - verify: <pass | fail + commands>
-- review: <security / SRE: clean | findings | n/a>
 
 ### Left open
 
-- <unsure finding or blocker>
+- <blocker or unattributed verifier issue>
 
 ### Next
 
@@ -177,5 +261,5 @@ do not fabricate their procedures here.
 - Auto-merge, auto-commit, auto-push
 - Editing protected paths unattended
 - Cluster mutation without explicit ask
-- Worktrees, `ship-work`, or upstream Rust/cargo pipelines
+- Replacing local `review-loop` gates with Macroscope/Bugbot/Codex defaults
 - Running find-work tightly after an empty-queue stop

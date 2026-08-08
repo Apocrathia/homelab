@@ -143,10 +143,11 @@ This contract is ground truth for the lap. Fix in-scope paths before the run
 Do **not** change the contract mid-run. Evolve hypothesis → stop, ship partial,
 new run.
 
-When defining constraints, ask what the eval consumes that has a ceiling
-(Grafana query cost, scrape volume, peak memory, binary/render size). Soft:
-modest breach OK when the metric gain justifies it; dramatic breach → discard
-even if simpler. Constraint checks run before the simplicity criterion.
+When defining constraints, survey what the eval consumes that has a ceiling
+(Grafana query cost, scrape volume, peak memory, binary/render size, API rate
+limits, request latency). Soft: modest breach OK when the metric gain justifies
+it; dramatic breach → discard even if simpler. Constraint checks run **before**
+the simplicity criterion at the classification gate.
 
 ### Grafana as the metric source
 
@@ -192,7 +193,8 @@ metric from logs in chat.
 
 1. Resolve GNU `timeout` / `gtimeout` for shell evals (Grafana MCP queries use
    the contract range instead of shell timeout, but still respect wall-clock
-   budget).
+   budget). Persist `baseline.duration_seconds` and `meta.expected_runtime` so
+   a restart can rebuild the 2× candidate timeout without re-running setup.
 2. Run eval / Grafana query; record metric + duration (or query wall time).
 3. Baseline failure / timeout / unreadable metric → **stop** and ask operator.
 
@@ -252,6 +254,10 @@ Sandbox (optional but preferred):
   "ended_at": null
 }
 ```
+
+Leave `constraints` as `[]` when none are defined. When defined, populate with
+`{name, soft_limit, measurement}` objects. The classification gate only
+evaluates constraints when this array is non-empty.
 
 ## Phase 2: Experiment loop
 
@@ -316,6 +322,9 @@ When eval returns a metric:
 Crash path: empty/unreadable metric, timeout, or fundamentally broken eval →
 `crash`. Dumb fixable typos may be corrected and re-eval'd once before
 classifying crash; do not burn the experiment budget on endless amend cycles.
+Sanitize `error` before writing: drop tokens, signed URLs, Authorization
+headers; prefer a one-line redacted cause. Never paste raw `run.log` into JSON
+or chat.
 
 ### `exp-NNN.json` schema
 
@@ -324,8 +333,8 @@ classifying crash; do not burn the experiment budget on endless amend cycles.
   "id": 1,
   "timestamp": "<ISO>",
   "description": "<what this tried>",
-  "change_category": "architecture | hyperparameter | simplification | algorithm | configuration | other",
-  "rationale": "<why this probe>",
+  "change_category": "architecture | hyperparameter | simplification | algorithm | data-pipeline | configuration | other",
+  "rationale": "<why this probe — what hypothesis angle it tests>",
   "metric_value": 0,
   "delta_from_baseline": 0,
   "delta_from_best": 0,
@@ -339,14 +348,22 @@ classifying crash; do not burn the experiment budget on endless amend cycles.
 ```
 
 Deltas: positive means improvement (`candidate - reference` for `higher`,
-`reference - candidate` for `lower`). Omit `constraint_values` when the
-contract has none. Prefer a one-line redacted `error` cause over a log dump.
-Never paste raw `run.log` into JSON or chat.
+`reference - candidate` for `lower`). For `delta_from_best`, use the best
+metric **before** the current experiment as the reference. Omit
+`constraint_values` when the contract has none.
 
 Structured fields exist so a later agent can reason over the corpus:
-`change_category` aggregates what helps; `rationale` records intent;
-`observation` captures findings on discards; `related_experiments` traces
-paths.
+
+- **`change_category`** — aggregate which change types help or hurt
+- **`rationale`** — intent / hypothesis angle for future agents
+- **`observation`** — findings on discards (often the most valuable field)
+- **`related_experiments`** — IDs this run builds on, varies, or combines
+
+One file per experiment (`exp-NNN.json`). Read history by globbing
+`exp-*.json` and sorting by ID. Treat `meta.json` `best` as advisory — scan
+experiment files for the true best before classifying the next run if state
+looks stale. Homelab runs **one agent per slug** (no concurrent experiment
+loops committing / resetting shared git state).
 
 ### Stop conditions
 
