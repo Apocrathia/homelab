@@ -14,9 +14,17 @@ systems: use MCP when a server is configured for the job.
   embedded credentials.
 - Prefer GitLab MCP for MR / CI / pipeline reads (`watch-mr`, `find-work` Open
   MRs / CI scouts) over `glab` / raw API when the server is configured.
-- Prefer Flux / Kubernetes MCP for inventory and status reads when configured.
+- Prefer Flux / Kubernetes MCP for inventory, status, and Flux mutations
+  (reconcile / suspend / resume / source) when configured.
+  - `reconcile_flux_helmrelease` already force-reconciles (sets
+    `reconcile.fluxcd.io/forceAt`). Do **not** drop to
+    `flux reconcile helmrelease --force` because the MCP schema omits a
+    `force` argument.
+  - Use `flux` / `kubectl` CLI for Flux only when MCP errors, is
+    unavailable, or cannot express the action (not for “I want `--force`”).
 - Prefer CLI (`kubectl`, `flux`, `helm`, `talosctl`) when you need exact flags,
   pipes, or local render (`helm template`) — or when MCP is unavailable.
+  “Exact flags” does not override the Flux MCP reconcile rule above.
 - Local filesystem / git / renders: Shell, Read, Grep (not MCP).
 - Mutating MCP calls still need the same permission bar as mutating CLI. Ask
   first.

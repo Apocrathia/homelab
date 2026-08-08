@@ -49,7 +49,9 @@ This is a GitOps-managed Kubernetes homelab with a full LGTM observability stack
 **Available MCP tools (prefer over guessing):**
 
 - **Grafana MCP**: PromQL, LogQL, alert rules, dashboards, incidents, Sift investigations, deeplinks
-- **Flux MCP**: Kustomization/HelmRelease reconciliation status
+- **Flux MCP**: Kustomization/HelmRelease status **and** reconcile / suspend /
+  resume / source (prefer over `flux` / `kubectl annotate`). HelmRelease
+  reconcile via MCP already force-reconciles (`forceAt`).
 - **Home Assistant MCP**: When incidents touch smart-home integrations
 
 **kubectl convention:** Put the subcommand directly after `kubectl` (e.g. `kubectl get pods -n foo`, not `kubectl -n foo get pods`) so allowlisted commands work without approval.
@@ -115,12 +117,16 @@ Use Grafana MCP for PromQL. Always specify a reasonable time range.
 
 ### Cluster state (kubectl — read-only)
 
+Prefer Flux / Kubernetes MCP for HelmRelease, Kustomization, and GitRepository
+inventory when available. Use kubectl for pods, events, nodes, and storage —
+and for GitOps kinds only when MCP is unavailable.
+
 ```bash
 # Workload health
 kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
 kubectl get events -A --sort-by='.lastTimestamp' | tail -30
 
-# GitOps status
+# GitOps status (fallback if Flux MCP unavailable)
 kubectl get kustomizations -A
 kubectl get helmreleases -A
 kubectl get gitrepositories -A
@@ -135,6 +141,9 @@ kubectl get pv,pvc -A
 - Reconciliation status of affected Kustomizations and HelmReleases
 - Last applied revision vs git HEAD (drift indicator)
 - Error messages from failed reconciliations
+- Operator-approved reconcile / suspend / resume / source via Flux MCP (not
+  `flux reconcile` / `kubectl annotate` unless MCP cannot do it). MCP
+  HelmRelease reconcile already sets `forceAt`.
 
 ## Phase 3: Analysis
 
