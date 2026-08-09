@@ -3,7 +3,7 @@
 create-chart-tag:
   stage: deploy
   # renovate: datasource=docker depName=alpine/git
-  image: alpine/git:v2.54.0@sha256:729da2347ce652f30476b064198577fe12e1147e58499be9f343039343ef2cee
+  image: alpine/git:v2.54.0@sha256:3b44767883ac77bddae0160cc27b6b039345e23fa3504f4159efaa32264ab57f
   before_script:
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
