@@ -212,25 +212,18 @@ spec:
         limits:
           cpu: 1000m
           memory: 1Gi
-      # Aggressive retention - Kafka is just a buffer, data should be consumed quickly by ingesters
-      # Use extraConfig to properly override retention (avoids duplicate env vars from chart defaults)
-      # Size-based retention as safety net: delete oldest segments when total size exceeds 15Gi (75% of 20Gi volume)
-      extraConfig: |-
-        log.retention.hours=1
-        log.retention.bytes=16106127360
-        log.retention.check.interval.ms=60000
-        log.segment.delete.delay.ms=60000
-        log.segment.bytes=1073741824
-      extraEnv:
-        # Override chart defaults for aggressive retention - env vars take precedence over extraConfig
-        - name: KAFKA_LOG_RETENTION_HOURS
-          value: "1"
+      # Aggressive retention — Kafka is a short buffer; ingesters should consume quickly.
+      # mimir-distributed 6.x uses logRetentionHours + env (extraConfig/extraEnv are ignored).
+      # log.retention.bytes is per-partition; 8Gi keeps two hot partitions under the 20Gi PVC.
+      logRetentionHours: 1
+      env:
         - name: KAFKA_LOG_RETENTION_BYTES
-          value: "16106127360" # 15Gi safety net
+          value: "8589934592" # 8Gi per partition
         - name: KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS
-          value: "60000" # Check every 60s
-        # Increase max message size to handle large timeseries (default 1MB)
-        # This must be smaller than distributor's max_write_request_size
+          value: "60000"
+        - name: KAFKA_LOG_SEGMENT_BYTES
+          value: "1073741824" # 1Gi
+        # Increase max message size for large timeseries (must be < distributor max_write_request_size)
         - name: KAFKA_MESSAGE_MAX_BYTES
           value: "52428800" # 50MB
         - name: KAFKA_REPLICA_FETCH_MAX_BYTES
