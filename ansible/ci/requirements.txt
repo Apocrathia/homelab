@@ -1,5 +1,5 @@
 # CI / local tooling pins — Renovate pip_requirements manager.
 # Used by ansible/.gitlab-ci.yml (.ansible-base and .ansible-ssh-setup).
-ansible-core==2.21.2
+ansible-core==2.21.3
 ansible-lint==26.6.0
 onepasswordconnectsdk==2.1.0
