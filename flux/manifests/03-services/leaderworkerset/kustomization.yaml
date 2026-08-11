@@ -7,7 +7,7 @@ metadata:
 resources:
   # LeaderWorkerSet controller and CRDs
   # renovate: datasource=github-releases depName=kubernetes-sigs/lws
-  - https://github.com/kubernetes-sigs/lws/releases/download/v0.9.0/manifests.yaml
+  - https://github.com/kubernetes-sigs/lws/releases/download/v0.10.0/manifests.yaml
 
 patches:
   # Add resource requests and limits to LWS controller to prevent OOM kills
