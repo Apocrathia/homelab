@@ -12,7 +12,7 @@ pre-commit:
   variables:
     PRE_COMMIT_HOME: $CI_PROJECT_DIR/.cache/pre-commit
     # renovate: datasource=pypi depName=pre-commit
-    PRE_COMMIT_VERSION: "4.6.1"
+    PRE_COMMIT_VERSION: "4.6.2"
   cache:
     # Suffix invalidates Alpine-built nodeenv caches (glibc Node cannot run on musl).
     key:
