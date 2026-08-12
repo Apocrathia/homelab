@@ -1,0 +1,28 @@
+# Ghostty: install when missing, then keep Fleet-maintained version current.
+# Requires ghostty/darwin under software.fleet_maintained_apps on the same fleet.
+#
+# Patch policies only fail when the app is installed and outdated — missing
+# hosts pass. The install policy covers first-time install.
+---
+- name: macOS - Ghostty installed
+  description: >
+    Fails when Ghostty is not installed.
+  resolution: >
+    Fleet installs Ghostty (ghostty/darwin). Prefer Fleet over Homebrew for this
+    app so installs and uninstalls stay consistent.
+  platform: darwin
+  query: "SELECT 1 FROM apps WHERE bundle_identifier = 'com.mitchellh.ghostty'"
+  install_software:
+    fleet_maintained_app_slug: ghostty/darwin
+  critical: false
+- name: macOS - Ghostty up to date
+  description: >
+    Fails when Ghostty is installed but behind the Fleet-maintained app metadata.
+  resolution: >
+    Fleet updates Ghostty (ghostty/darwin). Prefer Fleet over Homebrew for this
+    app so installs and uninstalls stay consistent.
+  type: patch
+  fleet_maintained_app_slug: ghostty/darwin
+  install_software: true
+  platform: darwin
+  critical: false
