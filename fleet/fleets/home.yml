@@ -29,7 +29,7 @@ software:
       self_service: true
     - slug: fleet-desktop/darwin
       self_service: true
-    - slug: iterm2/darwin
+    - slug: ghostty/darwin
       self_service: true
     - slug: slack/darwin
       self_service: true
