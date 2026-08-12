@@ -20,7 +20,7 @@ spec:
     app:
       name: huntarr2
       # renovate: datasource=docker depName=ghcr.io/refringe/huntarr2
-      image: ghcr.io/refringe/huntarr2:0.1.2@sha256:6db332f07dc5547da30bc9abeff04c58a0a6c9d238e4badb6f1e65d823c26ddf
+      image: ghcr.io/refringe/huntarr2:0.1.3@sha256:91b5a96c698b9fdd3d4ae57dc3f56d9c68d4b8bd90280e031948615516fbac01
       command:
         - /bin/huntarr2
       container:
