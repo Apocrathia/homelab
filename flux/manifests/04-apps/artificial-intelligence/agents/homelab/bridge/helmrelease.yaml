@@ -61,7 +61,7 @@ spec:
         - name: install
           # Using full Python image (not slim) to include build tools for native extensions
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14@sha256:297cf11d0b98b38ac26a56136f0279df845314bcd0347c1f6383fee6e75125ee
+          image: public.ecr.aws/docker/library/python:3.14@sha256:4fad23465a06cc5149a541fbec6f87e234a64dc0550f6bfdd2d290d8f03240df
           command: ["/bin/bash", "-c"]
           args:
             - |
