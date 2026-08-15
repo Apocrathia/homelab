@@ -6,6 +6,7 @@ from __future__ import annotations
 import contextlib
 import io
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -128,6 +129,149 @@ class CheckDiscoveryTest(unittest.TestCase):
                 " -> .agents/agents/example/agent.md",
                 output,
             )
+
+    def _flat_file_tree(self, root: str) -> None:
+        """Like _happy_tree but agents are flat .md files, not directories."""
+        agent_md = os.path.join(root, ".agents", "agents", "example.md")
+        skill_dir = os.path.join(root, ".agents", "skills", "demo")
+        self._write(agent_md, "# Example\n")
+        self._write(os.path.join(skill_dir, "SKILL.md"), "# Demo\n")
+        self._write(os.path.join(root, "AGENTS.md"), "# Agents\n")
+
+        cursor_agents = os.path.join(root, ".cursor", "agents")
+        claude_agents = os.path.join(root, ".claude", "agents")
+        cursor_skills = os.path.join(root, ".cursor", "skills")
+        os.makedirs(cursor_agents, exist_ok=True)
+        os.makedirs(claude_agents, exist_ok=True)
+        os.makedirs(cursor_skills, exist_ok=True)
+
+        os.symlink(
+            os.path.join("..", "..", ".agents", "agents", "example.md"),
+            os.path.join(cursor_agents, "example.md"),
+        )
+        os.symlink(
+            os.path.join("..", "..", ".agents", "agents", "example.md"),
+            os.path.join(claude_agents, "example.md"),
+        )
+        os.symlink(
+            os.path.join("..", "..", ".agents", "skills", "demo"),
+            os.path.join(cursor_skills, "demo"),
+        )
+        os.symlink(
+            os.path.join("..", ".agents", "skills"),
+            os.path.join(root, ".claude", "skills"),
+        )
+        os.symlink("AGENTS.md", os.path.join(root, "CLAUDE.md"))
+
+    def test_flat_file_agents_exits_zero(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._flat_file_tree(root)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertIn("Discovery parity OK.", output)
+
+    def test_missing_flat_file_cursor_agent_link(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._flat_file_tree(root)
+            os.unlink(os.path.join(root, ".cursor", "agents", "example.md"))
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn("MISSING [agent-cursor] .cursor/agents/example.md", output)
+
+    def test_duplicate_dir_and_flat_agent_ids(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._flat_file_tree(root)
+            # Also create the directory-based layout for the same agent id
+            self._write(
+                os.path.join(root, ".agents", "agents", "example", "agent.md"),
+                "# Example\n",
+            )
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn("DUPLICATE_ID", output)
+
+
+    def test_missing_agents_sot_directory(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._happy_tree(root)
+            # Deleting the agents source of truth (with its discovery mirrors)
+            # must fail loudly, not enumerate as empty and report parity OK.
+            shutil.rmtree(os.path.join(root, ".agents", "agents"))
+            shutil.rmtree(os.path.join(root, ".cursor", "agents"))
+            shutil.rmtree(os.path.join(root, ".claude", "agents"))
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn("MISSING [agents-sot] .agents/agents", output)
+
+    def test_missing_skills_sot_directory(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._happy_tree(root)
+            # Deleting the skills source of truth (with its discovery mirrors)
+            # must fail loudly, not enumerate as empty and report parity OK.
+            shutil.rmtree(os.path.join(root, ".agents", "skills"))
+            shutil.rmtree(os.path.join(root, ".cursor", "skills"))
+            os.unlink(os.path.join(root, ".claude", "skills"))
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn("MISSING [skills-sot] .agents/skills", output)
+
+    def test_skill_md_replaced_by_directory(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._happy_tree(root)
+            # The discovery links still resolve to the skill directory, so only
+            # a type check catches an entrypoint no harness can read.
+            skill_md = os.path.join(root, ".agents", "skills", "demo", "SKILL.md")
+            os.unlink(skill_md)
+            os.makedirs(skill_md)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn(
+                "NOT_A_FILE [skill-md-sot] .agents/skills/demo/SKILL.md", output
+            )
+
+    def test_skill_md_symlinked_outside_agents(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._happy_tree(root)
+            # Cursor and Claude still resolve the skill directory; the
+            # entrypoint itself redirects outside .agents/ and must be caught.
+            self._write(os.path.join(root, "outside", "SKILL.md"), "# Evil\n")
+            skill_md = os.path.join(root, ".agents", "skills", "demo", "SKILL.md")
+            os.unlink(skill_md)
+            os.symlink(
+                os.path.join("..", "..", "..", "outside", "SKILL.md"), skill_md
+            )
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn(
+                "ESCAPES [skill-md-sot] .agents/skills/demo/SKILL.md", output
+            )
+
+    def test_skill_md_deleted(self):
+        with tempfile.TemporaryDirectory() as root:
+            self._happy_tree(root)
+            # The discovery links point at the skill directory, so a deleted
+            # entrypoint must fail explicitly rather than report parity OK.
+            skill_md = os.path.join(root, ".agents", "skills", "demo", "SKILL.md")
+            os.unlink(skill_md)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn("MISSING [skill-md-sot] .agents/skills/demo/SKILL.md", output)
 
 
 if __name__ == "__main__":

@@ -45,10 +45,10 @@ flowchart TD
   researchMerge --> researchCleanup["/autoresearch cleanup"]
   setup -->|no| invoke["Invoke skill from brief<br/>/alignment · /project-planner · /implement-change<br/>/watch-mr · /reconcile-context"]
   invoke --> worktree[Open worktree per brief]
-  worktree --> build[Execute skill + subagents]
+  worktree --> build["Execute skill + subagents<br/>implementer↔reviewer → verifier"]
   build --> route{Brief type?}
   route -->|watch-mr| mergeReady["merge-ready report<br/>human merge"]
-  route -->|other| review["/review-loop"]
+  route -->|other| review["/review-loop<br/>CLI reviewers → verifier"]
   review --> reconcileDocs["/reconcile-docs<br/>docs, plans, issues"]
   reconcileDocs --> reconcileCtx["/reconcile-context<br/>AGENTS.md, .agents/context/"]
   reconcileCtx --> ship["/ship-work<br/>includes watch-mr"]

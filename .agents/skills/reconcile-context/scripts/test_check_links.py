@@ -353,6 +353,38 @@ class CheckLinksTest(unittest.TestCase):
 
             self.assertEqual([os.path.join(root, "docs", "bad_\udcff.md")], paths)
 
+    def test_alias_to_tracked_file_outside_surface_is_kept(self):
+        """Off-surface alias stays on the default surface and is scanned.
+
+        drop_internal_symlinks must not drop a `.agents/` symlink whose target
+        is tracked under `docs/` (not on the default surface). Homelab allows
+        reading through in-repo markdown symlinks, so the target's broken link
+        is reported rather than a `[symlink]` rejection.
+        """
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            os.makedirs(os.path.join(root, ".agents", "context"), exist_ok=True)
+            os.makedirs(os.path.join(root, "docs"), exist_ok=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("# Agents\n")
+            with open(os.path.join(root, "docs", "real.md"), "w", encoding="utf-8") as fh:
+                fh.write("[Missing](./gone.md)\n")
+            os.symlink(
+                os.path.join("..", "..", "docs", "real.md"),
+                os.path.join(root, ".agents", "context", "alias.md"),
+            )
+            subprocess.run(
+                ["git", "add", "AGENTS.md", "docs/real.md", ".agents/context/alias.md"],
+                cwd=root,
+                check=True,
+            )
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status)
+            self.assertIn(".agents/context/alias.md", output)
+            self.assertIn("missing file", output)
+
 
 if __name__ == "__main__":
     unittest.main()
