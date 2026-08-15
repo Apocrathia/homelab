@@ -36,6 +36,11 @@ Do not fold context work into this skill.
 - **Delete-on-ship** — no `closed/` archives. Git history is the archive.
 - **Acceptance gate** — if acceptance is not met, **do not delete** the issue
   or plan; surface what remains.
+- **Protected paths** — never write a path listed in
+  [`protected-paths.md`](../../rules/protected-paths.md) without confirmation.
+  `docs/` is freely editable except listed paths. Propose a patch and wait; if
+  declined, keep the issue/plan and its backlink rather than leave a broken
+  link.
 - This skill does not ship (no commit/push). Hand off to
   [`draft-commit`](../draft-commit/SKILL.md) when authorized — see
   [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship).
@@ -65,7 +70,20 @@ Do not fold context work into this skill.
 
 Update only docs that describe **current** behavior and are now wrong. Do not
 narrate the fix ("previously broken…"). Prefer adjacent READMEs over inventing
-new doc trees. Tunable config stays in manifests (GitOps SoT).
+new doc trees. Tunable config stays in manifests (GitOps SoT). Never write a
+protected path: if one is affected, return a proposed patch and wait.
+
+### Protected docs
+
+If a required edit (behavior doc or a backlink before deleting an issue/plan)
+hits a path in [`protected-paths.md`](../../rules/protected-paths.md):
+
+- **Approved** — apply the patch, then complete any deferred deletions.
+- **Declined** — do not apply; keep the issue/plan files and their backlinks.
+- **No patch** — proceed.
+
+Homelab does not currently list `docs/` paths as protected; still honor the
+list if it grows.
 
 ### Issues (`docs/issues/`)
 
@@ -134,6 +152,6 @@ If nothing needed reconcile, say so in one line and stop.
 - Never cluster-mutate as part of reconcile-docs.
 - No secrets in doc or issue bodies.
 - Protected paths still need confirmation unless the operator already ordered
-  this reconcile (summarize first when touching `.agents/` / `.cursor/` only
-  for backlinks that truly require it — prefer leaving agent-tree edits to
-  `reconcile-context`).
+  this reconcile (summarize first). Prefer leaving agent-tree edits to
+  `reconcile-context`; any protected docs/ path uses the same confirmation
+  gate as above.

@@ -244,6 +244,52 @@ def surface(check_all, md_files):
     return out
 
 
+def drop_internal_symlinks(surface_files, md_files):
+    """Drop surface files that are symlinks to another tracked Markdown file.
+
+    Harness discovery paths are symlinks into `.agents/` (CLAUDE.md -> AGENTS.md,
+    .claude/agents/ -> .agents/agents/). The target is tracked and scanned on
+    its own, so skipping the alias avoids double-scanning — provided the target
+    is also on the surface. When a symlink target is tracked but NOT on the
+    surface (e.g. a `.agents/` alias pointing at a `docs/` file in default
+    mode), the alias is kept so it is still validated. A broken symlink
+    (realpath resolves to a nonexistent target) is never dropped.
+    """
+    # Only independently tracked non-symlink files count as targets: a
+    # tracked symlink's realpath would otherwise put its (possibly untracked)
+    # target into the set, letting an alias to an unvalidated file vanish.
+    tracked = {os.path.realpath(f) for f in md_files if not os.path.islink(f)}
+    # Like `tracked`, the surface set must exclude symlinks: an alias's
+    # realpath would otherwise put its target into the set via the alias
+    # itself, so the guard below could never preserve the alias and the
+    # target would never be scanned.
+    surface_real = {
+        os.path.realpath(f) for f in surface_files if not os.path.islink(f)
+    }
+    kept = []
+    for f in surface_files:
+        try:
+            is_link = stat.S_ISLNK(os.lstat(f).st_mode)
+        except OSError:
+            kept.append(f)
+            continue
+        real = os.path.realpath(f)
+        if (
+            is_link
+            and within_root(real)
+            and real in tracked
+            and os.path.exists(real)
+        ):
+            if real not in surface_real:
+                # Target is tracked but not on this surface — keep the alias
+                # so it gets validated on its own terms.
+                kept.append(f)
+                continue
+            continue  # drop the alias — the target is on the surface and will be scanned
+        kept.append(f)
+    return kept
+
+
 def tracked_lookup(md_files):
     exact = {}
     folded = {}
@@ -289,7 +335,7 @@ def main():
     # the real cause (e.g. "cannot read file") instead of a bogus "missing anchor"
     # when a link points at a tracked-but-unreadable Markdown file.
     read_failures = {os.path.realpath(f): why for f, _, why in read_bad}
-    surface_files = surface(check_all, md_files)
+    surface_files = drop_internal_symlinks(surface(check_all, md_files), md_files)
     # anchor_map records read failures for every tracked file because the anchor
     # index has to cover any link target. A read failure only fails the run if
     # that file is on the surface, which is every tracked file under --all but
