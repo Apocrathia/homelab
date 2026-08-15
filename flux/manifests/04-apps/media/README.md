@@ -15,6 +15,7 @@ Media applications are organized into three categories:
 ## Servers
 
 - **[Jellyfin](./servers/jellyfin/README.md)** - Open-source media server with SSO plugin for Authentik
+- **[Jellyfin AI Upscaler](./servers/jellyfin-ai-upscaler/README.md)** - CPU ONNX inference sidecar for the Jellyfin AI Upscaler plugin
 - **[Komga](./servers/komga/README.md)** - Media server for comics, manga, magazines, and eBooks with OPDS support
 - **[Plex](./servers/plex/README.md)** - Media server with transcoding and direct LoadBalancer access
 - **[Tunarr](./servers/tunarr/README.md)** - Virtual TV channel creator with HDHomeRun emulation for Plex/Jellyfin

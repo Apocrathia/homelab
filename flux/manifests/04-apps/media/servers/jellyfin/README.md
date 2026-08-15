@@ -76,6 +76,15 @@ SSO login creates a new Jellyfin user. To link SSO to an existing account (e.g.,
 2. Visit `/sso/linking` to link your Authentik identity to the existing account
 3. Future SSO logins will use the linked account with its existing permissions
 
+## AI Upscaler
+
+The [Jellyfin AI Upscaler plugin](https://github.com/Kuschel-code/JellyfinUpscalerPlugin) talks to a separate inference service. After installing the plugin, point it at:
+
+- **AI Service URL**: `http://jellyfin-ai-upscaler.jellyfin-ai-upscaler.svc.cluster.local:80`
+- **AI Service API Token**: same value as the `API_TOKEN` field on `vaults/Secrets/items/jellyfin-ai-upscaler-secrets`
+
+Set realtime mode to `server` if you want CPU inference during playback. Details: [Jellyfin AI Upscaler](../jellyfin-ai-upscaler/README.md).
+
 ## Media Libraries
 
 Media is mounted read-write from the NAS (trickplay and other sidecar metadata):

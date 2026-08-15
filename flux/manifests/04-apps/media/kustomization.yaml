@@ -28,6 +28,7 @@ resources:
   - management/whisparr
   - management/scripts
   - servers/jellyfin
+  - servers/jellyfin-ai-upscaler
   - servers/komga
   - servers/plex
   - servers/tunarr
