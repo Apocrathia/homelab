@@ -1,0 +1,137 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jellyfin-ai-upscaler
+  namespace: jellyfin-ai-upscaler
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: jellyfin-ai-upscaler
+      # renovate: datasource=docker depName=kuscheltier/jellyfin-ai-upscaler
+      image: kuscheltier/jellyfin-ai-upscaler:docker7-cpu@sha256:07389285ee18cfed7a4a1b69d37bb944b192249cd4a150799306161ca61c0605
+      container:
+        name: jellyfin-ai-upscaler
+        port: 5000
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: USE_GPU
+            value: "false"
+          - name: MAX_CONCURRENT_REQUESTS
+            value: "4"
+          - name: DEFAULT_MODEL
+            value: "fsrcnn-x2"
+          - name: LOG_LEVEL
+            value: "INFO"
+          - name: API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: jellyfin-ai-upscaler-secrets
+                key: api-token
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: 4000m
+          memory: 8Gi
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 5000
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /app/models
+          subPath: models
+        - name: data
+          mountPath: /app/cache
+          subPath: cache
+        - name: data
+          mountPath: /app/config
+          subPath: config
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      healthChecks:
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 15Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/jellyfin-ai-upscaler-secrets"
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: true
+      path: /health
+    httproute:
+      enabled: false
