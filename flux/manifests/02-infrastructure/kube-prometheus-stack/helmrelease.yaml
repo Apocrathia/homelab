@@ -46,7 +46,7 @@ spec:
         kubeApiserverHistogram: true
         kubeApiserverSlos: true
         kubelet: true
-        kubeProxy: true
+        kubeProxy: false
         kubePrometheusGeneral: true
         kubePrometheusNodeRecording: true
         kubernetesApps: true
@@ -61,6 +61,10 @@ spec:
         nodeExporterRecording: true
         prometheus: true
         prometheusOperator: true
+
+    # Cilium kube-proxy replacement (Talos proxy.disabled). No kube-proxy to scrape.
+    kubeProxy:
+      enabled: false
 
     # Prometheus Operator configuration
     prometheusOperator:
