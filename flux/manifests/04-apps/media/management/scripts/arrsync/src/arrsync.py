@@ -23,10 +23,11 @@ API Versions:
 import argparse
 import logging
 import os
+import re
 import sys
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -64,6 +65,34 @@ class ArrConfig:
     url: str
     api_key: str
     api_version: str
+
+
+@dataclass
+class SyncResult:
+    """Summary of one service sync."""
+
+    service: str
+    total_items: int = 0
+    success_count: int = 0
+    failed_refresh: list[str] = field(default_factory=list)
+    failed_rename: list[str] = field(default_factory=list)
+    renames_needed: int = 0
+    renamed_count: int = 0
+    codec_candidates: int = 0
+    service_error: str | None = None
+
+    @property
+    def failure_count(self) -> int:
+        """Return the number of failed items."""
+        return len(self.failed_refresh) + len(self.failed_rename)
+
+    @property
+    def succeeded(self) -> bool:
+        """Return whether the service completed without failures."""
+        return self.service_error is None and self.failure_count == 0
+
+
+CODEC_STALE_PATTERN = re.compile(r"h264|x264|H\.264", re.IGNORECASE)
 
 
 class ArrClient(ABC):
@@ -275,7 +304,12 @@ class ArrClient(ABC):
         """
         pass
 
-    def sync_all(self) -> bool:
+    @abstractmethod
+    def get_rename_previews(self, item_id: int) -> list[dict[str, Any]]:
+        """List files that need renaming for an item."""
+        pass
+
+    def sync_all(self) -> SyncResult:
         """
         Refresh and rename all items in the service.
 
@@ -290,12 +324,12 @@ class ArrClient(ABC):
         database/filesystem mismatches in Lidarr).
 
         Returns:
-            True if all items synced successfully, False if any item failed
+            Counts and failures for the completed service run
         """
         items = self.list_items()
         logger.info(f"[{self.config.name}] Found {len(items)} items to process")
 
-        failed_items: list[str] = []
+        result = SyncResult(service=self.config.name, total_items=len(items))
 
         for item in items:
             item_id = item["id"]
@@ -303,29 +337,63 @@ class ArrClient(ABC):
             logger.info(f"[{self.config.name}] Processing: {item_name} (ID: {item_id})")
 
             # Refresh first to ensure metadata is up-to-date
-            if not self.refresh_item(item_id):
+            try:
+                refreshed = self.refresh_item(item_id)
+            except Exception as e:
+                logger.error(f"[{self.config.name}] Refresh error for {item_name}: {e}")
+                refreshed = False
+            if not refreshed:
                 logger.error(f"[{self.config.name}] Failed to refresh: {item_name}")
-                failed_items.append(f"{item_name} (refresh)")
+                result.failed_refresh.append(item_name)
                 continue
 
             # Wait for command queue to be idle before renaming
             # This ensures any background tasks triggered by refresh have completed
-            self._wait_for_idle()
-
-            # Then rename to reflect current state
-            if not self.rename_item(item_id):
-                logger.error(f"[{self.config.name}] Failed to rename: {item_name}")
-                failed_items.append(f"{item_name} (rename)")
+            if not self._wait_for_idle():
+                logger.error(f"[{self.config.name}] Failed waiting to rename: {item_name}")
+                result.failed_rename.append(item_name)
                 continue
 
-        success_count = len(items) - len(failed_items)
-        logger.info(f"[{self.config.name}] Processed {success_count}/{len(items)} items successfully")
+            try:
+                previews = self.get_rename_previews(item_id)
+            except Exception as e:
+                logger.error(f"[{self.config.name}] Rename preview failed for {item_name}: {e}")
+                result.failed_rename.append(item_name)
+                continue
 
-        if failed_items:
-            logger.warning(f"[{self.config.name}] Failed items: {', '.join(failed_items)}")
-            return False
+            result.renames_needed += len(previews)
+            for preview in previews:
+                existing_path = preview.get("existingPath", "unknown")
+                new_path = preview.get("newPath", "unknown")
+                if self.dry_run:
+                    logger.info(f"[{self.config.name}] [DRY-RUN] Would rename: {existing_path} -> {new_path}")
+                if CODEC_STALE_PATTERN.search(existing_path):
+                    result.codec_candidates += 1
+                    if self.dry_run:
+                        logger.info(
+                            f"[{self.config.name}] [DRY-RUN] Codec rename candidate: {existing_path} -> {new_path}"
+                        )
 
-        return True
+            if not previews:
+                result.success_count += 1
+                continue
+
+            # Then rename to reflect current state
+            try:
+                renamed = self.rename_item(item_id)
+            except Exception as e:
+                logger.error(f"[{self.config.name}] Rename error for {item_name}: {e}")
+                renamed = False
+            if not renamed:
+                logger.error(f"[{self.config.name}] Failed to rename: {item_name}")
+                result.failed_rename.append(item_name)
+                continue
+
+            if not self.dry_run:
+                result.renamed_count += len(previews)
+            result.success_count += 1
+
+        return result
 
     @abstractmethod
     def _get_item_name(self, item: dict[str, Any]) -> str:
@@ -398,6 +466,10 @@ class SonarrClient(ArrClient):
             return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
 
+    def get_rename_previews(self, item_id: int) -> list[dict[str, Any]]:
+        """List episode files that Sonarr would rename."""
+        return self._get(f"rename?seriesId={item_id}")
+
     def _get_item_name(self, item: dict[str, Any]) -> str:
         """Extract series title from Sonarr series object."""
         return item.get("title", "Unknown")
@@ -456,6 +528,10 @@ class RadarrClient(ArrClient):
         if result is None:
             return self.dry_run  # True if dry-run, False if API error
         return self._wait_for_command(result["id"])
+
+    def get_rename_previews(self, item_id: int) -> list[dict[str, Any]]:
+        """List movie files that Radarr would rename."""
+        return self._get(f"rename?movieId={item_id}")
 
     def _get_item_name(self, item: dict[str, Any]) -> str:
         """Extract movie title from Radarr movie object."""
@@ -541,6 +617,10 @@ class LidarrClient(ArrClient):
             logger.error(f"[{self.config.name}] Error getting track files for rename: {e}")
             return False
 
+    def get_rename_previews(self, item_id: int) -> list[dict[str, Any]]:
+        """List track files that Lidarr would rename."""
+        return self._get(f"rename?artistId={item_id}")
+
     def _get_item_name(self, item: dict[str, Any]) -> str:
         """Extract artist name from Lidarr artist object."""
         return item.get("artistName", "Unknown")
@@ -559,17 +639,16 @@ def get_env_or_fail(key: str) -> str:
     Returns:
         Environment variable value
 
-    Exits:
-        sys.exit(1): If the environment variable is not set
+    Raises:
+        ValueError: If the environment variable is not set
     """
     value = os.environ.get(key)
     if not value:
-        logger.error(f"Required environment variable {key} is not set")
-        sys.exit(1)
+        raise ValueError(f"Required environment variable {key} is not set")
     return value
 
 
-def run_sonarr(dry_run: bool) -> bool:
+def run_sonarr(dry_run: bool) -> SyncResult:
     """
     Run sync operation for Sonarr.
 
@@ -577,7 +656,7 @@ def run_sonarr(dry_run: bool) -> bool:
         dry_run: If True, preview actions without executing
 
     Returns:
-        True if sync completed successfully, False otherwise
+        Sonarr sync result
     """
     # Default to cluster internal service URL if not specified
     url = os.environ.get("SONARR_URL", "http://sonarr.sonarr.svc.cluster.local")
@@ -586,7 +665,7 @@ def run_sonarr(dry_run: bool) -> bool:
     return client.sync_all()
 
 
-def run_radarr(dry_run: bool) -> bool:
+def run_radarr(dry_run: bool) -> SyncResult:
     """
     Run sync operation for Radarr.
 
@@ -594,7 +673,7 @@ def run_radarr(dry_run: bool) -> bool:
         dry_run: If True, preview actions without executing
 
     Returns:
-        True if sync completed successfully, False otherwise
+        Radarr sync result
     """
     # Default to cluster internal service URL if not specified
     url = os.environ.get("RADARR_URL", "http://radarr.radarr.svc.cluster.local")
@@ -603,7 +682,7 @@ def run_radarr(dry_run: bool) -> bool:
     return client.sync_all()
 
 
-def run_lidarr(dry_run: bool) -> bool:
+def run_lidarr(dry_run: bool) -> SyncResult:
     """
     Run sync operation for Lidarr.
 
@@ -611,13 +690,30 @@ def run_lidarr(dry_run: bool) -> bool:
         dry_run: If True, preview actions without executing
 
     Returns:
-        True if sync completed successfully, False otherwise
+        Lidarr sync result
     """
     # Default to cluster internal service URL if not specified
     url = os.environ.get("LIDARR_URL", "http://lidarr.lidarr.svc.cluster.local")
     api_key = get_env_or_fail("LIDARR_API_KEY")
     client = LidarrClient(url, api_key, dry_run)
     return client.sync_all()
+
+
+def print_summary(results: list[SyncResult]) -> None:
+    """Log one end-of-run summary for all attempted services."""
+    logger.info("=== arrSync end summary ===")
+    for result in results:
+        logger.info(
+            f"[{result.service}] items: success={result.success_count} failed={result.failure_count}; "
+            f"renames: needed={result.renames_needed} renamed={result.renamed_count}; "
+            f"codec rename candidates={result.codec_candidates}"
+        )
+        if result.failed_refresh:
+            logger.warning(f"[{result.service}] Failed refresh items: {', '.join(result.failed_refresh)}")
+        if result.failed_rename:
+            logger.warning(f"[{result.service}] Failed rename items: {', '.join(result.failed_rename)}")
+        if result.service_error:
+            logger.error(f"[{result.service}] Service failure: {result.service_error}")
 
 
 def main() -> int:
@@ -683,19 +779,20 @@ Environment Variables:
         "lidarr": run_lidarr,
     }
 
-    # Execute sync for requested service(s)
-    if args.service == "all":
-        # Process all services sequentially
-        # Fail fast if any service fails
-        for name, runner in services.items():
-            logger.info(f"Starting sync for {name}")
-            if not runner(args.dry_run):
-                logger.error(f"Sync failed for {name}")
-                return 1
-    else:
-        # Process single service
-        if not services[args.service](args.dry_run):
-            return 1
+    selected_services = services.items() if args.service == "all" else [(args.service, services[args.service])]
+    results: list[SyncResult] = []
+    for name, runner in selected_services:
+        logger.info(f"Starting sync for {name}")
+        try:
+            results.append(runner(args.dry_run))
+        except Exception as e:
+            logger.error(f"Sync failed for {name}: {e}")
+            results.append(SyncResult(service=name.title(), service_error=str(e)))
+
+    print_summary(results)
+    if any(not result.succeeded for result in results):
+        logger.error("Sync completed with failures")
+        return 1
 
     logger.info("Sync completed successfully")
     return 0
