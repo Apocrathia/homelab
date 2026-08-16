@@ -71,19 +71,18 @@ OAuth is pre-configured in the HelmRelease with these settings:
 
 ## Bulk Import
 
-A CronJob imports photos from the SMB staging share (currently **suspended**
-in the CronJob manifest until the iCloud → `Immich/import` handoff is ready):
+A CronJob imports photos from the SMB staging share nightly at 3 AM:
 
 - **Source**: `//storage.services.apocrathia.com/Pictures/Immich/import`
 - **Behavior**: Recursively uploads all files, deletes after successful upload
 - **Concurrency**: 4 parallel uploads
 - **Duplicates**: Immich skips by content checksum; re-uploads of the same
-  file do not create new assets
+  file do not create new assets. Staging deletes do not touch
+  `Pictures/iCloud` (icloudpd's mirror).
 
 ### Manual Import
 
-To trigger an import manually (CronJob must be unsuspended, or create from the
-CronJob template):
+To trigger an import manually:
 
 ```bash
 kubectl create job --from=cronjob/immich-import immich-import-manual -n immich

@@ -54,8 +54,6 @@ metadata:
 spec:
   schedule: "0 3 * * *" # 0300
   timeZone: "America/Denver"
-  # Suspended until storage template is live and iCloud→import staging is ready.
-  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
