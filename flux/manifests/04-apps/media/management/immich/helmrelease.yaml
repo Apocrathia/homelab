@@ -78,6 +78,9 @@ spec:
           scope: "openid email profile"
           signingAlgorithm: "RS256"
           tokenEndpointAuthMethod: "client_secret_post"
+          # Library path uses this claim instead of the user UUID when set
+          # (e.g. preferred_username=ianyoung → library/ianyoung/…).
+          storageLabelClaim: preferred_username
           # Disable password login once OAuth is working
           # passwordLogin:
           #   enabled: false
@@ -87,7 +90,7 @@ spec:
           enabled: true
           hashVerificationEnabled: true
           # Path convention: Year/Year-Month-Day/original-filename.ext
-          # e.g. library/<user>/2024/2024-03-15/IMG_1234.HEIC
+          # e.g. library/ianyoung/2024/2024-03-15/IMG_1234.HEIC
           template: "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"
 
     # Enable Valkey for Redis-compatible caching

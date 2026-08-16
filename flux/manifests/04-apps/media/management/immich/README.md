@@ -39,9 +39,12 @@ Create a 1Password item:
 - **PostgreSQL**: Longhorn volume for database storage
 - **Storage template**: Enabled in HelmRelease config
   (`{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`). Originals land under
-  `Pictures/Immich/library/…` on the NAS. After enabling or changing the
-  template, run **Storage Template Migration** once from Administration → Jobs
-  so existing assets move off UUID `upload/` paths.
+  `Pictures/Immich/library/<storage-label>/…` on the NAS. Primary user
+  storage label is `ianyoung` (Administration → Users). OAuth sets
+  `storageLabelClaim: preferred_username` so new users get a label from
+  Authentik instead of a UUID folder. After enabling or changing the
+  template or label, run **Storage Template Migration** once from
+  Administration → Jobs so existing assets move off UUID `upload/` paths.
 
 ### Access
 
@@ -63,6 +66,8 @@ OAuth is pre-configured in the HelmRelease with these settings:
 - **Scope**: `openid email profile`
 - **Auto Register**: Enabled
 - **Button Text**: "Sign in with Authentik"
+- **Storage label claim**: `preferred_username` (maps OIDC username into the
+  library folder name, e.g. `library/ianyoung/`)
 
 ## Bulk Import
 
