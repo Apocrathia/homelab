@@ -539,12 +539,12 @@ pre-commit run --all-files
 
 Pipeline defined in `.gitlab/tofu.gitlab-ci.yml`.
 
-| Stage  | Job             | Trigger              | Description                                  |
-| ------ | --------------- | -------------------- | -------------------------------------------- |
-| verify | `tofu-validate` | MRs (terraform/\*\*) | Syntax and configuration validation          |
-| verify | `tofu-plan`     | MRs (terraform/\*\*) | Plan posted as MR comment                    |
-| deploy | `tofu-drift`    | Schedule (daily)     | Drift detection; notifies only, non-blocking |
-| deploy | `tofu-apply`    | Manual (main only)   | Apply with `--parallelism 1`                 |
+| Stage  | Job             | Trigger              | Description                                   |
+| ------ | --------------- | -------------------- | --------------------------------------------- |
+| verify | `tofu-validate` | MRs (terraform/\*\*) | Syntax and configuration validation           |
+| verify | `tofu-plan`     | MRs (terraform/\*\*) | Summary + per-unit plan details as MR comment |
+| deploy | `tofu-drift`    | Schedule (daily)     | Drift detection; notifies only, non-blocking  |
+| deploy | `tofu-apply`    | Manual (main only)   | Apply with `--parallelism 1`                  |
 
 ### Required CI/CD Variables
 
