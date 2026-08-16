@@ -80,11 +80,6 @@ own the secret.
 - **Purpose**: Web scraping and content extraction
 - **Tools**: Page scraping, content extraction, site crawling
 
-### A2A MCP Server
-
-- **Purpose**: Bridge between MCP and Agent-to-Agent protocol
-- **Tools**: Agent registration, message routing, task delegation
-
 ### GitHub MCP Server
 
 - **Purpose**: GitHub repository and issue management

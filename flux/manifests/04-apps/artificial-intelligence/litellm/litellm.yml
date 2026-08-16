@@ -189,11 +189,6 @@ guardrails:
           action: "MASK"
 
 mcp_servers:
-  a2a:
-    alias: "a2a"
-    url: "http://a2a.mcp-a2a.svc.cluster.local:8080/mcp"
-    transport: "http"
-    auth_type: "none"
   context7:
     alias: "context7"
     url: "https://mcp.context7.com/mcp"
