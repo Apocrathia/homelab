@@ -108,7 +108,7 @@ spec:
       default: openAI
       openAI:
         provider: OpenAI
-        model: "qwen3.6-prime"
+        model: "qwen3.8-prime"
         apiKeySecretRef: kagent-secrets
         apiKeySecretKey: litellm-api-key
         config:

@@ -8,7 +8,7 @@ through the kagent UI.
 ## Overview
 
 - `AgentHarness/openclaw` — substrate runtime, OpenClaw backend
-- `ModelConfig/openclaw-model` — LiteLLM (`qwen3.6-prime`)
+- `ModelConfig/openclaw-model` — LiteLLM (`qwen3.8-prime`)
 - `OnePasswordItem/openclaw-harness-secrets` — gateway token + LiteLLM API key
 - Role/RoleBinding `openclaw-ate-api-env-sources` — lets
   `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
