@@ -29,8 +29,6 @@ buckets.
 ### Actionable siblings
 
 - Tracked `uv.lock` HIGH CVEs → `trivy-uv-lock-high-cves.md`
-- Kyverno + gateway AVD-KSV-0041 →
-  `trivy-kyverno-gateway-secrets-rbac.md`
 
 ### Also seen
 

@@ -106,8 +106,7 @@ repeatable path from alert/query → `docs/issues/` remediations.
 - [ ] First burn-down wave from current CIS summary (theme issues only):
   - SecurityContext / seccomp gaps
   - `allowPrivilegeEscalation`
-  - Minimize secrets access / wildcard RBAC (coordinate with existing
-    `trivy-kyverno-gateway-secrets-rbac.md`)
+  - Minimize secrets access / wildcard RBAC
   - HostPath volumes
 - [ ] Respect deferred noise buckets in `trivy-scan-noise-deferred.md`
 
