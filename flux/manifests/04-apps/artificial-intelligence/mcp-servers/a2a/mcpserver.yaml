@@ -21,7 +21,27 @@ spec:
       # Service name "a2a" injects A2A_PORT=tcp://... via service links.
       # agentgateway inherits that into the stdio child, so pin the port
       # with an explicit export in the shell (env block alone is not enough).
-      - export HOME=/tmp && export A2A_PORT=41241 && mkdir -p /tmp/a2a-data && pip install --quiet a2a-mcp-server && exec python -m a2a_mcp_server
+      # After pip install, rewrite client card path agent.json -> agent-card.json
+      # (kagent serves AgentCard at /.well-known/agent-card.json).
+      - |
+        set -e
+        export HOME=/tmp
+        export A2A_PORT=41241
+        mkdir -p /tmp/a2a-data
+        pip install --quiet a2a-mcp-server
+        python <<'PY'
+        from pathlib import Path
+        import site
+
+        old = "/.well-known/agent.json"
+        new = "/.well-known/agent-card.json"
+        for root in map(Path, site.getsitepackages()):
+            for path in root.rglob("*.py"):
+                text = path.read_text(errors="ignore")
+                if old in text:
+                    path.write_text(text.replace(old, new))
+        PY
+        exec python -m a2a_mcp_server
     env:
       HOME: /tmp
       A2A_MCP_DATA_DIR: /tmp/a2a-data

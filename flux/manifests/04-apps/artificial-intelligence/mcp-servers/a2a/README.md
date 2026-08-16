@@ -31,6 +31,8 @@ This deployment includes:
 | `MCP_PATH`         | `/mcp`            | Endpoint path                     |
 | `A2A_MCP_DATA_DIR` | `/tmp/a2a-data`   | Data directory (ephemeral)        |
 
+The agent registry is ephemeral under `/tmp/a2a-data` (pod restart clears registrations).
+
 ### Security
 
 - **Permission Profile**: Network access for A2A agent endpoints
@@ -38,14 +40,37 @@ This deployment includes:
 
 ## Available Agents
 
-The following agents are available for registration via A2A MCP tools. **All agent communication goes through LiteLLM's A2A gateway** for unified access:
+Register agents with the **kagent controller base A2A URL** only:
 
-### Via LiteLLM A2A Gateway (Recommended)
+```
+http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/<namespace>/<name>
+```
 
-- **homelab-agent**: `http://litellm.litellm.svc.cluster.local:4000/a2a/homelab-agent`
-- **search-agent**: `http://litellm.litellm.svc.cluster.local:4000/a2a/search-agent`
+Do **not** append `/.well-known/agent-card.json` (or `agent.json`). The
+server tool `register_agent` (LiteLLM: `a2a-register_agent`) stores the
+registration URL and `send_message` (LiteLLM: `a2a-send_message`) POSTs to
+it; the card path is for discovery only (fetched automatically).
 
-These agents are registered in LiteLLM's `agent_list` and should be registered with the a2a-mcp-server using these LiteLLM gateway URLs to ensure all communication routes through the LiteLLM proxy.
+User agents live in `agent-*` namespaces (not `kagent`). System agents (and `homelab-agent`) live in `kagent`.
+
+### User agents (`agent-*`)
+
+| Agent                | Registration URL                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| git-agent            | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent`                       |
+| home-agent           | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent`                     |
+| infrastructure-agent | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent` |
+| media-agent          | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent`                   |
+| search-agent         | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent`                 |
+| knowledge-agent      | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent`           |
+
+### Agents in `kagent`
+
+| Agent         | Registration URL                                                                      |
+| ------------- | ------------------------------------------------------------------------------------- |
+| homelab-agent | `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent` |
+
+Other Ready agents in the `kagent` namespace use the same `/api/a2a/kagent/<name>` shape.
 
 ## Access
 
@@ -55,30 +80,26 @@ This server is accessible only through the LiteLLM proxy. See the [main README](
 
 ### Registering Agents
 
-Use the MCP tools to register A2A agents dynamically. **Always use LiteLLM A2A gateway URLs** to route through the LiteLLM proxy:
+Via LiteLLM, call `a2a-register_agent` with a base URL from the tables above
+(server-native name: `register_agent`). Example URL:
 
-1. **homelab-agent** (via LiteLLM):
-
-   ```
-   http://litellm.litellm.svc.cluster.local:4000/a2a/homelab-agent
-   ```
-
-2. **search-agent** (via LiteLLM):
-   ```
-   http://litellm.litellm.svc.cluster.local:4000/a2a/search-agent
-   ```
-
-**Important**: All agent communication should go through LiteLLM's A2A gateway for unified access, authentication, and monitoring. Direct kagent controller URLs should not be used.
+```
+http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent
+```
 
 ### Available MCP Tools
 
-The A2A MCP server provides these tools:
+Server-native names (unprefixed). Through LiteLLM the same tools appear as
+`a2a-<name>` (hyphen after `a2a`, underscore in the rest):
 
-1. **Agent Registration** - Register A2A agents with their endpoint URLs
-2. **Agent Discovery** - List all registered agents
-3. **Message Sending** - Send messages to registered agents and receive responses
-4. **Task Management** - Track tasks, retrieve results, cancel running tasks
-5. **Agent Unregistration** - Remove agents from the registry
+| Native           | LiteLLM              | Role                                     |
+| ---------------- | -------------------- | ---------------------------------------- |
+| `register_agent` | `a2a-register_agent` | Register A2A agents by base endpoint URL |
+| `list_agents`    | `a2a-list_agents`    | List registered agents                   |
+| `send_message`   | `a2a-send_message`   | Send a message to a registered agent     |
+
+Other native tools cover task management and unregistration; LiteLLM prefixes
+them the same way (`a2a-…`).
 
 ## Integration
 
