@@ -92,3 +92,46 @@ mcp_servers:
     url: "https://mcp.deepwiki.com/mcp"
   context7:
     url: "https://mcp.context7.com/mcp"
+
+# ── A2A (Agent-to-Agent) ──────────────────────────────────────────────
+# Native Hermes A2A plugin — peers are kagent agents registered in
+# litellm.yml under top-level `agents:`. The old MCP bridge
+# (`mcp_servers.a2a`) was removed; prefer these native peers.
+# Docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a
+a2a_agents:
+  homelab-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
+    timeout: 120
+  git-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
+    timeout: 120
+  home-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
+    timeout: 120
+  infrastructure-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
+    timeout: 120
+  knowledge-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
+    timeout: 120
+  media-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
+    timeout: 120
+  search-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
+    timeout: 120
+  k8s-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/k8s-agent"
+    timeout: 120
+  helm-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/helm-agent"
+    timeout: 120
+  cilium-policy-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/cilium-policy-agent"
+    timeout: 120
+  cilium-manager-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/cilium-manager-agent"
+    timeout: 120
+  observability-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/observability-agent"
+    timeout: 120
