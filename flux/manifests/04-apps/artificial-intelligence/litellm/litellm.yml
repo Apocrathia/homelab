@@ -80,6 +80,14 @@ model_list:
     litellm_params:
       model: openai/qwen3.5:27b
       api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: muse-glimmer
+    litellm_params:
+      model: openai/muse-glimmer
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
+  - model_name: nemotron-3.5-lightning
+    litellm_params:
+      model: openai/nemotron-3.5-lightning
+      api_base: os.environ/OLLAMA_OPENAI_API_BASE
 
   # Prime Inference (cloud)
   - model_name: qwen3.8-prime
