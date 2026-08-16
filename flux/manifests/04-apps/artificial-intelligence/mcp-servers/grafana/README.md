@@ -37,32 +37,7 @@ kagent ships a Grafana MCP integration. This deployment remains separately inven
 
 ### Grafana Service Account Token
 
-**Important**: Grafana service accounts cannot be provisioned via YAML files. They must be created manually through the Grafana UI or HTTP API.
-
-You'll need to create a Grafana service account and generate a token for authentication.
-
-**Step 1: Create Service Account**
-
-1. Go to your Grafana instance: `https://grafana.gateway.services.apocrathia.com`
-2. Navigate to **Administration** → **Users and access** → **Service accounts**
-3. Click **Add service account**
-4. Set:
-   - **Display name**: `mcp-server`
-   - **Role**: `Admin` (or appropriate permissions for your use case)
-5. Click **Create**
-
-**Step 2: Generate Token**
-
-1. Select the `mcp-server` service account from the list
-2. Click **Add service account token**
-3. Set:
-   - **Name**: `mcp-server-token`
-   - **Expiration**: Set appropriate expiration or choose "No expiration"
-4. Click **Generate token**
-5. Copy the generated token (it will only be shown once)
-
-**Step 3: Store in 1Password**
-Store the token in the 1Password item referenced by the secret.
+The `mcp-server` service account is provisioned via a `GrafanaServiceAccount` CR in `flux/manifests/03-services/observability/grafana/` (same namespace as the Grafana CR: `prometheus-system`; `instanceName: kube-prometheus-stack-grafana`). grafana-operator reconciles the account and writes the token to Secret `mcp-server-token` in that namespace.
 
 ## Deployment
 

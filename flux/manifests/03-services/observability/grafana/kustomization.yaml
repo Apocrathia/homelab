@@ -9,6 +9,7 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - grafana.yaml
+  - mcp-service-account.yaml
   - secret.yaml
   - datasources/home-assistant.yaml
   - alerting/
