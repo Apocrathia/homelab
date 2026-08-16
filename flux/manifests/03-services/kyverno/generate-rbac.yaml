@@ -22,9 +22,10 @@ rules:
 # generate rules. When a ClusterPolicy has a generate rule that clones a
 # resource, Kyverno's admission webhook checks that the admission
 # controller itself has sufficient permissions on the target kind in the
-# target namespace — otherwise it rejects the policy at create time. The
-# default admission-controller ClusterRole does not grant any verbs on
-# Secrets, so we aggregate list plus name-scoped get for Secrets here.
+# target namespace — otherwise it rejects the policy at create/update
+# time. That check does not honor resourceNames, so get/list stay
+# unscoped here. Runtime generate mutations remain name-scoped on the
+# background-controller ClusterRole above.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -34,8 +35,4 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["docker-io-imagepullsecret"]
-    verbs: ["get"]
+    verbs: ["get", "list"]
