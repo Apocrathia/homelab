@@ -39,9 +39,18 @@ RADARR_URL=http://radarr.example.com
 LIDARR_URL=http://lidarr.example.com
 EOF
 
-# Run the script
+# Run the dry-run smoke
 python arrsync.py all --dry-run
 ```
+
+The dry run queries each service's rename preview without issuing rename commands. Check the final summary for:
+
+- `items: success=... failed=...` for each service
+- `renames: needed=... renamed=0`
+- any `Failed refresh items`, `Failed rename items`, or `Service failure` lines
+- `Codec rename candidate` lines for existing paths containing `h264`, `x264`, or `H.264`; the proposed path should use the configured HEVC naming
+
+The command exits non-zero after printing the summary if any service or item fails.
 
 ### Code Formatting
 
