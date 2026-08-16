@@ -23,8 +23,8 @@
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
           },
           {
-            "id": "qwen3.6-prime",
-            "name": "Qwen3.6 Prime",
+            "id": "qwen3.8-prime",
+            "name": "Qwen3.8 Prime",
             "reasoning": true,
             "input": ["text", "image"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
