@@ -37,6 +37,11 @@ Create a 1Password item:
 - **ML Cache**: Longhorn volume for machine learning model cache
 - **Valkey Data**: Longhorn volume for Redis cache persistence
 - **PostgreSQL**: Longhorn volume for database storage
+- **Storage template**: Enabled in HelmRelease config
+  (`{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}`). Originals land under
+  `Pictures/Immich/library/…` on the NAS. After enabling or changing the
+  template, run **Storage Template Migration** once from Administration → Jobs
+  so existing assets move off UUID `upload/` paths.
 
 ### Access
 
@@ -61,15 +66,19 @@ OAuth is pre-configured in the HelmRelease with these settings:
 
 ## Bulk Import
 
-A CronJob runs daily at 3 AM to import photos from the SMB share:
+A CronJob imports photos from the SMB staging share (currently **suspended**
+in the CronJob manifest until the iCloud → `Immich/import` handoff is ready):
 
 - **Source**: `//storage.services.apocrathia.com/Pictures/Immich/import`
 - **Behavior**: Recursively uploads all files, deletes after successful upload
 - **Concurrency**: 4 parallel uploads
+- **Duplicates**: Immich skips by content checksum; re-uploads of the same
+  file do not create new assets
 
 ### Manual Import
 
-To trigger an import manually:
+To trigger an import manually (CronJob must be unsuspended, or create from the
+CronJob template):
 
 ```bash
 kubectl create job --from=cronjob/immich-import immich-import-manual -n immich

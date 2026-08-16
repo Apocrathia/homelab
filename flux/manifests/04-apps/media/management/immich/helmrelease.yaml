@@ -81,6 +81,12 @@ spec:
           # Disable password login once OAuth is working
           # passwordLogin:
           #   enabled: false
+        # Originals on NAS under Pictures/Immich/library/… (not UUID upload/ paths).
+        # https://docs.immich.app/administration/storage-template/
+        storageTemplate:
+          enabled: true
+          hashVerificationEnabled: true
+          template: "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"
 
     # Enable Valkey for Redis-compatible caching
     valkey:
