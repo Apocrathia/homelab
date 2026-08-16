@@ -283,32 +283,39 @@ mcp_servers:
     transport: "http"
     auth_type: "none"
 
-agent_list:
+agents:
   - agent_name: "git-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Git Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
+      protocolVersion: "0.3"
   - agent_name: "home-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Home Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
+      protocolVersion: "0.3"
   - agent_name: "homelab-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Homelab Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
+      protocolVersion: "0.3"
   - agent_name: "infrastructure-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Infrastructure Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
+      protocolVersion: "0.3"
   - agent_name: "knowledge-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Knowledge Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
+      protocolVersion: "0.3"
   - agent_name: "media-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Media Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
+      protocolVersion: "0.3"
   - agent_name: "search-agent"
-    litellm_params:
-      custom_llm_provider: "a2a_agent"
+    agent_card_params:
+      name: "Search Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
+      protocolVersion: "0.3"

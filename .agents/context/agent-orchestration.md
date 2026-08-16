@@ -23,9 +23,15 @@ Agent cards are at `<base>/.well-known/agent-card.json`. Register agents with
 the **base URL only** (no card path). Card-path registration makes
 `a2a-send_message` POST the card URL and fail.
 
-The A2A bridge fetches `agent-card.json` from the base URL. Register via the
-LiteLLM `a2a` MCP tools. If registration fails, prefer the MCP fallback for
-the same need.
+### LiteLLM native agents (preferred)
+
+Register kagent agents in `litellm.yml` under top-level `agents:` with
+`agent_card_params` (name, url, `protocolVersion: "0.3"`). Clients call
+`POST /a2a/{agent_name}` or list via `GET /v1/agents`.
+
+The MCP `a2a` bridge (`mcp_servers.a2a`) remains until a follow-up removal
+after live probes pass. Prefer native `/a2a/{agent_name}` over bridge tools
+when the agent is in `agents:`.
 
 ### Namespaces
 

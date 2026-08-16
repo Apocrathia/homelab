@@ -75,7 +75,7 @@ flowchart LR
 
 1. Create a new directory under `agents/`
 2. Add a `Namespace` manifest (`agent-<name>`), `ModelConfig`, 1Password-backed secrets, and the `Agent` CRD in that namespace
-3. Register the agent in LiteLLM `agent_list` with A2A URL `/api/a2a/<namespace>/<agent-name>`
+3. Register the agent in LiteLLM `agents:` (`agent_card_params.url`) with A2A URL `/api/a2a/<namespace>/<agent-name>`. After registration, prefer LiteLLM native `POST /a2a/{agent_name}` (discover via `GET /v1/agents`); the MCP `a2a` bridge remains until a follow-up removal.
 4. Add any necessary bridge components for external integrations
 5. Update this README with a link to the new agent
 
