@@ -163,6 +163,7 @@ spec:
       GENERIC_TOKEN_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/token/"
       GENERIC_USERINFO_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/userinfo/"
       GENERIC_SCOPE: "openid profile email"
+      AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
 
     proxy_config:
       # Include model configuration from separate file using relative path
