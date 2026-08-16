@@ -10,6 +10,7 @@ This deployment installs the Grafana Operator using the official Helm chart from
 
 - Dashboard management through `GrafanaDashboard` CRDs
 - Datasource management through `GrafanaDatasource` CRDs
+- Service account management through `GrafanaServiceAccount` CRDs
 - GitOps-friendly dashboard deployment
 - Import from Grafana.com dashboards
 
