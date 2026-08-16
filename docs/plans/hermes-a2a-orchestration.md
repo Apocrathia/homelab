@@ -1,6 +1,6 @@
 ---
 title: Hermes A2A broker registration + orchestration map
-status: active
+status: done
 branch: fix/hermes-a2a-orchestration
 source: docs/issues/hermes-agent-orchestration-gaps.md
 ---
@@ -9,39 +9,21 @@ source: docs/issues/hermes-agent-orchestration-gaps.md
 
 ## Goal
 
-Hermes (and other LiteLLM MCP clients) can `a2a_register_agent` against
-kagent base A2A URLs, list the live fleet including user agents, round-trip
-`a2a_send_message`, and follow a documented need→agent map.
+Hermes (and other clients) can list and invoke the live kagent A2A fleet
+through LiteLLM, and follow a documented need→agent map.
 
-## Facts (2026-08-16)
+## Outcome
 
-- All user `Agent` CRs are Ready/Accepted and serve
-  `/.well-known/agent-card.json` under `/api/a2a/<namespace>/<name>/`.
-- Issue repro used `kagent/<user-agent>` — wrong namespace; cards 404 there.
-- `/.well-known/agent.json` returns HTTP 200 JSON-RPC `INVALID_REQUEST`.
-- `a2a-mcp-server` fetch uses `agent.json` and passes that body to
-  `AgentCard(**data)` → Pydantic errors on base-URL register.
-- Registering the card path "works" for list, but `send_message` POSTs to the
-  **registration** URL → 405 on the card path. Base URL register is required.
+- kagent agents are registered in LiteLLM `litellm.yml` under top-level
+  `agents:` (`agent_card_params`, `protocolVersion: "0.3"`).
+- Clients use `GET /v1/agents` and `POST /a2a/{agent_name}` (native Agent
+  Gateway). The LiteLLM MCP `a2a` bridge (`mcp-servers/a2a`) is removed.
+- Need→A2A→MCP fallback map:
+  [`.agents/context/agent-orchestration.md`](../../.agents/context/agent-orchestration.md).
 
-## Slices
+## Feedback loop (post-change)
 
-1. **a2a-bridge-card-path** — after `pip install a2a-mcp-server`, rewrite
-   well-known path strings to `agent-card.json` in the installed client code;
-   document base-URL registration for all agents in `mcp-servers/a2a/README.md`.
-2. **orchestration-map** — durable map under `.agents/context/` (self-improve /
-   Hermes: A2A vs direct MCP fallback). Link from agents README if needed.
-
-## Out of scope
-
-- Cluster apply/reconcile (operator).
-- Persistent A2A registry PVC (`/tmp/a2a-data` stays ephemeral).
-- kagent chart card metadata / empty `version` (tracked elsewhere).
-- Discord A2A bridge replacement.
-
-## Feedback loop
-
-- Local: `kustomize build` agents + mcp-servers/a2a; `yamllint` on changed YAML;
-  `prettier` on changed markdown.
-- Live (after operator apply): register base URLs → `a2a_list_agents` →
-  `a2a_send_message` to `k8s-agent`; curl `agent-card.json` for each user agent.
+- Local: `kustomize build` on agents + mcp-servers + litellm; `yamllint` /
+  `prettier` on touched files.
+- Live: `GET /v1/agents` lists configured agents; `POST /a2a/homelab-agent`
+  `message/send` round-trips.

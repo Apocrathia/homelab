@@ -16,7 +16,6 @@ resources:
   - truenas/
   - proxmox/
   - firecrawl/
-  - a2a/
   - github/
   - qdrant/
   - discord/
