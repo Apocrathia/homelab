@@ -76,14 +76,157 @@ tofu-plan:
       echo "=== Running Terragrunt Plan ==="
 
       PLAN_PARSER="${CI_PROJECT_DIR}/scripts/terraform/tofu-plan-summary.sh"
-      PLAN_OUTPUT=$(terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
+      PLAN_OUTPUT=$(TG_NO_COLOR=true terragrunt run --all -- plan -no-color 2>&1) || PLAN_EXIT=$?
 
-      PLAN_SUMMARY=$(echo "$PLAN_OUTPUT" | "$PLAN_PARSER" summarize)
+      PLAN_SUMMARY=$(printf '%s\n' "$PLAN_OUTPUT" | "$PLAN_PARSER" summarize)
 
-      echo "$PLAN_OUTPUT"
+      printf '%s\n' "$PLAN_OUTPUT"
       echo ""
       echo "=== Plan Summary ==="
-      echo "$PLAN_SUMMARY"
+      printf '%s\n' "$PLAN_SUMMARY"
+
+      render_plan_comment() {
+        awk '
+          function add_body(unit, line) {
+            body[unit] = body[unit] line "\n"
+          }
+          function add_refresh(unit, line) {
+            refresh[unit] = refresh[unit] line "\n"
+          }
+          function bracket_delta(line, copy, opens, closes) {
+            copy = line
+            opens = gsub(/\[/, "", copy)
+            copy = line
+            closes = gsub(/\]/, "", copy)
+            return opens - closes
+          }
+          function print_refresh(unit) {
+            if (refresh[unit] == "") {
+              return
+            }
+            print "<details><summary>Proxmox address refresh</summary>"
+            print ""
+            print "```hcl"
+            printf "%s", refresh[unit]
+            print "```"
+            print ""
+            print "</details>"
+            print ""
+          }
+          function is_compact(status) {
+            return status == "No changes" ||
+              status == "Changes to Outputs only" ||
+              status ~ /^Plan: 0 to add, 0 to change, 0 to destroy/
+          }
+          BEGIN {
+            esc = sprintf("%c", 27)
+            prefix = "^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\\.[0-9][0-9][0-9][ \t]+[A-Z][A-Z]*[ \t]+\\[[^]]+\\][ \t]+"
+          }
+          $0 == "__TOFU_PLAN_OUTPUT__" {
+            reading_output = 1
+            next
+          }
+          !reading_output {
+            separator = index($0, ": ")
+            if (separator > 0) {
+              unit = substr($0, 1, separator - 1)
+              status[unit] = substr($0, separator + 2)
+              order[++unit_count] = unit
+            }
+            next
+          }
+          {
+            line = $0
+            gsub(esc "\\[[0-9;]*m", "", line)
+            unit = ""
+
+            if (line ~ prefix) {
+              matched = substr(line, 1, match(line, prefix) + RLENGTH - 1)
+              match(matched, /\[[^]]+\]/)
+              unit = substr(matched, RSTART + 1, RLENGTH - 2)
+              sub(prefix, "", line)
+            } else if (line ~ /^\[[^]]+\][ \t]+/) {
+              match(line, /^\[[^]]+\]/)
+              unit = substr(line, RSTART + 1, RLENGTH - 2)
+              sub(/^\[[^]]+\][ \t]+/, "", line)
+            }
+
+            if (!(unit in status)) {
+              next
+            }
+            compact = is_compact(status[unit])
+
+            sub(/^terraform: /, "", line)
+
+            if (!compact) {
+              if (!started[unit] &&
+                  line !~ /^(OpenTofu|Terraform) will perform/ &&
+                  line !~ /^[ \t]*#/ &&
+                  line !~ /Objects have changed outside/ &&
+                  line !~ /Changes to Outputs:/ &&
+                  line !~ /^Plan:/) {
+                next
+              }
+              started[unit] = 1
+            }
+
+            if (line ~ /Refreshing state/ ||
+                line ~ /Read complete after/ ||
+                line ~ /compared your real infrastructure/ ||
+                line ~ /Your infrastructure matches the configuration/) {
+              next
+            }
+
+            if (capturing_refresh[unit]) {
+              add_refresh(unit, line)
+              refresh_depth[unit] += bracket_delta(line)
+              if (refresh_depth[unit] <= 0) {
+                capturing_refresh[unit] = 0
+              }
+              next
+            }
+
+            if (unit ~ /^proxmox\/talos-cluster\// &&
+                line ~ /ipv[46]_addresses[ \t]*=/) {
+              add_refresh(unit, line)
+              refresh_depth[unit] = bracket_delta(line)
+              if (refresh_depth[unit] > 0) {
+                capturing_refresh[unit] = 1
+              }
+              next
+            }
+
+            if (compact) {
+              next
+            }
+
+            add_body(unit, line)
+          }
+          END {
+            for (i = 1; i <= unit_count; i++) {
+              unit = order[i]
+              if (is_compact(status[unit])) {
+                print "- `" unit "`: " status[unit]
+                if (refresh[unit] != "") {
+                  print ""
+                  print_refresh(unit)
+                }
+                continue
+              }
+
+              print "<details open><summary><code>" unit "</code> — " status[unit] "</summary>"
+              print ""
+              print_refresh(unit)
+              print "```hcl"
+              printf "%s", body[unit]
+              print "```"
+              print ""
+              print "</details>"
+              print ""
+            }
+          }
+        '
+      }
 
       {
         echo "$MARKER"
@@ -95,13 +238,11 @@ tofu-plan:
         echo "$PLAN_SUMMARY"
         echo '```'
         echo ""
-        echo "<details><summary>Full Plan Output</summary>"
-        echo ""
-        echo '```hcl'
-        echo "$PLAN_OUTPUT"
-        echo '```'
-        echo ""
-        echo "</details>"
+        {
+          printf '%s\n' "$PLAN_SUMMARY"
+          printf '%s\n' "__TOFU_PLAN_OUTPUT__"
+          printf '%s\n' "$PLAN_OUTPUT"
+        } | render_plan_comment
         echo ""
         echo "<!-- pipeline:${CI_PIPELINE_ID} -->"
       } > "$PLAN_FILE"
