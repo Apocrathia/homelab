@@ -123,6 +123,7 @@ kubectl get pods --namespace kagent -l app=a2a-gateway
 
 ## References
 
+- **[Agent orchestration (A2A vs MCP)](../../../../../.agents/context/agent-orchestration.md)** - Hermes / orchestrator need→agent map and LiteLLM MCP fallbacks
 - **[kagent Documentation](https://kagent.dev/docs/)** - Agent orchestration documentation
 - **[Agent CRD Reference](https://kagent.dev/docs/kagent/crds)** - Custom resource definitions
 - **[System Prompts Guide](https://kagent.dev/docs/kagent/getting-started/system-prompts)** - Writing effective prompts
