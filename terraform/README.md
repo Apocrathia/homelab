@@ -1,15 +1,15 @@
 # Terraform (OpenTofu + Terragrunt)
 
-Infrastructure as Code for Proxmox VMs, Cloudflare DNS, Okta, and GitLab using
-OpenTofu and Terragrunt.
+Infrastructure as Code for Proxmox VMs, Cloudflare DNS, Okta, GitLab, and
+Tailscale using OpenTofu and Terragrunt.
 
 > **Navigation**: [← Home](../README.md) | [Talos Setup →](../talos/README.md)
 
 ## Overview
 
 OpenTofu configurations for Proxmox virtual machines (Talos Kubernetes cluster
-and other cluster workloads), Cloudflare DNS zones, Okta org settings, and a
-GitLab project scaffold (1Password ephemeral → GitLab provider).
+and other cluster workloads), Cloudflare DNS zones, Okta org settings, a
+GitLab project scaffold, and the Tailscale tailnet policy.
 
 | Tool                                                                                   | Purpose                                                            |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -19,6 +19,7 @@ GitLab project scaffold (1Password ephemeral → GitLab provider).
 | [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) | Cloudflare provider for OpenTofu                                   |
 | [okta/okta](https://registry.terraform.io/providers/okta/okta)                         | Okta provider for OpenTofu                                         |
 | [gitlabhq/gitlab](https://registry.terraform.io/providers/gitlabhq/gitlab)             | GitLab provider for OpenTofu                                       |
+| [tailscale/tailscale](https://registry.terraform.io/providers/tailscale/tailscale)     | Tailscale provider for OpenTofu                                    |
 | [1Password/onepassword](https://registry.terraform.io/providers/1Password/onepassword) | Read vault items (ephemeral) for provider credentials              |
 
 ### Managed VMs
@@ -85,6 +86,48 @@ export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
 cd terraform/deployments/gitlab/homelab && terragrunt plan
 ```
 
+### Managed Tailscale
+
+| Deployment         | Module             | Notes                                     |
+| ------------------ | ------------------ | ----------------------------------------- |
+| `tailscale/policy` | `tailscale-policy` | Tailnet policy; import before first apply |
+
+Set `tailscale_tailnet` in the deployment to the intended tailnet ID or name.
+The checked-in review placeholder fails provider variable validation so a plan
+cannot silently target another tailnet.
+
+Auth uses 1Password Connect and the `tailscale-terraform-secrets` API
+Credential item. Its **username** field is the OAuth client ID and its
+**credential** field is the OAuth client secret. Do not export
+`TAILSCALE_OAUTH_CLIENT_ID` or `TAILSCALE_OAUTH_CLIENT_SECRET`.
+
+The policy resource refuses to replace an existing policy during creation and
+does not reset the tailnet policy when destroyed. `policy.hujson` is the full
+desired policy file, not a patch. Before the first apply:
+
+1. Set and review `tailscale_tailnet`.
+2. Import the live policy into state.
+3. Replace `policy.hujson` with the live HuJSON from the admin console (or
+   `terragrunt state show` / API export).
+4. Edit that file in place (default-deny grants, `tagOwners`, shared HTTPS
+   rules). Do not apply the checked-in starter until it matches live intent.
+5. `terragrunt plan` must show only the intentional grant/tagOwners delta.
+
+```bash
+cd terraform/deployments/tailscale/policy
+terragrunt init
+terragrunt import tailscale_acl.this acl
+# Replace policy.hujson with the live policy, then edit.
+terragrunt plan
+```
+
+Machine sharing is a beta Tailscale feature and is not managed by this stack.
+Share and revoke individual untagged machines manually from the Tailscale admin
+console. Operator-managed Kubernetes proxies are tagged and cannot be shared.
+The policy permits shared users to reach HTTPS port 443 only; Tailscale machine
+sharing limits `dst = ["*"]` to machines explicitly shared with each recipient.
+Do not add recipient email addresses to the policy.
+
 ### Future Scope
 
 - Proxmox cluster configuration
@@ -109,13 +152,14 @@ Terragrunt auto-detects OpenTofu when both are installed.
 
 ### Modules
 
-| Module           | Use case                                                           |
-| ---------------- | ------------------------------------------------------------------ |
-| `talos-vm`       | Talos Kubernetes nodes; node placement is intentional and enforced |
-| `proxmox-vm`     | General cluster VMs; optional Proxmox HA; ignores placement drift  |
-| `cloudflare-dns` | Zone lookup + `for_each` DNS records (explicit map only)           |
-| `okta-org`       | Okta org settings (scaffold; resources added over time)            |
-| `gitlab-project` | Existing GitLab project lookup + optional ownership label          |
+| Module             | Use case                                                           |
+| ------------------ | ------------------------------------------------------------------ |
+| `talos-vm`         | Talos Kubernetes nodes; node placement is intentional and enforced |
+| `proxmox-vm`       | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+| `cloudflare-dns`   | Zone lookup + `for_each` DNS records (explicit map only)           |
+| `okta-org`         | Okta org settings (scaffold; resources added over time)            |
+| `gitlab-project`   | Existing GitLab project lookup + optional ownership label          |
+| `tailscale-policy` | Complete tailnet policy with safe create/destroy behavior          |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
@@ -129,6 +173,7 @@ The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = tru
 | `providers/cloudflare.hcl` | `deployments/cloudflare/**` |
 | `providers/okta.hcl`       | `deployments/okta/**`       |
 | `providers/gitlab.hcl`     | `deployments/gitlab/**`     |
+| `providers/tailscale.hcl`  | `deployments/tailscale/**`  |
 
 ### State Backend
 
@@ -169,13 +214,15 @@ terraform/
 │   ├── proxmox.hcl                     # bpg/proxmox provider generate
 │   ├── cloudflare.hcl                  # cloudflare + onepassword (ephemeral token)
 │   ├── okta.hcl                        # okta/okta provider generate
-│   └── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
+│   ├── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
+│   └── tailscale.hcl                   # tailscale + onepassword (ephemeral OAuth)
 ├── modules/
 │   ├── talos-vm/                       # Pinned Talos nodes
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
 │   ├── okta-org/                       # Okta org settings (scaffold)
-│   └── gitlab-project/                 # Project data + optional label
+│   ├── gitlab-project/                 # Project data + optional label
+│   └── tailscale-policy/               # Tailnet policy
 └── deployments/
     ├── proxmox/
     │   ├── home/
@@ -198,8 +245,12 @@ terraform/
     ├── okta/
     │   └── org/
     │       └── terragrunt.hcl
-    └── gitlab/
-        └── homelab/
+    ├── gitlab/
+    │   └── homelab/
+    │       └── terragrunt.hcl
+    └── tailscale/
+        └── policy/
+            ├── policy.hujson
             └── terragrunt.hcl
 ```
 
@@ -239,6 +290,13 @@ root.hcl + providers/okta.hcl
 ```
 root.hcl + providers/gitlab.hcl
     └── deployments/gitlab/homelab/terragrunt.hcl  → modules/gitlab-project
+```
+
+**Tailscale policy**:
+
+```
+root.hcl + providers/tailscale.hcl
+    └── deployments/tailscale/policy/terragrunt.hcl  → modules/tailscale-policy
 ```
 
 ## Prerequisites
@@ -294,6 +352,14 @@ Create an API token in Okta (Security → API → Tokens). Store it in the
 `providers/okta.hcl` (same identity already present in the Cloudflare CNAME
 for the custom domain).
 
+### Tailscale OAuth Client
+
+Create a dedicated OAuth client with the minimum scopes needed to manage the
+tailnet policy. Store it in the `tailscale-terraform-secrets` API Credential
+item in vault `Secrets`: client ID in **username**, client secret in
+**credential**. The tailnet ID or name is non-secret and belongs in the
+deployment HCL after operator review.
+
 ## Environment Variables
 
 ### Local Development
@@ -305,7 +371,7 @@ Create a `.env` file in the `terraform/` directory (gitignored), filled from
 # Proxmox API (optional curl helpers only — provider uses Connect)
 export PROXMOX_API_URL=https://node-01.services.apocrathia.com:8006
 
-# All provider stacks: Connect only (no PROXMOX_VE_* / CLOUDFLARE / OKTA / GITLAB PATs).
+# All provider stacks: Connect only (no PROXMOX_VE_* / CLOUDFLARE / OKTA / GITLAB / TAILSCALE credentials).
 # export OP_CONNECT_HOST=… OP_CONNECT_TOKEN=…
 
 # GitLab HTTP State Backend
@@ -387,6 +453,20 @@ terragrunt plan
 ```
 
 Do not export `OKTA_API_TOKEN`.
+
+### Tailscale policy
+
+```bash
+# Connect auth. Local: port-forward Connect first.
+export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
+export OP_CONNECT_TOKEN=…
+export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
+cd terraform/deployments/tailscale/policy
+terragrunt plan
+```
+
+Set and review `tailscale_tailnet`, then import the current policy before the
+first apply. Do not export Tailscale OAuth credentials.
 
 ### All Deployments
 
@@ -646,5 +726,7 @@ Match module inputs in the deployment's `terragrunt.hcl` to the output, paying a
 - [bpg/proxmox Multi-Node Guide](https://registry.terraform.io/providers/bpg/proxmox/latest/docs/guides/multi-node)
 - [Cloudflare Provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
 - [Okta Provider](https://registry.terraform.io/providers/okta/okta/latest/docs)
+- [Tailscale Provider](https://registry.terraform.io/providers/tailscale/tailscale/latest/docs)
+- [Tailscale machine sharing](https://tailscale.com/kb/1084/sharing)
 - [GitLab Terraform State](https://docs.gitlab.com/ee/user/infrastructure/iac/terraform_state.html)
 - [Proxmox API Documentation](https://pve.proxmox.com/pve-docs/api-viewer/)

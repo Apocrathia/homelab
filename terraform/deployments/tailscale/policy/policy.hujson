@@ -1,0 +1,21 @@
+{
+  "tagOwners": {
+    // Admins own the operator tag. The operator owns proxy tags.
+    "tag:k8s-operator": [],
+    "tag:k8s": ["tag:k8s-operator"],
+  },
+
+  "grants": [
+    {
+      "src": ["autogroup:admin"],
+      "dst": ["*"],
+      "ip": ["*"],
+    },
+    {
+      // Machine sharing limits visibility; this rule further limits access to HTTPS.
+      "src": ["autogroup:shared"],
+      "dst": ["*"],
+      "ip": ["443"],
+    },
+  ],
+}

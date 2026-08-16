@@ -26,6 +26,11 @@ The `OnePasswordItem` `tailscale-secrets` syncs those fields into a Kubernetes S
 
 Operator and proxy defaults live in `helmrelease.yaml`. Workloads use Tailscale CRDs after the operator is running; nothing in this directory exposes a web UI.
 
+Operator-managed proxies are tagged (`tag:k8s` by default). Tagged machines
+cannot be shared with external Tailscale users. For shareable MagicDNS front
+doors, use a user-owned untagged proxy (see `04-apps/demo-app`). Tailnet policy
+and OAuth for OpenTofu live under `terraform/deployments/tailscale/policy`.
+
 ### Optional features
 
 - **API server proxy**: set `apiServerProxyConfig.mode` to `"true"` or `"noauth"` in `helmrelease.yaml`, or deploy a `ProxyGroup` of type `kube-apiserver`.

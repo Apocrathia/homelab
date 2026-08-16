@@ -1,0 +1,192 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-tailscale
+  namespace: demo-app
+data:
+  serve.json: |
+    {
+      "TCP": {
+        "443": {
+          "HTTPS": true
+        }
+      },
+      "Web": {
+        "${TS_CERT_DOMAIN}:443": {
+          "Handlers": {
+            "/": {
+              "Proxy": "http://127.0.0.1:8080"
+            }
+          }
+        }
+      },
+      "AllowFunnel": {
+        "${TS_CERT_DOMAIN}:443": false
+      }
+    }
+  nginx.conf: |
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr notice;
+
+    events {}
+
+    http {
+      access_log /dev/stdout;
+
+      server {
+        listen 8080;
+
+        location / {
+          proxy_pass http://demo-app.demo-app.svc:80;
+          proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Proto https;
+        }
+      }
+    }
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: demo-app-tailscale-auth
+  namespace: demo-app
+spec:
+  itemPath: "vaults/Secrets/items/demo-app-tailscale-auth"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-tailscale
+  namespace: demo-app
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: demo-app-tailscale
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: demo-app-tailscale
+  namespace: demo-app
+  labels:
+    app.kubernetes.io/name: demo-app-tailscale
+spec:
+  replicas: 1
+  serviceName: demo-app-tailscale
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-app-tailscale
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: demo-app-tailscale
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: tailscale
+          # renovate: datasource=docker depName=ghcr.io/tailscale/tailscale
+          image: ghcr.io/tailscale/tailscale:v1.102.2@sha256:321ce041508c19079b57a28b6666c8d81ab0b08accc0a2585b3ab663d557ac24
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TS_AUTHKEY
+              valueFrom:
+                secretKeyRef:
+                  name: demo-app-tailscale-auth
+                  key: TS_AUTHKEY
+            - name: TS_AUTH_ONCE
+              value: "true"
+            - name: TS_HOSTNAME
+              value: demo-app
+            - name: TS_KUBE_SECRET
+              value: ""
+            - name: TS_SERVE_CONFIG
+              value: /etc/tailscale/serve.json
+            - name: TS_SOCKET
+              value: /tmp/tailscaled.sock
+            - name: TS_STATE_DIR
+              value: /var/lib/tailscale
+            - name: TS_USERSPACE
+              value: "true"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: false
+            runAsUser: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tailscale
+              readOnly: true
+            - name: state
+              mountPath: /var/lib/tailscale
+            - name: tailscale-tmp
+              mountPath: /tmp
+        - name: reverse-proxy
+          # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
+          image: public.ecr.aws/nginx/nginx:alpine@sha256:238132c0a2231df8741a1dc77b362584b8a2169050686d85968aebc24fb9a71d
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/sbin/nginx
+          args:
+            - -g
+            - daemon off;
+            - -c
+            - /etc/demo-app-tailscale/nginx.conf
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 101
+            runAsNonRoot: true
+            runAsUser: 101
+          volumeMounts:
+            - name: config
+              mountPath: /etc/demo-app-tailscale
+              readOnly: true
+            - name: reverse-proxy-tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: demo-app-tailscale
+        - name: reverse-proxy-tmp
+          emptyDir: {}
+        - name: tailscale-tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: state
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: longhorn

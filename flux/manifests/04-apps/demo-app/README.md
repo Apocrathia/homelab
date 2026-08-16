@@ -30,6 +30,7 @@ This directory contains:
 
 - `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart
 - `kustomization.yaml` - Kustomize configuration for Flux deployment
+- `tailscale-proxy.yaml` - Standalone Tailscale proxy and persistent identity
 - `README.md` - This documentation
 
 All Kubernetes resources (deployment, service, PVCs, Authentik blueprint, etc.) are generated from the generic-app chart templates.
@@ -197,6 +198,73 @@ httproute:
 - **Outpost**: `http://ak-outpost-demo-app-outpost.demo-app.svc:9000`
 - **Persistent Storage**: Longhorn volume at `/app`
 - **Shared Storage**: SMB mount at `/usr/share/nginx/html`
+
+## Standalone Tailscale sharing
+
+The standalone proxy publishes demo-app over private Tailscale HTTPS. It is a
+user-owned, untagged machine so it can be shared with external Tailscale users.
+This path connects directly to the in-cluster Service and does not use
+Authentik. The public Authentik URL remains unchanged.
+
+### Credential
+
+Create a non-ephemeral, untagged auth key as the user who will own and share the
+machine. Do not use an OAuth client, operator tag, or tagged auth key.
+
+Store the key in the `Secrets` vault as an item named
+`demo-app-tailscale-auth`. The item must have a concealed field named
+`TS_AUTHKEY`; the 1Password operator copies that field to the Kubernetes Secret
+consumed by the StatefulSet. No credential value belongs in Git.
+
+The auth key is only used when the persistent Tailscale state is empty. If the
+PVC is lost, generate a new key and update the 1Password item before recreating
+the pod.
+
+### Rollout
+
+The live Service may have out-of-band Tailscale operator annotations. Remove
+the operator exposure before reconciling this directory; two proxies cannot own
+the `demo-app` hostname.
+
+```bash
+kubectl annotate service demo-app -n demo-app tailscale.com/expose- tailscale.com/hostname-
+kubectl get service demo-app -n demo-app -o yaml
+kubectl get pods -n tailscale-system
+```
+
+Wait for the operator-managed proxy to disappear, then reconcile or apply the
+GitOps manifests. Confirm the standalone machine appears in the Tailscale admin
+console as `demo-app`, owned by the expected user, with no tags. Tailscale HTTPS
+must be enabled for the tailnet.
+
+### Share and revoke
+
+In the Tailscale admin console, open the `demo-app` machine and use **Share** to
+invite the external user. Revoke access from the same machine's sharing panel.
+Deleting or expiring the auth key does not revoke an existing machine or its
+shares.
+
+Recipients must use the certificate-backed MagicDNS FQDN shown by Tailscale:
+
+```text
+https://demo-app.<tailnet>.ts.net
+```
+
+The short hostname and Tailscale IP are not supported access paths for shared
+recipients. Funnel is disabled, so the endpoint is not public.
+
+### Validation
+
+```bash
+kubectl get statefulset,pod,pvc -n demo-app -l app.kubernetes.io/name=demo-app-tailscale
+kubectl logs statefulset/demo-app-tailscale -n demo-app -c tailscale
+kubectl exec statefulset/demo-app-tailscale -n demo-app -c tailscale -- tailscale status
+kubectl exec statefulset/demo-app-tailscale -n demo-app -c tailscale -- tailscale serve status
+curl --fail --show-error --location https://demo-app.<tailnet>.ts.net
+```
+
+Run the final `curl` from the invited recipient's tailnet. Also confirm the
+public URL still redirects through Authentik.
 
 ## Troubleshooting
 
