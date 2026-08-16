@@ -1,8 +1,9 @@
 ---
 # RBAC for the kyverno background controller to clone the
-# docker-io-imagepullsecret Secret across namespaces. Secret creation and
-# discovery cannot be restricted by resource name; subsequent access is
-# restricted to the generated Secret.
+# docker-io-imagepullsecret Secret across namespaces. Kyverno's generate
+# policy admission dry-run checks get/update/delete on Secrets without
+# honoring resourceNames, so these verbs stay unscoped. Intentional Secret
+# manage is documented in .trivyignore.yaml (AVD-KSV-0041 / generate-rbac.yaml).
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -12,20 +13,14 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["list", "watch", "create"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["docker-io-imagepullsecret"]
-    verbs: ["get", "update", "patch", "delete"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 # RBAC for the kyverno admission controller to perform pre-validation of
 # generate rules. When a ClusterPolicy has a generate rule that clones a
 # resource, Kyverno's admission webhook checks that the admission
 # controller itself has sufficient permissions on the target kind in the
 # target namespace — otherwise it rejects the policy at create/update
-# time. That check does not honor resourceNames, so get/list stay
-# unscoped here. Runtime generate mutations remain name-scoped on the
-# background-controller ClusterRole above.
+# time. That check does not honor resourceNames, so get/list stay unscoped.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
