@@ -26,7 +26,7 @@ terraform {
 }
 
 inputs = {
-  onepassword_vault_name                   = "Secrets"
+  onepassword_vault_name                  = "Secrets"
   onepassword_cloudflare_token_item_title = "cloudflare-terraform-secrets"
 
   zone_name = "apocrathia.com"
