@@ -86,6 +86,8 @@ spec:
         storageTemplate:
           enabled: true
           hashVerificationEnabled: true
+          # Path convention: Year/Year-Month-Day/original-filename.ext
+          # e.g. library/<user>/2024/2024-03-15/IMG_1234.HEIC
           template: "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"
 
     # Enable Valkey for Redis-compatible caching
