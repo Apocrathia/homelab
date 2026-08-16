@@ -1,10 +1,8 @@
 ---
-# RBAC for the kyverno background controller to clone Secrets across
-# namespaces. The default kyverno:background-controller ClusterRole does
-# not grant create/update/delete on secrets — it only reads configmaps and
-# events. Aggregating this ClusterRole adds those verbs so the
-# `sync-docker-io-imagepullsecret` ClusterPolicy can generate and keep in
-# sync the docker-io-imagepullsecret Secret in labeled namespaces.
+# RBAC for the kyverno background controller to clone the
+# docker-io-imagepullsecret Secret across namespaces. Secret creation and
+# discovery cannot be restricted by resource name; subsequent access is
+# restricted to the generated Secret.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -14,7 +12,11 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    verbs: ["list", "watch", "create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["docker-io-imagepullsecret"]
+    verbs: ["get", "update", "patch", "delete"]
 ---
 # RBAC for the kyverno admission controller to perform pre-validation of
 # generate rules. When a ClusterPolicy has a generate rule that clones a
@@ -22,7 +24,7 @@ rules:
 # controller itself has sufficient permissions on the target kind in the
 # target namespace — otherwise it rejects the policy at create time. The
 # default admission-controller ClusterRole does not grant any verbs on
-# Secrets, so we aggregate get/list for Secrets here.
+# Secrets, so we aggregate list plus name-scoped get for Secrets here.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -32,4 +34,8 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "list"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["docker-io-imagepullsecret"]
+    verbs: ["get"]

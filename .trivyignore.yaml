@@ -17,3 +17,10 @@ misconfigurations:
       Prefer fixing with readOnlyRootFilesystem plus emptyDir mounts when
       practical; until then suppress by basename for cronjob.yaml and
       daemonset.yaml only.
+  - id: AVD-KSV-0041
+    paths:
+      - "generate-rbac.yaml"
+    statement: >-
+      Kyverno intentionally clones and synchronizes the named Docker Hub
+      imagePullSecret into opted-in namespaces. Kubernetes RBAC cannot constrain
+      Secret creation by resource name or namespace label.
