@@ -123,14 +123,14 @@ spec:
 
       service:
         type: ClusterIP
-        ports:
-          - port: 80
-            targetPort: 9119
-            portName: http
-          # A2A inbound port — other agents reach Hermes via this port.
-          - port: 9900
-            targetPort: 9900
-            portName: a2a
+        port: 80
+        targetPort: 9119
+        portName: http
+      # A2A inbound port — other agents reach Hermes via this port.
+      extraServicePorts:
+        - name: a2a
+          port: 9900
+          targetPort: 9900
 
       resources:
         requests:
