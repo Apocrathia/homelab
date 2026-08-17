@@ -106,8 +106,7 @@ spec:
             readOnly: false
 
     secrets:
-      enabled: true
-      itemPath: "vaults/Secrets/items/aurral-secrets"
+      enabled: false
 
     authentik:
       enabled: true
