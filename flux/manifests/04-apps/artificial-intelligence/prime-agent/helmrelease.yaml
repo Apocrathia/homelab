@@ -1,0 +1,143 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prime-agent
+  namespace: prime-agent
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: prime-agent
+      namespace: prime-agent
+      # renovate: datasource=docker depName=node
+      image: node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436
+
+      # No upstream OCI image exists: install the pinned npm tarball into the
+      # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
+      # session workers spawn in-pod on first attach and persist across exec
+      # sessions. Renovate tracks PRIME_AGENT_VERSION via upstream git tags.
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          set -euo pipefail
+          export HOME=/opt/data
+          export NPM_CONFIG_PREFIX=/opt/data/npm
+          export PATH=/opt/data/npm/bin:$PATH
+
+          installed=""
+          pkg=/opt/data/npm/lib/node_modules/prime-agent/package.json
+          if [[ -f "$pkg" ]]; then
+            installed=$(node -p "require('$pkg').version" || true)
+          fi
+          if [[ "$installed" != "$PRIME_AGENT_VERSION" ]]; then
+            echo "installing prime-agent $PRIME_AGENT_VERSION (was: ${installed:-none})"
+            npm install -g "https://pub-728493de92a943e2a9b2d17b4719f318.r2.dev/releases/v${PRIME_AGENT_VERSION}/prime-agent-${PRIME_AGENT_VERSION}.tgz"
+          fi
+
+          # Reconcile static config from the ConfigMap on every boot.
+          # settings.json is seeded once; runtime keys (recentModels, theme)
+          # accumulate on the PVC afterwards. Delete it to re-seed.
+          mkdir -p /opt/data/.prime/agent/extensions
+          cp -f /static/*.ts /opt/data/.prime/agent/extensions/
+          if [[ ! -f /opt/data/.prime/agent/settings.json ]]; then
+            cp /static/settings.json /opt/data/.prime/agent/settings.json
+          fi
+
+          prime-agent --version
+          echo "ready: kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent"
+          exec sleep infinity
+
+      container:
+        name: prime-agent
+        # Nothing listens; the chart requires a declared port.
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: HOME
+            value: "/opt/data"
+          - name: NPM_CONFIG_PREFIX
+            value: "/opt/data/npm"
+          - name: PATH
+            value: "/opt/data/npm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
+          - name: PRIME_AGENT_VERSION
+            value: "0.7.2"
+          # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm.ts
+          # extension reads LITELLM_API_KEY for catalog discovery and requests.
+          - name: LITELLM_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000/v1"
+          - name: LITELLM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: litellm-api-key
+
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # npm install + kernel bootstrap write to the container fs.
+        readOnlyRootFilesystem: false
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          - name: static-config
+            mountPath: /static
+            configMapName: prime-agent-config
+
+      volumeMounts:
+        - name: state
+          mountPath: /opt/data
+
+    # No healthChecks: PID 1 idles (sleep infinity) and the agent runs on
+    # demand via kubectl exec, so there is no listener or worker to probe.
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: state
+            capacity: 10Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/prime-agent-secrets"
+
+    # TUI-only app: no web UI, so no Gateway route, SSO, or uptime check.
+    authentik:
+      enabled: false
+    httproute:
+      enabled: false
+    gatus:
+      enabled: false

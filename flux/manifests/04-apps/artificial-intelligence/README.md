@@ -82,6 +82,7 @@ flowchart TB
 
 - **[Hermes Agent](./hermes-agent/README.md)** - Nous Research personal AI agent (gateway, dashboard, skills) backed by LiteLLM
 - **[kagent](./kagent/README.md)** - Agent orchestration platform for Kubernetes
+- **[Prime Agent](./prime-agent/README.md)** - Prime Intellect coding agent CLI as a persistent exec-attached agent box, backed by LiteLLM
 - **[Agent Substrate](./substrate/README.md)** - gVisor sandbox runtime and WorkerPool data plane for kagent
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration

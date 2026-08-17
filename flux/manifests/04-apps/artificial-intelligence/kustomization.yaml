@@ -19,6 +19,7 @@ resources:
   - openclaw
   - openwebui
   # - odysseus
+  - prime-agent
   - promptfoo
   - pyrit
   - qdrant

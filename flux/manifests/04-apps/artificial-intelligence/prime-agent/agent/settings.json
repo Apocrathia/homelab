@@ -1,0 +1,7 @@
+{
+  "defaultProvider": "litellm",
+  "defaultModel": "kimi-k3-prime",
+  "telemetry": {
+    "enabled": false
+  }
+}
