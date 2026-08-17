@@ -6,6 +6,7 @@ metadata:
   name: media
 
 resources:
+  - acquisitions/aurral
   - acquisitions/archiveteam-warrior
   - acquisitions/lidarr-youtube-downloader
   - acquisitions/prowlarr
