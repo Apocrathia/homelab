@@ -47,6 +47,11 @@
     {
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
+    },
+    {
+      "description": "Calendar versioning (vYYYY.M.D.patch) — default semver can't parse these",
+      "matchPackageNames": ["nousresearch/hermes-agent"],
+      "versioning": "calendar"
     }
   ],
   "customManagers": [
