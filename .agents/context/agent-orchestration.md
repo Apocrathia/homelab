@@ -57,6 +57,7 @@ is down or unregistered, use those aliases through LiteLLM.
 | Web search                               | `agent-search`/`search-agent`                                                | `searxng`, `firecrawl`                                                          |
 | Encyclopedia / memory / repo docs        | `agent-knowledge`/`knowledge-agent`                                          | `openzim`, `qdrant`, `deepwiki` (+ `searxng` / `firecrawl` if search is enough) |
 | Homelab Q&A / multi-domain orchestration | `kagent`/`homelab-agent`                                                     | Compose domain MCPs (`flux`, `grafana`, …) as needed                            |
+| Hermes (orchestrator, Discord, ops)      | `hermes-agent`/`hermes-agent` (registered on LiteLLM)                        | Direct MCP tools; delegate via `a2a_call` to kagent agents                      |
 | Kubernetes ops / troubleshooting         | `kagent`/`k8s-agent`                                                         | `flux` (inventory / reconcile); no general kubectl MCP                          |
 | Helm releases                            | `kagent`/`helm-agent`                                                        | `flux` (`HelmRelease` path)                                                     |
 | Cilium install / policy / debug          | `kagent`/`cilium-manager-agent`, `cilium-policy-agent`, `cilium-debug-agent` | none in LiteLLM — A2A or CLI                                                    |
