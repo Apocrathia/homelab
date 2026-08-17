@@ -115,7 +115,7 @@ spec:
       category: "Media"
       displayName: "Aurral"
       externalHost: "https://aurral.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/aurral/icon.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/aurral/icon.svg"
       oidc:
         redirectUris:
           - url: "https://aurral.gateway.services.apocrathia.com/oauth/callback"

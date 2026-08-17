@@ -1,6 +1,6 @@
 # Aurral
 
-[← Back to Acquisitions](../README.md)
+[← Back to Management](../README.md)
 
 Self-hosted music discovery companion for a Lidarr-based music stack. Provides personalized recommendations, manages dynamic playlists ("Flows"), and automates track downloads from multiple sources (slskd, Usenet via Prowlarr, yt-dlp).
 
