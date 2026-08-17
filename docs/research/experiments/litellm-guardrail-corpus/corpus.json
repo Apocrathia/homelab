@@ -31,7 +31,7 @@
   },
   {
     "id": "tp-api-key",
-    "text": "openai_api_key=sk-1234998222abcdefg1234",
+    "text": "api_key=sk-1234998222abcdefg1234",
     "expected": "mask",
     "guardrail": "secret-mask"
   },

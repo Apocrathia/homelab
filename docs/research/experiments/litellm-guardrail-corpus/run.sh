@@ -13,8 +13,8 @@ if [[ ! -f "$SECRETS_FILE" ]]; then
     exit 0
 fi
 
-BASE_URL=$(python3 -c "import json; print(json.load(open('$SECRETS_FILE'))['litellm']['base_url'].rstrip('/'))")
-AUTH_HEADER=$(python3 -c "import json; d=json.load(open('$SECRETS_FILE'))['litellm']['headers']; k=list(d.keys())[0]; print(f'{k}: {d[k]}')")
+BASE_URL=$(python3 -c "import json; print(json.load(open('$SECRETS_FILE'))['a2a']['base_url'].rstrip('/'))")
+AUTH_HEADER=$(python3 -c "import json; d=json.load(open('$SECRETS_FILE'))['a2a']['headers']; k=list(d.keys())[0]; print(f'{k}: {d[k]}')")
 
 GREEN="\033[32m"
 RED="\033[31m"
@@ -33,7 +33,7 @@ while IFS= read -r entry; do
         -H "$AUTH_HEADER" \
         -d "$(jq -n --arg t "$text" --arg g "$guardrail" '{text: $t, guardrail_name: $g}')" 2>/dev/null || echo '{}')
 
-    redacted=$(echo "$resp" | jq -r '.data.text // .text // ""')
+    redacted=$(echo "$resp" | jq -r '.response_text // .data.text // .text // ""')
     was_modified="$([[ "$redacted" != "$text" ]] && echo "mask" || echo "pass")"
 
     if [[ "$was_modified" == "$expected" ]]; then
