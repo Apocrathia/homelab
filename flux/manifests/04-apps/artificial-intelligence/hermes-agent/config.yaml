@@ -135,3 +135,14 @@ a2a_agents:
   observability-agent:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/observability-agent"
     timeout: 120
+
+
+# ── Inbound A2A ───────────────────────────────────────────────────
+# Enables Hermes to serve an Agent Card and accept JSONRPC tasks
+# from other agents. Other agents discover Hermes via the
+# litellm.yml `agents:` entry (see litellm helmrelease).
+# Docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/a2a
+gateway:
+  platforms:
+    a2a:
+      enabled: true

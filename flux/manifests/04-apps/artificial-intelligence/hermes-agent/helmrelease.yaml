@@ -107,12 +107,30 @@ spec:
               secretKeyRef:
                 name: hermes-agent-secrets
                 key: gitlab-token
+          # A2A inbound — lets other agents call Hermes via JSONRPC.
+          # Bearer token lives in 1Password (hermes-agent-secrets/a2a-bearer-token).
+          - name: A2A_HOST
+            value: "0.0.0.0"
+          - name: A2A_PORT
+            value: "9900"
+          - name: A2A_PUBLIC_URL
+            value: "http://hermes-agent.hermes-agent.svc.cluster.local:9900"
+          - name: A2A_BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hermes-agent-secrets
+                key: a2a-bearer-token
 
       service:
         type: ClusterIP
-        port: 80
-        targetPort: 9119
-        portName: http
+        ports:
+          - port: 80
+            targetPort: 9119
+            portName: http
+          # A2A inbound port — other agents reach Hermes via this port.
+          - port: 9900
+            targetPort: 9900
+            portName: a2a
 
       resources:
         requests:
