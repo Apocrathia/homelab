@@ -1,0 +1,17 @@
+{
+  "title": "LiteLLM guardrail regression corpus",
+  "kind": "experiment",
+  "status": "running",
+  "found_at": "2026-08-17",
+  "area": "security",
+  "hypothesis": "Custom aws_secret_key regexes and hide-secrets guardrail catch real secrets while ignoring folder paths and git SHAs.",
+  "eval_command": "run.sh",
+  "metric": "corpus_pass_rate",
+  "baseline": "0% (prebuilt aws_secret_key matches paths)",
+  "target": "100% (all real leaks masked, all paths/shas untouched)",
+  "budgets": {
+    "time": "30s per run",
+    "api_calls": "~20 per run"
+  },
+  "raw_data": "corpus.json"
+}
