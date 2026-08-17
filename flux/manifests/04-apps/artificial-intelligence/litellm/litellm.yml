@@ -472,6 +472,11 @@ agents:
       name: "Hermes Agent"
       url: "http://hermes-agent.hermes-agent.svc.cluster.local:9900"
       protocolVersion: "0.3"
+    # Hermes enforces bearer auth on A2A message/send. The env value must
+    # include the "Bearer " prefix (os.environ substitution replaces the
+    # whole string; there is no concatenation).
+    static_headers:
+      Authorization: "os.environ/HERMES_A2A_AUTHORIZATION"
 
 # Native search engines exposed at /v1/search/<search_tool_name>.
 # SearXNG instance: productivity/searxng (JSON format enabled by init container).

@@ -31,6 +31,7 @@ Create a 1Password item:
 - `redis-password`: Shared password for Valkey (`litellm-valkey`) and LiteLLM `REDIS_PASSWORD`
 - `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
 - `oidc-client-secret`: Authentik OIDC provider Client Secret
+- `hermes-a2a-authorization`: Full `Bearer <token>` Authorization header value for Hermes Agent inbound A2A (same token as `hermes-agent-secrets`/`a2a-bearer-token`)
 
 ### Storage
 
