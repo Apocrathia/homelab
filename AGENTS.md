@@ -97,6 +97,7 @@ rows, read each.
 | Sync shared .agents/ from prime-context    | [`integrate-upstream`](./.agents/skills/integrate-upstream/SKILL.md)                                                                                                       |
 | Deploying a Helm app                       | [`helm-deployment`](./.agents/skills/helm-deployment/SKILL.md)                                                                                                             |
 | Adding an MCP server                       | [`mcp-deployment`](./.agents/skills/mcp-deployment/SKILL.md)                                                                                                               |
+| Invoking kagent agents via LiteLLM A2A     | [`a2a`](./.agents/skills/a2a/SKILL.md), [`agent-orchestration.md`](./.agents/context/agent-orchestration.md)                                                               |
 | CNPG logical restore                       | [`cnpg-logical-database-restore`](./.agents/skills/cnpg-logical-database-restore/SKILL.md)                                                                                 |
 | Longhorn volume restore (generic-app)      | [`generic-app-longhorn-restore`](./.agents/skills/generic-app-longhorn-restore/SKILL.md)                                                                                   |
 | Filing a gap / local issue                 | [`file-issue`](./.agents/skills/file-issue/SKILL.md), [`docs/issues/README.md`](./docs/issues/README.md)                                                                   |
