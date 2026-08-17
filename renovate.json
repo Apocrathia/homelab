@@ -45,6 +45,7 @@
       "platformAutomerge": true
     },
     {
+      "description": "Strict semver only — registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
     }
