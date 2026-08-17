@@ -67,6 +67,12 @@ spec:
       name: litellm-secrets
       valuesKey: homeassistant-token
       targetPath: envVars.HOMEASSISTANT_TOKEN
+    # Full "Bearer <token>" header value for Hermes Agent inbound A2A auth
+    # (same token as hermes-agent-secrets/a2a-bearer-token).
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: hermes-a2a-authorization
+      targetPath: envVars.HERMES_A2A_AUTHORIZATION
     - kind: Secret
       name: litellm-secrets
       valuesKey: oidc-client-id
