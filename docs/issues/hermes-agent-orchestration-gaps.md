@@ -1,16 +1,47 @@
 ---
 title: "Hermes agent: A2A broker registration and agent orchestration gaps"
 kind: bug
-status: open
+status: closed
 severity: medium
 source: agent
 found_at: 2026-07-29
 found_by: hermes
 area: agents
 slice: afk
+closed_by: "!3886 + !3880 + !3884"
 ---
 
 # Hermes agent: A2A broker registration and agent orchestration gaps
+
+## Resolution
+
+All three gaps resolved:
+
+1. **A2A bridge registration mismatch** — Resolved by removing the old MCP
+   A2A bridge (`mcp_servers.a2a`) and switching to Hermes native A2A plugin
+   with `a2a_agents` peer config (!3880). All 12 kagent agents are configured
+   as peers and `a2a_call` / `a2a_list` work natively.
+
+2. **6 user agents not on broker** — LiteLLM now registers all agents natively
+   via top-level `agents:` in `litellm.yml` with `agent_card_params` (commit
+   `004a48a33`). Hermes peers reach them through the native A2A plugin.
+
+3. **No delegation map** — Documented in `.agents/context/agent-orchestration.md`
+   with a full need-to-agent table including MCP fallbacks.
+
+Verified: `a2a_list()` returns 12 peers, `a2a_call(agent="k8s-agent")`
+returns a live response.
+
+## Original problem
+
+Three gaps prevented Hermes from fully orchestrating the kagent A2A fleet:
+
+1. **A2A bridge registration mismatch** — LiteLLM MCP bridge fetched
+   `/.well-known/agent.json` but kagent serves `/.well-known/agent-card.json`.
+2. **6 user agents not registered on the kagent broker** — defined as `Agent`
+   CRs but not serving cards on the broker.
+3. **No documented delegation map** — self-improve work graph needed a mapping
+   of which A2A agent to call when.
 
 ## Problem / desired state
 
