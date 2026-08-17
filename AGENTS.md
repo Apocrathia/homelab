@@ -50,6 +50,8 @@ terse, humor OK, **profanity encouraged**).
 - 1Password Item CRs for secrets (not bare managed Secret YAML)
 - No commit/push without authorization; never cluster-mutate without ask
   ([`constraints.md`](./.agents/context/constraints.md#commit-and-ship))
+- Run security tooling on any code change; never commit secrets
+  ([`security.md`](./.agents/rules/security.md))
 - Confirm before editing protected paths
   ([`protected-paths.md`](./.agents/rules/protected-paths.md))
 - Edit in a worktree, not the workspace root; run

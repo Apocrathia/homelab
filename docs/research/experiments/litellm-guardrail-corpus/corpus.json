@@ -1,0 +1,74 @@
+[
+  {
+    "id": "tp-quoted-key",
+    "text": "aws_secret_access_key = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "tp-env-key",
+    "text": "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "tp-json-key",
+    "text": "{\"awsSecretKey\": \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\"}",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "tp-export-key",
+    "text": "export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "tp-bare-key",
+    "text": "here is my key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY please use it",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "tp-api-key",
+    "text": "openai_api_key=sk-1234998222abcdefg1234",
+    "expected": "mask",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-abs-path",
+    "text": "/Users/ianyoung/Projects/homelab/flux/manifests/04-apps/artificial-intelligence/litellm/litellm.yml",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-rel-path",
+    "text": "flux/manifests/04-apps/artificial-intelligence/litellm/litellm.yml",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-kebab-path",
+    "text": "/opt/homebrew/lib/node_modules/prime-agent/dist/skills/agent-message/SKILL.md",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-kube-path",
+    "text": "/var/lib/kubelet/pods/abcdef123456/volumes/kubernetes.io~configmap/config/foo.yaml",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-git-sha",
+    "text": "commit abababababababababababababababababababab merged",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  },
+  {
+    "id": "fp-short-path",
+    "text": "check a b c /d for details",
+    "expected": "pass",
+    "guardrail": "secret-mask"
+  }
+]
