@@ -208,6 +208,17 @@ guardrails:
       mode: "pre_call"
       default_on: true
 
+policies:
+  global-baseline:
+    guardrails:
+      add:
+        - secret-mask
+        - hide-secrets
+
+policy_attachments:
+  - policy: global-baseline
+    scope: "*"
+
 mcp_servers:
   context7:
     alias: "context7"
