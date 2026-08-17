@@ -36,8 +36,8 @@ with the same command; `prime-agent list` shows active agents.
 
 ## Configuration
 
-- **Upgrade**: bump `PRIME_AGENT_VERSION` in `helmrelease.yaml` and restart the
-  pod (manual pin; the R2 tarball has no Renovate datasource)
+- **Upgrade**: Renovate tracks `PRIME_AGENT_VERSION` in `helmrelease.yaml`
+  (upstream git tags, semver); the new tarball installs on pod restart
 - **Models**: `/model` inside the TUI. Default is seeded in
   `agent/settings.json`; the extension re-reads the gateway catalog on start
   (`/litellm-refresh` to re-poll)

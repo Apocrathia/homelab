@@ -26,7 +26,7 @@ spec:
       # No upstream OCI image exists: install the pinned npm tarball into the
       # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
       # session workers spawn in-pod on first attach and persist across exec
-      # sessions. Bump PRIME_AGENT_VERSION to upgrade (manual; no datasource).
+      # sessions. Renovate tracks PRIME_AGENT_VERSION via upstream git tags.
       command: ["/bin/bash", "-c"]
       args:
         - |
@@ -71,6 +71,7 @@ spec:
             value: "/opt/data/npm"
           - name: PATH
             value: "/opt/data/npm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
             value: "0.7.2"
           # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm.ts
