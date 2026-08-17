@@ -27,6 +27,10 @@ entries:
       redirect_uris:
         - url: "https://renovate.gateway.services.apocrathia.com/auth/callback"
           matching_mode: "strict"
+      # Authentik 2026.5+: empty grant_types rejects authorization_code (invalid_grant).
+      grant_types:
+        - authorization_code
+        - refresh_token
       access_code_validity: "minutes=1"
       access_token_validity: "minutes=5"
       refresh_token_validity: "days=30"
