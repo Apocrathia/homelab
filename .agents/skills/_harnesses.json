@@ -1,0 +1,19 @@
+{
+  "note": "symlink-owned vs script-owned: Cursor (.cursor/skills/) and Claude (.claude/skills/) discovery are symlinks into .agents/skills/; Prime Agent discovers project .agents/skills/ natively (>= 0.7.2), so no .prime/agent/skills symlink is needed. Keep all mirrors.enabled false.",
+  "mirrors": {
+    "cursor": {
+      "enabled": false,
+      "path": ".cursor/skills",
+      "reason": "symlink owns discovery"
+    },
+    "claude": {
+      "enabled": false,
+      "path": ".claude/skills",
+      "reason": "symlink owns discovery"
+    },
+    "prime-agent": {
+      "enabled": false,
+      "reason": "native .agents/skills/ discovery"
+    }
+  }
+}

@@ -6,3 +6,7 @@ flux/manifests/01-bootstrap/flux-system/*
 
 # All Helm template files - they have dumb YAML structures
 helm/**/templates/*.yaml
+
+# Generated Prime Agent prompt surface (sync_surfaces.py owns content)
+.prime/agent/*.md
+.prime/agent/*.md.generated

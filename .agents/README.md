@@ -8,6 +8,10 @@ adapters:
 
 - [`.cursor/`](../.cursor/README.md) — Cursor rules discovery, hooks, commands
 - [`.claude/`](../.claude/README.md) — Claude Code discovery symlinks
+- [`.prime/agent/`](../.prime/agent/) — Prime Agent prompt surface: generated
+  `APPEND_SYSTEM.md` (always-on rules) via
+  [`sync_surfaces.py`](./skills/reconcile-context/scripts/sync_surfaces.py);
+  skills discovered natively from [`skills/`](./skills/)
 
 ## Layout
 
@@ -28,8 +32,12 @@ the `.claude/skills` directory symlink. All rules — behavioral and domain
 `.cursor/rules/`.
 
 Discovery parity:
-[`skills/reconcile-context/scripts/check_discovery.py`](./skills/reconcile-context/scripts/check_discovery.py)
-(via [`reconcile-context`](./skills/reconcile-context/SKILL.md)).
+[`skills/reconcile-context/scripts/check_discovery.py`](./skills/reconcile-context/scripts/check_discovery.py);
+generated harness surfaces (`.prime/agent/APPEND_SYSTEM.md`):
+[`sync_surfaces.py --check`](./skills/reconcile-context/scripts/sync_surfaces.py)
+(both via [`reconcile-context`](./skills/reconcile-context/SKILL.md)). Harness
+ownership of each surface is declared in `rules|agents|skills/_harnesses.json`
+sidecars.
 
 ## Loading
 

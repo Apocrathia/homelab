@@ -22,7 +22,7 @@ true and thin. Stale context text is confidently wrong.
 ## Workflow
 
 ```
-- [ ] 1. Link and discovery check (script)
+- [ ] 1. Link, discovery, and surface check (script)
 - [ ] 2. Structural drift (README inventory, routing, loading)
 - [ ] 3. Reality drift (claims vs repo — thin)
 - [ ] 4. Harvest <!-- drift: --> notes
@@ -35,6 +35,7 @@ true and thin. Stale context text is confidently wrong.
 ```bash
 python3 .agents/skills/reconcile-context/scripts/check_links.py
 python3 .agents/skills/reconcile-context/scripts/check_discovery.py
+python3 .agents/skills/reconcile-context/scripts/sync_surfaces.py --check
 ```
 
 Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
@@ -42,7 +43,15 @@ Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
 `check_discovery.py` verifies Cursor/Claude discovery symlinks against the
 `.agents/` source of truth (agent/skill links, `.claude/skills`, `CLAUDE.md`).
 
-Hook-safe: no side effects, nonzero exit on broken links or discovery drift.
+`sync_surfaces.py --check` fails when a generated harness surface
+(`.prime/agent/APPEND_SYSTEM.md`) drifts from the `rules/_harnesses.json`
+sidecar, or when the sidecar's `always_on` list, Cursor `alwaysApply: true`
+frontmatter, and AGENTS.md Always-in-force rule links disagree. After an
+intentional always-on rule change, regenerate with `--write` — never hand-edit
+`.prime/agent/`.
+
+Hook-safe: no side effects, nonzero exit on broken links, discovery drift, or
+surface drift.
 
 ### 2. Structural drift
 
@@ -110,4 +119,7 @@ The link check runs from pre-commit and pre-push via the `context-links` hook in
 [`.pre-commit-config.yaml`](../../../.pre-commit-config.yaml) on changes to
 `AGENTS.md`, `CLAUDE.md`, and `.agents/**/*.md`. CI runs the same script from
 [`.gitlab/context-links.gitlab-ci.yml`](../../../.gitlab/context-links.gitlab-ci.yml).
-Keep the full reconcile (steps 2–5) as an explicit invocation.
+The surface check (`sync_surfaces.py --check`) is not in the hook; run it
+from this skill after touching always-on rules, `AGENTS.md` Always in force, or
+`_harnesses.json` sidecars. Keep the full reconcile (steps 2–5) as an explicit
+invocation.
