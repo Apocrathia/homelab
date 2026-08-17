@@ -17,6 +17,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
 - **[media](./media/)** - `media-agent`: Servarr (Sonarr/Radarr) management
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
+- **[hermes](./hermes/)** - `hermes-agent`: Nous Research personal agent (external app fronted by a BYO A2A proxy; browser automation, deep research, media generation)
 
 **System Agents (managed by kagent helm chart):**
 
@@ -47,6 +48,7 @@ flowchart LR
     MEDIA[media-agent]
     INFRA[infrastructure-agent]
     GIT[git-agent]
+    HERMES[hermes-agent]
     CILIUM_POLICY[cilium-policy-agent]
     CILIUM_DEBUG[cilium-debug-agent]
     HOME[home-agent]
@@ -58,6 +60,7 @@ flowchart LR
     H --> INFRA
     H --> GIT
     H --> KNOW
+    H --> HERMES
 
     K8S --> HELM
     K8S --> CILIUM_MGR
