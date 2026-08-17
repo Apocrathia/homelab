@@ -188,6 +188,12 @@ guardrails:
           name: "jwt"
           action: "MASK"
 
+  - guardrail_name: "hide-secrets"
+    litellm_params:
+      guardrail: "hide-secrets"
+      mode: "pre_call"
+      default_on: true
+
 mcp_servers:
   context7:
     alias: "context7"
