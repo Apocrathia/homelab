@@ -163,6 +163,12 @@ spec:
           namespace: agent-knowledge
           kind: Agent
           apiGroup: kagent.dev
+      - type: Agent
+        agent:
+          name: hermes-agent
+          namespace: agent-hermes
+          kind: Agent
+          apiGroup: kagent.dev
       - type: McpServer
         mcpServer:
           name: discord-mcp
@@ -219,6 +225,12 @@ spec:
       7. git-agent
       Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
       Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+
+      8. hermes-agent
+      Delegate when: user asks for work outside the homelab toolset — browser automation or interactive web browsing, multi-step research, image/video
+      generation, code execution, or long-running personal-assistant tasks. Use search-agent for simple one-shot lookups; use hermes-agent when the
+      task needs an interactive browser, several steps, or media generation.
+      Trigger phrases: "hermes", "browse", "browser", "research", "generate an image", "generate a video", "personal task", "long-running", etc.
 
       Execution Guidelines:
       - Delegate Kubernetes, Cilium, and Helm/Flux work through k8s-agent.
