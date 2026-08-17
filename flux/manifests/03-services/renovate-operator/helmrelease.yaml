@@ -1,0 +1,113 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: renovate-operator
+  namespace: renovate-operator
+spec:
+  chart:
+    spec:
+      chart: renovate-operator
+      # renovate: datasource=helm registryUrl=https://helm.mogenius.com/public depName=renovate-operator
+      version: 6.0.0
+      sourceRef:
+        kind: HelmRepository
+        name: renovate-operator
+        namespace: flux-system
+  interval: 5m
+  timeout: 10m
+  valuesFrom:
+    # OIDC client ID for the web UI, copied from Authentik into 1Password
+    # after the blueprint creates the provider.
+    - kind: Secret
+      name: renovate-operator-secret
+      valuesKey: oidc-client-id
+      targetPath: auth.oidc.clientId
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Clean resource names (svc/renovate-operator instead of release+chart)
+    fullnameOverride: renovate-operator
+
+    image:
+      registry: ghcr.io
+      repository: mogenius/renovate-operator
+      # renovate: datasource=docker depName=ghcr.io/mogenius/renovate-operator
+      tag: "6.0.0"
+      pullPolicy: IfNotPresent
+
+    # CRDs installed via the chart's hook job (kubectl apply of the bundled CRD)
+    crd:
+      install: true
+      mode: hook
+
+    # Namespace-scoped RBAC: all discovery/executor Jobs run in this namespace,
+    # so no ClusterRole for the operator itself.
+    rbac:
+      ownNamespaceOnly: true
+
+    # Policy engine: restrict which hosts/images RenovateJobs may reference.
+    # Defaults already allow gitlab.com and the renovate/renovatebot images.
+    policy:
+      enabled: true
+
+    # Web UI: exposed via Gateway with Authentik OIDC. Without an auth
+    # provider the UI is unauthenticated, so never route it without this.
+    auth:
+      oidc:
+        enabled: true
+        issuerUrl: "https://auth.gateway.services.apocrathia.com/application/o/renovate-operator/"
+        # clientId comes from valuesFrom above
+        existingSecret: renovate-operator-secret
+        secretKey: oidc-client-secret
+        sessionSecretKey: oidc-session-secret
+        redirectUrl: "https://renovate.gateway.services.apocrathia.com/auth/callback"
+
+    # Only cluster admins may see or act on RenovateJobs. Group names match
+    # the Authentik groups claim (operator lowercases before matching).
+    authorization:
+      enabled: true
+      defaults:
+        adminGroups:
+          - kubernetes-admins
+        anonymousRead: false
+        anonymousReadLogs: false
+
+    route:
+      enabled: true
+      hostnames:
+        - renovate.gateway.services.apocrathia.com
+      parentRefs:
+        - name: main-gateway
+          namespace: cilium-system
+          sectionName: https
+    # Webhook server stays off (schedule-only), no session store, telemetry off.
+    webhook:
+      enabled: false
+    valkey:
+      enabled: false
+    telemetry:
+      enabled: false
+
+    # Job bookkeeping: keep finished Jobs for inspection; Kyverno reaps
+    # completed/failed Jobs after 24h cluster-wide anyway.
+    config:
+      deleteSuccessfulJobs: false
+      jobTTLSecondsAfterFinished: -1
+      globalParallelismLimit: 2
+
+    logging:
+      level: "info"
+      format: "json"
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
