@@ -3,8 +3,9 @@
  * catalog from the gateway at startup instead of keeping a local copy.
  *
  * Authentication:
- *   Run /login and select "LiteLLM Gateway". Prime Agent stores the virtual
- *   key in ~/.prime/agent/auth.json with mode 0600.
+ *   Set LITELLM_API_KEY (cluster deployments), or run /login and select
+ *   "LiteLLM Gateway". /login stores the virtual key in
+ *   ~/.prime/agent/auth.json with mode 0600; auth.json wins when both exist.
  *
  * Optional configuration:
  *   LITELLM_BASE_URL  OpenAI-compatible base URL, including /v1
@@ -18,7 +19,7 @@ import { dirname, join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const PROVIDER = "litellm";
-const DEFAULT_BASE_URL = "https://ai.gateway.services.apocrathia.com/v1";
+const DEFAULT_BASE_URL = "http://litellm.litellm.svc.cluster.local:4000/v1";
 const FETCH_TIMEOUT_MS = 5000;
 const DEFAULT_CONTEXT_WINDOW = 1_000_000;
 const DEFAULT_MAX_TOKENS = 16384;
@@ -26,7 +27,7 @@ const DEFAULT_MAX_TOKENS = 16384;
 /** Modes LiteLLM reports for endpoints that are not chat completions. */
 const CHAT_MODES = new Set(["chat", "completion"]);
 const LOGIN_MODEL_ID = "login-required";
-const DEFAULT_MODEL_ID = "qwen3.8-prime";
+const DEFAULT_MODEL_ID = "kimi-k3-prime";
 
 type ModelDefinition = {
   id: string;
@@ -77,20 +78,25 @@ function authPath(): string {
 }
 
 /**
- * Read the credential written by Prime Agent's /login flow. The key stays in
- * auth.json; it is used only as the Authorization header for catalog discovery.
+ * Catalog credential: the /login-written auth.json entry when present, else
+ * the LITELLM_API_KEY env var. Used only as the Authorization header for
+ * catalog discovery.
  */
 function readApiKey(): string | undefined {
   try {
     const credential = JSON.parse(readFileSync(authPath(), "utf8"))?.[PROVIDER];
-    return credential?.type === "api_key" &&
+    if (
+      credential?.type === "api_key" &&
       typeof credential.key === "string" &&
       credential.key
-      ? credential.key
-      : undefined;
+    ) {
+      return credential.key;
+    }
   } catch {
-    return undefined;
+    // No readable auth.json; fall through to the environment.
   }
+  const envKey = process.env.LITELLM_API_KEY;
+  return envKey && envKey.length > 0 ? envKey : undefined;
 }
 
 function isOffline(): boolean {

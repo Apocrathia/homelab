@@ -49,7 +49,7 @@ spec:
           # settings.json is seeded once; runtime keys (recentModels, theme)
           # accumulate on the PVC afterwards. Delete it to re-seed.
           mkdir -p /opt/data/.prime/agent/extensions
-          cp /static/litellm.ts /opt/data/.prime/agent/extensions/litellm.ts
+          cp -f /static/*.ts /opt/data/.prime/agent/extensions/
           if [[ ! -f /opt/data/.prime/agent/settings.json ]]; then
             cp /static/settings.json /opt/data/.prime/agent/settings.json
           fi

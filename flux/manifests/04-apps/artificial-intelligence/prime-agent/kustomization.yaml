@@ -9,11 +9,13 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
 
+# Payload mirrors ~/.prime/agent/. kustomize cannot glob a directory, so each
+# injected file gets one entry here; drop the file under agent/ and list it.
 configMapGenerator:
   - name: prime-agent-config
     namespace: prime-agent
     files:
-      - litellm.ts
-      - settings.json
+      - agent/extensions/litellm.ts
+      - agent/settings.json
     options:
       disableNameSuffixHash: true

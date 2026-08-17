@@ -14,10 +14,13 @@ This deployment includes:
   so the pinned npm tarball installs into the Longhorn-backed `HOME` on boot
 - Longhorn-backed state at `/opt/data` (agent config, sessions, kernels, npm
   prefix)
-- `litellm.ts` provider extension, reconciled from a ConfigMap on every pod
-  start; discovers the model catalog from the gateway
-- `settings.json` seeded once (delete from the PVC to re-seed); runtime keys
-  accumulate afterwards
+- `agent/` payload (extensions, seeded settings) reconciled from a ConfigMap
+  on every pod start; mirrors `~/.prime/agent/`
+- `agent/extensions/litellm.ts` registers the in-cluster LiteLLM gateway as
+  the model provider and discovers the catalog from it; auth via
+  `LITELLM_API_KEY` (or `/login` interactively)
+- `agent/settings.json` seeded once (delete from the PVC to re-seed); runtime
+  keys accumulate afterwards
 
 ## Access
 
@@ -35,9 +38,12 @@ with the same command; `prime-agent list` shows active agents.
 
 - **Upgrade**: bump `PRIME_AGENT_VERSION` in `helmrelease.yaml` and restart the
   pod (manual pin; the R2 tarball has no Renovate datasource)
-- **Models**: `/model` inside the TUI. Default is seeded in `settings.json`;
-  the extension re-reads the gateway catalog on start (`/litellm-refresh` to
-  re-poll)
+- **Models**: `/model` inside the TUI. Default is seeded in
+  `agent/settings.json`; the extension re-reads the gateway catalog on start
+  (`/litellm-refresh` to re-poll)
+- **Inject more agent files**: drop them under `agent/` and add one
+  `configMapGenerator` entry in `kustomization.yaml` (kustomize cannot glob a
+  directory); `*.ts` files land in `~/.prime/agent/extensions/` on boot
 - **Skills/MCP servers**: not shipped in git — install into the PVC at runtime
   (`~/.prime/agent/`) per upstream docs
 
