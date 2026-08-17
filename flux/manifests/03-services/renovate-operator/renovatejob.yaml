@@ -1,0 +1,36 @@
+---
+apiVersion: renovate-operator.mogenius.com/v1alpha1
+kind: RenovateJob
+metadata:
+  name: homelab-shadow
+  namespace: renovate-operator
+spec:
+  # Shadow mode: the discovery filter intentionally matches no real project,
+  # so discovery returns an empty set, no executor Jobs run, and zero MRs are
+  # opened. Mend Renovate CE remains the only bot acting on real repos.
+  # Flip the filter to "Apocrathia/*" at cutover.
+  schedule: "0 3 * * *"
+  discoveryFilters:
+    - "Apocrathia/renovate-operator-shadow-probe"
+  # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
+  image: ghcr.io/renovatebot/renovate:44.11.4
+  secretRef: renovate-operator-secret
+  provider:
+    name: gitlab
+    # endpoint omitted: defaults to https://gitlab.com/api/v4
+  parallelism: 1
+  renovateConfig:
+    inline: |
+      module.exports = {
+        binarySource: "global",
+        onboarding: false,
+        requireConfig: "optional",
+        detectHostRulesFromEnv: true,
+      }
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

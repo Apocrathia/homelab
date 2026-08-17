@@ -25,6 +25,7 @@ resources:
   - prometheus-community.yaml
   - qdrant.yaml
   - renovate.yaml
+  - renovate-operator.yaml
   - tailscale.yaml
   - tracearr.yaml
   - tuppr.yaml
