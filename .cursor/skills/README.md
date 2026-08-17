@@ -11,6 +11,7 @@ For when to write a skill and frontmatter conventions, see
 | Skill                           | SoT                                                                                                           | Purpose                                          |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | `alignment`                     | [`.agents/skills/alignment`](../../.agents/skills/alignment/SKILL.md)                                         | Grill-me interview until scope is shared         |
+| `a2a`                           | [`.agents/skills/a2a`](../../.agents/skills/a2a/SKILL.md)                                                     | LiteLLM A2A broker client for kagent agents      |
 | `architecture-review`           | [`.agents/skills/architecture-review`](../../.agents/skills/architecture-review/SKILL.md)                     | Read-only architecture friction → `docs/issues/` |
 | `file-issue`                    | [`.agents/skills/file-issue`](../../.agents/skills/file-issue/SKILL.md)                                       | File/update gaps under `docs/issues/`            |
 | `integrate-upstream`            | [`.agents/skills/integrate-upstream`](../../.agents/skills/integrate-upstream/SKILL.md)                       | Pull shared .agents/ updates from prime-context  |

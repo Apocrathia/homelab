@@ -11,6 +11,8 @@ Lap routing (`find-work` → implement → ship) lives in
 [`self-improve`](../skills/self-improve/SKILL.md). This file is only
 need → A2A agent → MCP fallback.
 
+Client usage (Cursor, Claude, Prime): [`a2a` skill](../skills/a2a/SKILL.md).
+
 ## A2A base URL
 
 Pattern (in-cluster):
