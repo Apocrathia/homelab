@@ -31,6 +31,29 @@ spec:
             value: "1000"
           - name: PGID
             value: "1000"
+          # Behind the Gateway API reverse proxy
+          - name: TRUST_PROXY
+            value: "true"
+          - name: AURRAL_PUBLIC_URL
+            value: "https://aurral.gateway.services.apocrathia.com"
+          # Native OIDC against Authentik (mealie pattern: creds from aurral-secrets)
+          - name: OIDC_ENABLED
+            value: "true"
+          - name: OIDC_ISSUER
+            value: "https://auth.gateway.services.apocrathia.com/application/o/aurral/"
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: aurral-secrets
+                key: oidc-client-id
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: aurral-secrets
+                key: oidc-client-secret
+          # Aurral hardcodes its callback path: /sso/callback
+          - name: OIDC_REDIRECT_URI
+            value: "https://aurral.gateway.services.apocrathia.com/sso/callback"
       replicas: 1
       resources:
         requests:
@@ -106,7 +129,8 @@ spec:
             readOnly: false
 
     secrets:
-      enabled: false
+      enabled: true
+      itemPath: "vaults/Secrets/items/aurral-secrets"
 
     authentik:
       enabled: true
@@ -117,7 +141,7 @@ spec:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/aurral/icon.svg"
       oidc:
         redirectUris:
-          - url: "https://aurral.gateway.services.apocrathia.com/oauth/callback"
+          - url: "https://aurral.gateway.services.apocrathia.com/sso/callback"
             matchingMode: "strict"
 
     httproute:
