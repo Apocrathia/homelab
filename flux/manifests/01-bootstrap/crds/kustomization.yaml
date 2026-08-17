@@ -19,7 +19,7 @@ resources:
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/standard-install.yaml
   # Gateway API Inference Extension (for InferencePool)
   # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api-inference-extension
-  - https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.5.0/manifests.yaml
+  - https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/v1.6.0/manifests.yaml
   # Kyverno (managed by Helm chart)
   # - ./kyverno
   # Cert Manager (managed by Helm chart)
