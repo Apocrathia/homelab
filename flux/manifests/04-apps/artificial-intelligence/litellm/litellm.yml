@@ -327,7 +327,7 @@ agents:
 # SearXNG instance: productivity/searxng (JSON format enabled by init container).
 # Docs: https://docs.litellm.ai/docs/search/searxng
 search_tools:
-  - search_tool_name: searxng-search
+  - search_tool_name: searxng
     litellm_params:
       search_provider: searxng
       api_base: http://searxng.searxng.svc.cluster.local:8080
