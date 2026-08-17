@@ -28,8 +28,14 @@ the same repositories.
 Configuration lives in two places:
 
 - `helmrelease.yaml` - operator deployment, UI routing, and OIDC (chart values)
-- `renovatejob.yaml` - schedule, discovery filter, Renovate image, and global
-  Renovate config for the Jobs the operator spawns
+- `config/renovatejob.yaml` - schedule, discovery filter, Renovate image, and
+  global Renovate config for the Jobs the operator spawns
+
+`config/` is a separate Flux Kustomization (`services-renovate-operator-config`)
+that depends on the operator one: the chart installs the `RenovateJob` CRD, so
+CRs must not apply before the chart's CRD hook completes. Applying both from
+one Kustomization deadlocks - the CR's dry-run failure aborts the apply before
+the HelmRelease is ever created.
 
 Renovate behavior for processed repositories still comes from `renovate.json`
 in each target repository.

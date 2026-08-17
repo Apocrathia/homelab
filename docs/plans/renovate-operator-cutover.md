@@ -53,13 +53,17 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
 
 ## Steps
 
-- [x] Shadow manifests + HelmRepository + registrations (this branch)
-- [x] Web UI via Gateway + Authentik OIDC blueprint (this branch)
-- [ ] Operator adds fields to the `renovate-secrets` 1Password item:
+- [x] Shadow manifests + HelmRepository + registrations (merged, !3889)
+- [x] Web UI via Gateway + Authentik OIDC blueprint (merged, !3889)
+- [x] CRD-ordering fix: `RenovateJob` moved to `config/` with its own Flux
+      Kustomization depending on the operator one — applying the CR and the
+      CRD-installing HelmRelease from the same Kustomization deadlocks
+      (CR dry-run failure aborts the apply before the HelmRelease exists)
+- [x] Operator adds fields to the `renovate-secrets` 1Password item:
       `RENOVATE_TOKEN` + `GITHUB_COM_TOKEN` (same values as `gitlab-token` /
       `github-token`) and a generated `oidc-session-secret` — without the
       first, discovery jobs fail auth
-- [ ] Merge shadow MR; confirm Flux reconciles `services-renovate-operator`
+- [x] Merge shadow MR; confirm Flux reconciles `services-renovate-operator`
 - [ ] Copy the Authentik provider's client ID + secret into `oidc-client-id`
       / `oidc-client-secret` on the same 1Password item (blueprint creates
       the provider on apply; UI login fails until this is done)

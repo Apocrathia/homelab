@@ -10,7 +10,6 @@ resources:
   - namespace.yaml
   - secret.yaml
   - helmrelease.yaml
-  - renovatejob.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
