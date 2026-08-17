@@ -17,7 +17,6 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
 - **[media](./media/)** - `media-agent`: Servarr (Sonarr/Radarr) management
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
-- **[hermes](./hermes/)** - `hermes-agent`: Nous Research personal agent (external app fronted by a BYO A2A proxy; browser automation, deep research, media generation)
 
 **System Agents (managed by kagent helm chart):**
 
