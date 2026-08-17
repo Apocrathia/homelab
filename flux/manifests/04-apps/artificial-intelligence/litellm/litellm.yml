@@ -322,6 +322,11 @@ agents:
       name: "Search Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
       protocolVersion: "0.3"
+  - agent_name: "hermes-agent"
+    agent_card_params:
+      name: "Hermes Agent"
+      url: "http://hermes-agent.hermes-agent.svc.cluster.local:9900"
+      protocolVersion: "0.3"
 
 # Native search engines exposed at /v1/search/<search_tool_name>.
 # SearXNG instance: productivity/searxng (JSON format enabled by init container).
