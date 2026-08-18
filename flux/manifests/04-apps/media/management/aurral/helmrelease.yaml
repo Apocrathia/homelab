@@ -54,6 +54,15 @@ spec:
           # Aurral hardcodes its callback path: /sso/callback
           - name: OIDC_REDIRECT_URI
             value: "https://aurral.gateway.services.apocrathia.com/sso/callback"
+          # Lidarr connection (web UI settings take precedence over these env
+          # fallbacks; LIDARR_API_KEY is source-supported but undocumented)
+          - name: LIDARR_URL
+            value: "http://lidarr.lidarr.svc.cluster.local"
+          - name: LIDARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: aurral-secrets
+                key: lidarr-api-key
       replicas: 1
       resources:
         requests:
