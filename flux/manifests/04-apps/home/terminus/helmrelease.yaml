@@ -20,7 +20,7 @@ spec:
     app:
       name: terminus
       # renovate: datasource=docker depName=ghcr.io/usetrmnl/terminus
-      image: ghcr.io/usetrmnl/terminus:latest@sha256:e7685ec3425da7513b4647232dd9f90c878955c16ea2d4f43889a141dddd2950
+      image: ghcr.io/usetrmnl/terminus:latest@sha256:fe4d4d0c42714516ab5e65bf30657b8cacb45ee362d28a108cda00b85e596b6e
       container:
         name: terminus
         port: 2300
@@ -111,7 +111,7 @@ spec:
       sidecars:
         - name: sidekiq
           # renovate: datasource=docker depName=ghcr.io/usetrmnl/terminus
-          image: ghcr.io/usetrmnl/terminus:latest@sha256:e7685ec3425da7513b4647232dd9f90c878955c16ea2d4f43889a141dddd2950
+          image: ghcr.io/usetrmnl/terminus:latest@sha256:fe4d4d0c42714516ab5e65bf30657b8cacb45ee362d28a108cda00b85e596b6e
           command:
             - bundle
             - exec
