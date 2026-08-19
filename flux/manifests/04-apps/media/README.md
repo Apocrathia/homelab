@@ -62,6 +62,7 @@ Media applications are organized into three categories:
 - **[qBittorrent](./acquisitions/qbittorrent/README.md)** - BitTorrent client with Gluetun VPN and kill switch
 - **[Lidarr YouTube Downloader](./acquisitions/lidarr-youtube-downloader/README.md)** - Fetches missing Lidarr albums from YouTube as tagged MP3s
 - **[SABnzbd](./acquisitions/sabnzbd/README.md)** - Usenet client with Gluetun VPN and kill switch
+- **[slskd](./acquisitions/slskd/README.md)** - Soulseek daemon with web UI for P2P music acquisition
 
 ### Community
 

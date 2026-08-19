@@ -1,0 +1,271 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: slskd
+  namespace: slskd
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: slskd
+      # renovate: datasource=docker depName=slskd/slskd
+      image: slskd/slskd:0.26.0@sha256:ecd4026d4f8fb504e2cc55323efa2c1f5b56d20d3686b018249cc36b48ea17a6
+      container:
+        name: slskd
+        port: 5030
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # Allow config (slskd.yml) to be edited from the web UI
+          - name: SLSKD_REMOTE_CONFIGURATION
+            value: "true"
+          # TLS terminates at the gateway; skip the self-signed HTTPS listener
+          - name: SLSKD_NO_HTTPS
+            value: "true"
+          # Completed downloads land on the SMB share, like the other download clients
+          - name: SLSKD_DOWNLOADS_DIR
+            value: "/downloads"
+          # Web UI credentials (stock defaults are slskd/slskd)
+          - name: SLSKD_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: web-username
+          - name: SLSKD_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: web-password
+          # Stable JWT signing key so web sessions survive restarts
+          - name: SLSKD_JWT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: jwt-key
+          # Soulseek network login
+          - name: SLSKD_SLSK_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: soulseek-username
+          - name: SLSKD_SLSK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: soulseek-password
+          # VPN integration: wait for gluetun before connecting to Soulseek,
+          # and drop the connection if the VPN goes down
+          - name: SLSKD_VPN
+            value: "true"
+          # Set true (with VPN_PORT_FORWARDING=on below) once the VPN provider
+          # is confirmed to support port forwarding (PIA, ProtonVPN, ...)
+          - name: SLSKD_VPN_PORT_FORWARDING
+            value: "false"
+          - name: SLSKD_VPN_GLUETUN_URL
+            value: "http://localhost:8000"
+          - name: SLSKD_VPN_GLUETUN_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: gluetun-api-key
+        extraPorts:
+          - name: soulseek
+            containerPort: 50300
+            protocol: TCP
+
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: "false" # Allow gluetun init container to run as root
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      # Gluetun VPN init container (with `restartPolicy: Always` to act as sidecar)
+      initContainers:
+        - name: gluetun
+          # renovate: datasource=docker depName=qmcgaw/gluetun
+          image: qmcgaw/gluetun:v3.41.3@sha256:fa19cc76b2af13d57a8d3dc3066f2ada061b1c761b8aecf989b3877c0486e027
+          restartPolicy: Always
+          env:
+            # VPN Credentials from 1Password
+            - name: OPENVPN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: vpn-username
+            - name: OPENVPN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: vpn-password
+            # VPN Provider Configuration
+            - name: VPN_SERVICE_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: vpn-provider
+            - name: VPN_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: vpn-type
+            # Server Selection
+            - name: SERVER_REGIONS
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: vpn-region
+            - name: OPENVPN_PROTOCOL
+              value: "udp"
+            # Firewall Configuration
+            - name: FIREWALL_INPUT_PORTS
+              value: "5030" # Allow slskd web UI
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: "10.69.0.0/16" # Allow service subnet
+            # Control server (polled by slskd for VPN status / forwarded port)
+            - name: HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE
+              valueFrom:
+                secretKeyRef:
+                  name: slskd-secrets
+                  key: gluetun-control-role
+            # DNS Configuration - Use plain DNS to avoid DoT timeout issues with K8s search domains
+            - name: DOT
+              value: "off" # Disable DNS over TLS to avoid timeout issues with Kubernetes search domains
+            - name: DNS_SERVER_ADDRESS
+              value: "127.0.0.1" # DNS server binding address
+            - name: DNS_ADDRESS
+              value: "127.0.0.1" # Use gluetun's internal DNS server
+            - name: DNS_KEEP_NAMESERVER
+              value: "off" # Don't keep existing nameservers
+          # https://github.com/qdm12/gluetun/issues/2521#issuecomment-2453592258 - Clean up IP rules after Gluetun starts
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  [
+                    "/bin/sh",
+                    "-c",
+                    "(ip rule del table 51820; ip -6 rule del table 51820) || true",
+                  ]
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - NET_ADMIN
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+            runAsUser: "0"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumes:
+            emptyDir:
+              - name: gluetun-data
+                mountPath: /gluetun
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 5030
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 5030
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 5030
+        portName: http
+
+      volumes:
+        emptyDir:
+          # .NET single-file self-extraction dir; required with readOnlyRootFilesystem
+          - name: dotnet-extract
+            mountPath: /.net
+          - name: tmp
+            mountPath: /tmp
+
+      volumeMounts:
+        - name: data
+          mountPath: /app
+        - name: downloads
+          mountPath: /downloads
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 10Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/slskd-secrets"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "slskd"
+      externalHost: "https://slskd.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/slskd/icon.svg"
+
+    gatus:
+      enabled: true
+      path: /health
