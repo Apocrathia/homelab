@@ -45,10 +45,10 @@ spec:
     resources:
       limits:
         cpu: "500m"
-        memory: "1Gi"
+        memory: "2Gi"
       requests:
         cpu: "100m"
-        memory: "256Mi"
+        memory: "512Mi"
     podSecurityContext:
       seccompProfile:
         type: RuntimeDefault
