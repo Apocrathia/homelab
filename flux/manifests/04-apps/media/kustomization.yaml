@@ -11,6 +11,7 @@ resources:
   - acquisitions/prowlarr
   - acquisitions/qbittorrent
   - acquisitions/sabnzbd
+  - management/aurral
   - management/bazarr
   - management/cleanuparr
   - management/huntarr2
