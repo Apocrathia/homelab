@@ -68,16 +68,19 @@ spec:
 
     # Ingester configuration
     ingester:
-      replicas: 2
+      # replication_factor is 3 (chart default); keep one ingester of spare so
+      # pushes keep flowing (RF-1 required) while one is restarting
+      replicas: 3
       resources:
         requests:
           cpu: 100m
-          memory: 256Mi
-        limits:
-          cpu: 500m
           memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 2Gi
       persistence:
-        enabled: false
+        # WAL on PVC so buffered traces survive restarts (was emptyDir)
+        enabled: true
 
     # Compactor configuration
     compactor:
@@ -152,6 +155,10 @@ spec:
       enabled: false
     memcachedExporter:
       enabled: false
+    # Chart renders the cache block regardless of memcached.enabled; clear it
+    # so the config stops referencing the absent tempo-memcached service
+    cache:
+      caches: []
 
     # Monitoring configuration
     metaMonitoring:
