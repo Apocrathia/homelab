@@ -53,6 +53,12 @@ spec:
               secretKeyRef:
                 name: slskd-secrets
                 key: jwt-key
+          # Primary API key (X-API-Key header, Administrator role)
+          - name: SLSKD_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: slskd-secrets
+                key: slskd-api-key
           # Soulseek network login
           - name: SLSKD_SLSK_USERNAME
             valueFrom:
