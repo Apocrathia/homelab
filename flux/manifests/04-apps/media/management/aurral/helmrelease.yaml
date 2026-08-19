@@ -54,6 +54,10 @@ spec:
           # Aurral hardcodes its callback path: /sso/callback
           - name: OIDC_REDIRECT_URI
             value: "https://aurral.gateway.services.apocrathia.com/sso/callback"
+          # Aurral recomputes roles from env on every OIDC login and overwrites
+          # the stored role, so admin grants must live here (not just the DB)
+          - name: OIDC_ADMIN_USERS
+            value: "ianyoung"
           # Lidarr connection (web UI settings take precedence over these env
           # fallbacks; LIDARR_API_KEY is source-supported but undocumented)
           - name: LIDARR_URL
