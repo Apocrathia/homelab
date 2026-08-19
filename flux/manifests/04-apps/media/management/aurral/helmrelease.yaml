@@ -112,12 +112,12 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+        - name: downloads
+          mountPath: /downloads
         - name: music
           mountPath: /music
       volumes:
         emptyDir:
-          - name: downloads
-            mountPath: /downloads
           - name: tmp
             mountPath: /tmp
 
@@ -131,6 +131,11 @@ spec:
       smb:
         enabled: true
         volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
           - name: music
             source: "//storage.services.apocrathia.com/Audio"
             subDir: "Music"

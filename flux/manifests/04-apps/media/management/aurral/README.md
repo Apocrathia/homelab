@@ -9,7 +9,7 @@ Self-hosted music discovery companion for a Lidarr-based music stack. Provides p
 - **Web UI**: Full configuration via web interface after first deploy
 - **Authentication**: OIDC via Authentik
 - **Database**: SQLite (aurral.db in /config) - no external database required
-- **Data**: Config stored in /config (Longhorn PVC), music library mounted from SMB share at /data
+- **Data**: Config in /config (Longhorn PVC). SABnzbd drop folder at /downloads (SMB Downloads). Music library at /music (SMB Audio/Music).
 
 ## Access
 
