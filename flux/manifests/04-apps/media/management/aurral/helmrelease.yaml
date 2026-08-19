@@ -113,7 +113,7 @@ spec:
         - name: config
           mountPath: /config
         - name: music
-          mountPath: /data
+          mountPath: /music
       volumes:
         emptyDir:
           - name: downloads
