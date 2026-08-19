@@ -47,7 +47,7 @@ fields before the HelmRelease can go ready:
 | ---------------------- | ----------------------------------------------------------- |
 | `web-username`         | Web UI / API login username                                 |
 | `web-password`         | Web UI / API login password                                 |
-| `jwt-key`              | Random string >= 16 chars (keeps sessions across restarts)  |
+| `jwt-key`              | Random string >= 32 chars (keeps sessions across restarts)  |
 | `soulseek-username`    | Soulseek network account username                           |
 | `soulseek-password`    | Soulseek network account password                           |
 | `vpn-username`         | VPN account username (same value as qBittorrent's)          |
