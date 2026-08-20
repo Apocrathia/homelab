@@ -9,7 +9,7 @@ spec:
     spec:
       chart: renovate-operator
       # renovate: datasource=helm registryUrl=https://helm.mogenius.com/public depName=renovate-operator
-      version: 6.0.0
+      version: 6.0.1
       sourceRef:
         kind: HelmRepository
         name: renovate-operator
