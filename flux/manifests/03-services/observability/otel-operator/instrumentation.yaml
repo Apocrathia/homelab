@@ -55,7 +55,7 @@ spec:
     argument: "1"
   nodejs:
     # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.78.0@sha256:5b8f492a6b54fa62e46ff55737876d8baf936c46b4e95b5989a5b5e17eac9550
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.78.0@sha256:6cdee36a59255857cc8c408d7ebd14c3b510f13433dec150d188dac9d614f115
 ---
 # .NET auto-instrumentation
 apiVersion: opentelemetry.io/v1alpha1
