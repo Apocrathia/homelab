@@ -10,7 +10,7 @@ spec:
     spec:
       chart: gatus-sidecar
       # renovate: datasource=docker depName=ghcr.io/home-operations/charts/gatus-sidecar
-      version: "0.4.1"
+      version: "0.5.1"
       sourceRef:
         kind: HelmRepository
         name: tuppr
