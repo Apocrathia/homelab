@@ -14,7 +14,7 @@ spec:
   stdioTransport: {}
   deployment:
     # renovate: datasource=docker registryUrl=https://ghcr.io depName=sirkirby/unifi-network-mcp
-    image: ghcr.io/sirkirby/unifi-network-mcp:0.27.1@sha256:91f2a5f2f63b721e17606d8a47270a809c11bdf731497ebaf255caf39cc150ab
+    image: ghcr.io/sirkirby/unifi-network-mcp:0.27.3@sha256:8c6520089e84472e3e0a3c0c3e3fe29e60e858a684c70bec42af92c4d62d1b95
     port: 8080
     cmd: /bin/sh
     args:
