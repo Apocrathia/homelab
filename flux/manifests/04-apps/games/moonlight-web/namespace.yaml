@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: moonlight-web
+  labels:
+    name: moonlight-web
+    images/dockerhub: "true"
