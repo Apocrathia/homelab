@@ -1,0 +1,113 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: moonlight-web
+  namespace: moonlight-web
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: moonlight-web
+      # renovate: datasource=docker depName=mrcreativ3001/moonlight-web-stream
+      image: docker.io/mrcreativ3001/moonlight-web-stream:v2.10.0@sha256:4ee561ec4043526e93b0b3dba4926031c86ee3c9dab0333475a6b3c7117c701a
+      container:
+        name: moonlight-web
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: BIND_ADDRESS
+            value: "0.0.0.0:8080"
+          # Authentik proxy injects X-authentik-username; auto-create defaults on
+          - name: FORWARDED_HEADER
+            value: "X-authentik-username"
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /moonlight-web/server
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 2Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Gaming"
+      displayName: "Moonlight"
+      externalHost: "https://moonlight.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/games/moonlight-web/icon.svg"
+      interceptHeaderAuth: true
+      metaDescription: "Browser Moonlight client for Sunshine game streaming"
+      metaPublisher: "moonlight-web-stream"
+
+    gatus:
+      enabled: true
+      group: games
+
+    httproute:
+      enabled: false
+
+    loadbalancer:
+      enabled: false
+
+    postgres:
+      enabled: false

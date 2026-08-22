@@ -35,17 +35,23 @@ from RomM).
 Weekly CronJob that mirrors the official ES-DE themes list into
 `Emulation/themes/` on the share.
 
+### [Moonlight Web](./moonlight-web/README.md)
+
+Browser Moonlight client for Sunshine hosts, fronted by Authentik. Streams over
+WebSocket (no UDP LoadBalancer).
+
 ## Overview
 
 Game support services cover ROM management, web emulation helpers, ES-DE
-gamelist scraping, theme mirroring, and AMP metrics export. Deployed via Flux;
-game server hosting stays on `game.apocrathia.com` via
-[AMP](https://cubecoders.com/AMP).
+gamelist scraping, theme mirroring, browser Sunshine streaming, and AMP metrics
+export. Deployed via Flux; game server hosting stays on `game.apocrathia.com`
+via [AMP](https://cubecoders.com/AMP).
 
 ## References
 
 - **[amp-cubecoders-exporter](https://github.com/soynx/amp-cubecoders-exporter)** - AMP Prometheus exporter
 - **[ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)** - Steam card farming
+- **[Moonlight Web](https://github.com/MrCreativ3001/moonlight-web-stream)** - Browser Sunshine client
 - **[ROMM](https://github.com/rommapp/romm)** - ROM management
 - **[Skyscraper](https://github.com/Gemba/skyscraper)** - ES-DE gamelist scraping
 - **[ES-DE themes-list](https://gitlab.com/es-de/themes/themes-list)** - Theme catalog mirrored by esde-themes
