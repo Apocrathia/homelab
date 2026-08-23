@@ -32,7 +32,7 @@ spec:
           containers:
             - name: trigger-scan
               # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
-              image: ghcr.io/trueforge-org/kubectl:1.31.1@sha256:a8ceb8dc31ea35d33f854b0a0b7093c574535868743360c7063f8e90afc9b75c
+              image: ghcr.io/trueforge-org/kubectl:1.31.1@sha256:128a01d4dee6a3c2041023db3490d7d5e9d64056c63b0db01cd5ec8fd0181e77
               command:
                 - /bin/sh
                 - /scripts/trigger.sh
