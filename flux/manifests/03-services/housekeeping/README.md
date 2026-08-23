@@ -21,14 +21,6 @@ Prevents etcd database bloat by periodically defragmenting when fragmentation ex
 - **Threshold**: Defragments when fragmentation exceeds 50%
 - **Talos API**: Uses `kubernetesTalosAPIAccess` feature
 
-### Node Labeler (`node-labeler/`)
-
-Ensures control-plane nodes maintain proper labels.
-
-- **Schedule**: Every 2 hours
-- **Namespace**: `kube-system`
-- **Targets**: `talos-01` through `talos-04`
-
 ## Troubleshooting
 
 ### etcd Defrag Issues
@@ -45,19 +37,6 @@ kubectl logs job/etcd-defrag-manual -n housekeeping
 
 # Check etcd status directly
 talosctl etcd status -n 10.100.1.80
-```
-
-### Node Labeling Issues
-
-```bash
-# Check cronjob status
-kubectl get cronjobs -n kube-system node-labeler
-
-# Check recent job logs
-kubectl logs -n kube-system -l job-name=node-labeler --tail=20
-
-# Verify node labels
-kubectl get nodes --show-labels | grep control-plane
 ```
 
 ## References
