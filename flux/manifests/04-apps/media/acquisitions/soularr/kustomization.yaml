@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: soularr
+  namespace: soularr
+  labels:
+    app.kubernetes.io/name: soularr
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+
+configMapGenerator:
+  - name: soularr-config
+    namespace: soularr
+    files:
+      - config.ini
+    options:
+      disableNameSuffixHash: true

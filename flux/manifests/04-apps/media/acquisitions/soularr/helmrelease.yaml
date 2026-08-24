@@ -1,0 +1,140 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: soularr
+  namespace: soularr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: soularr
+      # renovate: datasource=docker depName=mrusse08/soularr
+      image: mrusse08/soularr:latest@sha256:250aa20a1e5f74bddb329c6e0f6cf510bea8cb6fee1035246dec4f0c6548fa06
+      container:
+        name: soularr
+        port: 8265
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: SCRIPT_INTERVAL
+            value: "300"
+          - name: WEBUI_ENABLED
+            value: "true"
+          - name: LIDARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: soularr-secrets
+                key: lidarr-api-key
+          - name: SLSKD_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: soularr-secrets
+                key: slskd-api-key
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8265
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8265
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8265
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: downloads
+          mountPath: /downloads
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          - name: soularr-config
+            mountPath: /data/config.ini
+            subPath: config.ini
+            readOnly: true
+            configMapName: soularr-config
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 5Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: downloads
+            source: "//storage.services.apocrathia.com/Downloads"
+            subDir: ""
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/soularr-secrets"
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Soularr"
+      externalHost: "https://soularr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/soularr/icon.png"
+
+    httproute:
+      enabled: false
+
+    gatus:
+      enabled: true
+      path: /

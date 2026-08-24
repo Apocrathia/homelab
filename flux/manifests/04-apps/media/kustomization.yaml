@@ -12,6 +12,7 @@ resources:
   - acquisitions/qbittorrent
   - acquisitions/sabnzbd
   - acquisitions/slskd
+  - acquisitions/soularr
   - management/aurral
   - management/bazarr
   - management/chaptarr
