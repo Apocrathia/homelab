@@ -10,26 +10,26 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 ### Pipeline Components
 
-| File                              | Stage         | Trigger                         | Purpose                                          |
-| --------------------------------- | ------------- | ------------------------------- | ------------------------------------------------ |
-| `no-op.gitlab-ci.yml`             | test          | MR (fallback)                   | Ensures pipeline passes when no other jobs apply |
-| `chart-tag.gitlab-ci.yml`         | deploy        | `Chart.yaml` changes            | Creates Git tags for Helm chart releases         |
-| `kustomize-diff.gitlab-ci.yml`    | verify        | MR (manifest changes)           | Posts rendered manifest diffs to MR comments     |
-| `mr-change-summary.gitlab-ci.yml` | verify        | MR (any)                        | Invokes git-agent (A2A) to post a change summary |
-| `scorecard.gitlab-ci.yml`         | verify        | MR (manifest changes)           | Runs OpenSSF Scorecard on changed dependencies   |
-| `tofu.gitlab-ci.yml`              | verify/deploy | MR/main (terraform changes)     | OpenTofu plan/apply for Proxmox VMs              |
-| `fleet/.gitlab-ci.yml`            | deploy        | MR/main/schedule (fleet config) | Fleet GitOps (`fleetctl gitops`)                 |
-| `gitleaks.gitlab-ci.yml`          | test          | MR (all files)                  | Secret scanning on MR commits                    |
-| `kube-linter.gitlab-ci.yml`       | test          | MR (manifest changes)           | Kubernetes manifest security linting             |
-| `trivy.gitlab-ci.yml`             | test          | MR (IaC changes)                | IaC security scanning for Terraform and K8s      |
-| `shellcheck.gitlab-ci.yml`        | test          | MR (shell script changes)       | Shell script static analysis                     |
-| `semgrep.gitlab-ci.yml`           | test          | MR (code changes)               | SAST for Python, Go, JS, TS                      |
+| File                           | Stage         | Trigger                         | Purpose                                          |
+| ------------------------------ | ------------- | ------------------------------- | ------------------------------------------------ |
+| `no-op.gitlab-ci.yml`          | test          | MR (fallback)                   | Ensures pipeline passes when no other jobs apply |
+| `chart-tag.gitlab-ci.yml`      | deploy        | `Chart.yaml` changes            | Creates Git tags for Helm chart releases         |
+| `kustomize-diff.gitlab-ci.yml` | verify        | MR (manifest changes)           | Posts rendered manifest diffs to MR comments     |
+| `scorecard.gitlab-ci.yml`      | verify        | MR (manifest changes)           | Runs OpenSSF Scorecard on changed dependencies   |
+| `tofu.gitlab-ci.yml`           | verify/deploy | MR/main (terraform changes)     | OpenTofu plan/apply for Proxmox VMs              |
+| `fleet/.gitlab-ci.yml`         | deploy        | MR/main/schedule (fleet config) | Fleet GitOps (`fleetctl gitops`)                 |
+| `gitleaks.gitlab-ci.yml`       | test          | MR (all files)                  | Secret scanning on MR commits                    |
+| `kube-linter.gitlab-ci.yml`    | test          | MR (manifest changes)           | Kubernetes manifest security linting             |
+| `trivy.gitlab-ci.yml`          | test          | MR (IaC changes)                | IaC security scanning for Terraform and K8s      |
+| `shellcheck.gitlab-ci.yml`     | test          | MR (shell script changes)       | Shell script static analysis                     |
+| `semgrep.gitlab-ci.yml`        | test          | MR (code changes)               | SAST for Python, Go, JS, TS                      |
 
 ### Disabled Pipelines
 
-| File                     | Purpose            | Status                         |
-| ------------------------ | ------------------ | ------------------------------ |
-| `renovate.gitlab-ci.yml` | Dependency updates | Commented out in main pipeline |
+| File                              | Purpose                                          | Status                         |
+| --------------------------------- | ------------------------------------------------ | ------------------------------ |
+| `renovate.gitlab-ci.yml`          | Dependency updates                               | Commented out in main pipeline |
+| `mr-change-summary.gitlab-ci.yml` | Invokes git-agent (A2A) to post a change summary | Commented out in main pipeline |
 
 ## Stages
 
@@ -52,7 +52,9 @@ Runs on MRs that modify `flux/manifests/**/*`. Builds kustomize overlays for bot
 
 ### MR Change Summary
 
-Runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
+Currently commented out in `.gitlab-ci.yml`. Re-enable by uncommenting the local include.
+
+When enabled, runs on every MR. Builds a prompt from the MR title, description, changed files, and full diff, then invokes the in-cluster `git-agent` (kagent) over A2A. The agent fetches upstream context (release notes, PRs, issues) for each version delta and posts a single self-updating comment to the MR via the gitlab-mcp server.
 
 **Energy gate**: before invoking the agent, the job hashes the diff and changed-files list and compares against the `<!-- hash:... -->` trailer on the existing change-summary comment. If the hash matches, the agent is **not invoked** at all (no energy spent on local inference). Rebases that don't change the actual diff become 0-cost no-ops.
 
