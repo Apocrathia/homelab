@@ -29,6 +29,7 @@ Media applications are organized into three categories:
 - **[Lidarr](./management/lidarr/README.md)** - Music management and automation
 - **[Whisparr](./management/whisparr/README.md)** - Adult content management
 - **[Bazarr](./management/bazarr/README.md)** - Subtitle management with Whisper AI transcription
+- **[Chaptarr](./management/chaptarr/README.md)** - Audiobook and eBook collection manager with Authentik OIDC
 
 ### Photo/Video Management
 

@@ -14,6 +14,7 @@ resources:
   - acquisitions/slskd
   - management/aurral
   - management/bazarr
+  - management/chaptarr
   - management/cleanuparr
   - management/huntarr2
   - management/icloudpd
