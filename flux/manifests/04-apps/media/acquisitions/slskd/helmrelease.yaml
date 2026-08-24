@@ -268,7 +268,7 @@ spec:
     authentik:
       enabled: true
       category: "Media"
-      displayName: "slskd"
+      displayName: "Soulseek"
       externalHost: "https://slskd.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/slskd/icon.svg"
 
