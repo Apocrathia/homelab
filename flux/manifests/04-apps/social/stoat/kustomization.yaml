@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: stoat
+  namespace: stoat
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  # Supporting services (deployed first)
+  - mongo.yaml
+  - valkey.yaml
+  - rabbitmq.yaml
+  - rustfs.yaml
+  - createbuckets.yaml
+  # Application services
+  - api.yaml
+  - events.yaml
+  - autumn.yaml
+  - january.yaml
+  - gifbox.yaml
+  - crond.yaml
+  - pushd.yaml
+  - web.yaml
+  # Routing
+  - httproute.yaml
+
+configMapGenerator:
+  - name: stoat-config
+    namespace: stoat
+    files:
+      - Revolt.toml
+    options:
+      disableNameSuffixHash: true

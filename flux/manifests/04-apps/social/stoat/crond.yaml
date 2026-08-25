@@ -1,0 +1,104 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stoat-crond
+  namespace: stoat
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: stoat-crond
+  template:
+    metadata:
+      labels:
+        app: stoat-crond
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: crond
+          # renovate: datasource=docker depName=ghcr.io/stoatchat/crond
+          image: ghcr.io/stoatchat/crond:v0.15.1@sha256:6c419872ed364cd7fb61d2148bc24a93d0427221050db3b4c76957f8bd0e6474
+          env:
+            - name: TZ
+              value: "America/Denver"
+            - name: REVOLT__DATABASE__MONGODB
+              value: "mongodb://stoat-mongo:27017"
+            - name: REVOLT__DATABASE__REDIS
+              value: "redis://stoat-valkey:6379/"
+            - name: REVOLT__RABBIT__HOST
+              value: "stoat-rabbitmq"
+            - name: REVOLT__RABBIT__USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: rabbit-username
+            - name: REVOLT__RABBIT__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: rabbit-password
+            - name: REVOLT__FILES__ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: files-encryption-key
+            - name: REVOLT__FILES__S3__ENDPOINT
+              value: "http://stoat-rustfs:9000"
+            - name: REVOLT__FILES__S3__PATH_STYLE_BUCKETS
+              value: "true"
+            - name: REVOLT__FILES__S3__REGION
+              value: "us-east-1"
+            - name: REVOLT__FILES__S3__ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: rustfs-access-key
+            - name: REVOLT__FILES__S3__SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: rustfs-secret-key
+            - name: REVOLT__FILES__S3__DEFAULT_BUCKET
+              value: "revolt-uploads"
+            - name: REVOLT__PUSHD__VAPID__PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: vapid-private-key
+            - name: REVOLT__PUSHD__VAPID__PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stoat-secrets
+                  key: vapid-public-key
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - name: revolt-config
+              mountPath: /Revolt.toml
+              subPath: Revolt.toml
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: revolt-config
+          configMap:
+            name: stoat-config

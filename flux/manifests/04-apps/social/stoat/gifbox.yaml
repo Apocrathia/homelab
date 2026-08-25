@@ -1,0 +1,151 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: stoat-gifbox
+  namespace: stoat
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    app:
+      name: stoat-gifbox
+      namespace: stoat
+      # renovate: datasource=docker depName=ghcr.io/stoatchat/gifbox
+      image: ghcr.io/stoatchat/gifbox:v0.15.1@sha256:9dbe75ab2d7986f49ad33d8aafba81bbc15cb123bd820f3faea0033c144561ef
+      container:
+        name: gifbox
+        port: 14706
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: REVOLT__DATABASE__MONGODB
+            value: "mongodb://stoat-mongo:27017"
+          - name: REVOLT__DATABASE__REDIS
+            value: "redis://stoat-valkey:6379/"
+          - name: REVOLT__RABBIT__HOST
+            value: "stoat-rabbitmq"
+          - name: REVOLT__RABBIT__USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rabbit-username
+          - name: REVOLT__RABBIT__PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rabbit-password
+          - name: REVOLT__FILES__ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: files-encryption-key
+          - name: REVOLT__FILES__S3__ENDPOINT
+            value: "http://stoat-rustfs:9000"
+          - name: REVOLT__FILES__S3__PATH_STYLE_BUCKETS
+            value: "true"
+          - name: REVOLT__FILES__S3__REGION
+            value: "us-east-1"
+          - name: REVOLT__FILES__S3__ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rustfs-access-key
+          - name: REVOLT__FILES__S3__SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rustfs-secret-key
+          - name: REVOLT__FILES__S3__DEFAULT_BUCKET
+            value: "revolt-uploads"
+          - name: REVOLT__PUSHD__VAPID__PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: vapid-private-key
+          - name: REVOLT__PUSHD__VAPID__PUBLIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: vapid-public-key
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Distroless images do no writes, but autumn/january/gifbox process
+        # media and may need scratch space outside a read-only rootfs.
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 14706
+        targetPort: 14706
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 14706
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 14706
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+      volumes:
+        configMap:
+          - name: revolt-config
+            mountPath: /Revolt.toml
+            subPath: Revolt.toml
+            configMapName: stoat-config
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false
