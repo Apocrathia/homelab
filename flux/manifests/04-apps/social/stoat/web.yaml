@@ -99,8 +99,17 @@ spec:
     secrets:
       enabled: false
 
+    # Bookmark only — Stoat runs its own accounts/invites; proxy mode would
+    # sit in front of the websocket and API for no real gain.
     authentik:
-      enabled: false
+      enabled: true
+      mode: "bookmark"
+      displayName: "Stoat"
+      externalHost: "https://stoat.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/stoat/icon.svg"
+      category: "Social"
+      metaDescription: "Self-hosted Stoat chat (Revolt fork)"
+      metaPublisher: "Stoat"
 
     gatus:
       enabled: true
