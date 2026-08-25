@@ -78,12 +78,6 @@ spec:
         limits:
           cpu: "1"
           memory: 2Gi
-      persistence:
-        # WAL on PVC so buffered traces survive restarts (was emptyDir)
-        enabled: true
-        # Render the chart's pre-upgrade recreate hook: required when adding
-        # volumeClaimTemplates to the existing StatefulSet (immutable field)
-        enableStatefulSetRecreationForSizeChange: true
 
     # Compactor configuration
     compactor:
