@@ -1,7 +1,7 @@
 # Terraform (OpenTofu + Terragrunt)
 
-Infrastructure as Code for Proxmox VMs, Cloudflare DNS, Okta, and GitLab using
-OpenTofu and Terragrunt.
+Infrastructure as Code for Proxmox VMs, Cloudflare DNS, Okta, GitLab, and the
+Tailscale tailnet using OpenTofu and Terragrunt.
 
 > **Navigation**: [← Home](../README.md) | [Talos Setup →](../talos/README.md)
 
@@ -19,6 +19,7 @@ GitLab project scaffold (1Password ephemeral → GitLab provider).
 | [cloudflare/cloudflare](https://registry.terraform.io/providers/cloudflare/cloudflare) | Cloudflare provider for OpenTofu                                   |
 | [okta/okta](https://registry.terraform.io/providers/okta/okta)                         | Okta provider for OpenTofu                                         |
 | [gitlabhq/gitlab](https://registry.terraform.io/providers/gitlabhq/gitlab)             | GitLab provider for OpenTofu                                       |
+| [tailscale/tailscale](https://registry.terraform.io/providers/tailscale/tailscale)     | Tailscale provider for OpenTofu                                    |
 | [1Password/onepassword](https://registry.terraform.io/providers/1Password/onepassword) | Read vault items (ephemeral) for provider credentials              |
 
 ### Managed VMs
@@ -85,6 +86,28 @@ export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
 cd terraform/deployments/gitlab/homelab && terragrunt plan
 ```
 
+### Managed Tailscale
+
+| Deployment          | Module              | Notes                                                        |
+| ------------------- | ------------------- | ------------------------------------------------------------ |
+| `tailscale/tailnet` | `tailscale-tailnet` | Policy file + DNS + tailnet settings for `taila8ef8c.ts.net` |
+
+The tailnet policy file lives in the deployment directory (`policy.hujson`)
+and is managed WHOLE by `tailscale_acl` — it was imported verbatim from the
+live tailnet before first plan. `acls_externally_managed_on` locks the admin
+console's policy editor once applied (live since 2026-08-25). The tailnet's
+custom domain (`tailnet.apocrathia.com`) is console-managed (no provider/API
+support). Auth is **1Password Connect** → ephemeral item
+`tailscale-terraform-secrets` (API Credential: **username** = OAuth client ID,
+**credential** = client secret; section **dns** field **nextdns-id** = NextDNS
+profile ID). The global DNS resolver is the NextDNS linked-IPv6 address,
+derived in-module from that ID so the profile ID never lands in public git.
+Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
+`feature_settings`, `auth_keys`, `users:read`, `log_streaming`,
+`logs:configuration:read`, `devices:core`, `devices:core:read`,
+`devices:posture_attributes`; tags: `tag:k8s`. Do not export
+`TAILSCALE_API_KEY` or `TAILSCALE_OAUTH_*`.
+
 ### Future Scope
 
 - Proxmox cluster configuration
@@ -93,6 +116,7 @@ cd terraform/deployments/gitlab/homelab && terragrunt plan
 - Additional Cloudflare zones as needed
 - Okta authenticator / policy / app resources
 - Broader GitLab project settings after the label spike
+- Tailscale auth keys, OAuth client management, device-level resources
 - Wire Proxmox / Okta through the same 1Password ephemeral pattern
 
 ## Architecture
@@ -109,13 +133,14 @@ Terragrunt auto-detects OpenTofu when both are installed.
 
 ### Modules
 
-| Module           | Use case                                                           |
-| ---------------- | ------------------------------------------------------------------ |
-| `talos-vm`       | Talos Kubernetes nodes; node placement is intentional and enforced |
-| `proxmox-vm`     | General cluster VMs; optional Proxmox HA; ignores placement drift  |
-| `cloudflare-dns` | Zone lookup + `for_each` DNS records (explicit map only)           |
-| `okta-org`       | Okta org settings (scaffold; resources added over time)            |
-| `gitlab-project` | Existing GitLab project lookup + optional ownership label          |
+| Module              | Use case                                                           |
+| ------------------- | ------------------------------------------------------------------ |
+| `talos-vm`          | Talos Kubernetes nodes; node placement is intentional and enforced |
+| `proxmox-vm`        | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+| `cloudflare-dns`    | Zone lookup + `for_each` DNS records (explicit map only)           |
+| `okta-org`          | Okta org settings (scaffold; resources added over time)            |
+| `gitlab-project`    | Existing GitLab project lookup + optional ownership label          |
+| `tailscale-tailnet` | Tailnet policy file, DNS configuration, tailnet settings           |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
@@ -129,6 +154,7 @@ The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = tru
 | `providers/cloudflare.hcl` | `deployments/cloudflare/**` |
 | `providers/okta.hcl`       | `deployments/okta/**`       |
 | `providers/gitlab.hcl`     | `deployments/gitlab/**`     |
+| `providers/tailscale.hcl`  | `deployments/tailscale/**`  |
 
 ### State Backend
 
@@ -169,13 +195,15 @@ terraform/
 │   ├── proxmox.hcl                     # bpg/proxmox provider generate
 │   ├── cloudflare.hcl                  # cloudflare + onepassword (ephemeral token)
 │   ├── okta.hcl                        # okta/okta provider generate
-│   └── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
+│   ├── gitlab.hcl                      # gitlab + onepassword (ephemeral PAT)
+│   └── tailscale.hcl                   # tailscale + onepassword (ephemeral OAuth)
 ├── modules/
 │   ├── talos-vm/                       # Pinned Talos nodes
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
 │   ├── okta-org/                       # Okta org settings (scaffold)
-│   └── gitlab-project/                 # Project data + optional label
+│   ├── gitlab-project/                 # Project data + optional label
+│   └── tailscale-tailnet/              # Policy file + DNS + tailnet settings
 └── deployments/
     ├── proxmox/
     │   ├── home/
@@ -198,9 +226,13 @@ terraform/
     ├── okta/
     │   └── org/
     │       └── terragrunt.hcl
-    └── gitlab/
-        └── homelab/
-            └── terragrunt.hcl
+    ├── gitlab/
+    │   └── homelab/
+    │       └── terragrunt.hcl
+    └── tailscale/
+        └── tailnet/
+            ├── terragrunt.hcl
+            └── policy.hujson
 ```
 
 ### Configuration Hierarchy
@@ -239,6 +271,13 @@ root.hcl + providers/okta.hcl
 ```
 root.hcl + providers/gitlab.hcl
     └── deployments/gitlab/homelab/terragrunt.hcl  → modules/gitlab-project
+```
+
+**Tailscale tailnet**:
+
+```
+root.hcl + providers/tailscale.hcl
+    └── [AWS_SECRET_KEY_STANDALONE_REDACTED].hcl  → modules/tailscale-tailnet
 ```
 
 ## Prerequisites
@@ -500,6 +539,22 @@ git add deployments/**/.terraform.lock.hcl
 ```
 
 ### Cloudflare DNS records
+
+### Tailscale policy file / DNS / settings
+
+Import the live tailnet config before first apply (already done for the
+initial stack; IDs don't matter for acl / dns / settings):
+
+```bash
+cd terraform/deployments/tailscale/tailnet
+terragrunt init -lock=false
+terragrunt import -lock=false tailscale_acl.policy acl
+terragrunt import -lock=false tailscale_dns_configuration.this dns_configuration
+terragrunt import -lock=false tailscale_tailnet_settings.this tailnet_settings
+```
+
+Keep `policy.hujson` byte-identical to the intended policy — `tailscale_acl`
+overwrites the WHOLE policy file.
 
 Handmade records stay out of state until you add them to `dns_records` in the
 deployment `terragrunt.hcl` and import:
