@@ -29,6 +29,12 @@
 		// Friend-sharing front door: users shared into the tailnet
 		// (autogroup:shared) may reach the cilium Gateway device tagged
 		// tag:k8s over HTTPS only (*.tailnet.apocrathia.com).
+		//
+		// Known upstream risk: tailscale/tailscale#14445 (open, reproduced
+		// May 2026) — grants from autogroup:shared to a tag dst may not be
+		// honored for shared tagged devices. If an invited friend cannot
+		// reach the gateway, switch this dst to the device IP
+		// 100.120.155.113 or the device name as the documented workaround.
 		{
 			"src": ["autogroup:shared"],
 			"dst": ["tag:k8s"],
