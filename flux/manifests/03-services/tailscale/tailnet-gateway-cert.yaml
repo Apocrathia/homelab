@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tailnet-apocrathia-com-tls
+  namespace: cert-manager
+spec:
+  commonName: "*.tailnet.apocrathia.com"
+  dnsNames:
+    - "*.tailnet.apocrathia.com"
+  duration: 2160h
+  renewBefore: 360h
+  secretName: tailnet-apocrathia-com-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  subject:
+    organizations:
+      - Apocrathia
