@@ -59,5 +59,12 @@ inputs = {
       proxied = false
       comment = "Okta custom domain"
     }
+    "tailnet-share-wildcard" = {
+      name    = "*.tailnet.apocrathia"
+      type    = "A"
+      content = "100.120.155.113"
+      proxied = false
+      comment = "Tailscale service sharing front door (cilium-tailscale gateway device)"
+    }
   }
 }
