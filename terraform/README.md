@@ -56,6 +56,7 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 | Deployment           | Module               | Notes                                               |
 | -------------------- | -------------------- | --------------------------------------------------- |
 | `okta/app`           | `okta-app`           | OIDC apps + OIN SAML apps + Everyone assignment     |
+| `okta/authenticator` | `okta-authenticator` | Org authenticators + WebAuthn passkey method        |
 | `okta/network-zone`  | `okta-network-zone`  | IP / dynamic zones; home egress probed at plan time |
 | `okta/policy-signon` | `okta-policy-signon` | Sign-on policy wiring the network zones             |
 
@@ -128,7 +129,7 @@ Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 - Network/VLAN configuration
 - Import remaining handmade Cloudflare records
 - Additional Cloudflare zones as needed
-- Okta groups, authenticators, password policies (sign-on policy wiring lives in `okta-policy-signon`)
+- Okta groups, password policies (authenticators live in `okta-authenticator`; sign-on policy wiring in `okta-policy-signon`)
 - Broader GitLab project settings after the label spike
 - Tailscale auth keys, OAuth client management, device-level resources
 - Wire Proxmox / Okta through the same 1Password ephemeral pattern
@@ -153,6 +154,7 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `proxmox-vm`         | General cluster VMs; optional Proxmox HA; ignores placement drift  |
 | `cloudflare-dns`     | Zone lookup + `for_each` DNS records (explicit map only)           |
 | `okta-app`           | OIDC web apps + Everyone assignment                                |
+| `okta-authenticator` | Org authenticators + WebAuthn passkey method settings              |
 | `okta-network-zone`  | Network zones; plan-time probe for the dynamic home egress IP      |
 | `okta-policy-signon` | Sign-on policy + rules; zone ids via terragrunt dependency         |
 | `gitlab-project`     | Existing GitLab project lookup + optional ownership label          |
@@ -218,6 +220,7 @@ terraform/
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
 │   ├── okta-app/                       # OIDC web apps + Everyone assignment
+│   ├── okta-authenticator/             # Org authenticators + WebAuthn passkeys
 │   ├── okta-network-zone/              # Network zones + egress IP probe
 │   ├── okta-policy-signon/             # Sign-on policy + rules
 │   ├── gitlab-project/                 # Project data + optional label
@@ -243,6 +246,8 @@ terraform/
     │       └── terragrunt.hcl
     ├── okta/
     │   ├── app/
+    │   │   └── terragrunt.hcl
+    │   ├── authenticator/
     │   │   └── terragrunt.hcl
     │   ├── network-zone/
     │   │   └── terragrunt.hcl
@@ -281,11 +286,12 @@ root.hcl + providers/cloudflare.hcl
     └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
 ```
 
-**Okta app / network zone / sign-on policy**:
+**Okta app / authenticator / network zone / sign-on policy**:
 
 ```
 root.hcl + providers/okta.hcl
     ├── deployments/okta/app/terragrunt.hcl            → modules/okta-app
+    ├── deployments/okta/authenticator/terragrunt.hcl  → modules/okta-authenticator
     ├── deployments/okta/network-zone/terragrunt.hcl   → modules/okta-network-zone
     └── deployments/okta/policy-signon/terragrunt.hcl  → modules/okta-policy-signon
 ```
@@ -438,14 +444,14 @@ terragrunt plan
 Edit public records in that deployment's `terragrunt.hcl`. Do not export
 `CLOUDFLARE_API_TOKEN`.
 
-### Okta app / network zone / sign-on policy
+### Okta app / authenticator / network zone / sign-on policy
 
 ```bash
 # Connect auth (same as GitLab / Cloudflare). Local: port-forward Connect first.
 export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
 export OP_CONNECT_TOKEN=…
 export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
-cd terraform/deployments/okta/app             # or okta/network-zone, okta/policy-signon
+cd terraform/deployments/okta/app             # or okta/authenticator, okta/network-zone, okta/policy-signon
 terragrunt plan
 ```
 
