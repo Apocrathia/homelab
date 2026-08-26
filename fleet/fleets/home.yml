@@ -31,6 +31,8 @@ software:
       self_service: true
     - slug: ghostty/darwin
       self_service: true
+    - slug: moonlight/darwin
+      self_service: true
     - slug: slack/darwin
       self_service: true
     # Self-service only (My Device; no auto-install policies).
