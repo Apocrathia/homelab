@@ -1,7 +1,10 @@
 # -----------------------------------------------------------------------------
-# Okta org
+# Okta network zones
 # -----------------------------------------------------------------------------
-# OIDC web apps + Everyone assignment.
+# Network zones are inert until a sign-in or password policy references them.
+#
+# Home egress IP is dynamic: home-egress gets it from the plan-time probe
+# (egress_probe_url default https://icanhazip.com), never hardcoded here.
 #
 # Auth (1Password Connect — no OKTA_API_TOKEN in env):
 #   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
@@ -9,9 +12,6 @@
 #   TF_HTTP_*        — state backend
 #
 # Do NOT export OKTA_API_TOKEN. Do NOT commit vault UUIDs.
-#
-# Client secrets are omit_secret=true — read once from Okta Admin UI into
-# 1Password (not TF outputs).
 
 include "root" {
   path = find_in_parent_folders("root.hcl")
@@ -22,15 +22,13 @@ include "provider" {
 }
 
 terraform {
-  source = "../../../modules/okta-org"
+  source = "../../../modules/okta-network-zones"
 }
 
 inputs = {
   onepassword_vault_name            = "Secrets"
   onepassword_okta_token_item_title = "okta-terraform-secrets"
 
-  # Home egress IP is dynamic: home-egress gets it from the plan-time probe
-  # (egress_probe_url default https://icanhazip.com), never hardcoded here.
   network_zones = {
     home-egress = {
       name              = "Home Egress"
@@ -47,14 +45,6 @@ inputs = {
       type               = "DYNAMIC"
       usage              = "BLOCKLIST"
       dynamic_proxy_type = "TorAnonymizer"
-    }
-  }
-
-  oauth_apps = {
-    authentik = {
-      label        = "Authentik"
-      redirect_uri = "https://auth.gateway.services.apocrathia.com/source/oauth/callback/okta/"
-      login_uri    = "https://auth.gateway.services.apocrathia.com/source/oauth/login/okta/"
     }
   }
 }
