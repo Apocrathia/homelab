@@ -8,8 +8,8 @@ Tailscale tailnet using OpenTofu and Terragrunt.
 ## Overview
 
 OpenTofu configurations for Proxmox virtual machines (Talos Kubernetes cluster
-and other cluster workloads), Cloudflare DNS zones, Okta org settings, and a
-GitLab project scaffold (1Password ephemeral → GitLab provider).
+and other cluster workloads), Cloudflare DNS zones, Okta apps and network
+zones, and a GitLab project scaffold (1Password ephemeral → GitLab provider).
 
 | Tool                                                                                   | Purpose                                                            |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -53,14 +53,21 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 ### Managed Okta
 
-| Deployment | Module     | Notes                                               |
-| ---------- | ---------- | --------------------------------------------------- |
-| `okta/org` | `okta-org` | OIDC apps + Everyone assignment; org settings later |
+| Deployment          | Module              | Notes                                               |
+| ------------------- | ------------------- | --------------------------------------------------- |
+| `okta/app`          | `okta-app`          | OIDC apps + Everyone assignment                     |
+| `okta/network-zone` | `okta-network-zone` | IP / dynamic zones; home egress probed at plan time |
 
 Org name and base URL live in `providers/okta.hcl`. Auth is **1Password
 Connect** → ephemeral item `okta-terraform-secrets` (API Credential
 **credential** field) — same pattern as GitLab / Cloudflare. Do not export
 `OKTA_API_TOKEN`.
+
+The `home-egress` network zone's gateway is the plan-time public egress IP
+(`data.http` probe, default `https://icanhazip.com`) — home egress is
+dynamic, so it is never hardcoded in HCL. Plan/apply must run somewhere that
+egresses to the internet; CI runners sit on the lab network and see the same
+IP. Zones are inert until a sign-in or password policy references them.
 
 ### Managed GitLab
 
@@ -114,7 +121,7 @@ Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 - Network/VLAN configuration
 - Import remaining handmade Cloudflare records
 - Additional Cloudflare zones as needed
-- Okta authenticator / policy / app resources
+- Okta groups, authenticators, sign-in / password policies (wire the network zones)
 - Broader GitLab project settings after the label spike
 - Tailscale auth keys, OAuth client management, device-level resources
 - Wire Proxmox / Okta through the same 1Password ephemeral pattern
@@ -138,7 +145,8 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `talos-vm`          | Talos Kubernetes nodes; node placement is intentional and enforced |
 | `proxmox-vm`        | General cluster VMs; optional Proxmox HA; ignores placement drift  |
 | `cloudflare-dns`    | Zone lookup + `for_each` DNS records (explicit map only)           |
-| `okta-org`          | Okta org settings (scaffold; resources added over time)            |
+| `okta-app`          | OIDC web apps + Everyone assignment                                |
+| `okta-network-zone` | Network zones; plan-time probe for the dynamic home egress IP      |
 | `gitlab-project`    | Existing GitLab project lookup + optional ownership label          |
 | `tailscale-tailnet` | Tailnet policy file, DNS configuration, tailnet settings           |
 
@@ -183,7 +191,7 @@ remote_state {
 }
 ```
 
-State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-cloudflare-dns`, `homelab-deployments-okta-org`).
+State keys follow the deployment path (e.g. `homelab-deployments-proxmox-talos-cluster-talos-01`, `homelab-deployments-cloudflare-dns`, `homelab-deployments-okta-app`).
 
 ## Directory Structure
 
@@ -201,7 +209,8 @@ terraform/
 │   ├── talos-vm/                       # Pinned Talos nodes
 │   ├── proxmox-vm/                     # Cluster-portable VMs (+ optional HA)
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
-│   ├── okta-org/                       # Okta org settings (scaffold)
+│   ├── okta-app/                       # OIDC web apps + Everyone assignment
+│   ├── okta-network-zone/              # Network zones + egress IP probe
 │   ├── gitlab-project/                 # Project data + optional label
 │   └── tailscale-tailnet/              # Policy file + DNS + tailnet settings
 └── deployments/
@@ -224,7 +233,9 @@ terraform/
     │   └── dns/
     │       └── terragrunt.hcl
     ├── okta/
-    │   └── org/
+    │   ├── app/
+    │   │   └── terragrunt.hcl
+    │   └── network-zone/
     │       └── terragrunt.hcl
     ├── gitlab/
     │   └── homelab/
@@ -259,11 +270,12 @@ root.hcl + providers/cloudflare.hcl
     └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
 ```
 
-**Okta org**:
+**Okta app / network zone**:
 
 ```
 root.hcl + providers/okta.hcl
-    └── deployments/okta/org/terragrunt.hcl  → modules/okta-org
+    ├── deployments/okta/app/terragrunt.hcl           → modules/okta-app
+    └── deployments/okta/network-zone/terragrunt.hcl  → modules/okta-network-zone
 ```
 
 **GitLab project**:
@@ -414,14 +426,14 @@ terragrunt plan
 Edit public records in that deployment's `terragrunt.hcl`. Do not export
 `CLOUDFLARE_API_TOKEN`.
 
-### Okta org
+### Okta app / network zone
 
 ```bash
 # Connect auth (same as GitLab / Cloudflare). Local: port-forward Connect first.
 export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
 export OP_CONNECT_TOKEN=…
 export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
-cd terraform/deployments/okta/org
+cd terraform/deployments/okta/app             # or okta/network-zone
 terragrunt plan
 ```
 

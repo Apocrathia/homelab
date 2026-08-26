@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Okta org
+# Okta apps
 # -----------------------------------------------------------------------------
 # OIDC web apps from var.oauth_apps, each assigned to the built-in Everyone
 # group. Client secrets are omit_secret=true (not in state); read once from the

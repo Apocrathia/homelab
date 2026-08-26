@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Okta org
+# Okta apps
 # -----------------------------------------------------------------------------
 # OIDC web apps + Everyone assignment.
 #
@@ -22,7 +22,7 @@ include "provider" {
 }
 
 terraform {
-  source = "../../../modules/okta-org"
+  source = "../../../modules/okta-app"
 }
 
 inputs = {
