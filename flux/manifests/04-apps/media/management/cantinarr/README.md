@@ -23,8 +23,8 @@ This deployment includes:
 Almost everything is configured in the web UI after the setup wizard (admin
 account, Radarr/Sonarr/Chaptarr instances, download clients, AI providers).
 
-Deployment env vars are limited to timezone, the cluster-internal arr webhook
-callback URL, and disabling the optional GitHub update check. See
+Deployment env vars cover timezone, the cluster-internal arr webhook callback,
+disabling the GitHub update check, and the MCP OAuth issuer. See
 `helmrelease.yaml`.
 
 Push notifications and completed-media library mounts are off until you add
@@ -35,6 +35,14 @@ them deliberately.
 Uses Authentik proxy provider for SSO. Cantinarr also has its own connect-link /
 passkey / password auth for household devices — set **Settings > External
 Address** to the gateway URL after first login so invite links resolve correctly.
+
+### MCP
+
+Endpoint: `https://cantinarr.gateway.services.apocrathia.com/mcp`. Authentik
+skips `/.well-known/`, `/oauth/`, `/passkeys/`, and `/mcp` so clients can run
+Cantinarr's inbound OAuth. There is no static API key — the client registers,
+opens the authorize URL, and stores the issued tokens. Enable a password or
+passkey on the Cantinarr user used for MCP login.
 
 ## Initial Setup
 
