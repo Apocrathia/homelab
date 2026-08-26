@@ -53,10 +53,11 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 ### Managed Okta
 
-| Deployment          | Module              | Notes                                               |
-| ------------------- | ------------------- | --------------------------------------------------- |
-| `okta/app`          | `okta-app`          | OIDC apps + Everyone assignment                     |
-| `okta/network-zone` | `okta-network-zone` | IP / dynamic zones; home egress probed at plan time |
+| Deployment           | Module               | Notes                                               |
+| -------------------- | -------------------- | --------------------------------------------------- |
+| `okta/app`           | `okta-app`           | OIDC apps + Everyone assignment                     |
+| `okta/network-zone`  | `okta-network-zone`  | IP / dynamic zones; home egress probed at plan time |
+| `okta/policy-signon` | `okta-policy-signon` | Sign-on policy wiring the network zones             |
 
 Org name and base URL live in `providers/okta.hcl`. Auth is **1Password
 Connect** → ephemeral item `okta-terraform-secrets` (API Credential
@@ -67,7 +68,13 @@ The `home-egress` network zone's gateway is the plan-time public egress IP
 (`data.http` probe, default `https://icanhazip.com`) — home egress is
 dynamic, so it is never hardcoded in HCL. Plan/apply must run somewhere that
 egresses to the internet; CI runners sit on the lab network and see the same
-IP. Zones are inert until a sign-in or password policy references them.
+IP.
+
+The `Zone Sign-On` policy (priority 1, above the system default) wires the
+zones: DENY from the Tor Anonymizers blocklist; ALLOW from Home Egress and
+Tailscale with preferred-style MFA (`DEVICE` prompt, remembered devices);
+ALLOW everywhere else with MFA at every sign-in attempt. Zone ids flow in
+through a terragrunt dependency on `okta/network-zone`.
 
 ### Managed GitLab
 
@@ -121,7 +128,7 @@ Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 - Network/VLAN configuration
 - Import remaining handmade Cloudflare records
 - Additional Cloudflare zones as needed
-- Okta groups, authenticators, sign-in / password policies (wire the network zones)
+- Okta groups, authenticators, password policies (sign-on policy wiring lives in `okta-policy-signon`)
 - Broader GitLab project settings after the label spike
 - Tailscale auth keys, OAuth client management, device-level resources
 - Wire Proxmox / Okta through the same 1Password ephemeral pattern
@@ -140,15 +147,16 @@ Terragrunt auto-detects OpenTofu when both are installed.
 
 ### Modules
 
-| Module              | Use case                                                           |
-| ------------------- | ------------------------------------------------------------------ |
-| `talos-vm`          | Talos Kubernetes nodes; node placement is intentional and enforced |
-| `proxmox-vm`        | General cluster VMs; optional Proxmox HA; ignores placement drift  |
-| `cloudflare-dns`    | Zone lookup + `for_each` DNS records (explicit map only)           |
-| `okta-app`          | OIDC web apps + Everyone assignment                                |
-| `okta-network-zone` | Network zones; plan-time probe for the dynamic home egress IP      |
-| `gitlab-project`    | Existing GitLab project lookup + optional ownership label          |
-| `tailscale-tailnet` | Tailnet policy file, DNS configuration, tailnet settings           |
+| Module               | Use case                                                           |
+| -------------------- | ------------------------------------------------------------------ |
+| `talos-vm`           | Talos Kubernetes nodes; node placement is intentional and enforced |
+| `proxmox-vm`         | General cluster VMs; optional Proxmox HA; ignores placement drift  |
+| `cloudflare-dns`     | Zone lookup + `for_each` DNS records (explicit map only)           |
+| `okta-app`           | OIDC web apps + Everyone assignment                                |
+| `okta-network-zone`  | Network zones; plan-time probe for the dynamic home egress IP      |
+| `okta-policy-signon` | Sign-on policy + rules; zone ids via terragrunt dependency         |
+| `gitlab-project`     | Existing GitLab project lookup + optional ownership label          |
+| `tailscale-tailnet`  | Tailnet policy file, DNS configuration, tailnet settings           |
 
 The `proxmox-vm` module can attach a `proxmox_haresource` when `ha.enabled = true` (Home uses HA group `Primary`).
 
@@ -211,6 +219,7 @@ terraform/
 │   ├── cloudflare-dns/                 # Zone + explicit DNS records
 │   ├── okta-app/                       # OIDC web apps + Everyone assignment
 │   ├── okta-network-zone/              # Network zones + egress IP probe
+│   ├── okta-policy-signon/             # Sign-on policy + rules
 │   ├── gitlab-project/                 # Project data + optional label
 │   └── tailscale-tailnet/              # Policy file + DNS + tailnet settings
 └── deployments/
@@ -235,7 +244,9 @@ terraform/
     ├── okta/
     │   ├── app/
     │   │   └── terragrunt.hcl
-    │   └── network-zone/
+    │   ├── network-zone/
+    │   │   └── terragrunt.hcl
+    │   └── policy-signon/
     │       └── terragrunt.hcl
     ├── gitlab/
     │   └── homelab/
@@ -270,12 +281,13 @@ root.hcl + providers/cloudflare.hcl
     └── deployments/cloudflare/<zone>/terragrunt.hcl  → modules/cloudflare-dns
 ```
 
-**Okta app / network zone**:
+**Okta app / network zone / sign-on policy**:
 
 ```
 root.hcl + providers/okta.hcl
-    ├── deployments/okta/app/terragrunt.hcl           → modules/okta-app
-    └── deployments/okta/network-zone/terragrunt.hcl  → modules/okta-network-zone
+    ├── deployments/okta/app/terragrunt.hcl            → modules/okta-app
+    ├── deployments/okta/network-zone/terragrunt.hcl   → modules/okta-network-zone
+    └── deployments/okta/policy-signon/terragrunt.hcl  → modules/okta-policy-signon
 ```
 
 **GitLab project**:
@@ -426,14 +438,14 @@ terragrunt plan
 Edit public records in that deployment's `terragrunt.hcl`. Do not export
 `CLOUDFLARE_API_TOKEN`.
 
-### Okta app / network zone
+### Okta app / network zone / sign-on policy
 
 ```bash
 # Connect auth (same as GitLab / Cloudflare). Local: port-forward Connect first.
 export OP_CONNECT_HOST=http://onepassword-connect.onepassword-system.svc:8080
 export OP_CONNECT_TOKEN=…
 export TF_HTTP_ADDRESS=… TF_HTTP_USERNAME=… TF_HTTP_PASSWORD=…
-cd terraform/deployments/okta/app             # or okta/network-zone
+cd terraform/deployments/okta/app             # or okta/network-zone, okta/policy-signon
 terragrunt plan
 ```
 
