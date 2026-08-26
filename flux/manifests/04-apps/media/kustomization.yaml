@@ -18,6 +18,7 @@ resources:
   - management/cantinarr
   - management/chaptarr
   - management/cleanuparr
+  - management/houndarr
   - management/huntarr2
   - management/icloudpd
   - management/immich
