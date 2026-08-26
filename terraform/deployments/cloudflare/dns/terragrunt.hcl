@@ -60,7 +60,7 @@ inputs = {
       comment = "Okta custom domain"
     }
     "tailnet-share-wildcard" = {
-      name    = "*.tailnet.apocrathia"
+      name    = "*.tailnet"
       type    = "A"
       content = "100.120.155.113"
       proxied = false
