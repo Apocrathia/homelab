@@ -1,0 +1,101 @@
+{
+	// Declare static groups of users. Use autogroups for all users or users with a specific role.
+	// "groups": {
+	//  	"group:example": ["alice@example.com", "bob@example.com"],
+	// },
+
+	// Define the tags which can be applied to devices and by which users.
+	// tagOwners controls who can assign each tag. The k8s operator OAuth client
+	// must be owner of tag:k8s-operator; the operator assigns tag:k8s to proxy pods.
+	"tagOwners": {
+		"tag:k8s-operator": ["autogroup:admin"],
+		"tag:k8s":          ["tag:k8s-operator"],
+	},
+
+	// autoApprovers lets tagged devices approve certain requests without manual
+	// admin approval. "services" covers Tailscale Services (used by ProxyGroup / HA ingress).
+	"autoApprovers": {
+		"services": {
+			"tag:k8s": ["tag:k8s"],
+		},
+	},
+
+	// Define grants that govern access for users, groups, autogroups, tags,
+	// Tailscale IP addresses, and subnet ranges.
+	"grants": [
+		// Allow all connections.
+		// Comment this section out if you want to define specific restrictions.
+		{"src": ["*"], "dst": ["*"], "ip": ["*"]},
+
+		// Allow everything on the tailnet to talk to the API Server Proxy.
+		// Redundant while the open grant above exists; keep when tightening ACLs.
+		{
+			"src": ["*"],
+			"dst": ["tag:k8s-operator"],
+			"ip":  ["tcp:443"],
+		},
+
+		// Allow users in "group:example" to access "tag:example", but only from
+		// devices that are running macOS and have enabled Tailscale client auto-updating.
+		// {"src": ["group:example"], "dst": ["tag:example"], "ip": ["*"], "srcPosture":["posture:autoUpdateMac"]},
+	],
+
+	// Define postures that will be applied to all rules without any specific
+	// srcPosture definition.
+	// "defaultSrcPosture": [
+	//      "posture:anyMac",
+	// ],
+
+	// Define device posture rules requiring devices to meet
+	// certain criteria to access parts of your system.
+	// "postures": {
+	//      // Require devices running macOS, a stable Tailscale
+	//      // version and auto update enabled for Tailscale.
+	// 	"posture:autoUpdateMac": [
+	// 	    "node:os == 'macos'",
+	// 	    "node:tsReleaseTrack == 'stable'",
+	// 	    "node:tsAutoUpdate",
+	// 	],
+	//      // Require devices running macOS and a stable
+	//      // Tailscale version.
+	// 	"posture:anyMac": [
+	// 	    "node:os == 'macos'",
+	// 	    "node:tsReleaseTrack == 'stable'",
+	// 	],
+	// },
+
+	// nodeAttrs grant capabilities to tagged devices. "funnel" lets tag:k8s
+	// proxy pods expose services to the public internet via Tailscale Funnel.
+	"nodeAttrs": [
+		{
+			"target": ["tag:k8s"],
+			"attr":   ["funnel"],
+		},
+		{"target": ["*"], "app": {"tailscale.com/app-connectors": [{
+			"name":        "github",
+			"connectors":  ["tag:k8s-operator"],
+			"presetAppID": "github",
+		}]}},
+	],
+
+	// Define users and devices that can use Tailscale SSH.
+	"ssh": [
+		// Allow all users to SSH into their own devices in check mode.
+		// Comment this section out if you want to define specific restrictions.
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["autogroup:nonroot", "root"],
+		},
+	],
+
+	// Test access rules every time they're saved.
+	// "tests": [
+	//  	{
+	//  		"src": "alice@example.com",
+	//  		"accept": ["tag:example"],
+	//  		"deny": ["100.101.102.103:443"],
+	//  	},
+	// ],
+}
