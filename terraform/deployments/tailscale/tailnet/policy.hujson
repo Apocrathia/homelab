@@ -22,16 +22,25 @@
 
 	// Define grants that govern access for users, groups, autogroups, tags,
 	// Tailscale IP addresses, and subnet ranges.
+	//
+	// Deny-by-default: there is no blanket grant. Every entry below is an
+	// explicit exception; anything not listed here is blocked.
 	"grants": [
-		// Allow all connections.
-		// Comment this section out if you want to define specific restrictions.
-		{"src": ["*"], "dst": ["*"], "ip": ["*"]},
-
-		// Allow everything on the tailnet to talk to the API Server Proxy.
-		// Redundant while the open grant above exists; keep when tightening ACLs.
+		// Friend-sharing front door: users shared into the tailnet
+		// (autogroup:shared) may reach the cilium Gateway device tagged
+		// tag:k8s over HTTPS only (*.tailnet.apocrathia.com).
 		{
-			"src": ["*"],
-			"dst": ["tag:k8s-operator"],
+			"src": ["autogroup:shared"],
+			"dst": ["tag:k8s"],
+			"ip":  ["tcp:443"],
+		},
+
+		// Tailnet admins keep the same HTTPS-only access to the front door
+		// so the operator can reach and verify the service friends are
+		// invited to. Remove this grant if no human access is wanted.
+		{
+			"src": ["autogroup:admin"],
+			"dst": ["tag:k8s"],
 			"ip":  ["tcp:443"],
 		},
 
@@ -78,24 +87,22 @@
 		}]}},
 	],
 
-	// Define users and devices that can use Tailscale SSH.
-	"ssh": [
-		// Allow all users to SSH into their own devices in check mode.
-		// Comment this section out if you want to define specific restrictions.
-		{
-			"action": "check",
-			"src":    ["autogroup:member"],
-			"dst":    ["autogroup:self"],
-			"users":  ["autogroup:nonroot", "root"],
-		},
-	],
+	// Tailscale SSH is intentionally not configured. The previous
+	// autogroup:member -> autogroup:self check-mode rule was removed with the
+	// move to deny-by-default; nothing on the tailnet uses SSH. Re-add an
+	// explicit "ssh" block here if that ever changes.
 
 	// Test access rules every time they're saved.
-	// "tests": [
-	//  	{
-	//  		"src": "alice@example.com",
-	//  		"accept": ["tag:example"],
-	//  		"deny": ["100.101.102.103:443"],
-	//  	},
-	// ],
+	"tests": [
+		// Owner (implicitly admin) reaches the front door over HTTPS only;
+		// everything else stays denied.
+		{
+			"src":    "ian@apocrathia.com",
+			"accept": ["tag:k8s:443"],
+			"deny":   ["tag:k8s:22", "tag:k8s-operator:443"],
+		},
+		// autogroup:shared cannot be a test src (API rejects autogroups and
+		// device names). Re-add a shared-user test here once the first friend
+		// is invited, using their email address.
+	],
 }
