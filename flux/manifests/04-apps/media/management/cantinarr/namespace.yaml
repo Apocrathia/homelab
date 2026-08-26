@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cantinarr
+  labels:
+    app.kubernetes.io/name: cantinarr

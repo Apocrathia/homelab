@@ -40,6 +40,7 @@ Media applications are organized into three categories:
 ### Media Tools
 
 - **[Aurral](./management/aurral/README.md)** - Music discovery companion for Lidarr (Seerr-like, for music)
+- **[Cantinarr](./management/cantinarr/README.md)** - Media discovery, requests, and \*arr management with AI and MCP tools
 - **[Cleanuparr](./management/cleanuparr/README.md)** - Monitors and removes blocked/stalled downloads from Arr apps
 - **[Huntarr2](./management/huntarr2/README.md)** - Automated missing content and quality upgrade searches
 - **[Recyclarr](./management/recyclarr/README.md)** - TRaSH Guides sync for quality profiles

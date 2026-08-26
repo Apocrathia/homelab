@@ -1,0 +1,118 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cantinarr
+  namespace: cantinarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: cantinarr
+      # renovate: datasource=docker depName=ghcr.io/windoze95/cantinarr
+      # GHCR publishes latest (+ digest); semver tags are not pushed to the registry.
+      image: ghcr.io/windoze95/cantinarr:latest@sha256:11680354a7450954d9ae8c75d85967c20b4666a6ee2fd062d0c3680c948d3c52
+      container:
+        name: cantinarr
+        port: 8585
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # Origin Radarr/Sonarr/Chaptarr POST webhooks to (cluster DNS, not the
+          # Authentik/gateway URL). Formerly CANTINARR_PUBLIC_URL.
+          - name: CANTINARR_ARR_CALLBACK_URL
+            value: "http://cantinarr.cantinarr.svc.cluster.local"
+          # Skip optional GitHub release checks from the admin UI.
+          - name: CANTINARR_DISABLE_UPDATE_CHECK
+            value: "1"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8585
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8585
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8585
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: config
+            capacity: 5Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Media"
+      displayName: "Cantinarr"
+      externalHost: "https://cantinarr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/cantinarr/icon.png"
+
+    gatus:
+      enabled: true
+      path: /api/health
+
+    httproute:
+      enabled: false
