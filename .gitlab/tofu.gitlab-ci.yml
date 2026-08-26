@@ -156,7 +156,7 @@ tofu-plan:
             }
             compact = is_compact(status[unit])
 
-            sub(/^terraform: /, "", line)
+            sub(/^(tofu|terraform): /, "", line)
 
             if (!compact) {
               if (!started[unit] &&

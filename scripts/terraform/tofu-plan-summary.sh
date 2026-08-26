@@ -46,7 +46,7 @@ is_no_drift() {
 
 unit_has_resource_drift() {
   local unit=$1
-  grep -F "[${unit}]" <<<"$PLAN_TEXT" | grep 'terraform: Plan:' |
+  grep -F "[${unit}]" <<<"$PLAN_TEXT" | grep -E '(tofu|terraform): Plan:' |
     grep -qvE 'Plan: 0 to add, 0 to change, 0 to destroy(\.|, 0 to replace\.)?'
 }
 
@@ -56,16 +56,16 @@ summarize() {
 
   while IFS= read -r line; do
     case "$line" in
-      *"terraform: Plan:"*)
+      *"terraform: Plan:"* | *"tofu: Plan:"*)
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
-        plan=$(printf '%s' "$line" | sed -nE 's/^.*terraform: (Plan:.*)$/\1/p')
+        plan=$(printf '%s' "$line" | sed -nE 's/^.*(tofu|terraform): (Plan:.*)$/\2/p')
         if [ -n "$unit" ]; then
           lines+=("${unit}: ${plan}")
         else
           lines+=("$plan")
         fi
         ;;
-      *"terraform: No changes"*)
+      *"terraform: No changes"* | *"tofu: No changes"*)
         unit=$(printf '%s' "$line" | sed -nE 's/^.*\[([^]]+)\].*/\1/p')
         if [ -n "$unit" ]; then
           lines+=("${unit}: No changes")
@@ -137,6 +137,19 @@ Run Summary  1 units  1s
   drift=$(drift_status)
   [ "$drift" = "drift_detected" ] || {
     echo "self-check failed: expected drift_detected, got $drift" >&2
+    return 1
+  }
+
+  sample='[unit/a] tofu: Plan: 1 to add, 0 to change, 0 to destroy.'
+  PLAN_TEXT="$sample"
+  drift=$(drift_status)
+  [ "$drift" = "drift_detected" ] || {
+    echo "self-check failed: expected tofu drift_detected, got $drift" >&2
+    return 1
+  }
+  summary=$(summarize)
+  [ "$summary" = "unit/a: Plan: 1 to add, 0 to change, 0 to destroy." ] || {
+    echo "self-check failed: expected tofu plan summary line, got $summary" >&2
     return 1
   }
 
