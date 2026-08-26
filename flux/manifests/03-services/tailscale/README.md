@@ -45,10 +45,13 @@ adapted for this cluster's Cilium GatewayClass.
   `GatewayClass cilium-tailscale`, and `Gateway tailnet-gateway` with an HTTPS
   listener for `*.tailnet.apocrathia.com`.
 - The operator turns the gateway's LoadBalancer Service into one tailnet
-  device: `cilium-system-cilium-gateway-tailnet-gateway.taila8ef8c.ts.net`,
-  IP `100.120.155.113`, tagged `tag:k8s`. **This device is the one shared
-  with external users.** If the device is ever recreated, update the DNS
-  record content (below).
+  device: `tailnet-gateway.taila8ef8c.ts.net`, IP `100.120.155.113`, tagged
+  `tag:k8s`. The device hostname is pinned by the Gateway's
+  `spec.infrastructure.annotations` (`tailscale.com/hostname`, propagated to
+  the generated Service by Cilium); without it the operator falls back to
+  `<namespace>-<service-name>`. **This device is the one shared with external
+  users.** If the device is ever recreated, update the DNS record content
+  (below).
 - Per-app `HTTPRoute` resources bind `<app>.tailnet.apocrathia.com` to the
   gateway. Pilot: `04-apps/demo-app/tailnet-httproute.yaml` (direct to the
   app, no Authentik — friends must not land on the homelab IdP).
