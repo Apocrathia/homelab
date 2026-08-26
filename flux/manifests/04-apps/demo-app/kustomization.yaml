@@ -9,5 +9,6 @@ metadata:
 
 resources:
   - namespace.yaml
+  - configmap.yaml
   - helmrelease.yaml
   - tailnet-httproute.yaml
