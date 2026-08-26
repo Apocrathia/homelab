@@ -55,7 +55,7 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 | Deployment           | Module               | Notes                                               |
 | -------------------- | -------------------- | --------------------------------------------------- |
-| `okta/app`           | `okta-app`           | OIDC apps + Everyone assignment                     |
+| `okta/app`           | `okta-app`           | OIDC apps + OIN SAML apps + Everyone assignment     |
 | `okta/network-zone`  | `okta-network-zone`  | IP / dynamic zones; home egress probed at plan time |
 | `okta/policy-signon` | `okta-policy-signon` | Sign-on policy wiring the network zones             |
 
