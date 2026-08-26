@@ -29,6 +29,10 @@ generate "provider" {
           source  = "1Password/onepassword"
           version = "~> 3.0"
         }
+        http = {
+          source  = "hashicorp/http"
+          version = "~> 3.4"
+        }
       }
     }
 

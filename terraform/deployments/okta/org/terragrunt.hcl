@@ -29,6 +29,27 @@ inputs = {
   onepassword_vault_name            = "Secrets"
   onepassword_okta_token_item_title = "okta-terraform-secrets"
 
+  # Home egress IP is dynamic: home-egress gets it from the plan-time probe
+  # (egress_probe_url default https://icanhazip.com), never hardcoded here.
+  network_zones = {
+    home-egress = {
+      name              = "Home Egress"
+      type              = "IP"
+      include_egress_ip = true
+    }
+    tailscale-cgnat = {
+      name     = "Tailscale"
+      type     = "IP"
+      gateways = ["100.64.0.0/10"]
+    }
+    tor-anonymizers = {
+      name               = "Tor Anonymizers"
+      type               = "DYNAMIC"
+      usage              = "BLOCKLIST"
+      dynamic_proxy_type = "TorAnonymizer"
+    }
+  }
+
   oauth_apps = {
     authentik = {
       label        = "Authentik"

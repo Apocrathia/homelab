@@ -53,14 +53,20 @@ those. Okta's own `_acme-challenge.okta` challenge is an exception
 
 ### Managed Okta
 
-| Deployment | Module     | Notes                                               |
-| ---------- | ---------- | --------------------------------------------------- |
-| `okta/org` | `okta-org` | OIDC apps + Everyone assignment; org settings later |
+| Deployment | Module     | Notes                                                              |
+| ---------- | ---------- | ------------------------------------------------------------------ |
+| `okta/org` | `okta-org` | OIDC apps + Everyone assignment; network zones; org settings later |
 
 Org name and base URL live in `providers/okta.hcl`. Auth is **1Password
 Connect** → ephemeral item `okta-terraform-secrets` (API Credential
 **credential** field) — same pattern as GitLab / Cloudflare. Do not export
 `OKTA_API_TOKEN`.
+
+The `home-egress` network zone's gateway is the plan-time public egress IP
+(`data.http` probe, default `https://icanhazip.com`) — home egress is
+dynamic, so it is never hardcoded in HCL. Plan/apply must run somewhere that
+egresses to the internet; CI runners sit on the lab network and see the same
+IP. Zones are inert until a sign-in or password policy references them.
 
 ### Managed GitLab
 
@@ -138,7 +144,7 @@ Terragrunt auto-detects OpenTofu when both are installed.
 | `talos-vm`          | Talos Kubernetes nodes; node placement is intentional and enforced |
 | `proxmox-vm`        | General cluster VMs; optional Proxmox HA; ignores placement drift  |
 | `cloudflare-dns`    | Zone lookup + `for_each` DNS records (explicit map only)           |
-| `okta-org`          | Okta org settings (scaffold; resources added over time)            |
+| `okta-org`          | OIDC apps + network zones (scaffold; resources added over time)    |
 | `gitlab-project`    | Existing GitLab project lookup + optional ownership label          |
 | `tailscale-tailnet` | Tailnet policy file, DNS configuration, tailnet settings           |
 
