@@ -15,3 +15,4 @@ spec:
     - name: bootstrap-1password
     - name: bootstrap-helm
     - name: infrastructure-cilium
+    - name: services-cert-manager
