@@ -29,6 +29,7 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 This directory contains:
 
 - `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart
+- `tailnet-httproute.yaml` - HTTPRoute exposing the app on the tailnet gateway (`demo.tailnet.apocrathia.com`)
 - `kustomization.yaml` - Kustomize configuration for Flux deployment
 - `README.md` - This documentation
 
@@ -190,6 +191,13 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com`
 - **Authentication**: SSO through Authentik
 - **TLS**: Automatic TLS certificate management
+
+### Tailnet Access
+
+- **URL**: `https://demo.tailnet.apocrathia.com`
+- **Authentication**: None (direct route, no Authentik) - intended for sharing with external users over Tailscale
+- **TLS**: Wildcard certificate for `*.tailnet.apocrathia.com` terminated at the tailnet gateway
+- **Routing**: Via the `tailnet-gateway` (see [Tailscale service sharing](../../03-services/tailscale/README.md#service-sharing-with-external-users))
 
 ### Internal Access
 
