@@ -31,6 +31,14 @@ metadata:
   namespace: cilium-system
 spec:
   gatewayClassName: cilium-tailscale
+  # Device name shown in the Tailscale admin console / MagicDNS for the
+  # operator proxy device backing this Gateway. Cilium copies
+  # spec.infrastructure.annotations onto the generated LoadBalancer Service;
+  # the tailscale operator uses tailscale.com/hostname as the device hostname
+  # instead of the default <namespace>-<service-name>.
+  infrastructure:
+    annotations:
+      tailscale.com/hostname: "tailnet-gateway"
   listeners:
     - name: https
       protocol: HTTPS
