@@ -15,6 +15,7 @@ resources:
   - acquisitions/soularr
   - management/aurral
   - management/bazarr
+  - management/cantinarr
   - management/chaptarr
   - management/cleanuparr
   - management/huntarr2
