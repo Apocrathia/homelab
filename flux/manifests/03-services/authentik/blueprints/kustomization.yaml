@@ -49,6 +49,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - okta.yaml
+  - name: authentik-blueprint-webauthn-mfa
+    namespace: authentik
+    files:
+      - webauthn-mfa.yaml
 
 labels:
   - includeSelectors: true

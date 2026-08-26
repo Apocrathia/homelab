@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+# WebAuthn MFA for the default authentication flow.
+#
+# Partial updates of upstream default stages only (blueprint updates are
+# partial: attributes not listed here keep their existing values).
+#
+# Covers YubiKeys (roaming), Touch ID (platform), and passkeys stored in a
+# password manager such as 1Password. Passkey autofill is the primary factor;
+# hardware keys are the backup. Static recovery codes are the last resort and
+# are stored in 1Password.
+version: 1
+metadata:
+  name: webauthn-mfa
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Upstream WebAuthn setup stage (used from user settings and first-login
+  # enrollment). Enable discoverable credentials so passkeys can be stored
+  # in 1Password and used via autofill; allow both roaming and platform
+  # authenticators.
+  - model: authentik_stages_authenticator_webauthn.authenticatorwebauthnstage
+    state: present
+    identifiers:
+      name: "default-authenticator-webauthn-setup"
+    attrs:
+      user_verification: "preferred"
+      resident_key_requirement: "preferred"
+      hints:
+        - "security-key"
+        - "client-device"
+        - "hybrid"
+
+  # Upstream validation stage, already bound to default-authentication-flow
+  # at order 30. Gate login on WebAuthn, with static recovery codes as
+  # fallback. Users without any authenticator are prompted to enroll on
+  # first login (not_configured_action: configure).
+  # Switch not_configured_action to "deny" once every user is enrolled.
+  - model: authentik_stages_authenticator_validate.authenticatorvalidatestage
+    state: present
+    identifiers:
+      name: "default-authentication-mfa-validation"
+    attrs:
+      device_classes:
+        - "webauthn"
+        - "static"
+      not_configured_action: "configure"
+      configuration_stages:
+        - !Find [authentik_stages_authenticator_webauthn.authenticatorwebauthnstage, [name, "default-authenticator-webauthn-setup"]]
+        - !Find [authentik_stages_authenticator_static.authenticatorstaticstage, [name, "default-authenticator-static-setup"]]
+      webauthn_user_verification: "preferred"
+
+  # Passkey autofill: offer passkey login directly from the username field
+  # of the login form. Remove this entry to keep password-first login only.
+  - model: authentik_stages_identification.identificationstage
+    state: present
+    identifiers:
+      name: "default-authentication-identification"
+    attrs:
+      # user_fields restates the existing value: the stage's clean() rejects
+      # partial updates that omit it ("at least one source must be selected").
+      user_fields:
+        - "email"
+        - "username"
+      webauthn_stage: !Find [authentik_stages_authenticator_validate.authenticatorvalidatestage, [name, "default-authentication-mfa-validation"]]
