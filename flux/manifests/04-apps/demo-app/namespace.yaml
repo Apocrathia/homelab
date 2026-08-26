@@ -5,3 +5,9 @@ metadata:
   name: demo-app
   labels:
     app.kubernetes.io/name: demo-app
+    # generic-app chart defaults (non-root, read-only rootfs, dropped caps)
+    # already satisfy restricted; enforce it so nothing else landing in this
+    # namespace can regress.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

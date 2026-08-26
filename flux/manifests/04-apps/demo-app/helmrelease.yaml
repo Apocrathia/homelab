@@ -27,6 +27,11 @@ spec:
         - name: nginx-html
           mountPath: /usr/share/nginx/html
       volumes:
+        configMap:
+          - name: demo-app-nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
         emptyDir:
           - name: nginx-cache
             mountPath: /var/cache/nginx

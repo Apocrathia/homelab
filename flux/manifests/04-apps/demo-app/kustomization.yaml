@@ -11,3 +11,12 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - tailnet-httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: demo-app-nginx-config
+    namespace: demo-app
+    files:
+      - nginx.conf
