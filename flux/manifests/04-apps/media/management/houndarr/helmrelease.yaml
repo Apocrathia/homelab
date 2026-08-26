@@ -1,0 +1,131 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: houndarr
+  namespace: houndarr
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: houndarr
+      # renovate: datasource=docker depName=ghcr.io/av1155/houndarr
+      image: ghcr.io/av1155/houndarr:v1.13.2@sha256:c7a21fb5ce8f37e2e9865a8f8bac5427d9bd699e6f0e4014a8b2da889f6dbdfb
+      container:
+        name: houndarr
+        port: 8877
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # Override K8s service discovery env (HOUNDARR_PORT=tcp://…:80)
+          - name: HOUNDARR_PORT
+            value: "8877"
+          - name: HOUNDARR_SECURE_COOKIES
+            value: "true"
+          - name: HOUNDARR_AUTH_MODE
+            value: "proxy"
+          - name: HOUNDARR_AUTH_PROXY_HEADER
+            value: "X-authentik-username"
+          # Authentik outpost / pod network (same CIDR as wakapi)
+          - name: HOUNDARR_TRUSTED_PROXIES
+            value: "10.42.0.0/16"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8877
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+      healthChecks:
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8877
+            scheme: HTTP
+          failureThreshold: 60
+          periodSeconds: 10
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8877
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 8877
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Media"
+      displayName: "Houndarr"
+      externalHost: "https://houndarr.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/houndarr/icon.png"
+
+    # Proxy auth mode 401s unauthenticated probes on /; /api/health is public
+    gatus:
+      enabled: true
+      path: /api/health
+
+    httproute:
+      enabled: false
