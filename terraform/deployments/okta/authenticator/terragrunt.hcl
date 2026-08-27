@@ -37,7 +37,11 @@ inputs = {
   }
 
   webauthn = {
-    allow_syncable_passkeys            = true
+    # allow_syncable_passkeys is deliberately omitted: this org's API does not
+    # echo allowSyncablePasskeys back, so asserting a value fails every apply
+    # with "Provider produced inconsistent result after apply" and taints the
+    # resource (upstream okta/terraform-provider-okta bug). Omitted = the org
+    # value stays untouched.
     attachment                         = "ANY"
     user_verification                  = "PREFERRED"
     show_sign_in_with_a_passkey_button = true
