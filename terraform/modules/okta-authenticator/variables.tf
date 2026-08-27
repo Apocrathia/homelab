@@ -49,7 +49,10 @@ variable "webauthn" {
     user_verification                  = optional(string, "PREFERRED")
     user_verification_for_verify       = optional(string)
     attachment                         = optional(string, "ANY")
-    allow_syncable_passkeys            = optional(bool, true)
+    # Omit (null) on orgs whose API does not return this field: the provider
+    # errors with "Provider produced inconsistent result" when it writes true
+    # and reads back null.
+    allow_syncable_passkeys            = optional(bool)
     enable_autofill_ui                 = optional(bool, true)
     resident_key_requirement           = optional(string)
     show_sign_in_with_a_passkey_button = optional(bool, true)
