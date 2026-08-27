@@ -82,6 +82,10 @@ spec:
           mountPath: /downloads
         - name: movies
           mountPath: /movies
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:
