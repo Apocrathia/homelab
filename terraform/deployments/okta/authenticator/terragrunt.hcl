@@ -2,9 +2,12 @@
 # Okta authenticators
 # -----------------------------------------------------------------------------
 # Org authenticators + WebAuthn (passkey / FIDO2) method settings. webauthn is
-# activated and its method configured for passkeys (syncable passkeys allowed,
-# any attachment, autofill + sign-in button). Add more entries to authenticators
-# to manage email/phone/etc.
+# activated and its method configured for passkeys (any attachment, autofill +
+# sign-in button). Add more entries to authenticators to manage email/phone/etc.
+#
+# allow_syncable_passkeys is intentionally omitted: this org's API does not
+# return the field, so the provider fails apply with "Provider produced
+# inconsistent result" (wrote true, read back null). Org default applies.
 #
 # Auth (1Password Connect — no OKTA_API_TOKEN in env):
 #   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
@@ -37,7 +40,6 @@ inputs = {
   }
 
   webauthn = {
-    allow_syncable_passkeys            = true
     attachment                         = "ANY"
     user_verification                  = "PREFERRED"
     show_sign_in_with_a_passkey_button = true
