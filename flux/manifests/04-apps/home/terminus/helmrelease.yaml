@@ -53,6 +53,8 @@ spec:
             value: "86400"
           - name: SESSION_INACTIVITY_LIMIT
             value: "86400"
+          - name: SESSION_EXPIRATION_ENABLED
+            value: "false"
       replicas: 1
       podAntiAffinity:
         enabled: false
