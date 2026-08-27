@@ -43,13 +43,19 @@ variable "webauthn" {
     The provider always sends this list: {} asserts Okta's default (no custom
     AAGUID groups), so existing custom org groups must be declared here or the
     first apply clears them. Omitted scalars (e.g. hardware_protected) are
-    safe — null keeps the org value.
+    safe — null keeps the org value. Several fields are Okta Early Access
+    gated (allow_syncable_passkeys needs the Passkeys Rebrand EA feature;
+    user_verification_for_verify, enable_autofill_ui, resident_key_requirement,
+    show_sign_in_with_a_passkey_button, cert_based_attestation_validation,
+    hardware_protected, fips_compliant are also EA-gated): when the org lacks
+    the feature the API omits the field from responses and apply fails with
+    "Provider produced inconsistent result" — leave such fields null.
   EOT
   type = object({
     user_verification                  = optional(string, "PREFERRED")
     user_verification_for_verify       = optional(string)
     attachment                         = optional(string, "ANY")
-    allow_syncable_passkeys            = optional(bool, true)
+    allow_syncable_passkeys            = optional(bool)
     enable_autofill_ui                 = optional(bool, true)
     resident_key_requirement           = optional(string)
     show_sign_in_with_a_passkey_button = optional(bool, true)
