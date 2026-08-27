@@ -60,7 +60,7 @@ spec:
     auth:
       oidc:
         enabled: true
-        issuerUrl: "https://auth.gateway.services.apocrathia.com/application/o/renovate-operator/"
+        issuerUrl: "https://auth.gateway.services.apocrathia.com/application/o/renovate/"
         # clientId comes from valuesFrom above
         existingSecret: renovate-operator-secret
         secretKey: oidc-client-secret

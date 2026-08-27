@@ -49,6 +49,6 @@ entries:
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "renovate-oidc-provider"]]
       meta_launch_url: "https://renovate.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/renovate/icon.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/renovate-operator/icon.svg"
       meta_description: "Dependency update automation - Renovate as Kubernetes Jobs"
       meta_publisher: "mogenius"
