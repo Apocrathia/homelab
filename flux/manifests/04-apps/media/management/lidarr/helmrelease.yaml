@@ -82,6 +82,10 @@ spec:
           mountPath: /downloads
         - name: music
           mountPath: /music
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:
