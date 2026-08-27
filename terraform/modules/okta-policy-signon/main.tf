@@ -5,11 +5,20 @@
 # rule per entry of var.rules, evaluated by rule priority. Wire network zone
 # ids in from the okta-network-zone unit via a terragrunt dependency.
 
+# Everyone stays in the policy's people condition: Okta defaults custom sign-on
+# policies to Everyone, and leaving it undeclared plans a removal every run.
+data "okta_group" "everyone" {
+  name = "Everyone"
+  type = "BUILT_IN"
+}
+
 resource "okta_policy_signon" "this" {
   name        = var.policy_name
   description = var.policy_description
   status      = var.policy_status
   priority    = var.policy_priority
+
+  groups_included = [data.okta_group.everyone.id]
 }
 
 resource "okta_policy_rule_signon" "this" {
