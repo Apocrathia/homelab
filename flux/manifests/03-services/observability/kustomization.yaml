@@ -14,4 +14,5 @@ resources:
   - mimir
   - otel-operator
   - prometheus
+  - tailscale2otel
   - tempo

@@ -41,3 +41,4 @@ resources:
   - llm-d-modelservice.yaml
   - open-telemetry.yaml
   - policy-reporter.yaml
+  - rknightion.yaml

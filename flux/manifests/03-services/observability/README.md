@@ -109,6 +109,19 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **Not** included in `services-observability` (depends on CNPG)
 - **Details**: See [`gatus/README.md`](./gatus/README.md)
 
+### 11. **tailscale2otel** (`tailscale2otel/`)
+
+- **Purpose**: Collect Tailscale configuration audit logs (who did what, when)
+  and tailnet inventory metrics from the Tailscale API
+- **Deployment**: `tailscale2otel` chart (OCI, ghcr.io/rknightion/charts)
+- **Features**:
+  - Polls the configuration audit log API (available on all plans; this
+    tailnet is free-plan, so network flow logs are disabled)
+  - Pushes OTLP logs and metrics to the Alloy ingest service (logs → Loki,
+    metrics → Mimir)
+  - OAuth client credentials from 1Password (`tailscale2otel-secrets` item)
+- **Details**: See [`tailscale2otel/README.md`](./tailscale2otel/README.md)
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:
