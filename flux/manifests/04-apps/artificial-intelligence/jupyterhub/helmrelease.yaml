@@ -111,7 +111,7 @@ spec:
           description: "VS Code in your browser"
           kubespawner_override:
             # renovate: datasource=docker depName=codercom/code-server
-            image: codercom/code-server:4.134.0@sha256:9d6c9b2e89f95c95885f859bbca0af2f648c376e61e9bbdff5c14be5a6e27d40
+            image: codercom/code-server:4.135.0@sha256:ccd326184d71efc5ebb94155eda7bb30153902342a35dbc8525450d81aa55012
             default_url: /
             cmd:
               ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8888"]
