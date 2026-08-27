@@ -2,10 +2,13 @@
 # Okta sign-on policy (network zone wiring)
 # -----------------------------------------------------------------------------
 # Custom sign-on policy above the system default:
-#   1. DENY from the Tor Anonymizers blocklist zone
-#   2. ALLOW from trusted zones (Home Egress + Tailscale) — MFA required,
+#   1. ALLOW from trusted zones (Home Egress + Tailscale) — MFA required,
 #      preferred-style: DEVICE prompt + remembered devices
-#   3. ALLOW everywhere else — MFA required at every sign-in attempt
+#   2. ALLOW everywhere else — MFA required at every sign-in attempt
+#
+# Tor anonymizers are denied by the BLOCKLIST "Tor Anonymizers" zone itself —
+# blocklist zones are enforced globally by Okta and cannot be referenced in
+# policy rules (the API rejects them).
 #
 # Zone ids come from the okta/network-zone unit (terragrunt dependency).
 #
@@ -37,20 +40,13 @@ inputs = {
   onepassword_okta_token_item_title = "okta-terraform-secrets"
 
   policy_name        = "Zone Sign-On"
-  policy_description = "Deny anonymizers; preferred MFA on trusted zones; MFA everywhere else."
+  policy_description = "Tor denied via blocklist zone; preferred MFA on trusted zones; MFA everywhere else."
   policy_priority    = 1
 
   rules = {
-    deny-anonymizers = {
-      name               = "Deny Anonymizers"
-      priority           = 1
-      access             = "DENY"
-      network_connection = "ZONE"
-      network_includes   = [dependency.network_zone.outputs.network_zone_ids["tor-anonymizers"]]
-    }
     trusted-zones = {
       name               = "Trusted Zones"
-      priority           = 2
+      priority           = 1
       access             = "ALLOW"
       network_connection = "ZONE"
       network_includes = [
@@ -66,7 +62,7 @@ inputs = {
     }
     require-mfa-elsewhere = {
       name               = "Require MFA Elsewhere"
-      priority           = 3
+      priority           = 2
       access             = "ALLOW"
       network_connection = "ANYWHERE"
       mfa_required       = true
