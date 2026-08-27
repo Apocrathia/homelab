@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale2otel
+  namespace: tailscale2otel
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tailscale2otel
+      # renovate: datasource=docker depName=ghcr.io/rknightion/charts/tailscale2otel
+      version: "3.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: rknightion
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Credentials arrive as TS2OTEL_* env vars via envFrom on the Secret the
+    # OnePasswordItem renders (see secret.yaml). The item must contain only
+    # TS2OTEL_* fields, because envFrom injects every key in the Secret.
+    existingSecret: tailscale2otel-secrets
+
+    config:
+      otlp:
+        # Push into the in-cluster Alloy OTLP receiver; alloy-system routes
+        # OTLP logs to Loki and metrics to Mimir.
+        protocol: http
+        endpoint: "http://alloy.alloy-system.svc:4318"
+        tls:
+          # Plaintext is the chart's documented in-cluster-collector case;
+          # WireGuard/public exposure is not involved.
+          insecure: true
+
+      collectors:
+        # Network flow logs are Premium/Enterprise-only; this tailnet is on the
+        # free plan, so the flow-log API would just error on every poll.
+        # Configuration audit logs are available on all plans and stay enabled.
+        flowlogs:
+          enabled: false
