@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
 # Okta apps
 # -----------------------------------------------------------------------------
-# OIDC web apps + Everyone assignment.
+# OIDC web apps + OIN (Okta Integration Network) SAML apps + Everyone
+# assignment.
 #
 # Auth (1Password Connect — no OKTA_API_TOKEN in env):
 #   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
@@ -34,6 +35,17 @@ inputs = {
       label        = "Authentik"
       redirect_uri = "https://auth.gateway.services.apocrathia.com/source/oauth/callback/okta/"
       login_uri    = "https://auth.gateway.services.apocrathia.com/source/oauth/login/okta/"
+    }
+  }
+
+  saml_apps = {
+    google_workspace = {
+      preconfigured_app = "google"
+      label             = "Google Workspace"
+      app_settings_json = jsonencode({
+        domain  = "apocrathia.com"
+        afwOnly = false
+      })
     }
   }
 }
