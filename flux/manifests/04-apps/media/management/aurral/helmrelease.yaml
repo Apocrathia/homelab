@@ -20,7 +20,7 @@ spec:
     app:
       name: aurral
       # renovate: datasource=docker depName=ghcr.io/lklynet/aurral
-      image: ghcr.io/lklynet/aurral:2.6.1@sha256:e3958412ba697edf836b87d210fa605dcdf55abc24922a3b73aaa8b81e914e3b
+      image: ghcr.io/lklynet/aurral:2.7.0@sha256:40f2d868806533afa04f22db955bec894483e69fff3b778a4cc64660bbb1f83f
       container:
         name: aurral
         port: 3001
