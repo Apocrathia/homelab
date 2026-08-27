@@ -84,6 +84,10 @@ spec:
           mountPath: /anime
         - name: tv
           mountPath: /tv
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:
