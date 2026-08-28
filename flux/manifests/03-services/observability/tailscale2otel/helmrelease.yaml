@@ -11,7 +11,7 @@ spec:
     spec:
       chart: tailscale2otel
       # renovate: datasource=docker depName=ghcr.io/rknightion/charts/tailscale2otel
-      version: "3.0.0"
+      version: "4.0.1"
       sourceRef:
         kind: HelmRepository
         name: rknightion
