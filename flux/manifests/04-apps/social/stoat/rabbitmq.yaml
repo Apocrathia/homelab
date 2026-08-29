@@ -1,0 +1,114 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: stoat-rabbitmq
+  namespace: stoat
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    app:
+      name: stoat-rabbitmq
+      namespace: stoat
+      # renovate: datasource=docker depName=library/rabbitmq
+      image: rabbitmq:4@sha256:9d39258795e314bec0a204db15cc0b8770590ae983d88efacf159c766b1e539d
+      container:
+        name: rabbitmq
+        port: 5672
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rabbit-username
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: stoat-secrets
+                key: rabbit-password
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 5672
+        targetPort: 5672
+        portName: amqp
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - rabbitmq-diagnostics
+              - -q
+              - check_running
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - rabbitmq-diagnostics
+              - -q
+              - check_running
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+      volumeMounts:
+        - name: rabbit
+          mountPath: /var/lib/rabbitmq
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: rabbit
+            capacity: 2Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false

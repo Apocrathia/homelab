@@ -1,0 +1,109 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: stoat-mongo
+  namespace: stoat
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    app:
+      name: stoat-mongo
+      namespace: stoat
+      # renovate: datasource=docker depName=library/mongo
+      image: mongo:8@sha256:e0ce8c35124d4a9f9785532d1f268f39e9728ffa1cb38f46fa482436424c4bd3
+      container:
+        name: mongo
+        port: 27017
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+      service:
+        type: ClusterIP
+        port: 27017
+        targetPort: 27017
+        portName: mongo
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - /bin/bash
+              - -c
+              - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - /bin/bash
+              - -c
+              - echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+      volumeMounts:
+        - name: db
+          mountPath: /data/db
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: db
+            capacity: 10Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false
