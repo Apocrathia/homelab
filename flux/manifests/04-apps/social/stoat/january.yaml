@@ -27,7 +27,7 @@ spec:
       name: stoat-january
       namespace: stoat
       # renovate: datasource=docker depName=ghcr.io/stoatchat/proxy
-      image: ghcr.io/stoatchat/proxy:v0.15.1@sha256:7b4ab6e698490c315e418cfc4d419d5874a662e9246276994305750187b1f2e2
+      image: ghcr.io/stoatchat/proxy:v0.15.3@sha256:8f0e08ba010078ef2c76bf4a6b86985332225c72e4dd1010694a49ebabb2f7f4
       container:
         name: january
         port: 14705
