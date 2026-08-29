@@ -27,7 +27,7 @@ spec:
       name: stoat-gifbox
       namespace: stoat
       # renovate: datasource=docker depName=ghcr.io/stoatchat/gifbox
-      image: ghcr.io/stoatchat/gifbox:v0.15.1@sha256:9dbe75ab2d7986f49ad33d8aafba81bbc15cb123bd820f3faea0033c144561ef
+      image: ghcr.io/stoatchat/gifbox:v0.15.3@sha256:4ec68a3b28eeef135542c9b6002eaaf3a483773505b831e9596969cd6ec9121b
       container:
         name: gifbox
         port: 14706
