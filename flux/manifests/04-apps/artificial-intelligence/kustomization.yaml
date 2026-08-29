@@ -10,6 +10,7 @@ resources:
   - kagent
   - agents
   - comfyui
+  - duckdb
   - firecrawl
   - hermes-agent
   - jupyterhub

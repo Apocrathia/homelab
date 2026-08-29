@@ -260,6 +260,11 @@ mcp_servers:
     url: "http://discord.mcp-discord.svc.cluster.local:8080/mcp"
     transport: "http"
     auth_type: "none"
+  duckdb:
+    alias: "duckdb"
+    url: "http://duckdb.mcp-duckdb.svc.cluster.local:8080/mcp"
+    transport: "http"
+    auth_type: "none"
   firecrawl:
     alias: "firecrawl"
     url: "http://firecrawl.mcp-firecrawl.svc.cluster.local:8080/mcp"

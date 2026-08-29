@@ -1,0 +1,60 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: duckdb
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: mcp-server
+spec:
+  # mcp-server-motherduck is stdio-only; kmcp's agentgateway adapter exposes
+  # it as streamable-http on deployment.port.
+  transportType: stdio
+  stdioTransport: {}
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14-slim@sha256:83ff1d245a3d57d04152252d3ef9cb361494d0b3395abd65a5ebe91c401c8e83
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      # pip installs the console script under $HOME/.local/bin (pip runs as a
+      # non-root user without --user); prepend it to PATH so the
+      # upstream-documented `mcp-server-motherduck` invocation works.
+      - export PATH=/tmp/.local/bin:$PATH && pip install --quiet mcp-server-motherduck && exec mcp-server-motherduck --db-path /data/duckdb.db --read-write
+    env:
+      HOME: /tmp
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: 1Gi
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # pip installs at startup and needs a writable root filesystem.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: data
+        mountPath: /data
+      - name: shared
+        mountPath: /shared
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: duckdb-mcp-data
+      - name: shared
+        persistentVolumeClaim:
+          claimName: duckdb-mcp-shared
+      - name: tmp
+        emptyDir: {}
