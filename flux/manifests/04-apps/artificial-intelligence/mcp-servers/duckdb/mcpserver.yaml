@@ -8,10 +8,15 @@ metadata:
     app.kubernetes.io/name: duckdb-mcp
     app.kubernetes.io/component: mcp-server
 spec:
-  # mcp-server-motherduck is stdio-only; kmcp's agentgateway adapter exposes
-  # it as streamable-http on deployment.port.
-  transportType: stdio
-  stdioTransport: {}
+  # mcp-server-motherduck speaks native streamable-http (--transport http), so
+  # this runs as ONE long-running process; agentgateway fronts it as a plain
+  # HTTP reverse proxy and no per-session process respawn applies. (Under
+  # transportType stdio the adapter would spawn a fresh process per session
+  # and concurrent read-write sessions would contend on the DuckDB file lock.)
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
   deployment:
     # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
     image: public.ecr.aws/docker/library/python:3.14-slim@sha256:83ff1d245a3d57d04152252d3ef9cb361494d0b3395abd65a5ebe91c401c8e83
@@ -22,7 +27,10 @@ spec:
       # pip installs the console script under $HOME/.local/bin (pip runs as a
       # non-root user without --user); prepend it to PATH so the
       # upstream-documented `mcp-server-motherduck` invocation works.
-      - export PATH=/tmp/.local/bin:$PATH && pip install --quiet mcp-server-motherduck && exec mcp-server-motherduck --db-path /data/duckdb.db --read-write
+      # ephemeral_connections (default on) opens the DB per query and releases
+      # the file lock between queries, so concurrent MCP sessions serialize at
+      # the database instead of deadlocking on a held lock.
+      - export PATH=/tmp/.local/bin:$PATH && pip install --quiet mcp-server-motherduck && exec mcp-server-motherduck --db-path /data/duckdb.db --read-write --transport http --host 0.0.0.0 --port 8080
     env:
       HOME: /tmp
     resources:

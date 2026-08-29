@@ -11,14 +11,14 @@ This deployment includes:
 - `mcp-server-motherduck` installed from PyPI at pod startup
 - Backing DuckDB file at `/data/duckdb.db` on a 10Gi Longhorn RWO volume
 - Shared SMB mount at `/shared` (`//storage.services.apocrathia.com/Library/Databases/DuckDB`) for cross-process Parquet/CSV/JSON exchange with the UI deployment
-- kmcp (`kagent.dev/v1alpha1` MCPServer) with `transportType: stdio` — the agentgateway adapter exposes the stdio process as streamable-http on port 8080
-- Read-write enabled — the MCP process is the sole writer of its `.duckdb` file (see _Concurrency_ below)
+- kmcp (`kagent.dev/v1alpha1` MCPServer) with `transportType: http` — `mcp-server-motherduck` runs its native streamable-http transport as one long-running process on port 8080, fronted by agentgateway as a plain reverse proxy
+- Read-write enabled against `/data/duckdb.db`; concurrency is handled by ephemeral connections (see _Concurrency_ below)
 
 ## Configuration
 
 ### Transport
 
-`transportType: stdio` with `stdioTransport: {}`. kmcp's agentgateway adapter replaces the image entrypoint, runs `cmd`/`args` per MCP session, and serves streamable-http `/mcp` on port 8080.
+`transportType: http` with `httpTransport: { targetPort: 8080, path: /mcp }`. The server runs `--transport http --host 0.0.0.0 --port 8080` as a single long-running process; agentgateway fronts it as a plain HTTP reverse proxy, so the per-session process respawn that applies to `stdio` targets does not apply here.
 
 ### Endpoint
 
@@ -28,7 +28,7 @@ This deployment includes:
 
 ### Concurrency
 
-agentgateway respawns the stdio process **per MCP session**, and `/data/duckdb.db` is read-write — DuckDB's single-writer file lock means two concurrent sessions will contend, and the second process fails to open the database. Treat this server as one-session-at-a-time; agents that hit a lock error should retry.
+One long-running HTTP process multiplexes all MCP sessions. `ephemeral_connections` (default) opens a fresh DuckDB connection per query and releases the file lock between queries, so concurrent read-write sessions serialize at the database instead of deadlocking on a held lock. Heavy concurrent write traffic will queue, not corrupt.
 
 ### Persistence
 
@@ -46,7 +46,7 @@ Per `mcp-server-motherduck`, agents get tools for executing arbitrary SQL querie
 
 ## Notes
 
-The first session after a pod start downloads `mcp-server-motherduck` from PyPI; later sessions reuse the wheel cache in `/tmp` (emptyDir — survives per-session respawns, not pod restarts). First session per pod is slower than a baked image. If startup time becomes painful, switch to a wrapper image with the package pre-installed.
+The process downloads `mcp-server-motherduck` from PyPI at pod startup (wheel cache lives in `/tmp`, an emptyDir, so every restart re-downloads). Pod startup is slower than a baked image. If startup time becomes painful, switch to a wrapper image with the package pre-installed.
 
 ## References
 
