@@ -21,7 +21,7 @@ spec:
       name: prime-agent
       namespace: prime-agent
       # renovate: datasource=docker depName=node
-      image: node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
+      image: node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
 
       # No upstream OCI image exists: install the pinned npm tarball into the
       # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
