@@ -13,7 +13,7 @@ spec:
   discoveryFilters:
     - "Apocrathia/renovate-operator-shadow-probe"
   # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
-  image: ghcr.io/renovatebot/renovate:44.45.1@sha256:1c84139f1f0fe55fed6d8eadd33cdffc9b561078464b29d00e6c25ea6d322cab
+  image: ghcr.io/renovatebot/renovate:44.51.0@sha256:0049d7ff17273a3e910ed06c0aa63efb2f4b88b274a3d87c2e8ea27804d35335
   secretRef: renovate-operator-secret
   provider:
     name: gitlab
