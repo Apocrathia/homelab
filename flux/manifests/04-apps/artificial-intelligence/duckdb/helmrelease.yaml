@@ -158,7 +158,7 @@ spec:
     authentik:
       enabled: true
       mode: "proxy"
-      category: "AI & Automation"
+      category: "Artificial Intelligence"
       displayName: "DuckDB"
       externalHost: "https://duckdb.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/duckdb/icon.svg"
