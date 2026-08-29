@@ -27,7 +27,7 @@ spec:
       containers:
         - name: pushd
           # renovate: datasource=docker depName=ghcr.io/stoatchat/pushd
-          image: ghcr.io/stoatchat/pushd:v0.15.1@sha256:e8a4d518df332a79bf958a858555dd12c4d607b53abe80a566e08db98c09f673
+          image: ghcr.io/stoatchat/pushd:v0.15.3@sha256:b7212314026197d9e997fbb20f14aa624748c96b0595f3015a6640877b061864
           env:
             - name: TZ
               value: "America/Denver"
