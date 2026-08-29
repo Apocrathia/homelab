@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-duckdb
+  labels:
+    name: mcp-duckdb
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+    mcp-server: "true"
+    images/dockerhub: "true"
+  annotations:
+    description: "Namespace for DuckDB MCP server deployment"

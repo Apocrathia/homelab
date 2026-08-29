@@ -101,6 +101,14 @@ own the secret.
 - **LiteLLM**: `mcp_servers.discord` (alias `discord`)
 - **Source**: [SaseQ/discord-mcp](https://github.com/SaseQ/discord-mcp)
 
+### DuckDB MCP Server
+
+- **Purpose**: SQL execution against a persistent local DuckDB file for data exploration and agent-driven analysis
+- **Tools**: Query execution, schema inspection, table listing, read-write data operations
+- **Backend**: Longhorn-backed `/data/duckdb.db` (separate from the human-facing UI deployment)
+- **LiteLLM**: `mcp_servers.duckdb` (alias `duckdb`)
+- **Source**: [motherduckdb/mcp-server-motherduck](https://github.com/motherduckdb/mcp-server-motherduck)
+
 ## External MCP Servers (via LiteLLM)
 
 ### DeepWiki

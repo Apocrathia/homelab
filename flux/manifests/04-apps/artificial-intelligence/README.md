@@ -87,6 +87,10 @@ flowchart TB
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
 
+### Data & Analytics
+
+- **[DuckDB](./duckdb/README.md)** - In-process analytical database with the official notebook UI for ad-hoc SQL
+
 ### Evals & Red Teaming
 
 - **[Promptfoo](./promptfoo/README.md)** - LLM eval framework and red-teaming platform with declarative configs and a web UI

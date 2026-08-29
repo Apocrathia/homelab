@@ -1,0 +1,68 @@
+---
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: duckdb
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: mcp-server
+spec:
+  # mcp-server-motherduck speaks native streamable-http (--transport http), so
+  # this runs as ONE long-running process; agentgateway fronts it as a plain
+  # HTTP reverse proxy and no per-session process respawn applies. (Under
+  # transportType stdio the adapter would spawn a fresh process per session
+  # and concurrent read-write sessions would contend on the DuckDB file lock.)
+  transportType: http
+  httpTransport:
+    targetPort: 8080
+    path: /mcp
+  deployment:
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    image: public.ecr.aws/docker/library/python:3.14-slim@sha256:83ff1d245a3d57d04152252d3ef9cb361494d0b3395abd65a5ebe91c401c8e83
+    port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      # pip installs the console script under $HOME/.local/bin (pip runs as a
+      # non-root user without --user); prepend it to PATH so the
+      # upstream-documented `mcp-server-motherduck` invocation works.
+      # ephemeral_connections (default on) opens the DB per query and releases
+      # the file lock between queries, so concurrent MCP sessions serialize at
+      # the database instead of deadlocking on a held lock.
+      - export PATH=/tmp/.local/bin:$PATH && pip install --quiet mcp-server-motherduck && exec mcp-server-motherduck --db-path /data/duckdb.db --read-write --transport http --host 0.0.0.0 --port 8080
+    env:
+      HOME: /tmp
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: 1Gi
+      requests:
+        cpu: "100m"
+        memory: 256Mi
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    securityContext:
+      allowPrivilegeEscalation: false
+      # pip installs at startup and needs a writable root filesystem.
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - name: data
+        mountPath: /data
+      - name: shared
+        mountPath: /shared
+      - name: tmp
+        mountPath: /tmp
+    volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: duckdb-mcp-data
+      - name: shared
+        persistentVolumeClaim:
+          claimName: duckdb-mcp-shared
+      - name: tmp
+        emptyDir: {}

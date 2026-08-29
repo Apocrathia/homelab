@@ -1,0 +1,75 @@
+---
+# Persistent storage for the MCP server's local DuckDB file. RWO matches
+# DuckDB's single-writer file-lock model — the MCP process is the only
+# writer of /data/duckdb.db.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: duckdb-mcp-data
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+# SMB credentials for the shared Parquet/CSV/JSON landing zone.
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: duckdb-mcp-shared-credentials
+  namespace: mcp-duckdb
+spec:
+  itemPath: "vaults/Secrets/items/smb-credentials"
+---
+# SMB-backed shared storage at //storage.services.apocrathia.com/Library/Databases/DuckDB.
+# Mounted RWX so the MCP server can both read existing files and persist
+# query results back. The same share is mounted by the duckdb UI pod, so
+# files written here are queryable from notebooks and vice versa.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: duckdb-mcp-shared-pv
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: shared-storage
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: duckdb-mcp-shared-volume
+    volumeAttributes:
+      source: "//storage.services.apocrathia.com/Library"
+      subDir: "Databases/DuckDB"
+      createSubDir: "true"
+    nodeStageSecretRef:
+      name: duckdb-mcp-shared-credentials
+      namespace: mcp-duckdb
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: duckdb-mcp-shared
+  namespace: mcp-duckdb
+  labels:
+    app.kubernetes.io/name: duckdb-mcp
+    app.kubernetes.io/component: shared-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: duckdb-mcp-shared-pv
+  resources:
+    requests:
+      storage: 100Gi
