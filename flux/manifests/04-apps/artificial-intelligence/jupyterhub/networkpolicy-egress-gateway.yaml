@@ -47,3 +47,14 @@ spec:
         - ports:
             - port: "9000"
               protocol: TCP
+    # The hub must reach the Kubernetes API to spawn and watch singleuser
+    # pods (KubeSpawner reflector). The API runs on node host networking, so
+    # the hub's private-CIDR rules do not cover it; it matches the
+    # kube-apiserver identity (both reserved:host and reserved:remote-node
+    # carry the kube-apiserver label). Without this, spawn times out.
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
