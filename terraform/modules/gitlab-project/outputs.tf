@@ -1,6 +1,6 @@
 output "project_id" {
   description = "Numeric GitLab project id"
-  value       = data.gitlab_project.this.id
+  value       = local.project_id
 }
 
 output "project_path" {

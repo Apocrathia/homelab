@@ -35,6 +35,13 @@ inputs = {
   # module), then enforce no direct pushes — everything through MRs.
   manage_branch_protection = true
   protected_branch         = "main"
+
+  # Adopt the project itself and mark it with the managed-by-terraform topic.
+  # description / resolve_outdated_diff_discussions are pinned because provider
+  # v19 resets optional-only attributes to null when unset.
+  manage_project                      = true
+  project_description                 = "GitOps-managed Kubernetes homelab cluster on Talos Linux with Flux CD, 1Password secrets management, and production-like infrastructure for home services."
+  resolve_outdated_diff_discussions   = true
   terraform_label_name        = "managed-by-terraform"
   terraform_label_color       = "#428BCA"
   terraform_label_description = "Owned by OpenTofu under terraform/deployments/gitlab"
