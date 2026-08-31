@@ -21,7 +21,7 @@ generate "provider" {
       required_providers {
         gitlab = {
           source  = "gitlabhq/gitlab"
-          version = "~> 18.0"
+          version = "~> 19.0"
         }
         onepassword = {
           source  = "1Password/onepassword"

@@ -46,7 +46,7 @@ variable "protected_branch" {
 
 variable "branch_protection_push_access_level" {
   type        = string
-  description = "Who may push to the protected branch (no one | developer | maintainer)"
+  description = "allowed_to_push access level (no one | developer | maintainer)"
   default     = "no one"
 
   validation {
@@ -57,7 +57,7 @@ variable "branch_protection_push_access_level" {
 
 variable "branch_protection_merge_access_level" {
   type        = string
-  description = "Who may merge to the protected branch (no one | developer | maintainer)"
+  description = "allowed_to_merge access level (no one | developer | maintainer)"
   default     = "maintainer"
 
   validation {

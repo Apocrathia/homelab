@@ -19,16 +19,29 @@ resource "gitlab_project_label" "managed_by_terraform" {
 }
 
 # Branch protection: adopts the existing GitLab-side rule on first apply
-# (import block below), then enforces the access levels in one plan/apply.
+# (import block below), then enforces the access levels. Uses the EE
+# allowed_to_* attributes: access changes are in-place updates on gitlab.com,
+# unlike the CE string attrs (push_access_level/merge_access_level), which are
+# ForceNew and not available for EE. Requires provider >= 19 (v18 marks the
+# nested attributes read-only).
 resource "gitlab_branch_protection" "main" {
   count = var.manage_branch_protection ? 1 : 0
 
-  project                = data.gitlab_project.this.id
-  branch                 = var.protected_branch
-  push_access_level      = var.branch_protection_push_access_level
-  merge_access_level     = var.branch_protection_merge_access_level
-  unprotect_access_level = "maintainer"
-  allow_force_push       = var.branch_protection_allow_force_push
+  project          = data.gitlab_project.this.id
+  branch           = var.protected_branch
+  allow_force_push = var.branch_protection_allow_force_push
+
+  allowed_to_push = [{
+    access_level = var.branch_protection_push_access_level
+  }]
+
+  allowed_to_merge = [{
+    access_level = var.branch_protection_merge_access_level
+  }]
+
+  allowed_to_unprotect = [{
+    access_level = "maintainer"
+  }]
 
   lifecycle {
     prevent_destroy = true
