@@ -95,9 +95,22 @@ spec:
           pvcName: jupyterhub-notebooks
           subPath: "{username}"
         homeMountPath: /home/jovyan
+        # Local POSIX-capable emptyDir for Jupyter runtime/data state (the SMB
+        # home volume cannot enforce 0600 file permissions).
+        extraVolumes:
+          - name: jupyter-runtime
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: jupyter-runtime
+            mountPath: /var/lib/jupyter-runtime
       # Extra environment variables
       extraEnv:
         TZ: "America/Denver"
+        # Jupyter's secure_write requires 0600 runtime files; the SMB home
+        # mount (file_mode=0644, noperm) cannot honor chmod, so point Jupyter
+        # runtime/data dirs at the local emptyDir below.
+        JUPYTER_RUNTIME_DIR: "/var/lib/jupyter-runtime"
+        JUPYTER_DATA_DIR: "/var/lib/jupyter-runtime/data"
       # Profile options for users to choose their environment
       profileList:
         - display_name: "JupyterLab (PyTorch)"

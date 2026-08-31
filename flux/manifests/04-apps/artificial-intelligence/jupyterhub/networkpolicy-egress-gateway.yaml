@@ -1,0 +1,60 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: hub-egress-gateway
+  namespace: jupyterhub
+  labels:
+    app.kubernetes.io/name: jupyterhub
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Allow hub pods to reach the Cilium gateway Envoy for the authentik OIDC token exchange"
+spec:
+  description: |
+    Additive egress allow so hub pods can reach authentik through the
+    gateway LB IP. In-cluster traffic to the LB IP is socket-redirected
+    to the node-local Cilium Envoy, which enforces the hub's egress
+    policy against the reserved:ingress identity and propagates the
+    hub's identity to the upstream connection. The chart-managed hub
+    NetworkPolicy covers neither, so Envoy answered "403 Access denied"
+    at the gateway, and "503 no healthy upstream" for the backend.
+  endpointSelector:
+    matchLabels:
+      app: jupyterhub
+      component: hub
+      release: jupyterhub
+  egress:
+    # Pass the gateway Envoy's policy check for in-cluster (hairpin) traffic
+    # to the gateway LB IP.
+    - toEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # The gateway preserves the hub's identity when connecting upstream, so the
+    # hub must also be allowed to reach the authentik server pods directly;
+    # otherwise Envoy filters all upstream hosts and answers "503 no healthy
+    # upstream".
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: authentik
+            app.kubernetes.io/component: server
+            io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+    # The hub must reach the Kubernetes API to spawn and watch singleuser
+    # pods (KubeSpawner reflector). The API runs on node host networking, so
+    # the hub's private-CIDR rules do not cover it; it matches the
+    # kube-apiserver identity (both reserved:host and reserved:remote-node
+    # carry the kube-apiserver label). Without this, spawn times out.
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
