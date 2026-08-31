@@ -21,7 +21,7 @@ spec:
       name: hermes-agent
       namespace: hermes-agent
       # renovate: datasource=docker depName=nousresearch/hermes-agent
-      image: nousresearch/hermes-agent:v2026.8.27@sha256:e0df6adebddf29b91112aefc999d4aaf6846c9eb544faca5672a16a13590ff79
+      image: nousresearch/hermes-agent:v2026.8.31@sha256:64923faeae267792bf9bf87fe3b4c4869e35004e360c7df01730ad801b74d524
 
       # s6 /init must run as root to fix /run and remap UIDs; generic-app defaults
       # to runAsUser 1000. Run gateway + dashboard directly as the image hermes user.
