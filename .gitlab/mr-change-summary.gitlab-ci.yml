@@ -5,7 +5,7 @@ mr-change-summary:
   # into hung streamable-HTTP sessions and trip kagent's ~180s A2A deadline.
   resource_group: mr-change-summary
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14@sha256:b0aed0e0059e9b1527ef57689a7206f32526627b0713e2228a916df62880188a
+  image: public.ecr.aws/docker/library/python:3.14@sha256:8edbf9e42c7fb168b9c523718ed907117e6d2e60f5889c0c499bbda3a787da53
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
