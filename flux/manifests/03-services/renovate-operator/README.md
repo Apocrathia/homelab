@@ -9,15 +9,14 @@ Kubernetes operator that runs Renovate as per-project Jobs driven by `RenovateJo
 This deployment includes:
 
 - The mogenius renovate-operator and its `RenovateJob` CRD
-- A shadow `RenovateJob` (`homelab-shadow`) whose discovery filter matches no
-  real project, so the operator proves its discovery loop without opening MRs
+- The `RenovateJob` (`homelab`) that discovers `Apocrathia/*` on GitLab daily
+  at 03:00 and runs one executor Job per project
 - Web UI exposed via Gateway with Authentik OIDC authentication
 - 1Password-managed platform and OIDC credentials via `renovate-operator-secret`
 
-Mend Renovate CE in the `renovate` namespace is still the active bot. This
-operator runs alongside it in shadow mode until cutover, which flips the
-discovery filter to the real group scope and retires CE. Never point both at
-the same repositories.
+This operator is the only Renovate bot on the group. Mend Renovate CE (former
+`renovate` namespace) was retired at cutover; never run two bots against the
+same repositories.
 
 ## Access
 
@@ -68,9 +67,9 @@ otherwise.
 kubectl get pods -n renovate-operator
 kubectl logs -n renovate-operator deployment/renovate-operator -f
 
-# Shadow job state and discovered projects
+# Job state and discovered projects
 kubectl get renovatejobs -n renovate-operator
-kubectl describe renovatejob homelab-shadow -n renovate-operator
+kubectl describe renovatejob homelab -n renovate-operator
 
 # Discovery and executor Jobs the operator spawns
 kubectl get jobs -n renovate-operator
@@ -83,4 +82,4 @@ kubectl get httproute -n renovate-operator
 
 - **[renovate-operator documentation](https://github.com/mogenius/renovate-operator)** - Source, CRD schema, and Helm chart
 - **[Renovate documentation](https://docs.renovatebot.com/)** - Renovate configuration reference
-- **[Renovate CE](../renovate/README.md)** - The currently active Renovate deployment
+- **[Renovate CE](../renovate/README.md)** - Retired predecessor deployment (kept for reference during cutover validation)
