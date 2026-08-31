@@ -71,3 +71,33 @@ variable "branch_protection_allow_force_push" {
   description = "Allow force push to the protected branch"
   default     = false
 }
+
+variable "manage_project" {
+  type        = bool
+  description = "When true, adopt and manage the project itself (required for topics)"
+  default     = false
+}
+
+variable "project_description" {
+  type        = string
+  description = "Project description. Must be set when manage_project is true: provider v19 resets optional-only attributes to null when unset"
+  default     = null
+}
+
+variable "resolve_outdated_diff_discussions" {
+  type        = bool
+  description = "Automatically resolve outdated MR diff discussions. Optional-only in provider v19: set explicitly when manage_project is true if enabled on the project"
+  default     = null
+}
+
+variable "project_topics" {
+  type        = set(string)
+  description = "Extra topics for the project (terraform_topic_name is always added when manage_project is true)"
+  default     = []
+}
+
+variable "terraform_topic_name" {
+  type        = string
+  description = "Topic marking the project as Terraform-managed"
+  default     = "managed-by-terraform"
+}
