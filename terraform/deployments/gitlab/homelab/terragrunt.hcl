@@ -30,6 +30,11 @@ inputs = {
 
   project_path                = "Apocrathia/homelab"
   manage_terraform_label      = false
+
+  # Branch protection: adopt the existing rule on main (import block in the
+  # module), then enforce no direct pushes — everything through MRs.
+  manage_branch_protection = true
+  protected_branch         = "main"
   terraform_label_name        = "managed-by-terraform"
   terraform_label_color       = "#428BCA"
   terraform_label_description = "Owned by OpenTofu under terraform/deployments/gitlab"

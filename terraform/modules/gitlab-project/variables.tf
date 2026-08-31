@@ -31,3 +31,43 @@ variable "terraform_label_color" {
   description = "Label color (hex with leading # or a CSS color name)"
   default     = "#428BCA"
 }
+
+variable "manage_branch_protection" {
+  type        = bool
+  description = "When true, adopt and manage branch protection for protected_branch"
+  default     = false
+}
+
+variable "protected_branch" {
+  type        = string
+  description = "Branch to protect"
+  default     = "main"
+}
+
+variable "branch_protection_push_access_level" {
+  type        = string
+  description = "allowed_to_push access level (no one | developer | maintainer)"
+  default     = "no one"
+
+  validation {
+    condition     = contains(["no one", "developer", "maintainer"], var.branch_protection_push_access_level)
+    error_message = "branch_protection_push_access_level must be one of: no one, developer, maintainer."
+  }
+}
+
+variable "branch_protection_merge_access_level" {
+  type        = string
+  description = "allowed_to_merge access level (no one | developer | maintainer)"
+  default     = "maintainer"
+
+  validation {
+    condition     = contains(["no one", "developer", "maintainer"], var.branch_protection_merge_access_level)
+    error_message = "branch_protection_merge_access_level must be one of: no one, developer, maintainer."
+  }
+}
+
+variable "branch_protection_allow_force_push" {
+  type        = bool
+  description = "Allow force push to the protected branch"
+  default     = false
+}
