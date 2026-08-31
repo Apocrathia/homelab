@@ -11,6 +11,7 @@ resources:
   - storage.yaml
   - helmrelease.yaml
   - httproute.yaml
+  - networkpolicy-egress-gateway.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
