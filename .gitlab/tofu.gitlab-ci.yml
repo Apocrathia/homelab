@@ -104,7 +104,7 @@ tofu-plan:
             if (refresh[unit] == "") {
               return
             }
-            print "<details><summary>Proxmox address refresh</summary>"
+            print "<details><summary><code>" unit "</code> — Proxmox address refresh</summary>"
             print ""
             print "```hcl"
             printf "%s", refresh[unit]
@@ -207,22 +207,26 @@ tofu-plan:
               unit = order[i]
               if (is_compact(status[unit])) {
                 print "- `" unit "`: " status[unit]
-                if (refresh[unit] != "") {
-                  print ""
-                  print_refresh(unit)
-                }
                 continue
               }
 
               print "<details open><summary><code>" unit "</code> — " status[unit] "</summary>"
               print ""
-              print_refresh(unit)
               print "```hcl"
               printf "%s", body[unit]
               print "```"
               print ""
               print "</details>"
               print ""
+            }
+
+            # Address-refresh noise goes last so the unit list stays unbroken.
+            for (i = 1; i <= unit_count; i++) {
+              unit = order[i]
+              if (refresh[unit] != "") {
+                print ""
+                print_refresh(unit)
+              }
             }
           }
         '
