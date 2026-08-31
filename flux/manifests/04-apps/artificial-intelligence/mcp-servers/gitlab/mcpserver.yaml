@@ -18,7 +18,7 @@ spec:
     targetPort: 8080
   deployment:
     # renovate: datasource=docker depName=zereight050/gitlab-mcp
-    image: docker.io/zereight050/gitlab-mcp:2.1.54@sha256:6f4586127a0db15bc22cda3be61965677ea4a7744b083b653bc7f61b916bd300
+    image: docker.io/zereight050/gitlab-mcp:2.1.55@sha256:31c7de903269a2dce557a974f31ba4f28fcc7ea0d9a1831b98aa2352ccd4ca75
     port: 8080
     env:
       HOST: "0.0.0.0"
