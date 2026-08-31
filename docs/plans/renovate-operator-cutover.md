@@ -2,7 +2,7 @@
 title: "Renovate operator: shadow, then replace Renovate CE"
 status: active
 found_at: 2026-08-17
-updated_at: 2026-08-17
+updated_at: 2026-08-31
 area: flux
 ---
 
@@ -50,6 +50,10 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
   Authentik OIDC configured. Admin access limited to `kubernetes-admins`.
 - Job image `ghcr.io/renovatebot/renovate` — avoids Docker Hub rate limits;
   in policy `allowedImages`.
+- Carry CE's registry credentials into executor Jobs via `extraEnv` +
+  `secretKeyRef` — `detectHostRulesFromEnv: true` builds hostRules from the
+  `DOCKER_*` env vars; without them Docker Hub pulls hit anonymous rate
+  limits and GHCR pulls lose auth.
 
 ## Steps
 
@@ -64,14 +68,17 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
       `github-token`) and a generated `oidc-session-secret` — without the
       first, discovery jobs fail auth
 - [x] Merge shadow MR; confirm Flux reconciles `services-renovate-operator`
-- [ ] Copy the Authentik provider's client ID + secret into `oidc-client-id`
+- [x] Copy the Authentik provider's client ID + secret into `oidc-client-id`
       / `oidc-client-secret` on the same 1Password item (blueprint creates
       the provider on apply; UI login fails until this is done)
-- [ ] Validate shadow: operator pod healthy, daily discovery job runs,
+- [x] Validate shadow: operator pod healthy, daily discovery job runs,
       `RenovateJob` status shows zero projects, OIDC login works at
-      https://renovate.gateway.services.apocrathia.com
-- [ ] Cutover MR: `discoveryFilters: ["Apocrathia/*"]`, suspend/remove the
-      Mend CE HelmRelease + flux-kustomization entry
+      https://renovate.gateway.services.apocrathia.com (verified live
+      2026-08-31: discovery Job completes in ~13s, UI serves 200 behind OIDC)
+- [x] Cutover MR: `discoveryFilters: ["Apocrathia/*"]`, `extraEnv` registry
+      credentials carried over from CE, Mend CE entry dropped from
+      `flux/manifests/kustomization.yaml` (Flux prunes the namespace,
+      HelmRelease, and CNPG cluster on merge)
 - [ ] Watch first real runs; confirm no duplicate MRs on repos CE already
       touched (branch/MR names are deterministic, expect reuse not dupes)
 - [ ] Tear down CE: delete `03-services/renovate/`, its root kustomization
@@ -89,7 +96,7 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
 - `kubectl kustomize flux/manifests/03-services/renovate-operator/`
 - `pre-commit run --files <changed files>`
 - `kubectl get renovatejobs -n renovate-operator` and
-  `kubectl describe renovatejob homelab-shadow -n renovate-operator` (read-only)
+  `kubectl describe renovatejob homelab -n renovate-operator` (read-only)
 - `kubectl get jobs -n renovate-operator` — discovery jobs only during shadow
 
 ## Notes
