@@ -7,7 +7,7 @@ metadata:
 spec:
   # PostgreSQL version
   # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
-  imageName: ghcr.io/cloudnative-pg/postgresql:16@sha256:2df439412099abae19e8d2ccba95a9bc21ee58af4462c9f62d02cd6bdd026dba
+  imageName: ghcr.io/cloudnative-pg/postgresql:16@sha256:34cd4159d07b3410a1b29da35072e2e927a0905e717a61afa3814624a2e8859a
 
   # Number of instances
   instances: 1
