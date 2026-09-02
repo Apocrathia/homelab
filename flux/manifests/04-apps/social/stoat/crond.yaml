@@ -27,7 +27,7 @@ spec:
       containers:
         - name: crond
           # renovate: datasource=docker depName=ghcr.io/stoatchat/crond
-          image: ghcr.io/stoatchat/crond:v0.15.3@sha256:e29e2dc6789096071a7c694601514463515bd0e9c332fe1aae5348dfb4977ca1
+          image: ghcr.io/stoatchat/crond:v0.15.4@sha256:05b2978b5d963f95c712d70d10a9d751fe7ca845c6f6a9836af4923bd93213cd
           env:
             - name: TZ
               value: "America/Denver"
