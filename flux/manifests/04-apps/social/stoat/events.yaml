@@ -27,7 +27,7 @@ spec:
       name: stoat-events
       namespace: stoat
       # renovate: datasource=docker depName=ghcr.io/stoatchat/events
-      image: ghcr.io/stoatchat/events:v0.15.3@sha256:3504a540d8f1de0aace13d4b2bd3b1221ee21aeb037fadd0959c85c4a9c920c3
+      image: ghcr.io/stoatchat/events:v0.15.4@sha256:96addd29c8b6b7264ea38e81c3ad8bf451691f8ffd4fa2d0704813af27597366
       container:
         name: events
         port: 14703
