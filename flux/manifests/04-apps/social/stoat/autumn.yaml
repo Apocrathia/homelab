@@ -27,7 +27,7 @@ spec:
       name: stoat-autumn
       namespace: stoat
       # renovate: datasource=docker depName=ghcr.io/stoatchat/file-server
-      image: ghcr.io/stoatchat/file-server:v0.15.3@sha256:328f42d90d10f3c73fa21c44bb759769dcf00ef9163440e5136267cd2ebc83d0
+      image: ghcr.io/stoatchat/file-server:v0.15.4@sha256:6f50d872b590052486aa15633a27204c805a62b3d36ab67af417a1a1fe69b8af
       container:
         name: autumn
         port: 14704
