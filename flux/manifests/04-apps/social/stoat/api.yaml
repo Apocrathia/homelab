@@ -27,7 +27,7 @@ spec:
       name: stoat-api
       namespace: stoat
       # renovate: datasource=docker depName=ghcr.io/stoatchat/api
-      image: ghcr.io/stoatchat/api:v0.15.3@sha256:9d9cc9119a61ce1477f08fce05387fbfca7cf4d939dd8b69d33851ad4790c6c5
+      image: ghcr.io/stoatchat/api:v0.15.4@sha256:a1932875c33a480d01e3d29e726b4d3276ad4b9996d5a97d0525132ca08d8884
       container:
         name: api
         port: 14702
