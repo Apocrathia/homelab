@@ -37,7 +37,7 @@ spec:
       registry: ghcr.io
       repository: mogenius/renovate-operator
       # renovate: datasource=docker depName=ghcr.io/mogenius/renovate-operator
-      tag: "6.1.0"
+      tag: "6.2.0"
       pullPolicy: IfNotPresent
 
     # CRDs installed via the chart's hook job (kubectl apply of the bundled CRD)
