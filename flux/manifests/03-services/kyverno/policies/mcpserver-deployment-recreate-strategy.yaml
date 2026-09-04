@@ -1,0 +1,46 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mcpserver-deployment-recreate-strategy
+  annotations:
+    policies.kyverno.io/title: MCPServer Deployments use Recreate strategy
+    policies.kyverno.io/category: Availability
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/description: >-
+      The kagent kmcp controller renders MCPServer Deployments with the default
+      RollingUpdate strategy and exposes no field to override it. MCPServers that
+      mount RWO Longhorn PVCs then deadlock on upgrade: the new ReplicaSet pod is
+      created before the old one terminates, and the volume stays attached to the
+      node running the old pod, so the new pod sits in ContainerCreating until the
+      rollout hits ProgressDeadlineExceeded. This policy patches any Deployment
+      owned by an MCPServer CR to use the Recreate strategy, trading a short
+      downtime window (acceptable in a homelab) for rollouts that actually
+      complete. Remove this once upstream kmcp exposes spec.deployment.strategy.
+spec:
+  # Mutating policies don't take validationFailureAction; the rule below is a
+  # no-op patch failure risk (the fields always exist on a Deployment).
+  background: true
+  rules:
+    - name: set-recreate-strategy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      # Only Deployments owned by a kagent MCPServer CR. ownerReferences is the
+      # stable signal — names/labels vary across MCPServer instances.
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.ownerReferences[?kind=='MCPServer'] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+      mutate:
+        patchStrategicMerge:
+          spec:
+            strategy:
+              type: Recreate
+              # Explicitly null out the rollingUpdate block: with type=Recreate
+              # the API rejects a spec that still carries rollingUpdate params.
+              rollingUpdate: null
