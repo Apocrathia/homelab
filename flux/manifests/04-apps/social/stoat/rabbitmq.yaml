@@ -27,7 +27,7 @@ spec:
       name: stoat-rabbitmq
       namespace: stoat
       # renovate: datasource=docker depName=library/rabbitmq
-      image: rabbitmq:4@sha256:da7257ed0ded84a4a48eeb69e1428a3ade65454f95f6a16523e0aa1e364d1cb1
+      image: rabbitmq:4@sha256:1773ab33af6af1bbae4a3b1070472c863e669806a9ac63a627c02a44b3a59dcf
       container:
         name: rabbitmq
         port: 5672
