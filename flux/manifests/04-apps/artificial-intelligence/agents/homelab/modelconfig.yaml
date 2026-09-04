@@ -6,7 +6,7 @@ metadata:
   namespace: kagent
 spec:
   provider: OpenAI
-  model: glm-5.2-prime
+  model: glm-5.3-prime
   openAI:
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
   apiKeySecret: homelab-agent-secrets
