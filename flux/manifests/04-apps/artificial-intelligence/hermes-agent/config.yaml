@@ -8,13 +8,13 @@
 # Named custom_providers + key_env is required for cluster LiteLLM.
 #
 # Model tiers (all via LiteLLM → Prime):
-#   main  = glm-5.2-prime          (default agent thinking)
+#   main  = glm-5.3-prime          (default agent thinking)
 #   hard  = kimi-k3-prime          (/model hard or /model hard --once)
 #   smol  = llama3.1-8b-prime      (auxiliary side-jobs + /model smol)
 # Hermes does not auto-route by difficulty — escalate hard with /model.
 model:
   provider: litellm
-  default: glm-5.2-prime
+  default: glm-5.3-prime
 
 custom_providers:
   - name: litellm
@@ -23,7 +23,7 @@ custom_providers:
     # Curated catalog for the dashboard picker — skip live /v1/models dump.
     discover_models: false
     models:
-      - glm-5.2-prime
+      - glm-5.3-prime
       - kimi-k3-prime
       - llama3.1-8b-prime
 
