@@ -13,11 +13,14 @@
 	},
 
 	// autoApprovers lets tagged devices approve certain requests without manual
-	// admin approval. "services" covers Tailscale Services (used by ProxyGroup / HA ingress).
+	// admin approval. "services" covers Tailscale Services (used by ProxyGroup / HA
+	// ingress). "exitNode" lets tag:k8s proxy pods advertise as exit nodes without
+	// per-device approval (the exit-nodes ProxyGroup recreates pods on reschedule).
 	"autoApprovers": {
 		"services": {
 			"tag:k8s": ["tag:k8s"],
 		},
+		"exitNode": ["tag:k8s"],
 	},
 
 	// Define grants that govern access for users, groups, autogroups, tags,

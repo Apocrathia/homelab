@@ -31,6 +31,14 @@ Operator and proxy defaults live in `helmrelease.yaml`. Workloads use Tailscale 
 - **API server proxy**: set `apiServerProxyConfig.mode` to `"true"` or `"noauth"` in `helmrelease.yaml`, or deploy a `ProxyGroup` of type `kube-apiserver`.
 - **Custom proxy behavior**: create `ProxyClass` resources ([docs](https://tailscale.com/kb/1445/kubernetes-operator-customization)).
 
+## Exit node
+
+`config/exit-node.yaml` runs a `ProxyGroup` (`type: egress`, 2 replicas) whose pods advertise as tailnet exit nodes: `exit-node-0` and `exit-node-1`, tagged `tag:k8s`. Clients select one with `tailscale set --exit-node=exit-node-0` or the OS app.
+
+The ProxyGroup lives under `config/` in its own Flux Kustomization (`services-tailscale-config`, `dependsOn: services-tailscale`) because the operator Helm chart installs the CRD — a CR in the same Kustomization as its CRD-installing HelmRelease deadlocks server-side dry-run on a fresh cluster.
+
+Exit-node routes need approval per device, and the ProxyGroup recreates pods on reschedule — so the tailnet policy auto-approves `tag:k8s` as exit nodes (`autoApprovers.exitNode` in `terraform/deployments/tailscale/tailnet/policy.hujson`). That policy is applied by Terraform, not Flux: apply it before or alongside the first rollout of this ProxyGroup, or the devices sit in the admin console awaiting approval.
+
 ## Service sharing with external users
 
 Pattern for sharing homelab services with friends over Tailscale without any
