@@ -88,7 +88,7 @@ spec:
       repository: ghcr.io/berriai/litellm-database
       pullPolicy: IfNotPresent
       # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-      tag: "v1.99.0"
+      tag: "v1.99.1"
 
     # Replica configuration
     replicaCount: 1
