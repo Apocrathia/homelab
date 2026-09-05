@@ -31,9 +31,12 @@ spec:
                 - Deployment
       # Only Deployments owned by a kagent MCPServer CR. ownerReferences is the
       # stable signal — names/labels vary across MCPServer instances.
+      # Nil-safe: most Deployments carry no ownerReferences; without the
+      # `|| `[]`` fallback, length(nil) errors and the webhook failurePolicy
+      # (Fail) denies every Deployment write cluster-wide.
       preconditions:
         all:
-          - key: "{{ request.object.metadata.ownerReferences[?kind=='MCPServer'] | length(@) }}"
+          - key: "{{ (request.object.metadata.ownerReferences || `[]`) | [?kind=='MCPServer'] | length(@) }}"
             operator: GreaterThan
             value: 0
       mutate:
