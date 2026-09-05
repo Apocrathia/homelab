@@ -18,10 +18,6 @@ Lemmy UI frontend for the lemmy.ml instance.
 
 Open-source VoIP server for low-latency voice chat.
 
-### [Stoat](./stoat/README.md)
-
-Self-hosted Stoat chat (Revolt fork) — Discord-style messaging, invite-only.
-
 ### [The Lounge](./thelounge/README.md)
 
 Self-hosted web IRC client with persistent connections and message history.
