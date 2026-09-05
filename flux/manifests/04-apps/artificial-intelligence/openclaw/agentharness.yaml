@@ -10,11 +10,11 @@ metadata:
     app.kubernetes.io/component: harness
 spec:
   backend: openclaw
-  runtime: substrate
   description: Resident OpenClaw coding harness on Agent Substrate
   modelConfigRef: openclaw-model
-  substrate:
-    # Omit workerPoolRef — controller default is ate-system/kagent-default.
-    # Secret key must be "token" (CRD-hardcoded).
-    gatewayTokenSecretRef:
-      name: openclaw-harness-secrets
+  # Omit workerPoolRef — controller default is ate-system/kagent-default.
+  # kagent 0.10.0 (CRD v1alpha2) removed spec.runtime and
+  # spec.substrate.gatewayTokenSecretRef: the gateway no longer authenticates
+  # the actor WebSocket handshake with a bearer token. Harness workload env is
+  # built entirely by the controller (bootstrap JSON + ACP shim env).
+  substrate: {}
