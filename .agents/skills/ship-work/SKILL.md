@@ -36,25 +36,25 @@ this lap. Never merge or approve the MR unless the operator names that action.
 
 ## Non-Cursor agents
 
-This skill assumes Cursor's subagent system (`shell`, `bugbot`, fix subagents).
+This skill assumes Cursor's subagent system (`shell`, fix subagents).
 Agents without that layer run git and GitLab tools directly from the shell.
 
 - **Step 0:** resolve MR via GitLab MCP (`user-gitlab`) or `glab mr view` on the
   host. Prefer MCP.
-- **Step 1** ("Bugbot: `Diff: uncommitted changes`"): Bugbot is a Cursor
-  subagent type. Skip it outside Cursor; run local reviewers only. See
-  [`review-loop`](../review-loop/SKILL.md).
+- **Step 1** (uncommitted re-review): run
+  [`review-loop`](../review-loop/SKILL.md) with uncommitted scope (local gates;
+  add the review lens skills when deeper review is wanted).
 - **Step 3** (`watch-mr`): same Bugbot skip outside Cursor.
 
 ## Roles
 
-| Job                               | Subagent                             | Parent does                                                                                                                                                                                                         |
-| --------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commit message draft              | parent                               | Read diff; follow Conventional Commits ([`.cursor/rules/conventional-commit-messages.mdc`](../../../.cursor/rules/conventional-commit-messages.mdc)) and [`draft-commit`](../draft-commit/SKILL.md) message quality |
-| Push / open MR                    | `shell` (local system with git auth) | Spawn with worktree **absolute path**; prefer GitLab MCP for MR create                                                                                                                                              |
-| Local reviewers (optional re-run) | `shell` + `bugbot`                   | After substantial watch-mr fixes                                                                                                                                                                                    |
-| GitLab thread triage              | `shell` + fix subagents              | Same rules as `watch-mr`                                                                                                                                                                                            |
-| MR watch loop                     | parent or `shell`                    | [`watch-mr`](../watch-mr/SKILL.md) until merged or dismissed                                                                                                                                                        |
+| Job                        | Subagent                             | Parent does                                                                                                                                                                                                         |
+| -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commit message draft       | parent                               | Read diff; follow Conventional Commits ([`.cursor/rules/conventional-commit-messages.mdc`](../../../.cursor/rules/conventional-commit-messages.mdc)) and [`draft-commit`](../draft-commit/SKILL.md) message quality |
+| Push / open MR             | `shell` (local system with git auth) | Spawn with worktree **absolute path**; prefer GitLab MCP for MR create                                                                                                                                              |
+| Local re-review (optional) | `review-loop` (local gates + lenses) | After substantial watch-mr fixes                                                                                                                                                                                    |
+| GitLab thread triage       | `shell` + fix subagents              | Same rules as `watch-mr`                                                                                                                                                                                            |
+| MR watch loop              | parent or `shell`                    | [`watch-mr`](../watch-mr/SKILL.md) until merged or dismissed                                                                                                                                                        |
 
 ## Prerequisites
 
@@ -101,9 +101,8 @@ defaults like `featurehomelab-self-improve-lap-*`). Pass **absolute**
 
 Only when the lap is ship-authorized. Stage the intended diff.
 
-Run a final uncommitted review pass if anything changed since `review-loop`
-(Macroscope / Bugbot / Codex per [`review-loop`](../review-loop/SKILL.md);
-non-Cursor agents skip Bugbot).
+Run a final uncommitted [`review-loop`](../review-loop/SKILL.md) pass if
+anything changed since the last clean loop.
 
 Commit with Conventional Commits (imperative subject, body covering why /
 non-obvious choices). Use a HEREDOC. Do not `--no-verify` unless the operator

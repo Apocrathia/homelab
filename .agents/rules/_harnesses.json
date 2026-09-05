@@ -23,6 +23,7 @@
     "rules": [
       "ambiguity-goes-back-to-source",
       "clarify-dont-guess",
+      "context-management",
       "general",
       "ground-before-asking",
       "ponytail",
@@ -38,6 +39,7 @@
     "always_on": [
       "ambiguity-goes-back-to-source",
       "clarify-dont-guess",
+      "context-management",
       "general",
       "ground-before-asking",
       "ponytail",

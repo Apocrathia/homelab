@@ -48,7 +48,7 @@ flowchart TD
   worktree --> build["Execute skill + subagents<br/>implementer↔reviewer → verifier"]
   build --> route{Brief type?}
   route -->|watch-mr| mergeReady["merge-ready report<br/>human merge"]
-  route -->|other| review["/review-loop<br/>CLI reviewers → verifier"]
+  route -->|other| review["/review-loop<br/>local gates → verifier"]
   review --> reconcileDocs["/reconcile-docs<br/>docs, plans, issues"]
   reconcileDocs --> reconcileCtx["/reconcile-context<br/>AGENTS.md, .agents/context/"]
   reconcileCtx --> ship["/ship-work<br/>includes watch-mr"]

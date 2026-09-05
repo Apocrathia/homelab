@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
-description: Prefer structured-question tool when present; prose = one Ask; no markdown question walls
+description: Prefer structured-question tool when present; prose = one Ask; no markdown question walls; strawman drafts for open-ended asks
 ---
 
 # Question format
@@ -31,9 +31,28 @@ Order is fixed.
 
 **Ask:** The question. **Bold**, own line, never buried in a paragraph.
 
-**Suggestion:** Recommendation + brief why, or no preference.
+**Suggestion:** Recommendation + brief why, or no preference. For an
+open-ended ask with no genuine recommendation, replace this block with
+**Strawman:** (see below). Do not nest a strawman here, and do not add a
+fifth block.
 
 **Gaps/concerns:** Only if real. Omit when empty; don't write "none".
+
+## Strawman drafts
+
+For open-ended asks (a definition, design, plan, or name), don't just ask the
+question. Commit to a deliberately rough draft, explicitly labeled as a
+strawman, and invite the operator to tear it apart. Critiquing a concrete
+artifact is cheaper than generating from scratch, and a rough draft surfaces
+the operator's real criteria faster than an open question.
+
+The strawman **replaces** the **Suggestion** slot. Ordered slots stay
+Context → Ask → Strawman → Gaps, with Gaps still optional (omit when none).
+When you have a genuine recommendation, keep **Suggestion** and skip the
+strawman: a strawman is for open problems, not a hedge.
+
+Always label the draft as a strawman. Passing weak work off as your best
+answer destroys trust.
 
 ## Forbidden
 

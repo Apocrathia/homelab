@@ -4,7 +4,7 @@ description: >-
   Structured post-work retrospective: review outcomes, mine git history for
   context-relevant changes outside the session, extract lessons, classify them,
   and route improvements — local context edits, rule/skill/enforcement proposals,
-  or upstream contributions to prime-context. Use when the user says retro,
+  or upstream contributions to the shared agent core. Use when the user says retro,
   /retrospective, what did we learn, or at work-close / session-end after a lap.
 disable-model-invocation: true
 ---
@@ -15,7 +15,7 @@ A structured review at work-close or session-end that extracts lessons from the
 work just done — and from changes that landed outside the agent's session. The
 retrospective **classifies** observations and **routes** them: local context
 edits, rule or skill improvements, enforcement promotion, or upstream
-contributions back to prime-context.
+contributions back to the shared core.
 
 Does not edit files directly (except non-protected drift notes). Produces a
 report with classified, routed recommendations. Protected-path edits go through
@@ -41,7 +41,7 @@ down the session worktree after merge — retro first.
 2. **Git history findings** — significant changes that touched context surfaces,
    with rationale from commit messages and MR descriptions.
 3. **Observations** — classified lessons, each with a route.
-4. **Upstream candidates** — generic enough for prime-context.
+4. **Upstream candidates** — generic enough for the shared core.
 5. **No-op declaration** — if nothing to capture, say so.
 
 ## Workflow
@@ -155,7 +155,7 @@ Classification criteria:
 | Test                                                                          | Result                        |
 | ----------------------------------------------------------------------------- | ----------------------------- |
 | References lab-only infra (Flux, Helm, Talos, CNPG, Longhorn, Gateway API, …) | Domain-specific → stays local |
-| Improvement works beyond this lab for other prime-context consumers           | Generic → upstream candidate  |
+| Improvement works beyond this lab for other core consumers                    | Generic → upstream candidate  |
 | Improvement to Layer 1 (generic) or Layer 2 (templatized) file                | Generic → upstream candidate  |
 | Improvement to Layer 3 (project-specific) file                                | Domain-specific → stays local |
 
@@ -166,26 +166,26 @@ Upstream candidates are improvements to:
 - Scripts (`skills/reconcile-context/scripts/`)
 - Templates (`templates/**/*.tmpl`) in the core
 
-Contribute via issue/MR on prime-context; pull later with
+Contribute via issue/MR on the core repo; pull later with
 [`integrate-upstream`](../integrate-upstream/SKILL.md).
 
 ### 6. Route and propose actions
 
-| Route                 | Action                                          | Approval needed?                |
-| --------------------- | ----------------------------------------------- | ------------------------------- |
-| `reconcile-context`   | Run the skill (or note drift for next lap)      | No (skill handles it)           |
-| Context module edit   | Propose edit; surface in report                 | Yes (protected path)            |
-| Rule edit             | Propose edit; surface in report                 | Yes (protected path)            |
-| Skill edit            | Propose edit; surface in report                 | Yes (protected path)            |
-| Enforcement promotion | Propose hook/CI; surface in report              | Yes                             |
-| Pattern record        | Write to `.agents/memories/<topic>.md`          | Yes (`.agents/**` is protected) |
-| Anti-pattern record   | Write to `.agents/memories/<topic>.md`          | Yes (`.agents/**` is protected) |
-| Upstream contribution | File issue on prime-context or open PR/MR there | Yes                             |
+| Route                 | Action                                            | Approval needed?                |
+| --------------------- | ------------------------------------------------- | ------------------------------- |
+| `reconcile-context`   | Run the skill (or note drift for next lap)        | No (skill handles it)           |
+| Context module edit   | Propose edit; surface in report                   | Yes (protected path)            |
+| Rule edit             | Propose edit; surface in report                   | Yes (protected path)            |
+| Skill edit            | Propose edit; surface in report                   | Yes (protected path)            |
+| Enforcement promotion | Propose hook/CI; surface in report                | Yes                             |
+| Pattern record        | Write to `.agents/memories/<topic>.md`            | Yes (`.agents/**` is protected) |
+| Anti-pattern record   | Write to `.agents/memories/<topic>.md`            | Yes (`.agents/**` is protected) |
+| Upstream contribution | File issue on the core repo or open a PR/MR there | Yes                             |
 
 **Upstream contribution path:**
 
-1. **File an issue** on prime-context (default) — improvement, evidence, proposed change.
-2. **Open a PR/MR** on prime-context when the change is small and well-defined.
+1. **File an issue** on the core repo (default) — improvement, evidence, proposed change.
+2. **Open a PR/MR** on the core repo when the change is small and well-defined.
 3. **Record locally** even if upstream is deferred — write a memory so it is not lost.
 
 The retrospective is the **push** side (to the core). The **pull** side is

@@ -19,7 +19,7 @@ folder after the README.
 | `architecture-review` skill                           | Design-debt / coupling exploration before large refactors      | Clear implement brief already in hand        |
 | `prototype` skill                                     | Need a throwaway to answer a design question                   | Production change with known shape           |
 | `retrospective` skill                                 | Session-end / post-lap "what did we learn"                     | Mid-lap implementation                       |
-| `integrate-upstream` skill                            | Sync shared rules/skills from prime-context                    | Homelab-only domain edits                    |
+| `integrate-upstream` skill                            | Sync shared rules/skills from the shared core                  | Homelab-only domain edits                    |
 | [`development-loop.md`](./development-loop.md)        | Finding / prioritizing work; constant-loop; find-work; ranking | Single-issue implement with clear acceptance |
 | [`vertical-slices.md`](./vertical-slices.md)          | Sizing plans, Launch briefs, MRs                               | Already one obvious vertical slice           |
 | [`learning-loop.md`](./learning-loop.md)              | Post-lap lessons / retrospective routing                       | Mid-lap implementation                       |
