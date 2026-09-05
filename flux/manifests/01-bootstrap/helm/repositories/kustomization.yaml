@@ -29,6 +29,7 @@ resources:
   - tailscale.yaml
   - tracearr.yaml
   - tuppr.yaml
+  - external-dns.yaml
   - external-secrets.yaml
   - fleet.yaml
   - immich.yaml

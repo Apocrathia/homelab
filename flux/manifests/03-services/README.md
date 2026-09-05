@@ -12,6 +12,7 @@ Platform services that provide core functionality to the homelab cluster.
 - [**Tailscale**](tailscale/README.md) - Kubernetes operator for Tailscale ingress, egress, and subnet routing
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
+- [**ExternalDNS**](external-dns/README.md) - UniFi DNS record management for Gateway API routes and services
 
 ### Monitoring and Observability
 
