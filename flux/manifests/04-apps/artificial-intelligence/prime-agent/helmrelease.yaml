@@ -73,7 +73,7 @@ spec:
             value: "/opt/data/npm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
-            value: "0.9.1"
+            value: "0.9.2"
           # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm.ts
           # extension reads LITELLM_API_KEY for catalog discovery and requests.
           - name: LITELLM_BASE_URL
