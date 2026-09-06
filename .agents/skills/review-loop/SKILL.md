@@ -24,6 +24,12 @@ Homelab SoT for this skill is the **local GitOps gate table** below (Prettier,
 yamllint, helm/kustomize → `.scratch/`, Trivy, context checks). That is enough
 for a clean pass.
 
+For a deeper read-only review after local gates are green, run the lens skills
+[`review-correctness`](../review-correctness/SKILL.md),
+[`review-security`](../review-security/SKILL.md), and
+[`review-fit`](../review-fit/SKILL.md) in parallel (fresh context each), then
+triage findings per [`subagents.md`](../../rules/subagents.md).
+
 If Macroscope, Codex CLI, or Cursor Bugbot are available, you may run them as
 **extra** reviewers after local gates are green. They are optional. Without them,
 do not invent a Macroscope/Bugbot/Codex loop — hand off to

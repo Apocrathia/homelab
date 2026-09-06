@@ -31,6 +31,7 @@ the `.md` files, not these links.
 | `ambiguity-goes-back-to-source.mdc` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`                                            |
 | `question-format.mdc`               | AskQuestion-first; prose = one Ask; points at `.agents/context/questions.md`                       |
 | `response-shape.mdc`                | Ultra-short replies; half-screen rule; no interview walls                                          |
+| `context-management.mdc`            | Meter-first compact; fork/delegate/write; file handoffs                                            |
 | `subagents.mdc`                     | Prefer defined personas for plan / implement / verify / SRE / security / docs / context            |
 | `ponytail.mdc`                      | Lazy-senior YAGNI / minimal-code + surgical touch                                                  |
 | `surgical-edits.mdc`                | Simplicity-first + touch-only-what-you-must (pairs with ponytail)                                  |

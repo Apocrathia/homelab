@@ -1,20 +1,20 @@
 ---
 name: integrate-upstream
 description: >-
-  Pull changes from the prime-context core into this project's existing
+  Pull changes from the shared agent core into this project's existing
   .agents/ tree — diff shared rules, skills, and scripts, reconcile layer 1 and
   2 changes, and preserve project-specific content. Use when the user says sync
   upstream, integrate upstream changes, pull updates from the core, or update
-  .agents/ from prime-context.
+  .agents/ from the shared core.
 disable-model-invocation: true
 ---
 
 # Integrate upstream
 
-This repo's `.agents/` shares a portable core with
-[prime-context](https://github.com/PrimeIntellect-ai/prime-context). The core
-evolves — new rules, improved skills, better scripts. This skill pulls those
-upstream changes in while preserving homelab domain content (layer 3).
+This repo's `.agents/` shares a portable core with an upstream agent-config
+repo. The core evolves — new rules, improved skills, better scripts. This
+skill pulls those upstream changes in while preserving homelab domain content
+(layer 3).
 
 | Layer                | What                                          | How this skill handles it                               |
 | -------------------- | --------------------------------------------- | ------------------------------------------------------- |
@@ -39,17 +39,15 @@ Homelab notes:
 
 ## When to run
 
-- Operator says sync upstream, update from the core, pull prime-context
-  changes, or integrate upstream.
+- Operator says sync upstream, update from the core, pull shared-core changes,
+  or integrate upstream.
 - After the core ships changes this consumer wants.
 - Before a `reconcile-context` pass when shared files may be stale.
 
 ## What you need from the operator
 
 - **Upstream core path** — local clone (preferred), git remote URL, or
-  submodule path. Default local path if present:
-  `/Users/ianyoung/Projects/prime-context` (or `../prime-context` relative to
-  this repo).
+  submodule path. The operator names it per lap; do not guess or hardcode it.
 - **Project name** — for `{{project_name}}` normalization. Default: `homelab`
   (or derive from `AGENTS.md`).
 
@@ -58,14 +56,14 @@ set before writing ([`protected-paths`](../../rules/protected-paths.md)).
 
 ## Branch and MR naming
 
-Every prime-context integration — first-time scaffold or later sync — uses a
-greppable branch pattern and a constant MR title:
+Every core integration — first-time scaffold or later sync — uses a greppable
+branch pattern and a constant MR title:
 
-| Thing    | Value                                                            |
-| -------- | ---------------------------------------------------------------- |
-| Branch   | `chore/integrate-prime-context` **or** dated                     |
-|          | `chore/integrate-prime-context-<YYYYMMDDHHMM>`                   |
-| MR title | `chore(agents): integrate prime-context for assisted agent work` |
+| Thing    | Value                                   |
+| -------- | --------------------------------------- |
+| Branch   | `chore/sync-agent-core` **or** dated    |
+|          | `chore/sync-agent-core-<YYYYMMDDHHMM>`  |
+| MR title | `chore(agents): sync shared agent core` |
 
 Prefer the **dated** form when a prior integration branch/MR already exists, or
 when `ship-work` / host tooling resolves an undated branch to an old merged MR
@@ -76,9 +74,9 @@ and rerun.
 Derive the timestamp, do not copy it:
 
 ```bash
-branch="chore/integrate-prime-context-$(date -u +%Y%m%d%H%M)"   # e.g. chore/integrate-prime-context-202608071432
+branch="chore/sync-agent-core-$(date -u +%Y%m%d%H%M)"   # e.g. chore/sync-agent-core-202608071432
 # or, when no collision risk and operator prefers a short name:
-# branch="chore/integrate-prime-context"
+# branch="chore/sync-agent-core"
 ```
 
 One token for the date suffix, not `-2026-08-07-14-32`.
@@ -107,17 +105,25 @@ Copy this checklist and work it in order:
 
 ```bash
 # Local clone — use as-is
-upstream="/abs/path/to/prime-context"
+upstream="/abs/path/to/agent-core"
 
-# Git remote — clone to temp (full history, not --depth 1)
-upstream=$(mktemp -d)
+# Git remote — unique dir under the consumer .scratch/ (not /tmp).
+# $$ is reused across retries in the same shell, so mktemp the suffix.
+consumer_root="$(git rev-parse --show-toplevel)"
+mkdir -p "$consumer_root/.scratch"
+upstream=$(mktemp -d "$consumer_root/.scratch/upstream-core.XXXXXX") || {
+  echo "could not create scratch clone dir — stop" >&2
+  exit 1
+}
 git clone <remote-url> "$upstream"
+# Clone full history (not --depth 1) so step 6 can diff old vs new upstream revisions.
 
 # Submodule — use the submodule path
 upstream="<repo-root>/<submodule-path>"
 ```
 
-Verify top-level `rules/`, `skills/`, and `templates/`. Record:
+Verify top-level `rules/`, `skills/`, and `templates/`. If the structure does
+not match, stop and ask the operator — it may be the wrong repo. Record:
 
 ```bash
 upstream_rev=$(git -C "$upstream" rev-parse HEAD 2>/dev/null || echo "unknown")
@@ -212,7 +218,7 @@ When baseline is known, 3-way:
 3. **Decide:**
    - **Clean apply** — no real local delta → take upstream (token-replace layer 2)
    - **Conflict** — merge; propose resolution; never blind-take either side
-   - **Local improvement** — surface for possible contribution back to prime-context
+   - **Local improvement** — surface for possible contribution back to the core
 
 When baseline is unknown: 2-way only; flag possible local customizations.
 
@@ -227,7 +233,7 @@ Present the full change set before writing. Wait for confirmation.
 **Upstream revision:** <sha>
 **Baseline:** <sha | unknown — 2-way>
 **Project name:** homelab
-**Branch:** <e.g. `chore/integrate-prime-context-202608071432`>
+**Branch:** <e.g. `chore/sync-agent-core-202608071432`>
 
 ### Clean applies (replace)
 
@@ -306,7 +312,7 @@ python3 .agents/skills/reconcile-context/scripts/check_discovery.py
 
 - Hand off via [`draft-commit`](../draft-commit/SKILL.md) (or authorized
   [`ship-work`](../ship-work/SKILL.md))
-- MR title: `chore(agents): integrate prime-context for assisted agent work`
+- MR title: `chore(agents): sync shared agent core`
 - Optionally run [`reconcile-context`](../reconcile-context/SKILL.md)
 - Contribute local improvements back to the core when evidence supports it
 ```
@@ -321,6 +327,6 @@ A clean pass with nothing to change is a valid outcome. Say so and stop.
   bootstrap) with the narrower upstream list.
 - Write `.agents/upstream-ref`.
 - Skip discovery wiring or the link/discovery checks.
-- Assume upstream is prime-context without verifying `rules/` + `skills/` +
+- Assume a repo is the shared core without verifying `rules/` + `skills/` +
   `templates/`.
 - Reconcile by blindly taking either side.

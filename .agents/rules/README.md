@@ -19,6 +19,7 @@ lives inside each `.md` and is read through the symlink.
 | `ambiguity-goes-back-to-source.md` | Flag irreducible ambiguity with `[NEEDS CLARIFICATION]`     |
 | `question-format.md`               | AskQuestion-first; points at `context/questions.md`         |
 | `response-shape.md`                | Short replies; half-screen rule                             |
+| `context-management.md`            | Meter-first compact; fork/delegate/write; file handoffs     |
 | `subagents.md`                     | Personas + Prompt contract; fan out; implementer↔reviewer  |
 | `ponytail.md`                      | YAGNI / minimal-code + surgical touch discipline            |
 | `surgical-edits.md`                | Simplicity-first + touch-only-what-you-must edit contract   |

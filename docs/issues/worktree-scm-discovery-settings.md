@@ -82,12 +82,10 @@ scan-depth setting as concrete examples.
 
 ## Notes
 
-Upstream candidate. The same gap exists in
-[prime-context](https://github.com/PrimeIntellect-ai/prime-context) `rules/worktrees.md`,
-which is the source this repo's rule derives from. That repo has no local issue
-ledger, so contributing back means a GitHub issue or PR against
-`PrimeIntellect-ai/prime-context`. Keep the upstream version harness-neutral —
-name the setting keys as an example rather than assuming Cursor.
+Upstream candidate. The same gap exists in the shared agent core's
+`rules/worktrees.md`, which is the source this repo's rule derives from. Keep
+any upstream version harness-neutral — name the setting keys as an example
+rather than assuming Cursor.
 
 Homelab's ship model stays operator-gated regardless; this issue is about
 visibility, not about granting agents commit authority.

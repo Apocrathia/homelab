@@ -6,7 +6,7 @@ structural enforcement. Accumulate and prune.
 The [`retrospective`](../skills/retrospective/SKILL.md) skill is the
 operational trigger — outcome review, git history for external changes,
 classification, and routing (local context, rule/skill/enforcement proposals, or
-upstream contributions to prime-context).
+upstream contributions to the shared agent core).
 
 ## Outcome review (required)
 
@@ -39,8 +39,8 @@ add to memories.
 Generic improvements (shared rules/skills/scripts that apply beyond this lab)
 are upstream candidates:
 
-1. File an issue on prime-context (default).
-2. Open a PR on prime-context when small and well-defined.
+1. File an issue on the core repo (default).
+2. Open a PR on the core repo when small and well-defined.
 3. Record a local memory even if upstream is deferred.
 
 Pull side: [`integrate-upstream`](../skills/integrate-upstream/SKILL.md).

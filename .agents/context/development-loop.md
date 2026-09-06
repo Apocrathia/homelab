@@ -25,7 +25,7 @@ Overrides any conflicting pattern. Full lab constraints:
 
 ## Ship model
 
-Hybrid with prime-context's work graph. Authorization still gates commits
+Hybrid with the shared core's work graph. Authorization still gates commits
 ([`constraints.md#commit-and-ship`](./constraints.md#commit-and-ship)).
 
 ```mermaid
