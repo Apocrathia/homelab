@@ -23,11 +23,11 @@ Rollback artifacts kept on disk but **not** in the active kustomization:
 
 1Password item: `vaults/Secrets/items/openclaw-secrets`
 
-| Field             | Used by                                                           |
-| ----------------- | ----------------------------------------------------------------- |
-| `token`           | AgentHarness `gatewayTokenSecretRef` (CRD requires this key name) |
-| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist       |
-| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                      |
+| Field             | Used by                                                                                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `token`           | Legacy — kagent 0.10.0 removed `gatewayTokenSecretRef`; the gateway no longer authenticates with a bearer token. Safe to drop from the 1Password item |
+| `gateway-token`   | Legacy/generic-app; keep in sync with `token` if both exist                                                                                           |
+| `litellm-api-key` | ModelConfig / ActorTemplate `OPENAI_API_KEY`                                                                                                          |
 
 ## Access
 
