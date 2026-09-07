@@ -33,6 +33,7 @@ resources:
   - management/tdarr
   - management/whisparr
   - management/scripts
+  - servers/invidious
   - servers/jellyfin
   - servers/jellyfin-ai-upscaler
   - servers/komga
