@@ -53,6 +53,18 @@
 			"ip":  ["tcp:443"],
 		},
 
+		// Exit nodes: only devices with autogroup:internet access can use an
+		// exit node (policy-file syntax rule), and this tailnet is deny-by-
+		// default — without this grant no device can use the exit-nodes
+		// Connector even though it is auto-approved. Scoped to admins only;
+		// autogroup:shared (friends) must not route internet traffic through
+		// the cluster.
+		{
+			"src": ["autogroup:admin"],
+			"dst": ["autogroup:internet"],
+			"ip":  ["*"],
+		},
+
 		// Allow users in "group:example" to access "tag:example", but only from
 		// devices that are running macOS and have enabled Tailscale client auto-updating.
 		// {"src": ["group:example"], "dst": ["tag:example"], "ip": ["*"], "srcPosture":["posture:autoUpdateMac"]},
@@ -113,5 +125,10 @@
 		// autogroup:shared cannot be a test src (API rejects autogroups and
 		// device names). Re-add a shared-user test here once the first friend
 		// is invited, using their email address.
+		// Owner can use exit nodes (autogroup:internet via the admin grant).
+		{
+			"src":    "ian@apocrathia.com",
+			"accept": ["autogroup:internet:*"],
+		},
 	],
 }
