@@ -1,0 +1,87 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nitter-valkey
+  namespace: nitter
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: nitter-valkey
+      namespace: nitter
+      # renovate: datasource=docker depName=valkey/valkey
+      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
+      # nitter uses redis purely as a cache; no persistence needed
+      args:
+        - valkey-server
+        - --save
+        - ""
+        - --appendonly
+        - "no"
+      container:
+        name: valkey
+        port: 6379
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: valkey
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false

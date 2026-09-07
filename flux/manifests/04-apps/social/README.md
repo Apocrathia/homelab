@@ -18,6 +18,10 @@ Lemmy UI frontend for the lemmy.ml instance.
 
 Open-source VoIP server for low-latency voice chat.
 
+### [Nitter](./nitter/README.md)
+
+Alternative Twitter/X front-end — no JavaScript, no ads, burner-account sessions.
+
 ### [The Lounge](./thelounge/README.md)
 
 Self-hosted web IRC client with persistent connections and message history.

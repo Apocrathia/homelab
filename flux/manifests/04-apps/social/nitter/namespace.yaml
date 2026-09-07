@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nitter
+  labels:
+    app.kubernetes.io/name: nitter
+    # generic-app chart defaults (non-root, read-only rootfs, dropped caps,
+    # seccomp RuntimeDefault) satisfy restricted; enforce it so nothing else
+    # landing in this namespace can regress.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
