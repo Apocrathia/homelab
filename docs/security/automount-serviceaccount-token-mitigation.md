@@ -98,7 +98,6 @@ Add these namespaces to the policy's exclude list:
 | `lws-system`              | lws-controller-manager                     | LeaderWorkerSet controller                       |
 | `pasture-system`          | pasture-operator                           | Custom operator                                  |
 | `system-upgrade`          | tuppr                                      | Manages node upgrades                            |
-| `renovate`                | renovate-mend-renovate-ce                  | Repository automation                            |
 | `gitlab-runner`           | gitlab-runner                              | Spawns job pods, needs API access                |
 
 #### Can Disable SA Token (Fix via Helm Values)

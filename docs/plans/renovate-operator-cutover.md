@@ -2,7 +2,7 @@
 title: "Renovate operator: shadow, then replace Renovate CE"
 status: active
 found_at: 2026-08-17
-updated_at: 2026-08-31
+updated_at: 2026-09-07
 area: flux
 ---
 
@@ -81,8 +81,9 @@ then cut over. Origin: Obsidian Running Notes, "New Apps to Deploy".
       HelmRelease, and CNPG cluster on merge)
 - [ ] Watch first real runs; confirm no duplicate MRs on repos CE already
       touched (branch/MR names are deterministic, expect reuse not dupes)
-- [ ] Tear down CE: delete `03-services/renovate/`, its root kustomization
-      entry, the `renovate` HelmRepository, and the CNPG cluster
+- [x] Tear down CE: delete `03-services/renovate/`, its root kustomization
+      entry, the `renovate` HelmRepository, and the CNPG cluster (root
+      kustomization entry and live resources already pruned at cutover)
 - [ ] Vault cleanup after CE teardown: remove the CE-only fields
       (`gitlab-token`, `github-token`, `license-key`, `webhook-secret`,
       `api-secret`) from `renovate-secrets`, leaving the operator-convention

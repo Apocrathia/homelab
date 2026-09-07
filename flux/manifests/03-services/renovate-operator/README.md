@@ -82,4 +82,3 @@ kubectl get httproute -n renovate-operator
 
 - **[renovate-operator documentation](https://github.com/mogenius/renovate-operator)** - Source, CRD schema, and Helm chart
 - **[Renovate documentation](https://docs.renovatebot.com/)** - Renovate configuration reference
-- **[Renovate CE](../renovate/README.md)** - Retired predecessor deployment (kept for reference during cutover validation)
