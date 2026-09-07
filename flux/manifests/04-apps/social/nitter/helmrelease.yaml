@@ -1,0 +1,138 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nitter
+  namespace: nitter
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: nitter
+      namespace: nitter
+      # renovate: datasource=docker depName=zedeus/nitter
+      image: zedeus/nitter:8142bab1a920d13589ab5e689d7623ac0ac7ec34@sha256:8ca440fa51d8ce4618d51a6341dabbce784407025e2531343c36e540e0e3c4ba
+      # Render hmacKey from the 1Password secret into the config at boot;
+      # nitter reads config only from a file (no env-var support for it).
+      command:
+        - sh
+        - -c
+        - |
+          sed "s|__NITTER_HMAC_KEY__|$(cat /run/secrets/hmac-key)|" /config/nitter.conf > /tmp/nitter.conf
+          exec ./nitter
+      container:
+        name: nitter
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: NITTER_CONF_FILE
+            value: "/tmp/nitter.conf"
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 512Mi
+      securityContext:
+        # matches upstream compose (user: "998:998")
+        runAsUser: 998
+        runAsGroup: 998
+        fsGroup: 998
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+            # tmpfs: /tmp/nitter.conf carries the rendered hmacKey; keep it
+            # out of node disk
+            medium: Memory
+            sizeLimit: 64Mi
+        configMap:
+          - name: nitter-config
+            mountPath: /config/nitter.conf
+            subPath: nitter.conf
+            configMapName: nitter-config
+            readOnly: true
+        secret:
+          - name: hmac-key
+            mountPath: /run/secrets/hmac-key
+            subPath: hmac-key
+            readOnly: true
+            secretName: nitter-secrets
+          - name: sessions
+            mountPath: /src/sessions.jsonl
+            subPath: sessions-jsonl
+            readOnly: true
+            secretName: nitter-secrets
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/nitter-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Social"
+      displayName: "Nitter"
+      externalHost: "https://nitter.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/nitter/icon.png"
+      metaDescription: "Alternative Twitter/X front-end"
+      metaPublisher: "Nitter"
+      # RSS feeds + media proxy stay unauthenticated so external readers work;
+      # everything else requires Authentik SSO.
+      skipPathRegex:
+        - "^/@[^/]+/rss$"
+        - "^/@[^/]+/(with_replies|media|search|articles)/rss$"
+        - "^/@[^/]+/lists/[^/]+/rss$"
+        - "^/i/lists/[^/]+/rss$"
+        - "^/pic/"
+
+    gatus:
+      enabled: true
+      group: social
+
+    httproute:
+      enabled: false
