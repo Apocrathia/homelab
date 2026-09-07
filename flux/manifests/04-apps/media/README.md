@@ -20,6 +20,7 @@ Media applications are organized into three categories:
 - **[Jellyfin AI Upscaler](./servers/jellyfin-ai-upscaler/README.md)** - CPU ONNX inference sidecar for the Jellyfin AI Upscaler plugin
 - **[Komga](./servers/komga/README.md)** - Media server for comics, manga, magazines, and eBooks with OPDS support
 - **[Plex](./servers/plex/README.md)** - Media server with transcoding and direct LoadBalancer access
+- **[Restreamer](./servers/restreamer/README.md)** - Self-hosted video streaming server with restreaming to external services
 - **[Tunarr](./servers/tunarr/README.md)** - Virtual TV channel creator with HDHomeRun emulation for Plex/Jellyfin
 
 ## Management
