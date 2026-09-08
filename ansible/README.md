@@ -75,12 +75,33 @@ passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
 Runner `HOME` stays `/home/gitlab-runner` (writable emptyDir); ansible gets
 absolute `IdentityFile` / `UserKnownHostsFile` under that path.
 
+## Service account
+
+`roles/common` (user tag) maintains a dedicated `ansible` automation account on
+every host — CI never logs in as a human account:
+
+- locked password (`password_lock: true` → shadow `!`): password-aging policy
+  cannot break sudo, and the account cannot be brute-forced
+- deploy key `ansible_gitops_ed25519` as the only authorized key (`exclusive`)
+- `/etc/sudoers.d/ansible` → `NOPASSWD: ALL` (visudo-validated, `0440`)
+
+Rollout is two-phase, because CI must create the account before it can use it:
+
+1. **This phase** — role creates/manages the account; CI still connects as
+   `ianyoung` with the become password. Landing on main runs `ansible-apply`,
+   which provisions the account on every host. Bootstrap (`-u root`) covers
+   new hosts on day 0.
+2. **Follow-up** — flip `ansible_user: ansible` in `group_vars/all.yml`, drop
+   `--become-password-file` from CI, then retire the `sudo-password` field.
+
 ## Secrets
 
-1Password is the SoT for the deploy key and sudo password. Use multiline text
-fields (not concealed) for PEM / `known_hosts`. Install the matching public key
-on managed hosts for `ansible_user` (`ianyoung` today). Local laptop runs can
-use `~/.ssh/ansible_gitops_ed25519` directly; that is not the CI path.
+1Password is the SoT for the deploy key and sudo password (sudo password is
+phase-1 only; it retires when `ansible_user` flips to the service account).
+Use multiline text fields (not concealed) for PEM / `known_hosts`. The deploy
+public key is committed in `group_vars/all.yml` — public material, repo is SoT.
+Local laptop runs can use `~/.ssh/ansible_gitops_ed25519` directly; that is
+not the CI path.
 
 ## Related
 
