@@ -1,7 +1,7 @@
 {
   "_id": "custom_03_video",
   "name": "03 - Video Transcoding",
-  "description": "HEVC x265 CPU encoding. SD: CRF 26/28 8-bit; HD+: library CRF + 10-bit. Size verify 2-101%.",
+  "description": "HEVC x265 CPU encoding. SD: CRF 26/28 8-bit; HD+: library CRF + 10-bit. Post-encode HEVC guard, size verify 2-101%.",
   "tags": "",
   "flowPlugins": [
     {
@@ -183,7 +183,7 @@
       "pluginName": "ffmpegCommandCustomArguments",
       "version": "1.0.0",
       "inputsDB": {
-        "outputArguments": "-x265-params lookahead=64:frame-threads=2:deblock=-1,-1:psy-rd=1.1:psy-rdoq=1:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
+        "outputArguments": "-x265-params rc-lookahead=64:frame-threads=2:deblock=-1,-1:psy-rd=1.1:psy-rdoq=1:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
       },
       "id": "vid009",
       "position": { "x": 250, "y": 880 },
@@ -195,7 +195,7 @@
       "pluginName": "ffmpegCommandCustomArguments",
       "version": "1.0.0",
       "inputsDB": {
-        "outputArguments": "-tune animation -bf 3 -x265-params lookahead=64:frame-threads=2:deblock=-2,-2:psy-rd=1:psy-rdoq=0.5:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
+        "outputArguments": "-tune animation -bf 3 -x265-params rc-lookahead=64:frame-threads=2:deblock=-2,-2:psy-rd=1:psy-rdoq=0.5:aq-mode=1:aq-strength=0.80:ipratio=1.4:pbratio=1.3:qpmax=69:qpmin=10:no-cu-lossless=1:scenecut=40:scenecut-bias=0.1:no-sao=1:no-strong-intra-smoothing=1"
       },
       "id": "vid009a",
       "position": { "x": 550, "y": 880 },
@@ -211,6 +211,18 @@
       "fpEnabled": true
     },
     {
+      "name": "Output contains HEVC video?",
+      "sourceRepo": "Community",
+      "pluginName": "checkVideoCodec",
+      "version": "1.0.0",
+      "inputsDB": {
+        "codec": "hevc"
+      },
+      "id": "vid_vchk",
+      "position": { "x": 400, "y": 1100 },
+      "fpEnabled": true
+    },
+    {
       "name": "Verify output file size (2-101% of original)",
       "sourceRepo": "Community",
       "pluginName": "runClassicTranscodePlugin",
@@ -221,7 +233,7 @@
         "upperBound": "101"
       },
       "id": "vid011",
-      "position": { "x": 400, "y": 1100 },
+      "position": { "x": 400, "y": 1200 },
       "fpEnabled": true
     },
     {
@@ -233,7 +245,7 @@
         "flowId": "custom_04_output"
       },
       "id": "vid012",
-      "position": { "x": 400, "y": 1250 },
+      "position": { "x": 400, "y": 1350 },
       "fpEnabled": true
     },
     {
@@ -242,7 +254,7 @@
       "pluginName": "comment",
       "version": "1.0.0",
       "id": "vid013",
-      "position": { "x": 700, "y": 1100 },
+      "position": { "x": 700, "y": 1200 },
       "fpEnabled": true
     },
     {
@@ -252,6 +264,15 @@
       "version": "1.0.0",
       "id": "vid014",
       "position": { "x": 700, "y": 950 },
+      "fpEnabled": true
+    },
+    {
+      "name": "Post-encode guard tripped - no HEVC video in output",
+      "sourceRepo": "Community",
+      "pluginName": "failFlow",
+      "version": "1.0.0",
+      "id": "vid_failv",
+      "position": { "x": 700, "y": 1100 },
       "fpEnabled": true
     }
   ],
@@ -441,9 +462,23 @@
     {
       "source": "vid010",
       "sourceHandle": "1",
-      "target": "vid011",
+      "target": "vid_vchk",
       "targetHandle": null,
       "id": "ve010_success"
+    },
+    {
+      "source": "vid_vchk",
+      "sourceHandle": "1",
+      "target": "vid011",
+      "targetHandle": null,
+      "id": "ve_vchk_pass"
+    },
+    {
+      "source": "vid_vchk",
+      "sourceHandle": "2",
+      "target": "vid_failv",
+      "targetHandle": null,
+      "id": "ve_vchk_fail"
     },
     {
       "source": "vid010",
