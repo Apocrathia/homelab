@@ -124,11 +124,8 @@
 		},
 		// autogroup:shared cannot be a test src (API rejects autogroups and
 		// device names). Re-add a shared-user test here once the first friend
-		// is invited, using their email address.
-		// Owner can use exit nodes (autogroup:internet via the admin grant).
-		{
-			"src":    "ian@apocrathia.com",
-			"accept": ["autogroup:internet:*"],
-		},
+		// is invited, using their email address. autogroup:internet is also
+		// rejected as a test dst, so exit-node access cannot be asserted here
+		// (apply failed with "test(s) failed (400)" when tried in !4387).
 	],
 }
