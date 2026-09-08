@@ -38,7 +38,7 @@ Platform services that provide core functionality to the homelab cluster.
   - [**Agent**](gitlab/agent/README.md) - Kubernetes cluster agent
   - [**Runner**](gitlab/runner/README.md) - CI/CD runner
 - [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
-- [**Renovate Operator**](renovate-operator/README.md) - Shadow deployment of the mogenius Renovate operator, candidate to replace Renovate CE
+- [**Renovate Operator**](renovate-operator/README.md) - mogenius Renovate operator for automated dependency updates
 - [**Tuppr**](tuppr/README.md) - Automated Talos Linux and Kubernetes upgrade controller
 
 ## Architecture
