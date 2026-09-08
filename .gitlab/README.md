@@ -28,7 +28,6 @@ This directory contains the GitLab CI/CD configuration files for the homelab pro
 
 | File                              | Purpose                                          | Status                         |
 | --------------------------------- | ------------------------------------------------ | ------------------------------ |
-| `renovate.gitlab-ci.yml`          | Dependency updates                               | Commented out in main pipeline |
 | `mr-change-summary.gitlab-ci.yml` | Invokes git-agent (A2A) to post a change summary | Commented out in main pipeline |
 
 ## Stages
