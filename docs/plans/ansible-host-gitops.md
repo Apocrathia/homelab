@@ -49,6 +49,13 @@ NUC (BLKNUC7i7DNK1E).
 - **Port from homelab.gh** — `common` tags, GitHub `.keys` authorized_keys,
   timezone/`github_username` group vars, `requirements.yml`. Drop
   `ignore_errors: true`, k8s/docker/proxmox roles, compose files.
+- **Service account (2026-09-08)** — dedicated `ansible` user per host, locked
+  password, deploy-key auth (`exclusive`), `sudoers.d` NOPASSWD. Motivated by
+  MR !4392 CI failure: `game` had a hidden 60-day password-aging policy
+  (manual CIS residue, not repo-managed) that expired `ianyoung`'s password
+  and broke sudo mid-run. Human accounts keep their policy; CI stops
+  depending on any human password. Two-phase: role first, then
+  `ansible_user` flip + become-password retirement.
 
 ## Steps
 
@@ -57,8 +64,12 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Document keep/drop from `homelab.gh` in README + this plan
 - [x] Fetch deploy key + known_hosts + `sudo-password` from 1Password Connect
 - [x] Confirm Connect token can read `Secrets` / `ansible-secrets`
-- [ ] Install deploy pubkey on hosts; MR `ansible-check` green
+- [x] Install deploy pubkey on hosts; MR `ansible-check` green
 - [ ] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`
+- [ ] Service account phase 1: role manages `ansible` user (locked password,
+      deploy key, NOPASSWD sudo); merge + `ansible-apply` provisions hosts
+- [ ] Service account phase 2: flip `ansible_user`, drop become password from
+      CI + 1Password (`sudo-password` field), README/CI notes
 - [ ] Stage UniFi NUC + Track A cutover (links to related issue)
 - [ ] Expand roles only when a host needs them (no speculative roles)
 

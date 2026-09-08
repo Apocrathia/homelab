@@ -34,3 +34,36 @@
       {{ username }} ALL=(ALL) NOPASSWD:ALL
     validate: "visudo -cf %s"
   when: common_passwordless_sudo | bool
+
+- name: Ensure ansible service account exists
+  ansible.builtin.user:
+    name: "{{ common_ansible_account }}"
+    shell: /bin/bash
+    password_lock: true
+    create_home: true
+    state: present
+
+- name: Ensure service account .ssh directory exists
+  ansible.builtin.file:
+    path: "/home/{{ common_ansible_account }}/.ssh"
+    state: directory
+    owner: "{{ common_ansible_account }}"
+    group: "{{ common_ansible_account }}"
+    mode: "0700"
+
+- name: Authorize GitOps deploy key for service account
+  ansible.posix.authorized_key:
+    user: "{{ common_ansible_account }}"
+    key: "{{ common_ansible_account_pubkey }}"
+    state: present
+    exclusive: true
+
+- name: Allow passwordless sudo for service account
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ common_ansible_account }}"
+    mode: "0440"
+    owner: root
+    group: root
+    content: |
+      {{ common_ansible_account }} ALL=(ALL) NOPASSWD:ALL
+    validate: "visudo -cf %s"

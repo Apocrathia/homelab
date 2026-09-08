@@ -6,3 +6,7 @@ common_manage_timezone: true
 common_fetch_github_keys: true
 # CI uses sudo-password from 1Password; do not force NOPASSWD.
 common_passwordless_sudo: false
+# Automation service account: repo is the source of truth for its authorized
+# key (exclusive), so an empty pubkey fails loudly rather than half-managing.
+common_ansible_account: ansible
+common_ansible_account_pubkey: ""
