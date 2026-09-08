@@ -108,6 +108,14 @@ spec:
         emptyDir:
           - name: tmp
             mountPath: /tmp
+          # vite preview writes a config timestamp file here on every boot —
+          # EROFS CrashLoopBackOff with readOnlyRootFilesystem otherwise
+          - name: vite-temp
+            mountPath: /app/node_modules/.vite-temp
+          # F8 in-app feedback pins (upstream compose mounts ./feedback for
+          # the same purpose); on-demand writes to a fixed path
+          - name: feedback
+            mountPath: /app/feedback
 
     storage:
       longhorn:
