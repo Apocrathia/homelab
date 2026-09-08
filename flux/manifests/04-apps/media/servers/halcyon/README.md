@@ -53,7 +53,7 @@ kubectl logs -n halcyon deployment/halcyon -f
 kubectl get pods -n authentik | grep halcyon
 ```
 
-If the pod crashloops on startup with RO-rootfs complaints, relax `securityContext.readOnlyRootFilesystem` (npm may want a writable HOME); the image runs as uid 1000 (`node`).
+The container keeps `readOnlyRootFilesystem: true`; the two paths that need writes are emptyDir-mounted (`/tmp`, `/app/node_modules/.vite-temp` for vite's startup config file, `/app/feedback` for F8 pins). If a new EROFS path appears in logs, add an emptyDir for it rather than relaxing the security context.
 
 ## References
 
