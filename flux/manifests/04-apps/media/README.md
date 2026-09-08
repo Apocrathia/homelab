@@ -14,6 +14,7 @@ Media applications are organized into three categories:
 
 ## Servers
 
+- **[Halcyon Video](./servers/halcyon/README.md)** - 3D video rental store front-end for Jellyfin/Plex with server-side Jellyseerr and RomM integration
 - **[Invidious](./servers/invidious/README.md)** - Privacy-focused YouTube frontend with companion-sidecar video streaming
 - **[Jellyfin](./servers/jellyfin/README.md)** - Open-source media server with SSO plugin for Authentik
 - **[Jellyfin AI Upscaler](./servers/jellyfin-ai-upscaler/README.md)** - CPU ONNX inference sidecar for the Jellyfin AI Upscaler plugin
