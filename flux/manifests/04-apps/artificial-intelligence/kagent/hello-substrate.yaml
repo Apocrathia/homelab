@@ -11,8 +11,6 @@ metadata:
 spec:
   type: Declarative
   description: Disposable Go smoke agent on Agent Substrate (gVisor actor)
-  # Required — default is agent-sandbox; WorkerPool lives in ate-system
-  platform: substrate
   declarative:
     runtime: go
     modelConfig: default-model-config
