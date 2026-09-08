@@ -55,6 +55,7 @@
   ansible.posix.authorized_key:
     user: "{{ common_ansible_account }}"
     key: "{{ common_ansible_account_pubkey }}"
+    path: "/home/{{ common_ansible_account }}/.ssh/authorized_keys"
     state: present
     exclusive: true
 
