@@ -22,7 +22,6 @@ resources:
   - management/huntarr2
   - management/icloudpd
   - management/immich
-  - management/jellyplex-watched
   - management/lidarr
   - management/radarr
   - management/recyclarr
