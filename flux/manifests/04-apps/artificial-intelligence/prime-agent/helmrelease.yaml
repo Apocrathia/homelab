@@ -45,6 +45,31 @@ spec:
             npm install -g "https://pub-728493de92a943e2a9b2d17b4719f318.r2.dev/releases/v${PRIME_AGENT_VERSION}/prime-agent-${PRIME_AGENT_VERSION}.tgz"
           fi
 
+          # Python kernel: the node:*-slim image ships no curl or wget, so
+          # prime-agent's PRIME_AGENT_INSTALL_UV path (astral.sh installer)
+          # cannot run here. Fetch the pinned uv release with node's own fetch
+          # and extract it onto the PVC; prime-agent finds ~/.local/bin/uv.
+          uv_installed=""
+          if [[ -x "$HOME/.local/bin/uv" ]]; then
+            uv_installed=$("$HOME/.local/bin/uv" --version 2>/dev/null | awk '{print $2}' || true)
+          fi
+          if [[ "$uv_installed" != "$UV_VERSION" ]]; then
+            echo "installing uv $UV_VERSION (was: ${uv_installed:-none})"
+            arch=$(uname -m)
+            url="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${arch}-unknown-linux-gnu.tar.gz"
+            node -e '
+              const [url, out] = process.argv.slice(1);
+              fetch(url).then(async (r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+                require("fs").writeFileSync(out, Buffer.from(await r.arrayBuffer()));
+              }).catch((e) => { console.error(e.message); process.exit(1); });
+            ' "$url" /tmp/uv.tgz
+            mkdir -p "$HOME/.local/bin"
+            tar -xzf /tmp/uv.tgz -C /tmp
+            install -m 0755 "/tmp/uv-${arch}-unknown-linux-gnu/uv" "$HOME/.local/bin/uv"
+            rm -rf /tmp/uv.tgz "/tmp/uv-${arch}-unknown-linux-gnu"
+          fi
+
           # Reconcile static config from the ConfigMap on every boot.
           # settings.json is seeded once; runtime keys (recentModels, theme)
           # accumulate on the PVC afterwards. Delete it to re-seed.
@@ -70,10 +95,18 @@ spec:
           - name: NPM_CONFIG_PREFIX
             value: "/opt/data/npm"
           - name: PATH
-            value: "/opt/data/npm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            value: "/opt/data/npm/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
             value: "0.9.4"
+          # Let kernel bootstrap install uv by itself when missing instead of
+          # failing the (non-TTY) install prompt. Normally a no-op: the boot
+          # script pre-seeds uv on the PVC.
+          - name: PRIME_AGENT_INSTALL_UV
+            value: "1"
+          # renovate: datasource=github-releases depName=astral-sh/uv versioning=semver
+          - name: UV_VERSION
+            value: "0.12.11"
           # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm.ts
           # extension reads LITELLM_API_KEY for catalog discovery and requests.
           - name: LITELLM_BASE_URL
