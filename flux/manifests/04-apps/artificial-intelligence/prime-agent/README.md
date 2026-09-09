@@ -12,8 +12,11 @@ This deployment includes:
 
 - Stock `node` image + bootstrap (`generic-app`); no upstream OCI image exists,
   so the pinned npm tarball installs into the Longhorn-backed `HOME` on boot
+- Pinned `uv` for the Python kernel installs to `~/.local/bin` on boot (the
+  slim node image has no curl/wget, so node's own `fetch` pulls the GitHub
+  release); `PRIME_AGENT_INSTALL_UV=1` arms prime-agent's uv fallback
 - Longhorn-backed state at `/opt/data` (agent config, sessions, kernels, npm
-  prefix)
+  prefix, uv)
 - `agent/` payload (extensions, seeded settings) reconciled from a ConfigMap
   on every pod start; mirrors `~/.prime/agent/`
 - `agent/extensions/litellm.ts` registers the in-cluster LiteLLM gateway as
@@ -72,5 +75,6 @@ prime-agent status                                    # daemon/worker state (ins
 - Pod crashloops on bootstrap: check egress to the R2 release bucket and npm
 - `/model` shows only `login-required`: the `prime-agent-secrets` item is
   missing or the key lacks model access on the gateway
-- Kernel bootstrap fails on first tool call: check egress for the Python
-  runtime download; `~/.prime/agent/logs/` has details
+- Kernel bootstrap fails on first tool call: uv installs on boot (check egress
+  to github.com), then downloads the Python runtime; `~/.prime/agent/logs/`
+  has details
