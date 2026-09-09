@@ -95,7 +95,7 @@ spec:
           - name: NPM_CONFIG_PREFIX
             value: "/opt/data/npm"
           - name: PATH
-            value: "/opt/data/npm/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            value: "/opt/data/npm/bin:/opt/data/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
             value: "0.9.4"
