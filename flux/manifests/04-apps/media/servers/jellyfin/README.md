@@ -103,6 +103,8 @@ Media is mounted read-write from the NAS (trickplay and other sidecar metadata):
 | `/educational`  | Educational  |
 | `/music`        | Music        |
 | `/music-videos` | Music Videos |
+| `/books`        | Books        |
+| `/audiobooks`   | Audiobooks   |
 
 ## Troubleshooting
 
