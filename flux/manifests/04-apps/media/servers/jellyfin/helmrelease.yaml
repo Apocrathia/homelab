@@ -68,6 +68,10 @@ spec:
           mountPath: /music
         - name: music-videos
           mountPath: /music-videos
+        - name: books
+          mountPath: /books
+        - name: audiobooks
+          mountPath: /audiobooks
       volumes:
         emptyDir:
           - name: cache
@@ -113,6 +117,16 @@ spec:
           - name: music-videos
             source: "//storage.services.apocrathia.com/Video"
             subDir: "Music Videos"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: books
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: audiobooks
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Audiobooks"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
 
