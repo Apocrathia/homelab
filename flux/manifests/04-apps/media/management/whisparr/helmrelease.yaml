@@ -84,6 +84,10 @@ spec:
           mountPath: /downloads
         - name: adult
           mountPath: /adult
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:

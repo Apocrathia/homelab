@@ -78,6 +78,10 @@ spec:
       volumeMounts:
         - name: config
           mountPath: /config
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
       sidecars:
         - name: flaresolverr
