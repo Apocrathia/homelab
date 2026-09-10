@@ -11,6 +11,10 @@ policies:
 reports:
 agent_options:
 controls:
+  # Require Apple Silicon Macs (macOS 14+) to pass Apple's hardware
+  # attestation challenge (ACME) before DEP/ADE enrollment completes.
+  # Intel Macs fall back to SCEP. Fleet Premium, 4.84+.
+  apple_require_hardware_attestation: true
 org_settings:
   server_settings:
     server_url: $FLEET_URL
