@@ -1,0 +1,119 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: restreamer
+  namespace: restreamer
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: restreamer
+      # renovate: datasource=docker depName=datarhei/restreamer
+      image: datarhei/restreamer:2.12.0@sha256:6b6b1a0d90a326de081a5ab552455b828ad1fd771831442ebbba7cae6afd2b26
+      container:
+        name: restreamer
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # External hostname; also skips the public-IP detection call (api.ipify.org)
+          - name: CORE_HOST_NAME
+            value: "restreamer.gateway.services.apocrathia.com"
+          # Disable anonymous update telemetry to service.datarhei.com
+          - name: CORE_UPDATE_CHECK
+            value: "false"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 4000m
+          memory: 4Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /ping
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /ping
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: config
+          mountPath: /core/config
+        - name: data
+          mountPath: /core/data
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: config
+            capacity: 5Gi
+          - name: data
+            capacity: 20Gi
+
+    secrets:
+      enabled: false
+
+    gatus:
+      path: /ping
+
+    authentik:
+      enabled: true
+      category: "Media"
+      displayName: "Restreamer"
+      externalHost: "https://restreamer.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/restreamer/icon.svg"
+
+    httproute:
+      enabled: false
