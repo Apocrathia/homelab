@@ -21,6 +21,24 @@ This deployment includes:
 
 Web UI after deployment. PostgreSQL connection is pre-configured via environment variables.
 
+### PostgreSQL databases
+
+The app uses three logical databases on the single `chaptarr-postgres` CNPG cluster (`MainDb`, `LogDb`, `CacheDb`):
+
+- `chaptarr` — main data (created by CNPG bootstrap)
+- `chaptarr_logs` — UI logs table (`Logs`)
+- `chaptarr_cache` — HTTP response cache (`HttpResponse`)
+
+The two extra databases were created manually on the existing cluster (CNPG cannot add databases to a bootstrapped cluster declaratively):
+
+```bash
+kubectl exec -n chaptarr chaptarr-postgres-1 -c postgres -- psql -U postgres \
+  -c "CREATE DATABASE chaptarr_logs OWNER chaptarr ENCODING UTF8;" \
+  -c "CREATE DATABASE chaptarr_cache OWNER chaptarr ENCODING UTF8;"
+```
+
+Pointing `LogDb`/`CacheDb` at the main database collides their `VersionInfo` migration tables with the main schema, so log/cache migrations get skipped and `/api/v1/log` + author search 500 with `relation "Logs"/"HttpResponse" does not exist`. If the cluster is ever re-bootstrapped, re-create the two databases before the app starts.
+
 See `helmrelease.yaml` for deployment configuration.
 
 ### Secrets
