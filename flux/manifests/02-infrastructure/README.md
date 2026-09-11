@@ -23,6 +23,8 @@ The infrastructure layer provides the foundational services that enable the clus
 ### Storage and Data
 
 - [**Longhorn**](longhorn/README.md) - Distributed block storage with backup capabilities
+- [**Snapshot Controller**](snapshot-controller/README.md) - CSI volume snapshot stack
+- [**Kopiur**](kopiur/README.md) - Kopia-native backup operator (pilot)
 
 ### Monitoring and Observability
 

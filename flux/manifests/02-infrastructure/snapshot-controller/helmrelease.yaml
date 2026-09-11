@@ -1,0 +1,49 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: snapshot-controller
+  namespace: flux-system
+spec:
+  interval: 5m
+  targetNamespace: kube-system
+  chart:
+    spec:
+      chart: snapshot-controller
+      # renovate: datasource=docker depName=ghcr.io/home-operations/charts/snapshot-controller
+      version: 0.1.1
+      sourceRef:
+        kind: HelmRepository
+        name: home-operations
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    # CRDs ship unmodified from kubernetes-csi/external-snapshotter in the chart crds/ dir
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    # Requests/limits per the chart's documented example
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    # CSI snapshot stack: prerequisite for kopiur's default copyMethod: Snapshot
+    # (Longhorn's own chart ships neither the controller nor a VolumeSnapshotClass)
+    volumeSnapshotClasses:
+      - name: longhorn
+        annotations:
+          snapshot.storage.kubernetes.io/is-default-class: "true"
+        driver: driver.longhorn.io
+        deletionPolicy: Delete
