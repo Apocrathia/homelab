@@ -83,11 +83,14 @@ SSO enforced somewhere in the path. Two sanctioned shapes, by app mode:
 
 - **Outpost (proxy-mode apps)**: backendRef is the app's Authentik outpost
   Service (e.g. `ak-outpost-demo-app-outpost:9000`). Pilot:
-  `04-apps/demo-app/tailnet-shared-httproute.yaml`.
+  `04-apps/demo-app/tailnet-httproute.yaml` (interim two-route shape:
+  the outpost-generated LAN route plus this app-side tailnet route; the
+  chart learns to dual-parent the outpost route in slice 5).
 - **Direct (OIDC-mode apps)**: backendRef is the app's own Service and the
   app enforces Authentik OIDC itself, with redirect URIs already minted on
-  the same hostname (e.g. jellyfin's `/sso/OID/...`). Pilot:
-  `04-apps/media/servers/jellyfin/tailnet-shared-httproute.yaml`.
+  the same hostname (e.g. jellyfin's `/sso/OID/...`). Pilot: jellyfin —
+  the chart-rendered route plus a postRenderers parentRef in its
+  `helmrelease.yaml` (same-httproute shape, no extra files).
 
 Direct backends with no Authentik auth in the path are forbidden - friends
 hit the same SSO, redirect URIs, and app permissions as on the LAN. The

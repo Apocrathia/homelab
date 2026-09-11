@@ -197,7 +197,7 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
 - **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
 - **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: Via the `tailnet-gateway` listener `https-gateway-services` (`tailnet-shared-httproute.yaml`); pilot for the dual-gateway pattern - see [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- **Routing**: Via the `tailnet-gateway` listener `https-gateway-services` (`tailnet-httproute.yaml`); pilot for the dual-gateway pattern - see [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
 
 ### Internal Access
 

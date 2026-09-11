@@ -91,13 +91,16 @@ retired entirely.
       READMEs rewritten.
 - [ ] Slice 2 - Authentik: friends group bindings, outpost authorization
       (follow-up MR).
-- [ ] Slice 5 - reusable exposure pattern (follow-up MRs): codify the
-      tailnet-share shapes (outpost proxy, direct OIDC, SAML, direct-no-auth
-      forbidden) as generic-app chart values so chart apps get
-      `tailnet-shared` routes by config; publish the same shapes as a
-      copyable pattern doc for non-chart deployments (sibling manifests,
-      e.g. app-specific Helm charts). Operators apply it without our
-      chart.
+- [ ] Slice 5 - reusable exposure pattern (follow-up MRs, touches
+      protected path helm/generic-app/\*\* - operator confirmation required):
+      chart-side templating so one HTTPRoute serves both doors, backend
+      chosen by auth mode. Concretely: template
+      `kubernetes_httproute_parent_refs` as a list (proxy apps: the
+      outpost-generated route dual-parents, app-side `tailnet-httproute.yaml`
+      files die), add a values-driven extra-parentRefs list for the
+      chart-rendered route (OIDC apps: replaces per-app postRenderers
+      patches like jellyfin's), and define the SAML shape. Publish the
+      shapes as a copyable pattern doc for non-chart deployments.
 - [ ] Slice 3 - invite friends: add the email-free friends grant
       (`autogroup:member -> tag:k8s` 443+53) to `policy.hujson`, read the
       `tailnet-dns` device IP, set `dns_split_dns` in
