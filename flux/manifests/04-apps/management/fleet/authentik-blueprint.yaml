@@ -147,6 +147,7 @@ entries:
       provider: !Find [authentik_providers_saml.samlprovider, [name, "fleetdm-mdm-saml-provider"]]
       group: "Home"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/icon.svg"
+      meta_hide: true
       meta_description: "Fleet MDM end-user authentication (device setup / ADE)"
       meta_publisher: "Fleet"
 
