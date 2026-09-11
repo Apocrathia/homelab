@@ -1,8 +1,7 @@
 # -----------------------------------------------------------------------------
 # Tailscale tailnet
 # -----------------------------------------------------------------------------
-# Policy file, DNS, and tailnet settings for taila8ef8c.ts.net
-# (custom domain tailnet.apocrathia.com).
+# Policy file, DNS, and tailnet settings for taila8ef8c.ts.net.
 #
 # Auth (1Password Connect — no TAILSCALE_* tokens in env):
 #   OP_CONNECT_HOST  — http://onepassword-connect.onepassword-system.svc:8080
@@ -37,8 +36,28 @@ inputs = {
 
   dns_magic_dns          = true
   dns_override_local_dns = false
-  dns_search_paths       = ["tailnet.apocrathia.com"]
-  dns_split_dns          = {}
+  # No search paths: the tailnet search domain only resolved via the retired
+  # public wildcard record.
+  dns_search_paths = []
+  dns_split_dns    = {}
+
+  # Split DNS for the homelab app zone (tailnet split DNS plan, slice 1).
+  # Restricted nameserver for gateway.services.apocrathia.com -> the
+  # tailnet-dns resolver device (flux/manifests/03-services/tailnet-dns).
+  # The nameserver must be an IP, and the device IP only exists after the
+  # resolver's first rollout, so this stays off until then:
+  #   1. Deploy the tailnet-dns Flux Kustomization.
+  #   2. Read the device IP: `kubectl -n tailnet-dns get svc tailnet-dns`
+  #      (EXTERNAL-IP), or the tailnet-dns device in the admin console.
+  #   3. Replace the empty dns_split_dns map above with the block below
+  #      (uncommenting this block as-is creates a duplicate attribute and
+  #      breaks the HCL parse), set the IP, then apply.
+  # The device IP is stable across restarts (operator-persisted proxy
+  # state), so this is one-time. Admin-console equivalent: DNS -> Add
+  # nameserver -> Custom -> gateway.services.apocrathia.com + device IP.
+  # dns_split_dns = {
+  #   "gateway.services.apocrathia.com" = ["100.x.y.z"]
+  # }
 
   acls_externally_managed_on = true
   acls_external_link         = "https://gitlab.com/Apocrathia/homelab/-/blob/main/terraform/deployments/tailscale/tailnet/policy.hujson"

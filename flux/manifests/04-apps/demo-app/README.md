@@ -29,7 +29,7 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 This directory contains:
 
 - `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart
-- `tailnet-httproute.yaml` - HTTPRoute exposing the app on the tailnet gateway (`demo.tailnet.apocrathia.com`)
+- `tailnet-shared-httproute.yaml` - HTTPRoute exposing the app's LAN hostname on the tailnet gateway (`demo.gateway.services.apocrathia.com`, dual-gateway pattern pilot)
 - `kustomization.yaml` - Kustomize configuration for Flux deployment
 - `README.md` - This documentation
 
@@ -192,12 +192,12 @@ httproute:
 - **Authentication**: SSO through Authentik
 - **TLS**: Automatic TLS certificate management
 
-### Tailnet Access
+### Tailnet Access (shared hostname)
 
-- **URL**: `https://demo.tailnet.apocrathia.com`
-- **Authentication**: None (direct route, no Authentik) - intended for sharing with external users over Tailscale
-- **TLS**: Wildcard certificate for `*.tailnet.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: Via the `tailnet-gateway` (see [Tailscale service sharing](../../03-services/tailscale/README.md#service-sharing-with-external-users))
+- **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
+- **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
+- **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
+- **Routing**: Via the `tailnet-gateway` listener `https-gateway-services` (`tailnet-httproute.yaml`); pilot for the dual-gateway pattern - see [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
 
 ### Internal Access
 

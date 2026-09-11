@@ -57,11 +57,17 @@ spec:
     sources:
       - gateway-httproute
       - service
+    extraArgs:
+      # Only routes accepted by main-gateway produce LAN records. Routes on
+      # tailnet-gateway (same hostnames, dual-parentRef) are written by the
+      # external-dns-tailnet instance in 03-services/tailnet-dns instead.
+      # Without this filter, dual-parentRef routes make this instance write
+      # the tailnet-gateway CGNAT address into the UDM, which LAN clients
+      # cannot route.
+      gateway-name: main-gateway
     txtOwnerId: main
     txtPrefix: "k8s.main.%{record_type}-"
     domainFilters:
       - apocrathia.com
-    excludeDomains:
-      - tailnet.apocrathia.com
     serviceMonitor:
       enabled: true

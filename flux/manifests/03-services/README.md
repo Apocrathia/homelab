@@ -13,6 +13,7 @@ Platform services that provide core functionality to the homelab cluster.
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
 - [**ExternalDNS**](external-dns/README.md) - UniFi DNS record management for Gateway API routes and services
+- [**Tailnet DNS**](tailnet-dns/README.md) - Split-DNS resolver serving the app zone to Tailscale users
 
 ### Monitoring and Observability
 

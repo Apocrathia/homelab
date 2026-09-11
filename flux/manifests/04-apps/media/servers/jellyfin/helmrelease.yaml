@@ -158,3 +158,27 @@ spec:
     httproute:
       enabled: true
       hostname: jellyfin.gateway.services.apocrathia.com
+
+  # Tailnet sharing (same-httproute pattern, OIDC shape): the chart's own
+  # HTTPRoute gains a second parentRef on tailnet-gateway via postRenderers,
+  # so one route object serves LAN and friends on the same hostname. Friends
+  # resolve the name via tailnet split DNS; jellyfin enforces Authentik OIDC
+  # itself (redirect URIs are minted on this hostname). Chart-side templating
+  # of extra parentRefs lands in slice 5, after which this patch goes away.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: gateway.networking.k8s.io
+              version: v1
+              kind: HTTPRoute
+              name: jellyfin
+            patch: |
+              - op: add
+                path: /spec/parentRefs/-
+                value:
+                  group: gateway.networking.k8s.io
+                  kind: Gateway
+                  name: tailnet-gateway
+                  namespace: cilium-system
+                  sectionName: https-gateway-services

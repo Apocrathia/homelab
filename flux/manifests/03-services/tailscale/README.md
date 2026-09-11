@@ -43,69 +43,68 @@ Exit-node routes need approval per device, and the Connector recreates pods on r
 
 ## Service sharing with external users
 
-Pattern for sharing homelab services with friends over Tailscale without any
-public internet exposure. Follows the official
-[BYO custom domain Gateway API solution](https://tailscale.com/docs/solutions/kubernetes-operator-byod-gateway-api),
-adapted for this cluster's Cilium GatewayClass.
+Friends reach homelab apps over Tailscale as invited tailnet users - not
+device-shares, and with no public DNS. They use the same
+`gateway.services.apocrathia.com` hostnames the LAN uses, resolve them via
+tailnet split DNS, and authenticate through Authentik like every LAN user.
+Plan and slice status: [tailnet split DNS](../../../../docs/plans/tailnet-split-dns.md).
 
 ### Architecture
 
 - `tailnet-gateway.yaml` defines `CiliumGatewayClassConfig tailscale-gateway-config`
   (the generated LoadBalancer Service gets `loadBalancerClass: tailscale`),
-  `GatewayClass cilium-tailscale`, and `Gateway tailnet-gateway` with an HTTPS
-  listener for `*.tailnet.apocrathia.com`.
+  `GatewayClass cilium-tailscale`, and `Gateway tailnet-gateway` with one HTTPS
+  listener, `https-gateway-services`, serving
+  `*.gateway.services.apocrathia.com` with the main-gateway's wildcard
+  certificate (admitted by the existing `cert-manager-secrets`
+  ReferenceGrant in `03-services/gateway/`).
 - The operator turns the gateway's LoadBalancer Service into one tailnet
-  device: `tailnet-gateway.taila8ef8c.ts.net`, IP `100.120.155.113`, tagged
-  `tag:k8s`. The device hostname is pinned by the Gateway's
-  `spec.infrastructure.annotations` (`tailscale.com/hostname`, propagated to
-  the generated Service by Cilium); without it the operator falls back to
-  `<namespace>-<service-name>`. **This device is the one shared with external
-  users.** If the device is ever recreated, update the DNS record content
-  (below).
-- Per-app `HTTPRoute` resources bind `<app>.tailnet.apocrathia.com` to the
-  gateway. Pilot: `04-apps/demo-app/tailnet-httproute.yaml` (direct to the
-  app, no Authentik — friends must not land on the homelab IdP).
-- TLS: wildcard cert `*.tailnet.apocrathia.com` from cert-manager DNS-01
-  (`tailnet-gateway-cert.yaml`), terminated at the gateway.
-- DNS: `*.tailnet.apocrathia.com` A record pointing at the device IP lives in
-  `terraform/deployments/cloudflare/dns` (gray cloud — the CGNAT target is
-  only reachable through Tailscale, so the name is public but the service is
-  not).
+  device: `tailnet-gateway.taila8ef8c.ts.net`, tagged `tag:k8s`. The device
+  hostname is pinned by the Gateway's `spec.infrastructure.annotations`
+  (`tailscale.com/hostname`, propagated to the generated Service by Cilium);
+  without it the operator falls back to `<namespace>-<service-name>`.
+- Tailnet split DNS resolves `gateway.services.apocrathia.com` for tailnet
+  clients to this gateway instead of `main-gateway`; the resolver stack lives
+  in [Tailnet DNS](../tailnet-dns/README.md).
 - Policy: the tailnet policy file is externally managed via
   `terraform/deployments/tailscale/tailnet` (the console policy editor is
-  locked) and is deny-by-default. The friend-facing grant is
-  `autogroup:shared` -> `tag:k8s` port 443: whatever shared users may reach,
-  and nothing else.
+  locked) and is deny-by-default. Admins reach `tag:k8s` over HTTPS (443)
+  and DNS (tcp/udp 53, the split-DNS resolver). Friend emails never live
+  in git; the friends grant (slice 3) uses an email-free src such as
+  `autogroup:member` — on this invite-only tailnet every member other
+  than the owner is a friend. Friends then get the same 443+53 access
+  and nothing else - no exit-node, no internet.
 
-### Sharing a service with a friend
+### Friend-facing routes
 
-1. Give the service an `HTTPRoute` on `tailnet-gateway` (copy the demo-app
-   route, change hostname and backend).
-2. In the Tailscale admin console, open the gateway device and select
-   **Share**: invite by email or copy an invite link. Recipients need their
-   own Tailscale account and must be admin of their own tailnet (free plan
-   works).
-3. The recipient accepts and reaches `https://<app>.tailnet.apocrathia.com`.
-   Shared devices are quarantined by default (receive-only) and visible only
-   to that one user.
-4. Revoke any time from the same Share dialog. Revoking cuts the user off;
-   the route and DNS record stay.
+Every route a friend can reach MUST go through the `tailnet-gateway`
+(`https-gateway-services` listener, same hostname as LAN) with Authentik
+SSO enforced somewhere in the path. Two sanctioned shapes, by app mode:
 
-Tagged devices can be shared — the old assumption that they cannot came from
-[tailscale/tailscale#10633](https://github.com/tailscale/tailscale/issues/10633),
-which was a Tailnet Lock issue; Tailnet Lock is not enabled here.
+- **Outpost (proxy-mode apps)**: backendRef is the app's Authentik outpost
+  Service (e.g. `ak-outpost-demo-app-outpost:9000`). Pilot:
+  `04-apps/demo-app/tailnet-httproute.yaml` (interim two-route shape:
+  the outpost-generated LAN route plus this app-side tailnet route; the
+  chart learns to dual-parent the outpost route in slice 5).
+- **Direct (OIDC-mode apps)**: backendRef is the app's own Service and the
+  app enforces Authentik OIDC itself, with redirect URIs already minted on
+  the same hostname (e.g. jellyfin's `/sso/OID/...`). Pilot: jellyfin —
+  the chart-rendered route plus a postRenderers parentRef in its
+  `helmrelease.yaml` (same-httproute shape, no extra files).
 
-### Troubleshooting
+Direct backends with no Authentik auth in the path are forbidden - friends
+hit the same SSO, redirect URIs, and app permissions as on the LAN. The
+Authentik HTTPRoute in `03-services/authentik/httproute.yaml` dual-parents
+the IdP's own hostname on `main-gateway` so OIDC flows complete.
 
-- **Invited friend cannot reach the service**: grants from `autogroup:shared`
-  to a tag destination may not be honored for shared tagged devices
-  ([tailscale/tailscale#14445](https://github.com/tailscale/tailscale/issues/14445)).
-  Workaround: in the policy, switch the `autogroup:shared` grant destination
-  from `tag:k8s` to the gateway device's IP or name, then re-apply.
-- **Name resolves but nothing loads**: the wildcard DNS record points at the
-  gateway device's CGNAT address, which is only reachable through Tailscale.
-  Confirm the client device is connected to Tailscale before debugging the
-  cluster.
+Each app ships its own cross-namespace `ReferenceGrant` (in the authentik
+namespace, `from` the app's namespace) in the same file as its shared route -
+see the grant in the pilot file. The authentik manifests stay app-agnostic;
+do not add app namespaces to any grant there.
+
+Friends are invited as tailnet users; the friends grant in the tailnet
+policy uses an email-free src (no friends list in git). Until it lands
+(slice 3), nothing friend-facing is reachable (deny-by-default).
 
 ## Authentication
 

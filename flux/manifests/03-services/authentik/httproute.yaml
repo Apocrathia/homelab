@@ -9,6 +9,12 @@ spec:
     - name: main-gateway
       namespace: cilium-system
       sectionName: https
+    # Friends authenticate against the same hostname: tailnet split DNS
+    # resolves auth.gateway.services.apocrathia.com to tailnet-gateway, so
+    # the IdP itself must be reachable there or OIDC redirect loops break.
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
   hostnames:
     - "auth.gateway.services.apocrathia.com"
   rules:
