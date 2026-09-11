@@ -9,7 +9,7 @@ Open-source device management platform built on osquery. Inventory, queries, and
 - Fleet server via the official Helm chart
 - MySQL and Valkey from the chart's bundled subcharts (dev/test posture)
 - Gateway API access; TLS terminated at the gateway
-- Authentik SAML for user SSO; SCIM backchannel for IdP vitals on hosts (no proxy — agents need open API paths)
+- Authentik SAML for user SSO + device-user (end-user) IdP auth; SCIM backchannel for IdP vitals on hosts (no proxy — agents need open API paths)
 - Org settings managed as GitOps under [`fleet/`](../../../../../fleet/) (`fleetctl gitops`)
 
 ## Access
@@ -96,6 +96,16 @@ After the first successful GitOps apply: edit your user → Authentication → S
 
 Optional: enable UI GitOps mode under **Settings → Integrations → Change management** so the UI cannot drift settings that GitOps owns.
 
+### End-user authentication (device users)
+
+Device users authenticate with Authentik during setup (macOS Setup Assistant via ADE, Windows MDM, Linux Orbit enrollment). Fleet treats this as a **second SAML connection** with its own ACS URL (`/api/v1/fleet/mdm/sso/callback`); authentik allows one ACS URL per provider, so the blueprint defines a second SAML provider + application (`fleetdm-mdm`).
+
+- IdP settings: `fleet/default.yml` → `org_settings.mdm.end_user_authentication` (all-fleets, GitOps-applied)
+- Enable per fleet: `fleet/fleets/home.yml` → `controls.setup_experience.enable_end_user_authentication`
+- NameID (email) matches the SCIM `userName` mapping, so setup maps to SCIM users; the SAML `name` attribute feeds the local account's full name (`AccountConfiguration`)
+- Fleet pushes the updated enrollment profile (`configuration_web_url`) to Apple on the DEP sync (~1/min). Takes effect for devices that enroll **after** enabling — already-enrolled hosts are unaffected
+- The blueprint and this config land in the same MR. Fleet validates the GitOps YAML syntax only at apply time and fetches the IdP metadata when a device starts the setup flow — a missing Authentik app surfaces at device setup, not at apply
+
 ### SCIM (IdP vitals on hosts)
 
 Premium feature. Authentik pushes users/groups to Fleet over SCIM so hosts can show IdP full name, groups, and department ([Fleet guide](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts#other-idps)). This is separate from SAML SSO — keep both.
@@ -146,6 +156,7 @@ Health check path: `/healthz` (also used by the chart probes).
 - [Deploy Fleet on Kubernetes](https://fleetdm.com/guides/deploy-fleet-on-kubernetes)
 - [Fleet YAML files (GitOps)](https://fleetdm.com/docs/configuration/yaml-files)
 - [Fleet SSO (Authentik)](https://fleetdm.com/docs/deploy/single-sign-on-sso#authentik)
+- [End-user authentication (macOS Setup deep dive)](https://fleetdm.com/guides/end-user-authentication)
 - [Foreign vitals / SCIM](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts)
 - [Authentik SCIM provider](https://docs.goauthentik.io/add-secure-apps/providers/scim/)
 - [Log destinations](https://fleetdm.com/guides/log-destinations)

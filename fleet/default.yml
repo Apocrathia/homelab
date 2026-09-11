@@ -31,3 +31,14 @@ org_settings:
     metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/
     enable_sso_idp_login: true
     enable_jit_provisioning: true
+  # End-user (device user) IdP — macOS Setup Assistant (ADE), Windows MDM,
+  # Linux Orbit enrollment. Separate SAML connection from staff SSO above:
+  # Fleet uses a different ACS URL per connection, and authentik allows one
+  # ACS URL per provider, so this points at the fleetdm-mdm application
+  # (flux/manifests/04-apps/management/fleet/authentik-blueprint.yaml).
+  # entity_id must equal the authentik provider's audience.
+  mdm:
+    end_user_authentication:
+      idp_name: Authentik
+      entity_id: https://fleet.gateway.services.apocrathia.com
+      metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm-mdm/metadata/
