@@ -1,10 +1,9 @@
 # Backup
 
-Cluster backup plane built on [kopiur](../02-infrastructure/kopiur/README.md)
-(Kopia-native operator): a shared `ClusterRepository` on the NAS RustFS
-S3-compatible object store, plus per-workload `SnapshotPolicy` /
-`SnapshotSchedule` pairs. Intended to replace Longhorn's recurring CIFS backup
-jobs for cluster volumes; Longhorn stays for replication and volume storage.
+Shared kopia repository for the cluster, built on
+[kopiur](../../02-infrastructure/kopiur/README.md) (Kopia-native operator):
+one `ClusterRepository` on the NAS RustFS S3-compatible object store.
+Backup policies live with their apps, not here.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -17,18 +16,21 @@ jobs for cluster volumes; Longhorn stays for replication and volume storage.
   bucket creation return 403; verified 2026-09-11)
 - `clusterrepository.yaml` — `ClusterRepository/nas-rustfs`: kopia repository
   in the `kopia` bucket at `storage.services.apocrathia.com:9009`
-  (plain HTTP, path-style), tenancy-gated by `allowedNamespaces`, credential
-  projection enabled, maintenance default-managed in `kopiur-system`
-- `pilot-*.yaml` — pilot SnapshotPolicies + nightly schedules
-  (0200 UTC ± 30m jitter, keepDaily 7 / keepWeekly 4) on three non-critical
-  Longhorn PVCs
+  (plain HTTP, path-style), CEL identity defaults, maintenance
+  default-managed in `kopiur-system`
 
-## Status: pilot
+## How an app opts in
 
-Three low-stakes PVCs (`demo-app`, `changedetection-io`, `huntarr2`), running
-in parallel with Longhorn's `daily-backup` RecurringJob. Expand
-`allowedNamespaces` + add policy files to widen coverage; retire the Longhorn
-backup job once restores have been drilled and the pilot has soaked.
+This directory does not change per app. An app backs itself up by:
+
+1. Labeling its namespace (in its own `namespace.yaml`):
+   `backup.apocrathia.com/repo: nas-rustfs` — the tenancy gate
+2. Adding a `backup.yaml` to its own kustomization with a `SnapshotPolicy`
+   (PVC sources, retention) and a `SnapshotSchedule` (cron window)
+
+Pilot apps: `demo-app`, `jellyfin` (config only; media PVCs are NAS-backed).
+Longhorn's `daily-backup` RecurringJob stays in place until the pilot proves
+out (restore drill + soak).
 
 Kopia encrypts, compresses, and deduplicates client-side before upload, so
 the RustFS bucket and any future cloud replica hold ciphertext only.
@@ -37,13 +39,6 @@ the RustFS bucket and any future cloud replica hold ciphertext only.
 `secrets` create/patch/delete RBAC (Kubernetes cannot scope `create` to a
 Secret name). Gates: the repository owner must set `credentialProjection.allowed`,
 each consumer opts in per policy, and `allowedNamespaces` limits tenants.
-
-## Configuration
-
-- Repository backend details live in `clusterrepository.yaml`
-- Credentials: 1Password item `vaults/Secrets/items/kopiur-secrets`
-- `KOPIA_PASSWORD` is the repository encryption passphrase — losing it makes
-  the repository unrecoverable (there is no reset)
 
 ## Usage
 

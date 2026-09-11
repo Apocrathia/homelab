@@ -7,6 +7,3 @@ metadata:
 resources:
   - secret.yaml
   - clusterrepository.yaml
-  - pilot-demo-app.yaml
-  - pilot-changedetection-io.yaml
-  - pilot-huntarr2.yaml

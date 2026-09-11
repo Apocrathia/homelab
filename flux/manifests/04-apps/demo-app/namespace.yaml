@@ -5,6 +5,8 @@ metadata:
   name: demo-app
   labels:
     app.kubernetes.io/name: demo-app
+    # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
+    backup.apocrathia.com/repo: nas-rustfs
     # generic-app chart defaults (non-root, read-only rootfs, dropped caps)
     # already satisfy restricted; enforce it so nothing else landing in this
     # namespace can regress.

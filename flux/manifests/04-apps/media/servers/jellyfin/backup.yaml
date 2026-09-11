@@ -1,17 +1,19 @@
 ---
-# Pilot: huntarr2 (media tooling config, 1Gi Longhorn PVC)
+# Backup: jellyfin-config -> ClusterRepository/nas-rustfs
+# Nightly 0200 UTC window (H pins a deterministic minute, 30m jitter).
+# Media PVCs are NAS-backed RWX shares and are not backed up here.
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
-  name: huntarr2-config
-  namespace: huntarr2
+  name: jellyfin-config
+  namespace: jellyfin
 spec:
   repository:
     kind: ClusterRepository
     name: nas-rustfs
   sources:
     - pvc:
-        name: huntarr2-config
+        name: jellyfin-config
   retention:
     keepDaily: 7
     keepWeekly: 4
@@ -21,11 +23,11 @@ spec:
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
-  name: huntarr2-nightly
-  namespace: huntarr2
+  name: jellyfin-nightly
+  namespace: jellyfin
 spec:
   policyRef:
-    name: huntarr2-config
+    name: jellyfin-config
   schedule:
     cron: "H 2 * * *"
     jitter: 30m

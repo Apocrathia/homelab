@@ -1,17 +1,18 @@
 ---
-# Pilot: changedetection-io (config-only, 5Gi Longhorn PVC)
+# Backup: demo-app-data -> ClusterRepository/nas-rustfs
+# Nightly 0200 UTC window (H pins a deterministic minute, 30m jitter).
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
-  name: changedetection-io-config
-  namespace: changedetection-io
+  name: demo-app-data
+  namespace: demo-app
 spec:
   repository:
     kind: ClusterRepository
     name: nas-rustfs
   sources:
     - pvc:
-        name: changedetection-io-config
+        name: demo-app-data
   retention:
     keepDaily: 7
     keepWeekly: 4
@@ -21,11 +22,11 @@ spec:
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
-  name: changedetection-io-nightly
-  namespace: changedetection-io
+  name: demo-app-nightly
+  namespace: demo-app
 spec:
   policyRef:
-    name: changedetection-io-config
+    name: demo-app-data
   schedule:
     cron: "H 2 * * *"
     jitter: 30m
