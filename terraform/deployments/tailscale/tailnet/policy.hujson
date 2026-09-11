@@ -35,17 +35,22 @@
 	// Deny-by-default: there is no blanket grant. Every entry below is an
 	// explicit exception; anything not listed here is blocked.
 	"grants": [
-		// Invited friends will reach the tailnet front door (tailnet-gateway,
-		// *.gateway.services.apocrathia.com) over HTTPS and the split-DNS
-		// resolver (tailnet-dns device, also tag:k8s) over DNS. Friend
-		// emails never enter this file — the slice-3 grant uses an
-		// email-free src, e.g. on this invite-only tailnet:
-		//   {"src": ["autogroup:member"], "dst": ["tag:k8s"],
-		//    "ip": ["tcp:443", "tcp:53", "udp:53"]}
-		// Port 53 is explicit: community reports say split-DNS servers are
-		// exempt from grants, but docs only promise that for global
-		// nameservers. Friends get NO exit-node or internet access: the
-		// only autogroup:internet grant below is admin-only.
+		// Invited friends (tailnet members) reach the tailnet front door
+		// (tailnet-gateway, *.gateway.services.apocrathia.com) over HTTPS
+		// and the split-DNS resolver (tailnet-dns device, also tag:k8s)
+		// over DNS. The src is email-free by design (operator rule: no
+		// friends list in git): autogroup:member on this invite-only
+		// tailnet = everyone except the owner, and membership is granted
+		// by console invite. Port 53 is explicit: community reports say
+		// split-DNS servers are exempt from grants, but docs only promise
+		// that for global nameservers. Members get NO exit-node or
+		// internet access: the only autogroup:internet grant below is
+		// admin-only, and admins supersede member grants anyway.
+		{
+			"src": ["autogroup:member"],
+			"dst": ["tag:k8s"],
+			"ip":  ["tcp:443", "tcp:53", "udp:53"],
+		},
 
 		// Tailnet admins keep the same HTTPS-only access to the front door
 		// so the operator can reach and verify the service friends are
