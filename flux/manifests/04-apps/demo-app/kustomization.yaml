@@ -21,12 +21,3 @@ configMapGenerator:
     namespace: demo-app
     files:
       - nginx.conf
-  - name: authentik-access-demo-app
-    namespace: authentik
-    files:
-      - demo-app.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"

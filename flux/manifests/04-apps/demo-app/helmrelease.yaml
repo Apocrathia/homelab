@@ -59,6 +59,7 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Platform"
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"

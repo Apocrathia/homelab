@@ -47,10 +47,11 @@ Group-level only. Groups live in `blueprints/app-access.yaml`; every app's own
 blueprint carries its admins binding:
 
 - **admins** — operator group; an admins binding in each application's own blueprint
-- **users** — friends group; sharing = adding a users binding in the app's own
-  blueprint (mirrors the app's tailnet-httproute.yaml)
-- Chart-rendered apps get bindings when the chart captures the pattern
-  (jellyfin + demo-app carry committed access blueprints as the two guinea pigs)
+- **users** — friends group; sharing = a users binding in the app's own
+  blueprint, or `authentik.shared: true` for chart-rendered apps (mirrors the
+  app's tailnet exposure)
+- Chart-rendered apps get their admins binding automatically; the former
+  jellyfin + demo-app guinea-pig access blueprints are retired
 - One-off user grants are made in the Authentik UI, not GitOps
 
 Default-deny is enforced by the tenant flag `core_default_app_access` (operator-led; superusers get no bypass in 2026.8.2). The flag is a one-time toggle, not chart config — set it **after** joining the admins group in the UI.
