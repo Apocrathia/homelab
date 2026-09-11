@@ -43,11 +43,8 @@ Create a 1Password item:
 
 - **External URL**: `https://ai.gateway.services.apocrathia.com`
 - **Internal Service**: `http://litellm.litellm.svc.cluster.local:4000`
-- **Tailnet (admin-only)**: the same hostname is dual-parented on
-  `tailnet-gateway` (`https-gateway-services` listener) via
-  `httproute.yaml`. Tailnet members resolve it via split DNS, but the
-  Authentik app binding is admins-only — friends in `users` are denied
-  at the IdP.
+- **Tailnet (admin-only)**: dual-parented on `tailnet-gateway` in
+  `httproute.yaml`; app access is admins-only via the Authentik binding.
 
 ## Authentication
 
