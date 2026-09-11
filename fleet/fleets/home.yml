@@ -14,6 +14,11 @@ reports:
 agent_options:
 controls:
   enable_disk_encryption: true
+  # Require IdP (Authentik) authentication when a device is first set up —
+  # populates the local account username + full name from SAML/SCIM.
+  # IdP settings live in default.yml → org_settings.mdm.end_user_authentication.
+  setup_experience:
+    enable_end_user_authentication: true
   scripts:
     - paths: ../platforms/all/scripts/*.sh
 software:

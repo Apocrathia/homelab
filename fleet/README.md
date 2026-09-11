@@ -52,6 +52,9 @@ Drop `.keep` when you add real content.
 
 - **Org-wide SSO, server URL, global enroll secret** → `default.yml` →
   `org_settings`
+- **End-user (device user) IdP settings** → `default.yml` →
+  `org_settings.mdm.end_user_authentication`; per-fleet enable →
+  `fleets/home.yml` → `controls.setup_experience.enable_end_user_authentication`
 - **IdP icon for the login button** → `platforms/all/icons/` (URL in
   `sso_settings.idp_image_url`)
 - **Policies / reports shared across fleets** → `platforms/…` and list them
