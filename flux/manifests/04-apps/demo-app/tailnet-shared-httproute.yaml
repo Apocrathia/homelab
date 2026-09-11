@@ -37,3 +37,23 @@ spec:
           name: ak-outpost-demo-app-outpost
           namespace: authentik
           port: 9000
+
+---
+# The route above points at the Authentik outpost Service in the authentik
+# namespace, so a ReferenceGrant must exist THERE admitting HTTPRoutes from
+# HERE. Apps own their grants: this file ships both, and the authentik
+# manifests stay app-agnostic (kustomize patches cannot cross
+# kustomizations, and ReferenceGrant 'from' takes exact namespaces only).
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: from-demo-app
+  namespace: authentik
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: demo-app
+  to:
+    - group: ""
+      kind: Service

@@ -87,6 +87,11 @@ as on the LAN, and nothing friend-facing bypasses the IdP. Pilot:
 `03-services/authentik/httproute.yaml` dual-parents the same hostname on
 `main-gateway`.
 
+Each app ships its own cross-namespace `ReferenceGrant` (in the authentik
+namespace, `from` the app's namespace) in the same file as its shared route -
+see the grant in the pilot file. The authentik manifests stay app-agnostic;
+do not add app namespaces to any grant there.
+
 Friends are invited as tailnet users; the friends grant in the tailnet
 policy uses an email-free src (no friends list in git). Until it lands
 (slice 3), nothing friend-facing is reachable (deny-by-default).

@@ -77,7 +77,9 @@ retired entirely.
 - [x] Slice 1 - tailnet-internal DNS (this MR): `tailnet-dns` stack,
       `https-gateway-services` listener, dual-parentRef pilots (Authentik,
       demo-app), external-dns `--gateway-name` filters, admin 443+53 grants,
-      `dns_split_dns` scaffolding in terragrunt.
+      `dns_split_dns` scaffolding in terragrunt. Friend-shared apps ship
+      their own ReferenceGrant (authentik namespace, `from` the app ns)
+      alongside the route - the authentik manifests stay app-agnostic.
 - [x] Slice 4 - retire the public path (this MR): Cloudflare record block
       removed; Certificate, old listener, and orphaned ReferenceGrant removed;
       demo-app and jellyfin direct routes removed; `autogroup:shared` grant
