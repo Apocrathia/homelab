@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: jellyfin-tailnet-shared
+  namespace: jellyfin
+  labels:
+    app.kubernetes.io/name: jellyfin
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
+  hostnames:
+    - "jellyfin.gateway.services.apocrathia.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        # Direct to the app (no outpost): jellyfin is an OIDC-mode app —
+        # it enforces Authentik SSO itself (redirect URIs minted on this
+        # same hostname in the authentik-blueprint), and the IdP is
+        # reachable by friends through the dual-parentRef'd Authentik
+        # route. Outpost proxying is for apps without native OIDC.
+        - group: ""
+          kind: Service
+          name: jellyfin
+          port: 80

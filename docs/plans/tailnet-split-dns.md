@@ -80,6 +80,10 @@ retired entirely.
       `dns_split_dns` scaffolding in terragrunt. Friend-shared apps ship
       their own ReferenceGrant (authentik namespace, `from` the app ns)
       alongside the route - the authentik manifests stay app-agnostic.
+- [x] Slice 1b - jellyfin pilot, OIDC shape (this MR): direct backend
+      (app enforces Authentik OIDC itself, redirect URIs already minted on
+      the shared hostname), proving the OIDC variant of the exposure
+      pattern alongside demo-app's outpost variant.
 - [x] Slice 4 - retire the public path (this MR): Cloudflare record block
       removed; Certificate, old listener, and orphaned ReferenceGrant removed;
       demo-app and jellyfin direct routes removed; `autogroup:shared` grant
@@ -87,6 +91,13 @@ retired entirely.
       READMEs rewritten.
 - [ ] Slice 2 - Authentik: friends group bindings, outpost authorization
       (follow-up MR).
+- [ ] Slice 5 - reusable exposure pattern (follow-up MRs): codify the
+      tailnet-share shapes (outpost proxy, direct OIDC, SAML, direct-no-auth
+      forbidden) as generic-app chart values so chart apps get
+      `tailnet-shared` routes by config; publish the same shapes as a
+      copyable pattern doc for non-chart deployments (sibling manifests,
+      e.g. app-specific Helm charts). Operators apply it without our
+      chart.
 - [ ] Slice 3 - invite friends: add the email-free friends grant
       (`autogroup:member -> tag:k8s` 443+53) to `policy.hujson`, read the
       `tailnet-dns` device IP, set `dns_split_dns` in

@@ -77,15 +77,22 @@ Plan and slice status: [tailnet split DNS](../../../../docs/plans/tailnet-split-
 
 ### Friend-facing routes
 
-Every route a friend can reach MUST go Gateway -> Authentik outpost: an
-`HTTPRoute` on `tailnet-gateway`'s `https-gateway-services` listener whose
-backendRef is the app's Authentik outpost Service (e.g.
-`ak-outpost-demo-app-outpost:9000`). Direct-to-Service friend-facing routes
-are forbidden - friends hit the same SSO, redirect URIs, and app permissions
-as on the LAN, and nothing friend-facing bypasses the IdP. Pilot:
-`04-apps/demo-app/tailnet-shared-httproute.yaml`; the Authentik HTTPRoute in
-`03-services/authentik/httproute.yaml` dual-parents the same hostname on
-`main-gateway`.
+Every route a friend can reach MUST go through the `tailnet-gateway`
+(`https-gateway-services` listener, same hostname as LAN) with Authentik
+SSO enforced somewhere in the path. Two sanctioned shapes, by app mode:
+
+- **Outpost (proxy-mode apps)**: backendRef is the app's Authentik outpost
+  Service (e.g. `ak-outpost-demo-app-outpost:9000`). Pilot:
+  `04-apps/demo-app/tailnet-shared-httproute.yaml`.
+- **Direct (OIDC-mode apps)**: backendRef is the app's own Service and the
+  app enforces Authentik OIDC itself, with redirect URIs already minted on
+  the same hostname (e.g. jellyfin's `/sso/OID/...`). Pilot:
+  `04-apps/media/servers/jellyfin/tailnet-shared-httproute.yaml`.
+
+Direct backends with no Authentik auth in the path are forbidden - friends
+hit the same SSO, redirect URIs, and app permissions as on the LAN. The
+Authentik HTTPRoute in `03-services/authentik/httproute.yaml` dual-parents
+the IdP's own hostname on `main-gateway` so OIDC flows complete.
 
 Each app ships its own cross-namespace `ReferenceGrant` (in the authentik
 namespace, `from` the app's namespace) in the same file as its shared route -

@@ -9,10 +9,13 @@
 ## Access
 
 - **URL**: <https://jellyfin.gateway.services.apocrathia.com>
-- **Friends (tailnet)**: returns in a later slice — the auth mode
-  (outpost route vs. OIDC with tailnet redirect URIs) is decided then;
-  the LAN route is chart-rendered from `helmrelease.yaml` values and
-  stays as-is.
+- **Friends (tailnet)**: `jellyfin.gateway.services.apocrathia.com` on
+  `tailnet-gateway` via
+  [`tailnet-shared-httproute.yaml`](./tailnet-shared-httproute.yaml) —
+  direct backend (OIDC-mode app: Jellyfin enforces Authentik SSO itself,
+  redirect URIs already minted on this hostname; the IdP is
+  dual-parentRef'd for friends). LAN route is chart-rendered from
+  `helmrelease.yaml` values and stays as-is.
 
 ## Configuration
 
