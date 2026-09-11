@@ -79,6 +79,11 @@ data:
               - name: {{ .Values.authentik.gateway.name }}
                 namespace: {{ .Values.authentik.gateway.namespace }}
                 sectionName: {{ .Values.authentik.gateway.sectionName }}
+              {{- if .Values.tailnet.enabled }}
+              - name: {{ .Values.tailnet.gateway.name }}
+                namespace: {{ .Values.tailnet.gateway.namespace }}
+                sectionName: {{ .Values.tailnet.gateway.sectionName }}
+              {{- end }}
             kubernetes_json_patches:
               deployment:
                 - op: add
