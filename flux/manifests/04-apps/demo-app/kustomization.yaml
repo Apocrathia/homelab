@@ -11,6 +11,7 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
   - tailnet-httproute.yaml
+  - backup.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

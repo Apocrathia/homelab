@@ -1,0 +1,34 @@
+---
+# Backup: jellyfin-config -> ClusterRepository/nas-rustfs
+# Nightly 0200 UTC window (H pins a deterministic minute, 30m jitter).
+# Media PVCs are NAS-backed RWX shares and are not backed up here.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: jellyfin-config
+  namespace: jellyfin
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  sources:
+    - pvc:
+        name: jellyfin-config
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: jellyfin-nightly
+  namespace: jellyfin
+spec:
+  policyRef:
+    name: jellyfin-config
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false

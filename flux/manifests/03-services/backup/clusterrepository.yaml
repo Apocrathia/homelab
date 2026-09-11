@@ -1,0 +1,42 @@
+---
+# Shared kopia repository on the NAS RustFS instance (S3-compatible).
+# Cluster-scoped; tenant SnapshotPolicies reference it by name and never see
+# the credentials (projection copies the Secret into mover namespaces).
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: ClusterRepository
+metadata:
+  name: nas-rustfs
+spec:
+  backend:
+    s3:
+      bucket: kopia
+      # Bare host:port, no scheme; RustFS serves plain HTTP on this endpoint
+      endpoint: storage.services.apocrathia.com:9009
+      region: us-east-1 # signing only
+      tls:
+        disableTls: true
+      auth:
+        secretRef:
+          name: kopiur-secrets
+          namespace: kopiur-system
+  encryption:
+    passwordSecretRef:
+      name: kopiur-secrets
+      namespace: kopiur-system
+      key: KOPIA_PASSWORD
+  # Bootstrap the kopia repository in the bucket on first connect
+  create:
+    enabled: true
+  # Tenancy gate: namespaces carrying this label may reference the repository.
+  # Apps opt in from their own namespace.yaml — this file does not change per app.
+  allowedNamespaces:
+    selector:
+      matchLabels:
+        backup.apocrathia.com/repo: nas-rustfs
+  # Kopia identity per consumer namespace (evaluated at admission)
+  identityDefaults:
+    hostnameExpr: "namespace"
+    usernameExpr: "namespace + '-' + policyName"
+  # Let consumers opt into credential projection (mover-namespace Secret copies)
+  credentialProjection:
+    allowed: true

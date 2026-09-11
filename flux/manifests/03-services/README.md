@@ -31,6 +31,7 @@ Platform services that provide core functionality to the homelab cluster.
 ### Data Services
 
 - [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL management with enterprise features
+- [**Backup**](backup/README.md) - Kopia backup plane (kopiur ClusterRepository + workload policies)
 
 ### Development and Operations
 
