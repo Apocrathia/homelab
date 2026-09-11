@@ -4,9 +4,11 @@
 	//  	"group:example": ["alice@example.com", "bob@example.com"],
 	// },
 
-	// Invited tailnet users (friends) get a group:friends entry only when
-	// the first invite lands (slice 3 of the tailnet split DNS plan) —
-	// no user emails are committed before then, so no groups exist yet.
+	// Invited tailnet users (friends): a friends list of emails never
+	// enters this file (operator rule). The friends grant (slice 3 of the
+	// tailnet split DNS plan) must use an email-free src — e.g.
+	// autogroup:member on this invite-only tailnet, where every member
+	// other than the owner IS a friend. No groups exist yet.
 
 	// Define the tags which can be applied to devices and by which users.
 	// tagOwners controls who can assign each tag. The k8s operator OAuth client
@@ -33,12 +35,12 @@
 	// Deny-by-default: there is no blanket grant. Every entry below is an
 	// explicit exception; anything not listed here is blocked.
 	"grants": [
-		// Invited friends (group:friends, added with the group in slice 3
-		// — no emails in git until then) will reach the tailnet front door
-		// (tailnet-gateway, *.gateway.services.apocrathia.com) over HTTPS
-		// and the split-DNS resolver (tailnet-dns device, also tag:k8s)
-		// over DNS. Grant shape to add then:
-		//   {"src": ["group:friends"], "dst": ["tag:k8s"],
+		// Invited friends will reach the tailnet front door (tailnet-gateway,
+		// *.gateway.services.apocrathia.com) over HTTPS and the split-DNS
+		// resolver (tailnet-dns device, also tag:k8s) over DNS. Friend
+		// emails never enter this file — the slice-3 grant uses an
+		// email-free src, e.g. on this invite-only tailnet:
+		//   {"src": ["autogroup:member"], "dst": ["tag:k8s"],
 		//    "ip": ["tcp:443", "tcp:53", "udp:53"]}
 		// Port 53 is explicit: community reports say split-DNS servers are
 		// exempt from grants, but docs only promise that for global
@@ -130,17 +132,11 @@
 		// cannot be asserted here (apply failed with "test(s) failed (400)"
 		// when tried in !4387).
 		//
-		// group:friends is a valid test src (policy-file syntax allows user,
-		// group, tag, host), but the group only exists once slice 3 invites
-		// land (no emails in git until then) and the API needs a
-		// representative member. Add with the first invite:
-		// {
-		// 	"src":    "group:friends",
-		// 	"accept": ["tag:k8s:443", "tag:k8s:53"],
-		// 	"deny":   ["tag:k8s:22", "tag:k8s:8080"],
-		// },
-		// Friends' lack of internet access is structural (no
-		// group:friends -> autogroup:internet grant exists) and cannot be
-		// asserted here because autogroup:internet is not a valid test dst.
+		// autogroup:member cannot be a test src (API rejects autogroups),
+		// so the slice-3 friends grant (autogroup:member -> tag:k8s
+		// 443+53) cannot be asserted here. Friends' lack of internet
+		// access is structural (no friends-src -> autogroup:internet grant
+		// exists) and cannot be asserted here because autogroup:internet
+		// is not a valid test dst.
 	],
 }

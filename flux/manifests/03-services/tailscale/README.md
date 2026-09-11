@@ -69,10 +69,11 @@ Plan and slice status: [tailnet split DNS](../../../../docs/plans/tailnet-split-
 - Policy: the tailnet policy file is externally managed via
   `terraform/deployments/tailscale/tailnet` (the console policy editor is
   locked) and is deny-by-default. Admins reach `tag:k8s` over HTTPS (443)
-  and DNS (tcp/udp 53, the split-DNS resolver). `group:friends` and its
-  grant are added only when the first invite lands (no user emails live in
-  git before that); friends then get the same 443+53 access and nothing
-  else - no exit-node, no internet.
+  and DNS (tcp/udp 53, the split-DNS resolver). Friend emails never live
+  in git; the friends grant (slice 3) uses an email-free src such as
+  `autogroup:member` — on this invite-only tailnet every member other
+  than the owner is a friend. Friends then get the same 443+53 access
+  and nothing else - no exit-node, no internet.
 
 ### Friend-facing routes
 
@@ -86,9 +87,9 @@ as on the LAN, and nothing friend-facing bypasses the IdP. Pilot:
 `03-services/authentik/httproute.yaml` dual-parents the same hostname on
 `main-gateway`.
 
-Friends are invited as tailnet users and added to `group:friends` in the
-tailnet policy; until that group exists (first invite), nothing
-friend-facing is reachable (deny-by-default).
+Friends are invited as tailnet users; the friends grant in the tailnet
+policy uses an email-free src (no friends list in git). Until it lands
+(slice 3), nothing friend-facing is reachable (deny-by-default).
 
 ## Authentication
 

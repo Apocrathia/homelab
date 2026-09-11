@@ -59,9 +59,10 @@ retired entirely.
   the LAN resolves the same names via UniFi to `main-gateway`. Dual-parentRef
   routes attach to both gateways.
 - **Deny-by-default stays.** Admins get `tag:k8s` 443 and tcp/udp 53
-  only; no exit-node, no internet. `group:friends` and its grant (same
-  ports) are added together with the first invite in slice 3 - no user
-  emails are committed to git before invitations exist.
+  only; no exit-node, no internet. Friend emails never enter git
+  (operator rule); the slice-3 friends grant (same ports) uses an
+  email-free src - `autogroup:member` on this invite-only tailnet, where
+  every member other than the owner is a friend.
 - **Terraform applies from CI.** The `tofu-apply` GitLab job
   (`.gitlab/tofu.gitlab-ci.yml`, stage deploy) runs
   `terragrunt run --all --parallelism 1 --non-interactive -- apply
@@ -84,11 +85,11 @@ retired entirely.
       READMEs rewritten.
 - [ ] Slice 2 - Authentik: friends group bindings, outpost authorization
       (follow-up MR).
-- [ ] Slice 3 - invite friends: create `group:friends` (first invite's
-      email) plus the `group:friends -> tag:k8s` 443+53 grant in
-      `policy.hujson`, read the `tailnet-dns` device IP, set
-      `dns_split_dns` in `terraform/deployments/tailscale/tailnet/terragrunt.hcl`,
-      invite the users (follow-up MR + operator invite step).
+- [ ] Slice 3 - invite friends: add the email-free friends grant
+      (`autogroup:member -> tag:k8s` 443+53) to `policy.hujson`, read the
+      `tailnet-dns` device IP, set `dns_split_dns` in
+      `terraform/deployments/tailscale/tailnet/terragrunt.hcl`, invite the
+      users (follow-up MR + operator invite step). No friend emails in git.
 
 ## Feedback loop
 
@@ -119,4 +120,4 @@ Optional manual cleanup: the lingering `tailnet-apocrathia-com-tls` Secret in
 the `cert-manager` namespace (the Certificate CR is removed by this MR;
 cert-manager may leave the emitted Secret behind).
 
-Slice 3 then creates `group:friends` with the first invite and re-adds the grant.
+Slice 3 then adds the email-free friends grant (see slice-3 step).
