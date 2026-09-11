@@ -97,7 +97,7 @@ spec:
         blocks_storage:
           backend: s3
           s3:
-            endpoint: "storage.services.apocrathia.com:9000"
+            endpoint: "storage.services.apocrathia.com:9009"
             insecure: true
             bucket_name: mimir-blocks
           # TSDB configuration to reduce local disk usage
@@ -110,14 +110,14 @@ spec:
         ruler_storage:
           backend: s3
           s3:
-            endpoint: "storage.services.apocrathia.com:9000"
+            endpoint: "storage.services.apocrathia.com:9009"
             insecure: true
             bucket_name: mimir-ruler
 
         alertmanager_storage:
           backend: s3
           s3:
-            endpoint: "storage.services.apocrathia.com:9000"
+            endpoint: "storage.services.apocrathia.com:9009"
             insecure: true
             bucket_name: mimir-alertmanager
 
