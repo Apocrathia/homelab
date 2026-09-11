@@ -159,12 +159,8 @@ spec:
       enabled: true
       hostname: jellyfin.gateway.services.apocrathia.com
 
-  # Tailnet sharing (same-httproute pattern, OIDC shape): the chart's own
-  # HTTPRoute gains a second parentRef on tailnet-gateway via postRenderers,
-  # so one route object serves LAN and friends on the same hostname. Friends
-  # resolve the name via tailnet split DNS; jellyfin enforces Authentik OIDC
-  # itself (redirect URIs are minted on this hostname). Chart-side templating
-  # of extra parentRefs lands in slice 5, after which this patch goes away.
+  # Tailnet sharing: add a tailnet-gateway parentRef to the chart's own
+  # HTTPRoute. Dropped when the chart can template extra parentRefs.
   postRenderers:
     - kustomize:
         patches:

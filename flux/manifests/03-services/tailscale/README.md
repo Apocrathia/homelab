@@ -140,6 +140,17 @@ kubectl delete pod -n tailscale-system -l app=operator
 
 Cluster pods use CoreDNS, which may cache the old `0.0.0.0` response until the deployment restarts or the cache TTL expires.
 
+### Client resolves gateway.services names to the wrong address
+
+A device using one of the tailnet exit nodes routes DNS through it, which
+returns the LAN answer (`10.100.1.99`) instead of the tailnet-gateway
+answer. Toggle the exit node off to use the split-DNS resolver:
+
+```bash
+tailscale set --exit-node=
+dig +short demo.gateway.services.apocrathia.com   # expect 100.120.155.113
+```
+
 ## References
 
 - **[Kubernetes operator](https://tailscale.com/kb/1236/kubernetes-operator)** — setup and CRD overview

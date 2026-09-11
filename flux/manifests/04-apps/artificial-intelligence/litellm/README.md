@@ -43,6 +43,8 @@ Create a 1Password item:
 
 - **External URL**: `https://ai.gateway.services.apocrathia.com`
 - **Internal Service**: `http://litellm.litellm.svc.cluster.local:4000`
+- **Tailnet (admin-only)**: dual-parented on `tailnet-gateway` in
+  `httproute.yaml`; app access is admins-only via the Authentik binding.
 
 ## Authentication
 

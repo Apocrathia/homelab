@@ -9,6 +9,9 @@ spec:
     - name: main-gateway
       namespace: cilium-system
       sectionName: https
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
   hostnames:
     - "ai.gateway.services.apocrathia.com"
   rules:
