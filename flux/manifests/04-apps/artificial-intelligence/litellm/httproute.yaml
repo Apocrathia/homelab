@@ -9,6 +9,14 @@ spec:
     - name: main-gateway
       namespace: cilium-system
       sectionName: https
+    # Tailnet (admin-only): same-httproute shape — members resolve this
+    # hostname via tailnet split DNS to tailnet-gateway, but the app's
+    # Authentik binding is admins-only (users/friends are denied at the
+    # IdP). OIDC-mode app: LiteLLM enforces Authentik SSO itself and the
+    # redirect URI is minted on this same hostname.
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
   hostnames:
     - "ai.gateway.services.apocrathia.com"
   rules:
