@@ -38,4 +38,24 @@ data:
           {{- if .Values.authentik.metaPublisher }}
           meta_publisher: "{{ .Values.authentik.metaPublisher }}"
           {{- end }}
+
+      # Admins group binding (app access)
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "{{ .Values.app.name }}"]]
+          group: !Find [authentik_core.group, [name, "admins"]]
+        attrs:
+          order: 10
+      {{- if .Values.authentik.shared }}
+
+      # Users group binding (app access) - the shared tag
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "{{ .Values.app.name }}"]]
+          group: !Find [authentik_core.group, [name, "users"]]
+        attrs:
+          order: 20
+      {{- end }}
 {{- end }}

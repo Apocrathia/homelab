@@ -1,6 +1,15 @@
 # Changelog
 
-## Version 0.0.77 (Latest)
+## Version 0.0.78 (Latest)
+
+- **Authentik app-access bindings**: the chart's blueprints (proxy, OIDC,
+  bookmark) now render an `admins` group binding (order 10) whenever
+  `authentik.enabled` is true, plus a `users` group binding (order 20) when
+  `authentik.shared` is true. The jellyfin + demo-app guinea-pig access
+  blueprints are retired; their bindings persist through the swap (blueprints
+  upsert by target + group identifiers and never garbage-collect).
+
+## Version 0.0.77
 
 - **OIDC provider grant types**: OAuth2/OIDC blueprints set `grant_types` to
   `authorization_code` and `refresh_token` on the Authentik oauth2provider

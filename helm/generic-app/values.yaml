@@ -485,6 +485,10 @@ authentik:
   # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
 
+  # Share this app with the users tier / friends; adds the users group binding.
+  # Must mirror the app's tailnet exposure.
+  shared: false
+
   # Common settings (both modes)
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
