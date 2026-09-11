@@ -159,22 +159,6 @@ spec:
       enabled: true
       hostname: jellyfin.gateway.services.apocrathia.com
 
-  # Tailnet sharing: add a tailnet-gateway parentRef to the chart's own
-  # HTTPRoute. Dropped when the chart can template extra parentRefs.
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              group: gateway.networking.k8s.io
-              version: v1
-              kind: HTTPRoute
-              name: jellyfin
-            patch: |
-              - op: add
-                path: /spec/parentRefs/-
-                value:
-                  group: gateway.networking.k8s.io
-                  kind: Gateway
-                  name: tailnet-gateway
-                  namespace: cilium-system
-                  sectionName: https-gateway-services
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

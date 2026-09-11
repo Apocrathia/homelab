@@ -614,6 +614,17 @@ httproute:
     namespace: cilium-system
     sectionName: https
 
+# Tailnet sharing (friends/admins over Tailscale split DNS): adds a
+# tailnet-gateway parentRef to the route, keeping one hostname and one
+# route object for both doors. Access control is Authentik-side (app
+# group bindings); enabling this only makes the app reachable.
+tailnet:
+  enabled: false
+  gateway:
+    name: tailnet-gateway
+    namespace: cilium-system
+    sectionName: https-gateway-services
+
 # TCPRoute configuration for additional ports
 tcproute:
   enabled: false
