@@ -120,6 +120,9 @@ data:
           group: !Find [authentik_core.group, [name, "admins"]]
         attrs:
           order: 10
+      {{- if and .Values.authentik.shared (not .Values.tailnet.enabled) }}
+      {{- fail "authentik.shared: true requires tailnet.enabled: true - a users binding without tailnet exposure would be unreachable for friends" }}
+      {{- end }}
       {{- if .Values.authentik.shared }}
 
       # Users group binding (app access) - the shared tag

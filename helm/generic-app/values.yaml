@@ -486,7 +486,8 @@ authentik:
   mode: "proxy"
 
   # Share this app with the users tier / friends; adds the users group binding.
-  # Must mirror the app's tailnet exposure.
+  # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
+  # binding without tailnet exposure fails the render (see templates).
   shared: false
 
   # Common settings (both modes)
