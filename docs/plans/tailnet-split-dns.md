@@ -1,6 +1,6 @@
 ---
 title: "Tailnet split DNS for friends (retire the public tailnet path)"
-status: active
+status: complete
 found_at: 2026-09-10
 updated_at: 2026-09-10
 area: networking
@@ -89,8 +89,9 @@ retired entirely.
       demo-app and jellyfin direct routes removed; `autogroup:shared` grant
       removed; external-dns `excludeDomains` dropped; search paths emptied;
       READMEs rewritten.
-- [ ] Slice 2 - Authentik: friends group bindings, outpost authorization
-      (follow-up MR).
+- [ ] Slice 2 - Authentik: users/admins group bindings, per-app (merged in
+      !4466 by the IAM lap; verified live: users tier sees demo-app +
+      jellyfin only).
 - [ ] Slice 5 - reusable exposure pattern (follow-up MRs, touches
       protected path helm/generic-app/\*\* - operator confirmation required):
       chart-side templating so one HTTPRoute serves both doors, backend
@@ -136,4 +137,15 @@ Optional manual cleanup: the lingering `tailnet-apocrathia-com-tls` Secret in
 the `cert-manager` namespace (the Certificate CR is removed by this MR;
 cert-manager may leave the emitted Secret behind).
 
-Slice 3 then adds the email-free friends grant (see slice-3 step).
+Slice 3 added the email-free friends grant (autogroup:member ->
+tag:k8s 443+53, merged in !4468) and enabled split DNS.
+
+## Closeout
+
+Slices 1-4 merged and verified live (!4460, !4467, !4468); slice 2
+landed separately (!4466, IAM lap). Admin-tier pilot: litellm dual-
+parented admin-only (!4470). Both tiers accepted from a tailnet client.
+Remaining operator chores: demo-app duplicate admins-binding cleanup
+(Authentik UI, import-race leftovers), announcement to friends. Parked:
+slice 5 chart capture, invitation enrollment (IAM), upstream race
+report.
