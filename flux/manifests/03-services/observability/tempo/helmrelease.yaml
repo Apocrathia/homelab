@@ -52,7 +52,7 @@ spec:
         backend: s3
         s3:
           bucket: tempo
-          endpoint: storage.services.apocrathia.com:9000
+          endpoint: storage.services.apocrathia.com:9009
           insecure: true
 
     # Distributor configuration
