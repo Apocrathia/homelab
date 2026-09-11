@@ -1,0 +1,32 @@
+---
+# Pilot: changedetection-io (config-only, 5Gi Longhorn PVC)
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: changedetection-io-config
+  namespace: changedetection-io
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  sources:
+    - pvc:
+        name: changedetection-io-config
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: changedetection-io-nightly
+  namespace: changedetection-io
+spec:
+  policyRef:
+    name: changedetection-io-config
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false

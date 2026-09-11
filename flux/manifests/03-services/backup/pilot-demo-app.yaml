@@ -1,0 +1,33 @@
+---
+# Pilot: demo-app (throwaway demo workload, 10Gi Longhorn PVC)
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: demo-app-data
+  namespace: demo-app
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  sources:
+    - pvc:
+        name: demo-app-data
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: demo-app-nightly
+  namespace: demo-app
+spec:
+  policyRef:
+    name: demo-app-data
+  schedule:
+    # 0200 UTC = 1900 MST; H hashes a deterministic per-schedule minute
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false

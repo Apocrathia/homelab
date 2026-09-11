@@ -19,6 +19,7 @@ resources:
   - 02-infrastructure/snapshot-controller/flux-kustomization.yaml
   - 02-infrastructure/kopiur/flux-kustomization.yaml
   - 03-services/authentik/flux-kustomization.yaml
+  - 03-services/backup/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
   # - 03-services/chaos-mesh/flux-kustomization.yaml
   - 03-services/external-dns/flux-kustomization.yaml

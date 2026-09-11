@@ -1,0 +1,32 @@
+---
+# Pilot: huntarr2 (media tooling config, 1Gi Longhorn PVC)
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: huntarr2-config
+  namespace: huntarr2
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  sources:
+    - pvc:
+        name: huntarr2-config
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: huntarr2-nightly
+  namespace: huntarr2
+spec:
+  policyRef:
+    name: huntarr2-config
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false
