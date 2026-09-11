@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml
+# demo.gateway.services.apocrathia.com on tailnet-gateway: the tailnet half of
+# the dual-gateway pattern. The main-gateway half is the HTTPRoute the
+# Authentik outpost operator generates (ak-outpost-demo-app-outpost in the
+# authentik namespace) from the generic-app chart's authentik blueprint, so
+# it cannot carry a second parentRef from GitOps. Friends resolve this same
+# hostname via tailnet split DNS (03-services/tailnet-dns) and land on
+# tailnet-gateway, with the same Authentik SSO and redirect URIs as the LAN.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: demo-tailnet-shared
+  namespace: demo-app
+  labels:
+    app.kubernetes.io/name: demo-app
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
+  hostnames:
+    - "demo.gateway.services.apocrathia.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        # Same backend as the outpost-generated main-gateway route: the
+        # Authentik proxy outpost enforces SSO. Admitted by the
+        # ReferenceGrant in 03-services/authentik/httproute.yaml.
+        - group: ""
+          kind: Service
+          name: ak-outpost-demo-app-outpost
+          namespace: authentik
+          port: 9000

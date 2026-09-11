@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns-tailnet
+  namespace: tailnet-dns
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: external-dns
+      # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/external-dns depName=external-dns
+      version: "1.21.1"
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Second ExternalDNS instance: writes per-app A records for
+    # *.gateway.services.apocrathia.com into the tailnet CoreDNS's etcd so
+    # tailnet devices resolve the same hostnames the LAN uses, but pointing
+    # at tailnet-gateway (100.120.155.113) instead of main-gateway.
+    # The UniFi-backed instance in 03-services/external-dns keeps the LAN
+    # side; both instances must keep disjoint gateway filters or dual-
+    # parentRef routes leak CGNAT addresses into the wrong DNS zone.
+    provider:
+      name: coredns
+    env:
+      # coredns provider reads etcd endpoints from ETCD_URLS (external-dns
+      # has no CLI flag for this); optional ETCD_USERNAME/ETCD_PASSWORD are
+      # unused - in-cluster etcd has no auth.
+      - name: ETCD_URLS
+        value: "http://etcd.tailnet-dns.svc.cluster.local:2379"
+    triggerLoopOnEvent: true
+    policy: sync
+    sources:
+      - gateway-httproute
+    txtOwnerId: tailnet
+    txtPrefix: "k8s.tailnet.%{record_type}-"
+    domainFilters:
+      - gateway.services.apocrathia.com
+    extraArgs:
+      # Only routes attached to tailnet-gateway produce records here. Routes
+      # on main-gateway are the UniFi instance's job.
+      gateway-name: tailnet-gateway
+    serviceMonitor:
+      enabled: true

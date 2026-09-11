@@ -40,32 +40,23 @@ spec:
     annotations:
       tailscale.com/hostname: "tailnet-gateway"
   listeners:
-    - name: https
+    # HTTPS listener so friends reach the same
+    # *.gateway.services.apocrathia.com hostnames the LAN uses (tailnet
+    # split DNS resolves them to this gateway). Reuses the main-gateway's
+    # wildcard cert secret - the ReferenceGrant `cert-manager-secrets` in
+    # 03-services/gateway/gateway.yaml already admits Gateways in
+    # cilium-system to that Secret, so no new grant or certificate is
+    # needed.
+    - name: https-gateway-services
       protocol: HTTPS
       port: 443
-      hostname: "*.tailnet.apocrathia.com"
+      hostname: "*.gateway.services.apocrathia.com"
       tls:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: tailnet-apocrathia-com-tls
+            name: gateway-services-apocrathia-com-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:
           from: All
----
-# yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: tailnet-cert-manager-secrets
-  namespace: cert-manager
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: cilium-system
-  to:
-    - group: ""
-      kind: Secret
-      name: tailnet-apocrathia-com-tls

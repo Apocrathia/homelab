@@ -9,12 +9,10 @@
 ## Access
 
 - **URL**: <https://jellyfin.gateway.services.apocrathia.com>
-- **Tailnet**: <https://jellyfin.tailnet.apocrathia.com> via
-  `tailnet-httproute.yaml` on the shared `tailnet-gateway`
-  ([pattern](../../../03-services/tailscale/README.md)). Direct to Jellyfin,
-  no Authentik — tailnet users sign in with local Jellyfin
-  username/password accounts. SSO (below) only works on the public URL;
-  the OIDC redirect URIs are registered for that hostname.
+- **Friends (tailnet)**: returns in a later slice — the auth mode
+  (outpost route vs. OIDC with tailnet redirect URIs) is decided then;
+  the LAN route is chart-rendered from `helmrelease.yaml` values and
+  stays as-is.
 
 ## Configuration
 

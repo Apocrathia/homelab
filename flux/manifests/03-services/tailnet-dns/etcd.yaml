@@ -1,0 +1,117 @@
+---
+# Single-member etcd backing the tailnet CoreDNS resolver (skydns store for
+# ExternalDNS's coredns provider). State is disposable: ExternalDNS rebuilds
+# all records on its next sync, so an emptyDir is deliberate - no PVC.
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd
+  namespace: tailnet-dns
+  labels:
+    app.kubernetes.io/name: tailnet-dns
+    app.kubernetes.io/component: etcd
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: tailnet-dns
+    app.kubernetes.io/component: etcd
+  ports:
+    - name: etcd-client
+      port: 2379
+      protocol: TCP
+      targetPort: etcd-client
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etcd
+  namespace: tailnet-dns
+  labels:
+    app.kubernetes.io/name: tailnet-dns
+    app.kubernetes.io/component: etcd
+spec:
+  replicas: 1
+  # RollingUpdate would briefly run two single-member clusters claiming the
+  # same member identity; Recreate keeps one at a time. State is disposable
+  # (ExternalDNS rebuilds), so the rollout gap is harmless.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tailnet-dns
+      app.kubernetes.io/component: etcd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tailnet-dns
+        app.kubernetes.io/component: etcd
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: etcd
+          # renovate: datasource=docker depName=gcr.io/etcd-development/etcd
+          image: gcr.io/etcd-development/etcd:v3.6.14@sha256:a491baeaa0cb0c9cd89c0062ac44ece53886e3e5bddad18d2daf36678ce665b6
+          command:
+            - /usr/local/bin/etcd
+            - --name=tailnet-dns-etcd
+            - --data-dir=/var/lib/etcd
+            - --listen-client-urls=http://0.0.0.0:2379
+            - --advertise-client-urls=http://etcd.tailnet-dns.svc.cluster.local:2379
+            - --listen-peer-urls=http://0.0.0.0:2380
+            - --initial-advertise-peer-urls=http://etcd.tailnet-dns.svc.cluster.local:2380
+            - --initial-cluster=tailnet-dns-etcd=http://etcd.tailnet-dns.svc.cluster.local:2380
+            - --auto-compaction-retention=1h
+          env:
+            - name: ETCDCTL_ENDPOINTS
+              value: http://localhost:2379
+          ports:
+            - name: etcd-client
+              containerPort: 2379
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - /usr/local/bin/etcdctl
+                - endpoint
+                - health
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - /usr/local/bin/etcdctl
+                - endpoint
+                - health
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/etcd
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 512Mi

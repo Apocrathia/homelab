@@ -15,12 +15,19 @@ UniFi Network Integration API (DNS Policies) on the other.
 
 - **Domain filter**: `apocrathia.com` (LAN DNS zone served by the UDM; CoreDNS
   forwards `apocrathia.com` to `10.100.1.1`)
-- **Excluded**: `tailnet.apocrathia.com` — served by the Tailscale gateway and
-  uses a wildcard hostname (`*.tailnet.apocrathia.com`), which UniFi dnsmasq
-  cannot represent
-- **Sources**: `gateway-httproute`, `service`
+- **Sources**: `gateway-httproute`, `service`, gateway-filtered to
+  `main-gateway` (`--gateway-name=main-gateway`)
 - **Policy**: `sync` (create and delete records), TXT registry with
   `txtOwnerId: main`
+
+A second ExternalDNS instance (`external-dns-tailnet`, CoreDNS/etcd provider)
+lives in [../tailnet-dns](../tailnet-dns/README.md) and writes the same
+hostnames for `tailnet-gateway` into the tailnet-internal resolver. The two
+instances MUST keep disjoint `--gateway-name` filters: dual-parentRef routes
+(Authentik, demo-app) attach to both gateways, and ExternalDNS combines
+targets from every matching parent Gateway - without the filters this
+instance would write the tailnet-gateway CGNAT address into the UDM, which
+LAN clients cannot route.
 
 ## Architecture
 
@@ -53,20 +60,20 @@ supported by the Integration API):
 
 Set in `helmrelease.yaml`:
 
-| Value            | Setting                    | Notes                                    |
-| ---------------- | -------------------------- | ---------------------------------------- |
-| `UNIFI_HOST`     | `https://10.100.1.1`       | UDM; webhook skips TLS verify by default |
-| `domainFilters`  | `apocrathia.com`           | Only manage this zone                    |
-| `excludeDomains` | `tailnet.apocrathia.com`   | Wildcard tailnet zone not supported      |
-| `policy`         | `sync`                     | Full create/delete lifecycle             |
-| `txtPrefix`      | `k8s.main.%{record_type}-` | Ownership registry in UniFi TXT records  |
+| Value           | Setting                    | Notes                                       |
+| --------------- | -------------------------- | ------------------------------------------- |
+| `UNIFI_HOST`    | `https://10.100.1.1`       | UDM; webhook skips TLS verify by default    |
+| `domainFilters` | `apocrathia.com`           | Only manage this zone                       |
+| `policy`        | `sync`                     | Full create/delete lifecycle                |
+| `gateway-name`  | `main-gateway`             | Only routes on this Gateway produce records |
+| `txtPrefix`     | `k8s.main.%{record_type}-` | Ownership registry in UniFi TXT records     |
 
 ## Limitations
 
 Inherited from UniFi dnsmasq (see webhook README):
 
-- **No wildcards** — `*.example.com` records fail; tailnet zone is excluded
-  for this reason.
+- **No wildcards** — `*.example.com` records fail; do not add wildcard
+  hostnames to `main-gateway`.
 - **One CNAME per name** — additional targets are dropped with a warning.
 
 ## Troubleshooting
@@ -82,8 +89,6 @@ kubectl -n external-dns logs deploy/external-dns -c external-dns | grep -i "desi
 
 - **Records not appearing**: check the webhook `/readyz` probe (it probes the
   UniFi API); a bad API key shows up there first.
-- **Reconcile errors mentioning wildcards**: confirm `excludeDomains` still
-  covers any wildcard hostnames added to Gateways.
 
 ## Related Documentation
 

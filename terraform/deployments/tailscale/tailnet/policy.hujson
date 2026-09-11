@@ -4,6 +4,15 @@
 	//  	"group:example": ["alice@example.com", "bob@example.com"],
 	// },
 
+	// Invited tailnet users (friends). The owner is a placeholder member
+	// so the group is never empty (server-side validation of empty groups
+	// is undocumented; a failed first CI apply is worse than a redundant
+	// member whose admin grants already supersede this group). Replace
+	// with the first friend's email when inviting (slice 3).
+	"groups": {
+		"group:friends": ["ian@apocrathia.com"],
+	},
+
 	// Define the tags which can be applied to devices and by which users.
 	// tagOwners controls who can assign each tag. The k8s operator OAuth client
 	// must be owner of tag:k8s-operator; the operator assigns tag:k8s to proxy pods.
@@ -29,36 +38,38 @@
 	// Deny-by-default: there is no blanket grant. Every entry below is an
 	// explicit exception; anything not listed here is blocked.
 	"grants": [
-		// Friend-sharing front door: users shared into the tailnet
-		// (autogroup:shared) may reach the cilium Gateway device tagged
-		// tag:k8s over HTTPS only (*.tailnet.apocrathia.com).
-		//
-		// Known upstream risk: tailscale/tailscale#14445 (open, reproduced
-		// May 2026) — grants from autogroup:shared to a tag dst may not be
-		// honored for shared tagged devices. If an invited friend cannot
-		// reach the gateway, switch this dst to the gateway device's IP or
-		// name as the documented workaround.
+		// Invited friends (group:friends) reach the tailnet front door
+		// (tailnet-gateway, *.gateway.services.apocrathia.com) over HTTPS
+		// and the split-DNS resolver (tailnet-dns device, also tag:k8s)
+		// over DNS. Community reports say split-DNS servers are exempt
+		// from grants, but docs only promise that for global nameservers,
+		// so tcp/udp:53 is granted explicitly. Friends get NO exit-node or
+		// internet access: the only autogroup:internet grant below is
+		// admin-only, and nothing else references group:friends.
 		{
-			"src": ["autogroup:shared"],
+			"src": ["group:friends"],
 			"dst": ["tag:k8s"],
-			"ip":  ["tcp:443"],
+			"ip":  ["tcp:443", "tcp:53", "udp:53"],
 		},
 
 		// Tailnet admins keep the same HTTPS-only access to the front door
 		// so the operator can reach and verify the service friends are
-		// invited to. Remove this grant if no human access is wanted.
+		// invited to. Port 53 was added with the split-DNS resolver: admin
+		// devices resolve gateway.services.apocrathia.com through it too,
+		// and the grants-exemption for split-DNS servers is unverified.
+		// Remove this grant if no human access is wanted.
 		{
 			"src": ["autogroup:admin"],
 			"dst": ["tag:k8s"],
-			"ip":  ["tcp:443"],
+			"ip":  ["tcp:443", "tcp:53", "udp:53"],
 		},
 
 		// Exit nodes: only devices with autogroup:internet access can use an
 		// exit node (policy-file syntax rule), and this tailnet is deny-by-
 		// default — without this grant no device can use the exit-nodes
 		// Connector even though it is auto-approved. Scoped to admins only;
-		// autogroup:shared (friends) must not route internet traffic through
-		// the cluster.
+		// group:friends (invited friends) must not route internet traffic
+		// through the cluster.
 		{
 			"src": ["autogroup:admin"],
 			"dst": ["autogroup:internet"],
@@ -115,17 +126,28 @@
 
 	// Test access rules every time they're saved.
 	"tests": [
-		// Owner (implicitly admin) reaches the front door over HTTPS only;
-		// everything else stays denied.
+		// Owner (implicitly admin) reaches the front door over HTTPS and the
+		// split-DNS resolver over DNS; everything else stays denied.
 		{
 			"src":    "ian@apocrathia.com",
-			"accept": ["tag:k8s:443"],
+			"accept": ["tag:k8s:443", "tag:k8s:53"],
 			"deny":   ["tag:k8s:22", "tag:k8s-operator:443"],
 		},
-		// autogroup:shared cannot be a test src (API rejects autogroups and
-		// device names). Re-add a shared-user test here once the first friend
-		// is invited, using their email address. autogroup:internet is also
-		// rejected as a test dst, so exit-node access cannot be asserted here
-		// (apply failed with "test(s) failed (400)" when tried in !4387).
+		// autogroup:internet is rejected as a test dst, so exit-node access
+		// cannot be asserted here (apply failed with "test(s) failed (400)"
+		// when tried in !4387).
+		//
+		// group:friends IS a valid test src (policy-file syntax allows user,
+		// group, tag, host), but the group is empty until slice 3 invites
+		// land and the API needs a representative member. Uncomment with the
+		// first invite:
+		// {
+		// 	"src":    "group:friends",
+		// 	"accept": ["tag:k8s:443", "tag:k8s:53"],
+		// 	"deny":   ["tag:k8s:22", "tag:k8s:8080"],
+		// },
+		// Friends' lack of internet access is structural (no
+		// group:friends -> autogroup:internet grant exists) and cannot be
+		// asserted here because autogroup:internet is not a valid test dst.
 	],
 }
