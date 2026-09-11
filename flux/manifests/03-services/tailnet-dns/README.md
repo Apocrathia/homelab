@@ -79,9 +79,9 @@ kubectl -n tailnet-dns run -it --rm dig --image=busybox --restart=Never --   nsl
 ```
 
 - **Friends cannot resolve app names**: check the split-DNS nameserver matches
-  the current device IP, and that the tailnet policy grants
-  `group:friends` TCP/UDP 53 to `tag:k8s`
-  (`terraform/deployments/tailscale/tailnet/policy.hujson`).
+  the current device IP, and that the tailnet policy grants their group
+  TCP/UDP 53 to `tag:k8s` (admins: grant already present; friends:
+  `group:friends` + grant land with the first invite, slice 3).
 - **`nslookup` fails for non-app zones**: intended. Only
   `gateway.services.apocrathia.com` is served; everything else is REFUSED.
 - **Records missing after etcd restart**: ExternalDNS rebuilds on its next
