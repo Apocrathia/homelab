@@ -57,7 +57,7 @@ spec:
       containers:
         - name: etcd
           # renovate: datasource=docker depName=gcr.io/etcd-development/etcd
-          image: gcr.io/etcd-development/etcd:v3.6.14@sha256:a491baeaa0cb0c9cd89c0062ac44ece53886e3e5bddad18d2daf36678ce665b6
+          image: gcr.io/etcd-development/etcd:v3.7.1@sha256:a9983dd6d9283138ab926daa307c6c25623636703ecf5645d5df4d666ce9eba2
           command:
             - /usr/local/bin/etcd
             - --name=tailnet-dns-etcd
