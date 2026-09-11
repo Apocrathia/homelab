@@ -40,3 +40,13 @@ spec:
   # Let consumers opt into credential projection (mover-namespace Secret copies)
   credentialProjection:
     allowed: true
+  # Kopia web UI. Read-only connection (browse + restore only); the operator
+  # mints UI login credentials into an owned Secret.
+  server:
+    namespace: kopiur-system
+    readOnly: true
+    auth:
+      generate: {}
+    service:
+      type: ClusterIP
+      port: 51515
