@@ -71,3 +71,7 @@ spec:
 
     httproute:
       enabled: false
+
+    # Tailnet sharing via chart values (outpost-generated route dual-parents)
+    tailnet:
+      enabled: true

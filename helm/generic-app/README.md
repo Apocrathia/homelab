@@ -116,6 +116,7 @@ All available configuration values for the chart:
 | `httproute.gateway.namespace`                  | string | `cilium-system`                                   | Gateway namespace                                                                       |
 | `httproute.gateway.sectionName`                | string | `https`                                           | Gateway section name                                                                    |
 | `tailnet.enabled`                              | bool   | `false`                                           | Add a tailnet-gateway parentRef to the route (shared hostname over Tailscale split DNS) |
+| `authentik.shared`                             | bool   | `false`                                           | Add the users group binding (share with friends); requires `tailnet.enabled`            |
 | `tailnet.gateway.name`                         | string | `tailnet-gateway`                                 | Tailnet Gateway name                                                                    |
 | `tailnet.gateway.namespace`                    | string | `cilium-system`                                   | Tailnet Gateway namespace                                                               |
 | `tailnet.gateway.sectionName`                  | string | `https-gateway-services`                          | Tailnet Gateway section name                                                            |
