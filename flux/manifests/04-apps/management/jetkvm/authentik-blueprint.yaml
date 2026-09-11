@@ -23,3 +23,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/jetkvm/icon.png"
       meta_description: "JetKVM Cloud Dashboard - KVM-over-IP management"
       meta_publisher: "JetKVM"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "jetkvm"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

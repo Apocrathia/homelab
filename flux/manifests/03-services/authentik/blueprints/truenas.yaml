@@ -21,3 +21,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/truenas.svg"
       meta_description: "TrueNAS storage management interface"
       meta_publisher: "iXsystems"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "truenas"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

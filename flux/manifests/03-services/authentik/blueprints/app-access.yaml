@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+#
+# Application access model — group-level grants only (user one-offs are UI-only).
+# Groups are IdP-level and live here; each application's own blueprint carries
+# its bindings:
+#   admins = operator: an admins binding in every app blueprint (order 10).
+#   users  = friends: nothing by default; a users binding in the app's own
+#            blueprint IS the "shared" tag and must mirror the app's
+#            tailnet-httproute.yaml (order 20).
+#
+# Un-share/revoke = same identifiers with state: absent. Blueprints never
+# garbage-collect — deleting an entry does nothing.
+#
+# Ordering: app blueprints !Find these groups and may fail their first atomic
+# import until this file applies; the k8s-sidecar resync heals that.
+version: 1
+metadata:
+  name: app-access
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Friends group — bound only to explicitly shared applications.
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: "users"
+    attrs:
+      name: "users"
+
+  # Operators group — bound to every application.
+  - model: authentik_core.group
+    state: present
+    identifiers:
+      name: "admins"
+    attrs:
+      name: "admins"

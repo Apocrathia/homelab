@@ -55,3 +55,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/immich/icon.svg"
       meta_description: "Self-hosted photo and video backup solution"
       meta_publisher: "Immich"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "immich"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

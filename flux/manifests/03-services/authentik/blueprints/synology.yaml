@@ -21,3 +21,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/synology.svg"
       meta_description: "Synology DiskStation"
       meta_publisher: "Synology"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "synology"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

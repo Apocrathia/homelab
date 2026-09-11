@@ -48,3 +48,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/jupyterhub/icon.svg"
       meta_description: "Multi-user Jupyter notebook server for interactive computing"
       meta_publisher: "Project Jupyter"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "jupyterhub"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

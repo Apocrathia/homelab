@@ -21,3 +21,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/unifi-network.png"
       meta_description: "UniFi Network management interface"
       meta_publisher: "Ubiquiti"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "unifi-network"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

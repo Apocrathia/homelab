@@ -52,3 +52,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/renovate-operator/icon.svg"
       meta_description: "Dependency update automation - Renovate as Kubernetes Jobs"
       meta_publisher: "mogenius"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "renovate"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10
