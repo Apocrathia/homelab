@@ -82,7 +82,12 @@ spec:
         app.kubernetes.io/component: coredns
     spec:
       automountServiceAccountToken: false
-      dnsPolicy: Default
+      # ClusterFirst: this CoreDNS is a cluster CLIENT of etcd — it must
+      # resolve etcd.tailnet-dns.svc.cluster.local through the cluster
+      # resolver. dnsPolicy Default (node resolv.conf -> node-local DNS)
+      # fails to resolve the Service name from this pod and every zone
+      # query times out against a dead upstream.
+      dnsPolicy: ClusterFirst
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
