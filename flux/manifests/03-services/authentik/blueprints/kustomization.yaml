@@ -53,6 +53,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - webauthn-mfa.yaml
+  - name: authentik-blueprint-app-access
+    namespace: authentik
+    files:
+      - app-access.yaml
 
 labels:
   - includeSelectors: true

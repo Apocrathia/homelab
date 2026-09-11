@@ -110,3 +110,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/kube-auth/icon.svg"
       meta_description: "Kubernetes cluster authentication via OIDC"
       meta_publisher: "Kubernetes"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "kubernetes"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

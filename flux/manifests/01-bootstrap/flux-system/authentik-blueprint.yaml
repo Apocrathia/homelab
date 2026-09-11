@@ -118,3 +118,21 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/01-bootstrap/flux-system/icon.svg"
       meta_description: "OIDC client for Flux Status SSO"
       meta_publisher: "ControlPlane"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "flux-operator"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "flux-operator-oidc"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

@@ -66,3 +66,12 @@ entries:
             - op: add
               path: /spec/template/spec/automountServiceAccountToken
               value: false
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "hubble"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

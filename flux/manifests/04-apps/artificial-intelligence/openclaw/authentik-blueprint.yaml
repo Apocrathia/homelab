@@ -24,3 +24,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/openclaw/icon.svg"
       meta_description: "OpenClaw coding harness on Agent Substrate"
       meta_publisher: "OpenClaw"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "openclaw"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

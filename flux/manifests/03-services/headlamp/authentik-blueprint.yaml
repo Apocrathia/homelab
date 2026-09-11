@@ -23,3 +23,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/headlamp/icon.svg"
       meta_description: "Kubernetes web UI with OIDC authentication"
       meta_publisher: "Kubernetes SIG UI"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "headlamp"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

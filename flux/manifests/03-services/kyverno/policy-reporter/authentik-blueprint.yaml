@@ -47,3 +47,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/kyverno/policy-reporter/icon.svg"
       meta_description: "Monitoring and observability tool for PolicyReport CRDs"
       meta_publisher: "Kyverno"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "policy-reporter"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

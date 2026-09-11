@@ -21,3 +21,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/home-assistant.svg"
       meta_description: "Home automation platform"
       meta_publisher: "Home Assistant"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "home-assistant"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

@@ -41,6 +41,28 @@ The 1Password Connect Operator will automatically create a Kubernetes secret wit
 
 Okta OAuth source client id/secret are entered in the Authentik UI (Directory → Federation and Social login → Okta), not via this item.
 
+### Application access
+
+Group-level only. Groups live in `blueprints/app-access.yaml`; every app's own
+blueprint carries its admins binding:
+
+- **admins** — operator group; an admins binding in each application's own blueprint
+- **users** — friends group; sharing = adding a users binding in the app's own
+  blueprint (mirrors the app's tailnet-httproute.yaml)
+- Chart-rendered apps get bindings when the chart captures the pattern
+  (jellyfin + demo-app carry committed access blueprints as the two guinea pigs)
+- One-off user grants are made in the Authentik UI, not GitOps
+
+Default-deny is enforced by the tenant flag `core_default_app_access` (operator-led; superusers get no bypass in 2026.8.2). The flag is a one-time toggle, not chart config — set it **after** joining the admins group in the UI.
+
+UI (preferred): admin interface → Settings (`/if/admin/#/admin/settings`) → switch **"Allow application access with no policies"** off.
+
+CLI (equivalent):
+
+```bash
+kubectl exec -n authentik deploy/authentik-server -- ak set_flag core_default_app_access false
+```
+
 ## Authentication
 
 Authentik uses self-hosted authentication. The first user created on initial access becomes the admin user.

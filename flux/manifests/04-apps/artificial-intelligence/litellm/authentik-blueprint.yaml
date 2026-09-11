@@ -48,3 +48,12 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/litellm/icon.png"
       meta_description: "LiteLLM Proxy Admin UI - Unified LLM API Gateway Management"
       meta_publisher: "BerriAI"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "litellm"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

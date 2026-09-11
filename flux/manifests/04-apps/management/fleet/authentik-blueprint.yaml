@@ -149,3 +149,21 @@ entries:
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/icon.svg"
       meta_description: "Fleet MDM end-user authentication (device setup / ADE)"
       meta_publisher: "Fleet"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "fleetdm"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "fleetdm-mdm"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

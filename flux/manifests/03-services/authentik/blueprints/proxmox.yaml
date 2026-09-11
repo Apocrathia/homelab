@@ -54,3 +54,12 @@ entries:
       refresh_token_validity: "days=30"
       token_validity: "days=30"
       client_type: "confidential"
+
+  # Admins group binding (app access)
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "proxmox"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10
