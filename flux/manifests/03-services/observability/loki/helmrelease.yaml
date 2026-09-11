@@ -50,7 +50,7 @@ spec:
           ruler: loki
           admin: loki
         s3:
-          endpoint: "http://storage.services.apocrathia.com:9000"
+          endpoint: "http://storage.services.apocrathia.com:9009"
           insecure: true
           s3ForcePathStyle: true
       # Disable query scheduler for homelab
