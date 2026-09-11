@@ -48,9 +48,9 @@ spec:
           - name: Chaptarr__Postgres__MainDb
             value: "chaptarr"
           - name: Chaptarr__Postgres__LogDb
-            value: "chaptarr"
+            value: "chaptarr_logs"
           - name: Chaptarr__Postgres__CacheDb
-            value: "chaptarr"
+            value: "chaptarr_cache"
       replicas: 1
       podAnnotations:
         instrumentation.opentelemetry.io/inject-dotnet: "otel-system/dotnet"
