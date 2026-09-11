@@ -18,6 +18,7 @@ resources:
   - gitlab.yaml
   - grafana.yaml
   - headlamp.yaml
+  - home-operations.yaml
   - kyverno.yaml
   - longhorn.yaml
   - metrics-server.yaml
@@ -27,7 +28,6 @@ resources:
   - renovate-operator.yaml
   - tailscale.yaml
   - tracearr.yaml
-  - tuppr.yaml
   - external-dns.yaml
   - external-secrets.yaml
   - fleet.yaml

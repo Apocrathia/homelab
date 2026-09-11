@@ -16,6 +16,8 @@ resources:
   - 02-infrastructure/metrics-server/flux-kustomization.yaml
   - 02-infrastructure/coredns/flux-kustomization.yaml
   - 02-infrastructure/kube-prometheus-stack/flux-kustomization.yaml
+  - 02-infrastructure/snapshot-controller/flux-kustomization.yaml
+  - 02-infrastructure/kopiur/flux-kustomization.yaml
   - 03-services/authentik/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
   # - 03-services/chaos-mesh/flux-kustomization.yaml
