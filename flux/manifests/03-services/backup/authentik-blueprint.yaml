@@ -1,0 +1,81 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+#
+# Kopia web UI (ClusterRepository/nas-rustfs spec.server). The outpost
+# provisions its own HTTPRoute via kubernetes_httproute_parent_refs — no
+# hand-written HTTPRoute needed.
+version: 1
+metadata:
+  name: kopia
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Proxy Provider for Kopia
+  - model: authentik_providers_proxy.proxyprovider
+    state: present
+    identifiers:
+      name: "kopia-proxy-provider"
+    attrs:
+      name: "kopia-proxy-provider"
+      authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+      authentication_flow: !Find [authentik_flows.flow, [slug, "default-authentication-flow"]]
+      mode: "proxy"
+      intercept_header_auth: false
+      internal_host: "http://nas-rustfs-kopia-ui.kopiur-system.svc.cluster.local:51515"
+      external_host: "https://kopia.gateway.services.apocrathia.com"
+
+  # Application for Kopia
+  - model: authentik_core.application
+    state: present
+    identifiers:
+      slug: "kopia"
+    attrs:
+      name: "Kopia"
+      slug: "kopia"
+      group: "Infrastructure"
+      provider: !Find [authentik_providers_proxy.proxyprovider, [name, "kopia-proxy-provider"]]
+      launch_url: "https://kopia.gateway.services.apocrathia.com"
+      open_in_new_tab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/backup/icon.svg"
+      meta_description: "Kopia backup repository (kopiur pilot)"
+      meta_publisher: "Kopia Project"
+
+  # Outpost for Kopia — provisions the HTTPRoute itself
+  - model: authentik_outposts.outpost
+    state: present
+    identifiers:
+      name: "kopia-outpost"
+    attrs:
+      name: "kopia-outpost"
+      type: "proxy"
+      service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+      providers:
+        - !Find [authentik_providers_proxy.proxyprovider, [name, "kopia-proxy-provider"]]
+      config:
+        authentik_host: "https://auth.gateway.services.apocrathia.com"
+        authentik_host_insecure: true
+        authentik_host_browser: ""
+        log_level: "info"
+        object_naming_template: "ak-outpost-%(name)s"
+        kubernetes_replicas: 1
+        kubernetes_namespace: "authentik"
+        kubernetes_httproute_parent_refs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
+        kubernetes_json_patches:
+          deployment:
+            - op: add
+              path: /spec/template/spec/automountServiceAccountToken
+              value: false
+
+  # Admins group binding (app access) — backups are operator-only
+  - model: authentik_policies.policybinding
+    state: present
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "kopia"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+    attrs:
+      order: 10

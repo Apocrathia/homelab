@@ -40,6 +40,21 @@ the RustFS bucket and any future cloud replica hold ciphertext only.
 Secret name). Gates: the repository owner must set `credentialProjection.allowed`,
 each consumer opts in per policy, and `allowedNamespaces` limits tenants.
 
+## Web UI
+
+`spec.server` on the ClusterRepository runs the kopia web UI (htmlui, bundled
+in the kopia binary) as a read-only Deployment + ClusterIP Service in
+`kopiur-system`. Authentik fronts it: the blueprint in this directory creates
+the proxy provider, application, and outpost — the outpost provisions its own
+HTTPRoute on `https://kopia.gateway.services.apocrathia.com` (no hand-written
+route). Admins group only; the UI login password is operator-minted into
+`nas-rustfs-kopia-ui-auth` (read it with `kubectl -n kopiur-system get secret
+nas-rustfs-kopia-ui-auth -o jsonpath='{.data.password}' | base64 -d`).
+
+The UI is read-only (browse + restore); mutations stay in GitOps. The server
+pod holds the repository decryption key, so it stays behind Authentik and
+ClusterIP.
+
 ## Usage
 
 ```bash

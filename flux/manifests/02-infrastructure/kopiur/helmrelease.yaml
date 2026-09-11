@@ -32,9 +32,13 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    # Grants the operator cluster-wide secrets create/patch/delete RBAC so a
-    # shared ClusterRepository can project its credential Secret into mover
-    # namespaces (opt-in feature; consumers set credentialProjection.enabled)
+    # Each flag grants the operator cluster-wide secrets create/patch/delete
+    # RBAC (Kubernetes cannot scope `create` to a Secret name):
+    # - credentialProjection: shared ClusterRepository projects its credential
+    #   Secret into mover namespaces (consumers opt in per policy)
+    # - kopiaUi: mints the web-UI login Secret for spec.server repositories
     features:
       credentialProjection:
+        enabled: true
+      kopiaUi:
         enabled: true

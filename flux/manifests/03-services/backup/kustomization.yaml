@@ -7,3 +7,17 @@ metadata:
 resources:
   - secret.yaml
   - clusterrepository.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-kopia
+    namespace: kopiur-system
+    files:
+      - kopia.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"
