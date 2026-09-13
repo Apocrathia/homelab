@@ -20,7 +20,7 @@ spec:
     app:
       name: meshtastic
       # renovate: datasource=docker depName=ghcr.io/yeraze/meshmonitor
-      image: ghcr.io/yeraze/meshmonitor:4.15.2@sha256:bd202a54ab3a95c162905039c6c62b009349595171fc5eed110b15d8e5092776
+      image: ghcr.io/yeraze/meshmonitor:4.16.0@sha256:f9b028fe7cba1c1eb6bc36f8b0dbb03f2c737b638e4488e9f68f9e9d951374a4
       container:
         name: meshtastic
         port: 3001
