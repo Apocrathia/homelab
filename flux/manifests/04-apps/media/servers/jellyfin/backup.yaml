@@ -17,6 +17,12 @@ spec:
   retention:
     keepDaily: 7
     keepWeekly: 4
+  # Jellyfin writes config files 0600 as UID 1000 (fsGroup 1000); the default
+  # mover UID 65532 cannot read them. Inherit the app's securityContext so the
+  # mover runs as the same UID/GID (requires the workload to pin runAsUser).
+  mover:
+    inheritSecurityContextFrom:
+      pvcConsumer: {}
   credentialProjection:
     enabled: true
 ---
