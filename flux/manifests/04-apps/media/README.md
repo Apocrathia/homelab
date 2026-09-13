@@ -73,6 +73,7 @@ Media applications are organized into three categories:
 ### Community
 
 - **[Archive Team Warrior](./acquisitions/archiveteam-warrior/README.md)** - Distributed web archiving volunteer service
+- **[copyparty](./acquisitions/copyparty/README.md)** - Friends' file drop box with resumable browser uploads to the `Uploads` SMB share
 
 ## Storage Integration
 

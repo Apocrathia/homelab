@@ -1,0 +1,126 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: copyparty
+  namespace: copyparty
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.78"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: copyparty
+      # renovate: datasource=docker depName=ghcr.io/9001/copyparty-ac
+      image: ghcr.io/9001/copyparty-ac:1.20.23@sha256:093b25d94a0373e20044327c8fe2604fc5b2a7c1a77885c2a2f34418ebd5e615
+      container:
+        name: copyparty
+        port: 3923
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3923
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3923
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3923
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: state
+          mountPath: /state
+        - name: uploads
+          mountPath: /w
+      volumes:
+        emptyDir:
+          - name: temp
+            mountPath: /tmp
+        configMap:
+          - name: cfg
+            mountPath: /cfg
+            readOnly: true
+            configMapName: copyparty-conf
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 2
+        volumes:
+          - name: state
+            capacity: 5Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: uploads
+            source: "//storage.services.apocrathia.com/Uploads"
+            subDir: ""
+            capacity: "500Gi"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: false
+
+    # Authentik proxy provider; identity headers drive copyparty's own ACLs.
+    authentik:
+      enabled: true
+      mode: "proxy"
+      shared: true
+      displayName: "Copyparty"
+      externalHost: "https://copyparty.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/copyparty/icon.svg"
+      category: "Media"
+
+    # Proxy mode: the outpost owns the HTTPRoute (dual-parented below).
+    httproute:
+      enabled: false
+
+    # Tailnet sharing (friends) on the same hostname.
+    tailnet:
+      enabled: true

@@ -1,0 +1,47 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: copyparty-ingress-trusted
+  namespace: copyparty
+  labels:
+    app.kubernetes.io/name: copyparty
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: media
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "Ingress: Authentik outpost, gatus probes, node health checks only"
+spec:
+  description: |
+    copyparty authenticates by trusting identity headers from
+    cluster-internal sources (xff-src), so ingress is restricted to the
+    authentik namespace (the proxy outpost that injects the headers),
+    the gatus namespace (synthetic probes), and the node (kubelet
+    probes and port-forward). Everything else is denied.
+  endpointSelector:
+    matchLabels:
+      app: copyparty
+  ingress:
+    # Authentik proxy outpost — the only header-injecting source
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "3923"
+              protocol: TCP
+    # gatus synthetic probes (no identity headers — unauthenticated view)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: gatus
+      toPorts:
+        - ports:
+            - port: "3923"
+              protocol: TCP
+    # kubelet health probes and kubectl port-forward
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "3923"
+              protocol: TCP
