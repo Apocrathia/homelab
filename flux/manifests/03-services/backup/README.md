@@ -28,6 +28,13 @@ This directory does not change per app. An app backs itself up by:
 2. Adding a `backup.yaml` to its own kustomization with a `SnapshotPolicy`
    (PVC sources, retention) and a `SnapshotSchedule` (cron window)
 
+If the app writes files that are not world-readable (common: images running
+as UID 1000 with 0600 files), the default mover UID 65532 gets permission
+denied and the snapshot fails. Add `mover.inheritSecurityContextFrom:
+pvcConsumer: {}` to the policy so the mover runs as the app's UID/GID —
+this requires the app to pin `runAsUser` in its securityContext
+(see jellyfin/backup.yaml).
+
 Pilot apps: `demo-app`, `jellyfin` (config only; media PVCs are NAS-backed).
 Longhorn's `daily-backup` RecurringJob stays in place until the pilot proves
 out (restore drill + soak).
