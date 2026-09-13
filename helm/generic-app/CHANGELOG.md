@@ -1,6 +1,18 @@
 # Changelog
 
-## Version 0.0.79 (Latest)
+## Version 0.0.80 (Latest)
+
+- **Authentik SSO launch URLs**: new optional `authentik.ssoLaunchUrl` value
+  (default empty = the app's `externalHost`). When set, the Application
+  `launch_url` / `meta_launch_url` in all three blueprint modes (proxy, OIDC,
+  bookmark) deep-links the library tile to the app's direct SSO entrypoint
+  instead of its own login page. Apps that don't set it render unchanged.
+- **Template rename**: `templates/authentik-blueprint.yaml` ->
+  `templates/authentik-proxy-blueprint.yaml` (it renders only proxy mode);
+  frees the generic `authentik-blueprint.yaml` name for a future consolidated
+  template. Pure rename - rendered output is unchanged.
+
+## Version 0.0.79
 
 - **Kopia backup values**: Optional top-level `backup:` block (default
   `enabled: false`) renders a kopiur `SnapshotPolicy` + `SnapshotSchedule`

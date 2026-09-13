@@ -93,6 +93,7 @@ All available configuration values for the chart:
 | `authentik.enabled`                            | bool   | `true`                                            | Enable Authentik SSO integration                                                        |
 | `authentik.displayName`                        | string | `Demo Application`                                | Display name in Authentik                                                               |
 | `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`    | External URL                                                                            |
+| `authentik.ssoLaunchUrl`                       | string | `""`                                              | Direct SSO entrypoint for the library tile; empty = the app's own URL                   |
 | `authentik.icon`                               | string | `https://i.imgur.com/0gNsvyk.png`                 | Icon URL                                                                                |
 | `authentik.openInNewTab`                       | bool   | `true`                                            | Open in new tab                                                                         |
 | `authentik.category`                           | string | `Applications`                                    | Category in Authentik dashboard                                                         |
