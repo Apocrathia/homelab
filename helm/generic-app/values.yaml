@@ -726,5 +726,26 @@ postgres:
     interval: 30s
   # Database name (defaults to app.name if not specified)
   database: ""
+
   # Database owner (defaults to app.name if not specified)
   owner: ""
+
+# Kopia backup via kopiur (SnapshotPolicy + SnapshotSchedule).
+# Requires the app namespace to carry the label matching the
+# ClusterRepository's allowedNamespaces selector
+# (backup.apocrathia.com/repo: nas-rustfs) - namespaces are app-owned.
+backup:
+  enabled: false
+  # ClusterRepository to back up to
+  repository: nas-rustfs
+  # Longhorn volume names (storage.longhorn.volumes[].name) to back up.
+  # Empty = all Longhorn volumes. SMB and emptyDir volumes are never included.
+  volumes: []
+  # GFS retention
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  # Nightly window; H pins a deterministic per-schedule minute
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m

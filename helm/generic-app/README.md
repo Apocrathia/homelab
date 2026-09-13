@@ -1006,6 +1006,41 @@ secrets:
   itemPath: "vaults/Secrets/items/my-app-secrets"
 ```
 
+### Kopia Backup
+
+Optional `backup:` block (default off) renders a kopiur `SnapshotPolicy` +
+`SnapshotSchedule` that back the app's Longhorn volumes up to a shared
+`ClusterRepository` (see `flux/manifests/03-services/backup/`):
+
+```yaml
+backup:
+  enabled: true
+  repository: nas-rustfs # ClusterRepository name
+  volumes: # Longhorn volume names; empty = all Longhorn volumes
+    - config
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  schedule:
+    cron: "H 2 * * *" # 0200 UTC nightly window
+    jitter: 30m
+```
+
+Prerequisites and behavior:
+
+- The app **namespace** must carry the label matching the repository's
+  `allowedNamespaces` selector (`backup.apocrathia.com/repo: nas-rustfs`) —
+  namespaces are app-owned, so the label lives in the app's `namespace.yaml`.
+- The backup mover inherits the app's own securityContext (`pvcConsumer`), so
+  files the app writes with owner-only permissions are readable. This requires
+  the chart-pinned `runAsUser` (always set) and the workload to be running at
+  backup time; a scaled-to-zero workload holds the backup with an actionable
+  condition.
+- SMB and emptyDir volumes are never backed up (SMB shares are NAS-backed
+  already).
+- Enabling with no Longhorn volumes and no explicit `volumes` list fails the
+  render with a clear message.
+
 ## Usage Example
 
 ### Direct Helm Install

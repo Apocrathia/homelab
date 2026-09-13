@@ -130,6 +130,11 @@ spec:
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
 
+    backup:
+      enabled: true
+      volumes:
+        - config
+
     secrets:
       enabled: false
 
