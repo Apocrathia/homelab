@@ -33,9 +33,10 @@ spec:
           # TLS terminates at the gateway; skip the self-signed HTTPS listener
           - name: SLSKD_NO_HTTPS
             value: "true"
-          # Completed downloads land on the SMB share, like the other download clients
+          # Completed downloads land in Music/ on the SMB Downloads share,
+          # alongside the other music download clients
           - name: SLSKD_DOWNLOADS_DIR
-            value: "/downloads"
+            value: "/downloads/Music"
           # Web UI credentials (stock defaults are slskd/slskd)
           - name: SLSKD_USERNAME
             valueFrom:
