@@ -144,6 +144,7 @@ spec:
       mode: oidc
       displayName: "Komga"
       externalHost: "https://komga.gateway.services.apocrathia.com"
+      ssoLaunchUrl: "https://komga.gateway.services.apocrathia.com/oauth2/authorization/authentik"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/komga/icon.svg"
       category: "Media"
       metaDescription: "Self-hosted media server for comics, manga, and eBooks"

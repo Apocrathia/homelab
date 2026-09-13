@@ -199,6 +199,7 @@ spec:
       mode: "oidc"
       displayName: "Semaphore"
       externalHost: "https://semaphore.gateway.services.apocrathia.com"
+      ssoLaunchUrl: "https://semaphore.gateway.services.apocrathia.com/api/auth/oidc/authentik/login"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/semaphore/icon.svg"
       category: "Platform"
       metaDescription: "Semaphore UI for Ansible, Terraform, OpenTofu, and shell automation"
