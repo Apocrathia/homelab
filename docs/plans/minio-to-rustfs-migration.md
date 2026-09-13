@@ -106,10 +106,11 @@ credentials):
       secret as the current MinIO items; per-app policies attached
       (admin API, 2026-09-10 — verified: object roundtrip in own buckets
       PASS, cross-bucket + bucket-creation 403)
-- [ ] Cutover per app (tempo, then loki, then mimir): flip the HelmRelease
-      S3 endpoint to `http://storage.services.apocrathia.com:9009`,
-      reconcile, verify fresh data lands (Grafana Explore over the last 15m)
-      and the RustFS bucket grows
+- [x] Cutover per app (tempo, then loki, then mimir): MRs !4461 / !4462 /
+      !4463 merged; HelmReleases Ready on :9009; fresh objects verified in
+      tempo, loki, and mimir-blocks (2026-09-12/13). mimir-ruler and
+      mimir-alertmanager buckets remain empty — valid steady state (no rule
+      configs / alertmanager state not yet persisted)
 - [ ] Migrate history per app — run ON the NAS (rclone ships with TrueNAS;
       loopback keeps traffic local; per-app creds are identical on both
       endpoints, so one pair drives both sides):
