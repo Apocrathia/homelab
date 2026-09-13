@@ -1,0 +1,41 @@
+---
+# Overridable defaults; prefer inventory/group_vars for site-wide values.
+# Secrets (kopia_repo_password, kopia_s3_access_key, kopia_s3_secret_key) are
+# REQUIRED and deliberately have no defaults — the playbook supplies them via
+# 1Password lookup. Missing secrets fail the run instead of silently backing
+# up to nowhere.
+
+# Shared-repository design (operator decision 2026-09-13): hosts connect to
+# the SAME kopia repository as the cluster (kopiur ClusterRepository/nas-rustfs)
+# so every backup is visible in the one kopia web UI. Sources are scoped by
+# kopia's user@host identity — each host only snapshots its own paths.
+
+# Package version from the official kopia apt/dnf repo ("" = latest available).
+# Keep aligned with (not newer than) the kopia version kopiur bundles — a newer
+# client would auto-upgrade the shared repo format and break the cluster side.
+kopia_package_version: "0.23.1"
+
+# Repository backend: the cluster's repo, on NAS RustFS (S3-compatible, plain
+# HTTP on the LAN). Bucket root — no prefix (must match the ClusterRepository).
+kopia_s3_endpoint: storage.services.apocrathia.com:9009
+kopia_s3_region: us-east-1
+kopia_s3_bucket: kopia
+
+# What to back up (required per host via host_vars; no sane default).
+kopia_backup_paths: []
+
+# Retention (GFS), set per source path. Kopia applies it during each snapshot
+# run (auto-expire); the cluster's kopiur SnapshotPolicy governs k8s sources.
+kopia_keep_daily: 7
+kopia_keep_weekly: 4
+kopia_keep_monthly: 6
+
+# Snapshot schedule (systemd timer, one-shot service snapshotting the explicit
+# path list — bootstrap-safe on a fresh host, where `--all` would find no
+# sources yet).
+kopia_schedule_oncalendar: "*-*-* 02:00:00"
+kopia_schedule_randomized_delay: "30m"
+# Required secrets — no defaults on purpose.
+# kopia_repo_password:    repository encryption password (same repo as the cluster)
+# kopia_s3_access_key:    RustFS access key for the kopia bucket (hosts user)
+# kopia_s3_secret_key:    RustFS secret key

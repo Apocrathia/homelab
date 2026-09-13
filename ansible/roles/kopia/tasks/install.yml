@@ -1,0 +1,8 @@
+---
+- name: Install kopia (Debian)
+  ansible.builtin.import_tasks: install_debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Install kopia (RedHat)
+  ansible.builtin.import_tasks: install_redhat.yml
+  when: ansible_os_family == "RedHat"

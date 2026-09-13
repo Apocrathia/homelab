@@ -1,0 +1,50 @@
+---
+# Snapshot runs as a one-shot systemd service on a timer — inspectable with
+# journalctl and systemctl, no kopia daemon. Paths are explicit (bootstrap-
+# safe: `--all` only lists sources with existing snapshots, so a fresh host
+# would find nothing on its first run). Maintenance is kopiur-owned on the
+# cluster side (default-managed Maintenance CR); hosts never run maintenance.
+- name: Install kopia snapshot service unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/kopia-snapshot.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Kopia snapshot run (this host's sources)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/kopia snapshot create {{ kopia_backup_paths | join(' ') }}
+      Nice=10
+      IOSchedulingClass=idle
+  register: kopia_snapshot_unit
+
+- name: Install kopia snapshot timer unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/kopia-snapshot.timer
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Nightly kopia snapshot run
+
+      [Timer]
+      OnCalendar={{ kopia_schedule_oncalendar }}
+      RandomizedDelaySec={{ kopia_schedule_randomized_delay }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+  register: kopia_snapshot_timer_unit
+
+- name: Reload systemd units
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: kopia_snapshot_unit is changed or kopia_snapshot_timer_unit is changed
+
+- name: Enable and start kopia snapshot timer
+  ansible.builtin.systemd:
+    name: kopia-snapshot.timer
+    enabled: true
+    state: started

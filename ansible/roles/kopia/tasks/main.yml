@@ -1,0 +1,33 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - kopia_repo_password is defined
+      - kopia_s3_access_key is defined
+      - kopia_s3_secret_key is defined
+      - kopia_backup_paths | length > 0
+    fail_msg: >-
+      kopia role requires kopia_repo_password, kopia_s3_access_key,
+      kopia_s3_secret_key (playbook supplies via 1Password) and a
+      non-empty kopia_backup_paths (host_vars).
+
+- name: Install kopia
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - kopia
+    - packages
+
+- name: Configure repository
+  ansible.builtin.import_tasks: repository.yml
+  tags:
+    - kopia
+
+- name: Configure backup policy
+  ansible.builtin.import_tasks: policy.yml
+  tags:
+    - kopia
+
+- name: Configure snapshot schedule
+  ansible.builtin.import_tasks: schedule.yml
+  tags:
+    - kopia

@@ -1,0 +1,39 @@
+---
+# Shared-repository design: hosts connect to the SAME repository as the
+# cluster (kopiur ClusterRepository/nas-rustfs). Runs as root; kopia keeps its
+# config in /root/.config/kopia. Credentials pass via environment, never argv
+# or files.
+- name: Check for existing repository connection
+  ansible.builtin.command:
+    cmd: kopia repository status --json
+  register: kopia_repo_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Connect to the shared repository
+  ansible.builtin.command:
+    cmd: >-
+      kopia repository connect s3
+      --endpoint={{ kopia_s3_endpoint }}
+      --region={{ kopia_s3_region }}
+      --bucket={{ kopia_s3_bucket }}
+      --disable-tls
+  environment:
+    KOPIA_PASSWORD: "{{ kopia_repo_password }}"
+    AWS_ACCESS_KEY_ID: "{{ kopia_s3_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ kopia_s3_secret_key }}"
+  register: kopia_repo_connect
+  when:
+    - kopia_repo_status.rc != 0
+    - not ansible_check_mode
+  changed_when: kopia_repo_connect.rc == 0
+  no_log: true
+
+- name: Verify repository connection
+  ansible.builtin.command:
+    cmd: kopia repository status --json
+  register: kopia_repo_status2
+  changed_when: false
+  failed_when: kopia_repo_status2.rc != 0
+  check_mode: false

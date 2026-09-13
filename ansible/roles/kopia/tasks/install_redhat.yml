@@ -1,0 +1,25 @@
+---
+# Official kopia yum repo: https://kopia.io/docs/installation/
+- name: Import kopia signing key
+  ansible.builtin.rpm_key:
+    key: https://kopia.io/signing-key
+    state: present
+
+- name: Configure kopia dnf repository
+  ansible.builtin.copy:
+    dest: /etc/yum.repos.d/kopia.repo
+    mode: "0644"
+    content: |
+      [Kopia]
+      name=Kopia
+      baseurl=http://packages.kopia.io/rpm/stable/$basearch/
+      gpgcheck=1
+      enabled=1
+      gpgkey=https://kopia.io/signing-key
+  register: kopia_dnf_repo
+
+- name: Install kopia package
+  ansible.builtin.dnf:
+    name: "{{ 'kopia-' + kopia_package_version if kopia_package_version else 'kopia' }}"
+    state: present
+  when: not (ansible_check_mode and kopia_dnf_repo is changed)
