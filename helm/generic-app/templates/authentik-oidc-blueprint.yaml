@@ -99,7 +99,7 @@ data:
           name: "{{ .Values.authentik.displayName }}"
           slug: "{{ .Values.app.name }}"
           provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "{{ .Values.app.name }}-oidc-provider"]]
-          launch_url: "{{ .Values.authentik.externalHost }}"
+          launch_url: "{{ .Values.authentik.ssoLaunchUrl | default .Values.authentik.externalHost }}"
           group: "{{ .Values.authentik.category | default "Applications" }}"
           open_in_new_tab: {{ if (hasKey .Values.authentik "openInNewTab") }}{{ .Values.authentik.openInNewTab }}{{ else }}true{{ end }}
           {{- if .Values.authentik.icon }}

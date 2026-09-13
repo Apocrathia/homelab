@@ -493,6 +493,8 @@ authentik:
   # Common settings (both modes)
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
+  # Direct SSO entrypoint for the library tile; leave unset for the app's own URL
+  ssoLaunchUrl: ""
   icon: "https://i.imgur.com/0gNsvyk.png"
   openInNewTab: true
   # Category for organizing applications in Authentik dashboard
