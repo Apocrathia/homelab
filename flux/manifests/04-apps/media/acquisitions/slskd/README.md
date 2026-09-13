@@ -17,8 +17,8 @@ This deployment includes:
 - Authentik proxy provider for SSO in front of the web UI
 - Longhorn persistent volume for application data (`/app`: config, SQLite DBs,
   incomplete downloads)
-- SMB mount for completed downloads (`/downloads`), matching the other
-  download clients
+- SMB mount for completed downloads (`/downloads/Music`), alongside the other
+  music download clients
 
 ## Access
 
