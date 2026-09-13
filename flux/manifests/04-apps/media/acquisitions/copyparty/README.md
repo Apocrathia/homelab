@@ -48,10 +48,8 @@ browser uploads are the supported path for friends.
 ## Prerequisite
 
 The `Uploads` SMB share must exist on `storage.services.apocrathia.com`
-(create dataset + share on TrueNAS, or repoint `storage.smb.volumes[].source`
-in `helmrelease.yaml` at an existing share). Set a quota on the dataset —
-friend uploads are otherwise unbounded, and a full share takes the NAS down
-with it.
+(or repoint `storage.smb.volumes[].source` in `helmrelease.yaml` at an
+existing share).
 
 ## Troubleshooting
 
