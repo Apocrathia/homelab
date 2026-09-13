@@ -7,6 +7,7 @@ metadata:
 
 resources:
   - acquisitions/archiveteam-warrior
+  - acquisitions/copyparty
   - acquisitions/lidarr-youtube-downloader
   - acquisitions/prowlarr
   - acquisitions/qbittorrent
