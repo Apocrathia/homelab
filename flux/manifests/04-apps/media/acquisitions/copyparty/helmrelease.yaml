@@ -27,6 +27,8 @@ spec:
         env:
           - name: TZ
             value: "America/Denver"
+          - name: XDG_CONFIG_HOME
+            value: /state
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -115,7 +117,7 @@ spec:
       displayName: "Copyparty"
       externalHost: "https://copyparty.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/copyparty/icon.svg"
-      category: "Media"
+      category: "Productivity"
 
     # Proxy mode: the outpost owns the HTTPRoute (dual-parented below).
     httproute:
