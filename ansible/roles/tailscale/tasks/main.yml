@@ -1,0 +1,70 @@
+---
+- name: Add Tailscale upstream GPG key
+  ansible.builtin.get_url:
+    url: https://pkgs.tailscale.com/stable/debian/bookworm.asc
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: "0644"
+  register: tailscale_key
+
+- name: Add Tailscale apt repo (deb822)
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    types: [deb]
+    uris: https://pkgs.tailscale.com/stable/debian
+    suites: [bookworm]
+    components: [main]
+    signed_by: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    state: present
+  notify: Update apt cache
+
+- name: Install tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+
+- name: Enable tailscaled
+  ansible.builtin.service:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Check current login status
+  ansible.builtin.command:
+    cmd: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+
+- name: Join the tailnet when not logged in
+  ansible.builtin.command:
+    cmd: >
+      tailscale up
+      --authkey={{ lookup('community.general.onepassword_read', tailscale_authkey_vault_item, vault='Secrets') }}
+      --advertise-tags={{ tailscale_tags | join(',') }}
+      --hostname={{ inventory_hostname_short }}
+      --accept-dns={{ 'true' if tailscale_accept_dns else 'false' }}
+  register: tailscale_join
+  changed_when: tailscale_join.rc == 0
+  when:
+    - tailscale_tags | length > 0
+    - (tailscale_status.stdout | from_json).BackendState != 'Running' or
+      (tailscale_status.stdout | from_json).Self.Tags | default([]) | difference(tailscale_tags) | length > 0
+  no_log: true
+
+- name: Read the host's tailnet IPv4 address
+  ansible.builtin.command:
+    cmd: tailscale ip -4
+  register: tailscale_ip
+  changed_when: false
+
+- name: Record the tailnet address for downstream tasks
+  ansible.builtin.set_fact:
+    tailscale_host_ipv4: "{{ tailscale_ip.stdout_lines[0] }}"
+
+- name: Assert no routes or exit-node are advertised
+  ansible.builtin.command:
+    cmd: tailscale debug prefs
+  register: tailscale_prefs
+  changed_when: false
+  failed_when: >-
+    (tailscale_prefs.stdout | from_json).AdvertiseRoutes | default([]) | length > 0
+    or (tailscale_prefs.stdout | from_json).AdvertiseExitNode | default(false) | bool

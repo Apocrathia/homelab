@@ -1,0 +1,75 @@
+---
+- name: Fail loudly when no domain is set
+  ansible.builtin.fail:
+    msg: "acme_sh_domain must be set on {{ inventory_hostname }} (host_vars)"
+  when: acme_sh_domain | length == 0
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - cron
+      - git
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Clone or update acme.sh
+  ansible.builtin.git:
+    repo: https://github.com/acmesh-official/acme.sh
+    dest: "{{ acme_sh_src }}"
+    version: "{{ acme_sh_git_version }}"
+    update: true
+  register: acme_sh_repo
+
+- name: Install acme.sh
+  # Creates ~/.acme.sh and the daily renewal cronjob (acme.sh-managed).
+  ansible.builtin.command:
+    cmd: ./acme.sh --install --accountemail {{ acme_sh_account_email }}
+  args:
+    chdir: "{{ acme_sh_src }}"
+    creates: /root/.acme.sh/acme.sh
+
+- name: Issue the certificate (DNS-01, Let's Encrypt)
+  # Idempotent: acme.sh skips when the cert is valid. Environment carries
+  # the Cloudflare token — it is never written to disk.
+  ansible.builtin.command:
+    cmd: >-
+      ./acme.sh --issue
+      -d {{ acme_sh_domain }}
+      --dns {{ acme_sh_dns_provider }}
+      --server {{ acme_sh_server }}
+  args:
+    chdir: /root/.acme.sh
+  environment:
+    CF_Token: "{{ lookup('community.general.onepassword_read', acme_sh_cf_token_vault_item, vault='Secrets') }}"
+  register: acme_sh_issue
+  changed_when: "'Cert success' in acme_sh_issue.stdout"
+  no_log: true
+
+- name: Ensure the certificate directory exists
+  ansible.builtin.file:
+    path: "{{ acme_sh_cert_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the certificate where nginx_site expects it
+  # --install-cert registers the reloadcmd; acme.sh re-runs this (and the
+  # reload) on every renewal from its own cronjob. Files only change when
+  # the cert actually renews.
+  ansible.builtin.command:
+    cmd: >-
+      ./acme.sh --install-cert -d {{ acme_sh_domain }}
+      --key-file {{ acme_sh_cert_dir }}/{{ acme_sh_domain }}.key
+      --fullchain-file {{ acme_sh_cert_dir }}/{{ acme_sh_domain }}.pem
+      --reloadcmd "{{ acme_sh_reloadcmd }}"
+  args:
+    chdir: /root/.acme.sh
+  environment:
+    CF_Token: "{{ lookup('community.general.onepassword_read', acme_sh_cf_token_vault_item, vault='Secrets') }}"
+  register: acme_sh_install_cert
+  changed_when: >-
+    'Reload' in acme_sh_install_cert.stdout
+    or 'Installing' in acme_sh_install_cert.stdout
+  no_log: true

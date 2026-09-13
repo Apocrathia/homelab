@@ -8,6 +8,9 @@ area: networking
 
 # Tailnet split DNS for friends (retire the public tailnet path)
 
+> Bare-host counterpart (non-k8s hosts joining the tailnet):
+> `docs/plans/game-host-tailnet.md`
+
 ## Goal
 
 Friends get homelab app access over Tailscale with zero public DNS and zero

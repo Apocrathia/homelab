@@ -44,6 +44,15 @@ tailnet: records point at `tailnet-gateway`'s tailnet address
 etcd state is deliberately disposable (emptyDir). If etcd restarts empty,
 ExternalDNS rebuilds every record on its next sync; expect a sub-minute gap.
 
+## Static zone: game.apocrathia.com
+
+The Corefile also serves a static `hosts`-plugin zone for
+`game.apocrathia.com` (the bare AMP game host). The record is static because
+nothing in-cluster sources it; the address is the game host's tailnet IPv4,
+read on the host with `tailscale ip -4` after it joins, and stable across
+restarts. LAN clients keep using the UniFi-resolved LAN IP; tailnet clients
+get the tailnet address from this zone.
+
 ## Split DNS configuration (post-deploy, operator step)
 
 The tailnet must send `gateway.services.apocrathia.com` queries to the

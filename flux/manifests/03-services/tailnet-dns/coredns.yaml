@@ -27,6 +27,22 @@ data:
         loadbalance
         reload
     }
+    # Static zone for the bare game host: one A record at the host's tailnet
+    # address (no etcd — nothing dynamic sources this record). The IP is the
+    # game host's CGNAT address from `tailscale ip -4` on the host; it is
+    # stable across restarts.
+    game.apocrathia.com:53 {
+        errors
+        hosts {
+            # PLACEHOLDER: replace with the game host's tailnet IPv4
+            # (read on the host with `tailscale ip -4` after first join;
+            # stable across restarts — operator-persisted device state)
+            100.100.100.100 game.apocrathia.com
+            ttl 60
+        }
+        cache 30
+        reload
+    }
 ---
 # The tailscale operator turns this Service into a tailnet device
 # (tailnet-dns.taila8ef8c.ts.net) via `tailscale.com/expose`. The operator

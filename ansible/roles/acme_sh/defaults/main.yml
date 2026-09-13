@@ -1,0 +1,25 @@
+---
+# One domain per host (this role is single-site; nginx_site consumes the
+# output). Empty fails loudly — see tasks.
+acme_sh_domain: ""
+
+# Issuer + account
+acme_sh_account_email: ""
+# acme.sh defaults to ZeroSSL since v3.0 — pin Let's Encrypt (operator rule).
+acme_sh_server: letsencrypt
+
+# DNS-01 provider (acme.sh dnsapi script name without dns_ prefix).
+# Cloudflare scoped API token, read from 1Password at task time.
+acme_sh_dns_provider: cf
+acme_sh_cf_token_vault_item: "vaults/Secrets/items/cloudflare-api-token"
+
+# Where acme.sh lives
+acme_sh_src: /usr/local/src/acme.sh
+acme_sh_git_version: master
+
+# Where certs land for the vhost to reference
+acme_sh_cert_dir: /etc/ssl/ansible
+
+# Reload command baked into the renewal (acme.sh re-runs install-cert with
+# this on every renewal via its own cronjob)
+acme_sh_reloadcmd: "service nginx reload"

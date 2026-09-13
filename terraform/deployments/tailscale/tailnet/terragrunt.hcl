@@ -49,6 +49,10 @@ inputs = {
   # Custom -> gateway.services.apocrathia.com + device IP.
   dns_split_dns = {
     "gateway.services.apocrathia.com" = ["100.76.213.107"]
+    # Game host zone: same resolver device; CoreDNS serves a static A record
+    # for game.apocrathia.com pointing at the host's tailnet address
+    # (flux/manifests/03-services/tailnet-dns/coredns.yaml).
+    "game.apocrathia.com" = ["100.76.213.107"]
   }
 
   acls_externally_managed_on = true

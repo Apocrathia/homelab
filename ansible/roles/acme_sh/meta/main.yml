@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: acme_sh
+  author: apocrathia
+  description: acme.sh from upstream git, certificates via DNS-01, install-cert with reload. Own the four commands, nothing else.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

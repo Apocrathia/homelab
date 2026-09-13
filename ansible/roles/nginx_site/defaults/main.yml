@@ -1,0 +1,22 @@
+---
+# The site. Set nginx_site_domain on the host; no default — an unset domain
+# must fail loudly, not proxy some placeholder.
+nginx_site_domain: ""
+
+# Upstream the vhost proxies to (host:port).
+nginx_site_upstream: "127.0.0.1:8080"
+
+# Cert files minted by nickjj.acme_sh (acme_sh_copy_certs_to_path default).
+nginx_site_tls_dir: /etc/ssl/ansible
+
+# Websockets: on by default (AMP and most admin UIs need them).
+nginx_site_websockets: true
+
+# Extra location blocks / headers specific to the proxied app, injected
+# verbatim into the vhost template. Empty = plain proxy only.
+nginx_site_extra_locations: ""
+nginx_site_extra_headers: ""
+
+# Shared static webroot served by the upstream app (AMP: X-AMP-Scheme,
+# /shared/ alias and NotRunning.html 502 page). Empty = skipped.
+nginx_site_shared_webroot: ""
