@@ -16,7 +16,19 @@ Realtime server-side upscaling is enabled. On CPU it will be slow; the plugin st
 ## Access
 
 - **Internal**: `http://jellyfin-ai-upscaler.jellyfin-ai-upscaler.svc.cluster.local:80`
-- **Health**: `/health` (unauthenticated, used by probes)
+- **Health**: `/health` (unauthenticated, used by probes; returns 503 while the
+  app-level circuit breaker is open)
+
+## Probes
+
+Liveness is a TCP socket check on port 5000, readiness is HTTP `/health`. The
+service's circuit breaker opens after repeated upscale failures (e.g. a
+model/input mismatch) and `/health` then returns 503 until it resets. That is
+a degraded-but-alive state: restarting the container does not clear the
+breaker's cause and the plugin immediately re-triggers it, so HTTP liveness
+produced an endless restart loop (157 restarts, Sep 2026). Readiness on
+`/health` still pulls a degraded pod out of the Service endpoints, and Gatus
+alerts on the same signal.
 
 There is no public URL. The operator dashboard on `:5000` is not exposed.
 
