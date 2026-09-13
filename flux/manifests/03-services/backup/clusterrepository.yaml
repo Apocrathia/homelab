@@ -40,13 +40,15 @@ spec:
   # Let consumers opt into credential projection (mover-namespace Secret copies)
   credentialProjection:
     allowed: true
-  # Kopia web UI. Read-only connection (browse + restore only); the operator
-  # mints UI login credentials into an owned Secret.
+  # Kopia web UI. Read-only connection (browse + restore only). No UI login:
+  # Authentik fronts the route, and a NetworkPolicy restricts ingress to the
+  # authentik namespace (networkpolicy.yaml in this directory).
   server:
     namespace: kopiur-system
     readOnly: true
     auth:
-      generate: {}
+      insecure:
+        acknowledgeInsecure: true
     service:
       type: ClusterIP
       port: 51515

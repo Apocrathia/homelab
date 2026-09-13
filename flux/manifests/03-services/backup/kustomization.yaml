@@ -7,6 +7,7 @@ metadata:
 resources:
   - secret.yaml
   - clusterrepository.yaml
+  - networkpolicy.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -18,6 +19,8 @@ configMapGenerator:
       - kopia.yaml=authentik-blueprint.yaml
 
 labels:
-  - includeSelectors: true
+  # metadata-labels only: includeSelectors would inject authentik_blueprint into
+  # networkpolicy.yaml's podSelector and the policy would select zero live pods
+  - includeSelectors: false
     pairs:
       authentik_blueprint: "true"
