@@ -1,8 +1,7 @@
 ---
-# Shared-repository design: hosts connect to the SAME repository as the
-# cluster (kopiur ClusterRepository/nas-rustfs). Runs as root; kopia keeps its
-# config in /root/.config/kopia. Credentials pass via environment, never argv
-# or files.
+# Shared-repository design: hosts connect to the SAME repository the rest of
+# the lab uses. Runs as root; kopia keeps its config in /root/.config/kopia.
+# Credentials pass via environment, never argv or files.
 - name: Check for existing repository connection
   ansible.builtin.command:
     cmd: kopia repository status --json

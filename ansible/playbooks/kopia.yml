@@ -5,7 +5,7 @@
   become: true
   roles:
     - role: kopia
-      # Shared repository with the cluster: same repo password, hosts' own S3
+      # Shared repository: one repo password for the whole lab, hosts' own S3
       # user for the kopia bucket. Both from 1Password — nothing secret in Git.
       kopia_repo_password: "{{ lookup('community.general.onepassword', 'kopia-secrets', field='repo-password') }}"
       kopia_s3_access_key: "{{ lookup('community.general.onepassword', 'kopia-secrets', field='access-key-id') }}"

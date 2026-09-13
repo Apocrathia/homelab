@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: kopia
   author: apocrathia
-  description: Kopia client for non-Kubernetes hosts — package install, per-host S3 repository, retention policy, and a systemd-timer snapshot schedule.
+  description: Kopia client — package install, shared S3 repository, retention policy, and a systemd-timer snapshot schedule.
   license: MIT
   min_ansible_version: "2.15"
   platforms:

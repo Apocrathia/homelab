@@ -6,17 +6,18 @@
 # up to nowhere.
 
 # Shared-repository design (operator decision 2026-09-13): hosts connect to
-# the SAME kopia repository as the cluster (kopiur ClusterRepository/nas-rustfs)
-# so every backup is visible in the one kopia web UI. Sources are scoped by
-# kopia's user@host identity — each host only snapshots its own paths.
+# the SAME kopia repository the rest of the lab uses, so every backup is
+# visible in the one kopia web UI. Sources are scoped by kopia's user@host
+# identity — each host only snapshots its own paths.
 
 # Package version from the official kopia apt/dnf repo ("" = latest available).
-# Keep aligned with (not newer than) the kopia version kopiur bundles — a newer
-# client would auto-upgrade the shared repo format and break the cluster side.
+# Must not exceed the repo's format version — a newer client would
+# auto-upgrade the shared repo format and break older clients.
+# renovate: datasource=github-releases depName=kopia/kopia
 kopia_package_version: "0.23.1"
 
-# Repository backend: the cluster's repo, on NAS RustFS (S3-compatible, plain
-# HTTP on the LAN). Bucket root — no prefix (must match the ClusterRepository).
+# Repository backend: NAS RustFS (S3-compatible, plain HTTP on the LAN).
+# Bucket root — no prefix (the shared repo lives at the bucket root).
 kopia_s3_endpoint: storage.services.apocrathia.com:9009
 kopia_s3_region: us-east-1
 kopia_s3_bucket: kopia
@@ -25,7 +26,7 @@ kopia_s3_bucket: kopia
 kopia_backup_paths: []
 
 # Retention (GFS), set per source path. Kopia applies it during each snapshot
-# run (auto-expire); the cluster's kopiur SnapshotPolicy governs k8s sources.
+# run (auto-expire).
 kopia_keep_daily: 7
 kopia_keep_weekly: 4
 kopia_keep_monthly: 6
@@ -36,6 +37,6 @@ kopia_keep_monthly: 6
 kopia_schedule_oncalendar: "*-*-* 02:00:00"
 kopia_schedule_randomized_delay: "30m"
 # Required secrets — no defaults on purpose.
-# kopia_repo_password:    repository encryption password (same repo as the cluster)
+# kopia_repo_password:    shared repository encryption password
 # kopia_s3_access_key:    RustFS access key for the kopia bucket (hosts user)
 # kopia_s3_secret_key:    RustFS secret key

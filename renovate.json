@@ -76,7 +76,8 @@
       "description": "Renovate comment + plain version (yaml/CI/shell/env-list) or GitHub URL",
       "managerFilePatterns": [
         "/^flux/manifests/.*\\.ya?ml$/",
-        "/^\\.gitlab/.*\\.ya?ml$/"
+        "/^\\.gitlab/.*\\.ya?ml$/",
+        "/^ansible/.*\\.ya?ml$/"
       ],
       "depTypeTemplate": "version-field",
       "matchStrings": [

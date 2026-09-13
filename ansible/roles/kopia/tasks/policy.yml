@@ -1,7 +1,6 @@
 ---
-# Retention per source path. The shared repo's GLOBAL policy belongs to the
-# cluster side (kopiur-managed maintenance; kopia default retention is
-# time-based 1h/24h/7d/30d/52w otherwise) — hosts never touch --global.
+# Retention per source path. The shared repo's GLOBAL policy is owned
+# elsewhere in the lab — hosts never touch --global.
 - name: Set retention policy on backup paths
   ansible.builtin.command:
     cmd: >-

@@ -1,30 +1,29 @@
 # kopia
 
-Kopia backups for non-Kubernetes hosts: package install from the official
-kopia repos, per-path retention policy, and a systemd-timer snapshot
-schedule. Hosts connect to the **shared repository** the cluster's kopiur
-pilot uses (`ClusterRepository/nas-rustfs`, bucket `kopia` on NAS RustFS), so
-every backup — cluster and hosts — is visible in the one kopia web UI at
-`kopia.gateway.services.apocrathia.com`.
+Kopia backups for managed hosts: package install from the official kopia
+repos, per-path retention policy, and a systemd-timer snapshot schedule.
+Hosts connect to the **shared repository** the rest of the lab backs up to
+(bucket `kopia` on NAS RustFS), so every backup is visible in the one kopia
+web UI at `kopia.gateway.services.apocrathia.com`.
 
-## What it does
+The role:
 
 1. **Install** — kopia from the official apt (Debian) / dnf (Fedora) repo,
-   version pinned by `kopia_package_version` (keep aligned with, not newer
-   than, the version kopiur bundles — a newer client would auto-upgrade the
-   shared repo format and break the cluster side).
+   version pinned by `kopia_package_version` (must not exceed the repo's
+   format version — a newer client would auto-upgrade the shared repo
+   format and break older clients).
 2. **Repository** — connects to the shared repo on
    `storage.services.apocrathia.com:9009` (plain HTTP on the LAN), config in
-   `/root/.config/kopia`. Hosts use their own RustFS user (bucket-scoped to
-   `kopia`), distinct from kopiur's, so host-key rotation never touches the
-   cluster. Credentials pass via environment, never argv.
+   `/root/.config/kopia`, hosts' own bucket-scoped RustFS user (from
+   `kopia-secrets`). Credentials pass via environment, never argv.
 3. **Policy** — retention per backup path (defaults 7 daily / 4 weekly /
-   6 monthly). The global policy belongs to the cluster side; hosts never
-   touch `--global`.
+   6 monthly). Hosts never touch the repo's `--global` policy — it is owned
+   elsewhere in the lab.
 4. **Schedule** — `kopia-snapshot.timer` runs a one-shot service with the
    explicit path list (bootstrap-safe; `--all` only finds sources that
    already have snapshots) nightly at 02:00 + 30m randomized delay,
-   Persistent. Maintenance is kopiur-owned; hosts never run maintenance.
+   Persistent. Maintenance is owned elsewhere in the lab; hosts never run
+   maintenance.
 
 Snapshot sources are scoped by kopia's user@host identity — each host
 snapshots only its own paths (verified against kopia source:
@@ -35,11 +34,11 @@ snapshots only its own paths (verified against kopia source:
 Secrets have **no defaults** and fail the run when missing. The playbook
 supplies them via 1Password lookup (`playbooks/kopia.yml`):
 
-| Variable              | Source                                | Notes                                                    |
-| --------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `kopia_repo_password` | `kopia-secrets` / `repo-password`     | Shared repository encryption (same repo as the cluster). |
-| `kopia_s3_access_key` | `kopia-secrets` / `access-key-id`     | Hosts' RustFS user, scoped to the `kopia` bucket.        |
-| `kopia_s3_secret_key` | `kopia-secrets` / `access-key-secret` |                                                          |
+| Variable              | Source                                | Notes                                             |
+| --------------------- | ------------------------------------- | ------------------------------------------------- |
+| `kopia_repo_password` | `kopia-secrets` / `repo-password`     | Shared repository encryption.                     |
+| `kopia_s3_access_key` | `kopia-secrets` / `access-key-id`     | Hosts' RustFS user, scoped to the `kopia` bucket. |
+| `kopia_s3_secret_key` | `kopia-secrets` / `access-key-secret` |                                                   |
 
 Non-secret defaults live in `defaults/main.yml`. Per-host backup paths go in
 `inventory/host_vars/<host>.yml`.
@@ -62,12 +61,13 @@ journalctl -u kopia-snapshot.service
 
 ## Notes
 
-- Shared-repo trade-off (operator decision 2026-09-13): any host (or the
-  cluster) can read and delete the whole repository. Confidentiality rides on
-  the repo password; blast-radius separation would require separate buckets
-  and users per trust domain.
-- `kopia_package_version` must not exceed the cluster's kopia version
-  (kopiur bundles 0.23.1); newer formats would break the cluster client.
+- Shared-repo trade-off (operator decision 2026-09-13): any connected client
+  can read and delete the whole repository. Confidentiality rides on the repo
+  password; blast-radius separation would require separate buckets and users
+  per trust domain.
+- `kopia_package_version` must not exceed the version the rest of the lab
+  runs (0.23.1); newer formats would break older clients. Renovate manages
+  the pin (github-releases datasource).
 - unifi-os is an appliance OS — unverified as a kopia target; check before
   adding it to the inventory.
 - KopiaUI (desktop tray app) manages its own per-user repository config and

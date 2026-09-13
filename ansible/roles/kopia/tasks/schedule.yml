@@ -2,8 +2,8 @@
 # Snapshot runs as a one-shot systemd service on a timer — inspectable with
 # journalctl and systemctl, no kopia daemon. Paths are explicit (bootstrap-
 # safe: `--all` only lists sources with existing snapshots, so a fresh host
-# would find nothing on its first run). Maintenance is kopiur-owned on the
-# cluster side (default-managed Maintenance CR); hosts never run maintenance.
+# would find nothing on its first run). Maintenance is owned elsewhere in the
+# lab; hosts never run maintenance.
 - name: Install kopia snapshot service unit
   ansible.builtin.copy:
     dest: /etc/systemd/system/kopia-snapshot.service
@@ -38,13 +38,9 @@
       WantedBy=timers.target
   register: kopia_snapshot_timer_unit
 
-- name: Reload systemd units
-  ansible.builtin.systemd:
-    daemon_reload: true
-  when: kopia_snapshot_unit is changed or kopia_snapshot_timer_unit is changed
-
 - name: Enable and start kopia snapshot timer
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: kopia-snapshot.timer
     enabled: true
     state: started
+    daemon_reload: true
