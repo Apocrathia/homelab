@@ -53,6 +53,11 @@ spec:
             subDir: "Sites/Demo"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
 
+    backup:
+      enabled: true
+      volumes:
+        - data
+
     secrets:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"

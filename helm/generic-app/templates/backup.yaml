@@ -1,0 +1,55 @@
+{{- if .Values.backup.enabled }}
+{{- /* Select volumes: explicit list, else all Longhorn volumes. */}}
+{{- $vols := list }}
+{{- range .Values.backup.volumes }}
+  {{- $vols = append $vols . }}
+{{- end }}
+{{- if not $vols }}
+  {{- range .Values.storage.longhorn.volumes }}
+    {{- $vols = append $vols .name }}
+  {{- end }}
+{{- end }}
+{{- if not $vols }}
+  {{- fail "backup.enabled is true but no backup.volumes are set and storage.longhorn.volumes is empty" }}
+{{- end }}
+{{- $ns := .Values.app.namespace | default .Values.app.name }}
+---
+# Kopia backup policy: {{ .Values.app.name }} ({{ $vols | join ", " }})
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: {{ .Values.app.name }}-backup
+  namespace: {{ $ns }}
+spec:
+  repository:
+    kind: ClusterRepository
+    name: {{ .Values.backup.repository }}
+  sources:
+    {{- range $vols }}
+    - pvc:
+        name: {{ $.Values.app.name }}-{{ . }}
+    {{- end }}
+  retention:
+    keepDaily: {{ $.Values.backup.retention.keepDaily }}
+    keepWeekly: {{ $.Values.backup.retention.keepWeekly }}
+  # The chart always pins the workload's runAsUser, so the mover can inherit
+  # the app's own securityContext and read files the app writes 0600.
+  mover:
+    inheritSecurityContextFrom:
+      pvcConsumer: {}
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: {{ .Values.app.name }}-nightly
+  namespace: {{ $ns }}
+spec:
+  policyRef:
+    name: {{ .Values.app.name }}-backup
+  schedule:
+    cron: "{{ .Values.backup.schedule.cron }}"
+    jitter: {{ .Values.backup.schedule.jitter }}
+    runOnCreate: false
+{{- end }}

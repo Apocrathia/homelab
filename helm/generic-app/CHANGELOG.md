@@ -1,6 +1,17 @@
 # Changelog
 
-## Version 0.0.78 (Latest)
+## Version 0.0.79 (Latest)
+
+- **Kopia backup values**: Optional top-level `backup:` block (default
+  `enabled: false`) renders a kopiur `SnapshotPolicy` + `SnapshotSchedule`
+  for the app's Longhorn volumes. `volumes` selects Longhorn volume names
+  (empty = all); GFS retention defaults to keepDaily 7 / keepWeekly 4; the
+  nightly window defaults to `H 2 * * *` with 30m jitter. The mover inherits
+  the app's securityContext (`pvcConsumer`), so owner-only files are readable.
+  Requires the app namespace to carry the ClusterRepository's
+  `backup.apocrathia.com/repo` label (namespaces are app-owned).
+
+## Version 0.0.78
 
 - **Authentik app-access bindings**: the chart's blueprints (proxy, OIDC,
   bookmark) now render an `admins` group binding (order 10) whenever
