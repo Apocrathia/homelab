@@ -47,13 +47,18 @@ in the kopia binary) as a read-only Deployment + ClusterIP Service in
 `kopiur-system`. Authentik fronts it: the blueprint in this directory creates
 the proxy provider, application, and outpost — the outpost provisions its own
 HTTPRoute on `https://kopia.gateway.services.apocrathia.com` (no hand-written
-route). Admins group only; the UI login password is operator-minted into
-`nas-rustfs-kopia-ui-auth` (read it with `kubectl -n kopiur-system get secret
-nas-rustfs-kopia-ui-auth -o jsonpath='{.data.password}' | base64 -d`).
+route). Admins group only.
+
+The UI has no login of its own (`auth.insecure`) — Authentik is the only
+authentication. `networkpolicy.yaml` compensates: ingress to the UI Service is
+restricted to the `authentik` namespace, so no other in-cluster workload can
+reach it. That trust covers the whole namespace (outposts, server, workers),
+not just the kopia outpost. The policy selects the server pod by its kopiur
+labels — re-verify it still selects the pod after kopiur chart upgrades.
 
 The UI is read-only (browse + restore); mutations stay in GitOps. The server
-pod holds the repository decryption key, so it stays behind Authentik and
-ClusterIP.
+pod holds the repository decryption key, so it stays behind Authentik,
+ClusterIP, and the NetworkPolicy.
 
 ## Usage
 

@@ -1,0 +1,25 @@
+---
+# Ingress to the kopia web UI (spec.server on ClusterRepository/nas-rustfs).
+# The UI runs without its own login (auth.insecure); Authentik is the only
+# authentication, so the Service must be reachable in-cluster only from the
+# authentik outpost. Egress is untouched.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nas-rustfs-kopia-ui
+  namespace: kopiur-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kopiur-server
+      app.kubernetes.io/instance: nas-rustfs
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: authentik
+      ports:
+        - protocol: TCP
+          port: 51515
