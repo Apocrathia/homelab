@@ -112,6 +112,9 @@ spec:
             - SETUID # su-exec drops to www-data
             - SETGID
             - NET_BIND_SERVICE # nginx binds :80
+            - DAC_OVERRIDE # /var/www/html and nginx state dirs are
+            # www-data-owned; root without DAC_OVERRIDE cannot create
+            # the .env symlink or write nginx temp files
       service:
         type: ClusterIP
         port: 80
