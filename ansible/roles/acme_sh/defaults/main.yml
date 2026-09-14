@@ -10,6 +10,10 @@ acme_sh_server: letsencrypt
 
 # DNS-01 provider (acme.sh dnsapi script name without the dns_ prefix;
 # the role adds it: --dns dns_cf).
+
+# Fixed sleep before CA validation, skipping acme.sh's public TXT check
+# (cloudflare-dns.com DoH is blocked on this network — see tasks/main.yml).
+acme_sh_dnssleep: 120
 acme_sh_dns_provider: cf
 
 # Cloudflare scoped API token. Never a default: CI injects it from the
