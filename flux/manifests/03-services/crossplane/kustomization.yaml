@@ -10,3 +10,19 @@ namespace: crossplane-system
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - crossview-secret.yaml
+  - crossview-helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-crossview
+    namespace: crossplane-system
+    files:
+      - crossview.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

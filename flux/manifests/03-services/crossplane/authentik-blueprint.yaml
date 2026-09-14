@@ -25,7 +25,7 @@ entries:
       issuer_mode: "per_provider"
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       redirect_uris:
-        - url: "https://crossview.gateway.services.apocrathia.com/api/auth/oidc/callback"
+        - url: "https://crossplane.gateway.services.apocrathia.com/api/auth/oidc/callback"
           matching_mode: "strict"
       # Authentik 2026.5+: empty grant_types rejects authorization_code (invalid_grant).
       grant_types:
@@ -47,9 +47,9 @@ entries:
       slug: "crossview"
       group: "Platform"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "crossview-oidc-provider"]]
-      meta_launch_url: "https://crossview.gateway.services.apocrathia.com"
+      meta_launch_url: "https://crossplane.gateway.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/crossview/icon.svg"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/crossplane/icon.svg"
       meta_description: "Crossplane resource dashboard"
       meta_publisher: "Crossplane Contrib"
 

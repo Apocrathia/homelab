@@ -42,8 +42,7 @@ Platform services that provide core functionality to the homelab cluster.
 - [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
 - [**Renovate Operator**](renovate-operator/README.md) - mogenius Renovate operator for automated dependency updates
 - [**Tuppr**](tuppr/README.md) - Automated Talos Linux and Kubernetes upgrade controller
-- [**Crossplane**](crossplane/README.md) - Control plane for Kubernetes-native management of external resources (core only, no providers yet)
-- [**Crossview**](crossview/README.md) - Web dashboard for Crossplane resources
+- [**Crossplane**](crossplane/README.md) - Control plane for Kubernetes-native management of external resources, with the Crossview web dashboard
 
 ## Architecture
 

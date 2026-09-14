@@ -13,3 +13,5 @@ spec:
     name: homelab
   dependsOn:
     - name: infrastructure-cilium
+    - name: services-authentik
+    - name: services-gateway

@@ -4,7 +4,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: crossview
-  namespace: crossview
+  namespace: crossplane-system
 spec:
   interval: 30m
   chart:
@@ -18,7 +18,6 @@ spec:
         namespace: flux-system
       interval: 30m
   install:
-    createNamespace: true
     remediation:
       retries: 3
   upgrade:
@@ -32,6 +31,10 @@ spec:
       valuesKey: oidc-client-id
       targetPath: config.sso.oidc.clientId
   values:
+    # Runs beside the Crossplane control plane in crossplane-system
+    global:
+      namespace: crossplane-system
+      createNamespace: false
     image:
       repository: ghcr.io/crossplane-contrib/crossview
       # renovate: datasource=docker depName=ghcr.io/crossplane-contrib/crossview
@@ -46,11 +49,11 @@ spec:
             namespace: cilium-system
             sectionName: https
         hostnames:
-          - crossview.gateway.services.apocrathia.com
+          - crossplane.gateway.services.apocrathia.com
     config:
       # Public origin used as the post-SSO redirect destination
       cors:
-        origin: https://crossview.gateway.services.apocrathia.com
+        origin: https://crossplane.gateway.services.apocrathia.com
         credentials: true
       session:
         cookie:
@@ -61,7 +64,7 @@ spec:
           enabled: true
           issuer: "https://auth.gateway.services.apocrathia.com/application/o/crossview/"
           # clientId arrives via valuesFrom from crossview-secrets
-          callbackURL: "https://crossview.gateway.services.apocrathia.com/api/auth/oidc/callback"
+          callbackURL: "https://crossplane.gateway.services.apocrathia.com/api/auth/oidc/callback"
           scope: "openid profile email"
           usernameAttribute: preferred_username
           emailAttribute: email
@@ -72,7 +75,8 @@ spec:
         tag: "17"
       persistence:
         storageClass: longhorn
-    # All credentials from the 1Password-backed secret — no plaintext values
+    # All credentials from the 1Password-backed secret — no plaintext values;
+    # secretKeyRef slots keep the chart from rendering its own Secret
     secrets:
       adminUsername:
         secretKeyRef:
