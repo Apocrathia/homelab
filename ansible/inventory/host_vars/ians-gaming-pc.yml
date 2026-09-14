@@ -1,0 +1,6 @@
+---
+# kopia backup sources for the gaming PC. Game library lives on dedicated
+# fast storage and is re-downloadable — not backed up.
+kopia_backup_paths:
+  - /etc
+  - /home/ianyoung

@@ -1,0 +1,14 @@
+---
+- name: Configure kopia backups
+  hosts: kopia
+  gather_facts: true
+  become: true
+  roles:
+    - role: kopia
+      # Shared repository: one repo password for the whole lab, hosts' own S3
+      # user for the kopia bucket. Both from 1Password — nothing secret in Git.
+      # vault= is required when the lookup runs against 1Password Connect
+      # (CI); with a signed-in op CLI locally it just narrows the search.
+      kopia_repo_password: "{{ lookup('community.general.onepassword', 'kopia-secrets', vault='Secrets', field='repo-password') }}"
+      kopia_s3_access_key: "{{ lookup('community.general.onepassword', 'kopia-secrets', vault='Secrets', field='access-key-id') }}"
+      kopia_s3_secret_key: "{{ lookup('community.general.onepassword', 'kopia-secrets', vault='Secrets', field='access-key-secret') }}"

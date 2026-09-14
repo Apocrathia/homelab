@@ -1,0 +1,42 @@
+---
+# Official kopia apt repo: https://kopia.io/docs/installation/
+- name: Ensure apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Install kopia signing key
+  ansible.builtin.get_url:
+    url: https://kopia.io/signing-key
+    dest: /etc/apt/keyrings/kopia-keyring.asc
+    mode: "0644"
+  register: kopia_apt_key
+
+- name: Dearmor kopia signing key
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /etc/apt/keyrings/kopia-keyring.gpg /etc/apt/keyrings/kopia-keyring.asc
+    creates: /etc/apt/keyrings/kopia-keyring.gpg
+
+- name: Configure kopia apt repository
+  ansible.builtin.deb822_repository:
+    name: kopia
+    types: deb
+    uris: http://packages.kopia.io/apt/
+    suites: stable
+    components: main
+    signed_by: /etc/apt/keyrings/kopia-keyring.gpg
+    state: present
+  register: kopia_apt_repo
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 0
+  when: kopia_apt_repo is changed or kopia_apt_key is changed
+
+- name: Install kopia package
+  ansible.builtin.apt:
+    name: "{{ 'kopia=' + kopia_package_version if kopia_package_version else 'kopia' }}"
+    state: present
+  when: not (ansible_check_mode and (kopia_apt_repo is changed or kopia_apt_key is changed))

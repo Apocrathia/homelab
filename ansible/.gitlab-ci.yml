@@ -78,6 +78,16 @@
         exit 1
       fi
     - python "$CI_PROJECT_DIR/ansible/ci/fetch_op_ssh.py"
+    # community.general.onepassword shells out to `op`; in CI the lookup runs
+    # in Connect mode (OP_CONNECT_HOST/TOKEN env from the ansible-secrets
+    # token) — still needs the binary. venv bin is first in PATH and writable
+    # (runner forces uid 1000, no root).
+    - |
+      OP_VERSION="2.30.3"
+      curl -sSLo /tmp/op.zip "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VERSION}/op_linux_amd64_v${OP_VERSION}.zip"
+      python -m zipfile -e /tmp/op.zip /tmp/op-pkg
+      install -m 0755 /tmp/op-pkg/op "$CI_PROJECT_DIR/.venv/bin/op"
+      op --version
 
 ansible-validate:
   extends: .ansible-base

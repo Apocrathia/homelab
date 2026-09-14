@@ -1,0 +1,8 @@
+---
+# kopia backup sources for game.services.apocrathia.com
+kopia_backup_paths:
+  - /etc
+  - /home
+  - /opt
+  - /var/backups
+  - /var/lib
