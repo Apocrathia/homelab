@@ -10,3 +10,19 @@ resources:
   - helmrelease.yaml
   - mysql.yaml
   - valkey.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # Wraps the raw Authentik blueprint (state: absent cleanup of the old
+  # proxy provider/outpost) into a ConfigMap the authentik sidecar reads.
+  - name: authentik-blueprint-projectsend-proxy-cleanup
+    namespace: projectsend
+    files:
+      - projectsend-proxy-cleanup.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"
