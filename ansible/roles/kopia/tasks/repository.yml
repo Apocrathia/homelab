@@ -10,6 +10,27 @@
   failed_when: false
   check_mode: false
 
+- name: Ensure /etc/kopia directory
+  ansible.builtin.file:
+    path: /etc/kopia
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+# kopia never persists the repo password in its config (by design): every
+# invocation needs KOPIA_PASSWORD. The systemd snapshot service reads this
+# file; 0600 root-only keeps it off the unit file (world-readable) and Git.
+- name: Write kopia environment file for the snapshot service
+  ansible.builtin.copy:
+    dest: /etc/kopia/snapshot.env
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      KOPIA_PASSWORD={{ kopia_repo_password }}
+  no_log: true
+
 - name: Connect to the shared repository
   ansible.builtin.command:
     cmd: >-

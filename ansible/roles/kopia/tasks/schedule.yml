@@ -16,6 +16,7 @@
 
       [Service]
       Type=oneshot
+      EnvironmentFile=/etc/kopia/snapshot.env
       ExecStart=/usr/bin/kopia snapshot create {{ kopia_backup_paths | join(' ') }}
       Nice=10
       IOSchedulingClass=idle
