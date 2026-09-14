@@ -75,7 +75,7 @@
       {{ (tailscale_status.stdout | from_json).get('BackendState', '')
          if tailscale_status.rc == 0 else 'absent' }}
     tailscale_tags_current: >-
-      {{ ((tailscale_status.stdout | from_json).get('Self') or {}).get('Tags', [])
+      {{ (((tailscale_status.stdout | from_json).get('Self') or {}).get('Tags') or [])
          if tailscale_status.rc == 0 else [] }}
 
 - name: Fail loudly when the auth key is not provided
@@ -135,11 +135,13 @@
 - name: Fail when routes or exit node are advertised
   # A-prime architecture: zero LAN routes. Asserted on every run where the
   # daemon answers (skipped pre-join / in --check on a fresh host).
+  # prefs JSON uses explicit nulls for absent values (AdvertiseRoutes: null),
+  # so dict.get defaults never fire — coalesce with `or` before filtering.
   ansible.builtin.fail:
     msg: >-
       {{ inventory_hostname }} advertises routes or an exit node —
       the tailnet must never carry LAN routes (A-prime decision).
   when:
     - tailscale_prefs.rc == 0
-    - (tailscale_prefs.stdout | from_json).get('AdvertiseRoutes', []) | length > 0
-      or (tailscale_prefs.stdout | from_json).get('AdvertiseExitNode', false) | bool
+    - ((tailscale_prefs.stdout | from_json).get('AdvertiseRoutes') or []) | length > 0
+      or ((tailscale_prefs.stdout | from_json).get('AdvertiseExitNode') or false) | bool
