@@ -14,6 +14,9 @@ tailscale_tags: []
 tailscale_advertise_routes: []
 tailscale_advertise_exit_node: false
 
-# Accept DNS from the tailnet (MagicDNS + split DNS) so this host resolves
-# gateway.services.apocrathia.com names without the LAN resolver.
-tailscale_accept_dns: true
+# Keep the host's default (LAN) resolver. accept-dns=true would route all
+# DNS through MagicDNS (100.100.100.100), whose upstream is the tailnet's
+# global resolver — it cannot resolve LAN-only names (broke kopia's
+# storage.services.apocrathia.com endpoint). This host is a LAN citizen
+# and an inbound-reachable server; it needs LAN DNS, not MagicDNS names.
+tailscale_accept_dns: false
