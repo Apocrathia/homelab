@@ -49,7 +49,7 @@ entries:
       name: "Immich"
       slug: "immich"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "immich-oidc-provider"]]
-      launch_url: "https://immich.gateway.services.apocrathia.com"
+      meta_launch_url: "https://immich.gateway.services.apocrathia.com"
       group: "Media"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/immich/icon.svg"

@@ -30,7 +30,7 @@ entries:
       slug: "tracearr"
       group: "Media"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "tracearr-proxy-provider"]]
-      launch_url: "https://tracearr.gateway.services.apocrathia.com"
+      meta_launch_url: "https://tracearr.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/tracearr/icon.svg"
       meta_description: "Real-time monitoring for Plex, Jellyfin, and Emby"

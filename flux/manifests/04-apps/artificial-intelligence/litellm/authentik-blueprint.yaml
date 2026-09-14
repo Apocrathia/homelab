@@ -43,7 +43,7 @@ entries:
       slug: "litellm"
       group: "Artificial Intelligence"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "litellm-oidc-provider"]]
-      launch_url: "https://ai.gateway.services.apocrathia.com/ui"
+      meta_launch_url: "https://ai.gateway.services.apocrathia.com/ui"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/litellm/icon.png"
       meta_description: "LiteLLM Proxy Admin UI - Unified LLM API Gateway Management"
