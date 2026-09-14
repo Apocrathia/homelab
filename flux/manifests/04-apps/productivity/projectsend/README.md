@@ -23,14 +23,17 @@ This deployment includes:
   ever chowning it). Files land under `Uploads/ProjectSend/` on the NAS
 - MySQL 8.4 (`projectsend-mysql`, 10Gi Longhorn) and Valkey
   (`projectsend-valkey`, 1Gi Longhorn)
-- Authentik proxy provider in front, shared with friends over the tailnet;
-  the app's own email/password client login sits behind the proxy
+- Authentik OIDC integration (chart-rendered provider, jellyfin shape):
+  friends sign in with their Authentik account via the app's Social Login
+  (generic OpenID Connect) and are auto-provisioned as clients; the local
+  email/password login remains for the administrator
 
 ## Access
 
 - **URL**: <https://projectsend.gateway.services.apocrathia.com>
 - **Friends (tailnet)**: same hostname via the tailnet-gateway parentRef;
-  friends log in with the client account created for them in the app
+  friends click "OpenID Connect" on the login page and sign in with their
+  Authentik account — auto-provisioned as a client on first login
 - **On the NAS**: `//storage.services.apocrathia.com/Uploads/ProjectSend/`
 
 ## Prerequisite
@@ -63,5 +66,8 @@ kubectl -n projectsend get pods,pvc
   su-exec down to www-data, and DAC_OVERRIDE lets root write the `.env`
   symlink and nginx state into www-data-owned directories. Breaking those =
   patching the image, not this chart.
-- `/up` 200 but login loops: `TRUSTED_PROXIES` mismatch — verify the outpost
-  still fronts the app.
+- OIDC button errors: check the app's Social Login settings match the
+  provider (issuer `https://auth.gateway.services.apocrathia.com`, client
+  ID/secret from Authentik's projectsend-oidc-provider) and that the
+  redirect URI is exactly
+  `https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback`.

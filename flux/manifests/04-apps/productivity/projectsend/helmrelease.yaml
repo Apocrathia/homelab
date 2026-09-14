@@ -182,24 +182,40 @@ spec:
     postgres:
       enabled: false
 
+    # OIDC mode: native social-login provider (Settings > Social Login >
+    # OpenID Connect in the app UI); Authentik is upstream-supported via
+    # OIDC discovery. Friends signing in with no local account are
+    # auto-provisioned as clients, never staff.
     authentik:
       enabled: true
-      mode: "proxy"
+      mode: "oidc"
       shared: true
       displayName: "ProjectSend"
       externalHost: "https://projectsend.gateway.services.apocrathia.com"
+      ssoLaunchUrl: "https://projectsend.gateway.services.apocrathia.com/auth/oidc/redirect"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/projectsend/icon.svg"
       category: "Productivity"
       metaDescription: "Client file sharing with per-client portals"
       metaPublisher: "ProjectSend"
+      oidc:
+        redirectUris:
+          - url: "https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback"
+            matchingMode: "strict"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        clientType: "confidential"
+        subMode: "user_username"
 
     gatus:
       enabled: true
       path: "/up"
 
-    # Proxy mode: the outpost owns the HTTPRoute (dual-parented below).
+    # Direct HTTPRoute (OIDC mode has no outpost); tailnet dual-parents it.
     httproute:
-      enabled: false
+      enabled: true
+      hostname: projectsend.gateway.services.apocrathia.com
 
     # Tailnet sharing (friends) on the same hostname.
     tailnet:

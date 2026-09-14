@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprint/schema.json
+#
+# Access-only blueprint — the chart-rendered OIDC blueprint owns the
+# provider/application. Blueprints never garbage-collect, so switching
+# the app from proxy to OIDC mode leaves the old proxy provider and
+# outpost behind (the outpost's HTTPRoute would fight the app's new
+# direct route on the same hostname). Same identifiers with state:
+# absent removes them.
+version: 1
+metadata:
+  name: projectsend-proxy-cleanup
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  - model: authentik_providers_proxy.proxyprovider
+    state: absent
+    identifiers:
+      name: "projectsend-proxy-provider"
+
+  - model: authentik_outposts.outpost
+    state: absent
+    identifiers:
+      name: "projectsend-outpost"
