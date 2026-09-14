@@ -72,7 +72,7 @@ spec:
       image:
         repository: postgres
         # renovate: datasource=docker depName=postgres
-        tag: "17"
+        tag: "18"
       persistence:
         storageClass: longhorn
     # All credentials from the 1Password-backed secret — no plaintext values;
