@@ -31,7 +31,7 @@ spec:
     gitlabUrl: https://gitlab.com/
 
     # Number of runner pods to deploy
-    replicas: 2
+    replicas: 4
 
     # Unregister all runners before termination
     unregisterRunners: true
