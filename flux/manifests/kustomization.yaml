@@ -22,6 +22,7 @@ resources:
   - 03-services/backup/flux-kustomization.yaml
   - 03-services/cert-manager/flux-kustomization.yaml
   # - 03-services/chaos-mesh/flux-kustomization.yaml
+  - 03-services/crossplane/flux-kustomization.yaml
   - 03-services/external-dns/flux-kustomization.yaml
   - 03-services/external-secrets/flux-kustomization.yaml
   - 03-services/gateway/flux-kustomization.yaml
