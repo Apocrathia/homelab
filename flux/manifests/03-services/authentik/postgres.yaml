@@ -12,6 +12,29 @@ spec:
   # Number of instances
   instances: 1
 
+  # Barman backups: rustfs S3 (bucket `cnpg`, policy scoped to bucket+objects).
+  # WAL archiving is continuous; base backups are triggered by the scheduled
+  # Backup resource in scheduled-backup.yaml.
+  backup:
+    retentionPolicy: 14d
+    barmanObjectStore:
+      destinationPath: s3://cnpg/authentik
+      endpointURL: http://storage.services.apocrathia.com:9009
+      serverName: authentik-postgres
+      s3Credentials:
+        accessKeyId:
+          name: authentik-postgres-backup-secrets
+          key: AWS_ACCESS_KEY_ID
+        secretAccessKey:
+          name: authentik-postgres-backup-secrets
+          key: AWS_SECRET_ACCESS_KEY
+      wal:
+        compression: zstd
+      data:
+        compression: gzip
+        jobs: 2
+        immediateCheckpoint: true
+
   # Storage configuration
   storage:
     storageClass: longhorn
