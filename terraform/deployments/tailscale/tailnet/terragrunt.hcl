@@ -35,7 +35,7 @@ inputs = {
   acl_policy = file("${get_terragrunt_dir()}/policy.hujson")
 
   dns_magic_dns          = true
-  dns_override_local_dns = false
+  dns_override_local_dns = true
   # No search paths: the tailnet search domain only resolved via the retired
   # public wildcard record.
   dns_search_paths = []
