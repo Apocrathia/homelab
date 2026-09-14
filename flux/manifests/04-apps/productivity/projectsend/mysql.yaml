@@ -21,7 +21,7 @@ spec:
       name: projectsend-mysql
       namespace: projectsend
       # renovate: datasource=docker depName=mysql
-      image: mysql:8.4@sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a11983c638f2a
+      image: mysql:26.7@sha256:45abdd9b4144660b5c93a5b7d0ebb21e024f0ba9851ecb4ab43bf83c6bf83592
       container:
         name: mysql
         port: 3306
