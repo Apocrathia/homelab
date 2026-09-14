@@ -58,8 +58,10 @@ kubectl -n projectsend get pods,pvc
 - Setup screen errors on database: check `projectsend-mysql` is Ready first
   (first boot is slow by design — the app waits for migrations).
 - The container runs as root with a minimal capability set (CHOWN, FOWNER,
-  SETUID, SETGID, NET_BIND_SERVICE): the image's supported mode — supervisord
-  writes `/run/supervisord.pid`, nginx binds :80, workers su-exec down to
-  www-data. Breaking those = patching the image, not this chart.
+  SETUID, SETGID, NET_BIND_SERVICE, DAC_OVERRIDE): the image's supported
+  mode — supervisord writes `/run/supervisord.pid`, nginx binds :80, workers
+  su-exec down to www-data, and DAC_OVERRIDE lets root write the `.env`
+  symlink and nginx state into www-data-owned directories. Breaking those =
+  patching the image, not this chart.
 - `/up` 200 but login loops: `TRUSTED_PROXIES` mismatch — verify the outpost
   still fronts the app.
