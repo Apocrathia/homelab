@@ -20,7 +20,7 @@ spec:
     app:
       name: wakapi
       # renovate: datasource=docker depName=ghcr.io/muety/wakapi
-      image: ghcr.io/muety/wakapi:2.17.6@sha256:00662767731a6797d4be02cbc6c3f32b7ff8d0c683ee10ec5612856d4efbb3bf
+      image: ghcr.io/muety/wakapi:2.18.0@sha256:9ee43d15009730928ed4c3506bdfb410522d9e6543d364d8c063e1e02348ba78
       container:
         name: wakapi
         port: 3000
