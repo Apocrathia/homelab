@@ -66,7 +66,12 @@
   environment:
     CF_Token: "{{ acme_sh_cf_token }}"
   register: acme_sh_issue
+  # rc 2 + "Skipping" = valid cert already exists, nothing to do (acme.sh
+  # reuses exit code 2 for "no renewal needed" — same code in its cron log).
   changed_when: "'Cert success' in acme_sh_issue.stdout"
+  failed_when: >-
+    acme_sh_issue.rc != 0
+    and not (acme_sh_issue.rc == 2 and 'Skipping' in acme_sh_issue.stdout)
   when: not ansible_check_mode
   no_log: true
 
