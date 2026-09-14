@@ -1,0 +1,123 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: projectsend-mysql
+  namespace: projectsend
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: projectsend-mysql
+      namespace: projectsend
+      # renovate: datasource=docker depName=mysql
+      image: mysql:8.4@sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a11983c638f2a
+      container:
+        name: mysql
+        port: 3306
+        env:
+          - name: MYSQL_DATABASE
+            value: "projectsend"
+          - name: MYSQL_USER
+            value: "projectsend"
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: projectsend-mysql-secrets
+                key: database-password
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: projectsend-mysql-secrets
+                key: database-root-password
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      # Official mysql image runs as uid/gid 999 (mysql)
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 3306
+        targetPort: 3306
+        portName: mysql
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - mysqladmin
+              - ping
+              - -h
+              - 127.0.0.1
+              - --silent
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - mysqladmin
+              - ping
+              - -h
+              - 127.0.0.1
+              - --silent
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 2
+        volumes:
+          - name: data
+            capacity: 10Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/projectsend-secrets"
+
+    postgres:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false

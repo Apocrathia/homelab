@@ -1,0 +1,168 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: projectsend
+  namespace: projectsend
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: projectsend
+      # renovate: datasource=docker depName=projectsend/projectsend
+      image: projectsend/projectsend:2@sha256:3e3972b8cd37702bedfa1d6f6804dfe4ae78c61dfe290a9fc06b29691dc057f8
+      container:
+        name: projectsend
+        port: 80
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: APP_URL
+            value: "https://projectsend.gateway.services.apocrathia.com"
+          - name: APP_ENV
+            value: "production"
+          - name: APP_DEBUG
+            value: "false"
+          # MySQL via the in-namespace projectsend-mysql release
+          - name: DB_CONNECTION
+            value: "mysql"
+          - name: DB_HOST
+            value: "projectsend-mysql.projectsend.svc.cluster.local"
+          - name: DB_PORT
+            value: "3306"
+          - name: DB_DATABASE
+            value: "projectsend"
+          - name: DB_USERNAME
+            value: "projectsend"
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: projectsend-secrets
+                key: database-password
+          # Valkey via the in-namespace projectsend-valkey release
+          - name: REDIS_HOST
+            value: "projectsend-valkey"
+          - name: CACHE_STORE
+            value: "redis"
+          - name: SESSION_DRIVER
+            value: "redis"
+          - name: QUEUE_CONNECTION
+            value: "redis"
+          # Only the Authentik outpost and node sources can reach the pod;
+          # trust X-Forwarded-* from the cluster CIDR so rate limits and the
+          # download log record real client IPs.
+          - name: TRUSTED_PROXIES
+            value: "10.42.0.0/16"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      # Image runs nginx + php-fpm + worker + scheduler as uid 1000
+      # (www-data) under supervisord; needs writable /run and /var/lib/nginx
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+      healthChecks:
+        # First boot waits for MySQL and runs migrations — slow start is normal
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /up
+            port: 80
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /up
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /up
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: storage
+          mountPath: /var/www/html/storage
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: true
+        volumes:
+          # Same Uploads share as copyparty; ProjectSend keeps its tree
+          # (storage/app/files, .env, APP_KEY) under its own subDir.
+          - name: storage
+            source: "//storage.services.apocrathia.com/Uploads"
+            subDir: "ProjectSend"
+            capacity: "500Gi"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/projectsend-secrets"
+
+    postgres:
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      shared: true
+      displayName: "ProjectSend"
+      externalHost: "https://projectsend.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/projectsend/icon.svg"
+      category: "Productivity"
+      metaDescription: "Client file sharing with per-client portals"
+      metaPublisher: "ProjectSend"
+
+    gatus:
+      enabled: true
+      path: "/up"
+
+    # Proxy mode: the outpost owns the HTTPRoute (dual-parented below).
+    httproute:
+      enabled: false
+
+    # Tailnet sharing (friends) on the same hostname.
+    tailnet:
+      enabled: true
