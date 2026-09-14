@@ -153,6 +153,15 @@ spec:
       metaPublisher: "Mealie"
       oidc:
         tokenValidity: "days=30"
+        customScopeMappings:
+          - name: "mealie-email-verified-mapping"
+            scopeName: "email"
+            description: "Email address with email_verified set to True for Mealie"
+            expression: |
+              return {
+                  "email": request.user.email,
+                  "email_verified": True
+              }
         redirectUris:
           - url: "https://mealie.gateway.services.apocrathia.com/login"
             matchingMode: "strict"
