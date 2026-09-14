@@ -51,7 +51,7 @@
     cmd: >-
       ./acme.sh --issue
       -d {{ acme_sh_domain }}
-      --dns {{ acme_sh_dns_provider }}
+      --dns dns_{{ acme_sh_dns_provider }}
       --server {{ acme_sh_server }}
   args:
     chdir: /root/.acme.sh

@@ -8,7 +8,8 @@ acme_sh_account_email: ""
 # acme.sh defaults to ZeroSSL since v3.0 — pin Let's Encrypt (operator rule).
 acme_sh_server: letsencrypt
 
-# DNS-01 provider (acme.sh dnsapi script name without dns_ prefix).
+# DNS-01 provider (acme.sh dnsapi script name without the dns_ prefix;
+# the role adds it: --dns dns_cf).
 acme_sh_dns_provider: cf
 
 # Cloudflare scoped API token. Never a default: CI injects it from the
