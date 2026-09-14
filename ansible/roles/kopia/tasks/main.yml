@@ -2,13 +2,14 @@
 - name: Validate required variables
   ansible.builtin.assert:
     that:
-      - kopia_repo_password is defined
-      - kopia_s3_access_key is defined
-      - kopia_s3_secret_key is defined
+      - kopia_repo_password | length > 0
+      - kopia_s3_access_key | length > 0
+      - kopia_s3_secret_key | length > 0
       - kopia_backup_paths | length > 0
     fail_msg: >-
-      kopia role requires kopia_repo_password, kopia_s3_access_key,
-      kopia_s3_secret_key (playbook supplies via 1Password) and a
+      kopia role requires non-empty kopia_repo_password, kopia_s3_access_key,
+      and kopia_s3_secret_key (playbook supplies via 1Password — a missing
+      item field resolves to an empty string and must NOT reach kopia) and a
       non-empty kopia_backup_paths (host_vars).
 
 - name: Install kopia
