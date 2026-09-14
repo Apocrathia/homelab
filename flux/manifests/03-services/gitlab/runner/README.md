@@ -44,7 +44,7 @@ Once the runner is deployed, you can verify it's working by:
 
 The GitLab Runner is configured with:
 
-- 2 runner manager pods (`replicas: 2`)
+- 4 runner manager pods (`replicas: 4`)
 - Each runner can handle up to 10 concurrent jobs (`concurrent: 10`)
 - Runners use the Kubernetes executor to spawn job pods
 - Job pods run with the Ubuntu 22.04 image by default
