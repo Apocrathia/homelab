@@ -20,8 +20,11 @@
     mode: "0644"
   notify: Reload nginx
 
+# Check mode: the apt task above does not install nginx, so the service
+# does not exist yet on a fresh host — skip rather than fail.
 - name: Ensure nginx is enabled and running
   ansible.builtin.service:
     name: nginx
     enabled: true
     state: started
+  when: not ansible_check_mode

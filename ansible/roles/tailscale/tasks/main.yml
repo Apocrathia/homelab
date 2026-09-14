@@ -32,11 +32,14 @@
     update_cache: true
     cache_valid_time: 3600
 
+# Check mode: the apt task above does not install tailscale, so the service
+# does not exist yet on a fresh host — skip rather than fail.
 - name: Enable tailscaled
   ansible.builtin.service:
     name: tailscaled
     enabled: true
     state: started
+  when: not ansible_check_mode
 
 # Read tasks always execute (check_mode: false) so their registers carry real
 # data; they tolerate the binary being absent on a first run in --check (apt
