@@ -120,6 +120,7 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Productivity"
       displayName: "SearXNG"
       externalHost: "https://searxng.gateway.services.apocrathia.com"
@@ -131,3 +132,7 @@ spec:
 
     httproute:
       enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

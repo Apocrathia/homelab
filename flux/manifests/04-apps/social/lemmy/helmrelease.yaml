@@ -61,6 +61,7 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Social"
       displayName: "Lemmy"
       externalHost: "https://lemmy.gateway.services.apocrathia.com"
@@ -68,3 +69,7 @@ spec:
 
     httproute:
       enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

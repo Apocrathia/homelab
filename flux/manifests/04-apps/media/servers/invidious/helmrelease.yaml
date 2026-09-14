@@ -223,6 +223,7 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Media"
       displayName: "Invidious"
       externalHost: "https://invidious.gateway.services.apocrathia.com"
@@ -235,3 +236,7 @@ spec:
     gatus:
       enabled: true
       path: /api/v1/stats
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

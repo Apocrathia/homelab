@@ -73,6 +73,7 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Productivity"
       displayName: "Kiwix"
       externalHost: "https://wiki.gateway.services.apocrathia.com"
@@ -80,3 +81,7 @@ spec:
 
     httproute:
       enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

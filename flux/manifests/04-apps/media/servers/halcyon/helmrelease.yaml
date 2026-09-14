@@ -134,6 +134,7 @@ spec:
     authentik:
       enabled: true
       mode: "proxy"
+      shared: true
       displayName: "Halcyon Video"
       externalHost: "https://halcyon.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/halcyon/icon.svg"
@@ -141,3 +142,7 @@ spec:
 
     httproute:
       enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
