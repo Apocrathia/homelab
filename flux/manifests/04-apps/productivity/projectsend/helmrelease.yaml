@@ -63,6 +63,25 @@ spec:
           # download log record real client IPs.
           - name: TRUSTED_PROXIES
             value: "10.42.0.0/16"
+      # The entrypoint chowns storage/ recursively (set -e); CIFS cannot
+      # chown, so the SMB share cannot be storage/ itself. Mount it at
+      # /uploads and symlink the Laravel files-disk root onto it — busybox
+      # chown -R does not traverse symlinks, so the share is never chowned,
+      # while Laravel (storage/app/files) and nginx (X-Accel alias) both
+      # resolve through the symlink to the share.
+      initContainers:
+        - name: link-uploads
+          image: projectsend/projectsend:2@sha256:3e3972b8cd37702bedfa1d6f6804dfe4ae78c61dfe290a9fc06b29691dc057f8
+          command:
+            - sh
+            - -c
+            - mkdir -p /var/www/html/storage/app && ln -sfn /uploads /var/www/html/storage/app/files
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage
+            - name: uploads
+              mountPath: /uploads
+
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
@@ -73,19 +92,26 @@ spec:
         limits:
           cpu: 1000m
           memory: 1Gi
-      # Image runs nginx + php-fpm + worker + scheduler as uid 1000
-      # (www-data) under supervisord; needs writable /run and /var/lib/nginx
+      # Upstream-supported runtime: supervisord as root (pidfile in /run,
+      # nginx binds :80, workers su-exec down to www-data=1000). Minimal
+      # capability set for exactly those needs.
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 0
+        runAsGroup: 0
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-        runAsNonRoot: true
+        runAsNonRoot: false
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: false
         capabilities:
           drop:
             - ALL
+          add:
+            - CHOWN # entrypoint chowns storage to www-data
+            - FOWNER
+            - SETUID # su-exec drops to www-data
+            - SETGID
+            - NET_BIND_SERVICE # nginx binds :80
       service:
         type: ClusterIP
         port: 80
@@ -121,16 +147,25 @@ spec:
       volumeMounts:
         - name: storage
           mountPath: /var/www/html/storage
+        - name: uploads
+          mountPath: /uploads
 
     storage:
+      # storage/ (framework cache, .env + APP_KEY) on local disk: the
+      # entrypoint chown would fail on CIFS. Uploads live on the share via
+      # the /uploads symlink.
       longhorn:
-        enabled: false
+        enabled: true
+        numberOfReplicas: 2
+        volumes:
+          - name: storage
+            capacity: 1Gi
       smb:
         enabled: true
         volumes:
-          # Same Uploads share as copyparty; ProjectSend keeps its tree
-          # (storage/app/files, .env, APP_KEY) under its own subDir.
-          - name: storage
+          # Same Uploads share as copyparty; ProjectSend's uploads land under
+          # the ProjectSend subDir, isolated from copyparty's /u tree.
+          - name: uploads
             source: "//storage.services.apocrathia.com/Uploads"
             subDir: "ProjectSend"
             capacity: "500Gi"

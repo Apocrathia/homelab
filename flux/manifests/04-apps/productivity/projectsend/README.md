@@ -16,9 +16,11 @@ This deployment includes:
 - MySQL 8.4 (`projectsend-mysql`) — the database ProjectSend requires
   (pdo_mysql; no Postgres support upstream)
 - Valkey (`projectsend-valkey`) — sessions, cache, and job queue
-- Uploads land on the NAS: the app storage directory mounts
-  `//storage.services.apocrathia.com/Uploads` (subDir `ProjectSend`) — files
-  appear as plain files next to copyparty's tree
+- Uploads land on the NAS: the `Uploads` SMB share mounts at `/uploads` and
+  an init container symlinks `storage/app/files` → `/uploads` (the entrypoint
+  chowns `storage/` recursively, which fails on CIFS; the symlink keeps both
+  Laravel's disk root and nginx's X-Accel alias pointing at the share without
+  ever chowning it). Files land under `Uploads/ProjectSend/` on the NAS
 - MySQL 8.4 (`projectsend-mysql`, 10Gi Longhorn) and Valkey
   (`projectsend-valkey`, 1Gi Longhorn)
 - Authentik proxy provider in front, shared with friends over the tailnet;
@@ -55,5 +57,9 @@ kubectl -n projectsend get pods,pvc
 
 - Setup screen errors on database: check `projectsend-mysql` is Ready first
   (first boot is slow by design — the app waits for migrations).
+- The container runs as root with a minimal capability set (CHOWN, FOWNER,
+  SETUID, SETGID, NET_BIND_SERVICE): the image's supported mode — supervisord
+  writes `/run/supervisord.pid`, nginx binds :80, workers su-exec down to
+  www-data. Breaking those = patching the image, not this chart.
 - `/up` 200 but login loops: `TRUSTED_PROXIES` mismatch — verify the outpost
   still fronts the app.
