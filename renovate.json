@@ -45,6 +45,12 @@
       "platformAutomerge": true
     },
     {
+      "description": "MySQL stays on the 8.4 LTS lineage — 26.x needs the 9.x LTS stepping stone (lineage rule) and aborts on an 8.4 datadir",
+      "matchPackageNames": ["mysql"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Strict semver only — registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
