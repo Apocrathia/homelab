@@ -47,12 +47,20 @@
   when: not ansible_check_mode
 
 - name: Issue the certificate (DNS-01, Let's Encrypt)
+  # --dnssleep: the LAN resolver blocks cloudflare-dns.com (DoH, on adblock
+  # lists as a DNS-bypass domain), so acme.sh's public TXT propagation check
+  # can never connect from this host. A fixed sleep skips the check; the CA
+  # queries Cloudflare's authoritative nameservers directly.
+  # --log: write ~/.acme.sh/acme.sh.log so failures are diagnosable on-host
+  # (the task itself is no_log).
   ansible.builtin.command:
     cmd: >-
       ./acme.sh --issue
       -d {{ acme_sh_domain }}
       --dns dns_{{ acme_sh_dns_provider }}
       --server {{ acme_sh_server }}
+      --dnssleep {{ acme_sh_dnssleep }}
+      --log
   args:
     chdir: /root/.acme.sh
   environment:
@@ -77,6 +85,7 @@
       --key-file {{ acme_sh_cert_dir }}/{{ acme_sh_domain }}.key
       --fullchain-file {{ acme_sh_cert_dir }}/{{ acme_sh_domain }}.pem
       --reloadcmd "{{ acme_sh_reloadcmd }}"
+      --log
   args:
     chdir: /root/.acme.sh
   environment:
