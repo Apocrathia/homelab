@@ -11,6 +11,7 @@ resources:
   - cryptpad
   - excalidraw
   - kiwix
+  - projectsend
   - rclone
   - searxng
   - silverbullet

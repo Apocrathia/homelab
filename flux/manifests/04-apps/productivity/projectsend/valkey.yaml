@@ -1,0 +1,90 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: projectsend-valkey
+  namespace: projectsend
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: projectsend-valkey
+      namespace: projectsend
+      # renovate: datasource=docker depName=valkey/valkey
+      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
+      args:
+        - valkey-server
+        - --maxmemory
+        - 256mb
+        - --maxmemory-policy
+        - noeviction
+      container:
+        name: valkey
+        port: 6379
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: valkey
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 384Mi
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - valkey-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    postgres:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    httproute:
+      enabled: false

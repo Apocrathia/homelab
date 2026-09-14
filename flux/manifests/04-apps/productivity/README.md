@@ -26,6 +26,8 @@ Offline Wikipedia and content library server with automated ZIM updates.
 
 Workflow automation platform for connecting services and APIs.
 
+### [ProjectSend](./projectsend/README.md)
+
 ### [rclone](./rclone/README.md)
 
 Cloud storage synchronization and management.
