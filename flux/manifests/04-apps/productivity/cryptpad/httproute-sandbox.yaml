@@ -1,0 +1,26 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: cryptpad-sandbox
+  namespace: cryptpad
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: https
+    # Sandbox origin serves the pad iframes; friends on the tailnet need it
+    # alongside the main hostname or pads render blank.
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
+  hostnames:
+    - "cryptpad-sandbox.gateway.services.apocrathia.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: cryptpad
+          port: 80

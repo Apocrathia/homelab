@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-cryptpad-cleanup
+  namespace: cryptpad
+  labels:
+    authentik_blueprint: "true"
+data:
+  cryptpad-cleanup.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    version: 1
+    metadata:
+      name: cryptpad-cleanup
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # The OIDC swap retired the forward-auth proxy; blueprints never
+      # garbage-collect, so removal is explicit state: absent entries.
+      # Deleting the outpost also removes its k8s objects (deployment + the
+      # ak-outpost-cryptpad-outpost HTTPRoute on the main hostname).
+      - model: authentik_providers_proxy.proxyprovider
+        state: absent
+        identifiers:
+          name: "cryptpad-proxy-provider"
+      - model: authentik_outposts.outpost
+        state: absent
+        identifiers:
+          name: "cryptpad-outpost"
