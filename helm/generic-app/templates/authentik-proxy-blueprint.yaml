@@ -49,7 +49,7 @@ data:
           name: "{{ .Values.authentik.displayName }}"
           slug: "{{ .Values.app.name }}"
           provider: !Find [authentik_providers_proxy.proxyprovider, [name, "{{ .Values.app.name }}-proxy-provider"]]
-          launch_url: "{{ .Values.authentik.ssoLaunchUrl | default .Values.authentik.externalHost }}"
+          meta_launch_url: "{{ .Values.authentik.ssoLaunchUrl | default .Values.authentik.externalHost }}"
           group: "{{ .Values.authentik.category | default "Applications" }}"
           open_in_new_tab: {{ if (hasKey .Values.authentik "openInNewTab") }}{{ .Values.authentik.openInNewTab }}{{ else }}true{{ end }}
           {{- if .Values.authentik.icon }}

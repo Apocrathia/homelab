@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.0.81 (Latest)
+
+- **Fix launch URL attr**: the Application entry in the proxy and OIDC
+  templates wrote `launch_url`, a read-only serializer field that
+  Authentik silently ignores on blueprint import. Tiles only worked
+  via the provider-URL fallback, which also meant `ssoLaunchUrl` from
+  0.0.80 had no effect. Both templates now write `meta_launch_url`
+  (the actual model field; bookmark mode already did). Visible
+  behavior is unchanged for apps that don't set `ssoLaunchUrl`.
+
 ## Version 0.0.80 (Latest)
 
 - **Authentik SSO launch URLs**: new optional `authentik.ssoLaunchUrl` value
