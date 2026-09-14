@@ -78,6 +78,7 @@
         exit 1
       fi
     - python "$CI_PROJECT_DIR/ansible/ci/fetch_op_ssh.py"
+    - python "$CI_PROJECT_DIR/ansible/ci/fetch_op_secrets.py"
     # community.general.onepassword shells out to `op`; in CI the lookup runs
     # in Connect mode (OP_CONNECT_HOST/TOKEN env from the ansible-secrets
     # token) — still needs the binary. venv bin is first in PATH and writable
@@ -114,6 +115,7 @@ ansible-check:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook --check --diff
       --become-password-file "$HOME/.ansible/become_password"
+      -e @"$HOME/.ansible/op_secrets.json"
       playbooks/site.yml
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $OP_CONNECT_TOKEN
@@ -128,6 +130,7 @@ ansible-apply:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook
       --become-password-file "$HOME/.ansible/become_password"
+      -e @"$HOME/.ansible/op_secrets.json"
       playbooks/site.yml
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $OP_CONNECT_TOKEN

@@ -1,9 +1,10 @@
 ---
-# Join parameters. authkey is an Ephemeral=False reusable key scoped to the
-# tag, stored in 1Password (vault Secrets, item "tailscale-ansible-authkey",
-# field "credential"). Generate in the Tailscale admin console:
-# Settings -> Keys -> Generate auth key (Reusable, no expiry override).
-tailscale_authkey_vault_item: "vaults/Secrets/items/tailscale-ansible-authkey"
+# Join auth key: reusable, pre-authorized, tag-scoped key generated in the
+# Tailscale admin console and stored in 1Password (vault Secrets, item
+# "tailscale-ansible-authkey", field "credential" — API Credential item).
+# Never a default: CI injects it via ci/fetch_op_secrets.py (-e
+# @op_secrets.json); local runs pass -e tailscale_authkey=...
+tailscale_authkey: ""
 
 # Device tag applied at join time. tagOwners for the tag must already exist
 # in terraform/deployments/tailscale/tailnet/policy.hujson.

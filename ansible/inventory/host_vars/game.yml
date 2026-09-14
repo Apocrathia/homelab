@@ -22,7 +22,7 @@ nginx_site_extra_headers: "proxy_set_header        X-AMP-Scheme $scheme;"
 acme_sh_domain: game.apocrathia.com
 acme_sh_account_email: admin@apocrathia.com
 # Token must have Zone:DNS:Edit on apocrathia.com (same item cert-manager's
-# issuer uses); read from 1Password at task time — never written to git.
+# issuer uses). Delivered by CI from 1Password Connect — never in git.
 acme_sh_reloadcmd: "service nginx reload"
 
 # tailscale role
