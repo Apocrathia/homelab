@@ -1,0 +1,31 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: crossplane
+  namespace: crossplane-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: crossplane
+      # renovate: datasource=helm registryUrl=https://charts.crossplane.io/stable depName=crossplane
+      version: "2.4.0"
+      sourceRef:
+        kind: HelmRepository
+        name: crossplane
+        namespace: flux-system
+      interval: 30m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # Core control plane only: no providers, functions, or configurations are
+  # installed. CRDs are applied by the chart's init container (`crossplane
+  # core init`), not by Helm, so provider/extension CRs land before any
+  # dependent objects reference them.
+  values: {}
