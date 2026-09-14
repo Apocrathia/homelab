@@ -1,6 +1,13 @@
 ---
 # Retention per source path. The shared repo's GLOBAL policy is owned
 # elsewhere in the lab — hosts never touch --global.
+- name: Skip policy on unreachable backend (configured host)
+  ansible.builtin.debug:
+    msg: repository unreachable — skipping policy update this run
+  when:
+    - kopia_repo_config_file.stat.exists
+    - kopia_repo_status.rc != 0
+
 - name: Set retention policy on backup paths
   ansible.builtin.command:
     cmd: >-
@@ -8,7 +15,11 @@
       --keep-daily {{ kopia_keep_daily }}
       --keep-weekly {{ kopia_keep_weekly }}
       --keep-monthly {{ kopia_keep_monthly }}
-  when: not ansible_check_mode
+  # Skip on a configured host whose backend is unreachable this run —
+  # policy set opens the repo and would abort the play. Next apply retries.
+  when:
+    - not ansible_check_mode
+    - kopia_repo_status.rc == 0 or not kopia_repo_config_file.stat.exists
   register: kopia_policy_paths
   changed_when: "'updated' in kopia_policy_paths.stdout or 'created' in kopia_policy_paths.stdout"
   loop: "{{ kopia_backup_paths }}"
