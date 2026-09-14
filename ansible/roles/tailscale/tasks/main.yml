@@ -34,17 +34,19 @@
     components: [main]
     signed_by: /usr/share/keyrings/tailscale-archive-keyring.gpg
     state: present
-  notify: Update apt cache
 
 # Check mode: deb822_repository reports changed without writing the repo
 # file, so the tailscale package is not yet visible to apt — skip rather
 # than fail ("No package matching 'tailscale' is available").
+# No cache_valid_time: earlier apt tasks in this play refresh the cache,
+# which would make update_cache skip here even when the repo above just
+# changed — the package list would never be fetched (relay diagnosis
+# from the kopia session, confirmed by the 18:39 apply).
 - name: Install tailscale
   ansible.builtin.apt:
     name: tailscale
     state: present
     update_cache: true
-    cache_valid_time: 3600
   when: not ansible_check_mode
 
 # Check mode: the apt task above does not install tailscale, so the service
