@@ -6,3 +6,6 @@
 
 - name: Site — kopia backups
   ansible.builtin.import_playbook: kopia.yml
+
+- name: Site — game host
+  ansible.builtin.import_playbook: game.yml

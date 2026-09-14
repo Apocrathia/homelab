@@ -1,0 +1,18 @@
+---
+# Join parameters. authkey is an Ephemeral=False reusable key scoped to the
+# tag, stored in 1Password (vault Secrets, item "tailscale-ansible-authkey",
+# field "credential"). Generate in the Tailscale admin console:
+# Settings -> Keys -> Generate auth key (Reusable, no expiry override).
+tailscale_authkey_vault_item: "vaults/Secrets/items/tailscale-ansible-authkey"
+
+# Device tag applied at join time. tagOwners for the tag must already exist
+# in terraform/deployments/tailscale/tailnet/policy.hujson.
+tailscale_tags: []
+
+# No subnet routes, ever (A-prime architecture decision: zero LAN routes).
+tailscale_advertise_routes: []
+tailscale_advertise_exit_node: false
+
+# Accept DNS from the tailnet (MagicDNS + split DNS) so this host resolves
+# gateway.services.apocrathia.com names without the LAN resolver.
+tailscale_accept_dns: true

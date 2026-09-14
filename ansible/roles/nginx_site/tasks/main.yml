@@ -1,0 +1,30 @@
+---
+- name: Fail loudly when no domain is set
+  ansible.builtin.fail:
+    msg: "nginx_site_domain must be set on {{ inventory_hostname }} (host_vars)"
+  when: nginx_site_domain | length == 0
+
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install site vhost
+  ansible.builtin.template:
+    src: site.conf.j2
+    dest: /etc/nginx/conf.d/{{ nginx_site_domain }}.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+# Check mode: the apt task above does not install nginx, so the service
+# does not exist yet on a fresh host — skip rather than fail.
+- name: Ensure nginx is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
+  when: not ansible_check_mode

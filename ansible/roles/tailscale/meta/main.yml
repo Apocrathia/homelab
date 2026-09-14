@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: tailscale
+  author: apocrathia
+  description: tailscaled from the upstream apt repo, joined to taila8ef8c.ts.net with a static tag. No subnet routes.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+dependencies: []

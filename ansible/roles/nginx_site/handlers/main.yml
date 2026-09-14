@@ -1,0 +1,8 @@
+---
+- name: Reload nginx
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  # Handlers run in check mode when their task reported changed; the service
+  # does not exist on a not-yet-provisioned host.
+  when: not ansible_check_mode

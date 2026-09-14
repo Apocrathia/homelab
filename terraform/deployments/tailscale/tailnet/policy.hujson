@@ -13,9 +13,12 @@
 	// Define the tags which can be applied to devices and by which users.
 	// tagOwners controls who can assign each tag. The k8s operator OAuth client
 	// must be owner of tag:k8s-operator; the operator assigns tag:k8s to proxy pods.
+	// tag:game is owned by admins because the game host's auth key is an
+	// admin-generated reusable key (ansible roles/tailscale joins with it).
 	"tagOwners": {
 		"tag:k8s-operator": ["autogroup:admin"],
 		"tag:k8s":          ["tag:k8s-operator"],
+		"tag:game":         ["autogroup:admin"],
 	},
 
 	// autoApprovers lets tagged devices approve certain requests without manual
@@ -62,6 +65,21 @@
 			"src": ["autogroup:admin"],
 			"dst": ["tag:k8s"],
 			"ip":  ["tcp:443", "tcp:53", "udp:53"],
+		},
+
+		// Game host (game.apocrathia.com, bare node, tag:game). The AMP web
+		// UI is 443-only behind nginx + Authentik OIDC: admins only. Game
+		// instance ports are everyone (friends connect to play). Port list
+		// is deliberately explicit — extend per game instance, never "*".
+		{
+			"src": ["autogroup:admin"],
+			"dst": ["tag:game"],
+			"ip":  ["tcp:443"],
+		},
+		{
+			"src": ["autogroup:member"],
+			"dst": ["tag:game"],
+			"ip":  ["tcp:25565"],
 		},
 
 		// Exit nodes: only devices with autogroup:internet access can use an
@@ -130,8 +148,15 @@
 		// split-DNS resolver over DNS; everything else stays denied.
 		{
 			"src":    "ian@apocrathia.com",
-			"accept": ["tag:k8s:443", "tag:k8s:53"],
+			"accept": ["tag:k8s:443", "tag:k8s:53", "tag:game:443", "tag:game:25565"],
 			"deny":   ["tag:k8s:22", "tag:k8s-operator:443"],
+		},
+		// Game host: web UI is admins-only; friends (not asserted here —
+		// autogroup:member is not a valid test src) structurally lack a
+		// tag:game:443 grant and keep only tcp:25565.
+		{
+			"src":    "ian@apocrathia.com",
+			"deny":   ["tag:game:22"],
 		},
 		// autogroup:internet is rejected as a test dst, so exit-node access
 		// cannot be asserted here (apply failed with "test(s) failed (400)"
