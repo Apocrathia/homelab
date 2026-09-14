@@ -18,6 +18,10 @@ module.exports = {
   // Installation method
   installMethod: "docker",
 
+  // Cap HTTP workers (default: one per CPU = 16 on these nodes; 16 x 2026.5.1
+  // workers OOM-kills the 1Gi pod). Upstream example value.
+  maxWorkers: 4,
+
   // Logging
   logToStdout: true,
   logLevel: "info",
