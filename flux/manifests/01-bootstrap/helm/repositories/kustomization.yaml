@@ -43,3 +43,4 @@ resources:
   - policy-reporter.yaml
   - rknightion.yaml
   - crossplane.yaml
+  - crossview.yaml
