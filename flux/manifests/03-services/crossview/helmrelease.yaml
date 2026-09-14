@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: crossview
+  namespace: crossview
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: crossview
+      # renovate: datasource=helm registryUrl=https://crossplane-contrib.github.io/crossview/ depName=crossview
+      version: "4.6.0"
+      sourceRef:
+        kind: HelmRepository
+        name: crossview
+        namespace: flux-system
+      interval: 30m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  valuesFrom:
+    # OIDC client ID, copied from Authentik into 1Password after the
+    # blueprint creates the provider (same flow as renovate-operator).
+    - kind: Secret
+      name: crossview-secrets
+      valuesKey: oidc-client-id
+      targetPath: config.sso.oidc.clientId
+  values:
+    image:
+      repository: ghcr.io/crossplane-contrib/crossview
+      # renovate: datasource=docker depName=ghcr.io/crossplane-contrib/crossview
+      tag: "v4.6.0"
+      pullPolicy: IfNotPresent
+    # Gateway API only — chart-rendered HTTPRoute on the main gateway
+    gatewayAPI:
+      enabled: true
+      httpRoute:
+        parentRefs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
+        hostnames:
+          - crossview.gateway.services.apocrathia.com
+    config:
+      # Public origin used as the post-SSO redirect destination
+      cors:
+        origin: https://crossview.gateway.services.apocrathia.com
+        credentials: true
+      session:
+        cookie:
+          secure: true
+          httpOnly: true
+      sso:
+        oidc:
+          enabled: true
+          issuer: "https://auth.gateway.services.apocrathia.com/application/o/crossview/"
+          # clientId arrives via valuesFrom from crossview-secrets
+          callbackURL: "https://crossview.gateway.services.apocrathia.com/api/auth/oidc/callback"
+          scope: "openid profile email"
+          usernameAttribute: preferred_username
+          emailAttribute: email
+    database:
+      image:
+        repository: postgres
+        # renovate: datasource=docker depName=postgres
+        tag: "17"
+      persistence:
+        storageClass: longhorn
+    # All credentials from the 1Password-backed secret — no plaintext values
+    secrets:
+      adminUsername:
+        secretKeyRef:
+          name: crossview-secrets
+          key: admin-username
+      OIDCClientSecret:
+        secretKeyRef:
+          name: crossview-secrets
+          key: oidc-client-secret
+      adminPassword:
+        secretKeyRef:
+          name: crossview-secrets
+          key: admin-password
+      sessionSecret:
+        secretKeyRef:
+          name: crossview-secrets
+          key: session-secret
+      dbPassword:
+        secretKeyRef:
+          name: crossview-secrets
+          key: db-password
