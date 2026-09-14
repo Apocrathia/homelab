@@ -41,7 +41,7 @@ entries:
       name: "Policy Reporter"
       slug: "policy-reporter"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "policy-reporter-oidc-provider"]]
-      launch_url: "https://kyverno.gateway.services.apocrathia.com"
+      meta_launch_url: "https://kyverno.gateway.services.apocrathia.com"
       group: "Platform"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/kyverno/policy-reporter/icon.svg"

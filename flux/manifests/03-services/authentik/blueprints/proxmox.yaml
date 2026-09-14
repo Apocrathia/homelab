@@ -16,7 +16,7 @@ entries:
       name: "Proxmox VE"
       slug: "proxmox"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "proxmox-oidc-provider"]]
-      launch_url: "https://node-01.management.apocrathia.com:8006"
+      meta_launch_url: "https://node-01.management.apocrathia.com:8006"
       group: "Infrastructure"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/proxmox.svg"

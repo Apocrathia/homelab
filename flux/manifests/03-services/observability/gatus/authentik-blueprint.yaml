@@ -32,7 +32,7 @@ entries:
       slug: "gatus"
       group: "Platform"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "gatus-proxy-provider"]]
-      launch_url: "https://gatus.gateway.services.apocrathia.com"
+      meta_launch_url: "https://gatus.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/observability/gatus/icon.svg"
       meta_description: "In-cluster uptime monitoring"

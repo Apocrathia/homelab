@@ -32,7 +32,7 @@ entries:
       slug: "hubble"
       group: "Infrastructure"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "hubble-proxy-provider"]]
-      launch_url: "https://hubble.gateway.services.apocrathia.com"
+      meta_launch_url: "https://hubble.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/02-infrastructure/cilium/icon.svg"
       meta_description: "Network observability platform for cloud native environments"

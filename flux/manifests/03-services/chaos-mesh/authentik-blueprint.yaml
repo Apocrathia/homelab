@@ -32,7 +32,7 @@ entries:
       slug: "chaos-mesh-dashboard"
       group: "Platform"
       provider: !Find [authentik_providers_proxy.proxyprovider, [name, "chaos-mesh-dashboard-proxy-provider"]]
-      launch_url: "https://chaos.gateway.services.apocrathia.com"
+      meta_launch_url: "https://chaos.gateway.services.apocrathia.com"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/chaos-mesh/icon.svg"
       meta_description: "Chaos engineering platform for Kubernetes"
