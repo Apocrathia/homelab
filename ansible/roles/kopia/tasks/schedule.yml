@@ -43,4 +43,7 @@
     name: kopia-snapshot.timer
     enabled: true
     state: started
-    daemon_reload: true
+    daemon_reload: "{{ not ansible_check_mode }}"
+  # In check mode the unit files are only reported, never written — the
+  # service cannot be found yet, so skip the systemd call entirely.
+  when: not ansible_check_mode
