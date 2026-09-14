@@ -29,5 +29,7 @@ acme_sh_git_version: master
 acme_sh_cert_dir: /etc/ssl/ansible
 
 # Reload command baked into the renewal (acme.sh re-runs install-cert with
-# this on every renewal via its own cronjob)
-acme_sh_reloadcmd: "service nginx reload"
+# this on every renewal via its own cronjob). Guards on the nginx binary:
+# on a first run the cert lands BEFORE nginx_site installs nginx, and the
+# reload would fail the apply; renewals find nginx present and reload it.
+acme_sh_reloadcmd: "[ -x /usr/sbin/nginx ] && service nginx reload || true"

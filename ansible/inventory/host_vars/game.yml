@@ -23,7 +23,7 @@ acme_sh_domain: game.apocrathia.com
 acme_sh_account_email: admin@apocrathia.com
 # Token must have Zone:DNS:Edit on apocrathia.com (same item cert-manager's
 # issuer uses). Delivered by CI from 1Password Connect — never in git.
-acme_sh_reloadcmd: "service nginx reload"
+acme_sh_reloadcmd: "[ -x /usr/sbin/nginx ] && service nginx reload || true"
 
 # tailscale role
 tailscale_tags: ["tag:game"]
