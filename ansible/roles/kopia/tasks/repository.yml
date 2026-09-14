@@ -28,11 +28,3 @@
     - not ansible_check_mode
   changed_when: kopia_repo_connect.rc == 0
   no_log: true
-
-- name: Verify repository connection
-  ansible.builtin.command:
-    cmd: kopia repository status --json
-  register: kopia_repo_status2
-  changed_when: false
-  failed_when: kopia_repo_status2.rc != 0
-  check_mode: false
