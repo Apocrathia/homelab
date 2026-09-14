@@ -74,6 +74,22 @@ Authentik uses self-hosted authentication. The first user created on initial acc
 2. Create the first admin user account
 3. Configure applications and policies through the admin interface or blueprints
 
+## Backup
+
+PostgreSQL backups via CNPG barman to the RustFS `cnpg` bucket
+(`s3://cnpg/authentik`):
+
+- WAL archiving: continuous, zstd-compressed (point-in-time recovery window)
+- Base backups: nightly at 0500 UTC (`scheduled-backup.yaml`), gzip, immediate
+  checkpoint
+- Retention: 14 days (backups + WALs)
+- Credentials: 1Password item `cnpg-backups-secrets` (bucket-scoped S3 user;
+  see `docs/infrastructure/rustfs-bucket-user-creation.md`)
+
+The Longhorn volume is additionally covered by the kopiur volume-backup pilot
+once authentik opts in — barman provides PITR, kopia provides the disk-level
+copy.
+
 ## Troubleshooting
 
 ```bash
