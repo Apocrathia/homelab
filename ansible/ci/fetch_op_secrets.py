@@ -26,7 +26,9 @@ from pathlib import Path
 # var name -> (item title, field label)
 SECRETS: dict[str, tuple[str, str]] = {
     "tailscale_authkey": ("tailscale-ansible-authkey", "credential"),
-    "acme_sh_cf_token": ("cloudflare-api-token", "credential"),
+    # cloudflare-api-token is an older item: the token sits in a custom
+    # "api-token" field (the default "credential" field is empty).
+    "acme_sh_cf_token": ("cloudflare-api-token", "api-token"),
 }
 
 
@@ -60,7 +62,7 @@ def main() -> int:
         try:
             item = client.get_item_by_title(item_title, vault.id)
         except Exception:  # noqa: BLE001 — absent item is expected pre-setup
-            missing.append(f"{item_title} (var {var})")
+            missing.append(f"item {item_title!r} (var {var})")
             continue
         value = ""
         for field in item.fields or []:
@@ -70,7 +72,7 @@ def main() -> int:
         if value:
             out[var] = value
         else:
-            missing.append(f"{item_title}/{field_label} (var {var})")
+            missing.append(f"field {item_title}/{field_label} (var {var})")
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out))
