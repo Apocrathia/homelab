@@ -4,6 +4,19 @@
     msg: "acme_sh_domain must be set on {{ inventory_hostname }} (host_vars)"
   when: acme_sh_domain | length == 0
 
+- name: Fail loudly when the Cloudflare token is not provided
+  # CI provides it via -e @op_secrets.json (ci/fetch_op_secrets.py); local
+  # runs pass -e acme_sh_cf_token=... or a vars file. Skipped in check mode
+  # so wiring can be validated without secrets.
+  ansible.builtin.fail:
+    msg: >-
+      acme_sh_cf_token is empty on {{ inventory_hostname }} —
+      CI: is the cloudflare-api-token item readable via 1Password Connect?
+      Local: pass -e acme_sh_cf_token=...
+  when:
+    - not ansible_check_mode
+    - (acme_sh_cf_token | default('')) | length == 0
+
 - name: Install dependencies
   ansible.builtin.apt:
     name:
@@ -43,7 +56,7 @@
   args:
     chdir: /root/.acme.sh
   environment:
-    CF_Token: "{{ lookup('community.general.onepassword_read', acme_sh_cf_token_vault_item, vault='Secrets') }}"
+    CF_Token: "{{ acme_sh_cf_token }}"
   register: acme_sh_issue
   changed_when: "'Cert success' in acme_sh_issue.stdout"
   when: not ansible_check_mode
@@ -67,7 +80,7 @@
   args:
     chdir: /root/.acme.sh
   environment:
-    CF_Token: "{{ lookup('community.general.onepassword_read', acme_sh_cf_token_vault_item, vault='Secrets') }}"
+    CF_Token: "{{ acme_sh_cf_token }}"
   register: acme_sh_install_cert
   changed_when: >-
     'Reload' in acme_sh_install_cert.stdout

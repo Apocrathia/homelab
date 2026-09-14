@@ -65,13 +65,28 @@
       {{ ((tailscale_status.stdout | from_json).get('Self') or {}).get('Tags', [])
          if tailscale_status.rc == 0 else [] }}
 
+- name: Fail loudly when the auth key is not provided
+  # CI provides it via -e @op_secrets.json (ci/fetch_op_secrets.py) from the
+  # tailscale-ansible-authkey 1Password item; local runs pass
+  # -e tailscale_authkey=... Skipped in check mode so wiring can be validated
+  # without secrets.
+  ansible.builtin.fail:
+    msg: >-
+      tailscale_authkey is empty on {{ inventory_hostname }} —
+      CI: is the tailscale-ansible-authkey item present in vault Secrets
+      (see docs/plans/game-host-tailnet.md, operator steps)?
+      Local: pass -e tailscale_authkey=...
+  when:
+    - not ansible_check_mode
+    - (tailscale_authkey | default('')) | length == 0
+
 - name: Join the tailnet when not logged in
   # Mutating: skipped in --check (tailscale up would fail against a binary
   # the check run never installed).
   ansible.builtin.command:
     cmd: >-
       tailscale up
-      --authkey={{ lookup('community.general.onepassword_read', tailscale_authkey_vault_item, vault='Secrets') }}
+      --authkey={{ tailscale_authkey }}
       --advertise-tags={{ tailscale_tags | join(',') }}
       --hostname={{ inventory_hostname_short }}
       --accept-dns={{ 'true' if tailscale_accept_dns else 'false' }}

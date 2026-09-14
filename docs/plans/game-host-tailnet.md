@@ -75,12 +75,18 @@ tailnet split-DNS work:
 
 ## Operator-led steps (not GitOps)
 
-- Generate the tag-scoped auth key in the Tailscale console; store in
-  1Password item `tailscale-ansible-authkey`. Blast radius: any holder of
-  the key joins as `tag:game` — give it an expiry (reissue when the next
-  host onboards) and note the revoke procedure in the 1Password item
-  (console: Settings -> Keys -> revoke). The LAN was already the trust
-  boundary for these hosts, so this is tightening, not new exposure.
+- Generate the tag-scoped auth key in the Tailscale console
+  (Settings -> Keys -> Generate auth key): **Reusable**, **Pre-authorized**
+  (no per-device approval click), **Expiration** set (e.g. 90d; reissue when
+  the next host onboards). Store it as a 1Password API Credential item:
+  vault `Secrets`, title `tailscale-ansible-authkey`, token in the default
+  `credential` field. CI picks it up via `ansible/ci/fetch_op_secrets.py`
+  (1Password Connect) and passes it as `-e @op_secrets.json`. Blast radius:
+  any holder of the key joins as `tag:game` — note the revoke procedure in
+  the 1Password item (console: Settings -> Keys -> revoke). No interactive
+  login on the host: the role passes `--authkey`, and pre-authorization
+  skips the console approval click. The LAN was already the trust boundary
+  for these hosts, so this is tightening, not new exposure.
 - Run the playbooks against `game`; read `tailscale ip -4` on the host; put
   the address into the CoreDNS hosts block and drop the placeholder comment.
 - AMP instance config (host file edit, ADS stopped):
