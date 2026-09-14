@@ -70,7 +70,7 @@ spec:
           - name: DISABLE_USERPASS_LOGIN
             value: "true"
           - name: OIDC_ALLOW_REGISTRATION
-            value: "false"
+            value: "true"
           - name: OIDC_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -286,6 +286,7 @@ spec:
     authentik:
       enabled: true
       mode: oidc
+      shared: true
       displayName: "RomM"
       externalHost: "https://romm.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/games/romm/icon.svg"
@@ -314,3 +315,7 @@ spec:
     httproute:
       enabled: true
       hostname: "romm.gateway.services.apocrathia.com"
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true

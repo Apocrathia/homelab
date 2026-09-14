@@ -100,7 +100,12 @@ spec:
 
     authentik:
       enabled: true
+      shared: true
       category: "Media"
       displayName: "Seerr"
       externalHost: "https://seerr.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/seerr/icon.svg"
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
