@@ -16,11 +16,23 @@ spec:
         name: homelab
         namespace: flux-system
       interval: 5m
+  # OIDC client credentials (Secret cryptpad-secrets, synced by the
+  # OnePasswordItem in this kustomization) feed the Authentik provider
+  # blueprint so the app and IdP share one credential source.
+  valuesFrom:
+    - kind: Secret
+      name: cryptpad-secrets
+      valuesKey: oidc-client-id
+      targetPath: authentik.oidc.clientId
+    - kind: Secret
+      name: cryptpad-secrets
+      valuesKey: oidc-client-secret
+      targetPath: authentik.oidc.clientSecret
   values:
     app:
       name: cryptpad
-      # renovate: datasource=docker depName=cryptpad/cryptpad
-      image: cryptpad/cryptpad:version-2025.9.0@sha256:353d98ac893158b699dcf345b6c8271dea9200d1015a9d367441625c046486e4
+      # renovate: datasource=docker depName=cryptpad/cryptpad versioning=regex:^version-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$
+      image: cryptpad/cryptpad:version-2026.5.1@sha256:1f89dcdd28c1375f675e47b1d0cf07a51f3e9a07a79dc93c8cddb3295b98a34d
       container:
         name: cryptpad
         port: 3000
@@ -31,9 +43,47 @@ spec:
         env:
           - name: CPAD_CONF
             value: "/cryptpad/config/config.js"
+          # SSO plugin reads these at require time (config/sso.js)
+          - name: OIDC_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: cryptpad-secrets
+                key: oidc-client-id
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: cryptpad-secrets
+                key: oidc-client-secret
       replicas: 1
       podAntiAffinity:
         enabled: false
+      # Official SSO plugin (github.com/cryptpad/sso) — version must pair with
+      # the CryptPad image tag (0.6.0 <-> 2026.5.1); fetched into an emptyDir
+      # the entrypoint's npm build picks up on every start.
+      initContainers:
+        - name: install-sso-plugin
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+          image: public.ecr.aws/docker/library/alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              # renovate: datasource=github-releases depName=cryptpad/sso
+              SSO_PLUGIN_VERSION="0.6.0"
+              wget -qO- "https://codeload.github.com/cryptpad/sso/tar.gz/refs/tags/${SSO_PLUGIN_VERSION}" \
+                | tar xz -C /plugins --strip-components=1
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: sso-plugin
+              mountPath: /plugins
       # CryptPad container runs as user/group 4001
       securityContext:
         runAsUser: 4001
@@ -94,6 +144,13 @@ spec:
             mountPath: /cryptpad/config/config.js
             subPath: config.js
             configMapName: cryptpad-config
+          - name: sso-config
+            mountPath: /cryptpad/config/sso.js
+            subPath: sso.js
+            configMapName: cryptpad-sso-config
+        emptyDir:
+          - name: sso-plugin
+            mountPath: /cryptpad/lib/plugins/sso
       volumeMounts:
         - name: data
           mountPath: /data
@@ -110,18 +167,33 @@ spec:
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
 
+    # Secret sync happens via the plain OnePasswordItem in this kustomization
+    # (must exist before the HelmRelease valuesFrom above can resolve).
     secrets:
       enabled: false
 
-    # Authentik proxy for main domain
+    # Native OIDC via the SSO plugin; Authentik provider + app come from the
+    # chart blueprint, access from the admins + users group bindings.
     authentik:
       enabled: true
-      category: "Productivity"
+      mode: "oidc"
+      shared: true
       displayName: "CryptPad"
       externalHost: "https://cryptpad.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/cryptpad/icon.svg"
+      category: "Productivity"
+      oidc:
+        redirectUris:
+          # Hard-coded by the plugin: httpUnsafeOrigin + /ssoauth
+          - url: "https://cryptpad.gateway.services.apocrathia.com/ssoauth"
+            matchingMode: "strict"
 
-    # HTTPRoute for sandbox domain (no auth required)
+    # Main domain route (sandbox gets its own hand-written route for the
+    # second hostname; the chart template takes exactly one).
     httproute:
       enabled: true
-      hostname: cryptpad-sandbox.gateway.services.apocrathia.com
+      hostname: cryptpad.gateway.services.apocrathia.com
+
+    # Friends tier: adds the tailnet-gateway parentRef to the chart route.
+    tailnet:
+      enabled: true

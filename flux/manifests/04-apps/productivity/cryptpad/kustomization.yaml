@@ -7,6 +7,9 @@ metadata:
 
 resources:
   - namespace.yaml
+  - onepassworditem.yaml
+  - httproute-sandbox.yaml
+  - authentik-blueprint-cleanup.yaml
   - helmrelease.yaml
 
 configMapGenerator:
@@ -14,5 +17,11 @@ configMapGenerator:
     namespace: cryptpad
     files:
       - config.js
+    options:
+      disableNameSuffixHash: true
+  - name: cryptpad-sso-config
+    namespace: cryptpad
+    files:
+      - sso.js
     options:
       disableNameSuffixHash: true
