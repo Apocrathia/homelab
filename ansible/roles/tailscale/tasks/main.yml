@@ -8,11 +8,22 @@
     update_cache: true
     cache_valid_time: 3600
 
-- name: Add Tailscale upstream GPG key
+- name: Download Tailscale upstream GPG key (armored)
   ansible.builtin.get_url:
     url: https://pkgs.tailscale.com/stable/debian/bookworm.asc
-    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    dest: /tmp/tailscale-archive-keyring.asc
     mode: "0644"
+
+- name: Dearmor Tailscale GPG key into the keyring
+  # deb822 Signed-By needs a binary (dearmored) keyring; saving the .asc
+  # directly leaves apt unable to verify the repo signature
+  # (NO_PUBKEY 458CA832957F5868). Runs every time: cheap, self-heals a
+  # corrupt keyring (like the one the armored download left behind), and
+  # picks up key rotations with the repo definition.
+  ansible.builtin.command:
+    cmd: gpg --dearmor --yes --output /usr/share/keyrings/tailscale-archive-keyring.gpg /tmp/tailscale-archive-keyring.asc
+  register: tailscale_dearmor
+  changed_when: tailscale_dearmor.rc == 0
 
 - name: Add Tailscale apt repo (deb822)
   ansible.builtin.deb822_repository:
