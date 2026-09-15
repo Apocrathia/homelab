@@ -49,6 +49,9 @@ entries:
       refresh_token_validity: "days=30"
       token_validity: "days=30"
       client_type: "confidential"
+      grant_types:
+        - "authorization_code"
+        - "refresh_token"
 
   # Application for AMP
   - model: authentik_core.application
@@ -59,7 +62,7 @@ entries:
       name: "AMP Server Management"
       slug: "amp"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "amp-oidc-provider"]]
-      launch_url: "https://game.apocrathia.com"
+      meta_launch_url: "https://game.apocrathia.com/"
       group: "Gaming"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/amp.png"

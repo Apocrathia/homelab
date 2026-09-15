@@ -34,10 +34,7 @@ data:
     game.apocrathia.com:53 {
         errors
         hosts {
-            # PLACEHOLDER: replace with the game host's tailnet IPv4
-            # (read on the host with `tailscale ip -4` after first join;
-            # stable across restarts — operator-persisted device state)
-            100.100.100.100 game.apocrathia.com
+            100.108.85.40 game.apocrathia.com
             ttl 60
         }
         cache 30
