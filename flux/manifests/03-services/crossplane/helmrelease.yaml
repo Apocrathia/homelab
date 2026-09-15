@@ -28,4 +28,11 @@ spec:
   # installed. CRDs are applied by the chart's init container (`crossplane
   # core init`), not by Helm, so provider/extension CRs land before any
   # dependent objects reference them.
-  values: {}
+  #
+  # Image: the chart default registry xpkg.crossplane.io CNAMEs through
+  # gateway.scarf.sh (a download-analytics gateway the lab DNS blocklists),
+  # so pulls resolve to 0.0.0.0. Pull the same image from Upbound's own
+  # registry instead; the tag still tracks the chart appVersion.
+  values:
+    image:
+      repository: xpkg.upbound.io/crossplane/crossplane
