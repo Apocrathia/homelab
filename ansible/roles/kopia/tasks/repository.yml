@@ -10,6 +10,15 @@
   failed_when: false
   check_mode: false
 
+- name: Check whether kopia has a stored repository config
+  ansible.builtin.stat:
+    path: /root/.config/kopia/repository.config
+  register: kopia_repo_config_file
+  # Config existence is the source of truth for "this host was ever
+  # connected" — NOT the status probe, whose output is empty when the
+  # backend is unreachable (e.g. transient DNS failure), which would
+  # wrongly trigger a first-run connect.
+
 - name: Ensure /etc/kopia directory
   ansible.builtin.file:
     path: /etc/kopia
@@ -31,7 +40,7 @@
       KOPIA_PASSWORD={{ kopia_repo_password }}
   no_log: true
 
-- name: Connect to the shared repository
+- name: Connect to the shared repository (first run only — no config yet)
   ansible.builtin.command:
     cmd: >-
       kopia repository connect s3
@@ -45,7 +54,20 @@
     AWS_SECRET_ACCESS_KEY: "{{ kopia_s3_secret_key }}"
   register: kopia_repo_connect
   when:
-    - kopia_repo_status.rc != 0
+    - not kopia_repo_config_file.stat.exists
     - not ansible_check_mode
+  # First-run connect failure IS fatal (bad creds/endpoint on a new host).
+  # A configured host never reaches this task — transient backend/DNS
+  # trouble on it is surfaced by the probe, not by a doomed re-connect.
   changed_when: kopia_repo_connect.rc == 0
   no_log: true
+
+- name: Report unreachable backend on a configured host (non-fatal)
+  ansible.builtin.debug:
+    msg: >-
+      kopia repository status failed (likely backend/DNS unreachable) but a
+      repository config exists — leaving it in place; the next apply or the
+      snapshot timer retries. If this persists, check the endpoint.
+  when:
+    - kopia_repo_config_file.stat.exists
+    - kopia_repo_status.rc != 0
