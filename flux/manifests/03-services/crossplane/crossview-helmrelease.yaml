@@ -61,14 +61,13 @@ spec:
         username: crossview
         ssl:
           mode: disable
-      # Public origin used as the post-SSO redirect destination
-      cors:
-        origin: https://crossplane.gateway.services.apocrathia.com
-        credentials: true
-      session:
-        cookie:
-          secure: true
-          httpOnly: true
+      # Post-SSO-login redirect destination (chart reads it from
+      # config.server.cors.origin — the localhost:5173 default redirected
+      # users to a dead dev URL after Authentik login)
+      server:
+        cors:
+          origin: https://crossplane.gateway.services.apocrathia.com
+          credentials: true
       sso:
         oidc:
           enabled: true
