@@ -29,6 +29,52 @@ data:
         blueprints.goauthentik.io/instantiate: "true"
     context: {}
     entries:
+      # Bind flow. The LDAP provider's "Bind Flow" field is its
+      # authorization_flow (LDAPOutpostConfigSerializer.bind_flow_slug) and
+      # the outpost executes it on every bind. It must be an
+      # authentication-designation flow WITHOUT an MFA stage: the outpost's
+      # flow executor cannot answer interactive MFA challenges, and with
+      # mfa_support disabled it would submit the bind password as a TOTP
+      # code. Reuses the stock password and login stages.
+      - model: authentik_flows.flow
+        state: present
+        identifiers:
+          slug: "tak-ldap-bind"
+        attrs:
+          name: "TAK LDAP bind flow"
+          title: "TAK LDAP bind"
+          slug: "tak-ldap-bind"
+          designation: "authentication"
+
+      - model: authentik_stages_identification.identificationstage
+        state: present
+        identifiers:
+          name: "tak-ldap-bind-identification"
+        attrs:
+          name: "tak-ldap-bind-identification"
+          user_fields:
+            - "username"
+          case_insensitive_matching: true
+          password_stage: !Find [authentik_stages_password.passwordstage, [name, "default-authentication-password"]]
+
+      - model: authentik_flows.flowstagebinding
+        state: present
+        identifiers:
+          target: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
+          stage: !Find [authentik_stages_identification.identificationstage, [name, "tak-ldap-bind-identification"]]
+          order: 10
+        attrs:
+          order: 10
+
+      - model: authentik_flows.flowstagebinding
+        state: present
+        identifiers:
+          target: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
+          stage: !Find [authentik_stages_user_login.userloginstage, [name, "default-authentication-login"]]
+          order: 100
+        attrs:
+          order: 100
+
       # LDAP Provider for OpenTAKServer
       - model: authentik_providers_ldap.ldapprovider
         state: present
@@ -36,7 +82,7 @@ data:
           name: "tak-ldap-provider"
         attrs:
           name: "tak-ldap-provider"
-          authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+          authorization_flow: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
           base_dn: "OU=tak,DC=ldap,DC=apocrathia,DC=com"
           bind_mode: "direct"
