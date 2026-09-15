@@ -2,8 +2,8 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: ots-postgres
-  namespace: ots
+  name: tak-postgres
+  namespace: tak
 spec:
   # PostgreSQL 15 + PostGIS (OTS uses GeoAlchemy2 Geography POINT columns in
   # models/Point.py + CITrap.py - real PostGIS dependency). CNPG's official
@@ -46,15 +46,15 @@ spec:
     topologyKey: "kubernetes.io/hostname"
 
   # Bootstrap configuration. postInitApplicationSQL runs as superuser in
-  # the ots database during bootstrap - postgis is not a trusted extension,
-  # so the ots owner cannot CREATE EXTENSION itself. Only runs at cluster
+  # the tak database during bootstrap - postgis is not a trusted extension,
+  # so the tak owner cannot CREATE EXTENSION itself. Only runs at cluster
   # creation; re-created clusters re-run it.
   bootstrap:
     initdb:
-      database: ots
-      owner: ots
+      database: tak
+      owner: tak
       secret:
-        name: ots-secrets
+        name: tak-secrets
       postInitApplicationSQL:
         - CREATE EXTENSION IF NOT EXISTS postgis;
 

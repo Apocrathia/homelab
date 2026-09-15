@@ -81,7 +81,7 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: ots-8088
+    - name: tak-8088
       protocol: TCP
       port: 8088
       allowedRoutes:
@@ -89,8 +89,8 @@ spec:
           from: Selector
           selector:
             matchLabels:
-              kubernetes.io/metadata.name: ots
-    - name: ots-8089
+              kubernetes.io/metadata.name: tak
+    - name: tak-8089
       protocol: TCP
       port: 8089
       allowedRoutes:
@@ -98,8 +98,8 @@ spec:
           from: Selector
           selector:
             matchLabels:
-              kubernetes.io/metadata.name: ots
-    - name: ots-8443
+              kubernetes.io/metadata.name: tak
+    - name: tak-8443
       protocol: TCP
       port: 8443
       allowedRoutes:
@@ -107,8 +107,8 @@ spec:
           from: Selector
           selector:
             matchLabels:
-              kubernetes.io/metadata.name: ots
-    - name: ots-8446
+              kubernetes.io/metadata.name: tak
+    - name: tak-8446
       protocol: TCP
       port: 8446
       allowedRoutes:
@@ -116,7 +116,7 @@ spec:
           from: Selector
           selector:
             matchLabels:
-              kubernetes.io/metadata.name: ots
+              kubernetes.io/metadata.name: tak
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1

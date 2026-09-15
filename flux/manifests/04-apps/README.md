@@ -9,13 +9,12 @@ User-facing applications and workloads deployed in the cluster.
 Applications are organized by functional category:
 
 - **Artificial Intelligence**: LLM interfaces, agents, MCP servers
-- **Comms**: Field coordination and communications (TAK)
 - **Games**: Steam automation, ROM management
 - **Home**: Home automation utilities and monitoring
 - **Management**: Administrative tools and dashboards
 - **Media**: Servers, Arr stack, download clients
 - **Productivity**: Workflow automation, search, notes
-- **Social**: Community and chat services
+- **Social**: Community and chat services, field coordination
 
 ## Components
 
@@ -26,10 +25,6 @@ Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB stor
 ### [Artificial Intelligence](artificial-intelligence/README.md)
 
 LiteLLM, OpenWebUI, kagent, Hermes Agent, MCP servers, and related tooling.
-
-### [Comms](comms/README.md)
-
-OpenTAKServer for ATAK team coordination.
 
 ### [Games](games/README.md)
 
@@ -53,7 +48,7 @@ ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakap
 
 ### [Social](social/README.md)
 
-Hypermind, Lemmy, Mumble, and The Lounge.
+Hypermind, Lemmy, Mumble, TAK, and The Lounge.
 
 ## Deployment
 

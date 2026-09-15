@@ -2,8 +2,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: ots
-  namespace: ots
+  name: tak
+  namespace: tak
 spec:
   interval: 15m
   chart:
@@ -18,9 +18,9 @@ spec:
       interval: 5m
   values:
     app:
-      name: ots
-      namespace: ots
-      # Upstream images run as the image's ots user (uid 1000, gid 1024 -
+      name: tak
+      namespace: tak
+      # Upstream images run as the image's default user (uid 1000, gid 1024 -
       # verified in the image /etc/passwd); the pod securityContext below
       # matches. Entrypoints are correct in-image (verified via registry
       # configs): opentakserver, /app/venv/bin/cot_parser,
@@ -28,24 +28,24 @@ spec:
       # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver
       image: ghcr.io/brian7704/opentakserver:1.7.13@sha256:96190757acb799fa9d1e3be50469706610b64fbc9c5c1ed280e55fa6f0b06e4d
       container:
-        name: ots-api
+        name: tak-api
         # Loopback HTTP API port; the webui sidecar proxies to it
         port: 8081
         env:
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
-                name: ots-secrets
+                name: tak-secrets
                 key: secret-key
           - name: SECURITY_PASSWORD_SALT
             valueFrom:
               secretKeyRef:
-                name: ots-secrets
+                name: tak-secrets
                 key: security-password-salt
           - name: OTS_CA_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: ots-secrets
+                name: tak-secrets
                 key: ca-password
           - name: OTS_DATA_FOLDER
             value: "/app/ots"
@@ -66,7 +66,7 @@ spec:
           cpu: "1"
           memory: 1Gi
       securityContext:
-        # Image user: ots = uid 1000, gid 1024
+        # Image default user: uid 1000, gid 1024
         runAsUser: 1000
         runAsGroup: 1024
         fsGroup: 1024
@@ -103,20 +103,20 @@ spec:
               mountPath: /app/ots
           volumes:
             configMap:
-              - name: ots-config-template
+              - name: tak-config-template
                 mountPath: /template
-                configMapName: ots-config-template
+                configMapName: tak-config-template
                 readOnly: true
             secret:
-              - name: ots-db-password
+              - name: tak-db-password
                 mountPath: /run/secrets/db-password
                 subPath: password
-                secretName: ots-secrets
+                secretName: tak-secrets
                 readOnly: true
-              - name: ots-ldap-bind-password
+              - name: tak-ldap-bind-password
                 mountPath: /run/secrets/ldap-bind-password
                 subPath: ldap-bind-password
-                secretName: ots-secrets
+                secretName: tak-secrets
                 readOnly: true
           securityContext:
             runAsUser: 1000
@@ -133,17 +133,17 @@ spec:
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: secret-key
             - name: SECURITY_PASSWORD_SALT
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: security-password-salt
             - name: OTS_CA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: ca-password
             - name: OTS_DATA_FOLDER
               value: "/app/ots"
@@ -177,17 +177,17 @@ spec:
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: secret-key
             - name: SECURITY_PASSWORD_SALT
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: security-password-salt
             - name: OTS_CA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: ca-password
             - name: OTS_DATA_FOLDER
               value: "/app/ots"
@@ -221,17 +221,17 @@ spec:
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: secret-key
             - name: SECURITY_PASSWORD_SALT
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: security-password-salt
             - name: OTS_CA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ots-secrets
+                  name: tak-secrets
                   key: ca-password
             - name: OTS_DATA_FOLDER
               value: "/app/ots"
@@ -256,7 +256,7 @@ spec:
 
         # nginx + OpenTAKServer-UI SPA. Serves 80 (WebUI behind Authentik),
         # 8443 (mTLS Marti API) and 8446 (certificate enrollment TLS). The
-        # vhosts come from the ots-nginx-conf ConfigMap with literal values;
+        # vhosts come from the tak-nginx-conf ConfigMap with literal values;
         # the image's envsubst templates are inert upstream. Runs as root:
         # the nginx master binds :80 as root at start, then drops workers
         # to the nginx user. Reads the OTS CA read-only.
@@ -276,9 +276,9 @@ spec:
               readOnly: true
           volumes:
             configMap:
-              - name: ots-nginx-conf
+              - name: tak-nginx-conf
                 mountPath: /etc/nginx/conf.d
-                configMapName: ots-nginx-conf
+                configMapName: tak-nginx-conf
                 readOnly: true
           securityContext:
             runAsUser: 0
@@ -313,15 +313,15 @@ spec:
           image: rabbitmq:4.3.5@sha256:078107e036374f4d9bbeab8766799abe474bf252aedb4617ddd2edfa8e2c2c05
           volumes:
             configMap:
-              - name: ots-rabbitmq-plugins
+              - name: tak-rabbitmq-plugins
                 mountPath: /etc/rabbitmq/enabled_plugins
                 subPath: enabled_plugins
-                configMapName: ots-rabbitmq
+                configMapName: tak-rabbitmq
                 readOnly: true
-              - name: ots-rabbitmq-conf
+              - name: tak-rabbitmq-conf
                 mountPath: /etc/rabbitmq/conf.d/99-opentakserver.conf
                 subPath: 99-opentakserver.conf
-                configMapName: ots-rabbitmq
+                configMapName: tak-rabbitmq
                 readOnly: true
             emptyDir:
               - name: rabbitmq-data
@@ -401,7 +401,7 @@ spec:
       # WebUI is friends-tier: admins (order 10) + users (order 20) bindings.
       # Friends reach the app over the tailnet.
       shared: true
-      category: "Communications"
+      category: "Social"
       displayName: "OpenTAKServer"
       externalHost: "https://tak.gateway.services.apocrathia.com"
       # No icon asset exists upstream; empty overrides the chart's demo-app

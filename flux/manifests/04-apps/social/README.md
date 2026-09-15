@@ -18,6 +18,10 @@ Lemmy UI frontend for the lemmy.ml instance.
 
 Open-source VoIP server for low-latency voice chat.
 
+### [TAK](./tak/README.md)
+
+Open-source TAK server for ATAK: CoT streaming, mission sync, and certificate enrollment via Authentik LDAP.
+
 ### [The Lounge](./thelounge/README.md)
 
 Self-hosted web IRC client with persistent connections and message history.

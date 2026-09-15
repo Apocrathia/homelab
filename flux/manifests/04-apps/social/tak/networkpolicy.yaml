@@ -1,6 +1,6 @@
 ---
 # LDAP outpost ingress: ports 3389 (LDAP) and 6636 (LDAPS) are reachable
-# ONLY from ots-namespace pods (operator requirement). The outpost serves a
+# ONLY from tak-namespace pods (operator requirement). The outpost serves a
 # self-signed LDAPS certificate by default; OTS's ldap3 client does not
 # verify it, and the NetworkPolicy keeps both ports inside the namespace.
 # The host entity stays allowed for kubectl port-forward and node-local
@@ -8,15 +8,15 @@
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: ots-ldap-outpost-ingress
-  namespace: ots
+  name: tak-ldap-outpost-ingress
+  namespace: tak
   labels:
-    app.kubernetes.io/name: ots
+    app.kubernetes.io/name: tak
     app.kubernetes.io/component: network-policy
-    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/part-of: social
     app.kubernetes.io/managed-by: flux
   annotations:
-    description: "LDAP outpost 3389/6636 reachable only from ots pods"
+    description: "LDAP outpost 3389/6636 reachable only from tak pods"
 spec:
   endpointSelector:
     matchLabels:
@@ -24,7 +24,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: ots
+            io.kubernetes.pod.namespace: tak
       toPorts:
         - ports:
             - port: "3389"
@@ -54,19 +54,19 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: ots-app-ingress
-  namespace: ots
+  name: tak-app-ingress
+  namespace: tak
   labels:
-    app.kubernetes.io/name: ots
+    app.kubernetes.io/name: tak
     app.kubernetes.io/component: network-policy
-    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/part-of: social
     app.kubernetes.io/managed-by: flux
   annotations:
     description: "OTS app pod: WebUI via authentik outpost + gatus; CoT/Marti/enroll via gateway"
 spec:
   endpointSelector:
     matchLabels:
-      app: ots
+      app: tak
   ingress:
     # Authentik proxy outpost (WebUI reverse proxy)
     - fromEndpoints:
@@ -109,19 +109,19 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: ots-app-egress
-  namespace: ots
+  name: tak-app-egress
+  namespace: tak
   labels:
-    app.kubernetes.io/name: ots
+    app.kubernetes.io/name: tak
     app.kubernetes.io/component: network-policy
-    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/part-of: social
     app.kubernetes.io/managed-by: flux
   annotations:
     description: "OTS app pods: DNS, in-namespace postgres/LDAP, outbound HTTPS"
 spec:
   endpointSelector:
     matchLabels:
-      app: ots
+      app: tak
   egress:
     # DNS
     - toEndpoints:
@@ -137,7 +137,7 @@ spec:
     # In-namespace: CNPG postgres (5432) + LDAP outpost (3389/6636)
     - toEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: ots
+            io.kubernetes.pod.namespace: tak
       toPorts:
         - ports:
             - port: "5432"
@@ -162,12 +162,12 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: ots-ldap-outpost-egress
-  namespace: ots
+  name: tak-ldap-outpost-egress
+  namespace: tak
   labels:
-    app.kubernetes.io/name: ots
+    app.kubernetes.io/name: tak
     app.kubernetes.io/component: network-policy
-    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/part-of: social
     app.kubernetes.io/managed-by: flux
   annotations:
     description: "LDAP outpost: DNS + authentik (gateway Envoy + server pods)"
