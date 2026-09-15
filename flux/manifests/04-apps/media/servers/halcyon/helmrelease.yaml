@@ -20,7 +20,7 @@ spec:
     app:
       name: halcyon
       # renovate: datasource=docker depName=ghcr.io/halcyon-video/halcyon-video
-      image: ghcr.io/halcyon-video/halcyon-video:0.20.0@sha256:daac7055344acd3749b75eb0536090fd02055ca8191f309069951f34783e958a
+      image: ghcr.io/halcyon-video/halcyon-video:0.20.1@sha256:456faa7d5097dfeb13afc3ffbd68fea9be582b91e2ad0e739c0434ca1c416619
       container:
         name: halcyon
         port: 1420
