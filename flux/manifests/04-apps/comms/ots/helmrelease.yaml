@@ -1,0 +1,432 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ots
+  namespace: ots
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: ots
+      namespace: ots
+      # Upstream images run as the image's ots user (uid 1000, gid 1024 -
+      # verified in the image /etc/passwd); the pod securityContext below
+      # matches. Entrypoints are correct in-image (verified via registry
+      # configs): opentakserver, /app/venv/bin/cot_parser,
+      # /app/venv/bin/eud_handler --no-ssl / --ssl. No command overrides.
+      # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver
+      image: ghcr.io/brian7704/opentakserver:1.7.13@sha256:96190757acb799fa9d1e3be50469706610b64fbc9c5c1ed280e55fa6f0b06e4d
+      container:
+        name: ots-api
+        # Loopback HTTP API port; the webui sidecar proxies to it
+        port: 8081
+        env:
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ots-secrets
+                key: secret-key
+          - name: SECURITY_PASSWORD_SALT
+            valueFrom:
+              secretKeyRef:
+                name: ots-secrets
+                key: security-password-salt
+          - name: OTS_CA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ots-secrets
+                key: ca-password
+          - name: OTS_DATA_FOLDER
+            value: "/app/ots"
+          - name: OTS_LISTENER_ADDRESS
+            value: "127.0.0.1"
+          - name: OTS_RABBITMQ_SERVER_ADDRESS
+            value: "localhost"
+          - name: OTS_MEDIAMTX_ENABLE
+            value: "False"
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+      securityContext:
+        # Image user: ots = uid 1000, gid 1024
+        runAsUser: 1000
+        runAsGroup: 1024
+        fsGroup: 1024
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # OTS writes temp files (datapackage processing) outside /app/ots
+        readOnlyRootFilesystem: false
+      volumeMounts:
+        - name: data
+          mountPath: /app/ots
+
+      # Render /app/ots/config.yml (LDAP + DB URI) from the ConfigMap
+      # template + 1Password secrets on every boot - OTS reads LDAP only
+      # from config.yml (no env support upstream), and config.yml overrides
+      # env-derived defaults. The render-config init container seds the
+      # 1Password secret placeholders into the template.
+      initContainers:
+        - name: render-config
+          # Same image as the main container (no extra pull); entrypoint
+          # overridden to a sed render
+          # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver
+          image: ghcr.io/brian7704/opentakserver:1.7.13@sha256:96190757acb799fa9d1e3be50469706610b64fbc9c5c1ed280e55fa6f0b06e4d
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              sed \
+                -e "s|__OTS_DB_PASSWORD__|$(cat /run/secrets/db-password)|" \
+                -e "s|__OTS_LDAP_BIND_PASSWORD__|$(cat /run/secrets/ldap-bind-password)|" \
+                /template/config.yml > /app/ots/config.yml
+              echo "rendered /app/ots/config.yml ($(wc -c < /app/ots/config.yml) bytes)"
+          volumeMounts:
+            - name: data
+              mountPath: /app/ots
+          volumes:
+            configMap:
+              - name: ots-config-template
+                mountPath: /template
+                configMapName: ots-config-template
+                readOnly: true
+            secret:
+              - name: ots-db-password
+                mountPath: /run/secrets/db-password
+                subPath: password
+                secretName: ots-secrets
+                readOnly: true
+              - name: ots-ldap-bind-password
+                mountPath: /run/secrets/ldap-bind-password
+                subPath: ldap-bind-password
+                secretName: ots-secrets
+                readOnly: true
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+
+      sidecars:
+        # Consumes CoT messages from RabbitMQ and writes to the database
+        - name: cot-parser
+          # renovate: datasource=docker depName=ghcr.io/brian7704/ots_cot_parser
+          image: ghcr.io/brian7704/ots_cot_parser:1.7.13@sha256:28a2dde23f9ffa940d70e2a0b725d9f7b90b4dcffbef888efe63c08d7f9f6700
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: secret-key
+            - name: SECURITY_PASSWORD_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: security-password-salt
+            - name: OTS_CA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: ca-password
+            - name: OTS_DATA_FOLDER
+              value: "/app/ots"
+            - name: OTS_LISTENER_ADDRESS
+              value: "127.0.0.1"
+            - name: OTS_RABBITMQ_SERVER_ADDRESS
+              value: "localhost"
+            - name: OTS_MEDIAMTX_ENABLE
+              value: "False"
+            - name: TZ
+              value: "America/Denver"
+          volumeMounts:
+            - name: data
+              mountPath: /app/ots
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        # TCP CoT streaming (ATAK persistent connections, plain TCP)
+        - name: eud-handler
+          # renovate: datasource=docker depName=ghcr.io/brian7704/ots_eud_handler
+          image: ghcr.io/brian7704/ots_eud_handler:1.7.13@sha256:8019ca904d0dcee478149a61821165e88f04fcc376d0b1c03b4cc103f36803dc
+          ports:
+            - containerPort: 8088
+              name: cot
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: secret-key
+            - name: SECURITY_PASSWORD_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: security-password-salt
+            - name: OTS_CA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: ca-password
+            - name: OTS_DATA_FOLDER
+              value: "/app/ots"
+            - name: OTS_LISTENER_ADDRESS
+              value: "127.0.0.1"
+            - name: OTS_RABBITMQ_SERVER_ADDRESS
+              value: "localhost"
+            - name: OTS_MEDIAMTX_ENABLE
+              value: "False"
+            - name: TZ
+              value: "America/Denver"
+          volumeMounts:
+            - name: data
+              mountPath: /app/ots
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        # SSL CoT streaming (ATAK client certificates from the OTS CA)
+        - name: eud-handler-ssl
+          # renovate: datasource=docker depName=ghcr.io/brian7704/ots_eud_handler_ssl
+          image: ghcr.io/brian7704/ots_eud_handler_ssl:1.7.13@sha256:a78c6c6beb281d7e7f6725d88225e37fa92c2c4a0f48bd528edbc744e22269c0
+          ports:
+            - containerPort: 8089
+              name: ssl-cot
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: secret-key
+            - name: SECURITY_PASSWORD_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: security-password-salt
+            - name: OTS_CA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ots-secrets
+                  key: ca-password
+            - name: OTS_DATA_FOLDER
+              value: "/app/ots"
+            - name: OTS_LISTENER_ADDRESS
+              value: "127.0.0.1"
+            - name: OTS_RABBITMQ_SERVER_ADDRESS
+              value: "localhost"
+            - name: OTS_MEDIAMTX_ENABLE
+              value: "False"
+            - name: TZ
+              value: "America/Denver"
+          volumeMounts:
+            - name: data
+              mountPath: /app/ots
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+        # nginx + OpenTAKServer-UI SPA. Serves 80 (WebUI behind Authentik),
+        # 8443 (mTLS Marti API) and 8446 (certificate enrollment TLS). The
+        # vhosts come from the ots-nginx-conf ConfigMap with literal values;
+        # the image's envsubst templates are inert upstream. Runs as root:
+        # the nginx master binds :80 as root at start, then drops workers
+        # to the nginx user. Reads the OTS CA read-only.
+        - name: webui
+          # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver-ui
+          image: ghcr.io/brian7704/opentakserver-ui:master@sha256:da740d87f1d8a67821bd051591a037abcf7c714c0a15be6f578eef25cda7b81d
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 8443
+              name: marti
+            - containerPort: 8446
+              name: enroll
+          volumeMounts:
+            - name: data
+              mountPath: /app/ots
+              readOnly: true
+          volumes:
+            configMap:
+              - name: ots-nginx-conf
+                mountPath: /etc/nginx/conf.d
+                configMapName: ots-nginx-conf
+                readOnly: true
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE # nginx master binds :80
+                - SETUID # workers drop to the nginx user
+                - SETGID
+                - KILL # reload terminates old workers
+                - CHOWN # nginx state dirs
+                - FOWNER
+                - DAC_OVERRIDE
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+        # RabbitMQ for CoT message fan-out. guest/guest on loopback only
+        # (all containers share the pod netns) - upstream compose parity.
+        # Ephemeral by design (upstream mounts no data volume); queue loss
+        # on restart only, TTL 1 day upstream default.
+        - name: rabbitmq
+          # renovate: datasource=docker depName=rabbitmq
+          image: rabbitmq:4.3.5@sha256:078107e036374f4d9bbeab8766799abe474bf252aedb4617ddd2edfa8e2c2c05
+          volumes:
+            configMap:
+              - name: ots-rabbitmq-plugins
+                mountPath: /etc/rabbitmq/enabled_plugins
+                subPath: enabled_plugins
+                configMapName: ots-rabbitmq
+                readOnly: true
+              - name: ots-rabbitmq-conf
+                mountPath: /etc/rabbitmq/conf.d/99-opentakserver.conf
+                subPath: 99-opentakserver.conf
+                configMapName: ots-rabbitmq
+                readOnly: true
+            emptyDir:
+              - name: rabbitmq-data
+                mountPath: /var/lib/rabbitmq
+          securityContext:
+            # Official image: root entrypoint chowns /var/lib/rabbitmq and
+            # su-exec drops to the rabbitmq user
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - FOWNER
+                - DAC_OVERRIDE
+                - SETUID
+                - SETGID
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+
+      # CoT streaming, Marti API and enrollment - routed by the TCPRoutes
+      # in tcproutes.yaml (dual parentRefs the chart template cannot express)
+      extraServicePorts:
+        - name: cot
+          port: 8088
+          targetPort: 8088
+          protocol: TCP
+        - name: ssl-cot
+          port: 8089
+          targetPort: 8089
+          protocol: TCP
+        - name: marti
+          port: 8443
+          targetPort: 8443
+          protocol: TCP
+        - name: enroll
+          port: 8446
+          targetPort: 8446
+          protocol: TCP
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # OTS_DATA_FOLDER: CA + issued certs, config.yml, uploads,
+          # datapackages. Losing the CA breaks every enrolled client.
+          - name: data
+            capacity: 10Gi
+
+    backup:
+      enabled: true
+      volumes:
+        - data
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/opentakserver-secrets"
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      # WebUI is friends-tier: admins (order 10) + users (order 20) bindings.
+      # Friends reach the app over the tailnet.
+      shared: true
+      category: "Communications"
+      displayName: "OpenTAKServer"
+      externalHost: "https://tak.gateway.services.apocrathia.com"
+      # No icon asset exists upstream; empty overrides the chart's demo-app
+      # default icon
+      icon: ""
+      metaDescription: "TAK server for ATAK - CoT streaming, missions, datapackages"
+      metaPublisher: "OpenTAKServer"
+      # The SPA authenticates against the OTS API with its own session
+      # tokens (LDAP-backed), not Authentik cookies - exempt those paths.
+      skipPathRegex:
+        - "^/api"
+        - "^/socket.io"
+
+    # Tailnet sharing: adds the tailnet-gateway parentRef to the outpost's
+    # HTTPRoute (one hostname, both doors)
+    tailnet:
+      enabled: true
+
+    gatus:
+      enabled: true
+      path: /health
+
+    # The Authentik proxy outpost creates the WebUI HTTPRoute itself
+    httproute:
+      enabled: false
+
+    postgres:
+      enabled: false

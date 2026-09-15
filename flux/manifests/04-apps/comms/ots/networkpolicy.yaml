@@ -1,0 +1,207 @@
+---
+# LDAP outpost ingress: ports 3389 (LDAP) and 6636 (LDAPS) are reachable
+# ONLY from ots-namespace pods (operator requirement). The outpost serves a
+# self-signed LDAPS certificate by default; OTS's ldap3 client does not
+# verify it, and the NetworkPolicy keeps both ports inside the namespace.
+# The host entity stays allowed for kubectl port-forward and node-local
+# tooling (the outpost deployment ships no liveness/readiness probes).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ots-ldap-outpost-ingress
+  namespace: ots
+  labels:
+    app.kubernetes.io/name: ots
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "LDAP outpost 3389/6636 reachable only from ots pods"
+spec:
+  endpointSelector:
+    matchLabels:
+      goauthentik.io/outpost-type: ldap
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: ots
+      toPorts:
+        - ports:
+            - port: "3389"
+              protocol: TCP
+            - port: "6636"
+              protocol: TCP
+    # kubectl port-forward + node-local tooling (the outpost ships no
+    # liveness/readiness probes)
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "3389"
+              protocol: TCP
+            - port: "6636"
+              protocol: TCP
+            - port: "9300"
+              protocol: TCP
+---
+# App pod ingress: the WebUI (nginx :80) is reachable from the authentik
+# proxy outpost (dials the ClusterIP Service directly) and gatus (/health
+# probes). CoT streaming (8088/8089), the mTLS Marti API (8443) and
+# certificate enrollment (8446) arrive via the gateway Envoy (TCPRoutes
+# on main-gateway + tailnet-gateway). The host entity covers kubectl
+# port-forward and node-local tooling. No rule lists the loopback Flask
+# API (8081) or RabbitMQ (1883): both are pod-internal and stay denied.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ots-app-ingress
+  namespace: ots
+  labels:
+    app.kubernetes.io/name: ots
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "OTS app pod: WebUI via authentik outpost + gatus; CoT/Marti/enroll via gateway"
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ots
+  ingress:
+    # Authentik proxy outpost (WebUI reverse proxy)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    # gatus synthetic probes (/health)
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: gatus
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    # Gateway Envoy (TCPRoutes: CoT 8088/8089, Marti 8443, enrollment 8446)
+    # and node-local access (kubectl port-forward, tooling)
+    - fromEntities:
+        - ingress
+        - host
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "8088"
+              protocol: TCP
+            - port: "8089"
+              protocol: TCP
+            - port: "8443"
+              protocol: TCP
+            - port: "8446"
+              protocol: TCP
+---
+# App pod egress: DNS, in-namespace postgres + LDAP outpost, and outbound
+# HTTPS (OTS's built-in ADS-B poller and plugin repo are upstream defaults
+# that call out to api.airplanes.live / repo.opentakserver.io). Everything
+# else is denied.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ots-app-egress
+  namespace: ots
+  labels:
+    app.kubernetes.io/name: ots
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "OTS app pods: DNS, in-namespace postgres/LDAP, outbound HTTPS"
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ots
+  egress:
+    # DNS
+    - toEndpoints:
+        - matchLabels:
+            k8s:k8s-app: kube-dns
+            io.kubernetes.pod.namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # In-namespace: CNPG postgres (5432) + LDAP outpost (3389/6636)
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: ots
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "3389"
+              protocol: TCP
+            - port: "6636"
+              protocol: TCP
+    # Outbound HTTPS (ADS-B poller, plugin repo)
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+# LDAP outpost egress: the outpost pod talks to the authentik host
+# (https://auth.gateway.services.apocrathia.com). In-cluster traffic to the
+# gateway LB IP is socket-redirected to the node-local Envoy (ingress
+# entity), which preserves the outpost identity to the upstream authentik
+# server pods, so both paths are allowed.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: ots-ldap-outpost-egress
+  namespace: ots
+  labels:
+    app.kubernetes.io/name: ots
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: comms
+    app.kubernetes.io/managed-by: flux
+  annotations:
+    description: "LDAP outpost: DNS + authentik (gateway Envoy + server pods)"
+spec:
+  endpointSelector:
+    matchLabels:
+      goauthentik.io/outpost-type: ldap
+  egress:
+    # DNS
+    - toEndpoints:
+        - matchLabels:
+            k8s:k8s-app: kube-dns
+            io.kubernetes.pod.namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Gateway Envoy (auth.gateway.services.apocrathia.com resolves to the
+    # gateway LB IP)
+    - toEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # authentik server pods (Envoy preserves the client identity upstream)
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: authentik
+            app.kubernetes.io/component: server
+            io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP

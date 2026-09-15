@@ -9,6 +9,7 @@ User-facing applications and workloads deployed in the cluster.
 Applications are organized by functional category:
 
 - **Artificial Intelligence**: LLM interfaces, agents, MCP servers
+- **Comms**: Field coordination and communications (TAK)
 - **Games**: Steam automation, ROM management
 - **Home**: Home automation utilities and monitoring
 - **Management**: Administrative tools and dashboards
@@ -25,6 +26,10 @@ Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB stor
 ### [Artificial Intelligence](artificial-intelligence/README.md)
 
 LiteLLM, OpenWebUI, kagent, Hermes Agent, MCP servers, and related tooling.
+
+### [Comms](comms/README.md)
+
+OpenTAKServer for ATAK team coordination.
 
 ### [Games](games/README.md)
 

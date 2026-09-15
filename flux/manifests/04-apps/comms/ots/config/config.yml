@@ -1,0 +1,29 @@
+---
+# OpenTAKServer runtime config, rendered to /app/ots/config.yml by the
+# render-config init container on every boot (it seds the 1Password secret
+# placeholders below into this template).
+# OTS loads this file after its env-derived defaults, so these keys win.
+# LDAP has no env-var support upstream (DefaultConfig class attributes),
+# which is why LDAP + the database URI live here and not in the HelmRelease.
+#
+# Secrets are placeholders filled from the ots-secrets 1Password item:
+#   __OTS_DB_PASSWORD__      <- password field
+#   __OTS_LDAP_BIND_PASSWORD__ <- ldap-bind-password field
+OTS_ENABLE_LDAP: true
+# Dedicated LDAP outpost deployed with this app (see authentik-blueprint.yaml);
+# LDAPS on 6636. The outpost presents a self-signed certificate - the ldap3
+# client does not verify it, and the connection never leaves the namespace.
+LDAP_HOST: ak-outpost-ots-ldap-outpost.ots.svc.cluster.local
+LDAP_PORT: 636
+LDAP_USE_SSL: true
+LDAP_BASE_DN: OU=ots,DC=ldap,DC=apocrathia,DC=com
+LDAP_USER_DN: ou=users,OU=ots,DC=ldap,DC=apocrathia,DC=com
+LDAP_GROUP_DN: ou=groups,OU=ots,DC=ldap,DC=apocrathia,DC=com
+# Service user created post-deploy (see README); password from 1Password.
+LDAP_BIND_USER_DN: cn=ots-ldap-bind,ou=users,OU=ots,DC=ldap,DC=apocrathia,DC=com
+LDAP_BIND_USER_PASSWORD: __OTS_LDAP_BIND_PASSWORD__
+# Groups named ots_<channel> become ATAK channels; ots_admin grants the
+# OTS administrator role (group mapping in opentakserver/ldap_api.py).
+OTS_LDAP_ADMIN_GROUP: ots_admin
+OTS_LDAP_GROUP_PREFIX: ots_
+SQLALCHEMY_DATABASE_URI: postgresql+psycopg://ots:__OTS_DB_PASSWORD__@ots-postgres-rw.ots.svc.cluster.local:5432/ots

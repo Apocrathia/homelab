@@ -60,3 +60,39 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: ots-8088
+      protocol: TCP
+      port: 8088
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: ots
+    - name: ots-8089
+      protocol: TCP
+      port: 8089
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: ots
+    - name: ots-8443
+      protocol: TCP
+      port: 8443
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: ots
+    - name: ots-8446
+      protocol: TCP
+      port: 8446
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: ots

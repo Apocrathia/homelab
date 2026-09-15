@@ -1,0 +1,114 @@
+---
+# Authentik objects the generic-app chart does not render: the LDAP provider
+# (OTS has no OIDC support - LDAP is the only federation path), a dedicated
+# LDAP outpost pinned to this namespace, the ots_admin group, and the group
+# bindings that gate LDAP bind/search access. The chart's proxy blueprint
+# still owns the WebUI provider/application/outpost.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-ots-ldap
+  namespace: ots
+  labels:
+    authentik_blueprint: "true"
+data:
+  ots-ldap.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    #
+    # Access model (verified against authentik 2026.8.2 source):
+    # the LDAP provider no longer has a search_group field - bind/search is
+    # gated by the outpost's access check against the provider's application
+    # slug (internal/outpost/ldap/bind/direct/bind.go). Group bindings on
+    # the ots-ldap application below are therefore the friends-tier
+    # restriction: admins + users, mirroring the chart's proxy bindings.
+    version: 1
+    metadata:
+      name: ots-ldap
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # LDAP Provider for OpenTAKServer
+      - model: authentik_providers_ldap.ldapprovider
+        state: present
+        identifiers:
+          name: "ots-ldap-provider"
+        attrs:
+          name: "ots-ldap-provider"
+          authorization_flow: !Find [authentik_flows.flow, [slug, "default-provider-authorization-implicit-consent"]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+          base_dn: "OU=ots,DC=ldap,DC=apocrathia,DC=com"
+          bind_mode: "direct"
+          search_mode: "direct"
+          # Friends may not have TOTP devices; the bind service account
+          # definitely does not. Semicolon passwords would misparse.
+          mfa_support: false
+
+      # Hidden application: LDAP bind/search access is checked against this
+      # slug, so it must exist and carry the group bindings below
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "ots-ldap"
+        attrs:
+          name: "OpenTAKServer LDAP"
+          slug: "ots-ldap"
+          provider: !Find [authentik_providers_ldap.ldapprovider, [name, "ots-ldap-provider"]]
+          meta_hide: true
+          group: "Communications"
+          meta_description: "LDAP bind/search access for OpenTAKServer (access control only)"
+          meta_publisher: "OpenTAKServer"
+
+      # Dedicated LDAP outpost, pinned to the ots namespace (operator
+      # decision): NetworkPolicy locks 3389/6636 to ots-namespace pods
+      - model: authentik_outposts.outpost
+        state: present
+        identifiers:
+          name: "ots-ldap-outpost"
+        attrs:
+          name: "ots-ldap-outpost"
+          type: "ldap"
+          service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+          providers:
+            - !Find [authentik_providers_ldap.ldapprovider, [name, "ots-ldap-provider"]]
+          config:
+            authentik_host: "https://auth.gateway.services.apocrathia.com"
+            authentik_host_insecure: true
+            authentik_host_browser: ""
+            log_level: "info"
+            object_naming_template: "ak-outpost-%(name)s"
+            kubernetes_replicas: 1
+            kubernetes_namespace: "ots"
+            kubernetes_json_patches:
+              deployment:
+                - op: add
+                  path: /spec/template/spec/automountServiceAccountToken
+                  value: false
+
+      # OTS administrator group (authentik_core.group) - membership grants
+      # the OTS administrator role via OTS_LDAP_ADMIN_GROUP in config.yml
+      - model: authentik_core.group
+        state: present
+        identifiers:
+          name: "ots_admin"
+        attrs:
+          name: "ots_admin"
+
+      # Admins group binding (LDAP bind/search access)
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "ots-ldap"]]
+          group: !Find [authentik_core.group, [name, "admins"]]
+        attrs:
+          order: 10
+
+      # Users group binding (LDAP bind/search access) - the friends tier
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "ots-ldap"]]
+          group: !Find [authentik_core.group, [name, "users"]]
+        attrs:
+          order: 20
