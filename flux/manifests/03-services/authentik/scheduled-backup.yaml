@@ -6,7 +6,9 @@ metadata:
   name: authentik-postgres-backup
   namespace: authentik
 spec:
-  schedule: "0 5 * * *" # 0500 UTC = 2300 MST, after the kopia 0200 UTC window
+  # CNPG cron is 6-field (seconds first): "0 0 5 * * *" = daily 05:00 UTC.
+  # A 5-field "0 5 * * *" parses as minute=5 hourly (caught live 2026-09-15).
+  schedule: "0 0 5 * * *" # 0500 UTC = 2300 MST, after the kopia 0200 UTC window
   backupOwnerReference: self
   cluster:
     name: authentik-postgres
