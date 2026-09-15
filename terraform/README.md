@@ -225,6 +225,8 @@ terraform/
 │   ├── okta-policy-signon/             # Sign-on policy + rules
 │   ├── gitlab-project/                 # Project data + optional label
 │   └── tailscale-tailnet/              # Policy file + DNS + tailnet settings
+├── compositions/                       # Intentionally empty — see its README
+│   └── README.md                       # Multi-module root modules (none yet)
 └── deployments/
     ├── proxmox/
     │   ├── home/
