@@ -41,9 +41,13 @@ entries:
       include_claims_in_id_token: true
       issuer_mode: "per_provider"
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      # Regex (not strict): AMP 2.8 uses the browser's current page path as
+      # redirect_uri (GH CubeCoders/AMP#1469), so sub-pages like /instances
+      # arrive as redirect targets. Authentik regex mode fullmatches; this
+      # pattern pins scheme+host and allows any path under it.
       redirect_uris:
-        - url: "https://game.apocrathia.com/"
-          matching_mode: "strict"
+        - url: "https://game\\.apocrathia\\.com/.*"
+          matching_mode: "regex"
       access_code_validity: "minutes=1"
       access_token_validity: "minutes=5"
       refresh_token_validity: "days=30"
