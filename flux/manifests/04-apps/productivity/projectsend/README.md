@@ -46,8 +46,9 @@ account — operator handles that on deploy.
 ## Configuration
 
 Everything tunable lives in `helmrelease.yaml` env vars; email, branding,
-and client accounts are configured in the app UI (System → Settings). Files
-live under `/var/www/html/storage`, which is the SMB-mounted `Uploads` share
+client accounts, and the OIDC issuer/credentials (System → Settings →
+Social Login → OpenID Connect) are configured in the app UI. Files live
+under `/var/www/html/storage`, which is the SMB-mounted `Uploads` share
 — ProjectSend's internal tree (APP_KEY, database-of-record for shares) sits
 in the same directory, so treat the subDir as app-owned.
 
@@ -67,7 +68,11 @@ kubectl -n projectsend get pods,pvc
   symlink and nginx state into www-data-owned directories. Breaking those =
   patching the image, not this chart.
 - OIDC button errors: check the app's Social Login settings match the
-  provider (issuer `https://auth.gateway.services.apocrathia.com`, client
-  ID/secret from Authentik's projectsend-oidc-provider) and that the
-  redirect URI is exactly
+  provider. The issuer must include the per-provider path —
+  `https://auth.gateway.services.apocrathia.com/application/o/projectsend/`
+  — not the bare Authentik host (the global discovery URL returns 404 and
+  the redirect throws a 500). Client ID/secret come from Authentik's
+  `projectsend-oidc-provider`; the redirect URI is pinned strict at
   `https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback`.
+  Auto-provision (friends become client accounts on first login) is set in
+  the same Social Login screen.
