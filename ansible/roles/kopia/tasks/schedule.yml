@@ -17,7 +17,10 @@
       [Service]
       Type=oneshot
       EnvironmentFile=/etc/kopia/snapshot.env
-      ExecStart=/usr/bin/kopia snapshot create {{ kopia_backup_paths | join(' ') }}
+      # systemd oneshot units run without HOME; kopia resolves its config from
+      # HOME/.config/kopia and reports "repository is not connected" when it is
+      # unset. Pin the config path explicitly.
+      ExecStart=/usr/bin/kopia --config-file=/root/.config/kopia/repository.config snapshot create {{ kopia_backup_paths | join(' ') }}
       Nice=10
       IOSchedulingClass=idle
   register: kopia_snapshot_unit
