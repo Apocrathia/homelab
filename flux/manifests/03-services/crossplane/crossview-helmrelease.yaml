@@ -17,6 +17,8 @@ spec:
         name: crossview
         namespace: flux-system
       interval: 30m
+  # CNPG cluster init (~1-2m) must finish inside the upgrade wait window
+  timeout: 10m
   install:
     remediation:
       retries: 3
@@ -51,6 +53,14 @@ spec:
         hostnames:
           - crossplane.gateway.services.apocrathia.com
     config:
+      database:
+        enabled: true
+        host: crossview-postgres-rw
+        port: 5432
+        database: crossview
+        username: crossview
+        ssl:
+          mode: disable
       # Public origin used as the post-SSO redirect destination
       cors:
         origin: https://crossplane.gateway.services.apocrathia.com
@@ -68,13 +78,12 @@ spec:
           scope: "openid profile email"
           usernameAttribute: preferred_username
           emailAttribute: email
+    # Bundled postgres disabled — the database is the CNPG cluster in
+    # crossview-postgres.yaml (same pattern as every other DB-backed app).
+    # The chart's bundled single-replica postgres on a RWO PVC cannot roll
+    # in place: the surge pod can land on another node and block forever.
     database:
-      image:
-        repository: postgres
-        # renovate: datasource=docker depName=postgres
-        tag: "18"
-      persistence:
-        storageClass: longhorn
+      enabled: false
     # All credentials from the 1Password-backed secret — no plaintext values;
     # secretKeyRef slots keep the chart from rendering its own Secret
     secrets:

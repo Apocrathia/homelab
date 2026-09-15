@@ -1,0 +1,56 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: crossview-postgres
+  namespace: crossplane-system
+spec:
+  # PostgreSQL version
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration — username + password keys come from the
+  # 1Password-backed secret (same pattern as romm and the other DB apps)
+  bootstrap:
+    initdb:
+      database: crossview
+      owner: crossview
+      secret:
+        name: crossview-secrets
+
+  # Monitoring
+  monitoring:
+    enablePodMonitor: true

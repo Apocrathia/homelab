@@ -55,7 +55,10 @@ stale.
 managed resources, and compositions from live cluster state. It runs beside the
 control plane in `crossplane-system` with a read-only ClusterRole
 (get/list/watch — it can read secrets cluster-wide but cannot mutate) and a
-bundled PostgreSQL 17 database on Longhorn for session state.
+CNPG PostgreSQL cluster (`crossview-postgres`, see `crossview-postgres.yaml`)
+for session state — same pattern as every other DB-backed app. The chart's
+bundled single-replica postgres stays disabled: it cannot roll in place on a
+RWO Longhorn PVC.
 
 - **URL**: `https://crossplane.gateway.services.apocrathia.com` (Gateway API
   HTTPRoute on `main-gateway`, chart-rendered); the SSO entrypoint is
@@ -76,14 +79,15 @@ bundled PostgreSQL 17 database on Longhorn for session state.
 
 ### 1Password item fields
 
-| Field                | Used by                    |
-| -------------------- | -------------------------- |
-| `oidc-client-id`     | HelmRelease `valuesFrom`   |
-| `oidc-client-secret` | OIDC env (secretKeyRef)    |
-| `admin-username`     | local admin fallback login |
-| `admin-password`     | local admin fallback login |
-| `session-secret`     | session cookie signing     |
-| `db-password`        | bundled PostgreSQL         |
+| Field                | Used by                                |
+| -------------------- | -------------------------------------- |
+| `oidc-client-id`     | HelmRelease `valuesFrom`               |
+| `oidc-client-secret` | OIDC env (secretKeyRef)                |
+| `admin-username`     | local admin fallback login             |
+| `admin-password`     | local admin fallback login             |
+| `session-secret`     | session cookie signing                 |
+| `db-password`        | chart DB password                      |
+| `password`           | CNPG bootstrap (mirrors `db-password`) |
 
 ## Troubleshooting
 
@@ -91,6 +95,7 @@ bundled PostgreSQL 17 database on Longhorn for session state.
 kubectl -n crossplane-system get pods
 kubectl -n crossplane-system logs deploy/crossplane
 kubectl -n crossplane-system logs deploy/crossview
+kubectl -n crossplane-system get cluster crossview-postgres
 kubectl get httproute -n crossplane-system
 kubectl get crds | grep crossplane.io
 ```
