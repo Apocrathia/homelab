@@ -4,7 +4,7 @@
 # ship as plain manifests - the chart's tcproute template cannot express
 # them. Listener names (sectionName) match the tak-* TCP listeners added to
 # both Gateways (allowedRoutes locked to the tak namespace).
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tak-cot
@@ -22,7 +22,7 @@ spec:
         - name: tak
           port: 8088
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tak-ssl-cot
@@ -40,7 +40,7 @@ spec:
         - name: tak
           port: 8089
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tak-marti
@@ -58,7 +58,7 @@ spec:
         - name: tak
           port: 8443
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: tak-enroll

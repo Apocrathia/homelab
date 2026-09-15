@@ -95,7 +95,6 @@ spec:
               set -eu
               sed \
                 -e "s|__OTS_DB_PASSWORD__|$(cat /run/secrets/db-password)|" \
-                -e "s|__OTS_LDAP_BIND_PASSWORD__|$(cat /run/secrets/ldap-bind-password)|" \
                 /template/config.yml > /app/ots/config.yml
               echo "rendered /app/ots/config.yml ($(wc -c < /app/ots/config.yml) bytes)"
           volumeMounts:
@@ -111,11 +110,6 @@ spec:
               - name: tak-db-password
                 mountPath: /run/secrets/db-password
                 subPath: password
-                secretName: tak-secrets
-                readOnly: true
-              - name: tak-ldap-bind-password
-                mountPath: /run/secrets/ldap-bind-password
-                subPath: ldap-bind-password
                 secretName: tak-secrets
                 readOnly: true
           securityContext:

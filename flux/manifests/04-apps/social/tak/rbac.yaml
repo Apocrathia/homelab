@@ -1,0 +1,46 @@
+---
+# The tak-ldap-outpost (authentik LDAP outpost, see authentik-blueprint.yaml)
+# deploys into this namespace; the outpost controller runs in the authentik
+# namespace as this service account and needs to manage its objects here.
+# Scope mirrors the authentik chart's own Role, reduced to what the outpost
+# controller creates: the token Secret, the Deployment + Service, and a
+# ServiceMonitor when the prometheus CRDs are present.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: authentik-outpost-controller
+  namespace: tak
+  labels:
+    app.kubernetes.io/name: tak
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: social
+    app.kubernetes.io/managed-by: flux
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "services"]
+    verbs: ["get", "create", "delete", "list", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "create", "delete", "list", "patch"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["servicemonitors"]
+    verbs: ["get", "create", "delete", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: authentik-outpost-controller
+  namespace: tak
+  labels:
+    app.kubernetes.io/name: tak
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: social
+    app.kubernetes.io/managed-by: flux
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: authentik-outpost-controller
+subjects:
+  - kind: ServiceAccount
+    name: authentik
+    namespace: authentik

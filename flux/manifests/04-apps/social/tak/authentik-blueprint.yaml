@@ -41,8 +41,9 @@ data:
           base_dn: "OU=tak,DC=ldap,DC=apocrathia,DC=com"
           bind_mode: "direct"
           search_mode: "direct"
-          # Friends may not have TOTP devices; the bind service account
-          # definitely does not. Semicolon passwords would misparse.
+          # Friends may not have TOTP devices, and semicolon passwords
+          # would misparse in the TOTP flow. Users bind directly with
+          # their Authentik passwords.
           mfa_support: false
 
       # Hidden application: LDAP bind/search access is checked against this

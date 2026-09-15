@@ -13,6 +13,7 @@ resources:
   - networkpolicy.yaml
   - tcproutes.yaml
   - authentik-blueprint.yaml
+  - rbac.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

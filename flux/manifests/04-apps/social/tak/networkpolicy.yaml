@@ -45,12 +45,14 @@ spec:
               protocol: TCP
 ---
 # App pod ingress: the WebUI (nginx :80) is reachable from the authentik
-# proxy outpost (dials the ClusterIP Service directly) and gatus (/health
-# probes). CoT streaming (8088/8089), the mTLS Marti API (8443) and
-# certificate enrollment (8446) arrive via the gateway Envoy (TCPRoutes
-# on main-gateway + tailnet-gateway). The host entity covers kubectl
-# port-forward and node-local tooling. No rule lists the loopback Flask
-# API (8081) or RabbitMQ (1883): both are pod-internal and stay denied.
+# proxy outpost (dials the ClusterIP Service directly), gatus (/health
+# probes), and the gateway Envoy L7 path. CoT streaming (8088/8089), the
+# mTLS Marti API (8443) and certificate enrollment (8446) are plain L4
+# (TCPRoutes bypass Envoy): LAN clients (world, via the main-gateway
+# LoadBalancer) and the tailscale operator proxy (tailscale-system, via
+# tailnet-gateway) reach the pod directly. No rule lists the loopback
+# Flask API (8081) or RabbitMQ (1883): both are pod-internal and stay
+# denied.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -84,8 +86,8 @@ spec:
         - ports:
             - port: "80"
               protocol: TCP
-    # Gateway Envoy (TCPRoutes: CoT 8088/8089, Marti 8443, enrollment 8446)
-    # and node-local access (kubectl port-forward, tooling)
+    # WebUI via node-local access (kubectl port-forward, tooling) and the
+    # gateway Envoy L7 path
     - fromEntities:
         - ingress
         - host
@@ -93,6 +95,29 @@ spec:
         - ports:
             - port: "80"
               protocol: TCP
+    # CoT streaming (8088/8089), mTLS Marti API (8443) and enrollment
+    # (8446) are plain L4 (no Envoy): LAN clients reach the pod directly
+    # through the main-gateway LoadBalancer (world), tailnet members
+    # through the tailscale operator proxy pods in tailscale-system.
+    # kubectl port-forward stays covered by the host entity below.
+    - fromEntities:
+        - world
+        - host
+      toPorts:
+        - ports:
+            - port: "8088"
+              protocol: TCP
+            - port: "8089"
+              protocol: TCP
+            - port: "8443"
+              protocol: TCP
+            - port: "8446"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: tailscale-system
+      toPorts:
+        - ports:
             - port: "8088"
               protocol: TCP
             - port: "8089"
