@@ -58,7 +58,8 @@ control plane in `crossplane-system` with a read-only ClusterRole
 bundled PostgreSQL 17 database on Longhorn for session state.
 
 - **URL**: `https://crossplane.gateway.services.apocrathia.com` (Gateway API
-  HTTPRoute on `main-gateway`, chart-rendered)
+  HTTPRoute on `main-gateway`, chart-rendered); the SSO entrypoint is
+  `/api/auth/oidc` — the root path serves the local login form
 - **Auth**: native OIDC against Authentik — blueprint creates
   `crossview-oidc-provider` and a Platform-group launchpad entry
   (`authentik-blueprint.yaml`); local admin fallback via 1Password

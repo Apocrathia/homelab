@@ -43,11 +43,14 @@ entries:
     identifiers:
       slug: "crossview"
     attrs:
-      name: "Crossview"
+      # Display name only — slug must stay "crossview"; Authentik derives the
+      # OIDC issuer URL (/application/o/crossview/) from it.
+      name: "Crossplane"
       slug: "crossview"
       group: "Platform"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "crossview-oidc-provider"]]
-      meta_launch_url: "https://crossplane.gateway.services.apocrathia.com"
+      # SSO start endpoint — the root path lands on the local login form
+      meta_launch_url: "https://crossplane.gateway.services.apocrathia.com/api/auth/oidc"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/crossplane/icon.svg"
       meta_description: "Crossplane resource dashboard"
