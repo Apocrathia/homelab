@@ -59,5 +59,13 @@ inputs = {
       proxied = false
       comment = "Okta custom domain"
     }
+    "tailscale-challenge" = {
+      name    = "_tailscale-challenge"
+      type    = "TXT"
+      content = "v2=SzxeEEScysZuRuQbhY7iCJ1zBCuyocxA9xUYb15m7bQ3"
+      ttl     = 3600
+      proxied = false
+      comment = "Tailscale domain verification challenge"
+    }
   }
 }
