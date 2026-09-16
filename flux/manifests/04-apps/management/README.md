@@ -18,6 +18,10 @@ Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.
 
 Service account and External Secrets PushSecret for mobile Kubernetes clients (e.g. Kuber, Kubenav): cluster token synced to 1Password.
 
+### [LibreSpeed](./speedtest/README.md)
+
+Self-hosted HTML5 network speed test for LAN and tailnet throughput checks.
+
 ### [Semaphore](./semaphore/README.md)
 
 Web UI and API for Ansible, Terraform/OpenTofu, and shell automation with Authentik OIDC.

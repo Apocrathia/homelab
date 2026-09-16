@@ -3,13 +3,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: management
+  name: speedtest
+  namespace: speedtest
+  labels:
+    app.kubernetes.io/name: speedtest
 
 resources:
-  - fleet
-  - jetkvm
-  - kuber-ios
-  - scripts/unifi
-  - semaphore
-  - speedtest
-  - unpoller
+  - namespace.yaml
+  - helmrelease.yaml

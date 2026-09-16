@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: speedtest
+  labels:
+    app.kubernetes.io/name: speedtest
+    # Privileged security context - Apache entrypoint runs as root
+    # (chown, apache config edits) before dropping to www-data
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
