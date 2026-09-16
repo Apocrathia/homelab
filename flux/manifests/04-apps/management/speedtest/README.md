@@ -19,8 +19,10 @@ Self-hosted HTML5 network speed test for measuring LAN, tailnet, and WAN through
 
 ## Configuration
 
-Everything runs from image defaults. The container needs no environment
-variables beyond `TZ`; `MODE=standalone` and `TELEMETRY=false` are baked in.
+The container needs no secrets. `TZ` and `USE_NEW_DESIGN=true` are the only
+environment variables; `MODE=standalone` and `TELEMETRY=false` are baked in.
+`USE_NEW_DESIGN` makes the entrypoint rewrite `config.json` so the modern
+frontend loads by default (`?design=old` still forces the classic one).
 Without an `IPINFO_APIKEY`, ISP lookups use the bundled offline database and
 make no external calls.
 

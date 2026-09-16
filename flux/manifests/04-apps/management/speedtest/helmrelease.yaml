@@ -27,6 +27,9 @@ spec:
         env:
           - name: TZ
             value: "America/Denver"
+          # Default to the modern frontend (entrypoint rewrites config.json)
+          - name: USE_NEW_DESIGN
+            value: "true"
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
