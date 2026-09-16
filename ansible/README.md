@@ -59,19 +59,19 @@ SSH material is **not** stored as GitLab CI variables. Check/apply jobs call
 [`ci/fetch_op_ssh.py`](./ci/fetch_op_ssh.py) against in-cluster 1Password
 Connect (same `OP_CONNECT_*` bootstrap as tofu).
 
-| Source   | Value                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------- |
-| Vault    | `Secrets`                                                                                    |
-| Item     | `ansible-secrets`                                                                            |
-| Fields   | `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline **text**), `sudo-password` |
-| Optional | `ansible_gitops_ed25519.pub`                                                                 |
+| Source   | Value                                                                       |
+| -------- | --------------------------------------------------------------------------- |
+| Vault    | `Secrets`                                                                   |
+| Item     | `ansible-secrets`                                                           |
+| Fields   | `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline **text**) |
+| Optional | `ansible_gitops_ed25519.pub`                                                |
 
 GitLab only needs `OP_CONNECT_TOKEN` (already used by tofu). `OP_CONNECT_HOST`
 defaults to `http://onepassword-connect.onepassword-system.svc:8080`.
 
-Check/apply use `--become-password-file` from Connect field `sudo-password`
-(same password for `ianyoung` on managed hosts; split later if they diverge).
-Jobs use `mcr.microsoft.com/devcontainers/python:3.12` so uid 1000 has a
+Check/apply connect as the `ansible` service account (deploy key, NOPASSWD
+sudo) — no become password is fetched. Jobs use
+`mcr.microsoft.com/devcontainers/python:3.12` so uid 1000 has a
 passwd entry (`vscode`) and OpenSSH can start under the non-root runner.
 Runner `HOME` stays `/home/gitlab-runner` (writable emptyDir); ansible gets
 absolute `IdentityFile` / `UserKnownHostsFile` under that path.
@@ -86,20 +86,14 @@ every host — CI never logs in as a human account:
 - deploy key `ansible_gitops_ed25519` as the only authorized key (`exclusive`)
 - `/etc/sudoers.d/ansible` → `NOPASSWD: ALL` (visudo-validated, `0440`)
 
-Rollout is two-phase, because CI must create the account before it can use it:
-
-1. **This phase** — role creates/manages the account; CI still connects as
-   `ianyoung` with the become password. Landing on main runs `ansible-apply`,
-   which provisions the account on every host. Bootstrap (`-u root`) covers
-   new hosts on day 0.
-2. **Follow-up** — flip `ansible_user: ansible` in `group_vars/all.yml`, drop
-   `--become-password-file` from CI, then retire the `sudo-password` field.
+CI connects as this account (`ansible_user: ansible` in `group_vars/all.yml`)
+using the deploy key; sudo needs no password. New hosts get the account on
+day 0 via bootstrap (`-u root`); `common.yml` keeps it converged after that.
 
 ## Secrets
 
-1Password is the SoT for the deploy key and sudo password (sudo password is
-phase-1 only; it retires when `ansible_user` flips to the service account).
-Use multiline text fields (not concealed) for PEM / `known_hosts`. The deploy
+1Password is the SoT for the deploy key and known_hosts. Use multiline text
+fields (not concealed) for PEM / `known_hosts`. The deploy
 public key is committed in `group_vars/all.yml` — public material, repo is SoT.
 Local laptop runs can use `~/.ssh/ansible_gitops_ed25519` directly; that is
 not the CI path.

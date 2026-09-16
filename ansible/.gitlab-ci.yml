@@ -9,7 +9,9 @@
 # Secrets (1Password item `ansible-secrets` in vault `Secrets`):
 #   ansible_gitops_ed25519       — deploy private key (multiline text field)
 #   ansible_gitops_known_hosts   — known_hosts blob (multiline text field)
-#   sudo-password                — sudo password for ansible_user (text field)
+#
+# CI connects as the `ansible` service account (deploy key + NOPASSWD sudo);
+# no become password is fetched or used.
 #
 # CI/CD variables:
 #   OP_CONNECT_TOKEN — Connect API token (shared with tofu; vault must include Secrets)
@@ -114,7 +116,6 @@ ansible-check:
   script:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook --check --diff
-      --become-password-file "$HOME/.ansible/become_password"
       -e @"$HOME/.ansible/op_secrets.json"
       playbooks/site.yml
   rules:
@@ -129,7 +130,6 @@ ansible-apply:
   script:
     - cd "$CI_PROJECT_DIR/ansible"
     - ansible-playbook
-      --become-password-file "$HOME/.ansible/become_password"
       -e @"$HOME/.ansible/op_secrets.json"
       playbooks/site.yml
   rules:

@@ -8,7 +8,6 @@ Required field labels (text fields; files with the same name also work):
 
   ansible_gitops_ed25519
   ansible_gitops_known_hosts
-  sudo-password
 
 Optional:
 
@@ -18,7 +17,6 @@ Environment overrides:
 
   ANSIBLE_OP_VAULT, ANSIBLE_OP_ITEM
   ANSIBLE_OP_FIELD_PRIVATE_KEY, ANSIBLE_OP_FIELD_KNOWN_HOSTS
-  ANSIBLE_OP_FIELD_BECOME_PASSWORD
 """
 
 from __future__ import annotations
@@ -45,15 +43,6 @@ def _normalize_multiline(value: str) -> str:
     if not text.endswith("\n"):
         text += "\n"
     return text
-
-
-def _normalize_password(value: str) -> str:
-    """Become password file: first line only, trailing newline."""
-    text = value.replace("\r\n", "\n").strip("\n")
-    if "\n" not in text and "\\n" in text:
-        text = text.replace("\\n", "\n")
-    first = text.split("\n", 1)[0]
-    return first + "\n"
 
 
 def _field_map(item) -> dict[str, str]:
@@ -87,7 +76,6 @@ def main() -> int:
     item_title = os.environ.get("ANSIBLE_OP_ITEM", "ansible-secrets")
     field_private = os.environ.get("ANSIBLE_OP_FIELD_PRIVATE_KEY", "ansible_gitops_ed25519")
     field_known = os.environ.get("ANSIBLE_OP_FIELD_KNOWN_HOSTS", "ansible_gitops_known_hosts")
-    field_become = os.environ.get("ANSIBLE_OP_FIELD_BECOME_PASSWORD", "sudo-password")
 
     # Imported lazily so ansible-validate (no Connect) does not need the SDK.
     from onepasswordconnectsdk.client import Client
@@ -112,7 +100,6 @@ def main() -> int:
     try:
         private_key = _resolve_secret(client, item, vault.id, field_private, fields)
         known_hosts = _resolve_secret(client, item, vault.id, field_known, fields)
-        become_password = _resolve_secret(client, item, vault.id, field_become, fields)
     except KeyError as missing:
         file_names = [getattr(f, "name", "?") for f in client.get_files(item.id, vault.id)]
         available = sorted(set(fields) | set(file_names))
@@ -125,25 +112,19 @@ def main() -> int:
 
     ssh_dir = Path.home() / ".ssh"
     ssh_dir.mkdir(mode=0o700, exist_ok=True)
-    ansible_dir = Path.home() / ".ansible"
-    ansible_dir.mkdir(mode=0o700, exist_ok=True)
 
     private_path = ssh_dir / "id_ed25519"
     known_path = ssh_dir / "known_hosts"
-    become_path = ansible_dir / "become_password"
 
     private_path.write_text(_normalize_multiline(private_key), encoding="utf-8")
     private_path.chmod(0o600)
     known_path.write_text(_normalize_multiline(known_hosts), encoding="utf-8")
     known_path.chmod(0o644)
-    become_path.write_text(_normalize_password(become_password), encoding="utf-8")
-    become_path.chmod(0o600)
 
     # Never print secret material — lengths only for operator debug.
     print(
         f"wrote {private_path} ({private_path.stat().st_size} bytes), "
-        f"{known_path} ({known_path.stat().st_size} bytes), "
-        f"{become_path} ({become_path.stat().st_size} bytes) "
+        f"{known_path} ({known_path.stat().st_size} bytes) "
         f"from op://{vault_name}/{item_title}"
     )
     return 0
