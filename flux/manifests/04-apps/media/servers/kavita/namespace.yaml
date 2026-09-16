@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kavita
+  labels:
+    app.kubernetes.io/name: kavita
+    app.kubernetes.io/component: media-server
+    app.kubernetes.io/part-of: media
