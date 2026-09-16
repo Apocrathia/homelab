@@ -23,10 +23,9 @@ from __future__ import annotations
 import json
 import os
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
+import requests
 import yaml
 
 # --- exceptions (the only configuration) -------------------------------------
@@ -64,25 +63,18 @@ class Client:
         self.project = project_id
 
     def req(self, method: str, path: str, body: dict | None = None) -> tuple[int, object]:
-        data = json.dumps(body).encode() if body is not None else None
-        r = urllib.request.Request(
+        r = requests.request(
+            method,
             self.base + path,
-            data=data,
-            method=method,
-            headers={
-                "Authorization": f"Bearer {self.token}",
-                "Content-Type": "application/json",
-            },
+            json=body,
+            timeout=20,
+            headers={"Authorization": f"Bearer {self.token}"},
         )
-        # URL = validated http(s) base + hardcoded paths; no user input reaches it.
-        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
+        raw = r.text
         try:
-            with urllib.request.urlopen(r, timeout=20) as resp:
-                raw = resp.read().decode()
-                return resp.status, (json.loads(raw) if raw.strip() else None)
-        except urllib.error.HTTPError as e:
-            raw = e.read().decode()
-            return e.code, (json.loads(raw) if raw.strip() else raw)
+            return r.status_code, (json.loads(raw) if raw.strip() else None)
+        except ValueError:
+            return r.status_code, raw
 
     def get(self, path: str):
         code, body = self.req("GET", path)
