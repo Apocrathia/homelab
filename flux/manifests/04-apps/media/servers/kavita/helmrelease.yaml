@@ -27,6 +27,30 @@ spec:
         env:
           - name: TZ
             value: "America/Denver"
+      initContainers:
+        # Seed appsettings.json: the image bakes its first-boot template at
+        # /tmp/config/appsettings.json (entrypoint copies it on first boot),
+        # but the pod's /tmp emptyDir shadows it. This copies the template
+        # from the un-shadowed image layer only when the config is missing,
+        # so later UI edits (OIDC credentials) are never clobbered.
+        - name: seed-appsettings
+          # renovate: datasource=docker depName=ghcr.io/kareadita/kavita
+          image: ghcr.io/kareadita/kavita:0.9.1@sha256:31181a32f0dda73cae68721867028a7253d57881b58bea5754cd9e578e75421a
+          command: ["/bin/sh", "-c"]
+          args:
+            - test -f /kavita/config/appsettings.json || cp /tmp/config/appsettings.json /kavita/config/appsettings.json
+          volumeMounts:
+            - name: config
+              mountPath: /kavita/config
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
