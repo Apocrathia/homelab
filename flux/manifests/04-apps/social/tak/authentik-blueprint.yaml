@@ -133,6 +133,24 @@ data:
                   path: /spec/template/spec/automountServiceAccountToken
                   value: false
 
+      # Bind service user for OTS's runtime group lookups. flask-ldap3-login's
+      # get_user_groups() opens its own connection bound with these
+      # credentials - direct bind covers only login. The blueprint cannot
+      # carry a password: the operator sets it (to the 1Password
+      # ldap-bind-password value) after import. Member of `users` so the
+      # outpost's app access check passes.
+      - model: authentik_core.user
+        state: present
+        identifiers:
+          username: "tak-ldap-bind"
+        attrs:
+          username: "tak-ldap-bind"
+          name: "TAK LDAP bind"
+          type: "service_account"
+          is_active: true
+          groups:
+            - !Find [authentik_core.group, [name, "users"]]
+
       # OTS administrator group (authentik_core.group) - membership grants
       # the OTS administrator role via OTS_LDAP_ADMIN_GROUP in config.yml
       - model: authentik_core.group

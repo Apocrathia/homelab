@@ -41,30 +41,32 @@ Postgres is a standalone CNPG Cluster (`tak-postgres`, `postgres.yaml`) on the p
 - **WebUI**: Authentik proxy (admins + users bindings). The SPA's own login then hits the OTS API with LDAP credentials.
 - **ATAK enrollment**: ATAK posts Authentik username/password to `:8446/Marti/api/tls`; OTS checks them against the dedicated LDAP outpost (`tak-ldap-outpost`, deployed in this namespace by `authentik-blueprint.yaml`) and signs the client CSR with the OTS CA. Enrolled clients then use the certificate on :8089/:8443.
 - **LDAP access control**: the provider's application (`tak-ldap`) carries admins + users group bindings - that is what gates who may bind/search (the LDAP provider lost its `search_group` field in newer authentik; the outpost checks application access, verified against 2026.8.2 source).
-- **LDAP bind mode**: direct bind - users bind with their own Authentik username/password as `cn=<username>,ou=users,<base_dn>` (flask-ldap3-login direct-bind path; no service account). Group membership reads use the user's own bound connection, with `member` matching against authentik's lowercased tree.
+- **LDAP bind mode**: direct bind for authentication - users bind with their own Authentik username/password as `cn=<username>,ou=users,<base_dn>` (flask-ldap3-login direct-bind path), and their groups are read over their own bound connection at login. OTS's runtime group lookups (`/api/groups/all`, fired on every page) open a separate connection bound as the `tak-ldap-bind` service account, which the blueprint creates without a password (operator sets it). Known limitation: those runtime lookups search groups with `member=<username>`, but authentik stores full DNs in `member` - the webui group dropdowns therefore stay empty in LDAP mode even with the bind user configured; login-time role assignment (channels, `tak_admin`) is unaffected.
 - **Channel groups**: create Authentik groups per channel trio: `tak_<name>`, `tak_<name>_read`, `tak_<name>_write`. Membership in `tak_<name>` maps to that ATAK channel role; `tak_admin` grants the OTS administrator role.
 
 ## Required 1Password item
 
 `vaults/Secrets/items/opentakserver-secrets` with fields:
 
-| Field                    | Used for                                            |
-| ------------------------ | --------------------------------------------------- |
-| `username`               | Postgres owner + CNPG initdb - set to `tak`         |
-| `password`               | Postgres password (CNPG initdb + config.yml DB URI) |
-| `secret-key`             | Flask SECRET_KEY                                    |
-| `security-password-salt` | Flask-Security-Too password salt                    |
-| `ca-password`            | OTS CA private key password                         |
+| Field                    | Used for                                               |
+| ------------------------ | ------------------------------------------------------ |
+| `username`               | Postgres owner + CNPG initdb - set to `tak`            |
+| `password`               | Postgres password (CNPG initdb + config.yml DB URI)    |
+| `secret-key`             | Flask SECRET_KEY                                       |
+| `security-password-salt` | Flask-Security-Too password salt                       |
+| `ca-password`            | OTS CA private key password                            |
+| `ldap-bind-password`     | Password of the `tak-ldap-bind` authentik service user |
 
-Fields `database-url`, `rabbitmq-username`, `rabbitmq-password`, `mediamtx-token`, and `ldap-bind-password` are unused leftovers (LDAP uses direct bind - no service account) and can be deleted.
+Fields `database-url`, `rabbitmq-username`, `rabbitmq-password`, and `mediamtx-token` are unused leftovers from an earlier attempt and can be deleted.
 
 The pod stays pending until the item exists (OnePasswordItem). LDAP + the database URI are rendered into `/app/ots/config.yml` by the `render-config` init container on every boot - upstream OTS has no env-var support for LDAP settings.
 
 ## Post-deploy operator steps
 
-1. **Tailnet policy**: apply the policy change shipped with this MR (`terraform/deployments/tailscale/tailnet/policy.hujson` - `terragrunt apply`). Until applied, tailnet CoT is blocked by the deny-by-default policy.
-2. **Channel groups**: create the `tak_<name>` / `_read` / `_write` trios in Authentik for each channel you want, and add friends to the relevant groups. Users authenticate against LDAP with their own Authentik credentials (direct bind - no service account exists or is needed).
-3. **ATAK enrollment**: add the server in ATAK as `tak.gateway.services.apocrathia.com` with the ports above, then enroll the client certificate. On the first TLS connect ATAK shows a hostname-mismatch prompt - the OTS server certificate has a hardcoded CN of `opentakserver`, not the FQDN. Accept once; it is upstream behavior.
+1. **LDAP bind user password**: the blueprint creates `tak-ldap-bind` (service account, `users` group). Set its password in the Authentik UI (Directory -> Users -> tak-ldap-bind) to the `ldap-bind-password` value from 1Password, then restart the tak deployment. Until then every WebUI page shows "failed to get group list" - runtime group lookups bind as this user; login itself is direct bind and works regardless.
+2. **Tailnet policy**: apply the policy change shipped with this MR (`terraform/deployments/tailscale/tailnet/policy.hujson` - `terragrunt apply`). Until applied, tailnet CoT is blocked by the deny-by-default policy.
+3. **Channel groups**: create the `tak_<name>` / `_read` / `_write` trios in Authentik for each channel you want, and add friends (and yourself, in `tak_admin`, for the OTS administrator role) to the relevant groups. Users authenticate against LDAP with their own Authentik credentials.
+4. **ATAK enrollment**: add the server in ATAK as `tak.gateway.services.apocrathia.com` with the ports above, then enroll the client certificate. On the first TLS connect ATAK shows a hostname-mismatch prompt - the OTS server certificate has a hardcoded CN of `opentakserver`, not the FQDN. Accept once; it is upstream behavior.
 
 ## First boot
 

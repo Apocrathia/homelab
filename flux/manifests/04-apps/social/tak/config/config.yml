@@ -35,6 +35,12 @@ LDAP_USER_LOGIN_ATTR: cn
 # authentik groups expose `member` (groupOfUniqueNames objectClass is kept
 # for the default group filter).
 LDAP_GROUP_MEMBERS_ATTR: member
+# Service account for OTS's runtime group lookups (get_user_groups opens
+# its own connection and binds with these; direct bind covers only
+# authentication). Created by the blueprint without a password - the
+# operator sets it to the 1Password ldap-bind-password value.
+LDAP_BIND_USER_DN: cn=tak-ldap-bind,ou=users,ou=tak,dc=ldap,dc=apocrathia,dc=com
+LDAP_BIND_USER_PASSWORD: __OTS_LDAP_BIND_PASSWORD__
 # Groups named tak_<channel> become ATAK channels; tak_admin grants the
 # OTS administrator role (group mapping in opentakserver/ldap_api.py).
 OTS_LDAP_ADMIN_GROUP: tak_admin

@@ -93,8 +93,18 @@ spec:
           args:
             - |
               set -eu
+              # The LDAP bind password is optional at this point: the
+              # tak-secrets item may not carry the key yet (operator sets
+              # it after creating the bind user). An empty value only
+              # leaves runtime group lookups erroring until then - login
+              # (direct bind) is unaffected.
+              BIND_PW=""
+              if [ -f /run/secrets/ldap-bind/ldap-bind-password ]; then
+                BIND_PW="$(cat /run/secrets/ldap-bind/ldap-bind-password)"
+              fi
               sed \
                 -e "s|__OTS_DB_PASSWORD__|$(cat /run/secrets/db-password)|" \
+                -e "s|__OTS_LDAP_BIND_PASSWORD__|${BIND_PW}|" \
                 /template/config.yml > /app/ots/config.yml
               echo "rendered /app/ots/config.yml ($(wc -c < /app/ots/config.yml) bytes)"
           volumeMounts:
@@ -110,6 +120,13 @@ spec:
               - name: tak-db-password
                 mountPath: /run/secrets/db-password
                 subPath: password
+                secretName: tak-secrets
+                readOnly: true
+              # Whole-secret mount (no subPath): missing keys simply do not
+              # appear as files, so the pod never blocks on a field the
+              # operator has not filled yet
+              - name: tak-ldap-bind-password
+                mountPath: /run/secrets/ldap-bind
                 secretName: tak-secrets
                 readOnly: true
           securityContext:
