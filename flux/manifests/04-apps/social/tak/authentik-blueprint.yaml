@@ -85,8 +85,13 @@ data:
           authorization_flow: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
           base_dn: "OU=tak,DC=ldap,DC=apocrathia,DC=com"
-          bind_mode: "direct"
-          search_mode: "direct"
+          # Cached modes: each bind/search otherwise re-executes the full
+          # authentik flow (the outpost flow executor measures ~600ms per
+          # round trip on this install, so a direct-mode login costs
+          # 2-4s). Cached keeps the direct logic with an in-memory result
+          # cache for the standard session duration.
+          bind_mode: "cached"
+          search_mode: "cached"
           # Friends may not have TOTP devices, and semicolons in
           # credentials would misparse in the TOTP flow. Users bind
           # directly with their Authentik credentials.
