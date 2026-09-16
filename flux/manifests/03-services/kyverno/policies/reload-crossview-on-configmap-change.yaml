@@ -1,0 +1,49 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: reload-crossview-on-configmap-change
+  annotations:
+    policies.kyverno.io/title: Reload Crossview on ConfigMap change
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment, ConfigMap
+    policies.kyverno.io/description: >-
+      The crossview chart ships app config in a ConfigMap but carries no
+      checksum annotation on the Deployment pod template, so ConfigMap-only
+      changes never roll the pod — env vars from ConfigMaps resolve at pod
+      start (a CORS-origin fix once sat applied but inert until a manual
+      restart). When crossview-config is written, stamp a changing annotation
+      on the crossview Deployment pod template to trigger a rolling restart.
+      Copy this file for other apps with the same chart gap; the target must
+      be static — Kyverno resolves mutate.targets variables against the
+      target kind, not the trigger (kyverno#5546).
+spec:
+  # Admission-time only: the rule fires when the ConfigMap is written. The
+  # mutate-existing work itself is done by the background controller (see
+  # mutate-rbac.yaml).
+  background: false
+  rules:
+    - name: stamp-reload-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - ConfigMap
+              names:
+                - crossview-config
+              namespaces:
+                - crossplane-system
+      mutate:
+        mutateExistingOnPolicyUpdate: false
+        targets:
+          - apiVersion: apps/v1
+            kind: Deployment
+            namespace: crossplane-system
+            name: crossview
+        patchStrategicMerge:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  apocrathia.com/reloaded-from: "{{ request.object.metadata.name }}@{{ request.object.metadata.resourceVersion }}"

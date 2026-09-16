@@ -8,5 +8,6 @@ resources:
   - helmrelease.yaml
   - cleanup-rbac.yaml
   - generate-rbac.yaml
+  - mutate-rbac.yaml
   - policies/
   - policy-reporter/
