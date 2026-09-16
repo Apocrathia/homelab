@@ -33,6 +33,15 @@ spec:
         enabled: false
 
     manager:
+      # Disable the operator's self-generated NetworkPolicy (operator.networkpolicy
+      # feature gate, on-by-default since operator 0.159.0 via chart 0.123.0):
+      # its egress allow-list permits only the control-plane node IPs on 6443,
+      # which blocks the in-cluster API VIP (10.69.0.1:443) and kubelet probes on
+      # 8081, so the operator crashloops and takes Flux reconciles with it.
+      # Upstream tracking: open-telemetry/opentelemetry-operator#5493, #5558.
+      featureGatesMap:
+        operator.networkpolicy: false
+
       # Enable ServiceMonitor for Prometheus metrics
       serviceMonitor:
         enabled: true
