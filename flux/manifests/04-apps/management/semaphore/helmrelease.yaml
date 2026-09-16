@@ -58,6 +58,10 @@ spec:
             value: "/var/lib/semaphore/tmp"
           - name: SEMAPHORE_CONFIG_PATH
             value: "/var/lib/semaphore/config"
+          # Cron pool timezone for schedules (schedule.timezone in config.json);
+          # unset defaults to UTC and silently shifts cron times.
+          - name: SEMAPHORE_SCHEDULE_TIMEZONE
+            value: "America/Denver"
           - name: SEMAPHORE_ADMIN
             value: "admin"
           - name: SEMAPHORE_ADMIN_NAME
