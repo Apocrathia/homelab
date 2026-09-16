@@ -82,6 +82,22 @@
 			"ip":  ["tcp:25565"],
 		},
 
+		// Peer relay: admins may relay client-to-client traffic through the
+		// cluster's PeerRelay device (peer-relay-0, deployed by the tailscale
+		// operator — flux/manifests/03-services/tailscale/config/peer-relay.yaml)
+		// when a direct connection isn't possible. The tailscale.com/cap/relay
+		// app capability gates who can allocate relay bindings on the device;
+		// no separate network grant to the relay is needed. Scoped to admins,
+		// mirroring exit-node access below: friends never route traffic
+		// through the cluster.
+		{
+			"src": ["autogroup:admin"],
+			"dst": ["peer-relay-0"],
+			"app": {
+				"tailscale.com/cap/relay": [],
+			},
+		},
+
 		// Exit nodes: only devices with autogroup:internet access can use an
 		// exit node (policy-file syntax rule), and this tailnet is deny-by-
 		// default — without this grant no device can use the exit-nodes
