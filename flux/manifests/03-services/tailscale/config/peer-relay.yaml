@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/imroc/kubeschemas/main/cilium.io/ciliumloadbalancerippool_v2.json
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: peer-relay-pool
+spec:
+  # Static space below the Services VLAN DHCP pool (10.100.1.100-200);
+  # .94 is the free slot in the LB block (.93, .95-.99 are taken).
+  blocks:
+    - cidr: "10.100.1.94/32"
+  serviceSelector:
+    matchLabels:
+      tailscale.com/parent-resource-type: peerrelay
+      tailscale.com/parent-resource: peer-relays
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/imroc/kubeschemas/main/cilium.io/ciliuml2announcementpolicy_v2alpha1.json
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: peer-relay-l2-policy
+spec:
+  interfaces:
+    - eth0
+  serviceSelector:
+    matchLabels:
+      tailscale.com/parent-resource-type: peerrelay
+      tailscale.com/parent-resource: peer-relays
+  loadBalancerIPs: true
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/tailscale.com/peerrelay_v1alpha1.json
+apiVersion: tailscale.com/v1alpha1
+kind: PeerRelay
+metadata:
+  name: peer-relays
+  namespace: tailscale-system
+spec:
+  # One relay device, peer-relay-0. The exit-nodes Connector runs two replicas,
+  # but each peer relay needs its own router port forward for WAN reachability,
+  # so this stays at one until that changes. Tagged tag:k8s via the operator's
+  # default tags, so the existing tailnet policy applies with no changes.
+  hostnamePrefix: peer-relay
+  replicas: 1

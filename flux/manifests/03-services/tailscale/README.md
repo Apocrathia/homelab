@@ -1,6 +1,6 @@
 # Tailscale Kubernetes operator
 
-Manages Tailscale resources in the cluster: ingress/egress proxies, subnet routers, exit nodes, and API server access.
+Manages Tailscale resources in the cluster: ingress/egress proxies, subnet routers, exit nodes, peer relays, and API server access.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -40,6 +40,14 @@ Do not use a `ProxyGroup` (`type: egress`) for this — egress ProxyGroups are H
 The Connector lives under `config/` in its own Flux Kustomization (`services-tailscale-config`, `dependsOn: services-tailscale`) because the operator Helm chart installs the CRD — a CR in the same Kustomization as its CRD-installing HelmRelease deadlocks server-side dry-run on a fresh cluster.
 
 Exit-node routes need approval per device, and the Connector recreates pods on reschedule — so the tailnet policy auto-approves `tag:k8s` as exit nodes (`autoApprovers.exitNode` in `terraform/deployments/tailscale/tailnet/policy.hujson`). That policy is applied by Terraform, not Flux: apply it before or alongside the first rollout of this Connector, or the devices sit in the admin console awaiting approval.
+
+## Peer relays
+
+`config/peer-relay.yaml` runs a `PeerRelay` (`replicas: 1`) whose pod acts as a tailnet peer relay: `peer-relay-0`, tagged `tag:k8s` via the operator's default tags ([docs](https://tailscale.com/docs/features/peer-relay)). When a direct connection between two tailnet devices isn't possible, they relay through this device instead of falling back to Tailscale's DERP servers. Peers must run Tailscale 1.86+.
+
+The operator creates one LoadBalancer Service per replica exposing UDP 41641 (fixed by the operator, not configurable via the CR) and advertises each Service's load balancer address as the relay's static endpoint. `peer-relay-pool` and `peer-relay-l2-policy` in the same file give that Service the IP 10.100.1.94 and announce it on the LAN, following the per-service Cilium pool pattern (`gateway`, `ingest`). The IP sits in the static space below the Services VLAN DHCP pool (10.100.1.100–200). LAN peers reach the relay directly; peers outside the LAN need the router to forward UDP 41641 to this address.
+
+Devices can only relay through it once the tailnet policy grants the `tailscale.com/cap/relay` capability. That grant lives in `terraform/deployments/tailscale/tailnet/policy.hujson` — applied by Terraform, not Flux — so the relay is an inert device until it lands.
 
 ## Service sharing with external users
 
