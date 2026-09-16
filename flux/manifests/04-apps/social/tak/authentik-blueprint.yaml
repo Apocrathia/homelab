@@ -34,8 +34,8 @@ data:
       # the outpost executes it on every bind. It must be an
       # authentication-designation flow WITHOUT an MFA stage: the outpost's
       # flow executor cannot answer interactive MFA challenges, and with
-      # mfa_support disabled it would submit the bind password as a TOTP
-      # code. Reuses the stock password and login stages.
+      # mfa_support disabled it would submit the bind secret as a TOTP
+      # code. Reuses the stock credential and login stages.
       - model: authentik_flows.flow
         state: present
         identifiers:
@@ -87,9 +87,9 @@ data:
           base_dn: "OU=tak,DC=ldap,DC=apocrathia,DC=com"
           bind_mode: "direct"
           search_mode: "direct"
-          # Friends may not have TOTP devices, and semicolon passwords
-          # would misparse in the TOTP flow. Users bind directly with
-          # their Authentik passwords.
+          # Friends may not have TOTP devices, and semicolons in
+          # credentials would misparse in the TOTP flow. Users bind
+          # directly with their Authentik credentials.
           mfa_support: false
 
       # Hidden application: LDAP bind/search access is checked against this
@@ -153,8 +153,8 @@ data:
       # Bind service user for OTS's runtime group lookups. flask-ldap3-login's
       # get_user_groups() opens its own connection bound with these
       # credentials - direct bind covers only login. The blueprint cannot
-      # carry a password: the operator sets it (to the 1Password
-      # ldap-bind-password value) after import. Member of `users` so the
+      # hold a secret value; the operator sets it (the 1Password
+      # ldap-bind value) after import. Member of `users` so the
       # outpost's app access check passes; carries the search role above.
       - model: authentik_core.user
         state: present
