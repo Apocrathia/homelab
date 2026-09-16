@@ -133,12 +133,29 @@ data:
                   path: /spec/template/spec/automountServiceAccountToken
                   value: false
 
+      # Role granting full-directory search. Without it the outpost limits
+      # any non-superuser bind to the groups that user is a member of, so
+      # OTS's runtime group lookups would only ever see the bind user's own
+      # groups. This is the documented "Search full LDAP directory"
+      # permission; the blueprint serializer only supports role-wide
+      # (global) assignment, which equals object scope here since this is
+      # the cluster's only LDAP provider. Visibility is confined to this
+      # outpost - the OTS webui only surfaces tak_* groups.
+      - model: authentik_rbac.role
+        state: present
+        identifiers:
+          name: "tak-ldap-search"
+        attrs:
+          name: "tak-ldap-search"
+          permissions:
+            - "authentik_providers_ldap.search_full_directory"
+
       # Bind service user for OTS's runtime group lookups. flask-ldap3-login's
       # get_user_groups() opens its own connection bound with these
       # credentials - direct bind covers only login. The blueprint cannot
       # carry a password: the operator sets it (to the 1Password
       # ldap-bind-password value) after import. Member of `users` so the
-      # outpost's app access check passes.
+      # outpost's app access check passes; carries the search role above.
       - model: authentik_core.user
         state: present
         identifiers:
@@ -150,6 +167,8 @@ data:
           is_active: true
           groups:
             - !Find [authentik_core.group, [name, "users"]]
+          roles:
+            - !Find [authentik_rbac.role, [name, "tak-ldap-search"]]
 
       # OTS administrator group (authentik_core.group) - membership grants
       # the OTS administrator role via OTS_LDAP_ADMIN_GROUP in config.yml
