@@ -98,7 +98,7 @@ spec:
             value: "/opt/data/npm/bin:/opt/data/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
-            value: "0.9.4"
+            value: "0.9.5"
           # Let kernel bootstrap install uv by itself when missing instead of
           # failing the (non-TTY) install prompt. Normally a no-op: the boot
           # script pre-seeds uv on the PVC.
