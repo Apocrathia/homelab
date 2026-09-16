@@ -18,9 +18,10 @@ metadata:
       on any write to that ConfigMap this policy stamps a changing annotation
       on the named Deployment pod template, which triggers a rolling restart.
 spec:
-  mutating: true
   # Admission-time only: mutateExisting targets are live objects, there is
-  # nothing useful to do on old reports.
+  # nothing useful to do on old reports. (No `mutating: true` — this field is
+  # not in the v1 CRD schema the installed operator serves, and mutate rules
+  # are detected from the rule body anyway.)
   background: false
   rules:
     - name: stamp-reload-annotation
