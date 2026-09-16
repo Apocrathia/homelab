@@ -7,7 +7,7 @@ resources:
   - audit-automount-sa-token.yaml
   - block-default-namespace.yaml
   - mcpserver-deployment-recreate-strategy.yaml
-  - reload-deployment-on-configmap-change.yaml
+  - reload-crossview-on-configmap-change.yaml
   - sync-docker-io-imagepullsecret.yaml
   # - cleanup-replicasets.yaml
   # - cleanup-pods.yaml

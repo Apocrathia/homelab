@@ -19,23 +19,6 @@ spec:
       interval: 30m
   # CNPG cluster init (~1-2m) must finish inside the upgrade wait window
   timeout: 10m
-  # The chart ships no checksum annotation on the Deployment pod template, so
-  # ConfigMap-only changes (chart values) never roll the pod. Label the
-  # rendered ConfigMap so the kyverno reload-deployment-on-configmap-change
-  # policy restarts the Deployment whenever it changes.
-  postrenders:
-    kustomize:
-      patches:
-        - target:
-            kind: ConfigMap
-            name: crossview-config
-          patch: |
-            apiVersion: v1
-            kind: ConfigMap
-            metadata:
-              name: crossview-config
-              labels:
-                apocrathia.com/reload-deployment: crossview
   install:
     remediation:
       retries: 3
