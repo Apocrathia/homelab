@@ -19,6 +19,13 @@
 		"tag:k8s-operator": ["autogroup:admin"],
 		"tag:k8s":          ["tag:k8s-operator"],
 		"tag:game":         ["autogroup:admin"],
+		// Dedicated tag for the PeerRelay device (the operator assigns it via
+		// spec.tags on the PeerRelay CR; the operator must own any tag it
+		// assigns). Grant dst uses this tag, not the device hostname — the
+		// ACL grammar has no hostname dst form (bare "peer-relay-0" was
+		// rejected with "invalid address"; learned in the tofu-apply behind
+		// !4643).
+		"tag:peer-relay":   ["tag:k8s-operator"],
 	},
 
 	// autoApprovers lets tagged devices approve certain requests without manual
@@ -83,19 +90,22 @@
 		},
 
 		// Peer relay: tailnet members and admins may relay client-to-client
-		// traffic through the cluster's PeerRelay device (peer-relay-0,
-		// deployed by the tailscale operator —
-		// flux/manifests/03-services/tailscale/config/peer-relay.yaml) when
-		// a direct connection isn't possible. The tailscale.com/cap/relay
-		// app capability gates who can allocate relay bindings on the
-		// device; no separate network grant to the relay is needed. Friends
-		// (autogroup:member) are included: the relay forwards only the
-		// WireGuard-encrypted underlay between peers — same trust model as
-		// Tailscale's DERP servers, self-hosted — unlike exit nodes below,
-		// which stay admin-only because they egress to the internet.
+		// traffic through the cluster's PeerRelay device (deployed by the
+		// tailscale operator —
+		// flux/manifests/03-services/tailscale/config/peer-relay.yaml,
+		// tagged tag:peer-relay) when a direct connection isn't possible.
+		// The tailscale.com/cap/relay app capability gates who can allocate
+		// relay bindings on the device; no separate network grant to the
+		// relay is needed. dst is the tag, not the device hostname — the
+		// ACL grammar has no hostname dst form (bare "peer-relay-0" was
+		// rejected with "invalid address"). Friends (autogroup:member) are
+		// included: the relay forwards only the WireGuard-encrypted
+		// underlay between peers — same trust model as Tailscale's DERP
+		// servers, self-hosted — unlike exit nodes below, which stay
+		// admin-only because they egress to the internet.
 		{
 			"src": ["autogroup:member", "autogroup:admin"],
-			"dst": ["peer-relay-0"],
+			"dst": ["tag:peer-relay"],
 			"app": {
 				"tailscale.com/cap/relay": [],
 			},

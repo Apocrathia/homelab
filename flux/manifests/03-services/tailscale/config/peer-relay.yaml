@@ -37,7 +37,14 @@ metadata:
 spec:
   # One relay device, peer-relay-0. The exit-nodes Connector runs two replicas,
   # but each peer relay needs its own router port forward for WAN reachability,
-  # so this stays at one until that changes. Tagged tag:k8s via the operator's
-  # default tags, so the existing tailnet policy applies with no changes.
+  # so this stays at one until that changes. Carries a dedicated tag:peer-relay
+  # (not the operator's default tag:k8s) so the relay grant in the tailnet
+  # policy can target it precisely — grant dst has no hostname form, and
+  # tag:k8s would also name the exit nodes and gateways, where the relay
+  # capability does nothing. tag:peer-relay is owned by the operator
+  # (tag:k8s-operator) via tagOwners. Changing tags requires recreating the
+  # device: delete this CR and let Flux re-apply it.
   hostnamePrefix: peer-relay
   replicas: 1
+  tags:
+    - tag:peer-relay

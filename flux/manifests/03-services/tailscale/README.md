@@ -43,11 +43,11 @@ Exit-node routes need approval per device, and the Connector recreates pods on r
 
 ## Peer relays
 
-`config/peer-relay.yaml` runs a `PeerRelay` (`replicas: 1`) whose pod acts as a tailnet peer relay: `peer-relay-0`, tagged `tag:k8s` via the operator's default tags ([docs](https://tailscale.com/docs/features/peer-relay)). When a direct connection between two tailnet devices isn't possible, they relay through this device instead of falling back to Tailscale's DERP servers. Peers must run Tailscale 1.86+.
+`config/peer-relay.yaml` runs a `PeerRelay` (`replicas: 1`) whose pod acts as a tailnet peer relay: `peer-relay-0`, carrying the dedicated `tag:peer-relay` via `spec.tags` ([docs](https://tailscale.com/docs/features/peer-relay)). Grant dst in the tailnet policy has no hostname form — the tag is how the policy targets the relay. Changing tags means recreating the device: delete the CR and let Flux re-apply it. When a direct connection between two tailnet devices isn't possible, they relay through this device instead of falling back to Tailscale's DERP servers. Peers must run Tailscale 1.86+.
 
 The operator creates one LoadBalancer Service per replica exposing UDP 41641 (fixed by the operator, not configurable via the CR) and advertises each Service's load balancer address as the relay's static endpoint. `peer-relay-pool` and `peer-relay-l2-policy` in the same file give that Service the IP 10.100.1.94 and announce it on the LAN, following the per-service Cilium pool pattern (`gateway`, `ingest`). The IP sits in the static space below the Services VLAN DHCP pool (10.100.1.100–200). LAN peers reach the relay directly; peers outside the LAN need the router to forward UDP 41641 to this address.
 
-Devices can only relay through it once the tailnet policy grants the `tailscale.com/cap/relay` capability. That grant lives in `terraform/deployments/tailscale/tailnet/policy.hujson` — applied by Terraform, not Flux — so the relay is an inert device until it lands.
+Devices can only relay through it once the tailnet policy grants the `tailscale.com/cap/relay` capability. That grant lives in `terraform/deployments/tailscale/tailnet/policy.hujson` (dst: `tag:peer-relay`, src: `autogroup:member` + `autogroup:admin`) — applied by Terraform, not Flux — so the relay is an inert device until it lands. `tag:peer-relay` is owned by `tag:k8s-operator` in `tagOwners`, which is what lets the operator assign it to the relay device.
 
 ## Service sharing with external users
 
