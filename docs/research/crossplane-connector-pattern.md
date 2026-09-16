@@ -234,6 +234,13 @@ MRs in v2 — the best per-resource ergonomics of the four.
   existing `terraform/` deployments are CI-reconciled static infra; cluster
   Workspaces are Flux-reconciled app config. Two stacks, two states, never
   the same backend.
+- State will contain the per-app OIDC `client_secret` (Sensitive-marked, but
+  Terraform state is plaintext). This is a deliberate divergence from the CI
+  stack's rule against persisting credentials in state
+  (`docs/plans/tofu-1password-provider.md` uses ephemeral items there): here
+  the values must be resource attributes, and the state Secret is
+  RBAC-gated in the cluster. Acceptable tradeoff, but it should stay an
+  explicit decision.
 - Pattern C uses the same k8s-Secret state backend by default, plus
   `writeOutputsToSecret` for cross-object wiring.
 
@@ -285,12 +292,23 @@ confirm.
 1. Spike one app first (`file-issue` candidate): migrate a low-stakes
    Authentik app entry (e.g. `headlamp`) from blueprint ConfigMap to a
    namespaced provider-opentofu Workspace with the kubernetes state backend.
-   Prove create/update/delete/drift-repair end to end, then decide.
+   Prove create/update/delete/drift-repair end to end, then decide. Define
+   the OIDC client credentials statically in 1Password and set them on
+   provider creation (see recommendation 3) so delete/recreate cycles never
+   churn credentials.
 2. Keep Workspaces per-app with a shared module (app + provider + binding).
    Per-app delete propagation and per-app status are the point; one
    mega-workspace turns one accidental CR deletion into a full Authentik wipe.
-3. Add a new 1Password item holding a scoped Authentik API token (service
-   account): OnePasswordItem → Secret → ProviderConfig credentials array.
+3. Make 1Password the source of truth for both connection directions. A
+   scoped Authentik API token (service account) feeds the ProviderConfig
+   credentials array. The per-app OIDC `client_id`/`client_secret` live in
+   the app's existing 1Password item and are set explicitly on provider
+   creation: the goauthentik provider takes `client_id` as required and
+   `client_secret` as optional/sensitive, so Authentik never generates
+   credentials and the blueprint-era "copy the client ID from the Authentik
+   UI into 1Password" step disappears. The app's HelmRelease `valuesFrom`
+   keeps reading the same item; both consumers stay in sync across any
+   provider lifecycle.
 4. Keep blueprints for bootstrap-critical config (Authentik's own internal
    defaults, the worker's own needs). Migrate app-facing entries
    (Application/Provider/bindings) progressively, and delete the
