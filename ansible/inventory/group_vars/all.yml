@@ -7,6 +7,12 @@ github_username: Apocrathia
 username: ianyoung
 ansible_user: ianyoung
 
+# Dedicated automation account (roles/common, user tag): locked password,
+# deploy-key auth, NOPASSWD sudo. ansible_user flips to this account in a
+# follow-up once hosts have it (see docs/plans/ansible-host-gitops.md).
+common_ansible_account: ansible
+common_ansible_account_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBIFitm0mvFG8mh2BWNzip5SBdrCkHN9hfxNj9ETlBRg ansible-gitops@homelab"
+
 # Packages installed by roles/common (packages tag). Names must exist on both
 # Debian (game) and Fedora (desktops); OS-specific bits live in packages_*.yml.
 common_packages:
