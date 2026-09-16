@@ -73,7 +73,7 @@ spec:
           containers:
             - name: immich-cli
               # renovate: datasource=docker depName=ghcr.io/immich-app/immich-cli
-              image: ghcr.io/immich-app/immich-cli:3.2.1@sha256:1353bdc3a8a13d4a0af736a5a0ab62a7f6ed5701e63efce9c785631c9670e24c
+              image: ghcr.io/immich-app/immich-cli:3.2.2@sha256:893e12b5de29e0a75212b8383632bb102b919f30fd93e09b776ce77f1f18565e
               args:
                 - upload
                 - --recursive
