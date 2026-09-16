@@ -1,0 +1,161 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kavita
+  namespace: kavita
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: kavita
+      # renovate: datasource=docker depName=ghcr.io/kareadita/kavita
+      image: ghcr.io/kareadita/kavita:0.9.1@sha256:31181a32f0dda73cae68721867028a7253d57881b58bea5754cd9e578e75421a
+      container:
+        name: kavita
+        port: 5000
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 5000
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /kavita/config
+        - name: comics
+          mountPath: /comics
+          readOnly: true
+        - name: manga
+          mountPath: /manga
+          readOnly: true
+        - name: books
+          mountPath: /books
+          readOnly: true
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/health
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: config
+            capacity: 20Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: comics
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Comics"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: manga
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Manga"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: books
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+
+    secrets:
+      enabled: false # No secrets needed - web UI bootstrap, OIDC configured in-app
+
+    authentik:
+      enabled: true
+      mode: oidc
+      displayName: "Kavita"
+      externalHost: "https://kavita.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/kavita/icon.svg"
+      category: "Media"
+      metaDescription: "Self-hosted digital library for comics, manga, and ebooks"
+      metaPublisher: "Kavita"
+      oidc:
+        subMode: "user_username"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        customScopeMappings:
+          - name: "kavita-email-verified-mapping"
+            scopeName: "email"
+            description: "Email address with email_verified set to True for Kavita"
+            expression: |
+              return {
+                  "email": request.user.email,
+                  "email_verified": True
+              }
+        redirectUris:
+          - url: "https://kavita.gateway.services.apocrathia.com/signin-oidc"
+            matchingMode: "strict"
+          - url: "https://kavita.gateway.services.apocrathia.com/signout-callback-oidc"
+            matchingMode: "strict"
+
+    gatus:
+      path: /api/health
+
+    httproute:
+      enabled: true
+      hostname: kavita.gateway.services.apocrathia.com

@@ -37,6 +37,7 @@ resources:
   - servers/invidious
   - servers/jellyfin
   - servers/jellyfin-ai-upscaler
+  - servers/kavita
   - servers/komga
   - servers/plex
   - servers/restreamer
