@@ -396,11 +396,10 @@ spec:
       # Friends reach the app over the tailnet.
       shared: true
       category: "Social"
-      displayName: "OpenTAKServer"
+      displayName: "TAK"
       externalHost: "https://tak.gateway.services.apocrathia.com"
-      # No icon asset exists upstream; empty overrides the chart's demo-app
-      # default icon
-      icon: ""
+      # TAK brand mark (tak.gov)
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/tak/icon.svg"
       metaDescription: "TAK server for ATAK - CoT streaming, missions, datapackages"
       metaPublisher: "OpenTAKServer"
       # The SPA authenticates against the OTS API with its own session
