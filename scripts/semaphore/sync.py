@@ -57,6 +57,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class Client:
     def __init__(self, base: str, token: str, project_id: int):
+        if not base.startswith(("http://", "https://")):
+            raise ValueError(f"SEMAPHORE_URL must be http(s), got {base!r}")
         self.base = base.rstrip("/") + "/api"
         self.token = token
         self.project = project_id
@@ -72,6 +74,8 @@ class Client:
                 "Content-Type": "application/json",
             },
         )
+        # URL = validated http(s) base + hardcoded paths; no user input reaches it.
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
         try:
             with urllib.request.urlopen(r, timeout=20) as resp:
                 raw = resp.read().decode()
