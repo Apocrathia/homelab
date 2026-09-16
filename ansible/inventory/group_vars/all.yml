@@ -5,11 +5,13 @@ github_username: Apocrathia
 
 # Primary login user created/managed by roles/common (user tag).
 username: ianyoung
-ansible_user: ianyoung
+
+# CI/automation connects as the managed service account (deploy-key auth,
+# NOPASSWD sudo — no become password). Provisioned by roles/common.
+ansible_user: ansible
 
 # Dedicated automation account (roles/common, user tag): locked password,
-# deploy-key auth, NOPASSWD sudo. ansible_user flips to this account in a
-# follow-up once hosts have it (see docs/plans/ansible-host-gitops.md).
+# deploy-key auth, NOPASSWD sudo.
 common_ansible_account: ansible
 common_ansible_account_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBIFitm0mvFG8mh2BWNzip5SBdrCkHN9hfxNj9ETlBRg ansible-gitops@homelab"
 

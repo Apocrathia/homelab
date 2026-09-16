@@ -40,12 +40,14 @@ NUC (BLKNUC7i7DNK1E).
   reversible later with Semaphore if a UI is needed.
 - **Secrets** — 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
   via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Fields:
-  `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline text),
-  `sudo-password`. No committed vault file / no GitLab SSH vars.
+  `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline text).
+  No committed vault file / no GitLab SSH vars.
 - **Layout** — lowercase `ansible/`; purpose inventory groups; thin playbooks +
   `site.yml`; minimal `ansible.cfg` (not a dumped defaults file).
-- **Become** — `--become-password-file` from Connect `sudo-password`;
-  `common_passwordless_sudo` defaults false.
+- **Become** — none needed: CI connects as the `ansible` service account
+  (NOPASSWD sudoers entry). `common_passwordless_sudo` stays false for humans
+  (phase 1 used `--become-password-file` from Connect `sudo-password`; retired
+  2026-09-16).
 - **Port from homelab.gh** — `common` tags, GitHub `.keys` authorized_keys,
   timezone/`github_username` group vars, `requirements.yml`. Drop
   `ignore_errors: true`, k8s/docker/proxmox roles, compose files.
@@ -66,10 +68,12 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Confirm Connect token can read `Secrets` / `ansible-secrets`
 - [x] Install deploy pubkey on hosts; MR `ansible-check` green
 - [ ] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`
-- [ ] Service account phase 1: role manages `ansible` user (locked password,
-      deploy key, NOPASSWD sudo); merge + `ansible-apply` provisions hosts
-- [ ] Service account phase 2: flip `ansible_user`, drop become password from
-      CI + 1Password (`sudo-password` field), README/CI notes
+- [x] Service account phase 1: role manages `ansible` user (locked password,
+      deploy key, NOPASSWD sudo); merged !4399, applied + verified on both
+      hosts 2026-09-15
+- [x] Service account phase 2: flip `ansible_user`, drop become password from
+      CI + README/CI notes (operator follow-up: delete the `sudo-password`
+      field from the 1Password `ansible-secrets` item)
 - [ ] Stage UniFi NUC + Track A cutover (links to related issue)
 - [ ] Expand roles only when a host needs them (no speculative roles)
 
