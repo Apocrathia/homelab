@@ -8,12 +8,12 @@ area: other
 
 # Crossplane as the cross-system connector
 
-> Research note (September 2026). Surveyed using Crossplane as the GitOps
-> connector for config that lives in external systems but changes with the
-> cluster — Authentik applications/providers/bindings as the prime candidate —
-> comparing native Crossplane providers, Terraform-run-by-Crossplane, and Flux
-> tofu-controller against the current Authentik blueprint sidecar pattern.
-> Follow-ups are proposals until they land as issues/plans or in the tree.
+> Research note (September 2026). Can Crossplane be the GitOps connector for
+> config that lives in external systems but changes with the cluster?
+> Authentik is the test case: native Crossplane providers vs
+> Terraform-run-by-Crossplane vs Flux tofu-controller vs the current blueprint
+> sidecar pattern. Follow-ups are proposals until they land as issues/plans or
+> in the tree.
 
 ## Sources
 
@@ -54,7 +54,7 @@ Today every app that needs an Authentik entry ships a blueprint ConfigMap:
 3. Authentik's blueprint **discovery** imports the files. Import is an
    idempotent **apply**: `state: present` upserts by identifiers.
 
-What that model cannot do (verified against Authentik 2026.8.2 behavior):
+Gaps in that model, verified against Authentik 2026.8.2 behavior:
 
 - **Delete propagation** — removing the ConfigMap removes the file, not the
   Authentik objects. Deletion needs a second blueprint with `state: absent`
@@ -77,7 +77,7 @@ What that model cannot do (verified against Authentik 2026.8.2 behavior):
   blueprint instance's status to `error` (visible in the Authentik admin
   UI) and log to the worker, but Flux keeps showing the ConfigMap as healthy
   even when the import failed.
-- **(Not a problem: atomicity)** — applies _are_ transactional:
+- **Atomicity (not actually a problem)** — applies _are_ transactional:
   `Importer.apply()` wraps the whole import in a Django `atomic()` block and
   rolls back on failure (`importer.py`, 2026.8.2). A failed import leaves no
   partial objects.
@@ -94,41 +94,41 @@ What that model cannot do (verified against Authentik 2026.8.2 behavior):
 
 The repo already runs OpenTofu + Terragrunt in GitLab CI for external infra
 (Proxmox, Talos, Cloudflare, GitLab, Okta, Tailscale). That pipeline is
-merge-event-triggered on `terraform/**/*` — batch runs in in-cluster
-runners only when an MR touches the HCL. It manages **static** inventory:
-resources that exist independent of any cluster workload, reconciled when a
-MR changes them, never on a schedule.
+merge-event-triggered on `terraform/**/*`: batch runs in in-cluster runners
+only when an MR touches the HCL, never on a schedule. It manages **static**
+inventory — resources that exist independent of any cluster workload.
 
-Per-app Authentik config is different: the desired state lives next to each
+Per-app Authentik config is different. The desired state lives next to each
 app's Flux manifests, changes whenever an app is added or removed, and should
-reconcile continuously — not only when someone edits an HCL file. The gap is
-not "Terraform vs Crossplane" but **where the reconcile loop lives**: CI
-(batch, on merge) vs an in-cluster controller (continuous, per-resource
-status).
+reconcile continuously. Someone editing an HCL file should not be the only
+thing that triggers it. The actual question is where the reconcile loop
+lives: CI (batch, on merge) vs an in-cluster controller (continuous,
+per-resource status).
 
 ## What already aligns
 
-- **Crossplane core 2.4.1 is deployed** (`flux/manifests/03-services/crossplane/`)
-  — core control plane only, zero providers, exactly one Provider manifest
-  away from the first managed resource. Namespaced MRs are the v2 default.
-- **Crossview dashboard** already renders providers, MRs, and compositions —
-  the observability half of "config as cluster objects" exists.
-- **The provider-adding runbook exists** in the crossplane README: Provider
-  CR → ProviderConfig with 1Password-backed secret →
-  `defaultActivations` scoping against upjet CRD bloat.
-- **Credential pattern is proven** — tofu already resolves provider creds via
+- Crossplane core 2.4.1 is already deployed
+  (`flux/manifests/03-services/crossplane/`), core only, zero providers. The
+  first managed resource is one Provider manifest away. Namespaced MRs are
+  the v2 default.
+- Crossview already renders providers, MRs, and compositions, so the
+  observability half of "config as cluster objects" exists.
+- The crossplane README already carries the provider-adding runbook: Provider
+  CR → ProviderConfig with 1Password-backed secret → `defaultActivations`
+  scoping against upjet CRD bloat.
+- The credential pattern is proven. Tofu already resolves provider creds via
   1Password Connect (`docs/plans/tofu-1password-provider.md`); the Crossplane
   equivalent is a `OnePasswordItem` → Secret → ProviderConfig chain.
-- **The Authentik API is Terraform-shaped** — the goauthentik Terraform
-  provider covers Application, Provider, Group, User, bindings, flows, outposts;
-  whatever pattern wins, that surface is the coverage target.
+- The Authentik API is Terraform-shaped: the goauthentik provider covers
+  Application, Provider, Group, User, bindings, flows, outposts. Whatever
+  pattern wins, that surface is the coverage target.
 
 ## Key findings
 
-### Pattern landscape
+### Pattern candidates
 
-Four candidate patterns for per-app Authentik config (and, generalizing, any
-external system with an API):
+Four candidate patterns for per-app Authentik config. The same comparison
+would apply to any external system with an API.
 
 | #   | Pattern                                    | Reconcile loop             | Authentik coverage today           |
 | --- | ------------------------------------------ | -------------------------- | ---------------------------------- |
@@ -156,8 +156,8 @@ The maintained surface is `goauthentik/terraform-provider-authentik` — 141
 stars, release v2026.8.0 (2026-09-09) tracking Authentik 2026.8, pushed within
 the last week. It covers Application, OAuth2/LDAP/proxy/SAML providers, Group,
 User, policy bindings, flows, and outposts. Any pattern that can run Terraform
-gets full, current Authentik coverage; a native Crossplane provider does not
-exist to compete.
+gets full, current Authentik coverage. There is no native provider to
+compete with it.
 
 ### B — Terraform via Crossplane Workspace: healthy, with a lineage caveat
 
@@ -175,8 +175,8 @@ exist to compete.
   args. v1.1.8 ships both cluster-scoped (`opentofu.upbound.io`) and
   namespaced (`opentofu.m.upbound.io`) Workspace CRDs — per-app locality in
   the app's own directory/namespace works.
-- **Critical gotcha:** the provider does **not** persist Terraform state.
-  Modules must declare their own backend; the canonical in-cluster option is
+- One critical gotcha: the provider does not persist Terraform state.
+  Modules must declare their own backend. The canonical in-cluster option is
   the Terraform/OpenTofu `kubernetes` backend (state stored as a k8s Secret).
 - CRD footprint is small: 7 CRDs total in the v1.1.8 package (Workspace,
   ProviderConfig, ProviderConfigUsage in both cluster- and namespaced scopes,
@@ -192,10 +192,10 @@ exist to compete.
   state in a k8s Secret via the default Kubernetes backend. `approvePlan:
 auto` or named-plan approval for PR-style review; `branchPlanner` (tech
   preview) auto-plans branches.
-- **Dangerous default for this use case:** `destroyResourcesOnDeletion`
-  defaults to **false** — deleting the CR orphans the external resources,
-  the exact inverse of Crossplane's default. Drift detection is on by default
-  and repaired each interval.
+- Dangerous default for this use case: `destroyResourcesOnDeletion` is
+  `false` by default, so deleting the CR orphans the external resources.
+  That is the exact inverse of Crossplane's default. Drift detection is on
+  by default and repaired each interval.
 - Cost: one more controller in the Flux fleet. It competes with pattern B for
   the same job; running both for different systems is defensible but adds
   two IaC mental models to the lab.
@@ -260,62 +260,58 @@ MRs in v2 — the best per-resource ergonomics of the four.
 
 ## Conclusion
 
-`inconclusive → leaning B`. The survey is conclusive on the landscape; the
-pattern choice needs one bounded live spike to confirm.
+`inconclusive → leaning B`. The survey answers everything that can be
+answered from sources; the pattern choice needs one bounded live spike to
+confirm.
 
-- **The idea is sound**: Crossplane as the connector for cluster-adjacent
+- The idea is sound. Crossplane as the connector for cluster-adjacent
   external config is a real, supported pattern, and the lab is one Provider
   manifest away from it.
-- **The viable engine is Terraform either way** — there is no maintained
-  native Authentik provider, so the choice is only _which reconcile loop_
-  runs the tofu: Crossplane Workspaces (B) or tofu-controller (C).
-- **B fits this lab better**: the Crossplane core is already deployed and
-  dashboarded, delete-propagation defaults to safe (destroy), and the
-  CRD/ops footprint is 7 CRDs. C would add a second IaC controller to the
-  Flux fleet and defaults to orphan-on-delete — the exact failure mode being
-  escaped.
-- **The blueprint pain is real and source-verified**, not operator
-  exaggeration: applies fire on file events (only the discovery path is
-  hash-gated; the docs' "60-minute" claim is discovery cadence, not
-  re-apply), nothing reconciles on a timer, there is no orphan cleanup, and
-  no object ever surfaces status to Flux.
+- The engine is Terraform either way. There is no maintained native
+  Authentik provider, so the only real choice is which reconcile loop runs
+  the tofu: Crossplane Workspaces (B) or tofu-controller (C).
+- B fits this lab better. The Crossplane core is already deployed and
+  dashboarded, delete-propagation defaults to safe (destroy), and the CRD
+  footprint is small. C would add a second IaC controller to the Flux fleet
+  and defaults to orphan-on-delete, which is the same silent-leaves problem
+  blueprints have today.
+- The blueprint pain is real, not operator exaggeration. Applies fire on
+  file events (only the discovery path is hash-gated; the docs' "60-minute"
+  claim is discovery cadence, not re-apply), nothing reconciles on a timer,
+  there is no orphan cleanup, and no object ever surfaces status to Flux.
 
 ## Recommendations
 
-1. **Spike (bounded, one app):** migrate one low-stakes Authentik app entry
-   (e.g. `headlamp`) from blueprint ConfigMap to a namespaced
-   provider-opentofu Workspace with the kubernetes state backend. Prove
-   create/update/delete/drift-repair end to end, then decide. → `file-issue`
-   candidate.
-2. **Module strategy:** prefer per-app Workspaces with a shared module
-   (app + provider + binding) over one mega-workspace — per-app delete
-   propagation and per-app status are the point. One mega-workspace turns one
-   accidental CR deletion into a full Authentik wipe.
-3. **Credentials:** new 1Password item holding an Authentik API token
-   (service account, scoped); OnePasswordItem → Secret → ProviderConfig
-   credentials array.
-4. **Keep blueprints for bootstrap-critical config** (Authentik's own
-   internal defaults, the worker's own needs). Migrate app-facing entries
-   (Application/Provider/bindings) progressively; delete-on-ship the
+1. Spike one app first (`file-issue` candidate): migrate a low-stakes
+   Authentik app entry (e.g. `headlamp`) from blueprint ConfigMap to a
+   namespaced provider-opentofu Workspace with the kubernetes state backend.
+   Prove create/update/delete/drift-repair end to end, then decide.
+2. Keep Workspaces per-app with a shared module (app + provider + binding).
+   Per-app delete propagation and per-app status are the point; one
+   mega-workspace turns one accidental CR deletion into a full Authentik wipe.
+3. Add a new 1Password item holding a scoped Authentik API token (service
+   account): OnePasswordItem → Secret → ProviderConfig credentials array.
+4. Keep blueprints for bootstrap-critical config (Authentik's own internal
+   defaults, the worker's own needs). Migrate app-facing entries
+   (Application/Provider/bindings) progressively, and delete the
    `state: absent` cleanup hacks as each migrates.
-5. **Generalize deliberately:** the same pattern covers any external system
-   with a healthy TF provider (Cloudflare, Tailscale, GitLab) once the
-   Authentik spike proves the loop. Do not adopt systems whose TF providers
-   are dead (okta community provider is stale — keep okta in CI tofu).
+5. Generalize deliberately: the same pattern covers any external system with
+   a healthy TF provider (Cloudflare, Tailscale, GitLab) once the Authentik
+   spike proves the loop. Keep systems whose TF providers are dead (okta
+   community provider is stale) in CI tofu.
 
 ## What not to do
 
-- **Do not generate or adopt a native provider-authentik** — 103 CRDs, no
-  maintained upstream, and it would need the operator to become the
-  maintainer.
-- **Do not use `upbound/provider-terraform`** (deleted repo, TF CLI frozen
-  at 1.5.7 BSL). Use `upbound/provider-opentofu`.
-- **Do not point cluster Workspaces at the CI stack's GitLab HTTP state
-  backend** — two reconcile loops writing one state file is the classic
+- Do not generate or adopt a native provider-authentik: 103 CRDs, no
+  maintained upstream, and the operator becomes the maintainer.
+- Do not use `upbound/provider-terraform` (deleted repo, TF CLI frozen at
+  1.5.7 BSL). Use `upbound/provider-opentofu`.
+- Do not point cluster Workspaces at the CI stack's GitLab HTTP state
+  backend. Two reconcile loops writing one state file is the classic
   split-brain.
-- **Do not migrate the blueprint fleet in one MR.** The importer has no
-  orphan cleanup, so a botched migration leaves objects behind with no status
-  signal — migrate per-app with a verification step each time.
-- **Do not trust the "blueprints re-apply every 60 minutes" doc line** when
-  reasoning about drift; the 2026.8.2 source is file-event driven, with only
+- Do not migrate the blueprint fleet in one MR. The importer has no orphan
+  cleanup, so a botched migration leaves objects behind with no status
+  signal. Migrate per-app with a verification step each time.
+- Do not trust the "blueprints re-apply every 60 minutes" doc line when
+  reasoning about drift. The 2026.8.2 source is file-event driven, with only
   the discovery path hash-gated (see above).
