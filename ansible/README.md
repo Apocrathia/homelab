@@ -39,7 +39,7 @@ ansible-lint playbooks roles inventory
 ansible-playbook playbooks/common.yml --limit game --check --diff
 ```
 
-Day-0 (create user + keys), often as root once:
+Day-0 (create login user, service account + keys), as root once:
 
 ```bash
 ansible-playbook playbooks/bootstrap.yml --limit game -u root
@@ -89,6 +89,29 @@ every host — CI never logs in as a human account:
 CI connects as this account (`ansible_user: ansible` in `group_vars/all.yml`)
 using the deploy key; sudo needs no password. New hosts get the account on
 day 0 via bootstrap (`-u root`); `common.yml` keeps it converged after that.
+
+## Adding a host
+
+Bootstrap is a prerequisite, not optional: a host in inventory without its
+`ansible` account fails CI with SSH auth errors; missing from the CI
+`known_hosts` blob, it fails with a host-key mismatch.
+
+1. **Inventory** — add the host + `ansible_host` DNS under the right purpose
+   group in [`inventory/hosts.yml`](./inventory/hosts.yml) (the NUC note there
+   is a live example).
+2. **Bootstrap (day-0, once)** — from a laptop, as root:
+   `ansible-playbook playbooks/bootstrap.yml --limit <newhost> -u root`
+   (run from `ansible/`; `-K` if root needs a password). Creates `ianyoung`
+   **and** the `ansible` service account — deploy key, NOPASSWD sudo. After
+   this, `common.yml` keeps both converged.
+3. **Stage CI's known_hosts** — CI runs with host-key checking on. From the
+   laptop: `ssh-keyscan <newhost-fqdn>`, verify the fingerprint against the
+   host console if you care (TOFU is fine on the tailnet), then append the
+   output to the `ansible_gitops_known_hosts` field in the 1Password
+   `ansible-secrets` item. The next job re-fetches the field, so no restart
+   is needed.
+4. **Verify** — next MR touching `ansible/**` runs `ansible-check` as
+   `ansible@<newhost>`; a main push applies.
 
 ## Secrets
 
