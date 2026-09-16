@@ -1,0 +1,109 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: speedtest
+  namespace: speedtest
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: speedtest
+      namespace: speedtest
+      # renovate: datasource=docker depName=ghcr.io/librespeed/speedtest
+      image: ghcr.io/librespeed/speedtest:6.3.0@sha256:af011d4fb5709c6e2b2f381925a6c290d53ce2ed35fa8860e7d33e20690d5065
+      container:
+        name: speedtest
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      # php:8-apache image: entrypoint chowns /var/www/html and edits apache
+      # config as root, then the master drops to www-data workers
+      securityContext:
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 33
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "true"
+        readOnlyRootFilesystem: "false"
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+            - DAC_OVERRIDE
+            - KILL
+            - FOWNER
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: true
+      shared: true
+      category: "Productivity"
+      displayName: "LibreSpeed"
+      externalHost: "https://speedtest.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/speedtest/icon.svg"
+      metaDescription: "Self-hosted HTML5 network speed test"
+      metaPublisher: "LibreSpeed"
+
+    httproute:
+      enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
