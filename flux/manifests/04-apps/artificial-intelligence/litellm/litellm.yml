@@ -352,42 +352,42 @@ agents:
     agent_card_params:
       name: "Git Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-git/git-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "home-agent"
     agent_card_params:
       name: "Home Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-home/home-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "homelab-agent"
     agent_card_params:
       name: "Homelab Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "infrastructure-agent"
     agent_card_params:
       name: "Infrastructure Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "knowledge-agent"
     agent_card_params:
       name: "Knowledge Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "media-agent"
     agent_card_params:
       name: "Media Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-media/media-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "search-agent"
     agent_card_params:
       name: "Search Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-search/search-agent"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
   - agent_name: "hermes-agent"
     agent_card_params:
       name: "Hermes Agent"
       url: "http://hermes-agent.hermes-agent.svc.cluster.local:9900"
-      protocolVersion: "0.3"
+      protocolVersion: "1.0"
     # Hermes enforces bearer auth on A2A message/send. The env value must
     # include the "Bearer " prefix (os.environ substitution replaces the
     # whole string; there is no concatenation).

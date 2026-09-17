@@ -19,16 +19,14 @@ import httpx
 import uvicorn
 from a2a.client import ClientConfig, ClientFactory
 from a2a.client.card_resolver import A2ACardResolver
+from a2a.helpers.proto_helpers import get_artifact_text
 from a2a.types import (
     Message,
     Part,
     Role,
-    Task,
-    TaskArtifactUpdateEvent,
-    TaskStatusUpdateEvent,
-    TextPart,
+    SendMessageRequest,
+    TaskState,
 )
-from a2a.utils.artifact import get_artifact_text
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -122,8 +120,8 @@ async def _invoke_agent(prompt: str, alert_name: str) -> None:
 
                 msg = Message(
                     message_id=str(uuid4()),
-                    role=Role.user,
-                    parts=[Part(root=TextPart(kind="text", text=user_text))],
+                    role=Role.ROLE_USER,
+                    parts=[Part(text=user_text)],
                     context_id=context_id,
                 )
 
@@ -131,25 +129,29 @@ async def _invoke_agent(prompt: str, alert_name: str) -> None:
                 saw_non_stub = False
 
                 try:
-                    async for event in client.send_message(msg):
-                        if isinstance(event, Message):
+                    async for event in client.send_message(
+                        SendMessageRequest(message=msg)
+                    ):
+                        if event.HasField("message"):
                             continue
 
-                        if not (isinstance(event, tuple) and len(event) >= 2):
-                            continue
-
-                        task, update = event[0], event[1]
-                        if isinstance(task, Task):
+                        if event.HasField("task"):
+                            task = event.task
                             ctx = getattr(task, "context_id", None) or getattr(task, "contextId", None)
                             if isinstance(ctx, str) and ctx.strip():
                                 context_id = ctx.strip()
                             elif hasattr(task, "id") and getattr(task, "id", None):
                                 context_id = str(task.id)
+                            continue
 
-                        if isinstance(update, TaskStatusUpdateEvent):
-                            last_state = str(update.status.state)
-                        elif isinstance(update, TaskArtifactUpdateEvent):
-                            text = (get_artifact_text(update.artifact) or "").strip()
+                        if event.HasField("status_update"):
+                            last_state = TaskState.Name(
+                                event.status_update.status.state
+                            ).removeprefix("TASK_STATE_")
+                        elif event.HasField("artifact_update"):
+                            text = (
+                                get_artifact_text(event.artifact_update.artifact) or ""
+                            ).strip()
                             if text and not _looks_like_tool_stub(text):
                                 saw_non_stub = True
                 except Exception:  # noqa: BLE001

@@ -5,7 +5,7 @@ description = "CronJob runner: scout-only find-work via kagent A2A"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "a2a-sdk>=0.3.25",
+    "a2a-sdk>=1.1.2,<1.2",
     "httpx>=0.28.0,<1.0.0",
 ]
 

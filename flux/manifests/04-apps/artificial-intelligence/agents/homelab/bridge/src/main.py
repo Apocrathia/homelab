@@ -23,18 +23,8 @@ import discord
 import httpx
 from a2a.client import ClientConfig, ClientFactory
 from a2a.client.card_resolver import A2ACardResolver
-from a2a.types import (
-    DataPart,
-    Message,
-    Part,
-    Role,
-    Task,
-    TaskArtifactUpdateEvent,
-    TaskStatusUpdateEvent,
-    TextPart,
-)
-from a2a.utils.artifact import get_artifact_text
-from a2a.utils.message import get_message_text
+from a2a.helpers.proto_helpers import get_artifact_text, get_message_text
+from a2a.types import Message, Part, Role, SendMessageRequest, TaskState
 from discord.ext import commands
 
 # Type alias for status callback
@@ -85,17 +75,18 @@ def get_tool_call_info(artifact) -> tuple[str | None, str | None]:
         return None, None
 
     for part in artifact.parts:
-        part_data = part.root if hasattr(part, "root") else part
-
-        # Check for DataPart with kagent function_call metadata
-        if isinstance(part_data, DataPart):
-            metadata = getattr(part_data, "metadata", {}) or {}
-            kagent_type = metadata.get("kagent_type")
+        # Check for data parts with kagent function_call metadata
+        if part.HasField("data") and part.HasField("metadata"):
+            kagent_type = (
+                part.metadata["kagent_type"]
+                if "kagent_type" in part.metadata
+                else None
+            )
 
             if kagent_type == "function_call":
-                data = getattr(part_data, "data", {}) or {}
-                tool_name = data.get("name")
-                call_id = data.get("id")
+                data = part.data.struct_value
+                tool_name = data["name"] if "name" in data else None
+                call_id = data["id"] if "id" in data else None
                 return tool_name, call_id
 
     return None, None
@@ -111,16 +102,18 @@ def get_tool_response_info(artifact) -> tuple[str | None, str | None]:
         return None, None
 
     for part in artifact.parts:
-        part_data = part.root if hasattr(part, "root") else part
-
-        if isinstance(part_data, DataPart):
-            metadata = getattr(part_data, "metadata", {}) or {}
-            kagent_type = metadata.get("kagent_type")
+        # Check for data parts with kagent function_response metadata
+        if part.HasField("data") and part.HasField("metadata"):
+            kagent_type = (
+                part.metadata["kagent_type"]
+                if "kagent_type" in part.metadata
+                else None
+            )
 
             if kagent_type == "function_response":
-                data = getattr(part_data, "data", {}) or {}
-                tool_name = data.get("name")
-                call_id = data.get("id")
+                data = part.data.struct_value
+                tool_name = data["name"] if "name" in data else None
+                call_id = data["id"] if "id" in data else None
                 return tool_name, call_id
 
     return None, None
@@ -261,8 +254,8 @@ class DiscordBridge(commands.Bot):
         # Create message with contextId for multi-turn support
         a2a_message = Message(
             message_id=str(uuid4()),
-            role=Role.user,
-            parts=[Part(root=TextPart(kind="text", text=message))],
+            role=Role.ROLE_USER,
+            parts=[Part(text=message)],
             context_id=existing_context_id,
         )
 
@@ -276,69 +269,65 @@ class DiscordBridge(commands.Bot):
         active_delegations: set[str] = set()
 
         try:
-            async for event in client.send_message(a2a_message):
+            async for event in client.send_message(
+                SendMessageRequest(message=a2a_message)
+            ):
                 logger.debug(f"A2A event: {type(event).__name__}")
 
-                # Handle Message objects directly
-                if isinstance(event, Message):
-                    text = get_message_text(event)
+                # Handle Message events directly
+                if event.HasField("message"):
+                    text = get_message_text(event.message)
                     if text:
                         logger.debug(f"Message text: {text[:100]}...")
                         response_text.append(text)
 
-                # Handle (Task, UpdateEvent) tuples
-                elif isinstance(event, tuple) and len(event) >= 2:
-                    task, update_event = event[0], event[1]
+                # Handle task snapshots - extract contextId
+                elif event.HasField("task"):
+                    task = event.task
+                    task_context = getattr(task, "context_id", None) or getattr(
+                        task, "contextId", None
+                    )
+                    if task_context:
+                        new_context_id = task_context
+                    elif hasattr(task, "id") and task.id:
+                        # Fallback to task ID
+                        new_context_id = task.id
 
-                    # Extract contextId from task
-                    if isinstance(task, Task):
-                        task_context = getattr(task, "context_id", None) or getattr(
-                            task, "contextId", None
-                        )
-                        if task_context:
-                            new_context_id = task_context
-                        elif hasattr(task, "id") and task.id:
-                            # Fallback to task ID
-                            new_context_id = task.id
+                # TaskArtifactUpdateEvent - extract artifact text and delegation info
+                elif event.HasField("artifact_update"):
+                    artifact = event.artifact_update.artifact
 
-                    # TaskArtifactUpdateEvent - extract artifact text and delegation info
-                    if isinstance(update_event, TaskArtifactUpdateEvent):
-                        artifact = update_event.artifact
+                    # Check for delegation (tool call to another agent)
+                    tool_name, call_id = get_tool_call_info(artifact)
+                    if tool_name and call_id and call_id not in active_delegations:
+                        active_delegations.add(call_id)
+                        logger.info(f"Delegation started: {tool_name}")
 
-                        # Check for delegation (tool call to another agent)
-                        tool_name, call_id = get_tool_call_info(artifact)
-                        if tool_name and call_id and call_id not in active_delegations:
-                            active_delegations.add(call_id)
-                            logger.info(f"Delegation started: {tool_name}")
+                        # Send status message via callback
+                        if status_callback:
+                            status_msg = format_delegation_message(tool_name)
+                            await status_callback(status_msg)
 
-                            # Send status message via callback
-                            if status_callback:
-                                status_msg = format_delegation_message(tool_name)
-                                await status_callback(status_msg)
+                    # Check for delegation response (tool result)
+                    resp_name, resp_id = get_tool_response_info(artifact)
+                    if resp_name and resp_id and resp_id in active_delegations:
+                        active_delegations.discard(resp_id)
+                        logger.info(f"Delegation completed: {resp_name}")
 
-                        # Check for delegation response (tool result)
-                        resp_name, resp_id = get_tool_response_info(artifact)
-                        if resp_name and resp_id and resp_id in active_delegations:
-                            active_delegations.discard(resp_id)
-                            logger.info(f"Delegation completed: {resp_name}")
+                    # Extract the actual text content
+                    text = get_artifact_text(artifact)
+                    if text:
+                        logger.debug(f"Artifact text: {text[:100]}...")
+                        response_text.append(text)
 
-                        # Extract the actual text content
-                        text = get_artifact_text(artifact)
-                        if text:
-                            logger.debug(f"Artifact text: {text[:100]}...")
-                            response_text.append(text)
-
-                    # TaskStatusUpdateEvent - log important states
-                    elif isinstance(update_event, TaskStatusUpdateEvent):
-                        state = update_event.status.state
-                        if state in ("completed", "failed", "canceled"):
-                            logger.info(f"Task {state}")
-                        else:
-                            logger.debug(f"Task status: {state}")
-
-                    # None update - initial task event, skip
-                    elif update_event is None:
-                        logger.debug("Initial task event")
+                # TaskStatusUpdateEvent - log important states
+                elif event.HasField("status_update"):
+                    state = TaskState.Name(event.status_update.status.state)
+                    state = state.removeprefix("TASK_STATE_").lower()
+                    if state in ("completed", "failed", "canceled"):
+                        logger.info(f"Task {state}")
+                    else:
+                        logger.debug(f"Task status: {state}")
 
                 else:
                     logger.warning(f"Unknown event type: {type(event)}")

@@ -21,7 +21,7 @@ from uuid import uuid4
 import httpx
 from a2a.client import ClientConfig, ClientFactory
 from a2a.client.card_resolver import A2ACardResolver
-from a2a.types import Message, Part, Role, TextPart
+from a2a.types import Message, Part, Role, SendMessageRequest
 from aiohttp import web
 
 logging.basicConfig(
@@ -63,13 +63,15 @@ async def call_agent(
 
         a2a_message = Message(
             message_id=str(uuid4()),
-            role=Role.user,
-            parts=[Part(root=TextPart(kind="text", text=prompt))],
+            role=Role.ROLE_USER,
+            parts=[Part(text=prompt)],
         )
 
         logger.info(f"[{request_id}] sending to home-agent: {prompt[:80]}")
 
-        async for event in client.send_message(a2a_message):
+        async for event in client.send_message(
+            SendMessageRequest(message=a2a_message)
+        ):
             logger.debug(f"[{request_id}] a2a event: {type(event).__name__}")
 
         logger.info(f"[{request_id}] home-agent run complete")
