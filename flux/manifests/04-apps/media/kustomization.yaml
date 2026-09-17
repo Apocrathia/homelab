@@ -16,6 +16,7 @@ resources:
   - acquisitions/soularr
   - management/aurral
   - management/bazarr
+  - management/calibre-web-automated
   - management/cantinarr
   - management/chaptarr
   - management/cleanuparr
