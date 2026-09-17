@@ -1,0 +1,134 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: calibre-web-automated
+  namespace: calibre-web-automated
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.81"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: calibre-web-automated
+      # renovate: datasource=docker depName=crocodilestick/calibre-web-automated
+      image: crocodilestick/calibre-web-automated:v4.0.6@sha256:c31a738b6d5ec6982c050063dd3f063b6943eb1051fc81144789f840d9093a8d
+      container:
+        name: calibre-web-automated
+        port: 8083
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          # Library lives on SMB: disable SQLite WAL, skip recursive chown,
+          # switch file watching to polling (CWA's documented network-share mode)
+          - name: NETWORK_SHARE_MODE
+            value: "true"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      securityContext:
+        # LSIO base: container starts as root, s6-overlay drops the app to
+        # PUID/PGID (1000). Non-root start breaks CWA init services (they
+        # rewrite /etc/ImageMagick-6 policy + apply s6 uid/gid transitions)
+        # and poisons the config dir for later boots. Boot-verified in podman.
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 1000
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8083
+        portName: http
+      volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: library
+          mountPath: /calibre-library
+        - name: ingest
+          mountPath: /cwa-book-ingest
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8083
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: config
+            capacity: 10Gi
+      smb:
+        enabled: true
+        volumes:
+          - name: library
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+          - name: ingest
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books/_import"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: false
+            createSubDir: "true"
+
+    secrets:
+      enabled: false # Web UI bootstrap; default admin credentials changed on first login
+
+    authentik:
+      enabled: true
+      mode: bookmark
+      displayName: "Calibre"
+      externalHost: "https://calibre.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/calibre-web-automated/icon.svg"
+      category: "Media"
+      metaDescription: "Automated Calibre library management and ebook organization"
+      metaPublisher: "Calibre-Web Automated"
+
+    gatus:
+      path: /login
+
+    httproute:
+      enabled: true
+      hostname: calibre.gateway.services.apocrathia.com

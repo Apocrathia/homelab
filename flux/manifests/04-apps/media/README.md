@@ -43,6 +43,7 @@ Media applications are organized into three categories:
 ### Media Tools
 
 - **[Aurral](./management/aurral/README.md)** - Music discovery companion for Lidarr (Seerr-like, for music)
+- **[Calibre-Web Automated](./management/calibre-web-automated/README.md)** - Automated Calibre ebook library organization and ingest pipeline
 - **[Cantinarr](./management/cantinarr/README.md)** - Media discovery, requests, and \*arr management with AI and MCP tools
 - **[Cleanuparr](./management/cleanuparr/README.md)** - Monitors and removes blocked/stalled downloads from Arr apps
 - **[Houndarr](./management/houndarr/README.md)** - Rate-limited missing, cutoff, and upgrade searches for the \*arr stack
