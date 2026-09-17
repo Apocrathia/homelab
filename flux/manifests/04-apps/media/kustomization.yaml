@@ -39,6 +39,6 @@ resources:
   - servers/jellyfin-ai-upscaler
   - servers/kavita
   - servers/komga
-  - servers/plex
+  # - servers/plex (disabled 2026-09-16 — jellyfin replaced it; delete dir once decommission is confirmed)
   - servers/restreamer
   - servers/tunarr
