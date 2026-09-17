@@ -1,0 +1,77 @@
+---
+# TCPRoutes for ATAK client traffic on both front doors (LAN via
+# main-gateway, tailnet via tailnet-gateway). Dual parentRefs are why these
+# ship as plain manifests - the chart's tcproute template cannot express
+# them. Listener names (sectionName) match the tak-* TCP listeners added to
+# both Gateways (allowedRoutes locked to the tak namespace).
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: tak-cot
+  namespace: tak
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: tak-8088
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: tak-8088
+  rules:
+    - backendRefs:
+        - name: tak
+          port: 8088
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: tak-ssl-cot
+  namespace: tak
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: tak-8089
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: tak-8089
+  rules:
+    - backendRefs:
+        - name: tak
+          port: 8089
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: tak-marti
+  namespace: tak
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: tak-8443
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: tak-8443
+  rules:
+    - backendRefs:
+        - name: tak
+          port: 8443
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: tak-enroll
+  namespace: tak
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: tak-8446
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: tak-8446
+  rules:
+    - backendRefs:
+        - name: tak
+          port: 8446

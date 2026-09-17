@@ -1,0 +1,63 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tak-postgres
+  namespace: tak
+spec:
+  # PostgreSQL 15 + PostGIS (OTS uses GeoAlchemy2 Geography POINT columns in
+  # models/Point.py + CITrap.py - real PostGIS dependency). CNPG's official
+  # postgis companion image is stale at PG15/PostGIS 3.3 but is the only
+  # first-party option; OTS has no PG17/18-specific needs.
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgis
+  imageName: ghcr.io/cloudnative-pg/postgis:15-3.3@sha256:f56e7aaada2dbf651e91e603a8a77477ebf775c0d0326eabfa1ce65a610f574d
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # PostgreSQL-specific configuration
+  postgresql:
+    parameters:
+      max_connections: "100"
+      track_io_timing: "on"
+      track_functions: "all"
+      log_statement: "ddl"
+      log_min_duration_statement: "1000ms"
+      log_min_messages: "INFO"
+
+  # Affinity settings for better performance (CloudNativePG-specific)
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: "preferred"
+    topologyKey: "kubernetes.io/hostname"
+
+  # Bootstrap configuration. postInitApplicationSQL runs as superuser in
+  # the tak database during bootstrap - postgis is not a trusted extension,
+  # so the tak owner cannot CREATE EXTENSION itself. Only runs at cluster
+  # creation; re-created clusters re-run it.
+  bootstrap:
+    initdb:
+      database: tak
+      owner: tak
+      secret:
+        name: tak-secrets
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS postgis;
+
+  # Monitoring
+  monitoring:
+    enablePodMonitor: true

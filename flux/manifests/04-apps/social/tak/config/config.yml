@@ -1,0 +1,48 @@
+---
+# OpenTAKServer runtime config, rendered to /app/ots/config.yml by the
+# render-config init container on every boot (it seds the 1Password secret
+# placeholders below into this template).
+# OTS loads this file after its env-derived defaults, so these keys win.
+# LDAP has no env-var support upstream (DefaultConfig class attributes),
+# which is why LDAP + the database URI live here and not in the HelmRelease.
+#
+# The DB password placeholder is filled from the tak-secrets OnePasswordItem
+# (1Password item opentakserver-secrets, `password` field):
+#   __OTS_DB_PASSWORD__
+OTS_ENABLE_LDAP: true
+# Dedicated LDAP outpost deployed with this app (see authentik-blueprint.yaml);
+# LDAPS on 636. The outpost presents a self-signed certificate - the ldap3
+# client does not verify it, and the connection never leaves the namespace.
+# authentik serves the tree lowercased; match it so member-DN filters compare
+# exactly (users cn=<username>,ou=users,<base>; groups ou=groups,<base> with
+# a `member` attribute - not uniqueMember).
+LDAP_HOST: ak-outpost-tak-ldap-outpost.tak.svc.cluster.local
+LDAP_PORT: 636
+LDAP_USE_SSL: true
+# flask-ldap3-login composes <LDAP_USER_DN>,<LDAP_BASE_DN> for searches and
+# builds bind DNs as <rdn>=<username>,<user search dn> - these sub-DNs are
+# RELATIVE to the base, not full DNs.
+LDAP_BASE_DN: ou=tak,dc=ldap,dc=apocrathia,dc=com
+LDAP_USER_DN: ou=users
+LDAP_GROUP_DN: ou=groups
+# Direct bind (no service account): authentik user entries are
+# cn=<username>,ou=users,<base>, and RDN attr == login attr selects the
+# direct-bind path in flask-ldap3-login authenticate(). Users bind with
+# their own Authentik passwords; the outpost access check gates them on
+# the hidden tak-ldap app (users tier).
+LDAP_USER_RDN_ATTR: cn
+LDAP_USER_LOGIN_ATTR: cn
+# authentik groups expose `member` (groupOfUniqueNames objectClass is kept
+# for the default group filter).
+LDAP_GROUP_MEMBERS_ATTR: member
+# Service account for OTS's runtime group lookups (get_user_groups opens
+# its own connection and binds with these; direct bind covers only
+# authentication). Created by the blueprint without a password - the
+# operator sets it to the 1Password ldap-bind-password value.
+LDAP_BIND_USER_DN: cn=tak-ldap-bind,ou=users,ou=tak,dc=ldap,dc=apocrathia,dc=com
+LDAP_BIND_USER_PASSWORD: __OTS_LDAP_BIND_PASSWORD__
+# Groups named tak_<channel> become ATAK channels; tak_admin grants the
+# OTS administrator role (group mapping in opentakserver/ldap_api.py).
+OTS_LDAP_ADMIN_GROUP: tak_admin
+OTS_LDAP_GROUP_PREFIX: tak_
+SQLALCHEMY_DATABASE_URI: postgresql+psycopg://tak:__OTS_DB_PASSWORD__@tak-postgres-rw.tak.svc.cluster.local:5432/tak

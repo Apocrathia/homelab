@@ -24,3 +24,14 @@ misconfigurations:
       Kyverno intentionally clones and synchronizes the named Docker Hub
       imagePullSecret into opted-in namespaces. Kubernetes RBAC cannot constrain
       Secret creation by resource name or namespace label.
+  - id: AVD-KSV-0056
+    paths:
+      - "rbac.yaml"
+    statement: >-
+      The authentik LDAP outpost controller runs in the authentik namespace
+      and deploys its Service object into this namespace by design (operator
+      decision: the LDAP outpost lives with the app). Kubernetes RBAC cannot
+      scope create verbs by resource name, so the Role mirrors the authentik
+      chart's own namespaced Role shape, reduced to the resources the
+      outpost controller manages. The chart's equivalent Role never hits
+      this check only because it is rendered at deploy time, not committed.

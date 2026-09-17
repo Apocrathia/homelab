@@ -60,3 +60,39 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: tak-8088
+      protocol: TCP
+      port: 8088
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8089
+      protocol: TCP
+      port: 8089
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8443
+      protocol: TCP
+      port: 8443
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8446
+      protocol: TCP
+      port: 8446
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak

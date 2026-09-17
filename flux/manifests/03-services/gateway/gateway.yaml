@@ -33,7 +33,11 @@ metadata:
 spec:
   service:
     type: LoadBalancer
-    externalTrafficPolicy: Local
+    # Cluster (not Local): TCPRoute listeners are plain L4 - the backend
+    # pod is the only service backend, so with Local every node not
+    # hosting the pod refused connections. L7 listeners are unaffected:
+    # every node runs Envoy behind the l7-load-balancer redirect.
+    externalTrafficPolicy: Cluster
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -81,6 +85,42 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: tak-8088
+      protocol: TCP
+      port: 8088
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8089
+      protocol: TCP
+      port: 8089
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8443
+      protocol: TCP
+      port: 8443
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
+    - name: tak-8446
+      protocol: TCP
+      port: 8446
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: tak
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_referencegrants.yaml
 apiVersion: gateway.networking.k8s.io/v1beta1

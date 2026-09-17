@@ -56,22 +56,28 @@
 		// that for global nameservers. Members get NO exit-node or
 		// internet access: the only autogroup:internet grant below is
 		// admin-only, and admins supersede member grants anyway.
+		// Ports 8088/8089/8443/8446 are the OpenTAKServer CoT listeners on
+		// tailnet-gateway (plain CoT, SSL CoT, mTLS Marti API, cert
+		// enrollment).
+		// Grants are tag-scoped: any future tag:k8s device listening on these ports inherits member reachability with no policy change.
 		{
 			"src": ["autogroup:member"],
 			"dst": ["tag:k8s"],
-			"ip":  ["tcp:443", "tcp:53", "udp:53"],
+			"ip":  ["tcp:443", "tcp:53", "udp:53", "tcp:8088", "tcp:8089", "tcp:8443", "tcp:8446"],
 		},
 
-		// Tailnet admins keep the same HTTPS-only access to the front door
+		// Tailnet admins keep the same access to the front door
 		// so the operator can reach and verify the service friends are
 		// invited to. Port 53 was added with the split-DNS resolver: admin
 		// devices resolve gateway.services.apocrathia.com through it too,
 		// and the grants-exemption for split-DNS servers is unverified.
-		// Remove this grant if no human access is wanted.
+		// Remove this grant if no human access is wanted. Ports
+		// 8088/8089/8443/8446 are the OpenTAKServer CoT listeners (same
+		// ports as the member grant above).
 		{
 			"src": ["autogroup:admin"],
 			"dst": ["tag:k8s"],
-			"ip":  ["tcp:443", "tcp:53", "udp:53"],
+			"ip":  ["tcp:443", "tcp:53", "udp:53", "tcp:8088", "tcp:8089", "tcp:8443", "tcp:8446"],
 		},
 
 		// Game host (game.apocrathia.com, bare node, tag:game). The AMP web
@@ -189,7 +195,7 @@
 		// split-DNS resolver over DNS; everything else stays denied.
 		{
 			"src":    "ian@apocrathia.com",
-			"accept": ["tag:k8s:443", "tag:k8s:53", "tag:game:443", "tag:game:25565"],
+			"accept": ["tag:k8s:443", "tag:k8s:53", "tag:k8s:8088", "tag:k8s:8089", "tag:k8s:8443", "tag:k8s:8446", "tag:game:443", "tag:game:25565"],
 			"deny":   ["tag:k8s:22", "tag:k8s-operator:443"],
 		},
 

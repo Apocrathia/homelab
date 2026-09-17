@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tak
+  labels:
+    name: tak
+    # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
+    backup.apocrathia.com/repo: nas-rustfs

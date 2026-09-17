@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: tak
+  namespace: tak
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - helmrelease.yaml
+  - networkpolicy.yaml
+  - tcproutes.yaml
+  - authentik-blueprint.yaml
+  - rbac.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # nginx vhosts for the webui sidecar (literal values, no envsubst)
+  - name: tak-nginx-conf
+    namespace: tak
+    files:
+      - http-80.conf=config/nginx/http-80.conf
+      - https-8443.conf=config/nginx/https-8443.conf
+      - https-8446.conf=config/nginx/https-8446.conf
+  # rabbitmq sidecar config (upstream compose parity)
+  - name: tak-rabbitmq
+    namespace: tak
+    files:
+      - enabled_plugins=config/rabbitmq/enabled_plugins
+      - 99-opentakserver.conf=config/rabbitmq/99-opentakserver.conf
+  # config.yml template for the render-config init container
+  - name: tak-config-template
+    namespace: tak
+    files:
+      - config.yml=config/config.yml

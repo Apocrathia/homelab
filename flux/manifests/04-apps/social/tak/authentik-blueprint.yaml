@@ -1,0 +1,203 @@
+---
+# Authentik objects the generic-app chart does not render: the LDAP provider
+# (OTS has no OIDC support - LDAP is the only federation path), a dedicated
+# LDAP outpost pinned to this namespace, the tak_admin group, and the group
+# bindings that gate LDAP bind/search access. The chart's proxy blueprint
+# still owns the WebUI provider/application/outpost.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-tak-ldap
+  namespace: tak
+  labels:
+    authentik_blueprint: "true"
+data:
+  tak-ldap.yaml: |
+    ---
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    #
+    # Access model (verified against authentik 2026.8.2 source):
+    # the LDAP provider no longer has a search_group field - bind/search is
+    # gated by the outpost's access check against the provider's application
+    # slug (internal/outpost/ldap/bind/direct/bind.go). Group bindings on
+    # the tak-ldap application below are therefore the friends-tier
+    # restriction: admins + users, mirroring the chart's proxy bindings.
+    version: 1
+    metadata:
+      name: tak-ldap
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    context: {}
+    entries:
+      # Bind flow. The LDAP provider's "Bind Flow" field is its
+      # authorization_flow (LDAPOutpostConfigSerializer.bind_flow_slug) and
+      # the outpost executes it on every bind. It must be an
+      # authentication-designation flow WITHOUT an MFA stage: the outpost's
+      # flow executor cannot answer interactive MFA challenges, and with
+      # mfa_support disabled it would submit the bind secret as a TOTP
+      # code. Reuses the stock credential and login stages.
+      - model: authentik_flows.flow
+        state: present
+        identifiers:
+          slug: "tak-ldap-bind"
+        attrs:
+          name: "TAK LDAP bind flow"
+          title: "TAK LDAP bind"
+          slug: "tak-ldap-bind"
+          designation: "authentication"
+
+      - model: authentik_stages_identification.identificationstage
+        state: present
+        identifiers:
+          name: "tak-ldap-bind-identification"
+        attrs:
+          name: "tak-ldap-bind-identification"
+          user_fields:
+            - "username"
+          case_insensitive_matching: true
+          password_stage: !Find [authentik_stages_password.passwordstage, [name, "default-authentication-password"]]
+
+      - model: authentik_flows.flowstagebinding
+        state: present
+        identifiers:
+          target: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
+          stage: !Find [authentik_stages_identification.identificationstage, [name, "tak-ldap-bind-identification"]]
+          order: 10
+        attrs:
+          order: 10
+
+      - model: authentik_flows.flowstagebinding
+        state: present
+        identifiers:
+          target: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
+          stage: !Find [authentik_stages_user_login.userloginstage, [name, "default-authentication-login"]]
+          order: 100
+        attrs:
+          order: 100
+
+      # LDAP Provider for OpenTAKServer
+      - model: authentik_providers_ldap.ldapprovider
+        state: present
+        identifiers:
+          name: "tak-ldap-provider"
+        attrs:
+          name: "tak-ldap-provider"
+          authorization_flow: !Find [authentik_flows.flow, [slug, "tak-ldap-bind"]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, "default-invalidation-flow"]]
+          base_dn: "OU=tak,DC=ldap,DC=apocrathia,DC=com"
+          # Cached modes: each bind/search otherwise re-executes the full
+          # authentik flow (the outpost flow executor measures ~600ms per
+          # round trip on this install, so a direct-mode login costs
+          # 2-4s). Cached keeps the direct logic with an in-memory result
+          # cache for the standard session duration.
+          bind_mode: "cached"
+          search_mode: "cached"
+          # Friends may not have TOTP devices, and semicolons in
+          # credentials would misparse in the TOTP flow. Users bind
+          # directly with their Authentik credentials.
+          mfa_support: false
+
+      # Hidden application: LDAP bind/search access is checked against this
+      # slug, so it must exist and carry the group bindings below
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: "tak-ldap"
+        attrs:
+          name: "OpenTAKServer LDAP"
+          slug: "tak-ldap"
+          provider: !Find [authentik_providers_ldap.ldapprovider, [name, "tak-ldap-provider"]]
+          meta_hide: true
+          group: "Social"
+          meta_description: "LDAP bind/search access for OpenTAKServer (access control only)"
+          meta_publisher: "OpenTAKServer"
+
+      # Dedicated LDAP outpost, pinned to the tak namespace (operator
+      # decision): NetworkPolicy locks 3389/6636 to tak-namespace pods
+      - model: authentik_outposts.outpost
+        state: present
+        identifiers:
+          name: "tak-ldap-outpost"
+        attrs:
+          name: "tak-ldap-outpost"
+          type: "ldap"
+          service_connection: !Find [authentik_outposts.kubernetesserviceconnection, [name, "Local Kubernetes Cluster"]]
+          providers:
+            - !Find [authentik_providers_ldap.ldapprovider, [name, "tak-ldap-provider"]]
+          config:
+            authentik_host: "https://auth.gateway.services.apocrathia.com"
+            authentik_host_insecure: true
+            authentik_host_browser: ""
+            log_level: "info"
+            object_naming_template: "ak-outpost-%(name)s"
+            kubernetes_replicas: 1
+            kubernetes_namespace: "tak"
+            kubernetes_json_patches:
+              deployment:
+                - op: add
+                  path: /spec/template/spec/automountServiceAccountToken
+                  value: false
+
+      # Role granting full-directory search. Without it the outpost limits
+      # any non-superuser bind to the groups that user is a member of, so
+      # OTS's runtime group lookups would only ever see the bind user's own
+      # groups. This is the documented "Search full LDAP directory"
+      # permission; the blueprint serializer only supports role-wide
+      # (global) assignment, which equals object scope here since this is
+      # the cluster's only LDAP provider. Visibility is confined to this
+      # outpost - the OTS webui only surfaces tak_* groups.
+      - model: authentik_rbac.role
+        state: present
+        identifiers:
+          name: "tak-ldap-search"
+        attrs:
+          name: "tak-ldap-search"
+          permissions:
+            - "authentik_providers_ldap.search_full_directory"
+
+      # Bind service user for OTS's runtime group lookups. flask-ldap3-login's
+      # get_user_groups() opens its own connection bound with these
+      # credentials - direct bind covers only login. The blueprint cannot
+      # hold a secret value; the operator sets it (the 1Password
+      # ldap-bind value) after import. Member of `users` so the
+      # outpost's app access check passes; carries the search role above.
+      - model: authentik_core.user
+        state: present
+        identifiers:
+          username: "tak-ldap-bind"
+        attrs:
+          username: "tak-ldap-bind"
+          name: "TAK LDAP bind"
+          type: "service_account"
+          is_active: true
+          groups:
+            - !Find [authentik_core.group, [name, "users"]]
+          roles:
+            - !Find [authentik_rbac.role, [name, "tak-ldap-search"]]
+
+      # OTS administrator group (authentik_core.group) - membership grants
+      # the OTS administrator role via OTS_LDAP_ADMIN_GROUP in config.yml
+      - model: authentik_core.group
+        state: present
+        identifiers:
+          name: "tak_admin"
+        attrs:
+          name: "tak_admin"
+
+      # Admins group binding (LDAP bind/search access)
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "tak-ldap"]]
+          group: !Find [authentik_core.group, [name, "admins"]]
+        attrs:
+          order: 10
+
+      # Users group binding (LDAP bind/search access) - the friends tier
+      - model: authentik_policies.policybinding
+        state: present
+        identifiers:
+          target: !Find [authentik_core.application, [slug, "tak-ldap"]]
+          group: !Find [authentik_core.group, [name, "users"]]
+        attrs:
+          order: 20
