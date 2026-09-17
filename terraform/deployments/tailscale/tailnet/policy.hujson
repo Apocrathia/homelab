@@ -123,6 +123,18 @@
 			"ip":  ["*"],
 		},
 
+		// LAN VLANs through the exit nodes: services (10.100.1.0/24) and access
+		// (10.100.0.0/24) only. autogroup:internet covers public destinations
+		// only, so private ranges need an explicit grant; without it exit-node
+		// clients stall on any 10.100.x traffic. Admins only — friends keep
+		// zero LAN access (tailnet split DNS plan) and every other subnet
+		// stays unreachable.
+		{
+			"src": ["autogroup:admin"],
+			"dst": ["10.100.1.0/24", "10.100.0.0/24"],
+			"ip":  ["*"],
+		},
+
 		// Allow users in "group:example" to access "tag:example", but only from
 		// devices that are running macOS and have enabled Tailscale client auto-updating.
 		// {"src": ["group:example"], "dst": ["tag:example"], "ip": ["*"], "srcPosture":["posture:autoUpdateMac"]},
@@ -179,6 +191,14 @@
 			"src":    "ian@apocrathia.com",
 			"accept": ["tag:k8s:443", "tag:k8s:53", "tag:game:443", "tag:game:25565"],
 			"deny":   ["tag:k8s:22", "tag:k8s-operator:443"],
+		},
+
+		// Exit-node LAN grant: admins reach both VLANs on any port; other private
+		// ranges stay denied (exactly the two /24s are granted).
+		{
+			"src":    "ian@apocrathia.com",
+			"accept": ["10.100.1.50:443", "10.100.1.50:445", "10.100.0.1:443"],
+			"deny":   ["10.100.2.1:443"],
 		},
 		// Game host: web UI is admins-only; friends (not asserted here —
 		// autogroup:member is not a valid test src) structurally lack a

@@ -41,6 +41,13 @@ The Connector lives under `config/` in its own Flux Kustomization (`services-tai
 
 Exit-node routes need approval per device, and the Connector recreates pods on reschedule — so the tailnet policy auto-approves `tag:k8s` as exit nodes (`autoApprovers.exitNode` in `terraform/deployments/tailscale/tailnet/policy.hujson`). That policy is applied by Terraform, not Flux: apply it before or alongside the first rollout of this Connector, or the devices sit in the admin console awaiting approval.
 
+Admin clients using an exit node can also reach the LAN VLANs directly: the
+policy grants `autogroup:admin` the services (`10.100.1.0/24`) and access
+(`10.100.0.0/24`) subnets; every other subnet stays unreachable. LAN-only
+names under `services.apocrathia.com` (e.g. the NAS,
+`storage.services.apocrathia.com`) resolve through
+[tailnet-dns](../tailnet-dns/), which forwards them to the UDM.
+
 ## Peer relays
 
 `config/peer-relay.yaml` runs a `PeerRelay` (`replicas: 1`) whose pod acts as a tailnet peer relay: `peer-relay-0`, carrying the dedicated `tag:peer-relay` via `spec.tags` ([docs](https://tailscale.com/docs/features/peer-relay)). Grant dst in the tailnet policy has no hostname form — the tag is how the policy targets the relay. Changing tags means recreating the device: delete the CR and let Flux re-apply it. When a direct connection between two tailnet devices isn't possible, they relay through this device instead of falling back to Tailscale's DERP servers. Peers must run Tailscale 1.86+.
@@ -152,7 +159,9 @@ Cluster pods use CoreDNS, which may cache the old `0.0.0.0` response until the d
 
 A device using one of the tailnet exit nodes routes DNS through it, which
 returns the LAN answer (`10.100.1.99`) instead of the tailnet-gateway
-answer. Toggle the exit node off to use the split-DNS resolver:
+answer. With the admin LAN grant those answers connect too (the traffic
+rides the exit node); toggle the exit node off to prefer the tailnet-gateway
+path:
 
 ```bash
 tailscale set --exit-node=
