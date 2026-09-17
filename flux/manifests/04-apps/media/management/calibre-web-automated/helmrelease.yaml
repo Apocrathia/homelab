@@ -108,9 +108,10 @@ spec:
             readOnly: false
           - name: ingest
             source: "//storage.services.apocrathia.com/Library"
-            subDir: "Books/Import"
+            subDir: "Books/_import"
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: false
+            createSubDir: "true"
 
     secrets:
       enabled: false # Web UI bootstrap; default admin credentials changed on first login

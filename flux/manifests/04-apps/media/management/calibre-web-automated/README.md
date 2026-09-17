@@ -8,7 +8,7 @@ Automated Calibre ebook library: ingests books, pulls metadata, converts formats
 
 This deployment includes:
 
-- Ingest pipeline wired to the existing Books/Import folder — files placed there are processed and removed
+- Ingest pipeline wired to Books/\_import (underscore prefix keeps it sorted to the top) — files placed there are processed and removed
 - Auto-created Calibre library at the Books share root (metadata.db, organized folders)
 - Format conversion via bundled Calibre (MOBI to EPUB, etc.)
 - NETWORK_SHARE_MODE for the SMB library (SQLite WAL off, polling watcher)
@@ -32,7 +32,7 @@ Dashboard-only Authentik bookmark (no SSO provider); CWA uses its own account sy
 
 1. Open the URL and log in with the default credentials, then **change the admin password immediately** (the CWA README documents the defaults).
 2. Ingest settings: tune which formats convert (PDF/EPUB/MOBI handling) and the target format in CWA Settings.
-3. Drop books into the Books/Import folder (or let the existing pile process) — CWA files them into the library automatically.
+3. Drop books into the Books/\_import folder — CWA files them into the library automatically and removes the sources. The old Import pile is not wired up; move books into \_import in batches for a controlled ingest.
 
 ## Troubleshooting
 
