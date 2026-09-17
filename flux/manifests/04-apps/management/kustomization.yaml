@@ -10,6 +10,5 @@ resources:
   - jetkvm
   - kuber-ios
   - scripts/unifi
-  - semaphore
   - speedtest
   - unpoller

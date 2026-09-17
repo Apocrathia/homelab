@@ -136,3 +136,17 @@ ansible-apply:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule" && $OP_CONNECT_TOKEN
       changes:
         - ansible/**/*
+
+# Nightly drift correction (scheduled pipeline; replaces the retired
+# Semaphore schedule). Same run as ansible-apply, schedule-only.
+ansible-drift:
+  extends: .ansible-ssh-setup
+  stage: deploy
+  resource_group: ansible-gitops
+  script:
+    - cd "$CI_PROJECT_DIR/ansible"
+    - ansible-playbook
+      -e @"$HOME/.ansible/op_secrets.json"
+      playbooks/site.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $OP_CONNECT_TOKEN

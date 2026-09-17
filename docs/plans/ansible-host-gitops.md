@@ -36,8 +36,11 @@ NUC (BLKNUC7i7DNK1E).
 
 ## Decisions
 
-- **Execution** — GitLab CI push over SSH, not AWX — mirrors `fleet/` gitops;
-  reversible later with Semaphore if a UI is needed.
+- **Execution** — GitLab CI push over SSH, not AWX — mirrors `fleet/` gitops.
+  Semaphore was trialed as a UI/ops surface (2026-09-16→18) and retired: it
+  demanded a parallel execution plane (duplicated secrets, its own runtime,
+  glibc shims for tofu) that CI already covers. Nightly drift correction
+  runs as a scheduled CI pipeline instead.
 - **Secrets** — 1Password item `ansible-secrets` (vault `Secrets`); CI fetches
   via Connect (`OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`, same as tofu). Fields:
   `ansible_gitops_ed25519`, `ansible_gitops_known_hosts` (multiline text).
