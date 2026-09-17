@@ -73,7 +73,14 @@ spec:
             command:
               - sh
               - -c
-              - valkey-cli -a $(VALKEY_PASSWORD) ping | grep PONG
+              # $() is shell command substitution, not variable expansion:
+              # the bare $(VALKEY_PASSWORD) form ran a command named
+              # VALKEY_PASSWORD (not found) and authenticated with an empty
+              # password, so every probe failed NOAUTH on a healthy server.
+              # "$VALKEY_PASSWORD" is real variable expansion with the
+              # container's env var; --no-auth-warning silences the cli
+              # password warning that polluted probe output.
+              - valkey-cli -a "$VALKEY_PASSWORD" --no-auth-warning ping | grep PONG
           initialDelaySeconds: 5
           periodSeconds: 10
           timeoutSeconds: 3
@@ -85,7 +92,8 @@ spec:
             command:
               - sh
               - -c
-              - valkey-cli -a $(VALKEY_PASSWORD) ping | grep PONG
+              # Same $(VAR) command-substitution bug as readinessProbe above.
+              - valkey-cli -a "$VALKEY_PASSWORD" --no-auth-warning ping | grep PONG
           initialDelaySeconds: 15
           periodSeconds: 30
           timeoutSeconds: 5
