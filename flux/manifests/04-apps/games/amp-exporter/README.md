@@ -8,7 +8,7 @@ server instances, scraped into the homelab observability stack.
 ## Overview
 
 [amp-cubecoders-exporter](https://github.com/soynx/amp-cubecoders-exporter)
-polls the AMP JSON API (ADS controller at `game.apocrathia.com`) and exposes
+polls the AMP JSON API (ADS controller at `game.services.apocrathia.com`) and exposes
 instance CPU, memory, disk, player counts, app state, and module-specific
 metrics (for example Minecraft TPS) on `:9822/metrics`.
 
@@ -31,7 +31,7 @@ permissions), then assign a user to it. See the exporter
 
 ### Panel URL
 
-`AMP_URL` is set to `http://game.apocrathia.com:8080/` in the HelmRelease.
+`AMP_URL` is set to `http://game.services.apocrathia.com:8080/` in the HelmRelease.
 
 ## Metrics and dashboards
 

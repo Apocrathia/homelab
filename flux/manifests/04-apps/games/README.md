@@ -44,7 +44,7 @@ WebSocket (no UDP LoadBalancer).
 
 Game support services cover ROM management, web emulation helpers, ES-DE
 gamelist scraping, theme mirroring, browser Sunshine streaming, and AMP metrics
-export. Deployed via Flux; game server hosting stays on `game.apocrathia.com`
+export. Deployed via Flux; game server hosting stays on `game.services.apocrathia.com`
 via [AMP](https://cubecoders.com/AMP).
 
 ## References
