@@ -44,9 +44,10 @@ Exit-node routes need approval per device, and the Connector recreates pods on r
 Admin clients using an exit node can also reach the LAN VLANs directly: the
 policy grants `autogroup:admin` the services (`10.100.1.0/24`) and access
 (`10.100.0.0/24`) subnets; every other subnet stays unreachable. LAN-only
-names under `services.apocrathia.com` (e.g. the NAS,
-`storage.services.apocrathia.com`) resolve through
-[tailnet-dns](../tailnet-dns/), which forwards them to the UDM.
+names under `services.apocrathia.com` and `access.apocrathia.com` (e.g. the
+NAS, `storage.services.apocrathia.com`, or `ians-gaming-pc.access.apocrathia.com`)
+resolve through [tailnet-dns](../tailnet-dns/), which forwards them to the LAN
+DNS (10.100.1.1).
 
 ## Peer relays
 
