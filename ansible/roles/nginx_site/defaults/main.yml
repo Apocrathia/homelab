@@ -3,6 +3,10 @@
 # must fail loudly, not proxy some placeholder.
 nginx_site_domain: ""
 
+# Extra server_names (aliases) served by this vhost alongside the primary
+# domain — e.g. a legacy name kept alive behind the same cert (SAN).
+nginx_site_aliases: []
+
 # Upstream the vhost proxies to (host:port).
 nginx_site_upstream: "127.0.0.1:8080"
 

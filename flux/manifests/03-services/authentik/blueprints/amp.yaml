@@ -46,7 +46,7 @@ entries:
       # arrive as redirect targets. Authentik regex mode fullmatches; this
       # pattern pins scheme+host and allows any path under it.
       redirect_uris:
-        - url: "https://game\\.apocrathia\\.com/.*"
+        - url: "https://game\\.services\\.apocrathia\\.com/.*"
           matching_mode: "regex"
       access_code_validity: "minutes=1"
       access_token_validity: "minutes=5"
@@ -66,7 +66,7 @@ entries:
       name: "AMP Server Management"
       slug: "amp"
       provider: !Find [authentik_providers_oauth2.oauth2provider, [name, "amp-oidc-provider"]]
-      meta_launch_url: "https://game.apocrathia.com/"
+      meta_launch_url: "https://game.services.apocrathia.com/"
       group: "Gaming"
       open_in_new_tab: true
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/amp.png"

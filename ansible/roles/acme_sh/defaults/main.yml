@@ -3,6 +3,10 @@
 # output). Empty fails loudly — see tasks.
 acme_sh_domain: ""
 
+# Extra SANs on the issued certificate (the cert file/key stay named
+# after acme_sh_domain, the first -d; acme.sh remembers SANs at renew).
+acme_sh_san_domains: []
+
 # Issuer + account
 acme_sh_account_email: ""
 # acme.sh defaults to ZeroSSL since v3.0 — pin Let's Encrypt (operator rule).

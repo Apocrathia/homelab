@@ -8,18 +8,25 @@ kopia_backup_paths:
   - /var/lib
 
 # game.services.apocrathia.com — AMP controller + game instances.
-# Web UI: https://game.apocrathia.com (443 via nginx, Let's Encrypt
+# Web UI: https://game.services.apocrathia.com (443 via nginx, Let's Encrypt
 # DNS-01 through Cloudflare; AMP bound to 127.0.0.1:8080 behind the proxy).
+# game.apocrathia.com still resolves (static tailnet record + LAN DNS) and
+# rides along as a SAN on the cert and a server_name alias — both names
+# serve the same vhost.
 
 # nginx_site role
-nginx_site_domain: game.apocrathia.com
+nginx_site_domain: game.services.apocrathia.com
+nginx_site_aliases:
+  - game.apocrathia.com
 nginx_site_upstream: "127.0.0.1:8080"
 nginx_site_shared_webroot: /opt/cubecoders/amp/shared/WebRoot
 # AMP-specific: tells the app it is behind an HTTPS proxy (AMP docs)
 nginx_site_extra_headers: "proxy_set_header        X-AMP-Scheme $scheme;"
 
 # acme_sh role (dependency of nginx_site)
-acme_sh_domain: game.apocrathia.com
+acme_sh_domain: game.services.apocrathia.com
+acme_sh_san_domains:
+  - game.apocrathia.com
 acme_sh_account_email: admin@apocrathia.com
 # Token must have Zone:DNS:Edit on apocrathia.com (same item cert-manager's
 # issuer uses). Delivered by CI from 1Password Connect — never in git.

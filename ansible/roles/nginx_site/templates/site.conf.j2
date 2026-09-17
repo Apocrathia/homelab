@@ -1,3 +1,4 @@
+{% set server_names = [nginx_site_domain] + (nginx_site_aliases | default([])) %}
 # {{ nginx_site_domain }} — reverse proxy to {{ nginx_site_upstream }}.
 # Cert: /etc/ssl/ansible/{{ nginx_site_domain }}.pem (minted/renewed by
 # nickjj.acme_sh via Cloudflare DNS-01; reloadcmd reloads nginx).
@@ -5,7 +6,7 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name {{ nginx_site_domain }};
+    server_name {{ server_names | join(' ') }};
 
     return 301 https://$host$request_uri;
 }
@@ -14,7 +15,7 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
 
-    server_name {{ nginx_site_domain }};
+    server_name {{ server_names | join(' ') }};
 
     ssl_certificate {{ nginx_site_tls_dir }}/{{ nginx_site_domain }}.pem;
     ssl_certificate_key {{ nginx_site_tls_dir }}/{{ nginx_site_domain }}.key;

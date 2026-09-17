@@ -57,6 +57,7 @@
     cmd: >-
       ./acme.sh --issue
       -d {{ acme_sh_domain }}
+      {{ acme_sh_san_domains | map('regex_replace', '^', '-d ') | join(' ') }}
       --dns dns_{{ acme_sh_dns_provider }}
       --server {{ acme_sh_server }}
       --dnssleep {{ acme_sh_dnssleep }}
