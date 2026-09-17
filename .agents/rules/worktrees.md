@@ -48,8 +48,10 @@ existence checks.
    switch the workspace root checkout.
 
 4. Run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) **before**
-   creating a new worktree. Remove safe (merged / content-equivalent) trees and
-   orphan branches so `.worktrees/` does not accumulate cruft. Skip when
+   creating a new worktree — **own-scope only**: this session's own old trees
+   plus merged orphan branches (no worktree). Other sessions' trees are
+   protected by their [leases](#worktree-leases); a repo-wide sweep needs an
+   explicit operator ask. Skip when
    resuming an existing worktree for this task (step 2). Keep or ask on unique
    WIP / dirty trees per that skill — do not block the lap waiting on ask-only
    candidates.
@@ -57,6 +59,8 @@ existence checks.
    the workspace root):
    - `cd "$repo_root"` then `mkdir -p .worktrees/<type>` and
      `git worktree add -b <type>/<slug> .worktrees/<type>/<slug> <base>`.
+   - Immediately write the worktree lease (see
+     [Worktree leases](#worktree-leases)) — before any other step.
 6. Run shell commands that mutate the tree, and edit files, only inside the
    worktree directory. Pass the worktree **absolute path** to subagents.
 
@@ -109,11 +113,35 @@ Mirror the branch path under `.worktrees/`. Use `type/short-slug` branch names
 (`feat/…`, `fix/…`, `chore/…`, `docs/…`). Slug describes **what changes**, not
 plan numbers, phases, or status. Put plan and issue refs in the MR body.
 
+## Worktree leases
+
+Parallel agent sessions share `.worktrees/`. A tree that is merged + clean can
+still be another live session's active lap — a fresh tree is merged + clean by
+definition until its first edit, and sessions keep working after their MR
+merges. "Merged + clean" is therefore never enough to remove a tree. Every
+worktree created under the step-5 contract gets a lease:
+
+- **Path:**
+  `$repo_root/.scratch/worktree-leases/<branch-with-slashes-as-underscores>.lock`
+  (e.g. `fix/amp-exporter-new-hostname` → `fix_amp-exporter-new-hostname.lock`).
+- **Content:** `session: <id>`, `branch: <name>`, `created: <ISO-8601 UTC>`.
+- **Write it immediately after `git worktree add`** — the gap between add and
+  first edit is exactly when trees get killed.
+- **Liveness:** mtime younger than **24h** = live. A session may `touch` its
+  own lease to extend it; expired leases protect nothing.
+- **Holders:** [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md)
+  skips live-leased trees (report the holder);
+  [`clock-out`](../skills/clock-out/SKILL.md) and any manual teardown delete
+  the lease.
+- **No lease** (human-created tree, pre-lease tree): the cleanup skill's
+  keep/ask rules apply unchanged.
+
 ## Cleanup
 
 After merge (or when abandoning the lap), tear down via
 [`clock-out`](../skills/clock-out/SKILL.md) (session worktree) or
-`git worktree remove` + delete the branch. Never `rm -rf` a worktree path.
+`git worktree remove` + delete the branch — and delete the tree's lease. Never
+`rm -rf` a worktree path.
 Also run [`cleanup-worktrees`](../skills/cleanup-worktrees/SKILL.md) before
 creating a **new** worktree (step 4 under Before any file change). Bulk /
 inventory cleanup uses that skill.

@@ -35,7 +35,7 @@ Copy this checklist and work it in order:
 - [ ] 2. Sync main while session worktree still exists
 - [ ] 3. Remove nested Macroscope review sandboxes for this branch
 - [ ] 4. Remove the agent worktree
-- [ ] 5. Delete the session branch
+- [ ] 5. Delete the session branch + release its worktree lease
 - [ ] 6. Prune stale worktree metadata
 - [ ] 7. Report what was removed and stop
 ```
@@ -221,14 +221,19 @@ git worktree remove "$session_worktree_path" --force
 `cd` out of the worktree before removing it. If removal fails because you are
 still inside that directory, `cd "$repo_root"` and retry.
 
-### 5. Delete local branches
+### 5. Delete local branches + release the lease
 
 After the worktree is gone:
 
 ```bash
 cd "$repo_root"
 git branch -D "$session_branch"
+rm -f ".scratch/worktree-leases/$(echo "$session_branch" | tr '/' '_').lock"
 ```
+
+Lease names replace `/` with `_` (see
+[`.agents/rules/worktrees.md`](../../rules/worktrees.md#worktree-leases)). A
+missing lease file is fine — delete only, never fail.
 
 If this session used a `mr/<iid>-review` tracking branch, `"$session_branch"`
 is that name (e.g. `mr/72-review`); delete it once the upstream MR is merged.
