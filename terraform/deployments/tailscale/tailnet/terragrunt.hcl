@@ -44,8 +44,8 @@ inputs = {
   # restricted nameserver -> the tailnet-dns resolver device
   # (flux/manifests/03-services/tailnet-dns). CoreDNS serves the app zone
   # (gateway.services...) from etcd via longest-suffix match and forwards
-  # LAN-only names (e.g. storage.services.apocrathia.com,
-  # ians-gaming-pc.access.apocrathia.com) to the LAN DNS (10.100.1.1).
+  # LAN-only names - services names to the services VLAN resolver
+  # (10.100.1.1), the access zone to the access VLAN resolver (10.100.0.1).
   # Device IP read post-rollout via
   # `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`.
   # The IP is stable across restarts (operator-persisted proxy state), so
@@ -54,7 +54,8 @@ inputs = {
   dns_split_dns = {
     "services.apocrathia.com" = ["100.76.213.107"]
     # Access VLAN zone: same resolver device; CoreDNS forwards the zone to
-    # the LAN DNS (hosts live under <name>.access.apocrathia.com).
+    # that VLAN's own resolver (10.100.0.1; hosts live under
+    # <name>.access.apocrathia.com).
     "access.apocrathia.com" = ["100.76.213.107"]
     # Game host zone: same resolver device; CoreDNS serves a static A record
     # for game.apocrathia.com pointing at the host's tailnet address

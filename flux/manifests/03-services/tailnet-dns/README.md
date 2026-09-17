@@ -16,15 +16,15 @@ Friends are invited tailnet users, not device-shares, and Tailscale split DNS
 queries for the homelab zones here. App records point at `tailnet-gateway`'s
 tailnet address (`100.120.155.113`); LAN-only names (e.g.
 `storage.services.apocrathia.com`, `ians-gaming-pc.access.apocrathia.com`)
-resolve to LAN IPs via the LAN DNS (10.100.1.1) — visible to friends but
-unroutable for them (deny-by-default).
+resolve to LAN IPs via their VLAN resolvers (services 10.100.1.1, access
+10.100.0.1) — visible to friends but unroutable for them (deny-by-default).
 
-| Component     | Implementation                                                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Resolver      | CoreDNS (plain manifests, `coredns.yaml`) serving the app zone from etcd; other `services.apocrathia.com` and `access.apocrathia.com` names forward to the LAN DNS (10.100.1.1) |
-| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                                                                                                                     |
-| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)                                                                                              |
-| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)                                                                                              |
+| Component     | Implementation                                                                                                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Resolver      | CoreDNS (plain manifests, `coredns.yaml`) serving the app zone from etcd; other `services.apocrathia.com` names forward to the services VLAN resolver (10.100.1.1), `access.apocrathia.com` to the access VLAN resolver (10.100.0.1) |
+| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                                                                                                                                                                          |
+| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)                                                                                                                                                   |
+| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)                                                                                                                                                   |
 
 ## How it works
 
@@ -37,8 +37,9 @@ unroutable for them (deny-by-default).
    elsewhere under `services.apocrathia.com` or under the whole
    `access.apocrathia.com` zone (LAN-only, e.g.
    `storage.services.apocrathia.com`, `ians-gaming-pc.access.apocrathia.com`)
-   forward to the LAN DNS (`10.100.1.1`) — the same answers LAN clients get.
-   All other zones are refused; this is not a general resolver.
+   forward to their VLAN resolvers — services names to `10.100.1.1`, access
+   names to the access VLAN's own DNS at `10.100.0.1` — the same answers
+   LAN clients get. All other zones are refused; this is not a general resolver.
 3. The `tailnet-dns` Service carries `tailscale.com/expose: "true"`, so the
    Tailscale operator runs a proxy device `tailnet-dns.taila8ef8c.ts.net`
    (tagged `tag:k8s`) that DNATs TCP and UDP 53 to the Service. Only

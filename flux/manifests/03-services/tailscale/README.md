@@ -46,8 +46,8 @@ policy grants `autogroup:admin` the services (`10.100.1.0/24`) and access
 (`10.100.0.0/24`) subnets; every other subnet stays unreachable. LAN-only
 names under `services.apocrathia.com` and `access.apocrathia.com` (e.g. the
 NAS, `storage.services.apocrathia.com`, or `ians-gaming-pc.access.apocrathia.com`)
-resolve through [tailnet-dns](../tailnet-dns/), which forwards them to the LAN
-DNS (10.100.1.1).
+resolve through [tailnet-dns](../tailnet-dns/), which forwards them to their VLAN
+resolvers (services `10.100.1.1`, access `10.100.0.1`).
 
 ## Peer relays
 
