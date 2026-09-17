@@ -1,0 +1,15 @@
+---
+# Host firewall (tasks/firewall.yml). Off by default — the gaming PC keeps
+# accepting LAN connections (Sunshine, Ollama, …) untouched; only hosts that
+# opt in get the default-deny inbound policy.
+hardening_firewall_manage: false
+# Trusted sources (operator policy, 2026-09-15): 10/8 + 192.168/16 only.
+# 172.16/12 is the guest network and is deliberately absent, as is the tailnet
+# CGNAT range.
+hardening_firewall_allow_from:
+  - 10.0.0.0/8
+  - 192.168.0.0/16
+# TCP ports trusted sources may reach (SSH; game serves AMP behind nginx/443).
+hardening_firewall_allow_tcp_ports:
+  - "22"
+  - "443"

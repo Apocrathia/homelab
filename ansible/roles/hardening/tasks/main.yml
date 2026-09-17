@@ -1,0 +1,19 @@
+---
+- name: Apply devsec ssh hardening
+  ansible.builtin.import_role:
+    name: devsec.hardening.ssh_hardening
+  tags:
+    - hardening
+
+- name: Apply devsec os hardening
+  ansible.builtin.import_role:
+    name: devsec.hardening.os_hardening
+  tags:
+    - hardening
+
+- name: Configure host firewall
+  ansible.builtin.import_tasks: firewall.yml
+  when: hardening_firewall_manage | bool
+  tags:
+    - hardening
+    - firewall
