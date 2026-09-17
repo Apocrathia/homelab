@@ -25,9 +25,9 @@ mecatui connect mecatl.mecatl.svc.cluster.local:8080
 ## Configuration
 
 - **Agents**: defined as Markdown files with YAML frontmatter (name, tools, model, permissionMode, maxTurns)
-- **Secrets** (1Password):
-  - `mecatl-secrets`: `litellm-api-key` (LiteLLM virtual key), future MCP tokens as `mcp-<server>-token`
-  - `mecatl-valkey-secrets`: `password` (Valkey auth)
+- **Secrets** (1Password, single item `mecatl-secrets`):
+  - `litellm-api-key` (LiteLLM virtual key), future MCP tokens as `mcp-<server>-token`
+  - `valkey-password` (Valkey auth for mecatl-valkey)
 - **Model routing**: `defaultProvider`/`model` in the HelmRelease; per-session overrides via the API
 - **MCP servers**: add entries under `mcp.servers` in the HelmRelease
 

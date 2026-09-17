@@ -36,8 +36,8 @@ spec:
           - name: VALKEY_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: mecatl-valkey-secrets
-                key: password
+                name: mecatl-secrets
+                key: valkey-password
       replicas: 1
       resources:
         requests:
@@ -103,8 +103,7 @@ spec:
             capacity: 5Gi
 
     secrets:
-      enabled: true
-      itemPath: "vaults/Secrets/items/mecatl-valkey-secrets"
+      enabled: false
 
     gatus:
       enabled: false

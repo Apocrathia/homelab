@@ -54,8 +54,8 @@ spec:
     # Redis-backed state: dedicated mecatl-valkey (same namespace).
     redis:
       endpoint: "mecatl-valkey.mecatl.svc.cluster.local:6379"
-      credentialsSecret: mecatl-valkey-secrets
-      passwordKey: password
+      credentialsSecret: mecatl-secrets
+      passwordKey: valkey-password
       # In-cluster plaintext Redis (Cilium mesh); no CA bundle needed.
       caKey: ""
       filesystem:
