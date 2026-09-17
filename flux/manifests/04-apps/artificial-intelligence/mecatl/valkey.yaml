@@ -30,13 +30,18 @@ spec:
       namespace: mecatl
       # renovate: datasource=docker depName=valkey/valkey
       image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
+      # generic-app renders command/args from app.command/app.args only;
+      # app.container accepts name/port/stdin/tty/env. The args block sat
+      # under container: and was silently dropped, so the image default
+      # command ran a passwordless valkey-server. Keep args at app level;
+      # kubelet expands $(VAR) in container args from the container env.
+      args:
+        - valkey-server
+        - --requirepass
+        - $(VALKEY_PASSWORD)
       container:
         name: mecatl-valkey
         port: 6379
-        args:
-          - valkey-server
-          - --requirepass
-          - $(VALKEY_PASSWORD)
         env:
           - name: VALKEY_PASSWORD
             valueFrom:
