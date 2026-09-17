@@ -1,13 +1,10 @@
 ---
-# Corefile for the tailnet DNS resolver. Serves the split-DNS zone
-# gateway.services.apocrathia.com from etcd (records written by the
-# external-dns-tailnet release in this namespace), forwards the
-# access.apocrathia.com zone to the access VLAN resolver (10.100.0.1) and
-# LAN-only names under services.apocrathia.com to the services VLAN
-# resolver (10.100.1.1), and serves static records for the bare game
-# host: game.apocrathia.com plus a game.services.apocrathia.com override
-# inside the services block. Queries for any other zone are refused -
-# this instance is not a general resolver.
+# Corefile for the tailnet DNS resolver. Two server blocks: the homelab
+# domain zone apocrathia.com (etcd app zone gateway.services, static game
+# host records, forward of LAN-only names to the services VLAN resolver
+# at 10.100.1.1) and the access.apocrathia.com zone (forwarded to the
+# access VLAN resolver at 10.100.0.1). Queries for any other zone are
+# refused - this instance is not a general resolver.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,16 +15,37 @@ metadata:
     app.kubernetes.io/component: coredns
 data:
   Corefile: |
-    gateway.services.apocrathia.com:53 {
+    # Homelab domain zone, one block for everything under apocrathia.com
+    # except the access VLAN (own block below, different upstream). Chain:
+    # hosts -> etcd -> forward.
+    # - hosts: static records for the bare game host - one tailnet
+    #   address, both names (alias). fallthrough passes the rest on.
+    # - etcd: the app zone gateway.services.apocrathia.com (records
+    #   written by the external-dns-tailnet release in this namespace).
+    # - forward: LAN-only names (e.g. storage.services.apocrathia.com,
+    #   the NAS) come from the services VLAN resolver at 10.100.1.1 -
+    #   the same answers LAN clients get.
+    # Zone routing: hosts and etcd never compete (disjoint names), and
+    # game.apocrathia.com queries only reach a block this broad - a
+    # services-only zone would not match them, which is why the alias
+    # lives here.
+    apocrathia.com:53 {
         errors
         health :8080
         ready :8181
+        hosts {
+            100.108.85.40 game.services.apocrathia.com game.apocrathia.com
+            ttl 60
+            fallthrough
+        }
         etcd gateway.services.apocrathia.com {
             path /skydns
             endpoint http://etcd.tailnet-dns.svc.cluster.local:2379
-            # no fallthrough: unknown names in the zone return NXDOMAIN
-            # (matching the LAN DNS), not SERVFAIL from an exhausted chain
+            # no fallthrough: unknown names in the app zone NXDOMAIN
+            # here (matching the LAN DNS), never the VLAN resolver's
+            # LAN answer via the forward below
         }
+        forward . 10.100.1.1
         cache 30
         loadbalance
         reload
@@ -35,46 +53,12 @@ data:
     # Access VLAN hosts (10.100.0.0/24) live in their own zone, served by
     # that VLAN's gateway/DNS at 10.100.0.1 (e.g.
     # ians-gaming-pc.access.apocrathia.com); forward the whole zone there.
+    # Own block because the upstream differs from the domain zone's.
     access.apocrathia.com:53 {
         errors
         forward . 10.100.0.1
         cache 30
         loadbalance
-        reload
-    }
-    # LAN-only names under the services parent zone (e.g.
-    # storage.services.apocrathia.com, the NAS) come from the services VLAN
-    # resolver at 10.100.1.1 - the same answers LAN clients get. The etcd
-    # app zone above stays authoritative (longest-suffix match routes
-    # *.gateway.services queries there, never here), and the game host has
-    # a static tailnet answer here - same host and address as the
-    # game.apocrathia.com zone below, so it answers under both names;
-    # fallthrough sends everything else to the VLAN resolver.
-    services.apocrathia.com:53 {
-        errors
-        hosts {
-            100.108.85.40 game.services.apocrathia.com
-            ttl 60
-            fallthrough
-        }
-        forward . 10.100.1.1
-        cache 30
-        loadbalance
-        reload
-    }
-    # Static zone for the bare game host: one A record at the host's tailnet
-    # address (no etcd — nothing dynamic sources this record). The IP is the
-    # game host's CGNAT address from `tailscale ip -4` on the host; it is
-    # stable across restarts. The same host also answers
-    # game.services.apocrathia.com via the hosts override in the services
-    # block above.
-    game.apocrathia.com:53 {
-        errors
-        hosts {
-            100.108.85.40 game.apocrathia.com
-            ttl 60
-        }
-        cache 30
         reload
     }
 ---

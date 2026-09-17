@@ -62,8 +62,9 @@ inputs = {
     # app names, and game.services.apocrathia.com is a static tailnet record
     # (flux/manifests/03-services/tailnet-dns/coredns.yaml).
     "services.apocrathia.com" = ["100.76.213.107"]
-    # Game host zone: same resolver device; CoreDNS serves a static A record
-    # for game.apocrathia.com pointing at the host's tailnet address.
+    # Game host name: same resolver device; CoreDNS serves it as a static
+    # alias of game.services.apocrathia.com in the domain zone
+    # (flux/manifests/03-services/tailnet-dns/coredns.yaml).
     "game.apocrathia.com" = ["100.76.213.107"]
   }
 

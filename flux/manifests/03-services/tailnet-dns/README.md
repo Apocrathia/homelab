@@ -19,12 +19,12 @@ tailnet address (`100.120.155.113`); LAN-only names (e.g.
 resolve to LAN IPs via their VLAN resolvers (access 10.100.0.1, services
 10.100.1.1) — visible to friends but unroutable for them (deny-by-default).
 
-| Component     | Implementation                                                                                                                                                                                                                                                                                         |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Resolver      | CoreDNS (plain manifests, `coredns.yaml`) serving the app zone from etcd; `access.apocrathia.com` forwards to the access VLAN resolver (10.100.0.1), other `services.apocrathia.com` names to the services VLAN resolver (10.100.1.1) — except `game.services.apocrathia.com`, a static tailnet record |
-| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                                                                                                                                                                                                                                            |
-| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)                                                                                                                                                                                                                     |
-| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)                                                                                                                                                                                                                     |
+| Component     | Implementation                                                                                                                                                                                                                                                                                |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Resolver      | CoreDNS (plain manifests, `coredns.yaml`), two server blocks: the `apocrathia.com` domain zone (etcd app zone + static game-host records + forward of LAN-only names to the services VLAN resolver 10.100.1.1) and `access.apocrathia.com` (forwarded to the access VLAN resolver 10.100.0.1) |
+| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                                                                                                                                                                                                                                   |
+| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)                                                                                                                                                                                                            |
+| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)                                                                                                                                                                                                            |
 
 ## How it works
 
@@ -33,15 +33,15 @@ resolve to LAN IPs via their VLAN resolvers (access 10.100.0.1, services
    per-app A records (target = tailnet-gateway's status address) into etcd
    under `/skydns`. `txtOwnerId: tailnet` keeps its TXT registry separate from
    the UniFi instance.
-2. CoreDNS serves `gateway.services.apocrathia.com` from that etcd. The
-   whole `access.apocrathia.com` zone and LAN-only names elsewhere under
-   `services.apocrathia.com` (e.g. `storage.services.apocrathia.com`, the
-   NAS) forward to their VLAN resolvers — access names to the access VLAN's
-   own DNS at `10.100.0.1`, services names to `10.100.1.1` — the same
-   answers LAN clients get. One exception: `game.services.apocrathia.com`
-   is a static tailnet record (hosts + fallthrough), same host and address
-   as the `game.apocrathia.com` zone below. All other zones are refused;
-   this is not a general resolver.
+2. CoreDNS runs two server blocks. The `apocrathia.com` domain zone nests
+   the whole chain: the etcd app zone `gateway.services.apocrathia.com`
+   (unknown names there NXDOMAIN, never the VLAN answer), static
+   game-host records, and a forward of LAN-only names (e.g.
+   `storage.services.apocrathia.com`, the NAS) to the services VLAN
+   resolver `10.100.1.1` — the same answers LAN clients get. The
+   `access.apocrathia.com` block forwards its zone to the access VLAN's
+   own DNS at `10.100.0.1`. All other zones are refused; this is not a
+   general resolver.
 3. The `tailnet-dns` Service carries `tailscale.com/expose: "true"`, so the
    Tailscale operator runs a proxy device `tailnet-dns.taila8ef8c.ts.net`
    (tagged `tag:k8s`) that DNATs TCP and UDP 53 to the Service. Only
@@ -57,14 +57,15 @@ ExternalDNS rebuilds every record on its next sync; expect a sub-minute gap.
 
 ## Static zones: the game host
 
-The Corefile serves static `hosts`-plugin records for the bare AMP game
-host: a `game.apocrathia.com` zone and a `game.services.apocrathia.com`
-override inside the services zone block — same host, same tailnet address,
-both names. The records are static because nothing in-cluster sources
-them; the address is the game host's tailnet IPv4, read on the host with
+The Corefile serves a static `hosts`-plugin record for the bare AMP game
+host inside the domain zone block: one address, both names —
+`game.services.apocrathia.com game.apocrathia.com` as aliases (a
+services-only zone would not match the bare name, so the record lives in
+the `apocrathia.com` block). Static because nothing in-cluster sources
+it; the address is the game host's tailnet IPv4, read on the host with
 `tailscale ip -4` after it joins, and stable across restarts. LAN clients
 keep using the UniFi-resolved LAN IP; tailnet clients get the tailnet
-address from these records.
+address from this record.
 
 ## Split DNS configuration (post-deploy, operator step)
 
@@ -105,8 +106,8 @@ kubectl -n tailnet-dns run -it --rm dig --image=busybox --restart=Never --   nsl
   TCP/UDP 53 to `tag:k8s` (admins: grant already present; friends:
   `group:friends` + grant land with the first invite, slice 3).
 - **`nslookup` fails for non-split zones**: intended. Only
-  `access.apocrathia.com`, `services.apocrathia.com`, and
-  `game.apocrathia.com` are served; everything else is REFUSED.
+  the split-DNS zones (`access.apocrathia.com`, `services.apocrathia.com`,
+  `game.apocrathia.com`) are served; everything else is REFUSED.
 - **Records missing after etcd restart**: ExternalDNS rebuilds on its next
   sync (interval 1m / on event).
 
