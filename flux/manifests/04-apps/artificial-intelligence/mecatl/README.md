@@ -9,7 +9,7 @@
 - **mecak8s pods**: stateless agent compute (1 replica), gRPC :8080 + HTTP/SSE :8081
 - **State**: dedicated mecatl-valkey (Redis protocol) - session snapshots, event streams, virtual filesystem
 - **Coordination**: Kubernetes Leases (chart ships its own RBAC)
-- **Models**: cluster LiteLLM via OpenAI-compatible endpoint (`glm-5.2-prime` default)
+- **Models**: cluster LiteLLM via OpenAI-compatible endpoint (`glm-5.3-prime` default)
 - **MCP**: streaming-HTTP only; kmcp servers reachable in-cluster (none wired yet)
 - **Posture**: strict - read-only calls allowed, mutating calls denied until pre-configured
 

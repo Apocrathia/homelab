@@ -29,7 +29,7 @@ spec:
     # Models via cluster LiteLLM (OpenAI-compatible).
     # OPENAI_API_KEY (the LiteLLM virtual key) is projected via extraEnv.
     defaultProvider: "openai"
-    model: "glm-5.2-prime"
+    model: "glm-5.3-prime"
 
     # Provider credentials come from 1Password (mecatl-secrets item):
     # litellm-api-key -> OPENAI_API_KEY. cliconfig detects the env var and
