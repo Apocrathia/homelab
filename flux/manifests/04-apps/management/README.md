@@ -22,10 +22,6 @@ Service account and External Secrets PushSecret for mobile Kubernetes clients (e
 
 Self-hosted HTML5 network speed test for LAN and tailnet throughput checks.
 
-### [Semaphore](./semaphore/README.md)
-
-Web UI and API for Ansible, Terraform/OpenTofu, and shell automation with Authentik OIDC.
-
 ### [UnPoller](./unpoller/README.md)
 
 UniFi network monitoring exporting metrics to Prometheus with Grafana dashboards.
