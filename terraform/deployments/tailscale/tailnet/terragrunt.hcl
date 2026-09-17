@@ -53,14 +53,17 @@ inputs = {
   # Custom -> one entry per zone (services.apocrathia.com,
   # access.apocrathia.com, game.apocrathia.com) + device IP.
   dns_split_dns = {
-    "services.apocrathia.com" = ["100.76.213.107"]
     # Access VLAN zone: same resolver device; CoreDNS forwards the zone to
     # that VLAN's own resolver (10.100.0.1; hosts live under
     # <name>.access.apocrathia.com).
     "access.apocrathia.com" = ["100.76.213.107"]
-    # Game host zone: same resolver device; CoreDNS serves a static A record
-    # for game.apocrathia.com pointing at the host's tailnet address
+    # Services zone: same resolver device; CoreDNS forwards LAN-only names
+    # to the services VLAN resolver (10.100.1.1) - the etcd app zone answers
+    # app names, and game.services.apocrathia.com is a static tailnet record
     # (flux/manifests/03-services/tailnet-dns/coredns.yaml).
+    "services.apocrathia.com" = ["100.76.213.107"]
+    # Game host zone: same resolver device; CoreDNS serves a static A record
+    # for game.apocrathia.com pointing at the host's tailnet address.
     "game.apocrathia.com" = ["100.76.213.107"]
   }
 
