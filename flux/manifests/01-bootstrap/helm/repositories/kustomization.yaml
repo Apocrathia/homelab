@@ -36,6 +36,7 @@ resources:
   - k8sgpt.yaml
   - kagent.yaml
   - substrate.yaml
+  - mecatl.yaml
   - litellm.yaml
   - grafana-community.yaml
   - llm-d-modelservice.yaml
