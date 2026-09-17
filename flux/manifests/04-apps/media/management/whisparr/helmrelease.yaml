@@ -20,7 +20,7 @@ spec:
     app:
       name: whisparr
       # renovate: datasource=docker depName=ghcr.io/trueforge-org/whisparr
-      image: ghcr.io/trueforge-org/whisparr:2@sha256:f4dd20353b959af4b045bb9c53f4aaf223a8ac8fd4d4b0e7db00c629de8a0e92
+      image: ghcr.io/trueforge-org/whisparr:2.2.0@sha256:f4dd20353b959af4b045bb9c53f4aaf223a8ac8fd4d4b0e7db00c629de8a0e92
       container:
         name: whisparr
         port: 6969
