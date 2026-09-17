@@ -1,0 +1,36 @@
+---
+# ponytail: ufw/Debian path only — `game` (Debian) is the sole opt-in today.
+# If a RedHat host ever sets hardening_firewall_manage, add firewalld
+# branching here.
+- name: Install ufw (Debian)
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+# Rules first, then enable — a half-configured firewall must never cut the
+# SSH session running this playbook.
+- name: Set incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Set outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow trusted LAN sources to reach allowed TCP ports
+  community.general.ufw:
+    rule: allow
+    direction: in
+    from_ip: "{{ item.0 }}"
+    to_port: "{{ item.1 }}"
+    proto: tcp
+  loop: "{{ hardening_firewall_allow_from | product(hardening_firewall_allow_tcp_ports) | list }}"
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled

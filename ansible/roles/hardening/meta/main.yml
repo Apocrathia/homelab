@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  role_name: hardening
+  author: apocrathia
+  description: devsec ssh/os hardening for managed hosts plus an opt-in ufw default-deny firewall.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+dependencies: []
