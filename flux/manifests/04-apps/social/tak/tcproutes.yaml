@@ -58,8 +58,13 @@ spec:
         - name: tak
           port: 8443
 ---
+# Enrollment moves from TCPRoute passthrough to a gateway-terminated HTTPS
+# listener (see the tak-8446 listener on both gateways): iOS kills the TLS
+# handshake on the OTS cert's hostname mismatch before any HTTP request,
+# so 8446 must present the zone wildcard. Plain HTTP lands on the webui
+# nginx port-80 vhost, which routes /Marti/api/tls to the OTS API.
 apiVersion: gateway.networking.k8s.io/v1
-kind: TCPRoute
+kind: HTTPRoute
 metadata:
   name: tak-enroll
   namespace: tak
@@ -71,7 +76,13 @@ spec:
     - name: tailnet-gateway
       namespace: cilium-system
       sectionName: tak-8446
+  hostnames:
+    - tak.gateway.services.apocrathia.com
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /Marti
+      backendRefs:
         - name: tak
-          port: 8446
+          port: 80

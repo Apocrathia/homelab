@@ -87,9 +87,19 @@ spec:
           selector:
             matchLabels:
               kubernetes.io/metadata.name: tak
+    # Enrollment: gateway-terminated TLS. iTAK/iOS aborts the handshake on
+    # the OTS cert (CN=opentakserver, no SAN) - hostname mismatch is fatal
+    # in-app with no prompt. Terminate with the zone wildcard instead; the
+    # OTS CA stays responsible for client certs on 8089/8443.
     - name: tak-8446
-      protocol: TCP
+      protocol: HTTPS
       port: 8446
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: gateway-services-apocrathia-com-tls
+            namespace: cert-manager
       allowedRoutes:
         namespaces:
           from: Selector
