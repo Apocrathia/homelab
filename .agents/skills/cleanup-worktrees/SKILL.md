@@ -16,9 +16,12 @@ this skill is the **remove** path. Agents run it **before creating a new
 worktree**, not only when the operator asks for a tidy-up.
 
 Operator ask to clean up is authorization to remove **safe** candidates only.
-When running as the pre-create step, the same safe/keep/ask rules apply.
-Do not touch the workspace-root checkout's uncommitted WIP. Never delete
-`main`. Never `rm -rf` a worktree path.
+The pre-create step (before `git worktree add`) is **own-scope only**: this
+session's own old worktrees plus merged orphan branches with no worktree.
+Other sessions' trees are protected by their
+[worktree leases](../../rules/worktrees.md#worktree-leases); a repo-wide sweep
+requires an explicit operator ask. Do not touch the workspace-root checkout's
+uncommitted WIP. Never delete `main`. Never `rm -rf` a worktree path.
 
 ## Workflow
 
@@ -62,13 +65,14 @@ still has an open MR/PR head. Homelab defaults to **MR** / GitLab.
 
 For each candidate branch `B` (skip `main` and the primary checkout):
 
-| Check              | How                                                                                             | Outcome                                    |
-| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                     | Safe (if clean or force-ok below)          |
-| Content-equivalent | Unique patch already on `$base` (same file hunk under a different SHA — cherry-pick / recommit) | Treat as safe; tip need not be an ancestor |
-| Unique WIP         | `git log --oneline "$base..$B"` has commits whose **tree/diff** is not on `$base`               | **Keep** or ask                            |
-| Dirty worktree     | `git -C <path> status --porcelain`                                                              | See force rules                            |
-| Open MR/PR         | MR (or PR) still open for that head                                                             | **Keep** unless operator says abandon      |
+| Check              | How                                                                                                                   | Outcome                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                                           | Safe (if clean or force-ok below)                                              |
+| Content-equivalent | Unique patch already on `$base` (same file hunk under a different SHA — cherry-pick / recommit)                       | Treat as safe; tip need not be an ancestor                                     |
+| Unique WIP         | `git log --oneline "$base..$B"` has commits whose **tree/diff** is not on `$base`                                     | **Keep** or ask                                                                |
+| Dirty worktree     | `git -C <path> status --porcelain`                                                                                    | See force rules                                                                |
+| Open MR/PR         | MR (or PR) still open for that head                                                                                   | **Keep** unless operator says abandon                                          |
+| Live lease         | `.scratch/worktree-leases/<branch>.lock` mtime < 24h (see [`worktrees.md`](../../rules/worktrees.md#worktree-leases)) | **Keep**; report holder — merged + clean is NOT enough under parallel sessions |
 
 **Force remove (`git worktree remove --force`) only when:**
 
@@ -112,6 +116,11 @@ Confirm only the primary checkout remains when that is the intent.
 - Never delete `main` or remove the primary worktree.
 - Never discard unique unmerged commits or real uncommitted WIP without an
   explicit operator call.
+- Never remove a worktree with a live lease (< 24h) whose holder is not this
+  session — report the holder instead. "Merged + clean" does not mean "not in
+  use" when sessions run in parallel.
+- Pre-create runs are own-scope (this session's trees + merged orphans);
+  repo-wide sweeps need an explicit operator ask.
 - Do not `git switch` in the workspace root to "free" a branch lock as part of
   cleanup.
 - Do not push branch deletions to remotes unless the operator explicitly asks
