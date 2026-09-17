@@ -29,7 +29,7 @@ spec:
       # in the mecatl namespace (same pattern as terminus-valkey).
       namespace: mecatl
       # renovate: datasource=docker depName=valkey/valkey
-      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518b5288a58416981d9db95d30b
+      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
       container:
         name: mecatl-valkey
         port: 6379
