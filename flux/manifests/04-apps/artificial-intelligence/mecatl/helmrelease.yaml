@@ -1,0 +1,87 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mecatl
+  namespace: mecatl
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: mecak8s
+      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/mecatl/charts depName=mecak8s
+      version: "0.0.38"
+      sourceRef:
+        kind: HelmRepository
+        name: mecatl
+        namespace: flux-system
+      interval: 5m
+  values:
+    # Single replica: two-replica HA is unnecessary for a homelab
+    # coding-agent lane; scale to 2 if failover matters later.
+    replicaCount: 1
+
+    # Stable, non-secret identity for OTel resources. Offline/GitOps renders
+    # cannot use Helm's uuidv4 lookup - set a canonical value.
+    telemetry:
+      installationID: "a1c39736-8dbd-4c85-9c9c-6f5f8db9b4e0"
+
+    # Models via cluster LiteLLM (OpenAI-compatible).
+    # OPENAI_API_KEY (the LiteLLM virtual key) is projected via extraEnv.
+    defaultProvider: "openai"
+    model: "glm-5.3-prime"
+
+    # Provider credentials come from 1Password (mecatl-secrets item):
+    # litellm-api-key -> OPENAI_API_KEY. cliconfig detects the env var and
+    # selects openai as the default provider automatically.
+    extraEnv:
+      - name: OPENAI_BASE_URL
+        value: "http://litellm.litellm.svc.cluster.local:4000/v1"
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: mecatl-secrets
+            key: litellm-api-key
+
+    # The chart hard-fails a real provider without OIDC or an explicitly
+    # asserted TLS boundary. The cluster Cilium mesh provides in-cluster
+    # TLS termination and network policy enforcement; we assert the
+    # trusted-mesh profile instead of running per-pod OIDC for a
+    # single-tenant homelab lane.
+    security:
+      allowUnsafeRealProvider: true
+
+    # Redis-backed state: dedicated mecatl-valkey (same namespace).
+    redis:
+      endpoint: "mecatl-valkey.mecatl.svc.cluster.local:6379"
+      credentialsSecret: mecatl-secrets
+      passwordKey: valkey-password
+      # In-cluster plaintext Redis (Cilium mesh); no CA bundle needed.
+      caKey: ""
+      filesystem:
+        # Virtual workspace: persistent file ops without mounting a volume.
+        # Git-clone workflows land here; real FS mounts need --workspace
+        # plus extraVolumes when we want them.
+        enabled: true
+
+    # MCP servers (streaming HTTP). All kmcp servers are reachable
+    # in-cluster; bearer tokens projected via MCP_<NAME>_TOKEN env.
+    # Start minimal: none wired yet. Add per-server entries as needed:
+    #   mcp:
+    #     servers:
+    #       - name: flux
+    #         url: http://mcp-flux.mcp-flux.svc.cluster.local:8080/mcp
+    #         auth:
+    #           staticBearer:
+    #             tokenSecret: mecatl-secrets
+    #             tokenKey: mcp-flux-token
+    mcp:
+      servers: []
+
+    # No filesystem workspace yet - Redis virtual FS covers agent file ops.
+    workspace: ""
+
+    # Strict posture: read-only tool calls allowed, mutating calls need
+    # pre-configured permission. Headless deployment - no interactive
+    # approvals, so mutating calls are denied until explicitly granted.
+    posture: "strict"
