@@ -49,6 +49,13 @@ CHECK_ARGS = ["--check", "--diff"]
 SUFFIX_CHECK = ".yml — check"
 SUFFIX_APPLY = ".yml — apply"
 
+# tofu side: bash templates over scripts/semaphore/tofu-run.sh. The
+# tofu-context environment carries the state/Connect env and is seeded by
+# hand (its secret values cannot be derived from the repo).
+TOFU_RUNNER = "scripts/semaphore/tofu-run.sh"
+TOFU_ENV_NAME = "tofu-context"
+TOFU_TAIL = (" — plan", " — apply")
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # --- tiny API client ----------------------------------------------------------
@@ -121,6 +128,14 @@ def scan_playbooks() -> dict[str, str]:
     return out
 
 
+def scan_deployments() -> list[str]:
+    """Top-level dirs under terraform/deployments/ that contain terragrunt units."""
+    droot = REPO_ROOT / "terraform" / "deployments"
+    if not droot.is_dir():
+        return []
+    return sorted(d.name for d in droot.iterdir() if d.is_dir() and any(d.rglob("terragrunt.hcl")))
+
+
 def derived_name(playbook: str, suffix: str) -> str:
     return playbook[: -len(".yml")] + suffix
 
@@ -185,6 +200,61 @@ def reconcile_templates(cli: Client, ids: dict, playbooks: dict[str, str]) -> li
     return log
 
 
+def reconcile_tofu(cli: Client, ids: dict, deployments: list[str]) -> list[str]:
+    """Reconcile bash templates that run tofu-run.sh (plan/apply, all or per-dir)."""
+    log = []
+    existing = {t["name"]: t for t in cli.list("templates")}
+
+    desired = {}
+    for mode in ("plan", "apply"):
+        all_args = json.dumps([mode, "--all"])
+        desired[f"tofu — {mode} (all)"] = {
+            "name": f"tofu — {mode} (all)",
+            "playbook": TOFU_RUNNER,
+            "description": "terraform/deployments — all units",
+            "repository_id": ids["repository"],
+            "environment_ids": [ids["tofu_environment"]],
+            "app": "bash",
+            "type": "",
+            "allow_override_args_in_task": False,
+            "arguments": all_args,
+        }
+        for d in deployments:
+            desired[f"tofu {d} — {mode}"] = {
+                "name": f"tofu {d} — {mode}",
+                "playbook": TOFU_RUNNER,
+                "description": f"terraform/deployments/{d}",
+                "repository_id": ids["repository"],
+                "environment_ids": [ids["tofu_environment"]],
+                "app": "bash",
+                "type": "",
+                "allow_override_args_in_task": False,
+                "arguments": json.dumps([mode, d]),
+            }
+
+    for name, body in desired.items():
+        cur = existing.get(name)
+        if cur is None:
+            cli.create("templates", body)
+            log.append(f"created template {name!r}")
+        else:
+            changed = (
+                (cur.get("arguments") or "") != body["arguments"]
+                or cur.get("playbook") != body["playbook"]
+                or (cur.get("environment_ids") or []) != body["environment_ids"]
+            )
+            if changed:
+                cli.update("templates", cur["id"], body)
+                log.append(f"updated template {name!r}")
+
+    for name, cur in existing.items():
+        if name not in desired and name.startswith("tofu ") and name.endswith(TOFU_TAIL):
+            cli.delete("templates", cur["id"])
+            log.append(f"deleted template {name!r} (no deployment dir)")
+
+    return log
+
+
 def reconcile_schedules(cli: Client) -> list[str]:
     log = []
     templates = {t["name"]: t for t in cli.list("templates")}
@@ -228,12 +298,18 @@ def main() -> int:
         "repository": next(r["id"] for r in cli.list("repositories") if r["name"] == REPO_NAME),
         "inventory": next(i["id"] for i in cli.list("inventory") if i["name"] == INVENTORY_NAME),
         "environment": next(e["id"] for e in cli.list("environment") if e["name"] == ENVIRONMENT_NAME),
+        "tofu_environment": next(
+            e["id"] for e in cli.list("environment") if e["name"] == TOFU_ENV_NAME
+        ),
     }
 
     playbooks = scan_playbooks()
+    deployments = scan_deployments()
     print(f"scanned {len(playbooks)} playbook(s): {', '.join(sorted(playbooks))}")
+    print(f"scanned {len(deployments)} tofu deployment dir(s): {', '.join(deployments)}")
 
     log = reconcile_templates(cli, ids, playbooks)
+    log += reconcile_tofu(cli, ids, deployments)
     log += reconcile_schedules(cli)
 
     if log:
