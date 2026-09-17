@@ -14,9 +14,8 @@ from uuid import uuid4
 import httpx
 from a2a.client import ClientConfig, ClientFactory
 from a2a.client.card_resolver import A2ACardResolver
-from a2a.types import Message, Part, Role, Task, TaskArtifactUpdateEvent, TaskStatusUpdateEvent, TextPart
-from a2a.utils.artifact import get_artifact_text
-from a2a.utils.message import get_message_text
+from a2a.helpers.proto_helpers import get_artifact_text, get_message_text
+from a2a.types import Message, Part, Role, SendMessageRequest, TaskState
 
 LOG = logging.getLogger(__name__)
 
@@ -102,8 +101,8 @@ async def run_multiturn(
 
             msg = Message(
                 message_id=str(uuid4()),
-                role=Role.user,
-                parts=[Part(root=TextPart(kind="text", text=user_text))],
+                role=Role.ROLE_USER,
+                parts=[Part(text=user_text)],
                 context_id=context_id,
             )
 
@@ -114,9 +113,11 @@ async def run_multiturn(
             turn_transport_error = False
 
             try:
-                async for event in client.send_message(msg):
-                    if isinstance(event, Message):
-                        text = (get_message_text(event) or "").strip()
+                async for event in client.send_message(
+                    SendMessageRequest(message=msg)
+                ):
+                    if event.HasField("message"):
+                        text = (get_message_text(event.message) or "").strip()
                         if text:
                             LOG.info("message text: %s", text[:3000])
                             saw_any_text = True
@@ -124,26 +125,28 @@ async def run_multiturn(
                                 saw_non_stub_text = True
                         continue
 
-                    if not (isinstance(event, tuple) and len(event) >= 2):
-                        continue
-
-                    task, update = event[0], event[1]
-                    if isinstance(task, Task):
+                    if event.HasField("task"):
+                        task = event.task
                         task_context = getattr(task, "context_id", None) or getattr(task, "contextId", None)
                         if isinstance(task_context, str) and task_context.strip():
                             next_context = task_context.strip()
                         elif hasattr(task, "id") and getattr(task, "id", None):
                             next_context = str(task.id)
+                        continue
 
-                    if isinstance(update, TaskArtifactUpdateEvent):
-                        text = (get_artifact_text(update.artifact) or "").strip()
+                    if event.HasField("artifact_update"):
+                        text = (
+                            get_artifact_text(event.artifact_update.artifact) or ""
+                        ).strip()
                         if text:
                             LOG.info("artifact text: %s", text[:3000])
                             saw_any_text = True
                             if not looks_like_tool_stub_text(text):
                                 saw_non_stub_text = True
-                    elif isinstance(update, TaskStatusUpdateEvent):
-                        last_state = str(update.status.state)
+                    elif event.HasField("status_update"):
+                        last_state = TaskState.Name(
+                            event.status_update.status.state
+                        ).removeprefix("TASK_STATE_")
                         LOG.info("task status: %s", last_state)
             except Exception as e:  # noqa: BLE001
                 turn_transport_error = True
