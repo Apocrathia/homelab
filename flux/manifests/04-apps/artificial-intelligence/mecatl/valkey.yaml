@@ -1,0 +1,110 @@
+---
+# Mecatl session/event state. Dedicated instance: the litellm-valkey is
+# cache-scoped (response cache, TTL'd) and not durable enough for Mecatl
+# session snapshots + event streams. Redis protocol via Valkey
+# (same pattern as terminus-valkey).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mecatl-valkey
+  namespace: mecatl
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mecatl-valkey
+      # renovate: datasource=docker depName=valkey/valkey
+      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518b5288a58416981d9db95d30b
+      container:
+        name: mecatl-valkey
+        port: 6379
+        args:
+          - valkey-server
+          - --requirepass
+          - $(VALKEY_PASSWORD)
+        env:
+          - name: VALKEY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mecatl-valkey-secrets
+                key: password
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 6379
+        targetPort: 6379
+        portName: redis
+      healthChecks:
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - sh
+              - -c
+              - valkey-cli -a $(VALKEY_PASSWORD) ping | grep PONG
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - sh
+              - -c
+              - valkey-cli -a $(VALKEY_PASSWORD) ping | grep PONG
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/mecatl-valkey-secrets"
+
+    gatus:
+      enabled: false

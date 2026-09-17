@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Mecatl: stylized agent core - hexagon with node dots -->
+  <polygon points="32,6 54,19 54,45 32,58 10,45 10,19" fill="none" stroke="#22d3ee" stroke-width="3"/>
+  <circle cx="32" cy="32" r="7" fill="#22d3ee"/>
+  <circle cx="32" cy="14" r="3" fill="#22d3ee" opacity="0.6"/>
+  <circle cx="48" cy="41" r="3" fill="#22d3ee" opacity="0.6"/>
+  <circle cx="16" cy="41" r="3" fill="#22d3ee" opacity="0.6"/>
+  <line x1="32" y1="32" x2="32" y2="14" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+  <line x1="32" y1="32" x2="48" y2="41" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+  <line x1="32" y1="32" x2="16" y2="41" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+</svg>
