@@ -10,17 +10,18 @@ uses, pointed at `tailnet-gateway` instead of `main-gateway`.
 
 Part of the [tailnet split DNS plan](../../../../docs/plans/tailnet-split-dns.md).
 Friends are invited tailnet users, not device-shares, and Tailscale split DNS
-(restricted nameserver for `gateway.services.apocrathia.com`) sends their
-queries for the homelab app zone here. Zero LAN IPs are advertised to the
-tailnet: records point at `tailnet-gateway`'s tailnet address
-(`100.120.155.113`).
+(restricted nameserver for `services.apocrathia.com`) sends their
+queries for the homelab zone here. App records point at `tailnet-gateway`'s
+tailnet address (`100.120.155.113`); LAN-only names elsewhere in the zone
+(e.g. `storage.services.apocrathia.com`) resolve to LAN IPs via the UDM
+forward — visible to friends but unroutable for them (deny-by-default).
 
-| Component     | Implementation                                                                      |
-| ------------- | ----------------------------------------------------------------------------------- |
-| Resolver      | CoreDNS (plain manifests, `coredns.yaml`) serving only the split-DNS zone from etcd |
-| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                         |
-| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)  |
-| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)  |
+| Component     | Implementation                                                                                                                     |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Resolver      | CoreDNS (plain manifests, `coredns.yaml`) serving the app zone from etcd; other `services.apocrathia.com` names forward to the UDM |
+| Record store  | Single-member etcd (`etcd.yaml`), disposable emptyDir state                                                                        |
+| Record writer | ExternalDNS instance #2 (`external-dns-tailnet`, chart `1.21.1`, coredns provider)                                                 |
+| Tailnet leg   | `tailnet-dns` Service exposed via `tailscale.com/expose` (operator L3, TCP+UDP 53)                                                 |
 
 ## How it works
 
@@ -29,8 +30,11 @@ tailnet: records point at `tailnet-gateway`'s tailnet address
    per-app A records (target = tailnet-gateway's status address) into etcd
    under `/skydns`. `txtOwnerId: tailnet` keeps its TXT registry separate from
    the UniFi instance.
-2. CoreDNS serves `gateway.services.apocrathia.com` from that etcd. All other
-   zones are refused; this is not a general resolver.
+2. CoreDNS serves `gateway.services.apocrathia.com` from that etcd. Names
+   elsewhere under `services.apocrathia.com` (LAN-only, e.g.
+   `storage.services.apocrathia.com`) forward to the UDM (`10.100.1.1`) —
+   the same answers LAN clients get. All other zones are refused; this is
+   not a general resolver.
 3. The `tailnet-dns` Service carries `tailscale.com/expose: "true"`, so the
    Tailscale operator runs a proxy device `tailnet-dns.taila8ef8c.ts.net`
    (tagged `tag:k8s`) that DNATs TCP and UDP 53 to the Service. Only
@@ -55,7 +59,7 @@ get the tailnet address from this zone.
 
 ## Split DNS configuration (post-deploy, operator step)
 
-The tailnet must send `gateway.services.apocrathia.com` queries to the
+The tailnet must send `services.apocrathia.com` queries to the
 resolver device. The nameserver must be an IP, and the proxy device's tailnet
 IP is only knowable after first deploy:
 
@@ -65,7 +69,7 @@ IP is only knowable after first deploy:
 2. Set the restricted nameserver via Terraform
    (`terraform/deployments/tailscale/tailnet/terragrunt.hcl`,
    `dns_split_dns` input - commented block there) or the admin console
-   (DNS -> Add nameserver -> Custom -> `gateway.services.apocrathia.com` +
+   (DNS -> Add nameserver -> Custom -> `services.apocrathia.com` +
    the device IP). Terraform is preferred; the tailnet policy and DNS are
    otherwise managed there.
 
@@ -91,8 +95,9 @@ kubectl -n tailnet-dns run -it --rm dig --image=busybox --restart=Never --   nsl
   the current device IP, and that the tailnet policy grants their group
   TCP/UDP 53 to `tag:k8s` (admins: grant already present; friends:
   `group:friends` + grant land with the first invite, slice 3).
-- **`nslookup` fails for non-app zones**: intended. Only
-  `gateway.services.apocrathia.com` is served; everything else is REFUSED.
+- **`nslookup` fails for non-split zones**: intended. Only
+  `services.apocrathia.com` and `game.apocrathia.com` are served; everything
+  else is REFUSED.
 - **Records missing after etcd restart**: ExternalDNS rebuilds on its next
   sync (interval 1m / on event).
 

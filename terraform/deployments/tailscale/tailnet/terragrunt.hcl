@@ -39,16 +39,19 @@ inputs = {
   # No search paths: the tailnet search domain only resolved via the retired
   # public wildcard record.
   dns_search_paths = []
-  # Split DNS for the homelab app zone (tailnet split DNS plan, slice 3):
-  # restricted nameserver for gateway.services.apocrathia.com -> the
-  # tailnet-dns resolver device (flux/manifests/03-services/tailnet-dns),
-  # device IP read post-rollout via
+  # Split DNS for the homelab zone (tailnet split DNS plan, slice 3,
+  # broadened from gateway.services.apocrathia.com to services.apocrathia.com):
+  # restricted nameserver -> the tailnet-dns resolver device
+  # (flux/manifests/03-services/tailnet-dns). CoreDNS serves the app zone
+  # (gateway.services...) from etcd via longest-suffix match and forwards
+  # other names under the zone (LAN-only, e.g. storage.services.apocrathia.com)
+  # to the UDM. Device IP read post-rollout via
   # `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`.
   # The IP is stable across restarts (operator-persisted proxy state), so
   # this is one-time. Admin-console equivalent: DNS -> Add nameserver ->
-  # Custom -> gateway.services.apocrathia.com + device IP.
+  # Custom -> services.apocrathia.com + device IP.
   dns_split_dns = {
-    "gateway.services.apocrathia.com" = ["100.76.213.107"]
+    "services.apocrathia.com" = ["100.76.213.107"]
     # Game host zone: same resolver device; CoreDNS serves a static A record
     # for game.apocrathia.com pointing at the host's tailnet address
     # (flux/manifests/03-services/tailnet-dns/coredns.yaml).

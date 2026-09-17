@@ -1,8 +1,10 @@
 ---
-# Corefile for the tailnet DNS resolver. Serves only the split-DNS zone
+# Corefile for the tailnet DNS resolver. Serves the split-DNS zone
 # gateway.services.apocrathia.com from etcd (records written by the
-# external-dns-tailnet release in this namespace). Queries for any other
-# zone are refused - this instance is not a general resolver.
+# external-dns-tailnet release in this namespace), forwards other names
+# under services.apocrathia.com to the UDM, and serves a static zone for
+# game.apocrathia.com. Queries for any other zone are refused - this
+# instance is not a general resolver.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -23,6 +25,17 @@ data:
             # no fallthrough: unknown names in the zone return NXDOMAIN
             # (matching the UDM), not SERVFAIL from an exhausted chain
         }
+        cache 30
+        loadbalance
+        reload
+    }
+    # LAN-only names under the parent zone (e.g. storage.services.apocrathia.com,
+    # the NAS) come from the UDM - the same answers LAN clients get. The etcd
+    # zone above stays authoritative: longest-suffix match routes
+    # *.gateway.services queries there, never here.
+    services.apocrathia.com:53 {
+        errors
+        forward . 10.100.1.1
         cache 30
         loadbalance
         reload
