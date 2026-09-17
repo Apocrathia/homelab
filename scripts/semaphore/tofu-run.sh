@@ -14,6 +14,9 @@ repo="$(cd "$(dirname "$0")/../.." && pwd)"
 
 export TF_IN_AUTOMATION=true
 export TG_NO_COLOR=true
+# glibc loader + libc staged at /lib64 by the semaphore deployment's
+# glibc-stage initContainer (Alpine pod; 1Password provider is glibc-linked).
+export LD_LIBRARY_PATH="/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 # Pinned tofu + terragrunt, same as CI (the pod bundles older versions).
 # ci-deps.sh lives outside this hook's file set; it is CI's own bootstrap.

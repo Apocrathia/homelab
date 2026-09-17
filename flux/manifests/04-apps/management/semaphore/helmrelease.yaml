@@ -109,6 +109,34 @@ spec:
       volumeMounts:
         - name: data
           mountPath: /var/lib/semaphore
+        # glibc runtime for glibc-linked tofu providers (1Password): the
+        # provider ELF requests /lib64/ld-linux-x86-64.so.2, which does not
+        # exist on Alpine. Staged by the glibc-stage initContainer.
+        # (bare name: app.volumeMounts get the app-name prefix, and the
+        # initContainer declares the pod volume as semaphore-glibc-libs)
+        - name: glibc-libs
+          mountPath: /lib64
+      initContainers:
+        - name: glibc-stage
+          # renovate: datasource=docker depName=frolvlad/alpine-glibc
+          image: frolvlad/alpine-glibc:alpine-3.22_glibc-2.42@sha256:7180a9c58e09bddbbf4bf4d63737954dafef2c3f1059d56ef520290455dc1ae
+          command: ["sh", "-c"]
+          # Provider needs the loader + libc.so.6 (its only dynamic dep);
+          # tofu-run.sh exports LD_LIBRARY_PATH=/lib64 so the loader finds libc.
+          args:
+            - cp /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /usr/glibc-compat/lib/libc.so.6 /stage/ && chmod 755 /stage/*
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumes:
+            emptyDir:
+              - name: semaphore-glibc-libs
+                mountPath: /stage
       volumes:
         secret:
           - name: oidc-client-id
