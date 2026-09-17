@@ -58,8 +58,12 @@ spec:
         - name: tak
           port: 8443
 ---
+# Enrollment API over the gateway-terminated tak-8446 listeners; plain
+# HTTP arrives on the webui nginx port-80 vhost, which proxies
+# /Marti/api/tls to the OTS API. The CoT and Marti listeners stay opaque
+# TCP passthrough (client-cert mTLS).
 apiVersion: gateway.networking.k8s.io/v1
-kind: TCPRoute
+kind: HTTPRoute
 metadata:
   name: tak-enroll
   namespace: tak
@@ -71,7 +75,13 @@ spec:
     - name: tailnet-gateway
       namespace: cilium-system
       sectionName: tak-8446
+  hostnames:
+    - tak.gateway.services.apocrathia.com
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /Marti
+      backendRefs:
         - name: tak
-          port: 8446
+          port: 80

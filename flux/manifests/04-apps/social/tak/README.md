@@ -15,7 +15,7 @@ OpenTAKServer (OTS) is an open-source TAK server: it serves the Team Awareness K
 | 8088 | CoT streaming (TCP)                | none                                                 | plain ATAK connections                                      |
 | 8089 | CoT streaming (SSL)                | OTS CA server cert                                   | ATAK client certificates                                    |
 | 8443 | Marti API (missions, datapackages) | OTS CA server cert + client cert verification (mTLS) | `/Marti/api/tls` returns 404 here                           |
-| 8446 | Certificate enrollment             | OTS CA server cert                                   | only `/Marti/api/tls` is proxied, everything else 403       |
+| 8446 | Certificate enrollment             | Gateway TLS (Let's Encrypt zone wildcard)            | gateway terminates TLS; nginx proxies only `/Marti/api/tls` |
 
 All five ports are exposed by the `tak` Service; the TCP ports (8088/8089/8443/8446) are routed by `tcproutes.yaml` on **both** `main-gateway` (LAN) and `tailnet-gateway` (tailnet).
 
@@ -66,7 +66,7 @@ The pod stays pending until the item exists (OnePasswordItem). LDAP + the databa
 1. **LDAP bind user password**: the blueprint creates `tak-ldap-bind` (service account, `users` group). Set its password in the Authentik UI (Directory -> Users -> tak-ldap-bind) to the `ldap-bind-password` value from 1Password, then restart the tak deployment. Until then every WebUI page shows "failed to get group list" - runtime group lookups bind as this user; login itself is direct bind and works regardless.
 2. **Tailnet policy**: apply the policy change shipped with this MR (`terraform/deployments/tailscale/tailnet/policy.hujson` - `terragrunt apply`). Until applied, tailnet CoT is blocked by the deny-by-default policy.
 3. **Channel groups**: create the `tak_<name>` / `_read` / `_write` trios in Authentik for each channel you want, and add friends (and yourself, in `tak_admin`, for the OTS administrator role) to the relevant groups. Users authenticate against LDAP with their own Authentik credentials.
-4. **ATAK enrollment**: add the server in ATAK as `tak.gateway.services.apocrathia.com` with the ports above, then enroll the client certificate. On the first TLS connect ATAK shows a hostname-mismatch prompt - the OTS server certificate has a hardcoded CN of `opentakserver`, not the FQDN. Accept once; it is upstream behavior.
+4. **ATAK enrollment**: add the server in ATAK as `tak.gateway.services.apocrathia.com` with the ports above, then enroll the client certificate. Enrollment goes through gateway-terminated TLS on :8446 (the Let's Encrypt zone wildcard), so iOS/iTAK clients have no certificate prompt. SSL CoT on :8089 and the mTLS Marti API on :8443 still present the OTS CA server cert (hardcoded CN=`opentakserver`, no SAN) - installed TAK clients match against the enrolled truststore and do not enforce hostname, but plain web clients will warn there.
 
 ## First boot
 
