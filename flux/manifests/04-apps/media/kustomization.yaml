@@ -21,7 +21,7 @@ resources:
   - management/chaptarr
   - management/cleanuparr
   - management/houndarr
-  - management/huntarr2
+  # - management/huntarr2 # disabled: unused, replaced by houndarr; ready for removal
   - management/icloudpd
   - management/immich
   - management/lidarr
