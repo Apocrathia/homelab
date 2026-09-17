@@ -58,11 +58,10 @@ spec:
         - name: tak
           port: 8443
 ---
-# Enrollment moves from TCPRoute passthrough to a gateway-terminated HTTPS
-# listener (see the tak-8446 listener on both gateways): iOS kills the TLS
-# handshake on the OTS cert's hostname mismatch before any HTTP request,
-# so 8446 must present the zone wildcard. Plain HTTP lands on the webui
-# nginx port-80 vhost, which routes /Marti/api/tls to the OTS API.
+# Enrollment API over the gateway-terminated tak-8446 listeners; plain
+# HTTP arrives on the webui nginx port-80 vhost, which proxies
+# /Marti/api/tls to the OTS API. The CoT and Marti listeners stay opaque
+# TCP passthrough (client-cert mTLS).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
