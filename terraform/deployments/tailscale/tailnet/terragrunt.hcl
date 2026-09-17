@@ -50,7 +50,8 @@ inputs = {
   # `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`.
   # The IP is stable across restarts (operator-persisted proxy state), so
   # this is one-time. Admin-console equivalent: DNS -> Add nameserver ->
-  # Custom -> services.apocrathia.com + device IP.
+  # Custom -> one entry per zone (services.apocrathia.com,
+  # access.apocrathia.com, game.apocrathia.com) + device IP.
   dns_split_dns = {
     "services.apocrathia.com" = ["100.76.213.107"]
     # Access VLAN zone: same resolver device; CoreDNS forwards the zone to

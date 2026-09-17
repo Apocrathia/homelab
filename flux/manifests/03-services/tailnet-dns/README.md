@@ -48,7 +48,7 @@ resolve to LAN IPs via their VLAN resolvers (services 10.100.1.1, access
 4. The UniFi-backed ExternalDNS in [../external-dns](../external-dns/) keeps
    writing LAN records and is filtered to `main-gateway`. The two instances
    must stay gateway-filtered: dual-parentRef routes (e.g. Authentik) would
-   otherwise write CGNAT addresses into the UDM and break LAN clients.
+   otherwise write CGNAT addresses into the LAN DNS and break LAN clients.
 
 etcd state is deliberately disposable (emptyDir). If etcd restarts empty,
 ExternalDNS rebuilds every record on its next sync; expect a sub-minute gap.
