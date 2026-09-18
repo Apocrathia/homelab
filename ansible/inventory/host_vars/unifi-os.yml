@@ -9,6 +9,7 @@ common_packages_extra:
   - slirp4netns # UOS Server requirement (trixie: 1.2.1)
   - uidmap # rootless podman subordinate IDs
   - vlan # ifupdown VLAN subinterfaces (network tag)
+  - python3-debian # kopia role repo tasks need it in check mode (deb822)
 
 # Static L3: one address per VLAN at .3 (gateway .1, honeypot .2, below
 # every DHCP pool start). Port trunk profile: native VLAN 0 (Legacy,
