@@ -94,8 +94,9 @@ NUC (BLKNUC7i7DNK1E).
   Server; hosting tier was the IPFIX gate, not CPU.
 - Inventory (current): `game` → `game.services.apocrathia.com`,
   `ians-gaming-pc` → `ians-gaming-pc.access.apocrathia.com`,
-  `unifi-os` → `10.10.0.3` (static Management; host_vars/unifi-os.yml holds
-  the full .3-per-VLAN table).
+  `unifi-os` → `unifi-os.management.apocrathia.com` (host_vars/unifi-os.yml
+  holds the full .3-per-VLAN table; ansible_host is a hostname like every
+  other host).
 - Local verify (2026-08-01): syntax-check + `ansible-lint` production profile
   clean (Homebrew Python 3.14 + ansible-core 2.20). CI image is Python 3.12 +
   ansible-core 2.16+.
