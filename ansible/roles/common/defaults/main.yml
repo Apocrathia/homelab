@@ -11,3 +11,12 @@ common_passwordless_sudo: false
 # key (exclusive), so an empty pubkey fails loudly rather than half-managing.
 common_ansible_account: ansible
 common_ansible_account_pubkey: ""
+# Host-specific additions to common_packages (see host_vars/).
+common_packages_extra: []
+# Static L3 config (see tasks/network.yml). Empty = host keeps its current
+# network management (typically installer DHCP).
+common_network_interfaces: []
+# DNS for hosts with static interfaces. Required when the list is non-empty.
+common_network_dns:
+  servers: []
+  search: []

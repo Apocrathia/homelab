@@ -9,6 +9,11 @@
   tags:
     - system
 
+- name: Configure network
+  ansible.builtin.import_tasks: network.yml
+  tags:
+    - network
+
 - name: Configure user
   ansible.builtin.import_tasks: user.yml
   tags:

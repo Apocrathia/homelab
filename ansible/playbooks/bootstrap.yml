@@ -4,8 +4,26 @@
 # with SSH key auth + passwordless sudo.
 - name: Bootstrap login user on managed hosts
   hosts: all
-  gather_facts: true
+  gather_facts: false
   become: true
+  pre_tasks:
+    # Day-0 hosts may have no python3 at all (Debian netinst): facts and
+    # normal modules need one, so install it via raw before gathering.
+    - name: Install python3 + python3-apt (raw; no interpreter needed)
+      ansible.builtin.raw: |
+        set -e
+        if python3 -c 'import apt' 2>/dev/null; then
+          echo PRESENT
+          exit 0
+        fi
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -qq
+        apt-get install -y -qq python3 python3-apt
+        echo INSTALLED
+      register: bootstrap_python3
+      changed_when: "'INSTALLED' in bootstrap_python3.stdout"
+    - name: Gather facts now that an interpreter exists
+      ansible.builtin.setup:
   roles:
     - role: common
       tags:
