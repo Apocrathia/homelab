@@ -1,10 +1,13 @@
 ---
 # Game host: AMP over nginx/443 (Let's Encrypt via Cloudflare DNS-01) and
 # tailnet membership (tag:game). All app specifics in host_vars/game.yml.
+# Roles are independent and composed here in dependency-safe order: acme_sh
+# mints the cert, nginx_site's vhost references it, tailscale joins last.
 - name: Configure the game host
   hosts: game
   gather_facts: true
   become: true
   roles:
-    - role: nginx_site # pulls in acme_sh via meta dependency
+    - role: acme_sh
+    - role: nginx_site
     - role: tailscale
