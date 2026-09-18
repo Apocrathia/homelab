@@ -1,5 +1,17 @@
 ---
 # Official kopia apt repo: https://kopia.io/docs/installation/
+# deb822_repository can only simulate in check mode when python3-debian is
+# already on the host; it auto-installs the lib on real runs only. Fresh
+# hosts lack it, so CI ansible-check (--check) dies at the repo task.
+# check_mode: false makes this one task run for real during --check —
+# same override as common's python3-apt bootstrap. The apt module is safe
+# here because common guarantees python3-apt before this role runs.
+- name: Ensure python3-debian for deb822 repo module
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+  check_mode: false
+
 - name: Ensure apt keyrings directory
   ansible.builtin.file:
     path: /etc/apt/keyrings
