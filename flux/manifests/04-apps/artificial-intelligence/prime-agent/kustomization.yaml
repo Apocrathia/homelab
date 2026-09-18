@@ -15,6 +15,7 @@ configMapGenerator:
   - name: prime-agent-config
     namespace: prime-agent
     files:
+      - agent/extensions/activity-recap.ts
       - agent/extensions/litellm.ts
       - agent/settings.json
     options:
