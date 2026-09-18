@@ -18,6 +18,7 @@ configMapGenerator:
       - agent/extensions/activity-recap.ts
       - agent/extensions/litellm.ts
       - agent/extensions/a2a.ts
+      - agent/extensions/name-sessions.ts
       - agent/settings.json
     options:
       disableNameSuffixHash: true

@@ -26,6 +26,9 @@ This deployment includes:
   `a2a_task` tools for the kagent agents brokered by LiteLLM; configured via
   `A2A_BASE_URL` + `A2A_API_KEY` (same virtual key). Slow agent runs return
   early with a `task_id` to poll — the harness aborts tool calls at ~240s
+- `agent/extensions/name-sessions.ts` names every session (operator rule):
+  registers the `name_session` tool and appends a naming directive to every
+  turn while the session is unnamed (26-character limit, picker column truncates)
 - `agent/settings.json` seeded once (delete from the PVC to re-seed); runtime
   keys accumulate afterwards
 
