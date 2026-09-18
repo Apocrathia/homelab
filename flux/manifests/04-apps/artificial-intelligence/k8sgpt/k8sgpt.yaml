@@ -10,7 +10,7 @@ spec:
   ai:
     enabled: true
     backend: openai
-    model: qwen3.8-prime
+    model: glm-5.3-prime
     baseUrl: http://litellm.litellm.svc.cluster.local:4000/v1
     secret:
       name: k8sgpt-secrets
