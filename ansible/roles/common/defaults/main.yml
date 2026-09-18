@@ -13,6 +13,11 @@ common_ansible_account: ansible
 common_ansible_account_pubkey: ""
 # Host-specific additions to common_packages (see host_vars/).
 common_packages_extra: []
+
+# Oh-my-zsh + starter .zshrc for the primary user (user tag). Create-only:
+# an existing ~/.oh-my-zsh or ~/.zshrc is never modified — this is a
+# bootstrap for new hosts, not dotfile management.
+common_manage_zsh: true
 # Static L3 config (see tasks/network.yml). Empty = host keeps its current
 # network management (typically installer DHCP).
 common_network_interfaces: []

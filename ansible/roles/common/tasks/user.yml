@@ -35,6 +35,34 @@
     validate: "visudo -cf %s"
   when: common_passwordless_sudo | bool
 
+- name: Check for existing oh-my-zsh install
+  ansible.builtin.stat:
+    path: "/home/{{ username }}/.oh-my-zsh"
+  register: common_omz_dir
+
+- name: Install oh-my-zsh (clone-only; never touches an existing install)
+  ansible.builtin.git:
+    repo: https://github.com/ohmyzsh/ohmyzsh.git
+    dest: "/home/{{ username }}/.oh-my-zsh"
+    version: master
+    depth: 1
+    update: false
+  become: true
+  become_user: "{{ username }}"
+  when:
+    - common_manage_zsh | bool
+    - not common_omz_dir.stat.exists
+
+- name: Create starter .zshrc (never overwrites an existing file)
+  ansible.builtin.copy:
+    src: zshrc.omz
+    dest: "/home/{{ username }}/.zshrc"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+    force: false
+  when: common_manage_zsh | bool
+
 - name: Ensure ansible service account exists
   ansible.builtin.user:
     name: "{{ common_ansible_account }}"
