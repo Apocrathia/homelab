@@ -1,7 +1,7 @@
 # Crossplane
 
-Crossplane control plane (core only — no providers, functions, or
-configurations) with the Crossview web dashboard.
+Crossplane control plane (core plus the upbound `provider-opentofu`
+package) with the Crossview web dashboard.
 
 > **Navigation**: [← Back to Services README](../README.md)
 
@@ -13,12 +13,13 @@ deployed here runs the API extensions controller, the RBAC manager, and the
 package manager that pulls provider/function/configuration packages from OCI
 registries on demand.
 
-No provider is installed yet, so the cluster gains the Crossplane CRDs and
-controllers but manages nothing external. Adding a provider is a single
+One provider is installed: `upbound/provider-opentofu` (see
+[provider-opentofu](#provider-opentofu)), so the cluster can manage external
+APIs through OpenTofu workspaces. Adding another provider is still a single
 `Provider` manifest plus a `ProviderConfig` with credentials from a
 1Password-backed secret.
 
-- **Scope**: core control plane, zero configuration
+- **Scope**: core control plane + `provider-opentofu` (OpenTofu workspaces)
 - **CRDs**: applied by the chart init container (`crossplane core init`), not
   by Helm — Helm upgrades never skip CRD changes
 - **Version line**: v2.x; cluster-scoped MRs are legacy in v2, namespaced MRs
@@ -34,10 +35,10 @@ controllers but manages nothing external. Adding a provider is a single
 | Secrets       | None required — providers bring their own `ProviderConfig`                                                          |
 | Dashboard     | [Crossview](https://github.com/crossplane-contrib/crossview) chart 4.6.0, `crossview-*` manifests in this directory |
 
-## Adding a provider later
+## Adding a provider
 
 1. Create a `Provider` manifest in this directory naming the OCI package
-   (e.g. `xpkg.upbound.io/crossplane-contrib/provider-kubernetes`).
+   (e.g. `xpkg.upbound.io/upbound/provider-opentofu:v1.1.8`).
 2. Create a `ProviderConfig` referencing a 1Password-backed secret
    (`OnePasswordItem`, never a bare Secret).
 3. Scope the managed resource activation policy to only the MRs actually
@@ -48,6 +49,38 @@ Provider health should be checked on the
 [Upbound Marketplace](https://marketplace.upbound.io/providers) before
 adoption; several community providers (cloudflare, okta) are archived or
 stale.
+
+## provider-opentofu
+
+[`upbound/provider-opentofu`](https://github.com/upbound/provider-opentofu)
+v1.1.8 (`provider-opentofu.yaml`) runs OpenTofu modules against external
+systems through `Workspace` managed resources — Pattern B from
+[`docs/research/crossplane-connector-pattern.md`](../../../docs/research/crossplane-connector-pattern.md).
+First consumer: headlamp's Authentik entry
+(`flux/manifests/03-services/headlamp/opentofu-workspace.yaml`).
+
+- **CRDs**: 7 (Workspace, ProviderConfig, ProviderConfigUsage in both scopes
+  plus namespaced ClusterProviderConfig) — small enough that no
+  `defaultActivations` scoping is needed
+- **Workspaces live per-app**: in the consuming app's directory and
+  namespace, against a namespaced `ProviderConfig`
+  (`opentofu.m.upbound.io/v1beta1`)
+- **State**: each module declares a `kubernetes` backend
+  (`in_cluster_config = true`); state lands as a `tfstate-*` Secret in the
+  Workspace namespace — kept separate from the CI tofu stack's GitLab HTTP
+  backend. The provider runtime SA already gets cluster-wide secret/lease
+  access via the `crossplane:provider:<revision>:system` ClusterRole, so the
+  backend needs no extra RBAC.
+- **Credentials**: `OnePasswordItem` → Secret → namespaced
+  `ProviderConfig.spec.credentials` array, materialized as a file in the
+  workspace and read from HCL via `file()`. The Authentik API token is created
+  by the
+  [`terraform-service-account` blueprint](../authentik/blueprints/terraform-service-account.yaml)
+  (service account + auto-generated key, never committed); copy the key once
+  from Authentik into the 1Password item
+- **Deletion**: deleting a Workspace runs `tofu destroy` by default
+  (external objects go with the CR — the inverse of the blueprint
+  ConfigMap pattern)
 
 ## Crossview dashboard
 

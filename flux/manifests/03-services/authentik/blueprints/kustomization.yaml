@@ -57,6 +57,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - app-access.yaml
+  - name: authentik-blueprint-terraform-service-account
+    namespace: authentik
+    files:
+      - terraform-service-account.yaml
 
 labels:
   - includeSelectors: true

@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: headlamp-cleanup
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # The Authentik entry moved from the blueprint ConfigMap to the Crossplane
+  # provider-opentofu Workspace (opentofu-workspace.yaml). Blueprints never
+  # garbage-collect, so removal is an explicit state: absent companion,
+  # kept forever (same pattern as the cryptpad cleanup). One-shot: the
+  # file hash gates re-import, so it will not fight the Workspace's create.
+  # The binding is absent FIRST so it deletes while its target still exists.
+  - model: authentik_policies.policybinding
+    state: absent
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "headlamp"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+  - model: authentik_core.application
+    state: absent
+    identifiers:
+      slug: "headlamp"

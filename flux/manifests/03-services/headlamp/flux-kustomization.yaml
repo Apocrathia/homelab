@@ -14,3 +14,4 @@ spec:
   dependsOn:
     - name: services-authentik
     - name: services-gateway
+    - name: services-crossplane
