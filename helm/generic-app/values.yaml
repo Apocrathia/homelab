@@ -732,6 +732,36 @@ postgres:
   # Database owner (defaults to app.name if not specified)
   owner: ""
 
+  # Barman object-store backups — matches the manual pattern from
+  # 03-services/authentik/postgres.yaml. Disabled by default; enabling adds
+  # continuous WAL archiving plus a ScheduledBackup for nightly base backups.
+  backup:
+    enabled: false
+    # S3 destination. Defaults: bucket `cnpg`, per-app subdirectory
+    # (s3://cnpg/{app.name}), rustfs endpoint.
+    destinationPath: ""
+    endpointURL: ""
+    # Barman server name. Defaults to the cluster name ({app.name}-postgres).
+    serverName: ""
+    # Credentials Secret with AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY.
+    # Defaults: OnePasswordItem CR named {app.name}-postgres-backup-secrets
+    # referencing the shared cnpg-backups-secrets vault item.
+    # Set itemPath: "" to use an existing Secret instead of creating the CR.
+    credentials:
+      secretName: ""
+      itemPath: "vaults/Secrets/items/cnpg-backups-secrets"
+    wal:
+      compression: zstd
+    data:
+      compression: gzip
+      jobs: 2
+      immediateCheckpoint: true
+    # Nightly base backup (CNPG 6-field cron, seconds first):
+    # "0 0 5 * * *" = daily 0500 UTC = 2300 MST, after the kopia 0200 window.
+    # Empty string disables the ScheduledBackup (WAL archiving still runs).
+    schedule: "0 0 5 * * *"
+    retentionPolicy: 14d
+
 # Kopia backup via kopiur (SnapshotPolicy + SnapshotSchedule).
 # Requires the app namespace to carry the label matching the
 # ClusterRepository's allowedNamespaces selector

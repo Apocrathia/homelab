@@ -3,17 +3,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: productivity
+  name: endurain
 
 resources:
-  - endurain
-  - n8n
-  - changedetection-io
-  - cryptpad
-  - excalidraw
-  - kiwix
-  - projectsend
-  - rclone
-  - searxng
-  - silverbullet
-  - wakapi
+  - namespace.yaml
+  - helmrelease.yaml

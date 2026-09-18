@@ -14,6 +14,10 @@ Website change detection and monitoring with notification support.
 
 End-to-end encrypted collaboration suite with real-time document editing.
 
+### [Endurain](./endurain/README.md)
+
+Self-hosted fitness tracking: activity uploads, workouts, body metrics, and health stats.
+
 ### [Excalidraw](./excalidraw/README.md)
 
 Virtual whiteboard for sketching diagrams and hand-drawn visuals.

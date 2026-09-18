@@ -1,0 +1,174 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: endurain
+  namespace: endurain
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.77"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: endurain
+      namespace: endurain
+      # renovate: datasource=docker depName=codeberg.org/endurain-project/endurain
+      image: codeberg.org/endurain-project/endurain:v0.19.2@sha256:092c26904028237b7da3bc205e15ede0c70b07084d86e582c3644f66b1cfb140
+      container:
+        name: endurain
+        port: 8080
+        env:
+          - name: TZ
+            value: "America/Denver"
+          # FQDN used for internal links, Strava, and the runtime env.js
+          - name: ENDURAIN_HOST
+            value: "https://endurain.gateway.services.apocrathia.com"
+          - name: BEHIND_PROXY
+            value: "true"
+          # Trust X-Forwarded-* from the gateway over the pod network
+          - name: TRUSTED_PROXIES
+            value: "10.42.0.0/16"
+          # PostgreSQL via CloudNativePG
+          - name: DB_HOST
+            value: "endurain-postgres-rw.endurain.svc.cluster.local"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_DATABASE
+            value: "endurain"
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: endurain-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: endurain-secrets
+                key: password
+          # JWT signing + Fernet encryption (user MFA secrets, IdP credentials)
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: endurain-secrets
+                key: secret-key
+          - name: FERNET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: endurain-secrets
+                key: fernet-key
+          # OIDC discovery fetch to internal Authentik (private IP)
+          - name: SSRF_ALLOWED_HOSTS
+            value: "auth.gateway.services.apocrathia.com"
+      service:
+        port: 8080
+        targetPort: 8080
+      healthChecks:
+        # Image HEALTHCHECK uses /api/v1/about
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/about
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/about
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        # First boot runs DB migrations; image healthcheck start-period is 120s
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /api/v1/about
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      # Entrypoint rewrites /app/frontend/dist/env.js and index.html at start
+      securityContext:
+        readOnlyRootFilesystem: false
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+      volumeMounts:
+        - name: data
+          mountPath: /app/backend/data
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # Activity files, user/server images; distinct size from postgres
+          - name: data
+            capacity: 10Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/endurain-secrets"
+
+    postgres:
+      enabled: true
+      backup:
+        enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 5Gi
+
+    authentik:
+      enabled: true
+      mode: "oidc"
+      displayName: "Endurain"
+      externalHost: "https://endurain.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/endurain/icon.svg"
+      category: "Productivity"
+      metaDescription: "Self-hosted fitness tracking service"
+      metaPublisher: "Endurain"
+      oidc:
+        # Slug 'authentik' must match the IdP slug set in Endurain's admin UI
+        redirectUris:
+          - url: "https://endurain.gateway.services.apocrathia.com/api/v1/public/idp/callback/authentik"
+            matchingMode: "strict"
+
+    gatus:
+      enabled: true
+      group: productivity
+      path: /api/v1/about
+
+    httproute:
+      enabled: true
+      hostname: endurain.gateway.services.apocrathia.com
