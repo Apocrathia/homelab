@@ -1,0 +1,29 @@
+{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled }}
+{{- if .Values.postgres.backup.credentials.itemPath }}
+---
+# 1Password Item CR for S3 backup credentials (shared cnpg vault item).
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: {{ default (printf "%s-postgres-backup-secrets" .Values.app.name) .Values.postgres.backup.credentials.secretName }}
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  itemPath: {{ .Values.postgres.backup.credentials.itemPath | quote }}
+{{- end }}
+{{- if .Values.postgres.backup.schedule }}
+---
+# Nightly base backup for the CNPG cluster (barman object store).
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ .Values.app.name }}-postgres-backup
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  # CNPG cron is 6-field (seconds first): "0 0 5 * * *" = daily 05:00 UTC.
+  # A 5-field "0 5 * * *" parses as minute=5 hourly (caught live 2026-09-15).
+  schedule: {{ .Values.postgres.backup.schedule | quote }}
+  backupOwnerReference: self
+  cluster:
+    name: {{ .Values.app.name }}-postgres
+{{- end }}
+{{- end }}

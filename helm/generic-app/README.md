@@ -999,6 +999,35 @@ When `postgres.monitoring.enabled: true`, a PodMonitor resource is created for P
 
 When using Longhorn storage, the chart pre-creates a named Longhorn volume (`{app-name}-postgres-data`) for better visibility in the Longhorn UI. Note that CNPG will still create its own PVCs with pod-based names (e.g., `{pod-name}-pgdata`), but the underlying Longhorn volume will have a meaningful name.
 
+**Backups (barman object store):**
+
+`postgres.backup.enabled: true` adds continuous WAL archiving and a nightly
+base backup to the rustfs S3 bucket (`s3://cnpg/{app.name}`), following the
+pattern established in `03-services/authentik/postgres.yaml`:
+
+```yaml
+postgres:
+  backup:
+    enabled: true # one line is enough; the rest are defaults
+    retentionPolicy: 14d
+    schedule: "0 0 5 * * *" # CNPG 6-field cron (seconds first)
+```
+
+What it creates:
+
+- `backup.barmanObjectStore` on the CNPG Cluster (wal: zstd, data: gzip,
+  `immediateCheckpoint`, 14d retention)
+- `ScheduledBackup` named `{app.name}-postgres-backup` (empty `schedule`
+  disables it; WAL archiving still runs)
+- `OnePasswordItem` named `{app.name}-postgres-backup-secrets` referencing the
+  shared `vaults/Secrets/items/cnpg-backups-secrets` vault item (set
+  `credentials.itemPath: ""` and `credentials.secretName` to use an existing
+  Secret instead)
+
+Overrides: `destinationPath` (default `s3://cnpg/{app.name}`),
+`endpointURL` (default `http://storage.services.apocrathia.com:9009`),
+`serverName` (default `{app.name}-postgres`).
+
 ### Secrets
 
 ```yaml

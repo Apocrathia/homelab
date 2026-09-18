@@ -63,6 +63,30 @@ spec:
     {{- end }}
   {{- end }}
 
+  {{- if .Values.postgres.backup.enabled }}
+  # Barman backups: S3-compatible object store (rustfs). WAL archiving is
+  # continuous; base backups are triggered by the ScheduledBackup resource.
+  backup:
+    retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
+    barmanObjectStore:
+      destinationPath: {{ default (printf "s3://cnpg/%s" .Values.app.name) .Values.postgres.backup.destinationPath }}
+      endpointURL: {{ default "http://storage.services.apocrathia.com:9009" .Values.postgres.backup.endpointURL }}
+      serverName: {{ default (printf "%s-postgres" .Values.app.name) .Values.postgres.backup.serverName }}
+      s3Credentials:
+        accessKeyId:
+          name: {{ default (printf "%s-postgres-backup-secrets" .Values.app.name) .Values.postgres.backup.credentials.secretName }}
+          key: AWS_ACCESS_KEY_ID
+        secretAccessKey:
+          name: {{ default (printf "%s-postgres-backup-secrets" .Values.app.name) .Values.postgres.backup.credentials.secretName }}
+          key: AWS_SECRET_ACCESS_KEY
+      wal:
+        compression: {{ .Values.postgres.backup.wal.compression }}
+      data:
+        compression: {{ .Values.postgres.backup.data.compression }}
+        jobs: {{ .Values.postgres.backup.data.jobs }}
+        immediateCheckpoint: {{ .Values.postgres.backup.data.immediateCheckpoint }}
+  {{- end }}
+
   # Bootstrap configuration
   bootstrap:
     initdb:
