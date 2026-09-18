@@ -116,6 +116,16 @@ spec:
               secretKeyRef:
                 name: prime-agent-secrets
                 key: litellm-api-key
+          # In-cluster A2A broker root (no /v1) for the a2a.ts extension's
+          # native a2a_agents/a2a_send/a2a_task tools. A2A rides the same
+          # LiteLLM virtual key.
+          - name: A2A_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000"
+          - name: A2A_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: litellm-api-key
 
       service:
         type: ClusterIP
