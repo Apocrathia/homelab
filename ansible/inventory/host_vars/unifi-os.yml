@@ -1,0 +1,57 @@
+---
+# unifi-os: UniFi OS Server (CK+ replacement; see
+# docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md). roles/common disables apt
+# Recommends, and podman's UniFi OS prereqs are Recommends-only on trixie,
+# so they must be explicit.
+common_packages_extra:
+  - fuse-overlayfs # rootless podman storage
+  - passt # pasta networking (UOS Server requirement)
+  - slirp4netns # UOS Server requirement (trixie: 1.2.1)
+  - uidmap # rootless podman subordinate IDs
+  - vlan # ifupdown VLAN subinterfaces (network tag)
+  - python3-debian # kopia role repo tasks need it in check mode (deb822)
+
+# Static L3: one address per VLAN at .3 (gateway .1, honeypot .2, below
+# every DHCP pool start). Port trunk profile: native VLAN 0 (Legacy,
+# untagged) + tagged 10/42/1000/1001/1002. Legacy gets an address too —
+# untagged-port fallback lands devices there with no guarantee of a
+# gateway, and they need an L2-reachable controller to adopt against.
+# Default route via Management only.
+common_network_interfaces:
+  - device: eno1 # untagged = VLAN 0 (Legacy)
+    address: 10.0.1.3/24
+  - device: eno1.10 # Management
+    vlan: 10
+    address: 10.10.0.3/24
+    gateway: 10.10.0.1
+  - device: eno1.1001 # Services
+    vlan: 1001
+    address: 10.100.1.3/24
+  - device: eno1.1002 # Media
+    vlan: 1002
+    address: 10.100.2.3/24
+  - device: eno1.1000 # Access
+    vlan: 1000
+    address: 10.100.0.3/24
+  - device: eno1.42 # IoT
+    vlan: 42
+    address: 10.0.42.3/24
+
+common_network_dns:
+  servers:
+    - 10.100.1.1 # gateway resolver (CoreDNS forwards here too)
+    - 1.1.1.1
+  search:
+    - apocrathia.com
+
+# kopia backups (roles/kopia; inventory kopia group = opt-in).
+# /var/lib/unifi includes UniFi's own autobackups (.unf, app-consistent);
+# mongod snapshots are crash-consistent only — the .unf tier covers that.
+# /var/lib/uosserver is runtime state, recreated by the UOS installer.
+kopia_backup_paths:
+  - /etc
+  - /home
+  - /opt
+  - /var/backups
+  - /var/lib/unifi
+  - /var/lib/mongodb

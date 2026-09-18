@@ -1,0 +1,52 @@
+---
+# Static L3 config via ifupdown. Fully driven by common_network_* host vars;
+# hosts that define no interfaces are untouched (all tasks gate on the list
+# being non-empty). The base interfaces file is replaced so the installer's
+# DHCP stanza for the primary NIC cannot fight the static config.
+- name: Install ifupdown VLAN support
+  ansible.builtin.apt:
+    name: vlan
+    state: present
+  when: common_network_interfaces | length > 0
+
+- name: Stop dhcpcd (static config owns the interfaces)
+  ansible.builtin.service:
+    name: dhcpcd
+    enabled: false
+    state: stopped
+  failed_when: false
+  when: common_network_interfaces | length > 0
+
+- name: Replace base interfaces file (drop installer DHCP stanza)
+  ansible.builtin.copy:
+    dest: /etc/network/interfaces
+    mode: "0644"
+    content: |
+      # Managed by Ansible (roles/common, network tag). Per-interface config
+      # lives in /etc/network/interfaces.d/ansible.
+      source /etc/network/interfaces.d/*
+
+      auto lo
+      iface lo inet loopback
+  when: common_network_interfaces | length > 0
+  notify: Reload network configuration
+
+- name: Configure static interfaces
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces.d/ansible
+    mode: "0644"
+  when: common_network_interfaces | length > 0
+  notify: Reload network configuration
+
+- name: Configure resolv.conf (static DNS)
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    mode: "0644"
+    follow: false
+    content: |
+      search {{ common_network_dns.search | join(' ') }}
+      {% for server in common_network_dns.servers %}
+      nameserver {{ server }}
+      {% endfor %}
+  when: common_network_interfaces | length > 0 and common_network_dns is defined

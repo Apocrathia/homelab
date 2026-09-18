@@ -1,7 +1,7 @@
 ---
 - name: Install common packages
   ansible.builtin.dnf:
-    name: "{{ common_packages }}"
+    name: "{{ common_packages + common_packages_extra }}"
     state: present
 
 - name: Install dnf-automatic

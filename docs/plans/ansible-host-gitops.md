@@ -70,7 +70,8 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Fetch deploy key + known_hosts + `sudo-password` from 1Password Connect
 - [x] Confirm Connect token can read `Secrets` / `ansible-secrets`
 - [x] Install deploy pubkey on hosts; MR `ansible-check` green
-- [ ] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml`
+- [x] Bootstrap first host (`playbooks/bootstrap.yml`) then `common.yml` —
+      unifi-os NUC 2026-09-08 (day-0 python3 pre-task added to bootstrap.yml)
 - [x] Service account phase 1: role manages `ansible` user (locked password,
       deploy key, NOPASSWD sudo); merged !4399, applied + verified on both
       hosts 2026-09-15
@@ -93,7 +94,15 @@ NUC (BLKNUC7i7DNK1E).
   Server; hosting tier was the IPFIX gate, not CPU.
 - Inventory (current): `game` → `game.services.apocrathia.com`,
   `ians-gaming-pc` → `ians-gaming-pc.access.apocrathia.com`,
-  `unifi-nuc` → `unifi.apocrathia.com`.
+  `unifi-os` → `unifi-os.management.apocrathia.com` (host_vars/unifi-os.yml
+  holds the full .3-per-VLAN table; ansible_host is a hostname like every
+  other host).
 - Local verify (2026-08-01): syntax-check + `ansible-lint` production profile
   clean (Homebrew Python 3.14 + ansible-core 2.20). CI image is Python 3.12 +
   ansible-core 2.16+.
+- unifi-os (2026-09-17): parallel-run state. Box holds a DHCP reservation at
+  `10.0.1.3` (Legacy — same address as the planned static .3) while the
+  network-tag renumber is pending; `unifi.*` DNS stays on the CK+ until the
+  Track A cutover. Static .3 scheme (roles/common `network` tag): Legacy .3
+  untagged (untagged-port adoption fallback), Management/Services/Media/
+  Access/IoT tagged at .3; default route via Management only.

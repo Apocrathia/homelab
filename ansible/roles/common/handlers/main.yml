@@ -1,0 +1,8 @@
+---
+# ifupdown re-processes all interfaces. On a management-IP renumber this
+# drops the ansible SSH session mid-handler — expected; the config is
+# already on disk and a reboot makes it deterministic.
+- name: Reload network configuration
+  ansible.builtin.service:
+    name: networking
+    state: restarted
