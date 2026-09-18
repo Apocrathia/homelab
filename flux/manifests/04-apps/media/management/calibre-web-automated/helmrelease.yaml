@@ -126,13 +126,38 @@ spec:
 
     authentik:
       enabled: true
-      mode: bookmark
+      mode: oidc
       displayName: "Calibre"
       externalHost: "https://calibre.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/calibre-web-automated/icon.svg"
       category: "Media"
       metaDescription: "Automated Calibre library management and ebook organization"
       metaPublisher: "Calibre-Web Automated"
+      oidc:
+        subMode: "user_username"
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        customScopeMappings:
+          - name: "calibre-web-automated-email-verified-mapping"
+            scopeName: "email"
+            description: "Email address with email_verified set to True for CWA"
+            expression: |
+              return {
+                  "email": request.user.email,
+                  "email_verified": True
+              }
+          - name: "calibre-web-automated-groups-mapping"
+            scopeName: "groups"
+            description: "Group names for CWA's OAuth group-based admin role management"
+            expression: |
+              return {
+                  "groups": [group.name for group in request.user.ak_groups.all()]
+              }
+        redirectUris:
+          - url: "https://calibre.gateway.services.apocrathia.com/login/generic/authorized"
+            matchingMode: "strict"
 
     gatus:
       path: /login
