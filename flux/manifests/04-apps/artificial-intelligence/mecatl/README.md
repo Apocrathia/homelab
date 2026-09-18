@@ -27,7 +27,7 @@ mecatui connect mecatl.mecatl.svc.cluster.local:8080
 - **Agents**: defined as Markdown files with YAML frontmatter (name, tools, model, permissionMode, maxTurns)
 - **Secrets** (1Password, single item `mecatl-secrets`):
   - `litellm-api-key` (LiteLLM virtual key), future MCP tokens as `mcp-<server>-token`
-  - `valkey-password` (Valkey auth for mecatl-valkey)
+  - `valkey-password` — vestigial: mecatl-valkey is TLS-only (cert-manager `mecatl-valkey-tls`), the channel is the auth
 - **Model routing**: `defaultProvider`/`model` in the HelmRelease; per-session overrides via the API
 - **MCP servers**: add entries under `mcp.servers` in the HelmRelease
 
@@ -37,6 +37,6 @@ mecatui connect mecatl.mecatl.svc.cluster.local:8080
 kubectl get pods -n mecatl
 kubectl logs -n mecatl -l app.kubernetes.io/name=mecatl
 kubectl logs -n mecatl mecatl-valkey-0
-# Valkey health:
-kubectl exec -n mecatl mecatl-valkey-0 -- valkey-cli -a $(kubectl get secret -n mecatl mecatl-valkey-secrets -o jsonpath='{.data.password}' | base64 -d) ping
+# Valkey health (TLS-only; CA comes from the cert-manager Secret):
+kubectl exec -n mecatl mecatl-valkey-0 -- valkey-cli --tls --cacert /tls/ca.crt ping
 ```

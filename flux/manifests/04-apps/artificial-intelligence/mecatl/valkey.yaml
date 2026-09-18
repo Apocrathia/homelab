@@ -30,24 +30,30 @@ spec:
       namespace: mecatl
       # renovate: datasource=docker depName=valkey/valkey
       image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
-      # generic-app renders command/args from app.command/app.args only;
-      # app.container accepts name/port/stdin/tty/env. The args block sat
-      # under container: and was silently dropped, so the image default
-      # command ran a passwordless valkey-server. Keep args at app level;
-      # kubelet expands $(VAR) in container args from the container env.
+      # TLS-only listener: Mecatl's engine hard-requires verified TLS for a
+      # credentialled redis and refuses plaintext+password outright
+      # (redisstore: "Redis credentials require verified TLS"), so the TLS
+      # channel is the auth and --port 0 disables the plaintext listener.
+      # args stay at app level: generic-app renders command/args from
+      # app.command/app.args only; app.container accepts name/port/stdin/
+      # tty/env (the original args block sat under container: and was
+      # silently dropped).
       args:
         - valkey-server
-        - --requirepass
-        - $(VALKEY_PASSWORD)
+        - --port
+        - "0"
+        - --tls-port
+        - "6379"
+        - --tls-cert-file
+        - /tls/tls.crt
+        - --tls-key-file
+        - /tls/tls.key
+        # No client-certificate mTLS (engine does not support it, ADR 0233).
+        - --tls-auth-clients
+        - "no"
       container:
         name: mecatl-valkey
         port: 6379
-        env:
-          - name: VALKEY_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mecatl-secrets
-                key: valkey-password
       replicas: 1
       resources:
         requests:
@@ -78,14 +84,9 @@ spec:
             command:
               - sh
               - -c
-              # $() is shell command substitution, not variable expansion:
-              # the bare $(VALKEY_PASSWORD) form ran a command named
-              # VALKEY_PASSWORD (not found) and authenticated with an empty
-              # password, so every probe failed NOAUTH on a healthy server.
-              # "$VALKEY_PASSWORD" is real variable expansion with the
-              # container's env var; --no-auth-warning silences the cli
-              # password warning that polluted probe output.
-              - valkey-cli -a "$VALKEY_PASSWORD" --no-auth-warning ping | grep PONG
+              # TLS-only valkey: verify against the CA bundled in the
+              # same cert-manager Secret. No AUTH - the channel is the auth.
+              - valkey-cli --tls --cacert /tls/ca.crt ping | grep PONG
           initialDelaySeconds: 5
           periodSeconds: 10
           timeoutSeconds: 3
@@ -97,8 +98,8 @@ spec:
             command:
               - sh
               - -c
-              # Same $(VAR) command-substitution bug as readinessProbe above.
-              - valkey-cli -a "$VALKEY_PASSWORD" --no-auth-warning ping | grep PONG
+              # Same TLS check as readinessProbe.
+              - valkey-cli --tls --cacert /tls/ca.crt ping | grep PONG
           initialDelaySeconds: 15
           periodSeconds: 30
           timeoutSeconds: 5
@@ -108,6 +109,13 @@ spec:
         - name: data
           mountPath: /data
       volumes:
+        # generic-app auto-mounts secret volumes at the entry's mountPath
+        # (unprefixed volume name, unlike app.volumeMounts entries).
+        secret:
+          - name: mecatl-valkey-tls
+            secretName: mecatl-valkey-tls
+            mountPath: /tls
+            readOnly: true
         emptyDir:
           - name: tmp
             mountPath: /tmp

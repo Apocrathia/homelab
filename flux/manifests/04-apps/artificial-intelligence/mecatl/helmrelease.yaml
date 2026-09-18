@@ -54,10 +54,15 @@ spec:
     # Redis-backed state: dedicated mecatl-valkey (same namespace).
     redis:
       endpoint: "mecatl-valkey.mecatl.svc.cluster.local:6379"
-      credentialsSecret: mecatl-secrets
-      passwordKey: valkey-password
-      # In-cluster plaintext Redis (Cilium mesh); no CA bundle needed.
-      caKey: ""
+      # Engine security model: credentialled redis requires verified TLS
+      # and mecak8s 0.0.38 always dials remote redis with TLS (caKey ""
+      # means system trust store, which a self-signed internal cert fails).
+      # Point credentialsSecret at the cert-manager Secret: ca.crt verifies
+      # the TLS-only valkey (each self-signed cert is its own CA). No
+      # password: the TLS channel is the auth; the valkey-password field in
+      # the 1Password item stays vestigial.
+      credentialsSecret: mecatl-valkey-tls
+      caKey: ca.crt
       filesystem:
         # Virtual workspace: persistent file ops without mounting a volume.
         # Git-clone workflows land here; real FS mounts need --workspace

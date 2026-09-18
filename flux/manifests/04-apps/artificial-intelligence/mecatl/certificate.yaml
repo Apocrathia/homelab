@@ -1,0 +1,21 @@
+---
+# TLS material for mecatl-valkey. Mecatl's engine hard-requires verified
+# TLS for a credentialled redis and refuses plaintext+password entirely,
+# so the dedicated valkey runs a TLS-only listener (auth = the TLS
+# channel). The self-signed ClusterIssuer makes the cert its own CA: fine
+# for an in-mesh service, and cert-manager rotates it automatically.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mecatl-valkey-tls
+  namespace: mecatl
+spec:
+  secretName: mecatl-valkey-tls
+  dnsNames:
+    - mecatl-valkey
+    - mecatl-valkey.mecatl
+    - mecatl-valkey.mecatl.svc
+    - mecatl-valkey.mecatl.svc.cluster.local
+  issuerRef:
+    name: self-signed
+    kind: ClusterIssuer

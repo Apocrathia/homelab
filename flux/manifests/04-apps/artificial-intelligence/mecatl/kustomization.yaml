@@ -10,5 +10,6 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
+  - certificate.yaml
   - valkey.yaml
   - helmrelease.yaml
