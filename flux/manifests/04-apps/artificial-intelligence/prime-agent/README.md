@@ -22,6 +22,10 @@ This deployment includes:
 - `agent/extensions/litellm.ts` registers the in-cluster LiteLLM gateway as
   the model provider and discovers the catalog from it; auth via
   `LITELLM_API_KEY` (or `/login` interactively)
+- `agent/extensions/a2a.ts` registers native `a2a_agents` / `a2a_send` /
+  `a2a_task` tools for the kagent agents brokered by LiteLLM; configured via
+  `A2A_BASE_URL` + `A2A_API_KEY` (same virtual key). Slow agent runs return
+  early with a `task_id` to poll — the harness aborts tool calls at ~240s
 - `agent/settings.json` seeded once (delete from the PVC to re-seed); runtime
   keys accumulate afterwards
 
