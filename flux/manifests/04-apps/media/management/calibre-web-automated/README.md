@@ -26,7 +26,14 @@ See `helmrelease.yaml` for complete deployment configuration.
 
 ## Authentication
 
-Dashboard-only Authentik bookmark (no SSO provider); CWA uses its own account system. The chart-rendered blueprint binds the tile to the admins group only.
+Authentik OIDC (chart-rendered provider + admins binding). CWA's own account system remains for the local admin; OAuth login appears as "Log in with SSO". Group-based admin roles: the `groups` scope mapping feeds CWA's OAuth group-based admin management (enable in Admin → Basic Configuration → Security, group name `admins`).
+
+Post-deploy OAuth setup (CWA Admin → Basic Configuration → OAuth):
+
+1. Metadata URL: `https://auth.gateway.services.apocrathia.com/application/o/calibre-web-automated/.well-known/openid-configuration` — click **Test Metadata**
+2. Client ID / secret from the authentik provider (`calibre-web-automated-oidc-provider`)
+3. Scopes: `openid profile email groups` (groups required for admin roles)
+4. OAuth Redirect Host: `https://calibre.gateway.services.apocrathia.com` — prevents redirect URI drift; restart CWA after setting it
 
 ## Initial Setup
 
