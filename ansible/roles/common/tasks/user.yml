@@ -41,14 +41,25 @@
   register: common_omz_dir
 
 - name: Install oh-my-zsh (clone-only; never touches an existing install)
+  # Runs as root (play become): becoming an unprivileged user needs setfacl on
+  # the host, which check-mode CI cannot bootstrap — clone then chown instead.
   ansible.builtin.git:
     repo: https://github.com/ohmyzsh/ohmyzsh.git
     dest: "/home/{{ username }}/.oh-my-zsh"
     version: master
     depth: 1
     update: false
-  become: true
-  become_user: "{{ username }}"
+  when:
+    - common_manage_zsh | bool
+    - not common_omz_dir.stat.exists
+
+- name: Hand fresh oh-my-zsh clones to the primary user
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.oh-my-zsh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
   when:
     - common_manage_zsh | bool
     - not common_omz_dir.stat.exists
