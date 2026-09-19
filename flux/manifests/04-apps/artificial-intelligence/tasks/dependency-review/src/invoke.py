@@ -111,11 +111,11 @@ class GitLab:
 
     async def approve(self, iid: int) -> None:
         r = await self.http.post(f"/projects/{self.project}/merge_requests/{iid}/approve")
-        # 405/409 = approvals disabled or already approved; 200 = approved
-        if r.status_code not in (200, 405, 409):
+        # 201 = approval created; 405/409 = approvals disabled or already approved
+        if r.status_code >= 300:
             LOG.warning("approve on !%s failed: %s %s", iid, r.status_code, r.text[:120])
         else:
-            LOG.info("approved !%s", iid)
+            LOG.info("approved !%s (%s)", iid, r.status_code)
 
 
 # --- Deterministic gates ------------------------------------------------------
