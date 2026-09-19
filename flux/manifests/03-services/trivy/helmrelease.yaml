@@ -40,6 +40,13 @@ spec:
       # ClientServer mode via in-cluster Trivy server avoids SQLite cache lock
       # contention when scan jobs run multiple containers in one pod.
       builtInTrivyServer: true
+    # Skip scanning resources that carry any of these label keys (key-presence
+    # match, all scan kinds). GitLab CI job pods always carry
+    # job.runner.gitlab.com/pod; the runner manager stays scanned via its
+    # Deployment. Cuts the ephemeral CI build-pod reports that filled
+    # trivy-operator-pvc.
+    trivyOperator:
+      skipResourceByLabels: "job.runner.gitlab.com/pod"
     # Alternate report storage - prevents CRD creation in etcd
     # Reports are sent to Loki via webhook; local PVC is just scratch space
     alternateReportStorage:
