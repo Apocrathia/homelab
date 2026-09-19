@@ -10,3 +10,4 @@ resources:
   - run-loop-agent-invoke
   - alert-agent-invoke
   - dependency-review
+  - dependency-merge

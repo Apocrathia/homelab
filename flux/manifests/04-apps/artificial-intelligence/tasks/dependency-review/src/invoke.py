@@ -310,7 +310,7 @@ async def collect_fact(http: httpx.AsyncClient, dep: Dep, gh_token: str) -> dict
 # --- MR note -------------------------------------------------------------------
 
 
-def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None) -> str:
+def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None, dep_sha: str = "") -> str:
     v = verdict["verdict"].upper()
     lines = [
         "## 🤖 Agent dependency review",
@@ -342,7 +342,12 @@ def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None) -> str:
         lines.append(f"| source | declared `{dep.declared_source}`, image label `{f['image_label_source']}`{flag} |")
     if agent_note:
         lines += ["", f"**Agent judgment:** {agent_note}"]
-    lines += ["", "_Automated dependency-review sweep. Merge decisions stay with the operator._"]
+    lines += [
+        "",
+        f"reviewed-sha: {dep_sha}",
+        "",
+        "_Automated dependency-review sweep. Merge decisions stay with the operator._",
+    ]
     return "\n".join(lines)
 
 
@@ -457,7 +462,7 @@ async def main() -> int:
         dep = next(d for d in deps if d.iid == m["iid"])
         f = fs.get(dep.iid, {})
         v = verdicts[dep.iid]
-        note = build_note(dep, f, v, agent_notes.get(dep.iid))
+        note = build_note(dep, f, v, agent_notes.get(dep.iid), m.get("sha") or "")
         labels = [f"agent-review:{v['verdict']}"] + v["flags"] + ["agent-review:done"]
         if dry_run:
             LOG.info("DRY RUN !%s -> %s (%s)\n%s\n---", dep.iid, v["verdict"].upper(), dep.pkg, note)
