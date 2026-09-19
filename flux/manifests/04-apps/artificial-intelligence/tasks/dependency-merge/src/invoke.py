@@ -34,9 +34,32 @@ LOG = logging.getLogger("dependency-merge")
 
 DEFAULT_MERGE_TYPES = ("digest", "patch", "minor")
 DIGEST_HOUR_UTC = 13  # 13:50Z == 07:50 America/Denver (MDT)
-DASHBOARD_ISSUE_IID = 3  # Renovate Dependency Dashboard
 
 NO_MERGE_FLAGS = ("agent-review:major", "agent-review:infra")
+# Label-independent hard blocklist: infra-class deps (Talos and friends) can
+# take the cluster — and the agents themselves — offline if merged by an agent.
+# Checked against branch + title BEFORE any label logic; a mislabeled MR
+# still cannot slip through.
+INFRA_KEYWORDS = (
+    "talos",
+    "siderolabs",
+    "kubelet",
+    "factory.talos.dev",
+    "authentik",
+    "tailscale",
+    "litellm",
+    "cnpg",
+    "cloudnative-pg",
+    "longhorn",
+    "rabbitmq",
+    "redis",
+    "kube-prometheus",
+)
+
+
+def _infra_class(*fields: str) -> bool:
+    p = " ".join(f.lower() for f in fields if f)
+    return any(k in p for k in INFRA_KEYWORDS)
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -108,11 +131,6 @@ class GitLab:
             return True
         LOG.warning("merge !%s failed: %s %s", iid, r.status_code, r.text[:150])
         return False
-
-    async def add_note(self, iid: int, body: str) -> None:
-        r = await self.http.post(f"/projects/{self.project}/issues/{iid}/notes", json={"body": body})
-        if r.status_code >= 300:
-            LOG.warning("note on issue %s failed: %s %s", iid, r.status_code, r.text[:120])
 
     async def close(self) -> None:
         await self.http.aclose()
@@ -221,6 +239,9 @@ async def main() -> int:
     candidates: list[dict] = []
     remaining: list[dict] = []
     for m in mrs:
+        if _infra_class(m["source_branch"], m["title"]):
+            remaining.append({**m, "_why": "infra-class — operator only (hard block)"})
+            continue
         labels = set(m.get("labels") or [])
         if "agent-review:pass" not in labels or "agent-review:done" not in labels:
             remaining.append({**m, "_why": "not reviewed / verdict not pass"})
@@ -303,12 +324,14 @@ async def main() -> int:
             ]
             tprompt = tri_tmpl + "\n\n## Remaining MRs\n\n```json\n" + json.dumps(rows, indent=1) + "\n```\n"
             ttext = await agent_turn(a2a_url, tprompt, continuation, max_turns, timeout_s)
-            digest = ttext.strip() or json.dumps(rows, indent=1)
+            confirm = parse_agent_json(ttext)
+            posted = any(str(c.get("posted")).lower() == "true" for c in confirm if isinstance(c, dict))
             if dry_run:
-                LOG.info("DRY RUN digest for issue #%s:\n%s", DASHBOARD_ISSUE_IID, digest[:1000])
+                LOG.info("DRY RUN triage digest for Discord #notifications (%s MRs)", len(rows))
+            elif posted:
+                LOG.info("triage digest posted to Discord #notifications")
             else:
-                await gl.add_note(DASHBOARD_ISSUE_IID, digest)
-                LOG.info("triage digest posted to issue #%s", DASHBOARD_ISSUE_IID)
+                LOG.warning("triage digest NOT confirmed posted: %s", (confirm or ttext)[-300:])
         except Exception as e:  # noqa: BLE001
             LOG.warning("triage phase failed: %s", e)
 

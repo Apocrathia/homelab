@@ -13,27 +13,34 @@ on its output:
 
 Mechanical gates (runner, no LLM), in order:
 
-1. `agent-review:pass` + `agent-review:done` labels present
-2. **no** `agent-review:major` / `agent-review:infra` flag — those are the
+1. **infra-class hard block** — branch/title match against `INFRA_KEYWORDS`
+   (talos, siderolabs, kubelet, authentik, tailscale, litellm, cnpg,
+   longhorn, rabbitmq, redis, kube-prometheus). Label-independent: a
+   Talos-class bump can reboot the cluster these agents run on, so it never
+   reaches the merge list even if mislabeled.
+2. `agent-review:pass` + `agent-review:done` labels present
+3. **no** `agent-review:major` / `agent-review:infra` flag — those are the
    operator's, always
-3. review note's `reviewed-sha` matches the current MR head — retargeted MRs
+4. review note's `reviewed-sha` matches the current MR head — retargeted MRs
    go back to the review sweep, never merged stale
-4. update type in `MERGE_UPDATE_TYPES` (default `digest,patch,minor`)
-5. `detailed_merge_status` mergeable, no conflicts
-6. head-sha pipeline `success`
-7. approved (if the approvals API says otherwise)
+5. update type in `MERGE_UPDATE_TYPES` (default `digest,patch,minor`)
+6. `detailed_merge_status` mergeable, no conflicts
+7. head-sha pipeline `success`
+8. approved (if the approvals API says otherwise)
 
 Only then does the **homelab-agent** get the candidate list for go/no-go:
 cluster health check via its tools, package-sanity pass, skip-on-doubt. The
 runner executes the merges it approves (`should_remove_source_branch`).
 With `A2A_URL` unreachable, nothing merges — no unjudged merges, ever.
 
-## Phase B — daily triage digest (07:50 America/Denver)
+## Phase B — daily triage digest → Discord (07:50 America/Denver)
 
-Everything NOT merged gets handed to the homelab-agent once a day for a
-digest note on the Renovate Dependency Dashboard issue (#3): ready-to-merge
-/ decide / waiting / stuck — the operator's morning review list replaces
-clicking through every MR.
+Everything NOT merged gets handed to the homelab-agent once a day. It posts
+one digest to Discord `#notifications` (its own discord-mcp tools, guild
+`996790779257290772` — same channel as the other scheduled reports):
+ready-to-merge / decide / waiting / stuck. The runner only accepts the
+merge as delivered when the agent's `send_message` actually succeeded and
+the confirmation JSON says so.
 
 ## Configuration
 

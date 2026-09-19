@@ -35,8 +35,13 @@ DEFAULT_INFRA_COOLDOWN_H = 72.0
 # MRs untouched for this long with a verdict label already set are skipped.
 FRESHNESS_WINDOW_MIN = 90
 # Packages where even patch bumps get a second operator glance (or 72h on majors).
+# Infra bumps are operator-only: never auto-merged, always in the triage digest.
+# siderolabs covers the installer/kubelet images that reimage nodes (a merged
+# Talos-class bump reboots the cluster the agents themselves run on).
 INFRA_PACKAGES = (
     "talos",
+    "siderolabs",
+    "kubelet",
     "authentik",
     "tailscale",
     "litellm",
@@ -66,8 +71,8 @@ def _dt(s: str) -> datetime:
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 
-def _is_infra(pkg: str) -> bool:
-    p = pkg.lower()
+def _is_infra(*fields: str) -> bool:
+    p = " ".join(f.lower() for f in fields if f)
     return any(k in p for k in INFRA_PACKAGES)
 
 
@@ -119,7 +124,7 @@ class GitLab:
 def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) -> dict:
     """Gates the agent may not upgrade past. Returns verdict dict."""
     verdict, reason, flags = "pass", "", []
-    is_infra = _is_infra(dep.pkg or "") or _is_infra(dep.title)
+    is_infra = _is_infra(dep.pkg or "", dep.title, dep.branch)
     if dep.update_type == "digest":
         reason = "Digest refresh (same tag, rebuilt image) - CVE-rebuild class, no cooldown."
         flags.append("agent-review:phase2-trivy")

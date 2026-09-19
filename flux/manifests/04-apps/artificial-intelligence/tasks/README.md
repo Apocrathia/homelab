@@ -16,10 +16,11 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
   needs GitLab/GitHub tokens (1Password items, see its README).
 - `dependency-merge/` — **live** second stage (`50 * * * *`, unsuspended):
   homelab-agent merges `agent-review:pass` MRs past the hard gates
-  (reviewed-sha match, green pipeline, no major/infra flags, allowed update
-  types) after its own go/no-go; posts the daily triage digest to the
-  Dependency Dashboard issue. Merge line is `MERGE_UPDATE_TYPES`
-  (`digest,patch,minor`); majors/infra are never auto-merged.
+  (infra-class hard block independent of labels, reviewed-sha match, green
+  pipeline, no major/infra flags, allowed update types) after its own
+  go/no-go; posts the daily triage digest to Discord `#notifications`.
+  Merge line is `MERGE_UPDATE_TYPES` (`digest,patch,minor`); majors and
+  infra-class deps (talos/siderolabs included) are never auto-merged.
 
 Defaults stay safe for testing: `suspend: true`, `concurrencyPolicy: Forbid`,
 and minimal runtime permissions.

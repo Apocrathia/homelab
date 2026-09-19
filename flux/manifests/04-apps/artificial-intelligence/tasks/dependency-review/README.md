@@ -15,12 +15,12 @@ Hourly agent sweep over open Renovate MRs. Replaces manual triage:
 
 ## Classes
 
-| Update                                                              | Cooldown                  | Notes                                                                                |
-| ------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
-| digest refresh                                                      | none                      | same tag, rebuilt image (CVE-rebuild class); Trivy pre-merge scan is the phase-2 gap |
-| patch/minor                                                         | 24h from upstream release | superseded → hold; OSV hit → block                                                   |
-| major                                                               | 24h + human review        | DB-migration risk, `agent-review:major` label                                        |
-| infra majors (talos, authentik, tailscale, litellm, cnpg, longhorn) | 72h                       | `agent-review:infra` label on every infra bump                                       |
+| Update                                                                                             | Cooldown                  | Notes                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| digest refresh                                                                                     | none                      | same tag, rebuilt image (CVE-rebuild class); Trivy pre-merge scan is the phase-2 gap                                                                                                       |
+| patch/minor                                                                                        | 24h from upstream release | superseded → hold; OSV hit → block                                                                                                                                                         |
+| major                                                                                              | 24h + human review        | DB-migration risk, `agent-review:major` label                                                                                                                                              |
+| infra (talos, siderolabs, kubelet, authentik, tailscale, litellm, cnpg, longhorn, rabbitmq, redis) | 72h on majors             | `agent-review:infra` label on every infra bump — operator-only, never auto-merged; matched on package, title, AND branch so `ghcr.io/siderolabs/installer`-style names cannot slip through |
 
 ## Idempotency
 
