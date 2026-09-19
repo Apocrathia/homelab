@@ -13,6 +13,14 @@ common_ansible_account: ansible
 common_ansible_account_pubkey: ""
 # Host-specific additions to common_packages (see host_vars/).
 common_packages_extra: []
+
+# Operator shell environment for the primary user (user tag): oh-my-zsh +
+# powerlevel10k clones (create-only, existing installs untouched), managed
+# ~/.zshrc (overwritten — personal overrides go in ~/.zshrc.local, which the
+# role never touches), and a create-only ~/.p10k.zsh seed (wizard re-runs
+# stay local). Supporting packages (bat, thefuck, fastfetch/eza per distro)
+# live in common_packages / common_packages_extra.
+common_manage_zsh: true
 # Static L3 config (see tasks/network.yml). Empty = host keeps its current
 # network management (typically installer DHCP).
 common_network_interfaces: []

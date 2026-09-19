@@ -35,6 +35,81 @@
     validate: "visudo -cf %s"
   when: common_passwordless_sudo | bool
 
+- name: Check for existing oh-my-zsh install
+  ansible.builtin.stat:
+    path: "/home/{{ username }}/.oh-my-zsh"
+  register: common_omz_dir
+
+- name: Install oh-my-zsh (clone-only; never touches an existing install)
+  # Runs as root (play become): becoming an unprivileged user needs setfacl on
+  # the host, which check-mode CI cannot bootstrap — clone then chown instead.
+  ansible.builtin.git:
+    repo: https://github.com/ohmyzsh/ohmyzsh.git
+    dest: "/home/{{ username }}/.oh-my-zsh"
+    version: master
+    depth: 1
+    update: false
+  when:
+    - common_manage_zsh | bool
+    - not common_omz_dir.stat.exists
+
+- name: Hand fresh oh-my-zsh clones to the primary user
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.oh-my-zsh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+  when:
+    - common_manage_zsh | bool
+    - not common_omz_dir.stat.exists
+
+- name: Check for existing powerlevel10k install
+  ansible.builtin.stat:
+    path: "/home/{{ username }}/.oh-my-zsh/custom/themes/powerlevel10k"
+  register: common_p10k_dir
+
+- name: Install powerlevel10k (clone-only; never touches an existing install)
+  ansible.builtin.git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: "/home/{{ username }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    version: master
+    depth: 1
+    update: false
+  when:
+    - common_manage_zsh | bool
+    - not common_p10k_dir.stat.exists
+
+- name: Hand fresh powerlevel10k clones to the primary user
+  ansible.builtin.file:
+    path: "/home/{{ username }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+  when:
+    - common_manage_zsh | bool
+    - not common_p10k_dir.stat.exists
+
+- name: Manage .zshrc (operator environment; personal bits in ~/.zshrc.local)
+  ansible.builtin.copy:
+    src: zshrc
+    dest: "/home/{{ username }}/.zshrc"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+  when: common_manage_zsh | bool
+
+- name: Seed .p10k.zsh (create-only; p10k configure re-runs stay local)
+  ansible.builtin.copy:
+    src: p10k
+    dest: "/home/{{ username }}/.p10k.zsh"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0644"
+    force: false
+  when: common_manage_zsh | bool
+
 - name: Ensure ansible service account exists
   ansible.builtin.user:
     name: "{{ common_ansible_account }}"
