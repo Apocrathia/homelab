@@ -215,6 +215,11 @@ def update_type_of(note: dict | None) -> str:
     return (note or {}).get("utype") or ""
 
 
+def _skip(remaining: list[dict], m: dict, why: str) -> None:
+    LOG.info("skip !%s: %s", m["iid"], why)
+    remaining.append({**m, "_why": why})
+
+
 async def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s", stream=sys.stdout)
     gl = GitLab(
@@ -240,36 +245,36 @@ async def main() -> int:
     remaining: list[dict] = []
     for m in mrs:
         if _infra_class(m["source_branch"], m["title"]):
-            remaining.append({**m, "_why": "infra-class — operator only (hard block)"})
+            _skip(remaining, m, "infra-class — operator only (hard block)")
             continue
         labels = set(m.get("labels") or [])
         if "agent-review:pass" not in labels or "agent-review:done" not in labels:
-            remaining.append({**m, "_why": "not reviewed / verdict not pass"})
+            _skip(remaining, m, "not reviewed / verdict not pass")
             continue
         if labels & set(NO_MERGE_FLAGS):
-            remaining.append({**m, "_why": "major/infra flagged — operator review"})
+            _skip(remaining, m, "major/infra flagged — operator review")
             continue
         note = await gl.review_note(m["iid"])
         if not note or note["verdict"] != "pass" or not note["sha"]:
-            remaining.append({**m, "_why": "review note missing/ambiguous"})
+            _skip(remaining, m, "review note missing/ambiguous")
             continue
         if note["sha"] != m.get("sha"):
-            remaining.append({**m, "_why": "head moved since review — re-review next sweep"})
+            _skip(remaining, m, "head moved since review — re-review next sweep")
             continue
         utype = update_type_of(note)
         if utype not in merge_types:
             remaining.append({**m, "_why": f"update type {utype or '?'} not in auto-merge set"})
             continue
         if m.get("has_conflicts") or m.get("detailed_merge_status") not in ("mergeable", None):
-            remaining.append({**m, "_why": f"not mergeable ({m.get('detailed_merge_status')})"})
+            _skip(remaining, m, f"not mergeable ({m.get('detailed_merge_status')})")
             continue
         pipe = await gl.head_pipeline_status(m["sha"])
         if pipe != "success":
-            remaining.append({**m, "_why": f"pipeline {pipe or 'none'}"})
+            _skip(remaining, m, f"pipeline {pipe or 'none'}")
             continue
         appr = await gl.approved(m["iid"])
         if appr is False:
-            remaining.append({**m, "_why": "not approved"})
+            _skip(remaining, m, "not approved")
             continue
         candidates.append({**m, "_note_reason": note["reason"], "_utype": utype, "_approved": appr})
 
@@ -291,10 +296,10 @@ async def main() -> int:
             d = decisions.get(c["iid"], {})
             action = str(d.get("action", "")).lower()
             if action not in ("merge", "skip"):
-                remaining.append({**c, "_why": f"agent judgment: {d.get('reason', 'no decision')}"})
+                _skip(remaining, c, f"agent judgment: {d.get('reason', 'no decision')}")
                 continue
             if action == "skip":
-                remaining.append({**c, "_why": f"agent held: {str(d.get('reason'))[:120]}"})
+                _skip(remaining, c, f"agent held: {str(d.get('reason'))[:120]}")
                 continue
             if dry_run:
                 LOG.info("DRY RUN would merge !%s (%s)", c["iid"], c["title"][:60])
@@ -303,10 +308,10 @@ async def main() -> int:
             if await gl.merge(c["iid"], c["sha"]):
                 merged.append(c)
             else:
-                remaining.append({**c, "_why": "merge API failed"})
+                _skip(remaining, c, "merge API failed")
     elif candidates:
         for c in candidates:
-            remaining.append({**c, "_why": "A2A unavailable — no unjudged merges"})
+            _skip(remaining, c, "A2A unavailable — no unjudged merges")
 
     # --- Phase B: daily triage digest ---------------------------------------
     hour_utc = datetime.now(UTC).hour
