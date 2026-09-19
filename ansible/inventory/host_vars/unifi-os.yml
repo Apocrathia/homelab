@@ -4,6 +4,8 @@
 # Recommends, and podman's UniFi OS prereqs are Recommends-only on trixie,
 # so they must be explicit.
 common_packages_extra:
+  - eza # ls replacement (operator shell environment, roles/common)
+  - fastfetch # login fetcher (operator shell environment, roles/common)
   - fuse-overlayfs # rootless podman storage
   - passt # pasta networking (UOS Server requirement)
   - slirp4netns # UOS Server requirement (trixie: 1.2.1)

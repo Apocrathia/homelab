@@ -4,3 +4,10 @@
 kopia_backup_paths:
   - /etc
   - /home/ianyoung
+
+# Operator shell environment (roles/common user tag): fastfetch is already
+# installed (2.66.0, newer than the repo pin would be — present keeps it);
+# eza joins the bat/thefuck set already on this host.
+common_packages_extra:
+  - eza
+  - fastfetch

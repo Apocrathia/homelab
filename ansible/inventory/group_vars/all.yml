@@ -18,6 +18,7 @@ common_ansible_account_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBIFitm0mvFG
 # Packages installed by roles/common (packages tag). Names must exist on both
 # Debian (game) and Fedora (desktops); OS-specific bits live in packages_*.yml.
 common_packages:
+  - bat # cat replacement (operator shell environment, roles/common)
   - curl
   - git
   - htop
@@ -26,6 +27,7 @@ common_packages:
   - net-tools
   - podman
   - sudo
+  - thefuck # command-fixer alias (operator shell environment, roles/common)
   - tmux
   - vim
   - zsh
