@@ -13,7 +13,7 @@
  *     message and append an `agent_status` entry through ctx.sessionManager.
  *     That object is typed read-only (ReadonlySessionManager) but the runtime
  *     instance is the full SessionManager, so appendAgentStatus exists.
- *  2. Sweep every 30 min (lock-guarded): backfill one `agent_status` line per
+ *  2. Sweep every 5 min (lock-guarded): backfill one `agent_status` line per
  *     saved session file under ~/.prime/agent/sessions/. Entries chain
  *     parentId to the file's last entry — the same entry type the native
  *     summarizer persists, so the scanner and agents view pick them up.
@@ -55,13 +55,13 @@ import type {
 
 // --- tunables ----------------------------------------------------------------
 
-const SWEEP_INTERVAL_MS = 30 * 60_000;
+const SWEEP_INTERVAL_MS = 5 * 60_000;
 const SWEEP_START_DELAY_MS = 15_000;
 const LIVE_APPEND_MIN_INTERVAL_MS = 10_000;
 /** Skip session files touched this recently — a live worker owns them. */
-const LIVE_FILE_MAX_AGE_MS = 10 * 60_000;
+const LIVE_FILE_MAX_AGE_MS = 2 * 60_000;
 /** Sweep claim lifetime; stale claims are reclaimed by any worker. */
-const LOCK_MAX_AGE_MS = 35 * 60_000;
+const LOCK_MAX_AGE_MS = 10 * 60_000;
 const LOCK_FILE = join(
   process.env.HOME ?? "",
   ".prime",
@@ -356,22 +356,12 @@ async function runSweep(
 
 export default function (pi: ExtensionAPI): void {
   let lastLiveAppendAt = 0;
+  // Deferred-recap state: the newest throttled recap and its flush timer.
+  let pendingRecap: string | undefined;
+  let pendingCtx: ExtensionContext | undefined;
+  let pendingTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Live recap: append after each settled turn. Throttled because a tool-loop
-  // burst fires turn_end per LLM response; the sweep repairs any recap the
-  // throttle dropped.
-  pi.on("turn_end", async (event, ctx) => {
-    const text = assistantText(
-      (event.message as { content?: unknown } | undefined)?.content,
-    );
-    const recap = deriveRecap(text);
-    if (!recap) {
-      return;
-    }
-    const now = Date.now();
-    if (now - lastLiveAppendAt < LIVE_APPEND_MIN_INTERVAL_MS) {
-      return;
-    }
+  const appendLive = (ctx: ExtensionContext, recap: string): void => {
     const manager = ctx.sessionManager as unknown as WritableSessionManager;
     const messageCount = manager
       .getEntries()
@@ -381,7 +371,45 @@ export default function (pi: ExtensionAPI): void {
       taskState: "needs_input",
       basedOnMessageCount: messageCount,
     });
-    lastLiveAppendAt = now;
+    lastLiveAppendAt = Date.now();
+  };
+
+  const flushPending = (): void => {
+    pendingTimer = undefined;
+    const recap = pendingRecap;
+    pendingRecap = undefined;
+    if (recap !== undefined && pendingCtx !== undefined) {
+      appendLive(pendingCtx, recap);
+    }
+  };
+
+  // Live recap: append after each settled turn. Throttled because a tool-loop
+  // burst fires turn_end per LLM response; a throttled recap is deferred
+  // (newest wins) and flushed once the window elapses, so a turn's final
+  // answer always lands instead of waiting for the sweep to repair it.
+  pi.on("turn_end", async (event, ctx) => {
+    const text = assistantText(
+      (event.message as { content?: unknown } | undefined)?.content,
+    );
+    const recap = deriveRecap(text);
+    if (!recap) {
+      return;
+    }
+    const now = Date.now();
+    const sinceLastAppend = now - lastLiveAppendAt;
+    if (sinceLastAppend < LIVE_APPEND_MIN_INTERVAL_MS) {
+      // Defer instead of drop: keep the newest recap; one timer per window.
+      pendingRecap = recap;
+      pendingCtx = ctx;
+      if (pendingTimer === undefined) {
+        pendingTimer = ctx.setTimeout(
+          flushPending,
+          LIVE_APPEND_MIN_INTERVAL_MS - sinceLastAppend,
+        );
+      }
+      return;
+    }
+    appendLive(ctx, recap);
   });
 
   // Sweep: backfill saved sessions. The lock lets exactly one worker run it.
