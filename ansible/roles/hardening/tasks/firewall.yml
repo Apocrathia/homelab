@@ -8,7 +8,7 @@
     state: present
     update_cache: true
     cache_valid_time: 3600
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
 
 # Rules first, then enable — a half-configured firewall must never cut the
 # SSH session running this playbook.

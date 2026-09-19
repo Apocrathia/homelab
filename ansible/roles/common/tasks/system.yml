@@ -4,7 +4,7 @@
     name: "{{ inventory_hostname }}"
   when:
     - common_manage_hostname | bool
-    - ansible_hostname != inventory_hostname
+    - ansible_facts["hostname"] != inventory_hostname
 
 - name: Set system timezone
   community.general.timezone:
