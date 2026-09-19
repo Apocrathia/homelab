@@ -7,7 +7,7 @@ repos:
         args: [--allow-multiple-documents]
         exclude: |
           (?x)^(
-            flux/manifests/.*/authentik-blueprint\.yaml|
+            flux/manifests/.*/authentik-blueprint(-cleanup)?\.yaml|
             flux/manifests/.*/authentik/blueprints/.*\.yaml|
             helm/.*/templates/.*\.yaml|
             flux/manifests/.*/recyclarr\.yml|

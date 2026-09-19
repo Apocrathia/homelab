@@ -13,6 +13,7 @@ resources:
   - crossview-secret.yaml
   - crossview-postgres.yaml
   - crossview-helmrelease.yaml
+  - provider-opentofu.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
