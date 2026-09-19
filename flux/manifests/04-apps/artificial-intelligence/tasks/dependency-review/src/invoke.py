@@ -121,6 +121,28 @@ class GitLab:
 # --- Deterministic gates ------------------------------------------------------
 
 
+AGENT_HELD_LABEL = "agent-review:agent-held"
+
+
+def protect_prior_agent_hold(v: dict, prior_labels: list[str]) -> dict:
+    """A judgment-unavailable pass must not overwrite a prior agent hold.
+
+    Live finding (2026-09-19): the review sweep held tracearr v2.4.0 on
+    regression report #1193; a later sweep whose A2A turn timed out fell back
+    to deterministic verdicts and re-passed it. The merge-stage agent caught
+    the flip-flop — this keeps the review record from lying in the first
+    place. A successful agent turn clears the marker on its next pass.
+    """
+    if v["verdict"] == "pass" and AGENT_HELD_LABEL in (prior_labels or []):
+        v = dict(v)
+        v["verdict"] = "hold"
+        v["reason"] = (
+            "Prior agent hold stands — this sweep's judgment turn was unavailable "
+            "(A2A failure); next successful sweep re-judges it."
+        )
+    return v
+
+
 def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) -> dict:
     """Gates the agent may not upgrade past. Returns verdict dict."""
     verdict, reason, flags = "pass", "", []
@@ -442,10 +464,14 @@ async def main() -> int:
     for dep in deps:
         v = verdicts[dep.iid]
         av = agent_verdicts.get(dep.iid)
+        if not av:
+            # judgment unavailable: keep prior agent holds (see protect_prior_agent_hold)
+            verdicts[dep.iid] = v = protect_prior_agent_hold(v, dep.labels)
         if av:
             # agent may only downgrade a pass; hard gates always win
             if v["verdict"] == "pass" and av.get("verdict") in ("hold", "block"):
                 v["verdict"] = av["verdict"]
+                v["flags"].append(AGENT_HELD_LABEL)
             # agent may resolve unknown release dates (helm chart sources, dead repos);
             # cooldown is then re-checked deterministically against that date
             if v["verdict"] == "hold" and av.get("release_at_corrected") and dep.update_type != "major":
@@ -468,6 +494,8 @@ async def main() -> int:
         f = fs.get(dep.iid, {})
         v = verdicts[dep.iid]
         note = build_note(dep, f, v, agent_notes.get(dep.iid), m.get("sha") or "")
+        if v["verdict"] == "pass":
+            v["flags"] = [fl for fl in v["flags"] if fl != AGENT_HELD_LABEL]
         labels = [f"agent-review:{v['verdict']}"] + v["flags"] + ["agent-review:done"]
         if dry_run:
             LOG.info("DRY RUN !%s -> %s (%s)\n%s\n---", dep.iid, v["verdict"].upper(), dep.pkg, note)

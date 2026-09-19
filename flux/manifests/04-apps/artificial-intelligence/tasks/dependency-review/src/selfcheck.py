@@ -52,3 +52,13 @@ assert not inv._is_infra(
     "ghcr.io/unpoller/unpoller", "chore(deps): Update unpoller", "renovate/ghcr.io-unpoller-unpoller-5.x"
 )
 print("STAGE-1 CONTRACT CHECKS PASS")
+
+# agent-hold protection: fallback pass must not overwrite a prior agent hold
+v_pass = {"iid": 1, "verdict": "pass", "reason": "", "flags": []}
+kept = inv.protect_prior_agent_hold(v_pass, ["agent-review:pass", "agent-review:agent-held", "agent-review:done"])
+assert kept["verdict"] == "hold", kept
+v_no_label = inv.protect_prior_agent_hold(dict(v_pass), ["agent-review:pass"])
+assert v_no_label["verdict"] == "pass", v_no_label
+v_holding = inv.protect_prior_agent_hold({"iid": 1, "verdict": "hold", "reason": "", "flags": []}, [])
+assert v_holding["verdict"] == "hold", v_holding
+print("AGENT-HOLD PROTECTION CHECKS PASS")
