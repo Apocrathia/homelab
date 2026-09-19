@@ -9,3 +9,4 @@ resources:
   - scheduled-agent-invoke
   - run-loop-agent-invoke
   - alert-agent-invoke
+  - dependency-review

@@ -10,6 +10,11 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
   (`run-loop` heartbeat; in-cluster ceiling = `mode=scout`). Schedule
   `30 */6 * * *`; unsuspend when ready.
 - `alert-agent-invoke/` — alert-driven invoke path (separate from Cron templates).
+- `dependency-review/` — **live** hourly Renovate MR sweep (`20 * * * *`,
+  unsuspended): deterministic upstream facts → git-agent judgment → verdict
+  note + `agent-review:*` labels + approval on pass. Unlike its siblings it
+  needs GitLab/GitHub tokens (1Password items, see its README); merge
+  authority stays with the operator.
 
 Defaults stay safe for testing: `suspend: true`, `concurrencyPolicy: Forbid`,
 and minimal runtime permissions.
