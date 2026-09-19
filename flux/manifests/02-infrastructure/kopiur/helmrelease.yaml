@@ -12,7 +12,7 @@ spec:
     spec:
       chart: kopiur
       # renovate: datasource=docker depName=ghcr.io/home-operations/charts/kopiur
-      version: "0.10.8"
+      version: "0.10.9"
       sourceRef:
         kind: HelmRepository
         name: home-operations
