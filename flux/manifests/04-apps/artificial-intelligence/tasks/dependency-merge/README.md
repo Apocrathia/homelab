@@ -18,7 +18,8 @@ Mechanical gates (runner, no LLM), in order:
    longhorn, rabbitmq, redis, kube-prometheus). Label-independent: a
    Talos-class bump can reboot the cluster these agents run on, so it never
    reaches the merge list even if mislabeled.
-2. `agent-review:pass` + `agent-review:done` labels present
+2. `agent-review:pass` label present (the sweep recomputes the whole
+   `agent-review:*` set every run — stale flags come off automatically)
 3. **no** `agent-review:major` / `agent-review:infra` flag — those are the
    operator's, always
 4. review note's `reviewed-sha` matches the current MR head — retargeted MRs

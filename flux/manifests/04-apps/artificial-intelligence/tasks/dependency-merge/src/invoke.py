@@ -248,7 +248,7 @@ async def main() -> int:
             _skip(remaining, m, "infra-class — operator only (hard block)")
             continue
         labels = set(m.get("labels") or [])
-        if "agent-review:pass" not in labels or "agent-review:done" not in labels:
+        if "agent-review:pass" not in labels:
             _skip(remaining, m, "not reviewed / verdict not pass")
             continue
         if labels & set(NO_MERGE_FLAGS):

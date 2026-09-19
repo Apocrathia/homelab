@@ -53,6 +53,16 @@ INFRA_PACKAGES = (
     "kube-prometheus",
 )
 VERDICT_LABELS = ("agent-review:pass", "agent-review:hold", "agent-review:block")
+# The sweep fully owns the agent-review:* namespace: every sweep recomputes the
+# whole label set so stale flags (infra, major, phase2-trivy, agent-held) come
+# off the moment they stop applying. No persistent "done" marker — the verdict
+# label IS the state.
+ALL_AGENT_LABELS = VERDICT_LABELS + (
+    "agent-review:infra",
+    "agent-review:major",
+    "agent-review:phase2-trivy",
+    "agent-review:agent-held",
+)
 
 
 def _env_float(name: str, default: float) -> float:
@@ -102,9 +112,9 @@ class GitLab:
         if r.status_code >= 300:
             LOG.warning("note on !%s failed: %s %s", iid, r.status_code, r.text[:120])
 
-    async def set_labels(self, m: dict, iids_labels: list[str]) -> None:
+    async def set_labels(self, m: dict, new_labels: list[str]) -> None:
         current = set(m.get("labels") or [])
-        new = sorted(current - set(VERDICT_LABELS) | set(iids_labels))
+        new = sorted((current - set(ALL_AGENT_LABELS)) | set(new_labels))
         r = await self.http.put(f"/projects/{self.project}/merge_requests/{m['iid']}", json={"labels": ",".join(new)})
         if r.status_code >= 300:
             LOG.warning("labels on !%s failed: %s %s", m["iid"], r.status_code, r.text[:120])
@@ -496,7 +506,7 @@ async def main() -> int:
         note = build_note(dep, f, v, agent_notes.get(dep.iid), m.get("sha") or "")
         if v["verdict"] == "pass":
             v["flags"] = [fl for fl in v["flags"] if fl != AGENT_HELD_LABEL]
-        labels = [f"agent-review:{v['verdict']}"] + v["flags"] + ["agent-review:done"]
+        labels = [f"agent-review:{v['verdict']}"] + v["flags"]
         if dry_run:
             LOG.info("DRY RUN !%s -> %s (%s)\n%s\n---", dep.iid, v["verdict"].upper(), dep.pkg, note)
             continue
