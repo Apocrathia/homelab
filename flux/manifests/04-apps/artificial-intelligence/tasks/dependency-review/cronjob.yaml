@@ -7,8 +7,8 @@ metadata:
   annotations:
     ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
 spec:
-  # :20 past the hour — after Renovate's early-hour MR burst, before human morning review
-  schedule: "20 * * * *"
+  # :23 minutes past the hour
+  schedule: "23 * * * *"
   suspend: false
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
