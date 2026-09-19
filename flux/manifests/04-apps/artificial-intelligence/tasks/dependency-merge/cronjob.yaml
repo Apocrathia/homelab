@@ -7,8 +7,8 @@ metadata:
   annotations:
     ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
 spec:
-  # :50 — 30 min behind the :20 review sweep, so passes are mergeable same hour
-  schedule: "50 * * * *"
+  # :47 minutes past the hour. 24 minutes after the dependency check.
+  schedule: "47 * * * *"
   suspend: false
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
