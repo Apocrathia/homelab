@@ -5,3 +5,7 @@ metadata:
   name: kopiur-system
   labels:
     app.kubernetes.io/name: kopiur
+    # nas-rustfs tenancy gate: kopiur's default-managed Maintenance applies in
+    # this namespace, and the admission webhook enforces the gate on it too —
+    # without the label the apply is denied and repo maintenance never runs.
+    backup.apocrathia.com/repo: nas-rustfs
