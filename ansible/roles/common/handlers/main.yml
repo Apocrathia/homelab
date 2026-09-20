@@ -6,3 +6,8 @@
   ansible.builtin.service:
     name: networking
     state: restarted
+
+- name: Reload nftables ruleset
+  ansible.builtin.service:
+    name: nftables
+    state: reloaded

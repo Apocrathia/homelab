@@ -46,6 +46,13 @@ common_network_dns:
   search:
     - apocrathia.com
 
+# UOS Server console serves 11443 (unprivileged bind); redirect the standard
+# HTTPS port so consumers (external-dns webhook, local MCP configs) need no
+# port suffix. TLS terminates on the app, which owns its Let's Encrypt cert.
+common_nftables_redirects:
+  - from_port: 443
+    to_port: 11443
+
 # kopia backups (roles/kopia; inventory kopia group = opt-in).
 # UOS Server keeps app data in podman volumes under /home/uosserver —
 # the /home source carries UniFi's autobackups (.unf, app-consistent);

@@ -28,3 +28,6 @@ common_network_interfaces: []
 common_network_dns:
   servers: []
   search: []
+# TCP port redirects via nftables (tasks/nftables.yml, network tag). Empty =
+# nftables is neither installed nor managed on the host.
+common_nftables_redirects: []
