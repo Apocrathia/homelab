@@ -10,6 +10,17 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
   (`run-loop` heartbeat; in-cluster ceiling = `mode=scout`). Schedule
   `30 */6 * * *`; unsuspend when ready.
 - `alert-agent-invoke/` — alert-driven invoke path (separate from Cron templates).
+- `dependency-review/` — **live** hourly Renovate MR sweep (`20 * * * *`,
+  unsuspended): deterministic upstream facts → git-agent judgment → verdict
+  note + `agent-review:*` labels + approval on pass. Unlike its siblings it
+  needs GitLab/GitHub tokens (1Password items, see its README).
+- `dependency-merge/` — **live** second stage (`50 * * * *`, unsuspended):
+  homelab-agent merges `agent-review:pass` MRs past the hard gates
+  (infra-class hard block independent of labels, reviewed-sha match, green
+  pipeline, no major/infra flags, allowed update types) after its own
+  go/no-go; posts the daily triage digest to Discord `#notifications`.
+  Merge line is `MERGE_UPDATE_TYPES` (`digest,patch,minor`); majors and
+  infra-class deps (talos/siderolabs included) are never auto-merged.
 
 Defaults stay safe for testing: `suspend: true`, `concurrencyPolicy: Forbid`,
 and minimal runtime permissions.
