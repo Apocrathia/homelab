@@ -14,6 +14,12 @@
   tags:
     - network
 
+- name: Configure nftables port redirects
+  ansible.builtin.import_tasks: nftables.yml
+  when: common_nftables_redirects | length > 0
+  tags:
+    - network
+
 - name: Configure user
   ansible.builtin.import_tasks: user.yml
   tags:
