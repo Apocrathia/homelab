@@ -32,7 +32,7 @@ spec:
           containers:
             - name: trigger-scan
               # renovate: datasource=docker depName=registry.k8s.io/kubectl
-              image: registry.k8s.io/kubectl:v1.31.14@sha256:74a458e9b800947f4bd1875be5213e8f31f4f2d1e6639548bf05145387ad07bb
+              image: registry.k8s.io/kubectl:v1.37.0@sha256:5ed410ebac5dc976cc717098994dcdb29bbbd38f6bd65f582311f5be4ba719cf
               command:
                 - /bin/sh
                 - /scripts/trigger.sh
