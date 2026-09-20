@@ -15,17 +15,17 @@ and Ansible-managed k8s are gone. Keep the useful bits: purpose groups,
 
 ## Layout
 
-| Path                  | Role                                                              |
-| --------------------- | ----------------------------------------------------------------- |
-| `ansible.cfg`         | Minimal overrides only                                            |
-| `requirements.yml`    | Collection pins                                                   |
-| `inventory/`          | Hosts + non-secret group/host vars                                |
-| `playbooks/`          | `site.yml` aggregator, `bootstrap.yml`, `common.yml`, `kopia.yml` |
-| `roles/common/`       | Baseline packages, hostname/timezone, login user, omz+p10k shell  |
-| `roles/hardening/`    | devsec ssh/os hardening + opt-in ufw firewall (unassigned yet)    |
-| `ci/requirements.txt` | Pip pins for CI/local tooling (Renovate `pip_requirements`)       |
-| `ci/fetch_op_ssh.py`  | Pull deploy key + known_hosts from 1Password Connect              |
-| `.gitlab-ci.yml`      | Validate always; check/apply when Connect token can read secrets  |
+| Path                  | Role                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `ansible.cfg`         | Minimal overrides only                                                             |
+| `requirements.yml`    | Collection pins                                                                    |
+| `inventory/`          | Hosts + non-secret group/host vars                                                 |
+| `playbooks/`          | `site.yml` aggregator, `bootstrap.yml`, `common.yml`, `kopia.yml`                  |
+| `roles/common/`       | Baseline packages, hostname/timezone, login user, omz+p10k shell, ghostty terminfo |
+| `roles/hardening/`    | devsec ssh/os hardening + opt-in ufw firewall (unassigned yet)                     |
+| `ci/requirements.txt` | Pip pins for CI/local tooling (Renovate `pip_requirements`)                        |
+| `ci/fetch_op_ssh.py`  | Pull deploy key + known_hosts from 1Password Connect                               |
+| `.gitlab-ci.yml`      | Validate always; check/apply when Connect token can read secrets                   |
 
 ## Local usage
 

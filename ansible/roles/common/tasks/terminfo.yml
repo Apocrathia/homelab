@@ -1,0 +1,21 @@
+---
+# Ghostty's terminfo entry ships in no distro package (Debian has none;
+# Fedora's ghostty is the full GUI app), so vendor the compiled entry from
+# the Ghostty.app bundle and drop it in the system terminfo database.
+# Remote apps then resolve TERM=xterm-ghostty natively and ghostty's
+# ssh-terminfo auto-install skips instead of failing on every login.
+# Embedded firmware (UniFi APs) cannot take a terminfo db at all — the
+# failed-install warning there stays cosmetic.
+# Vendored from Ghostty 1.3.1 (app bundle Resources/terminfo; macOS hex dir
+# '78' == 'x' on Linux). Refresh only if ghostty changes its terminfo caps.
+- name: Ensure system terminfo directory exists
+  ansible.builtin.file:
+    path: /usr/share/terminfo/x
+    state: directory
+    mode: "0755"
+
+- name: Install Ghostty terminfo entry
+  ansible.builtin.copy:
+    src: xterm-ghostty
+    dest: /usr/share/terminfo/x/xterm-ghostty
+    mode: "0644"
