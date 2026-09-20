@@ -132,6 +132,14 @@ for sys_dir in "${ROMS_ROOT}"/*/; do
     continue
   fi
 
+  # RomM's gamelist provider only reads roms/<platform>/gamelist.xml. Publish a
+  # copy next to the ROMs so RomM's nightly scan can use this metadata; ES-DE
+  # reads the original at gamelists/, and RomM excludes *.xml from ROM scans.
+  if ! cp "${GAMELISTS_ROOT}/${sys}/gamelist.xml" "${ROMS_ROOT}/${sys}/gamelist.xml"; then
+    echo "WARNING: RomM gamelist copy failed for ${sys}" >&2
+    FAILED+=("${sys}:romscopy")
+  fi
+
   SCRAPED=$((SCRAPED + 1))
 done
 
