@@ -47,7 +47,8 @@ common_network_dns:
     - apocrathia.com
 
 # kopia backups (roles/kopia; inventory kopia group = opt-in).
-# /var/lib/unifi includes UniFi's own autobackups (.unf, app-consistent);
+# UOS Server keeps app data in podman volumes under /home/uosserver —
+# the /home source carries UniFi's autobackups (.unf, app-consistent);
 # mongod snapshots are crash-consistent only — the .unf tier covers that.
 # /var/lib/uosserver is runtime state, recreated by the UOS installer.
 kopia_backup_paths:
@@ -55,5 +56,3 @@ kopia_backup_paths:
   - /home
   - /opt
   - /var/backups
-  - /var/lib/unifi
-  - /var/lib/mongodb
