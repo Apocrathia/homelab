@@ -62,3 +62,9 @@ assert v_no_label["verdict"] == "pass", v_no_label
 v_holding = inv.protect_prior_agent_hold({"iid": 1, "verdict": "hold", "reason": "", "flags": []}, [])
 assert v_holding["verdict"] == "hold", v_holding
 print("AGENT-HOLD PROTECTION CHECKS PASS")
+
+# agent-invented flags: only whitelisted vocabulary becomes labels; the rest is note text
+assert inv.ALLOWED_FLAGS <= set(inv.ALL_AGENT_LABELS)
+assert "agent-review:regression" not in inv.ALLOWED_FLAGS
+assert "agent-review:source-mismatch" not in inv.ALLOWED_FLAGS
+print("FLAG WHITELIST CHECKS PASS")

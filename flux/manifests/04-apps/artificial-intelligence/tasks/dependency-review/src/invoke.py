@@ -63,6 +63,16 @@ ALL_AGENT_LABELS = VERDICT_LABELS + (
     "agent-review:phase2-trivy",
     "agent-review:agent-held",
 )
+# The ONLY flag labels the sweep applies. Anything else the agent returns
+# (source-mismatch, regression, bug-storm, ...) is note text, not a label —
+# live finding: agents invent vocabulary and free-form labels confuse the
+# operator ("why is it a downgrade?").
+ALLOWED_FLAGS = {
+    "agent-review:infra",
+    "agent-review:major",
+    "agent-review:phase2-trivy",
+    "agent-review:agent-held",
+}
 
 
 def _env_float(name: str, default: float) -> float:
@@ -500,9 +510,18 @@ async def main() -> int:
                     LOG.warning("bad release_at_corrected for !%s", dep.iid)
             if av.get("reason"):
                 agent_notes[dep.iid] = str(av["reason"])[:400]
+            agent_tags = []
             for fl in av.get("flags") or []:
-                if isinstance(fl, str):
+                if not isinstance(fl, str):
+                    continue
+                if fl in ALLOWED_FLAGS:
                     v["flags"].append(fl)
+                elif fl.strip():
+                    agent_tags.append(fl.removeprefix("agent-review:"))
+            if agent_tags:
+                agent_notes[dep.iid] = (
+                    (agent_notes.get(dep.iid) or "") + " Agent-observed: " + ", ".join(agent_tags) + "."
+                ).strip()
 
     for m in fresh:
         dep = next(d for d in deps if d.iid == m["iid"])
