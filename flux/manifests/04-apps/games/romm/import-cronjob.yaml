@@ -30,8 +30,8 @@ spec:
               type: RuntimeDefault
           containers:
             - name: import-esde-media
-              # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
-              image: ghcr.io/trueforge-org/kubectl:1.31.1@sha256:d13949bc47cd8bce6557f1797411ba1a083ac99c867a0be25102b4c3c72fd6dd
+              # renovate: datasource=docker depName=registry.k8s.io/kubectl
+              image: registry.k8s.io/kubectl:v1.37.0@sha256:5ed410ebac5dc976cc717098994dcdb29bbbd38f6bd65f582311f5be4ba719cf
               command:
                 - /bin/sh
                 - /scripts/import-trigger.sh
