@@ -94,3 +94,22 @@ Evidence from 2026-08-01 dogfood:
 Out of scope for this issue: rewriting goflow2 to ClickHouse top-talkers;
 SPAN/softflowd alternatives (valid escape hatch if UniFi export stays dead
 after UOS Server).
+
+## Resolution (2026-09-20)
+
+The hosting gate is met: the controller migrated from CK+ to UniFi OS
+Server on the unifi-os NUC (10.0.1.3 native / 10.10.0.3 management;
+unifi.apocrathia.com CNAMEs here via nftables 443→11443). A full site
+restore (not a rebuild) carried the config; 13/13 devices migrated with
+set-inform. Architecture is split: the NUC hosts the Network app only;
+the UXG-Pro stays the gateway and serves DHCP/DNS; Protect runs
+standalone on the UNVR-Pro. The CK+ is powered off.
+
+The Problem / desired state text above describes the pre-migration
+world and is retained as history.
+
+Remaining acceptance before closing: confirm live IPFIX receipt
+post-cutover — UXG's restored netflow config (enabled, v10, port 2055,
+target `ingest.services.apocrathia.com`, seven networks) provisions the
+exporter and the goflow2 ingest path is up; one Grafana flows-dashboard
+glance confirms the series. Close on confirmation.

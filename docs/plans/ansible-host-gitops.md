@@ -2,7 +2,7 @@
 title: "Ansible host GitOps"
 status: active
 found_at: 2026-08-01
-updated_at: 2026-08-01
+updated_at: 2026-09-20
 related_issue: docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md
 area: agents
 ---
@@ -30,7 +30,8 @@ NUC (BLKNUC7i7DNK1E).
 - Docker Compose roles (compose retired)
 - Ansible-managed Kubernetes / k3s / Proxmox cluster bootstrap (Talos + Flux /
   OpenTofu own that)
-- UniFi OS Server install play (Track A consumer — after NUC is staged)
+- UniFi OS Server install play (superseded: UOS Server installed manually
+  2026-09-20 — no install play materialized)
 - Full CIS / `devsec.hardening` on day one
 - Storing deploy keys as GitLab CI variables (Connect is the bus)
 
@@ -78,7 +79,9 @@ NUC (BLKNUC7i7DNK1E).
 - [x] Service account phase 2: flip `ansible_user`, drop become password from
       CI + README/CI notes (operator follow-up: delete the `sudo-password`
       field from the 1Password `ansible-secrets` item)
-- [ ] Stage UniFi NUC + Track A cutover (links to related issue)
+- [x] Stage UniFi NUC + Track A cutover — done 2026-09-20: UOS Server on unifi-os
+      (static .3 per VLAN), site restored from CK+ backup, 13/13 devices migrated
+      with set-inform, unifi.apocrathia.com CNAMEs here, CK+ powered off
 - [ ] Expand roles only when a host needs them (no speculative roles)
 
 ## Feedback loop
@@ -100,9 +103,10 @@ NUC (BLKNUC7i7DNK1E).
 - Local verify (2026-08-01): syntax-check + `ansible-lint` production profile
   clean (Homebrew Python 3.14 + ansible-core 2.20). CI image is Python 3.12 +
   ansible-core 2.16+.
-- unifi-os (2026-09-17): parallel-run state. Box holds a DHCP reservation at
-  `10.0.1.3` (Legacy — same address as the planned static .3) while the
-  network-tag renumber is pending; `unifi.*` DNS stays on the CK+ until the
-  Track A cutover. Static .3 scheme (roles/common `network` tag): Legacy .3
-  untagged (untagged-port adoption fallback), Management/Services/Media/
-  Access/IoT tagged at .3; default route via Management only.
+- unifi-os (2026-09-20): production controller. Statics live per the .3-per-
+  VLAN scheme (roles/common `network` tag): Legacy .3 untagged (untagged-port
+  adoption fallback), Management/Services/Media/Access/IoT tagged at .3;
+  default route via Management only. unifi.apocrathia.com CNAMEs to this box
+  (nftables 443→11443); the UXG-Pro gateway serves DHCP/DNS; Protect runs
+  standalone on the UNVR-Pro (not adopted); the CK+ is powered off (PoE
+  pulled, Distribution port 47).
