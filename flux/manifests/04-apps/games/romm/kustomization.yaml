@@ -12,6 +12,7 @@ resources:
   - helmrelease.yaml
   - rbac.yaml
   - cronjob.yaml
+  - import-cronjob.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -28,5 +29,8 @@ configMapGenerator:
     files:
       - src/trigger.sh
       - src/enqueue-scan.py
+      - src/import-trigger.sh
+      - src/import-esde-media.py
+      - src/import-segments.py
     options:
       disableNameSuffixHash: true

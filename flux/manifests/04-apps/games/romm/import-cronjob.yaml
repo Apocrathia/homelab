@@ -2,13 +2,12 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: romm-nightly-metadata-scan
+  name: romm-esde-media-import
   namespace: romm
-  annotations:
-    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in rbac.yaml"
 spec:
-  # 0300 America/Denver — after built-in maintenance tasks finish
-  schedule: "0 3 * * *"
+  # Thursday 05:00 America/Denver — after esde-media-scraper (Wed 04:00+) has
+  # refreshed ES-DE media on the Games share.
+  schedule: "0 5 * * 4"
   timeZone: "America/Denver"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -16,7 +15,7 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 1
-      activeDeadlineSeconds: 300
+      activeDeadlineSeconds: 14400
       template:
         spec:
           serviceAccountName: romm-scan-trigger
@@ -30,21 +29,15 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: trigger-scan
-              # renovate: datasource=docker depName=registry.k8s.io/kubectl
-              image: registry.k8s.io/kubectl:v1.37.0@sha256:5ed410ebac5dc976cc717098994dcdb29bbbd38f6bd65f582311f5be4ba719cf
+            - name: import-esde-media
+              # renovate: datasource=docker depName=ghcr.io/trueforge-org/kubectl
+              image: ghcr.io/trueforge-org/kubectl:1.31.1@sha256:d1eaced176f09f027aaeaad3203359026ff106764f8b088baae2aa6b640652b8
               command:
                 - /bin/sh
-                - /scripts/trigger.sh
+                - /scripts/import-trigger.sh
               env:
-                - name: SCAN_TYPE
-                  # unmatched = ROMs missing provider IDs; update = refresh matched metadata
-                  value: "unmatched,update"
-                - name: SCAN_METADATA_SOURCES
-                  # gamelist: skyscraper's ES-DE gamelists (copied into
-                  # roms/<platform>/gamelist.xml by skyscraper's scrape.sh)
-                  # identify roms the external providers miss.
-                  value: "igdb,ss,ra,launchbox,gamelist,hasheous,playmatch,sgdb"
+                - name: COVER_SOURCE
+                  value: "miximages"
               resources:
                 requests:
                   cpu: 50m

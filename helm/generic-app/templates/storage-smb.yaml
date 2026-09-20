@@ -16,6 +16,11 @@ spec:
     {{- else }}
     - ReadWriteMany
     {{- end }}
+  {{- $mountOptions := .mountOptions | default $.Values.storage.smb.mountOptions }}
+  {{- if $mountOptions }}
+  mountOptions:
+    {{- toYaml $mountOptions | nindent 4 }}
+  {{- end }}
   persistentVolumeReclaimPolicy: Retain
   csi:
     driver: smb.csi.k8s.io
