@@ -68,6 +68,32 @@ kubectl create job -n romm --from=cronjob/romm-nightly-metadata-scan romm-nightl
 kubectl logs -n romm job/romm-nightly-metadata-scan-manual
 ```
 
+### ES-DE media import
+
+`romm-esde-media-import` runs Thursday 05:00 America/Denver, after
+`esde-media-scraper` refreshes ES-DE media on the Games share
+(`Emulation/media/<platform>/<type>/<rom>.png`). It fills **missing** RomM
+assets only — miximages become rom covers, and covers/3dboxes/physicalmedia/
+screenshots/titlescreens/manuals/wheels land as RomM media types. Existing
+assets are never overwritten. The scan trigger also gets `gamelist` in its
+metadata sources; skyscraper copies each gamelist to
+`roms/<platform>/gamelist.xml` for RomM to read.
+
+```bash
+# Manual import for specific platforms (all roms, single lane)
+kubectl exec -i -n romm deploy/romm -c romm -- \
+  env PLATFORMS=nes,nds \
+  python - < flux/manifests/04-apps/games/romm/src/import-esde-media.py
+
+# Segmented backfill: platform → letter shards (~CAP roms each, oversized
+# letters recurse to a second filename character), 2 lanes, per-segment
+# retries. 3 lanes OOM-kill the pod via CIFS dirty pages — keep --lanes ≤ 2.
+python3 flux/manifests/04-apps/games/romm/src/import-backfill.py --platforms nes,nds
+python3 .../src/import-backfill.py --dry-run          # report only
+kubectl exec -i -n romm deploy/romm -c romm -- env CAP=1200 \
+  python - < .../src/import-segments.py                # just print the shard plan
+```
+
 ## Authentication
 
 Authentication is handled through Authentik OIDC:
