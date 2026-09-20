@@ -456,6 +456,13 @@ storage:
   smb:
     enabled: false
     volumes: []
+    # Default CIFS mount options applied to every SMB volume; a per-volume
+    # `mountOptions` list overrides these for that volume.
+    # vers=3.0 avoids SMB3.1.1 POSIX negotiation, whose server-side uid
+    # tracking makes chmod(2) fail with EPERM (RomM's RA hash cache, atomic
+    # writes). uid aligns client-side file ownership with the container user
+    # so the VFS lets non-root processes chmod. noperm skips client-side
+    # permission checks; the SMB session user is the real gate server-side.
     # Example SMB volume configuration:
     # volumes:
     #   - name: media
@@ -465,6 +472,18 @@ storage:
     #     credentialsPath: "vaults/Secrets/items/smb-credentials"
     #     readOnly: true  # Set to false for read-write access
     #     createSubDir: "true"  # optional; SMB CSI creates subDir on the server if missing
+
+    # Default CIFS mount options applied to every SMB volume; a per-volume
+    # `mountOptions` list overrides these for that volume.
+    # vers=3.0 avoids SMB3.1.1 POSIX negotiation, whose server-side uid
+    # tracking makes chmod(2) fail with EPERM (RomM's RA hash cache, atomic
+    # writes). uid aligns client-side file ownership with the container user
+    # so the VFS lets non-root processes chmod. noperm skips client-side
+    # permission checks; the SMB session user is the real gate server-side.
+    mountOptions:
+      - vers=3.0
+      - uid=1000
+      - noperm
 
   # EmptyDir storage
   emptyDir:
