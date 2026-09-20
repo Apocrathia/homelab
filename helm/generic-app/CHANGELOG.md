@@ -1,6 +1,19 @@
 # Changelog
 
-## Version 0.0.81 (Latest)
+## Version 0.0.83 (Latest)
+
+- **SMB mount options**: SMB volumes now default `spec.mountOptions` to
+  `vers=3.0,uid=1000,noperm` (per-volume `mountOptions` list overrides for
+  that volume). SMB3.1.1 POSIX negotiation makes `chmod(2)` fail with EPERM
+  on CIFS shares, which broke RomM's RA hash cache and any atomic write;
+  `vers=3.0` drops the negotiation, `uid` aligns client-side file ownership
+  with the container user so the VFS owner check passes, and `noperm` leaves
+  permission decisions to the server (the SMB session user is the real gate).
+  Applies to all SMB volumes on their next pod re-stage; live mounts are
+  untouched until then. (The template/values change itself landed under
+  0.0.82 content; this release pins it.)
+
+## Version 0.0.81
 
 - **Fix launch URL attr**: the Application entry in the proxy and OIDC
   templates wrote `launch_url`, a read-only serializer field that
