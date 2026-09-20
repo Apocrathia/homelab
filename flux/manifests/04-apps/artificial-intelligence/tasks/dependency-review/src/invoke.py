@@ -181,6 +181,11 @@ def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) 
             verdict = "hold"
             reason = "Major bump - breaking-change/DB-migration risk, human review required."
             flags.append("agent-review:major")
+        else:
+            reason = (
+                f"release age {age_h:.1f}h cleared the {gate_h:g}h gate; no superseder; "
+                f"OSV {f.get('osv_new', {}).get('count', 'n/a')} hits."
+            )
     if is_infra:
         flags.append("agent-review:infra")
     return {"iid": dep.iid, "verdict": verdict, "reason": reason, "flags": flags}

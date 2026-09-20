@@ -100,7 +100,9 @@ class GitLab:
                 verdict = _VERDICT_RE.search(body)
                 sha = _SHA_RE.search(body)
                 utype = _UTYPE_RE.search(body)
+                pkg = re.search(r"\| package \| `([^`]+)`", body)
                 return {
+                    "pkg": pkg.group(1) if pkg else "",
                     "verdict": verdict.group(1).lower() if verdict else "",
                     "reason": (verdict.group(2) or "").strip() if verdict else "",
                     "sha": sha.group(1) if sha else "",
@@ -276,7 +278,15 @@ async def main() -> int:
         if appr is False:
             _skip(remaining, m, "not approved")
             continue
-        candidates.append({**m, "_note_reason": note["reason"], "_utype": utype, "_approved": appr})
+        candidates.append(
+            {
+                **m,
+                "_note_reason": note["reason"],
+                "_utype": utype,
+                "_note_pkg": note.get("pkg", ""),
+                "_approved": appr,
+            }
+        )
 
     LOG.info("merge candidates: %s, remaining: %s", len(candidates), len(remaining))
 
@@ -286,7 +296,13 @@ async def main() -> int:
         prompt_tmpl = Path(os.environ.get("PROMPT_PATH", "/scripts/task.md")).read_text(encoding="utf-8")
         continuation = Path(os.environ.get("CONTINUATION_PATH", "/scripts/continuation.md")).read_text(encoding="utf-8")
         sheet = [
-            {"iid": c["iid"], "title": c["title"], "pkg": c["_note_reason"], "update_type": c["_utype"]}
+            {
+                "iid": c["iid"],
+                "title": c["title"],
+                "pkg": c["_note_pkg"],
+                "reason": c["_note_reason"],
+                "update_type": c["_utype"],
+            }
             for c in candidates
         ]
         prompt = prompt_tmpl + "\n\n## Merge candidates\n\n```json\n" + json.dumps(sheet, indent=1) + "\n```\n"
