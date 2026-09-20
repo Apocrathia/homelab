@@ -46,6 +46,13 @@ common_network_dns:
   search:
     - apocrathia.com
 
+# UOS Server console serves 11443 (unprivileged bind); redirect the standard
+# HTTPS port so consumers (external-dns webhook, local MCP configs) need no
+# port suffix. TLS terminates on the app, which owns its Let's Encrypt cert.
+common_nftables_redirects:
+  - from_port: 443
+    to_port: 11443
+
 # kopia backups (roles/kopia; inventory kopia group = opt-in).
 # /var/lib/unifi includes UniFi's own autobackups (.unf, app-consistent);
 # mongod snapshots are crash-consistent only — the .unf tier covers that.

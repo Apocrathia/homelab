@@ -1,0 +1,16 @@
+#!/usr/sbin/nft -f
+# Managed by ansible (roles/common, common_nftables_redirects) — manual edits
+# are lost on the next apply.
+# ponytail: flush ruleset assumes the host runs no other firewall manager
+# (ufw/iptables). If a host ever needs both, switch to incremental table
+# management instead of flushing.
+flush ruleset
+
+table ip nat {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+{% for r in common_nftables_redirects %}
+        tcp dport {{ r.from_port }} redirect to :{{ r.to_port }}
+{% endfor %}
+    }
+}

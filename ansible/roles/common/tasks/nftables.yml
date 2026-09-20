@@ -1,0 +1,21 @@
+---
+# L4 tcp redirect only: TLS passes through untouched, so the target service
+# owns its certs (the UOS console handles Let's Encrypt itself).
+- name: Install nftables
+  ansible.builtin.apt:
+    name: nftables
+    state: present
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Manage /etc/nftables.conf
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    mode: "0644"
+  notify: Reload nftables ruleset
+
+- name: Enable nftables service
+  ansible.builtin.systemd:
+    name: nftables
+    enabled: true
+    state: started
