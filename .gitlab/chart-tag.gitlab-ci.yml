@@ -66,13 +66,14 @@ create-chart-tag:
       fi
 
       echo "=== Chart Tag Creation Completed ==="
+  # Runs on every default-branch pipeline: the job exits 0 when the tag
+  # already exists (idempotent), so this self-heals missed tag pushes that
+  # rules:changes can skip (e.g. the 0.0.82 merge) and makes token failures
+  # visible instead of hiding behind allow_failure.
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
-      changes:
-        - helm/generic-app/Chart.yaml
-  allow_failure: true
   artifacts:
     reports:
       junit: junit.xml
