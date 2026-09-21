@@ -154,7 +154,7 @@ def load_k8s_creds() -> tuple[str, str, str]:
         token = (SA_DIR / "token").read_text().strip()
         namespace = (SA_DIR / "namespace").read_text().strip()
     except OSError as e:
-        LOG.error("cannot read service account credentials at %s: %s", SA_DIR, e)
+        LOG.error("cannot read service account files at %s: %s", SA_DIR, e)
         sys.exit(1)
     return token, namespace, str(SA_DIR / "ca.crt")
 
