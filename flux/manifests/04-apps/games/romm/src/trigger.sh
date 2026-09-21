@@ -21,4 +21,7 @@ kubectl exec -i -n romm -c romm "${POD}" -- \
   env \
     SCAN_TYPE="${SCAN_TYPE:-unmatched}" \
     SCAN_METADATA_SOURCES="${SCAN_METADATA_SOURCES:-}" \
+    SCAN_ROTATION="${SCAN_ROTATION:-0}" \
+    SCAN_SKIP_PENDING="${SCAN_SKIP_PENDING:-40}" \
+    SCAN_DRY_RUN="${SCAN_DRY_RUN:-0}" \
   python - < /scripts/enqueue-scan.py
