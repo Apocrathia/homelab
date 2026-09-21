@@ -36,6 +36,15 @@ spec:
     # Unregister all runners before termination
     unregisterRunners: true
 
+    # The alpine runner image ships HOME=/ so the manager binary reads
+    # /.gitlab-runner/config.toml, which register rewrites with concurrent=1
+    # on every pod start; the chart's rendered config at
+    # /home/gitlab-runner/.gitlab-runner/ is never read. Point HOME at the
+    # chart's non-root config dir so concurrent/checkInterval actually apply.
+    envVars:
+      - name: HOME
+        value: /home/gitlab-runner
+
     # Configure the maximum number of concurrent jobs
     concurrent: 10
 
