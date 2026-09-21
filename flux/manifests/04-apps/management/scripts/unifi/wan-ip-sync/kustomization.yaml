@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: wan-ip-sync
+  namespace: unifi-scripts
+
+resources:
+  - cronjob.yaml
+  - rbac.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: wan-ip-sync-scripts
+    namespace: unifi-scripts
+    files:
+      - src/wan_ip_sync.py
+      - src/pyproject.toml
+      - src/uv.lock

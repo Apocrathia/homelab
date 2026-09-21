@@ -1,0 +1,59 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-dns-wan
+  namespace: wan-dns
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: external-dns
+      # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/external-dns depName=external-dns
+      version: "1.22.0"
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+        namespace: flux-system
+      interval: 1m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Third ExternalDNS instance: owns ONLY the per-ISP WAN A records for
+    # the dual-WAN gateway (UXG-PRO), derived from the DNSEndpoint CR the
+    # unifi-wan-ip-sync CronJob keeps patched with WAN1/WAN2 IPs from the
+    # UniFi API, and written into the PUBLIC Cloudflare zone
+    # apocrathia.com. Disjoint from the other instances: the UniFi-webhook
+    # instance in 03-services/external-dns owns LAN records for
+    # main-gateway routes and the tailnet instance in
+    # 03-services/tailnet-dns owns the etcd app zone for tailnet-gateway;
+    # neither of those gateways produces records here, and this instance
+    # never writes the LAN or etcd zones.
+    provider:
+      name: cloudflare
+    env:
+      - name: CF_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: cloudflare-api-token-secret
+            key: api-token
+    triggerLoopOnEvent: true
+    policy: sync
+    sources:
+      - crd
+    txtOwnerId: wan
+    txtPrefix: "k8s.wan.%{record_type}-"
+    domainFilters:
+      - apocrathia.com
+    extraArgs:
+      # A records only: the zone holds certs/mail/other types that this
+      # instance must never prune.
+      managed-record-types: A
+    serviceMonitor:
+      enabled: true

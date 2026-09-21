@@ -3,10 +3,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: unifi-scripts
-  namespace: unifi-scripts
+  name: wan-dns
+
+namespace: wan-dns
 
 resources:
   - namespace.yaml
-  - uptime-robot-ip-sync
-  - wan-ip-sync
+  - secret.yaml
+  - helmrelease.yaml
