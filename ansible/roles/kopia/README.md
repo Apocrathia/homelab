@@ -68,7 +68,8 @@ journalctl -u kopia-snapshot.service
 - `kopia_package_version` must not exceed the version the rest of the lab
   runs (0.23.1); newer formats would break older clients. Renovate manages
   the pin (github-releases datasource).
-- unifi-os is an appliance OS — unverified as a kopia target; check before
-  adding it to the inventory.
+- unifi-os is a Debian 13 NUC running UniFi OS Server in podman; it is an
+  active kopia target — `/etc`, `/home` (UOS app data in podman volumes under
+  `/home/uosserver`), `/opt`, `/var/backups` (`host_vars/unifi-os.yml`).
 - KopiaUI (desktop tray app) manages its own per-user repository config and
   is out of scope; this role's repository is the root/system one.

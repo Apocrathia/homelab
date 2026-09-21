@@ -33,8 +33,8 @@ common_packages:
   - zsh
 
 # roles/hardening (devsec.hardening) site-policy overrides. The role is not
-# wired to any playbook yet (first target: the unifi-os host when it comes
-# online); these stage policy so any future assignment works out of the box.
+# wired to any playbook yet (first target: the unifi-os host); these
+# stage policy so any future assignment works out of the box.
 # Nothing here uses chrooted SFTP; the devsec default (true) requires
 # root-owned home dirs and would break plain scp/sftp.
 sftp_chroot: false
