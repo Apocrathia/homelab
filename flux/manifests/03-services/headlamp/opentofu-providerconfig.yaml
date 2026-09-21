@@ -14,4 +14,4 @@ spec:
       secretRef:
         name: authentik-terraform-token
         namespace: headlamp
-        key: token
+        key: authentik-terraform-token
