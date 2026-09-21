@@ -60,6 +60,8 @@ Create a 1Password item:
 
 `romm-nightly-metadata-scan` runs at 03:00 America/Denver and enqueues **Unmatched** then **Update** scans (fill gaps, then refresh already-matched metadata). Built-in scheduled rescans use Quick mode and only pick up new files.
 
+Scans run in **rotation** (`SCAN_ROTATION=7`): each night enqueues one job per platform whose `id % 7 == weekday`, so every platform gets one bounded night per week instead of a single 4h job that can never walk the ~36k-rom library. Each job gets its own `SCAN_TIMEOUT` (a slow platform only burns its own job), and the queue drains serially (`SCAN_WORKERS=1`). Big platforms (mame ≈ 13.5k roms) converge over several rotations — each pass drops newly matched roms from the next. `SCAN_SKIP_PENDING=40` skips a night while the previous night's jobs are still draining. Manual whole-library runs still work by unsetting the rotation envs.
+
 The CronJob uses a namespaced ServiceAccount to `kubectl exec` into the romm pod and enqueue the scan on RomM's local RQ/Valkey queue. No HTTP/OIDC credentials required.
 
 ```bash
