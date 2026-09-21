@@ -8,6 +8,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -17,8 +18,60 @@ configMapGenerator:
     namespace: chaos-mesh
     files:
       - chaos-mesh-dashboard.yaml=authentik-blueprint.yaml
+  # Crossplane stitch: packages terraform.tf (the Workspace's HCL module) so
+  # the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (terraform.tf); the replacements
+  # fieldPath bracket-escapes it: data.[terraform.tf]. Unlike headlamp, the
+  # blanket authentik_blueprint label from `labels:` below lands on every
+  # object here — the patchesJson6902 entry strips it from this ConfigMap so
+  # the Authentik blueprint sidecar does not ingest the HCL as a blueprint.
+  - name: chaos-mesh-authentik-module
+    namespace: chaos-mesh
+    files:
+      - terraform.tf
+
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's terraform.tf data into the Workspace's module field.
+  # terraform.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it.
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: builtin
+  # patches run before replacements, so a `patches:` $patch: delete removes
+  # the source before this rule consumes it (verified on kustomize v5.8.1;
+  # no deletions-transformer builtin exists). An external `transformers:`
+  # entry would run after replacements, but kube-linter's embedded kustomize
+  # cannot load builtin plugin configs (v0.8.3: "unknown plugin loader
+  # behavior: PatchTransformer.builtin"), silently skipping this directory.
+  # The ConfigMap is harmless in-cluster (no authentik_blueprint label via
+  # patchesJson6902, which runs after the label transformer) and keeps a
+  # stable name (disableNameSuffixHash), so terraform.tf edits update it in
+  # place.
+  - source:
+      kind: ConfigMap
+      name: chaos-mesh-authentik-module
+      fieldPath: data.[terraform.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: chaos-mesh-authentik
+        fieldPaths:
+          - spec.forProvider.module
 
 labels:
   - includeSelectors: true
     pairs:
       authentik_blueprint: "true"
+
+# patchesJson6902 (not the unified `patches:`) is deliberate: the legacy
+# field runs AFTER the label transformer, while unified patches run before
+# it and the label would come back. Strips authentik_blueprint from the
+# intermediate module ConfigMap generated above.
+patchesJson6902:
+  - target:
+      group: ""
+      version: v1
+      kind: ConfigMap
+      name: chaos-mesh-authentik-module
+      namespace: chaos-mesh
+    path: terraform-module-cm-labels.json

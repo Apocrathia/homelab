@@ -70,9 +70,17 @@ The following chaos experiment types are enabled:
 
 ## Accessing the Dashboard
 
-The Chaos Mesh dashboard is exposed through Authentik authentication at: **https://chaos-mesh.gateway.services.apocrathia.com**
+The Chaos Mesh dashboard is exposed through Authentik authentication at: **https://chaos.gateway.services.apocrathia.com**
 
-The HTTPRoute is automatically managed by Authentik's outpost based on the blueprint configuration.
+The HTTPRoute is created by Authentik's outpost; the host lands on it when the provider-opentofu Workspace attaches the proxy provider to the outpost.
+
+### Authentik ownership
+
+- **Workspace-owned** (`crossplane.yaml`, Crossplane provider-opentofu, namespace `chaos-mesh`): proxy provider, application, admins policy binding, and the outpost <-> provider attachment (explicit m2m — the spike mechanic this deployment exists to prove)
+- **Blueprint-owned** (`authentik-blueprint.yaml`, outpost-only): the outpost itself — service connection, replicas, HTTPRoute parent ref
+- **Token**: same 1Password item as headlamp (`crossplane-terraform-secrets`, field `authentik-terraform-token`), materialized into this namespace by the OnePasswordItem in `crossplane.yaml`
+- **Module**: the HCL lives in `terraform.tf` and is stitched into the Workspace at build time: `kustomization.yaml` packs the file into a generated ConfigMap (`chaos-mesh-authentik-module`) and a `replacements` rule copies it into `spec.forProvider.module` byte-for-byte. The intermediate ConfigMap stays in the render — builtin patches run before replacements, so a `$patch: delete` would remove the source before the rule consumes it — and carries no `authentik_blueprint` label (stripped via `patchesJson6902`, which runs after the label transformer), so the Authentik blueprint sidecar ignores it.
+- **Not deployed yet**: the dashboard app is not running — the whole `services-chaos-mesh` Flux Kustomization is pending. The Authentik entry pre-exists the app; parity with the blueprint is the bar, not app uptime.
 
 ### Alternative Access Methods
 
@@ -127,7 +135,7 @@ kubectl apply -f pod-kill-demo.yaml
 
 ### 3. Monitor Experiments
 
-- **Dashboard**: Use the web UI at https://chaos-mesh.gateway.services.apocrathia.com
+- **Dashboard**: Use the web UI at https://chaos.gateway.services.apocrathia.com
   - Requires authentication: Use Authentik SSO or admin token
 - **CLI**: Check experiment status with `kubectl get podchaos -n chaos-mesh`
 - **Logs**: View controller logs with `kubectl logs -n chaos-mesh deployment/chaos-controller-manager`
@@ -207,7 +215,7 @@ For comprehensive documentation, visit:
 
 Chaos Mesh integrates with:
 
-- **Authentik**: Single sign-on authentication through proxy provider and automatic HTTPRoute management
+- **Authentik**: single sign-on through the workspace-managed proxy provider; outpost-managed HTTPRoute
 - **Prometheus**: Metrics collection and alerting
 - **Grafana**: Dashboards for chaos experiment monitoring
 - **Kyverno**: Policy-based chaos experiment governance
