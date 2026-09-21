@@ -113,3 +113,82 @@ post-cutover — UXG's restored netflow config (enabled, v10, port 2055,
 target `ingest.services.apocrathia.com`, seven networks) provisions the
 exporter and the goflow2 ingest path is up; one Grafana flows-dashboard
 glance confirms the series. Close on confirmation.
+
+## Resolution (2026-09-21): flows live via manual NETFLOW section — stock export is controller-broken
+
+Flows confirmed end-to-end: UXG → goflow2 (`10.100.1.96:2055`) →
+Prometheus → Mimir → Grafana `goflow2-collector`. Series:
+`goflow2_flow_traffic_packets_total{remote_ip="10.100.1.1"}`. The
+remaining acceptance above is answered — but not the way anyone expected.
+
+### Root cause (primary): renderer omission
+
+Network 10.6.106 never emits the `NETFLOW` section into the device config
+it pushes (`/data/udapi-config/udapi-net-cfg*.json` on the gateway; zero
+netflow in any config, current or historical). The CK+ era harvest shows the
+same omission — the bug predates the migration, and the "gimped flows"
+complaint was never DNS alone. The UI still renders NetFlow settings pages
+(frontend locale strings only); the backend has zero netflow references —
+no code on disk, no log lines. The setting key is dead weight: the
+controller re-renders on every netflow change (cfgversion bumps) and drops
+the section at output time.
+
+The device side is fully capable: firmware 5.1.26 ships
+`iptables-netflow` + `ipt_NETFLOW.ko`, and `ubios-udapi-server` accepts a
+hand-fed `NETFLOW` section — module loads, rules land, flows egress within
+seconds of a `udapi-server` restart.
+
+### Root cause (secondary): gateway-internal DNS
+
+Gateway-internal services resolve via the UTM coredns chain (NextDNS
+upstreams), which cannot see the internal zone. `svc-flow-accounting`
+logs `got error on hostname resolving` on `ingest.services.apocrathia.com`
+— LAN clients resolve it fine via the gateway's DHCP/DNS, but the
+gateway cannot resolve it for itself. **Gateway-internal destinations
+must be raw IPs** (hence `10.100.1.96` in the section). Same trap applies
+to any gateway-internal setting that takes a hostname.
+
+### Vendor
+
+Support ticket opened 2026-09-21: renderer omits NETFLOW; device side
+proven working with a manual section. Community evidence: same silent
+failure on UDM-Pro / UCG-Ultra since Network ~9.4 (locked thread, no
+Ubiquiti response).
+
+### Manual re-apply runbook
+
+The section dies on every controller config push (any gateway-affecting
+setting change re-renders `udapi-net-cfg.json`). Flows stop; re-apply:
+
+1. SSH to the UXG (`root@10.10.0.1`).
+2. `ls -l /data/udapi-config/udapi-net-cfg.json` — resolve the symlink to
+   the current versioned file.
+3. Back it up, then add the section (tested shape; `engineID` showed as 0
+   in logs — field consumed as auto or ignored):
+
+   ```json
+   "NETFLOW": {
+     "destination": { "address": "10.100.1.96", "port": 2055 },
+     "engineID": 1,
+     "refreshRate": 20,
+     "timeoutRate": 300,
+     "samplingRate": 0,
+     "version": 9
+   }
+   ```
+
+4. `systemctl restart udapi-server` — **bounces SSH (management plane
+   rides udapi-server); reconnect after ~30 s.**
+5. Confirm: `lsmod | grep NETFLOW`; `journalctl -u udapi-server | grep
+flow-accounting` (no resolving errors); Grafana `goflow2-collector`
+   series from `remote_ip="10.100.1.1"`.
+
+### Re-test trigger (vendor-fix check)
+
+After every Network Application upgrade:
+`grep -c NETFLOW /data/udapi-config/udapi-net-cfg.json` on the gateway.
+Non-zero = renderer learned the feature — retire the runbook, move the
+destination to the UI setting (raw IP), delete the workaround.
+
+**Status: stays open** — flows run on a workaround that any config push
+kills; closing waits on the vendor renderer fix.
