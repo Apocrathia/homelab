@@ -1,7 +1,7 @@
 # Ansible host GitOps
 
 Declarative config for non-Kubernetes Linux hosts (Debian game host, Fedora
-gaming PC, signage, UniFi NUC when staged, …). Fleet stays the
+gaming PC, signage, UniFi NUC, …). Fleet stays the
 inventory/compliance plane; this tree owns package/user/system desired state.
 `roles/common` branches on `ansible_os_family` (Debian apt /
 | `roles/kopia/` | Kopia client: per-host S3 repo, retention, systemd-timer backup |
