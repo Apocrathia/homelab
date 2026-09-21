@@ -31,8 +31,11 @@ spec:
               type: RuntimeDefault
           containers:
             - name: trigger-scan
-              # renovate: datasource=docker depName=registry.k8s.io/kubectl
-              image: registry.k8s.io/kubectl:v1.37.0@sha256:5ed410ebac5dc976cc717098994dcdb29bbbd38f6bd65f582311f5be4ba719cf
+              # renovate: datasource=docker depName=docker.io/alpine/kubectl
+              # registry.k8s.io/kubectl went distroless between v1.31 and
+              # v1.37 (no /bin/sh); the triggers pipe scripts through a shell.
+              # alpine/kubectl keeps busybox sh structurally at every bump.
+              image: docker.io/alpine/kubectl:1.37.0@sha256:954b65dea0eb140219b440413ede17c2eca205866df350d3c1fbc84d28af14ae
               command:
                 - /bin/sh
                 - /scripts/trigger.sh
