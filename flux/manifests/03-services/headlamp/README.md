@@ -25,7 +25,7 @@ All configuration is handled through Helm values in `helmrelease.yaml`.
 
 Uses the same Authentik OIDC provider as `kubectl` OIDC login. Users authenticate through Authentik and Headlamp uses the OIDC token to interact with the Kubernetes API. Access is controlled by Authentik group membership mapped to Kubernetes RBAC roles (see `authentik/kube-auth/`).
 
-No secrets are required for the OIDC client itself -- it is a public client using PKCE. The Authentik dashboard entry (application + group binding) is managed by the Crossplane workspace in `opentofu-workspace.yaml`, which reads its Authentik API token from 1Password item `authentik-terraform-token` (`secret.yaml`).
+No secrets are required for the OIDC client itself -- it is a public client using PKCE. The Authentik dashboard entry (application + group binding) is managed by the Crossplane workspace in `opentofu-workspace.yaml`, which reads its Authentik API token from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`) (`secret.yaml`).
 
 ## Troubleshooting
 
