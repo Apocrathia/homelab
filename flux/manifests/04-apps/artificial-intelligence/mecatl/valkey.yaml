@@ -29,7 +29,7 @@ spec:
       # in the mecatl namespace (same pattern as terminus-valkey).
       namespace: mecatl
       # renovate: datasource=docker depName=valkey/valkey
-      image: valkey/valkey:9-alpine@sha256:a0dbf4c1d5708782907c10e2c72deff317518518b5288a58416981d9db95d30b
+      image: valkey/valkey:9-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11
       # TLS-only listener: Mecatl's engine hard-requires verified TLS for a
       # credentialled redis and refuses plaintext+password outright
       # (redisstore: "Redis credentials require verified TLS"), so the TLS
