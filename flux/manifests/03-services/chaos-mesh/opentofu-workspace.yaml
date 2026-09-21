@@ -1,0 +1,123 @@
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: chaos-mesh-authentik
+  namespace: chaos-mesh
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: chaos-mesh-authentik
+  forProvider:
+    source: Inline
+    module: |
+      terraform {
+        required_providers {
+          authentik = {
+            source  = "goauthentik/authentik"
+            version = "2026.8.0"
+          }
+        }
+
+        # Per-workspace state: the kubernetes backend stores it as a Secret
+        # (tfstate-default-chaos-mesh) in this namespace via the provider runtime SA.
+        # Deliberately separate from the CI tofu stack (terraform/, GitLab
+        # HTTP backend) — two stacks, two states.
+        backend "kubernetes" {
+          secret_suffix     = "chaos-mesh"
+          namespace         = "chaos-mesh"
+          in_cluster_config = true
+        }
+      }
+
+      provider "authentik" {
+        # House convention for in-cluster Authentik consumers (kagent, the
+        # tak LDAP outpost, the kube-apiserver OIDC issuer): the public
+        # gateway hostname. The provider appends /api/v3 itself.
+        url = "https://auth.gateway.services.apocrathia.com"
+
+        # Token file written by the ProviderConfig credentials array.
+        token = file("authentik-token")
+      }
+
+      # Blueprint !Find lookups become data sources. authentik ships these
+      # three flows with every install, so they pre-exist any apply.
+      data "authentik_flow" "provider-authorization" {
+        slug = "default-provider-authorization-implicit-consent"
+      }
+
+      data "authentik_flow" "invalidation" {
+        slug = "default-invalidation-flow"
+      }
+
+      data "authentik_flow" "authentication" {
+        slug = "default-authentication-flow"
+      }
+
+      # The outpost itself stays blueprint-managed (authentik-blueprint.yaml);
+      # this workspace only reads it. Nothing under chaos-mesh is deployed yet
+      # (the whole flux Kustomization is pending), so the outpost appears when
+      # the blueprint ConfigMap first lands — until then this data source fails
+      # and the Workspace retries on its next reconcile. The Authentik entry
+      # pre-exists the dashboard app by design; parity with the retired
+      # blueprint is the bar, not app uptime.
+      data "authentik_outpost" "chaos-mesh-dashboard-outpost" {
+        name = "chaos-mesh-dashboard-outpost"
+      }
+
+      # Admins-group binding source, order-10 parity with the blueprint.
+      # include_users=false keeps the group's member list out of the state
+      # Secret.
+      data "authentik_group" "admins" {
+        name          = "admins"
+        include_users = false
+      }
+
+      # Proxy provider — 1:1 parity with the retired blueprint entry. mode=proxy:
+      # the outpost owns the HTTPRoute, no forward-auth middleware anywhere, and
+      # this module references no k8s objects. intercept_header_auth is explicit
+      # because the blueprint set it (TF default is also true). skip_path_regex:
+      # the blueprint set none, so none here either.
+      resource "authentik_provider_proxy" "chaos-mesh-dashboard-proxy-provider" {
+        name                  = "chaos-mesh-dashboard-proxy-provider"
+        mode                  = "proxy"
+        authorization_flow    = data.authentik_flow.provider-authorization.id
+        invalidation_flow     = data.authentik_flow.invalidation.id
+        authentication_flow   = data.authentik_flow.authentication.id
+        internal_host         = "http://chaos-dashboard.chaos-mesh.svc.cluster.local:2333"
+        external_host         = "https://chaos.gateway.services.apocrathia.com"
+        intercept_header_auth = true
+      }
+
+      # Application — 1:1 parity with the retired blueprint entry.
+      # protocol_provider replaces the blueprint's provider FK.
+      resource "authentik_application" "chaos-mesh-dashboard" {
+        name              = "Chaos Mesh"
+        slug              = "chaos-mesh-dashboard"
+        group             = "Platform"
+        meta_launch_url   = "https://chaos.gateway.services.apocrathia.com"
+        open_in_new_tab   = true
+        meta_icon         = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/chaos-mesh/icon.svg"
+        meta_description  = "Chaos engineering platform for Kubernetes"
+        meta_publisher    = "Chaos Mesh"
+        protocol_provider = authentik_provider_proxy.chaos-mesh-dashboard-proxy-provider.id
+      }
+
+      # IMMEDIATELY after the application: a proxy app without policies is open
+      # to ALL authenticated users until this binding lands. Same class of
+      # window headlamp accepted (seconds, single apply).
+      resource "authentik_policy_binding" "chaos-mesh-dashboard-admins" {
+        target = authentik_application.chaos-mesh-dashboard.uuid
+        group  = data.authentik_group.admins.id
+        order  = 10
+      }
+
+      # THE spike mechanic: outpost <-> provider is an explicit m2m here, not
+      # blueprint auto-discovery. The blueprint no longer lists this provider
+      # under the outpost's providers (no !Find couples them); the attachment
+      # resource owns the relationship. The outpost stays blueprint-owned —
+      # TF never creates, changes, or deletes it, only the m2m row.
+      resource "authentik_outpost_provider_attachment" "chaos-mesh-dashboard-outpost" {
+        outpost           = data.authentik_outpost.chaos-mesh-dashboard-outpost.id
+        protocol_provider = authentik_provider_proxy.chaos-mesh-dashboard-proxy-provider.id
+      }
