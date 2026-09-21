@@ -17,7 +17,8 @@ configMapGenerator:
     files:
       - agent/extensions/activity-recap.ts
       - agent/extensions/litellm.ts
-      - agent/extensions/a2a.ts
+      - agent/extensions/a2a/index.ts
+      - agent/extensions/a2a/server.mjs
       - agent/extensions/name-sessions.ts
       - agent/settings.json
     options:

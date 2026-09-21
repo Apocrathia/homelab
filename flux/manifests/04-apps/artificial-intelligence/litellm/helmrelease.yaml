@@ -73,6 +73,12 @@ spec:
       name: litellm-secrets
       valuesKey: hermes-a2a-authorization
       targetPath: envVars.HERMES_A2A_AUTHORIZATION
+    # Full "Bearer <token>" header value for Prime Agent inbound A2A auth
+    # (same token as prime-agent-secrets/a2a-webhook-token).
+    - kind: Secret
+      name: litellm-secrets
+      valuesKey: prime-a2a-authorization
+      targetPath: envVars.PRIME_A2A_AUTHORIZATION
     - kind: Secret
       name: litellm-secrets
       valuesKey: oidc-client-id
