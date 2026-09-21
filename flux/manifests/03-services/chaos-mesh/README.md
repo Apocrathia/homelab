@@ -76,9 +76,10 @@ The HTTPRoute is created by Authentik's outpost; the host lands on it when the p
 
 ### Authentik ownership
 
-- **Workspace-owned** (`opentofu-workspace.yaml`, Crossplane provider-opentofu, namespace `chaos-mesh`): proxy provider, application, admins policy binding, and the outpost <-> provider attachment (explicit m2m — the spike mechanic this deployment exists to prove)
+- **Workspace-owned** (`crossplane.yaml`, Crossplane provider-opentofu, namespace `chaos-mesh`): proxy provider, application, admins policy binding, and the outpost <-> provider attachment (explicit m2m — the spike mechanic this deployment exists to prove)
 - **Blueprint-owned** (`authentik-blueprint.yaml`, outpost-only): the outpost itself — service connection, replicas, HTTPRoute parent ref
-- **Token**: same 1Password item as headlamp (`crossplane-terraform-secrets`, field `authentik-terraform-token`), materialized into this namespace by `secret.yaml`
+- **Token**: same 1Password item as headlamp (`crossplane-terraform-secrets`, field `authentik-terraform-token`), materialized into this namespace by the OnePasswordItem in `crossplane.yaml`
+- **Module**: the HCL lives in `terraform.tf` and is stitched into the Workspace at build time: `kustomization.yaml` packs the file into a generated ConfigMap (`chaos-mesh-authentik-module`) and a `replacements` rule copies it into `spec.forProvider.module` byte-for-byte. The intermediate ConfigMap stays in the render — builtin patches run before replacements, so a `$patch: delete` would remove the source before the rule consumes it — and carries no `authentik_blueprint` label (stripped via `patchesJson6902`, which runs after the label transformer), so the Authentik blueprint sidecar ignores it.
 - **Not deployed yet**: the dashboard app is not running — the whole `services-chaos-mesh` Flux Kustomization is pending. The Authentik entry pre-exists the app; parity with the blueprint is the bar, not app uptime.
 
 ### Alternative Access Methods
