@@ -1,0 +1,135 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: unifi-wan-ip-sync
+  namespace: unifi-scripts
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          automountServiceAccountToken: true
+          serviceAccountName: unifi-wan-ip-sync
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: install-deps
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:be8ccd085666c34273c9dc5607c9842f8b2e3116128aae45148ce164c07ce09d
+              env:
+                # read-only root: pip/uv must not write under /.local or ~/.cache
+                - name: HOME
+                  value: /tmp
+                - name: UV_CACHE_DIR
+                  value: /tmp/uv-cache
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  python -m pip install --no-cache-dir uv
+                  python -m uv export --frozen --no-dev --directory=/scripts -o /tmp/req.txt
+                  python -m uv pip install --target=/deps --no-cache -r /tmp/req.txt
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          containers:
+            - name: sync
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:be8ccd085666c34273c9dc5607c9842f8b2e3116128aae45148ce164c07ce09d
+              command:
+                - python
+                - /scripts/wan_ip_sync.py
+              env:
+                - name: PYTHONPATH
+                  value: "/deps"
+                - name: UNIFI_URL
+                  value: "https://unifi.apocrathia.com"
+                - name: UNIFI_SITE
+                  value: "default"
+                - name: UNIFI_VERIFY_SSL
+                  value: "false"
+                - name: WAN1_HOSTNAME
+                  value: "conexon.apocrathia.com"
+                - name: WAN2_HOSTNAME
+                  value: "stratusiq.apocrathia.com"
+                - name: DNSENDPOINT_NAME
+                  value: "wan-ips"
+                - name: DRY_RUN
+                  value: "false"
+                - name: UNIFI_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: unifi-secrets
+                      key: username
+                - name: UNIFI_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: unifi-secrets
+                      key: credential
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: wan-ip-sync-scripts
+                defaultMode: 0755
+            - name: deps
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}

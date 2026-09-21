@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: unifi-wan-ip-sync
+  namespace: unifi-scripts
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: unifi-wan-ip-sync
+  namespace: unifi-scripts
+rules:
+  - apiGroups: ["externaldns.k8s.io"]
+    resources: ["dnsendpoints"]
+    verbs: ["get", "list", "create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: unifi-wan-ip-sync
+  namespace: unifi-scripts
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: unifi-wan-ip-sync
+subjects:
+  - kind: ServiceAccount
+    name: unifi-wan-ip-sync
+    namespace: unifi-scripts
