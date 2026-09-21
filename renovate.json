@@ -38,6 +38,12 @@
       "pinDigests": false
     },
     {
+      "description": "One MR for all generic-app chart version pins — each new generic-app-* tag touches ~88 HelmReleases",
+      "matchDatasources": ["git-tags"],
+      "matchDepNames": ["https://gitlab.com/Apocrathia/homelab.git"],
+      "groupName": "generic-app chart"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": false,
