@@ -200,7 +200,7 @@ spec:
         health_check_interval: 300
 
         # Caching
-        cache: true
+        cache: false
         cache_params:
           type: redis
           namespace: "litellm"
