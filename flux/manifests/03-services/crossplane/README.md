@@ -58,9 +58,10 @@ systems through `Workspace` managed resources — Pattern B from
 [`docs/research/crossplane-connector-pattern.md`](../../../docs/research/crossplane-connector-pattern.md).
 First consumers: headlamp's Authentik entry
 (`flux/manifests/03-services/headlamp/opentofu-workspace.yaml`) and
-chaos-mesh's (`flux/manifests/03-services/chaos-mesh/opentofu-workspace.yaml`,
-not yet deployed) — the chaos-mesh workspace is the first to use
-`authentik_outpost_provider_attachment`, the explicit outpost <-> provider m2m.
+chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`) —
+the chaos-mesh workspace owns a full proxy stack in one module, outpost
+included (the `authentik_outpost` resource carries `protocol_providers`, so
+the separate `authentik_outpost_provider_attachment` resource is retired).
 
 - **CRDs**: 7 (Workspace, ProviderConfig, ProviderConfigUsage in both scopes
   plus namespaced ClusterProviderConfig) — small enough that no

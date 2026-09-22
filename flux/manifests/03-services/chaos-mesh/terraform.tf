@@ -41,18 +41,7 @@ data "authentik_flow" "authentication" {
   slug = "default-authentication-flow"
 }
 
-# The outpost itself stays blueprint-managed (authentik-blueprint.yaml);
-# this workspace only reads it. Nothing under chaos-mesh is deployed yet
-# (the whole flux Kustomization is pending), so the outpost appears when
-# the blueprint ConfigMap first lands — until then this data source fails
-# and the Workspace retries on its next reconcile. The Authentik entry
-# pre-exists the dashboard app by design; parity with the retired
-# blueprint is the bar, not app uptime.
-data "authentik_outpost" "chaos-mesh-dashboard-outpost" {
-  name = "chaos-mesh-dashboard-outpost"
-}
-
-# Admins-group binding source, order-10 parity with the blueprint.
+# Admins-group binding source, order-10 parity with the retired blueprint.
 # include_users=false keeps the group's member list out of the state
 # Secret.
 data "authentik_group" "admins" {
@@ -99,12 +88,60 @@ resource "authentik_policy_binding" "chaos-mesh-dashboard-admins" {
   order  = 10
 }
 
-# THE spike mechanic: outpost <-> provider is an explicit m2m here, not
-# blueprint auto-discovery. The blueprint no longer lists this provider
-# under the outpost's providers (no !Find couples them); the attachment
-# resource owns the relationship. The outpost stays blueprint-owned —
-# TF never creates, changes, or deletes it, only the m2m row.
-resource "authentik_outpost_provider_attachment" "chaos-mesh-dashboard-outpost" {
-  outpost           = data.authentik_outpost.chaos-mesh-dashboard-outpost.id
-  protocol_provider = authentik_provider_proxy.chaos-mesh-dashboard-proxy-provider.id
+# The service connection the outpost runs through — the one authentik
+# creates on install (replaces the blueprint's !Find on the same name).
+# Read by name through the outposts/service_connections/kubernetes API,
+# hence the role's view_kubernetesserviceconnection permission.
+data "authentik_service_connection_kubernetes" "local" {
+  name = "Local Kubernetes Cluster"
+}
+
+# Outpost — the piece that retired the blueprint (authentik-blueprint.yaml,
+# deleted): this module now owns the full Authentik stack for the app.
+#
+# Why TF and not a blueprint: authentik's OutpostSerializer (2026.8.3,
+# authentik/outposts/api/outposts.py validate_providers) rejects CREATING a
+# provider-less outpost ("This list may not be empty."), and the TF
+# resource's protocol_providers is Required — a blueprint could never
+# create the outpost empty for authentik_outpost_provider_attachment to
+# fill afterwards (the attachment PATCHes an existing outpost). The
+# resource creates the outpost WITH the provider in one POST and manages
+# the m2m itself, so no attachment resource exists here.
+#
+# config: every key the blueprint set, byte-parity on values
+# (jsonencode formatting is diff-suppressed server-side). The outpost
+# owns the HTTPRoute on main-gateway; the route gains the chaos host
+# when this resource lands with the provider attached.
+resource "authentik_outpost" "chaos-mesh-dashboard-outpost" {
+  name               = "chaos-mesh-dashboard-outpost"
+  type               = "proxy"
+  service_connection = data.authentik_service_connection_kubernetes.local.id
+  protocol_providers = [
+    authentik_provider_proxy.chaos-mesh-dashboard-proxy-provider.id
+  ]
+  config = jsonencode({
+    authentik_host          = "https://auth.gateway.services.apocrathia.com"
+    authentik_host_insecure = true
+    authentik_host_browser  = ""
+    log_level               = "info"
+    object_naming_template  = "ak-outpost-%(name)s"
+    kubernetes_replicas     = 1
+    kubernetes_namespace    = "authentik"
+    kubernetes_httproute_parent_refs = [
+      {
+        name        = "main-gateway"
+        namespace   = "cilium-system"
+        sectionName = "https"
+      }
+    ]
+    kubernetes_json_patches = {
+      deployment = [
+        {
+          op    = "add"
+          path  = "/spec/template/spec/automountServiceAccountToken"
+          value = false
+        }
+      ]
+    }
+  })
 }
