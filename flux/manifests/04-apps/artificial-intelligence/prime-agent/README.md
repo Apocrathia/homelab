@@ -19,7 +19,7 @@ This deployment includes:
   prefix, uv)
 - `agent/` payload (extensions, seeded settings) reconciled from a ConfigMap
   on every pod start; mirrors `~/.prime/agent/`
-- `agent/extensions/litellm.ts` registers the in-cluster LiteLLM gateway as
+- `agent/extensions/litellm/index.ts` registers the in-cluster LiteLLM gateway as
   the model provider and discovers the catalog from it; auth via
   `LITELLM_API_KEY` (or `/login` interactively)
 - `agent/extensions/a2a/index.ts` registers native `a2a_agents` /
@@ -31,7 +31,7 @@ This deployment includes:
   standalone A2A server (message/send + tasks/get) on the declared port 8080,
   ClusterIP-only, so kagent agents can call prime-agent back through the
   broker (see [Inbound A2A](#inbound-a2a))
-- `agent/extensions/name-sessions.ts` names every session (operator rule):
+- `agent/extensions/name-sessions/index.ts` names every session (operator rule):
   registers the `name_session` tool and appends a naming directive to every
   turn while the session is unnamed (26-character limit, picker column truncates)
 - `agent/settings.json` seeded once (delete from the PVC to re-seed); runtime
@@ -87,11 +87,13 @@ Bearer auth, fail-closed (server rejects every POST without the token):
 - **Models**: `/model` inside the TUI. Default is seeded in
   `agent/settings.json`; the extension re-reads the gateway catalog on start
   (`/litellm-refresh` to re-poll)
-- **Inject more agent files**: drop them under `agent/` and add one
-  `configMapGenerator` entry in `kustomization.yaml` (kustomize cannot glob a
-  directory); `*.ts` files land in `~/.prime/agent/extensions/` on boot.
-  Directory extensions like `a2a/` list each file and need a matching copy
-  line in the boot script (ConfigMap keys are flat basenames)
+- **Inject more agent files**: one folder per extension under
+  `agent/extensions/` — `index.ts` (+ resources, README). Add each payload
+  file to `kustomization.yaml` keyed `<extension>_<basename>` (kustomize
+  cannot glob a directory and ConfigMap keys are flat) and a matching copy
+  line in the boot script, which assembles them into
+  `~/.prime/agent/extensions/<extension>/` on boot. READMEs stay
+  repo/local-only — they do not ship to the pod
 - **Skills/MCP servers**: not shipped in git — install into the PVC at runtime
   (`~/.prime/agent/`) per upstream docs
 

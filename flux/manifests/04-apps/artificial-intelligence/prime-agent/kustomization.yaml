@@ -9,17 +9,20 @@ resources:
   - namespace.yaml
   - helmrelease.yaml
 
-# Payload mirrors ~/.prime/agent/. kustomize cannot glob a directory, so each
-# injected file gets one entry here; drop the file under agent/ and list it.
+# Payload mirrors ~/.prime/agent/. One folder per extension under
+# agent/extensions/ (index.ts + resources + README); kustomize cannot glob
+# a directory and ConfigMap keys are flat, so each payload file is keyed
+# <extension>_<basename> and the boot script reassembles the folders.
+# READMEs are repo/local context only — they do not ship to the pod.
 configMapGenerator:
   - name: prime-agent-config
     namespace: prime-agent
     files:
-      - agent/extensions/activity-recap.ts
-      - agent/extensions/litellm.ts
-      - agent/extensions/a2a/index.ts
-      - agent/extensions/a2a/server.mjs
-      - agent/extensions/name-sessions.ts
+      - activity-recap_index.ts=agent/extensions/activity-recap/index.ts
+      - litellm_index.ts=agent/extensions/litellm/index.ts
+      - name-sessions_index.ts=agent/extensions/name-sessions/index.ts
+      - a2a_index.ts=agent/extensions/a2a/index.ts
+      - a2a_server.mjs=agent/extensions/a2a/server.mjs
       - agent/settings.json
     options:
       disableNameSuffixHash: true

@@ -73,20 +73,24 @@ spec:
           # Reconcile static config from the ConfigMap on every boot.
           # settings.json is seeded once; runtime keys (recentModels, theme)
           # accumulate on the PVC afterwards. Delete it to re-seed.
-          # The a2a extension is a directory (index.ts + server.mjs), but
-          # ConfigMap keys are flat basenames: the glob copy would drop a
-          # stray index.ts at the extensions root. The loader picks a root
-          # index.ts FIRST and returns it as the ONLY extension, silently
-          # suppressing litellm.ts, name-sessions.ts, activity-recap.ts, and
-          # a2a/, so its pieces land in extensions/a2a/ explicitly and
-          # strays are removed. a2a.ts is the stale pre-directory copy left
-          # on the PVC by older boots; the loader would run it alongside the
-          # new a2a/ directory.
+          # One folder per extension (index.ts + resources — the a2a/
+          # scheme, now applied to every extension), but ConfigMap keys are
+          # flat: each payload file is keyed <extension>_<basename> and
+          # assembled into its folder below. Nothing may live at the
+          # extensions root: the loader picks a root index.ts FIRST and
+          # returns it as the ONLY extension, silently suppressing every
+          # folder — so root *.ts strays from older flat layouts are
+          # removed on every boot.
+          mkdir -p /opt/data/.prime/agent/extensions/activity-recap
+          mkdir -p /opt/data/.prime/agent/extensions/litellm
+          mkdir -p /opt/data/.prime/agent/extensions/name-sessions
           mkdir -p /opt/data/.prime/agent/extensions/a2a
-          cp -f /static/*.ts /opt/data/.prime/agent/extensions/
-          rm -f /opt/data/.prime/agent/extensions/index.ts
-          rm -f /opt/data/.prime/agent/extensions/a2a.ts
-          cp -f /static/index.ts /static/server.mjs /opt/data/.prime/agent/extensions/a2a/
+          cp -f /static/activity-recap_index.ts /opt/data/.prime/agent/extensions/activity-recap/index.ts
+          cp -f /static/litellm_index.ts /opt/data/.prime/agent/extensions/litellm/index.ts
+          cp -f /static/name-sessions_index.ts /opt/data/.prime/agent/extensions/name-sessions/index.ts
+          cp -f /static/a2a_index.ts /opt/data/.prime/agent/extensions/a2a/index.ts
+          cp -f /static/a2a_server.mjs /opt/data/.prime/agent/extensions/a2a/server.mjs
+          rm -f /opt/data/.prime/agent/extensions/*.ts
           if [[ ! -f /opt/data/.prime/agent/settings.json ]]; then
             cp /static/settings.json /opt/data/.prime/agent/settings.json
           fi
@@ -124,7 +128,7 @@ spec:
           # renovate: datasource=github-releases depName=astral-sh/uv versioning=semver
           - name: UV_VERSION
             value: "0.12.17"
-          # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm.ts
+          # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm
           # extension reads LITELLM_API_KEY for catalog discovery and requests.
           - name: LITELLM_BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000/v1"
