@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+#
+# The Authentik stack moved from the chart-rendered blueprint ConfigMap
+# (authentik-blueprint-demo-app, Helm-pruned once helmrelease.yaml flipped
+# authentik.enabled: false) to the Crossplane provider-opentofu Workspace
+# (crossplane.yaml, module from terraform.tf). Blueprints never
+# garbage-collect, so removal is an explicit state: absent companion,
+# kept forever (same pattern as the headlamp and cryptpad cleanups).
+# One-shot: the file hash gates re-import, so it will not fight the
+# Workspace's create. NEVER edit or delete this file after the Workspace
+# owns the objects — an edit re-imports it and re-deletes tofu's objects
+# mid-reconcile.
+#
+# Delete order (FK discipline):
+#   1-2. policy bindings FIRST, while the application row still exists
+#        (a binding whose target is gone cannot be !Find'd).
+#   3. application after its bindings.
+#   4. outpost before the provider (m2m, no FK): deleting the outpost row
+#        makes the outpost controller GC the ak-outpost-demo-app-outpost
+#        deployment, its services, and the dual-gateway HTTPRoute — BOTH
+#        doors go dark ~1-5 min until the Workspace recreates the row.
+#   5. provider LAST: the application references it via FK.
+version: 1
+metadata:
+  name: demo-app-cleanup
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Admins binding — order-10 app access.
+  - model: authentik_policies.policybinding
+    state: absent
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "demo-app"]]
+      group: !Find [authentik_core.group, [name, "admins"]]
+
+  # Users binding — order-20 shared tag.
+  - model: authentik_policies.policybinding
+    state: absent
+    identifiers:
+      target: !Find [authentik_core.application, [slug, "demo-app"]]
+      group: !Find [authentik_core.group, [name, "users"]]
+
+  # The application row — tofu creates a fresh uuid; users re-login once
+  # (the provider delete below regenerates cookie_secret too).
+  - model: authentik_core.application
+    state: absent
+    identifiers:
+      slug: "demo-app"
+
+  # The outpost row — deleting it GCs the ak-outpost-demo-app-outpost
+  # deployment + services + HTTPRoute via the outpost controller.
+  - model: authentik_outposts.outpost
+    state: absent
+    identifiers:
+      name: "demo-app-outpost"
+
+  # The proxy provider — last (the application row references it via FK).
+  - model: authentik_providers_proxy.proxyprovider
+    state: absent
+    identifiers:
+      name: "demo-app-proxy-provider"

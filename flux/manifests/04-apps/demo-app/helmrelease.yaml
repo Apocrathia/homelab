@@ -62,8 +62,15 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
+    # Authentik stack ownership moved to the provider-opentofu Workspace
+    # (crossplane.yaml + terraform.tf): provider -> application -> both
+    # group bindings -> outpost. This block is the escape hatch: enabled
+    # false stops the chart rendering the blueprint ConfigMap, Helm prunes
+    # it, and authentik-blueprint-cleanup.yaml deletes the blueprint-era DB
+    # rows. The remaining keys are inert context (nothing in the chart
+    # reads them with enabled false).
     authentik:
-      enabled: true
+      enabled: false
       shared: true
       category: "Platform"
       displayName: "Demo Application"

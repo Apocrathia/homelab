@@ -10,6 +10,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -19,3 +20,44 @@ configMapGenerator:
     namespace: demo-app
     files:
       - nginx.conf
+  # One-shot state: absent companion: deletes the blueprint-era Authentik
+  # objects so the provider-opentofu Workspace can take over. Keep forever.
+  - name: authentik-blueprint-demo-app-cleanup
+    namespace: demo-app
+    files:
+      - demo-app-cleanup.yaml=authentik-blueprint-cleanup.yaml
+    options:
+      labels:
+        authentik_blueprint: "true"
+  # Crossplane stitch: packages terraform.tf (the Workspace's HCL module) so
+  # the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (terraform.tf); the replacements
+  # fieldPath bracket-escapes it: data.[terraform.tf]. Intentionally NOT
+  # labeled authentik_blueprint: authentik ignores it as a blueprint source.
+  - name: demo-app-authentik-module
+    namespace: demo-app
+    files:
+      - terraform.tf
+
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's terraform.tf data into the Workspace's module field.
+  # terraform.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it.
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch: delete
+  # would remove the source before this rule consumes it (verified on
+  # kustomize v5.8.1; no deletions-transformer builtin exists). The ConfigMap
+  # is harmless in-cluster (no authentik_blueprint label) and keeps a stable
+  # name (disableNameSuffixHash), so terraform.tf edits update it in place.
+  - source:
+      kind: ConfigMap
+      name: demo-app-authentik-module
+      fieldPath: data.[terraform.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: demo-app-authentik
+        fieldPaths:
+          - spec.forProvider.module
