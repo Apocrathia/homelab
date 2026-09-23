@@ -7,7 +7,9 @@ metadata:
   namespace: chaos-mesh
 resources:
   - namespace.yaml
+  - rbac.yaml
   - helmrelease.yaml
+  - push-secret.yaml
   - crossplane.yaml
 
 generatorOptions:
