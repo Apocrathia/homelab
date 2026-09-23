@@ -77,6 +77,18 @@ TODO.md
 # Claude
 .claude/settings.local.json
 
+# Prime-agent webui (agent/extensions/webui/): runtime droppings the
+# collector writes next to itself wherever it runs. webui-token is the
+# auth secret — never commit it anywhere. spawned-agents.log* adds the
+# rotation suffixes beyond the global *.log. index.stripped.mjs is the
+# scratch-only dev mirror; *.bak-* are pre-edit backups; *.dill are
+# prime-agent kernel state dumps.
+webui-token
+spawned-agents.log*
+index.stripped.mjs
+*.bak-*
+*.dill
+
 # Agent ephemeral workspace (see .scratch/README.md)
 .scratch/*
 !.scratch/README.md

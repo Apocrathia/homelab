@@ -15,7 +15,12 @@ repos:
           )$
       - id: check-merge-conflict
       - id: detect-private-key
+      # webui payload is byte-frozen (hash-verified syncs from scratch; the
+      # vendored marked/purify pin upstream jsdelivr bytes that ship without
+      # a trailing newline) — appending one breaks the sha pins in
+      # test_dashboard.py. Same rationale as the .prettierignore exemption.
       - id: end-of-file-fixer
+        exclude: ^flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/
       - id: trailing-whitespace
 
   - repo: https://github.com/gitleaks/gitleaks

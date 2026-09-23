@@ -10,3 +10,8 @@ helm/**/templates/*.yaml
 # Generated Prime Agent prompt surface (sync_surfaces.py owns content)
 .prime/agent/*.md
 .prime/agent/*.md.generated
+
+# prime-agent webui payload: byte-identical copy of the scratch source of
+# truth (.scratch/prime-webui/) — hash-verified syncs, formatting churn breaks
+# every slice landing. README/config stay prettier-clean.
+flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/*
