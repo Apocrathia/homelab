@@ -10,7 +10,7 @@ The demo app is a **baseline template** that demonstrates:
 
 - **Helm Chart Deployment**: Uses the generic-app chart for reusable application patterns
 - **Application Deployment**: Basic application deployment patterns
-- **Authentik Integration**: SSO integration through Authentik outpost
+- **Authentik Integration**: SSO integration through an Authentik proxy outpost owned by a provider-opentofu Workspace (chart-rendered blueprint retired)
 - **Gateway API Routing**: Traffic routing through Gateway API (handled by Authentik)
 - **Storage Integration**: Both persistent (Longhorn) and shared (SMB) storage
 - **Monitoring**: Application monitoring and observability
@@ -28,12 +28,22 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 
 This directory contains:
 
-- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart
-- `tailnet-shared-httproute.yaml` - HTTPRoute exposing the app's LAN hostname on the tailnet gateway (`demo.gateway.services.apocrathia.com`, dual-gateway pattern pilot)
-- `kustomization.yaml` - Kustomize configuration for Flux deployment
+- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: false` — see [Authentik Ownership](#authentik-ownership))
+- `crossplane.yaml` - OnePasswordItem token + provider-opentofu `ProviderConfig`/`Workspace` owning the Authentik stack
+- `terraform.tf` - HCL module for the Workspace (stitched in at build time by `kustomization.yaml`)
+- `kustomization.yaml` - Kustomize configuration for Flux deployment (module stitch)
 - `README.md` - This documentation
 
-All Kubernetes resources (deployment, service, PVCs, Authentik blueprint, etc.) are generated from the generic-app chart templates.
+Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is NOT chart-generated anymore — the Workspace owns it. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
+
+## Authentik Ownership
+
+The full Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings -> outpost — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`, `crossplane.yaml`). The HCL lives in `terraform.tf`; `kustomization.yaml` packs it into a generated ConfigMap (`demo-app-authentik-module`) and a `replacements` rule copies it into the Workspace's `spec.forProvider.module` byte-for-byte.
+
+- The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the OnePasswordItem in `crossplane.yaml` — same shared item as headlamp and chaos-mesh.
+- The outpost config carries BOTH gateway parentRefs: `main-gateway`/`https` (LAN) and `tailnet-gateway`/`https-gateway-services` (tailnet). The outpost route owns both doors.
+- `helmrelease.yaml` keeps the `authentik` block with `enabled: false` — the escape hatch that stops the chart rendering a blueprint ConfigMap.
+- ADOPT, not recreate: the Workspace imports (adopts) the chart-era Authentik objects in place — import blocks in `terraform.tf` + live ids in the Workspace `varmap` (`crossplane.yaml`). Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap stay in the module permanently — they go inert after adoption (verified), chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
 
 ## Storage Pattern
 
@@ -165,10 +175,12 @@ secrets:
   itemPath: "vaults/Secrets/items/demo-app-secrets"
 
 authentik:
-  enabled: true
+  # Stack owned by the provider-opentofu Workspace (crossplane.yaml +
+  # terraform.tf); the chart block is the disabled escape hatch.
+  enabled: false
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
-  icon: "https://i.imgur.com/A9nZmA4.png"
+  icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
 
 httproute:
   enabled: false
@@ -180,7 +192,7 @@ httproute:
 - **Volume Mounts**: All volume mounts defined in `app.volumeMounts` section
 - **Storage**: Multi-volume pattern - Longhorn for app data, SMB for static content
 - **Volume Structure**: Container-specific volumes (emptyDir) and pod-wide volumes (storage)
-- **Authentication**: Authentik SSO with custom display name and icon
+- **Authentication**: Authentik SSO — stack owned by the provider-opentofu Workspace; the chart's authentik block is disabled
 - **Secrets**: 1Password integration for sensitive configuration
 - **Networking**: Uses Authentik outpost (HTTPRoute disabled)
 
@@ -197,12 +209,12 @@ httproute:
 - **URL**: `https://demo.gateway.services.apocrathia.com` (same hostname as the LAN)
 - **Authentication**: SSO through Authentik (routes to the demo-app outpost, same as the LAN route)
 - **TLS**: Wildcard certificate for `*.gateway.services.apocrathia.com` terminated at the tailnet gateway
-- **Routing**: Via the `tailnet-gateway` listener `https-gateway-services` (`tailnet-httproute.yaml`); pilot for the dual-gateway pattern - see [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
+- **Routing**: The outpost-generated HTTPRoute `ak-outpost-demo-app-outpost` (ns `authentik`) dual-parents `main-gateway`/`https` and `tailnet-gateway`/`https-gateway-services` — the outpost route owns both doors; the app has no route manifest of its own (the deleted `tailnet-shared-httproute.yaml` era is over). Background: [Tailnet DNS](../../03-services/tailnet-dns/README.md) and the [split DNS plan](../../../../docs/plans/tailnet-split-dns.md)
 
 ### Internal Access
 
 - **Service**: `http://demo-app.demo-app.svc:80`
-- **Outpost**: `http://ak-outpost-demo-app-outpost.demo-app.svc:9000`
+- **Outpost**: `http://ak-outpost-demo-app-outpost.authentik.svc:9000` (the outpost deployment and its services run in ns `authentik`)
 - **Persistent Storage**: Longhorn volume at `/app`
 - **Shared Storage**: SMB mount at `/usr/share/nginx/html`
 
