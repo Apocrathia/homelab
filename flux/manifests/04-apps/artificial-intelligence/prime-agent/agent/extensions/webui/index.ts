@@ -601,4 +601,16 @@ export default function (pi: ExtensionAPI) {
     teardownBeacon();
     ctx = null;
   });
+
+  // G9a: live compaction feedback — the harness emits compaction_start/end
+  // (agent-session.d.ts); forward the phase so the webui can show "compacting…"
+  // instead of a silent hang. The disk notice still lands post-hoc (G2).
+  pi.on("compaction_start", async () => {
+    await safe(async () => post("/internal/event", { sessionId: safe(() => ctx!.sessionManager.getSessionId()), event: "comp", data: { phase: "start" } }));
+  });
+  pi.on("compaction_end", async (_event) => {
+    const d: Record<string, unknown> = { phase: "end" };
+    safe(() => { if ((_event as any)?.tokensBefore != null) d.tokensBefore = (_event as any).tokensBefore; });
+    await safe(async () => post("/internal/event", { sessionId: safe(() => ctx!.sessionManager.getSessionId()), event: "comp", data: d }));
+  });
 }

@@ -52,6 +52,11 @@ body.s-collapsed .s-expand{display:block;}
   flex:1;min-width:0;font-weight:500;} /* flex-fill: title takes line 1's room, age pins right */
 .row .age{color:var(--grey-4);font-size:11px;white-space:nowrap;flex:none;}
 .row-line2{padding-top:2px;}
+/* 7ba: line 3 — the subs-stats line; the caret LEADS the tiered counts (the
+   caret toggles the CHILDREN, its semantics live on their own line) */
+.row-line3{display:flex;align-items:baseline;gap:6px;padding-top:2px;}
+.subsline{color:var(--grey-4);font-size:10px;letter-spacing:.06em;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis;} /* the tiered counts: ● running ◐ idle ○ inactive */
 .row .activity{color:var(--grey-5);font-size:12px;white-space:nowrap;letter-spacing:.04em;
   display:block;overflow:hidden;text-overflow:ellipsis;} /* the operator's primary read: complete-or-ellipsized */
 .row .activity.working{color:var(--accent);} /* live working accent: the meta bits moved to the tooltip */
@@ -94,6 +99,14 @@ color:var(--grey-6);margin:10px 0;} /* 7ak: container pre-wrap dropped — the m
 .item.refine{display:flow-root;border:1px solid var(--hairline);border-left:2px solid var(--accent);margin:8px 0;padding:8px 12px;}
 .item.refine b{display:block;color:var(--accent);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
 .item.refine div{color:var(--grey-4);white-space:pre-wrap;padding-top:2px;}
+/* 7ag-c: harness-digest system block — a dim system preamble, hairline
+   container, distinct from user/agent items; the HARNESS micro-label on the
+   summary (never the raw customType string) */
+.item.digest{border:1px solid var(--hairline);margin:8px 0;} /* the hairline container — a system block, not a message */
+.item.digest > summary{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;cursor:pointer;list-style:revert;padding:8px 10px 0;} /* the HARNESS micro-label */
+.item.digest > summary::-webkit-details-marker{color:var(--grey-3);}
+.item.digest > div{color:var(--grey-4);padding:6px 10px 8px;} /* the body: dim grey md prose inside the hairline */
 /* 7(r) operator tweak: the time RIDES the item's first line — float:right inside
    a flow-root container: short first lines share the row, long ones wrap around
    the float instead of forcing a dedicated line (grey, non-accent) */
@@ -101,9 +114,9 @@ color:var(--grey-6);margin:10px 0;} /* 7ak: container pre-wrap dropped — the m
 .you{display:inline-block;vertical-align:top;color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;} /* 7al identity tag + ts nit: inline-block rides line 1 — the time float shares THAT line (label left, time right, top-aligned), not a line of its own; grey-4 = the meta-label tier (legibility nit 2026-09-22) */
 /* 7ao feed pill: new content while scrolled up lights the grey "↓ latest" pill;
    click = jump + re-pin; reaching the bottom hides it (no accent, no animation) */
-.feedpill{position:absolute;right:26px;bottom:64px;z-index:5;display:none;background:var(--grey-2);
+.feedpill{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;z-index:5;display:none;background:var(--grey-2);
 color:var(--grey-4);border:1px solid var(--grey-3);padding:4px 10px;font-size:11px;
-letter-spacing:.06em;cursor:pointer;} /* bottom is set inline at show time — it floats above the composer + queue strip */
+letter-spacing:.06em;cursor:pointer;} /* 7ao-b: bottom-CENTER of the log (left 50% + translate); bottom is set inline at show time — it floats above the composer + queue strip */
 .feedpill:hover{color:var(--grey-6);border-color:var(--grey-4);}
 /* 7ap-2.0: the typewriter skip button — the bottom-LEFT mirror of the pill; grey-4 glyph + hairline, subtle; shows only during a long-enough emulation */
 .feedff{position:absolute;left:26px;bottom:64px;z-index:5;display:none;background:var(--grey-2);
@@ -111,7 +124,7 @@ color:var(--grey-4);border:1px solid var(--grey-3);padding:4px 10px;font-size:11
 letter-spacing:.06em;cursor:pointer;} /* bottom is set inline at show time — it floats above the composer + queue strip, mirroring the pill */
 .feedff:hover{color:var(--grey-6);border-color:var(--grey-4);}
 .item.user,.item.notice,.item.custom,.md-body{display:flow-root;} /* the float is contained: it can never poke out of its row */
-.toolcard > summary .item-time,.agentmsg > summary .item-time,.thinking > summary .item-time{display:inline;float:right;padding:0 0 0 12px;} /* ts nit: the thinking summary joins the pattern — the time rides the summary line, in line with the label */
+.toolcard > summary .item-time,.agentmsg > summary .item-time,.thinking > summary .item-time,.item.digest > summary .item-time{display:inline;float:right;padding:0 0 0 12px;} /* ts nit: the thinking summary joins the pattern — the time rides the summary line, in line with the label; 7ag-c: the digest summary too */
 /* 7(s): agent-message collapse — the thinking treatment minus uppercase (mixed-case preview) */
 .agentmsg{margin:2px 0 6px;}
 .agentmsg > summary{color:var(--grey-4);font-size:11px;cursor:pointer;list-style:revert;padding:0;}
@@ -122,6 +135,7 @@ letter-spacing:.06em;cursor:pointer;} /* bottom is set inline at show time — i
 .thinking{margin:2px 0 6px;}
 .thinking > summary{color:var(--grey-4);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;list-style:revert;padding:0;}
 .thinking > summary::-webkit-details-marker{color:var(--grey-3);}
+.thinking > summary::before,.agentmsg > summary::before,.toolcard > summary::before{content:'';display:inline-block;width:8px;} /* 7az: the caret-to-label gap — the sidebar row's breathing room ('> python', not '>python') */
 .thinking div{color:var(--grey-4);white-space:pre-wrap;border-left:1px solid var(--hairline);padding-left:10px;margin-top:4px;}
 .toolcard{background:var(--grey-2);border:1px solid var(--hairline);padding:8px 12px;margin:10px 0;}
 .toolcard.error{border-color:var(--risk);}
@@ -347,3 +361,5 @@ width:min(880px,92vw);height:min(680px,86vh);display:flex;flex-direction:column;
 text-overflow:ellipsis;flex:1;min-width:0;}
 .viewer-head button{padding:3px 10px;font-size:10px;flex:none;}
 .viewer-body{flex:1;overflow:auto;padding:12px;color:var(--grey-5);white-space:pre-wrap;overflow-wrap:anywhere;}
+
+.item.digest > summary::before{content:'';display:inline-block;width:8px;} /* 7az rider: the digest marker breathes too */

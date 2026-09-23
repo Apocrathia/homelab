@@ -240,7 +240,21 @@ function codeDialect(c) { // 7ab-b: post-sanitize code walk — python fences to
   c.textContent = '';
   c.appendChild(hlPython(t));
 }
-feed.addEventListener('scroll', () => { if (feedGap() < PIN) pillHide(); }); // 7ao: reaching the bottom re-hides the pill (manual scroll or content-follow)
+function mdToPlain(t) { // 7ax: the LIST subtitle renders md-free — links -> their title text, emphasis/strike/inline-code markers stripped, images -> their alt; the FEED keeps full md (this never touches it)
+  return String(t ?? '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')   // images -> alt
+    .replace(/!\[([^\]]*)\]\[[^\]]*\]/g, '$1')   // reference images -> alt
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')       // links -> title
+    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, '$1')     // reference links -> title
+    .replace(/\*\*([^*]+)\*\*/g, '$1')              // bold
+    .replace(/__([^_]+)__/g, '$1')                    // bold
+    .replace(/\*([^*\s][^*]*?)\*/g, '$1')           // italic (asterisk pairs)
+    .replace(/(^|\W)_([^_]+)_(?=\W|$)/g, '$1$2')     // italic (word-boundary underscores — snake_case survives)
+    .replace(/~~([^~]+)~~/g, '$1')                    // strikethrough
+    .replace(/`([^`]*)`/g, '$1')                      // inline code chips
+    .trim();
+}
+feed.addEventListener('scroll', () => { if (feedGap() < PIN) { pillMute = false; pillHide(); } else if (!pillMute) pillShow(); }); // 7ao-b: the return-to-latest pill shows WHENEVER the feed sits above the bottom (any unpinned scroll, not just growth) — reaching the bottom re-hides it + clears the click-flight mute
 // 7ao scroll-fight fix: pinned-bottom-only autoscroll. The old nearBottom
 // flag (80px, recomputed ONLY on scroll events) was stale by construction —
 // appends below the fold fire no scroll event, so the flag kept saying
@@ -249,14 +263,15 @@ feed.addEventListener('scroll', () => { if (feedGap() < PIN) pillHide(); }); // 
 // its DOM update: <40px = pinned (follow the new bottom after the append),
 // else NO scrollTo at all — the browser preserves scrollTop across appends —
 // and new content lights the grey "↓ latest" pill instead.
-let pill = null;
+let pill = null, pillMute = false; // pillMute: the click's own smooth-scroll flight — the pill never flickers mid-animation (pinned clears it)
 function pillHide() { if (pill) pill.style.display = 'none'; }
 function pillShow() {
+  if (pillMute) return; // the flight mute owns the pill until the smooth scroll lands
   if (!pill) {
     pill = document.createElement('button');
     pill.className = 'feedpill';
     txt(pill, '↓ latest');
-    pill.addEventListener('click', () => { feed.scrollTop = feed.scrollHeight; pillHide(); }); // jump + re-pin
+    pill.addEventListener('click', () => { pillMute = true; try { feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' }); } catch (e) { feed.scrollTop = feed.scrollHeight; } pillHide(); }); // 7ao-b: smooth-scroll back to latest + re-pin; headless shapes keep the jump
     feed.parentNode.appendChild(pill); // inside #session (position:relative) — NOT the feed: snapshot wipes must not destroy it
   }
   const comp = $('#composer'), qb = $('#queue'); // the pill floats above the composer (+ any queue strip), whatever their height
@@ -282,6 +297,17 @@ const toolStatus = {}; let liveNode = null, liveTextSeen = 0; // liveTextSeen: 7
 const PIN = 40;
 const feedGap = () => (feed.scrollHeight || 0) - (feed.scrollTop || 0) - (feed.clientHeight || 0);
 const cmText = new WeakMap(); // 7ah: feed item node -> its RAW source text (the Copy-text action reads it at right-click)
+function seatCursor(host, tail, cursor) { // 7z-b: the streaming cursor rides INSIDE the md output's LAST ELEMENT — inline at the text tail (both renderers' paragraph shapes). A code-block tail (marked's <pre>, the house renderer's .md-code wrap) keeps it AFTER the body — a cursor inside code is noise, not signal; a list/quote tail descends ONE level (the last li / the quote's last block carries the text tail)
+  if (!cursor) return;
+  let e = tail && tail.nodeType === 1 ? tail : null; // real elements only — node-harness shapes fall back to the host
+  if (e) {
+    if (e.tagName === 'UL' || e.tagName === 'OL' || e.tagName === 'BLOCKQUOTE' || (e.tagName === 'DIV' && /\bmd-quote\b/.test(e.className || ''))) {
+      const d = e.lastElementChild; if (d && d.nodeType === 1) e = d; // the list/quote tail: the last li / last block
+    }
+    if (e.tagName === 'PRE' || e.tagName === 'CODE' || e.tagName === 'TABLE' || e.tagName === 'HR' || (e.tagName === 'DIV' && /\bmd-code\b/.test(e.className || ''))) e = null; // block tail — after the body, never inside code
+  }
+  (e ?? host).appendChild(cursor);
+}
 function endLive() { if (liveNode) { (liveNode.node ?? liveNode).querySelector?.('.cursor')?.remove(); } liveNode = null; liveTextSeen = 0; if (tw) twFinish(); } // 7ap: a running typewriter reveal completes when its message ends — it never writes behind a newer item
 function renderAssistant(item, streaming) {
   const n = el('item assistant');
@@ -291,7 +317,7 @@ function renderAssistant(item, streaming) {
     if (item.ts) itemTime(s, item.ts, 'span'); // ts nit: thinking items carry their time on the SUMMARY line — right, top, in line with the label (not center-floating next to the text below)
     const d = document.createElement('div'); txt(d, item.thinking); t.appendChild(d);
   }
-  const body = document.createElement('div'); body.appendChild(mdRender(item.text)); n.appendChild(body);
+  const body = document.createElement('div'); const mdFrag = mdRender(item.text); const mdTail = mdFrag.lastElementChild; body.appendChild(mdFrag); n.appendChild(body); // 7z-b: the md tail is captured BEFORE the append — the seat survives the fragment move
   if (item.tokens) {
     const u = document.createElement('div'); u.className = 'usage';
     txt(u, item.tokens.toLocaleString() + ' tok' + (item.cost != null ? ' · $' + item.cost.toFixed(4) : ''));
@@ -300,7 +326,7 @@ function renderAssistant(item, streaming) {
   body.className = 'md-body'; // 7(r) tweak: flow-root — contains the floated .item-time
   const tm = (item.ts && !item.thinking) ? itemTime(body, item.ts) : null; // 7(r) tweak + ts nit: no-thinking items float the ts inside the body; thinking items moved it up to the summary — never two clocks on one message
   let c = null;
-  if (streaming) { c = document.createElement('span'); c.className = 'cursor'; body.appendChild(c); } // 7(z): the cursor rides INLINE after the text — one element, moved per delta, never re-created
+  if (streaming) { c = document.createElement('span'); c.className = 'cursor'; seatCursor(body, mdTail, c); } // 7(z)-b: the cursor rides INLINE at the md output's text tail — one element, moved per delta, never re-created
   return { node: n, body, time: tm, cursor: c };
 }
 // 7ab: ipython cells split CODE vs OUTPUT — the args JSON carries the input
@@ -506,17 +532,32 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
     case 'tool':
       const c = toolCard(item.id, item.toolName, item.status, item.args);
       if (item.ts) itemTime(c.nm, item.ts, 'span');
-      if (item.text) { c.out.textContent = ''; c.out.appendChild(linkify(item.text)); }
+      if (item.text) { c.out.textContent = ''; c.out.appendChild(jsonEmbedRender(item.text)); } // 7ay: the OUTPUT block gets the agentmsg JSON treatment — whole-parse pretty + highlight, embedded spans in place; single-quoted python reprs parse as nothing, plain text stays plain (no fake conversion). URL linkify cedes to this (path anchors still walk below)
       if (item.text) pathLinks(c.out); // 7ac: toolcard output text linkifies (raw text, no md — the pinned line above stays verbatim)
       break;
     case 'notice': endLive(); const nn = el('item notice' + (item.boundary ? ' boundary' : '')); txt(nn, item.text); itemTime(nn, item.ts); break; // G2: the compaction strip carries the boundary class
     case 'custom': endLive();
+      // 7ag-c: harness-digest entries get the SYSTEM-BLOCK treatment — a
+      // HARNESS micro-label (never the raw customType), the dim hairline
+      // container, and the details/summary mode respect (collapsed in
+      // Collapsed/Details, open in Expanded): the injected preamble is
+      // context, so it reads as a system block, distinct from user/agent.
+      if (item.label === 'harness_digest') {
+        const dd = document.createElement('details'); dd.className = 'item custom digest'; dd.open = detailMode === 2; feed.appendChild(dd); // 47-bench P0#2: born mode-correct (the digest opens only in Expanded)
+        const su = document.createElement('summary'); dd.appendChild(su);
+        txt(su, 'harness'); // the humanized label — the css upcases it; never the raw "harness_digest"
+        if (item.ts) itemTime(su, item.ts, 'span');
+        const bd = document.createElement('div'); bd.className = 'md-body';
+        bd.appendChild(mdRender(item.text || '')); // the digest is md-ish prose — the feed's standard rich render
+        pathLinks(bd); // 7ac: paths inside the digest linkify like everywhere else
+        dd.appendChild(bd);
+      }
       // 7ag: refinement boxes — TUI special-box parity. Refinements
       // (refinement_notice/refinement_outcome custom messages) get their OWN
       // accented treatment: hairline frame + lime label/edge, body stays grey
       // (the accent law: no lime flood). Distinct from plain notices and the
       // agentmsg collapse.
-      if (item.label === 'refinement_notice' || item.label === 'refinement_outcome') {
+      else if (item.label === 'refinement_notice' || item.label === 'refinement_outcome') {
         const rn = el('item refine');
         const rb = document.createElement('b'); txt(rb, item.label); rn.appendChild(rb);
         const rs = document.createElement('div'); txt(rs, item.text || ''); rn.appendChild(rs);
@@ -617,8 +658,9 @@ function typewriterReveal(body, text) {
     const wasPinned = feedGap() < PIN, h0 = feed.scrollHeight;
     body.textContent = '';
     if (time) body.appendChild(time);
-    body.appendChild(mdRender(text.slice(0, k)));
-    body.appendChild(cur);
+    const frag = mdRender(text.slice(0, k)), mdTail = frag.lastElementChild; // 7z-b: the tail captured before the append
+    body.appendChild(frag);
+    seatCursor(body, mdTail, cur); // the same inline treatment the live stream wears
     if (feed.scrollHeight > h0) { if (wasPinned) feed.scrollTop = feed.scrollHeight; else pillShow(); }
   };
   tw = { iv: 0, body, text, time };
@@ -769,16 +811,6 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
   if (depth) { row.classList.add('child'); row.style.paddingLeft = (20 + depth * 24) + 'px'; }
   const main = document.createElement('div'); main.className = 'row-main'; row.appendChild(main);
   const kids = s.children || [];
-  if (kids.length) { // TUI tree parity: caret before the title; click toggles, never opens the session
-    const caret = document.createElement('span');
-    caret.className = 'caret' + (expanded.has(s.id) ? ' open' : '');
-    txt(caret, expanded.has(s.id) ? '▾' : '▸'); // expanded ▾ / collapsed ▸
-    caret.onclick = (e) => { e.stopPropagation();
-      if (!s.id) return;
-      if (expanded.has(s.id)) expanded.delete(s.id); else expanded.add(s.id);
-      showList(); };
-    main.appendChild(caret);
-  }
   // line 1 — the narrow-column read: live badge + title + age, nothing else inline
   if (s.live) { const b = document.createElement('span'); b.className = s.status === 'working' ? 'badge' : 'badge idle'; txt(b, 'live'); main.appendChild(b); } // 7w: two-tier — lime stays working-only; live-but-idle wears the grey-3 outline (the subs bar keeps its own ●/◐/○ tiers)
   const shell = s.count === 0; // row-state: header-only ghost (zero-message shell, 38-corpus) — dimmed + the '(empty)' recap
@@ -794,8 +826,22 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
   if (s.activity || shell) { // line 2 — the activity recap, the operator's primary read: flex-fill, ellipsized (a shell reads '(empty)' — the zero-content display truth)
     const line2 = document.createElement('div'); line2.className = 'row-line2'; row.appendChild(line2);
     const act = document.createElement('span'); act.className = 'activity'; // TUI Activity column
-    txt(act, s.activity || '(empty)'); line2.appendChild(act);
+    txt(act, s.activity ? mdToPlain(s.activity) : '(empty)'); line2.appendChild(act); // 7ax: the recap normalizes to plain text — raw md (links/emphasis/code) never reaches the subtitle; the feed keeps full md
     if (s.live && s.status === 'working') act.classList.add('working'); // working accent lives on the activity line
+  }
+  if (kids.length) { // 7ba: line 3 — the subs-stats line; the caret LIVES here now (its function = toggling the CHILDREN, so its semantics ride the children's own line); childless rows lose the caret entirely
+    const line3 = document.createElement('div'); line3.className = 'row-line3'; row.appendChild(line3);
+    const caret = document.createElement('span');
+    caret.className = 'caret' + (expanded.has(s.id) ? ' open' : '');
+    txt(caret, expanded.has(s.id) ? '▾' : '▸'); // expanded ▾ / collapsed ▸
+    caret.onclick = (e) => { e.stopPropagation();
+      if (!s.id) return;
+      if (expanded.has(s.id)) expanded.delete(s.id); else expanded.add(s.id);
+      showList(); };
+    line3.appendChild(caret);
+    if (s.subs && s.subs.total) { const st = document.createElement('span'); st.className = 'subsline';
+      txt(st, '● ' + s.subs.running + ' running ◐ ' + s.subs.idle + ' idle ○ ' + s.subs.inactive + ' inactive');
+      line3.appendChild(st); } // the tiered counts: ● running ◐ idle ○ inactive (the pane's sSubs dialect, the operator's line shape)
   }
   const bits = []; // meta de-cluttered: model:thinking, ctx, subs, count, cost live in the detail tooltip
   if (s.childId) bits.push(s.childId);
@@ -828,6 +874,8 @@ async function showSession(id, restore, force) { // selection model: one click l
   const tok = ++selToken;
   closeEvents(); // selection swap closes the previous session's stream FIRST — never two SSE
   sid = id; markSelected();
+  const wantHash = '#/s/' + encodeURIComponent(id); // 7bb: the URL tracks the open conversation — restorable + shareable (no hashchange listener exists, writes never loop)
+  if (location.hash !== wantHash) location.hash = wantHash;
   draftLoad(); // 7as: the entering chat's draft fills the composer from the first frame (empty default)
   lsSet('webuiSelected', id || ''); // selection persists — a refresh re-opens what the operator was reading
   feed.innerHTML = ''; for (const k in toolStatus) delete toolStatus[k]; endLive();
@@ -916,8 +964,9 @@ function attachEvents(id) {
       }
       liveNode.body.textContent = ''; // 7(z): the cursor rides INLINE at the end of the streaming text
       if (liveNode.time) liveNode.body.appendChild(liveNode.time); // 7(r) tweak: the ts float stays on top through deltas
-      liveNode.body.appendChild(mdRender(d.text));
-      if (liveNode.cursor) liveNode.body.appendChild(liveNode.cursor); // same element, moved — never re-created
+      const frag = mdRender(d.text), mdTail = frag.lastElementChild; // 7z-b: the tail captured before the append — the seat survives the fragment move
+      liveNode.body.appendChild(frag);
+      if (liveNode.cursor) seatCursor(liveNode.body, mdTail, liveNode.cursor); // same element, moved — never re-created
     }
     if (d.text) liveTextSeen++; // 7ap-2.0 dump gate: COUNTS this message's text-bearing live deltas — 0 = silent dump, 1 = single-delta buffered dump (both reveal), 2+ = streamed (never)
     busyUpdate(d);
@@ -931,7 +980,7 @@ function attachEvents(id) {
       txt(c.part, t.text || ''); // the beacon forwards CUMULATIVE partial text — replace, never append
     } else if (t.text) {
       if (c.part) { c.part.remove(); c.part = null; } // the final replaces the partial
-      txt(c.out, t.text);
+      c.out.textContent = ''; c.out.appendChild(jsonEmbedRender(t.text)); // 7ay: the live final carries the same OUTPUT-block JSON treatment (disk path parity)
     }
     busyUpdate({ tool: true });
     if (feed.scrollHeight > h0) { if (wasPinned) feed.scrollTop = feed.scrollHeight; else pillShow(); } // 7ao: pinned-only follow
@@ -941,6 +990,10 @@ function attachEvents(id) {
     const d = JSON.parse(e.data);
     if (Array.isArray(d.dropped) && d.dropped.length) { queueDropped(d.dropped); return; }
     knownQueue = d.items || []; pendingQueue = []; showQueue(knownQueue);
+  });
+  es.addEventListener('comp', (e) => { const d = JSON.parse(e.data); // 7ag-d client half: the beacon's compaction hook (lane 2) forwards {phase:'start'|'end'} by SHAPE — the busy strip reads the phase so a /compact never reads as a hang; unknown phases ignore; a real turn (busyNow) keeps its own strip
+    if (d.phase === 'start' && !busyNow) { busyReset(); turn.label = 'Compacting'; setWorking(true); } // honest timer: no anchor -> --:--
+    else if (d.phase === 'end' && !busyNow) setWorking(false); // the completion notice rides the feed (the boundary strip)
   });
   es.onopen = () => dot.classList.add('on');
   es.onerror = () => dot.classList.remove('on');
@@ -987,6 +1040,7 @@ function queueDropped(dropped) { // abort dropped steers: clear the strip, say i
 }
 function send() {
   const t = input.value.trim(); if (!t) return;
+  const sendSid = sid; // 7as-b rollback race: the FAILURE handler writes the ORIGIN chat's slot — a mid-flight session switch must never leak the failed text into the new pane
   closePop(); // pickers close on send — the text goes out as-is
   hideSendErr();
   input.value = ''; input.style.height = ''; draftClear(); // auto-grow resets to 1 line on send; 7as: the text is out (echo or queued) — the draft slot empties
@@ -1002,23 +1056,30 @@ function send() {
   post('/send', { text: t, session: sid }).then((r) => {
     if (r.ok) return;
     // failure: keep the text, roll back the optimism, say it inline
-    input.value = t; growInput(); input.focus();
+    if (sid === sendSid) { input.value = t; growInput(); input.focus(); } // still on the origin pane: the composer rolls back (autosave re-saves the slot)
+    else if (sendSid) lsSet(DRAFT_KEY + sendSid, t); // 7as-b: the pane SWITCHED mid-flight — the failed text writes the ORIGIN's draft slot; the open pane's composer + its slot stay untouched
     const i = pendingEchoes.findIndex((e) => e.text === t); // 7(y): busy sends carry no echo — the text lookup covers both paths
     if (i >= 0) { pendingEchoes[i].node.remove(); pendingEchoes.splice(i, 1); }
-    if (busyNow) { pendingQueue = pendingQueue.filter((x) => x !== t); renderQueueStrip(); }
-    if (!busyNow) setStatus(false); // the optimistic busy was ours \u2014 no turn is running
+    if (busyNow && sid === sendSid) { pendingQueue = pendingQueue.filter((x) => x !== t); renderQueueStrip(); } // the strip is the CURRENT pane's — only the origin pane's entry rolls back
+    if (!busyNow && sid === sendSid) setStatus(false); // the optimistic busy was ours \u2014 no turn is running (and never a foreign pane's status)
     sendError('not sent \u2014 ' + (r.err || 'request failed'));
   });
 }
 $('#send').onclick = send;
 const MAC_UI = /Mac/.test(navigator.platform || navigator.userAgent || ''); // 7at: the platform picks the send modifier (Cmd on mac, Ctrl elsewhere) + the hint glyph
-input.addEventListener('keydown', (e) => { if (popKey(e)) return; if (e.key === 'Enter' && (MAC_UI ? e.metaKey : e.ctrlKey)) { e.preventDefault(); send(); } }); // 7at send chord: Enter ALWAYS inserts a newline (single- or multi-line — the shiftKey heuristic is gone); Cmd+Enter (Ctrl+Enter off-mac) is the ONLY send
+input.addEventListener('keydown', (e) => { if (popKey(e)) return; // 7at-c hybrid chord: plain Enter sends ONLY while the input is single-line (an explicit \n makes it multi-line — a visual wrap does NOT count); after the first newline Enter inserts and the chord sends
+  if (e.key !== 'Enter') return;
+  if (MAC_UI ? e.metaKey : e.ctrlKey) { e.preventDefault(); send(); return; } // the chord ALWAYS sends — single- or multi-line
+  if (!e.shiftKey && !input.value.includes('\n')) { e.preventDefault(); send(); } // single-line: plain Enter sends; Shift+Enter inserts the first newline (multi-line falls through: the newline lands by default)
+}); // 7at-c supersedes the always-chord 7at (operator 2026-09-23: "if i don't press shift+enter, enter should still send")
 const sendHint = document.createElement('span'); sendHint.className = 'send-hint';
 txt(sendHint, (MAC_UI ? '\u2318\u23ce' : 'Ctrl+\u23ce') + ' to send'); // 7at: the subtle chord hint beside the send button — grey-4, tiny
 $('#send').parentNode.insertBefore(sendHint, $('#send'));
+const sendHintVis = () => { sendHint.style.display = input.value.includes('\n') ? '' : 'none'; }; // 7at-c: the hint shows ONLY in multi-line mode (when the chord is actually active) — beside the button per the slice-A review, never a layout shift under it
+sendHintVis(); // the honest first paint: a single-line composer starts hintless
 // auto-grow: ~4 lines before the textarea scrolls internally
 const INPUT_MAX = 100; // 4 lines at 13px/1.55 + padding \u2014 matches #input max-height in the css
-function growInput() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, INPUT_MAX) + 'px'; draftSave(); } // 7as: the draft autosave rides every height recompute — input events, picker accepts, failure rollbacks all pass through here
+function growInput() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, INPUT_MAX) + 'px'; draftSave(); sendHintVis(); } // 7as: the draft autosave rides every height recompute — input events, picker accepts, failure rollbacks all pass through here; 7at-c: each pass re-evaluates the chord hint (multi-line shows, single-line hides)
 input.addEventListener('input', growInput);
 
 // --- input pickers: "/" slash-command palette + "@" file references ---
@@ -1649,6 +1710,7 @@ function renderCm() {
     cmRow(box, 'Open', '', () => { closeCm(); showSession(id); });
     cmRow(box, 'Rename', '', () => cmRename(id));
     cmRow(box, 'Copy ID', '', () => cmCopy(id));
+    cmRow(box, 'Copy UI link', '', () => cmCopy(location.href.split('#')[0] + '#/s/' + encodeURIComponent(id))); // 7bb: the full URL with the hash — paste anywhere (the discord lane's "view this in ui" builds the same shape)
     if (!cm.live) cmRow(box, 'Resume', '', () => { closeCm(); resumeSession(id); }); // 7aq: inactive rows only — a live row IS the running agent
     cmRow(box, 'Shutdown', 'confirm', () => { cm.confirm = true; renderCm(); });
     cmRow(box, 'Archive', 'rides G4', null, true, 'rides G4');
@@ -1763,7 +1825,7 @@ document.addEventListener('click', (e) => { // 7ac: delegated — anchors carry 
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && viewer) closeViewer(); }); // Esc closes the viewer (menu + sash listeners untouched)
 
 showList();
-const deep = (location.hash || '').match(/^#\/s\/(.+)$/); // deep-link preselect, parsed ONCE; selection never rewrites the hash
+const deep = (location.hash || '').match(/^#\/s\/(.+)$/); // deep-link preselect, parsed ONCE; 7bb: showSession writes the hash on every switch — the URL tracks the open conversation
 if (deep) showSession(decodeURIComponent(deep[1]));
 else { const kept = lsGet('webuiSelected'); if (kept) showSession(kept, true); } // no deep link: restore the persisted selection
 setInterval(() => { if (!document.hidden) showList(); }, 15000); // sidebar refreshes every 15s while the page is visible
