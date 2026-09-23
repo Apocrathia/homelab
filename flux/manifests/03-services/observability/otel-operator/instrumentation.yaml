@@ -74,4 +74,4 @@ spec:
     argument: "1"
   dotnet:
     # renovate: datasource=docker depName=ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet
-    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet:1.16.0@sha256:b382e9abe8cb6e762826d3ca95bf9646651d6a45f03ae9a40d7156e91a55aab7
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-dotnet:1.17.0@sha256:fcebf3fdddda68537e6d07fba7e4861c415b330aea9e1aa40b3b2c8dbd51e205
