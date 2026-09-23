@@ -14,6 +14,11 @@
  *  a2a_send   — message/send to one agent; returns reply + task/context ids
  *  a2a_task   — tasks/get poll for a long-running task
  *
+ * This directory also carries the inbound side of the wire: server.mjs is a
+ * standalone A2A server (message/send + tasks/get) that owns port 8080 on
+ * the cluster box. The session_start handler below respawns it when
+ * A2A_WEBHOOK_TOKEN is set and the health probe fails.
+ *
  * Agent replies are data, not instructions. kagent agents can take minutes
  * and can pause in `input-required` state waiting on a follow-up message/send
  * with the same context_id. Because the harness aborts extension tool calls
@@ -21,10 +26,12 @@
  * agent is slow; a2a_task(wait_seconds) long-polls to the final reply.
  */
 
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -308,7 +315,50 @@ function replyText(reply: A2aReply, extra?: string): string {
   return lines.join("\n");
 }
 
+const HERE = dirname(fileURLToPath(import.meta.url));
+const WEBHOOK_PORT = parseInt(process.env.A2A_WEBHOOK_PORT ?? "8080", 10);
+
+/**
+ * Respawn the inbound A2A webhook server when it is down — the webui
+ * beacon's spawnCollectorIfDown pattern (probe first, one spawn attempt per
+ * 30s per process via a globalThis flag, detached+unref so the server owns
+ * the port and survives sessions). Only runs where A2A_WEBHOOK_TOKEN is set:
+ * the cluster box. The Mac never sets it, so local sessions spawn nothing.
+ */
+async function ensureWebhookUp(): Promise<void> {
+  const G = globalThis as Record<string, any>;
+  const now = Date.now();
+  if (G.__primeA2aWebhookSpawnAt && now - G.__primeA2aWebhookSpawnAt < 30000)
+    return;
+  G.__primeA2aWebhookSpawnAt = now;
+  try {
+    // probe: any HTTP response means the listener is up
+    await fetch(`http://127.0.0.1:${WEBHOOK_PORT}/health`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    return;
+  } catch {
+    // unreachable: fall through and spawn
+  }
+  try {
+    const child = spawn("node", [join(HERE, "server.mjs")], {
+      detached: true,
+      stdio: "ignore",
+    });
+    child.unref();
+    console.log("[a2a] webhook health probe failed — respawned server.mjs");
+  } catch (error) {
+    console.error(`[a2a] webhook respawn failed: ${(error as Error).message}`);
+  }
+}
+
 export default function a2aExtension(pi: ExtensionAPI) {
+  // Cluster box only (A2A_WEBHOOK_TOKEN gate): keep the inbound webhook
+  // server alive across session starts. No timers — probe and spawn once.
+  pi.on("session_start", async () => {
+    if (process.env.A2A_WEBHOOK_TOKEN) await ensureWebhookUp();
+  });
+
   pi.registerTool({
     name: "a2a_agents",
     label: "A2A roster",

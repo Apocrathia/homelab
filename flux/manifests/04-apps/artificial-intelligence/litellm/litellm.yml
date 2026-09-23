@@ -393,6 +393,17 @@ agents:
     # whole string; there is no concatenation).
     static_headers:
       Authorization: "os.environ/HERMES_A2A_AUTHORIZATION"
+  - agent_name: "prime-agent"
+    agent_card_params:
+      name: "Prime Agent"
+      url: "http://prime-agent.prime-agent.svc.cluster.local:8080"
+      protocolVersion: "1.0"
+    # Prime Agent enforces bearer auth on A2A message/send (the a2a
+    # webhook server). The env value must include the "Bearer " prefix
+    # (os.environ substitution replaces the whole string; there is no
+    # concatenation). Same token as prime-agent-secrets/a2a-webhook-token.
+    static_headers:
+      Authorization: "os.environ/PRIME_A2A_AUTHORIZATION"
 
 # Native search engines exposed at /v1/search/<search_tool_name>.
 # SearXNG instance: productivity/searxng (JSON format enabled by init container).

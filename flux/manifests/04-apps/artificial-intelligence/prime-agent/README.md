@@ -22,10 +22,15 @@ This deployment includes:
 - `agent/extensions/litellm.ts` registers the in-cluster LiteLLM gateway as
   the model provider and discovers the catalog from it; auth via
   `LITELLM_API_KEY` (or `/login` interactively)
-- `agent/extensions/a2a.ts` registers native `a2a_agents` / `a2a_send` /
-  `a2a_task` tools for the kagent agents brokered by LiteLLM; configured via
-  `A2A_BASE_URL` + `A2A_API_KEY` (same virtual key). Slow agent runs return
-  early with a `task_id` to poll — the harness aborts tool calls at ~240s
+- `agent/extensions/a2a/index.ts` registers native `a2a_agents` /
+  `a2a_send` / `a2a_task` tools for the kagent agents brokered by LiteLLM;
+  configured via `A2A_BASE_URL` + `A2A_API_KEY` (same virtual key). Slow agent
+  runs return early with a `task_id` to poll — the harness aborts tool calls
+  at ~240s
+- `agent/extensions/a2a/server.mjs` is the inbound side of the same wire: a
+  standalone A2A server (message/send + tasks/get) on the declared port 8080,
+  ClusterIP-only, so kagent agents can call prime-agent back through the
+  broker (see [Inbound A2A](#inbound-a2a))
 - `agent/extensions/name-sessions.ts` names every session (operator rule):
   registers the `name_session` tool and appends a naming directive to every
   turn while the session is unnamed (26-character limit, picker column truncates)
@@ -44,6 +49,35 @@ The daemon supervisor and session workers spawn in-pod on first attach and
 keep running after you detach (close the TUI; the worker persists). Reconnect
 with the same command; `prime-agent list` shows active agents.
 
+## Inbound A2A
+
+`a2a/server.mjs` is a standalone inbound A2A server (JSON-RPC 2.0 over HTTP,
+A2A 1.0 shapes: `message/send` + `tasks/get`, no streaming). It owns the
+declared port 8080, exposed ClusterIP-only (`prime-agent` service) with **no
+Gateway route** — only in-cluster callers (the LiteLLM broker) can reach it.
+The boot script starts it under `nohup` (logs at
+`/opt/data/.prime/agent/logs/a2a-webhook.log`), and the `a2a` extension's
+`session_start` handler respawns it if the health probe fails.
+
+Every `message/send` spawns a stateless one-shot `prime-agent -p "<prompt>"`
+run: a fresh session each time, so `contextId` groups tasks in the store but
+does **not** resume a conversation — send full context in each message. Runs
+past 120s keep running and are polled via `tasks/get`; at most 2 runs
+concurrently (excess queue FIFO).
+
+Bearer auth, fail-closed (server rejects every POST without the token):
+
+- Server side: `prime-agent-secrets` / `a2a-webhook-token` → env
+  `A2A_WEBHOOK_TOKEN` on this pod
+- Broker side: `litellm-secrets` / `prime-a2a-authorization` → env
+  `PRIME_A2A_AUTHORIZATION` on the LiteLLM pod — the same token with the
+  `Bearer ` prefix in front
+- Broker registration: the `agents:` entry `prime-agent` in
+  [`litellm.yml`](../litellm/litellm.yml) points at
+  `http://prime-agent.prime-agent.svc.cluster.local:8080` and sends that
+  `Authorization` header — kagent agents reach this box via
+  `a2a_send`/`a2a_task` like any other brokered agent
+
 ## Configuration
 
 - **Upgrade**: Renovate tracks `PRIME_AGENT_VERSION` in `helmrelease.yaml`
@@ -53,7 +87,9 @@ with the same command; `prime-agent list` shows active agents.
   (`/litellm-refresh` to re-poll)
 - **Inject more agent files**: drop them under `agent/` and add one
   `configMapGenerator` entry in `kustomization.yaml` (kustomize cannot glob a
-  directory); `*.ts` files land in `~/.prime/agent/extensions/` on boot
+  directory); `*.ts` files land in `~/.prime/agent/extensions/` on boot.
+  Directory extensions like `a2a/` list each file and need a matching copy
+  line in the boot script (ConfigMap keys are flat basenames)
 - **Skills/MCP servers**: not shipped in git — install into the PVC at runtime
   (`~/.prime/agent/`) per upstream docs
 
@@ -62,12 +98,17 @@ with the same command; `prime-agent list` shows active agents.
 Create the 1Password item at `vaults/Secrets/items/prime-agent-secrets`:
 
 - `litellm-api-key` — LiteLLM virtual key for the custom provider endpoint
+- `a2a-webhook-token` — bearer token for the inbound A2A webhook (same token
+  as `litellm-secrets`/`prime-a2a-authorization`, which adds the `Bearer `
+  prefix)
 
 ## Initial setup
 
 1. Mint a LiteLLM virtual key for prime-agent
-2. Create the 1Password item above; wait for the secret to sync
-3. Reconcile Flux (or apply locally)
+2. Mint a bearer token for the inbound A2A webhook; put it in the 1Password
+   item above as `a2a-webhook-token` and in `litellm-secrets` as
+   `prime-a2a-authorization` (value `Bearer <token>`)
+3. Wait for the secrets to sync; reconcile Flux (or apply locally)
 4. `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent` and
    confirm the default model with `/model`
 

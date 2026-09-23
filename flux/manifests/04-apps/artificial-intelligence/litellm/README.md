@@ -32,6 +32,7 @@ Create a 1Password item:
 - `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
 - `oidc-client-secret`: Authentik OIDC provider Client Secret
 - `hermes-a2a-authorization`: Full `Bearer <token>` Authorization header value for Hermes Agent inbound A2A (same token as `hermes-agent-secrets`/`a2a-bearer-token`)
+- `prime-a2a-authorization`: Full `Bearer <token>` Authorization header value for Prime Agent inbound A2A (same token as `prime-agent-secrets`/`a2a-webhook-token`)
 
 ### Storage
 
