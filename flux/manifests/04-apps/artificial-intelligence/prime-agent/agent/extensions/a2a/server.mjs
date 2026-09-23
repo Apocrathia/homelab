@@ -80,6 +80,31 @@ function snapshot(task) {
   return snap;
 }
 
+/** Task snapshot in the a2a-sdk 1.x proto JSON dialect the litellm broker
+ * parses replies with (json_format.ParseDict - strict, unknown keys are
+ * rejected): flat parts with no kind/type discriminator, TASK_STATE_* enum
+ * names, no createdAt (not a proto field). Bare for tasks/get; the
+ * message/send leg wraps it as {task} (SendMessageResponse envelope). */
+function protoSnapshot(task) {
+  const snap = {
+    id: task.id,
+    contextId: task.contextId,
+    status: { state: `TASK_STATE_${String(task.status.state).toUpperCase()}` },
+  };
+  if (task.status.message) {
+    snap.status.message = {
+      role: "ROLE_AGENT",
+      parts: task.status.message.parts.map((part) => ({ text: part.text })),
+    };
+  }
+  if (task.artifacts) {
+    snap.artifacts = task.artifacts.map((artifact) => ({
+      parts: artifact.parts.map((part) => ({ text: part.text })),
+    }));
+  }
+  return snap;
+}
+
 /** Resolve every waiter parked on this task (state transitions). */
 function settle(task) {
   for (const resolve of task.waiters.splice(0)) resolve();
@@ -191,14 +216,22 @@ function jsonRpc(res, id, { result, error }) {
   res.end(body);
 }
 
-async function messageSend(params) {
+async function messageSend(params, proto) {
   const parts = Array.isArray(params?.message?.parts)
     ? params.message.parts
     : [];
   const texts = parts
     .filter(
       (part) =>
-        part?.kind === "text" && typeof part.text === "string" && part.text,
+        // parts-dialect acceptance: A2A 1.0/0.3 JSON tags text parts with
+        // kind, older SDKs used type, and a2a-sdk 1.x proto JSON (what the
+        // litellm broker sends) is FLAT - {"text": "..."} with no
+        // discriminator key at all (Part.text is a proto oneof field).
+        (part?.kind === "text" ||
+          part?.type === "text" ||
+          (part?.kind == null && part?.type == null)) &&
+        typeof part?.text === "string" &&
+        part.text,
     )
     .map((part) => part.text);
   if (!texts.length) {
@@ -231,10 +264,13 @@ async function messageSend(params) {
   }
   // over the cap: leave the child running and return the working snapshot
   await waitFor(task, RUN_TIMEOUT_MS);
-  return { result: snapshot(task) };
+  // a2a-sdk 1.x parses the send result as a SendMessageResponse envelope
+  // (strict protobuf JSON): {"task": {...}}; lowercase callers keep the
+  // bare A2A 1.0 JSON task.
+  return { result: proto ? { task: protoSnapshot(task) } : snapshot(task) };
 }
 
-function tasksGet(params) {
+function tasksGet(params, proto) {
   const task = tasks.get(params?.id);
   if (!task) {
     return {
@@ -244,13 +280,16 @@ function tasksGet(params) {
       },
     };
   }
-  return { result: snapshot(task) };
+  // a2a-sdk 1.x GetTask parses the result as a bare proto Task (strict);
+  // lowercase callers keep the bare A2A 1.0 JSON task.
+  return { result: proto ? protoSnapshot(task) : snapshot(task) };
 }
 
 // litellm's broker client (a2a-sdk 1.x) sends PascalCase method names on
 // the agent-facing wire; alias them onto the v0.3 names this dispatch
-// routes. SendStreamingMessage stays unsupported on purpose: the card
-// declares streaming:false, so -32601 is the honest reply.
+// routes, and answer those calls in the SDK's proto JSON dialect
+// (protoSnapshot). SendStreamingMessage stays unsupported on purpose: the
+// card declares streaming:false, so -32601 is the honest reply.
 const METHOD_ALIASES = new Map([
   ["SendMessage", "message/send"],
   ["GetTask", "tasks/get"],
@@ -273,12 +312,15 @@ async function handlePost(req, res) {
   const id = body?.id ?? null;
   const rawMethod = body?.method;
   const method = METHOD_ALIASES.get(rawMethod) ?? rawMethod;
+  // PascalCase methods exist only on the a2a-sdk 1.x wire (strict protobuf
+  // JSON reply parsing); lowercase methods keep the A2A 1.0 JSON dialect.
+  const proto = METHOD_ALIASES.has(rawMethod);
   log(`rpc ${rawMethod ?? "(none)"} id ${JSON.stringify(id)}`);
   if (method === "message/send") {
-    return jsonRpc(res, id, await messageSend(body.params));
+    return jsonRpc(res, id, await messageSend(body.params, proto));
   }
   if (method === "tasks/get") {
-    return jsonRpc(res, id, tasksGet(body.params));
+    return jsonRpc(res, id, tasksGet(body.params, proto));
   }
   return jsonRpc(res, id, {
     error: { code: -32601, message: `method not found: ${String(method)}` },
