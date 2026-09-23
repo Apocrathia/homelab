@@ -8,6 +8,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - networkpolicy.yaml
 
 # Payload mirrors ~/.prime/agent/. kustomize cannot glob a directory, so each
 # injected file gets one entry here; drop the file under agent/ and list it.
@@ -21,5 +22,15 @@ configMapGenerator:
       - agent/extensions/a2a/server.mjs
       - agent/extensions/name-sessions.ts
       - agent/settings.json
+      # webui payload (flat keys; the boot script installs them under
+      # extensions/webui/ with their real names)
+      - webui_index.ts=agent/extensions/webui/index.ts
+      - webui_server.mjs=agent/extensions/webui/server.mjs
+      - webui_dashboard.js=agent/extensions/webui/dashboard.js
+      - webui_dashboard.css=agent/extensions/webui/dashboard.css
+      - webui_mark.svg=agent/extensions/webui/mark.svg
+      - webui_config.json=agent/extensions/webui/config.json
+      - webui_marked.min.js=agent/extensions/webui/marked.min.js
+      - webui_purify.min.js=agent/extensions/webui/purify.min.js
     options:
       disableNameSuffixHash: true

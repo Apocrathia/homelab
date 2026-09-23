@@ -1,0 +1,7 @@
+{
+  "_comment": "GitOps copy: reconciled from the ConfigMap on every boot. NEVER put a token here — the 1Password webui-token field mounts at the PRIME_WEBUI_TOKEN_FILE path and outranks this file.",
+  "host": "0.0.0.0",
+  "port": 8788,
+  "defaultCwd": "/opt/data/workspace",
+  "trustedCidrs": []
+}
