@@ -35,3 +35,17 @@ misconfigurations:
       chart's own namespaced Role shape, reduced to the resources the
       outpost controller manages. The chart's equivalent Role never hits
       this check only because it is rendered at deploy time, not committed.
+  - id: AVD-KSV-0046
+    paths:
+      - "rbac.yaml"
+    statement: >-
+      chaos-mesh dashboard viewer ClusterRole: read-only verbs (get/list/watch)
+      on the chaos-mesh.org CRD family, whose resource list churns with chart
+      versions — the wildcard avoids silent dashboard breakage on chart upgrades
+      and is strictly narrower than the chaos-mesh chart's own rendered role
+      (resources: ["*"], verbs: ["*"]), which escapes scanning only because it
+      is rendered at deploy time. SCOPE WARNING: basename matching suppresses
+      KSV-0046 in ALL repo files named rbac.yaml (the other 7 are clean today:
+      authentik/kube-auth, 01-bootstrap/flux-system, kuber-ios, tak,
+      mcp-servers/flux, litellm, romm); re-audit this entry when adding
+      resource wildcards to any rbac.yaml.
