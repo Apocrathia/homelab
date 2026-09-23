@@ -22,7 +22,7 @@ const PROVIDER = "litellm";
 const DEFAULT_BASE_URL = "http://litellm.litellm.svc.cluster.local:4000/v1";
 const FETCH_TIMEOUT_MS = 5000;
 const DEFAULT_CONTEXT_WINDOW = 1_000_000;
-const DEFAULT_MAX_TOKENS = 16384;
+const DEFAULT_MAX_TOKENS = 131072;
 
 /** Modes LiteLLM reports for endpoints that are not chat completions. */
 const CHAT_MODES = new Set(["chat", "completion"]);
