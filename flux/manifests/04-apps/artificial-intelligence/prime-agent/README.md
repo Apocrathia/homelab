@@ -59,7 +59,13 @@ The boot script starts it under `nohup` (logs at
 `/opt/data/.prime/agent/logs/a2a-webhook.log`), and the `a2a` extension's
 `session_start` handler respawns it if the health probe fails. The dispatch
 accepts both the v0.3 JSON-RPC names and the a2a-sdk 1.x PascalCase names
-(`SendMessage`/`GetTask`) that the broker's litellm client uses.
+(`SendMessage`/`GetTask`) that the broker's litellm client uses. Text parts
+are accepted in either wire dialect — kind-tagged, type-tagged, or the
+SDK's flat proto-JSON `{"text": ...}` shape — and PascalCase calls are
+answered in that same strict proto JSON (flat parts, `TASK_STATE_*`
+states, send result wrapped as `{"task": ...}` because the SDK's
+`ParseDict` rejects unknown keys); lowercase calls keep the A2A 1.0 JSON
+task shape.
 
 Every `message/send` spawns a stateless one-shot `prime-agent -p "<prompt>"`
 run: a fresh session each time, so `contextId` groups tasks in the store but
