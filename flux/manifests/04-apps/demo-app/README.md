@@ -31,8 +31,7 @@ This directory contains:
 - `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: false` — see [Authentik Ownership](#authentik-ownership))
 - `crossplane.yaml` - OnePasswordItem token + provider-opentofu `ProviderConfig`/`Workspace` owning the Authentik stack
 - `terraform.tf` - HCL module for the Workspace (stitched in at build time by `kustomization.yaml`)
-- `authentik-blueprint-cleanup.yaml` - one-shot cleanup companion (`state: absent` deletes for the chart-era blueprint rows; keep forever)
-- `kustomization.yaml` - Kustomize configuration for Flux deployment (module stitch + cleanup-companion packaging)
+- `kustomization.yaml` - Kustomize configuration for Flux deployment (module stitch)
 - `README.md` - This documentation
 
 Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is NOT chart-generated anymore — the Workspace owns it. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
@@ -43,7 +42,8 @@ The full Authentik stack — proxy provider -> application -> `admins` (order 10
 
 - The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the OnePasswordItem in `crossplane.yaml` — same shared item as headlamp and chaos-mesh.
 - The outpost config carries BOTH gateway parentRefs: `main-gateway`/`https` (LAN) and `tailnet-gateway`/`https-gateway-services` (tailnet). The outpost route owns both doors.
-- `helmrelease.yaml` keeps the `authentik` block with `enabled: false` — the escape hatch that stops the chart rendering a blueprint ConfigMap. `authentik-blueprint-cleanup.yaml` deleted the chart-era blueprint rows once (one-shot, hash-gated; never edit it afterward).
+- `helmrelease.yaml` keeps the `authentik` block with `enabled: false` — the escape hatch that stops the chart rendering a blueprint ConfigMap.
+- ADOPT, not recreate: the Workspace imports (adopts) the chart-era Authentik objects in place — import blocks in `terraform.tf` + live ids in the Workspace `varmap` (`crossplane.yaml`). Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap stay in the module permanently — they go inert after adoption (verified), chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
 
 ## Storage Pattern
 

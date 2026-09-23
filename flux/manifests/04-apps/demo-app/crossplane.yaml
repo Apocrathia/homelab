@@ -46,3 +46,13 @@ spec:
     # field verbatim, so terraform.tf is the single source of truth for the
     # module. Never render this file through kubectl apply directly.
     module: ""
+    # Live ids for the terraform.tf adoption imports — the HCL variables
+    # are type=string, so every value is a quoted string. NEVER leave one
+    # empty: an empty id makes tofu silently skip the import and plan a
+    # duplicate create.
+    varmap:
+      import_provider_pk: "39"
+      import_application_id: "demo-app"
+      import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
+      import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
+      import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"

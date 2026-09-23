@@ -73,6 +73,10 @@ resource "authentik_provider_proxy" "demo-app-proxy-provider" {
   internal_host         = "http://demo-app.demo-app.svc.cluster.local:80"
   external_host         = "https://demo.gateway.services.apocrathia.com"
   intercept_header_auth = false
+
+  # Parity with the live chart-era value — the TF default (minutes=10)
+  # would PATCH the row on the first apply.
+  access_token_validity = "hours=1"
 }
 
 # Application — 1:1 parity with the retired chart-rendered blueprint.
@@ -175,4 +179,64 @@ resource "authentik_outpost" "demo-app-outpost" {
       ]
     }
   })
+}
+
+# ---------------------------------------------------------------------------
+# Adoption (2026-09-23): the chart-era Authentik objects are adopted IN
+# PLACE — no companion deletes, no deletion window, uuids intact, no
+# re-login. The ids below are verified live. After the first apply the
+# import blocks go INERT (tofu then treats the objects as plain managed
+# state) and are safe to keep forever. NEVER leave a varmap value empty:
+# an empty id makes tofu silently skip the import and plan a duplicate
+# create.
+# ---------------------------------------------------------------------------
+
+variable "import_provider_pk" {
+  type        = string
+  description = "Live pk of the proxy provider to adopt (authentik_provider_proxy.demo-app-proxy-provider)."
+}
+
+variable "import_application_id" {
+  type        = string
+  description = "Slug of the application to adopt (authentik_application.demo-app) — applications import by slug, not uuid."
+}
+
+variable "import_binding_admins_pk" {
+  type        = string
+  description = "Live pk of the admins policy binding to adopt (authentik_policy_binding.demo-app-admins)."
+}
+
+variable "import_binding_users_pk" {
+  type        = string
+  description = "Live pk of the users policy binding to adopt (authentik_policy_binding.demo-app-users)."
+}
+
+variable "import_outpost_uuid" {
+  type        = string
+  description = "Live uuid of the outpost to adopt (authentik_outpost.demo-app-outpost)."
+}
+
+import {
+  to = authentik_provider_proxy.demo-app-proxy-provider
+  id = var.import_provider_pk
+}
+
+import {
+  to = authentik_application.demo-app
+  id = var.import_application_id
+}
+
+import {
+  to = authentik_policy_binding.demo-app-admins
+  id = var.import_binding_admins_pk
+}
+
+import {
+  to = authentik_policy_binding.demo-app-users
+  id = var.import_binding_users_pk
+}
+
+import {
+  to = authentik_outpost.demo-app-outpost
+  id = var.import_outpost_uuid
 }

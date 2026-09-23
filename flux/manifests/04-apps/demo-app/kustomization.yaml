@@ -20,15 +20,6 @@ configMapGenerator:
     namespace: demo-app
     files:
       - nginx.conf
-  # One-shot state: absent companion: deletes the blueprint-era Authentik
-  # objects so the provider-opentofu Workspace can take over. Keep forever.
-  - name: authentik-blueprint-demo-app-cleanup
-    namespace: demo-app
-    files:
-      - demo-app-cleanup.yaml=authentik-blueprint-cleanup.yaml
-    options:
-      labels:
-        authentik_blueprint: "true"
   # Crossplane stitch: packages terraform.tf (the Workspace's HCL module) so
   # the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (terraform.tf); the replacements
