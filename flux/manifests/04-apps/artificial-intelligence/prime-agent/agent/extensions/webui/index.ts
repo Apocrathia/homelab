@@ -297,10 +297,13 @@ export default function (pi: ExtensionAPI) {
           // G1 (34-entry-census.md §2): custom_message entries compile like
           // messages — the live path already forwards them (message_end, role
           // custom); without this branch they VANISHED on every snapshot
-          // refresh. display:false kinds + harness_digest stay hidden (TUI
-          // parity, dump @6002529). The slice's ONLY index.ts change (the
-          // freeze lifted for exactly this parse); compaction is disk-only v1.
-          else if (e.type === "custom_message" && e.display !== false && e.customType !== "harness_digest")
+          // refresh. HARNESS-DIGEST PERSISTENCE (operator 2026-09-22,
+          // overrides the old TUI-parity skip): harness_digest ALSO compiles
+          // — real entries carry display:false, so display must not hide
+          // THEM (other display:false kinds stay hidden); snapshot+disk+live
+          // AGREE (no vanish-on-work). Accent/detail-mode = dashboard rider.
+          // compaction stays disk-only v1.
+          else if (e.type === "custom_message" && (e.customType === "harness_digest" || e.display !== false))
             items.push({ kind: "custom", id: `${e.id}`, ts: e.timestamp ? Date.parse(e.timestamp) : undefined,
               label: e.customType ?? "custom",
               text: typeof e.content === "string" ? e.content : textOf(e.content).slice(0, 8000) });

@@ -98,12 +98,17 @@ const textOf = (c) =>
 // dropped them: agent messages rendered live then VANISHED on refresh
 // (84 on disk, 0 in view for the real lap), and compactions cut the feed
 // with zero feedback. custom_message -> the same "custom" item kind the
-// live path forwards (message_end, role custom); display:false kinds and
-// harness_digest stay hidden (TUI parity, dump @6002529). compaction -> the
+// live path forwards (message_end, role custom). HARNESS-DIGEST
+// PERSISTENCE (operator 2026-09-22, overrides the old TUI-parity skip):
+// harness_digest entries ALSO compile — real ones carry display:false, but
+// they "should not disappear — that is good information to have in the
+// conversation log", so display must not hide THEM (other display:false
+// kinds stay hidden); disk+snapshot+live must AGREE (no vanish-on-work).
+// Accent/detail-mode respect = the dashboard slice rider. compaction -> the
 // boundary notice ("Compacted — N tokens before" + the Goal-recap summary).
 function mapEntry(e) {
   if (e.type === "message" && e.message) return mapMessage(e.message, `${e.id}`);
-  if (e.type === "custom_message" && e.display !== false && e.customType !== "harness_digest")
+  if (e.type === "custom_message" && (e.customType === "harness_digest" || e.display !== false))
     return [{ kind: "custom", id: `${e.id}`, ts: e.timestamp ? Date.parse(e.timestamp) : undefined,
       label: e.customType ?? "custom",
       text: typeof e.content === "string" ? e.content : textOf(e.content).slice(0, 8000) }];
@@ -1078,6 +1083,17 @@ const S_ROUTES = {
   "rename": "POST", "compact": "POST", "shutdown": "POST", "context-usage": "GET",
 };
 
+// S2 CSP (24-security-slice-specs.md): the dashboard is ONE HTML surface —
+// the / route serves every view (list + session, the hash router is
+// client-side) with INLINE <script>/<style> (dashboardHtml embeds
+// dashboard.js/dashboard.css at module load), so script-src/style-src
+// 'unsafe-inline' is REQUIRED until the assets move to /static files (the
+// upgrade: serve them as files, then drop 'unsafe-inline'). The vendored
+// marked/DOMPurify pair rides /static — 'self' covers them. Header goes on
+// the HTML + /static responses ONLY — NO CSP on the API/SSE routes (no
+// document context; the hot JSON/event paths stay lean).
+const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+  + "img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 const public_ = http.createServer(async (req, res) => {
   const serve = (code, type, body, extra) => {
     res.writeHead(code, { "content-type": type, ...extra }); res.end(body);
@@ -1104,7 +1120,7 @@ const public_ = http.createServer(async (req, res) => {
     const m = /^(?!.*\.\.)[A-Za-z0-9_.-]+\.(js|css|svg)$/.exec(name);
     const sp = m ? path.resolve(HERE, m[0]) : null;
     if (!sp || !sp.startsWith(HERE + path.sep)) return serve(404, "text/plain", "not found");
-    try { return serve(200, STATIC_MIME[m[1]], fs.readFileSync(sp, "utf-8"), { "cache-control": "max-age=86400" }); }
+    try { return serve(200, STATIC_MIME[m[1]], fs.readFileSync(sp, "utf-8"), { "cache-control": "max-age=86400", "content-security-policy": CSP }); }
     catch { return serve(404, "text/plain", "not found"); }
   }
   const ip = (req.socket.remoteAddress ?? "").replace(/^::ffff:/, "");
@@ -1116,7 +1132,7 @@ const public_ = http.createServer(async (req, res) => {
     return serve(401, "text/plain", "unauthorized");
   }
   try {
-    if (req.method === "GET" && url.pathname === "/") return serve(200, "text/html; charset=utf-8", dashboardHtml());
+    if (req.method === "GET" && url.pathname === "/") return serve(200, "text/html; charset=utf-8", dashboardHtml(), { "content-security-policy": CSP });
 
     if (req.method === "GET" && url.pathname === "/api/sessions") {
       const disk = diskSessions();
