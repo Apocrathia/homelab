@@ -28,21 +28,21 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 
 This directory contains:
 
-- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: false` — see [Authentik Ownership](#authentik-ownership))
-- `crossplane.yaml` - OnePasswordItem token + provider-opentofu `ProviderConfig`/`Workspace` owning the Authentik stack
+- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.managedBy: terraform` — chart-rendered tofu docs; see [Authentik Ownership](#authentik-ownership))
+- `crossplane.yaml` - OnePasswordItem token + provider-opentofu `ProviderConfig`/`Workspace` — kustomize-owned copy; the chart renders identical docs (MR1), detach pending MR2
 - `terraform.tf` - HCL module for the Workspace (stitched in at build time by `kustomization.yaml`)
 - `kustomization.yaml` - Kustomize configuration for Flux deployment (module stitch)
 - `README.md` - This documentation
 
-Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is NOT chart-generated anymore — the Workspace owns it. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
+Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is tofu-native and now rendered twice with identical specs (MR1): the chart (`managedBy: terraform`) and the kustomize-owned `crossplane.yaml`; MR2 will detach the kustomize copy. The tofu Workspace owns the stack. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
 
 ## Authentik Ownership
 
-The full Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings -> outpost — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`, `crossplane.yaml`). The HCL lives in `terraform.tf`; `kustomization.yaml` packs it into a generated ConfigMap (`demo-app-authentik-module`) and a `replacements` rule copies it into the Workspace's `spec.forProvider.module` byte-for-byte.
+The full Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings -> outpost — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`). As of MR1 (chart 0.0.84+) the HelmRelease (`authentik.managedBy: terraform`) makes the chart render the SAME three tofu docs — identical specs, co-owned with `crossplane.yaml` via server-side apply; MR2 will detach the kustomize copy. The HCL lives in `terraform.tf`; `kustomization.yaml` packs it into a generated ConfigMap (`demo-app-authentik-module`) and a `replacements` rule copies it into the Workspace's `spec.forProvider.module` byte-for-byte.
 
 - The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the OnePasswordItem in `crossplane.yaml` — same shared item as headlamp and chaos-mesh.
 - The outpost config carries BOTH gateway parentRefs: `main-gateway`/`https` (LAN) and `tailnet-gateway`/`https-gateway-services` (tailnet). The outpost route owns both doors.
-- `helmrelease.yaml` keeps the `authentik` block with `enabled: false` — the escape hatch that stops the chart rendering a blueprint ConfigMap.
+- `helmrelease.yaml` sets `authentik.managedBy: terraform` (MR1) — the chart renders the tofu docs co-owned with `crossplane.yaml`. Escape hatch: `managedBy: blueprint` + `enabled: false` returns to the old behavior (chart renders no authentik docs; kustomize keeps owning until MR2).
 - ADOPT, not recreate: the Workspace imports (adopts) the chart-era Authentik objects in place — import blocks in `terraform.tf` + live ids in the Workspace `varmap` (`crossplane.yaml`). Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap stay in the module permanently — they go inert after adoption (verified), chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
 
 ## Storage Pattern
@@ -175,9 +175,10 @@ secrets:
   itemPath: "vaults/Secrets/items/demo-app-secrets"
 
 authentik:
-  # Stack owned by the provider-opentofu Workspace (crossplane.yaml +
-  # terraform.tf); the chart block is the disabled escape hatch.
-  enabled: false
+  # Chart renders the tofu docs (MR1), co-owned with crossplane.yaml;
+  # managedBy: blueprint + enabled: false is the escape hatch back.
+  enabled: true
+  managedBy: terraform
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
@@ -192,7 +193,7 @@ httproute:
 - **Volume Mounts**: All volume mounts defined in `app.volumeMounts` section
 - **Storage**: Multi-volume pattern - Longhorn for app data, SMB for static content
 - **Volume Structure**: Container-specific volumes (emptyDir) and pod-wide volumes (storage)
-- **Authentication**: Authentik SSO — stack owned by the provider-opentofu Workspace; the chart's authentik block is disabled
+- **Authentication**: Authentik SSO — chart-rendered tofu docs (`managedBy: terraform`, MR1) co-owned with the kustomize `crossplane.yaml` (MR2 detaches it)
 - **Secrets**: 1Password integration for sensitive configuration
 - **Networking**: Uses Authentik outpost (HTTPRoute disabled)
 

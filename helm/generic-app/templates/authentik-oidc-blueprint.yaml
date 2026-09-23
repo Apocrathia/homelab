@@ -1,4 +1,4 @@
-{{- if and .Values.authentik.enabled (eq .Values.authentik.mode "oidc") }}
+{{- if and .Values.authentik.enabled (ne (default "blueprint" .Values.authentik.managedBy) "terraform") (eq .Values.authentik.mode "oidc") }}
 ---
 apiVersion: v1
 kind: ConfigMap

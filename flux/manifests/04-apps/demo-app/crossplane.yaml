@@ -36,6 +36,16 @@ metadata:
   name: demo-app-authentik
   namespace: demo-app
 spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Makes the kustomize -> helm handover safe.
+  # Deliberate decommission therefore requires temporarily restoring ["*"]
+  # (or a manual tofu destroy) — the guard is intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
   providerConfigRef:
     kind: ProviderConfig
     name: demo-app-authentik

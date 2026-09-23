@@ -91,6 +91,7 @@ All available configuration values for the chart:
 | `secrets.enabled`                              | bool   | `true`                                            | Enable 1Password secrets integration                                                    |
 | `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`           | 1Password item path                                                                     |
 | `authentik.enabled`                            | bool   | `true`                                            | Enable Authentik SSO integration                                                        |
+| `authentik.managedBy`                          | string | `blueprint`                                       | Authentik stack owner: `blueprint` CMs (default) or `terraform` provider-opentofu docs  |
 | `authentik.displayName`                        | string | `Demo Application`                                | Display name in Authentik                                                               |
 | `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`    | External URL                                                                            |
 | `authentik.ssoLaunchUrl`                       | string | `""`                                              | Direct SSO entrypoint for the library tile; empty = the app's own URL                   |
@@ -903,6 +904,48 @@ authentik:
     - "^/api/"
     - "^/v1/"
 ```
+
+#### Authentik stack ownership: `managedBy`
+
+`authentik.managedBy` picks who owns the app's Authentik stack (0.0.84+):
+
+- **`blueprint` (default, legacy)**: the chart renders the blueprint ConfigMap
+  (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it. Unchanged
+  behavior for every existing app.
+- **`terraform` (fleet path)**: the chart renders the provider-opentofu stack —
+  `OnePasswordItem` (workspace token) + `ProviderConfig` + `Workspace` — the
+  pattern proven on demo-app. Blueprint ConfigMaps are suppressed. Proxy-only
+  for now; `oidc`/`bookmark` with `terraform` fails the render loudly.
+
+The tofu app-dir contract (per app):
+
+```yaml
+# flux/manifests/04-apps/<app>/
+# ├── terraform.tf       REAL per-app HCL module — single source of truth
+# ├── kustomization.yaml configMapGenerator: <app>-authentik-module (from terraform.tf)
+# ├── crossplane.yaml    kustomize-owned tofu docs (detached after the chart flip)
+# └── helmrelease.yaml   chart 0.0.84+ with authentik.managedBy: terraform
+```
+
+Wiring recipe:
+
+1. `kustomization.yaml` `configMapGenerator` packages `terraform.tf` into the
+   module ConfigMap; the data key is the literal filename (`terraform.tf`).
+2. The HelmRelease `valuesFrom` pulls that ConfigMap. Flux merges every data
+   key as a top-level values key, so the module lands in chart values as
+   `terraform.tf`.
+3. The chart consumes it verbatim: `index .Values "terraform.tf"` into
+   `spec.forProvider.module`, and `authentik.terraform.varmap` (live import
+   ids, strings only — NEVER empty) into `spec.forProvider.varmap`.
+
+Why `managementPolicies` (no `Delete`): crossplane v2 removed
+`spec.deletionPolicy` (the structural schema silently prunes it), so the
+Workspace renders `managementPolicies: [Observe, Create, Update]` — the
+v2-native orphan. A GitOps prune of the Workspace object can never run
+`tofu destroy` against the live Authentik stack, which makes the
+kustomize → helm ownership handover safe. Deliberate decommission requires
+temporarily restoring `["*"]` (or a manual `tofu destroy`) — the guard is
+intentional.
 
 ### PostgreSQL Database
 

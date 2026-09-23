@@ -504,6 +504,32 @@ authentik:
   # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
 
+  # Stack owner: "blueprint" (default/legacy) or "terraform" (fleet path).
+  # - blueprint: chart renders the authentik blueprint ConfigMaps (mode
+  #   proxy/oidc/bookmark) — unchanged behavior for every existing app.
+  # - terraform: chart renders the provider-opentofu docs (OnePasswordItem +
+  #   ProviderConfig + Workspace; proxy-only for now) and suppresses the
+  #   blueprint ConfigMaps. The flip for apps migrated to tofu-native
+  #   authentik (demo-app is the reference).
+  managedBy: "blueprint"
+
+  # terraform (managedBy: "terraform" only): import-id varmap for the tofu
+  # module's adoption imports. App-specific LIVE ids; strings only (the HCL
+  # variables are type=string). NEVER leave one empty: an empty id makes
+  # tofu silently skip the import and plan a duplicate create. terraform.tf
+  # itself stays a REAL per-app file
+  # (flux/manifests/04-apps/<app>/terraform.tf): the app kustomization's
+  # configMapGenerator packages it as the module ConfigMap, and the
+  # HelmRelease valuesFrom feeds that ConfigMap to this chart (every data
+  # key becomes a top-level values key — the literal `terraform.tf`).
+  # terraform:
+  #   varmap:
+  #     import_provider_pk: "39"
+  #     import_application_id: "demo-app"
+  #     import_binding_admins_pk: "<live admins binding pk>"
+  #     import_binding_users_pk: "<live users binding pk>"
+  #     import_outpost_uuid: "<live outpost uuid>"
+
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
   # binding without tailnet exposure fails the render (see templates).

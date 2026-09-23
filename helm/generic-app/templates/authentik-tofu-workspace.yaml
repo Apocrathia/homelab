@@ -1,0 +1,79 @@
+{{/* Authentik tofu-native stack (provider-opentofu): OnePasswordItem + ProviderConfig + Workspace, rendered when authentik.managedBy=terraform. Byte-parity with the kustomize-era per-app crossplane.yaml docs; proxy-only for now. */}}
+{{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") .Values.authentik.mode (ne .Values.authentik.mode "proxy") }}
+{{- fail (printf "authentik.managedBy=terraform is proxy-only for now: mode %q has no tofu support (use managedBy: blueprint)" .Values.authentik.mode) }}
+{{- end }}
+{{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") (or (not .Values.authentik.mode) (eq .Values.authentik.mode "proxy")) }}
+{{- if not (index .Values "terraform.tf") }}
+{{- fail "authentik.managedBy=terraform requires the tofu module as values key 'terraform.tf' - wire the app's module ConfigMap via HelmRelease valuesFrom (configMapGenerator keeps the literal-filename data key)" }}
+{{- end }}
+{{- if or (not .Values.authentik.terraform) (not .Values.authentik.terraform.varmap) }}
+{{- fail "authentik.terraform.varmap must never be empty - an empty id makes tofu silently skip the import and plan a duplicate create" }}
+{{- end }}
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # the operator creates the 1Password item crossplane-terraform-secrets
+  # (vault "Secrets", field authentik-terraform-token), and the OnePassword
+  # Connect operator syncs it as the authentik-terraform-token Secret
+  # consumed by the ProviderConfig in this file. Same item as headlamp's and
+  # chaos-mesh's copies; the namespace differs.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: {{ .Values.app.name }}-authentik
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  # Materializes the OnePasswordItem-backed Secret as a file in the tofu
+  # workdir; the workspace HCL reads it with file("authentik-token").
+  # The token itself never appears in a manifest.
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: {{ .Values.app.namespace | default .Values.app.name }}
+        key: authentik-terraform-token
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: {{ .Values.app.name }}-authentik
+  namespace: {{ .Values.app.namespace | default .Values.app.name }}
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Makes the kustomize -> helm handover safe.
+  # Deliberate decommission therefore requires temporarily restoring ["*"]
+  # (or a manual tofu destroy) — the guard is intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: {{ .Values.app.name }}-authentik
+  forProvider:
+    source: Inline
+    # Build-time stitch: terraform.tf stays the single source of truth for
+    # the module — a real per-app file (flux/manifests/04-apps/<app>/terraform.tf).
+    # The app kustomization's configMapGenerator packages it as the module
+    # ConfigMap, the HelmRelease valuesFrom feeds that ConfigMap into chart
+    # values (every data key becomes a top-level values key), and this
+    # template copies it here verbatim. Never render this file through
+    # kubectl apply directly.
+    module: {{ index .Values "terraform.tf" | quote }}
+    # Live ids for the terraform.tf adoption imports — the HCL variables
+    # are type=string, so every value is a quoted string. NEVER leave one
+    # empty: an empty id makes tofu silently skip the import and plan a
+    # duplicate create.
+    varmap:
+{{ .Values.authentik.terraform.varmap | toYaml | indent 6 }}
+{{- end }}

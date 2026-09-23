@@ -1,6 +1,20 @@
 # Changelog
 
-## Version 0.0.83 (Latest)
+## Version 0.0.84 (Latest)
+
+- **Authentik tofu-native support (`authentik.managedBy`)**: new values knob —
+  `blueprint` (default; zero behavior change for existing apps) or
+  `terraform` (the fleet path proven on demo-app). `managedBy: terraform`
+  renders the provider-opentofu docs from chart templates (OnePasswordItem +
+  ProviderConfig + Workspace, fed by the app's `terraform.tf` module via the
+  HelmRelease `valuesFrom` module ConfigMap) and suppresses the blueprint
+  ConfigMaps; proxy-only for now (oidc/bookmark modes fail the render
+  loudly). The Workspace renders `managementPolicies: [Observe, Create,
+Update]`: crossplane v2 removed `deletionPolicy`, so excluding the Delete
+  action is the v2-native orphan — a GitOps prune of the Workspace object can
+  never run tofu destroy on the live Authentik stack.
+
+## Version 0.0.83
 
 - **SMB mount options**: SMB volumes now default `spec.mountOptions` to
   `vers=3.0,uid=1000,noperm` (per-volume `mountOptions` list overrides for
