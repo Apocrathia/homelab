@@ -8,7 +8,7 @@ metadata:
 context: {}
 entries:
   # The Authentik entry moved from the blueprint ConfigMap to the Crossplane
-  # provider-opentofu Workspace (opentofu-workspace.yaml). Blueprints never
+  # provider-opentofu Workspace (crossplane.yaml, module from terraform.tf). Blueprints never
   # garbage-collect, so removal is an explicit state: absent companion,
   # kept forever (same pattern as the cryptpad cleanup). One-shot: the
   # file hash gates re-import, so it will not fight the Workspace's create.

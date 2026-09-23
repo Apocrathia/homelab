@@ -57,7 +57,7 @@ v1.1.8 (`provider-opentofu.yaml`) runs OpenTofu modules against external
 systems through `Workspace` managed resources — Pattern B from
 [`docs/research/crossplane-connector-pattern.md`](../../../docs/research/crossplane-connector-pattern.md).
 First consumers: headlamp's Authentik entry
-(`flux/manifests/03-services/headlamp/opentofu-workspace.yaml`) and
+(`flux/manifests/03-services/headlamp/crossplane.yaml`) and
 chaos-mesh's (`flux/manifests/03-services/chaos-mesh/crossplane.yaml`) —
 the chaos-mesh workspace owns a full proxy stack in one module, outpost
 included (the `authentik_outpost` resource carries `protocol_providers`, so
