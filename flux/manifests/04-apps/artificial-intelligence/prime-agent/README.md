@@ -57,7 +57,9 @@ declared port 8080, exposed ClusterIP-only (`prime-agent` service) with **no
 Gateway route** — only in-cluster callers (the LiteLLM broker) can reach it.
 The boot script starts it under `nohup` (logs at
 `/opt/data/.prime/agent/logs/a2a-webhook.log`), and the `a2a` extension's
-`session_start` handler respawns it if the health probe fails.
+`session_start` handler respawns it if the health probe fails. The dispatch
+accepts both the v0.3 JSON-RPC names and the a2a-sdk 1.x PascalCase names
+(`SendMessage`/`GetTask`) that the broker's litellm client uses.
 
 Every `message/send` spawns a stateless one-shot `prime-agent -p "<prompt>"`
 run: a fresh session each time, so `contextId` groups tasks in the store but

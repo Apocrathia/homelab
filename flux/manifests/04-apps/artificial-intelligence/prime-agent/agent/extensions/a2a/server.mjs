@@ -247,6 +247,15 @@ function tasksGet(params) {
   return { result: snapshot(task) };
 }
 
+// litellm's broker client (a2a-sdk 1.x) sends PascalCase method names on
+// the agent-facing wire; alias them onto the v0.3 names this dispatch
+// routes. SendStreamingMessage stays unsupported on purpose: the card
+// declares streaming:false, so -32601 is the honest reply.
+const METHOD_ALIASES = new Map([
+  ["SendMessage", "message/send"],
+  ["GetTask", "tasks/get"],
+]);
+
 async function handlePost(req, res) {
   if (!authed(req)) {
     res.writeHead(401, { "content-type": "text/plain" });
@@ -262,8 +271,9 @@ async function handlePost(req, res) {
     });
   }
   const id = body?.id ?? null;
-  const method = body?.method;
-  log(`rpc ${method ?? "(none)"} id ${JSON.stringify(id)}`);
+  const rawMethod = body?.method;
+  const method = METHOD_ALIASES.get(rawMethod) ?? rawMethod;
+  log(`rpc ${rawMethod ?? "(none)"} id ${JSON.stringify(id)}`);
   if (method === "message/send") {
     return jsonRpc(res, id, await messageSend(body.params));
   }
