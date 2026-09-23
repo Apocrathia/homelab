@@ -133,21 +133,34 @@ export function deriveRecap(text: string | undefined): string | undefined {
     .replace(/^#{1,6}\s+/gm, " ")
     .replace(/^\s*[-*+]\s+/gm, " ")
     .replace(/\*\*?([^*]*)\*\*?/g, "$1");
-  // Take the first non-empty line BEFORE collapsing whitespace, so a
-  // multi-line answer does not merge its bullets into one run-on recap.
-  const firstLine =
-    cleaned
-      .split("\n")
-      .map((line) => line.replace(/\s+/g, " ").trim())
-      .find((line) => line.length > 0) ?? "";
-  // First sentence of that line if it has a terminator.
-  const sentence = firstLine.match(/^(.{1,}?[.!?])(\s|$)/);
-  cleaned = (sentence ? sentence[1] : firstLine).replace(/[.\s]+$/, "").trim();
+  // Skip header lines (ending ":"), ack/short fillers, and one-word lines
+  // BEFORE picking the recap source: a rhetorical header or an "ok" ack
+  // must not become the recap (S1, 2026-09-19 — activity-recap review).
+  const ACK_RE =
+    /^(recorded|understood|noted|applying|done|working|ok)[.!\s]*$/i;
+  const lines = cleaned
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length > 0);
+  const pick =
+    lines.find(
+      (line) => line.length >= 20 && !line.endsWith(":") && !ACK_RE.test(line),
+    ) ??
+    lines[0] ??
+    "";
+  // First sentence of the picked line if it has a terminator.
+  const sentence = pick.match(/^(.{1,}?[.!?])(\s|$)/);
+  cleaned = (sentence ? sentence[1] : pick).replace(/[.\s]+$/, "").trim();
   if (!cleaned || cleaned.startsWith("<")) {
     return undefined;
   }
   if (cleaned.length > MAX_RECAP_CHARS) {
-    cleaned = `${cleaned.slice(0, MAX_RECAP_CHARS - 1).trimEnd()}…`;
+    const cut = cleaned.slice(0, MAX_RECAP_CHARS - 1);
+    const boundary = cut.lastIndexOf(" ");
+    cleaned = `${(boundary > MAX_RECAP_CHARS / 2
+      ? cut.slice(0, boundary)
+      : cut
+    ).trimEnd()}…`;
   }
   return cleaned;
 }
@@ -171,9 +184,14 @@ export async function scanSessionFile(path: string): Promise<SessionFileScan> {
     if (!trimmed) {
       continue;
     }
-    // Entry headers are {type,id,parentId,...} and id is always the second
-    // field, so the first "id" match is the entry id even on huge lines.
-    const idMatch = trimmed.match(/"id":"([^"]+)"/);
+    // The entry id is the only "id" immediately followed by "parentId":
+    // every runtime entry serializes as {…, id, parentId, timestamp}. A
+    // bare first-"id" match misreads harness refinement entries — nested
+    // ids (data.id = "refine_…", details.edits[].id = memory names like
+    // "opentakserver_deploy_state") precede the entry's own id — and the
+    // sweep then chains agent_status.parentId to a memory name: a dangling
+    // id that broke the chain walk (13 real sessions rendered empty).
+    const idMatch = trimmed.match(/"id":"([^"]+)","parentId":/);
     if (idMatch) {
       scan.lastEntryId = idMatch[1] ?? scan.lastEntryId;
     }
