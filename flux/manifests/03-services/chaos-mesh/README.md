@@ -86,8 +86,8 @@ The HTTPRoute is created by Authentik's outpost, which the provider-opentofu Wor
 `securityMode: true` means the dashboard itself requires an RBAC token after
 Authentik admits you. Paste the token from 1Password:
 
-1. Open 1Password → vault `Secrets` → item `chaos-mesh-dashboard-secrets`.
-2. Copy the `password` field — the `chaos-mesh-dashboard` service-account token.
+1. Open 1Password → vault `Secrets` → item `homelab-chaos-mesh-token`.
+2. Copy the `token` field — the `chaos-mesh-dashboard` service-account token.
 3. Paste it into the dashboard's token prompt — once per browser.
 
 The token lives in Secret `chaos-mesh-dashboard-token` (`rbac.yaml`); the SA
