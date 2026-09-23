@@ -367,7 +367,13 @@ function subInfo(p) {
   const c = subCache.get(p);
   if (c && c.mtimeMs === st.mtimeMs && c.size === st.size) return c.info;
   let info = {};
-  try { Object.assign(info, JSON.parse(fs.readFileSync(p, "utf-8"))); } catch {}
+  try {
+    // semgrep mass-assignment fix: allow-list, not a blanket assign — the
+    // runtime-written rlm-subagent.json may grow keys; only fields the row
+    // consumer reads pass through. New field needed? add it here AND in scanSubs.
+    const j = JSON.parse(fs.readFileSync(p, "utf-8"));
+    if (j && typeof j === "object") for (const k of ["childId", "sessionName", "status", "model", "sessionFile", "createdAt", "updatedAt", "parent"]) if (k in j) info[k] = j[k];
+  } catch {}
   subCache.set(p, { mtimeMs: st.mtimeMs, size: st.size, info });
   return info;
 }
