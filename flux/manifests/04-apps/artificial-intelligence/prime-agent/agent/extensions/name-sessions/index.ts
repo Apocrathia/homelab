@@ -17,6 +17,14 @@
  *  2. While a session is unnamed, every agent turn's system prompt ends with
  *     a naming directive. Clears automatically once named.
  *
+ * 2026-09-18 incident (session 01a0b58d-9b5f-72da-ae7a-94e60d790c18):
+ * "Count before sending" failed — models cannot count characters reliably
+ * ("unifi-os shell prompt setup", 27 chars, and the 1-4-word hint was
+ * satisfied yet still over). After the successful retry the agent ended its
+ * turn with zero task work. Hardening: word-length heuristic instead of
+ * counting, over-limit errors propose a compliant truncation, and the
+ * directive plus every tool result repeat that naming never ends a turn.
+ *
  * rlm.spawn children are named at spawn, so they never see the directive.
  */
 
@@ -31,41 +39,72 @@ const DIRECTIVE = `
 SESSION NAMING — REQUIRED (operator rule): this session has no name yet.
 Call the name_session tool first, batched with your first tool calls:
   name_session(name="<short lowercase topic slug>")
-- Length limit: MAX ${LIMIT} CHARACTERS including spaces — the session-picker title column truncates anything longer. Count before sending.
+
+NAMING NEVER ENDS A TURN. After name_session returns — success or error —
+immediately continue the user's request with your next tool call in the SAME
+turn. The turn ends when the user's work is done, never at the naming step.
+A thinking-only or text-only reply is not continuing.
+
+- Length limit: MAX ${LIMIT} CHARACTERS including spaces — the session-picker title column truncates anything longer. Do not count characters: 2-3 short words always fit; 4 words fit only if every word is ≤5 characters; treat 5+ words as over the limit. If your name is rejected, the tool error proposes a compliant one — take it and move on.
 - Name style: lowercase topic slug named for the app/component/task — e.g. "authentik host enrollment", "kavita deploy". Never dates, session ids, or plan numbers.
-- If the name_session tool is unavailable, fall back to: prime-agent rename <sessionId> "<slug>" where sessionId is the filename without .jsonl of the conversation-log path shown earlier in this prompt. Keep the fallback under ${LIMIT} characters too. If both fail, skip silently.
-- Naming does not replace the user's request — do both.`;
+- If the name_session tool is unavailable, fall back to: prime-agent rename <sessionId> "<slug>" where sessionId is the filename without .jsonl of the conversation-log path shown earlier in this prompt. Keep the fallback under ${LIMIT} characters too. If both fail, skip silently and continue the task.`;
+
+function shorten(name: string): string {
+  // Largest word-boundary prefix that fits LIMIT; hard slice if one word is over.
+  let out = "";
+  for (const word of name.split(/\s+/)) {
+    const candidate = out ? `${out} ${word}` : word;
+    if (candidate.length > LIMIT) break;
+    out = candidate;
+  }
+  return out || name.slice(0, LIMIT);
+}
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: TOOL,
     label: "Name session",
-    description: `Set this conversation's display name. Max ${LIMIT} characters (picker column truncates longer). Operator rule: every conversation gets named, early. Use once per conversation (again only if the focus pivots).`,
+    description: `Set this conversation's display name. Max ${LIMIT} characters (picker column truncates longer). Operator rule: every conversation gets named, early. Use once per conversation (again only if the focus pivots). Naming never ends a turn — after calling it, continue the user's task with your next tool call in the same turn.`,
     promptGuidelines: [
-      `Use name_session as the first tool call in any unnamed conversation to name it (operator rule); keep the name under ${LIMIT} characters.`,
+      `Use name_session as the first tool call in any unnamed conversation to name it (operator rule); keep the name under ${LIMIT} characters (2-3 short words). After it returns — success or error — continue the user's request in the same turn; naming never ends a turn.`,
     ],
     parameters: Type.Object({
       name: Type.String({
-        description: `Short lowercase topic slug, 1-4 words, named for the app/component/task, max ${LIMIT} characters including spaces`,
+        description: `Short lowercase topic slug named for the app/component/task; 2-3 short words (4 only if each word is ≤5 characters), max ${LIMIT} characters including spaces`,
       }),
     }),
     async execute(_toolCallId, params) {
       const name = (params.name || "").trim();
       if (!name) {
-        return { content: [{ type: "text", text: "Error: empty name" }] };
-      }
-      if (name.length > LIMIT) {
         return {
           content: [
             {
               type: "text",
-              text: `Error: name is ${name.length} characters — over the ${LIMIT}-character limit (session-picker column truncates at ${LIMIT}). Shorten it: drop filler words, keep the app/component/task slug.`,
+              text: "Error: empty name. Retry with a short slug, then continue the user's request in this same turn.",
+            },
+          ],
+        };
+      }
+      if (name.length > LIMIT) {
+        const suggestion = shorten(name);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: name is ${name.length} characters — over the ${LIMIT}-character limit (session-picker column truncates at ${LIMIT}). Use this instead: "${suggestion}" (${suggestion.length} chars). Then continue the user's request in this same turn — naming never ends a turn.`,
             },
           ],
         };
       }
       pi.setSessionName(name);
-      return { content: [{ type: "text", text: `Session named: ${name}` }] };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Session named: ${name}. Continue the user's request in this same turn.`,
+          },
+        ],
+      };
     },
   });
 
