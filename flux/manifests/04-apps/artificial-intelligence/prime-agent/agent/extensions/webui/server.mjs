@@ -17,6 +17,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 import * as crypto from "node:crypto";
+import * as net from "node:net";
 import * as os from "node:os";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -795,6 +796,7 @@ function heartbeatsBody() {
             : (typeof jb.prompt === "string" && jb.prompt ? jb.prompt.slice(0, 80) : "(unlabeled)"),
           interval: jb.schedule && typeof jb.schedule.expression === "string" ? jb.schedule.expression : undefined,
           status: typeof jb.status === "string" ? jb.status : undefined,
+          activeSessionId: typeof jb.activeSessionId === "string" && jb.activeSessionId ? jb.activeSessionId : undefined, // 7bc-3: heartbeat_manage's routing target (the store job's own field)
           target: typeof jb.sessionId === "string" && jb.sessionId ? jb.sessionId : e.name, // the owning session (the row click opens it)
           deliveryMode: typeof jb.deliveryMode === "string" ? jb.deliveryMode : undefined,
           runCount: typeof jb.runCount === "number" ? jb.runCount : 0,
@@ -808,9 +810,147 @@ function heartbeatsBody() {
   return { heartbeats: rows };
 }
 
-const CSS = fs.readFileSync(path.join(HERE, "dashboard.css"), "utf-8");
-const JS = fs.readFileSync(path.join(HERE, "dashboard.js"), "utf-8");
-const MARK = fs.readFileSync(path.join(HERE, "mark.svg"));
+// ---------- 7bc-3 S1: the heartbeat write transport (the daemon proxy) ----------
+// The daemon's PUBLIC local socket carries the schedule-management surface:
+// protocol v7 JSONL (binary-extracted + probe-proven, .scratch/webui-audit/
+// hbcfg-probe*.mjs), same-user fs perms as the only auth. The collector NEVER
+// launches a daemon (a second supervisor on a stray socket is worse than a
+// degraded write surface) and NEVER writes scheduled-jobs.json itself — every
+// write rides the daemon, which stays the single writer (55-hbcfg-design.md
+// §2). Daemon-down degrades honestly: every method rejects, the routes map
+// it to 503, and the v1 file-parse read above keeps serving rows.
+const DAEMON_SOCK = process.env.PRIME_WEBUI_DAEMON_SOCK
+  ?? path.join(os.tmpdir(), `prime-agent-${process.getuid()}`, "daemon.sock");
+class DaemonError extends Error {
+  constructor(message, { unavailable = false } = {}) { super(message); this.unavailable = unavailable; }
+}
+const daemon = (() => {
+  const CLIENT_ID = "prime-webui-" + crypto.randomUUID().slice(0, 8); // per-collector: the daemon's journal idempotency keys on clientId+commandId
+  const REQ_TIMEOUT_MS = 5000, HELLO_TIMEOUT_MS = 3000;
+  let sock = null, buf = "", hello = false, gen = 0, helloTimer = null;
+  let connWaiter = null; // {promise, resolve, reject} while connecting + hello-pending
+  const pending = new Map(); // command id -> {resolve, reject, timer}
+  let seq = 0;
+  function teardown() { // idempotent: late events from a superseded socket are no-ops (the gen bump)
+    gen++;
+    if (helloTimer) { clearTimeout(helloTimer); helloTimer = null; }
+    if (sock) { const s = sock; sock = null; buf = ""; hello = false; try { s.destroy(); } catch {} }
+    connWaiter = null;
+  }
+  function failAll() { // the wire died: every in-flight call rejects (the routes map it to 503)
+    for (const [, p] of pending) { clearTimeout(p.timer); p.reject(new DaemonError("daemon connection lost", { unavailable: true })); }
+    pending.clear();
+  }
+  function handleMsg(msg) {
+    if (msg?.type === "daemon_hello") { // pushed on connect
+      hello = true;
+      if (helloTimer) { clearTimeout(helloTimer); helloTimer = null; }
+      if (connWaiter) { const w = connWaiter; connWaiter = null; w.resolve(); }
+      return;
+    }
+    if (msg?.type === "response" && pending.has(msg.id)) { // id correlation: the one promise this id resolves
+      const p = pending.get(msg.id); pending.delete(msg.id); clearTimeout(p.timer);
+      if (msg.success === true) p.resolve(msg.data ?? {});
+      else p.reject(new DaemonError(String(msg.error ?? "daemon error")));
+      return;
+    }
+    // heartbeats_changed broadcasts + anything unrecognized: ignored in v1
+    // (the design's upgrade note wires the push into the SSE surface)
+  }
+  function onChunk(d) { // JSONL framing: split on newline; split frames + non-JSON lines are noise, never a crash
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i); buf = buf.slice(i + 1);
+      if (!line.trim()) continue;
+      let msg; try { msg = JSON.parse(line); } catch { continue; }
+      handleMsg(msg);
+    }
+  }
+  function ensureConn() { // connect + wait for the v7 hello; one attempt per call (request retries once)
+    if (sock && hello && !sock.destroyed) return Promise.resolve();
+    if (connWaiter) return connWaiter.promise;
+    const myGen = ++gen;
+    let resolveP, rejectP;
+    const promise = new Promise((res, rej) => { resolveP = res; rejectP = rej; });
+    connWaiter = { promise, resolve: resolveP, reject: rejectP };
+    const s = net.createConnection(DAEMON_SOCK);
+    sock = s;
+    s.setEncoding("utf8");
+    s.on("data", onChunk);
+    const onDown = () => { // connect failure OR mid-life drop
+      if (myGen !== gen) return; // a superseded socket's late event
+      failAll();
+      const w = connWaiter; teardown();
+      if (w) w.reject(new DaemonError("daemon unavailable", { unavailable: true }));
+    };
+    s.once("error", onDown);
+    s.once("close", onDown);
+    s.once("connect", () => {
+      helloTimer = setTimeout(onDown, HELLO_TIMEOUT_MS); // a silent peer never holds a caller past the connect phase
+    });
+    return promise;
+  }
+  async function request(command) {
+    try { await ensureConn(); } catch { await ensureConn(); } // single retry per call (the transient ECONNREFUSED class)
+    const id = "c" + (++seq);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { // a wedged daemon answers nothing: 5s then 503, per the design
+        if (pending.delete(id)) reject(new DaemonError("daemon request timeout", { unavailable: true }));
+      }, REQ_TIMEOUT_MS);
+      pending.set(id, { resolve, reject, timer });
+      try {
+        // the envelope AND the command carry the id (the probe's live-proven shape)
+        sock.write(JSON.stringify({ type: "command", id, protocol: { name: "prime-agent.daemon", version: 7 }, clientId: CLIENT_ID, command: { ...command, id } }) + "\n");
+      } catch { // the wire died between ensureConn and write
+        pending.delete(id); clearTimeout(timer); teardown();
+        reject(new DaemonError("daemon unavailable", { unavailable: true }));
+      }
+    });
+  }
+  return { request };
+})();
+function daemonRouteError(e, serve) { // DaemonError -> the honest HTTP answer (never a collector crash)
+  if (e instanceof DaemonError) {
+    if (e.unavailable) return serve(503, "application/json", j(0, { error: "daemon unavailable" }));
+    const m = String(e.message ?? "");
+    if (m.includes("Unknown active session")) return serve(409, "application/json", j(0, { error: "session not live" })); // the daemon owns session truth
+    if (m.includes("No cron job found") || m.includes("No active heartbeat found")) return serve(404, "application/json", j(0, { error: "no such job" }));
+    return serve(502, "application/json", j(0, { error: m.slice(0, 300) })); // the daemon said no: honest reason, capped
+  }
+  return serve(500, "application/json", j(0, { error: String(e?.message ?? e).slice(0, 300) }));
+}
+
+// ---------- mtime-cached asset reads (the module-load tax, 22-analysis-arch) ----------
+// The collector used to read dashboard.css/js/mark.svg at MODULE LOAD: every
+// UI edit forced a collector restart, killing each SSE stream and SIGTERMing
+// every live conversation (the deploy restart tax). Now each serve STATS the
+// file and re-reads ONLY on mtime change — one stat per page serve (the perf
+// report's discipline), so a static-tier deploy needs NO collector restart
+// (server.mjs itself still does). A missing/unreadable file serves the
+// last-known bytes (the mid-deploy window); the boot reads below keep the
+// fail-fast-on-missing-file contract. Never evicted: three known files plus
+// the /static allow-list names, each { mtimeMs, body } — negligible.
+const assetCache = new Map(); // abs path -> { mtimeMs, body }
+function readAsset(p) {
+  let st;
+  try { st = fs.statSync(p); } catch (e) {
+    const c = assetCache.get(p);
+    if (c) return c.body; // mid-deploy window: keep serving the last-known bytes
+    throw e; // boot/first-read: nothing cached — fail honestly (the module-load contract)
+  }
+  const c = assetCache.get(p);
+  if (c && c.mtimeMs === st.mtimeMs) return c.body;
+  const body = fs.readFileSync(p, "utf-8");
+  assetCache.set(p, { mtimeMs: st.mtimeMs, body });
+  return body;
+}
+const CSS_PATH = path.join(HERE, "dashboard.css");
+const JS_PATH = path.join(HERE, "dashboard.js");
+const MARK_PATH = path.join(HERE, "mark.svg");
+const CSS = readAsset(CSS_PATH); // boot warm-up: fail-fast + the 7bc-3 slice anchor
+const JS = readAsset(JS_PATH);
+const MARK = readAsset(MARK_PATH);
 function dashboardHtml() {
   return `<!doctype html>
 <html><head>
@@ -818,7 +958,7 @@ function dashboardHtml() {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prime Agent</title>
 <link rel="icon" type="image/svg+xml" href="/mark.svg">
-<style>${CSS}</style>
+<style>${readAsset(CSS_PATH)}</style>
 </head><body>
 <header>
   <img class="mark" src="/mark.svg" alt="prime">
@@ -860,7 +1000,7 @@ function dashboardHtml() {
     </footer>
   </section>
 </main>
-<script>const SESSION_API="/api/session/";${JS}</script>
+<script>const SESSION_API="/api/session/";${readAsset(JS_PATH)}</script>
 </body></html>`;
 }
 
@@ -1300,7 +1440,23 @@ function tokenEq(presented, expected) {
 // responses. Trusted-CIDR peers skip it entirely. Env overrides for the test.
 const RL_WINDOW_SECS = Math.max(1, parseInt(process.env.PRIME_WEBUI_RL_WINDOW_SECS ?? "60", 10));
 const RL_MAX = Math.max(1, parseInt(process.env.PRIME_WEBUI_RL_MAX ?? "30", 10));
-const authFails = new Map(); // ip -> [timestamps of 401s]
+// XFF keying (the operator's recorded cluster decision — the header is
+// effective for the intended deployment): behind the gateway proxy every
+// client shares the gateway's socket IP, so one 401-spammer would 429 the
+// shared bucket for everyone. With PRIME_WEBUI_TRUST_PROXY (env or config
+// trustProxy) set, the limiter keys on the gateway's X-Forwarded-For LEFTMOST
+// entry (the gateway appends the client chain) — validated as an IPv4/IPv6
+// literal (net.isIP); anything else falls back to the socket key, so a
+// spoofed garbage header never partitions buckets. Unset: the socket IP (the
+// local posture, unchanged). Only the limiter's KEY moves — the token and
+// trusted-CIDR gates stay socket-based.
+const TRUST_PROXY = /^(1|true|yes)$/i.test(String(process.env.PRIME_WEBUI_TRUST_PROXY ?? cfg.trustProxy ?? "").trim());
+function limiterKey(req, ip) {
+  if (!TRUST_PROXY) return ip;
+  const first = String(req.headers["x-forwarded-for"] ?? "").split(",")[0].trim();
+  return net.isIP(first) ? first : ip;
+}
+const authFails = new Map(); // key (socket ip, or the XFF ip when trusted) -> [timestamps of 401s]
 function authFailCount(ip) { // prune-while-counting
   const now = Date.now();
   const ts = (authFails.get(ip) ?? []).filter((t) => now - t < RL_WINDOW_SECS * 1000);
@@ -1537,9 +1693,16 @@ const S_ROUTES = {
 // document context; the hot JSON/event paths stay lean).
 const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
   + "img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
+// S2 hardening (the pentest re-verified gap): nosniff + no-referrer on EVERY
+// public response, not just the document surfaces — the API/healthz/404/429
+// tiers and both SSE handshakes included. nosniff: a browser must not sniff a
+// text/JSON answer into script; no-referrer: the webui is an operator-only
+// tool — nothing needs the origin, the honest minimal. serve() stamps both;
+// the SSE handshakes bypass serve(), so they spread the same object.
+const S2_HEADERS = { "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" };
 const public_ = http.createServer(async (req, res) => {
   const serve = (code, type, body, extra) => {
-    res.writeHead(code, { "content-type": type, ...extra }); res.end(body);
+    res.writeHead(code, { "content-type": type, ...S2_HEADERS, ...extra }); res.end(body);
   };
   // pentest M2: an over-cap connection gets exactly one answer — the 503 —
   // and the connection tier (MAX_CONNS, module scope) destroys it at its
@@ -1552,7 +1715,7 @@ const public_ = http.createServer(async (req, res) => {
   // /mark.svg rides <img>/<link> subresources, which cannot send headers:
   // pre-auth like /healthz or the logo/favicon 401s off-loopback (F4/S1)
   if (req.method === "GET" && url.pathname === "/mark.svg")
-    return serve(200, "image/svg+xml", MARK, { "cache-control": "max-age=86400" });
+    return serve(200, "image/svg+xml", readAsset(MARK_PATH), { "cache-control": "max-age=86400" });
   // /static assets (7ad vendored md libs; the page inlines its own JS/CSS):
   // pre-auth for the same subresource reason (<script src> cannot send
   // headers — F4/S1). Allow-list, not a listing: extension-mapped known
@@ -1567,15 +1730,16 @@ const public_ = http.createServer(async (req, res) => {
     const m = /^(?!.*\.\.)[A-Za-z0-9_.-]+\.(js|css|svg)$/.exec(name);
     const sp = m ? path.resolve(HERE, m[0]) : null;
     if (!sp || !sp.startsWith(HERE + path.sep)) return serve(404, "text/plain", "not found");
-    try { return serve(200, STATIC_MIME[m[1]], fs.readFileSync(sp, "utf-8"), { "cache-control": "max-age=86400", "content-security-policy": CSP }); }
+    try { return serve(200, STATIC_MIME[m[1]], readAsset(sp), { "cache-control": "max-age=86400", "content-security-policy": CSP }); }
     catch { return serve(404, "text/plain", "not found"); }
   }
   const ip = (req.socket.remoteAddress ?? "").replace(/^::ffff:/, "");
   const trusted = inTrusted(ip);
-  if (!trusted && authFailCount(ip) >= RL_MAX) // throttled pre-compare: no oracle
+  const lkey = limiterKey(req, ip); // XFF key when TRUST_PROXY (the cluster shape), else the socket IP
+  if (!trusted && authFailCount(lkey) >= RL_MAX) // throttled pre-compare: no oracle
     return serve(429, "text/plain", "too many auth failures", { "retry-after": String(RL_WINDOW_SECS) });
   if (!authed(req, url, TOKEN, req.method === "GET" && url.pathname === "/events")) {
-    if (!trusted) recordAuthFail(ip);
+    if (!trusted) recordAuthFail(lkey);
     return serve(401, "text/plain", "unauthorized");
   }
   try {
@@ -1669,6 +1833,55 @@ const public_ = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && url.pathname === "/api/heartbeats") { // 7bc: the read-only registry view (header-authed; NO write surface — management flows through the conversation)
       return serve(200, "application/json", j(0, heartbeatsBody()));
+    }
+
+    // ---------- 7bc-3 S1: the heartbeat write surface (the daemon proxy) ----------
+    // All header-authed by the gate above (the query token stays SSE-only,
+    // like /api/system); every write rides the daemon's public socket.
+    // Daemon-down = honest 503s (55-hbcfg-design §2): reads stay the v1 file
+    // parse, the UI degrades to read-only — NEVER a file-fallback write (that
+    // would re-create the race the design exists to avoid).
+    if (req.method === "POST" && url.pathname === "/api/heartbeats") { // create -> cron_add (a LIVE worker session only)
+      if (!isJsonRequest(req)) return serve(415, "text/plain", "unsupported media type"); // pentest #29
+      const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
+      const sessionId = body?.sessionId;
+      const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
+      const ivm = body?.intervalMinutes;
+      if (typeof sessionId !== "string" || !/^[A-Za-z0-9_-]+$/.test(sessionId)) return serve(400, "application/json", j(0, { error: "bad sessionId" }));
+      if (!Number.isInteger(ivm) || ivm < 1 || ivm > 1440) return serve(400, "application/json", j(0, { error: "intervalMinutes must be an integer 1..1440" }));
+      if (!prompt) return serve(400, "application/json", j(0, { error: "prompt required" }));
+      if (prompt.length > 2000) return serve(400, "application/json", j(0, { error: "prompt too long (max 2000)" }));
+      if (body.label !== undefined && (typeof body.label !== "string" || !body.label.trim() || body.label.length > 200)) return serve(400, "application/json", j(0, { error: "bad label" }));
+      // cron_add routes to a LIVE worker (the daemon owns session truth;
+      // passive sessions have no worker) — the registry IS the live set
+      if (!beacons.has(sessionId)) return serve(409, "application/json", j(0, { error: "session not live" }));
+      let r;
+      try {
+        // the daemon's parser accepts "every N minutes" for any N >= 10s
+        // (binary-extracted). label: the daemon's cron_add payload has NO
+        // label field (createCronJobForState reads schedule+prompt only) —
+        // accepted for the UX, never forwarded; the row label derives from
+        // the prompt on the read path.
+        r = await daemon.request({ type: "cron_add", activeSessionId: sessionId, schedule: `every ${ivm} minutes`, prompt });
+      } catch (e) { return daemonRouteError(e, serve); }
+      return serve(200, "application/json", j(0, { job: r.job }));
+    }
+    const hbManage = req.method === "POST" && /^\/api\/heartbeats\/([A-Za-z0-9_-]+)\/(pause|resume)$/.exec(url.pathname);
+    if (hbManage) { // -> heartbeat_manage (passive-safe: the daemon falls to the artifact path when no live worker owns it)
+      const jobId = hbManage[1], action = hbManage[2];
+      const row = heartbeatsBody().heartbeats.find((h) => h.id === jobId); // the registry read supplies the manage target
+      if (!row) return serve(404, "application/json", j(0, { error: "no such job" }));
+      let r;
+      try { r = await daemon.request({ type: "heartbeat_manage", activeSessionId: row.activeSessionId ?? row.target, jobId, action }); }
+      catch (e) { return daemonRouteError(e, serve); }
+      return serve(200, "application/json", j(0, { job: r.heartbeat }));
+    }
+    if (req.method === "DELETE" && /^\/api\/heartbeats\/[A-Za-z0-9_-]+$/.test(url.pathname)) { // -> cron_cancel (auto-routes: live workers, else the passive artifact path — no row lookup needed)
+      let r;
+      try { r = await daemon.request({ type: "cron_cancel", jobId: url.pathname.split("/")[3] }); }
+      catch (e) { return daemonRouteError(e, serve); }
+      return serve(200, "application/json", j(0, { job: r.job }));
     }
 
     if (req.method === "GET" && url.pathname === "/api/file") { // 7ac: the path-link viewer's fetch — header-authed like /api/system (query token stays SSE-only)
@@ -1801,6 +2014,7 @@ const public_ = http.createServer(async (req, res) => {
           "cache-control": "no-cache",
           connection: "keep-alive",
           "x-accel-buffering": "no",
+          ...S2_HEADERS,
         });
         res.flushHeaders();
         res.write("retry: 1000\n\n");
@@ -1813,6 +2027,7 @@ const public_ = http.createServer(async (req, res) => {
         "cache-control": "no-cache",
         connection: "keep-alive",
         "x-accel-buffering": "no",
+        ...S2_HEADERS,
       });
       res.flushHeaders();
       // subscribe FIRST, snapshot after (STATE.md:77 — the documented

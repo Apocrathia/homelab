@@ -1715,6 +1715,93 @@ async function cmRename(id) {
   if (sid === id && live) openMenuAt('rename');
   else toast('rename needs a live session');
 }
+// --- 7bc-3 S2 (HBCFG): the heartbeat write affordances, the cm dialect —
+// the registry rows' menu (the state-dependent Pause/Resume + Delete w/ the
+// Shutdown-precedent confirm) + the live session row's schedule form (the
+// rename-form dialect). Every write rides the S1 endpoints; the 503
+// daemon-down posture disables the affordances until the next successful
+// read; ANY failed write re-reads the registry BEFORE the retry re-arms
+// (a 503-after-success duplicate is visible + deletable, never blindly
+// re-created). NO prompt prefill — the operator's directive: the form is
+// a picker + an EMPTY field, placeholder hints only. ---
+const HB_INTERVALS = [1, 5, 10, 15, 30, 60]; // the picker's offer — the operator's usage bracket; the API takes 1..1440 (the free-form knob stays conversational)
+async function hbReq(method, url, body) { // the write tier: status + json, never a throw (the cmPost dialect)
+  try {
+    const r = await fetch(url, {
+      method,
+      headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), 'x-prime-token': token },
+      body: body === undefined ? undefined : JSON.stringify(body) });
+    let j = null; const text = await r.text();
+    try { j = JSON.parse(text); } catch (e) {}
+    return { status: r.status, json: j };
+  } catch (e) { return { status: 0, json: null }; }
+}
+function hbFailText(r) { // the honest verdict per the S1 contracts (the jargon law: no internal field names in operator-visible text)
+  if (r.status === 503) return 'daemon unavailable';
+  if (r.status === 409) return 'session not live';
+  if (r.status === 404) return 'no such job';
+  if (r.status === 400) { const e = String(r.json?.error || 'bad request'); return e.includes('intervalMinutes') ? 'pick an interval' : e; }
+  if (r.status === 502 && r.json?.error) return String(r.json.error).slice(0, 60); // the daemon's own no, capped
+  return 'heartbeat failed';
+}
+async function hbWriteFail(r) { // the shared failure path: the honest toast + the 503 posture + the refresh-before-retry refetch
+  toast(hbFailText(r));
+  if (r.status === 503) hbDown = true; // the write affordances grey until the next successful read
+  hbBlocked = true; // the retry stays dead until the fresh registry lands
+  await hbTick(); // the refetch FIRST — the duplicate (a 503-after-success) is visible + deletable in the fresh list, never blindly re-created
+}
+async function cmHbManage(id, action) { // 7bc-3 S2: pause/resume — the manage route resolves the row's own routing server-side
+  const r = await hbReq('POST', '/api/heartbeats/' + encodeURIComponent(id) + '/' + action, {});
+  if (!cm) return; // closed mid-flight
+  closeCm();
+  if (r.status === 200) { toast(action === 'pause' ? 'paused' : 'resumed'); hbTick(); return; } // the registry + the glyph set repaint on the read
+  hbWriteFail(r);
+}
+async function cmHbDelete(id) { // 7bc-3 S2: delete — cron_cancel (the server auto-routes: live worker, else the passive artifact path)
+  const r = await hbReq('DELETE', '/api/heartbeats/' + encodeURIComponent(id));
+  if (!cm) return; // closed mid-flight
+  closeCm();
+  if (r.status === 200) { toast('deleted'); hbTick(); return; }
+  hbWriteFail(r);
+}
+function hbSchedForm(box) { // 7bc-3 S2: the schedule form — the rename-form dialect, stacked: the interval picker (15m default) + an EMPTY prompt textarea (NO prefill — the operator's directive: the prompt is always the operator's words) + an optional label
+  cm.errEl = null; // a fresh form render: the previous instance's error note (a detached node after the innerHTML wipe) never receives a second 400's text
+  const back = el('pop-row mback', box);
+  txt(el('pn', back), '\u2190 back');
+  back.addEventListener('click', () => { cm.form = null; renderCm(); });
+  const f = el('mform', box);
+  const iv = document.createElement('select');
+  for (const m of HB_INTERVALS) { const o = document.createElement('option'); o.value = String(m); txt(o, m + 'm'); iv.appendChild(o); }
+  iv.value = '15'; // the default — the operator's usage (the DOM selects the 15m option)
+  f.appendChild(iv);
+  const ta = document.createElement('textarea');
+  ta.rows = 3;
+  ta.placeholder = 'what should the agent do on each beat?'; // EMPTY value by design — a placeholder hints, never a prefill
+  f.appendChild(ta);
+  const lab = document.createElement('input');
+  lab.placeholder = 'label (optional)';
+  f.appendChild(lab);
+  const go = document.createElement('button');
+  txt(go, 'Schedule');
+  go.disabled = hbBlocked; // the retry guard: a failed write's pending re-read keeps the submit dead
+  go.addEventListener('click', async () => {
+    if (go.disabled) return;
+    const body = { sessionId: cm.id, intervalMinutes: Number(iv.value) || 15, prompt: ta.value.trim() };
+    const l = lab.value.trim(); if (l) body.label = l;
+    go.disabled = true; // one submit at a time
+    const r = await hbReq('POST', '/api/heartbeats', body);
+    if (!cm) return; // closed mid-flight
+    if (r.status === 200) { closeCm(); toast('heartbeat scheduled'); hbTick(); return; } // the form closes + the list refreshes
+    await hbWriteFail(r);
+    if (r.status === 400) { // the field-level error: the form STAYS open — the note lands by the field, the typed words survive
+      txt(cm.errEl || (cm.errEl = el('pop-hint err', box)), hbFailText(r));
+      go.disabled = hbBlocked; // the guard decides — a landed re-read re-arms, a failed one keeps it dead
+      return;
+    }
+    closeCm(); // 409/503/other: the toast said why
+  });
+  f.appendChild(go);
+}
 function cmRow(box, label, note, fn, dis, tip) { // dis rows: greyed, no listener — visible-but-locked, never lights up
   const r = el('pop-row' + (dis ? ' dis' : ''), box);
   txt(el('pn', r), label);
@@ -1728,10 +1815,12 @@ function renderCm() {
   const box = cm.el; box.innerHTML = '';
   if (cm.kind === 'session') {
     const id = cm.id;
+    if (cm.form === 'hb') { hbSchedForm(box); return; } // 7bc-3 S2: the schedule form replaces the rows (the rename-form dialect)
     cmRow(box, 'Open', '', () => { closeCm(); showSession(id); });
     cmRow(box, 'Rename', '', () => cmRename(id));
     cmRow(box, 'Copy ID', '', () => cmCopy(id));
     cmRow(box, 'Copy UI link', '', () => cmCopy(location.href.split('#')[0] + '#/s/' + encodeURIComponent(id))); // 7bb: the full URL with the hash — paste anywhere (the discord lane's "view this in ui" builds the same shape)
+    if (cm.live) cmRow(box, 'Schedule heartbeat\u2026', '', () => { cm.form = 'hb'; renderCm(); }, hbDown, hbDown ? 'daemon unavailable' : ''); // 7bc-3 S2: live rows only — creating needs the session's worker; the daemon-down posture greys it
     if (!cm.live) cmRow(box, 'Resume', '', () => { closeCm(); resumeSession(id); }); // 7aq: inactive rows only — a live row IS the running agent
     cmRow(box, 'Shutdown', 'confirm', () => { cm.confirm = true; renderCm(); });
     if (cm.confirm) { // the hamburger's confirm-row pattern, same treatment
@@ -1756,6 +1845,23 @@ function renderCm() {
       go.addEventListener('click', () => cmDelete(cm.id));
       cf.appendChild(go); cf.appendChild(no);
     }
+  } else if (cm.kind === 'hb') { // 7bc-3 S2: the registry row's menu — the job re-resolves from hbData (fresh status; a stale row says so honestly)
+    const j = (hbData || []).find((x) => x && x.id === cm.id);
+    if (!j) { txt(el('pop-none', box), 'job no longer in the registry'); return; } // the row outlived its job — the next tick repaints the section
+    if (j.target) cmRow(box, 'Open session', '', () => { closeCm(); showSession(j.target); }); // the click action, preserved
+    const dis = hbDown, tip = dis ? 'daemon unavailable' : ''; // the daemon-down posture: the writes grey until the next successful read
+    if (j.status === 'paused') cmRow(box, 'Resume', '', () => cmHbManage(cm.id, 'resume'), dis, tip);
+    else if (j.status === 'active') cmRow(box, 'Pause', '', () => cmHbManage(cm.id, 'pause'), dis, tip);
+    cmRow(box, 'Delete', 'confirm', () => { cm.confirm = true; renderCm(); }, dis, tip);
+    if (cm.confirm) { // the Shutdown confirm-row pattern, same treatment
+      const cf = el('mconfirm', box);
+      txt(el('mwarn', cf), 'Delete \u2014 removes the heartbeat job.');
+      const go = document.createElement('button'), no = document.createElement('button');
+      txt(go, 'Delete'); txt(no, 'Cancel');
+      no.addEventListener('click', () => { cm.confirm = null; renderCm(); });
+      go.addEventListener('click', () => cmHbDelete(cm.id));
+      cf.appendChild(go); cf.appendChild(no);
+    }
   } else if (cm.kind === 'item') {
     cmRow(box, 'Copy text', '', () => cmCopy(cm.text));
   }
@@ -1776,6 +1882,8 @@ document.addEventListener('contextmenu', (e) => {
   if (!(t.closest && (t.closest('#sidebar') || t.closest('#session')))) return; // outside the app chrome: native menu
   e.preventDefault(); // suppressed inside the main/sidebar panes
   closeCm(); // one menu: the previous closes wherever the right-click lands
+  const hbr = t.closest('.hb-row');
+  if (hbr && hbr.dataset && hbr.dataset.id) { openCm(e, 'hb', { id: hbr.dataset.id }); return; } // 7bc-3 S2: the registry row's own menu — the job re-resolves from hbData at render (fresh status, honest staleness)
   const row = t.closest('.row');
   if (row && row.dataset && row.dataset.id) {
     openCm(e, row.classList.contains('child') ? 'child' : 'session', { id: row.dataset.id, live: row.dataset.live === '1' }); // 7aq: liveness rides the row
@@ -1844,15 +1952,19 @@ document.addEventListener('click', (e) => { // 7ac: delegated — anchors carry 
 });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && viewer) closeViewer(); }); // Esc closes the viewer (menu + sash listeners untouched)
 
-// --- 7bc: heartbeats section (read-only registry view) — the daemon's
-// scheduled-jobs store (scheduled-jobs.json under the session-artifacts dirs)
-// surfaced in the sidebar under the sessions, grey + collapsible. This is
-// the VIEW: no write surface exists; the operator's management flows through
-// the conversation as designed (the row click opens the target session; the
-// agent runs rlm_heartbeat on the operator's word). Active + paused render;
-// cancelled/completed are history, hidden as noise. ---
+// --- 7bc: heartbeats section (the registry view) + 7bc-3 S2 (the write
+// affordances) — the daemon's scheduled-jobs store (scheduled-jobs.json
+// under the session-artifacts dirs) surfaced in the sidebar under the
+// sessions, grey + collapsible. S2: the rows' context menu carries the
+// write affordances (Pause/Resume + Delete) and a LIVE session row's menu
+// carries the schedule form — every write rides the S1 endpoints; the
+// conversation keeps its own path (the agent runs rlm_heartbeat).
+// Active + paused render; cancelled/completed are history, hidden as
+// noise. ---
 let hbData = null;
 let hbOpen = lsGet('webuiHbOpen') !== '0'; // open by default; the caret toggles (persisted like the row carets)
+let hbDown = false; // 7bc-3 S2: the daemon-down posture — a 503 write disables the write affordances until the next SUCCESSFUL read (reads stay file-parse honest; the client cannot probe the daemon itself)
+let hbBlocked = false; // 7bc-3 S2: the refresh-before-retry guard — any failed write re-reads the registry first; the retry re-arms only when the read lands
 function renderHb() {
   const box = $('#hb');
   if (!box) return;
@@ -1868,6 +1980,7 @@ function renderHb() {
   if (!hbOpen) return; // collapsed: the head stays, the rows fold
   for (const j of jobs) {
     const row = el('hb-row', box);
+    row.dataset.id = j.id; // 7bc-3 S2: the row's job id rides the dataset — the cm opens on it (renderCm re-resolves the CURRENT job from hbData, never a stale snapshot)
     if (j.target) { row.title = 'open session ' + j.target; row.addEventListener('click', () => showSession(j.target)); }
     txt(el('hb-label', row), j.label || '(unlabeled)');
     const meta = el('hb-meta', row);
@@ -1884,7 +1997,7 @@ function hbTargets() { // 7bc-2: the ACTIVE-target set from the fetched registry
 }
 async function hbTick() { // fetches the registry; a failed read keeps the last good list (null-safe, no console noise)
   const d = await api('/api/heartbeats');
-  if (Array.isArray(d && d.heartbeats)) hbData = d.heartbeats;
+  if (Array.isArray(d && d.heartbeats)) { hbData = d.heartbeats; hbDown = false; hbBlocked = false; } // 7bc-3 S2: a successful read re-arms the write affordances (the daemon-down posture + the retry guard)
   renderHb();
   if (hbTargets()) { // 7bc-2: only a CHANGED set repaints — a paused-on-the-fly job drops the glyph within the tick; an unchanged registry costs zero extra renders
     if (listData) renderList(); // rows repaint with the fresh glyph set (skip before the first sessions fetch lands — its own render paints the glyphs)

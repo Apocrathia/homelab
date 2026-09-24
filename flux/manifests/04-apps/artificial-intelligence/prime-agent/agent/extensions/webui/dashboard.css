@@ -336,9 +336,9 @@ padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;}
 .menu .utext{color:var(--grey-4);font-size:11px;padding:0 12px 10px;}
 
 /* 7ah: context menu — the hamburger panel's own chrome (grey-2, hairline,
-   square, system mono); lime lives on the hover row only; locked rows
-   (Archive rides G4; child Delete owes a server route) stay grey and never
-   light up; the confirm block reuses the mconfirm treatment */
+   square, system mono); lime lives on the hover row only; locked rows stay
+   grey and never light up (Archive: hidden until its action exists); the
+   confirm block reuses the mconfirm treatment */
 .cmenu{position:fixed;z-index:20;min-width:180px;max-width:280px;background:var(--grey-2);
 border:1px solid var(--hairline);}
 .cmenu .pop-row:hover{background:var(--accent);}
@@ -349,6 +349,18 @@ border:1px solid var(--hairline);}
 .cmenu .mwarn{color:var(--grey-5);font-size:11px;flex:1 1 100%;}
 .cmenu .mconfirm button{padding:3px 10px;font-size:10px;border-color:var(--risk);color:var(--risk);}
 .cmenu .mconfirm button:hover{border-color:var(--risk);color:var(--grey-6);}
+/* 7bc-3 S2: the heartbeat write affordances — the hb-row cm + the schedule
+   form (the rename-form dialect, stacked): select/textarea/input share the
+   menu input chrome; the field note rides the pop-hint treatment; grey
+   everything, accent only on focus */
+.cmenu .mback .pn{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;}
+.cmenu .mform{display:flex;flex-direction:column;gap:6px;padding:8px 12px;}
+.cmenu .mform select,.cmenu .mform textarea,.cmenu .mform input{background:var(--grey-1);color:var(--grey-6);border:1px solid var(--grey-3);
+padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;}
+.cmenu .mform select:focus,.cmenu .mform textarea:focus,.cmenu .mform input:focus{outline:none;border-color:var(--accent);}
+.cmenu .mform textarea{resize:vertical;min-height:44px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.cmenu .mform button{align-self:flex-end;padding:3px 10px;font-size:10px;}
+.cmenu .mform button:disabled{color:var(--grey-4);border-color:var(--grey-3);cursor:default;}
 .toast{position:fixed;bottom:16px;right:16px;background:var(--grey-2);border:1px solid var(--hairline);
 color:var(--grey-5);padding:6px 12px;font-size:11px;z-index:30;} /* 7ah: clipboard confirm — instant, no animation */
 /* 7ac: path links — the .lnk link treatment in grey-3 (underline, no lime) */
@@ -368,9 +380,10 @@ text-overflow:ellipsis;flex:1;min-width:0;}
 
 .item.digest > summary::before{content:'';display:inline-block;width:8px;} /* 7az rider: the digest marker breathes too */
 
-/* 7bc heartbeats section (read-only v1): the daemon's scheduled-jobs registry
-   surfaced in the sidebar — grey, collapsible, under the sessions; no accent
-   (the operator's management flows through the conversation, this is the view) */
+/* 7bc heartbeats section: the daemon's scheduled-jobs registry surfaced in
+   the sidebar — grey, collapsible, under the sessions; no accent here (7bc-3
+   S2: the write affordances live in the rows' context menu + the schedule
+   form — see the cmenu block; the section itself stays a plain list) */
 #hb{border-top:1px solid var(--hairline);}
 #hb.hidden{display:none;}
 #hb .hb-head{display:flex;align-items:center;gap:8px;padding:8px 20px 6px;cursor:pointer;user-select:none;}
