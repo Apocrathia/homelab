@@ -62,21 +62,33 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
-    # Authentik stack ownership moved to the provider-opentofu Workspace
-    # (crossplane.yaml + terraform.tf): provider -> application -> both
-    # group bindings -> outpost. This block is the escape hatch: enabled
-    # false stops the chart rendering the blueprint ConfigMap, Helm prunes
-    # it, and the provider-opentofu workspace imports (adopts) the existing
-    # authentik objects in place; no deletion window. The remaining keys
-    # are inert context (nothing in the chart reads them with enabled
-    # false).
+    # Authentik stack: chart-rendered provider-opentofu docs (OnePasswordItem
+    # + ProviderConfig + Workspace) pulling the shared module
+    # terraform/modules/authentik-app at this chart's own git tag — values
+    # only, no per-app HCL (the crossplane.yaml/terraform.tf era is over).
+    # The chart composes the standard inputs from this block; the varmap
+    # carries the adopt tier: live import ids, so the Workspace imports
+    # (adopts) the existing authentik objects in place — no deletion
+    # window, uuids intact, nobody re-logs in. Ids verified live 2026-09-25.
+    # Live provider attrs match the composed surface: intercept_header_auth
+    # false (chart default), access_token_validity hours=1 (module proxy
+    # default) — no per-app overrides needed.
     authentik:
-      enabled: false
+      enabled: true
+      managedBy: terraform
       shared: true
       category: "Platform"
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
+      terraform:
+        varmap:
+          adoption: true
+          import_provider_pk: "39"
+          import_application_id: "demo-app"
+          import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
+          import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
+          import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"
 
     gatus:
       enabled: true

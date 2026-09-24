@@ -10,7 +10,7 @@ The demo app is a **baseline template** that demonstrates:
 
 - **Helm Chart Deployment**: Uses the generic-app chart for reusable application patterns
 - **Application Deployment**: Basic application deployment patterns
-- **Authentik Integration**: SSO integration through an Authentik proxy outpost owned by a provider-opentofu Workspace (chart-rendered blueprint retired)
+- **Authentik Integration**: SSO integration through an Authentik proxy outpost owned by a chart-rendered provider-opentofu Workspace pulling the shared `terraform/modules/authentik-app` module
 - **Gateway API Routing**: Traffic routing through Gateway API (handled by Authentik)
 - **Storage Integration**: Both persistent (Longhorn) and shared (SMB) storage
 - **Monitoring**: Application monitoring and observability
@@ -28,23 +28,20 @@ The demo app is deployed using **Flux GitOps** with a HelmRelease resource that 
 
 This directory contains:
 
-- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: false` — see [Authentik Ownership](#authentik-ownership))
-- `crossplane.yaml` - OnePasswordItem token + provider-opentofu `ProviderConfig`/`Workspace` owning the Authentik stack
-- `terraform.tf` - HCL module for the Workspace (stitched in at build time by `kustomization.yaml`)
-- `kustomization.yaml` - Kustomize configuration for Flux deployment (module stitch)
+- `helmrelease.yaml` - Flux HelmRelease resource that deploys the app using generic-app chart (`authentik.enabled: true` + `managedBy: terraform` — see [Authentik Ownership](#authentik-ownership))
+- `kustomization.yaml` - Kustomize configuration for Flux deployment (namespace, HelmRelease, nginx ConfigMap)
 - `README.md` - This documentation
 
-Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is NOT chart-generated anymore — the Workspace owns it. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
+Workload resources (deployment, service, PVCs, etc.) are generated from the generic-app chart templates. The Authentik stack is chart-rendered too — the chart's `authentik.managedBy: terraform` mode renders the OnePasswordItem + provider-opentofu ProviderConfig/Workspace docs. The app has no HTTPRoute of its own (`httproute.enabled: false`); the outpost-generated `ak-outpost-demo-app-outpost` route (ns `authentik`) is the only route serving `demo.gateway.services.apocrathia.com`, on both gateways. The old `tailnet-shared-httproute.yaml` era is over — that file was deleted.
 
 ## Authentik Ownership
 
-The full Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings -> outpost — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`, `crossplane.yaml`). The HCL lives in `terraform.tf`; `kustomization.yaml` packs it into a generated ConfigMap (`demo-app-authentik-module`) and a `replacements` rule copies it into the Workspace's `spec.forProvider.module` byte-for-byte.
+The full Authentik stack — proxy provider -> application -> `admins` (order 10) + `users` (order 20) group bindings -> outpost — is owned by the provider-opentofu `Workspace` (`demo-app-authentik`). The chart renders it: `authentik.managedBy: terraform` in `helmrelease.yaml` makes the generic-app chart render the OnePasswordItem + ProviderConfig/Workspace docs pulling the shared module `terraform/modules/authentik-app` (at the chart's own git tag, `generic-app-<version>`) — the module is the HCL, values-only, no per-app tofu files. The variable contract is the module's `variables.tf`; the chart composes the standard inputs from the `authentik` values block.
 
-- The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the OnePasswordItem in `crossplane.yaml` — same shared item as headlamp and chaos-mesh.
+- The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the chart-rendered OnePasswordItem — same shared item as headlamp and chaos-mesh.
 - The outpost config carries BOTH gateway parentRefs: `main-gateway`/`https` (LAN) and `tailnet-gateway`/`https-gateway-services` (tailnet). The outpost route owns both doors.
-- `helmrelease.yaml` keeps the `authentik` block with `enabled: false` — the escape hatch that stops the chart rendering a blueprint ConfigMap.
-- ADOPT, not recreate: the Workspace imports (adopts) the chart-era Authentik objects in place — import blocks in `terraform.tf` + live ids in the Workspace `varmap` (`crossplane.yaml`). Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap stay in the module permanently — they go inert after adoption (verified), chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
-- demo-app stays on this inline, kustomize-owned shape for now — the generic-app chart's shared-module path (`terraform/modules/authentik-app`, chart 0.0.84+) does not apply to it yet: this Workspace's tofu state uses the inline resource addresses (`authentik_provider_proxy.demo-app-proxy-provider`, not the module's `app[0]`), so flipping to the module would plan duplicate creates. Its own module migration (one-time `tofu state mv` or a delete+import cycle) is a separate pending decision.
+- ADOPT, not recreate: the chart-composed varmap carries `adoption: true` + the live import ids, so the module's import blocks adopt the existing Authentik objects in place. Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap ids stay permanently — they go inert after adoption, chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
+- First reconcile after this flip needs the `generic-app-<version>` git tag (the create-chart-tag CI job pushes it minutes after merge) and a one-time tofu state wipe — see the MR description; until then the workspace transiently fails (pathspec did not match).
 
 ## Storage Pattern
 
@@ -176,12 +173,23 @@ secrets:
   itemPath: "vaults/Secrets/items/demo-app-secrets"
 
 authentik:
-  # Stack owned by the provider-opentofu Workspace (crossplane.yaml +
-  # terraform.tf); the chart block is the disabled escape hatch.
-  enabled: false
+  # Chart-rendered provider-opentofu stack pulling the shared module
+  # terraform/modules/authentik-app; the varmap carries the adopt-tier ids.
+  enabled: true
+  managedBy: terraform
+  shared: true
+  category: "Platform"
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
+  terraform:
+    varmap:
+      adoption: true
+      import_provider_pk: "39"
+      import_application_id: "demo-app"
+      import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
+      import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
+      import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"
 
 httproute:
   enabled: false
@@ -193,7 +201,7 @@ httproute:
 - **Volume Mounts**: All volume mounts defined in `app.volumeMounts` section
 - **Storage**: Multi-volume pattern - Longhorn for app data, SMB for static content
 - **Volume Structure**: Container-specific volumes (emptyDir) and pod-wide volumes (storage)
-- **Authentication**: Authentik SSO — stack owned by the provider-opentofu Workspace; the chart's authentik block is disabled
+- **Authentication**: Authentik SSO — stack owned by the chart-rendered provider-opentofu Workspace (module `terraform/modules/authentik-app`); the chart's authentik block carries values only
 - **Secrets**: 1Password integration for sensitive configuration
 - **Networking**: Uses Authentik outpost (HTTPRoute disabled)
 

@@ -11,7 +11,7 @@ This deployment includes:
 - In-cluster Kubernetes dashboard with full resource management
 - OIDC authentication via Authentik (reuses the `kubernetes` OIDC provider)
 - Gateway API routing via Cilium
-- Authentik dashboard entry managed by a Crossplane provider-opentofu `Workspace` (`crossplane.yaml`, HCL module in `terraform.tf`)
+- Authentik dashboard entry managed by a Crossplane provider-opentofu `Workspace` (`crossplane.yaml`, pulling the shared `terraform/modules/authentik-app` module remotely)
 
 ## Access
 
@@ -25,7 +25,7 @@ All configuration is handled through Helm values in `helmrelease.yaml`.
 
 Uses the same Authentik OIDC provider as `kubectl` OIDC login. Users authenticate through Authentik and Headlamp uses the OIDC token to interact with the Kubernetes API. Access is controlled by Authentik group membership mapped to Kubernetes RBAC roles (see `authentik/kube-auth/`).
 
-No secrets are required for the OIDC client itself -- it is a public client using PKCE. The Authentik dashboard entry (application + group binding) is managed by the Crossplane Workspace in `crossplane.yaml`, which reads its Authentik API token from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`). The HCL module lives in `terraform.tf` and is stitched into the Workspace at build time: `kustomization.yaml` packs the file into a generated ConfigMap (`headlamp-authentik-module`) and a `replacements` rule copies it into `spec.forProvider.module` byte-for-byte. The intermediate ConfigMap stays in the render (kustomize runs patches before replacements, so it cannot be dropped) and carries no `authentik_blueprint` label, so Authentik ignores it.
+No secrets are required for the OIDC client itself -- it is a public client using PKCE. The Authentik dashboard entry (application + group binding) is managed by the Crossplane Workspace in `crossplane.yaml`, which reads its Authentik API token from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`). The Workspace is a thin shell: `source: Remote` pulls the shared module `terraform/modules/authentik-app` (pinned to the `generic-app-0.0.84` chart release tag; the create-chart-tag CI job pushes it minutes after merge, so the first reconcile fails once until the tag lands), and the module inputs live in the Workspace `varmap` — the full input set, since kustomize composes nothing. The module runs in `library` mode: headlamp has NO provider of its own — the tile + the `admins` binding are its whole Authentik footprint — and its OIDC login rides the blueprint-owned `kubernetes` OIDC provider (`authentik/kube-auth/`). ADOPT, not recreate: `adoption: true` + live import ids in the varmap adopt the existing objects in place (uuids intact, no deletion window); the `authentik-blueprint-cleanup.yaml` one-shot companion fired once and stays forever.
 
 ## Troubleshooting
 

@@ -1,9 +1,10 @@
 # authentik-app: the shared tofu module for generic-app chart apps.
 # ROOT module — the provider-opentofu Workspace pulls this directory
 # directly via source: Remote (import blocks are only legal in the root
-# module, so there is no wrapper). One module, two provider modes:
-# proxy (provider + application + bindings + outpost) and oidc (custom
-# scope mappings + oauth2 provider + application + bindings).
+# module, so there is no wrapper). One module, three provider modes:
+# proxy (provider + application + bindings + outpost), oidc (custom
+# scope mappings + oauth2 provider + application + bindings), and
+# library (application + bindings only — no provider).
 
 provider "authentik" {
   # House convention for in-cluster Authentik consumers (kagent, the
@@ -181,7 +182,10 @@ resource "authentik_application" "app" {
   meta_description = var.meta_description != "" ? var.meta_description : null
   meta_publisher   = var.meta_publisher != "" ? var.meta_publisher : null
 
-  protocol_provider = var.mode == "proxy" ? authentik_provider_proxy.app[0].id : authentik_provider_oauth2.app[0].id
+  # Library mode: no provider — the tile's login is handled elsewhere
+  # (headlamp: the kubernetes OIDC issuer blueprint). null omits the
+  # attribute, so an adopted provider-less application stays provider-less.
+  protocol_provider = var.mode == "library" ? null : (var.mode == "proxy" ? authentik_provider_proxy.app[0].id : authentik_provider_oauth2.app[0].id)
 }
 
 # IMMEDIATELY after the application: a proxy app without policies is open

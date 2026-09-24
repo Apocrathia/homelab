@@ -22,11 +22,11 @@ variable "external_host" {
 
 variable "mode" {
   type        = string
-  description = "Provider mode: proxy (provider + outpost) or oidc (oauth2 provider). Bookmarks stay chart-blueprint managed."
+  description = "Provider mode: proxy (provider + outpost), oidc (oauth2 provider), or library (dashboard tile + bindings only — no provider, for apps whose login is handled elsewhere, e.g. headlamp on the kubernetes OIDC issuer). Bookmarks stay chart-blueprint managed."
   default     = "proxy"
   validation {
-    condition     = contains(["proxy", "oidc"], var.mode)
-    error_message = "mode must be \"proxy\" or \"oidc\" — bookmarks are not covered by this module."
+    condition     = contains(["proxy", "oidc", "library"], var.mode)
+    error_message = "mode must be \"proxy\", \"oidc\", or \"library\" — bookmarks are not covered by this module."
   }
 }
 
@@ -52,7 +52,7 @@ variable "adoption" {
   default     = false
   validation {
     condition = !var.adoption || (
-      var.import_provider_pk != "" &&
+      (var.mode == "library" || var.import_provider_pk != "") &&
       var.import_application_id != "" &&
       (var.mode != "proxy" || var.import_outpost_uuid != "") &&
       (!var.shared || var.import_binding_users_pk != "") &&
