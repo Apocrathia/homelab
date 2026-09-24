@@ -1,6 +1,30 @@
 # Changelog
 
-## Version 0.0.83 (Latest)
+## Version 0.0.84 (Latest)
+
+- **Authentik tofu-native support (`authentik.managedBy`)**: new values knob —
+  `blueprint` (default; zero behavior change for existing apps) or
+  `terraform` (the fleet path). `managedBy: terraform` renders the
+  provider-opentofu docs from chart templates (OnePasswordItem +
+  ProviderConfig + Workspace) and suppresses the blueprint ConfigMaps. The
+  values-only contract: the chart composes the module's standard inputs from
+  the `authentik` values and the app's `authentik.terraform.varmap` (native
+  types — booleans stay booleans, import ids are quoted strings) merges on
+  top. No per-app `terraform.tf`, no module ConfigMap, no `valuesFrom`, no
+  kustomization additions. proxy and oidc modes (bookmark stays blueprint
+  and fails the render loudly under terraform). The Workspace pulls the
+  shared root module `terraform/modules/authentik-app` via `source: Remote`
+  with `remotePullPolicy: IfNotPresent`, ref-pinned to this chart's own git
+  tag (`generic-app-<version>`). Known behavior: right after a chart bump
+  the tag lands via CI minutes after merge, so the first workspace
+  reconcile fails once (`pathspec ... did not match`) and self-heals on the
+  next poll — one transient ReconcileError cycle per chart bump is expected.
+  The Workspace renders `managementPolicies: [Observe, Create, Update]`:
+  crossplane v2 removed `deletionPolicy`, so excluding the Delete action is
+  the v2-native orphan — a GitOps prune of the Workspace object can never
+  run tofu destroy on the live Authentik stack.
+
+## Version 0.0.83
 
 - **SMB mount options**: SMB volumes now default `spec.mountOptions` to
   `vers=3.0,uid=1000,noperm` (per-volume `mountOptions` list overrides for

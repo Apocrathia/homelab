@@ -1,4 +1,4 @@
-{{- if and .Values.authentik.enabled (or (not .Values.authentik.mode) (eq .Values.authentik.mode "proxy")) }}
+{{- if and .Values.authentik.enabled (ne (default "blueprint" .Values.authentik.managedBy) "terraform") (or (not .Values.authentik.mode) (eq .Values.authentik.mode "proxy")) }}
 ---
 apiVersion: v1
 kind: ConfigMap
