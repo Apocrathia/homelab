@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.83"
+      version: "0.0.84"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -62,16 +62,21 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
-    # Authentik stack ownership moved to the provider-opentofu Workspace
-    # (crossplane.yaml + terraform.tf): provider -> application -> both
-    # group bindings -> outpost. This block is the escape hatch: enabled
-    # false stops the chart rendering the blueprint ConfigMap, Helm prunes
-    # it, and the provider-opentofu workspace imports (adopts) the existing
-    # authentik objects in place; no deletion window. The remaining keys
-    # are inert context (nothing in the chart reads them with enabled
-    # false).
+    # Authentik stack: chart-rendered provider-opentofu docs (OnePasswordItem
+    # + ProviderConfig + Workspace) pulling the shared module
+    # terraform/modules/authentik-app at this chart's own git tag — values
+    # only, no per-app HCL (the crossplane.yaml/terraform.tf era is over).
+    # The chart composes the standard inputs from this block; no varmap
+    # needed. The migration to the module keeps the SAME tofu state: at
+    # the gate, tofu state mv renames the inline-era addresses to the
+    # module's addresses (workspace paused, Flux suspended) — no wipe,
+    # no import ids anywhere, uuids intact, nobody re-logs in.
+    # Live provider attrs match the composed surface: intercept_header_auth
+    # false (chart default), access_token_validity hours=1 (module proxy
+    # default) — no per-app overrides needed.
     authentik:
-      enabled: false
+      enabled: true
+      managedBy: terraform
       shared: true
       category: "Platform"
       displayName: "Demo Application"
