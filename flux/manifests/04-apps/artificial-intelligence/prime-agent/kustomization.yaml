@@ -23,6 +23,9 @@ configMapGenerator:
       - name-sessions_index.ts=agent/extensions/name-sessions/index.ts
       - a2a_index.ts=agent/extensions/a2a/index.ts
       - a2a_server.mjs=agent/extensions/a2a/server.mjs
+      - discord_index.ts=agent/extensions/discord/index.ts
+      - discord_server.mjs=agent/extensions/discord/server.mjs
+      - discord_guidelines.md=agent/extensions/discord/discord-guidelines.md
       - agent/settings.json
     options:
       disableNameSuffixHash: true
