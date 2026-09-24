@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# Adoption imports — adopt the live chart-era objects IN PLACE: no
+# Adoption imports — adopt the live blueprint-era objects IN PLACE: no
 # companion deletes, no deletion window, uuids intact, no re-login. After
 # the first apply the import blocks go INERT (tofu then treats the objects
 # as plain managed state) and are safe to keep forever.
