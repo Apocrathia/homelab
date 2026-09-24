@@ -91,6 +91,7 @@ All available configuration values for the chart:
 | `secrets.enabled`                              | bool   | `true`                                            | Enable 1Password secrets integration                                                    |
 | `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`           | 1Password item path                                                                     |
 | `authentik.enabled`                            | bool   | `true`                                            | Enable Authentik SSO integration                                                        |
+| `authentik.managedBy`                          | string | `blueprint`                                       | Authentik stack owner: `blueprint` CMs (default) or `terraform` provider-opentofu docs  |
 | `authentik.displayName`                        | string | `Demo Application`                                | Display name in Authentik                                                               |
 | `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`    | External URL                                                                            |
 | `authentik.ssoLaunchUrl`                       | string | `""`                                              | Direct SSO entrypoint for the library tile; empty = the app's own URL                   |
@@ -903,6 +904,110 @@ authentik:
     - "^/api/"
     - "^/v1/"
 ```
+
+#### Authentik stack ownership: `managedBy`
+
+`authentik.managedBy` picks who owns the app's Authentik stack (0.0.84+):
+
+- **`blueprint` (default, legacy)**: the chart renders the blueprint ConfigMap
+  (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it. Unchanged
+  behavior for every existing app.
+- **`terraform` (fleet path)**: the chart renders the provider-opentofu stack —
+  `OnePasswordItem` (workspace token) + `ProviderConfig` (token file +
+  per-app backend args) + `Workspace` — pulling the shared module
+  `terraform/modules/authentik-app`. Blueprint ConfigMaps are suppressed.
+  `proxy` and `oidc` modes; `bookmark` with `terraform` fails the render
+  loudly (bookmarks have no tofu resources — they stay `blueprint`).
+
+The contract is **values-only**: no per-app `terraform.tf`, no module
+ConfigMap, no `valuesFrom`, no kustomization additions. The chart composes
+the module's standard inputs from the `authentik` values (the same inputs the
+blueprint templates read), so flipping an app is a `managedBy` change alone —
+the adopt tier's ids arrive via a gate-time live patch (below), never git.
+
+```yaml
+authentik:
+  enabled: true
+  managedBy: terraform # blueprint -> terraform: the flip
+  # ...the same values the blueprint templates read (composed into varmap)
+  terraform: # module-input overrides only; ids never enter git (see Adopt tier)
+    varmap:
+      access_token_validity: "minutes=10" # example live-vs-default override
+```
+
+**Module**: `terraform/modules/authentik-app` is the root config (import
+blocks are root-only) — the Workspace pulls it via `source: Remote` with
+`module:
+git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-{{ chart version }}`.
+The ref self-pins to this chart's own git tag: the create-chart-tag CI job
+pushes `generic-app-<version>` minutes after merge, so the chart and the
+module it deploys always move together.
+
+**First-reconcile window**: the chart renders the new `?ref=` the moment Flux
+picks up the HelmRelease, but the tag lands minutes later via CI — the FIRST
+workspace reconcile after a chart bump fails with `pathspec
+'generic-app-<version>' did not match` (ReconcileError) and self-heals on the
+next reconcile once the tag exists. Expected, once per chart bump;
+`remotePullPolicy: IfNotPresent` (the admission default is `Always`) keeps
+later polls from re-cloning the repo every reconcile — a chart bump changes
+the ref and re-pulls exactly once.
+
+**Two tiers**:
+
+- **Adopt** (apps with live blueprint-era objects): the operator injects
+  the `adoption` flag + every live import id for the app's shape via a
+  gate-time live patch on the Workspace varmap (kubectl patch, Flux
+  suspended) — the ids NEVER enter git. tofu imports the objects in place —
+  no deletion window, uuids intact, nobody re-logs in; after the first apply
+  the imports go inert and the patch drops. The render gate and the module's
+  variable validation both fail loudly on a missing id (an empty id makes
+  tofu silently skip the import and plan a duplicate create).
+- **Blip** (fresh create, e.g. new apps): no varmap at all — the
+  chart-composed inputs suffice; tofu creates the stack from scratch.
+  Chart-era blueprints for blip apps decommission separately.
+
+**Private-repo hardening (recorded recipe, not active)**: the repo is public
+today, so the module pull needs zero auth. For the day it flips private, the
+proven recipe (provider-opentofu special-cases the filename) is one more
+credentials entry on the ProviderConfig:
+
+```yaml
+spec:
+  credentials:
+    - filename: authentik-token # existing
+      source: Secret
+      secretRef:
+        {
+          name: authentik-terraform-token,
+          namespace: <app>,
+          key: authentik-terraform-token,
+        }
+    - filename: .git-credentials # git module-pull auth
+      source: Secret
+      secretRef:
+        {
+          name: authentik-terraform-token,
+          namespace: <app>,
+          key: gitlab-module-pull-token,
+        }
+```
+
+The 1Password item `crossplane-terraform-secrets` gains a field
+`gitlab-module-pull-token` whose VALUE is the full git-store line
+`https://oauth2:<token>@gitlab.com` (operator pastes once; never in git). The
+per-app OnePasswordItem CR syncs every item field into the Secret, so the key
+appears in every app namespace with no per-app manifest changes. The provider
+writes the file to the workdir and points `GIT_CRED_DIR` at it (process-wide —
+every app namespace must use the same token content to keep the
+last-Connect-wins race benign). No `.netrc` needed.
+
+Why `managementPolicies` (no `Delete`): crossplane v2 removed
+`spec.deletionPolicy` (the structural schema silently prunes it), so the
+Workspace renders `managementPolicies: [Observe, Create, Update]` — the
+v2-native orphan. A GitOps prune of the Workspace object can never run
+`tofu destroy` against the live Authentik stack. Deliberate decommission
+requires temporarily restoring `["*"]` (or a manual `tofu destroy`) — the
+guard is intentional.
 
 ### PostgreSQL Database
 

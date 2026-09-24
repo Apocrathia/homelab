@@ -1,0 +1,166 @@
+{{/* Authentik tofu-native stack (provider-opentofu): OnePasswordItem + ProviderConfig + Workspace, rendered when authentik.managedBy=terraform. The Workspace pulls the shared module terraform/modules/authentik-app at the chart's own git tag (generic-app-<version>, pushed by the create-chart-tag CI job minutes after merge); the varmap carries the module's inputs. proxy and oidc modes; bookmarks stay managedBy: blueprint. */}}
+{{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") }}
+{{- $mode := default "proxy" .Values.authentik.mode }}
+{{- if and (ne $mode "proxy") (ne $mode "oidc") }}
+{{- fail (printf "authentik.managedBy=terraform supports modes \"proxy\" and \"oidc\" only, got %q - bookmarks have no tofu resources (use managedBy: blueprint)" $mode) }}
+{{- end }}
+{{- if and .Values.authentik.shared (not .Values.tailnet.enabled) }}
+{{- fail "authentik.shared: true requires tailnet.enabled: true - a users binding without tailnet exposure would be unreachable for friends" }}
+{{- end }}
+{{- $ns := .Values.app.namespace | default .Values.app.name }}
+{{- $oidc := .Values.authentik.oidc }}
+{{/*
+  The module-input varmap. The chart composes the standard surface from the
+  authentik values (the same inputs the blueprint templates read) so a blip
+  app is a managedBy flip alone; authentik.terraform.varmap merges on top
+  for what only the app knows - module-input overrides. Adoption ids never
+  enter git: adopt apps get them via a gate-time live patch on the Workspace
+  (kubectl patch, Flux suspended); the variable contract is
+  terraform/modules/authentik-app/variables.tf. Native types
+  flow through the tfvars.json path: bools as bools, ids as quoted strings.
+  NEVER route this through a ConfigMap - all-string data breaks the typing.
+*/}}
+{{- $composed := dict
+      "app_name" .Values.app.name
+      "mode" $mode
+      "display_name" .Values.authentik.displayName
+      "external_host" .Values.authentik.externalHost
+      "internal_host" (printf "http://%s.%s.svc.cluster.local:%v" .Values.app.name $ns (.Values.app.service.port | default 80))
+      "shared" .Values.authentik.shared
+      "tailnet" .Values.tailnet.enabled
+      "sso_launch_url" .Values.authentik.ssoLaunchUrl
+      "icon" .Values.authentik.icon
+      "open_in_new_tab" .Values.authentik.openInNewTab
+      "category" .Values.authentik.category
+      "authorization_flow" .Values.authentik.authorizationFlow
+      "invalidation_flow" .Values.authentik.invalidationFlow
+      "authentication_flow" .Values.authentik.authenticationFlow
+      "intercept_header_auth" .Values.authentik.interceptHeaderAuth
+      "skip_path_regex" .Values.authentik.skipPathRegex
+      "authentik_host" .Values.authentik.authentikHost
+      "authentik_host_insecure" .Values.authentik.authentikHostInsecure
+      "service_connection" .Values.authentik.serviceConnection
+      "log_level" .Values.authentik.logLevel
+      "kubernetes_replicas" .Values.authentik.replicas
+      "kubernetes_namespace" .Values.authentik.namespace
+      "oidc_client_id" $oidc.clientId
+      "client_type" $oidc.clientType
+      "sub_mode" $oidc.subMode
+      "include_claims_in_id_token" $oidc.includeClaimsInIdToken
+      "issuer_mode" $oidc.issuerMode
+      "signing_key" $oidc.signingKey
+      "access_code_validity" $oidc.accessCodeValidity
+      "refresh_token_validity" $oidc.refreshTokenValidity
+      "scopes" $oidc.scopes
+}}
+{{- if .Values.authentik.metaDescription }}{{- $_ := set $composed "meta_description" .Values.authentik.metaDescription }}{{- end }}
+{{- if .Values.authentik.metaPublisher }}{{- $_ := set $composed "meta_publisher" .Values.authentik.metaPublisher }}{{- end }}
+{{- if eq $mode "oidc" }}{{- $_ := set $composed "access_token_validity" $oidc.accessTokenValidity }}{{- end }}
+{{- $rus := list }}
+{{- range $oidc.redirectUris }}
+{{- $rus = append $rus (dict "url" .url "matching_mode" (.matchingMode | default "strict")) }}
+{{- end }}
+{{- $_ := set $composed "redirect_uris" $rus }}
+{{- $csm := list }}
+{{- range $oidc.customScopeMappings }}
+{{- $m := dict "name" .name "scope_name" .scopeName "expression" .expression }}
+{{- if .description }}{{- $_ := set $m "description" .description }}{{- end }}
+{{- $csm = append $csm $m }}
+{{- end }}
+{{- if gt (len $csm) 0 }}{{- $_ := set $composed "custom_scope_mappings" $csm }}{{- end }}
+{{- $vm := default (dict) (default (dict) .Values.authentik.terraform).varmap }}
+{{- $varmap := merge (deepCopy $vm) $composed }}
+{{- if $varmap.adoption }}
+{{- $need := list "import_provider_pk" "import_application_id" "import_binding_admins_pk" }}
+{{- if eq $mode "proxy" }}{{- $need = append $need "import_outpost_uuid" }}{{- end }}
+{{- if $varmap.shared }}{{- $need = append $need "import_binding_users_pk" }}{{- end }}
+{{- range $k := $need }}
+{{- if not (get $varmap $k) }}
+{{- fail (printf "authentik.terraform.varmap: adoption requires a live import id for %q - an empty id makes tofu silently skip the import and plan a duplicate create" $k) }}
+{{- end }}
+{{- end }}
+{{- end }}
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: {{ $ns }}
+spec:
+  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # the operator creates the 1Password item crossplane-terraform-secrets
+  # (vault "Secrets", field authentik-terraform-token), and the OnePassword
+  # Connect operator syncs it as the authentik-terraform-token Secret
+  # consumed by the ProviderConfig in this file. Same item as headlamp's and
+  # chaos-mesh's copies; the namespace differs.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: {{ .Values.app.name }}-authentik
+  namespace: {{ $ns }}
+spec:
+  # Materializes the OnePasswordItem-backed Secret as a file in the tofu
+  # workdir; the module's provider block reads it with file("authentik-token").
+  # The token itself never appears in a manifest.
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: {{ $ns }}
+        key: authentik-terraform-token
+  # Per-app state args for the module's PARTIAL kubernetes backend: the
+  # provider writes this as crossplane.remote.tfbackend and passes it via
+  # -backend-config at tofu init. Without it the backend init fails (the
+  # kubernetes backend requires secret_suffix/namespace/in_cluster_config).
+  # The state Secret is tfstate-default-<suffix> in the app namespace —
+  # deliberately separate from the CI tofu stack (terraform/, GitLab HTTP
+  # backend). Two stacks, two states.
+  backendFile: |
+    secret_suffix     = "{{ $ns }}"
+    namespace         = "{{ $ns }}"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: {{ .Values.app.name }}-authentik
+  namespace: {{ $ns }}
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Deliberate decommission therefore requires
+  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: {{ .Values.app.name }}-authentik
+  forProvider:
+    source: Remote
+    # The shared module is the root config (import blocks are root-only).
+    # The ref self-pins to this chart's own git tag: create-chart-tag CI
+    # pushes generic-app-<version> minutes after merge, so the FIRST
+    # reconcile after a chart bump fails (pathspec did not match) until the
+    # tag lands — one transient ReconcileError cycle, then self-heals.
+    module: "git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-{{ .Chart.Version }}"
+    # Pull once per URL; a chart bump changes the ref and re-pulls. The
+    # admission default (Always) would re-clone the repo on every poll.
+    remotePullPolicy: IfNotPresent
+    # Module inputs: the chart-composed surface + the app's
+    # authentik.terraform.varmap (overrides; adoption ids ride the
+    # gate-time live patch on this Workspace, never git — quoted strings,
+    # shared/adoption as native booleans, the tfvars.json path carries
+    # types). The variable contract:
+    # terraform/modules/authentik-app/variables.tf. The module's own
+    # variable validation is the runtime guard (adoption requires every
+    # shape id; ids without adoption fail).
+    varmap:
+{{ $varmap | toYaml | indent 6 }}
+{{- end }}
