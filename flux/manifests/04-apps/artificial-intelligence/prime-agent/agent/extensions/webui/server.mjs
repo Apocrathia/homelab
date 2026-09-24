@@ -891,8 +891,14 @@ const FILE_ROOTS = [SESSIONS_DIR, ARTIFACTS_DIR, FILE_REPO_ROOT,
 // one of these names.
 function deniedName(p) {
   const b = path.basename(p).toLowerCase();
+  // pentest L1 (finding #30): the report's credential stems — cred*, *key*,
+  // *.pem, *.env (the planted credentials.json/creds.json/apikey.json all
+  // served pre-fix). Coverage-only: the containment held, these are name
+  // tiers. Collateral is the same over-refuse direction the auth* stem
+  // already accepted (any *key* filename, e.g. hotkeys.md, now 403s).
   return b === "config.json" || b.includes("token") || b.startsWith("auth")
-    || b.startsWith("settings") || b.includes("secret");
+    || b.startsWith("settings") || b.includes("secret")
+    || b.startsWith("cred") || b.includes("key") || b.endsWith(".pem") || b.endsWith(".env");
 }
 function fileView(p) { // -> {path,size,text} | [status, {error}]
   if (typeof p !== "string" || !p || /[\x00-\x1f]/.test(p)) return [400, { error: "bad request" }];
@@ -1085,7 +1091,10 @@ function searchChunkTier2(chunk, carryStrLen, lowTerms, perFile, perTermCap, buf
   if (!pending.length) return;
   if (!sameLen) { // length-diverging lowercasing: first hit per term only, via regex on the original case
     for (const p of pending) if (!perFile.anchors[p.ti].length) {
-      const m = new RegExp(searchEscapeRe(lowTerms[p.ti]), "i").exec(str);
+      // semgrep CI (the #36-resync pipeline): the dynamic RegExp is an
+      // escaped literal — searchEscapeRe covers all 12 metacharacters, the
+      // pattern is linear (no alternation-backtracking ReDoS vector).
+      const m = new RegExp(searchEscapeRe(lowTerms[p.ti]), "i").exec(str); // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       if (m) perFile.anchors[p.ti].push(bufStart + Buffer.byteLength(str.slice(0, m.index), "utf-8"));
     }
     return;
@@ -1325,7 +1334,9 @@ const internal = http.createServer(async (req, res) => {
   try { url = new URL(req.url ?? "/", `http://${req.headers.host}`); } catch { return reply(400, "bad request"); }
   if (!authed(req, url, TOKEN)) return reply(401, "unauthorized");
   if (req.method === "POST" && url.pathname === "/internal/register") {
+    if (!isJsonRequest(req)) return reply(415, "unsupported media type"); // pentest #29
     const body = await readJson(req);
+    if (body === BODY_TOO_LARGE) return reply(413, "payload too large"); // pentest #28
     // pentest HIGH (56-pentest-report.md): controlPort is interpolated into
     // the beaconFetch URL template (`http://127.0.0.1:${port}${subpath}`) —
     // a STRING port ("8799/x/…" etc.) is loopback SSRF + token-forward.
@@ -1444,7 +1455,9 @@ const internal = http.createServer(async (req, res) => {
     return reply(200, "ok");
   }
   if (req.method === "POST" && url.pathname === "/internal/event") {
+    if (!isJsonRequest(req)) return reply(415, "unsupported media type"); // pentest #29
     const body = await readJson(req);
+    if (body === BODY_TOO_LARGE) return reply(413, "payload too large"); // pentest #28
     // pentest MED: the event name is allow-listed — an unknown or missing
     // name can never be interpolated into an SSE frame.
     if (!EVENT_NAMES.has(body?.event)) return reply(400, "bad event");
@@ -1461,6 +1474,7 @@ const internal = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/internal/unregister") {
     const body = await readJson(req);
+    if (body === BODY_TOO_LARGE) return reply(413, "payload too large"); // pentest #28
     if (body?.sessionId) {
       beacons.delete(body.sessionId);
       const subs = sseBySession.get(body.sessionId);
@@ -1471,13 +1485,38 @@ const internal = http.createServer(async (req, res) => {
   return reply(404, "not found");
 });
 
+// pentest M3 (finding #28): the body cap — 1MB is generous against every
+// legit payload (beacon frames, the 200-char search cap, composer texts;
+// the guards-review transient: a huge controlPort string JSON.stringify'd
+// in full pre-slice — the cap kills that class too). Past-cap bytes never
+// buffer (the RSS amplification dies at read time) and the body never
+// parses: 413 + the loud log. BODY_TOO_LARGE is the sentinel every caller
+// must turn into its own 413 reply.
+const MAX_BODY_BYTES = 1024 * 1024;
+const BODY_TOO_LARGE = Symbol("body too large");
 function readJson(req) {
   return new Promise((resolve) => {
     const chunks = [];
-    req.on("data", (c) => chunks.push(c));
-    req.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString())); } catch { resolve(null); } });
+    let total = 0;
+    req.on("data", (c) => {
+      total += c.length;
+      if (total <= MAX_BODY_BYTES) chunks.push(c); // past-cap bytes never buffer
+    });
+    req.on("end", () => {
+      if (total > MAX_BODY_BYTES) {
+        console.error(`[prime-webui-server] 413 body cap: ${total} bytes > ${MAX_BODY_BYTES} from ${req.socket?.remoteAddress ?? "?"} ${req.method} ${String(req.url ?? "/").split("?")[0]}`);
+        return resolve(BODY_TOO_LARGE);
+      }
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString())); } catch { resolve(null); }
+    });
   });
 }
+// pentest #29: the frame-forwarding POST tier (/internal/register,
+// /internal/event, /send) parses JSON only when DECLARED application/json
+// (charset tolerated). Same-trust lax parsing (a text/plain JSON body) is
+// probe surface, not a beacon — 415, never parsed.
+const isJsonRequest = (req) =>
+  String(req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase() === "application/json";
 
 // settings-proxy route table (menu slice): endpoint -> method. The beacon
 // (index.ts S1) owns the contracts; the collector forwards method+body and
@@ -1502,6 +1541,10 @@ const public_ = http.createServer(async (req, res) => {
   const serve = (code, type, body, extra) => {
     res.writeHead(code, { "content-type": type, ...extra }); res.end(body);
   };
+  // pentest M2: an over-cap connection gets exactly one answer — the 503 —
+  // and the connection tier (MAX_CONNS, module scope) destroys it at its
+  // deadline; the count itself bounds every held fd, half-open floods included.
+  if (overCap.has(req.socket)) return serve(503, "text/plain", "too many connections", { "connection": "close" });
   let url;
   // malformed request-target (raw socket): 400, never a collector process death
   try { url = new URL(req.url ?? "/", `http://${req.headers.host}`); } catch { return serve(400, "text/plain", "bad request"); }
@@ -1669,7 +1712,9 @@ const public_ = http.createServer(async (req, res) => {
       if (!method) return serve(404, "text/plain", "not found");
       if (req.method !== method) return serve(405, "text/plain", "method not allowed");
       if (!beacons.has(id)) return serve(404, "application/json", JSON.stringify({ error: "not live" }));
-      const r = await beaconFetch(id, "/" + seg[4], method === "POST" ? { json: (await readJson(req)) ?? {} } : undefined);
+      let sbody; // pentest #28: the sentinel must not ride into beaconFetch's JSON.stringify
+      if (method === "POST") { sbody = await readJson(req); if (sbody === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); }
+      const r = await beaconFetch(id, "/" + seg[4], method === "POST" ? { json: sbody ?? {} } : undefined);
       return serve(r.status, typeof r.body === "string" ? "text/plain" : "application/json",
         typeof r.body === "string" ? r.body : JSON.stringify(r.body));
     }
@@ -1800,7 +1845,9 @@ const public_ = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && url.pathname === "/send") {
+      if (!isJsonRequest(req)) return serve(415, "text/plain", "unsupported media type"); // pentest #29
       const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
       const id = body?.session;
       if (!id || !body.text?.trim()) return serve(400, "text/plain", "bad request");
       const r = await beaconFetch(id, "/send", { json: { text: body.text } });
@@ -1808,6 +1855,7 @@ const public_ = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && url.pathname === "/abort") {
       const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
       const id = body?.session;
       if (!id) return serve(400, "text/plain", "bad request");
       const r = await beaconFetch(id, "/abort", { json: {} });
@@ -1815,6 +1863,7 @@ const public_ = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && url.pathname === "/api/new") {
       const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
       const r = resolveNewCwd(body?.cwd);
       if (r.error) return serve(400, "text/plain", r.error);
       const child = spawnAgent(r.cwd); // stdin PIPE held open; its beacon registers it
@@ -1822,6 +1871,7 @@ const public_ = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && url.pathname === "/api/resume") { // 7aq: bring a dead root session back as a collector-spawned rpc child; the resumed beacon re-registers the SAME session id (transcript continuity)
       const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
       const id = body?.id;
       if (typeof id !== "string" || !/^[A-Za-z0-9_-]+$/.test(id)) return serve(400, "text/plain", "bad id");
       const d = diskSessions().find((x) => x.id === id); // root sessions only: resume is a root-session lifecycle act — artifact children belong to their parent
@@ -1842,6 +1892,7 @@ const public_ = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/delete-agent") { // row-state: the reaper's server half — flip the rlm-subagent LEDGER entry to status "deleted" (the TUI ctrl+x semantics: the RECORD dies, the session transcript persists on disk) + recompute the tree; the row re-renders inactive
       const body = await readJson(req);
+      if (body === BODY_TOO_LARGE) return serve(413, "text/plain", "payload too large"); // pentest #28
       const id = body?.id;
       if (typeof id !== "string" || !/^[A-Za-z0-9_-]+$/.test(id)) return serve(400, "text/plain", "bad id");
       if (beacons.has(id)) return serve(409, "application/json", JSON.stringify({ error: "still live" })); // stop it first (the context menu's Stop/shutdown)
@@ -1860,13 +1911,42 @@ const public_ = http.createServer(async (req, res) => {
   } catch (e) { return serve(500, "text/plain", String(e?.message ?? e)); }
 });
 
+// ---------- pentest M2 hardening (finding #27): scoped error handler + bounded sockets ----------
+// The exit-on-error class is BIND-time failure only (EADDRINUSE etc.): the
+// port is unusable by this process. EVERY runtime error — accept-time EMFILE
+// (what the slowloris fd-exhaustion chain fed), transient resets — logs and
+// CONTINUES: the collector is the SPOF for every spawned conversation, and one
+// error must not SIGTERM them all (the M2 death chain).
+const FATAL_BIND_CODES = new Set(["EADDRINUSE", "EACCES", "EADDRNOTAVAIL", "EAFNOSUPPORT", "EINVAL"]);
+// Bounded socket count: openConns counts accepted sockets — a half-open
+// request counts the same as a live SSE view, so the slowloris pile can
+// never outgrow the cap. Past MAX_CONNS the socket is marked over-cap: a
+// request that completes gets ONE answer (the 503 at the handler guard),
+// a silent half-open is destroyed at the deadline — at most N held fds at
+// any instant (the fd-exhaustion class closes).
+const MAX_CONNS = 256;
+let openConns = 0;
+const overCap = new WeakSet();
+public_.on("connection", (sock) => {
+  openConns++;
+  sock.on("close", () => { openConns--; });
+  if (openConns <= MAX_CONNS) return;
+  overCap.add(sock);
+  const kill = setTimeout(() => { try { sock.destroy(); } catch {} }, 1500);
+  kill.unref();
+  sock.on("close", () => clearTimeout(kill));
+});
+
 async function main() {
 console.log(`[prime-webui-server] token source: ${TOKEN_SOURCE}`);
 internal.listen(IPORT, "127.0.0.1", () => console.log(`[prime-webui-server] internal on 127.0.0.1:${IPORT}`));
 internal.on("error", (e) => { if (e?.code === "EADDRINUSE") { console.error("[prime-webui-server] internal port busy, exiting"); process.exit(0); } });
 public_.on("error", (e) => {
-  console.error("[prime-webui-server] public bind error:", e?.code);
-  process.exit(1); // never linger half-bound (internal up, public dead)
+  if (FATAL_BIND_CODES.has(e?.code)) { // #27: the BIND class only — port unusable by this process
+    console.error("[prime-webui-server] public bind error:", e?.code);
+    process.exit(1); // never linger half-bound (internal up, public dead)
+  }
+  console.error("[prime-webui-server] public server error (continuing):", e?.code ?? e?.message ?? String(e));
 });
 public_.listen(PORT, HOST, () => console.log(`[prime-webui-server] serving http://${HOST}:${PORT}`));
 setInterval(() => {

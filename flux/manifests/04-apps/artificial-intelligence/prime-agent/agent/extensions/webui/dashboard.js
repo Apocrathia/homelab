@@ -1632,9 +1632,10 @@ window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu) clos
 // inside the app chrome (main/sidebar panes) EXCEPT input/textarea (native
 // paste/spell survives); Escape + outside-click close. Session rows: Open /
 // Rename (the hamburger's own flow — the row's pane loads first; the form
-// posts to the pane's sid) / Copy ID / Shutdown (confirm row) / Archive
-// (LOCKED — the arch BADGE landed with the row-state slice; the archive
-// ACTION itself is still G4-unpaved, visible-but-locked telegraphs the
+// posts to the pane's sid) / Copy ID / Shutdown (confirm row). Archive:
+// the arch BADGE landed with the row-state slice; the archive ACTION is
+// still unpaved — the item is HIDDEN until the action exists (the
+
 // roadmap). Child rows: Copy ID / Stop (live children — the 409 remedy) /
 // Delete (row-state: confirm row -> POST /api/delete-agent; a still-live
 // child 409s -> "stop it first"; the ledger flips, the transcript persists).
@@ -1733,7 +1734,6 @@ function renderCm() {
     cmRow(box, 'Copy UI link', '', () => cmCopy(location.href.split('#')[0] + '#/s/' + encodeURIComponent(id))); // 7bb: the full URL with the hash — paste anywhere (the discord lane's "view this in ui" builds the same shape)
     if (!cm.live) cmRow(box, 'Resume', '', () => { closeCm(); resumeSession(id); }); // 7aq: inactive rows only — a live row IS the running agent
     cmRow(box, 'Shutdown', 'confirm', () => { cm.confirm = true; renderCm(); });
-    cmRow(box, 'Archive', 'rides G4', null, true, 'rides G4');
     if (cm.confirm) { // the hamburger's confirm-row pattern, same treatment
       const cf = el('mconfirm', box);
       txt(el('mwarn', cf), 'Shutdown — kills the agent worker.');
