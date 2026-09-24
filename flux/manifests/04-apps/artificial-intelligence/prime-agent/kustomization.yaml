@@ -34,6 +34,9 @@ configMapGenerator:
       - webui_config.json=agent/extensions/webui/config.json
       - webui_marked.min.js=agent/extensions/webui/marked.min.js
       - webui_purify.min.js=agent/extensions/webui/purify.min.js
+      - discord_index.ts=agent/extensions/discord/index.ts
+      - discord_server.mjs=agent/extensions/discord/server.mjs
+      - discord_guidelines.md=agent/extensions/discord/discord-guidelines.md
       - agent/settings.json
     options:
       disableNameSuffixHash: true

@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.83"
+      version: "0.0.84"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -20,7 +20,7 @@ spec:
     app:
       name: demo-app
       # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
-      image: public.ecr.aws/nginx/nginx:alpine@sha256:8874e0593c85fda7ac8fce31ddef23e2926cdadffcdcc955d2797b89c63646bf
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:42f630b748ea564bfae750a1b170972e0d087fb57fdc7d03cc00bcbe02d1c465
       volumeMounts:
         - name: data
           mountPath: /app
@@ -62,8 +62,21 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
+    # Authentik stack: chart-rendered provider-opentofu docs (OnePasswordItem
+    # + ProviderConfig + Workspace) pulling the shared module
+    # terraform/modules/authentik-app at this chart's own git tag — values
+    # only, no per-app HCL (the crossplane.yaml/terraform.tf era is over).
+    # The chart composes the standard inputs from this block; no varmap
+    # needed. The migration to the module keeps the SAME tofu state: at
+    # the gate, tofu state mv renames the inline-era addresses to the
+    # module's addresses (workspace paused, Flux suspended) — no wipe,
+    # no import ids anywhere, uuids intact, nobody re-logs in.
+    # Live provider attrs match the composed surface: intercept_header_auth
+    # false (chart default), access_token_validity hours=1 (module proxy
+    # default) — no per-app overrides needed.
     authentik:
       enabled: true
+      managedBy: terraform
       shared: true
       category: "Platform"
       displayName: "Demo Application"

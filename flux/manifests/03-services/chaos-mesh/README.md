@@ -81,6 +81,27 @@ The HTTPRoute is created by Authentik's outpost, which the provider-opentofu Wor
 - **Token**: same 1Password item as headlamp (`crossplane-terraform-secrets`, field `authentik-terraform-token`), materialized into this namespace by the OnePasswordItem in `crossplane.yaml`
 - **Module**: the HCL lives in `terraform.tf` and is stitched into the Workspace at build time: `kustomization.yaml` packs the file into a generated ConfigMap (`chaos-mesh-authentik-module`) and a `replacements` rule copies it into `spec.forProvider.module` byte-for-byte. The intermediate ConfigMap stays in the render — builtin patches run before replacements, so a `$patch: delete` would remove the source before the rule consumes it — and carries no `authentik_blueprint` label (no blueprint generator exists here and no blanket label block remains), so the Authentik blueprint sidecar ignores it. The former `patchesJson6902` strip (`terraform-module-cm-labels.json`) is retired with it.
 
+### Dashboard login (RBAC token)
+
+`securityMode: true` means the dashboard itself requires an RBAC token after
+Authentik admits you. Paste the token from 1Password:
+
+1. Open 1Password → vault `Secrets` → item `homelab-chaos-mesh-token`.
+2. Copy the `token` field — the `chaos-mesh-dashboard` service-account token.
+3. Paste it into the dashboard's token prompt — once per browser.
+
+The token lives in Secret `chaos-mesh-dashboard-token` (`rbac.yaml`); the SA
+token controller populates it and `push-secret.yaml` re-pushes it to the
+1Password item every 24h. If login stops working, copy the current value from
+the item again. (The Sep-2025 flow used item title
+`chaos-mesh-dashboard-token`; that old item, if it still exists in the vault,
+is not resumed by this restore.)
+
+Scope is **read-only**: `ClusterRole chaos-mesh-dashboard-viewer` grants
+get/list/watch on pods, namespaces, and all `chaos-mesh.org` resources. To
+create experiments from the dashboard, add write verbs to that ClusterRole in
+`rbac.yaml`.
+
 ### Alternative Access Methods
 
 If you need direct access (e.g., for API calls), you can still port-forward:
@@ -135,7 +156,8 @@ kubectl apply -f pod-kill-demo.yaml
 ### 3. Monitor Experiments
 
 - **Dashboard**: Use the web UI at https://chaos.gateway.services.apocrathia.com
-  - Requires authentication: Use Authentik SSO or admin token
+  - Requires authentication: Authentik SSO, then the dashboard RBAC token
+    (see [Dashboard login](#dashboard-login-rbac-token))
 - **CLI**: Check experiment status with `kubectl get podchaos -n chaos-mesh`
 - **Logs**: View controller logs with `kubectl logs -n chaos-mesh deployment/chaos-controller-manager`
 

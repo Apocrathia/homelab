@@ -1,0 +1,27 @@
+---
+# Daily CPU stress on one demo-app pod: one stress-ng worker at full load for
+# 60s. The pod's 100m CPU limit caps the actual burn, so the effect is CPU
+# throttling/latency, not an outage. No memory stress in this starter set.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: demo-app-cpu-stress
+  namespace: demo-app
+spec:
+  # Local time matches the repo cron convention (America/Denver).
+  schedule: "CRON_TZ=America/Denver 25 3 * * *"
+  type: StressChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  stressChaos:
+    mode: one
+    duration: "60s"
+    stressors:
+      cpu:
+        workers: 1
+        load: 100
+    selector:
+      namespaces:
+        - demo-app
+      labelSelectors:
+        app: demo-app

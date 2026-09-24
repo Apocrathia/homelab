@@ -14,7 +14,7 @@ spec:
     spec:
       chart: kagent
       # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/helm/kagent
-      version: "0.10.1"
+      version: "0.10.2"
       sourceRef:
         kind: HelmRepository
         name: kagent
@@ -40,7 +40,7 @@ spec:
     # Use ghcr.io for release images (default cr.kagent.dev is for dev)
     registry: ghcr.io
     # renovate: datasource=docker depName=ghcr.io/kagent-dev/kagent/controller
-    tag: "0.10.1"
+    tag: "0.10.2"
 
     database:
       type: postgres

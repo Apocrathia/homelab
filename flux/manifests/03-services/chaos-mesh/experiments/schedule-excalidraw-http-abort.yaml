@@ -1,0 +1,27 @@
+---
+# Daily HTTP abort on excalidraw: incoming GET requests on port 80 are reset
+# for 60s. The gatus probe GETs / during the window and fails, so the endpoint
+# shows a down blip in gatus that recovers when the chaos ends.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: excalidraw-http-abort
+  namespace: excalidraw
+spec:
+  # Local time matches the repo cron convention (America/Denver).
+  schedule: "CRON_TZ=America/Denver 35 4 * * *"
+  type: HTTPChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  httpChaos:
+    mode: all
+    target: Request
+    port: 80
+    method: GET
+    abort: true
+    duration: "60s"
+    selector:
+      namespaces:
+        - excalidraw
+      labelSelectors:
+        app: excalidraw

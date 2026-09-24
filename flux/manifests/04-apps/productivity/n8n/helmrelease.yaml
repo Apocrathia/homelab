@@ -20,7 +20,7 @@ spec:
       name: n8n
       namespace: n8n
       # renovate: datasource=docker depName=n8nio/n8n
-      image: n8nio/n8n:2.40.5@sha256:9f693fd5565539efd5e75ad168526c8041a6af516d9e50bc4d9cb1c9c5031523
+      image: n8nio/n8n:2.41.2@sha256:1419c3c665b02531dd43d815ef62f573aa9b1307962162a08a349dc8a452e8bf
       container:
         name: n8n
         port: 5678

@@ -91,11 +91,15 @@ spec:
           mkdir -p /opt/data/.prime/agent/extensions/litellm
           mkdir -p /opt/data/.prime/agent/extensions/name-sessions
           mkdir -p /opt/data/.prime/agent/extensions/a2a
+          mkdir -p /opt/data/.prime/agent/extensions/discord
           cp -f /static/activity-recap_index.ts /opt/data/.prime/agent/extensions/activity-recap/index.ts
           cp -f /static/litellm_index.ts /opt/data/.prime/agent/extensions/litellm/index.ts
           cp -f /static/name-sessions_index.ts /opt/data/.prime/agent/extensions/name-sessions/index.ts
           cp -f /static/a2a_index.ts /opt/data/.prime/agent/extensions/a2a/index.ts
           cp -f /static/a2a_server.mjs /opt/data/.prime/agent/extensions/a2a/server.mjs
+          cp -f /static/discord_index.ts /opt/data/.prime/agent/extensions/discord/index.ts
+          cp -f /static/discord_server.mjs /opt/data/.prime/agent/extensions/discord/server.mjs
+          cp -f /static/discord_guidelines.md /opt/data/.prime/agent/extensions/discord/discord-guidelines.md
           rm -f /opt/data/.prime/agent/extensions/*.ts
           if [[ ! -f /opt/data/.prime/agent/settings.json ]]; then
             cp /static/settings.json /opt/data/.prime/agent/settings.json
@@ -188,7 +192,7 @@ spec:
             value: "/opt/data/npm/bin:/opt/data/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
-            value: "0.9.5"
+            value: "0.9.6"
           # Let kernel bootstrap install uv by itself when missing instead of
           # failing the (non-TTY) install prompt. Normally a no-op: the boot
           # script pre-seeds uv on the PVC.
@@ -196,7 +200,7 @@ spec:
             value: "1"
           # renovate: datasource=github-releases depName=astral-sh/uv versioning=semver
           - name: UV_VERSION
-            value: "0.12.17"
+            value: "0.12.18"
           # In-cluster LiteLLM gateway (OpenAI-compatible). The litellm
           # extension reads LITELLM_API_KEY for catalog discovery and requests.
           - name: LITELLM_BASE_URL
@@ -248,6 +252,23 @@ spec:
           # renovate: datasource=github-releases depName=sharkdp/fd versioning=semver
           - name: FD_VERSION
             value: "10.5.0"
+          # Discord gateway (agent/extensions/discord) go-live wiring. The
+          # beacon factory gates on this env (or config bot_token) before
+          # registering anything; the gateway resolves it via the same
+          # env->config chain. Same token fields the local Mac instance uses —
+          # scope-split (DISCORD_ALLOWED_*) or instance retirement is the
+          # operator's cutover call, not wired here.
+          - name: DISCORD_BOT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: discord-bot-token
+          # Discord application id (presence/activity payload + REST shape).
+          - name: DISCORD_APPLICATION_ID
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: discord-app-id
 
       service:
         type: ClusterIP
