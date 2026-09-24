@@ -1,0 +1,24 @@
+---
+# Daily DNS failure on demo-app pods: the chaos DNS server answers SERVFAIL to
+# every domain the pod resolves for 60s. Mechanism test only — the nginx dummy
+# serves static files and does not need DNS itself.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: demo-app-dns-error
+  namespace: demo-app
+spec:
+  # Local time matches the repo cron convention (America/Denver).
+  schedule: "CRON_TZ=America/Denver 40 3 * * *"
+  type: DNSChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  dnsChaos:
+    action: error
+    mode: all
+    duration: "60s"
+    selector:
+      namespaces:
+        - demo-app
+      labelSelectors:
+        app: demo-app

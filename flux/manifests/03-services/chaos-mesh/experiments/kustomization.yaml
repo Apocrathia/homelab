@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - schedule-demo-app-pod-kill.yaml
+  - schedule-demo-app-cpu-stress.yaml
+  - schedule-demo-app-dns-error.yaml
+  - schedule-openwebui-litellm-delay.yaml
+  - schedule-excalidraw-http-abort.yaml

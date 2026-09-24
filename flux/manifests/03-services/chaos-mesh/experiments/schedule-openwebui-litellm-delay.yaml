@@ -1,0 +1,38 @@
+---
+# Daily 100ms egress delay on openwebui traffic to the litellm backend
+# (litellm.litellm.svc.cluster.local:4000) for 60s. Mimics a slow LLM backend.
+# openwebui has no gatus endpoint (the open-webui chart is outside
+# generic-app's auto-discovery), so validate this experiment via the chaos
+# object's status / dashboard events, not gatus.
+#
+# The target is an externalTargets Service VIP, not a pod selector: openwebui
+# reaches litellm through the Service ClusterIP, so pod-IP filtering would
+# never match at the openwebui veth. This also avoids needing the litellm
+# namespace annotated for chaos (it hosts a CNPG cluster and is not 1:1 to a
+# single app).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: openwebui-litellm-delay
+  namespace: openwebui
+spec:
+  # Local time matches the repo cron convention (America/Denver).
+  schedule: "CRON_TZ=America/Denver 15 4 * * *"
+  type: NetworkChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  networkChaos:
+    action: delay
+    mode: all
+    direction: to
+    duration: "60s"
+    delay:
+      latency: "100ms"
+    selector:
+      namespaces:
+        - openwebui
+      labelSelectors:
+        app.kubernetes.io/instance: openwebui
+        app.kubernetes.io/component: open-webui
+    externalTargets:
+      - "litellm.litellm.svc.cluster.local:4000"
