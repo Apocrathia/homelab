@@ -6,3 +6,6 @@ metadata:
   labels:
     app.kubernetes.io/name: excalidraw
     images/dockerhub: "true"
+  annotations:
+    # Opt in to Chaos Mesh experiments (controller-manager enableFilterNamespace)
+    chaos-mesh.org/inject: enabled

@@ -1,0 +1,24 @@
+---
+# Daily pod-kill on demo-app: deletes one pod so the Deployment controller
+# recreates it. The window is intended to produce a gatus endpoint blip (the
+# outage stays below the 5-minute alert rule's for-duration, so no page fires).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: demo-app-pod-kill
+  namespace: demo-app
+spec:
+  # Local time matches the repo cron convention (America/Denver).
+  schedule: "CRON_TZ=America/Denver 10 3 * * *"
+  type: PodChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  podChaos:
+    action: pod-kill
+    mode: one
+    gracePeriod: 5
+    selector:
+      namespaces:
+        - demo-app
+      labelSelectors:
+        app: demo-app
