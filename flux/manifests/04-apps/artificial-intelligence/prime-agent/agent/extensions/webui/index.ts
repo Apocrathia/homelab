@@ -114,6 +114,46 @@ async function readJsonBody(r: http.IncomingMessage): Promise<any | undefined> {
   try { return JSON.parse(Buffer.concat(chunks).toString()); } catch { return undefined; }
 }
 
+// --- cmd-parity v1 (7v/7av): command-shaped send annotation ------------------
+// API VERDICT (0.9.5 binary, dump pos 9766813 + 9737970 + 9742538): the
+// beacon's entire send surface is pi.sendUserMessage, which enters the input
+// pipeline as _prompt(text, {expandPromptTemplates:false, source:"extension"})
+// — and _prompt mirrors that flag into expandSkills AND extensionCommands
+// ("ignore"). So on the webui path: /skill:NAME NEVER expands (the TUI's
+// _expandSkillCommand runs only with expandSkills:true), extension commands
+// NEVER dispatch, and /fork is not a session-level command (G1's session set
+// is compact/refine/goal/autonomous — those four execute natively, caught
+// before the input event). Every other command-shaped submission lands as
+// LITERAL text; only the model's interpretation executes it (probe-proven,
+// 7v). The `input` event IS the extension-side normalization hook — it fires
+// for source:"extension" submissions BEFORE the flag-disabled expansion — so
+// the honest v1 normalizes there: known commands get a directive the model
+// executes by interpretation. v2 upgrade path: inject the SKILL.md content
+// itself (getCommands sourceInfo.path) instead of the directive.
+// /FORK VERDICT (7av): the branch surface EXISTS — ctx.fork(entryId,
+// {position:"before"|"at"}) — but ONLY on ExtensionCommandContext (command
+// handlers, dump pos 8216669), and sendUserMessage passes
+// extensionCommands:"ignore", so no registered command can dispatch on this
+// path either; the input event's ctx has no fork. UNREACHABLE from the webui
+// until the collector owns an RPC line-client (S6, 27-settings-parity.md).
+// Upstream material: sendUserMessage cannot dispatch commands; the
+// extension API has no pi-level command invocation surface.
+const TUI_ONLY_SEND_COMMANDS = new Set(["fork"]); // clone/tree: same class, follow-ups
+
+function annotateCommandText(text: string, knownNames: Set<string>): string {
+  // mirror the runtime's own slash parse (Lu): "/name args..."
+  const m = /^\/(\S+)(?:\s+([\s\S]*))?$/.exec(text);
+  if (!m) return "";
+  const name = m[1];
+  if (TUI_ONLY_SEND_COMMANDS.has(name))
+    return `The user invoked the command /${name}. /fork branches the session from a previous user message and is TUI-only: the webui send path cannot execute it (no extension-API fork reachable here). Tell the user it must be run in the TUI, or interpret the request if it maps to something you can do.\n\n${text}`;
+  if (!knownNames.has(name)) return ""; // unknown /word stays prose
+  const directive = name.startsWith("skill:")
+    ? `The user invoked the command /${name} — execute it now: load the skill "${name.slice(6)}" (its SKILL.md) and follow it.`
+    : `The user invoked the command /${name} — execute it now: perform what this command intends.`;
+  return `${directive}\n\n${text}`;
+}
+
 export default function (pi: ExtensionAPI) {
   let ctx: ExtensionContext | null = null;
   let control: http.Server | null = null;
@@ -478,6 +518,28 @@ export default function (pi: ExtensionAPI) {
       controlPort = (control!.address() as any).port;
       register(false);
     });
+  });
+
+  // cmd-parity v1 (7v/7av): the input event is the runtime's own
+  // normalization point — it fires on our sendUserMessage submissions
+  // (source "extension") BEFORE the flag-disabled expansion, so the known
+  // command-shaped text gets annotated there (annotateCommandText above).
+  // The source gate is LOAD-BEARING: "interactive" (TUI) and "rpc"
+  // submissions expand + dispatch NATIVELY (their pipelines run
+  // expandSkills:true / extensionCommands:"execute"); a transform on those
+  // would strip the /skill: form the runtime is about to expand and BREAK
+  // the TUI. Agent-injected prompts (heartbeats, agent messages) skip
+  // input handlers entirely (skipInputHandlers) — untouched by design.
+  pi.on("input", async (event) => {
+    if (event?.source !== "extension") return { action: "continue" };
+    let names = new Set<string>();
+    try {
+      const commands = await Promise.resolve((pi as any).getCommands?.() ?? []);
+      if (Array.isArray(commands))
+        for (const c of commands) if (typeof c?.name === "string") names.add(c.name);
+    } catch {}
+    const annotated = annotateCommandText(String(event?.text ?? ""), names);
+    return annotated ? { action: "transform", text: annotated } : { action: "continue" };
   });
 
   const throttle: Record<string, number> = {};

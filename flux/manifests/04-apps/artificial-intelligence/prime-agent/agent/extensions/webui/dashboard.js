@@ -839,8 +839,12 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
       if (expanded.has(s.id)) expanded.delete(s.id); else expanded.add(s.id);
       showList(); };
     line3.appendChild(caret);
-    if (s.subs && s.subs.total) { const st = document.createElement('span'); st.className = 'subsline';
-      txt(st, '● ' + s.subs.running + ' running ◐ ' + s.subs.idle + ' idle ○ ' + s.subs.inactive + ' inactive');
+    if (s.subs && s.subs.total) { const st = document.createElement('span'); st.className = 'subsline'; // 7bg: the three tiers SHADE together — one span per tier (glyph + count), running bright → inactive dark (the sbar family)
+      const seg = (cls, glyph, n, label) => { const t = document.createElement('span'); t.className = cls;
+        txt(t, glyph + ' ' + n + ' ' + label + ' '); st.appendChild(t); };
+      seg('subs-run', '●', s.subs.running, 'running');
+      seg('subs-idle', '◐', s.subs.idle, 'idle');
+      seg('subs-inact', '○', s.subs.inactive, 'inactive');
       line3.appendChild(st); } // the tiered counts: ● running ◐ idle ○ inactive (the pane's sSubs dialect, the operator's line shape)
   }
   const bits = []; // meta de-cluttered: model:thinking, ctx, subs, count, cost live in the detail tooltip
@@ -856,7 +860,9 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
   row.dataset.live = s.live ? '1' : '0'; // 7aq: liveness at right-click time — the context menu's Resume shows on inactive rows only
   if (s.id === sid) row.classList.add('selected'); // accent left edge marks the open conversation
   row.onclick = () => { if (s.id && (s.id !== sid || !paneMeta)) showSession(s.id); }; // a click loads the row into the pane — no hash writes; 7aw: re-clicking the OPEN row never even calls showSession (the pane is loaded; the chokepoint guard below holds for every other surface)
-  if (kids.length && expanded.has(s.id)) for (const c of kids) { if (keep && !keep(c)) continue; renderRow(c, box, depth + 1, keep); } // 7an: the filter composes with collapse — matching children render, the rest drop
+  if (kids.length && expanded.has(s.id)) { // 7bf: expanded children render in the TIER ORDER — running, idle, inactive (the section logic's bucketing); the stable sort preserves the payload's recency within each tier
+    const tierOf = (c) => (c.live && c.status === 'working') ? 0 : c.live ? 1 : 2; // 7bf: the tier order — running, then idle, then inactive
+    for (const c of kids.slice().sort((a, b) => tierOf(a) - tierOf(b))) { if (keep && !keep(c)) continue; renderRow(c, box, depth + 1, keep); } } // 7an: the filter composes with collapse — matching children render, the rest drop
 }
 function markSelected() { // immediate sidebar marking between 15s re-renders (renderRow marks on draw)
   document.querySelectorAll('#rows .row').forEach((r) => r.classList.toggle('selected', sid != null && r.dataset.id === sid));
@@ -1072,10 +1078,10 @@ input.addEventListener('keydown', (e) => { if (popKey(e)) return; // 7at-c hybri
   if (MAC_UI ? e.metaKey : e.ctrlKey) { e.preventDefault(); send(); return; } // the chord ALWAYS sends — single- or multi-line
   if (!e.shiftKey && !input.value.includes('\n')) { e.preventDefault(); send(); } // single-line: plain Enter sends; Shift+Enter inserts the first newline (multi-line falls through: the newline lands by default)
 }); // 7at-c supersedes the always-chord 7at (operator 2026-09-23: "if i don't press shift+enter, enter should still send")
-const sendHint = document.createElement('span'); sendHint.className = 'send-hint';
-txt(sendHint, (MAC_UI ? '\u2318\u23ce' : 'Ctrl+\u23ce') + ' to send'); // 7at: the subtle chord hint beside the send button — grey-4, tiny
-$('#send').parentNode.insertBefore(sendHint, $('#send'));
-const sendHintVis = () => { sendHint.style.display = input.value.includes('\n') ? '' : 'none'; }; // 7at-c: the hint shows ONLY in multi-line mode (when the chord is actually active) — beside the button per the slice-A review, never a layout shift under it
+const sendHint = document.createElement('span'); sendHint.className = 'send-sub';
+txt(sendHint, MAC_UI ? '\u2318\u23ce' : 'Ctrl+\u23ce'); // 7at-d: the chord hint rides INSIDE the send button — the glyph pair directly beneath SEND (the under-button design won; the inline-beside span is gone)
+$('#send').appendChild(sendHint);
+const sendHintVis = () => { sendHint.style.display = input.value.includes('\n') ? '' : 'none'; }; // 7at-d: the subtitle shows ONLY in multi-line mode (the chord is actually active) — the two-line button: SEND centered, the grey-4 glyph pair centered beneath
 sendHintVis(); // the honest first paint: a single-line composer starts hintless
 // auto-grow: ~4 lines before the textarea scrolls internally
 const INPUT_MAX = 100; // 4 lines at 13px/1.55 + padding \u2014 matches #input max-height in the css

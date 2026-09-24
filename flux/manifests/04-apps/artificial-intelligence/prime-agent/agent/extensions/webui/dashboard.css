@@ -57,6 +57,9 @@ body.s-collapsed .s-expand{display:block;}
 .row-line3{display:flex;align-items:baseline;gap:6px;padding-top:2px;}
 .subsline{color:var(--grey-4);font-size:10px;letter-spacing:.06em;white-space:nowrap;
 overflow:hidden;text-overflow:ellipsis;} /* the tiered counts: ● running ◐ idle ○ inactive */
+.subsline .subs-run{color:var(--accent);} /* 7bg: running = the bright working accent — glyph + count shade together (the sbar family) */
+.subsline .subs-idle{color:var(--grey-5);} /* 7bg: idle = the mid tone */
+.subsline .subs-inact{color:var(--grey-4);} /* 7bg: inactive = the darker tone */
 .row .activity{color:var(--grey-5);font-size:12px;white-space:nowrap;letter-spacing:.04em;
   display:block;overflow:hidden;text-overflow:ellipsis;} /* the operator's primary read: complete-or-ellipsized */
 .row .activity.working{color:var(--accent);} /* live working accent: the meta bits moved to the tooltip */
@@ -104,9 +107,9 @@ color:var(--grey-6);margin:10px 0;} /* 7ak: container pre-wrap dropped — the m
    summary (never the raw customType string) */
 .item.digest{border:1px solid var(--hairline);margin:8px 0;} /* the hairline container — a system block, not a message */
 .item.digest > summary{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
-text-transform:uppercase;cursor:pointer;list-style:revert;padding:8px 10px 0;} /* the HARNESS micro-label */
+text-transform:uppercase;cursor:pointer;list-style:revert;padding:0 10px;} /* the HARNESS micro-label; 7ag-e: the .item container's 12px owns the top — the label sits in the family, never double-padded */
 .item.digest > summary::-webkit-details-marker{color:var(--grey-3);}
-.item.digest > div{color:var(--grey-4);padding:6px 10px 8px;} /* the body: dim grey md prose inside the hairline */
+.item.digest > div{color:var(--grey-4);padding:6px 10px 0;} /* the body: dim grey md prose inside the hairline; 7ag-e: the .item container's 12px owns the bottom too */
 /* 7(r) operator tweak: the time RIDES the item's first line — float:right inside
    a flow-root container: short first lines share the row, long ones wrap around
    the float instead of forcing a dedicated line (grey, non-accent) */
@@ -225,7 +228,8 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 button.primary:hover{background:var(--accent);color:var(--accent-ink);}
 #stop{display:none;border-color:var(--risk);color:var(--risk);}
 .busy #stop{display:inline-block;}
-.send-hint{flex:none;color:var(--grey-4);font-size:10px;letter-spacing:.06em;user-select:none;white-space:nowrap;} /* 7at: the chord hint beside the send button */
+#send{display:flex;flex-direction:column;align-items:center;justify-content:center;} /* 7at-d: the two-line button — SEND centered, the chord glyphs centered beneath (the footer's stretch owns the height: no layout shift) */
+#send .send-sub{color:var(--grey-4);font-size:10px;letter-spacing:.06em;line-height:1;user-select:none;white-space:nowrap;} /* 7at-d: the glyph-pair subtitle — grey-4 tiny mono beneath SEND, multi-line only (JS toggles display) */
 footer.hidden{display:none;}
 .note{padding:10px 20px;color:var(--grey-4);font-size:11px;letter-spacing:.04em;
 border-top:1px solid var(--hairline);}
