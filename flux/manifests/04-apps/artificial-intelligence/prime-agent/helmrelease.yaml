@@ -161,6 +161,23 @@ spec:
               secretKeyRef:
                 name: prime-agent-secrets
                 key: a2a-webhook-token
+          # Discord gateway (agent/extensions/discord) go-live wiring. The
+          # beacon factory gates on this env (or config bot_token) before
+          # registering anything; the gateway resolves it via the same
+          # env->config chain. Same token fields the local Mac instance uses —
+          # scope-split (DISCORD_ALLOWED_*) or instance retirement is the
+          # operator's cutover call, not wired here.
+          - name: DISCORD_BOT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: discord-bot-token
+          # Discord application id (presence/activity payload + REST shape).
+          - name: DISCORD_APPLICATION_ID
+            valueFrom:
+              secretKeyRef:
+                name: prime-agent-secrets
+                key: discord-app-id
 
       service:
         type: ClusterIP
