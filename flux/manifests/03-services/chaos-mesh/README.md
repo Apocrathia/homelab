@@ -86,7 +86,8 @@ The HTTPRoute is created by Authentik's outpost, which the provider-opentofu Wor
 `securityMode: true` means the dashboard itself requires an RBAC token after
 Authentik admits you. Paste the token from 1Password:
 
-1. Open 1Password → vault `Secrets` → item `homelab-chaos-mesh-token`.
+1. Open 1Password → vault `Secrets` → item `homelab-chaos-mesh-token`
+   (category **API Credential**).
 2. Copy the `token` field — the `chaos-mesh-dashboard` service-account token.
 3. Paste it into the dashboard's token prompt — once per browser.
 
@@ -96,6 +97,50 @@ token controller populates it and `push-secret.yaml` re-pushes it to the
 the item again. (The Sep-2025 flow used item title
 `chaos-mesh-dashboard-token`; that old item, if it still exists in the vault,
 is not resumed by this restore.)
+
+#### 1Password item category bootstrap
+
+The item must be category **API Credential** to mirror
+`homelab-kuber-ios-token` exactly. `push-secret.yaml` cannot express that:
+ESO's 1Password provider hardcodes `Category: onepassword.Server` when it
+creates an item (no category option exists — `PushSecretMetadata` carries
+only `tags` + `vault`), while its update path preserves whatever category an
+existing item already has. `homelab-kuber-ios-token` is API Credential for
+the same reason: it was created out-of-band and ESO has kept the category on
+every 24h refresh since 2026-03-27. The chaos-mesh item landed SERVER when
+ESO created it fresh after !4905 (nothing pre-existed under that title), so
+the item is rebuilt once out-of-band:
+
+```bash
+# 1. Remove the ESO-created SERVER item (soft-deleted; recoverable 30 days
+#    from Recently Deleted). The window is safe: ESO re-pushes only on the
+#    24h refresh, a source-Secret change, or a PushSecret spec/annotation
+#    change.
+op item delete homelab-chaos-mesh-token --vault Secrets
+
+# 2. Pre-create the item as an API Credential. Field values are
+#    placeholders — ESO overwrites `token` with the real SA token on
+#    adoption.
+op item create --category "API Credential" --vault Secrets \
+  --title homelab-chaos-mesh-token \
+  'credential[concealed]=bootstrap-placeholder' \
+  'token[concealed]=bootstrap-placeholder' \
+  --tags kubernetes,chaos-mesh,readonly
+
+# 3. Adopt immediately (annotation change re-triggers the PushSecret)
+#    instead of waiting for the 24h refresh.
+kubectl annotate --overwrite -n chaos-mesh pushsecret \
+  chaos-mesh-dashboard-token-to-1password \
+  category-bootstrap=$(date +%F)
+
+# 4. Verify: category API_CREDENTIAL and `token` no longer a placeholder.
+op item get homelab-chaos-mesh-token --vault Secrets --format json \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["category"])'
+```
+
+If ESO ever creates this item fresh again (e.g. after the vault item is
+deleted and the placeholder bootstrap is skipped), it lands SERVER and the
+bootstrap must be rerun.
 
 Scope is **read-only**: `ClusterRole chaos-mesh-dashboard-viewer` grants
 get/list/watch on pods, namespaces, and all `chaos-mesh.org` resources. To
