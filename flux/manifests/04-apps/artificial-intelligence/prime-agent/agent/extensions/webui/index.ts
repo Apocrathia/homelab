@@ -28,28 +28,28 @@ try { cfg = JSON.parse(fs.readFileSync(path.join(HERE, "config.json"), "utf-8"))
 const PUBLIC_PORT = parseInt(process.env.PRIME_WEBUI_PORT ?? String(cfg.port ?? 8788), 10);
 const INTERNAL_PORT = parseInt(process.env.PRIME_WEBUI_INTERNAL_PORT ?? String(PUBLIC_PORT + 1), 10);
 // token resolution (identical chain to server.mjs — keep both in sync):
-// env -> token file -> config.json -> generate + persist. Resolving the same
+// env -> config.json -> token file -> generate + persist. Resolving the same
 // file on both sides is what lets beacon and collector share a token in any
 // deployment shape (local, k8s Secret at webui-token, env-injected) with zero
 // hand-maintenance. Never logged (only the source is).
 const TOKEN_FILE = process.env.PRIME_WEBUI_TOKEN_FILE ?? path.join(HERE, "webui-token");
 function resolveToken(): { token: string; source: string } {
   if (process.env.PRIME_WEBUI_TOKEN) return { token: process.env.PRIME_WEBUI_TOKEN, source: "env" };
+  if (cfg.token) return { token: String(cfg.token), source: "config" };
   try {
     const t = fs.readFileSync(TOKEN_FILE, "utf-8").trim();
     if (t) return { token: t, source: "file" };
   } catch {}
-  if (cfg.token) return { token: String(cfg.token), source: "config" };
   const token = crypto.randomUUID();
   try {
     fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
     fs.writeFileSync(TOKEN_FILE, token + "\n", { mode: 0o600 });
     try { fs.chmodSync(TOKEN_FILE, 0o600); } catch {}
-  } catch (e: any) { console.error("[prime-webui-beacon] token persist failed:", e?.message ?? e); }
+  } catch (e: any) { console.error("[webui-beacon] token persist failed:", e?.message ?? e); }
   return { token, source: "generated" };
 }
 const { token: TOKEN, source: TOKEN_SOURCE } = resolveToken();
-console.log("[prime-webui-beacon] token source:", TOKEN_SOURCE);
+console.log("[webui-beacon] token source:", TOKEN_SOURCE);
 
 type Item = // 7(r): ts = the message's own timestamp (epoch ms); absent -> the client renders no time
   | { kind: "user"; id: string; ts?: number; text: string }
@@ -177,7 +177,7 @@ export default function (pi: ExtensionAPI) {
   let noTokenWarned = false; // the fail-closed log fires once, not per request
   const authed = (req: http.IncomingMessage): boolean => {
     if (!TOKEN) { // fail-closed: a tokenless beacon serves nothing (the collector's pattern)
-      if (!noTokenWarned) { console.error("[prime-webui-beacon] auth fail-closed: no token resolved"); noTokenWarned = true; }
+      if (!noTokenWarned) { console.error("[webui-beacon] auth fail-closed: no token resolved"); noTokenWarned = true; }
       return false;
     }
     return tokenEq(req.headers["x-prime-token"], TOKEN);
@@ -246,7 +246,7 @@ export default function (pi: ExtensionAPI) {
                PRIME_WEBUI_INTERNAL_PORT: String(INTERNAL_PORT) },
       });
       child.unref();
-    } catch (e) { console.error("[prime-webui-beacon] spawn failed:", e); }
+    } catch (e) { console.error("[webui-beacon] spawn failed:", e); }
   }
 
   // per-field safe accessor: a throwing getter anywhere in the register
@@ -261,7 +261,7 @@ export default function (pi: ExtensionAPI) {
     if (!beat) beat = setInterval(() => register(true), 15000);
   }
   function registeredNow() {
-    if (!registered) { registered = true; console.log("[prime-webui-beacon] registered with collector"); }
+    if (!registered) { registered = true; console.log("[webui-beacon] registered with collector"); }
     armBeat();
   }
   // the landed session-death teardown (reload-resilience deploy #11): timers,
@@ -494,7 +494,7 @@ export default function (pi: ExtensionAPI) {
         if (idle !== true) return serve(409, "application/json", JSON.stringify({ error: "busy" }));
         try { (ctx as any)?.compact?.({
           customInstructions: typeof body?.instructions === "string" && body.instructions ? body.instructions : undefined,
-          onError: (e: any) => console.error("[prime-webui-beacon] compact failed:", e?.message ?? e),
+          onError: (e: any) => console.error("[webui-beacon] compact failed:", e?.message ?? e),
         }); }
         catch (e: any) { return serve(500, "text/plain", String(e?.message ?? e)); }
         return serve(200, "application/json", JSON.stringify({ ok: true, started: true }));

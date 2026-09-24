@@ -27,20 +27,21 @@ const HOST = process.env.PRIME_WEBUI_HOST ?? cfg.host ?? "127.0.0.1";
 const PORT = parseInt(process.env.PRIME_WEBUI_PORT ?? String(cfg.port ?? 8788), 10);
 const IPORT = parseInt(process.env.PRIME_WEBUI_INTERNAL_PORT ?? String(PORT + 1), 10);
 // token resolution (identical chain to the beacon index.ts — keep both in
-// sync): env -> token file -> config.json -> generate + persist. The token
-// file default lives in THIS dir so a k8s Secret mount (webui-token) or a
-// hand-placed file works with zero config; fresh installs need no token in
-// config.json. Auto-gen is last-writer-wins: two cold starts racing both
-// generate and the loser holds a stale token until restart — env or file
-// deployments never hit that. Never logged.
+// sync): env -> config.json -> token file -> generate + persist. Resolving
+// the same config + file on both sides is what lets beacon and collector
+// share a token in any deployment shape (local, k8s Secret at webui-token,
+// env-injected) with zero hand-maintenance. Config-before-file is the
+// operator's discord-parity directive (2026-09-24: "both token source, both
+// config") — a token pinned in config.json outranks a stale Secret-mount
+// file. Never logged (only the source is).
 const TOKEN_FILE = process.env.PRIME_WEBUI_TOKEN_FILE ?? path.join(HERE, "webui-token");
 function resolveToken() {
   if (process.env.PRIME_WEBUI_TOKEN) return { token: process.env.PRIME_WEBUI_TOKEN, source: "env" };
+  if (cfg.token) return { token: String(cfg.token), source: "config" };
   try {
     const t = fs.readFileSync(TOKEN_FILE, "utf-8").trim();
     if (t) return { token: t, source: "file" };
   } catch {}
-  if (cfg.token) return { token: String(cfg.token), source: "config" };
   const token = crypto.randomUUID();
   try {
     fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
@@ -77,6 +78,12 @@ const sseBySession = new Map();
 // can only over-refuse into the same safe leak.
 const refusedClaims = new Map();
 
+// the only event names a beacon legitimately forwards (index.ts forward() +
+// the compaction handlers; the dashboard's addEventListener set matches).
+// /internal/event interpolates the name straight into an SSE frame — a name
+// outside this set is a forged frame (pentest MED: forged SSE frames proven)
+// and never reaches a subscriber wire.
+const EVENT_NAMES = new Set(["item", "live", "tool", "busy", "queue", "comp"]);
 function fanout(sessionId, event, data) {
   const subs = sseBySession.get(sessionId);
   if (!subs) return;
@@ -314,7 +321,7 @@ function diskSessions() {
       const p = path.join(SESSIONS_DIR, f);
       let st;
       try { st = fs.statSync(p); } catch { continue; } // deleted between readdir and stat: skip the row, never kill the listing
-      out.push({ id: f.replace(/\.jsonl$/, ""), path: p, modified: st.mtimeMs });
+      out.push({ id: f.replace(/\.jsonl$/, ""), path: p, modified: st.mtimeMs, size: st.size });
     }
   } catch {}
   return out.sort((a, b) => b.modified - a.modified);
@@ -415,7 +422,7 @@ function scanSubs(parent, pdir, byParent, depth = 0) {
       parent: (typeof info.parent === "string" && info.parent) || parent, // file's own field wins; directory-derived is the fallback
       ledger: path.join(dirPath, "rlm-subagent.json"), // row-state: the delete route's target (server-side only — childDiet strips it from payloads)
     };
-    if (row.file) { try { row.modified = fs.statSync(row.file).mtimeMs; } catch {} }
+    if (row.file) { try { const fst = fs.statSync(row.file); row.modified = fst.mtimeMs; row.size = fst.size; } catch {} }
     children.push(row);
     if (row.id) scanSubs(row.id, dirPath, byParent, depth + 1); // grandchildren INSIDE this sub dir (live-verified shape)
   }
@@ -512,7 +519,7 @@ function countSubs(children) {
 // childIndex rows — this strips the RESPONSE tree only.
 function childDiet(rows) {
   return (rows ?? []).map((c) => {
-    const { file, ledger, updatedAt, ...rest } = c; // row-state: ledger + the staleness clock stay server-side (the delete route reads them); stale rides through to the client
+    const { file, ledger, updatedAt, size, ...rest } = c; // row-state: ledger + the staleness clock stay server-side (the delete route reads them); search's byte accounting rides with file; stale rides through to the client
     if (c.children?.length) rest.children = childDiet(c.children);
     return rest;
   });
@@ -761,6 +768,46 @@ async function systemBody() { // at most one sample per 2s window; the cached pr
 }
 sysCpu = { ...readCpu(), t: Date.now() }; // boot pre-sample: the FIRST /api/system call is already fast (no 250ms wait)
 
+// ---------- 7bc: heartbeats registry read (read-only v1) ----------
+// The daemon's rlm_heartbeat scheduler persists each session's jobs at
+// ARTIFACTS_DIR/<session-uuid>/scheduled-jobs.json (wild-verified shape:
+// {jobs:[{id,status active|paused|completed|cancelled,source heartbeat|
+// rlm_heartbeat|cron,deliveryMode steer|follow_up,label?,prompt,schedule
+// {kind once|cron|interval,expression,intervalMs},sessionId,runCount,
+// lastRunAt?,nextRunAt?}],dispatches:[...]}). The honest v1 = the READ: parse
+// + map, NO write surface — management stays conversational (the operator
+// asks in the target session; the agent runs rlm_heartbeat).
+function heartbeatsBody() {
+  const rows = [];
+  const rank = { active: 0, paused: 1, completed: 2, cancelled: 3 }; // active first; the sidebar renders active+paused only
+  try {
+    for (const e of fs.readdirSync(ARTIFACTS_DIR, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      let store = null;
+      try { store = JSON.parse(fs.readFileSync(path.join(ARTIFACTS_DIR, e.name, "scheduled-jobs.json"), "utf8")); }
+      catch {} // absent / unreadable / misparsed store: that session has no registry view, never a 500
+      if (!store || !Array.isArray(store.jobs)) continue;
+      for (const jb of store.jobs) {
+        if (!jb || typeof jb !== "object" || typeof jb.id !== "string") continue; // malformed row: skipped, not fatal
+        rows.push({
+          id: jb.id,
+          label: typeof jb.label === "string" && jb.label ? jb.label
+            : (typeof jb.prompt === "string" && jb.prompt ? jb.prompt.slice(0, 80) : "(unlabeled)"),
+          interval: jb.schedule && typeof jb.schedule.expression === "string" ? jb.schedule.expression : undefined,
+          status: typeof jb.status === "string" ? jb.status : undefined,
+          target: typeof jb.sessionId === "string" && jb.sessionId ? jb.sessionId : e.name, // the owning session (the row click opens it)
+          deliveryMode: typeof jb.deliveryMode === "string" ? jb.deliveryMode : undefined,
+          runCount: typeof jb.runCount === "number" ? jb.runCount : 0,
+          lastRunAt: jb.lastRunAt, nextRunAt: jb.nextRunAt,
+        });
+      }
+    }
+  } catch {} // artifacts root absent: an empty registry is a fact, not an error
+  rows.sort((a, b) => (rank[a.status] ?? 4) - (rank[b.status] ?? 4)
+    || String(a.nextRunAt ?? "").localeCompare(String(b.nextRunAt ?? "")));
+  return { heartbeats: rows };
+}
+
 const CSS = fs.readFileSync(path.join(HERE, "dashboard.css"), "utf-8");
 const JS = fs.readFileSync(path.join(HERE, "dashboard.js"), "utf-8");
 const MARK = fs.readFileSync(path.join(HERE, "mark.svg"));
@@ -780,6 +827,7 @@ function dashboardHtml() {
     <div class="sysrow" id="cpuRow"><span class="syslabel">CPU</span><span class="systack"><span class="sysfill" id="cpuFill"></span></span><span class="syspct" id="cpuPct"></span></div>
     <div class="sysrow" id="memRow"><span class="syslabel">MEM</span><span class="systack"><span class="sysfill" id="memFill"></span></span><span class="syspct" id="memPct"></span></div>
   </div>
+  <button class="ctxchip hidden" id="ctxChip" title="Context usage"><span class="ctxlabel">CTX</span><span class="ctxstack"><span class="ctxfill" id="ctxFill"></span></span><span class="ctxpct" id="ctxPct"></span></button>
   <span class="status-right"><span class="new-form hidden" id="newForm"><input id="newCwd" type="text" placeholder="cwd (empty = home)" spellcheck="false" autocomplete="off"><button id="newCreate">Create</button><button id="newCancel">Cancel</button></span><button id="new" title="New conversation">+</button><span class="new-note hidden" id="newNote"></span><span class="busy-timer" id="busyTimer"></span><span class="dot" id="dot"></span></span>
 </header>
 <main>
@@ -787,6 +835,7 @@ function dashboardHtml() {
     <div class="list-head"><span class="caps">Conversations</span><button id="sToggle" class="stoggle" title="Collapse sidebar">«</button></div>
     <div class="search-row"><input id="search" type="text" placeholder="search" spellcheck="false" autocomplete="off"><span class="search-count" id="searchCount"></span></div>
     <div id="rows"></div>
+    <div id="hb" class="hb hidden"></div>
   </aside>
   <div id="sash" title="Drag to resize — double-click or Esc resets"></div>
   <button id="sExpand" class="s-expand" title="Show sidebar">»</button>
@@ -872,6 +921,347 @@ function fileView(p) { // -> {path,size,text} | [status, {error}]
   catch { return [404, { error: "not found" }]; }
 }
 
+// ---------- cmd-k content search (54-cmdk-design.md §4) ----------
+// GET /api/search?q=<terms> — query-time in-process scan, NO persistent
+// index in lap 1 (measured warm scan on the real 632MB corpus: 37-105ms
+// tier 1, 360-842ms tier 2; the FTS5 sidecar is the documented upgrade,
+// gated on a measured in-cluster warm p95 > 2s, not a feeling). Shape:
+//   - tier 1 = Buffer.indexOf on raw bytes (case as typed); tier 2 (ONLY
+//     when tier 1 yields zero results, and never after a wall-cap trip) =
+//     whole-chunk toLowerCase + indexOf rescan. The byte budget resets
+//     per tier (a pooled budget would starve tier 2 on every budget-sized
+//     corpus — the case-insensitive fallback would never run there); the
+//     wall cap bounds the PAIR. 20 results max, score desc then mtime desc.
+//   - newest-first file order: the budget truncates the OLDEST bytes and
+//     says so honestly (partial: true).
+//   - bounded reads (the readTail/R3 discipline): files stream in 8MB
+//     chunks with a (max-term-len - 1)-byte carry across boundaries — a
+//     monster file never loads whole, and the event loop yields between
+//     chunks so SSE fanout keeps flowing mid-scan (25-cluster §4: the
+//     single-threaded collector is the real hazard).
+//   - entry-type-weighted scoring (the litellm-in-every-header lesson:
+//     every session file matches "litellm" in model_change): user 5 /
+//     assistant 3 / toolResult+other 1 / header-meta 0. Header-only
+//     matches score 0 and are NOT results — content is the vocabulary.
+//   - snippets: the first hit per term, ±120 chars around the match, the
+//     term wrapped in <b></b> (the client MUST escape-then-emphasize —
+//     this string carries raw transcript text, not safe HTML).
+//   - one scan at a time (singleton): identical q dedupes onto the
+//     running scan; a different q queues behind it (queue of 1 — an older
+//     queued request is superseded by a newer one and answered
+//     honestly-empty: the palette only wants the latest keystroke).
+// NaN-proof env parses (a malformed values.yaml typo must not fail the caps
+// OPEN — an unbounded scan on the pod is the exact hazard the caps exist for)
+const _sbm = parseInt(process.env.PRIME_WEBUI_SEARCH_BUDGET_MB ?? "256", 10);
+const _swm = parseInt(process.env.PRIME_WEBUI_SEARCH_WALL_MS ?? "4000", 10);
+const SEARCH_BUDGET_MB = Number.isFinite(_sbm) ? _sbm : 256;   // <= 0 = unlimited (documented)
+const SEARCH_WALL_MS = Number.isFinite(_swm) ? _swm : 4000;
+const SEARCH_CHUNK = 8 * 1024 * 1024;   // bytes per read (also the yield granularity)
+const SEARCH_RESULT_CAP = 20;           // per response
+const SEARCH_SNIPPET_CAP = 3;           // per session (one per term, the first hit)
+const SEARCH_CLASSIFY_TOTAL = 24;       // line-parses per file for scoring (per-term anchor cap below)
+const SEARCH_LINE_CAP = 1024 * 1024;    // a monster JSONL line truncates -> raw-slice snippet fallback
+const searchHeaderTypes = new Set(["session", "session_info", "model_change",
+  "thinking_level_change", "service_tier_change", "git_state", "agent_status",
+  "session_state", "child_usage_attributed", "custom", "rlm_subagent", "label"]);
+// weight + display role of a hit's entry (the parsed line's e.type)
+function searchClassify(e) {
+  if (e?.type === "message" && e.message) {
+    const r = e.message.role;
+    if (r === "user") return { w: 5, role: "user" };
+    if (r === "assistant") return { w: 3, role: "assistant" };
+    return { w: 1, role: "tool" }; // toolResult + bashExecution + unknown roles: the tool bucket
+  }
+  if (searchHeaderTypes.has(e?.type)) return { w: 0, role: "tool" };
+  return { w: 1, role: "tool" }; // custom_message/compaction/unparseable-line hits: "other"
+}
+// the entry's displayable text (thinking included — recall-valuable, the bench probe's own call)
+function searchText(e) {
+  if (e?.type === "message" && e.message) {
+    let t = textOf(e.message.content);
+    const c = e.message.content;
+    if (Array.isArray(c)) for (const b of c) if (b?.type === "thinking" && b.thinking) t += (t ? "\n" : "") + b.thinking;
+    return t;
+  }
+  if (e?.type === "custom_message") return typeof e.content === "string" ? e.content : textOf(e.content);
+  if (e?.type === "compaction") return String(e.summary ?? "");
+  return ""; // header/meta: no display text (its weight-0 kept it out of the snippet path anyway)
+}
+// snippet: ±120 chars around the term, <b>-marked. ci = tier 2: the
+// ORIGINAL-CASE occurrence from the original text is what gets marked.
+function snippetOf(text, term, ci) {
+  if (!text) return null;
+  const hay = ci ? text.toLowerCase() : text;
+  const needle = ci ? term.toLowerCase() : term;
+  const i = hay.indexOf(needle);
+  if (i < 0) return null;
+  const pad = 120;
+  const from = Math.max(0, i - pad), to = Math.min(text.length, i + needle.length + pad);
+  return (from > 0 ? "…" : "") + text.slice(from, i) + "<b>" + text.slice(i, i + needle.length) + "</b>"
+    + text.slice(i + needle.length, to) + (to < text.length ? "…" : "");
+}
+// read the whole line (JSONL entry) containing byte offset `off`, bounded:
+// 64KB steps, 1MB cap either side (a truncated monster line just fails
+// JSON.parse -> the raw-slice snippet fallback). -> { start, buf } | null
+function searchLineSlice(fd, size, off) {
+  const STEP = 65536;
+  let start = off;
+  const back = Buffer.alloc(Math.min(STEP, off));
+  while (start > 0 && off - start < SEARCH_LINE_CAP) {
+    const from = Math.max(0, start - back.length);
+    fs.readSync(fd, back, 0, start - from, from);
+    const nl = back.lastIndexOf(10);
+    if (nl >= 0) { start = from + nl + 1; break; }
+    start = from;
+    if (back.length < STEP) break; // reached the file's first line
+  }
+  let end = off;
+  while (end < size && end - off < SEARCH_LINE_CAP) {
+    const want = Math.min(STEP, size - end);
+    const fwd = Buffer.alloc(want);
+    const got = fs.readSync(fd, fwd, 0, want, end);
+    const nl = fwd.subarray(0, got).indexOf(10);
+    if (nl >= 0) { end += nl; break; }
+    end += got;
+    if (got < want) break;
+  }
+  const len = Math.min(end, size) - start;
+  if (len <= 0) return null;
+  const buf = Buffer.alloc(Math.min(len, SEARCH_LINE_CAP));
+  fs.readSync(fd, buf, 0, buf.length, start);
+  return { start, buf };
+}
+const searchEscapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// candidate file list: root sessions (fresh readdir+stat via diskSessions,
+// the size field feeds the byte accounting) + child transcripts from the
+// CACHED hierarchy walk (childIndex rows carry file+size server-side; the
+// walk already paid). Child hits map UP to their ROOT session id (the UI
+// nests them; the climb walks childIndex parent links, depth-guarded like
+// attach()). Newest-first: the budget eats the OLDEST bytes.
+function searchFiles() {
+  const files = [];
+  for (const d of diskSessions()) files.push({ path: d.path, mtime: d.modified, size: d.size ?? 0, id: d.id, child: null });
+  hierarchy(); // refresh childIndex
+  for (const row of childIndex.values()) {
+    if (!row.file) continue;
+    let root = row, guard = 0;
+    while (childIndex.has(root.parent) && guard++ < MAX_SCAN_DEPTH) root = childIndex.get(root.parent);
+    files.push({ path: row.file, mtime: row.modified ?? 0, size: row.size ?? 0,
+      id: root.parent ?? root.id, child: { childId: row.childId, name: row.name } });
+  }
+  files.sort((a, b) => b.mtime - a.mtime);
+  return files;
+}
+// tier 2 chunk pass: whole-chunk decode + toLowerCase + indexOf (the
+// measured 360-842ms full-corpus path). Char hits map to byte anchors with
+// ONE linear pass per chunk (an incremental byteLength cursor over the
+// chunk string — never a per-hit full-prefix walk). Ceiling (ponytail,
+// named): toLowerCase can CHANGE string length for a few chars (U+0130
+// class); when it does, only each term's FIRST hit gets a byte anchor
+// (regex re-search on the original-case chunk) — deeper anchors are
+// skipped and score slightly low in that ultrarare file. Counting dedupe
+// uses a char-space carry floor that is off by at most one char per 8MB
+// boundary in non-ASCII edge cases; upgrade path: byte-precise tier-2
+// anchors via a per-hit byteLength map.
+function searchChunkTier2(chunk, carryStrLen, lowTerms, perFile, perTermCap, bufStart) {
+  const str = chunk.toString("utf-8");
+  const low = str.toLowerCase();
+  const sameLen = low.length === str.length;
+  const pending = []; // { ti, char } — mapped to byte anchors at chunk end
+  const floor = Math.max(0, carryStrLen - 1);
+  for (let ti = 0; ti < lowTerms.length; ti++) {
+    const needle = lowTerms[ti];
+    let from = 0;
+    for (;;) {
+      const idx = low.indexOf(needle, from);
+      if (idx < 0) break;
+      if (idx + needle.length > floor) {
+        perFile.counts[ti]++;
+        if (perFile.anchors[ti].length < perTermCap) pending.push({ ti, char: idx });
+      }
+      from = idx + 1;
+    }
+  }
+  if (!pending.length) return;
+  if (!sameLen) { // length-diverging lowercasing: first hit per term only, via regex on the original case
+    for (const p of pending) if (!perFile.anchors[p.ti].length) {
+      const m = new RegExp(searchEscapeRe(lowTerms[p.ti]), "i").exec(str);
+      if (m) perFile.anchors[p.ti].push(bufStart + Buffer.byteLength(str.slice(0, m.index), "utf-8"));
+    }
+    return;
+  }
+  pending.sort((a, b) => a.char - b.char);
+  let cChar = 0, cByte = 0;
+  for (const p of pending) {
+    cByte += Buffer.byteLength(str.slice(cChar, p.char), "utf-8");
+    cChar = p.char;
+    perFile.anchors[p.ti].push(bufStart + cByte);
+  }
+}
+// one tier pass over the candidates -> { results, scanned, partial, wallHit }.
+// results rows are pre-cap (score/mtime kept for the final sort).
+async function searchScanTier(terms, ci, files, deadline) {
+  const budget = SEARCH_BUDGET_MB > 0 ? SEARCH_BUDGET_MB * 1048576 : Infinity;
+  const needles = terms.map((t) => Buffer.from(ci ? t.toLowerCase() : t, "utf-8"));
+  const lowTerms = terms.map((t) => t.toLowerCase());
+  const maxNeedle = Math.max(1, ...needles.map((n) => n.length));
+  const perTermCap = Math.max(3, Math.ceil(SEARCH_CLASSIFY_TOTAL / terms.length));
+  const res = { results: [], scanned: 0, partial: false, wallHit: false };
+  let spent = 0;
+  outer:
+  for (const f of files) {
+    if (Date.now() > deadline) { res.wallHit = true; res.partial = true; break; }
+    let st;
+    try { st = fs.statSync(f.path); } catch { continue; } // vanished since the listing: skip, never kill the scan
+    if (!st.size) continue;
+    let fd;
+    try { fd = fs.openSync(f.path, "r"); }
+    catch (e) { // poison guard (the list's log-once discipline): unreadable files skip, the scan never 500s
+      if (!poisonLogged.has(f.path)) { poisonLogged.add(f.path); console.error("[prime-webui-server] unreadable session file:", f.path, e?.message ?? e); }
+      continue;
+    }
+    try {
+      const perFile = { counts: new Array(terms.length).fill(0), anchors: terms.map(() => []) };
+      let pos = 0, carry = Buffer.alloc(0);
+      while (pos < st.size) {
+        if (Date.now() > deadline) { res.wallHit = true; res.partial = true; break outer; }
+        const rem = budget - spent;
+        if (rem <= 0) { res.partial = true; break outer; }
+        const want = Math.min(SEARCH_CHUNK, st.size - pos, rem);
+        const data = Buffer.alloc(want);
+        let got;
+        try { got = fs.readSync(fd, data, 0, want, pos); } catch (e) {
+          if (!poisonLogged.has(f.path)) { poisonLogged.add(f.path); console.error("[prime-webui-server] unreadable session file:", f.path, e?.message ?? e); }
+          continue outer; // poison mid-file: skip it whole, keep the scan alive
+        }
+        if (got <= 0) break;
+        const chunk = carry.length ? Buffer.concat([carry, data.subarray(0, got)]) : data.subarray(0, got);
+        const carryLen = carry.length, bufStart = pos - carryLen;
+        if (ci) searchChunkTier2(chunk, carry.toString("utf-8").length, lowTerms, perFile, perTermCap, bufStart);
+        else for (let ti = 0; ti < needles.length; ti++) {
+          const n = needles[ti];
+          let from = 0;
+          for (;;) {
+            const idx = chunk.indexOf(n, from);
+            if (idx < 0) break;
+            if (idx + n.length > carryLen) { // count each boundary-spanning hit exactly once
+              perFile.counts[ti]++;
+              if (perFile.anchors[ti].length < perTermCap) perFile.anchors[ti].push(bufStart + idx);
+            }
+            from = idx + 1;
+          }
+        }
+        spent += got; res.scanned += got;
+        pos += got;
+        if (pos < st.size) carry = chunk.subarray(Math.max(0, chunk.length - (maxNeedle - 1)));
+        if (budget - spent <= 0 && pos < st.size) { res.partial = true; break; } // prefix read; the rest of the list stays unscanned
+        await new Promise((r) => setImmediate(r)); // the SSE fanout yield (per 8MB chunk)
+      }
+      if (perFile.counts.every((c) => c > 0)) { // file-level AND: every term must hit the file
+        const row = searchQualify(f, st, fd, perFile, terms, ci);
+        if (row) res.results.push(row);
+      }
+    } finally { try { fs.closeSync(fd); } catch {} }
+  }
+  return res;
+}
+// post-scan per-file assembly: classify the anchor lines (JSON.parse ONLY
+// those lines — parse-fails cost nothing but the raw-slice fallback),
+// score = Σ entry weights over the classified hits (capped 99), snippet =
+// first hit per term. Header-only matches (score 0) are NOT results.
+// Ceiling (ponytail, named): only the FIRST perTermCap hits per term get
+// line-classified — a weighted hit buried under a long weight-0 run (a
+// thousand model_change lines before one user line) can be missed;
+// upgrade path: a full-line classification pass on qualifying files.
+function searchQualify(f, st, fd, perFile, terms, ci) {
+  const lineCache = new Map(); // lineStart -> parsed info (the dedupe for multiple hits on one entry)
+  let score = 0;
+  const snippets = [];
+  let first = null; // snippet-1's entry info: the response ts + role source
+  for (let ti = 0; ti < terms.length; ti++) {
+    const firstByte = perFile.anchors[ti][0];
+    for (const byte of perFile.anchors[ti]) {
+      const line = searchLineSlice(fd, st.size, byte);
+      if (!line) continue;
+      let info = lineCache.get(line.start);
+      if (!info) {
+        let e = null;
+        try { e = JSON.parse(line.buf.toString("utf-8")); } catch {} // malformed line: unclassifiable -> weight 1, raw snippet
+        const cls = searchClassify(e);
+        info = { w: cls.w, role: cls.role, ts: e?.timestamp, text: e ? searchText(e) : "", raw: line.buf.toString("utf-8") };
+        lineCache.set(line.start, info);
+      }
+      score += info.w;
+      if (byte === firstByte && snippets.length < SEARCH_SNIPPET_CAP) {
+        const s = snippetOf(info.text, terms[ti], ci) || snippetOf(info.raw, terms[ti], ci);
+        if (s) { snippets.push(s); if (!first) first = info; }
+      }
+    }
+  }
+  if (score <= 0) return null;
+  return {
+    id: f.id,
+    ts: (typeof first?.ts === "string" && first.ts) || new Date(st.mtimeMs).toISOString(),
+    score: Math.min(99, score),
+    hits: perFile.counts.reduce((a, b) => a + b, 0),
+    role: f.child ? "child" : (first?.role ?? "tool"),
+    child: f.child ? { childId: f.child.childId, name: f.child.name } : null,
+    snippets,
+    mtime: st.mtimeMs, // internal sort key (stripped from the response)
+  };
+}
+// singleton + queue-of-1 (the palette only wants the latest keystroke):
+// identical q dedupes onto the running scan; a different q queues; a NEWER
+// different q supersedes the queued one, which resolves honestly-empty.
+let searchInflight = null; // { q, promise }
+let searchQueued = null;   // { q, promise, resolve }
+const searchSuperseded = () => ({ results: [], partial: false, superseded: true, scannedMB: 0, corpusMB: 0, ms: 0 });
+function searchStart(q) {
+  const promise = runSearch(q).finally(() => {
+    searchInflight = null;
+    if (searchQueued) {
+      const next = searchQueued;
+      searchQueued = null;
+      searchStart(next.q).then(next.resolve, next.resolve);
+    }
+  });
+  searchInflight = { q, promise };
+  return promise;
+}
+function submitSearch(q) {
+  if (searchInflight?.q === q) return searchInflight.promise;
+  if (searchQueued?.q === q) return searchQueued.promise;
+  if (!searchInflight) return searchStart(q);
+  if (searchQueued) searchQueued.resolve(searchSuperseded());
+  let resolve;
+  const promise = new Promise((r) => { resolve = r; });
+  searchQueued = { q, promise, resolve };
+  return promise;
+}
+async function runSearch(q) {
+  const t0 = Date.now();
+  try {
+    const deadline = t0 + SEARCH_WALL_MS;
+    const terms = [...new Set(q.split(/\s+/))];
+    const files = searchFiles();
+    const corpusMB = Math.round(files.reduce((s, x) => s + (x.size ?? 0), 0) / 10485.76) / 100;
+    let pass = await searchScanTier(terms, false, files, deadline);
+    let scanned = pass.scanned;
+    if (!pass.results.length && !pass.wallHit) { // one tier escalation per query: only when tier 1 found nothing
+      pass = await searchScanTier(terms, true, files, deadline);
+      scanned += pass.scanned; // scannedMB counts both passes' real reads; partial is the FINAL pass's coverage
+    }
+    const results = pass.results
+      .sort((a, b) => b.score - a.score || b.mtime - a.mtime)
+      .slice(0, SEARCH_RESULT_CAP)
+      .map(({ id, ts, score, hits, role, child, snippets }) => ({ id, ts, score, hits, role, child, snippets }));
+    return { results, partial: pass.partial,
+      scannedMB: Math.round(scanned / 10485.76) / 100, corpusMB, ms: Date.now() - t0 };
+  } catch (e) {
+    return { results: [], partial: true, scannedMB: 0, corpusMB: 0, ms: Date.now() - t0, error: String(e?.message ?? e) };
+  }
+}
+
 // ---------- servers ----------
 const j = (s, o) => JSON.stringify(o);
 function inTrusted(remote) {
@@ -936,7 +1326,18 @@ const internal = http.createServer(async (req, res) => {
   if (!authed(req, url, TOKEN)) return reply(401, "unauthorized");
   if (req.method === "POST" && url.pathname === "/internal/register") {
     const body = await readJson(req);
-    if (!body?.sessionId || !body.controlPort) return reply(400, "bad register");
+    // pentest HIGH (56-pentest-report.md): controlPort is interpolated into
+    // the beaconFetch URL template (`http://127.0.0.1:${port}${subpath}`) —
+    // a STRING port ("8799/x/…" etc.) is loopback SSRF + token-forward.
+    // Integer 1-65535 ONLY; anything else is a forged register.
+    if (!body?.sessionId || !Number.isInteger(body.controlPort)
+        || body.controlPort < 1 || body.controlPort > 65535) {
+      console.error("[prime-webui-server] BAD REGISTER: controlPort must be an integer 1-65535, got",
+        JSON.stringify(body?.controlPort ?? null)?.slice(0, 64),
+        "session:", String(body?.sessionId).slice(0, 64),
+        "from", req.socket.remoteAddress);
+      return reply(400, "bad register");
+    }
     if (reapedSessions.has(body.sessionId)) return reply(200, "ok"); // a reaped spawn's dying beats: accepted (stop the retry), never re-registered — the row stays not-live
     const prev = beacons.get(body.sessionId);
     // field-preserving merge on the TUI-footer fields: an older beacon version
@@ -1044,6 +1445,9 @@ const internal = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/internal/event") {
     const body = await readJson(req);
+    // pentest MED: the event name is allow-listed — an unknown or missing
+    // name can never be interpolated into an SSE frame.
+    if (!EVENT_NAMES.has(body?.event)) return reply(400, "bad event");
     if (body?.sessionId && body.event) {
       // busy events also update the registry status (TUI-list field)
       if (body.event === "busy" && beacons.has(body.sessionId)) {
@@ -1220,10 +1624,20 @@ const public_ = http.createServer(async (req, res) => {
       return serve(200, "application/json", j(0, body));
     }
 
+    if (req.method === "GET" && url.pathname === "/api/heartbeats") { // 7bc: the read-only registry view (header-authed; NO write surface — management flows through the conversation)
+      return serve(200, "application/json", j(0, heartbeatsBody()));
+    }
+
     if (req.method === "GET" && url.pathname === "/api/file") { // 7ac: the path-link viewer's fetch — header-authed like /api/system (query token stays SSE-only)
       const r = fileView(url.searchParams.get("path"));
       if (Array.isArray(r)) return serve(r[0], "application/json", j(0, r[1]));
       return serve(200, "application/json", j(0, r));
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/search") { // 54-cmdk: content-first transcript search — header-authed like /api/system (the query token stays SSE-only)
+      const q = (url.searchParams.get("q") ?? "").trim();
+      if (q.length < 2 || q.length > 200) return serve(400, "application/json", j(0, { error: "bad q" }));
+      return serve(200, "application/json", j(0, await submitSearch(q)));
     }
 
     if (req.method === "GET" && /^\/api\/session\/[A-Za-z0-9_-]+\/commands$/.test(url.pathname)) {

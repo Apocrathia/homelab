@@ -509,9 +509,13 @@ function applyItem(item, streaming, live) { // live: the SSE item path ONLY — 
   switch (item.kind) {
     case 'user': endLive();
       // optimistic-echo reconcile: the first FIFO-matching pending node is
-      // consumed by the real server item (exact text, one per send)
+      // consumed by the real server item (exact text, one per send); the
+      // cmdparity rider: a directive-annotated delivery (/skill:NAME,
+      // commands, /fork — the annotation is a PREFIX) ends with the raw
+      // echo text, so an exact miss falls back to the suffix match
       const pe = pendingEchoes.findIndex((x) => x.text === item.text);
-      if (pe >= 0) { pendingEchoes[pe].node.remove(); pendingEchoes.splice(pe, 1); }
+      const ae = pe >= 0 ? pe : (item.text ? pendingEchoes.findIndex((x) => item.text.endsWith(x.text)) : -1); // exact beats suffix, FIFO within each pass — the echo never lingers on command sends
+      if (ae >= 0) { pendingEchoes[ae].node.remove(); pendingEchoes.splice(ae, 1); }
       const un = el('item user md-body'); itemTime(un, item.ts); youLabel(un); un.appendChild(mdRender(item.text)); break; // 7ak/7al: the .md-body treatment styles the marked blocks (pre-wrap lives in .md-body p now); YOU leads the meta row
     case 'assistant':
       const ph = liveNode, streamed = liveTextSeen > 1; endLive(); // F3: the final item replaces the streaming placeholder — one node per message, like the disk path; 7ap-2.0: >1 text-bearing live delta = a real stream
@@ -766,6 +770,7 @@ async function showList() { // sidebar refresh: rows render ONLY in the sidebar;
 // Match fields per the corpus finding: name + cwd + id + the activity recap —
 // names exist on ~24% of sessions, so the recap carries the content-ish recall.
 let searchQ = '', listData = null;
+let hbActive = new Map(); // 7bc-2: the ACTIVE-target set — sessionId -> interval; hbTargets() rebuild it each hbTick (the 7bc block), renderRow paints the lime pulse glyph for members, renderHbPane paints the open pane's chip
 const searchEl = $('#search'), searchCountEl = $('#searchCount');
 const rowMatch = (s, qy) => [s.name, s.cwd, s.id, s.activity].some((f) => typeof f === 'string' && f.toLowerCase().includes(qy));
 const treeMatch = (s, qy) => rowMatch(s, qy) || (s.children || []).some((c) => treeMatch(c, qy)); // a matching child keeps its ancestor chain visible
@@ -813,6 +818,7 @@ function renderRow(s, box, depth, keep) { // keep: 7an search predicate (undefin
   const kids = s.children || [];
   // line 1 — the narrow-column read: live badge + title + age, nothing else inline
   if (s.live) { const b = document.createElement('span'); b.className = s.status === 'working' ? 'badge' : 'badge idle'; txt(b, 'live'); main.appendChild(b); } // 7w: two-tier — lime stays working-only; live-but-idle wears the grey-3 outline (the subs bar keeps its own ●/◐/○ tiers)
+  if (hbActive.has(s.id)) { const hb = document.createElement('span'); hb.className = 'hbglyph'; txt(hb, '\u2665\uFE0E'); hb.title = 'active heartbeat' + (hbActive.get(s.id) ? ' \u2014 ' + hbActive.get(s.id) : ''); main.appendChild(hb); } // 7bc-2: the per-session heartbeat pulse glyph — lime (a heartbeat IS live activity; the accent law holds), the status-dot dialect at the subs-glyph scale; hover = the job's interval
   const shell = s.count === 0; // row-state: header-only ghost (zero-message shell, 38-corpus) — dimmed + the '(empty)' recap
   if (shell) row.classList.add('shell');
   if (s.stale) row.classList.add('stale'); // row-state: crash-era corpse (running/idle ledger, beacon absent >24h) — dimmed + tagged, display truth only
@@ -873,6 +879,7 @@ function restoreFailed() { // persisted selection is gone (404): fall back to th
   $('#emptyNote').style.display = 'block'; $('#sError').style.display = 'none'; $('#pastNote').style.display = 'none';
   $('footer').classList.add('hidden');
   $('#sTitle').textContent = ''; $('#sSub').textContent = ''; $('#sSubs').style.display = 'none';
+  renderHbPane(); // 7bc-2: no pane -> no chip (the selection died with the restore)
 }
 async function showSession(id, restore, force) { // selection model: one click loads a session into the pane — no views, no router; force: the 7aq/48 self-heal reloads must pass the re-select guard
   if (id === sid && paneMeta && !force) return; // 7aw re-select guard: the open pane IS this session — the row click is a NO-OP (no full-wipe re-render, no flash; the SSE keeps a live pane current); the self-heal paths force their reloads
@@ -880,13 +887,14 @@ async function showSession(id, restore, force) { // selection model: one click l
   const tok = ++selToken;
   closeEvents(); // selection swap closes the previous session's stream FIRST — never two SSE
   sid = id; markSelected();
+  renderHbPane(); // 7bc-2: the pane chip follows the selection immediately — every path (a registry still in flight paints it on the first hbTick)
   const wantHash = '#/s/' + encodeURIComponent(id); // 7bb: the URL tracks the open conversation — restorable + shareable (no hashchange listener exists, writes never loop)
   if (location.hash !== wantHash) location.hash = wantHash;
   draftLoad(); // 7as: the entering chat's draft fills the composer from the first frame (empty default)
   lsSet('webuiSelected', id || ''); // selection persists — a refresh re-opens what the operator was reading
   feed.innerHTML = ''; for (const k in toolStatus) delete toolStatus[k]; endLive();
   pendingEchoes.length = 0; busyNow = false; knownQueue = []; pendingQueue = [];
-  showQueue([]); hideSendErr(); closePop(); closeMenu(); // strip + notices + pickers + the settings menu reset with the pane
+  showQueue([]); hideSendErr(); closePop(); closeMenu(); closeCtxPop(); ctxPaint(null); // strip + notices + pickers + the settings menu + the ctx chip reset with the pane
   menuBtn.style.display = 'none'; // a pane swap hides the hamburger until the row proves live
   resumeBtn.style.display = 'none'; // 7aq: the same swap-time hide — the pane load decides whether the dead-pane Resume shows
   $('#emptyNote').style.display = 'none';
@@ -924,6 +932,7 @@ async function showSession(id, restore, force) { // selection model: one click l
   setStatus(!!(s.live && s.busy)); // F2: a not-live or idle pane clears the busy header — the timer never ticks over a dead pane
   if (s.live) attachEvents(id);
   if (s.live) input.focus(); // the composer is ready the moment the pane is
+  ctxPanePaint(s); // 7au: the chip's first paint rides the row's own context fields; the 30s poll refines live
 }
 // 7as per-chat drafts: every session owns its unsent composer text in its own
 // localStorage slot — `webui-draft-<sessionId>` (empty string = none). The
@@ -1050,6 +1059,7 @@ function send() {
   closePop(); // pickers close on send — the text goes out as-is
   hideSendErr();
   input.value = ''; input.style.height = ''; draftClear(); // auto-grow resets to 1 line on send; 7as: the text is out (echo or queued) — the draft slot empties
+  sendHintVis(); // 7at-e: the programmatic clear fires NO input event — the chord hint recomputes here or it lingers
   busyReset(t.length); setWorking(true);
   const h0 = feed.scrollHeight, wasPinned = feedGap() < PIN; // 7ao: pre-measured before the echo
   if (busyNow) { pendingQueue.push(t); renderQueueStrip(); } // 7(y): a queued steer shows in the strip ONLY — the feed block waits for delivery (no double render)
@@ -1405,6 +1415,10 @@ sash.addEventListener('pointercancel', () => { sashDrag = null; });
 sash.addEventListener('dblclick', () => { sashDrag = null; applySidebarWidth(SIDEBAR_DEF); lsSet('webuiSidebarWidth', SIDEBAR_DEF); }); // double-click resets to default
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sashDrag) { // Escape mid-drag resets too
   sashDrag = null; applySidebarWidth(SIDEBAR_DEF); lsSet('webuiSidebarWidth', SIDEBAR_DEF); } });
+window.addEventListener('keydown', (e) => { if (e.key !== 'Escape' || !document.body.classList.contains('s-collapsed')) return; // 7bh: the collapse trap's keyboard escape hatch — the collapsed rail never dead-ends
+  if (sashDrag || pop || menu || cm || ctxPop || viewer) return; // an overlay or a mid-drag reset owns that keypress first (their own listeners)
+  const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; // a field's Escape stays field-local (search clear, new-form cancel, composer)
+  setCollapsed(false); });
 window.addEventListener('resize', () => { if (!sashDrag && !document.body.classList.contains('s-collapsed')) applySidebarWidth(sidebar.getBoundingClientRect().width); }); // 50% cap holds when the viewport shrinks
 const savedW = parseInt(lsGet('webuiSidebarWidth') || '', 10);
 if (savedW) applySidebarWidth(savedW); // persisted width survives refresh
@@ -1830,11 +1844,146 @@ document.addEventListener('click', (e) => { // 7ac: delegated — anchors carry 
 });
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && viewer) closeViewer(); }); // Esc closes the viewer (menu + sash listeners untouched)
 
+// --- 7bc: heartbeats section (read-only registry view) — the daemon's
+// scheduled-jobs store (scheduled-jobs.json under the session-artifacts dirs)
+// surfaced in the sidebar under the sessions, grey + collapsible. This is
+// the VIEW: no write surface exists; the operator's management flows through
+// the conversation as designed (the row click opens the target session; the
+// agent runs rlm_heartbeat on the operator's word). Active + paused render;
+// cancelled/completed are history, hidden as noise. ---
+let hbData = null;
+let hbOpen = lsGet('webuiHbOpen') !== '0'; // open by default; the caret toggles (persisted like the row carets)
+function renderHb() {
+  const box = $('#hb');
+  if (!box) return;
+  const jobs = (hbData || []).filter((j) => j && (j.status === 'active' || j.status === 'paused'));
+  if (!jobs.length) { box.classList.add('hidden'); box.innerHTML = ''; return; } // empty registry = no section (honest absence)
+  box.classList.remove('hidden'); box.innerHTML = '';
+  const head = el('hb-head', box);
+  head.title = 'the daemon\u2019s heartbeat registry — manage via the conversation (rlm_heartbeat)';
+  const care = el('caret' + (hbOpen ? ' open' : ''), head);
+  txt(care, hbOpen ? '▾' : '▸'); // expanded ▾ / collapsed ▸ — the row-caret glyph pair
+  txt(el('caps', head), 'Heartbeats');
+  head.addEventListener('click', () => { hbOpen = !hbOpen; lsSet('webuiHbOpen', hbOpen ? '1' : '0'); renderHb(); });
+  if (!hbOpen) return; // collapsed: the head stays, the rows fold
+  for (const j of jobs) {
+    const row = el('hb-row', box);
+    if (j.target) { row.title = 'open session ' + j.target; row.addEventListener('click', () => showSession(j.target)); }
+    txt(el('hb-label', row), j.label || '(unlabeled)');
+    const meta = el('hb-meta', row);
+    if (j.interval) txt(el('hb-interval', meta), j.interval);
+    if (j.status) txt(el('hb-status', meta), j.status);
+  }
+}
+function hbTargets() { // 7bc-2: the ACTIVE-target set from the fetched registry — active jobs only (paused = suspended live activity: no glyph on the row or the pane); first job wins a session's interval label; returns true when the set CHANGED (the row/pane repaint rides the delta, not the tick)
+  const fresh = new Map();
+  for (const j of hbData || []) if (j && j.status === 'active' && j.target && !fresh.has(j.target)) fresh.set(j.target, j.interval);
+  const same = fresh.size === hbActive.size && [...fresh].every(([k, v]) => hbActive.has(k) && hbActive.get(k) === v);
+  hbActive = fresh;
+  return !same;
+}
+async function hbTick() { // fetches the registry; a failed read keeps the last good list (null-safe, no console noise)
+  const d = await api('/api/heartbeats');
+  if (Array.isArray(d && d.heartbeats)) hbData = d.heartbeats;
+  renderHb();
+  if (hbTargets()) { // 7bc-2: only a CHANGED set repaints — a paused-on-the-fly job drops the glyph within the tick; an unchanged registry costs zero extra renders
+    if (listData) renderList(); // rows repaint with the fresh glyph set (skip before the first sessions fetch lands — its own render paints the glyphs)
+    renderHbPane(); // the open pane's chip follows the set
+  }
+}
+
+// --- 7au: the context chip — a CTX N% chip in the header next to the
+// sysmeter; ALWAYS visible while a live session is open (pinned by default,
+// solving the disappearing problem); polls the same /api/s/<id>/context-usage
+// the hamburger's usage item reads (the item stays the quick glance) every
+// ~30s; click = the expanded popover (percent, tokens used/window, the
+// compaction threshold hint, a refresh). ANCHORED under the chip, per the
+// recorded recommendation (floating rejected: v1). The pane load paints the
+// first frame from the row's own context fields; the poll refines live. ---
+const ctxChip = $('#ctxChip'), ctxFill = $('#ctxFill'), ctxPct = $('#ctxPct');
+let ctxLast = null, ctxPop = null;
+const CTX_RESERVE = 16384; // ponytail: the runtime's compaction reserve default (binary-verified law: auto-compact fires when tokens > contextWindow - reserveTokens); a per-host settings.compaction.reserveTokens override shifts the line — upgrade path is a settings-aware endpoint
+function ctxPaint(u) { // null hides; {tokens, contextWindow, percent} paints
+  ctxLast = u || null;
+  if (!u || u.percent == null) { ctxChip.classList.add('hidden'); closeCtxPop(); return; } // no metered turn yet / dead pane: no chip
+  const p = Math.max(0, Math.min(100, u.percent));
+  ctxChip.classList.remove('hidden');
+  ctxFill.style.width = Math.round(p) + '%';
+  txt(ctxPct, Math.round(p) + '%');
+  ctxChip.title = 'Context usage \u2014 ' + Math.round(p) + '% \u00b7 ' + fmtTok(u.tokens ?? 0) + ' of ' + fmtTok(u.contextWindow ?? 0) + ' tok (click for detail)';
+  if (ctxPop) renderCtxPop(); // an open popover tracks the live numbers
+}
+async function ctxTick() { // the ~30s poll — gated to the open LIVE session (a dead row has no beacon context-usage)
+  if (!sid || !live) return;
+  const r = await sreq('context-usage');
+  if (!sid || !live) return; // the pane swapped mid-fetch: never paint a stale read
+  if (r.status === 200 && r.json) ctxPaint(r.json);
+  else if (r.json && r.json.error === 'not live') ctxPaint(null); // the session died: the chip goes with it
+}
+function renderCtxPop() {
+  ctxPop.innerHTML = '';
+  const u = ctxLast;
+  if (!u || u.percent == null) { txt(el('pop-none', ctxPop), 'no metered turn yet'); }
+  else {
+    const p = Math.max(0, Math.min(100, u.percent));
+    const bar = el('ubar', ctxPop); el('ufill', bar).style.width = Math.round(p) + '%';
+    txt(el('utext', ctxPop), Math.round(p) + '% \u00b7 ' + fmtTok(u.tokens ?? 0) + ' of ' + fmtTok(u.contextWindow ?? 0) + ' tok');
+    const line = u.contextWindow ? u.contextWindow - CTX_RESERVE : 0; // the binary-verified law: auto-compact fires when tokens > contextWindow - reserveTokens
+    if (line > 0) txt(el('ctx-hint', ctxPop), 'auto-compact at ' + fmtTok(line) + ' tok (window \u2212 ' + (CTX_RESERVE / 1024) + 'k reserve)');
+  }
+  const rf = el('pop-row', ctxPop);
+  txt(el('pn', rf), 'Refresh'); txt(el('pd', rf), ctxLast && ctxLast.percent != null ? 're-read now' : '');
+  rf.addEventListener('click', () => ctxTick()); // a manual re-read; ctxPaint re-renders the open popover
+}
+function closeCtxPop() { if (ctxPop) { ctxPop.remove(); ctxPop = null; } }
+function openCtxPop() {
+  if (ctxPop) { closeCtxPop(); return; } // toggle
+  ctxPop = document.createElement('div');
+  ctxPop.className = 'menu ctxpop';
+  document.body.appendChild(ctxPop);
+  const r = ctxChip.getBoundingClientRect(); // anchored under the chip (left/top at open — .menu's top/right reset in css)
+  ctxPop.style.left = Math.max(8, Math.min(r.left, innerWidth - 340)) + 'px';
+  ctxPop.style.top = (r.bottom + 8) + 'px';
+  renderCtxPop();
+}
+ctxChip.onclick = () => { if (!ctxChip.classList.contains('hidden')) openCtxPop(); }; // a hidden chip never opens the popover
+document.addEventListener('mousedown', (e) => { if (ctxPop && !ctxPop.contains(e.target) && !ctxChip.contains(e.target)) closeCtxPop(); }); // outside-click (the menu's own listener untouched)
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctxPop) closeCtxPop(); }); // Escape closes (menu + cm + viewer listeners untouched)
+function ctxPanePaint(s) { // the pane-load first paint: the row's own context fields (beacon register carries them); a live pane also gets one immediate poll
+  if (!s || !s.live || s.contextTokens == null) { ctxPaint(null); return; }
+  ctxPaint({ tokens: s.contextTokens, contextWindow: s.contextWindow, percent: s.contextPercent });
+  ctxTick();
+}
+
+// 7bc+7au init: hbTick first paint + the ~30s ctx poll; the registry re-fetch rides the sidebar's 15s tick
+hbTick();
+setInterval(() => { if (!document.hidden) ctxTick(); }, 30000); // the ~30s ctx poll while the page is visible
+
 showList();
 const deep = (location.hash || '').match(/^#\/s\/(.+)$/); // deep-link preselect, parsed ONCE; 7bb: showSession writes the hash on every switch — the URL tracks the open conversation
 if (deep) showSession(decodeURIComponent(deep[1]));
 else { const kept = lsGet('webuiSelected'); if (kept) showSession(kept, true); } // no deep link: restore the persisted selection
-setInterval(() => { if (!document.hidden) showList(); }, 15000); // sidebar refreshes every 15s while the page is visible
+setInterval(() => { if (!document.hidden) { showList(); hbTick(); } }, 15000); // sidebar refreshes every 15s while the page is visible (7bc: the heartbeats registry rides the same tick)
+
+// --- 7bc-2: the pane heartbeat chip — the open pane's status line carries
+// the same pulse glyph + a 'heartbeat' label (hover: 'active heartbeat —
+// <interval>'). A DEDICATED element: every subBits write wipes #sSub's
+// textContent, a sibling survives; created lazily into the session-head
+// between #sSub and #sSubs, removed when the open conversation has no active
+// heartbeat (paused drops it; honest absence). Follows the SELECTION
+// (showSession paints every swap) and the registry (hbTick repaints on a
+// changed active set). ---
+function renderHbPane() {
+  const sub = $('#sSub');
+  if (!sub || !sub.parentNode) return; // the pane chrome is absent: nothing to paint
+  let chip = document.getElementById('hbPaneChip');
+  if (!sid || !hbActive.has(sid)) { if (chip) chip.remove(); return; } // no active heartbeat on this conversation: no chip
+  if (!chip) { chip = document.createElement('div'); chip.id = 'hbPaneChip'; chip.className = 'sub hbpane'; sub.parentNode.insertBefore(chip, $('#sSubs')); } // its own status line, between the sub line and the subs bar
+  chip.innerHTML = '';
+  const g = document.createElement('span'); g.className = 'hbglyph'; txt(g, '\u2665\uFE0E'); chip.appendChild(g); // the SAME glyph the row carries
+  const l = document.createElement('span'); l.className = 'hbpane-label'; txt(l, 'heartbeat'); chip.appendChild(l);
+  chip.title = 'active heartbeat' + (hbActive.get(sid) ? ' \u2014 ' + hbActive.get(sid) : '');
+}
 
 // 7aa system meter: two stacked hairline tracks in the top bar (CPU over
 // MEM), grey fills ONLY (lime stays working-only), tiny mono % labels; hover
@@ -1856,3 +2005,240 @@ async function sysTick() {
 }
 sysTick(); // first paint without waiting the interval
 setInterval(() => { if (!document.hidden) sysTick(); }, 5000); // meter polls every 5s while the page is visible
+
+
+// --- 54-cmdk: the search palette (Cmd-K / Ctrl-K) — the deep transcript
+// search surface over GET /api/search (the frozen slice-1 endpoint: the
+// singleton in-process scan, the 20x3 cap, the honest partial flag).
+// CHORD VERDICT (verified this slice): the chord is NEW — no Cmd-K/Ctrl-K
+// binding existed anywhere (the composer's Cmd-Enter/Ctrl-Enter send chord
+// is the house's only platform chord; every other keydown listener is
+// Escape-scoped), so it registers here per the design, MAC_UI picking the
+// modifier exactly like the send chord.
+// While open the palette OWNS its keys: a CAPTURE-phase handler consumes
+// Escape/arrows/Enter before any bubble-phase listener (the menu/cm/viewer/
+// ctxPop/sash/collapse Escape hatches never fire under it — capture beats
+// their registration order; no guard-list edits needed).
+// Two result tiers per the design: the LOCAL row matches (the 7an sidebar
+// predicate — name/cwd/id/recap over the cached listData, instant, no fetch,
+// deduped against the server results once they land) render FIRST; the
+// SERVER content results (250ms debounce, seq-guarded fetch) render under
+// them. THE SNIPPET LAW (the pentest directive): raw transcript text renders
+// via createTextNode ONLY — the highlight is a string-split + a styled span,
+// never innerHTML; BOTH payload shapes ride: {pre,hit,post} (three clean
+// text fields — the next server slice) and the legacy raw string with
+// <b></b> marks (split on the first marker pair; no clean pair = one plain
+// text node — a transcript that itself contains '<b>' can at worst mis-place
+// a cosmetic highlight, never execute). ---
+let cmdk = null; // the open palette: {root, input, body, foot, q, sel, rows, seq, timer, search, err, server, last, prevFocus, smap}
+const CMDK_DEBOUNCE_MS = 250;
+const CMDK_LOCAL_CAP = 10;
+const CMDK_FETCH_MS = 10000; // the server's own wall cap is 4s — this covers only the network-hang class
+const cmdkSnipNode = (s) => { // ONE snippet -> {pre, hit, post} strings (hit '' = unmarked) — string-split, never an HTML parse
+  if (s && typeof s === 'object') {
+    const pre = typeof s.pre === 'string' ? s.pre : '', hit = typeof s.hit === 'string' ? s.hit : '';
+    return { pre, hit, post: typeof s.post === 'string' ? s.post : '' };
+  }
+  const t = typeof s === 'string' ? s : '';
+  const b = t.indexOf('<b>'), e = b >= 0 ? t.indexOf('</b>', b + 3) : -1; // the legacy raw shape: the first marker pair is the term
+  if (b < 0 || e < 0) return { pre: t, hit: '', post: '' };
+  return { pre: t.slice(0, b), hit: t.slice(b + 3, e), post: t.slice(e + 4) };
+};
+function cmdkSnipEl(box, s) { // the snippet render: text nodes ONLY (the createTextNode law) + the lime hit span; empty fields append nothing
+  const p = cmdkSnipNode(s);
+  const line = document.createElement('div'); line.className = 'cmdk-snip';
+  if (p.pre) line.appendChild(document.createTextNode(p.pre));
+  if (p.hit) { const h = document.createElement('span'); h.className = 'cmdk-hit'; h.appendChild(document.createTextNode(p.hit)); line.appendChild(h); }
+  if (p.post) line.appendChild(document.createTextNode(p.post));
+  box.appendChild(line);
+  return line;
+}
+function cmdkSessionMap() { // id|childId -> session (children too — a child hit's own row + the parent header need titles/ages)
+  const m = new Map();
+  const walk = (s) => { if (s.id) m.set(s.id, s); if (s.childId) m.set(s.childId, s); for (const c of s.children || []) walk(c); };
+  if (listData && Array.isArray(listData.sessions)) for (const s of listData.sessions) walk(s);
+  return m;
+}
+function cmdkOpenSession(id) { if (!id) return; cmdkClose(false); showSession(id); } // Enter/click: the existing open path, no new view; a child row opens its PARENT (the server maps hits up)
+function cmdkLocalRow(sec, s) {
+  const row = document.createElement('div'); row.className = 'cmdk-row';
+  const l1 = document.createElement('div'); l1.className = 'cmdk-l1'; row.appendChild(l1);
+  const t = document.createElement('span'); t.className = 'cmdk-title'; txt(t, s.name || s.firstMessage || s.cwd || s.id); l1.appendChild(t);
+  const a = document.createElement('span'); a.className = 'cmdk-age'; txt(a, s.modified ? fmtDate(s.modified) : ''); l1.appendChild(a);
+  if (s.activity) { const act = document.createElement('div'); act.className = 'cmdk-act'; txt(act, mdToPlain(s.activity)); row.appendChild(act); }
+  row.addEventListener('mousedown', (e) => e.preventDefault()); // keep the input's focus — greyed rows stay inert
+  row.addEventListener('click', () => cmdkOpenSession(s.id));
+  sec.appendChild(row);
+  return row;
+}
+function cmdkResultRow(sec, r, isChild) {
+  const owner = isChild ? cmdk.smap.get(r.child?.childId) : cmdk.smap.get(r.id);
+  const row = document.createElement('div'); row.className = 'cmdk-row' + (isChild ? ' child' : '');
+  const l1 = document.createElement('div'); l1.className = 'cmdk-l1'; row.appendChild(l1);
+  const t = document.createElement('span'); t.className = 'cmdk-title';
+  txt(t, isChild ? '▸ ' + (r.child?.name || owner?.name || 'child') : (owner ? (owner.name || owner.firstMessage || owner.cwd || r.id) : r.id));
+  l1.appendChild(t);
+  const a = document.createElement('span'); a.className = 'cmdk-age'; txt(a, owner?.modified ? fmtDate(owner.modified) : ''); l1.appendChild(a);
+  for (const sn of (Array.isArray(r.snippets) ? r.snippets : []).slice(0, 3)) cmdkSnipEl(row, sn); // the 20x3 cap is server-side; the render trusts-but-bounds
+  const meta = document.createElement('div'); meta.className = 'cmdk-meta'; row.appendChild(meta);
+  const role = document.createElement('span'); role.className = 'cmdk-role'; txt(role, String(r.role || 'tool')); meta.appendChild(role); // the type glyph: user/assistant/tool/child
+  const hits = document.createElement('span'); txt(hits, (r.hits ?? 0) + ' hits'); meta.appendChild(hits);
+  const ts = document.createElement('span'); txt(ts, fmtTime(r.ts)); meta.appendChild(ts); // the matched ENTRY's ts (the 7r item-time format)
+  row.addEventListener('mousedown', (e) => e.preventDefault());
+  row.addEventListener('click', () => cmdkOpenSession(r.id));
+  sec.appendChild(row);
+  return row;
+}
+function cmdkServerRows(sec, results) {
+  const groups = [], byId = new Map(); // one block per root id: its own root hit (0..1) + its child hits, first-appearance order
+  for (const r of results) {
+    let g = byId.get(r.id);
+    if (!g) { g = { id: r.id, root: null, kids: [] }; byId.set(r.id, g); groups.push(g); }
+    if (r.child) g.kids.push(r);
+    else if (!g.root) g.root = r;
+  }
+  for (const g of groups) {
+    if (g.root) cmdk.rows.push({ id: g.id, el: cmdkResultRow(sec, g.root, false) });
+    else { // child-only group: the hierarchy needs a parent row to indent under — synthetic header (title+age, no snippet), opens the parent
+      const head = document.createElement('div'); head.className = 'cmdk-row';
+      const l1 = document.createElement('div'); l1.className = 'cmdk-l1'; head.appendChild(l1);
+      const s = cmdk.smap.get(g.id);
+      const t = document.createElement('span'); t.className = 'cmdk-title'; txt(t, s ? (s.name || s.firstMessage || s.cwd || g.id) : g.id); l1.appendChild(t);
+      const a = document.createElement('span'); a.className = 'cmdk-age'; txt(a, s?.modified ? fmtDate(s.modified) : ''); l1.appendChild(a);
+      head.addEventListener('mousedown', (e) => e.preventDefault());
+      head.addEventListener('click', () => cmdkOpenSession(g.id));
+      sec.appendChild(head);
+      cmdk.rows.push({ id: g.id, el: head });
+    }
+    for (const r of g.kids) cmdk.rows.push({ id: g.id, el: cmdkResultRow(sec, r, true) }); // child hits nest under the parent block (the indent dialect)
+  }
+}
+function cmdkFoot() {
+  if (!cmdk) return;
+  const f = cmdk.foot;
+  if (cmdk.search) { txt(f, 'searching…'); return; } // the honest in-flight signal (no animation — the cursor blink stays the only one)
+  if (cmdk.err) { txt(f, 'search unavailable'); return; }
+  const qt = (cmdk.q || '').trim();
+  if (qt.length < 2) { txt(f, qt ? 'type 2+ characters to search transcripts' : ''); return; }
+  if (cmdk.server) {
+    const d = cmdk.last || {}, n = cmdk.server.length;
+    let s = n + (n === 1 ? ' transcript match' : ' transcript matches') + ' · ' + (d.ms ?? 0) + ' ms';
+    if (n >= 20) s += ' · top 20 — refine to narrow'; // the cap hit — honest
+    if (d.partial) s += ' · partial — showing newest ' + (d.scannedMB ?? 0) + ' MB of ' + (d.corpusMB ?? 0) + ' MB'; // the budget/wall ate the oldest bytes
+    txt(f, s);
+  } else txt(f, '');
+}
+function cmdkRender() {
+  if (!cmdk) return;
+  const box = cmdk.body; box.innerHTML = '';
+  cmdk.rows = [];
+  cmdk.smap = cmdkSessionMap();
+  const ql = (cmdk.q || '').trim().toLowerCase();
+  const locals = ql ? (listData && Array.isArray(listData.sessions) ? listData.sessions.filter((s) => rowMatch(s, ql)) : []) : [];
+  const serverIds = new Set((cmdk.server || []).map((r) => r.id));
+  const shown = locals.filter((s) => !serverIds.has(s.id)); // the design: local hits add only what the content results missed
+  if (shown.length) {
+    const sec = document.createElement('div'); sec.className = 'cmdk-sec'; box.appendChild(sec);
+    const h = document.createElement('div'); h.className = 'cmdk-sec-head'; txt(h, 'row matches'); sec.appendChild(h);
+    for (const s of shown.slice(0, CMDK_LOCAL_CAP)) cmdk.rows.push({ id: s.id, el: cmdkLocalRow(sec, s) }); // instant, no fetch
+    if (shown.length > CMDK_LOCAL_CAP) { const m = document.createElement('div'); m.className = 'cmdk-more'; txt(m, '+ ' + (shown.length - CMDK_LOCAL_CAP) + ' more — refine to narrow'); sec.appendChild(m); }
+  }
+  if (cmdk.search || cmdk.err || cmdk.server) { // the transcript tier renders once a fetch state exists (never stale rows under a new query)
+    const sec = document.createElement('div'); sec.className = 'cmdk-sec'; box.appendChild(sec);
+    const h = document.createElement('div'); h.className = 'cmdk-sec-head'; txt(h, 'transcript matches'); sec.appendChild(h);
+    if (cmdk.err) {
+      const e = document.createElement('div'); e.className = 'cmdk-err'; txt(e, 'search unavailable'); sec.appendChild(e);
+      const rt = document.createElement('button'); rt.className = 'cmdk-retry'; rt.type = 'button'; txt(rt, 'retry');
+      rt.onclick = () => { if (cmdk) { cmdk.err = false; cmdk.search = true; cmdkRender(); cmdkFire(); } }; // re-fire the CURRENT query
+      sec.appendChild(rt);
+    } else if (cmdk.search) { /* in flight — the footer carries 'searching…' */ }
+    else if (cmdk.server.length) cmdkServerRows(sec, cmdk.server);
+    else { const n = document.createElement('div'); n.className = 'cmdk-none'; txt(n, 'no matches in the transcripts'); sec.appendChild(n); }
+  }
+  if (cmdk.sel >= cmdk.rows.length) cmdk.sel = Math.max(0, cmdk.rows.length - 1); // clamp, preserve the index when possible (the pop precedent)
+  cmdk.rows.forEach((r, i) => { if (i === cmdk.sel) r.el.classList.add('sel'); });
+  const s = cmdk.rows[cmdk.sel];
+  if (s && s.el.scrollIntoView) s.el.scrollIntoView({ block: 'nearest' });
+  cmdkFoot();
+}
+function cmdkFire() { // the debounced fetch — seq-tagged: a newer keystroke's reply wins, a stale one paints nothing
+  if (!cmdk) return;
+  const seq = cmdk.seq;
+  const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const to = ctl ? setTimeout(() => ctl.abort(), CMDK_FETCH_MS) : null; // the network-hang class only (the server caps itself at 4s)
+  fetch('/api/search?q=' + encodeURIComponent(cmdk.q.trim()), { headers: { 'x-prime-token': token }, signal: ctl ? ctl.signal : undefined })
+    .then((r) => { if (!r.ok) return null; try { return r.json(); } catch (e) { return null; } })
+    .then((d) => {
+      if (to) clearTimeout(to);
+      if (!cmdk || seq !== cmdk.seq) return; // closed or superseded mid-flight — paint nothing
+      if (!d || !Array.isArray(d.results) || d.error) { cmdk.search = false; cmdk.err = true; cmdk.server = null; cmdk.last = null; }
+      else { cmdk.search = false; cmdk.err = false; cmdk.server = d.results; cmdk.last = d; }
+      cmdkRender();
+    })
+    .catch(() => { if (to) clearTimeout(to); if (cmdk && seq === cmdk.seq) { cmdk.search = false; cmdk.err = true; cmdkRender(); } });
+}
+function cmdkInput() {
+  if (!cmdk) return;
+  cmdk.q = cmdk.input.value;
+  cmdk.search = false; cmdk.err = false; cmdk.server = null; cmdk.last = null; cmdk.seq++; // a new query invalidates the in-flight reply
+  if (cmdk.timer) { clearTimeout(cmdk.timer); cmdk.timer = null; }
+  const qt = cmdk.q.trim();
+  if (qt.length >= 2 && qt.length <= 200) { // the server rejects shorter — the local tier still filters
+    cmdk.search = true; // a search IS pending through the debounce window — the footer says so
+    cmdk.timer = setTimeout(() => { if (cmdk) { cmdk.timer = null; cmdkFire(); } }, CMDK_DEBOUNCE_MS);
+  }
+  cmdkRender();
+}
+function cmdkClose(refocus) {
+  if (!cmdk) return;
+  if (cmdk.timer) clearTimeout(cmdk.timer);
+  const prev = cmdk.prevFocus;
+  cmdk.root.remove(); cmdk = null;
+  if (refocus && prev && prev.isConnected) prev.focus(); // the palette never leaks focus — the composer keeps its draft + caret
+}
+function cmdkOpen() {
+  if (cmdk) return;
+  closePop(); closeMenu(); closeCm(); closeCtxPop(); // the anchored popovers step aside — one modal at a time (the ownership discipline)
+  cmdk = { root: null, input: null, body: null, foot: null, q: '', sel: 0, rows: [], seq: 0, timer: null,
+           search: false, err: false, server: null, last: null, smap: new Map(), prevFocus: document.activeElement || null };
+  const root = document.createElement('div'); root.className = 'cmdk'; cmdk.root = root;
+  root.addEventListener('mousedown', (e) => { if (e.target === root) cmdkClose(true); }); // the scrim click closes (the viewer dialect)
+  const panel = document.createElement('div'); panel.className = 'cmdk-panel'; root.appendChild(panel);
+  const inrow = document.createElement('div'); inrow.className = 'cmdk-inrow'; panel.appendChild(inrow);
+  const inp = document.createElement('input'); inp.className = 'cmdk-in'; inp.placeholder = 'search transcripts…';
+  inp.autocomplete = 'off'; inp.spellcheck = false; inrow.appendChild(inp); cmdk.input = inp;
+  const body = document.createElement('div'); body.className = 'cmdk-body'; panel.appendChild(body); cmdk.body = body;
+  const foot = document.createElement('div'); foot.className = 'cmdk-foot'; panel.appendChild(foot); cmdk.foot = foot;
+  document.body.appendChild(root);
+  inp.addEventListener('input', cmdkInput); // the LOCAL tier renders instantly on every keystroke; the fetch debounces 250ms
+  inp.focus();
+  cmdkRender();
+}
+function cmdkSelPaint() { // the arrow-move fast path: sel classes + scroll, no full re-render
+  cmdk.rows.forEach((r, i) => { r.el.classList.remove('sel'); if (i === cmdk.sel) r.el.classList.add('sel'); });
+  const s = cmdk.rows[cmdk.sel];
+  if (s && s.el.scrollIntoView) s.el.scrollIntoView({ block: 'nearest' });
+}
+window.addEventListener('keydown', (e) => { // the chord: NEW (verified — no prior Cmd-K/Ctrl-K binding; the send chord's MAC_UI ternary is the precedent)
+  if ((MAC_UI ? e.metaKey : e.ctrlKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+    e.preventDefault(); // beats the browser's Cmd-K omnibox/search default
+    if (cmdk) cmdkClose(true); else cmdkOpen();
+  }
+}, true);
+window.addEventListener('keydown', (e) => { // the palette owns its keys while open: capture-phase consumption — Escape/arrows/Enter never reach the composer, the overlays' Escape hatches, or the 7bh collapse restore
+  if (!cmdk) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cmdkClose(true); return; }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (!cmdk.rows.length) return;
+    e.preventDefault(); e.stopPropagation();
+    cmdk.sel = (cmdk.sel + (e.key === 'ArrowUp' ? -1 : 1) + cmdk.rows.length) % cmdk.rows.length; // wrap (the popKey precedent)
+    cmdkSelPaint(); return;
+  }
+  if (e.key === 'Enter') {
+    if (e.target && e.target.tagName === 'BUTTON' && cmdk.root.contains(e.target)) return; // the retry button keeps its native Enter
+    e.preventDefault(); e.stopPropagation();
+    if (cmdk.rows.length && cmdk.rows[cmdk.sel]) cmdkOpenSession(cmdk.rows[cmdk.sel].id); // Enter opens the session (a child row opens its parent)
+  }
+}, true);
+
+// --- end 54-cmdk ---

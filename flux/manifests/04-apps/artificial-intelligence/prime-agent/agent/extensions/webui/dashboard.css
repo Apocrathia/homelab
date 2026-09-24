@@ -31,7 +31,7 @@ main{flex:1;display:flex;min-height:0;position:relative;} /* position:relative a
 .stoggle{cursor:pointer;background:none;border:1px solid var(--hairline);color:var(--grey-4);
 width:22px;height:22px;padding:0;line-height:1;flex:none;font-size:11px;letter-spacing:0;}
 .stoggle:hover{border-color:var(--accent);color:var(--accent);}
-.s-expand{display:none;position:absolute;left:0;top:0;width:18px;height:34px;
+.s-expand{display:none;position:absolute;left:0;top:0;width:18px;height:34px;z-index:15; /* 7bh: #session (position:relative, later in the dom) paints over AND swallows clicks on the handle — the collapsed rail's restore must sit above the pane */
 background:var(--grey-2);border:none;border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);
 color:var(--grey-4);padding:0;font-size:11px;line-height:34px;cursor:pointer;}
 .s-expand:hover{color:var(--accent);}
@@ -367,3 +367,85 @@ text-overflow:ellipsis;flex:1;min-width:0;}
 .viewer-body{flex:1;overflow:auto;padding:12px;color:var(--grey-5);white-space:pre-wrap;overflow-wrap:anywhere;}
 
 .item.digest > summary::before{content:'';display:inline-block;width:8px;} /* 7az rider: the digest marker breathes too */
+
+/* 7bc heartbeats section (read-only v1): the daemon's scheduled-jobs registry
+   surfaced in the sidebar — grey, collapsible, under the sessions; no accent
+   (the operator's management flows through the conversation, this is the view) */
+#hb{border-top:1px solid var(--hairline);}
+#hb.hidden{display:none;}
+#hb .hb-head{display:flex;align-items:center;gap:8px;padding:8px 20px 6px;cursor:pointer;user-select:none;}
+#hb .hb-head:hover{background:var(--grey-2);}
+#hb .hb-row{display:flex;align-items:baseline;gap:10px;padding:6px 20px;cursor:pointer;}
+#hb .hb-row:hover{background:var(--grey-2);}
+#hb .hb-label{color:var(--grey-5);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#hb .hb-meta{display:flex;gap:8px;flex:none;}
+#hb .hb-interval{color:var(--grey-4);font-size:11px;flex:none;}
+#hb .hb-status{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;flex:none;}
+
+/* 7au context chip: the CTX N% chip in the header next to the sysmeter —
+   always visible while a live session is open (pinned by default); grey
+   fill like the sysmeter (lime stays working-only); the popover reuses the
+   .menu chrome anchored under the chip (left/top set at open) */
+.ctxchip{display:flex;align-items:center;gap:6px;background:none;border:none;padding:0;cursor:pointer;flex:none;}
+.ctxchip:hover .ctxpct,.ctxchip:hover .ctxlabel{color:var(--grey-5);}
+.ctxchip .ctxlabel{color:var(--grey-4);font-size:9px;letter-spacing:.12em;flex:none;}
+.ctxchip .ctxstack{position:relative;width:60px;height:4px;background:var(--grey-1);border:1px solid var(--hairline);flex:none;}
+.ctxchip .ctxfill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--grey-4);}
+.ctxchip .ctxpct{color:var(--grey-4);font-size:10px;min-width:34px;text-align:right;flex:none;letter-spacing:.04em;}
+.ctxpop{top:auto;right:auto;} /* .menu base + anchored under the chip (left/top at open) */
+.ctxpop .ctx-hint{color:var(--grey-4);font-size:10px;letter-spacing:.04em;padding:6px 12px 8px;}
+
+/* 7bc-2: the per-session heartbeat indicator — the lime pulse glyph
+   (a heartbeat IS live activity: the accent law holds), the status-dot
+   dialect at the subs-glyph scale (10px, square, static — no animations
+   by design); rides the sidebar row beside the title + the pane's dedicated
+   status chip (glyph + grey label). */
+.hbglyph{color:var(--accent);font-size:10px;flex:none;line-height:1;user-select:none;} /* ♥ beside the row title + in the pane chip */
+.hbpane{display:flex;align-items:center;gap:6px;padding-top:2px;} /* the pane chip: its own status line beside #sSub */
+.hbpane .hbpane-label{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;} /* 'heartbeat' — grey-4 caps, the .caps dialect */
+
+/* 54-cmdk: the search palette — Cmd-K's centered modal over a fixed
+   backdrop. The pop-picker's chrome (grey-2 panel, hairline, square, system
+   mono); lime ONLY on the selected row + the match highlight (the working
+   law — the searching text stays grey). */
+.cmdk{position:fixed;inset:0;z-index:40;background:rgba(17,17,17,.78);
+display:flex;align-items:flex-start;justify-content:center;padding:10vh 16px 0;}
+.cmdk-panel{width:min(680px,100%);max-height:76vh;display:flex;flex-direction:column;
+background:var(--grey-2);border:1px solid var(--hairline);}
+.cmdk-inrow{display:flex;align-items:center;gap:8px;padding:10px 14px;
+border-bottom:1px solid var(--hairline);flex:none;}
+.cmdk-in{flex:1;min-width:0;background:none;border:none;outline:none;
+color:var(--grey-6);font-family:var(--font-mono);font-size:13px;
+letter-spacing:.04em;padding:0;}
+.cmdk-in::placeholder{color:var(--grey-4);}
+.cmdk-body{flex:1;min-height:0;overflow-y:auto;}
+.cmdk-sec{padding-bottom:4px;}
+.cmdk-sec-head{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;padding:8px 14px 2px;}
+.cmdk-row{padding:6px 14px;cursor:pointer;}
+.cmdk-l1{display:flex;align-items:baseline;gap:8px;}
+.cmdk-title{color:var(--grey-6);overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap;min-width:0;}
+.cmdk-age{margin-left:auto;color:var(--grey-4);font-size:11px;flex:none;}
+.cmdk-row.child{padding-left:38px;} /* the nested child hit — the hierarchy's indent dialect */
+.cmdk-row.child .cmdk-title{color:var(--grey-5);}
+.cmdk-snip{color:var(--grey-5);font-size:11px;padding-top:2px;
+white-space:pre-wrap;overflow-wrap:anywhere;}
+.cmdk-hit{color:var(--accent);} /* the term highlight — the lime accent */
+.cmdk-act{color:var(--grey-4);font-size:11px;padding-top:2px;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmdk-meta{display:flex;gap:10px;color:var(--grey-4);font-size:10px;
+letter-spacing:.12em;text-transform:uppercase;padding-top:2px;}
+.cmdk-more,.cmdk-none{color:var(--grey-4);padding:4px 14px;font-size:11px;}
+.cmdk-err{color:var(--risk);padding:8px 14px 2px;font-size:11px;}
+.cmdk-retry{background:none;border:none;border-bottom:1px solid var(--hairline);
+color:var(--grey-5);font-family:var(--font-mono);font-size:11px;
+letter-spacing:.04em;padding:0 2px;margin:4px 14px 8px;cursor:pointer;}
+.cmdk-retry:hover{color:var(--accent);border-color:var(--accent);}
+.cmdk-row.sel{background:var(--accent);} /* the active row — the pop-row.sel dialect */
+.cmdk-row.sel .cmdk-title,.cmdk-row.sel .cmdk-act{color:var(--accent-ink);}
+.cmdk-row.sel .cmdk-age,.cmdk-row.sel .cmdk-meta,.cmdk-row.sel .cmdk-role{color:var(--accent-ink);opacity:.85;}
+.cmdk-row.sel .cmdk-snip{color:var(--accent-ink);opacity:.9;}
+.cmdk-row.sel .cmdk-hit{color:var(--grey-1);}
+.cmdk-foot{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;padding:6px 14px;border-top:1px solid var(--hairline);flex:none;}
