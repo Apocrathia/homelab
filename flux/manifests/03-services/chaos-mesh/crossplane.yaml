@@ -72,9 +72,11 @@ spec:
     remotePullPolicy: IfNotPresent
     # Module inputs — no chart composer here, so the varmap carries the
     # full input set (variable contract: terraform/modules/authentik-app/
-    # variables.tf). ADOPT: import ids adopt the live objects in place
-    # (uuids intact, no deletion window); native booleans stay booleans,
-    # ids are quoted strings. Two live-vs-default overrides (verified in
+    # variables.tf). ADOPT at the gate: adoption ids are injected live at
+    # the migration gate (kubectl patch on this Workspace while Flux is
+    # suspended), never committed; tofu adopts the live objects in place
+    # — uuids intact, no deletion window — and the patch drops once the
+    # imports go inert. Two live-vs-default overrides (verified in
     # the authentik DB 2026-09-25): intercept_header_auth TRUE (module
     # default false — chart parity), and access_token_validity minutes=10
     # (the TF default written at blip time; the module proxy default is
@@ -99,8 +101,3 @@ spec:
       access_token_validity: "minutes=10"
       meta_description: "Chaos engineering platform for Kubernetes"
       meta_publisher: "Chaos Mesh"
-      adoption: true
-      import_provider_pk: "707"
-      import_application_id: "chaos-mesh-dashboard"
-      import_binding_admins_pk: "b38275d0-7c0f-4500-b384-bca1d4e54e75"
-      import_outpost_uuid: "cd17edbb-e0d6-4058-a8c0-83a2f58143d5"

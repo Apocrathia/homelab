@@ -13,8 +13,10 @@
   The module-input varmap. The chart composes the standard surface from the
   authentik values (the same inputs the blueprint templates read) so a blip
   app is a managedBy flip alone; authentik.terraform.varmap merges on top
-  for what only the app knows - adoption + live import ids (the variable
-  contract is terraform/modules/authentik-app/variables.tf). Native types
+  for what only the app knows - module-input overrides. Adoption ids never
+  enter git: adopt apps get them via a gate-time live patch on the Workspace
+  (kubectl patch, Flux suspended); the variable contract is
+  terraform/modules/authentik-app/variables.tf. Native types
   flow through the tfvars.json path: bools as bools, ids as quoted strings.
   NEVER route this through a ConfigMap - all-string data breaks the typing.
 */}}
@@ -152,9 +154,10 @@ spec:
     # admission default (Always) would re-clone the repo on every poll.
     remotePullPolicy: IfNotPresent
     # Module inputs: the chart-composed surface + the app's
-    # authentik.terraform.varmap (adoption + live import ids, quoted
-    # strings; shared/adoption as native booleans — the tfvars.json path
-    # carries types). The variable contract:
+    # authentik.terraform.varmap (overrides; adoption ids ride the
+    # gate-time live patch on this Workspace, never git — quoted strings,
+    # shared/adoption as native booleans, the tfvars.json path carries
+    # types). The variable contract:
     # terraform/modules/authentik-app/variables.tf. The module's own
     # variable validation is the runtime guard (adoption requires every
     # shape id; ids without adoption fail).

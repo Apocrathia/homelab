@@ -922,22 +922,17 @@ authentik:
 The contract is **values-only**: no per-app `terraform.tf`, no module
 ConfigMap, no `valuesFrom`, no kustomization additions. The chart composes
 the module's standard inputs from the `authentik` values (the same inputs the
-blueprint templates read), so flipping an app is a `managedBy` change plus —
-for the adopt tier — a varmap with the app's live import ids.
+blueprint templates read), so flipping an app is a `managedBy` change alone —
+the adopt tier's ids arrive via a gate-time live patch (below), never git.
 
 ```yaml
 authentik:
   enabled: true
   managedBy: terraform # blueprint -> terraform: the flip
   # ...the same values the blueprint templates read (composed into varmap)
-  terraform: # adopt tier only; blip tier omits this block
+  terraform: # module-input overrides only; ids never enter git (see Adopt tier)
     varmap:
-      adoption: true # native boolean
-      import_provider_pk: "39" # quoted strings - ids are strings
-      import_application_id: "demo-app" # the app slug
-      import_binding_admins_pk: "<live pk>"
-      import_binding_users_pk: "<live pk>" # shared tier
-      import_outpost_uuid: "<live uuid>" # proxy mode
+      access_token_validity: "minutes=10" # example live-vs-default override
 ```
 
 **Module**: `terraform/modules/authentik-app` is the root config (import
@@ -959,12 +954,14 @@ the ref and re-pulls exactly once.
 
 **Two tiers**:
 
-- **Adopt** (apps with live blueprint-era objects): `adoption: true` + every
-  live import id for the app's shape in the varmap. tofu imports the objects
-  in place — no deletion window, uuids intact, nobody re-logs in. The render
-  gate and the module's variable validation both fail loudly on a missing id
-  (an empty id makes tofu silently skip the import and plan a duplicate
-  create).
+- **Adopt** (apps with live blueprint-era objects): the operator injects
+  the `adoption` flag + every live import id for the app's shape via a
+  gate-time live patch on the Workspace varmap (kubectl patch, Flux
+  suspended) — the ids NEVER enter git. tofu imports the objects in place —
+  no deletion window, uuids intact, nobody re-logs in; after the first apply
+  the imports go inert and the patch drops. The render gate and the module's
+  variable validation both fail loudly on a missing id (an empty id makes
+  tofu silently skip the import and plan a duplicate create).
 - **Blip** (fresh create, e.g. new apps): no varmap at all — the
   chart-composed inputs suffice; tofu creates the stack from scratch.
   Chart-era blueprints for blip apps decommission separately.

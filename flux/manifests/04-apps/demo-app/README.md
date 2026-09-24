@@ -40,7 +40,7 @@ The full Authentik stack — proxy provider -> application -> `admins` (order 10
 
 - The workspace token comes from 1Password item `crossplane-terraform-secrets` (field `authentik-terraform-token`), synced as the `authentik-terraform-token` Secret by the chart-rendered OnePasswordItem — same shared item as headlamp and chaos-mesh.
 - The outpost config carries BOTH gateway parentRefs: `main-gateway`/`https` (LAN) and `tailnet-gateway`/`https-gateway-services` (tailnet). The outpost route owns both doors.
-- ADOPT, not recreate: the chart-composed varmap carries `adoption: true` + the live import ids, so the module's import blocks adopt the existing Authentik objects in place. Zero-outage cutover: the objects keep their uuids, nobody re-logs in. The import blocks + varmap ids stay permanently — they go inert after adoption, chart upgrades change nothing (ids are stable), and if an object is ever deleted out-of-band, tofu recreates it (state knows it).
+- ADOPT, not recreate: the adoption ids NEVER live in git — the migration gate injects them as a live patch on the Workspace varmap (kubectl patch, Flux suspended), the module's import blocks adopt the existing Authentik objects in place, and the patch drops once the imports go inert. Zero-outage cutover: the objects keep their uuids, nobody re-logs in. If an object is ever deleted out-of-band, tofu recreates it (state knows it).
 - First reconcile after this flip needs the `generic-app-<version>` git tag (the create-chart-tag CI job pushes it minutes after merge) and a one-time tofu state wipe — see the MR description; until then the workspace transiently fails (pathspec did not match).
 
 ## Storage Pattern
@@ -174,7 +174,9 @@ secrets:
 
 authentik:
   # Chart-rendered provider-opentofu stack pulling the shared module
-  # terraform/modules/authentik-app; the varmap carries the adopt-tier ids.
+  # terraform/modules/authentik-app; the chart composes the whole varmap —
+  # adoption ids are injected at the migration gate (live patch on the
+  # Workspace, Flux suspended) and never committed.
   enabled: true
   managedBy: terraform
   shared: true
@@ -182,14 +184,6 @@ authentik:
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
   icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
-  terraform:
-    varmap:
-      adoption: true
-      import_provider_pk: "39"
-      import_application_id: "demo-app"
-      import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
-      import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
-      import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"
 
 httproute:
   enabled: false

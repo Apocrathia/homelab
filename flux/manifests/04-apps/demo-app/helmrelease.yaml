@@ -66,10 +66,12 @@ spec:
     # + ProviderConfig + Workspace) pulling the shared module
     # terraform/modules/authentik-app at this chart's own git tag — values
     # only, no per-app HCL (the crossplane.yaml/terraform.tf era is over).
-    # The chart composes the standard inputs from this block; the varmap
-    # carries the adopt tier: live import ids, so the Workspace imports
-    # (adopts) the existing authentik objects in place — no deletion
-    # window, uuids intact, nobody re-logs in. Ids verified live 2026-09-25.
+    # The chart composes the standard inputs from this block; no varmap
+    # needed. Adoption ids NEVER live in git: the migration gate injects
+    # them via a live patch on the Workspace (kubectl patch, Flux
+    # suspended), the module's import blocks adopt the existing authentik
+    # objects in place — no deletion window, uuids intact, nobody re-logs
+    # in — and the patch drops once the imports go inert.
     # Live provider attrs match the composed surface: intercept_header_auth
     # false (chart default), access_token_validity hours=1 (module proxy
     # default) — no per-app overrides needed.
@@ -81,14 +83,6 @@ spec:
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
-      terraform:
-        varmap:
-          adoption: true
-          import_provider_pk: "39"
-          import_application_id: "demo-app"
-          import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
-          import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
-          import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"
 
     gatus:
       enabled: true

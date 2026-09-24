@@ -74,9 +74,11 @@ spec:
     # variables.tf). Library mode: headlamp's Authentik footprint is the
     # dashboard tile + the admins binding ONLY — no provider. Its OIDC
     # login rides the blueprint-owned `kubernetes` OIDC provider
-    # (authentik/kube-auth/), NOT a headlamp-owned provider. ADOPT: the
-    # import ids adopt the live objects in place; native booleans stay
-    # booleans, ids are quoted strings.
+    # (authentik/kube-auth/), NOT a headlamp-owned provider. ADOPT at the
+    # gate: adoption ids are injected live at the migration gate (kubectl
+    # patch on this Workspace while Flux is suspended), never committed;
+    # tofu adopts the live objects in place — uuids intact, no deletion
+    # window — and the patch drops once the imports go inert.
     varmap:
       app_name: "headlamp"
       display_name: "Headlamp"
@@ -91,6 +93,3 @@ spec:
       authentication_flow: "default-authentication-flow"
       meta_description: "Kubernetes web UI with OIDC authentication"
       meta_publisher: "Kubernetes SIG UI"
-      adoption: true
-      import_application_id: "headlamp"
-      import_binding_admins_pk: "6c7039b1-1752-4337-85bf-faecab56a087"

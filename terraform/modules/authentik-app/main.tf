@@ -1,4 +1,4 @@
-# authentik-app: the shared tofu module for generic-app chart apps.
+# authentik-app: the shared tofu module for homelab Authentik app integrations (generic-app chart apps AND standalone deployments like headlamp/chaos-mesh).
 # ROOT module — the provider-opentofu Workspace pulls this directory
 # directly via source: Remote (import blocks are only legal in the root
 # module, so there is no wrapper). One module, three provider modes:
