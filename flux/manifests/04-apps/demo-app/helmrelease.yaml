@@ -16,12 +16,6 @@ spec:
         name: homelab
         namespace: flux-system
       interval: 5m
-  # Feed the kustomize-generated tofu module ConfigMap into chart values:
-  # Flux merges every ConfigMap data key as a top-level values key, so the
-  # module lands as `terraform.tf` (the data key is the literal filename).
-  valuesFrom:
-    - kind: ConfigMap
-      name: demo-app-authentik-module
   values:
     app:
       name: demo-app
@@ -68,35 +62,21 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
-    # Authentik stack is tofu-native (MR1): the chart (authentik.managedBy:
-    # terraform) renders the same provider-opentofu docs as the kustomize-
-    # owned crossplane.yaml — identical specs, co-owned via server-side
-    # apply. MR2 will detach crossplane.yaml and leave the chart as sole
-    # owner. The Workspace's managementPolicies (no Delete action —
-    # crossplane v2 removed deletionPolicy) guarantees no prune or handover
-    # can ever tofu-destroy the live stack: provider -> application ->
-    # both group bindings -> outpost.
-    # Escape hatch: managedBy: blueprint + enabled: false returns to the old
-    # behavior (chart renders no authentik docs; crossplane.yaml keeps
-    # owning the stack until MR2).
+    # Authentik stack ownership moved to the provider-opentofu Workspace
+    # (crossplane.yaml + terraform.tf): provider -> application -> both
+    # group bindings -> outpost. This block is the escape hatch: enabled
+    # false stops the chart rendering the blueprint ConfigMap, Helm prunes
+    # it, and the provider-opentofu workspace imports (adopts) the existing
+    # authentik objects in place; no deletion window. The remaining keys
+    # are inert context (nothing in the chart reads them with enabled
+    # false).
     authentik:
-      enabled: true
-      managedBy: terraform
+      enabled: false
       shared: true
       category: "Platform"
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
-      terraform:
-        # Live ids for the terraform.tf adoption imports (HCL type=string;
-        # quoted; NEVER empty — an empty id makes tofu skip the import and
-        # plan a duplicate create).
-        varmap:
-          import_provider_pk: "39"
-          import_application_id: "demo-app"
-          import_binding_admins_pk: "1d184f0f-8aaf-49bc-8492-d2f97d0ee413"
-          import_binding_users_pk: "296ad1f3-4881-496f-9893-15d2be2e1547"
-          import_outpost_uuid: "661e8133-a9d2-4194-9502-6bfb23fdd245"
 
     gatus:
       enabled: true

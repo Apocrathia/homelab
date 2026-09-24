@@ -913,39 +913,104 @@ authentik:
   (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it. Unchanged
   behavior for every existing app.
 - **`terraform` (fleet path)**: the chart renders the provider-opentofu stack —
-  `OnePasswordItem` (workspace token) + `ProviderConfig` + `Workspace` — the
-  pattern proven on demo-app. Blueprint ConfigMaps are suppressed. Proxy-only
-  for now; `oidc`/`bookmark` with `terraform` fails the render loudly.
+  `OnePasswordItem` (workspace token) + `ProviderConfig` (token file +
+  per-app backend args) + `Workspace` — pulling the shared module
+  `terraform/modules/authentik-app`. Blueprint ConfigMaps are suppressed.
+  `proxy` and `oidc` modes; `bookmark` with `terraform` fails the render
+  loudly (bookmarks have no tofu resources — they stay `blueprint`).
 
-The tofu app-dir contract (per app):
+The contract is **values-only**: no per-app `terraform.tf`, no module
+ConfigMap, no `valuesFrom`, no kustomization additions. The chart composes
+the module's standard inputs from the `authentik` values (the same inputs the
+blueprint templates read), so flipping an app is a `managedBy` change plus —
+for the adopt tier — a varmap with the app's live import ids.
 
 ```yaml
-# flux/manifests/04-apps/<app>/
-# ├── terraform.tf       REAL per-app HCL module — single source of truth
-# ├── kustomization.yaml configMapGenerator: <app>-authentik-module (from terraform.tf)
-# ├── crossplane.yaml    kustomize-owned tofu docs (detached after the chart flip)
-# └── helmrelease.yaml   chart 0.0.84+ with authentik.managedBy: terraform
+authentik:
+  enabled: true
+  managedBy: terraform # blueprint -> terraform: the flip
+  # ...the same values the blueprint templates read (composed into varmap)
+  terraform: # adopt tier only; blip tier omits this block
+    varmap:
+      adoption: true # native boolean
+      import_provider_pk: "39" # quoted strings - ids are strings
+      import_application_id: "demo-app" # the app slug
+      import_binding_admins_pk: "<live pk>"
+      import_binding_users_pk: "<live pk>" # shared tier
+      import_outpost_uuid: "<live uuid>" # proxy mode
 ```
 
-Wiring recipe:
+**Module**: `terraform/modules/authentik-app` is the root config (import
+blocks are root-only) — the Workspace pulls it via `source: Remote` with
+`module:
+git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-{{ chart version }}`.
+The ref self-pins to this chart's own git tag: the create-chart-tag CI job
+pushes `generic-app-<version>` minutes after merge, so the chart and the
+module it deploys always move together.
 
-1. `kustomization.yaml` `configMapGenerator` packages `terraform.tf` into the
-   module ConfigMap; the data key is the literal filename (`terraform.tf`).
-2. The HelmRelease `valuesFrom` pulls that ConfigMap. Flux merges every data
-   key as a top-level values key, so the module lands in chart values as
-   `terraform.tf`.
-3. The chart consumes it verbatim: `index .Values "terraform.tf"` into
-   `spec.forProvider.module`, and `authentik.terraform.varmap` (live import
-   ids, strings only — NEVER empty) into `spec.forProvider.varmap`.
+**First-reconcile window**: the chart renders the new `?ref=` the moment Flux
+picks up the HelmRelease, but the tag lands minutes later via CI — the FIRST
+workspace reconcile after a chart bump fails with `pathspec
+'generic-app-<version>' did not match` (ReconcileError) and self-heals on the
+next reconcile once the tag exists. Expected, once per chart bump;
+`remotePullPolicy: IfNotPresent` (the admission default is `Always`) keeps
+later polls from re-cloning the repo every reconcile — a chart bump changes
+the ref and re-pulls exactly once.
+
+**Two tiers**:
+
+- **Adopt** (apps with live blueprint-era objects): `adoption: true` + every
+  live import id for the app's shape in the varmap. tofu imports the objects
+  in place — no deletion window, uuids intact, nobody re-logs in. The render
+  gate and the module's variable validation both fail loudly on a missing id
+  (an empty id makes tofu silently skip the import and plan a duplicate
+  create).
+- **Blip** (fresh create, e.g. new apps): no varmap at all — the
+  chart-composed inputs suffice; tofu creates the stack from scratch.
+  Chart-era blueprints for blip apps decommission separately.
+
+**Private-repo hardening (recorded recipe, not active)**: the repo is public
+today, so the module pull needs zero auth. For the day it flips private, the
+proven recipe (provider-opentofu special-cases the filename) is one more
+credentials entry on the ProviderConfig:
+
+```yaml
+spec:
+  credentials:
+    - filename: authentik-token # existing
+      source: Secret
+      secretRef:
+        {
+          name: authentik-terraform-token,
+          namespace: <app>,
+          key: authentik-terraform-token,
+        }
+    - filename: .git-credentials # git module-pull auth
+      source: Secret
+      secretRef:
+        {
+          name: authentik-terraform-token,
+          namespace: <app>,
+          key: gitlab-module-pull-token,
+        }
+```
+
+The 1Password item `crossplane-terraform-secrets` gains a field
+`gitlab-module-pull-token` whose VALUE is the full git-store line
+`https://oauth2:<token>@gitlab.com` (operator pastes once; never in git). The
+per-app OnePasswordItem CR syncs every item field into the Secret, so the key
+appears in every app namespace with no per-app manifest changes. The provider
+writes the file to the workdir and points `GIT_CRED_DIR` at it (process-wide —
+every app namespace must use the same token content to keep the
+last-Connect-wins race benign). No `.netrc` needed.
 
 Why `managementPolicies` (no `Delete`): crossplane v2 removed
 `spec.deletionPolicy` (the structural schema silently prunes it), so the
 Workspace renders `managementPolicies: [Observe, Create, Update]` — the
 v2-native orphan. A GitOps prune of the Workspace object can never run
-`tofu destroy` against the live Authentik stack, which makes the
-kustomize → helm ownership handover safe. Deliberate decommission requires
-temporarily restoring `["*"]` (or a manual `tofu destroy`) — the guard is
-intentional.
+`tofu destroy` against the live Authentik stack. Deliberate decommission
+requires temporarily restoring `["*"]` (or a manual `tofu destroy`) — the
+guard is intentional.
 
 ### PostgreSQL Database
 

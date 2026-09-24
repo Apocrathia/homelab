@@ -508,27 +508,39 @@ authentik:
   # - blueprint: chart renders the authentik blueprint ConfigMaps (mode
   #   proxy/oidc/bookmark) — unchanged behavior for every existing app.
   # - terraform: chart renders the provider-opentofu docs (OnePasswordItem +
-  #   ProviderConfig + Workspace; proxy-only for now) and suppresses the
-  #   blueprint ConfigMaps. The flip for apps migrated to tofu-native
-  #   authentik (demo-app is the reference).
+  #   ProviderConfig + Workspace) pulling the shared module
+  #   terraform/modules/authentik-app at this chart's own git tag
+  #   (generic-app-<version>), and suppresses the blueprint ConfigMaps.
+  #   proxy and oidc modes; bookmarks stay blueprint. Values-only: no
+  #   per-app terraform.tf, no module ConfigMap, no valuesFrom, no
+  #   kustomization additions.
   managedBy: "blueprint"
 
-  # terraform (managedBy: "terraform" only): import-id varmap for the tofu
-  # module's adoption imports. App-specific LIVE ids; strings only (the HCL
-  # variables are type=string). NEVER leave one empty: an empty id makes
-  # tofu silently skip the import and plan a duplicate create. terraform.tf
-  # itself stays a REAL per-app file
-  # (flux/manifests/04-apps/<app>/terraform.tf): the app kustomization's
-  # configMapGenerator packages it as the module ConfigMap, and the
-  # HelmRelease valuesFrom feeds that ConfigMap to this chart (every data
-  # key becomes a top-level values key — the literal `terraform.tf`).
+  # terraform (managedBy: "terraform" only): the module-input varmap, merged
+  # ON TOP of the chart-composed inputs. The chart composes the standard
+  # surface from the values below (app_name, mode, display_name,
+  # external_host, internal_host, shared, tailnet, flows,
+  # intercept_header_auth, skip_path_regex, oidc.*) — the same inputs the
+  # blueprint templates read — so a blip-tier app is a managedBy flip
+  # alone and may omit this block entirely. This varmap carries what only
+  # the app knows:
+  #   - adoption + LIVE import ids (adopt tier): native booleans stay
+  #     booleans, ids are quoted strings (never bare numbers — the tfvars
+  #     path carries types). An empty id under adoption makes tofu silently
+  #     skip the import and plan a duplicate create; the render and the
+  #     module's variable validation both fail it loudly.
+  #   - module-input overrides: e.g. oidc_client_id for an adopt app whose
+  #     live client_id differs from oidc.clientId, access_token_validity for
+  #     a proxy app whose live value differs from the authentik default.
+  # The full variable contract: terraform/modules/authentik-app/variables.tf.
   # terraform:
   #   varmap:
+  #     adoption: true
   #     import_provider_pk: "39"
-  #     import_application_id: "demo-app"
+  #     import_application_id: "demo-app"        # the app slug
   #     import_binding_admins_pk: "<live admins binding pk>"
-  #     import_binding_users_pk: "<live users binding pk>"
-  #     import_outpost_uuid: "<live outpost uuid>"
+  #     import_binding_users_pk: "<live users binding pk>"   # shared tier
+  #     import_outpost_uuid: "<live outpost uuid>"           # proxy mode
 
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
