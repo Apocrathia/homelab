@@ -85,11 +85,15 @@ spec:
           mkdir -p /opt/data/.prime/agent/extensions/litellm
           mkdir -p /opt/data/.prime/agent/extensions/name-sessions
           mkdir -p /opt/data/.prime/agent/extensions/a2a
+          mkdir -p /opt/data/.prime/agent/extensions/discord
           cp -f /static/activity-recap_index.ts /opt/data/.prime/agent/extensions/activity-recap/index.ts
           cp -f /static/litellm_index.ts /opt/data/.prime/agent/extensions/litellm/index.ts
           cp -f /static/name-sessions_index.ts /opt/data/.prime/agent/extensions/name-sessions/index.ts
           cp -f /static/a2a_index.ts /opt/data/.prime/agent/extensions/a2a/index.ts
           cp -f /static/a2a_server.mjs /opt/data/.prime/agent/extensions/a2a/server.mjs
+          cp -f /static/discord_index.ts /opt/data/.prime/agent/extensions/discord/index.ts
+          cp -f /static/discord_server.mjs /opt/data/.prime/agent/extensions/discord/server.mjs
+          cp -f /static/discord_guidelines.md /opt/data/.prime/agent/extensions/discord/discord-guidelines.md
           rm -f /opt/data/.prime/agent/extensions/*.ts
           if [[ ! -f /opt/data/.prime/agent/settings.json ]]; then
             cp /static/settings.json /opt/data/.prime/agent/settings.json
