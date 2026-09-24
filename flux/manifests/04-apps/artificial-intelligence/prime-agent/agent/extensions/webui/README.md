@@ -19,25 +19,69 @@ node server.mjs
 - **8789** — beacon register/heartbeat/event/unregister. Loopback +
   token only; never expose it (the Service and NetworkPolicy don't).
 
-`config.json`: `host`, `port`, `defaultCwd`, `trustedCidrs`, optional
-`token`. The GitOps copy stays token-free. Token resolution, identical
-on collector and beacon:
+## Configuration
+
+`config.json` is the live local config: gitignored, credentials inside.
+Start from `config.example.json` (token-free) and paste real values into
+`config.json`, never into the example. This payload's copy is the
+token-free GitOps shape — never put a token in it
+([below](#local-vs-cluster-credentials)).
+
+| field          | default                           | purpose |
+| -------------- | --------------------------------- | ------- |
+| `host`         | `"127.0.0.1"`                     | Collector bind host. The GitOps copy ships `"0.0.0.0"` (behind the NetworkPolicy). |
+| `port`         | `8788`                            | Dashboard/API/SSE port. The internal beacon port is `port+1` (8789) — no separate key. |
+| `defaultCwd`   | `~`                               | Working directory for spawned sessions (absolute path or `~`; relative paths are rejected). The GitOps copy ships `/opt/data/workspace`. |
+| `trustedCidrs` | `["127.0.0.0/8"]`                 | Token-bypass list checked before the token. `[]` is strictest (token for everyone), an absent key trusts loopback only — loopback is the default trust domain, same machine = same trust. Never pin a CIDR behind a proxy — the peer IP is the proxy, so a pin is dead config or fail-open. The cluster ships `[]`. |
+| `sessionsDir`  | `~/.prime/agent/sessions`         | Session tree root (also a file-viewer root). |
+| `artifactsDir` | `~/.prime/agent/session-artifacts` | RLM subagent artifacts root (also a file-viewer root). |
+| `token`        | absent                            | Auth token — tier 3 of the resolution chain below. Locally it can hold the token; the GitOps copy never carries one. |
+
+The token itself is the auto-generated 0600 beacon↔server credential
+(`webui-token`). Resolution, identical on collector and beacon:
 
 1. `PRIME_WEBUI_TOKEN` env
 2. token file — `PRIME_WEBUI_TOKEN_FILE`, default `webui-token` here
 3. `config.json` `token`
 4. auto-generate + persist `webui-token` (0600)
 
-`trustedCidrs` is a token-bypass list checked before the token: `[]` is
-strictest (token for everyone), an absent key trusts loopback only.
-Never pin a CIDR behind a proxy — the peer IP is the proxy, so a pin is
-dead config or fail-open. The cluster ships `[]`.
+The token-file default lives in this directory so a k8s Secret mount
+(`webui-token`) or a hand-placed file works with zero config; fresh
+installs need no token in `config.json`. The token is never logged
+(only the resolution source is).
 
-Cluster: the boot script reconciles this directory from the ConfigMap on
-every boot, copies the 1Password-synced secret to `webui-token` (0400,
-FATAL on empty — otherwise collector and beacons mint different tokens),
-and starts the collector. Cluster semantics (doors, replica pinning,
-secrets): see [`../../../README.md`](../../../README.md).
+### Env overrides
+
+Env outranks `config.json` — the cluster shape. `PRIME_WEBUI_HOST`,
+`PRIME_WEBUI_PORT`, `PRIME_WEBUI_INTERNAL_PORT`,
+`PRIME_WEBUI_SESSIONS_DIR`, `PRIME_WEBUI_ARTIFACTS`,
+`PRIME_WEBUI_TOKEN`, `PRIME_WEBUI_TOKEN_FILE`. Config-only fields (no
+env override): `defaultCwd`, `trustedCidrs`. Env-only tunables:
+`PRIME_WEBUI_PRUNE_SECS` (stale-beacon prune), `PRIME_WEBUI_STALE_HOURS`
+(ledger-row staleness threshold), `PRIME_WEBUI_IDLE_REAP_MS` /
+`PRIME_WEBUI_REAP_SWEEP_MS` (idle spawned-agent reap),
+`PRIME_WEBUI_FILE_REPO_ROOT` (file-viewer repo root),
+`PRIME_WEBUI_RL_MAX` / `PRIME_WEBUI_RL_WINDOW_SECS` (auth-failure
+limiter), `PRIME_WEBUI_MODELS` (context-window cache source).
+
+## Local vs cluster credentials
+
+- **Local (this Mac):** the installed extension's `config.json` holds
+  the real token; it is gitignored. `config.example.json` documents the
+  shape and stays token-free.
+- **Cluster:** the boot script reconciles this directory from the
+  ConfigMap on every boot, copies the 1Password-synced secret (the
+  `prime-agent-secrets` item's `webui-token` field) to the token-file
+  path (`0400`, FATAL on empty — otherwise collector and beacons mint
+  different tokens), and starts the collector. The token is
+  deliberately not env-shaped in-cluster, so `PRIME_WEBUI_TOKEN` and
+  the config key stay unset; the env pins that are set
+  (`PRIME_WEBUI_HOST`, `PRIME_WEBUI_PORT`, `PRIME_WEBUI_SESSIONS_DIR`,
+  `PRIME_WEBUI_FILE_REPO_ROOT`) outrank the config file — same
+  precedent as the a2a `A2A_WEBHOOK_TOKEN` mount. The GitOps
+  `config.json` copy stays token-free. Cluster semantics (doors,
+  replica pinning, secrets): see
+  [`../../../README.md`](../../../README.md).
 
 ## Architecture
 
@@ -107,6 +151,13 @@ secrets): see [`../../../README.md`](../../../README.md).
 - **Sysmeter**: CPU + memory bars in the header from a 2s-cached
   `/api/system` sample (macOS memory reads `vm_stat`, Linux
   `/proc/meminfo`).
+
+## Runtime artifacts
+
+`webui-token` (auto-generated 0600 beacon↔server token), `server.log`
+(collector stderr — the beacon's respawn redirect), `spawned-agents.log`
+(plus `.1` rotation at 10MB — spawned-agent stdout/stderr) — all
+gitignored.
 
 ## Dev
 
