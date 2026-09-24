@@ -9,7 +9,7 @@ spec:
   discoveryFilters:
     - "Apocrathia/*"
   # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
-  image: ghcr.io/renovatebot/renovate:44.111.3@sha256:a464d7ea8ca4a2a80e34484dfabe4e15e219cc04f6b2984a17fea3617acf96e4
+  image: ghcr.io/renovatebot/renovate:44.115.0@sha256:8da62a36328dfe84b2dd98e518e0b800a6d123d74eac422570b4abf1cd5bedc8
   secretRef: renovate-operator-secret
   provider:
     name: gitlab
