@@ -276,6 +276,18 @@ spec:
           node /opt/data/.prime/agent/extensions/webui/server.mjs &
           echo "prime-webui collector started (8788)"
 
+          # Discord bridge: the same always-on contract — the gateway must
+          # outlive "no agent running" too. Before this, only a session
+          # worker's beacon ever spawned it, so a pod restart killed the
+          # bridge until the next agent attach (the live outage: the pod
+          # booted with zero discord processes). The beacon's health-probe
+          # respawn stays the self-heal. Config-gated on the token (the
+          # beacon's own gate chain): no token, no bridge, silent skip.
+          if [[ -n "${DISCORD_BOT_TOKEN:-}" ]]; then
+            nohup node /opt/data/.prime/agent/extensions/discord/server.mjs >>/opt/data/.prime/agent/logs/discord-bridge.log 2>&1 &
+            echo "discord bridge started (8790)"
+          fi
+
           prime-agent --version
           echo "ready: kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent"
           exec sleep infinity
