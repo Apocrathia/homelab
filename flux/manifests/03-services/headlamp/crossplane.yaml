@@ -19,7 +19,7 @@ metadata:
   namespace: headlamp
 spec:
   # Materializes the OnePasswordItem-backed Secret as a file in the tofu
-  # workdir; the workspace HCL reads it with file("authentik-token").
+  # workdir; the module's provider block reads it with file("authentik-token").
   # The token itself never appears in a manifest.
   credentials:
     - filename: authentik-token
@@ -28,6 +28,16 @@ spec:
         name: authentik-terraform-token
         namespace: headlamp
         key: authentik-terraform-token
+  # Per-app state args for the module's PARTIAL kubernetes backend: the
+  # provider writes this as crossplane.remote.tfbackend and passes it via
+  # -backend-config at tofu init. The state Secret is
+  # tfstate-<workspace>-headlamp in this namespace — deliberately separate
+  # from the CI tofu stack (terraform/, GitLab HTTP backend). Two stacks,
+  # two states.
+  backendFile: |
+    secret_suffix     = "headlamp"
+    namespace         = "headlamp"
+    in_cluster_config = true
 ---
 apiVersion: opentofu.m.upbound.io/v1beta1
 kind: Workspace
@@ -35,13 +45,51 @@ metadata:
   name: headlamp-authentik
   namespace: headlamp
 spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Deliberate decommission therefore requires
+  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
   providerConfigRef:
     kind: ProviderConfig
     name: headlamp-authentik
   forProvider:
-    source: Inline
-    # Build-time stitch: kustomize (kustomization.yaml) generates a ConfigMap
-    # from terraform.tf and the replacements rule below copies it into this
-    # field verbatim, so terraform.tf is the single source of truth for the
-    # module. Never render this file through kubectl apply directly.
-    module: ""
+    source: Remote
+    # The shared module is the root config (import blocks are root-only).
+    # Pinned to the generic-app chart release tag — generic-app-0.0.84
+    # already exists (the module landed on main with it), so the first
+    # reconcile resolves the module immediately; a later chart tag means
+    # bumping this pin by hand (no renovate manager matches a git:: ref).
+    module: "git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-0.0.84"
+    # Pull once per URL; a tag move changes the ref and re-pulls. The
+    # admission default (Always) would re-clone the repo on every poll.
+    remotePullPolicy: IfNotPresent
+    # Module inputs — no chart composer here, so the varmap carries the
+    # full input set (variable contract: terraform/modules/authentik-app/
+    # variables.tf). Library mode: headlamp's Authentik footprint is the
+    # dashboard tile + the admins binding ONLY — no provider. Its OIDC
+    # login rides the blueprint-owned `kubernetes` OIDC provider
+    # (authentik/kube-auth/), NOT a headlamp-owned provider. SAME STATE,
+    # no recreate: the migration gate renames this app's inline-era tofu
+    # state addresses to the module's addresses via tofu state mv
+    # (workspace paused + guarded, Flux suspended), so the first plan
+    # reads No changes — no wipe, no import ids, uuids intact.
+    varmap:
+      app_name: "headlamp"
+      display_name: "Headlamp"
+      external_host: "https://headlamp.gateway.services.apocrathia.com"
+      mode: "library"
+      shared: false
+      sso_launch_url: ""
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/headlamp/icon.svg"
+      category: "Platform"
+      authorization_flow: "default-provider-authorization-implicit-consent"
+      invalidation_flow: "default-invalidation-flow"
+      authentication_flow: "default-authentication-flow"
+      meta_description: "Kubernetes web UI with OIDC authentication"
+      meta_publisher: "Kubernetes SIG UI"
