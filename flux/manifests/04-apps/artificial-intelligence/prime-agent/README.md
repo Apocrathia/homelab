@@ -19,17 +19,23 @@ This deployment includes:
   prefix, uv)
 - `agent/` payload (extensions, seeded settings) copied at pod start from
   the working-repo clone on the state PVC
-  (`/opt/data/workspace/homelab`) and reconciled onto `~/.prime/agent/`
+  (`/opt/data/repos/homelab`) and reconciled onto `~/.prime/agent/`
   (the ConfigMap era ended at the API server's 1 MiB limit; the per-path
   archive pull that replaced it died on GitLab's anonymous per-IP rate
   limit); unchanged files are not rewritten (`cp -u`)
 - The agent's working repo: a token-authenticated full clone of this
-  repository at `/opt/data/workspace/homelab` (under the webui
-  `defaultCwd` — agents work the repo by default), fast-forward pulled on
+  repository at `/opt/data/repos/homelab`, fast-forward pulled on
   every pod start (never `reset --hard` — agents work in this clone and
   their local state survives boots); git installs rootless via conda-forge
   (`node:24-bookworm-slim` ships no git and the pod runs as uid 1000, so
   apt is not an option)
+- PVC layout (operator, 2026-09-14): `/opt/data/repos/` carries the
+  associated repos (homelab clone, prime-agent source snapshot);
+  `/opt/data/workspace` is the agents' default cwd — scratch space,
+  never a clone target. Session cwd is harness-owned (container
+  workingDir never reaches spawned sessions), so the default is pinned
+  at each spawn surface: webui `defaultCwd` (config.json),
+  `DISCORD_DEFAULT_CWD` (discord extension), and `--cwd` on TUI attach
 - `agent/extensions/litellm/index.ts` registers the in-cluster LiteLLM gateway as
   the model provider and discovers the catalog from it; auth via
   `LITELLM_API_KEY` (or `/login` interactively)
@@ -65,7 +71,7 @@ Two doors:
 token>` — the token from the 1Password `webui-token` field — and the browser
   stores it for the session. The SSE stream keeps it in the URL (EventSource
   cannot send headers); rotate the token on suspicion.
-- **TUI**: `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent`
+- **TUI**: `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent --cwd /opt/data/workspace`
 
 The daemon supervisor and session workers spawn in-pod on first attach and
 keep running after you detach (close the TUI; the worker persists). Reconnect
@@ -83,9 +89,12 @@ with the same command; `prime-agent list` shows active agents.
   node drain, crash) kill them; the transcripts persist on the PVC and reappear
   as non-live sessions in the sidebar. TUI-side sessions survive collector
   restarts — their beacons re-register within ~15s.
-- **New sessions default to `/opt/data/workspace`** (`defaultCwd` in the
-  webui `config.json`), not the PVC root. Drop working code there; agents can
-  still be handed any absolute cwd per request.
+- **New sessions default to `/opt/data/workspace`** — pinned at each
+  harness spawn surface: the webui `config.json` `defaultCwd` (spawned
+  conversations) and `DISCORD_DEFAULT_CWD` (discord conversations). TUI
+  attach passes `--cwd` (the exec process cwd is `/`; the harness ignores
+  it). Drop working code there; agents can still be handed any absolute
+  cwd per request.
 - Single replica, pinned (`replicas: 1`): the beacon registry is in-memory
   per collector and the state PVC is Longhorn RWO. A second replica would
   double-mount the PVC and split the registry.
@@ -174,8 +183,8 @@ Create the 1Password item at `vaults/Secrets/items/prime-agent-secrets`:
 3. Mint a webui token (32+ chars) and add it as `webui-token` in the
    1Password item above
 4. Wait for the secrets to sync; reconcile Flux (or apply locally)
-5. `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent` and
-   confirm the default model with `/model`
+5. `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent --cwd /opt/data/workspace`
+   and confirm the default model with `/model`
 6. Open `https://prime.gateway.services.apocrathia.com?token=<webui token>`
    and confirm the collector banner in the logs (`prime-webui collector
 started (8788)`)
@@ -194,7 +203,7 @@ prime-agent status                                    # daemon/worker state (ins
   boot clones the repo when missing and `git pull --ff-only` every start;
   any failure WARNs in `kubectl logs` and boots the last good copy from
   the PVC (check egress to gitlab.com and restart the pod to re-sync)
-- Repo clone missing on the PVC: `/opt/data/workspace/homelab` holds a
+- Repo clone missing on the PVC: `/opt/data/repos/homelab` holds a
   full clone of this repository; if it exists with stray files and no
   `.git`, the boot skips the clone with a WARN — clean the dir once and
   restart
