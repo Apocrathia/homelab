@@ -36,26 +36,57 @@ This deployment includes:
   turn while the session is unnamed (26-character limit, picker column truncates)
 - `agent/settings.json` seeded once (delete from the PVC to re-seed); runtime
   keys accumulate afterwards
+- `agent/extensions/webui/` payload (dashboard + collector + beacon): the
+  collector starts from the boot script and serves the dashboard on 8788;
+  the `index.ts` beacon auto-loads inside every agent process (TUI and
+  spawned) and registers it with the collector
+- `networkpolicy.yaml`: Cilium ingress — 8788 from gateway Envoy, the
+  tailscale operator, and the node only; 8080 (inbound A2A webhook) from the
+  LiteLLM broker only — plus egress allowlist (DNS, LiteLLM, HTTPS 443 for
+  the boot installs)
 
 ## Access
 
-No web UI — attach a TUI session over exec:
+Two doors:
 
-```bash
-kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent
-```
+- **Webui**: `https://prime.gateway.services.apocrathia.com` over the LAN
+  (main-gateway) or the tailnet (tailnet-gateway). Append `?token=<webui
+token>` — the token from the 1Password `webui-token` field — and the browser
+  stores it for the session. The SSE stream keeps it in the URL (EventSource
+  cannot send headers); rotate the token on suspicion.
+- **TUI**: `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent`
 
 The daemon supervisor and session workers spawn in-pod on first attach and
 keep running after you detach (close the TUI; the worker persists). Reconnect
 with the same command; `prime-agent list` shows active agents.
 
+### Webui semantics
+
+- **The token is root.** It reads every session transcript and steers/spawns
+  agents with an arbitrary cwd (`POST /api/new` accepts any absolute path).
+  Treat it like a private SSH key: never in git, never in the shared tier.
+- **Never enable the Authentik shared/friends tier on this app** — a single
+  token with no per-session authz would expose every transcript to every
+  shared-tier user.
+- **Webui-spawned conversations are collector-lifetime.** Pod restarts (deploy,
+  node drain, crash) kill them; the transcripts persist on the PVC and reappear
+  as non-live sessions in the sidebar. TUI-side sessions survive collector
+  restarts — their beacons re-register within ~15s.
+- **New sessions default to `/opt/data/workspace`** (`defaultCwd` in the
+  webui `config.json`), not the PVC root. Drop working code there; agents can
+  still be handed any absolute cwd per request.
+- Single replica, pinned (`replicas: 1`): the beacon registry is in-memory
+  per collector and the state PVC is Longhorn RWO. A second replica would
+  double-mount the PVC and split the registry.
+
 ## Inbound A2A
 
 `a2a/server.mjs` is a standalone inbound A2A server (JSON-RPC 2.0 over HTTP,
-A2A 1.0 shapes: `message/send` + `tasks/get`, no streaming). It owns the
-declared port 8080, exposed ClusterIP-only (`prime-agent` service) with **no
-Gateway route** — only in-cluster callers (the LiteLLM broker) can reach it.
-The boot script starts it under `nohup` (logs at
+A2A 1.0 shapes: `message/send` + `tasks/get`, no streaming). It owns port
+8080, carried by the Service as an extra port next to the webui primary
+(8788) — ClusterIP-only with **no Gateway route**, so only in-cluster callers
+(the LiteLLM broker) can reach it. The boot script starts it under `nohup`
+(logs at
 `/opt/data/.prime/agent/logs/a2a-webhook.log`), and the `a2a` extension's
 `session_start` handler respawns it if the health probe fails. The dispatch
 accepts both the v0.3 JSON-RPC names and the a2a-sdk 1.x PascalCase names
@@ -111,6 +142,11 @@ Create the 1Password item at `vaults/Secrets/items/prime-agent-secrets`:
 - `a2a-webhook-token` — bearer token for the inbound A2A webhook (same token
   as `litellm-secrets`/`prime-a2a-authorization`, which adds the `Bearer `
   prefix)
+- `webui-token` — dashboard token (mint once, 32+ random chars). Never
+  commit it anywhere; the boot script copies it from the synced secret to
+  `~/.prime/agent/extensions/webui/webui-token` (mode 0400) and the pod
+  fails to boot on an empty field. Rotation is one field edit + one pod
+  restart.
 
 ## Initial setup
 
@@ -118,9 +154,14 @@ Create the 1Password item at `vaults/Secrets/items/prime-agent-secrets`:
 2. Mint a bearer token for the inbound A2A webhook; put it in the 1Password
    item above as `a2a-webhook-token` and in `litellm-secrets` as
    `prime-a2a-authorization` (value `Bearer <token>`)
-3. Wait for the secrets to sync; reconcile Flux (or apply locally)
-4. `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent` and
+3. Mint a webui token (32+ chars) and add it as `webui-token` in the
+   1Password item above
+4. Wait for the secrets to sync; reconcile Flux (or apply locally)
+5. `kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent` and
    confirm the default model with `/model`
+6. Open `https://prime.gateway.services.apocrathia.com?token=<webui token>`
+   and confirm the collector banner in the logs (`prime-webui collector
+started (8788)`)
 
 ## Troubleshooting
 
@@ -136,3 +177,12 @@ prime-agent status                                    # daemon/worker state (ins
 - Kernel bootstrap fails on first tool call: uv installs on boot (check egress
   to github.com), then downloads the Python runtime; `~/.prime/agent/logs/`
   has details
+- Webui dead (401 everywhere): the `webui-token` field is missing/empty or
+  was rotated — the boot log prints `FATAL: prime-agent-secrets/webui-token
+is missing or empty` on boot failure. The collector stream is in
+  `kubectl logs` (the boot script backgrounded it into the container log).
+- @-picker says fd missing: the boot fd install failed (check egress to
+  github.com); `/opt/data/bin/fd --version` should print the pinned version
+- Dashboard slow first paint: `/api/sessions` walks the sessions + artifacts
+  tree on the Longhorn PVC per refresh; a multi-second cold pass is expected
+  today (TTL cache is a queued follow-up)

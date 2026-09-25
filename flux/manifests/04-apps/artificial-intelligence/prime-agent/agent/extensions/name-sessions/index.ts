@@ -96,7 +96,7 @@ export default function (pi: ExtensionAPI) {
           ],
         };
       }
-      pi.setSessionName(name);
+      pi.setSessionName(name).catch(() => {}); // unhandled-rejection guard: a supervisor name-collision rejection must never kill the worker (discord lane live repro)
       return {
         content: [
           {

@@ -27,6 +27,12 @@ spec:
       # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
       # session workers spawn in-pod on first attach and persist across exec
       # sessions. Renovate tracks PRIME_AGENT_VERSION via upstream git tags.
+
+      # Single replica, pinned explicitly: the chart defaults to 2 when the
+      # key is absent. Two replicas would double-mount the RWO Longhorn PVC
+      # and run two webui collectors with split beacon registries.
+      replicas: 1
+
       command: ["/bin/bash", "-c"]
       args:
         - |
@@ -99,10 +105,70 @@ spec:
             cp /static/settings.json /opt/data/.prime/agent/settings.json
           fi
 
+          # Webui payload: reconcile from the ConfigMap on every boot (same
+          # contract as the extension folders above — /static is the source
+          # of truth; in-pod hand edits die on the next restart). The
+          # workspace dir is the pinned defaultCwd for dashboard-spawned
+          # agents.
+          mkdir -p /opt/data/.prime/agent/extensions/webui /opt/data/workspace
+          cp -f /static/webui_index.ts /opt/data/.prime/agent/extensions/webui/index.ts
+          cp -f /static/webui_server.mjs /opt/data/.prime/agent/extensions/webui/server.mjs
+          cp -f /static/webui_dashboard.js /opt/data/.prime/agent/extensions/webui/dashboard.js
+          cp -f /static/webui_dashboard.css /opt/data/.prime/agent/extensions/webui/dashboard.css
+          cp -f /static/webui_mark.svg /opt/data/.prime/agent/extensions/webui/mark.svg
+          cp -f /static/webui_config.json /opt/data/.prime/agent/extensions/webui/config.json
+          cp -f /static/webui_marked.min.js /opt/data/.prime/agent/extensions/webui/marked.min.js
+          cp -f /static/webui_purify.min.js /opt/data/.prime/agent/extensions/webui/purify.min.js
+
+          # webui token: copy from the 1Password-synced Secret to the HERE
+          # default (both index.ts and server.mjs read HERE/webui-token with
+          # no env needed). Mode enforced here because the chart's
+          # secret-volume block has no defaultMode passthrough. Empty field
+          # fails the boot loudly: otherwise collector and beacons would
+          # each auto-generate different tokens (401s everywhere).
+          if [[ ! -s /secret/webui-token ]]; then
+            echo "FATAL: prime-agent-secrets/webui-token is missing or empty"; exit 1
+          fi
+          cp -f /secret/webui-token /opt/data/.prime/agent/extensions/webui/webui-token
+          chmod 0400 /opt/data/.prime/agent/extensions/webui/webui-token
+
+          # fd for the @-picker (pattern: the uv install above). Static musl
+          # build to a PATH dir on the PVC (PATH already carries
+          # /opt/data/bin). The mkdir is load-bearing: nothing else creates
+          # /opt/data/bin on a fresh (or current) PVC, and install fails on
+          # a missing parent — set -e would crashloop the pod.
+          mkdir -p /opt/data/bin
+          fd_installed=""
+          if [[ -x /opt/data/bin/fd ]]; then
+            fd_installed=$(/opt/data/bin/fd --version 2>/dev/null | awk '{print $2}' || true)
+          fi
+          if [[ "$fd_installed" != "$FD_VERSION" ]]; then
+            echo "installing fd $FD_VERSION (was: ${fd_installed:-none})"
+            arch=$(uname -m)
+            url="https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${arch}-unknown-linux-musl.tar.gz"
+            node -e '
+              const [url, out] = process.argv.slice(1);
+              fetch(url).then(async (r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+                require("fs").writeFileSync(out, Buffer.from(await r.arrayBuffer()));
+              }).catch((e) => { console.error(e.message); process.exit(1); });
+            ' "$url" /tmp/fd.tgz
+            tar -xzf /tmp/fd.tgz -C /tmp
+            install -m 0755 "/tmp/fd-v${FD_VERSION}-${arch}-unknown-linux-musl/fd" /opt/data/bin/fd
+            rm -rf /tmp/fd.tgz "/tmp/fd-v${FD_VERSION}-${arch}-unknown-linux-musl"
+          fi
+
           # Inbound A2A webhook: server.mjs owns the declared port 8080; the
           # a2a extension respawns it if it dies.
           mkdir -p /opt/data/.prime/agent/logs
           nohup node /opt/data/.prime/agent/extensions/a2a/server.mjs >>/opt/data/.prime/agent/logs/a2a-webhook.log 2>&1 &
+
+          # The collector must outlive "no agent running": start it from the
+          # boot script (backgrounded; output lands in the container log),
+          # so the dashboard serves even with zero live agent sessions. The
+          # per-beacon spawnCollectorIfDown probe is the self-heal.
+          node /opt/data/.prime/agent/extensions/webui/server.mjs &
+          echo "prime-webui collector started (8788)"
 
           prime-agent --version
           echo "ready: kubectl exec -it deploy/prime-agent -n prime-agent -- prime-agent"
@@ -110,8 +176,11 @@ spec:
 
       container:
         name: prime-agent
-        # Inbound A2A webhook (a2a/server.mjs) listens on 8080.
-        port: 8080
+        # Two listeners: the webui collector (extensions/webui/server.mjs)
+        # owns the primary 8788 (8789 register port is loopback-only and
+        # never exposed), and the inbound A2A webhook (a2a/server.mjs)
+        # owns 8080, carried by extraServicePorts for the broker only.
+        port: 8788
         env:
           - name: TZ
             value: "America/Denver"
@@ -161,6 +230,28 @@ spec:
               secretKeyRef:
                 name: prime-agent-secrets
                 key: a2a-webhook-token
+          # Webui collector (index.ts beacon auto-loads in every agent
+          # process). The token is deliberately NOT env-shaped: it rides the
+          # Secret-file mount -> boot-script copy -> HERE/webui-token, so
+          # PRIME_WEBUI_TOKEN / PRIME_WEBUI_TOKEN_FILE stay unset and spawn
+          # env inheritance cannot leak it. The sessions-dir pin makes the
+          # collector's spawn contract explicit (HOME=/opt/data already
+          # resolves the same default). FILE_REPO_ROOT aligns the
+          # dashboard's file viewer + file tools with the cluster
+          # workspace: without it server.mjs falls back to the dev
+          # machine's repo path and every spawned-agent output under
+          # defaultCwd (/opt/data/workspace) 400s as "outside roots".
+          - name: PRIME_WEBUI_HOST
+            value: "0.0.0.0"
+          - name: PRIME_WEBUI_PORT
+            value: "8788"
+          - name: PRIME_WEBUI_SESSIONS_DIR
+            value: "/opt/data/.prime/agent/sessions"
+          - name: PRIME_WEBUI_FILE_REPO_ROOT
+            value: "/opt/data/workspace"
+          # renovate: datasource=github-releases depName=sharkdp/fd versioning=semver
+          - name: FD_VERSION
+            value: "10.5.0"
           # Discord gateway (agent/extensions/discord) go-live wiring. The
           # beacon factory gates on this env (or config bot_token) before
           # registering anything; the gateway resolves it via the same
@@ -181,8 +272,16 @@ spec:
 
       service:
         type: ClusterIP
-        port: 8080
-        targetPort: 8080
+        port: 8788
+        targetPort: 8788
+      # Inbound A2A webhook: litellm.yml's agents: entry targets
+      # http://prime-agent.prime-agent.svc.cluster.local:8080, so the
+      # webhook port rides an extra Service port next to the webui primary
+      # above — ClusterIP-only, no Gateway route.
+      extraServicePorts:
+        - name: a2a-webhook
+          port: 8080
+          targetPort: 8080
 
       resources:
         requests:
@@ -209,13 +308,38 @@ spec:
           - name: static-config
             mountPath: /static
             configMapName: prime-agent-config
+        # webui dashboard token: single field from the 1Password-synced
+        # secret, subPath-mounted read-only; the boot script copies it to
+        # HERE/webui-token (mode 0400) — the token-file default both
+        # index.ts and server.mjs resolve.
+        secret:
+          - name: webui-token
+            secretName: prime-agent-secrets
+            mountPath: /secret/webui-token
+            subPath: webui-token
 
       volumeMounts:
         - name: state
           mountPath: /opt/data
 
-    # No healthChecks: PID 1 idles (sleep infinity) and the agent runs on
-    # demand via kubectl exec, so there is no listener or worker to probe.
+      # The collector answers /healthz (200, pre-auth) from boot, so kubelet
+      # probes restart a crashed collector instead of a human noticing dead
+      # air. Probes hit pod loopback — fine with PRIME_WEBUI_HOST=0.0.0.0.
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 8788
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 8788
+          periodSeconds: 10
+          failureThreshold: 3
 
     storage:
       longhorn:
@@ -229,10 +353,16 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/prime-agent-secrets"
 
-    # TUI-only app: no web UI, so no Gateway route, SSO, or uptime check.
+    # Token-gated dashboard on both doors (LAN + tailnet); no Authentik in
+    # front — the webui token is the auth. NEVER enable the shared/friends
+    # tier on this app: a single token grants full agent control (see
+    # README). gatus stays off: an unauth probe would 401.
     authentik:
       enabled: false
     httproute:
-      enabled: false
+      enabled: true
+      hostname: prime.gateway.services.apocrathia.com
+    tailnet:
+      enabled: true
     gatus:
       enabled: false

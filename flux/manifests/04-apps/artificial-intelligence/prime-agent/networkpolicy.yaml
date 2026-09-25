@@ -1,0 +1,94 @@
+---
+# prime-agent webui ingress: the collector on 8788 is reachable ONLY from
+# the gateway Envoy L7 path (in-cluster traffic to the gateway LB IP is
+# socket-redirected to the node-local Envoy — reserved:ingress), the tailscale
+# operator proxy pods (tailnet door), and the node itself (kubectl port-forward,
+# kubelet probes). The inbound A2A webhook on 8080 (a2a/server.mjs) is reachable
+# ONLY from the LiteLLM broker (litellm.yml's agents: entry targets
+# prime-agent.prime-agent.svc.cluster.local:8080). Everything else is denied by
+# Cilium's default-deny-on-select. The token is the auth on every path;
+# trustedCidrs stays [] (23-analysis-sec F1: a CIDR pin behind a proxy is dead
+# config or fail-open — never ship one).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prime-agent-webui-ingress
+  namespace: prime-agent
+  labels:
+    app.kubernetes.io/name: prime-agent
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  endpointSelector:
+    matchLabels:
+      app: prime-agent
+  ingress:
+    - fromEntities:
+        - ingress
+        - host
+      toPorts:
+        - ports:
+            - port: "8788"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: tailscale-system
+      toPorts:
+        - ports:
+            - port: "8788"
+              protocol: TCP
+    # Inbound A2A webhook (a2a/server.mjs, port 8080): the LiteLLM broker is
+    # the only caller — same wire litellm.yml's agents: entry rides today
+    # (http://prime-agent.prime-agent.svc.cluster.local:8080), so denying it
+    # would break inbound A2A merged before the webui (parity check).
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: litellm
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+# prime-agent egress: DNS, in-cluster LiteLLM (models + A2A broker), and
+# outbound HTTPS for the boot installs (npm tarball, uv, fd releases).
+# No in-cluster lateral movement to other namespaces; no world TCP/UDP
+# beyond 443 (23-analysis-sec F2 egress allowlist).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prime-agent-egress
+  namespace: prime-agent
+  labels:
+    app.kubernetes.io/name: prime-agent
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/managed-by: flux
+spec:
+  endpointSelector:
+    matchLabels:
+      app: prime-agent
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:k8s-app: kube-dns
+            io.kubernetes.pod.namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: litellm
+      toPorts:
+        - ports:
+            - port: "4000"
+              protocol: TCP
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

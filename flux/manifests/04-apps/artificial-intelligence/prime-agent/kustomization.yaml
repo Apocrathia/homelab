@@ -8,6 +8,7 @@ metadata:
 resources:
   - namespace.yaml
   - helmrelease.yaml
+  - networkpolicy.yaml
 
 # Payload mirrors ~/.prime/agent/. One folder per extension under
 # agent/extensions/ (index.ts + resources + README); kustomize cannot glob
@@ -23,6 +24,16 @@ configMapGenerator:
       - name-sessions_index.ts=agent/extensions/name-sessions/index.ts
       - a2a_index.ts=agent/extensions/a2a/index.ts
       - a2a_server.mjs=agent/extensions/a2a/server.mjs
+      # webui payload (flat keys; the boot script installs them under
+      # extensions/webui/ with their real names)
+      - webui_index.ts=agent/extensions/webui/index.ts
+      - webui_server.mjs=agent/extensions/webui/server.mjs
+      - webui_dashboard.js=agent/extensions/webui/dashboard.js
+      - webui_dashboard.css=agent/extensions/webui/dashboard.css
+      - webui_mark.svg=agent/extensions/webui/mark.svg
+      - webui_config.json=agent/extensions/webui/config.json
+      - webui_marked.min.js=agent/extensions/webui/marked.min.js
+      - webui_purify.min.js=agent/extensions/webui/purify.min.js
       - discord_index.ts=agent/extensions/discord/index.ts
       - discord_server.mjs=agent/extensions/discord/server.mjs
       - discord_guidelines.md=agent/extensions/discord/discord-guidelines.md

@@ -1,0 +1,464 @@
+/* prime-webui — dark minimal terminal: #111 canvas, greys, hairlines,
+   one lime accent for the live role, system mono, square corners. */
+:root{--grey-1:#111111;--grey-2:#1C1C1C;--grey-3:#3A3A3A;--grey-4:#767676;
+--grey-5:#BCBCBC;--grey-6:#FFFFFF;--hairline:rgba(255,255,255,.10);
+--accent:#B6FF3C;--accent-ink:#0A1500;--risk:#FF6B4A;
+--font-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;}
+*{box-sizing:border-box;border-radius:0;margin:0;}
+html,body{height:100%;}
+body{background:var(--grey-1);color:var(--grey-5);font-family:var(--font-mono);
+font-size:13px;line-height:1.55;letter-spacing:.04em;font-variant-numeric:tabular-nums lining-nums;
+display:flex;flex-direction:column;}
+header{display:flex;align-items:center;gap:10px;padding:14px 20px;
+border-bottom:1px solid var(--hairline);}
+header img.mark{height:24px;width:auto;}
+.wordmark{color:var(--grey-6);font-weight:500;letter-spacing:.12em;font-size:11px;}
+.status-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none;}
+.busy-timer{display:none;color:var(--accent);font-size:11px;letter-spacing:.12em;text-transform:uppercase;}
+.dot{width:8px;height:8px;background:var(--grey-3);flex:none;}
+.item .usage{color:var(--grey-4);font-size:11px;letter-spacing:.04em;padding-top:4px;}
+.dot.on{background:var(--accent);}
+label,.caps{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-4);}
+main{flex:1;display:flex;min-height:0;position:relative;} /* position:relative anchors #sExpand */
+#sidebar{width:380px;flex:none;overflow-y:auto;border-right:1px solid var(--hairline);}
+/* width is the 380px default; the sash drag sets an inline style clamped 260px..50vw (JS clampW) */
+#sash{flex:none;width:6px;cursor:col-resize;} /* thin drag hit area on the sidebar border */
+#sash:hover{background:var(--hairline);}
+#session{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;} /* position:relative anchors the 7ao feed pill */
+.list-head{display:flex;align-items:center;gap:8px;padding:20px 20px 6px;}
+.list-head .caps{flex:1;}
+/* sidebar collapse: toggle in the list header, expand affordance at the pane edge */
+.stoggle{cursor:pointer;background:none;border:1px solid var(--hairline);color:var(--grey-4);
+width:22px;height:22px;padding:0;line-height:1;flex:none;font-size:11px;letter-spacing:0;}
+.stoggle:hover{border-color:var(--accent);color:var(--accent);}
+.s-expand{display:none;position:absolute;left:0;top:0;width:18px;height:34px;z-index:15; /* 7bh: #session (position:relative, later in the dom) paints over AND swallows clicks on the handle — the collapsed rail's restore must sit above the pane */
+background:var(--grey-2);border:none;border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);
+color:var(--grey-4);padding:0;font-size:11px;line-height:34px;cursor:pointer;}
+.s-expand:hover{color:var(--accent);}
+body.s-collapsed #sidebar{display:none;} /* collapse = zero-width rail; #sExpand is the affordance */
+body.s-collapsed #sash{display:none;}
+body.s-collapsed .s-expand{display:block;}
+.list-err{padding:10px 20px;color:var(--grey-4);font-size:11px;letter-spacing:.04em;}
+/* conversations sections (TUI parity): hairline divider + small-caps label */
+.list-section{border-top:1px solid var(--hairline);}
+.list-section .section-head{padding:8px 20px 6px;}
+.row{padding:10px 20px;border-top:1px solid var(--hairline);cursor:pointer;}
+.row:hover{background:var(--grey-2);}
+.row.selected{background:var(--grey-2);border-left:2px solid var(--accent);padding-left:18px;}
+.row.child .title{color:var(--grey-5);font-weight:400;}
+/* two-line narrow-column row: line 1 live badge + title + age, line 2 activity recap */
+.row-main{display:flex;align-items:baseline;gap:10px;}
+.row .title{color:var(--grey-6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  flex:1;min-width:0;font-weight:500;} /* flex-fill: title takes line 1's room, age pins right */
+.row .age{color:var(--grey-4);font-size:11px;white-space:nowrap;flex:none;}
+.row-line2{padding-top:2px;}
+/* 7ba: line 3 — the subs-stats line; the caret LEADS the tiered counts (the
+   caret toggles the CHILDREN, its semantics live on their own line) */
+.row-line3{display:flex;align-items:baseline;gap:6px;padding-top:2px;}
+.subsline{color:var(--grey-4);font-size:10px;letter-spacing:.06em;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis;} /* the tiered counts: ● running ◐ idle ○ inactive */
+.subsline .subs-run{color:var(--accent);} /* 7bg: running = the bright working accent — glyph + count shade together (the sbar family) */
+.subsline .subs-idle{color:var(--grey-5);} /* 7bg: idle = the mid tone */
+.subsline .subs-inact{color:var(--grey-4);} /* 7bg: inactive = the darker tone */
+.row .activity{color:var(--grey-5);font-size:12px;white-space:nowrap;letter-spacing:.04em;
+  display:block;overflow:hidden;text-overflow:ellipsis;} /* the operator's primary read: complete-or-ellipsized */
+.row .activity.working{color:var(--accent);} /* live working accent: the meta bits moved to the tooltip */
+.list-none{color:var(--grey-3);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+padding:6px 20px 10px;} /* zero-row section: dimmed 'none' — grey, small caps, no accent */
+.badge{font-size:10px;letter-spacing:.12em;color:var(--grey-1);background:var(--accent);
+padding:2px 6px;font-weight:500;flex:none;}
+/* 7w: two-tier liveness — lime stays working-only; a live-but-idle row wears
+   the grey-3 outline (13+ idle children in lime was green flood; the subs bar
+   keeps its own ●/◐/○ tiers) */
+.badge.idle{background:none;border:1px solid var(--grey-3);color:var(--grey-4);padding:1px 5px;}
+.caret{cursor:pointer;color:var(--grey-4);flex:none;font-size:11px;user-select:none;padding-right:2px;}
+.caret:hover{color:var(--grey-6);}
+.caret.open{color:var(--grey-5);}
+/* row-state slice: ghost shells, crash-era corpses, the G4 arch badge */
+.rtag{font-size:10px;letter-spacing:.12em;color:var(--grey-4);border:1px solid var(--grey-3);padding:1px 5px;flex:none;} /* micro tags — the .badge.idle outline dialect, no accent */
+.row.shell .title,.row.shell .activity{color:var(--grey-5);} /* 38-corpus ghosts: zero-message shells dim to the child-title tier */
+.row.stale .title,.row.stale .activity{color:var(--grey-4);} /* 39-forensics corpses: dimmer still — display truth, deletion stays manual */
+.session-head{padding:16px 20px 10px;border-bottom:1px solid var(--hairline);position:relative;} /* position:relative anchors the settings menu */
+.menubtn{position:absolute;top:16px;right:20px;width:22px;height:22px;padding:0;
+line-height:1;font-size:13px;letter-spacing:0;background:none;
+border:1px solid var(--hairline);color:var(--grey-4);}
+.menubtn:hover{border-color:var(--accent);color:var(--accent);} /* the #new button's treatment — hairline + grey, lime on hover only */
+.session-head .title{color:var(--grey-6);font-weight:500;font-size:16px;letter-spacing:.04em;}
+.session-head .sub{color:var(--grey-4);font-size:11px;letter-spacing:.04em;padding-top:3px;}
+#feed{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 20px 18px;}
+.item{overflow-wrap:anywhere;}
+.item{padding:12px 0;border-top:1px solid var(--hairline);}
+.item:first-child{border-top:none;}
+.item.user{background:var(--grey-2);border:1px solid var(--hairline);padding:10px 12px;
+color:var(--grey-6);margin:10px 0;} /* 7ak: container pre-wrap dropped — the md-body treatment carries it (assistant parity) */
+.item.user.pending{opacity:.5;} /* optimistic echo: dimmed until the real item event lands */
+.item.assistant{color:var(--grey-5);} /* 7ad follow-up: pre-wrap dropped — the body renders BLOCK html (marked/fallback); .md-body p owns the soft breaks */
+.item.notice{color:var(--grey-4);}
+.item.notice.boundary{border-top:1px dashed var(--grey-3);border-bottom:1px dashed var(--grey-3);white-space:pre-wrap;} /* G2: the compaction strip — dashed hairlines mark the context cut, the Goal recap rides below the marker */
+.item.custom{color:var(--grey-4);}
+.item.custom b{color:var(--grey-5);font-weight:500;}
+/* 7ag refinement boxes (TUI special-box parity): hairline frame + lime
+   label/edge ONLY — the body stays grey (the accent law: no lime flood) */
+.item.refine{display:flow-root;border:1px solid var(--hairline);border-left:2px solid var(--accent);margin:8px 0;padding:8px 12px;}
+.item.refine b{display:block;color:var(--accent);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;}
+.item.refine div{color:var(--grey-4);white-space:pre-wrap;padding-top:2px;}
+/* 7ag-c: harness-digest system block — a dim system preamble, hairline
+   container, distinct from user/agent items; the HARNESS micro-label on the
+   summary (never the raw customType string) */
+.item.digest{border:1px solid var(--hairline);margin:8px 0;} /* the hairline container — a system block, not a message */
+.item.digest > summary{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;cursor:pointer;list-style:revert;padding:0 10px;} /* the HARNESS micro-label; 7ag-e: the .item container's 12px owns the top — the label sits in the family, never double-padded */
+.item.digest > summary::-webkit-details-marker{color:var(--grey-3);}
+.item.digest > div{color:var(--grey-4);padding:6px 10px 0;} /* the body: dim grey md prose inside the hairline; 7ag-e: the .item container's 12px owns the bottom too */
+/* 7(r) operator tweak: the time RIDES the item's first line — float:right inside
+   a flow-root container: short first lines share the row, long ones wrap around
+   the float instead of forcing a dedicated line (grey, non-accent) */
+.item-time{color:var(--grey-4);font-size:10px;letter-spacing:.06em;float:right;padding:0 0 0 12px;}
+.you{display:inline-block;vertical-align:top;color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;} /* 7al identity tag + ts nit: inline-block rides line 1 — the time float shares THAT line (label left, time right, top-aligned), not a line of its own; grey-4 = the meta-label tier (legibility nit 2026-09-22) */
+/* 7ao feed pill: new content while scrolled up lights the grey "↓ latest" pill;
+   click = jump + re-pin; reaching the bottom hides it (no accent, no animation) */
+.feedpill{position:absolute;left:50%;transform:translateX(-50%);bottom:64px;z-index:5;display:none;background:var(--grey-2);
+color:var(--grey-4);border:1px solid var(--grey-3);padding:4px 10px;font-size:11px;
+letter-spacing:.06em;cursor:pointer;} /* 7ao-b: bottom-CENTER of the log (left 50% + translate); bottom is set inline at show time — it floats above the composer + queue strip */
+.feedpill:hover{color:var(--grey-6);border-color:var(--grey-4);}
+/* 7ap-2.0: the typewriter skip button — the bottom-LEFT mirror of the pill; grey-4 glyph + hairline, subtle; shows only during a long-enough emulation */
+.feedff{position:absolute;left:26px;bottom:64px;z-index:5;display:none;background:var(--grey-2);
+color:var(--grey-4);border:1px solid var(--grey-3);padding:4px 10px;font-size:11px;
+letter-spacing:.06em;cursor:pointer;} /* bottom is set inline at show time — it floats above the composer + queue strip, mirroring the pill */
+.feedff:hover{color:var(--grey-6);border-color:var(--grey-4);}
+.item.user,.item.notice,.item.custom,.md-body{display:flow-root;} /* the float is contained: it can never poke out of its row */
+.toolcard > summary .item-time,.agentmsg > summary .item-time,.thinking > summary .item-time,.item.digest > summary .item-time{display:inline;float:right;padding:0 0 0 12px;} /* ts nit: the thinking summary joins the pattern — the time rides the summary line, in line with the label; 7ag-c: the digest summary too */
+/* 7(s): agent-message collapse — the thinking treatment minus uppercase (mixed-case preview) */
+.agentmsg{margin:2px 0 6px;}
+.agentmsg > summary{color:var(--grey-4);font-size:11px;cursor:pointer;list-style:revert;padding:0;}
+.agentmsg > summary::-webkit-details-marker{color:var(--grey-3);}
+.agentmsg div{color:var(--grey-4);white-space:pre-wrap;border-left:1px solid var(--hairline);padding-left:10px;margin-top:4px;}
+.lnk{color:var(--accent);text-decoration:none;}
+.lnk:hover{text-decoration:underline;}
+.thinking{margin:2px 0 6px;}
+.thinking > summary{color:var(--grey-4);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;list-style:revert;padding:0;}
+.thinking > summary::-webkit-details-marker{color:var(--grey-3);}
+.thinking > summary::before,.agentmsg > summary::before,.toolcard > summary::before{content:'';display:inline-block;width:8px;} /* 7az: the caret-to-label gap — the sidebar row's breathing room ('> python', not '>python') */
+.thinking div{color:var(--grey-4);white-space:pre-wrap;border-left:1px solid var(--hairline);padding-left:10px;margin-top:4px;}
+.toolcard{background:var(--grey-2);border:1px solid var(--hairline);padding:8px 12px;margin:10px 0;}
+.toolcard.error{border-color:var(--risk);}
+.toolcard > summary{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-4);cursor:pointer;list-style:revert;padding:0;}
+.toolcard > summary::-webkit-details-marker{color:var(--grey-3);}
+.toolcard.running > summary{color:var(--accent);}
+.toolcard .tname{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-4);}
+.toolcard.error .tname{color:var(--risk);}
+.toolcard .targs{color:var(--grey-5);white-space:pre-wrap;font-size:12px;padding-top:2px;}
+.toolcard .tout{color:var(--grey-4);white-space:pre-wrap;font-size:12px;padding-top:4px;}
+/* 7ab ipython cell split: the input code rides a mono block (tcode, grey-1 bg),
+   the output gets its own framed block (distinct bg), and live partial output
+   streams in a dim tpart element that the final replaces */
+.toolcard .tcode{color:var(--grey-5);white-space:pre-wrap;font-size:12px;padding:6px 8px;margin-top:4px;
+background:var(--grey-1);border:1px solid var(--hairline);}
+.toolcard.ipy .tout{background:var(--grey-1);border:1px solid var(--hairline);padding:6px 8px;margin-top:4px;}
+.toolcard .tpart{color:var(--grey-5);white-space:pre-wrap;font-size:12px;padding:6px 8px;margin-top:4px;
+background:var(--grey-1);border:1px dashed var(--grey-3);} /* live partial: dimmer text, dashed frame — reads as in-flight, replaced at completion */
+/* 7ab JSON tokens (agentmsg bodies): keys grey-3, strings a green-grey,
+   numbers/bools/null each distinct — muted, no bright hues, PI-congruent */
+.j-key{color:var(--grey-3);}
+.j-str{color:#9FB29A;}
+.j-num{color:#C8A96E;}
+.j-bool{color:#8FB0C8;}
+.j-null{color:var(--grey-4);}
+/* 7ab-b/cell-kind CODE tokens (fenced ```python + the toolcard code cells): the
+   j-family's dialect for python/bash spans — keywords the blue, def names white,
+   strings green-grey, numbers gold, comments/vars dim, operators grey-4 */
+.c-kw{color:#8FB0C8;}
+.c-def{color:var(--grey-6);}
+.c-str{color:#9FB29A;}
+.c-num{color:#C8A96E;}
+.c-com{color:var(--grey-4);}
+.c-var{color:#9FB29A;}
+.c-op{color:var(--grey-4);}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:text-bottom;
+  animation:cursor-blink 1s steps(1,end) infinite;} /* 7(f): operator-sanctioned blink — the ONLY animation in the UI; steps() = hard console toggle, no easing; the element exists only while a message streams */
+@keyframes cursor-blink{50%{opacity:0;}}
+/* feed markdown (7e): TUI-copied blocks — modest, hairlines, no shadows */
+.md-h{color:var(--grey-6);font-weight:500;margin:10px 0 4px;} /* header: emphasized line, no display type */
+.md-p{margin:6px 0;}
+.md-quote{border-left:1px solid var(--hairline);padding-left:10px;color:var(--grey-4);margin:6px 0;} /* thinking-block treatment */
+.md-ul,.md-ol{padding-left:24px;margin:6px 0;}
+.md-ul li,.md-ol li{margin:2px 0;}
+.md-code{background:var(--grey-2);border:1px solid var(--hairline);padding:8px 12px;margin:10px 0;} /* toolcard treatment */
+.md-code pre{margin:0;overflow-x:auto;}
+.md-lang{display:block;color:var(--grey-4);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-bottom:2px;} /* tname treatment */
+.item code{background:var(--grey-2);border:1px solid var(--hairline);padding:0 4px;} /* inline code chip */
+.item .md-code code{background:none;border:none;padding:0;} /* the fenced block is already framed */
+.item hr{border:none;border-top:1px solid var(--hairline);margin:10px 0;}
+/* 7ad follow-up: marked's RAW elements — the md-* classes above are the
+   in-house fallback's; these style the library path. Grey family, lime
+   nowhere here. The container's old pre-wrap double-spaced the literal
+   newlines marked emits between blocks — paragraphs own their rhythm now
+   (sibling margins collapse). */
+.md-body p{margin:6px 0;white-space:pre-wrap;} /* the .md-p rhythm; soft breaks stay hard breaks (fallback parity) */
+.md-body h1,.md-body h2,.md-body h3,.md-body h4,.md-body h5,.md-body h6{color:var(--grey-6);
+font-weight:500;margin:10px 0 4px;font-size:13px;} /* the .md-h treatment — no display type */
+.md-body h1,.md-body h2{font-size:14px;border-bottom:1px solid var(--hairline);
+padding-bottom:3px;margin-top:14px;} /* sized grey, hairline bottom on the top two only */
+.md-body ul,.md-body ol{padding-left:24px;margin:6px 0;} /* same values as .md-ul/.md-ol — the fallback's classed lists match */
+.md-body li{margin:2px 0;}
+.md-body blockquote{border-left:1px solid var(--hairline);padding-left:10px;color:var(--grey-4);
+margin:6px 0;} /* the .md-quote treatment */
+.md-body table{border-collapse:collapse;margin:10px 0;display:block;overflow-x:auto;} /* wide tables scroll in the narrow pane */
+.md-body th,.md-body td{border:1px solid var(--hairline);padding:4px 10px;text-align:left;}
+.md-body th{background:var(--grey-2);color:var(--grey-6);font-weight:500;} /* header row grey-2 — no zebra stripes */
+.md-body pre{background:var(--grey-2);border:1px solid var(--hairline);padding:8px 12px;margin:10px 0;
+overflow-x:auto;} /* the .md-code treatment — marked's bare <pre> */
+.md-body pre code{background:none;border:none;padding:0;} /* the fenced block is already framed */
+#queue{display:none;padding:8px 20px;border-top:1px solid var(--hairline);}
+#queue .queued{color:var(--grey-4);padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#queue .caps{color:var(--accent);}
+#queue .qdrop{color:var(--risk);padding:2px 0;font-size:11px;}
+#queue .queued.dropped{color:var(--grey-5);white-space:pre-wrap;overflow:visible;} /* copy the text back */
+#sendErr{display:none;padding:6px 20px;color:var(--risk);font-size:11px;letter-spacing:.04em;
+border-top:1px solid var(--hairline);white-space:pre-wrap;}
+footer{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--hairline);background:var(--grey-1);}
+#input{flex:1;background:var(--grey-2);color:var(--grey-6);border:1px solid var(--hairline);
+padding:9px 12px;font:inherit;resize:none;min-height:40px;max-height:100px;overflow-y:auto;
+letter-spacing:.04em;} /* ~4 lines before the internal scroll */
+#input::placeholder{color:var(--grey-4);}
+button{border:1px solid var(--grey-3);background:none;color:var(--grey-5);padding:6px 16px;
+font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;}
+button:hover{border-color:var(--grey-4);color:var(--grey-6);}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500;}
+button.primary:hover{background:var(--accent);color:var(--accent-ink);}
+#stop{display:none;border-color:var(--risk);color:var(--risk);}
+.busy #stop{display:inline-block;}
+#send{display:flex;flex-direction:column;align-items:center;justify-content:center;} /* 7at-d: the two-line button — SEND centered, the chord glyphs centered beneath (the footer's stretch owns the height: no layout shift) */
+#send .send-sub{color:var(--grey-4);font-size:10px;letter-spacing:.06em;line-height:1;user-select:none;white-space:nowrap;} /* 7at-d: the glyph-pair subtitle — grey-4 tiny mono beneath SEND, multi-line only (JS toggles display) */
+footer.hidden{display:none;}
+.note{padding:10px 20px;color:var(--grey-4);font-size:11px;letter-spacing:.04em;
+border-top:1px solid var(--hairline);}
+
+/* TUI-footer metadata (TUI-META-SPEC.md §4, §8): subagent bar + detail-mode */
+.ssubs .sbar-run{color:var(--accent);}
+.ssubs .sbar-idle{color:var(--grey-5);}
+.ssubs .sbar-inact{color:var(--grey-4);}
+.session-head .dmode{cursor:pointer;color:var(--grey-4);font-size:11px;letter-spacing:.12em;
+text-transform:uppercase;background:none;border:1px solid var(--hairline);font-family:inherit;
+padding:2px 8px;margin-left:10px;}
+.session-head .dmode:hover{color:var(--grey-6);border-color:var(--grey-4);}
+
+/* header "+" — new conversation (POST /api/new): square, hairline, grey,
+   lime accent on hover only, no animations */
+header #new{cursor:pointer;background:none;border:1px solid var(--hairline);
+color:var(--grey-4);width:22px;height:22px;padding:0;line-height:1;flex:none;
+font-size:13px;letter-spacing:0;}
+header #new:hover{border-color:var(--accent);color:var(--accent);}
+header #new:disabled{color:var(--grey-3);cursor:default;}
+
+/* new-conversation cwd form: inline in the header, left of "+" — grey
+   palette, hairline, accent only on the active input focus */
+.new-form{display:flex;align-items:center;gap:6px;flex:none;}
+.new-form.hidden{display:none;}
+.new-form input{background:var(--grey-2);color:var(--grey-6);border:1px solid var(--grey-3);
+padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;width:280px;}
+.new-form input:focus{outline:none;border-color:var(--accent);}
+.new-form input::placeholder{color:var(--grey-4);}
+.new-form button{padding:3px 10px;font-size:10px;}
+
+/* 7an sidebar search: hairline input, grey mono, no accent (lime stays
+   working-only); the n/total count rides right, grey-4 */
+.search-row{display:flex;align-items:center;gap:8px;padding:0 20px 10px;}
+.search-row input{flex:1;min-width:0;background:var(--grey-2);color:var(--grey-6);border:1px solid var(--hairline);
+padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;}
+.search-row input:focus{outline:none;border-color:var(--grey-3);}
+.search-row input::placeholder{color:var(--grey-4);}
+.search-count{flex:none;color:var(--grey-4);font-size:11px;}
+.search-clear{flex:none;display:none;cursor:pointer;background:none;border:1px solid transparent;color:var(--grey-4);width:20px;height:20px;padding:0;line-height:1;font-size:12px;} /* 7an clear-X: the × rides the input's right, visible ONLY with text */
+.search-clear:hover{border-color:var(--hairline);color:var(--grey-6);}
+/* 7aa system meter: two stacked hairline tracks in the top bar, grey fills
+   ONLY, tiny mono % labels; hidden until /api/system answers */
+.sysmeter{display:flex;flex-direction:column;gap:3px;flex:none;}
+.sysmeter .sysrow{display:flex;align-items:center;gap:6px;cursor:default;}
+.sysmeter .systack{position:relative;width:110px;height:4px;background:var(--grey-1);border:1px solid var(--hairline);flex:none;}
+.sysmeter .sysfill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--grey-4);}
+.sysmeter .syslabel{color:var(--grey-4);font-size:9px;letter-spacing:.12em;flex:none;} /* 7aa-b: leading micro-label — [label | bar | %] */
+.sysmeter .syspct{color:var(--grey-4);font-size:10px;min-width:34px;text-align:right;flex:none;letter-spacing:.04em;}
+
+/* input pickers: "/" slash palette + "@" file picker — popover pinned above
+   the composer; grey palette, hairline border for visibility on the #111
+   canvas, accent ONLY on the selected entry; square, no shadows/animations */
+footer{position:relative;} /* anchors the pickers; no other positioned descendants */
+.pop{position:absolute;bottom:100%;left:20px;width:min(560px,calc(100% - 40px));
+max-height:40vh;overflow-y:auto;background:var(--grey-2);border:1px solid var(--hairline);
+z-index:10;}
+.pop-hint{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+padding:5px 12px;border-bottom:1px solid var(--hairline);}
+.pop-hint.err{color:var(--risk);font-size:11px;font-weight:600;}
+.pop-none{color:var(--grey-4);padding:8px 12px;font-size:11px;}
+.pop-row{display:flex;align-items:baseline;gap:10px;padding:6px 12px;cursor:pointer;}
+.pop-row .pn{color:var(--grey-6);flex:none;}
+.pop-row .pd{color:var(--grey-4);font-size:11px;white-space:nowrap;overflow:hidden;
+text-overflow:ellipsis;flex:1;min-width:0;}
+.pop-row .ps{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;flex:none;}
+.pop-row.sel{background:var(--accent);} /* accent lives on the active entry only */
+.pop-row.sel .pn{color:var(--accent-ink);}
+.pop-row.sel .pd{color:var(--accent-ink);opacity:.85;}
+.pop-row.sel .ps{color:var(--accent-ink);opacity:.85;}
+.pop-row.dis{cursor:default;} /* greyed TUI-local hints: visible, never sent */
+.pop-row.dis .pn{color:var(--grey-5);}
+.pop-row.dis .pd{color:var(--grey-3);}
+.pop-row.dis .ps{color:var(--grey-3);}
+
+/* "+" flow inline notice (RC3): non-blocking, no alert */
+.new-note{color:var(--grey-4);font-size:11px;letter-spacing:.04em;max-width:240px;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;}
+.new-note.hidden{display:none;}
+
+/* session menu (27-settings parity, sparse by directive (af)): panel pinned
+   under the head's right edge; grey palette, hairline, square, system mono —
+   accent ONLY on the active/hover row + the live usage bar; the picker rows
+   reuse the pop-row language; the hint/none classes ride through as-is */
+.menu{position:absolute;top:48px;right:20px;width:min(340px,calc(100% - 40px));
+max-height:60vh;overflow-y:auto;background:var(--grey-2);border:1px solid var(--hairline);z-index:10;}
+.menu .minfo{color:var(--grey-4);font-size:10px;letter-spacing:.04em;
+white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 12px;border-bottom:1px solid var(--hairline);}
+.menu .pop-row:hover,.menu .pop-row.sel{background:var(--accent);} /* lime lives on the active/hover row only */
+.menu .pop-row:hover .pn,.menu .pop-row.sel .pn{color:var(--accent-ink);}
+.menu .pop-row:hover .pd,.menu .pop-row.sel .pd{color:var(--accent-ink);opacity:.85;}
+.menu .mback .pn{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;}
+.menu .mconfirm{padding:8px 12px;border-top:1px solid var(--hairline);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.menu .mwarn{color:var(--grey-5);font-size:11px;flex:1 1 100%;}
+.menu .mconfirm button{padding:3px 10px;font-size:10px;border-color:var(--risk);color:var(--risk);}
+.menu .mconfirm button:hover{border-color:var(--risk);color:var(--grey-6);}
+.menu .mform{display:flex;gap:6px;padding:8px 12px;}
+.menu .mform input{flex:1;min-width:0;background:var(--grey-1);color:var(--grey-6);border:1px solid var(--grey-3);
+padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;}
+.menu .mform input:focus{outline:none;border-color:var(--accent);}
+.menu .mform button{padding:3px 10px;font-size:10px;}
+.menu .ubar{height:3px;background:var(--grey-3);margin:10px 12px 4px;} /* grey track */
+.menu .ufill{height:100%;background:var(--accent);} /* the live usage bar — the one lime bar */
+.menu .utext{color:var(--grey-4);font-size:11px;padding:0 12px 10px;}
+
+/* 7ah: context menu — the hamburger panel's own chrome (grey-2, hairline,
+   square, system mono); lime lives on the hover row only; locked rows stay
+   grey and never light up (Archive: hidden until its action exists); the
+   confirm block reuses the mconfirm treatment */
+.cmenu{position:fixed;z-index:20;min-width:180px;max-width:280px;background:var(--grey-2);
+border:1px solid var(--hairline);}
+.cmenu .pop-row:hover{background:var(--accent);}
+.cmenu .pop-row:hover .pn,.cmenu .pop-row:hover .pd{color:var(--accent-ink);opacity:.85;}
+.cmenu .pop-row.dis:hover{background:none;} /* visible-but-locked: the disabled row never lights up */
+.cmenu .pop-row.dis:hover .pn,.cmenu .pop-row.dis:hover .pd{color:var(--grey-5);}
+.cmenu .mconfirm{padding:8px 12px;border-top:1px solid var(--hairline);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.cmenu .mwarn{color:var(--grey-5);font-size:11px;flex:1 1 100%;}
+.cmenu .mconfirm button{padding:3px 10px;font-size:10px;border-color:var(--risk);color:var(--risk);}
+.cmenu .mconfirm button:hover{border-color:var(--risk);color:var(--grey-6);}
+/* 7bc-3 S2: the heartbeat write affordances — the hb-row cm + the schedule
+   form (the rename-form dialect, stacked): select/textarea/input share the
+   menu input chrome; the field note rides the pop-hint treatment; grey
+   everything, accent only on focus */
+.cmenu .mback .pn{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;}
+.cmenu .mform{display:flex;flex-direction:column;gap:6px;padding:8px 12px;}
+.cmenu .mform select,.cmenu .mform textarea,.cmenu .mform input{background:var(--grey-1);color:var(--grey-6);border:1px solid var(--grey-3);
+padding:3px 8px;font:inherit;font-size:11px;letter-spacing:.04em;}
+.cmenu .mform select:focus,.cmenu .mform textarea:focus,.cmenu .mform input:focus{outline:none;border-color:var(--accent);}
+.cmenu .mform textarea{resize:vertical;min-height:44px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.cmenu .mform button{align-self:flex-end;padding:3px 10px;font-size:10px;}
+.cmenu .mform button:disabled{color:var(--grey-4);border-color:var(--grey-3);cursor:default;}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--grey-2);border:1px solid var(--hairline);
+color:var(--grey-5);padding:6px 12px;font-size:11px;z-index:30;} /* 7ah: clipboard confirm — instant, no animation */
+/* 7ac: path links — the .lnk link treatment in grey-3 (underline, no lime) */
+.plink{color:var(--grey-3);text-decoration:underline;cursor:pointer;}
+.plink:hover{color:var(--grey-5);}
+/* 7ac: file viewer overlay — the menu's chrome (grey-2, hairline, square),
+mono text, pre-wrap, capped size; no lime, no motion */
+.viewer{position:fixed;inset:0;z-index:20;background:rgba(17,17,17,.78);
+display:flex;align-items:center;justify-content:center;}
+.viewer-box{background:var(--grey-2);border:1px solid var(--hairline);
+width:min(880px,92vw);height:min(680px,86vh);display:flex;flex-direction:column;}
+.viewer-head{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--hairline);}
+.viewer-path{color:var(--grey-5);font-size:11px;white-space:nowrap;overflow:hidden;
+text-overflow:ellipsis;flex:1;min-width:0;}
+.viewer-head button{padding:3px 10px;font-size:10px;flex:none;}
+.viewer-body{flex:1;overflow:auto;padding:12px;color:var(--grey-5);white-space:pre-wrap;overflow-wrap:anywhere;}
+
+.item.digest > summary::before{content:'';display:inline-block;width:8px;} /* 7az rider: the digest marker breathes too */
+
+/* 7bc heartbeats section: the daemon's scheduled-jobs registry surfaced in
+   the sidebar — grey, collapsible, under the sessions; no accent here (7bc-3
+   S2: the write affordances live in the rows' context menu + the schedule
+   form — see the cmenu block; the section itself stays a plain list) */
+#hb{border-top:1px solid var(--hairline);}
+#hb.hidden{display:none;}
+#hb .hb-head{display:flex;align-items:center;gap:8px;padding:8px 20px 6px;cursor:pointer;user-select:none;}
+#hb .hb-head:hover{background:var(--grey-2);}
+#hb .hb-row{display:flex;align-items:baseline;gap:10px;padding:6px 20px;cursor:pointer;}
+#hb .hb-row:hover{background:var(--grey-2);}
+#hb .hb-label{color:var(--grey-5);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#hb .hb-meta{display:flex;gap:8px;flex:none;}
+#hb .hb-interval{color:var(--grey-4);font-size:11px;flex:none;}
+#hb .hb-status{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;flex:none;}
+
+/* 7au context chip: the CTX N% chip in the header next to the sysmeter —
+   always visible while a live session is open (pinned by default); grey
+   fill like the sysmeter (lime stays working-only); the popover reuses the
+   .menu chrome anchored under the chip (left/top set at open) */
+.ctxchip{display:flex;align-items:center;gap:6px;background:none;border:none;padding:0;cursor:pointer;flex:none;}
+.ctxchip:hover .ctxpct,.ctxchip:hover .ctxlabel{color:var(--grey-5);}
+.ctxchip .ctxlabel{color:var(--grey-4);font-size:9px;letter-spacing:.12em;flex:none;}
+.ctxchip .ctxstack{position:relative;width:60px;height:4px;background:var(--grey-1);border:1px solid var(--hairline);flex:none;}
+.ctxchip .ctxfill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--grey-4);}
+.ctxchip .ctxpct{color:var(--grey-4);font-size:10px;min-width:34px;text-align:right;flex:none;letter-spacing:.04em;}
+.ctxpop{top:auto;right:auto;} /* .menu base + anchored under the chip (left/top at open) */
+.ctxpop .ctx-hint{color:var(--grey-4);font-size:10px;letter-spacing:.04em;padding:6px 12px 8px;}
+
+/* 7bc-2: the per-session heartbeat indicator — the lime pulse glyph
+   (a heartbeat IS live activity: the accent law holds), the status-dot
+   dialect at the subs-glyph scale (10px, square, static — no animations
+   by design); rides the sidebar row beside the title + the pane's dedicated
+   status chip (glyph + grey label). */
+.hbglyph{color:var(--accent);font-size:10px;flex:none;line-height:1;user-select:none;} /* ♥ beside the row title + in the pane chip */
+.hbpane{display:flex;align-items:center;gap:6px;padding-top:2px;} /* the pane chip: its own status line beside #sSub */
+.hbpane .hbpane-label{color:var(--grey-4);font-size:10px;letter-spacing:.12em;text-transform:uppercase;} /* 'heartbeat' — grey-4 caps, the .caps dialect */
+
+/* 54-cmdk: the search palette — Cmd-K's centered modal over a fixed
+   backdrop. The pop-picker's chrome (grey-2 panel, hairline, square, system
+   mono); lime ONLY on the selected row + the match highlight (the working
+   law — the searching text stays grey). */
+.cmdk{position:fixed;inset:0;z-index:40;background:rgba(17,17,17,.78);
+display:flex;align-items:flex-start;justify-content:center;padding:10vh 16px 0;}
+.cmdk-panel{width:min(680px,100%);max-height:76vh;display:flex;flex-direction:column;
+background:var(--grey-2);border:1px solid var(--hairline);}
+.cmdk-inrow{display:flex;align-items:center;gap:8px;padding:10px 14px;
+border-bottom:1px solid var(--hairline);flex:none;}
+.cmdk-in{flex:1;min-width:0;background:none;border:none;outline:none;
+color:var(--grey-6);font-family:var(--font-mono);font-size:13px;
+letter-spacing:.04em;padding:0;}
+.cmdk-in::placeholder{color:var(--grey-4);}
+.cmdk-body{flex:1;min-height:0;overflow-y:auto;}
+.cmdk-sec{padding-bottom:4px;}
+.cmdk-sec-head{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;padding:8px 14px 2px;}
+.cmdk-row{padding:6px 14px;cursor:pointer;}
+.cmdk-l1{display:flex;align-items:baseline;gap:8px;}
+.cmdk-title{color:var(--grey-6);overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap;min-width:0;}
+.cmdk-age{margin-left:auto;color:var(--grey-4);font-size:11px;flex:none;}
+.cmdk-row.child{padding-left:38px;} /* the nested child hit — the hierarchy's indent dialect */
+.cmdk-row.child .cmdk-title{color:var(--grey-5);}
+.cmdk-snip{color:var(--grey-5);font-size:11px;padding-top:2px;
+white-space:pre-wrap;overflow-wrap:anywhere;}
+.cmdk-hit{color:var(--accent);} /* the term highlight — the lime accent */
+.cmdk-act{color:var(--grey-4);font-size:11px;padding-top:2px;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cmdk-meta{display:flex;gap:10px;color:var(--grey-4);font-size:10px;
+letter-spacing:.12em;text-transform:uppercase;padding-top:2px;}
+.cmdk-more,.cmdk-none{color:var(--grey-4);padding:4px 14px;font-size:11px;}
+.cmdk-err{color:var(--risk);padding:8px 14px 2px;font-size:11px;}
+.cmdk-retry{background:none;border:none;border-bottom:1px solid var(--hairline);
+color:var(--grey-5);font-family:var(--font-mono);font-size:11px;
+letter-spacing:.04em;padding:0 2px;margin:4px 14px 8px;cursor:pointer;}
+.cmdk-retry:hover{color:var(--accent);border-color:var(--accent);}
+.cmdk-row.sel{background:var(--accent);} /* the active row — the pop-row.sel dialect */
+.cmdk-row.sel .cmdk-title,.cmdk-row.sel .cmdk-act{color:var(--accent-ink);}
+.cmdk-row.sel .cmdk-age,.cmdk-row.sel .cmdk-meta,.cmdk-row.sel .cmdk-role{color:var(--accent-ink);opacity:.85;}
+.cmdk-row.sel .cmdk-snip{color:var(--accent-ink);opacity:.9;}
+.cmdk-row.sel .cmdk-hit{color:var(--grey-1);}
+.cmdk-foot{color:var(--grey-4);font-size:10px;letter-spacing:.12em;
+text-transform:uppercase;padding:6px 14px;border-top:1px solid var(--hairline);flex:none;}
