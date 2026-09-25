@@ -60,9 +60,11 @@ spec:
               protocol: TCP
 ---
 # prime-agent egress: DNS, in-cluster LiteLLM (models + A2A broker), and
-# outbound HTTPS for the boot installs (npm tarball, uv, fd releases).
-# No in-cluster lateral movement to other namespaces; no world TCP/UDP
-# beyond 443 (23-analysis-sec F2 egress allowlist).
+# outbound HTTPS for the boot installs (npm tarball, uv, fd releases,
+# payload archive pull + workspace repo clone from gitlab.com, conda-forge
+# for the rootless git install). No in-cluster lateral movement to other
+# namespaces; no world TCP/UDP beyond 443 (23-analysis-sec F2 egress
+# allowlist).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
