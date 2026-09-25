@@ -38,7 +38,7 @@ See `helmrelease.yaml` for complete deployment configuration.
 
 ## Authentication
 
-Uses Authentik SSO with OPDS/API endpoints bypassing authentication for e-reader compatibility.
+Uses Authentik SSO (OIDC). The Authentik app/provider stack is module-rendered: `authentik.managedBy: terraform` in `helmrelease.yaml` renders the chart's provider-opentofu Workspace pulling `terraform/modules/authentik-app`.
 
 ## Troubleshooting
 

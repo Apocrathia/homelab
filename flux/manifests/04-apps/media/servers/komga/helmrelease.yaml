@@ -10,12 +10,22 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.83"
+      # tofu mode renders only from 0.0.84 (authentik-tofu-workspace.yaml
+      # introduced there); the flip bumps with the chart, tag already pushed.
+      version: "0.0.85"
       sourceRef:
         kind: GitRepository
         name: homelab
         namespace: flux-system
       interval: 5m
+  # OIDC client_id feeds the chart's composed oidc_client_id input from the
+  # same 1Password-backed Secret the app reads (komga-secrets.oidc-client-id;
+  # the value never enters git — tofu adoption preserves the live one).
+  valuesFrom:
+    - kind: Secret
+      name: komga-secrets
+      valuesKey: oidc-client-id
+      targetPath: authentik.oidc.clientId
   values:
     app:
       name: komga
@@ -139,8 +149,16 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/komga-secrets"
 
+    # Authentik stack owned by the chart-rendered provider-opentofu
+    # Workspace pulling the shared terraform/modules/authentik module; the
+    # chart composes the standard inputs from this block. Adoption ids
+    # never enter git — they ride a gate-time live patch on the Workspace
+    # varmap (MR description). Live attrs match the composed surface
+    # (sub_mode user_email, the email scope shadowed by the custom
+    # komga-email-verified-mapping); no config overrides needed.
     authentik:
       enabled: true
+      managedBy: terraform
       mode: oidc
       displayName: "Komga"
       externalHost: "https://komga.gateway.services.apocrathia.com"
