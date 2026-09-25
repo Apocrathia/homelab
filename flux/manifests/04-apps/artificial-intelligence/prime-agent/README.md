@@ -17,8 +17,15 @@ This deployment includes:
   release); `PRIME_AGENT_INSTALL_UV=1` arms prime-agent's uv fallback
 - Longhorn-backed state at `/opt/data` (agent config, sessions, kernels, npm
   prefix, uv)
-- `agent/` payload (extensions, seeded settings) reconciled from a ConfigMap
-  on every pod start; mirrors `~/.prime/agent/`
+- `agent/` payload (extensions, seeded settings) pulled at pod start from
+  this repo's public per-path GitLab archive and reconciled onto
+  `~/.prime/agent/` (the ConfigMap era ended at the API server's 1 MiB
+  limit); unchanged files are not rewritten (`cp -u`)
+- The agent's working repo: a token-authenticated full clone of this
+  repository on the state PVC at `/opt/data/workspace` (the webui
+  `defaultCwd` — agents work the repo by default); git installs rootless
+  via conda-forge (`node:24-bookworm-slim` ships no git and the pod runs
+  as uid 1000, so apt is not an option)
 - `agent/extensions/litellm/index.ts` registers the in-cluster LiteLLM gateway as
   the model provider and discovers the catalog from it; auth via
   `LITELLM_API_KEY` (or `/login` interactively)
@@ -125,12 +132,12 @@ Bearer auth, fail-closed (server rejects every POST without the token):
   `agent/settings.json`; the extension re-reads the gateway catalog on start
   (`/litellm-refresh` to re-poll)
 - **Inject more agent files**: one folder per extension under
-  `agent/extensions/` — `index.ts` (+ resources, README). Add each payload
-  file to `kustomization.yaml` keyed `<extension>_<basename>` (kustomize
-  cannot glob a directory and ConfigMap keys are flat) and a matching copy
-  line in the boot script, which assembles them into
-  `~/.prime/agent/extensions/<extension>/` on boot. READMEs stay
-  repo/local-only — they do not ship to the pod
+  `agent/extensions/` — `index.ts` (+ resources, README). Commit it to
+  `main`; the next pod restart pulls the per-path archive and the boot
+  script copies it into `~/.prime/agent/extensions/<extension>/`. No
+  manifest MR, no `configMapGenerator` entry — the payload CM era ended
+  at the API server's 1 MiB limit. READMEs stay repo/local-only — the
+  boot copies just the payload files it knows
 - **Skills/MCP servers**: not shipped in git — install into the PVC at runtime
   (`~/.prime/agent/`) per upstream docs
 
@@ -172,6 +179,13 @@ prime-agent status                                    # daemon/worker state (ins
 ```
 
 - Pod crashloops on bootstrap: check egress to the R2 release bucket and npm
+- Extensions stale after a GitLab outage: the boot pulls the payload
+  archive 3x with backoff; a failed pull boots the last good copy from the
+  PVC with a `WARN` in `kubectl logs` (check egress to gitlab.com and
+  restart the pod to re-sync)
+- Repo clone missing on the PVC: `/opt/data/workspace` holds a full
+  clone of this repository; if it exists with stray files and no `.git`,
+  the boot skips the clone with a WARN — clean the dir once and restart
 - `/model` shows only `login-required`: the `prime-agent-secrets` item is
   missing or the key lacks model access on the gateway
 - Kernel bootstrap fails on first tool call: uv installs on boot (check egress

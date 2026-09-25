@@ -173,9 +173,10 @@ gitignored.
 - Local deploy: copy named files to `~/.prime/agent/extensions/webui/`
   and restart the collector by port (`kill $(lsof -t -i :8788)`, never
   pkill by name); beacons re-register within 15s.
-- K8s payload (ConfigMap `prime-agent-config`, flat `webui_*` keys):
-  `index.ts`, `server.mjs`, `dashboard.js`, `dashboard.css`, `mark.svg`,
-  `config.json`, `marked.min.js`, `purify.min.js` — the boot script installs
-  them under `extensions/webui/` (the vendored pair feeds `/static/*`).
-  Adding a file = one `configMapGenerator` entry in
-  [`../../../kustomization.yaml`](../../../kustomization.yaml).
+- K8s payload (the boot script pulls this app dir's public GitLab archive
+  at pod start): `index.ts`, `server.mjs`, `dashboard.js`, `dashboard.css`,
+  `mark.svg`, `config.json`, `marked.min.js`, `purify.min.js` — copied
+  under `extensions/webui/` (the vendored pair feeds `/static/*`).
+  Adding a file = commit it here + one `cp -u` line in the boot script
+  ([`../../../helmrelease.yaml`](../../../helmrelease.yaml)); a merge to
+  main applies on the next pod restart.
