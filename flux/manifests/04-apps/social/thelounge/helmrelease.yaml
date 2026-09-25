@@ -20,7 +20,7 @@ spec:
     app:
       name: thelounge
       # renovate: datasource=docker depName=ghcr.io/thelounge/thelounge
-      image: ghcr.io/thelounge/thelounge:4.5.2@sha256:79b02c2a8373063f300129729161ec75a26ea1881352845f01f12988075d378e
+      image: ghcr.io/thelounge/thelounge:4.5.2@sha256:bae46016776b0a18639dcaff69a103b3bbee9cbb40e86cd24fb278eccc6bac7b
       container:
         name: thelounge
         port: 9000
