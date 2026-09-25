@@ -353,15 +353,33 @@ spec:
       enabled: true
       itemPath: "vaults/Secrets/items/prime-agent-secrets"
 
-    # Token-gated dashboard on both doors (LAN + tailnet); no Authentik in
-    # front — the webui token is the auth. NEVER enable the shared/friends
-    # tier on this app: a single token grants full agent control (see
-    # README). gatus stays off: an unauth probe would 401.
+    # SSO in front on both doors (LAN + tailnet): the Authentik proxy
+    # outpost owns the hostname — no straight route to the app service
+    # (httproute stays off below; the outpost dials the app's ClusterIP
+    # directly). The webui trusts the outpost (trustedCidrs = the cluster
+    # pod CIDR in the payload config.json — no env surface; the operator's
+    # gate decision), so SSO is the front door and the webui token is the
+    # break-glass layer for anything the pod CIDR does not cover. NEVER
+    # enable the shared/friends tier on this app: it would put SSO in
+    # front of full agent control (see README). gatus stays off: a
+    # synthetic probe cannot pass the outpost's SSO gate. The dashboard
+    # tile icon is the webui's own mark, served via the GitLab raw URL
+    # (icon.svg in this directory).
     authentik:
-      enabled: false
-    httproute:
       enabled: true
-      hostname: prime.gateway.services.apocrathia.com
+      managedBy: blueprint
+      mode: "proxy"
+      displayName: "Prime Agent"
+      category: "Artificial Intelligence"
+      externalHost: "https://prime.gateway.services.apocrathia.com"
+      openInNewTab: true
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/prime-agent/icon.svg"
+      metaDescription: "The prime-agent conversations dashboard"
+    # The Authentik proxy outpost creates the hostname's HTTPRoute itself
+    httproute:
+      enabled: false
+    # Tailnet sharing: adds the tailnet-gateway parentRef to the outpost's
+    # HTTPRoute (one hostname, both doors)
     tailnet:
       enabled: true
     gatus:
