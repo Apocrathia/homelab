@@ -959,7 +959,9 @@ the ref and re-pulls exactly once.
   gate-time live patch on the Workspace varmap (kubectl patch, Flux
   suspended) — the ids NEVER enter git. tofu imports the objects in place —
   no deletion window, uuids intact, nobody re-logs in; after the first apply
-  the imports go inert and the patch drops. The render gate and the module's
+  the imports go inert and the patch drops. OIDC apps with custom scope
+  mappings add `import_custom_scope_mapping_ids` (mapping name → live
+  pm_uuid) to the same patch — the module imports them in place (0.0.85+). The render gate and the module's
   variable validation both fail loudly on a missing id (an empty id makes
   tofu silently skip the import and plan a duplicate create).
 - **Blip** (fresh create, e.g. new apps): no varmap at all — the
