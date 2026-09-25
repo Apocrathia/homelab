@@ -1,14 +1,20 @@
 ---
 # prime-agent webui ingress: the collector on 8788 is reachable ONLY from
-# the gateway Envoy L7 path (in-cluster traffic to the gateway LB IP is
-# socket-redirected to the node-local Envoy — reserved:ingress), the tailscale
-# operator proxy pods (tailnet door), and the node itself (kubectl port-forward,
-# kubelet probes). The inbound A2A webhook on 8080 (a2a/server.mjs) is reachable
-# ONLY from the LiteLLM broker (litellm.yml's agents: entry targets
+# the Authentik proxy outpost (SSO in front on both doors — the outpost owns
+# the hostname and dials the app's ClusterIP Service directly), the gateway
+# Envoy L7 path (in-cluster traffic to the gateway LB IP is socket-redirected
+# to the node-local Envoy — reserved:ingress), and the node itself (kubectl
+# port-forward, kubelet probes). The tailscale operator proxy pods no longer
+# dial the app directly: the tailnet door rides the outpost's HTTPRoute
+# (tailnet-gateway parentRef, so tailnet traffic reaches the outpost, not the
+# app). The inbound A2A webhook on 8080 (a2a/server.mjs) is reachable ONLY
+# from the LiteLLM broker (litellm.yml's agents: entry targets
 # prime-agent.prime-agent.svc.cluster.local:8080). Everything else is denied by
-# Cilium's default-deny-on-select. The token is the auth on every path;
-# trustedCidrs stays [] (23-analysis-sec F1: a CIDR pin behind a proxy is dead
-# config or fail-open — never ship one).
+# Cilium's default-deny-on-select. trustedCidrs trusts the cluster pod CIDR
+# (10.42.0.0/16 — the outpost's dynamic pod IPs; the operator's gate decision on
+# !4929 supersedes 23-analysis-sec F1): the outpost serves tokenless behind
+# SSO, the cluster is the perimeter, and the webui token stays as the
+# break-glass layer for anything the CIDR does not cover (node-local access).
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -31,9 +37,12 @@ spec:
         - ports:
             - port: "8788"
               protocol: TCP
+    # Authentik proxy outpost (SSO front door on both doors — dials the
+    # app's ClusterIP Service directly; the hostname's HTTPRoute is the
+    # outpost's own, including the tailnet parentRef)
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: tailscale-system
+            io.kubernetes.pod.namespace: authentik
       toPorts:
         - ports:
             - port: "8788"
