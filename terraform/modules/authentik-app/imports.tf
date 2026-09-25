@@ -54,3 +54,16 @@ import {
   to       = authentik_policy_binding.users[0]
   id       = var.import_binding_users_pk
 }
+
+# Custom scope mappings (oidc mode): the resource is for_each-keyed by
+# mapping name, so a keyed each.key against it is an exact address match
+# (the count-resource ["g"] vs [0] mismatch does not apply). Same mode
+# ternary gating as the resource itself; the empty map (blip and steady
+# shapes) yields zero import instances. An adopt app whose declared
+# mapping lacks its pm_uuid fails the adoption validation loudly
+# (variables.tf) instead of silently skipping into a duplicate create.
+import {
+  for_each = var.mode == "oidc" ? var.import_custom_scope_mapping_ids : {}
+  to       = authentik_property_mapping_provider_scope.custom[each.key]
+  id       = each.value
+}

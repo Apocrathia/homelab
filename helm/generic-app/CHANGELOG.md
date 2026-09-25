@@ -1,6 +1,25 @@
 # Changelog
 
-## Version 0.0.84 (Latest)
+## Version 0.0.85 (Latest)
+
+- **Custom scope-mapping adoption support (authentik-app module)**: the
+  shared `terraform/modules/authentik-app` module gains
+  `import_custom_scope_mapping_ids` (map: mapping name → live pm_uuid) and a
+  keyed import block for `authentik_property_mapping_provider_scope.custom`
+  (for_each-gated to zero instances on the empty map — blip and steady
+  shapes carry no import at all, so behavior is unchanged outside adoption).
+  Fixes the komga pilot's wave-1a blocker: an adopt apply for an oidc app
+  with custom scope mappings planned "N to import, 1 to add" and the create
+  failed HTTP 400 on the unique property-mapping name. Unblocks adoption for
+  the six oidc fleet apps carrying custom mappings (komga, kavita, chaptarr,
+  mealie, romm, calibre-web-automated). The map rides the same gate-time
+  adoption varmap patch as the other import ids — never git; the module's
+  adoption validation now fails loudly when an adopt app with a declared
+  custom mapping lacks its pm_uuid, and rejects non-empty ids without
+  adoption. Module-only change: zero chart template diffs (workspace ref
+  self-pins to generic-app-0.0.85, landed by CI as usual).
+
+## Version 0.0.84
 
 - **Authentik tofu-native support (`authentik.managedBy`)**: new values knob —
   `blueprint` (default; zero behavior change for existing apps) or

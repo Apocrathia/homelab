@@ -533,7 +533,12 @@ authentik:
   # booleans, ids are quoted strings (never bare numbers — the tfvars path
   # carries types); tofu adopts the objects in place, the imports go inert,
   # and the patch drops. The render gate and the module's variable
-  # validation both fail loudly on a missing id under adoption.
+  # validation both fail loudly on a missing id under adoption. OIDC apps
+  # with custom scope mappings add import_custom_scope_mapping_ids - live
+  # pm_uuids keyed by mapping name, e.g.
+  # { "myapp-email-verified-mapping": "<pm_uuid>" } - to the same gate-time
+  # patch (0.0.85+); never git, and the empty map of the blip/steady shapes
+  # is zero import instances.
   # The full variable contract: terraform/modules/authentik-app/variables.tf.
   # terraform:
   #   varmap:

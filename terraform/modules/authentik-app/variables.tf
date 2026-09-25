@@ -56,7 +56,11 @@ variable "adoption" {
       var.import_application_id != "" &&
       (var.mode != "proxy" || var.import_outpost_uuid != "") &&
       (!var.shared || var.import_binding_users_pk != "") &&
-      var.import_binding_admins_pk != ""
+      var.import_binding_admins_pk != "" &&
+      (var.mode != "oidc" || alltrue([
+        for m in var.custom_scope_mappings :
+        lookup(var.import_custom_scope_mapping_ids, m.name, "") != ""
+      ]))
     )
     error_message = "adoption=true requires every live import id for the resources this app's shape creates. Empty id = tofu silently skips the import and plans a duplicate create."
   }
@@ -66,7 +70,8 @@ variable "adoption" {
       var.import_application_id == "" &&
       var.import_outpost_uuid == "" &&
       var.import_binding_admins_pk == "" &&
-      var.import_binding_users_pk == ""
+      var.import_binding_users_pk == "" &&
+      length(var.import_custom_scope_mapping_ids) == 0
     )
     error_message = "import ids set but adoption=false - either set adoption:true (adopt) or clear the ids (blip)."
   }
@@ -100,6 +105,12 @@ variable "import_outpost_uuid" {
   type        = string
   description = "Live uuid of the outpost to adopt (proxy mode)."
   default     = ""
+}
+
+variable "import_custom_scope_mapping_ids" {
+  type        = map(string)
+  description = "Live pm_uuids of the custom scope mappings to adopt, keyed by mapping name (the values-side identity). Gate-time injection only - never git; the empty map at steady state gates the mapping imports to zero instances."
+  default     = {}
 }
 
 # --- provider inputs (house defaults = chart values defaults) -------------
