@@ -89,9 +89,11 @@ spec:
           # checkout, so the anonymous archive pool is out of the loop.
 
           # The agent's working repo: a token-authenticated full clone of
-          # this repository at /opt/data/workspace/homelab, under the
-          # webui defaultCwd /opt/data/workspace (agents work the repo
-          # by default). node:24-bookworm-slim ships no git binary, and
+          # this repository at /opt/data/repos/homelab. Layout (operator,
+          # 2026-09-14): /opt/data/repos carries the associated repos
+          # (homelab clone, prime-agent source snapshot);
+          # /opt/data/workspace stays the agents' default cwd — scratch
+          # space, never a clone target. node:24-bookworm-slim ships no git binary, and
           # apt needs root — the pod runs as uid 1000 (runAsNonRoot;
           # apt-get is Permission denied there, verified) — so git
           # installs rootless like uv/fd: a pinned micromamba (static
@@ -137,13 +139,23 @@ spec:
           # WARNs and degrades; the payload copy below then boots the
           # last good PVC copy (a later successful restart clones and
           # re-syncs).
-          repo=/opt/data/workspace/homelab
-          mkdir -p /opt/data/workspace
+          repo=/opt/data/repos/homelab
+          mkdir -p /opt/data/workspace /opt/data/repos
+          # git-over-HTTPS auth: PRIVATE-TOKEN is an API-only header — the
+          # git endpoint ignores it, so the old extraheader silently ran
+          # clone/pull ANONYMOUS (outside the authenticated GitLab budget
+          # the comments relied on). Basic auth with the PAT as password
+          # works; the credential still rides process args only — never
+          # the remote URL, .git/config, disk.
+          auth=""
+          if [[ -n "${GITLAB_TOKEN:-}" ]]; then
+            auth="Authorization: Basic $(printf 'oauth2:%s' "$GITLAB_TOKEN" | base64 | tr -d '\n')"
+          fi
           if [[ ! -d "$repo/.git" ]]; then
             if [[ -z "$(ls -A "$repo" 2>/dev/null)" ]]; then
               echo "cloning homelab into $repo (the agent working repo)"
-              if [[ -n "${GITLAB_TOKEN:-}" ]]; then
-                git -c http.extraheader="PRIVATE-TOKEN: $GITLAB_TOKEN" clone https://gitlab.com/Apocrathia/homelab.git "$repo" \
+              if [[ -n "$auth" ]]; then
+                git -c http.extraheader="$auth" clone https://gitlab.com/Apocrathia/homelab.git "$repo" \
                   || echo "WARN: homelab clone failed — booting degraded (payload stays last-good; next successful restart clones)"
               else
                 git clone https://gitlab.com/Apocrathia/homelab.git "$repo" \
@@ -161,8 +173,8 @@ spec:
           # files either way.
           if [[ -d "$repo/.git" ]]; then
             echo "pulling homelab (ff-only; never resets)"
-            if [[ -n "${GITLAB_TOKEN:-}" ]]; then
-              git -c http.extraheader="PRIVATE-TOKEN: $GITLAB_TOKEN" -C "$repo" pull --ff-only \
+            if [[ -n "$auth" ]]; then
+              git -c http.extraheader="$auth" -C "$repo" pull --ff-only \
                 || echo "WARN: homelab pull failed — continuing with the checkout as-is (extensions may be stale)"
             else
               git -C "$repo" pull --ff-only \
@@ -408,6 +420,16 @@ spec:
               secretKeyRef:
                 name: prime-agent-secrets
                 key: discord-app-id
+          # Default cwd for discord-spawned conversations: the extension's
+          # env override for config default_cwd (which otherwise resolves to
+          # ~ = HOME = /opt/data). Session cwd is harness-owned — the
+          # container workingDir never reaches spawned sessions — so the
+          # default is pinned at each spawn surface: this env var (discord),
+          # the webui config defaultCwd (already /opt/data/workspace), and
+          # --cwd on TUI attach (README). resolveNewCwd fails on a missing
+          # dir, so the boot script mkdirs it before the bridge starts.
+          - name: DISCORD_DEFAULT_CWD
+            value: "/opt/data/workspace"
 
       service:
         type: ClusterIP
