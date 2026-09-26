@@ -276,6 +276,21 @@ spec:
             rm -rf /tmp/fd.tgz "/tmp/fd-v${FD_VERSION}-${arch}-unknown-linux-musl"
           fi
 
+          # glab (GitLab CLI) for agent MR flows: conda-forge like git,
+          # rootless prefix, symlinked into the PATH dir above. Unpinned
+          # (matches the git pattern): the install runs only when the
+          # binary is missing, so conda-forge's current build lands and
+          # boots stay idempotent. PVC note: the pod's fsGroup makes
+          # config files group-writable (660); glab refuses anything
+          # over 600, so the boot chmods its config dir every start.
+          if [[ ! -x /opt/data/glab/bin/glab ]]; then
+            echo "installing glab via conda-forge (was: none)"
+            MAMBA_ROOT_PREFIX=/opt/data/mamba "$micromamba" create -y -p /opt/data/glab -c conda-forge glab
+          fi
+          mkdir -p /opt/data/bin
+          ln -sf /opt/data/glab/bin/glab /opt/data/bin/glab
+          chmod 600 /opt/data/.config/glab-cli/*.yml 2>/dev/null || true
+
           # Inbound A2A webhook: server.mjs owns the declared port 8080; the
           # a2a extension respawns it if it dies.
           mkdir -p /opt/data/.prime/agent/logs
@@ -320,6 +335,15 @@ spec:
             value: "/opt/data/npm"
           - name: PATH
             value: "/opt/data/npm/bin:/opt/data/git/bin:/opt/data/bin:/opt/data/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          # The slim node image ships no system CA store: static curl and Go
+          # binaries (glab) need SSL_CERT_FILE pointed at the bundle the boot
+          # script materializes at /opt/data/tools/certs/ca-bundle.crt.
+          # GITLAB_HOST pins glab's default instance so agent sessions can
+          # use `glab` without per-shell exports.
+          - name: SSL_CERT_FILE
+            value: "/opt/data/tools/certs/ca-bundle.crt"
+          - name: GITLAB_HOST
+            value: "gitlab.com"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
             value: "0.9.6"
