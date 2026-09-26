@@ -10,12 +10,17 @@
 {{- $ns := .Values.app.namespace | default .Values.app.name }}
 {{- $oidc := .Values.authentik.oidc }}
 {{/*
-  The module-input varmap. The chart composes the standard surface from the
-  authentik values (the same inputs the blueprint templates read) so a blip
-  app is a managedBy flip alone; authentik.terraform.varmap merges on top
-  for what only the app knows - module-input overrides. Adoption ids never
-  enter git: adopt apps get them via a gate-time live patch on the Workspace
-  (kubectl patch, Flux suspended); the variable contract is
+  The module-input varmap - COMPOSED-ONLY. The chart composes the entire
+  surface from the authentik values (the same inputs the blueprint templates
+  read) so a blip app is a managedBy flip alone; there is NO values-side
+  varmap (0.0.86 removed the passthrough - a documented varmap block invites
+  adoption ids into git). Per-app config deltas become proper values keys
+  this compose reads, never a raw varmap. Adoption ids never enter git: adopt
+  apps get them via a gate-time LIVE merge-patch on the Workspace
+  spec.forProvider.varmap (kubectl patch, Flux suspended - the recorded OIDC
+  adopt-gate recipe, .scratch/oidc-adopt-gate-recipe.md §1 step 4) on top of
+  the composed keys below; the module's plan-time variable validation is the
+  adoption guard. The variable contract is
   terraform/modules/authentik-app/variables.tf. Native types
   flow through the tfvars.json path: bools as bools, ids as quoted strings.
   NEVER route this through a ConfigMap - all-string data breaks the typing.
@@ -43,7 +48,6 @@
       "log_level" .Values.authentik.logLevel
       "kubernetes_replicas" .Values.authentik.replicas
       "kubernetes_namespace" .Values.authentik.namespace
-      "oidc_client_id" $oidc.clientId
       "client_type" $oidc.clientType
       "sub_mode" $oidc.subMode
       "include_claims_in_id_token" $oidc.includeClaimsInIdToken
@@ -56,6 +60,7 @@
 {{- if .Values.authentik.metaDescription }}{{- $_ := set $composed "meta_description" .Values.authentik.metaDescription }}{{- end }}
 {{- if .Values.authentik.metaPublisher }}{{- $_ := set $composed "meta_publisher" .Values.authentik.metaPublisher }}{{- end }}
 {{- if eq $mode "oidc" }}{{- $_ := set $composed "access_token_validity" $oidc.accessTokenValidity }}{{- end }}
+{{- if $oidc.clientId }}{{- $_ := set $composed "oidc_client_id" $oidc.clientId }}{{- end }}
 {{- $rus := list }}
 {{- range $oidc.redirectUris }}
 {{- $rus = append $rus (dict "url" .url "matching_mode" (.matchingMode | default "strict")) }}
@@ -68,18 +73,6 @@
 {{- $csm = append $csm $m }}
 {{- end }}
 {{- if gt (len $csm) 0 }}{{- $_ := set $composed "custom_scope_mappings" $csm }}{{- end }}
-{{- $vm := default (dict) (default (dict) .Values.authentik.terraform).varmap }}
-{{- $varmap := merge (deepCopy $vm) $composed }}
-{{- if $varmap.adoption }}
-{{- $need := list "import_provider_pk" "import_application_id" "import_binding_admins_pk" }}
-{{- if eq $mode "proxy" }}{{- $need = append $need "import_outpost_uuid" }}{{- end }}
-{{- if $varmap.shared }}{{- $need = append $need "import_binding_users_pk" }}{{- end }}
-{{- range $k := $need }}
-{{- if not (get $varmap $k) }}
-{{- fail (printf "authentik.terraform.varmap: adoption requires a live import id for %q - an empty id makes tofu silently skip the import and plan a duplicate create" $k) }}
-{{- end }}
-{{- end }}
-{{- end }}
 ---
 apiVersion: onepassword.com/v1
 kind: OnePasswordItem
@@ -153,14 +146,16 @@ spec:
     # Pull once per URL; a chart bump changes the ref and re-pulls. The
     # admission default (Always) would re-clone the repo on every poll.
     remotePullPolicy: IfNotPresent
-    # Module inputs: the chart-composed surface + the app's
-    # authentik.terraform.varmap (overrides; adoption ids ride the
-    # gate-time live patch on this Workspace, never git — quoted strings,
-    # shared/adoption as native booleans, the tfvars.json path carries
-    # types). The variable contract:
-    # terraform/modules/authentik-app/variables.tf. The module's own
-    # variable validation is the runtime guard (adoption requires every
+    # Module inputs: the chart-composed surface ONLY - there is no
+    # values-side varmap (removed 0.0.86). Adoption ids ride the gate-time
+    # LIVE merge-patch on this Workspace's spec.forProvider.varmap, never
+    # values/git (the recorded OIDC adopt-gate recipe,
+    # .scratch/oidc-adopt-gate-recipe.md §1 step 4; kubectl patch, Flux
+    # suspended; quoted strings, shared/adoption as native booleans, the
+    # tfvars.json path carries types). The variable contract:
+    # terraform/modules/authentik-app/variables.tf. The module's plan-time
+    # variable validation is the adoption guard (adoption requires every
     # shape id; ids without adoption fail).
     varmap:
-{{ $varmap | toYaml | indent 6 }}
+{{ $composed | toYaml | indent 6 }}
 {{- end }}

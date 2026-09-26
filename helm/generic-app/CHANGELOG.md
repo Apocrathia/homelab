@@ -1,6 +1,27 @@
 # Changelog
 
-## Version 0.0.85 (Latest)
+## Version 0.0.86 (Latest)
+
+- **`authentik.terraform.varmap` passthrough REMOVED — the values surface is
+  compose-only**: the workspace varmap is built entirely from the
+  chart-composed inputs (`authentik` values — the same surface the blueprint
+  templates read); the `authentik.terraform.varmap` values merge and its
+  documented block in values.yaml are gone. Steady-state renders are
+  byte-identical for apps that never overrode it (the passthrough was a
+  no-op for them — komga: 26/26 composed, zero overrides). Adoption
+  injection is a live WORKSPACE merge-patch on `spec.forProvider.varmap` at
+  gate time (the OIDC adopt-gate recipe §1 step 4; kubectl patch, Flux
+  suspended) — never values: the komga pilot's helmrelease-values injection
+  worked only because this passthrough existed, and a documented varmap
+  block invites ids into git. Per-app config deltas become proper
+  `authentik` values keys (the compose surface), never a raw varmap. The
+  adoption-shape render gates are gone with it — the module's plan-time
+  variable validation is the adoption guard (adoption requires every shape
+  id; ids without adoption fail). The workspace `spec.forProvider.varmap`
+  stays as the module interface: composed by the chart, patched at gates.
+  Module untouched.
+
+## Version 0.0.85
 
 - **Custom scope-mapping adoption support (authentik-app module)**: the
   shared `terraform/modules/authentik-app` module gains

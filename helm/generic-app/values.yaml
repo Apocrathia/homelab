@@ -516,33 +516,15 @@ authentik:
   #   kustomization additions.
   managedBy: "blueprint"
 
-  # terraform (managedBy: "terraform" only): the module-input varmap, merged
-  # ON TOP of the chart-composed inputs. The chart composes the standard
-  # surface from the values below (app_name, mode, display_name,
-  # external_host, internal_host, shared, tailnet, flows,
-  # intercept_header_auth, skip_path_regex, oidc.*) — the same inputs the
-  # blueprint templates read — so a blip-tier app is a managedBy flip
-  # alone and may omit this block entirely. This varmap carries what only
-  # the app knows:
-  #   - module-input overrides: e.g. oidc_client_id for an adopt app whose
-  #     live client_id differs from oidc.clientId, access_token_validity for
-  #     a proxy app whose live value differs from the authentik default.
-  # Adoption ids NEVER enter git: at the migration gate the operator
-  # live-patches the rendered Workspace varmap with adoption + the app's
-  # live import ids (kubectl patch, Flux suspended) — native booleans stay
-  # booleans, ids are quoted strings (never bare numbers — the tfvars path
-  # carries types); tofu adopts the objects in place, the imports go inert,
-  # and the patch drops. The render gate and the module's variable
-  # validation both fail loudly on a missing id under adoption. OIDC apps
-  # with custom scope mappings add import_custom_scope_mapping_ids - live
-  # pm_uuids keyed by mapping name, e.g.
-  # { "myapp-email-verified-mapping": "<pm_uuid>" } - to the same gate-time
-  # patch (0.0.85+); never git, and the empty map of the blip/steady shapes
-  # is zero import instances.
+  # managedBy: "terraform" composes EVERY module input from the values
+  # below (the same surface the blueprint templates read) - there is no
+  # values-side varmap (removed 0.0.86). Per-app config deltas become
+  # proper values keys the compose reads. Adoption ids never enter git:
+  # adopt apps get them via a gate-time LIVE merge-patch on the rendered
+  # Workspace spec.forProvider.varmap (the recorded OIDC adopt-gate recipe,
+  # .scratch/oidc-adopt-gate-recipe.md §1 step 4; kubectl patch, Flux
+  # suspended); the module's plan-time validation is the adoption guard.
   # The full variable contract: terraform/modules/authentik-app/variables.tf.
-  # terraform:
-  #   varmap:
-  #     access_token_validity: "minutes=10"  # example live-vs-default override
 
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
