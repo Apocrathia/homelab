@@ -20,7 +20,7 @@ spec:
     app:
       name: jellyfin-ai-upscaler
       # renovate: datasource=docker depName=kuscheltier/jellyfin-ai-upscaler
-      image: kuscheltier/jellyfin-ai-upscaler:docker7-cpu@sha256:089145712dac4812991569854277d23180997014b0b225398f1c7cb236bb5775
+      image: kuscheltier/jellyfin-ai-upscaler:docker7-cpu@sha256:ef6f61cdc19bf241ef3c1deb8c1af3a538d644a924d92773bef1c5ca10b00ce3
       container:
         name: jellyfin-ai-upscaler
         port: 5000
