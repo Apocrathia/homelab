@@ -17,6 +17,10 @@ This deployment includes:
   release); `PRIME_AGENT_INSTALL_UV=1` arms prime-agent's uv fallback
 - Longhorn-backed state at `/opt/data` (agent config, sessions, kernels, npm
   prefix, uv)
+- Agent toolbox on the PVC, installed/healed at boot: rootless `git` and
+  `glab` (conda-forge via micromamba prefixes), static `fd` + `curl`, with
+  `SSL_CERT_FILE` pinned to the boot-materialized CA bundle (no system CA
+  store in the slim image) and `GITLAB_HOST` preset for `glab`
 - `agent/` payload (extensions, seeded settings) copied at pod start from
   the working-repo clone on the state PVC
   (`/opt/data/repos/homelab`) and reconciled onto `~/.prime/agent/`
