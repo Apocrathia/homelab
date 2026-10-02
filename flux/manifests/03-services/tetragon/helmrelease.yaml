@@ -1,0 +1,79 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tetragon
+  namespace: tetragon
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: tetragon
+      # renovate: datasource=helm registryUrl=https://helm.cilium.io depName=tetragon
+      version: "1.7.1"
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: flux-system
+      interval: 30m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Talos: mount the kernel tracing filesystem (official Talos note,
+    # https://tetragon.io/docs/installation/kubernetes/). Agents are
+    # hostNetwork + privileged by chart design; they mount host /proc
+    # (hostProcPath) instead of hostPID.
+    extraHostPathMounts:
+      - name: sys-kernel-tracing
+        mountPath: /sys/kernel/tracing
+        readOnly: false
+
+    # Agent (DaemonSet) resources
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+    tetragon:
+      # Credentials (uid/gid/caps) and namespaces on exec/kprobe events:
+      # the context that makes exec anomalies triageable.
+      enableProcessCred: true
+      enableProcessNs: true
+      # Export: JSON file -> export-stdout sidecar -> pod logs -> Alloy ->
+      # Loki. The chart default denylist also mutes host (""),
+      # cilium, and kube-system events; on Talos that hides exactly the
+      # host-side activity worth seeing, so deny only health checks.
+      exportDenyList: |-
+        {"health_check":true}
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      grpc:
+        # Keep gRPC on the unix socket: TCP without mTLS exposes events and
+        # policy loading to anyone on the pod network (no TLS values in 1.7.x).
+        enabled: true
+        address: "unix:///var/run/tetragon/tetragon.sock"
+
+    tetragonOperator:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          cpu: 500m
+          memory: 128Mi
+      prometheus:
+        enabled: true
+        serviceMonitor:
+          enabled: true
