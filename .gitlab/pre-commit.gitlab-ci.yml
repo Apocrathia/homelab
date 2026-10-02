@@ -7,7 +7,7 @@ pre-commit:
   stage: test
   image:
     # renovate: datasource=docker depName=python
-    name: python:3.14-bookworm@sha256:bfb689a7986adc6d5f16722e06c78e755efe4062e56276715fef450cbad09436
+    name: python:3.14-bookworm@sha256:b3c121f5b6b446c964c6ea924d9a099e259b29d7b56df82729e33572a31eadcc
     entrypoint: [""]
   variables:
     PRE_COMMIT_HOME: $CI_PROJECT_DIR/.cache/pre-commit
