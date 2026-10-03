@@ -21,7 +21,7 @@ spec:
       name: tdarr-server
       namespace: tdarr
       # renovate: datasource=docker depName=ghcr.io/haveagitgat/tdarr
-      image: ghcr.io/haveagitgat/tdarr:2.90.01@sha256:da53b682b85ad74241557ed6ed840504391dededac9824b5e27b6d1bba24335a
+      image: ghcr.io/haveagitgat/tdarr:2.94.01@sha256:2e2489c449717b143bbb292938a7d1ec4440c50daf40ceed187ae971ce926b00
       container:
         name: tdarr-server
         port: 8265
