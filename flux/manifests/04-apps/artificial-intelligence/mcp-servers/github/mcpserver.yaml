@@ -16,7 +16,7 @@ spec:
     targetPort: 8080
   deployment:
     # renovate: datasource=docker registryUrl=https://ghcr.io depName=github/github-mcp-server
-    image: ghcr.io/github/github-mcp-server:v1.12.2@sha256:508a0857ec762b1ab1cece29193345b501fab1dd9d1228a7b617062954cecac6
+    image: ghcr.io/github/github-mcp-server:v1.14.0@sha256:7aaeeec9ae4fe9a736d100c1ff0798f3c219b5009e05f5d3945fcacb13cc196b
     port: 8080
     args:
       - http
