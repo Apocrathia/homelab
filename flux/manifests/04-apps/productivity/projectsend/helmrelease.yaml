@@ -20,7 +20,7 @@ spec:
     app:
       name: projectsend
       # renovate: datasource=docker depName=projectsend/projectsend
-      image: projectsend/projectsend:2@sha256:889db3175a5e765e9c71373e0a2d6593dc69153e22778a17c01350065b6837ab
+      image: projectsend/projectsend:2@sha256:a82aac028f430cae165a1fc88ce5418bcb049be478e6307ef758306e6e65a99d
       container:
         name: projectsend
         port: 80
