@@ -37,6 +37,13 @@ spec:
           # alongside the other music download clients
           - name: SLSKD_DOWNLOADS_DIR
             value: "/downloads/Music"
+          # In-progress downloads must NOT land in APP_DIR (the slskd-data PVC,
+          # only 10Gi) - stage them in the existing Incomplete/Music folder on
+          # the SMB Downloads share, matching the share's per-category staging
+          # convention. Without this the PVC fills up and Grafana fires
+          # slskd/slskd-data above 80% capacity
+          - name: SLSKD_INCOMPLETE_DIR
+            value: "/downloads/Incomplete/Music"
           # Web UI credentials (stock defaults are slskd/slskd)
           - name: SLSKD_USERNAME
             valueFrom:
