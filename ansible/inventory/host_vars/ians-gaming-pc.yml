@@ -11,3 +11,10 @@ kopia_backup_paths:
 common_packages_extra:
   - eza
   - fastfetch
+
+# Sunshine game-stream host (roles/common sunshine tag). KMS capture reads
+# the DRM framebuffer directly — no xdg-desktop-portal involvement, so the
+# KDE "Allow remote control?" prompt never appears after the nightly
+# reboot. Physical desktop with a real monitor, so the KMS limitation
+# (cannot see KWin virtual outputs) does not apply here.
+common_sunshine_kms: true

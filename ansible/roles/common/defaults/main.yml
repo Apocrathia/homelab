@@ -31,3 +31,12 @@ common_network_dns:
 # TCP port redirects via nftables (tasks/nftables.yml, network tag). Empty =
 # nftables is neither installed nor managed on the host.
 common_nftables_redirects: []
+# Sunshine game-stream host via KMS capture (tasks/sunshine.yml). Bypasses the
+# xdg-desktop-portal remote-control prompt entirely by grabbing the DRM
+# framebuffer directly. Requires Sunshine already installed on the host
+# (package not managed here — install path differs per distro). Enable per
+# host in host_vars. Physical-desktop hosts only: KMS cannot see KWin
+# virtual outputs.
+common_sunshine_kms: false
+# Sunshine binary path for setcap (Linux binary, not flatpak).
+common_sunshine_bin: /usr/bin/sunshine

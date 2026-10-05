@@ -29,3 +29,9 @@
   ansible.builtin.import_tasks: user.yml
   tags:
     - user
+
+- name: Configure Sunshine KMS capture (opt-in)
+  ansible.builtin.import_tasks: sunshine.yml
+  when: common_sunshine_kms | bool
+  tags:
+    - sunshine
