@@ -41,6 +41,7 @@ resources:
   - 03-services/tailscale/flux-kustomization.yaml
   - 03-services/tailscale/config/flux-kustomization.yaml
   - 03-services/tetragon/flux-kustomization.yaml
+  - 03-services/tetragon/policies/flux-kustomization.yaml
   - 03-services/trivy/flux-kustomization.yaml
   - 03-services/tuppr/flux-kustomization.yaml
   - 04-apps/demo-app/flux-kustomization.yaml

@@ -14,7 +14,10 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
   HelmRepository. Agent DaemonSet on every node (hostNetwork + privileged by
   chart design, mounts host `/proc`, no hostPID), operator with 1 replica.
   TracingPolicy CRDs are created by the tetragon-operator
-  (`crds.installMethod: operator`), so Flux needs no CRD plumbing.
+  (`crds.installMethod: operator`) AFTER the HelmRelease runs, so the
+  TracingPolicies apply through a child Flux Kustomization gated on
+  services-tetragon (policies/flux-kustomization.yaml) — the chaos-mesh
+  experiments pattern.
 - Talos-specific values: the `/sys/kernel/tracing` hostPath mount (official
   Talos note) and a trimmed export denylist — the chart default mutes host,
   cilium, and kube-system events, which on Talos hides the host-side signal.
