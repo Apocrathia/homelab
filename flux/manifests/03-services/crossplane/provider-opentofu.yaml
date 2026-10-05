@@ -7,4 +7,4 @@ spec:
   # Crossplane v2 pulls the package and runs the runtime in crossplane-system;
   # namespaced opentofu.m.upbound.io Workspaces are the default model.
   # renovate: datasource=docker registryUrl=https://xpkg.upbound.io depName=upbound/provider-opentofu
-  package: xpkg.upbound.io/upbound/provider-opentofu:v1.1.8
+  package: xpkg.upbound.io/upbound/provider-opentofu:v1.1.9
