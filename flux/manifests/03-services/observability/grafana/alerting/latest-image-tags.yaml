@@ -31,7 +31,7 @@ spec:
       title: New Container Using 'latest' Image Tag
       condition: C
       for: 0s
-      execErrState: Alerting
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A
@@ -118,7 +118,7 @@ spec:
       title: "Daily Report: Container Using 'latest' Image Tag"
       condition: C
       for: 0s
-      execErrState: Alerting
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A
