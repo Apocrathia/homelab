@@ -25,6 +25,7 @@ Platform services that provide core functionality to the homelab cluster.
 ### Security and Compliance
 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
+- [**Tetragon**](tetragon/README.md) - eBPF runtime security (kernel-level detection)
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 - [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
 

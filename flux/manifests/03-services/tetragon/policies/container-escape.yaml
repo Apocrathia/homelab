@@ -1,0 +1,34 @@
+---
+# Container escape watch: setns() into another mount namespace, excluding
+# runc (which joins namespaces on every kubectl exec). On Talos this stays
+# quiet even for ordinary pods (RuntimeDefault seccomp refuses setns before
+# the kernel function runs), so signal = privileged pods attempting namespace
+# escape. Source: h2security Tetragon-on-Talos walkthrough.
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: container-escape-namespace-access
+spec:
+  options:
+    - name: policy-mode
+      value: monitoring
+  kprobes:
+    - call: sys_setns
+      syscall: true
+      args:
+        - index: 0
+          type: int # fd of the target namespace
+        - index: 1
+          type: int # namespace type flag (CLONE_NEWNS, CLONE_NEWNET, ...)
+      selectors:
+        - matchNamespaces:
+            - namespace: Mnt
+              operator: NotIn
+              values:
+                - host_ns
+          matchBinaries:
+            - operator: NotIn
+              values:
+                - /usr/bin/runc
+          matchActions:
+            - action: Sigkill
