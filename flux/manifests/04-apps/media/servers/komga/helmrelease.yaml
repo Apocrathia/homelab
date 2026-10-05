@@ -30,7 +30,7 @@ spec:
     app:
       name: komga
       # renovate: datasource=docker depName=gotson/komga
-      image: gotson/komga:1.27.1@sha256:9cf102f5fb78e2e020700c53eca757e4f4d4e347121b0a16380822760337cca9
+      image: gotson/komga:1.28.1@sha256:d8f772dce7b3dcd8baa0ce7481bd890e68446065ab6c8eb2cb5b24df62fb3c4f
       container:
         name: komga
         port: 25600
