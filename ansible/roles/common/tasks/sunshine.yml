@@ -1,0 +1,73 @@
+---
+# Sunshine (LizardByte) game-stream host, KMS capture mode.
+#
+# KMS capture reads the DRM framebuffer directly — below the Wayland
+# compositor — so it never touches xdg-desktop-portal. That kills the
+# "Allow remote control?" KDE portal prompt that would otherwise appear
+# after every reboot (portal session tokens do not survive reboots).
+# Input injection uses /dev/uinput, which has no portal path either.
+#
+# Scope: opt-in per host via common_sunshine_kms (default false) — see
+# defaults/main.yml. Intended for physical-desktop hosts (gaming PC); KMS
+# cannot see KWin virtual outputs, so do not enable on headless/virtual-
+# display setups.
+
+- name: Sunshine KMS | Add primary user to input group (uinput injection)
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: input
+    append: true
+
+- name: Sunshine KMS | Add primary user to video group (DRM access)
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: video
+    append: true
+
+- name: Sunshine KMS | Add primary user to audio group (audio capture)
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: audio
+    append: true
+
+- name: Sunshine KMS | Check current capabilities on sunshine binary
+  ansible.builtin.command:
+    cmd: getcap {{ common_sunshine_bin }}
+  register: common_sunshine_caps
+  changed_when: false
+  failed_when: false
+
+- name: Sunshine KMS | Grant cap_sys_admin for KMS capture (no root)
+  # setcap is not idempotent-tracked by a module; getcap check above gates
+  # it. Re-applied nightly by CI apply if a package upgrade drops it.
+  ansible.builtin.command:
+    cmd: setcap cap_sys_admin+p {{ common_sunshine_bin }}
+  when: >
+    common_sunshine_caps.stdout is not defined
+    or 'cap_sys_admin' not in common_sunshine_caps.stdout
+  args:
+    removes: "{{ common_sunshine_bin }}"
+
+- name: Sunshine KMS | Install uinput udev rule
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/60-uinput-sunshine.rules
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by homelab ansible (roles/common, sunshine task).
+      # Sunshine virtual keyboard/mouse/gamepad via /dev/uinput.
+      KERNEL=="uinput", MODE="0660", GROUP="input"
+
+- name: Sunshine KMS | Ensure sunshine.conf sets capture = kms
+  # Only manages the one key; the rest of the file stays as-is. Sunshine
+  # regenerates its web-UI-managed config under ~/.config/sunshine, so we
+  # drop a line-level edit only when the key is missing or wrong.
+  ansible.builtin.lineinfile:
+    path: "/home/{{ username }}/.config/sunshine/sunshine.conf"
+    line: "capture = kms"
+    regexp: "^\\s*capture\\s*=.*$"
+    create: true
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: "0600"
