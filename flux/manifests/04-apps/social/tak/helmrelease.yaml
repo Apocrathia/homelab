@@ -321,7 +321,7 @@ spec:
         # on restart only, TTL 1 day upstream default.
         - name: rabbitmq
           # renovate: datasource=docker depName=rabbitmq
-          image: rabbitmq:4.3.6@sha256:1da79932eb36450a9a93bb7c6b44d04ee542b73e2819833403e364a0bc095709
+          image: rabbitmq:4.3.6@sha256:42b190dffdd0cdb656f989f5404c30e1049d6b7d9c987089669b1905e5e3a1a6
           volumes:
             configMap:
               - name: tak-rabbitmq-plugins
