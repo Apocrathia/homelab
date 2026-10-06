@@ -73,7 +73,10 @@ spec:
       title: Gatus endpoint down
       condition: C
       for: 5m
-      execErrState: Alerting
+      # eval error must NOT fire the alert: with execErrState=Alerting, a broken
+      # plugin/datasource reports every endpoint/PVC as "down" or "full" even when
+      # the underlying metrics are healthy (mass false-positive storm).
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A
@@ -140,7 +143,10 @@ spec:
       title: Gatus endpoint down prolonged
       condition: C
       for: 1h
-      execErrState: Alerting
+      # eval error must NOT fire the alert: with execErrState=Alerting, a broken
+      # plugin/datasource reports every endpoint/PVC as "down" or "full" even when
+      # the underlying metrics are healthy (mass false-positive storm).
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A

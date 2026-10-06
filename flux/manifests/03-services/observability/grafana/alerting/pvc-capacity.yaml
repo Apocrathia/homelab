@@ -30,7 +30,10 @@ spec:
       title: PVC usage above 80%
       condition: C
       for: 15m
-      execErrState: Alerting
+      # eval error must NOT fire the alert: with execErrState=Alerting, a broken
+      # plugin/datasource reports every endpoint/PVC as "down" or "full" even when
+      # the underlying metrics are healthy (mass false-positive storm).
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A
@@ -97,7 +100,10 @@ spec:
       title: PVC usage above 90%
       condition: C
       for: 5m
-      execErrState: Alerting
+      # eval error must NOT fire the alert: with execErrState=Alerting, a broken
+      # plugin/datasource reports every endpoint/PVC as "down" or "full" even when
+      # the underlying metrics are healthy (mass false-positive storm).
+      execErrState: Error
       noDataState: OK
       data:
         - refId: A
