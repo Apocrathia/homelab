@@ -37,7 +37,7 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
 ## Policies and the enforcement graduation
 
 `policies/` ships two policies, both loaded with
-`spec.options: policy-mode: monitoring`:
+`spec.options: policy-mode: monitor` (valid modes: `monitor` | `enforce`):
 
 - **secret-file-access** — reads/writes to credential paths
   (`/etc/shadow`, ssh keys, sudoers, pam.d, binary dirs).
@@ -47,8 +47,8 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
   is high.
 
 Enforce actions (Sigkill) are authored in the selectors already: graduating a
-policy is a mode flip (edit `policy-mode` -> `enforcement`, or
-`tetra tp set-mode <name> enforcement` at runtime), not a rewrite. Talos
+policy is a mode flip (edit `policy-mode` -> `enforce`, or
+`tetra tp set-mode <name> enforce` at runtime), not a rewrite. Talos
 caveat: the kernel has no `CONFIG_BPF_KPROBE_OVERRIDE`, so kprobe-based
 Override enforcement is unavailable — LSM-hook policies are the enforcement
 path. For policies that enforce, `enableKeepSensorsOnExit` keeps sensors
