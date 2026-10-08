@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: mecak8s
-      # renovate: datasource=helm registryUrl=oci://ghcr.io/stacklok/mecatl/charts depName=mecak8s
+      # renovate: datasource=docker depName=ghcr.io/stacklok/mecatl/charts/mecak8s
       version: "0.0.38"
       sourceRef:
         kind: HelmRepository
