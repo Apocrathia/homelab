@@ -4,6 +4,6 @@ collections:
   - name: ansible.posix
     version: ">=2.2.2,<2.3.0"
   - name: community.general
-    version: ">=13.4.0,<13.5.0"
+    version: ">=13.5.0,<13.6.0"
   - name: devsec.hardening
     version: ">=10.6.0,<10.7.0"
