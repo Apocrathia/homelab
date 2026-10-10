@@ -185,6 +185,16 @@ spec:
       # Override default model_list to prevent duplicate entries with placeholder keys
       model_list: []
 
+      # Retry transient upstream failures instead of hard-400ing callers.
+      # Fallbacks: glm-5.3-prime -> closest Prime Inference capability peers.
+      router_settings:
+        num_retries: 2
+        retry_after: 5
+        allowed_fails: 3
+        timeout: 120
+        fallbacks:
+          - glm-5.3-prime: ["deepseek-v4-prime", "kimi-k3-prime"]
+
       general_settings:
         # Database configuration
         store_model_in_db: true
