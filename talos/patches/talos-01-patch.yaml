@@ -1,10 +1,7 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.12.3/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.14.2/pkg/machinery/config/schemas/config.schema.json
+# machine.certSANs: not deprecated in 1.14, stays in the v1alpha1 doc
 machine:
-  nodeLabels:
-    # https://www.robert-jensen.dk/posts/2025/fix-loadbalancer-services-not-working-on-single-node-talos-kubernetes-cluster/
-    node.kubernetes.io/exclude-from-external-load-balancers: ""
-    $patch: delete
   certSANs:
     - "10.100.1.80"
     - "10.100.1.8"
@@ -12,6 +9,15 @@ machine:
     - "talos-01.services.apocrathia.com"
     - "kubernetes.apocrathia.com"
     - "127.0.0.1"
+---
+# nodeLabels $patch: delete (v1alpha1) -> delete the single exclude-from-LB label key
+# from the generated KubeNodeConfig document (keep the control-plane role label)
+# https://www.robert-jensen.dk/posts/2025/fix-loadbalancer-services-not-working-on-single-node-talos-kubernetes-cluster/
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+  node.kubernetes.io/exclude-from-external-load-balancers:
+    $patch: delete
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig

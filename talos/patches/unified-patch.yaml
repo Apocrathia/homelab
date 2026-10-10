@@ -1,15 +1,12 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.12.3/pkg/machinery/config/schemas/config.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/siderolabs/talos/v1.14.2/pkg/machinery/config/schemas/config.schema.json
+# v1alpha1 remainder — machine.kubelet (extraMounts have NO new-format equivalent,
+# see https://docs.siderolabs.com/talos/v1.14/reference/configuration/document-map:
+# ".machine.kubelet.extraMounts ... Deprecated: removed in multi-doc config") and
+# cluster.etcd (not yet migrated to a document in Talos 1.14).
 machine:
-  features:
-    kubernetesTalosAPIAccess:
-      allowedKubernetesNamespaces:
-        - system-upgrade
-        - kube-system
-      allowedRoles:
-        - os:admin
-      enabled: true
   kubelet:
+    image: ghcr.io/siderolabs/kubelet:v1.37.1
     extraArgs:
       rotate-server-certificates: "false"
       feature-gates: "MemoryQoS=true"
@@ -32,105 +29,12 @@ machine:
           - bind
           - rshared
           - rw
-  sysctls:
-    # Completely disable swap for etcd performance
-    vm.swappiness: "0" # Disable swapping completely
-    vm.vfs_cache_pressure: "50" # Reduce VFS cache pressure
-    # Network optimizations
-    net.core.somaxconn: "32768"
-    net.core.netdev_max_backlog: "16384"
-    user.max_user_namespaces: "10000"
-  install:
-    disk: /dev/sda
-    wipe: true
-    # renovate: datasource=github-releases depName=siderolabs/talos
-    image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.2
-    # https://factory.talos.dev/?arch=amd64&board=undefined&cmdline=net.ifnames%3D0&cmdline-set=true&extensions=-&extensions=siderolabs%2Famd-ucode&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Futil-linux-tools&platform=metal&secureboot=undefined&target=metal&version=1.12.5
+    # kept from the previously applied config (live config parity)
+    defaultRuntimeSeccompProfileEnabled: true
+    disableManifestsDirectory: true
+# etcd tuning — .cluster.etcd is not deprecated in 1.14, stays in the v1alpha1 doc
+# Increased timeouts to handle storage latency and high load
 cluster:
-  clusterName: home
-  allowSchedulingOnControlPlanes: true
-  controlPlane:
-    endpoint: https://kubernetes.apocrathia.com:6443
-  apiServer:
-    certSANs:
-      - "10.100.1.8"
-      - "kubernetes.apocrathia.com"
-    # CRD Controller Specific Optimizations
-    extraArgs:
-      # Event garbage collection - 1 hour TTL
-      event-ttl: "1h"
-      max-requests-inflight: "1600"
-      max-mutating-requests-inflight: "800"
-      request-timeout: "120s"
-      # Watch cache sizing for heavy CRD usage
-      watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#200,persistentvolumeclaims#200"
-      # Audit optimization to reduce overhead
-      audit-log-maxbackup: "3" # Reduce from default 10
-      audit-log-maxsize: "50" # Reduce from default 100MB
-      # Goaway chance to force client reconnection distribution
-      # Helps prevent thundering herd on single API server
-      goaway-chance: "0.01"
-      # OIDC authentication via Authentik
-      oidc-issuer-url: "https://auth.gateway.services.apocrathia.com/application/o/kubernetes/"
-      oidc-client-id: "kubernetes"
-      oidc-username-claim: "email"
-      oidc-username-prefix: "oidc:"
-      oidc-groups-claim: "groups"
-      oidc-groups-prefix: "oidc:"
-    # SIEM Lap B: audit policy with request-body capture for exec/attach/
-    # port-forward/proxy subresources (the sensitive verbs), metadata-only
-    # for everything else. Default was Metadata for all events. The log
-    # backend stays node-local at /var/log/kube-apiserver/audit.log; the
-    # kube-audit-tailer DaemonSet ships it to Loki and Tenzir.
-    auditPolicy:
-      apiVersion: audit.k8s.io/v1
-      kind: Policy
-      omitStages:
-        - RequestReceived
-      rules:
-        # Request bodies for the sensitive subresources (kubectl exec / attach
-        # / port-forward / proxy), everything else metadata-only.
-        - level: Request
-          resources:
-            - group: ""
-              resources:
-                [pods/exec, pods/attach, pods/portforward, services/proxy]
-        - level: Metadata
-    resources:
-      requests:
-        cpu: "2000m"
-        memory: "4Gi" # Increased for larger CRD watch cache
-      limits:
-        cpu: "5000m" # Allow bursting
-        memory: "10Gi" # Increased to accommodate larger watch cache
-  network:
-    cni:
-      name: none
-    podSubnets:
-      - 10.42.0.0/16
-    serviceSubnets:
-      - 10.69.0.0/16
-  controllerManager:
-    extraArgs:
-      kube-api-qps: "500" # Increase API calls per second
-      kube-api-burst: "1000" # Allow burst API calls
-      # Increase leader election lease duration to tolerate etcd latency spikes
-      # Default is 15s, increasing to 30s gives more tolerance for I/O spikes
-      leader-elect-lease-duration: "30s"
-      leader-elect-renew-deadline: "20s" # Default is 10s, increase to 20s
-      leader-elect-retry-period: "4s" # Default is 2s, increase to 4s
-    resources:
-      requests:
-        cpu: "200m" # Increase from default 100m
-        memory: "512Mi" # Increase from default 256Mi
-      limits:
-        cpu: "1000m"
-        memory: "2Gi"
-  proxy:
-    disabled: true
-  # etcd tuning
-  # Increased timeouts to handle storage latency and high load
-  # These settings make etcd more tolerant of brief I/O latency spikes
   etcd:
     extraArgs:
       # Auto-compaction
@@ -152,28 +56,195 @@ cluster:
       metrics: "basic"
       listen-metrics-urls: "http://0.0.0.0:2381"
 ---
-# Disable Talos's broke-ass OOM controller
+# machine.features.kubernetesTalosAPIAccess -> KubeTalosAPIAccessConfig
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:admin
+allowedKubernetesNamespaces:
+  - system-upgrade
+  - kube-system
+---
+# machine.sysctls -> SysctlConfig (values merge over/with the deprecated field)
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  vm.swappiness: "0" # Disable swapping completely
+  vm.vfs_cache_pressure: "50" # Reduce VFS cache pressure
+  net.core.somaxconn: "32768"
+  net.core.netdev_max_backlog: "16384"
+  user.max_user_namespaces: "10000"
+---
+# machine.install -> UnattendedInstallConfig
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer:
+  # renovate: datasource=github-releases depName=siderolabs/talos
+  image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.2
+provisioning:
+  diskSelector:
+    match: disk.dev_path == "/dev/sda"
+  wipe: true
+---
+# cluster.clusterName + cluster.controlPlane.endpoint -> KubeClusterConfig
+apiVersion: v1alpha1
+kind: KubeClusterConfig
+clusterName: home
+endpoint: https://kubernetes.apocrathia.com:6443
+---
+# cluster.allowSchedulingOnControlPlanes: true -> no control-plane NoSchedule taint in KubeNodeConfig
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+taints:
+  $patch: delete
+---
+# cluster.apiServer (non-OIDC parts) -> KubeAPIServerConfig
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+certExtraSANs:
+  - "10.100.1.8"
+  - "kubernetes.apocrathia.com"
+extraArgs:
+  # Event garbage collection - 1 hour TTL
+  event-ttl: "1h"
+  max-requests-inflight: "1600"
+  max-mutating-requests-inflight: "800"
+  request-timeout: "120s"
+  # Watch cache sizing for heavy CRD usage
+  watch-cache-sizes: "customresourcedefinitions#500,secrets#1000,configmaps#1000,persistentvolumes#200,persistentvolumeclaims#200"
+  # Audit optimization to reduce overhead
+  audit-log-maxbackup: "3" # Reduce from default 10
+  audit-log-maxsize: "50" # Reduce from default 100MB
+  # Goaway chance to force client reconnection distribution
+  # Helps prevent thundering herd on single API server
+  goaway-chance: "0.01"
+resources:
+  requests:
+    cpu: "2000m"
+    memory: "4Gi" # Increased for larger CRD watch cache
+  limits:
+    cpu: "5000m" # Allow bursting
+    memory: "10Gi" # Increased to accommodate larger watch cache
+---
+# cluster.apiServer oidc-* flags -> KubeAuthenticationConfig (structured auth config;
+# oidc-* flags are REJECTED in KubeAPIServerConfig.extraArgs on 1.14)
+apiVersion: v1alpha1
+kind: KubeAuthenticationConfig
+configuration:
+  anonymous:
+    enabled: true
+    conditions:
+      - path: /livez
+      - path: /readyz
+      - path: /healthz
+  jwt:
+    # OIDC authentication via Authentik
+    - issuer:
+        url: https://auth.gateway.services.apocrathia.com/application/o/kubernetes/
+        audiences:
+          - kubernetes
+      claimMappings:
+        username:
+          claim: email
+          prefix: "oidc:"
+        groups:
+          claim: groups
+          prefix: "oidc:"
+---
+# cluster.controllerManager -> KubeControllerManagerConfig
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+extraArgs:
+  kube-api-qps: "500" # Increase API calls per second
+  kube-api-burst: "1000" # Allow burst API calls
+  # Increase leader election lease duration to tolerate etcd latency spikes
+  # Default is 15s, increasing to 30s gives more tolerance for I/O spikes
+  leader-elect-lease-duration: "30s"
+  leader-elect-renew-deadline: "20s" # Default is 10s, increase to 20s
+  leader-elect-retry-period: "4s" # Default is 2s, increase to 4s
+resources:
+  requests:
+    cpu: "200m" # Increase from default 100m
+    memory: "512Mi" # Increase from default 256Mi
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"
+---
+# cluster.proxy.disabled: true -> KubeProxyConfig enabled: false
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+enabled: false
+---
+# cluster.network.podSubnets/serviceSubnets -> KubeNetworkConfig
+# (dnsDomain cluster.local comes from gen default; pod/service subnets REPLACE on merge)
+apiVersion: v1alpha1
+kind: KubeNetworkConfig
+podSubnets:
+  - 10.42.0.0/16
+serviceSubnets:
+  - 10.69.0.0/16
+---
+# cluster.network.cni.name: none -> remove the generated KubeFlannelCNIConfig document
+apiVersion: v1alpha1
+kind: KubeFlannelCNIConfig
+$patch: delete
+---
+# kubelet config stays in the v1alpha1 doc (extraMounts) -> remove the generated KubeletConfig document
+apiVersion: v1alpha1
+kind: KubeletConfig
+$patch: delete
+---
+# keep pre-1.14 (non-sandboxd) workload behavior on this Longhorn cluster ->
+# remove the generated SecurityProfileConfig document (workloadIsolation: true by default in 1.14 gen)
+# OPT-IN LATER: replace this delete with workloadIsolation: true after testing Longhorn under sandboxd
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+$patch: delete
+---
+# Disable Talos's broke-ass OOM controller (unchanged from previous patch)
 apiVersion: v1alpha1
 kind: OOMConfig
 triggerExpression: "false"
 cgroupRankingExpression: "0.0"
 sampleInterval: "5s"
 ---
-# Layer 2 VIP for Kubernetes API (replaces deprecated machine.network.interfaces[].vip)
+# Layer 2 VIP for Kubernetes API (replaces deprecated machine.network.interfaces[].vip) (unchanged)
 apiVersion: v1alpha1
 kind: Layer2VIPConfig
 name: 10.100.1.8
 link: eth0
 ---
-# DNS resolvers (overrides Talos defaults of 1.1.1.1 and 8.8.8.8)
+# DNS resolvers (overrides Talos defaults of 1.1.1.1 and 8.8.8.8) (unchanged)
 apiVersion: v1alpha1
 kind: ResolverConfig
 nameservers:
   - address: 10.100.1.1
 ---
-# NTP time servers (replaces deprecated machine.time)
+# NTP time servers (replaces deprecated machine.time) (unchanged)
 apiVersion: v1alpha1
 kind: TimeSyncConfig
 ntp:
   servers:
     - pool.ntp.org
+---
+# cluster.apiServer.auditPolicy -> KubeAuditPolicyConfig
+# SIEM Lap B: audit policy with request-body capture for exec/attach/
+# port-forward/proxy subresources (the sensitive verbs), metadata-only
+# for everything else. Default was Metadata for all events. The log
+# backend stays node-local at /var/log/kube-apiserver/audit.log; the
+# kube-audit-tailer DaemonSet ships it to Loki and Tenzir.
+apiVersion: v1alpha1
+kind: KubeAuditPolicyConfig
+configuration:
+  apiVersion: audit.k8s.io/v1
+  kind: Policy
+  omitStages:
+    - RequestReceived
+  rules:
+    # Request bodies for the sensitive subresources (kubectl exec / attach
+    # / port-forward / proxy), everything else metadata-only.
+    - level: Request
+      resources:
+        - group: ""
+          resources: [pods/exec, pods/attach, pods/portforward, services/proxy]
+    - level: Metadata

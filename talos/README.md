@@ -36,10 +36,11 @@ Next, create the configuration for the cluster. We'll set up all nodes with a un
 Generate configurations:
 
 ```bash
-# Generate configurations
+# Generate configurations (1.14 multi-doc patch format)
 talosctl gen config \
   --with-secrets secrets.yaml \
   --config-patch @patches/unified-patch.yaml \
+  --output-types controlplane,talosconfig \
   home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/ \
   --force
@@ -50,22 +51,25 @@ This will generate the following files:
 
 - `controlplane.yaml`: Control plane configuration (used for all nodes)
 - `talosconfig`: Client configuration for talosctl
-- `worker.yaml`: Worker configuration (not used)
 
-Note: We only use the `controlplane.yaml` configuration since all nodes are control plane nodes with `allowSchedulingOnControlPlanes: true` in our unified configuration.
+Note: We only use the `controlplane.yaml` configuration since all nodes are control plane nodes with the control-plane `NoSchedule` taint removed in our unified patch. No `worker.yaml` is generated: the unified patch carries control-plane-only documents (`KubeAPIServerConfig`, `KubeAuthenticationConfig`, `KubeControllerManagerConfig`, `KubeProxyConfig`, `KubeTalosAPIAccessConfig`) that Talos rejects on worker machines, and this cluster runs no workers.
 
 Now, we can bootstrap the control plane nodes. Each node gets its own specific configuration patch to set its hostname:
 
 ```bash
-# Apply configuration to each node with its specific patch
+# Build each node's final config locally (hostname, addresses, certSANs),
+# validate it, then apply it
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
   echo "Configuring talos-${NODE_NUM} (10.100.1.${IP_LAST_OCTET})..."
+  talosctl machineconfig patch rendered/controlplane.yaml \
+    --patch "@patches/talos-${NODE_NUM}-patch.yaml" \
+    -o "rendered/talos-${NODE_NUM}.yaml"
+  talosctl validate --config "rendered/talos-${NODE_NUM}.yaml" --mode metal --strict
   talosctl apply-config --insecure \
     --nodes "10.100.1.${IP_LAST_OCTET}" \
-    --file rendered/controlplane.yaml \
-    --config-patch "@patches/talos-${NODE_NUM}-patch.yaml"
+    --file "rendered/talos-${NODE_NUM}.yaml"
 done
 ```
 
@@ -99,7 +103,7 @@ watch -n 1 kubectl get nodes
 
 **Note**: At this point, your nodes will be in `NotReady` state because there's no CNI installed yet. You need to install Cilium to get the nodes ready.
 
-**Important**: Since we're using `proxy.disabled: true`, we need to use a direct node endpoint for the initial Cilium installation. The VIP endpoint won't work until Cilium's kube-proxy replacement is running.
+**Important**: Since kube-proxy is disabled (`KubeProxyConfig.enabled: false`), we need to use a direct node endpoint for the initial Cilium installation. The VIP endpoint won't work until Cilium's kube-proxy replacement is running.
 
 ```bash
 # Use direct node endpoint for initial Cilium installation
@@ -136,31 +140,56 @@ Once Cilium is installed and nodes are ready, proceed to deploy [Flux](../flux/R
 To update the Talos configuration on existing nodes:
 
 ```bash
-# Generate new configurations with any changes
+# Generate new configurations with any changes (1.14 multi-doc patch format)
 talosctl gen config \
   --with-secrets secrets.yaml \
   --config-patch @patches/unified-patch.yaml \
+  --output-types controlplane,talosconfig \
   home "https://kubernetes.apocrathia.com:6443" \
   -o rendered/ \
   --force
+
+# Pre-flight validate the rendered bundle (catches config errors before
+# any node is touched)
+talosctl validate --config rendered/controlplane.yaml --mode metal --strict
+
+# Build + validate the final per-node configs locally
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  talosctl machineconfig patch rendered/controlplane.yaml \
+    --patch "@patches/talos-${NODE_NUM}-patch.yaml" \
+    -o "rendered/talos-${NODE_NUM}.yaml"
+  talosctl validate --config "rendered/talos-${NODE_NUM}.yaml" --mode metal --strict
+done
+
+# Keep a rollback copy of each node's CURRENT config
+for i in {1..4}; do
+  NODE_NUM=$(printf "%02d" $i)
+  IP_LAST_OCTET=$((79 + i))
+  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" get machineconfig v1alpha1 -o jsonpath='{.spec}' > "rendered/live-backup-talos-${NODE_NUM}.yaml"
+done
 
 # Configure talosconfig to connect directly to nodes (not VIP) for apply-config operations
 export TALOSCONFIG="rendered/talosconfig"
 talosctl config endpoint 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 
-# Apply new configurations to all nodes
+# Apply new configurations one node at a time (quorum-safe); with mode auto
+# (the default) the config applies live, no reboot
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
   echo "Updating talos-${NODE_NUM} (10.100.1.${IP_LAST_OCTET})..."
   talosctl apply-config \
     --nodes "10.100.1.${IP_LAST_OCTET}" \
-    --file rendered/controlplane.yaml \
-    --config-patch "@patches/talos-${NODE_NUM}-patch.yaml"
+    --file "rendered/talos-${NODE_NUM}.yaml"
+  # Verify before proceeding to the next node
+  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" get mc
+  kubectl get node "talos-${NODE_NUM}"
 done
 
-# Perform a rolling restart of the nodes
+# Reboot only if you need changes that only take effect on reboot (most
+# config changes apply live on 1.14). If you do reboot, sequence it yourself:
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
@@ -192,6 +221,8 @@ export TALOSCONFIG="~/.talos/config"
 kubectl get nodes
 ```
 
+> **Note (workload isolation)**: Talos 1.14 generates a `SecurityProfileConfig` document that enables `workloadIsolation` (sandboxd) by default. Our unified patch deliberately deletes that document to preserve current (non-isolated) behavior — the interaction between sandboxd and Longhorn's privileged CSI pods and host iscsid is untested. Opt in later by replacing the delete with `workloadIsolation: true` and testing during a maintenance window; the change needs a reboot to take effect.
+
 ## Upgrading Talos Linux
 
 **Important**: Configuration updates alone do not upgrade the Talos Linux OS version. You must use the `talosctl upgrade` command to perform actual OS upgrades.
@@ -207,10 +238,11 @@ kubectl get nodes
 2. **Update Configuration**: First, update your `unified-patch.yaml` with the new Talos version:
 
    ```yaml
-   machine:
-     install:
-       # renovate: datasource=github-releases depName=siderolabs/talos
-       image: factory.talos.dev/metal-installer/d0a1ee0d6badeabc0ad30f8591df19df685ac5757430ebd918639ee3e128846c:v1.10.6
+   apiVersion: v1alpha1
+   kind: UnattendedInstallConfig
+   installer:
+     # renovate: datasource=github-releases depName=siderolabs/talos
+     image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.2
    ```
 
 3. **Regenerate Configurations**: Generate new configurations with the updated version:
@@ -219,6 +251,7 @@ kubectl get nodes
    talosctl gen config \
      --with-secrets secrets.yaml \
      --config-patch @patches/unified-patch.yaml \
+     --output-types controlplane,talosconfig \
      home "https://kubernetes.apocrathia.com:6443" \
      -o rendered/ \
      --force
@@ -226,8 +259,8 @@ kubectl get nodes
 
 4. **Extract Target Version**: Extract the target version from the patch file:
    ```bash
-   # Extract version from unified patch file
-   TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+   # Extract version from the installer image in the unified patch file
+   TARGET_VERSION=$(grep -o 'metal-installer/[a-f0-9]*:v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
    echo "Target Talos version: $TARGET_VERSION"
    ```
 
@@ -244,8 +277,8 @@ kubectl get nodes
 Perform a rolling upgrade to minimize cluster downtime:
 
 ```bash
-# Extract target version from patch file
-TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+# Extract target version from the installer image in the patch file
+TARGET_VERSION=$(grep -o 'metal-installer/[a-f0-9]*:v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
 echo "Upgrading to Talos version: $TARGET_VERSION"
 
 # Upgrade nodes one at a time
@@ -278,8 +311,8 @@ done
 If you encounter issues with files being held open during upgrade:
 
 ```bash
-# Extract target version from patch file
-TARGET_VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | head -1)
+# Extract target version from the installer image in the patch file
+TARGET_VERSION=$(grep -o 'metal-installer/[a-f0-9]*:v[0-9]\+\.[0-9]\+\.[0-9]\+' patches/unified-patch.yaml | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
 echo "Staged upgrade to Talos version: $TARGET_VERSION"
 
 # Use staged upgrade for problematic nodes
