@@ -24,7 +24,7 @@ sync, so the false-positive tug self-resolves.
 
 | Component  | Implementation                                                                                                                                                          |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Controller | `external-dns` chart `1.22.0` (kubernetes-sigs), instance `external-dns-wan`                                                                                            |
+| Controller | `external-dns` chart `1.23.0` (kubernetes-sigs), instance `external-dns-wan`                                                                                            |
 | Provider   | Cloudflare (public zone `apocrathia.com`), token via 1Password item `cloudflare-api-token`                                                                              |
 | Source     | `crd` - the `DNSEndpoint` CR `wan-ips` in `unifi-scripts`, patched every 5 minutes by [unifi-wan-ip-sync](../../04-apps/management/scripts/unifi/wan-ip-sync/README.md) |
 | Registry   | TXT ownership labels, `txtOwnerId: wan`, prefix `k8s.wan.%{record_type}-`                                                                                               |
@@ -51,7 +51,7 @@ should be patched by hand; the next run would overwrite it.
 
 Pre-existing cluster dependency: the `dnsendpoints.externaldns.k8s.io` CRD
 (v1alpha1) is installed in-cluster and is **not** tracked in this repo. Chart
-`1.22.0`'s ClusterRole already grants `dnsendpoints` get/watch/list + status
+`1.23.0`'s ClusterRole already grants `dnsendpoints` get/watch/list + status
 update when `crd` is in sources, so no extra RBAC ships with this instance.
 
 ## Deployed objects
