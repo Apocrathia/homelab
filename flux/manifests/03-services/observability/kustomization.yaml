@@ -7,7 +7,6 @@ metadata:
 
 resources:
   - alloy
-  - goflow2
   - kube-audit-tailer
   - grafana
   - ingest

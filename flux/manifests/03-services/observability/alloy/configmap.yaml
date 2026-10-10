@@ -247,9 +247,18 @@ data:
       }
     }
 
+    // SIEM lap C fan-out leg: OTLP logs reach both Loki and the Tenzir
+    // detection node (same otelcol.exporter.otlphttp pattern the
+    // kube-audit-tailer uses for its dedicated stream). Node-side
+    // pipelines filter on the resource attributes they own, so OTLP streams
+    // without a Tenzir parser yet (e.g. tailscale2otel) are dropped there,
+    // not mis-parsed.
     otelcol.processor.batch "logs" {
       output {
-        logs = [otelcol.exporter.loki.otlp_logs.input]
+        logs = [
+          otelcol.exporter.loki.otlp_logs.input,
+          otelcol.exporter.otlphttp.tenzir.input,
+        ]
       }
     }
 
@@ -267,6 +276,17 @@ data:
     otelcol.exporter.otlphttp "mimir" {
       client {
         endpoint = "http://mimir-distributor.mimir-system.svc.cluster.local:8080/otlp"
+        tls {
+          insecure = true
+        }
+      }
+    }
+
+    // Fan out OTLP logs to the Tenzir detection node (accept_otlp 4318 in
+    // tenzir-system; SIEM lap C)
+    otelcol.exporter.otlphttp "tenzir" {
+      client {
+        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
         tls {
           insecure = true
         }

@@ -1,0 +1,52 @@
+---
+description: |
+  Tetragon export-stdout events → OCSF. Dispatches per event kind:
+  process_exec / process_exit → Process Activity (1007), kprobe events per
+  policy → File System Activity (1001), Process Activity (1007), or Network
+  Activity (4001), and everything else → OCSF Base Event. Every event,
+  whatever its class, gets the occurrence time and the node's hostname; the
+  source residue rides in `unmapped` for provenance.
+args:
+  positional:
+    - name: input
+      description: The parsed Tetragon export-stdout event record to read.
+      type: field
+    - name: ocsf
+      description: The OCSF event to build.
+      type: field
+---
+
+// Every event carries the product identity, whatever its class.
+$ocsf.metadata = {
+  version: "1.9.0",
+  product: {
+    name: "tetragon",
+    vendor_name: "cilium",
+  },
+}
+$ocsf.severity_id = 1
+
+if $input.process_exec? != null {
+  homelab::tetragon::ocsf::events::process_exec $input.process_exec, $ocsf
+} else if $input.process_exit? != null {
+  homelab::tetragon::ocsf::events::process_exit $input.process_exit, $ocsf
+} else if $input.process_kprobe? != null {
+  homelab::tetragon::ocsf::events::process_kprobe $input.process_kprobe, $ocsf
+} else {
+  @name = "ocsf.base_event"
+  $ocsf.category_uid = 0
+  $ocsf.class_uid = 0
+  $ocsf.activity_id = 0
+  // Base Event gates `device` behind the host profile; declaring it keeps
+  // the mapped device (and every other host-profile field we set) in cast.
+  $ocsf.metadata.profiles = ["host"]
+}
+
+// Every arm gets the occurrence time and the node: the OCSF 1.9.0 Base
+// Event schema carries `time` as required and `device` as recommended, so
+// the fallback arm is schema-proper too. The event type derives from what
+// the arm set, and the source record is the residue.
+$ocsf.time = move $input.time?
+$ocsf.device.hostname = move $input.node_name?
+$ocsf.type_uid = $ocsf.class_uid * 100 + $ocsf.activity_id
+$ocsf.unmapped = move $input

@@ -36,7 +36,8 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
 
 ## Policies and the enforcement graduation
 
-`policies/` ships two policies, both loaded with
+`policies/` ships three policies. secret-file-access and
+container-escape-namespace-access are loaded with
 `spec.options: policy-mode: monitor` (valid modes: `monitor` | `enforce`):
 
 - **secret-file-access** — reads/writes to credential paths
@@ -56,10 +57,25 @@ alive if the agent dies (persistent enforcement) — off for now.
 
 ## Follow-ups
 
-- Egress-anomaly policy (tcp_connect outside cluster CIDRs) waits on the
-  LAN CIDRs the operator wants treated as "internal"; with the current
-  evidence it would be authored against
-  pods `10.42.0.0/16` / services `10.69.0.0/16` + loopback.
+- Egress policy (`policies/egress.yaml`, upstream
+  monitor-network-activity-outside-cluster-cidr-range): shipped against pods
+  `10.42.0.0/16` / services `10.69.0.0/16` + loopback. The LAN CIDRs the
+  operator wants treated as "internal" are still a follow-up — adding them is
+  a values-only edit to the matchArgs list.
 - Base exec events (shells, sudo, SUID) need no policy — they ride the
   exec event stream; triage via Loki queries.
 - Grafana dashboard for `tetragon_*` metrics once the baseline lands.
+
+## SIEM (lap C)
+
+- `policies/egress.yaml` adds the upstream tcp_connect visibility policy
+  (see above) — its `sock`-arg kprobe events map to OCSF Network Activity.
+- `packages/` stages the Tenzir OCSF mapping package
+  (Process Activity 1007 / File System Activity 1001 / Network Activity
+  4001 per the live schema). It moves under the Tenzir node's homelab
+  package after lap B merges — see
+  [`packages/README.md`](./packages/README.md) for the staging contract and
+  the test harness invocation.
+- The OTLP fan-out leg to the Tenzir node lives in the shared Alloy
+  configmap (`observability/alloy/configmap.yaml`, same
+  `otelcol.exporter.otlphttp` pattern as the kube-audit-tailer).

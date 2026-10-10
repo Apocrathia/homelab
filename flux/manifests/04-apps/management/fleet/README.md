@@ -124,6 +124,40 @@ Authentik workers must reach `https://fleet.gateway.services.apocrathia.com` (in
 Osquery status and result logs go to Fleet container stdout (`statusPlugin` /
 `resultPlugin: stdout`), which Alloy scrapes into Loki.
 
+### Result rows: prove the path before wiring the SIEM (OPERATOR-LED)
+
+The last 30 days of Loki hold **status** rows only — zero **result** rows.
+Differential/snapshot result logs only emit when a scheduled query returns
+rows, and no scheduled query has returned anything yet. Before the SIEM tee
+to the Tenzir detection node (lap-C part 2, same exporter-fan-out pattern
+as tetragon), prove the result path end to end:
+
+1. Add a snapshot scheduled query to the fleet GitOps YAML
+   (`fleet/fleets/home.yml`; the modern key is `reports:` — `queries:` is the
+   deprecated alias; `interval` makes it scheduled and `logging` defaults to
+   snapshot — fleet v4.92.3 `QuerySpec`):
+   ```yaml
+   reports:
+     - name: siem result-path validation
+       description: Lap C validation — remove after confirming rows in Loki
+       query: SELECT * FROM osquery_info
+       interval: 300
+   ```
+2. Apply it the usual GitOps way (push to the default branch or wait for the
+   hourly `fleet-gitops` schedule), then confirm in Fleet that the host ran
+   it (Queries → the query → results).
+3. Rows arrive on the same stdout path as status rows. Verify in Loki:
+   ```logql
+   {namespace="fleet",container="fleet"} |= "\"snapshot\""
+   ```
+   Snapshot rows: `{name, hostIdentifier, unixTime, snapshot: [...]}`.
+   Differential rows (the fleetdm default for scheduled queries):
+   `{name, hostIdentifier, calendarTime, unixTime, action, columns: {...}}`.
+4. Remove the query block after validation.
+
+Executing a Fleet query against enrolled hosts is a cluster-adjacent
+mutation — operator-led, not agent-run.
+
 ```logql
 {namespace="fleet",container="fleet"}
 ```

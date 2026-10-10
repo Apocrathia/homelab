@@ -36,7 +36,7 @@ This is a GitOps-managed Kubernetes homelab with a full LGTM observability stack
 - **LGTM** (services/observability): Loki, Grafana Alloy, Tempo, Mimir, OpenTelemetry Operator
 - **Grafana Operator**: Dashboard and datasource CRDs; alerting rules as code
 - **Alloy**: Pod logs, syslog/CEF ingestion, OTLP traces
-- **Extras**: SNMP exporter, etcd scrape configs, goflow2 for NetFlow/IPFIX
+- **Extras**: SNMP exporter, etcd scrape configs, Tenzir read_netflow for NetFlow/IPFIX (SIEM lap C; goflow2 removed)
 
 **Repository layout:**
 
