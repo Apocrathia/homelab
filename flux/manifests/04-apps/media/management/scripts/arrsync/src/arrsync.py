@@ -348,11 +348,15 @@ class ArrClient(ABC):
                 continue
 
             # Wait for command queue to be idle before renaming
-            # This ensures any background tasks triggered by refresh have completed
+            # This ensures any background tasks triggered by refresh have completed.
+            # Non-fatal on timeout: background commands (Lidarr RSS sync, release
+            # searches) can keep the queue permanently busy, so a busy queue must
+            # not fail the item. Proceed with a warning; the rename command itself
+            # is still awaited via _wait_for_command.
             if not self._wait_for_idle():
-                logger.error(f"[{self.config.name}] Failed waiting to rename: {item_name}")
-                result.failed_rename.append(item_name)
-                continue
+                logger.warning(
+                    f"[{self.config.name}] Command queue not idle; proceeding to rename anyway: {item_name}"
+                )
 
             try:
                 previews = self.get_rename_previews(item_id)
