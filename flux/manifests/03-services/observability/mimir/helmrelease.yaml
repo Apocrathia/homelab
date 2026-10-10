@@ -92,6 +92,8 @@ spec:
           ingestion_burst_size: 1000000
           # Increase query parallelism
           max_query_parallelism: 32
+          # Compactor-enforced block storage retention: 90d
+          compactor_blocks_retention_period: 90d
 
         # Configure external MinIO storage with separate buckets
         blocks_storage:

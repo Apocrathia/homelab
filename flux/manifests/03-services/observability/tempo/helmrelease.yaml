@@ -82,6 +82,9 @@ spec:
     # Compactor configuration
     compactor:
       replicas: 1
+      config:
+        compaction:
+          block_retention: 720h # 30 days
       resources:
         requests:
           cpu: 100m
