@@ -9,3 +9,6 @@
 
 - name: Site — game host
   ansible.builtin.import_playbook: game.yml
+
+- name: Site — ollama hosts
+  ansible.builtin.import_playbook: ollama.yml

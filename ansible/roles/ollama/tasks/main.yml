@@ -1,0 +1,149 @@
+---
+# Deployment strategy (operator decision 2026-09-26): the official
+# ollama.com install.sh owns the install — it creates the ollama
+# user/groups, wipes and re-extracts /usr/local/lib/ollama, applies the
+# ROCm overlay when lspci detects an AMD GPU, writes
+# /etc/systemd/system/ollama.service, and daemon-reloads + restarts the
+# service. This role NEVER templates or drops into that unit, and NEVER
+# touches /usr/share/ollama (the models store).
+
+# install.sh prereqs: zstd unpacks the .tar.zst bundles, pciutils (lspci)
+# is how the script detects an AMD GPU and applies the ROCm overlay.
+# Fedora gotcha: NEVER add curl here — full curl conflicts with
+# curl-minimal on Fedora 36+ (curl is already present).
+- name: Install ollama prerequisites
+  ansible.builtin.package:
+    name:
+      - zstd
+      - pciutils
+    state: present
+  tags:
+    - ollama
+    - packages
+
+- name: Check installed ollama version
+  # Read-only probe; force-run under --check so the gate below evaluates
+  # against the real installed version.
+  ansible.builtin.command:
+    cmd: /usr/local/bin/ollama --version
+  register: ollama_version_check
+  changed_when: false
+  failed_when: false # absent binary must not fail the run; the gate reinstalls
+  check_mode: false
+  tags:
+    - ollama
+
+- name: Record installed ollama version
+  # Empty string when the binary is absent or the output unparseable — both
+  # make the gate fire and reinstall.
+  ansible.builtin.set_fact:
+    ollama_installed_version: >-
+      {{ ollama_version_check.stdout | default('') | regex_replace('(?s)^.*ollama version is ', '') | regex_replace('(?s)[\s,].*$', '') }}
+  tags:
+    - ollama
+
+- name: Look up latest ollama release
+  # Read-only GET; force-run under --check so the gate evaluates truthfully.
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/ollama/ollama/releases/latest
+  register: ollama_latest_release
+  check_mode: false
+  when: ollama_version == "latest"
+  tags:
+    - ollama
+
+- name: Resolve desired ollama version
+  ansible.builtin.set_fact:
+    ollama_desired_version: >-
+      {{ (ollama_latest_release.json.tag_name | regex_replace('^v', '')) if ollama_version == "latest" else ollama_version }}
+  tags:
+    - ollama
+
+# RPM consolidation (operator decision 2026-09-26): Fedora ships a
+# community ollama RPM that goes stale (f44 pins 0.12.x vs upstream 0.34.x)
+# and shadows the /usr/local install. Remove every subpackage so exactly one
+# ollama remains. dnf no-ops on absent names — idempotent.
+- name: Remove stale Fedora ollama RPMs
+  ansible.builtin.package:
+    name:
+      - ollama
+      - ollama-base
+      - ollama-rocm
+      - ollama-vulkan
+    state: absent
+  tags:
+    - ollama
+    - packages
+
+# HARD RULE: the role never writes inside /usr/share/ollama, never sets
+# OLLAMA_MODELS, never pulls or deletes models (137 GB store on
+# ians-gaming-pc). The pre/post stat pair below is insurance that no task
+# in this run made the models directory disappear.
+- name: Check for existing ollama models directory
+  ansible.builtin.stat:
+    path: /usr/share/ollama/.ollama/models
+  register: ollama_models_dir
+  failed_when: false
+  tags:
+    - ollama
+
+- name: Update ollama when the installed version differs from desired
+  when: ollama_desired_version != ollama_installed_version
+  tags:
+    - ollama
+  block:
+    - name: Fetch ollama install script
+      ansible.builtin.get_url:
+        url: "{{ ollama_install_script_url }}"
+        dest: /tmp/ollama-install.sh
+        mode: "0700"
+
+    - name: Run ollama install script
+      # The script creates the ollama user/groups, wipes and re-extracts
+      # /usr/local/lib/ollama, applies the ROCm overlay on AMD (lspci),
+      # writes the systemd unit, daemon-reloads, and restarts the service.
+      ansible.builtin.command:
+        cmd: bash /tmp/ollama-install.sh
+      changed_when: true
+      environment: "{{ {'OLLAMA_VERSION': ollama_desired_version} if ollama_version != 'latest' else {} }}"
+
+    - name: Wait for the ollama API to answer
+      # A broken upgrade must fail the nightly run loudly, not pass
+      # silently behind a dead service.
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 11434
+        timeout: 60
+
+- name: Ensure ollama service is enabled and started
+  # Cheap converge outside the gate: the install script already did this,
+  # so this only repairs a stopped/disabled service. In check mode the gate
+  # never ran the script, so there is nothing to converge (kopia
+  # schedule.yml pattern).
+  ansible.builtin.systemd_service:
+    name: ollama
+    enabled: true
+    state: started
+  when: not ansible_check_mode
+  tags:
+    - ollama
+
+- name: Re-check for ollama models directory after install
+  ansible.builtin.stat:
+    path: /usr/share/ollama/.ollama/models
+  register: ollama_models_dir_post
+  when: ollama_models_dir.stat.exists
+  tags:
+    - ollama
+
+- name: Assert ollama models directory survived the run
+  ansible.builtin.assert:
+    that:
+      - ollama_models_dir_post.stat.exists
+    fail_msg: >-
+      /usr/share/ollama/.ollama/models disappeared during this run — the
+      models store is off-limits; stop and investigate before the next
+      apply.
+  when: ollama_models_dir.stat.exists
+  tags:
+    - ollama
