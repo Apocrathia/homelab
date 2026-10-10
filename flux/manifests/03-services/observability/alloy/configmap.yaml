@@ -272,10 +272,12 @@ data:
       }
     }
 
-    // Export metrics to Mimir (via OTLP/HTTP)
+    // Export metrics to Mimir (via OTLP/HTTP) through the gateway, which
+    // injects the X-Scope-OrgID tenant header the distributor requires —
+    // the distributor itself 401s unauthenticated OTLP pushes.
     otelcol.exporter.otlphttp "mimir" {
       client {
-        endpoint = "http://mimir-distributor.mimir-system.svc.cluster.local:8080/otlp"
+        endpoint = "http://mimir-gateway.mimir-system.svc.cluster.local:80/otlp"
         tls {
           insecure = true
         }
