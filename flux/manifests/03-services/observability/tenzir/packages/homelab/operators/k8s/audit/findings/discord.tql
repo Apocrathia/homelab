@@ -1,0 +1,45 @@
+---
+args:
+  positional:
+    - name: source
+      type: string
+      default: "kube-audit"
+---
+
+// Format an OCSF Detection Finding (2004) as a Discord embed. One finding
+// in, one embed out; the pipeline sends it with `each` + `to_http`.
+this = {
+  embeds: [
+    {
+      title: f"Sigma: {finding_info.title}",
+      color: 15158332 if severity_id >= 4 else 15844367 if severity_id == 3 else 3447003,
+      timestamp: f"{evidences[0]?.data?.stageTimestamp}",
+      fields: [
+        {
+          name: "Severity",
+          value: f"{severity_id} ({policy.data?.level})",
+          inline: true,
+        },
+        {
+          name: "Rule ID",
+          value: f"{finding_info.analytic?.uid}",
+          inline: true,
+        },
+        {
+          name: "Source",
+          value: f"{evidences[0]?.data?.user?.username} [{evidences[0]?.data?.sourceIPs?[0]}] {evidences[0]?.data?.verb}"
+            + f" {evidences[0]?.data?.objectRef?.resource}"
+            + (f"/{evidences[0]?.data?.objectRef?.subresource}" if evidences[0]?.data?.objectRef?.subresource? != null else "")
+            + f" {evidences[0]?.data?.objectRef?.namespace}"
+            + (f"/{evidences[0]?.data?.objectRef?.name}" if evidences[0]?.data?.objectRef?.name? != null else ""),
+          inline: false,
+        },
+        {
+          name: "Evidence pivot (Loki)",
+          value: f"{{source=\"{$source}\",node=\"{evidences[0]?.data?.node?}\"}} @ {evidences[0]?.data?.stageTimestamp} (auditID {evidences[0]?.data?.auditID})",
+          inline: false,
+        },
+      ],
+    },
+  ],
+}

@@ -77,6 +77,25 @@ cluster:
       oidc-username-prefix: "oidc:"
       oidc-groups-claim: "groups"
       oidc-groups-prefix: "oidc:"
+    # SIEM Lap B: audit policy with request-body capture for exec/attach/
+    # port-forward/proxy subresources (the sensitive verbs), metadata-only
+    # for everything else. Default was Metadata for all events. The log
+    # backend stays node-local at /var/log/kube-apiserver/audit.log; the
+    # kube-audit-tailer DaemonSet ships it to Loki and Tenzir.
+    auditPolicy:
+      apiVersion: audit.k8s.io/v1
+      kind: Policy
+      omitStages:
+        - RequestReceived
+      rules:
+        # Request bodies for the sensitive subresources (kubectl exec / attach
+        # / port-forward / proxy), everything else metadata-only.
+        - level: Request
+          resources:
+            - group: ""
+              resources:
+                [pods/exec, pods/attach, pods/portforward, services/proxy]
+        - level: Metadata
     resources:
       requests:
         cpu: "2000m"

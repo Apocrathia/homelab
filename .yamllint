@@ -15,6 +15,9 @@ rules:
     ignore: |
       flux/manifests/01-bootstrap/flux-system/*
       helm/**/templates/*.yaml
+      # Vendored SigmaHQ rule files are upstream bytes; one rule's
+      # description block exceeds the 256-char limit.
+      flux/manifests/03-services/observability/tenzir/sigma/sigmahq/**
 
   braces:
     level: warning
@@ -35,6 +38,8 @@ rules:
     present: true
     ignore: |
       helm/**/templates/*.yaml
+      # Vendored SigmaHQ rule files are upstream bytes; no document marker.
+      flux/manifests/03-services/observability/tenzir/sigma/sigmahq/**
   document-end: disable
   truthy:
     check-keys: false

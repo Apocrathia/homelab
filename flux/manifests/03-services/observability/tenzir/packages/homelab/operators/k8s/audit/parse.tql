@@ -1,0 +1,14 @@
+---
+args:
+  named:
+    - name: service
+      type: string
+      default: "kube-apiserver-audit"
+---
+
+// Filter the OTLP stream down to kube-apiserver audit lines and unpack the
+// JSON body into the raw audit event. The tailer's node attribute rides
+// along as `node` for the Loki provenance pivot.
+where body.kind == "string"
+where resource.attributes["service.name"] == $service
+this = merge(parse_json(body.string_value), {node: resource.attributes["k8s.node.name"]})

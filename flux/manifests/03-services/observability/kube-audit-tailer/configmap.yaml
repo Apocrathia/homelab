@@ -1,0 +1,91 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-audit-tailer-config
+  namespace: kube-audit-tailer-system
+  labels:
+    app.kubernetes.io/name: kube-audit-tailer
+data:
+  config.alloy: |
+    // kube-apiserver audit log dual-writer: tails the host audit.log on each
+    // control plane and ships every line to Loki (native) and to the Tenzir
+    // detection node (OTLP/HTTP).
+    //
+    // Why this is not part of the shared alloy DaemonSet: kube-apiserver creates
+    // audit.log with mode 0600 inside a 0700 directory (k8s apiserver audit.go:
+    // OpenFile(..., 0600), MkdirAll(dir, 0700)), so only root can read it. The
+    // shared Alloy runs as UID 10001; this dedicated tailer runs as root with a
+    // read-only hostPath mount and nothing else. No taints exist on this
+    // cluster's control planes (allowSchedulingOnControlPlanes: true), so the
+    // DaemonSet schedules everywhere without tolerations.
+    //
+    // Both legs tail from the end (tail_from_end / start_at): the pre-existing
+    // ~150 MB backlog on each node is not re-shipped on first deploy. The
+    // chart's K8S_NODE_NAME downward-API env var feeds sys.env() in both legs:
+    // the Loki leg stamps it as a stream label and the OTLP leg as the
+    // k8s.node.name resource attribute, so a finding pivots to the raw Loki
+    // line with {source="kube-audit",node="<node>"} + timestamp + auditID,
+    // which is unique per line.
+
+    local.file_match "kube_audit" {
+      path_targets = [
+        {
+          __path__ = "/var/log/kube-apiserver/audit.log*",
+        },
+      ]
+    }
+
+    loki.source.file "kube_audit" {
+      targets       = local.file_match.kube_audit.targets
+      tail_from_end = true
+      forward_to    = [loki.process.kube_audit.receiver]
+    }
+
+    loki.process "kube_audit" {
+      stage.static_labels {
+        values = {
+          cluster   = "kubernetes",
+          component = "kube-apiserver-audit",
+          source    = "kube-audit",
+          node      = sys.env("K8S_NODE_NAME"),
+        }
+      }
+      forward_to = [loki.write.default.receiver]
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = "http://loki-write.loki-system.svc:3100/loki/api/v1/push"
+      }
+    }
+
+    otelcol.receiver.filelog "kube_audit" {
+      include           = ["/var/log/kube-apiserver/audit.log", "/var/log/kube-apiserver/audit.log-*"]
+      start_at          = "end"
+      include_file_path = true
+      operators = [
+        {
+          type  = "add",
+          field = "resource[\"service.name\"]",
+          value = "kube-apiserver-audit",
+        },
+        {
+          type  = "add",
+          field = "resource[\"k8s.node.name\"]",
+          value = sys.env("K8S_NODE_NAME"),
+        },
+      ]
+      output {
+        logs = [otelcol.exporter.otlphttp.tenzir.input]
+      }
+    }
+
+    otelcol.exporter.otlphttp "tenzir" {
+      client {
+        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        tls {
+          insecure = true
+        }
+      }
+    }

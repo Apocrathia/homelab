@@ -1,0 +1,5 @@
+[submodule "third-party/sigmahq"]
+	path = third-party/sigmahq
+	url = https://github.com/SigmaHQ/sigma.git
+	branch = master
+	shallow = true

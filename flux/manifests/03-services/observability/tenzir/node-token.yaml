@@ -1,0 +1,13 @@
+---
+# The tenzir-node chart schema requires `nodes[].token` (a platform
+# registration credential). This node is standalone: no Tenzir Platform, no
+# platform connection. A node with no token never connects, and Tenzir
+# ignores empty environment variables, so an empty TENZIR_TOKEN is a no-op
+# that satisfies the chart schema. No secret value is stored here.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tenzir-node-token
+  namespace: tenzir-system
+stringData:
+  TENZIR_TOKEN: ""

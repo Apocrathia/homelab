@@ -122,6 +122,23 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - OAuth client credentials from 1Password (`tailscale2otel-secrets` item)
 - **Details**: See [`tailscale2otel/README.md`](./tailscale2otel/README.md)
 
+### 12. **kube-audit-tailer** (`kube-audit-tailer/`)
+
+- **Purpose**: Tail the kube-apiserver audit log on control planes and
+  dual-write it to Loki and the Tenzir detection node
+- **Deployment**: Grafana Alloy chart as a dedicated root DaemonSet (the
+  audit file is root-only; the shared Alloy runs non-root)
+- **Details**: See [`kube-audit-tailer/README.md`](./kube-audit-tailer/README.md)
+
+### 13. **Tenzir** (`tenzir/`)
+
+- **Purpose**: SIEM detection plane — OCSF normalization of kube-apiserver
+  audit events, SigmaHQ + own Sigma rules, Detection Findings to Discord,
+  14-day hot window with rustfs parquet archive
+- **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), one
+  standalone node in `tenzir-system`
+- **Details**: See [`tenzir/README.md`](./tenzir/README.md)
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:

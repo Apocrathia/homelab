@@ -1,0 +1,32 @@
+// k8s audit event -> OCSF API Activity (6003). Lineage: the Loki pivot
+// (stream selector + node + timestamp + auditID) is stamped into
+// `unmapped.loki` so a finding pivots to the exact raw Loki line.
+class_uid = 6003
+category_uid = 6
+activity_id = 1 if verb in ["create"] else 2 if verb in ["get", "list", "watch"] else 3 if verb in ["update", "patch"] else 4 if verb in ["delete", "deletecollection"] else 0
+type_uid = 600300 + activity_id
+time = stageTimestamp
+metadata.version = "1.9.0"
+metadata.product.name = "audit"
+metadata.product.vendor_name = "kubernetes"
+metadata.product.version = apiVersion
+api.operation = f"{verb} {objectRef.resource}" if objectRef?.subresource == null else f"{verb} {objectRef.resource}/{objectRef.subresource}"
+api.service.name = "kubernetes"
+api.version = objectRef?.apiVersion
+http_request.user_agent = userAgent
+src_endpoint.ip = sourceIPs[0]
+actor.user.name = user?.username
+actor.user.uid = user?.uid
+unmapped = {
+  audit_id: auditID,
+  request_uri: requestURI,
+  object_ref: objectRef,
+  user_groups: user?.groups,
+  response_code: responseStatus?.code,
+  request_object: requestObject,
+  loki: {
+    selector: f"source=\"kube-audit\",node=\"{node}\"",
+    timestamp: stageTimestamp,
+  },
+}
+drop stageTimestamp, kind, apiVersion, level, auditID, stage, requestURI, verb, user, sourceIPs, userAgent, objectRef, responseStatus, requestObject, requestReceivedTimestamp, node
