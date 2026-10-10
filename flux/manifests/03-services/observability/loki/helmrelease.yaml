@@ -78,15 +78,16 @@ spec:
         path_prefix: /var/loki
         replication_factor: 2
 
-      # Table manager for retention
-      tableManager:
-        retention_deletes_enabled: true
-        retention_period: 744h # 31 days
+      # Compactor retention (tsdb schema; table_manager does not apply to tsdb stores)
+      compactor:
+        retention_enabled: true
+        delete_request_store: s3
 
       # Limits configuration
       limits_config:
         allow_structured_metadata: true
         reject_old_samples: false
+        retention_period: 1440h # 60 days
 
     # MinIO subchart disabled - using external MinIO
     minio:

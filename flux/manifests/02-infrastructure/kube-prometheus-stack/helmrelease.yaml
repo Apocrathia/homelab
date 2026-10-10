@@ -26,6 +26,13 @@ spec:
     timeout: 15m
     remediation:
       retries: 3
+  # Discord webhook URL for alertmanager receivers (same 1Password item as the
+  # Grafana unified-alerting Discord contact point)
+  valuesFrom:
+    - kind: Secret
+      name: grafana-secrets
+      valuesKey: discord-webhook-url
+      targetPath: discordWebhookUrl
   # This is the longest values file I've ever seen.
   # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
   values:
@@ -205,6 +212,9 @@ spec:
       alertmanagerSpec:
         updateStrategy:
           type: Recreate
+      # tplConfig expands {{ .Values.* }} in the config below; the Discord
+      # webhook URL arrives via valuesFrom from grafana-secrets, never git.
+      tplConfig: true
       config:
         global:
           resolve_timeout: 5m
@@ -213,13 +223,18 @@ spec:
           group_wait: 30s
           group_interval: 5m
           repeat_interval: 12h
-          receiver: "null"
+          receiver: discord
           routes:
             - match:
                 alertname: Watchdog
               receiver: "null"
+              # Intentional mute: Watchdog is the deadman heartbeat; paging
+              # Discord with it every repeat interval is noise, not signal.
         receivers:
           - name: "null"
+          - name: discord
+            discord_configs:
+              - webhook_url: "{{ .Values.discordWebhookUrl }}"
       resources:
         limits:
           cpu: 200m
