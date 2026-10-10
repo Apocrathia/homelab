@@ -32,8 +32,6 @@ LOG = logging.getLogger("dependency-review")
 
 DEFAULT_COOLDOWN_H = 24.0
 DEFAULT_INFRA_COOLDOWN_H = 72.0
-# MRs untouched for this long with a verdict label already set are skipped.
-FRESHNESS_WINDOW_MIN = 90
 # Packages where even patch bumps get a second operator glance (or 72h on majors).
 # Infra bumps are operator-only: never auto-merged, always in the triage digest.
 # siderolabs covers the installer/kubelet images that reimage nodes (a merged
@@ -117,14 +115,30 @@ class GitLab:
         r.raise_for_status()
         return [m for m in r.json() if m["source_branch"].startswith("renovate/")]
 
+    async def list_notes(self, iid: int) -> list[dict]:
+        r = await self.http.get(
+            f"/projects/{self.project}/merge_requests/{iid}/notes",
+            params={"per_page": 50, "sort": "desc", "order_by": "created_at"},
+        )
+        if r.status_code >= 300:
+            return []
+        return r.json()
+
     async def add_note(self, iid: int, body: str) -> None:
         r = await self.http.post(f"/projects/{self.project}/merge_requests/{iid}/notes", json={"body": body})
         if r.status_code >= 300:
             LOG.warning("note on !%s failed: %s %s", iid, r.status_code, r.text[:120])
 
+    async def update_note(self, iid: int, note_id: int, body: str) -> None:
+        r = await self.http.put(f"/projects/{self.project}/merge_requests/{iid}/notes/{note_id}", json={"body": body})
+        if r.status_code >= 300:
+            LOG.warning("note update on !%s failed: %s %s", iid, r.status_code, r.text[:120])
+
     async def set_labels(self, m: dict, new_labels: list[str]) -> None:
         current = set(m.get("labels") or [])
         new = sorted((current - set(ALL_AGENT_LABELS)) | set(new_labels))
+        if new == sorted(current):
+            return  # no-op label writes must not bump MR updated_at
         r = await self.http.put(f"/projects/{self.project}/merge_requests/{m['iid']}", json={"labels": ",".join(new)})
         if r.status_code >= 300:
             LOG.warning("labels on !%s failed: %s %s", m["iid"], r.status_code, r.text[:120])
@@ -403,6 +417,20 @@ def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None, dep_sha
     return "\n".join(lines)
 
 
+def pick_review_note(notes: list[dict]) -> dict | None:
+    """First sweep-owned review note in a desc-ordered note list, else None.
+
+    Same body markers the merge stage uses to find our notes ("Agent
+    dependency review" + "reviewed-sha:"); human, renovate, and merge-stage
+    comments never match and are skipped.
+    """
+    for n in notes:
+        body = n.get("body") or ""
+        if "Agent dependency review" in body and "reviewed-sha:" in body:
+            return n
+    return None
+
+
 # --- Main ------------------------------------------------------------------------
 
 
@@ -418,22 +446,19 @@ async def main() -> int:
     infra_cooldown_h = _env_float("INFRA_COOLDOWN_HOURS", DEFAULT_INFRA_COOLDOWN_H)
     approve_on_pass = _env_bool("APPROVE_ON_PASS", True)
     dry_run = _env_bool("DRY_RUN", False)
-    sweep_cutoff = datetime.now(UTC) - timedelta(minutes=FRESHNESS_WINDOW_MIN)
 
     mrs = await gl.open_renovate_mrs()
     LOG.info("open renovate MRs: %s", len(mrs))
 
-    fresh = []
-    for m in mrs:
-        labels = set(m.get("labels") or [])
-        if labels & set(VERDICT_LABELS) and _dt(m["updated_at"]) < sweep_cutoff:
-            continue  # already reviewed this cycle, no activity since
-        fresh.append(m)
-    LOG.info("MRs needing review: %s (rest already labeled + quiet)", len(fresh))
-    if not fresh:
+    # No freshness skip on updated_at: the old check was self-defeating (the
+    # sweep's own note/label writes ARE the MR activity), and periodic
+    # re-review is required anyway (cooldown holds must flip to pass at the
+    # gate; superseded/OSV/bug-storm signals appear over time). The single
+    # updated-in-place review note is the idempotency now.
+    if not mrs:
         return 0
 
-    deps = [parse_dep(m) for m in fresh]
+    deps = [parse_dep(m) for m in mrs]
     async with httpx.AsyncClient(timeout=30.0) as http:
         sem = asyncio.Semaphore(4)
 
@@ -523,7 +548,7 @@ async def main() -> int:
                     (agent_notes.get(dep.iid) or "") + " Agent-observed: " + ", ".join(agent_tags) + "."
                 ).strip()
 
-    for m in fresh:
+    for m in mrs:
         dep = next(d for d in deps if d.iid == m["iid"])
         f = fs.get(dep.iid, {})
         v = verdicts[dep.iid]
@@ -534,7 +559,17 @@ async def main() -> int:
         if dry_run:
             LOG.info("DRY RUN !%s -> %s (%s)\n%s\n---", dep.iid, v["verdict"].upper(), dep.pkg, note)
             continue
-        await gl.add_note(dep.iid, note)
+        existing = pick_review_note(await gl.list_notes(dep.iid))
+        if existing is None:
+            await gl.add_note(dep.iid, note)
+            LOG.info("note on !%s created", dep.iid)
+        elif existing.get("id") is None:
+            LOG.warning("review note on !%s could not be updated: existing note has no id", dep.iid)
+        elif (existing["body"] or "").strip() != note.strip():
+            await gl.update_note(dep.iid, existing["id"], note)
+            LOG.info("note on !%s updated", dep.iid)
+        else:
+            LOG.info("note on !%s unchanged", dep.iid)
         await gl.set_labels(m, labels)
         if approve_on_pass and v["verdict"] == "pass":
             await gl.approve(dep.iid)
