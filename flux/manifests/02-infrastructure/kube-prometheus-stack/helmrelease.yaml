@@ -31,7 +31,7 @@ spec:
   valuesFrom:
     - kind: Secret
       name: grafana-secrets
-      valuesKey: discord-webhook-url
+      valuesKey: alertmanager-discord-webhook-url
       targetPath: discordWebhookUrl
   # This is the longest values file I've ever seen.
   # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
