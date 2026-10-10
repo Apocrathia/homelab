@@ -1,0 +1,1216 @@
+{
+  activity_id: 1,
+  activity_name: "Launch",
+  category_name: "System Activity",
+  category_uid: 1,
+  class_name: "Process Activity",
+  class_uid: 1007,
+  device: {
+    hostname: "talos-01",
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    version: "1.9.0",
+  },
+  process: {
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    created_time: 2026-10-10T05:05:32.825311267Z,
+    file: {
+      path: "/usr/bin/runc",
+    },
+    parent_process: {
+      cmd_line: "/usr/bin/containerd-shim-runc-v2 -namespace k8s.io -id 1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205 -address /run/containerd/containerd.sock",
+      path: "/usr/bin/containerd-shim-runc-v2",
+      pid: 112991,
+    },
+    path: "/usr/bin/runc",
+    pid: 13053,
+    tid: 13053,
+    uid: "0",
+    working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T05:05:32.825311158Z,
+  type_name: "Process Activity: Launch",
+  type_uid: 100701,
+  unmapped: {
+    process_exec: {
+      process: {
+        exec_id: "dGFsb3MtMDE6NDM3NTc3MDM5OTQ1MTA5OjEzMDUz",
+        pid: 13053,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+        binary: "/usr/bin/runc",
+        arguments: "--root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+        flags: "execve clone",
+        start_time: 2026-10-10T05:05:32.825311267Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NzczOTI1MDA0MTY2NjY6MTEyOTkx",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 13053,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      parent: {
+        exec_id: "dGFsb3MtMDE6NzczOTI1MDA0MTY2NjY6MTEyOTkx",
+        pid: 112991,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+        binary: "/usr/bin/containerd-shim-runc-v2",
+        arguments: "-namespace k8s.io -id 1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205 -address /run/containerd/containerd.sock",
+        flags: "execve clone",
+        start_time: 2026-10-06T01:02:28.285782715Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NzczOTI0OTU2NzQ5Mzg6MTEyOTgz",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 112991,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+    },
+    node_labels: {
+      "beta.kubernetes.io/arch": "amd64",
+      "beta.kubernetes.io/os": "linux",
+    },
+  },
+}
+{
+  activity_id: 2,
+  activity_name: "Terminate",
+  category_name: "System Activity",
+  category_uid: 1,
+  class_name: "Process Activity",
+  class_uid: 1007,
+  device: {
+    hostname: "talos-01",
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    version: "1.9.0",
+  },
+  process: {
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    created_time: 2026-10-10T05:05:32.835863804Z,
+    file: {
+      path: "/usr/bin/runc",
+    },
+    parent_process: {
+      cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+      path: "/usr/bin/runc",
+      pid: 13053,
+    },
+    path: "/usr/bin/runc",
+    pid: 13062,
+    terminated_time: 2026-10-10T05:05:32.835907827Z,
+    tid: 13062,
+    uid: "0",
+    working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T05:05:32.835907496Z,
+  type_name: "Process Activity: Terminate",
+  type_uid: 100702,
+  unmapped: {
+    node_labels: {
+      "beta.kubernetes.io/arch": "amd64",
+      "beta.kubernetes.io/os": "linux",
+    },
+    process_exit: {
+      process: {
+        exec_id: "dGFsb3MtMDE6NDM3NTc3MDUwNDk3MDI0OjEzMDYy",
+        pid: 13062,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+        binary: "/usr/bin/runc",
+        arguments: "--root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+        flags: "execve",
+        start_time: 2026-10-10T05:05:32.835863804Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NDM3NTc3MDM5OTQ1MTA5OjEzMDUz",
+        refcnt: 1,
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 13062,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      parent: {
+        exec_id: "dGFsb3MtMDE6NDM3NTc3MDM5OTQ1MTA5OjEzMDUz",
+        pid: 13053,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+        binary: "/usr/bin/runc",
+        arguments: "--root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+        flags: "execve clone",
+        start_time: 2026-10-10T05:05:32.825311267Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NzczOTI1MDA0MTY2NjY6MTEyOTkx",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 13053,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      time: 2026-10-10T05:05:32.835907827Z,
+    },
+  },
+}
+{
+  activity_id: 2,
+  activity_name: "Read",
+  actor: {
+    process: {
+      cmd_line: "/usr/bin/pg_isready /usr/bin/pg_isready -U postgres",
+      container: {
+        image: {
+          name: "sha256:5a3c572cc9438c721c851f37447c662d56da8064af92069120554581134802c0",
+          uid: "ghcr.io/firecrawl/nuq-postgres@sha256:a582bc385702f3a93cafe2d8c749d55b6676e7c2761e94923113badf7af4b54f",
+        },
+        name: "postgres",
+        uid: "2606b2c72f5cd153fe1e23c3143a2ea8544049f5197142a491b4402c88197ec3",
+      },
+      parent_process: {
+        path: "/usr/bin/containerd-shim-runc-v2",
+        pid: 107169,
+      },
+      path: "/usr/bin/pg_isready",
+      pid: 13560,
+    },
+  },
+  category_name: "System Activity",
+  category_uid: 1,
+  class_name: "File System Activity",
+  class_uid: 1001,
+  device: {
+    hostname: "talos-01",
+  },
+  file: {
+    path: "/etc/shadow",
+    xattributes: {
+      permission: "-rw-r-----",
+    },
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "container",
+    ],
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T05:05:37.401589830Z,
+  type_name: "File System Activity: Read",
+  type_uid: 100102,
+  unmapped: {
+    node_labels: {
+      "beta.kubernetes.io/arch": "amd64",
+      "beta.kubernetes.io/os": "linux",
+    },
+    process_kprobe: {
+      process: {
+        exec_id: "dGFsb3MtMDE6NDM3NTgxNTkwMTI5OTQ5OjEzNTYw",
+        pid: 13560,
+        uid: 0,
+        cwd: "/",
+        binary: "/usr/bin/pg_isready",
+        arguments: "/usr/bin/pg_isready -U postgres",
+        flags: "execve rootcwd clone",
+        start_time: 2026-10-10T05:05:37.375496869Z,
+        auid: 4294967295,
+        pod: {
+          namespace: "firecrawl",
+          name: "firecrawl-postgres-54f8cb6599-668kf",
+          uid: "0f55a4d5-73c2-421a-9042-2b44cdeec4ef",
+          container: {
+            id: "containerd://2606b2c72f5cd153fe1e23c3143a2ea8544049f5197142a491b4402c88197ec3",
+            name: "postgres",
+            image: {
+              id: "ghcr.io/firecrawl/nuq-postgres@sha256:a582bc385702f3a93cafe2d8c749d55b6676e7c2761e94923113badf7af4b54f",
+              name: "sha256:5a3c572cc9438c721c851f37447c662d56da8064af92069120554581134802c0",
+            },
+            start_time: 2026-10-05T03:41:42Z,
+            pid: 1047355,
+            security_context: {},
+          },
+          pod_labels: {
+            app: "firecrawl-postgres",
+            "pod-template-hash": "54f8cb6599",
+          },
+          workload: "firecrawl-postgres",
+          workload_kind: "Deployment",
+        },
+        docker: "2606b2c72f5cd153fe1e23c3143a2ea",
+        parent_exec_id: "dGFsb3MtMDE6NTQ0ODAwMDAwMDAwOjEwNzE2OQ==",
+        refcnt: 1,
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_SETGID",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_SETGID",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026543894,
+          },
+          ipc: {
+            inum: 4026543895,
+          },
+          mnt: {
+            inum: 4026543897,
+          },
+          pid: {
+            inum: 4026543898,
+          },
+          pid_for_children: {
+            inum: 4026543898,
+          },
+          net: {
+            inum: 4026543795,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026543899,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 13560,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      parent: {
+        exec_id: "dGFsb3MtMDE6NTQ0ODAwMDAwMDAwOjEwNzE2OQ==",
+        pid: 107169,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/a9f6461d78a72c989305538dfc0b69f098c1c2354fafdf5bd0a1b6ee99eecf67",
+        binary: "/usr/bin/containerd-shim-runc-v2",
+        arguments: "-namespace k8s.io -id a9f6461d78a72c989305538dfc0b69f098c1c2354fafdf5bd0a1b6ee99eecf67 -address /run/containerd/containerd.sock",
+        flags: "procFS",
+        start_time: 2026-10-05T03:41:40.585366098Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6MTkwMDAwMDAwOjE=",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 107169,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      function_name: "security_file_permission",
+      args: [
+        {
+          file_arg: {
+            path: "/etc/shadow",
+            permission: "-rw-r-----",
+          },
+          int_arg: null,
+        },
+        {
+          file_arg: null,
+          int_arg: 4,
+        },
+      ],
+      "return": {
+        int_arg: 0,
+      },
+      action: "KPROBE_ACTION_SIGKILL",
+      policy_name: "secret-file-access",
+      return_action: "KPROBE_ACTION_SIGKILL",
+    },
+  },
+}
+{
+  activity_id: 0,
+  activity_name: "Unknown",
+  actor: {
+    process: {
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      container: {
+        image: {
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+        },
+        name: "longhorn-manager",
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+      },
+      parent_process: {
+        path: "/usr/bin/containerd-shim-runc-v2",
+        pid: 111600,
+      },
+      path: "/usr/local/sbin/longhorn-manager",
+      pid: 113625,
+    },
+  },
+  category_name: "System Activity",
+  category_uid: 1,
+  class_name: "Process Activity",
+  class_uid: 1007,
+  device: {
+    hostname: "talos-01",
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "container",
+    ],
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T05:05:34.891317436Z,
+  type_name: "Process Activity: Unknown",
+  type_uid: 100700,
+  unmapped: {
+    node_labels: {
+      "beta.kubernetes.io/arch": "amd64",
+      "beta.kubernetes.io/os": "linux",
+    },
+    process_kprobe: {
+      process: {
+        exec_id: "dGFsb3MtMDE6NzczOTg0MTEzMTYxNjc6MTEzNjI1",
+        pid: 113625,
+        uid: 0,
+        cwd: "/",
+        binary: "/usr/local/sbin/longhorn-manager",
+        arguments: "-d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+        flags: "execve rootcwd clone inInitTree",
+        start_time: 2026-10-06T01:02:34.196683558Z,
+        auid: 4294967295,
+        pod: {
+          namespace: "longhorn-system",
+          name: "longhorn-manager-7fqvg",
+          uid: "fbdc838c-057e-4107-b0d9-bced195a0db3",
+          container: {
+            id: "containerd://5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+            name: "longhorn-manager",
+            image: {
+              id: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+              name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+            },
+            start_time: 2026-10-06T01:02:34Z,
+            pid: 1,
+            security_context: {
+              privileged: true,
+            },
+          },
+          pod_labels: {
+            app: "longhorn-manager",
+            "app.kubernetes.io/instance": "longhorn",
+            "app.kubernetes.io/managed-by": "Helm",
+            "app.kubernetes.io/name": "longhorn",
+            "app.kubernetes.io/version": "v1.13.0",
+            "controller-revision-hash": "645945d545",
+            "helm.sh/chart": "longhorn-1.13.0",
+            "longhorn.io/admission-webhook": "longhorn-admission-webhook",
+            "longhorn.io/recovery-backend": "longhorn-recovery-backend",
+            "pod-template-generation": "23",
+          },
+          workload: "longhorn-manager",
+          workload_kind: "DaemonSet",
+        },
+        docker: "5bf9470aa7b3e40701e4a1f9ed234a9",
+        parent_exec_id: "dGFsb3MtMDE6NzczNzc0OTE0MDcyMDU6MTExNjAw",
+        refcnt: 1,
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026533734,
+          },
+          ipc: {
+            inum: 4026533735,
+          },
+          mnt: {
+            inum: 4026541852,
+          },
+          pid: {
+            inum: 4026541853,
+          },
+          pid_for_children: {
+            inum: 4026541853,
+          },
+          net: {
+            inum: 4026533296,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 120060,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: true,
+      },
+      parent: {
+        exec_id: "dGFsb3MtMDE6NzczNzc0OTE0MDcyMDU6MTExNjAw",
+        pid: 111600,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/83b82bcd00c12feaf657b14a946b82ae24a9da6f094a70ffea49c4e2c2bcae4a",
+        binary: "/usr/bin/containerd-shim-runc-v2",
+        arguments: "-namespace k8s.io -id 83b82bcd00c12feaf657b14a946b82ae24a9da6f094a70ffea49c4e2c2bcae4a -address /run/containerd/containerd.sock",
+        flags: "execve clone",
+        start_time: 2026-10-06T01:02:13.276773413Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NzczNzc0ODY1NDIyNjY6MTExNTgx",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 111600,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      function_name: "__x64_sys_setns",
+      args: [
+        {
+          int_arg: 18,
+        },
+        {
+          int_arg: 0,
+        },
+      ],
+      action: "KPROBE_ACTION_SIGKILL",
+      policy_name: "container-escape-namespace-access",
+      return_action: "KPROBE_ACTION_POST",
+    },
+  },
+}
+{
+  activity_id: 1,
+  activity_name: "Open",
+  actor: {
+    process: {
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      container: {
+        image: {
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+        },
+        name: "longhorn-manager",
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+      },
+      parent_process: {
+        path: "/usr/bin/containerd-shim-runc-v2",
+        pid: 111600,
+      },
+      path: "/usr/local/sbin/longhorn-manager",
+      pid: 113625,
+    },
+  },
+  category_name: "Network Activity",
+  category_uid: 4,
+  class_name: "Network Activity",
+  class_uid: 4001,
+  device: {
+    hostname: "talos-03",
+  },
+  dst_endpoint: {
+    ip: 8.8.8.8,
+    port: 443,
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "host",
+      "container",
+    ],
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.42.2.15,
+    port: 40123,
+  },
+  time: 2026-10-10T05:05:40.825311158Z,
+  type_name: "Network Activity: Open",
+  type_uid: 400101,
+  unmapped: {
+    node_labels: {
+      "kubernetes.io/arch": "amd64",
+      "kubernetes.io/os": "linux",
+    },
+    process_kprobe: {
+      process: {
+        exec_id: "dGFsb3MtMDE6NzczOTg0MTEzMTYxNjc6MTEzNjI1",
+        pid: 113625,
+        uid: 0,
+        cwd: "/",
+        binary: "/usr/local/sbin/longhorn-manager",
+        arguments: "-d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+        flags: "execve rootcwd clone inInitTree",
+        start_time: 2026-10-06T01:02:34.196683558Z,
+        auid: 4294967295,
+        pod: {
+          namespace: "longhorn-system",
+          name: "longhorn-manager-7fqvg",
+          uid: "fbdc838c-057e-4107-b0d9-bced195a0db3",
+          container: {
+            id: "containerd://5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+            name: "longhorn-manager",
+            image: {
+              id: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+              name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+            },
+            start_time: 2026-10-06T01:02:34Z,
+            pid: 1,
+            security_context: {
+              privileged: true,
+            },
+          },
+          pod_labels: {
+            app: "longhorn-manager",
+            "app.kubernetes.io/instance": "longhorn",
+            "app.kubernetes.io/managed-by": "Helm",
+            "app.kubernetes.io/name": "longhorn",
+            "app.kubernetes.io/version": "v1.13.0",
+            "controller-revision-hash": "645945d545",
+            "helm.sh/chart": "longhorn-1.13.0",
+            "longhorn.io/admission-webhook": "longhorn-admission-webhook",
+            "longhorn.io/recovery-backend": "longhorn-recovery-backend",
+            "pod-template-generation": "23",
+          },
+          workload: "longhorn-manager",
+          workload_kind: "DaemonSet",
+        },
+        docker: "5bf9470aa7b3e40701e4a1f9ed234a9",
+        parent_exec_id: "dGFsb3MtMDE6NzczNzc0OTE0MDcyMDU6MTExNjAw",
+        refcnt: 1,
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026533734,
+          },
+          ipc: {
+            inum: 4026533735,
+          },
+          mnt: {
+            inum: 4026541852,
+          },
+          pid: {
+            inum: 4026541853,
+          },
+          pid_for_children: {
+            inum: 4026541853,
+          },
+          net: {
+            inum: 4026533296,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 120060,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: true,
+      },
+      parent: {
+        exec_id: "dGFsb3MtMDE6NzczNzc0OTE0MDcyMDU6MTExNjAw",
+        pid: 111600,
+        uid: 0,
+        cwd: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/83b82bcd00c12feaf657b14a946b82ae24a9da6f094a70ffea49c4e2c2bcae4a",
+        binary: "/usr/bin/containerd-shim-runc-v2",
+        arguments: "-namespace k8s.io -id 83b82bcd00c12feaf657b14a946b82ae24a9da6f094a70ffea49c4e2c2bcae4a -address /run/containerd/containerd.sock",
+        flags: "execve clone",
+        start_time: 2026-10-06T01:02:13.276773413Z,
+        auid: 4294967295,
+        parent_exec_id: "dGFsb3MtMDE6NzczNzc0ODY1NDIyNjY6MTExNTgx",
+        cap: {
+          permitted: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+          effective: [
+            "CAP_CHOWN",
+            "DAC_OVERRIDE",
+            "CAP_DAC_READ_SEARCH",
+          ],
+        },
+        ns: {
+          uts: {
+            inum: 4026531838,
+            is_host: true,
+          },
+          ipc: {
+            inum: 4026531839,
+            is_host: true,
+          },
+          mnt: {
+            inum: 4026531832,
+            is_host: true,
+          },
+          pid: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          pid_for_children: {
+            inum: 4026531836,
+            is_host: true,
+          },
+          net: {
+            inum: 4026531833,
+            is_host: true,
+          },
+          time: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          time_for_children: {
+            inum: 4026531834,
+            is_host: true,
+          },
+          cgroup: {
+            inum: 4026531835,
+            is_host: true,
+          },
+          user: {
+            inum: 4026531837,
+            is_host: true,
+          },
+        },
+        tid: 111600,
+        process_credentials: {
+          uid: 0,
+          gid: 0,
+          euid: 0,
+          egid: 0,
+          suid: 0,
+          sgid: 0,
+          fsuid: 0,
+          fsgid: 0,
+        },
+        in_init_tree: false,
+      },
+      function_name: "tcp_connect",
+      args: [
+        {
+          sock_arg: {
+            family: "inet",
+            type: "sock_stream",
+            protocol: "tcp",
+            mark: 0,
+            priority: 0,
+            saddr: 10.42.2.15,
+            daddr: 8.8.8.8,
+            sport: 40123,
+            dport: 443,
+            cookie: 123456,
+            state: "tcp_syn_sent",
+          },
+        },
+      ],
+      policy_name: "monitor-network-activity-outside-cluster-cidr-range",
+    },
+  },
+}
+{
+  activity_id: 0,
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  category_uid: 0,
+  class_name: "Base Event",
+  class_uid: 0,
+  device: {
+    hostname: "talos-04",
+  },
+  metadata: {
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "host",
+    ],
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T05:05:41.825311158Z,
+  type_name: "Base Event: Unknown",
+  type_uid: 0,
+  unmapped: {
+    node_labels: {
+      "kubernetes.io/arch": "amd64",
+    },
+    process_signal: {
+      process: {
+        exec_id: "a",
+        pid: 1,
+        binary: "/usr/bin/kill",
+      },
+      signal: "SIGKILL",
+    },
+  },
+}

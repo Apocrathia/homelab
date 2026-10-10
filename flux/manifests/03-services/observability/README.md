@@ -74,17 +74,12 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - Pod/namespace annotation-based opt-in for instrumentation
 - **Usage**: Annotate pods with `instrumentation.opentelemetry.io/inject-<language>: "otel-system/<language>"`
 
-### 7. **goflow2** (`goflow2/`)
+### 7. **NetFlow → Tenzir** (removed: goflow2)
 
-- **Purpose**: NetFlow/IPFIX/sFlow collection for network traffic analysis
-- **Deployment**: Via generic-app Helm chart with goflow2 container
-- **Features**:
-  - IPFIX v10 ingestion from UniFi devices on port 2055/UDP
-  - NetFlow v5/v9 support
-  - sFlow v5 support
-  - Prometheus metrics export for flow data
-- **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
-- **Dashboard**: goflow2 Collector (Network folder; `goflow2/grafana/`)
+- **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and the
+  Tenzir detection node owns NetFlow natively via its `read_netflow`
+  operator. The `:2055/UDP` ingest LB on the shared pool IP is lap-C part 2
+  (Tenzir namespace); UniFi exporters keep their `:2055` target.
 
 ### 8. **Shared Ingest Pool** (`ingest/`)
 
@@ -92,7 +87,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **IP Address**: `10.100.1.96` (`ingest.services.apocrathia.com`)
 - **Services Sharing IP**:
   - Alloy: syslog (514/UDP, 6514/TCP), CEF (1514/TCP)
-  - goflow2: IPFIX (2055/UDP)
+  - Tenzir NetFlow (2055/UDP, lap-C part 2; `goflow2` removed)
 - **Implementation**: Cilium LB IPAM with `lbipam.cilium.io/sharing-key` annotation
 
 ### 9. **Prometheus Extras** (`prometheus/`)
@@ -164,7 +159,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 1. **Pod Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana
 2. **Syslog/CEF**: Network devices → Alloy (via ingest LB) → Loki → Grafana
-3. **NetFlow/IPFIX**: Network devices → goflow2 (via ingest LB) → Prometheus metrics → Grafana
+3. **NetFlow/IPFIX**: Network devices → Tenzir `read_netflow` (lap-C part 2; goflow2 removed)
 4. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana
 5. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana
 6. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)

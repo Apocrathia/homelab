@@ -1,0 +1,29 @@
+---
+# Egress visibility: outbound TCP connects that leave the pod CIDR
+# (10.42.0.0/16), service CIDR (10.69.0.0/16), or loopback. Upstream
+# policylibrary egress.yaml with this cluster's documented CIDRs
+# (talos/cilium-install.md); adding LAN CIDRs the operator counts as
+# "internal" is a values-only follow-up. Detection-only by nature: no
+# matchActions, so there is nothing to graduate and no policy-mode option
+# applies (the other policies carry policy-mode because they author Sigkill
+# actions). Emits process_kprobe events with the sock argument the SIEM
+# lap C tetragon mapping maps to OCSF Network Activity (4001).
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: monitor-network-activity-outside-cluster-cidr-range
+spec:
+  kprobes:
+    - call: tcp_connect
+      syscall: false
+      args:
+        - index: 0
+          type: sock
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: NotDAddr
+              values:
+                - 127.0.0.1
+                - 10.42.0.0/16
+                - 10.69.0.0/16

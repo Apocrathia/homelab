@@ -1,0 +1,9 @@
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+drop_null_fields
