@@ -6,6 +6,7 @@ metadata:
   namespace: prime-agent
 spec:
   interval: 15m
+  timeout: 15m
   chart:
     spec:
       chart: ./helm/generic-app
