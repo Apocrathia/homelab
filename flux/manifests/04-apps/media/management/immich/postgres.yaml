@@ -11,6 +11,30 @@ spec:
   # renovate: datasource=docker depName=ghcr.io/tensorchord/cloudnative-vectorchord versioning=regex:^(?<major>17)-(?<minor>\d+)\.(?<patch>\d+)(?:\.(?<build>\d+))?$
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-1.1.1@sha256:bb7eb8442f76b1e74911f28585019a77022911f8cfa2ddcfb166ea6af85abd09
   instances: 1
+
+  # Barman backups: rustfs S3 (bucket `cnpg`, policy scoped to bucket+objects).
+  # WAL archiving is continuous; base backups are triggered by the scheduled
+  # Backup resource in scheduled-backup.yaml.
+  backup:
+    retentionPolicy: 14d
+    barmanObjectStore:
+      destinationPath: s3://cnpg/immich
+      endpointURL: http://storage.services.apocrathia.com:9009
+      serverName: immich-postgres
+      s3Credentials:
+        accessKeyId:
+          name: immich-postgres-backup-secrets
+          key: AWS_ACCESS_KEY_ID
+        secretAccessKey:
+          name: immich-postgres-backup-secrets
+          key: AWS_SECRET_ACCESS_KEY
+      wal:
+        compression: zstd
+      data:
+        compression: gzip
+        jobs: 2
+        immediateCheckpoint: true
+
   storage:
     size: 20Gi
     storageClass: longhorn
