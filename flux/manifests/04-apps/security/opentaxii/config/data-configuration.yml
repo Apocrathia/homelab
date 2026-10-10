@@ -1,0 +1,60 @@
+---
+# TAXII 1.x bootstrap for OpenTAXII - loaded by `opentaxii-sync-data` on
+# every boot (docker/entrypoint.sh auto-detects /input/data-configuration.yml).
+#
+# Zero accounts: services with authentication_required: false grant anonymous
+# full access (verified in opentaxii/server.py handle_request). Acceptable
+# while the service is internal-only (ClusterIP, no route). When a feeder
+# needs auth, create accounts out-of-band:
+#   kubectl exec -n opentaxii deploy/opentaxii -- opentaxii-create-account --username <user> --password <pw>
+# TAXII 2.1 API roots/collections are separate (CLI bootstrap, see README).
+services:
+  - id: discovery
+    type: discovery
+    address: /services/discovery
+    description: TAXII 1.x discovery service
+    advertised_services:
+      - discovery
+      - collection_management
+      - poll
+      - inbox
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: collection_management
+    type: collection_management
+    address: /services/collection-management
+    description: TAXII 1.x collection management service
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: poll
+    type: poll
+    address: /services/poll
+    description: TAXII 1.x poll service
+    subscription_required: false
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: inbox
+    type: inbox
+    address: /services/inbox
+    description: TAXII 1.x inbox service
+    destination_collection_required: true
+    accept_all_content: true
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+collections:
+  - name: stix-feed
+    available: true
+    accept_all_content: true
+    type: DATA_SET
+    service_ids:
+      - inbox
+      - collection_management
+      - poll

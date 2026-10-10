@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: opentaxii
+  namespace: opentaxii
+  labels:
+    app.kubernetes.io/name: opentaxii
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # TAXII 1.x bootstrap services/collections. The docker entrypoint runs
+  # `opentaxii-sync-data` against it on every boot.
+  - name: opentaxii-data-configuration
+    namespace: opentaxii
+    files:
+      - data-configuration.yml=config/data-configuration.yml

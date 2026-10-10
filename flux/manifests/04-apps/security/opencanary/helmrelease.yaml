@@ -1,0 +1,128 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: opencanary
+  namespace: opencanary
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: opencanary
+      namespace: opencanary
+      # renovate: datasource=docker depName=thinkst/opencanary
+      image: thinkst/opencanary:0.9.10@sha256:4e51338e3b6e349652b0604be656d9b8fc1cde2cd40409b2e956f1da3eb673a1
+      container:
+        name: opencanary
+        # Image entrypoint runs `opencanaryd --dev --uid=nobody --gid=nogroup`:
+        # twistd starts as root, reads the config, then drops to nobody:nogroup.
+        # Services must bind unprivileged ports (8080 http, 2222 ssh).
+        port: 8080
+        extraPorts:
+          - name: ssh
+            containerPort: 2222
+            protocol: TCP
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      # Container starts as root (the opencanaryd wrapper execs twistd via sudo
+      # when non-root, which fails in-container), then drops to nobody:nogroup
+      # in-process via the image CMD. SETUID/SETGID are the only caps the
+      # privilege drop needs; everything else is dropped.
+      securityContext:
+        runAsUser: "0"
+        runAsGroup: "0"
+        fsGroup: 65534 # nobody:nogroup writes SSH host keys to the PVC
+        runAsNonRoot: "false"
+        allowPrivilegeEscalation: "false"
+        readOnlyRootFilesystem: "true"
+        capabilities:
+          drop:
+            - ALL
+          add:
+            - SETUID
+            - SETGID
+
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+
+      # No probes on purpose: any probe traffic hitting a honeypot port is
+      # synthetic attacker noise that pollutes the alert stream.
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: http
+
+      volumeMounts:
+        - name: data
+          mountPath: /var/tmp # OpenCanary's SSH_PATH: host keys persist here
+
+      volumes:
+        # twistd writes /var/run/opencanaryd.pid; needed on a read-only rootfs
+        emptyDir:
+          - name: run
+            mountPath: /var/run
+        configMap:
+          - name: config
+            mountPath: /etc/opencanaryd/opencanary.conf
+            subPath: opencanary.conf
+            readOnly: true
+            configMapName: opencanary-config
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    # A honeypot must look like a plain vulnerable service: no SSO, no
+    # Gateway route, no uptime probes. Attackers see raw ports only.
+    authentik:
+      enabled: false
+
+    httproute:
+      enabled: false
+
+    gatus:
+      enabled: false
+
+    loadbalancer:
+      enabled: true
+      ip: "10.100.1.98"
+      # Local keeps the attacker's source IP in alerts; Cilium only announces
+      # the L2 VIP on nodes with a local endpoint, so traffic always lands
+      # on this pod's node.
+      externalTrafficPolicy: Local
+      ports:
+        # attacker-facing standard ports -> container-listen honeypot ports
+        - name: http
+          port: 80
+          targetPort: 8080
+          protocol: TCP
+        - name: ssh
+          port: 22
+          targetPort: 2222
+          protocol: TCP

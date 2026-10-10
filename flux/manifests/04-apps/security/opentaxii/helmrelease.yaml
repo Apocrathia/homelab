@@ -1,0 +1,180 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: opentaxii
+  namespace: opentaxii
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: opentaxii
+      namespace: opentaxii
+      # 0.10.0b1 over 0.9.3: TAXII 2.1 enabled by default (0.9.3 ships
+      # taxii2 OFF in defaults.yml and the entrypoint-generated config),
+      # gunicorn 22.0.0 (0.9.3 pins 20.0.4 - CVE-2024-1135 request
+      # smuggling), Python 3.10 vs EOL 3.9. Single-arch amd64 image.
+      # renovate: datasource=docker depName=eclecticiq/opentaxii
+      image: eclecticiq/opentaxii:0.10.0b1@sha256:c7b7adc4bd1ee1e9419615e7c56c3f7a2cb5e1e06448b04a6245537c5efe1268
+      container:
+        name: opentaxii
+        port: 9000
+        env:
+          # Entrypoint (docker/entrypoint.sh) generates /tmp/opentaxii.yml
+          # from DATABASE_*/AUTH_DATABASE_*; gunicorn and opentaxii-sync-data
+          # load config from OPENTAXII_CONFIG. The entrypoint's unconditional
+          # `cp -> /opentaxii.yml` fails as uid 1000 - benign (no set -e),
+          # the generated config lives at /tmp/opentaxii.yml instead.
+          - name: OPENTAXII_CONFIG
+            value: /tmp/opentaxii.yml
+          # Advertised TAXII 1 service addresses in discovery responses
+          - name: OPENTAXII_DOMAIN
+            value: opentaxii.opentaxii.svc.cluster.local:9000
+          - name: DATABASE_HOST
+            value: opentaxii-postgres-rw.opentaxii.svc.cluster.local
+          - name: DATABASE_NAME
+            value: opentaxii
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                name: opentaxii-secrets
+                key: username
+          - name: DATABASE_PASS
+            valueFrom:
+              secretKeyRef:
+                name: opentaxii-secrets
+                key: password
+          # Auth tables in the same CNPG database. Without AUTH_DATABASE_HOST
+          # the entrypoint falls back to SQLite at /data (volume not mounted).
+          - name: AUTH_DATABASE_HOST
+            value: opentaxii-postgres-rw.opentaxii.svc.cluster.local
+          - name: AUTH_DATABASE_NAME
+            value: opentaxii
+          # JWT signing secret for /management/auth (0.10 renamed from
+          # OPENTAXII_AUTH_SECRET, which the config loader now ignores)
+          - name: DOCKER_OPENTAXII_AUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: opentaxii-secrets
+                key: auth-secret
+          - name: TZ
+            value: "America/Denver"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      securityContext:
+        # Image default user is root; uid 1000 is sufficient - the entrypoint
+        # only writes /tmp (emptyDir) and reads /input. TAXII 2.1 + TAXII 1
+        # data live in CNPG postgres, /data SQLite is unused.
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      healthChecks:
+        # Built-in management blueprint: GET /management/health -> 200
+        # {"alive": true} (opentaxii/management.py), no auth needed
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /management/health
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /management/health
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /management/health
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+          successThreshold: 1
+
+      service:
+        type: ClusterIP
+        port: 9000
+        targetPort: 9000
+        portName: http
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+        configMap:
+          # TAXII 1.x bootstrap data for the entrypoint's opentaxii-sync-data
+          # run (ConfigMap from kustomization configMapGenerator)
+          - name: data-configuration
+            mountPath: /input/data-configuration.yml
+            subPath: data-configuration.yml
+            readOnly: true
+            configMapName: opentaxii-data-configuration
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/opentaxii-secrets"
+
+    authentik:
+      # No SSO: TAXII clients speak basic auth/token, a proxy would break them
+      enabled: false
+
+    gatus:
+      enabled: true
+      group: security
+      path: /management/health
+
+    httproute:
+      # Internal consumption only (MISP/OpenCTI feeders in-cluster)
+      enabled: false
+
+    postgres:
+      enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+      instances: 1
+      storage:
+        storageClass: longhorn
+        size: 5Gi

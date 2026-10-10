@@ -14,6 +14,7 @@ Applications are organized by functional category:
 - **Management**: Administrative tools and dashboards
 - **Media**: Servers, Arr stack, download clients
 - **Productivity**: Workflow automation, search, notes
+- **Security**: Honeypots and threat-intel feeds
 - **Social**: Community and chat services, field coordination
 
 ## Components
@@ -45,6 +46,10 @@ Plex, Jellyfin, the Arr stack, and download clients.
 ### [Productivity](productivity/README.md)
 
 ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakapi.
+
+### [Security](security/README.md)
+
+OpenCanary honeypot and OpenTAXII TAXII 2.1 server.
 
 ### [Social](social/README.md)
 

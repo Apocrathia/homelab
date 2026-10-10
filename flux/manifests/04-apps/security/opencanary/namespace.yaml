@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opencanary
+  labels:
+    app.kubernetes.io/name: opencanary
+    images/dockerhub: "true"
