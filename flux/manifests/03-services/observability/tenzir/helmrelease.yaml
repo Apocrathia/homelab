@@ -166,10 +166,11 @@ spec:
 
     # Detection content: the homelab TQL mapping package (IaC-installed at
     # /etc/tenzir/packages/homelab) and the sigma rule directories, all
-    # rendered by configMapGenerator in this kustomization. Directory mounts
-    # update in place; sigma hot-reloads from them. Mapping-package changes
-    # additionally roll the pod via the config checksum annotation on any
-    # tenzir.yaml change (bounce the StatefulSet manually otherwise).
+    # rendered by configMapGenerator in this kustomization. Package files
+    # mount file-level (subPath; see extraVolumeMounts for why); sigma rule
+    # dirs stay directory mounts and hot-reload every 30s. subPath does not
+    # see ConfigMap updates, so mapping-package changes need a StatefulSet
+    # bounce (nothing checksum-rolls these ConfigMaps either).
     extraVolumes:
       - name: packages-homelab
         configMap:
@@ -191,18 +192,30 @@ spec:
           name: tenzir-sigma-sigmahq-kubernetes-audit
 
     extraVolumeMounts:
+      # Package files mount file-level: kubelet's atomic ConfigMap writer
+      # keeps ..data/..2026_* internals at every directory-mount root, and
+      # inside the walked package tree they fail Tenzir's operator-path
+      # segment check (SRE-20261010-001 crashloop). subPath binds the single
+      # projected file; kubelet auto-creates parent dirs, and the walked tree
+      # contains only the package files. subPath does not live-propagate
+      # ConfigMap updates — package changes need a pod roll.
       - name: packages-homelab
-        mountPath: /etc/tenzir/packages/homelab
+        mountPath: /etc/tenzir/packages/homelab/package.yaml
+        subPath: package.yaml
         readOnly: true
       - name: packages-homelab-audit-parse
-        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/parse.tql
+        subPath: parse.tql
         readOnly: true
       - name: packages-homelab-ocsf-map
-        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/ocsf
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/ocsf/map.tql
+        subPath: map.tql
         readOnly: true
       - name: packages-homelab-findings-discord
-        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/findings
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/findings/discord.tql
+        subPath: discord.tql
         readOnly: true
+      # Sigma stays directory-mounted to keep the 30s rule hot-reload.
       - name: sigma-own
         mountPath: /etc/tenzir/sigma/own
         readOnly: true
