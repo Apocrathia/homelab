@@ -47,6 +47,18 @@ The overall pattern is `[app].[host].[network].[domain].[tld]`.
   - `password`: Database password
 - **Application-Specific Keys**: Field names vary by app (e.g., `master-key`, `api-key`, `secret-key`)
 
+### Object Storage Credentials
+
+- **Pattern**: S3-compatible object-storage credentials follow two naming rules:
+  1. **Item name**: `<app>-secrets` for consumer credentials; `<server>-root-secrets` for server root identities (e.g., `rustfs-root-secrets`). Never concept- or tooling-named. (`agent-substrate-secrets` is the sanctioned legacy exception — `docs/plans/substrate-dedicated-rustfs.md` decision #8 deliberately keeps it.)
+  2. **Field names**: `access-key-id` / `access-key-secret` wherever the consumption path is a `secretKeyRef` (OnePasswordItem → HelmRelease `valuesFrom`). Env-projecting consumers (kopia, Tenzir `to_s3` — anything on the default AWS credential chain) use `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`, documented inline at the consumer; that is the only sanctioned exception.
+- **Purpose**: Prevent style drift — a 2026-09-11 census found 10 field-name styles for this one concept across the vault and history (census + cleanup checklist: `docs/plans/rustfs-secret-normalization.md`).
+- **Examples**:
+  - `vaults/Secrets/items/loki-secrets` — fields `access-key-id` / `access-key-secret`
+  - `vaults/Secrets/items/kopiur-secrets` — fields `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (+ `KOPIA_PASSWORD`)
+
+New RustFS consumers: follow the runbook at [`docs/infrastructure/rustfs-bucket-user-creation.md`](./infrastructure/rustfs-bucket-user-creation.md).
+
 ## Storage Patterns
 
 ### Longhorn Volumes

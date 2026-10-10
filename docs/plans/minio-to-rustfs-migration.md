@@ -2,7 +2,7 @@
 title: "Migrate NAS MinIO consumers to RustFS"
 status: active
 found_at: 2026-09-07
-updated_at: 2026-09-10
+updated_at: 2026-10-10
 area: storage
 ---
 
@@ -93,7 +93,7 @@ credentials):
 | 3   | Policy shape     | `s3:*` scoped to each app's buckets + objects (JSON below)                                                                                | Telemetry backends need broad CRUD + list + multipart; narrower action lists have caused churn on MinIO in the past. One statement per app.                                                                                                                                                                                                                                                                        |
 | 4   | Cutover order    | Tempo → Loki → Mimir, one app at a time                                                                                                   | Least-queried first (traces), most-queried last (metrics); each step is rollback-able by reverting the endpoint.                                                                                                                                                                                                                                                                                                   |
 | 5   | Data history     | Migrate history per bucket with `rclone copy` over the S3 API (loopback, on the NAS)                                                      | Operator wants history (2026-09-10). File-level moves do NOT work: MinIO and RustFS on-disk formats differ (rustfs#2212 — in-place binary swap is the only file-level path and only for some MinIO configs); on-disk objects are chunked + metadata-wrapped, and RustFS will not register foreign files. API copy is the supported route (RustFS's own migration guide uses mc/rclone).                            |
-| 6   | Root credentials | Rotate after cutover; store in `rustfs-root-secrets`; emergency-only                                                                      | Root was used only for verification. Rename the existing `rustfs-terraform-secrets` item (it holds root in its standard fields and is referenced by nothing now) or create `rustfs-root-secrets` and delete the old item.                                                                                                                                                                                          |
+| 6   | Root credentials | Rotate after cutover; store in `rustfs-root-secrets`; emergency-only                                                                      | Root was used only for verification. Rename the existing `rustfs-terraform-secrets` item (it holds root in its standard fields) to `rustfs-root-secrets` — prep + rename checklist: `docs/plans/rustfs-secret-normalization.md` (the item is also read by the `docs/infrastructure/rustfs-bucket-user-creation.md` scripts; that runbook is updated in the same change).                                           |
 
 ## Steps
 

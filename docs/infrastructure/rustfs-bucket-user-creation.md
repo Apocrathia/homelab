@@ -11,11 +11,12 @@ every RustFS consumer in the homelab.
   admin API on the same port; no TLS on the LAN segment)
 - Build: RustFS `1.0.0-beta.12`, data root `/mnt/Pool/Backup/S3`
   (rustfs-only folder; relocated 2026-09-11 out of the Library SMB share)
-- Root credentials: 1Password item **`rustfs-terraform-secrets`**
-  (`username` / `credential` fields — the pair this runbook's scripts read;
-  the item also carries duplicated `root-access-key` / `root-access-secret`
-  fields with the same shapes, presumably legacy. Both pairs resolve to the
-  same root identity as of 2026-10-10)
+- Root credentials: 1Password item **`rustfs-root-secrets`** (renamed from
+  `rustfs-terraform-secrets`, fields normalized to `access-key-id` /
+  `access-key-secret` — see
+  `docs/plans/rustfs-secret-normalization.md`; the pre-rename item held
+  `username` / `credential` plus duplicated legacy `root-access-*` fields,
+  all collapsed in the same sitting)
 - The web console is **not exposed on the LAN** (only 9009 answers; the
   console default port 9001 has nothing listening). Console access requires
   a port-forward or enabling `RUSTFS_CONSOLE_ADDRESS` on the NAS — see
@@ -34,11 +35,11 @@ cover **query parameters** — the admin API rejects unsigned query strings.
 The `op` CLI (1Password) provides the root credentials:
 
 ```python
-ROOT_AK = subprocess.run(["op","item","get","rustfs-terraform-secrets",
-                          "--fields","username","--reveal"],
+ROOT_AK = subprocess.run(["op","item","get","rustfs-root-secrets",
+                          "--fields","access-key-id","--reveal"],
                          capture_output=True, text=True).stdout.strip()
-ROOT_SK = subprocess.run(["op","item","get","rustfs-terraform-secrets",
-                          "--fields","credential","--reveal"],
+ROOT_SK = subprocess.run(["op","item","get","rustfs-root-secrets",
+                          "--fields","access-key-secret","--reveal"],
                          capture_output=True, text=True).stdout.strip()
 ```
 
