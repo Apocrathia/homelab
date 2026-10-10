@@ -1,0 +1,142 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: harness-groomer
+  namespace: agent-tasks
+  annotations:
+    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
+spec:
+  # Weekly, Monday 09:00 UTC (03:00 America/Denver MDT) — off-peak for the operator.
+  schedule: "0 9 * * 1"
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      # No retries: a retried Job re-sends the a2a message and spawns a second
+      # groom session while the first still runs detached on prime-agent;
+      # concurrent harness_state.json edits defeat the backup discipline.
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: harness-groomer
+        spec:
+          serviceAccountName: harness-groomer
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: install-deps
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:be8ccd085666c34273c9dc5607c9842f8b2e3116128aae45148ce164c07ce09d
+              env:
+                - name: HOME
+                  value: /tmp
+                - name: UV_CACHE_DIR
+                  value: /tmp/uv-cache
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  python -m pip install --no-cache-dir uv
+                  python -m uv export --frozen --no-dev --directory=/scripts -o /tmp/req.txt
+                  python -m uv pip install --target=/deps --no-cache -r /tmp/req.txt
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                seccompProfile:
+                  type: RuntimeDefault
+                capabilities:
+                  drop:
+                    - ALL
+          containers:
+            - name: groomer
+              # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+              image: public.ecr.aws/docker/library/python:3.14@sha256:be8ccd085666c34273c9dc5607c9842f8b2e3116128aae45148ce164c07ce09d
+              command:
+                - python
+                - /scripts/invoke.py
+              env:
+                - name: PYTHONPATH
+                  value: /deps
+                - name: PROMPT_PATH
+                  value: /scripts/task.md
+                - name: HTTP_TIMEOUT_S
+                  value: "300"
+                - name: POLL_INTERVAL_S
+                  value: "30"
+                # server.mjs answers message/send with `working` after 120s;
+                # 35 min of tasks/get polling stays under the 3600s job cap.
+                - name: POLL_DEADLINE_S
+                  value: "2100"
+                # Direct in-cluster prime-agent Service (bypasses the kagent
+                # broker): the a2a webhook, fail-closed bearer auth.
+                - name: A2A_URL
+                  value: http://prime-agent.prime-agent.svc.cluster.local:8080
+                - name: A2A_BEARER_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: harness-groomer-secrets
+                      key: a2a-webhook-token
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+                limits:
+                  cpu: "1"
+                  memory: 512Mi
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                seccompProfile:
+                  type: RuntimeDefault
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: deps
+                  mountPath: /deps
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: harness-groomer-scripts
+            - name: deps
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}

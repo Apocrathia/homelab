@@ -21,6 +21,10 @@ Scheduled task templates and wires for invoking A2A agents on a fixed cadence.
   go/no-go; posts the daily triage digest to Discord `#notifications`.
   Merge line is `MERGE_UPDATE_TYPES` (`digest,patch,minor`); majors and
   infra-class deps (talos/siderolabs included) are never auto-merged.
+- `harness-groomer/` — suspended weekly CronJob (`0 9 * * 1`): sends **one**
+  A2A message into the deployed prime-agent (direct Service, not the kagent
+  broker) to groom its own harness store (mechanical fixes, memory
+  classification, report on the PVC). Unsuspend when ready.
 
 Defaults stay safe for testing: `suspend: true`, `concurrencyPolicy: Forbid`,
 and minimal runtime permissions.

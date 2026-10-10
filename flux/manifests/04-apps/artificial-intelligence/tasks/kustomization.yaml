@@ -11,3 +11,4 @@ resources:
   - alert-agent-invoke
   - dependency-review
   - dependency-merge
+  - harness-groomer
