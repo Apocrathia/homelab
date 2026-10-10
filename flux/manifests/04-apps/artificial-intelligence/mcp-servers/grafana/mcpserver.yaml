@@ -24,6 +24,19 @@ spec:
       - --debug
     env:
       GRAFANA_URL: http://kube-prometheus-stack-grafana.prometheus-system.svc.cluster.local
+      # Default identity: the mcp-server GrafanaServiceAccount token, mirrored
+      # into this namespace by External Secrets and mounted below. Read fresh
+      # per request, so token rotation needs no pod restart. Per-request
+      # X-Grafana-Service-Account-Token / X-Grafana-API-Key headers still win.
+      GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE: /var/run/secrets/grafana/token
+    volumes:
+      - name: grafana-token
+        secret:
+          secretName: mcp-server-token
+    volumeMounts:
+      - name: grafana-token
+        mountPath: /var/run/secrets/grafana
+        readOnly: true
     resources:
       limits:
         cpu: "200m"
