@@ -115,6 +115,9 @@ extraArgs:
   # Audit optimization to reduce overhead
   audit-log-maxbackup: "3" # Reduce from default 10
   audit-log-maxsize: "50" # Reduce from default 100MB
+  # 1.14 no longer auto-derives the audit file backend from the policy doc
+  # (v1alpha1 did); without this the apiserver runs the policy with no log.
+  audit-log-path: "/var/log/kube-apiserver/audit.log"
   # Goaway chance to force client reconnection distribution
   # Helps prevent thundering herd on single API server
   goaway-chance: "0.01"
