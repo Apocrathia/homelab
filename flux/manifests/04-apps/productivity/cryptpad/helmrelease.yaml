@@ -69,7 +69,7 @@ spec:
             - |
               set -eu
               # renovate: datasource=github-releases depName=cryptpad/sso
-              SSO_PLUGIN_VERSION="0.6.0"
+              SSO_PLUGIN_VERSION="1.0.0"
               wget -qO- "https://codeload.github.com/cryptpad/sso/tar.gz/refs/tags/${SSO_PLUGIN_VERSION}" \
                 | tar xz -C /plugins --strip-components=1
           securityContext:
