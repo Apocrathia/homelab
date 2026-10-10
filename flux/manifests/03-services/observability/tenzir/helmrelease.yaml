@@ -1,0 +1,211 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node
+  namespace: tenzir-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.18.1
+
+    # One standalone node: no Tenzir Platform. The chart schema requires a
+    # token (see secret `tenzir-node-token`); an empty one keeps the node
+    # platform-less.
+    nodes:
+      - name: default
+        token:
+          existingSecret: tenzir-node-token
+        # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
+        # kube-audit-tailer pushes OTLP/HTTP at tenzir-node-default:4318.
+        extraPorts:
+          - name: otlp-grpc
+            containerPort: 4317
+          - name: otlp-http
+            containerPort: 4318
+
+    persistence:
+      size: 8Gi
+
+    # Node configuration (renders to the tenzir-node-default-config ConfigMap
+    # and rolls the pod on change). Nothing secret may live here: values land
+    # in a ConfigMap in plaintext. Secrets arrive via extraEnv below.
+    tenzir:
+      config:
+        tenzir:
+          package-dirs:
+            - /etc/tenzir/packages
+          start:
+            # Hard quota on the 8Gi PVC: erase oldest data past 7GiB, down to
+            # 6GiB. Edge storage is the 14d detection horizon, not a record.
+            disk-budget-high: 7GiB
+            disk-budget-low: 6GiB
+          pipelines:
+            k8s-audit-ingest-http:
+              name: k8s-audit ingest (otlp/http)
+              description: |
+                OTLP/HTTP listener for the kube-audit-tailer. Unpacks audit
+                JSON bodies onto the k8s-audit.raw topic.
+              definition: |
+                accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
+              restart-on-error: 1 minute
+            k8s-audit-ingest-grpc:
+              name: k8s-audit ingest (otlp/grpc)
+              description: |
+                OTLP/gRPC listener for future OTLP-native senders.
+              definition: |
+                accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
+              restart-on-error: 1 minute
+            k8s-audit-ocsf:
+              name: k8s-audit ocsf mapping
+              description: |
+                k8s audit -> OCSF API Activity (6003) with Loki provenance,
+                then derive + schema-validate and store in the node.
+              definition: |
+                subscribe "k8s-audit.raw"
+                homelab::k8s::audit::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf.k8s-audit"
+              restart-on-error: 1 minute
+            k8s-audit-sigma:
+              name: k8s-audit sigma detection
+              description: |
+                SigmaHQ kubernetes/audit rules + own starters, evaluated with
+                direct field matching on the raw audit schema (the SigmaHQ
+                kubernetes corpus names raw audit fields; it is not in the
+                OCSF projection catalog). Hot-reloads every 30s.
+              definition: |
+                subscribe "k8s-audit.raw"
+                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/own"], mapping="direct", refresh_interval=30s
+                publish "detections.sigma"
+              restart-on-error: 1 minute
+            findings-discord:
+              name: findings to discord
+              description: |
+                OCSF Detection Findings (2004) -> Discord embed, one POST per
+                finding, with the raw-Loki evidence pivot.
+              definition: |
+                subscribe "detections.sigma"
+                each {
+                  from $this
+                  homelab::k8s::audit::findings::discord
+                  to_http secret("discord-webhook-url"), buffer_all=true { write_json }
+                }
+              restart-on-error: 1 minute
+        plugins:
+          compaction:
+            time:
+              interval: 1 day
+              rules:
+                # Archive: after 14d in edge storage, export OCSF API Activity
+                # events as parquet to the rustfs `tenzir` bucket and consume
+                # the originals. Event-time is the OCSF `time` field.
+                - after: 14 days
+                  name: k8s-audit-archive
+                  field: time
+                  types: ["ocsf.api_activity"]
+                  pipeline: |
+                    to_s3 "s3://tenzir/ocsf/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      write_parquet
+                    }
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 384Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+    # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
+    # default AWS chain used by to_s3, plus the Discord webhook as a Tenzir
+    # managed secret named `discord-webhook-url` (TENZIR_SECRETS__ map).
+    extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: AWS_ACCESS_KEY_ID
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: AWS_SECRET_ACCESS_KEY
+      - name: TENZIR_SECRETS__DISCORD_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: DISCORD_WEBHOOK_URL
+
+    # Detection content: the homelab TQL mapping package (IaC-installed at
+    # /etc/tenzir/packages/homelab) and the sigma rule directories, all
+    # rendered by configMapGenerator in this kustomization. Directory mounts
+    # update in place; sigma hot-reloads from them. Mapping-package changes
+    # additionally roll the pod via the config checksum annotation on any
+    # tenzir.yaml change (bounce the StatefulSet manually otherwise).
+    extraVolumes:
+      - name: packages-homelab
+        configMap:
+          name: tenzir-packages-homelab
+      - name: packages-homelab-audit-parse
+        configMap:
+          name: tenzir-packages-homelab-audit-parse
+      - name: packages-homelab-ocsf-map
+        configMap:
+          name: tenzir-packages-homelab-ocsf-map
+      - name: packages-homelab-findings-discord
+        configMap:
+          name: tenzir-packages-homelab-findings-discord
+      - name: sigma-own
+        configMap:
+          name: tenzir-sigma-own
+      - name: sigma-sigmahq-kubernetes-audit
+        configMap:
+          name: tenzir-sigma-sigmahq-kubernetes-audit
+
+    extraVolumeMounts:
+      - name: packages-homelab
+        mountPath: /etc/tenzir/packages/homelab
+        readOnly: true
+      - name: packages-homelab-audit-parse
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit
+        readOnly: true
+      - name: packages-homelab-ocsf-map
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/ocsf
+        readOnly: true
+      - name: packages-homelab-findings-discord
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/findings
+        readOnly: true
+      - name: sigma-own
+        mountPath: /etc/tenzir/sigma/own
+        readOnly: true
+      - name: sigma-sigmahq-kubernetes-audit
+        mountPath: /etc/tenzir/sigma/sigmahq/kubernetes-audit
+        readOnly: true

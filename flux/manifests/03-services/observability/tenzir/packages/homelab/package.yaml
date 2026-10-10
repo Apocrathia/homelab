@@ -1,0 +1,8 @@
+---
+id: homelab
+name: homelab
+categories:
+  - mappings
+description: |
+  Homelab detection-plane content: k8s audit -> OCSF mapping, provenance
+  stamping, and finding formatting for the Tenzir detection node.

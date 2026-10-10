@@ -1,0 +1,102 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-audit-tailer
+  namespace: kube-audit-tailer-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: alloy
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=alloy
+      version: "1.13.1"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # No Service: the tailer only pushes to Loki and Tenzir.
+    service:
+      enabled: false
+
+    # otelcol.receiver.filelog is public-preview, below the chart's default
+    # minimum, so raise the minimum to public-preview.
+    controller:
+      type: daemonset
+      # The alloy chart reads scheduling keys only under controller: — values
+      # at the root are ignored.
+      # Control planes only (audit.log does not exist on workers). This cluster
+      # runs control-plane-only, so this is 4/4 nodes.
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      # No tolerations needed: allowSchedulingOnControlPlanes untaints the nodes.
+      tolerations: []
+      # Writable WAL/offsets dir for the read-only root filesystem, mirroring
+      # the shared alloy release. The audit-log hostPath backs the
+      # kube-apiserver-audit mount below (read-only at the volumeMount).
+      volumes:
+        extra:
+          - name: alloy-wal
+            emptyDir: {}
+          - name: kube-apiserver-audit
+            hostPath:
+              path: /var/log/kube-apiserver
+
+    alloy:
+      stabilityLevel: public-preview
+      # No HTTP server port: the internal listener binds loopback for the
+      # config-reloader only (chart-supported: drops the containerPort and
+      # the readiness probe).
+      enableHttpServerPort: false
+      listenAddr: 127.0.0.1
+      configMap:
+        create: false
+        name: kube-audit-tailer-config
+        key: config.alloy
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      # Root is required to read audit.log (0600 root-owned, 0700 dir).
+      # Scope of privilege: one read-only hostPath volume. All capabilities
+      # dropped, no privilege escalation, read-only root filesystem.
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      mounts:
+        extra:
+          - name: alloy-wal
+            mountPath: /tmp/alloy
+          - name: kube-apiserver-audit
+            mountPath: /var/log/kube-apiserver
+            readOnly: true
+
+    global:
+      podSecurityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+
+    rbac:
+      create: false
+
+    serviceAccount:
+      create: true
+      annotations: {}
+      # Zero-RBAC tailer: no token ever mounted into the pod.
+      automountServiceAccountToken: false

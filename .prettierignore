@@ -15,3 +15,8 @@ helm/**/templates/*.yaml
 # truth (.scratch/prime-webui/) — hash-verified syncs, formatting churn breaks
 # every slice landing. README/config stay prettier-clean.
 flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/*
+
+# Vendored SigmaHQ rules: byte-identical copies from the third-party/sigmahq
+# submodule at the pinned gitlink — re-copy on rule updates, never reformat.
+# (Same rationale as the webui exemption above.)
+flux/manifests/03-services/observability/tenzir/sigma/sigmahq/**

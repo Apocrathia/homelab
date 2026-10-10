@@ -27,6 +27,7 @@ resources:
   - qdrant.yaml
   - renovate-operator.yaml
   - tailscale.yaml
+  - tenzir.yaml
   - tracearr.yaml
   - external-dns.yaml
   - external-secrets.yaml

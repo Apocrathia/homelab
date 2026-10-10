@@ -1,0 +1,7 @@
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+node = "talos-01"
+homelab::k8s::audit::ocsf::map
+ocsf_derive
+ocsf_cast

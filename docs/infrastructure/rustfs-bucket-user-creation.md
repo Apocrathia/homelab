@@ -5,14 +5,17 @@ Use this when an app needs **new object storage** on the NAS RustFS instance
 recreate one after an incident. This is the standard onboarding path for
 every RustFS consumer in the homelab.
 
-## Facts (verified 2026-09-10/11)
+## Facts (verified 2026-09-10/11; re-verified 2026-10-10 on the `tenzir` onboarding — all four API calls 200, scoping battery green)
 
 - Endpoint: `http://storage.services.apocrathia.com:9009` (S3 API **and**
   admin API on the same port; no TLS on the LAN segment)
 - Build: RustFS `1.0.0-beta.12`, data root `/mnt/Pool/Backup/S3`
   (rustfs-only folder; relocated 2026-09-11 out of the Library SMB share)
 - Root credentials: 1Password item **`rustfs-terraform-secrets`**
-  (`username` / `credential` fields)
+  (`username` / `credential` fields — the pair this runbook's scripts read;
+  the item also carries duplicated `root-access-key` / `root-access-secret`
+  fields with the same shapes, presumably legacy. Both pairs resolve to the
+  same root identity as of 2026-10-10)
 - The web console is **not exposed on the LAN** (only 9009 answers; the
   console default port 9001 has nothing listening). Console access requires
   a port-forward or enabling `RUSTFS_CONSOLE_ADDRESS` on the NAS — see
@@ -108,6 +111,21 @@ and secret; store them in a **1Password item** named `<name>-secrets` with
 fields `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (plus any app-specific
 field like `KOPIA_PASSWORD` — that one is client-side encryption, RustFS
 never sees it).
+
+Convention from the 2026-10-10 `tenzir` run: prefix the access key with the
+consumer name uppercased (`TENZIR…`) so access keys are self-identifying in
+logs; alnum-only secret (40 chars) avoids any signing edge cases.
+
+Agents can write the keypair directly into the vault item from the host
+session — no operator copy step needed (verified 2026-10-10):
+
+```bash
+op item edit <name>-secrets "AWS_ACCESS_KEY_ID=<access_key>" "AWS_SECRET_ACCESS_KEY=<secret>"
+```
+
+The secret then never transits chat or files. Verify the item carries all
+expected fields with a label-only read (`op item get <name>-secrets
+--format json`, check field labels + value lengths only).
 
 ### 4. Attach the policy to the user (admin API)
 

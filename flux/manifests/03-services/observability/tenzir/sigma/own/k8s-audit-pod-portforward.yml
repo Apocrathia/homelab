@@ -1,0 +1,24 @@
+---
+title: Kubernetes Pod Port-Forward Started
+id: 5e4b8c2f-9a15-4736-8b1d-3c6d7e2f0002
+status: experimental
+description: |
+  A user opened a port-forward tunnel to a pod. Useful pivot for data
+  exfiltration and bypassing ingress controls in a home cluster.
+references:
+  - https://microsoft.github.io/Threat-Matrix-for-Kubernetes/techniques/Port%20Forwarding/
+author: homelab
+date: 2026-10-14
+logsource:
+  category: application
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    verb: create
+    objectRef.resource: pods
+    objectRef.subresource: portforward
+  condition: selection
+falsepositives:
+  - Legitimate debugging of a local service.
+level: medium
