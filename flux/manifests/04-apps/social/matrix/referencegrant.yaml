@@ -1,0 +1,20 @@
+---
+# Lets Gateways in cilium-system (main-gateway / tailnet-gateway)
+# reference the matrix TLS secret in this namespace, so the in-tree
+# https-matrix listeners on those gateways (gateway.yaml /
+# tailnet-gateway.yaml) can present certificate.yaml for the
+# matrix-apocrathia-com HTTPRoute.
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: gateway-tls
+  namespace: matrix
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: cilium-system
+  to:
+    - group: ""
+      kind: Secret
+      name: matrix-apocrathia-com-tls

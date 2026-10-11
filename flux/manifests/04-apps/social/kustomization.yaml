@@ -8,6 +8,7 @@ metadata:
 resources:
   - hypermind
   - lemmy
+  - matrix
   - mumble
   - tak
   - thelounge

@@ -1,0 +1,92 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: matrix
+spec:
+  # Scoped Authentik service-account token (operator-owned 1Password
+  # item); the OnePassword Connect operator syncs it as the Secret the
+  # ProviderConfig below consumes. Never a bare managed Secret.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: matrix-authentik
+  namespace: matrix
+spec:
+  # Materializes the token Secret as a file in the tofu workdir; the
+  # module reads it with file("authentik-token").
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: matrix
+        key: authentik-terraform-token
+  # Per-app state for the module's PARTIAL kubernetes backend; the state
+  # Secret is tfstate-matrix-matrix in this namespace.
+  backendFile: |
+    secret_suffix     = "matrix"
+    namespace         = "matrix"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: matrix-authentik
+  namespace: matrix
+spec:
+  # Prune guard - without the Delete action a GitOps prune of this
+  # object releases the finalizer WITHOUT running tofu destroy, so the
+  # live authentik stack survives a removed manifest (headlamp pattern).
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: matrix-authentik
+  forProvider:
+    source: Remote
+    # Shared authentik-app module as root config; pinned to the current
+    # generic-app chart release tag by hand (no renovate manager matches
+    # git:: refs).
+    module: "git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-0.0.86"
+    remotePullPolicy: IfNotPresent
+    # Hand-written varmap (standalone-workspace pattern; variable
+    # contract: terraform/modules/authentik-app/variables.tf). OIDC mode:
+    # MAS is the OAuth2 client of this provider. admins-only binding
+    # (shared: false) - the Matrix access gate; friends arrive via
+    # federation later, not tailnet SSO.
+    varmap:
+      app_name: "matrix"
+      display_name: "Matrix"
+      mode: "oidc"
+      shared: false
+      tailnet: false
+      external_host: "https://matrix.gateway.services.apocrathia.com"
+      sso_launch_url: "https://matrix.gateway.services.apocrathia.com/"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/matrix/icon.svg"
+      category: "Social"
+      authorization_flow: "default-provider-authorization-implicit-consent"
+      invalidation_flow: "default-invalidation-flow"
+      authentication_flow: "default-authentication-flow"
+      meta_description: "Matrix homeserver (Synapse) with SSO via Matrix Authentication Service"
+      meta_publisher: "Matrix"
+      oidc_client_id: "matrix"
+      client_type: "confidential"
+      sub_mode: "user_username"
+      include_claims_in_id_token: true
+      issuer_mode: "per_provider"
+      signing_key: "authentik Self-signed Certificate"
+      access_code_validity: "minutes=1"
+      access_token_validity: "minutes=5"
+      refresh_token_validity: "days=30"
+      scopes: ["openid", "email", "profile"]
+      redirect_uris:
+        # Same provider ULID as mas-config.yaml upstream_oauth2: the
+        # callback path embeds it on both sides.
+        - url: "https://matrix.gateway.services.apocrathia.com/upstream/callback/01M4M3KRKC5A5BWMTGAXXRGYEP"
+          matching_mode: "strict"
