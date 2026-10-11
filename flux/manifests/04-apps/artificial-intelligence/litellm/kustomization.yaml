@@ -8,7 +8,9 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
+  - backup-secret.yaml
   - postgres.yaml
+  - scheduled-backup.yaml
   - valkey.yaml
   - podmonitor.yaml
   - helmrelease.yaml

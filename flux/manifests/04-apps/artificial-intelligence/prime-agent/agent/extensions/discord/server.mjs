@@ -3722,11 +3722,16 @@ async function onThreadPromote(body) {
 // saw an answer to an unseen question. The beacon relays exactly that input
 // (the pi `input` event minus everything that arrived via the bot's own /send
 // — that text IS a Discord message already) to /internal/relay, and this
-// handler posts it on the conversation's surface with a provenance tag.
+// handler posts it on the conversation's surface attributed to the speaker.
+// Payload contract: { sessionId: string, text: string, source?: string,
+// speaker?: string } — `speaker?` is forward-compat for a future agent-origin
+// relay path (e.g. A2A); the beacon never sends it today, and a missing
+// speaker renders as "the operator".
 // The agent transcript keeps exactly ONE copy (the session's own write):
 // this path never dispatches — the relay handler holds no dispatch call, and
 // the bot's own surface posts are dropped by the admission ladder's self gate
 // (gate 2) even if the gateway echoed them back.
+const SOURCE_LABELS = { interactive: "tui", rpc: "cli", extension: "webui" }; // pi input sources -> the client the surface reader knows
 async function onRelayExternal(body) {
   const sessionId = String(body?.sessionId ?? "");
   const text = typeof body?.text === "string" ? body.text : "";
@@ -3761,14 +3766,13 @@ async function onRelayExternal(body) {
           "no surface channel known for this conversation yet — nothing to relay onto",
       },
     };
-  const label = ["interactive", "rpc"].includes(String(body?.source ?? ""))
-    ? "tui"
-    : String(body?.source ?? "") || "external"; // the pi input sources: interactive/rpc are both the operator's non-Discord clients; anything else names itself
-  const delivered = await postRelayChunks(
-    channelId,
-    `*(via ${label}):*\n${text}`,
-    cfg,
-  );
+  const source = String(body?.source ?? "");
+  const label = (SOURCE_LABELS[source] || source || "external").slice(0, 80); // the pi input sources: interactive/rpc are the operator's TUI/CLI clients, extension is the webui composer; anything else names itself — clamped at the payload boundary so a hostile source can't eat the header budget
+  const speaker = (
+    (typeof body?.speaker === "string" ? body.speaker : "").trim() ||
+    "the operator"
+  ).slice(0, 80); // all current sources are the operator — the admission ladder gates conversations to the operator's users; an explicit speaker (future agent-origin relay, e.g. A2A) names itself, same clamp
+  const delivered = await postRelayChunks(channelId, text, speaker, label, cfg);
   if (delivered > 0)
     log(
       `relay: conv ${convKey}: ${delivered} message(s) landed on the surface (via ${label})`,
@@ -3782,13 +3786,47 @@ async function onRelayExternal(body) {
 }
 // the finalize split discipline, minus the ack/preview machinery: chunked,
 // flood-capped, paced, reference-free (2026-09-24 operator rule). Display-only — never dispatches.
-async function postRelayChunks(channelId, content, cfg) {
-  let chunks = splitChunks(String(content), SPLIT_THRESHOLD);
+// Relay shape (relay-quoting lap): the speaker's words, never the agent's own —
+// a bold attribution header + the text as a Discord blockquote. The RAW text
+// splits first and the "> " prefix applies per chunk (the header rides chunk 1
+// only), so every chunk of a long relay reads as quoted speech.
+function quoteRelay(raw) {
+  return raw
+    .split("\n")
+    .map((ln) => (ln.length ? "> " + ln : ">")) // a blank line becomes a bare ">" — the prefix alone keeps the quote block continuous instead of ending it
+    .join("\n");
+}
+function relayQuotePieces(text, header) {
+  const out = [];
+  for (const raw of splitChunks(String(text), SPLIT_THRESHOLD - 300)) {
+    // 300 = quote budget: the "> " prefix costs <= 2/line and chunk 1 rides the header — a normal chunk fits under the cap with room to spare
+    let rest = raw;
+    while (rest) {
+      const head = out.length ? "" : header + "\n";
+      const quoted = quoteRelay(rest);
+      if (head.length + quoted.length <= SPLIT_THRESHOLD) {
+        out.push(head + quoted);
+        break;
+      }
+      // a blank-line wall quotes to ~2x its raw size — hard-fit the rest at the worst-case bound and quote on
+      const cut = Math.max(
+        1,
+        Math.floor((SPLIT_THRESHOLD - head.length - 1) / 2),
+      );
+      out.push(head + quoteRelay(rest.slice(0, cut)));
+      rest = rest.slice(cut);
+    }
+  }
+  return out;
+}
+async function postRelayChunks(channelId, text, speaker, label, cfg) {
+  const header = `**From ${speaker} (via ${label}):**`;
+  let chunks = relayQuotePieces(text, header);
   if (chunks.length > cfg.max_splits) {
     // the finalize flood cap — same discipline, same notice
     chunks = chunks.slice(0, cfg.max_splits);
     const notice =
-      "\n\n*(output truncated — full text is in the agent session)*";
+      "\n\n*(output truncated — full text is in the agent session)*"; // its own unquoted line AFTER the quote block — the bot's own speech, never the speaker's
     chunks[chunks.length - 1] =
       chunks[chunks.length - 1].slice(0, SPLIT_THRESHOLD - notice.length) +
       notice;
@@ -9965,7 +10003,8 @@ async function smoke() {
         sent.some(
           (s) =>
             s.channelId === "chan-relay" &&
-            s.content === "*(via tui):*\ntyped from the tui",
+            s.content ===
+              "**From the operator (via tui):**\n> typed from the tui",
         ),
       );
       check(
@@ -9975,7 +10014,8 @@ async function smoke() {
           sent.some(
             (s) =>
               s.channelId === "chan-relay" &&
-              s.content === "*(via tui):*\ntyped from the tui" &&
+              s.content ===
+                "**From the operator (via tui):**\n> typed from the tui" &&
               s.opts.replyTo == null,
           ),
         JSON.stringify({
@@ -10060,6 +10100,124 @@ async function smoke() {
           delete process.env.DISCORD_RELAY_EXTERNAL;
         else process.env.DISCORD_RELAY_EXTERNAL = relayEnvPrev;
       }
+      // (e) the blockquote shape: multi-line input renders ONE continuous quote — a blank line keeps the block alive as a bare ">"
+      await handlers.input({
+        text: "quote line one\n\nquote line two",
+        source: "interactive",
+      });
+      check(
+        "relay: multi-line input renders one continuous blockquote — the blank line becomes a bare '>' between quoted lines",
+        await until(() =>
+          sent.some(
+            (s) =>
+              s.channelId === "chan-relay" &&
+              s.content ===
+                "**From the operator (via tui):**\n> quote line one\n>\n> quote line two",
+          ),
+        ),
+        JSON.stringify({
+          posts: sent
+            .filter((s) => s.channelId === "chan-relay")
+            .map((s) => s.content),
+        }),
+      );
+      // (f) the payload contract: an explicit speaker rides the header, and the source map names the client (extension -> webui)
+      const respSpk = await ctl("/internal/relay", {
+        method: "POST",
+        headers: hdr,
+        body: JSON.stringify({
+          sessionId: "smoke-session-1",
+          text: "typed in the webui",
+          source: "extension",
+          speaker: "hermes-agent",
+        }),
+      });
+      check(
+        "relay: an explicit speaker rides the attribution header — 'From hermes-agent (via webui)' with the text quoted",
+        respSpk.status === 200 &&
+          sent.some(
+            (s) =>
+              s.channelId === "chan-relay" &&
+              s.content ===
+                "**From hermes-agent (via webui):**\n> typed in the webui",
+          ),
+        JSON.stringify({
+          status: respSpk.status,
+          posts: sent
+            .filter((s) => s.channelId === "chan-relay")
+            .map((s) => s.content),
+        }),
+      );
+      // (g) the source map's rpc leg + the missing-speaker default: rpc -> cli, header names "the operator"
+      const respCli = await ctl("/internal/relay", {
+        method: "POST",
+        headers: hdr,
+        body: JSON.stringify({
+          sessionId: "smoke-session-1",
+          text: "typed at the cli",
+          source: "rpc",
+        }),
+      });
+      check(
+        "relay: rpc names the client cli and a missing speaker defaults to 'the operator'",
+        respCli.status === 200 &&
+          sent.some(
+            (s) =>
+              s.channelId === "chan-relay" &&
+              s.content ===
+                "**From the operator (via cli):**\n> typed at the cli",
+          ),
+        JSON.stringify({
+          status: respCli.status,
+          posts: sent
+            .filter((s) => s.channelId === "chan-relay")
+            .map((s) => s.content),
+        }),
+      );
+      // (h) max_splits truncation: the notice lands OUTSIDE the quote block — its own unquoted line, the bot's own speech
+      const trNotice =
+        "*(output truncated — full text is in the agent session)*";
+      const pacePrevTr = process.env.DISCORD_SEND_PACE_MS;
+      const splitsPrev = process.env.DISCORD_MAX_SPLITS;
+      process.env.DISCORD_SEND_PACE_MS = "10"; // two capped chunks ride one pace gap — keep it fast like (d)
+      process.env.DISCORD_MAX_SPLITS = "2"; // deterministic: 4 raw pieces -> capped at 2 -> the notice rides the tail
+      try {
+        const postsBeforeTr = sent.filter(
+          (s) => s.channelId === "chan-relay",
+        ).length;
+        const respTr = await ctl("/internal/relay", {
+          method: "POST",
+          headers: hdr,
+          body: JSON.stringify({
+            sessionId: "smoke-session-1",
+            text: "truncation drive: " + "z".repeat(6000),
+            source: "interactive",
+          }),
+        });
+        const trPosts = sent
+          .filter((s) => s.channelId === "chan-relay")
+          .slice(postsBeforeTr);
+        const tail = trPosts[trPosts.length - 1]?.content ?? "";
+        const tailLines = tail.split("\n");
+        check(
+          "relay: the max_splits truncation notice lands outside the quote block — its own unquoted line after a blank separator",
+          respTr.status === 200 &&
+            trPosts.length === 2 &&
+            tailLines[tailLines.length - 1] === trNotice &&
+            tailLines[tailLines.length - 2] === "" &&
+            !tailLines[tailLines.length - 1].startsWith("> "),
+          JSON.stringify({
+            status: respTr.status,
+            count: trPosts.length,
+            tail: tail.slice(-120),
+          }),
+        );
+      } finally {
+        if (pacePrevTr === undefined) delete process.env.DISCORD_SEND_PACE_MS;
+        else process.env.DISCORD_SEND_PACE_MS = pacePrevTr;
+        if (splitsPrev === undefined) delete process.env.DISCORD_MAX_SPLITS;
+        else process.env.DISCORD_MAX_SPLITS = splitsPrev;
+      }
       // route shape: 401 without token, 400 bad payload, 409 unrouted session (the /internal/thread shapes)
       let respRelay = await ctl("/internal/relay", {
         method: "POST",
@@ -10112,11 +10270,14 @@ async function smoke() {
         .filter((s) => s.channelId === "chan-relay")
         .slice(postsBeforeLong);
       check(
-        "relay: long input splits — chunk 1 carries the attribution header, every chunk <= SPLIT_THRESHOLD, every chunk posts PLAIN (2026-09-24 operator rule: a relay block references nothing)",
+        "relay: long input splits — chunk 1 carries the attribution header (rpc -> cli), every later chunk stays quoted (a '> ' head), every chunk <= SPLIT_THRESHOLD, every chunk posts PLAIN (2026-09-24 operator rule: a relay block references nothing)",
         longOk &&
           longPosts.length >= 3 &&
           longPosts.every((s) => s.content.length <= SPLIT_THRESHOLD) &&
-          longPosts[0]?.content.startsWith("*(via tui):*\n") &&
+          longPosts[0]?.content.startsWith(
+            "**From the operator (via cli):**\n",
+          ) &&
+          longPosts.slice(1).every((s) => s.content.startsWith("> ")) &&
           longPosts.every((s) => s.opts.replyTo == null),
         JSON.stringify({
           count: longPosts.length,

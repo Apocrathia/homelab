@@ -1,0 +1,13 @@
+---
+# Overridable defaults; prefer inventory/group_vars for site-wide values.
+#
+# "latest" tracks GitHub releases/latest at apply time (the nightly drift
+# job pulls the host forward without a repo change); set a bare concrete
+# version (e.g. "0.32.13") to pin or roll back — the value is passed to
+# install.sh as OLLAMA_VERSION (bare form only; a "v" prefix 404s).
+ollama_version: "latest"
+
+# Official installer — it owns the whole install: ollama user/groups,
+# /usr/local/lib/ollama (CPU + CUDA + Vulkan), the ROCm overlay on AMD
+# GPUs (lspci detection), and the systemd unit. The role never templates it.
+ollama_install_script_url: "https://ollama.com/install.sh"

@@ -1,0 +1,10 @@
+---
+# ollama hosts: official install.sh deployment with a drift-gated
+# self-update (the nightly ansible-drift job pulls each host to the
+# latest GitHub release; pin ollama_version to hold it back).
+- name: Configure ollama
+  hosts: ollama
+  gather_facts: true
+  become: true
+  roles:
+    - role: ollama

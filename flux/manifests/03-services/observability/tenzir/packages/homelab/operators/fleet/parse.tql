@@ -1,0 +1,11 @@
+---
+description: |
+  Fleet osquery result-webhook envelope -> result rows. The fleet result
+  webhook plugin POSTs {timestamp, details: [<raw osquery rows>]}; the
+  envelope timestamp is redundant (rows carry their own unixTime) and the
+  details rows are the raw osquery results, in either snapshot or
+  differential shape.
+---
+
+unroll details
+this = details

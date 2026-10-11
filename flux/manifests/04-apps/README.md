@@ -14,7 +14,7 @@ Applications are organized by functional category:
 - **Management**: Administrative tools and dashboards
 - **Media**: Servers, Arr stack, download clients
 - **Productivity**: Workflow automation, search, notes
-- **Security**: Honeypots and threat-intel feeds
+- **Security**: Threat-intel platforms, honeypot, TAXII feeds
 - **Social**: Community and chat services, field coordination
 
 ## Components
@@ -49,7 +49,7 @@ ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakap
 
 ### [Security](security/README.md)
 
-OpenCanary honeypot and OpenTAXII TAXII 2.1 server.
+MISP and OpenCTI threat-intel platforms, OpenCanary honeypot, OpenTAXII TAXII 2.1 feeds.
 
 ### [Social](social/README.md)
 

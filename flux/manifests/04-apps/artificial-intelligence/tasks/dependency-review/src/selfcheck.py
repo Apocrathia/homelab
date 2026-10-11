@@ -68,3 +68,15 @@ assert inv.ALLOWED_FLAGS <= set(inv.ALL_AGENT_LABELS)
 assert "agent-review:regression" not in inv.ALLOWED_FLAGS
 assert "agent-review:source-mismatch" not in inv.ALLOWED_FLAGS
 print("FLAG WHITELIST CHECKS PASS")
+
+# pick_review_note: finds the sweep-owned note among decoys, returns None
+# without one, and picks the first (newest — caller passes desc-ordered)
+# when several sweep notes exist
+sweep_new = {"id": 11, "body": "## 🤖 Agent dependency review\n**Verdict: PASS**\nreviewed-sha: " + "a" * 40}
+sweep_old = {"id": 10, "body": "## 🤖 Agent dependency review\n**Verdict: HOLD**\nreviewed-sha: " + "b" * 40}
+human = {"id": 12, "body": "bump whenever, looks fine to me"}
+renovate = {"id": 13, "body": "chore(deps): update dependency x to 1.2.3"}
+assert inv.pick_review_note([human, sweep_new, renovate]) is sweep_new
+assert inv.pick_review_note([human, renovate]) is None
+assert inv.pick_review_note([sweep_new, sweep_old, human]) is sweep_new
+print("PICK-REVIEW-NOTE CHECKS PASS")

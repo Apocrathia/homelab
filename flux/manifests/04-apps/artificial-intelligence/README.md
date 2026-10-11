@@ -86,6 +86,7 @@ flowchart TB
 - **[Agent Substrate](./substrate/README.md)** - gVisor sandbox runtime and WorkerPool data plane for kagent
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
+- **[OpenHands](./openhands/README.md)** - AI software-engineering agent platform (Agent Canvas) backed by LiteLLM
 
 ### Data & Analytics
 

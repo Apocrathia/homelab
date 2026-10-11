@@ -9,7 +9,9 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
+  - backup-secret.yaml
   - postgres.yaml
+  - scheduled-backup.yaml
   - configmap.yaml
   - helmrelease.yaml
   - grafana.yaml

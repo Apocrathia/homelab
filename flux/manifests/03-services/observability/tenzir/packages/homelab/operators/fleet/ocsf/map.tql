@@ -1,0 +1,31 @@
+// Fleet osquery result row -> OCSF Base Event. One row's meaning comes
+// from the query it answers (row = {name, hostIdentifier, unixTime, and
+// either `snapshot: [...]` or `action` + `columns`}), and no scheduled
+// query exists yet to name a class per query — so every row maps to the
+// Base Event with the host, the event time, and the full row as residue.
+// When scheduled queries land, grow this into a `match name?` dispatch
+// (e.g. process queries -> Process Activity, listening_ports -> Network
+// Activity) and leave unknown names on the Base Event arm.
+severity_id = 1
+time = from_epoch(unixTime * 1s)
+device.hostname = hostIdentifier
+metadata.version = "1.9.0"
+metadata.product = {
+  name: "fleet",
+  vendor_name: "fleetdm",
+}
+metadata.profiles = ["host"]
+
+category_uid = 0
+class_uid = 0
+activity_id = 0
+type_uid = 0
+
+unmapped = {
+  query: name,
+  action: action?,
+  columns: columns?,
+  snapshot: snapshot?,
+  calendar_time: calendarTime?,
+}
+drop name, hostIdentifier, unixTime, action?, columns?, snapshot?, calendarTime?

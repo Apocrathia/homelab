@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+#
+# Service account + API token for the Tenzir SIEM lane: read-only pull of
+# authentik events via the events API (GET /api/v3/events/events/, page-
+# based pagination) into Tenzir from_http. Authentik generates the token key on
+# import — never committed here. Copy it once from Authentik
+# (Directory -> Users -> ak-tenzir -> Tokens) into the 1Password item
+# tenzir-secrets (field authentik-events-token); the tenzir namespace's
+# OnePasswordItem CR reads it from there. Shape mirrors
+# terraform-service-account.yaml (live-verified on 2026.8.2).
+#
+# Placement: ship as authentik-blueprint.yaml in the tenzir app dir
+# (per-app blueprint pattern like policy-reporter's). Self-contained —
+# every !Find resolves inside this file — so the first atomic import
+# succeeds without the k8s-sidecar heal.
+version: 1
+metadata:
+  name: tenzir-events-reader
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # Least privilege: read-only events. authentik_events.view_event is the
+  # codename the events API ViewSet checks (app_label.codename shape
+  # verified against the 2026.8 auth_permission table by the same method
+  # used for the terraform-workspace-manager role).
+  - model: authentik_rbac.role
+    state: present
+    identifiers:
+      name: "tenzir-events-reader"
+    attrs:
+      name: "tenzir-events-reader"
+      permissions:
+        - "authentik_events.view_event"
+
+  # Service-account user, same shape as ak-terraform / tak-ldap-bind: the
+  # blueprint holds no secret material.
+  - model: authentik_core.user
+    state: present
+    identifiers:
+      username: "ak-tenzir"
+    attrs:
+      username: "ak-tenzir"
+      name: "Tenzir SIEM events pull"
+      type: "service_account"
+      is_active: true
+      roles:
+        - !Find [authentik_rbac.role, [name, "tenzir-events-reader"]]
+
+  # API token. key is deliberately omitted: in blueprint context the
+  # serializer exposes it as optional (authentik/core/api/tokens.py) and
+  # authentik generates a random one; re-imports never touch it because
+  # key is not in attrs. intent must be "api" (TokenIntents.INTENT_API) —
+  # user and intent are required attrs in blueprint context.
+  - model: authentik_core.token
+    state: present
+    identifiers:
+      identifier: "tenzir-events-reader"
+    attrs:
+      identifier: "tenzir-events-reader"
+      user: !Find [authentik_core.user, [username, "ak-tenzir"]]
+      intent: "api"
+      expiring: false
+      description: "Tenzir from_http events-API pull token (read-only events)"

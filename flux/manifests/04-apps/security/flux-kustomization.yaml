@@ -13,4 +13,8 @@ spec:
     name: homelab
   dependsOn:
     - name: services-cert-manager
+    - name: services-gateway
+    - name: infrastructure-longhorn
+    - name: services-external-secrets
+    - name: bootstrap-1password
     - name: services-postgresql

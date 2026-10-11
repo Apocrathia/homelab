@@ -29,7 +29,7 @@ spec:
       containers:
         - name: tdarr-node
           # renovate: datasource=docker depName=ghcr.io/haveagitgat/tdarr_node
-          image: ghcr.io/haveagitgat/tdarr_node:2.95.01@sha256:7a56924b2f567b306abfd155a70874ee0b45ff69c9f63ed93e6177ae57622df7
+          image: ghcr.io/haveagitgat/tdarr_node:2.96.01@sha256:a24f19274a9862df73033997c15f69e7c473252bc8aeed789b2c09aa24a81414
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

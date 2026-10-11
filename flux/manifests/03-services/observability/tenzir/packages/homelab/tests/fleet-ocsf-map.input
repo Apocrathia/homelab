@@ -1,0 +1,2 @@
+{"name": "siem result-path validation", "hostIdentifier": "F2C1B0A1-1111-2222-3333-444455556666", "unixTime": 1760000400, "snapshot": [{"version": "5.23.1", "build_platform": "darwin", "config_hash": "abc123"}]}
+{"name": "listening-ports", "hostIdentifier": "F2C1B0A1-1111-2222-3333-444455556666", "calendarTime": "Fri Oct 10 16:00:40 2026 UTC", "unixTime": 1760000040, "action": "added", "columns": {"address": "0.0.0.0", "port": "2055", "protocol": "17"}}

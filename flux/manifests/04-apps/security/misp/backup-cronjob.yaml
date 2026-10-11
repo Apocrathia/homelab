@@ -1,0 +1,158 @@
+---
+# Nightly logical dump of the MISP MariaDB database into the rustfs bucket
+# `misp-mariadb-backups` (slice 1). Init container dumps+gzips via the same
+# digest-pinned mariadb image the subchart runs; the main container PUTs the
+# dump with aws-cli and prunes to the newest 14 daily copies (parity with the
+# CNPG `retentionPolicy: 14d` house default). The bucket is the archive; the
+# restore procedure is in the app README ("Backups").
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: misp-mariadb-backup
+  namespace: misp
+spec:
+  # 22:30 America/Denver = 04:30 UTC during DST (05:30 UTC in winter) -
+  # after the kopia 02:00 UTC volume window (see backup.yaml), before the
+  # CNPG-style 05:00 UTC pocket.
+  schedule: "30 22 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            # 1001 = the bitnami mariadb UID; both containers share it
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: dump
+              # Same digest pin as mariadb.image.tag in helmrelease.yaml -
+              # keep the two in sync so dump client and server versions
+              # match.
+              # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
+              image: docker.io/bitnamilegacy/mariadb:10.11.9-debian-12-r3@sha256:0a897dbd27c6588fb5b3d421956b0874521a65a32d3ae6fa269ff195be93a6ff
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  mariadb-dump --single-transaction --quick \
+                    --host="${MARIADB_HOST}" \
+                    --user="${MARIADB_USER}" \
+                    --password="${MARIADB_PASSWORD}" \
+                    "${MARIADB_DATABASE}" \
+                    | gzip > "/backup/misp-mariadb-$(date -u +%F).sql.gz"
+                  ls -l /backup
+              env:
+                - name: MARIADB_HOST
+                  value: mariadb
+                - name: MARIADB_USER
+                  value: misp
+                - name: MARIADB_DATABASE
+                  value: misp
+                # Chart-managed Secret from the bitnami mariadb subchart
+                # (mariadb.auth.* in helmrelease.yaml valuesFrom); reading
+                # it here keeps DB creds out of any second store.
+                - name: MARIADB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mariadb
+                      key: mariadb-password
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          containers:
+            - name: upload
+              # Same pin as the substrate bucket-init precedent
+              # (04-apps/artificial-intelligence/substrate).
+              # renovate: datasource=docker depName=amazon/aws-cli
+              image: amazon/aws-cli:2.37.12@sha256:ce44b800602264c12298bbf3399055a4cefdb9ed4a098abe564afe26e7071bce
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  for file in /backup/misp-mariadb-*.sql.gz; do
+                    key="$(basename "${file}")"
+                    echo "uploading ${key} to s3://misp-mariadb-backups/"
+                    aws s3 cp "${file}" "s3://misp-mariadb-backups/${key}"
+                  done
+                  # Retention: keep the newest 14 date-prefixed dumps. The
+                  # slice-1 bucket policy is s3:* on this bucket, so list +
+                  # delete are in scope.
+                  aws s3 ls "s3://misp-mariadb-backups/" \
+                    | awk '{print $4}' | sort | head -n -14 > /tmp/prune.txt
+                  while read -r old; do
+                    if [ -n "${old}" ]; then
+                      echo "pruning ${old}"
+                      aws s3 rm "s3://misp-mariadb-backups/${old}"
+                    fi
+                  done < /tmp/prune.txt
+              env:
+                - name: AWS_ENDPOINT_URL
+                  value: http://storage.services.apocrathia.com:9009
+                - name: AWS_REGION
+                  value: us-east-1
+                # aws-cli writes ~/.aws and temp state; HOME must be writable.
+                - name: HOME
+                  value: /tmp
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-mariadb-backups-secrets
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-mariadb-backups-secrets
+                      key: AWS_SECRET_ACCESS_KEY
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                  readOnly: true
+                - name: aws-home
+                  mountPath: /tmp
+          volumes:
+            - name: backup
+              emptyDir: {}
+            - name: aws-home
+              emptyDir: {}

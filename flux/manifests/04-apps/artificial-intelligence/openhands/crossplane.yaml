@@ -1,0 +1,59 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: openhands
+spec:
+  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # the operator creates the 1Password item crossplane-terraform-secrets
+  # (vault "Secrets", field authentik-terraform-token), and the OnePassword
+  # Connect operator syncs it as the authentik-terraform-token Secret
+  # consumed by the ProviderConfig in this file. Same item as headlamp's and
+  # chaos-mesh's copies; the namespace differs.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: openhands-authentik
+  namespace: openhands
+spec:
+  # Materializes the OnePasswordItem-backed Secret as a file in the tofu
+  # workdir; the module's provider block reads it with file("authentik-token").
+  # The token itself never appears in a manifest. No backendFile: the tf
+  # carries the kubernetes backend inline.
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: openhands
+        key: authentik-terraform-token
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: openhands-authentik
+  namespace: openhands
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Deliberate decommission therefore requires
+  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: openhands-authentik
+  forProvider:
+    source: Inline
+    # Build-time stitch: kustomize (kustomization.yaml) generates a ConfigMap
+    # from authentik.tf and the replacements rule below copies it into this
+    # field verbatim, so authentik.tf is the single source of truth for the
+    # module. Never render this file through kubectl apply directly.
+    module: ""

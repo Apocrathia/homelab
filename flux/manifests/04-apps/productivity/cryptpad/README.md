@@ -20,9 +20,9 @@ Guest pads are reachable without an account on both doors.
 
 ## Authentication
 
-Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso) plugin (pinned release, fetched by an initContainer into `/cryptpad/lib/plugins/sso`) with Authentik as the IdP. The chart's blueprint creates the OAuth2 provider and application; access is bound to the `admins` and `users` Authentik groups.
+Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso) plugin (pinned release, fetched by an initContainer into `/cryptpad/lib/plugins/sso`) with Authentik as the IdP. The chart's blueprint creates the OAuth2 provider and application; access is bound to the `admins` and `users` Authentik groups. The dashboard tile deep-links to `/login`, which auto-redirects to Authentik (single provider + enforced SSO; the legacy password form lives at `/login#standard-login`).
 
-Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking).
+Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking). Account names come from the IdP `name` claim (full display name); identity is keyed on `sub`, so claim tweaks never orphan accounts. Config edits in `sso.js`/`config.js` need a pod restart (no checksum rollouts in the chart).
 
 The SSO plugin version must pair with the CryptPad image tag (currently plugin 0.6.0 ↔ image 2026.5.1); check the plugin releases before bumping either.
 

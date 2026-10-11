@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openhands
+  labels:
+    app.kubernetes.io/name: openhands

@@ -1,0 +1,18 @@
+---
+# Chart source for the MISP HelmRelease. cmu-sei/misp-helm publishes no helm
+# index (no gh-pages branch), so the chart tree is consumed via GitRepository
+# and the tag pin below — the tracearr precedent. For GitRepository-sourced
+# charts Flux ignores the HelmRelease chart.spec.version field; the chart
+# version pin lives HERE as the git tag.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: misp
+  namespace: misp
+spec:
+  interval: 1h
+  url: https://github.com/cmu-sei/misp-helm
+  ref:
+    # renovate: datasource=git-tags depName=https://github.com/cmu-sei/misp-helm
+    tag: v5.0.1
+  timeout: 3m

@@ -46,3 +46,6 @@ resources:
   - rknightion.yaml
   - crossplane.yaml
   - crossview.yaml
+  - devops-ia.yaml
+  - misp.yaml
+  - openhands.yaml

@@ -6,5 +6,7 @@ metadata:
   name: security
 
 resources:
+  - misp
   - opencanary
+  - opencti
   - opentaxii

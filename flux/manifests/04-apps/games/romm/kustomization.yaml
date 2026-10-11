@@ -8,7 +8,9 @@ metadata:
 
 resources:
   - namespace.yaml
+  - backup-secret.yaml
   - postgres.yaml
+  - scheduled-backup.yaml
   - helmrelease.yaml
   - rbac.yaml
   - cronjob.yaml

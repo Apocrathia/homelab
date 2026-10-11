@@ -1,0 +1,90 @@
+---
+description: |
+  Tetragon process_kprobe → OCSF, dispatched per policy:
+  secret-file-access → File System Activity (1001, Read/Update from the
+  permission bit), container-escape-namespace-access → Process Activity
+  (1007; namespace context rides in the residue),
+  monitor-network-activity-outside-cluster-cidr-range → Network Activity
+  (4001, endpoints from the sock argument), any other policy → OCSF Base
+  Event. The hooked process maps to actor.process (the Image in Sigma
+  projections) and its pod to actor.process.container (container profile);
+  Network Activity pulls device and actor from the host profile.
+args:
+  positional:
+    - name: event
+      description: The process_kprobe record to read.
+    - name: ocsf
+      description: The OCSF event to build.
+      type: field
+---
+
+match $event.policy_name? {
+  "secret-file-access" => {
+    $ocsf.category_uid = ocsf_category_uid("System Activity")
+    $ocsf.class_uid = ocsf_class_uid("File System Activity")
+    $ocsf.activity_id = 2 if $event.args?[1]?.int_arg? == 4 else 3 if $event.args?[1]?.int_arg? == 2 else 0 // Read / Update
+    $ocsf.file = {
+      path: $event.args?[0]?.file_arg?.path?,
+      xattributes: {permission: $event.args?[0]?.file_arg?.permission?},
+    }
+    if $event.process?.pod? != null {
+      $ocsf.metadata.profiles = ["container"]
+    }
+  }
+  "container-escape-namespace-access" => {
+    $ocsf.category_uid = ocsf_category_uid("System Activity")
+    $ocsf.class_uid = ocsf_class_uid("Process Activity")
+    $ocsf.activity_id = 0 // setns has no dedicated activity; ns context rides in the residue
+    if $event.process?.pod? != null {
+      $ocsf.metadata.profiles = ["container"]
+    }
+  }
+  "monitor-network-activity-outside-cluster-cidr-range" => {
+    $ocsf.category_uid = ocsf_category_uid("Network Activity")
+    $ocsf.class_uid = ocsf_class_uid("Network Activity")
+    $ocsf.activity_id = 1 // Open — outbound connect attempt
+    $ocsf.src_endpoint = {
+      ip: $event.args?[0]?.sock_arg?.saddr?,
+      port: $event.args?[0]?.sock_arg?.sport?,
+    }
+    $ocsf.dst_endpoint = {
+      ip: $event.args?[0]?.sock_arg?.daddr?,
+      port: $event.args?[0]?.sock_arg?.dport?,
+    }
+    $ocsf.metadata.profiles = ["host"] if $event.process?.pod? == null else ["host", "container"]
+  }
+  _ => {
+    @name = "ocsf.base_event"
+    $ocsf.category_uid = 0
+    $ocsf.class_uid = 0
+    $ocsf.activity_id = 0
+    // Base Event gates `device` behind the host profile; declaring it keeps
+    // the mapped device (and every other host-profile field we set) in cast.
+    $ocsf.metadata.profiles = ["host"]
+  }
+}
+
+// Known policies map the hooked process (the Image in Sigma projections);
+// the Base Event fallback keeps none of it.
+if $ocsf.class_uid? != 0 {
+  $ocsf.actor.process = {
+    pid: $event.process?.pid?,
+    path: $event.process?.binary?,
+    cmd_line: f"{$event.process?.binary?} {$event.process?.arguments?}" if $event.process?.arguments? != null else $event.process?.binary?,
+    parent_process: {
+      pid: $event.parent?.pid?,
+      path: $event.parent?.binary?,
+    },
+  }
+}
+
+if $ocsf.class_uid? != 0 and $event.process?.pod? != null {
+  $ocsf.actor.process.container = {
+    uid: $event.process.pod.container?.id?.replace("containerd://", ""),
+    name: $event.process.pod.container?.name?,
+    image: {
+      uid: $event.process.pod.container.image?.id?,
+      name: $event.process.pod.container.image?.name?,
+    },
+  }
+}
