@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tetragon-tailer-config
+  namespace: tetragon-tailer-system
+  labels:
+    app.kubernetes.io/name: tetragon-tailer
+data:
+  config.alloy: |
+    // tetragon export stream -> Tenzir detection node. Tails the tetragon
+    // agent's JSON export file on each node and pushes it as OTLP/HTTP logs
+    // to the Tenzir accept_otlp listener (4318), where the homelab package
+    // filters on the service.name resource attribute.
+    //
+    // Why a dedicated tailer: tetragon v1.7.x has no TCP export
+    // (--export-connection does not exist; the agent's only sinks are the
+    // rotating export file and the pod-local export-stdout sidecar), and the
+    // export file is 0600 root-owned on the host, out of reach of the shared
+    // Alloy (uid 10001). This DaemonSet runs as root with a read-only
+    // hostPath mount and nothing else — the same surface the
+    // kube-audit-tailer carries for the apiserver audit log.
+    //
+    // No Loki leg: the tetragon pod's export-stdout sidecar already ships
+    // the same events to Loki as pod logs, so a second Loki writer would
+    // duplicate the stream.
+    //
+    // The file rotates at 10 MiB (lumberjack renames to tetragon-*.log),
+    // so the include set covers the live file and its rotated siblings;
+    // both start at end-of-file: the pre-existing node-local backlog is
+    // already in Loki and is not re-shipped.
+
+    otelcol.receiver.filelog "tetragon_export" {
+      include           = ["/var/run/cilium/tetragon/tetragon.log", "/var/run/cilium/tetragon/tetragon-*.log"]
+      start_at          = "end"
+      include_file_path = true
+      operators = [
+        {
+          type  = "add",
+          field = "resource[\"service.name\"]",
+          value = "tetragon-export",
+        },
+        {
+          type  = "add",
+          field = "resource[\"k8s.node.name\"]",
+          value = sys.env("K8S_NODE_NAME"),
+        },
+      ]
+      output {
+        logs = [otelcol.exporter.otlphttp.tenzir.input]
+      }
+    }
+
+    otelcol.exporter.otlphttp "tenzir" {
+      client {
+        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        tls {
+          insecure = true
+        }
+      }
+    }

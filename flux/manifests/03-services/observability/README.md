@@ -78,8 +78,9 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 - **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and the
   Tenzir detection node owns NetFlow natively via its `read_netflow`
-  operator. The `:2055/UDP` ingest LB on the shared pool IP is lap-C part 2
-  (Tenzir namespace); UniFi exporters keep their `:2055` target.
+  operator behind [`tenzir-ingest-lb`](./tenzir/service-ingest.yaml)
+  (`:2055/UDP` on the shared pool IP, Tenzir namespace); UniFi exporters
+  keep their `:2055` target.
 
 ### 8. **Shared Ingest Pool** (`ingest/`)
 
@@ -87,7 +88,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **IP Address**: `10.100.1.96` (`ingest.services.apocrathia.com`)
 - **Services Sharing IP**:
   - Alloy: syslog (514/UDP, 6514/TCP), CEF (1514/TCP)
-  - Tenzir NetFlow (2055/UDP, lap-C part 2; `goflow2` removed)
+  - Tenzir NetFlow (2055/UDP; `goflow2` removed)
 - **Implementation**: Cilium LB IPAM with `lbipam.cilium.io/sharing-key` annotation
 
 ### 9. **Prometheus Extras** (`prometheus/`)
@@ -128,11 +129,20 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 ### 13. **Tenzir** (`tenzir/`)
 
 - **Purpose**: SIEM detection plane — OCSF normalization of kube-apiserver
-  audit events, SigmaHQ + own Sigma rules, Detection Findings to Discord,
-  14-day hot window with rustfs parquet archive
+  audit, tetragon, authentik, fleet, trivy, and NetFlow data, SigmaHQ + own
+  Sigma rules on the audit stream, Detection Findings to Discord, 14-day hot
+  window with rustfs parquet archive
 - **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), one
   standalone node in `tenzir-system`
 - **Details**: See [`tenzir/README.md`](./tenzir/README.md)
+
+### 14. **tetragon-tailer** (`tetragon-tailer/`)
+
+- **Purpose**: Root DaemonSet that tails the tetragon agents' JSON export
+  files (0600 root-owned, out of reach of the shared Alloy) and pushes them
+  as OTLP/HTTP logs to the Tenzir detection node; the pod-logs leg to Loki
+  via the tetragon `export-stdout` sidecar is unchanged
+- **Details**: See [`tetragon-tailer/README.md`](./tetragon-tailer/README.md)
 
 ## Architecture
 
@@ -159,7 +169,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 1. **Pod Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana
 2. **Syslog/CEF**: Network devices → Alloy (via ingest LB) → Loki → Grafana
-3. **NetFlow/IPFIX**: Network devices → Tenzir `read_netflow` (lap-C part 2; goflow2 removed)
+3. **NetFlow/IPFIX**: Network devices → Tenzir `read_netflow` (goflow2 removed)
 4. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana
 5. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana
 6. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)

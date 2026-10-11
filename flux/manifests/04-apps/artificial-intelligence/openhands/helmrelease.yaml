@@ -1,0 +1,62 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openhands
+  namespace: openhands
+spec:
+  interval: 15m
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ./helm/agent-canvas
+      version: "0.1.0"
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: openhands
+        namespace: openhands
+      interval: 1h
+  values:
+    # Seed OH_SECRET_KEY + the session API key from the 1Password-synced
+    # Secret instead of auto-generating on the PVC (survives volume loss).
+    secrets:
+      ohSecretKey:
+        existingSecret: openhands-secrets
+        key: oh-secret-key
+      sessionApiKey:
+        existingSecret: openhands-secrets
+        key: session-api-key
+
+    config:
+      extraEnv:
+        # Telemetry off: frontend (incl. install ping) + automation/agent-server SDK
+        - name: AGENT_CANVAS_DISABLE_TELEMETRY
+          value: "1"
+        - name: VITE_DO_NOT_TRACK
+          value: "1"
+        # Seed LLM profile via the in-cluster LiteLLM proxy.
+        # Adjust or replace post-deploy in Settings > LLM.
+        - name: LLM_MODEL
+          value: litellm_proxy/claude-sonnet-4-5
+        - name: LLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openhands-secrets
+              key: litellm-api-key
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi

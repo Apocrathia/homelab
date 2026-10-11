@@ -60,13 +60,13 @@ supported by the Integration API):
 
 Set in `helmrelease.yaml`:
 
-| Value           | Setting                    | Notes                                       |
-| --------------- | -------------------------- | ------------------------------------------- |
-| `UNIFI_HOST`    | `https://10.100.1.1`       | UDM; webhook skips TLS verify by default    |
-| `domainFilters` | `apocrathia.com`           | Only manage this zone                       |
-| `policy`        | `sync`                     | Full create/delete lifecycle                |
-| `gateway-name`  | `main-gateway`             | Only routes on this Gateway produce records |
-| `txtPrefix`     | `k8s.main.%{record_type}-` | Ownership registry in UniFi TXT records     |
+| Value           | Setting                           | Notes                                       |
+| --------------- | --------------------------------- | ------------------------------------------- |
+| `UNIFI_HOST`    | `https://10.100.1.1`              | UDM; webhook skips TLS verify by default    |
+| `domainFilters` | `apocrathia.com`                  | Only manage this zone                       |
+| `policy`        | `sync`                            | Full create/delete lifecycle                |
+| `gateway-name`  | `main-gateway`                    | Only routes on this Gateway produce records |
+| `txtPrefix`     | `kubernetes.main.%{record_type}-` | Ownership registry in UniFi TXT records     |
 
 ## Limitations
 

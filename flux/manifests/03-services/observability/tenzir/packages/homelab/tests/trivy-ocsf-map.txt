@@ -1,0 +1,196 @@
+{
+  activity_id: 2,
+  activity_name: "Update",
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Vulnerability Finding",
+  class_uid: 2002,
+  finding_info: {
+    title: "trivy: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
+    uid: "statefulset-55c7d87c7d",
+  },
+  metadata: {
+    product: {
+      name: "trivy",
+      vendor_name: "aqua",
+      version: "0.75.0",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T22:32:58Z,
+  type_name: "Vulnerability Finding: Update",
+  type_uid: 200202,
+  unmapped: {
+    report_kind: "vulnerability_report",
+    workload: {
+      kind: "StatefulSet",
+      name: "prometheus-kube-prometheus-stack-prometheus",
+      namespace: "prometheus-system",
+      container: "config-reloader",
+    },
+    registry: {
+      server: "quay.io",
+    },
+    artifact: {
+      repository: "prometheus-operator/prometheus-config-reloader",
+      digest: "sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+      tag: "v0.94.1",
+    },
+    summary: {
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+      unknownCount: 21,
+      noneCount: 0,
+    },
+    secrets: null,
+    os: {
+      family: "",
+    },
+  },
+  vulnerabilities: [
+    {
+      affected_packages: [
+        {
+          fixed_in_version: "0.56.0",
+          name: "golang.org/x/crypto",
+          version: "v0.55.0",
+        },
+      ],
+      cve: {
+        uid: "CVE-2026-56855",
+      },
+      desc: null,
+      first_seen_time: 2026-09-02T20:17:36Z,
+      last_seen_time: 2026-09-04T16:34:56Z,
+      references: [],
+      severity: "UNKNOWN",
+      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via crafted messages",
+    },
+    {
+      affected_packages: [
+        {
+          fixed_in_version: "0.56.0",
+          name: "golang.org/x/crypto",
+          version: "v0.55.0",
+        },
+      ],
+      cve: {
+        uid: "CVE-2026-78662",
+      },
+      desc: null,
+      first_seen_time: 2026-09-02T20:17:37Z,
+      last_seen_time: 2026-09-04T16:33:34Z,
+      references: [],
+      severity: "UNKNOWN",
+      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via channel request flooding",
+    },
+  ],
+}
+{
+  activity_id: 1,
+  activity_name: "Create",
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Detection Finding",
+  class_uid: 2004,
+  finding_info: {
+    title: "trivy secrets: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
+    uid: "statefulset-55c7d87c7d",
+  },
+  metadata: {
+    product: {
+      name: "trivy",
+      vendor_name: "aqua",
+      version: "0.75.0",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T22:32:58Z,
+  type_name: "Detection Finding: Create",
+  type_uid: 200401,
+  unmapped: {
+    report_kind: "secret_report",
+    workload: {
+      kind: "StatefulSet",
+      name: "prometheus-kube-prometheus-stack-prometheus",
+      namespace: "prometheus-system",
+      container: "config-reloader",
+    },
+    registry: {
+      server: "quay.io",
+    },
+    artifact: {
+      repository: "prometheus-operator/prometheus-config-reloader",
+      digest: "sha256:06b52bd4dbe3ed6dd5905aadaf8b9987d9da4c31d37bb86deaadae68cee2d26b",
+      tag: "v0.94.1",
+    },
+    summary: {
+      criticalCount: 0,
+      highCount: 0,
+      mediumCount: 0,
+      lowCount: 0,
+    },
+    secrets: [
+      {
+        ruleID: "private-key",
+        category: "AWS",
+        severity: "CRITICAL",
+        title: "AWS Access Key",
+        startLine: 12,
+        endLine: 12,
+        "match": "AKIA****",
+        code: {
+          lines: [
+            {
+              Number: 12,
+              Content: "AKIAXXXXXXXXXXXXXXXX",
+            },
+          ],
+        },
+        sourceMetadata: {},
+      },
+    ],
+    os: null,
+  },
+}
+{
+  activity_id: 0,
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  category_uid: 0,
+  class_name: "Base Event",
+  class_uid: 0,
+  metadata: {
+    product: {
+      name: "trivy",
+      vendor_name: "aqua",
+      version: null,
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T22:32:58Z,
+  type_name: "Base Event: Unknown",
+  type_uid: 0,
+  unmapped: {
+    report_kind: null,
+    workload: {
+      kind: null,
+      name: null,
+      namespace: null,
+      container: null,
+    },
+    registry: null,
+    artifact: null,
+    summary: null,
+    secrets: null,
+    os: null,
+  },
+}

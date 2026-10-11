@@ -10,6 +10,7 @@ resources:
   - namespace.yaml
   - secret.yaml
   - node-token.yaml
+  - service-ingest.yaml
   - helmrelease.yaml
 
 generatorOptions:
@@ -36,6 +37,52 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - discord.tql=packages/homelab/operators/k8s/audit/findings/discord.tql
+  - name: tenzir-packages-homelab-tetragon-parse
+    namespace: tenzir-system
+    files:
+      - parse.tql=packages/homelab/operators/tetragon/parse.tql
+  - name: tenzir-packages-homelab-tetragon-map
+    namespace: tenzir-system
+    files:
+      - map.tql=packages/homelab/operators/tetragon/ocsf/map.tql
+  - name: tenzir-packages-homelab-tetragon-exec
+    namespace: tenzir-system
+    files:
+      - process_exec.tql=packages/homelab/operators/tetragon/ocsf/events/process_exec.tql
+  - name: tenzir-packages-homelab-tetragon-exit
+    namespace: tenzir-system
+    files:
+      - process_exit.tql=packages/homelab/operators/tetragon/ocsf/events/process_exit.tql
+  - name: tenzir-packages-homelab-tetragon-kprobe
+    namespace: tenzir-system
+    files:
+      - process_kprobe.tql=packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
+  - name: tenzir-packages-homelab-authentik-map
+    namespace: tenzir-system
+    files:
+      - map.tql=packages/homelab/operators/authentik/ocsf/map.tql
+  - name: tenzir-packages-homelab-fleet-parse
+    namespace: tenzir-system
+    files:
+      - parse.tql=packages/homelab/operators/fleet/parse.tql
+  - name: tenzir-packages-homelab-fleet-map
+    namespace: tenzir-system
+    files:
+      - map.tql=packages/homelab/operators/fleet/ocsf/map.tql
+  - name: tenzir-packages-homelab-trivy-map
+    namespace: tenzir-system
+    files:
+      - map.tql=packages/homelab/operators/trivy/ocsf/map.tql
+  # Per-app authentik blueprint (gatus pattern): the k8s-sidecar in the
+  # authentik namespace discovers ConfigMaps labeled authentik_blueprint
+  # across all namespaces and syncs them into /blueprints/user.
+  - name: authentik-blueprint-tenzir
+    namespace: tenzir-system
+    files:
+      - tenzir-events-reader.yaml=authentik-blueprint.yaml
+    options:
+      labels:
+        authentik_blueprint: "true"
   - name: tenzir-sigma-own
     namespace: tenzir-system
     files:

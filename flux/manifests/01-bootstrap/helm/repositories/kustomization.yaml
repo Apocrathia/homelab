@@ -48,3 +48,4 @@ resources:
   - crossview.yaml
   - devops-ia.yaml
   - misp.yaml
+  - openhands.yaml

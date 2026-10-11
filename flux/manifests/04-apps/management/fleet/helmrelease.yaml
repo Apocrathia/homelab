@@ -140,6 +140,7 @@ spec:
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
       FLEET_OSQUERY_POLICY_UPDATE_INTERVAL: "30m"
+      FLEET_WEBHOOK_RESULT_URL: "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/fleet"
 
     # MDM needs FLEET_SERVER_PRIVATE_KEY — injected via postRenderers above
     # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB
@@ -174,8 +175,13 @@ spec:
           cpu: 100m
           memory: 256Mi
 
-    # stdout → Alloy scrapes container logs → Loki (filesystem and
-    # emptyDir /logs never reach observability).
+    # Status rows → stdout → Alloy scrapes container logs → Loki (filesystem
+    # and emptyDir /logs never reach observability).
+    # Result rows → the Tenzir detection node: the webhook plugin POSTs
+    # {timestamp, details: [<raw osquery rows>]} per batch to the node's
+    # http-ingest listener; delivery errors only log, so Tenzir downtime
+    # never blocks fleet (unlike the splunk plugin, whose health check
+    # gates fleet startup).
     # https://fleetdm.com/guides/log-destinations
     # label/detail intervals: chart defaults are already 30m; set explicitly.
     # Policy interval is environments.FLEET_OSQUERY_POLICY_UPDATE_INTERVAL.
@@ -184,7 +190,7 @@ spec:
       detailUpdateInterval: 30m
       logging:
         statusPlugin: stdout
-        resultPlugin: stdout
+        resultPlugin: webhook
 
     database:
       secretName: fleetdm-secrets

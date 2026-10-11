@@ -37,7 +37,9 @@ spec:
       # Control planes only (audit.log does not exist on workers). This cluster
       # runs control-plane-only, so this is 4/4 nodes.
       nodeSelector:
-        node-role.kubernetes.io/control-plane: "true"
+        # Talos sets this label with an EMPTY-STRING value on control-plane
+        # nodes; "true" is an exact match against zero nodes (DESIRED 0).
+        node-role.kubernetes.io/control-plane: ""
       # No tolerations needed: allowSchedulingOnControlPlanes untaints the nodes.
       tolerations: []
       # Writable WAL/offsets dir for the read-only root filesystem, mirroring

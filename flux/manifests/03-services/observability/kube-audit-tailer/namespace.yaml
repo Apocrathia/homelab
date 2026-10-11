@@ -5,3 +5,8 @@ metadata:
   name: kube-audit-tailer-system
   labels:
     app.kubernetes.io/name: kube-audit-tailer
+    # Legitimate privileged DaemonSet: root, read-only hostPath on kube-apiserver
+    # audit.log (same precedent as trivy-system; default admission enforces baseline).
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/warn: privileged
