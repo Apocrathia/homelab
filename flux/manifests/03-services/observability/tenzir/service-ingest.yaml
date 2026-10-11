@@ -1,0 +1,35 @@
+---
+# LoadBalancer service for NetFlow ingest on the shared ingest pool IP
+# (flux/manifests/03-services/observability/ingest/), replacing the removed
+# goflow2 collector on the same IP and port so UniFi exporters keep pointing
+# at ingest.services.apocrathia.com:2055. The tenzir node accepts the UDP
+# datagrams itself (accept_udp "0.0.0.0:2055", binary=true + read_netflow).
+apiVersion: v1
+kind: Service
+metadata:
+  name: tenzir-ingest-lb
+  namespace: tenzir-system
+  labels:
+    app.kubernetes.io/name: tenzir
+    app.kubernetes.io/component: ingest
+    apocrathia.com/ingest: "true"
+  annotations:
+    lbipam.cilium.io/ips: "10.100.1.96"
+    lbipam.cilium.io/sharing-key: "ingest"
+    # Pairs with alloy's service-ingest annotation naming this namespace:
+    # both services share the pool IP on disjoint ports (alloy 6514/514/1514
+    # TCP+UDP, this one 2055/UDP).
+    lbipam.cilium.io/sharing-cross-namespace: "alloy-system"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  ports:
+    - name: netflow
+      port: 2055
+      protocol: UDP
+      targetPort: 2055
+  selector:
+    app.kubernetes.io/name: tenzir-node
+    app.kubernetes.io/instance: tenzir-node
+    app.kubernetes.io/component: node
+    app.kubernetes.io/tenzir-node: default

@@ -1,0 +1,100 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tetragon-tailer
+  namespace: tetragon-tailer-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: alloy
+      # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts depName=alloy
+      version: "1.13.1"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # No Service: the tailer only pushes to the Tenzir detection node.
+    service:
+      enabled: false
+
+    # otelcol.receiver.filelog is public-preview, below the chart's default
+    # minimum, so raise the minimum to public-preview.
+    controller:
+      type: daemonset
+      # tetragon agents run on every node, so no nodeSelector: the tailer
+      # schedules everywhere they export. No tolerations needed on this
+      # cluster (allowSchedulingOnControlPlanes untaints the nodes).
+      tolerations: []
+      # Writable WAL/offsets dir for the read-only root filesystem, mirroring
+      # the shared alloy release. The tetragon export hostPath backs the
+      # tetragon-export mount below (read-only at the volumeMount).
+      volumes:
+        extra:
+          - name: alloy-wal
+            emptyDir: {}
+          - name: tetragon-export
+            hostPath:
+              path: /var/run/cilium/tetragon
+              type: DirectoryOrCreate
+
+    alloy:
+      stabilityLevel: public-preview
+      # No HTTP server port: the internal listener binds loopback for the
+      # config-reloader only (chart-supported: drops the containerPort and
+      # the readiness probe).
+      enableHttpServerPort: false
+      listenAddr: 127.0.0.1
+      configMap:
+        create: false
+        name: tetragon-tailer-config
+        key: config.alloy
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      # Root is required to read the export file (tetragon writes it 0600
+      # root-owned into the export directory). Scope of privilege: one
+      # read-only hostPath volume. All capabilities dropped, no privilege
+      # escalation, read-only root filesystem.
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      mounts:
+        extra:
+          - name: alloy-wal
+            mountPath: /tmp/alloy
+          - name: tetragon-export
+            mountPath: /var/run/cilium/tetragon
+            readOnly: true
+
+    global:
+      podSecurityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+
+    rbac:
+      create: false
+
+    serviceAccount:
+      create: true
+      annotations: {}
+      # Zero-RBAC tailer: no token ever mounted into the pod.
+      automountServiceAccountToken: false

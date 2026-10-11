@@ -121,42 +121,61 @@ Authentik workers must reach `https://fleet.gateway.services.apocrathia.com` (in
 
 ## Logs
 
-Osquery status and result logs go to Fleet container stdout (`statusPlugin` /
-`resultPlugin: stdout`), which Alloy scrapes into Loki.
+Osquery **status** logs go to Fleet container stdout (`statusPlugin: stdout`),
+which Alloy scrapes into Loki. Osquery **result** rows are the Tenzir SIEM
+tee: `resultPlugin: webhook` POSTs
+`{timestamp, details: [<raw osquery rows>]}` batches to the Tenzir detection
+node's `http-ingest` listener (`FLEET_WEBHOOK_RESULT_URL`), where they are
+parsed, mapped to OCSF Base Events, and stored (see the
+[Tenzir README](../../../../03-services/observability/tenzir/)). The webhook
+plugin only logs delivery errors, so Tenzir downtime never blocks Fleet
+(webhook-plugin semantics verified at fleet v4.92.3 and v4.93.0).
 
-### Result rows: prove the path before wiring the SIEM (OPERATOR-LED)
+### Result rows: validate the tee with a live query (OPERATOR-LED)
 
-The last 30 days of Loki hold **status** rows only — zero **result** rows.
 Differential/snapshot result logs only emit when a scheduled query returns
-rows, and no scheduled query has returned anything yet. Before the SIEM tee
-to the Tenzir detection node (lap-C part 2, same exporter-fan-out pattern
-as tetragon), prove the result path end to end:
+rows, and no scheduled query has returned anything yet. Prove the result
+path end to end with one throwaway query:
 
 1. Add a snapshot scheduled query to the fleet GitOps YAML
    (`fleet/fleets/home.yml`; the modern key is `reports:` — `queries:` is the
    deprecated alias; `interval` makes it scheduled and `logging` defaults to
-   snapshot — fleet v4.92.3 `QuerySpec`):
+   snapshot — fleet v4.93.0 `QuerySpec`):
    ```yaml
    reports:
      - name: siem result-path validation
-       description: Lap C validation — remove after confirming rows in Loki
+       description: Lap C validation — remove after confirming rows in Tenzir
        query: SELECT * FROM osquery_info
        interval: 300
    ```
 2. Apply it the usual GitOps way (push to the default branch or wait for the
    hourly `fleet-gitops` schedule), then confirm in Fleet that the host ran
    it (Queries → the query → results).
-3. Rows arrive on the same stdout path as status rows. Verify in Loki:
-   ```logql
-   {namespace="fleet",container="fleet"} |= "\"snapshot\""
+3. Result rows POST straight to Tenzir (they no longer ride pod stdout).
+   Verify the tee landed as OCSF on the detection node — the http-ingest
+   pipeline shows the POSTs, and the stored rows show up as product
+   fleet/fleetdm Base Events:
+   ```sh
+   kubectl exec -n tenzir-system tenzir-node-default-0 -- \
+     tenzir -e localhost:5158 \
+     'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
+   kubectl exec -n tenzir-system tenzir-node-default-0 -- \
+     tenzir -e localhost:5158 \
+     'export | where metadata.product.name == "fleet" | head 5'
    ```
    Snapshot rows: `{name, hostIdentifier, unixTime, snapshot: [...]}`.
    Differential rows (the fleetdm default for scheduled queries):
    `{name, hostIdentifier, calendarTime, unixTime, action, columns: {...}}`.
+   Status rows are unaffected and still verifiable in Loki:
+   ```logql
+   {namespace="fleet",container="fleet"} |= "severity"
+   ```
 4. Remove the query block after validation.
 
 Executing a Fleet query against enrolled hosts is a cluster-adjacent
 mutation — operator-led, not agent-run.
+
+Status rows stay in Loki via container stdout:
 
 ```logql
 {namespace="fleet",container="fleet"}

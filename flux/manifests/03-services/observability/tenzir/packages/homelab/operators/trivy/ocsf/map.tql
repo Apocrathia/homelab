@@ -1,0 +1,81 @@
+// trivy-operator alternate-report-storage file -> OCSF. The report-reader
+// stamps `report_kind` from the directory it read (the serialized reports
+// carry no `kind` field of their own): vulnerability reports map to
+// Vulnerability Finding (2002) with the full CVE list, exposed-secret
+// reports to Detection Finding (2004). Report files are fixed-filename
+// rescans — every emit is the current scan state of one workload container,
+// so the findings stream is update-shaped. The CR metadata moves aside
+// first: `metadata` is OCSF real estate, and the source record rides in
+// `unmapped` for provenance.
+trivy_meta = move metadata
+
+time = report?.updateTimestamp?
+severity_id = 5 if report?.summary?.criticalCount? > 0 else 4 if report?.summary?.highCount? > 0 else 3 if report?.summary?.mediumCount? > 0 else 2 if report?.summary?.lowCount? > 0 else 1
+
+match report_kind? {
+  "vulnerability_report" => {
+    category_uid = ocsf_category_uid("Findings")
+    class_uid = ocsf_class_uid("Vulnerability Finding")
+    activity_id = 2 // Update — the fixed filename is rewritten on every rescan
+    finding_info = {
+      uid: trivy_meta?.name?,
+      title: f"trivy: {trivy_meta.labels?["trivy-operator.resource.kind"]?}/{trivy_meta.labels?["trivy-operator.resource.name"]?}",
+    }
+    vulnerabilities = report?.vulnerabilities?.map(v => {
+      title: v?.title?,
+      desc: v?.description?,
+      severity: v?.severity?,
+      references: v?.links?,
+      first_seen_time: v?.publishedDate?,
+      last_seen_time: v?.lastModifiedDate?,
+      cve: {uid: v?.vulnerabilityID?},
+      affected_packages: [
+        {
+          name: v?.resource?,
+          version: v?.installedVersion?,
+          fixed_in_version: v?.fixedVersion?,
+        },
+      ],
+    })
+  }
+  "secret_report" => {
+    category_uid = ocsf_category_uid("Findings")
+    class_uid = ocsf_class_uid("Detection Finding")
+    activity_id = 1 // Create — each rescan's exposed-secret state
+    finding_info = {
+      uid: trivy_meta?.name?,
+      title: f"trivy secrets: {trivy_meta.labels?["trivy-operator.resource.kind"]?}/{trivy_meta.labels?["trivy-operator.resource.name"]?}",
+    }
+  }
+  _ => {
+    // Unstamped sources keep the class triple at zero; nothing ships
+    // today with a kind outside the two arms above.
+    category_uid = 0
+    class_uid = 0
+    activity_id = 0
+  }
+}
+
+type_uid = (class_uid * 100) + activity_id
+metadata.version = "1.9.0"
+metadata.product = {
+  name: "trivy",
+  vendor_name: "aqua",
+  version: report?.scanner?.version?,
+}
+
+unmapped = {
+  report_kind: report_kind?,
+  workload: {
+    kind: trivy_meta.labels?["trivy-operator.resource.kind"]?,
+    name: trivy_meta.labels?["trivy-operator.resource.name"]?,
+    namespace: trivy_meta.labels?["trivy-operator.resource.namespace"]?,
+    container: trivy_meta.labels?["trivy-operator.container.name"]?,
+  },
+  registry: report?.registry?,
+  artifact: report?.artifact?,
+  summary: report?.summary?,
+  secrets: report?.secrets?,
+  os: report?.os?,
+}
+drop report_kind?, trivy_meta, report

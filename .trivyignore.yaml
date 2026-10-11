@@ -24,6 +24,13 @@ misconfigurations:
       Kyverno intentionally clones and synchronizes the named Docker Hub
       imagePullSecret into opted-in namespaces. Kubernetes RBAC cannot constrain
       Secret creation by resource name or namespace label.
+  - id: AVD-KSV-0109
+    paths:
+      - "report-reader.yaml"
+    statement: >-
+      Name-only false positive: the ConfigMap key `secret-reports.tql` contains
+      the word "secret", but its value is a Tenzir TQL pipeline (file watch,
+      read_json, HTTP push) with no secret material.
   - id: AVD-KSV-0056
     paths:
       - "rbac.yaml"
