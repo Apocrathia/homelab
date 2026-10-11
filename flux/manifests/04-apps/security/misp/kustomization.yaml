@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: misp
+  namespace: misp
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - externalsecret.yaml
+  - backup-secret.yaml
+  - backup-cronjob.yaml
+  - backup.yaml
+  - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: authentik-blueprint-misp
+    namespace: misp
+    files:
+      - misp.yaml=authentik-blueprint.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      authentik_blueprint: "true"

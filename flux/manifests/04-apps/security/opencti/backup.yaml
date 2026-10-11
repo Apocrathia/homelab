@@ -1,0 +1,49 @@
+---
+# Kopia coverage for the OpenCTI Longhorn PVCs (slice 8): nightly snapshot
+# into the shared kopiur repository on the NAS rustfs instance. The namespace
+# carries the tenancy-gate label (namespace.yaml); the ClusterRepository and
+# its credentials live in 03-services/backup/.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: opencti-backup
+  namespace: opencti
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  # OpenSearch claim (<claim>-<sts>-<ordinal>): volumeClaimTemplate
+  # `opensearch-cluster-master` on StatefulSet `opensearch-cluster-master`.
+  # The knowledge graph is the only durable state in the namespace.
+  # Crash-consistent Lucene volume copy - translog replay recovers the
+  # index on restore; the opensearch sts pins runAsUser 1000 at pod level
+  # so the mover inherits it cleanly.
+  sources:
+    - pvc:
+        name: opensearch-cluster-master-opensearch-cluster-master-0
+  # The rabbitmq PVC (data-opencti-rabbitmq-0) is deliberately NOT a source:
+  # queue state is disposable work-in-flight, not durable knowledge; losing
+  # it only costs in-flight worker jobs. Dragonfly has no PVC (in-memory by
+  # design), and file storage lives on the rustfs `opencti-files` bucket -
+  # its own durability domain.
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  mover:
+    inheritSecurityContextFrom:
+      pvcConsumer: {}
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: opencti-nightly
+  namespace: opencti
+spec:
+  policyRef:
+    name: opencti-backup
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false

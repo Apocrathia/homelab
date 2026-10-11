@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: misp
+  labels:
+    app.kubernetes.io/name: misp
+    # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
+    backup.apocrathia.com/repo: nas-rustfs

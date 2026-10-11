@@ -1,0 +1,230 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: opencti
+  namespace: opencti
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: opencti
+      # renovate: datasource=helm registryUrl=https://devops-ia.github.io/helm-opencti/ depName=opencti
+      version: "3.0.18"
+      sourceRef:
+        kind: HelmRepository
+        name: devops-ia
+        namespace: flux-system
+  values:
+    fullnameOverride: opencti
+
+    # Platform (opencti-server) settings.
+    # Secret values come from the opencti-secrets 1Password item via envFromSecrets;
+    # envFromSecrets entries take precedence over chart-default plaintext env.
+    env:
+      # Blank the chart-default ChangeMe so the chart's probe helper switches to the
+      # exec form that reads the secret-sourced APP__HEALTH_ACCESS_KEY (admin token).
+      APP__HEALTH_ACCESS_KEY: ""
+      # Heap tuned down from the 8GB default (research doc 2.3: tune down for homelab).
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      # OpenSearch subchart service is named <clusterName>-<nodeGroup>.
+      ELASTICSEARCH__URL: "http://opensearch-cluster-master:9200"
+      RABBITMQ__USERNAME: "user"
+      RABBITMQ__HOSTNAME: "opencti-rabbitmq"
+      REDIS__HOSTNAME: "opencti-redis"
+      # File storage: NAS rustfs bucket (slice 1), HTTP on the LAN segment.
+      MINIO__ENDPOINT: "storage.services.apocrathia.com"
+      MINIO__PORT: "9009"
+      MINIO__USE_SSL: false
+      MINIO__BUCKET_NAME: "opencti-files"
+      # OIDC SSO via authentik (slice 5). Local strategy stays enabled
+      # (chart default PROVIDERS__LOCAL__STRATEGY) as break-glass. OpenCTI 7.x
+      # migrates PROVIDERS__* env into its own DB on first boot; after that
+      # the DB provider is the source of truth and env edits are ignored.
+      # Callback route /auth/oic/callback = OpenCTI's default provider
+      # identifier (oic) for OpenIDConnectStrategy.
+      PROVIDERS__OPENID__STRATEGY: "OpenIDConnectStrategy"
+      PROVIDERS__OPENID__CONFIG__LABEL: "Login with Authentik"
+      PROVIDERS__OPENID__CONFIG__ISSUER: "https://auth.gateway.services.apocrathia.com/application/o/opencti/"
+      PROVIDERS__OPENID__CONFIG__CLIENT_ID: "opencti"
+      PROVIDERS__OPENID__CONFIG__REDIRECT_URIS: '["https://opencti.gateway.services.apocrathia.com/auth/oic/callback"]'
+      # Groups mapping: authentik 'admins' group -> OpenCTI built-in
+      # 'Administrators' group; claims read from the access token (authentik
+      # emits the groups claim via the profile scope mapping).
+      PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_SCOPE: "groups"
+      PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_PATH: '["groups"]'
+      PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_MAPPING: '["admins:Administrators"]'
+
+    envFromSecrets:
+      APP__ADMIN__EMAIL:
+        name: opencti-secrets
+        key: APP__ADMIN__EMAIL
+      APP__ADMIN__PASSWORD:
+        name: opencti-secrets
+        key: APP__ADMIN__PASSWORD
+      APP__ADMIN__TOKEN:
+        name: opencti-secrets
+        key: APP__ADMIN__TOKEN
+      # The 1Password item has no dedicated health key field; gate /health with the
+      # admin token value. Upstream rejects an empty/ChangeMe key with 401.
+      APP__HEALTH_ACCESS_KEY:
+        name: opencti-secrets
+        key: APP__ADMIN__TOKEN
+      APP__ENCRYPTION_KEY:
+        name: opencti-secrets
+        key: APP__ENCRYPTION_KEY
+      RABBITMQ__PASSWORD:
+        name: opencti-secrets
+        key: RABBITMQ__PASSWORD
+      REDIS__PASSWORD:
+        name: opencti-secrets
+        key: REDIS__PASSWORD
+      MINIO__ACCESS_KEY:
+        name: opencti-secrets
+        key: MINIO__ACCESS_KEY
+      MINIO__SECRET_KEY:
+        name: opencti-secrets
+        key: MINIO__SECRET_KEY
+      # Authentik generates this when the blueprint creates the OIDC
+      # provider; it is copied into the 1Password item post-merge (README).
+      PROVIDERS__OPENID__CONFIG__CLIENT_SECRET:
+        name: opencti-secrets
+        key: OIDC_CLIENT_SECRET
+
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "5Gi"
+
+    # Worker talks to the platform via OPENCTI_URL (auto-built) + OPENCTI_TOKEN.
+    # The chart only derives OPENCTI_TOKEN from plaintext values, so wire the
+    # vault field explicitly here.
+    worker:
+      envFromSecrets:
+        OPENCTI_TOKEN:
+          name: opencti-secrets
+          key: APP__ADMIN__TOKEN
+      resources:
+        requests:
+          cpu: "250m"
+          memory: "512Mi"
+        limits:
+          cpu: "1"
+          memory: "1Gi"
+
+    # MISP -> OpenCTI external-import connector (slice 6): the official
+    # Filigran-verified connector (OpenCTI-Platform/connectors
+    # external-import/misp) as its own Deployment. The chart auto-wires
+    # OPENCTI_URL to the in-cluster platform service; everything else is
+    # env-only per the connector docs. Defaults not pinned here (verified
+    # against the connector source settings.py): CONNECTOR_ID has a built-in
+    # UUID, reports/indicators/observables creation defaults true, connector
+    # type/scope default EXTERNAL_IMPORT/misp.
+    connectors:
+      - name: misp
+        enabled: true
+        replicas: 1
+        image:
+          # Chart default builds opencti/<name>, which does not exist on
+          # Docker Hub; Filigran publishes connectors as
+          # opencti/connector-<name>. Tag rides the chart appVersion
+          # (connector images publish the same date-based tags as the
+          # platform, e.g. 7.261008.0).
+          repository: opencti/connector-misp
+        env:
+          MISP_URL: https://misp.gateway.services.apocrathia.com
+          # Public Let's Encrypt wildcard terminates the gateway listener
+          # (gateway-cert.yaml), so chain verification works from any image.
+          MISP_SSL_VERIFY: true
+          # PT5M is also the connector default; pinned because the slice
+          # acceptance is worded on the poll interval.
+          CONNECTOR_DURATION_PERIOD: PT5M
+          # Default log level is error; info keeps the import runs visible.
+          CONNECTOR_LOG_LEVEL: info
+          # Acceptance-critical outputs; defaults true, pinned explicitly.
+          MISP_CREATE_REPORTS: true
+          MISP_CREATE_INDICATORS: true
+          MISP_CREATE_OBSERVABLES: true
+        envFromSecrets:
+          # Same platform-token vault ref as the worker: the chart only
+          # auto-derives OPENCTI_TOKEN from plaintext values.
+          OPENCTI_TOKEN:
+            name: opencti-secrets
+            key: APP__ADMIN__TOKEN
+          # MISP auth key (read permission); vault item created by the
+          # operator post-merge — see secret.yaml and the README slice-6
+          # steps for the intended wait-on-Secret ordering.
+          MISP_KEY:
+            name: opencti-misp-connector
+            key: MISP_KEY
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+
+    # Single-node OpenSearch on Longhorn; vm.max_map_count set by the chart's
+    # privileged busybox initContainer (operator decision: no Talos patch).
+    opensearch:
+      opensearchJavaOpts: "-Xms3g -Xmx3g"
+      sysctlInit:
+        enabled: true
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 30Gi
+      resources:
+        requests:
+          cpu: "1"
+          memory: "3.5Gi"
+        limits:
+          cpu: "2"
+          memory: "4.5Gi"
+
+    # RabbitMQ per research doc 2.3: 512MB max message, 24h consumer timeout.
+    # Password from the vault; erlang cookie left empty so bitnami generates a
+    # random one into the managed secret (instead of shipping ChangeMe).
+    rabbitmq:
+      auth:
+        existingPasswordSecret: opencti-secrets
+        existingSecretPasswordKey: RABBITMQ__PASSWORD
+        erlangCookie: ""
+      extraConfiguration: |-
+        max_message_size = 536870912
+        consumer_timeout = 86400000
+      persistence:
+        enabled: true
+        storageClass: longhorn
+        size: 8Gi
+
+    # Dragonfly (redis-compatible). Password from the vault. cache_mode dropped
+    # (chart default --cache_mode=true): LRU eviction would silently drop
+    # OpenCTI stream/task state; rely on REDIS__TRIMMING + memory limit instead.
+    redis:
+      extraArgs: []
+      passwordFromSecret:
+        enable: true
+        existingSecret:
+          name: opencti-secrets
+          key: REDIS__PASSWORD
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "1"
+          memory: "1Gi"
+
+    # File storage is the NAS rustfs instance; no in-cluster S3 subchart.
+    rustfs:
+      enabled: false

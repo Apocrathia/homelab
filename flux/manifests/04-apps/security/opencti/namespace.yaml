@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opencti
+  labels:
+    app.kubernetes.io/name: opencti
+    app.kubernetes.io/component: threat-intelligence
+    app.kubernetes.io/part-of: security
+    images/dockerhub: "true"
+    # Opt-in to the shared kopiur repository (ClusterRepository/nas-rustfs)
+    backup.apocrathia.com/repo: nas-rustfs

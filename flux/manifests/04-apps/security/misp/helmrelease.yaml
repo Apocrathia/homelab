@@ -1,0 +1,327 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: misp
+  namespace: misp
+spec:
+  interval: 15m
+  timeout: 15m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      # Chart tree lives at the repo root of the `misp` GitRepository
+      # (cmu-sei/misp-helm has no published helm index). Flux ignores
+      # chart.spec.version for GitRepository sources; the chart version pin
+      # is the git tag in the `misp` GitRepository.
+      chart: ./
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: misp
+        namespace: misp
+      interval: 1h
+  # Credentials come from the OnePasswordItem `misp-secrets` (secret.yaml).
+  # All values are chart-native; nothing secret is stored in git.
+  valuesFrom:
+    - kind: Secret
+      name: misp-secrets
+      valuesKey: MYSQL_PASSWORD
+      targetPath: mariadb.auth.password
+    - kind: Secret
+      name: misp-secrets
+      valuesKey: MYSQL_ROOT_PASSWORD
+      targetPath: mariadb.auth.rootPassword
+    - kind: Secret
+      name: misp-secrets
+      valuesKey: REDIS_PASSWORD
+      targetPath: valkey.auth.aclUsers.default.password
+    - kind: Secret
+      name: misp-secrets
+      valuesKey: ADMIN_EMAIL
+      targetPath: env.mispEmail
+  postRenderers:
+    - kustomize:
+        patches:
+          # The chart writes the Redis password into two ConfigMaps
+          # (misp-env REDIS_PASSWORD / misp-modules-env REDIS_PW). Strip
+          # those keys and feed both deployments from the Secret instead.
+          - target:
+              version: v1
+              kind: ConfigMap
+              name: misp-env
+            patch: |
+              - op: remove
+                path: /data/REDIS_PASSWORD
+          - target:
+              version: v1
+              kind: ConfigMap
+              name: misp-modules-env
+            patch: |
+              - op: remove
+                path: /data/REDIS_PW
+          # Feed the core pod from the Secret and bootstrap the admin user
+          # from the vault: misp-docker's entrypoint applies ADMIN_EMAIL /
+          # ADMIN_PASSWORD (email + password change for user id 1) on every
+          # container start, so the vault stays desired state.
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: misp
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-secrets
+                      key: REDIS_PASSWORD
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: ADMIN_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-secrets
+                      key: ADMIN_EMAIL
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-secrets
+                      key: ADMIN_PASSWORD
+              # misp-docker logs the admin password at boot unless this is
+              # set (template.env recommends true for k8s log capture).
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: DISABLE_PRINTING_PLAINTEXT_CREDENTIALS
+                  value: "true"
+              # OidcAuth envs the chart does not render (image
+              # configure_misp.sh interpolates them into the plugin
+              # config; entrypoint defaults are mixedAuth=false,
+              # allow_email_linking=false, require_email_verified=true).
+              # mixedAuth keeps the local login form as break-glass
+              # (issue acceptance: break-glass local admin preserved).
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: OIDC_MIXEDAUTH
+                  value: "true"
+              # Link the SSO identity to the existing local user (id 1,
+              # ADMIN_EMAIL) instead of refusing the login: without this
+              # the operator's first authentik login fails with "Refusing
+              # to link OIDC identity to existing user with NULL sub"
+              # (plugin source). Safe here: only the authentik `admins`
+              # group can complete the MISP authorization flow (no users
+              # binding in the blueprint).
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: OIDC_ALLOW_EMAIL_LINKING
+                  value: "true"
+              # Authentik's stock email scope emits email_verified: false
+              # (authentik does no email verification - verified against
+              # authentik 2026.8.2 blueprints/system/providers-oauth2.yaml),
+              # so the plugin's require_email_verified gate (image default
+              # true) would always refuse the link. Email ownership in this
+              # single-operator IdP is operator-asserted.
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: OIDC_REQUIRE_EMAIL_VERIFIED
+                  value: "false"
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: misp-modules
+            patch: |
+              - op: add
+                path: /spec/template/spec/containers/0/env/-
+                value:
+                  name: REDIS_PW
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-secrets
+                      key: REDIS_PASSWORD
+  values:
+    instanceEnv:
+      mispBaseurl: https://misp.gateway.services.apocrathia.com
+      # Only used by the (disabled) Ingress; kept in sync with the
+      # HTTPRoute hostname for one-source-of-truth.
+      ingressHostName: misp.gateway.services.apocrathia.com
+    env:
+      # Pairs with mariadb.fullnameOverride below (bitnami primary Service
+      # is the fullname for standalone architecture).
+      mysqlHost: mariadb
+      mysqlDatabase: misp
+      # Pairs with valkey.fullnameOverride below.
+      redisHost: valkey
+      redisPort: 6379
+      # SSO via authentik OIDC (slice 3): MISP core plugin OidcAuth, fed
+      # by the misp-docker env surface (configure_misp.sh set_up_oidc ->
+      # modify_config.php; plugin docs + research doc section 1.6).
+      oidcEnable: true
+      # Discovery endpoint for the blueprint-pinned authentik provider
+      # (slug "misp"); the plugin appends .well-known/openid-configuration.
+      oidcProviderUrl: https://auth.gateway.services.apocrathia.com/application/o/misp/
+      # Chart default (client_secret_jwt) is wrong for authentik; the
+      # plugin/misp-docker default is client_secret_post.
+      oidcAuthenticationMethod: client_secret_post
+      # PKCE (research section 1.6); chart default, pinned explicitly.
+      oidcCodeChallengeMethod: S256
+      # Roles claim from the blueprint's "MISP Roles" scope mapping:
+      # authentik "admins" -> misp-admin -> MISP role 1 (site admin).
+      oidcRolesProperty: "roles"
+      oidcRolesMapping: '{"misp-admin": "1"}'
+      # Org assigned to SSO-created users (created if missing; plugin
+      # checkOrganization). Required non-empty by set_up_oidc.
+      oidcDefaultOrg: Apocrathia
+      # Plugin OidcAuth.scopes; must be a JSON array (set_up_oidc gates
+      # on `jq type == array`). "roles" is the blueprint custom scope.
+      oidcScopes: '["profile", "email", "roles"]'
+      # End-session endpoint; configure_misp.sh maps this to
+      # Plugin.CustomAuth_custom_logout with post_logout_redirect_uri
+      # appended, so MISP logout lands back on the IdP-hosted login page.
+      oidcLogoutUrl: https://auth.gateway.services.apocrathia.com/application/o/misp/end-session/
+      # Blocked-IdP-user caveat (research section 1.6): the plugin's real
+      # hardening (offline_access + check_user_validity 300s) is plugin
+      # config the misp-docker v2.5.44 entrypoint never writes - these
+      # chart envs render into misp-env but the image does not consume
+      # them (verified against misp-docker @ 33ac4e6d, repo-wide).
+      # They are pinned to the researched values so the intent is on
+      # record and future images can pick them up; the README documents
+      # the actual blocked-user behavior on this image.
+      oidcOfflineAccess: "yes"
+      oidcCheckUserValidity: "300"
+
+    misp:
+      replicas: 1
+      misp:
+        image:
+          # Pinned to the chart appVersion pairing (core v2.5.44 ships with
+          # modules v3.0.9 upstream); bump with the chart tag.
+          # renovate: datasource=docker depName=ghcr.io/misp/misp-docker/misp-core
+          tag: v2.5.44@sha256:0eaa4e423d5cd965b7b76aa5665e81d5c05a35bc46a4ffec2ca52e0cfe627e86
+          pullPolicy: IfNotPresent
+        # Sizing from research doc section 1.5 (web tier 2 vcpu / 4-16Gi
+        # reference; single-instance homelab shape).
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+      service:
+        type: ClusterIP
+        port: 80
+      ingress:
+        # Gateway API only in this cluster.
+        enabled: false
+      httproute:
+        enabled: true
+        parentRefs:
+          - name: main-gateway
+            namespace: cilium-system
+            sectionName: https
+        hostnames:
+          - misp.gateway.services.apocrathia.com
+        rules:
+          - matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+
+    modules:
+      mispModules:
+        image:
+          # renovate: datasource=docker depName=ghcr.io/misp/misp-docker/misp-modules
+          tag: v3.0.9@sha256:99572d207973f804e153861bfa9d7b0da0c69c8687babc8e5534a360e1156613
+          pullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+    # The deployment template reads MYSQL_USER / MYSQL_PASSWORD from this
+    # Secret (username/password keys) - produced by externalsecret.yaml
+    # from the misp-secrets vault item.
+    mysqlCredentialsSecretName: misp-mysql-credentials
+    # Same chart shape for OIDC_CLIENT_ID / OIDC_CLIENT_SECRET; produced by
+    # externalsecret.yaml from the misp-secrets item (username = pinned
+    # client_id "misp", password = authentik-generated client secret,
+    # operator-copied post-merge).
+    oidcCredentialsSecretName: misp-oidc-credentials
+    # Admin auth key stays auto-generated by MISP; slice 6 mints it at
+    # runtime into the opencti-misp-connector 1Password item.
+    setAPIKey: false
+
+    pvc:
+      attachments:
+        storageClass: longhorn
+        storageRequest: 20Gi
+
+    mariadb:
+      enabled: true
+      # Service name == fullname for standalone; matches env.mysqlHost.
+      fullnameOverride: mariadb
+      architecture: standalone
+      image:
+        # Chart default is `latest`; pinned to the mariadb 10.11 line that
+        # misp-docker's compose uses.
+        # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
+        tag: 10.11.9-debian-12-r3@sha256:0a897dbd27c6588fb5b3d421956b0874521a65a32d3ae6fa269ff195be93a6ff
+      auth:
+        database: misp
+        username: misp
+        # password / rootPassword injected from misp-secrets via valuesFrom
+      primary:
+        persistence:
+          storageClass: longhorn
+          size: 10Gi
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+
+    valkey:
+      enabled: true
+      fullnameOverride: valkey
+      auth:
+        enabled: true
+        # default ACL user password injected from misp-secrets via
+        # valuesFrom; misp-core/modules send the same value
+      # Feed/job cache only (misp-docker disables valkey snapshotting by
+      # default too) - no PVC.
+      dataStorage:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+
+    smtp:
+      # SMTP relay target is an operator call (issue checklist); enable the
+      # ntppool smtp subchart with SMARTHOST_* config when decided.
+      enabled: false
