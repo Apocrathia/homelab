@@ -8,7 +8,7 @@ apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
   name: misp
-  namespace: misp
+  namespace: flux-system
 spec:
   interval: 1h
   url: https://github.com/cmu-sei/misp-helm
