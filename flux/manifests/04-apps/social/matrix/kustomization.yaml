@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: matrix
+  namespace: matrix
+
+resources:
+  - namespace.yaml
+  - certificate.yaml
+  - referencegrant.yaml
+  - secret.yaml
+  - postgres.yaml
+  - synapse-helmrelease.yaml
+  - mas-helmrelease.yaml
+  - httproute.yaml
+  - crossplane.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # homeserver.yaml template + log config for the render-config init
+  # container: __SYNAPSE_DB_PASSWORD__ is sed-substituted from the
+  # matrix-secrets Secret; the MAS shared secret stays out of the file
+  # (secret_path reads it at startup).
+  - name: matrix-synapse-config
+    namespace: matrix
+    files:
+      - homeserver.yaml=config/homeserver.yaml
+      - homeserver.log.config=config/homeserver.log.config
+  # MAS config: secret-free ConfigMap. MAS is distroless (no shell, no
+  # render step); every credential is a *_file path into the
+  # matrix-secrets Secret mount, so no secret bytes land here either.
+  - name: matrix-mas-config
+    namespace: matrix
+    files:
+      - mas-config.yaml=config/mas-config.yaml

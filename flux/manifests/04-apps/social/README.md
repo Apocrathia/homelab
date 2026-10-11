@@ -14,6 +14,10 @@ P2P swarm network for counting how many other people are wasting RAM on this con
 
 Lemmy UI frontend for the lemmy.ml instance.
 
+### [Matrix](./matrix/README.md)
+
+Matrix homeserver (Synapse) with SSO delegated to Matrix Authentication Service, upstreamed to Authentik OIDC.
+
 ### [Mumble](./mumble/README.md)
 
 Open-source VoIP server for low-latency voice chat.

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Matrix (Synapse + MAS) - three-room mark on the house black/green -->
+  <rect width="128" height="128" rx="24" fill="#000000"/>
+  <rect x="34" y="30" width="10" height="68" rx="5" fill="#0DBD8B"/>
+  <rect x="59" y="46" width="10" height="52" rx="5" fill="#0DBD8B" opacity="0.85"/>
+  <rect x="84" y="20" width="10" height="78" rx="5" fill="#0DBD8B"/>
+  <circle cx="39" cy="20" r="4" fill="#0DBD8B" opacity="0.5"/>
+  <circle cx="89" cy="108" r="4" fill="#0DBD8B" opacity="0.5"/>
+</svg>

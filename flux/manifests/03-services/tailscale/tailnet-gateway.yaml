@@ -60,6 +60,24 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    # Tailnet door for matrix.apocrathia.com (Synapse server_name
+    # host): https-gateway-services is hostname- and cert-scoped to
+    # *.gateway.services.apocrathia.com, so this host needs its own
+    # listener with the matrix-namespace cert; matrix/referencegrant.yaml
+    # admits cilium-system Gateways to it.
+    - name: https-matrix
+      protocol: HTTPS
+      port: 443
+      hostname: "matrix.apocrathia.com"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: matrix-apocrathia-com-tls
+            namespace: matrix
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: tak-8088
       protocol: TCP
       port: 8088

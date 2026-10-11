@@ -1,0 +1,102 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mas
+  namespace: matrix
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: mas
+      namespace: matrix
+      # Distroless image: ENTRYPOINT is mas-cli, so args ["server"] runs
+      # `mas-cli server`; MAS_CONFIG points at the mounted ConfigMap. No
+      # shell in the image - no render step, config ships secret-free and
+      # every credential is a *_file path into the matrix-secrets mount.
+      # renovate: datasource=docker depName=ghcr.io/element-hq/matrix-authentication-service
+      image: ghcr.io/element-hq/matrix-authentication-service:1.26.0@sha256:e089f1048a1d4a9a492ed17b9fe759100f1bd619407b001f5927928d88b780c4
+      args: ["server"]
+      container:
+        name: mas
+        # web listener: discovery, human, oauth, compat, graphql, assets;
+        # health rides a separate 8081 listener off the public door
+        port: 8080
+        extraPorts:
+          - containerPort: 8081
+            name: health
+            protocol: TCP
+        env:
+          - name: MAS_CONFIG
+            value: /config/mas-config.yaml
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      securityContext:
+        # distroless nonroot image user: uid 65532
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # stateless: Postgres holds everything; no writes anywhere
+        readOnlyRootFilesystem: true
+      volumes:
+        configMap:
+          - name: matrix-mas-config
+            mountPath: /config
+            configMapName: matrix-mas-config
+            readOnly: true
+        secret:
+          - name: matrix-secrets
+            mountPath: /run/secrets/matrix-secrets
+            secretName: matrix-secrets
+            readOnly: true
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: http
+      extraServicePorts:
+        - name: health
+          port: 8081
+          targetPort: 8081
+          protocol: TCP
+
+    secrets:
+      # matrix-secrets OnePasswordItem lives in secret.yaml
+      enabled: false
+
+    authentik:
+      # No Authentik proxy - MAS itself is the auth layer; its upstream
+      # provider is wired by the matrix-authentik tofu workspace
+      # (crossplane.yaml)
+      enabled: false
+
+    gatus:
+      enabled: true
+      # health resource is on its own listener (8081), off the web door
+      url: http://mas.matrix.svc:8081
+      path: /health
+
+    # Hand-written routes in httproute.yaml
+    httproute:
+      enabled: false
+
+    postgres:
+      enabled: false

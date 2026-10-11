@@ -85,6 +85,25 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    # matrix.apocrathia.com (Synapse server_name host): needs its own
+    # cert - the https listener's wildcard covers only
+    # *.gateway.services.apocrathia.com, and the exact hostname matches
+    # before the hostname-less fallback listener.
+    # matrix/referencegrant.yaml admits cilium-system Gateways to the
+    # matrix-namespace secret.
+    - name: https-matrix
+      protocol: HTTPS
+      port: 443
+      hostname: "matrix.apocrathia.com"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: matrix-apocrathia-com-tls
+            namespace: matrix
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: tak-8088
       protocol: TCP
       port: 8088

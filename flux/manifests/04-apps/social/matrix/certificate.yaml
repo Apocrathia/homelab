@@ -1,0 +1,28 @@
+---
+# TLS certificate for the matrix.apocrathia.com server_name host. The
+# gateway wildcard only covers *.gateway.services.apocrathia.com, so the
+# server_name host needs this dedicated cert, presented by the in-tree
+# https-matrix listeners on main-gateway and tailnet-gateway
+# (gateway.yaml / tailnet-gateway.yaml), consumed by the
+# matrix-apocrathia-com HTTPRoute via sectionName https-matrix.
+# referencegrant.yaml admits cilium-system Gateways to the secret.
+# DNS-01 via the Cloudflare-backed
+# letsencrypt-prod ClusterIssuer, same flow as mumble-tls.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: matrix-apocrathia-com-tls
+  namespace: matrix
+spec:
+  commonName: matrix.apocrathia.com
+  dnsNames:
+    - matrix.apocrathia.com
+  duration: 2160h
+  renewBefore: 360h
+  secretName: matrix-apocrathia-com-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  subject:
+    organizations:
+      - Apocrathia

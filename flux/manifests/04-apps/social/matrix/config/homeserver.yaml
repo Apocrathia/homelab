@@ -1,0 +1,61 @@
+---
+# Synapse homeserver.yaml template - rendered to /data/homeserver.yaml by
+# the render-config init container in synapse-helmrelease.yaml. Only
+# __SYNAPSE_DB_PASSWORD__ is substituted (from the matrix-secrets
+# Secret); the MAS shared secret is NOT written into this file - synapse
+# reads it from matrix_authentication_service.secret_path at startup, so
+# the kopia-backed /data PVC never stores secret bytes.
+#
+# Auth is fully delegated to MAS (the stable post-1.136 integration).
+# enable_registration and password_config stay off; Synapse enforces the
+# rest of the SSO-only lockdown at startup when mas.enabled is true
+# (synapse/config/mas.py check_config_conflicts).
+server_name: "matrix.apocrathia.com"
+public_baseurl: "https://matrix.apocrathia.com/"
+# Tailnet-only: serve_server_wellknown is omitted on purpose - with no
+# federation, no remote server will ever fetch /.well-known/matrix/server.
+# public_baseurl makes Synapse serve /.well-known/matrix/client with the
+# MSC2965 MAS issuer block (OIDC discovery for Element X et al.)
+pid_file: /data/homeserver.pid
+signing_key_path: /data/matrix.apocrathia.com.signing.key
+
+listeners:
+  # One client listener: client + federation resources behind the
+  # gateway; x_forwarded for the X-Forwarded-For/Proto the Cilium Envoy
+  # gateway appends. No TLS - the gateway terminates.
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ["0.0.0.0"]
+    resources:
+      - names: [client, federation]
+
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    # substituted by the render-config init container
+    password: "__SYNAPSE_DB_PASSWORD__"
+    dbname: synapse
+    host: matrix-postgres-rw.matrix.svc.cluster.local
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+enable_registration: false
+password_config:
+  enabled: false
+
+matrix_authentication_service:
+  enabled: true
+  endpoint: http://mas.matrix.svc.cluster.local:8080
+  secret_path: /run/secrets/matrix-secrets/shared-secret
+
+max_upload_size: 50M
+media_store_path: /data/media_store
+report_stats: false
+# Tailnet-only: keep the signing key out of matrix.org's key server
+# publication (only meaningful the day federation turns on)
+suppress_key_publication: true
+log_config: "/data/matrix.apocrathia.com.log.config"
