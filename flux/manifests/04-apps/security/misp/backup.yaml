@@ -1,0 +1,52 @@
+---
+# Kopia coverage for the MISP Longhorn PVCs (slice 8): nightly snapshot into
+# the shared kopiur repository on the NAS rustfs instance. The namespace
+# carries the tenancy-gate label (namespace.yaml); the ClusterRepository and
+# its credentials live in 03-services/backup/.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: misp-backup
+  namespace: misp
+spec:
+  repository:
+    kind: ClusterRepository
+    name: nas-rustfs
+  sources:
+    # Chart PVC (pvc.attachments in helmrelease.yaml): attachments +
+    # default-feed cache. Its consumer (the misp core pod) runs as root with
+    # no runAsUser pinned in the pod spec, so pvcConsumer inheritance falls
+    # back to the mover default UID; php uploads land 0644 (umask 022), so
+    # the expected case is readable. If a snapshot errors on unreadable
+    # files the mover UID is the knob (kopiur mover.podSecurityContext).
+    - pvc:
+        name: misp-attachments
+    # Bitnami StatefulSet claim (<claim>-<sts>-<ordinal>): volumeClaimTemplate
+    # `data` on StatefulSet `mariadb`. Crash-consistent InnoDB volume copy -
+    # the real restore path is the logical dump CronJob (backup-cronjob.yaml).
+    - pvc:
+        name: data-mariadb-0
+  retention:
+    keepDaily: 7
+    keepWeekly: 4
+  # The mariadb consumer pins runAsUser 1001 (container securityContext), so
+  # the data-mariadb-0 mover inherits it and can read bitnami's 0640 data
+  # files; per-source inheritance is derived from each PVC's own consumer.
+  mover:
+    inheritSecurityContextFrom:
+      pvcConsumer: {}
+  credentialProjection:
+    enabled: true
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: misp-nightly
+  namespace: misp
+spec:
+  policyRef:
+    name: misp-backup
+  schedule:
+    cron: "H 2 * * *"
+    jitter: 30m
+    runOnCreate: false
