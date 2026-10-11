@@ -60,44 +60,21 @@ spec:
     kind: ProviderConfig
     name: chaos-mesh-authentik
   forProvider:
-    source: Remote
-    # The shared module is the root config (import blocks are root-only).
-    # Pinned to the generic-app chart release tag — generic-app-0.0.84
-    # already exists (the module landed on main with it), so the first
-    # reconcile resolves the module immediately; a later chart tag means
-    # bumping this pin by hand (no renovate manager matches a git:: ref).
-    module: "git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-0.0.84"
-    # Pull once per URL; a tag move changes the ref and re-pulls. The
-    # admission default (Always) would re-clone the repo on every poll.
-    remotePullPolicy: IfNotPresent
-    # Module inputs — no chart composer here, so the varmap carries the
-    # full input set (variable contract: terraform/modules/authentik-app/
-    # variables.tf). SAME STATE, no recreate: the migration gate renames
-    # this app's inline-era tofu state addresses to the module's addresses
-    # via tofu state mv (workspace paused + guarded, Flux suspended), so
-    # the first plan reads No changes — no wipe, no import ids, uuids
-    # intact. Three live-vs-default overrides (verified in the authentik
-    # DB 2026-09-25): internal_host points at the dashboard service, not
-    # the app-name pattern the chart would compose; intercept_header_auth
-    # TRUE (module default false — chart parity); access_token_validity
-    # minutes=10 (the TF default written at blip time; the module proxy
-    # default is hours=1). NOT shared: live has only the admins binding
-    # (no users binding, no tailnet parentRef).
-    varmap:
-      app_name: "chaos-mesh-dashboard"
-      display_name: "Chaos Mesh"
-      external_host: "https://chaos.gateway.services.apocrathia.com"
-      mode: "proxy"
-      shared: false
-      sso_launch_url: ""
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/chaos-mesh/icon.svg"
-      category: "Platform"
-      authorization_flow: "default-provider-authorization-implicit-consent"
-      invalidation_flow: "default-invalidation-flow"
-      authentication_flow: "default-authentication-flow"
-      internal_host: "http://chaos-dashboard.chaos-mesh.svc.cluster.local:2333"
-      intercept_header_auth: true
-      skip_path_regex: []
-      access_token_validity: "minutes=10"
-      meta_description: "Chaos engineering platform for Kubernetes"
-      meta_publisher: "Chaos Mesh"
+    # Inline module, stitched at kustomize build time: kustomization.yaml's
+    # configMapGenerator packages authentik.tf and the replacements rule
+    # copies its bytes into this module field — crossplane.yaml +
+    # authentik.tf are the canonical file pair, and the HCL file is the
+    # single source of truth (never render this directory outside
+    # kustomize). No varmap: the app values — including the three
+    # live-vs-default overrides (internal_host on the dashboard service,
+    # intercept_header_auth true, access_token_validity minutes=10,
+    # verified in the authentik DB 2026-09-25) — live in the HCL now.
+    # ADDRESS PARITY: authentik.tf mirrors terraform/modules/authentik-app
+    # exactly, so the live tfstate Secret
+    # (tfstate-chaos-mesh-authentik-chaos-mesh) keeps its module-era
+    # addresses and the first plan after this layout swap reads No
+    # changes — no state-mv gate, no recreate, no import ids. If the state
+    # Secret is ever lost, re-adopt via manual tofu import (no import
+    # blocks live in git).
+    source: Inline
+    module: ""
