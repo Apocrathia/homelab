@@ -35,10 +35,10 @@ spec:
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
 
-      # Container starts as root (the opencanaryd wrapper execs twistd via sudo
-      # when non-root, which fails in-container), then drops to nobody:nogroup
-      # in-process via the image CMD. SETUID/SETGID are the only caps the
-      # privilege drop needs; everything else is dropped.
+      # The wrapper shells out to sudo when not root, which breaks in a
+      # container - so the pod starts as root. twistd then drops to
+      # nobody:nogroup itself, and SETUID/SETGID are the only caps that
+      # drop needs.
       securityContext:
         runAsUser: "0"
         runAsGroup: "0"

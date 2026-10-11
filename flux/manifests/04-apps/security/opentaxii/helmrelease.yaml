@@ -19,21 +19,20 @@ spec:
     app:
       name: opentaxii
       namespace: opentaxii
-      # 0.10.0b1 over 0.9.3: TAXII 2.1 enabled by default (0.9.3 ships
-      # taxii2 OFF in defaults.yml and the entrypoint-generated config),
-      # gunicorn 22.0.0 (0.9.3 pins 20.0.4 - CVE-2024-1135 request
-      # smuggling), Python 3.10 vs EOL 3.9. Single-arch amd64 image.
+      # Why 0.10.0b1 and not 0.9.3: TAXII 2.1 is on by default, gunicorn is
+      # current (0.9.3 pins 20.0.4, CVE-2024-1135 request smuggling), and
+      # Python 3.10 replaces EOL 3.9. Image is amd64-only.
       # renovate: datasource=docker depName=eclecticiq/opentaxii
       image: eclecticiq/opentaxii:0.10.0b1@sha256:c7b7adc4bd1ee1e9419615e7c56c3f7a2cb5e1e06448b04a6245537c5efe1268
       container:
         name: opentaxii
         port: 9000
         env:
-          # Entrypoint (docker/entrypoint.sh) generates /tmp/opentaxii.yml
-          # from DATABASE_*/AUTH_DATABASE_*; gunicorn and opentaxii-sync-data
-          # load config from OPENTAXII_CONFIG. The entrypoint's unconditional
-          # `cp -> /opentaxii.yml` fails as uid 1000 - benign (no set -e),
-          # the generated config lives at /tmp/opentaxii.yml instead.
+          # The entrypoint writes /tmp/opentaxii.yml from the DATABASE_* and
+          # AUTH_DATABASE_* vars; gunicorn and sync-data read it through
+          # OPENTAXII_CONFIG. Its `cp -> /opentaxii.yml` copy fails under
+          # uid 1000, but the script has no set -e, so that failure is
+          # harmless - the real config is /tmp/opentaxii.yml.
           - name: OPENTAXII_CONFIG
             value: /tmp/opentaxii.yml
           # Advertised TAXII 1 service addresses in discovery responses
