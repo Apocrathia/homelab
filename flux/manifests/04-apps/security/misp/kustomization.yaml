@@ -10,7 +10,6 @@ resources:
   - namespace.yaml
   - externalsecret.yaml
   - secret.yaml
-  - backup-secret.yaml
   - backup-cronjob.yaml
   - backup.yaml
   - helmrelease.yaml

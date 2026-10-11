@@ -201,11 +201,11 @@ Two independent mechanisms (research doc §5 slice 8):
    PUTs it to `s3://misp-mariadb-backups/misp-mariadb-YYYY-MM-DD.sql.gz`, then
    prunes to the newest 14 daily copies (parity with the CNPG
    `retentionPolicy: 14d` house default — the bucket is the archive, retention
-   is date-prefix-based). Credentials: rustfs keypair from the 1Password item
-   `misp-mariadb-backups-secrets` via the OnePasswordItem in
-   `backup-secret.yaml` (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` keys); DB
-   password read from the chart-managed Secret `mariadb` (`mariadb-password`
-   key) so DB creds live in no second store.
+   is date-prefix-based). Credentials: the rustfs keypair rides in the
+   consolidated `misp-secrets` item (`AWS_ACCESS_KEY_ID`/
+   `AWS_SECRET_ACCESS_KEY` fields — the single-item-per-app pattern, no
+   separate backup item); DB password read from the chart-managed Secret
+   `mariadb` (`mariadb-password` key) so DB creds live in no second store.
 2. **Volume snapshots** — `backup.yaml` + the namespace label: kopiur
    `SnapshotPolicy/misp-backup` snapshots `misp-attachments` and
    `data-mariadb-0` nightly (`H 2 * * *`, 30m jitter) into the shared

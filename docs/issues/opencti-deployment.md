@@ -36,9 +36,11 @@ Slice 1 — storage + secrets foundation:
 - rustfs bucket `opencti-files` exists with a bucket-scoped,
   self-identifying (`OPENCTI…`) user; scoping battery green (in-bucket
   PUT/GET/DELETE 200, cross-bucket 403, bucket-create 403)
-- 1Password items `opencti-secrets` (admin email/password/token, RabbitMQ
-  password, redis password, rustfs keys for `opencti-files`) and
-  `opencti-files-secrets` exist (label-only verification)
+- 1Password item `opencti-secrets` carries everything for the app (admin
+  email/password/token, RabbitMQ password, redis password, the rustfs
+  keys for `opencti-files` as MINIO**ACCESS_KEY/MINIO**SECRET_KEY) per the
+  single-item-per-app pattern; the former split item
+  `opencti-files-secrets` was consolidated away and archived (2026-10-11)
 
 Slice 4 — OpenCTI deploy (no SSO):
 
@@ -88,15 +90,13 @@ consider the LTS app lines.
   `APP__ADMIN__EMAIL`, `APP__ADMIN__PASSWORD`, `APP__ADMIN__TOKEN` (UUIDv4),
   `APP__ENCRYPTION_KEY` (base64 32 bytes), `RABBITMQ__PASSWORD`,
   `REDIS__PASSWORD`, `MINIO__ACCESS_KEY`, `MINIO__SECRET_KEY` (the last two
-  are the rustfs keypair for `opencti-files`, duplicated from
-  `opencti-files-secrets`). Slice 5 adds `OIDC_CLIENT_SECRET` (authentik OIDC
+  are the rustfs keypair for `opencti-files`). Slice 5 adds `OIDC_CLIENT_SECRET` (authentik OIDC
   client secret; the client_id is pinned to `opencti` in `authentik.tf` —
   the canonical file pair: `crossplane.yaml` carries the Crossplane
   objects, `authentik.tf` is the single source of truth for the HCL,
   stitched into the Workspace at kustomize build time — so
   only the secret is copied post-merge; the HCL never sets it, authentik
-  generates the secret server-side). `opencti-files-secrets` holds the same rustfs
-  keypair under `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
+  generates the secret server-side).
 - The `opencti-misp-connector` 1Password item is deferred to slice 6 (wired
   there): a single field `MISP_KEY` holding the MISP auth key, minted in the
   MISP UI post-merge (dedicated read-only user, org `Apocrathia`) and

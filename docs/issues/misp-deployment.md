@@ -36,8 +36,10 @@ Slice 1 — storage + secrets foundation:
   bucket-scoped, self-identifying (`MISP…`) users; scoping battery green
   (in-bucket PUT/GET/DELETE 200, cross-bucket 403, bucket-create 403) per
   [`docs/infrastructure/rustfs-bucket-user-creation.md`](../infrastructure/rustfs-bucket-user-creation.md)
-- 1Password items `misp-secrets`, `misp-files-secrets`,
-  `misp-mariadb-backups-secrets` exist (label-only verification)
+- 1Password item `misp-secrets` exists and carries the full field
+  inventory (app creds, OIDC username/password, both rustfs keypairs) —
+  single-item-per-app pattern; the split items were consolidated into it
+  and archived (2026-10-11)
 
 Slice 2 — MISP deploy (no SSO):
 
@@ -96,8 +98,10 @@ datasource), same pattern as generic-app.
   passwords, valkey/redis password, initial admin email + password (field
   labels match the misp-docker env names: `MYSQL_ROOT_PASSWORD`,
   `MYSQL_PASSWORD`, `REDIS_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`).
-  `misp-files-secrets` / `misp-mariadb-backups-secrets`: rustfs keypairs
-  (fields `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
+  The rustfs keypairs (misp-files, misp-mariadb-backups buckets) ride in
+  the same `misp-secrets` item (fields AWS_ACCESS_KEY_ID/
+  AWS_SECRET_ACCESS_KEY for the backup bucket; MISP_FILES_ACCESS_KEY/
+  MISP_FILES_SECRET_KEY for misp-files) — consolidated 2026-10-11.
 - The `opencti-misp-connector` 1Password item is deferred to slice 6
   (wired there): single field `MISP_KEY`, minted via the MISP UI post-merge —
   see the slice-6 steps below and the joint checklist in the OpenCTI issue.

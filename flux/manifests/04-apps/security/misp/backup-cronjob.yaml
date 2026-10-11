@@ -123,12 +123,12 @@ spec:
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:
-                      name: misp-mariadb-backups-secrets
+                      name: misp-secrets
                       key: AWS_ACCESS_KEY_ID
                 - name: AWS_SECRET_ACCESS_KEY
                   valueFrom:
                     secretKeyRef:
-                      name: misp-mariadb-backups-secrets
+                      name: misp-secrets
                       key: AWS_SECRET_ACCESS_KEY
               securityContext:
                 readOnlyRootFilesystem: true
