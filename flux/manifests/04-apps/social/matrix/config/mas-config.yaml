@@ -1,0 +1,90 @@
+---
+# Matrix Authentication Service config - mounted as a secret-free
+# ConfigMap (distroless image: no shell, no render step). Every
+# credential is a *_file path into the matrix-secrets Secret mounted at
+# /run/secrets/matrix-secrets. MAS sections clients and upstream_oauth2
+# sync to the database on startup; the provider ULID below is the stable
+# cross-ref and is embedded in the Authentik redirect URI
+# (crossplane.yaml).
+http:
+  public_base: https://matrix.gateway.services.apocrathia.com/
+  issuer: https://matrix.gateway.services.apocrathia.com/
+  # Cilium Envoy gateway pod IPs; the default trusted_proxies would also
+  # cover them (10/8 et al), the explicit entry documents the intent.
+  trusted_proxies:
+    - 10.0.0.0/8
+  listeners:
+    # web: everything clients and Synapse hit - kept on one listener so
+    # the HTTPRoute split (compat vs client API) lands on the same door
+    - name: web
+      resources:
+        - name: discovery # /.well-known/openid-configuration
+        - name: human # login/consent/account UI
+        - name: oauth # OAuth2/OIDC endpoints (Synapse introspects here)
+        - name: compat # /_matrix/client/*/login|logout|refresh
+        - name: graphql # frontend API
+        - name: assets # frontend static files
+      binds:
+        - address: "[::]:8080"
+    # health off the public listener
+    - name: health
+      resources:
+        - name: health
+      binds:
+        - address: "[::]:8081"
+
+database:
+  # Direct to the -rw service - never through a transaction-pooling
+  # pooler (MAS uses advisory locks). Migrations run automatically on
+  # boot against the mas role/database created by the CNPG bootstrap.
+  host: matrix-postgres-rw.matrix.svc.cluster.local
+  port: 5432
+  username: mas
+  password_file: /run/secrets/matrix-secrets/mas-db-password
+  database: mas
+  ssl_mode: disable
+
+matrix:
+  kind: synapse
+  # MUST equal Synapse's server_name
+  homeserver: matrix.apocrathia.com
+  endpoint: http://synapse.matrix.svc.cluster.local:8008
+  # Same value as Synapse's matrix_authentication_service.secret_path
+  secret_file: /run/secrets/matrix-secrets/shared-secret
+
+# SSO-only: no local password login forms; with exactly one upstream
+# provider MAS skips the provider picker and auto-redirects to Authentik
+passwords:
+  enabled: false
+
+secrets:
+  # 32-byte hex (64 chars) - immutable after first start
+  encryption_file: /run/secrets/matrix-secrets/encryption
+  keys:
+    # RSA key for OIDC RS256 signing (mas-cli config generate output)
+    - key_file: /run/secrets/matrix-secrets/rsa-key.pem
+
+upstream_oauth2:
+  providers:
+    - id: 01M4M3KRKC5A5BWMTGAXXRGYEP
+      human_name: Authentik
+      # Must match the issuer in authentik discovery byte-for-byte
+      # (per-provider issuer mode: /application/o/matrix/)
+      issuer: https://auth.gateway.services.apocrathia.com/application/o/matrix/
+      client_id: matrix
+      client_secret_file: /run/secrets/matrix-secrets/oidc-client-secret
+      token_endpoint_auth_method: client_secret_basic
+      scope: openid profile email
+      claims_imports:
+        localpart:
+          # preferred_username is the authentik username (profile scope)
+          action: require
+          template: "{{ user.preferred_username }}"
+        displayname:
+          action: suggest
+          template: "{{ user.name }}"
+        email:
+          action: suggest
+          template: "{{ user.email }}"
+        account_name:
+          template: "@{{ user.preferred_username }}"

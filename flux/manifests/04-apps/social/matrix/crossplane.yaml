@@ -1,0 +1,66 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: matrix
+spec:
+  # Scoped Authentik service-account token (operator-owned 1Password
+  # item); the OnePassword Connect operator syncs it as the Secret the
+  # ProviderConfig below consumes. Never a bare managed Secret.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: matrix-authentik
+  namespace: matrix
+spec:
+  # Materializes the token Secret as a file in the tofu workdir; the
+  # module reads it with file("authentik-token").
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: matrix
+        key: authentik-terraform-token
+  # Per-app state for the module's PARTIAL kubernetes backend; the state
+  # Secret is tfstate-matrix-authentik-matrix in this namespace.
+  backendFile: |
+    secret_suffix     = "matrix"
+    namespace         = "matrix"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: matrix-authentik
+  namespace: matrix
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Deliberate decommission therefore requires
+  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: matrix-authentik
+  forProvider:
+    # Inline module, stitched at kustomize build time: kustomization.yaml's
+    # configMapGenerator packages authentik.tf and the replacements rule
+    # copies its bytes into this module field — crossplane.yaml +
+    # authentik.tf are the canonical file pair, and the HCL file is the
+    # single source of truth (never render this directory outside
+    # kustomize). No varmap: the app values live in the HCL now.
+    # FRESH CREATE: matrix has no live tfstate — no address-parity claim
+    # (the headlamp/chaos-mesh parity comments are for migrated apps).
+    # The first sync creates the whole authentik stack; the state Secret
+    # will be tfstate-matrix-authentik-matrix in this namespace.
+    source: Inline
+    module: ""

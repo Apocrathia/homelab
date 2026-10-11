@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: synapse
+  namespace: matrix
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: synapse
+      namespace: matrix
+      # start.py reads /data/homeserver.yaml (SYNAPSE_CONFIG_DIR default)
+      # and drops to uid 991 via gosu when run as root - the pod starts
+      # as 991 directly, so the drop is skipped.
+      # renovate: datasource=docker depName=ghcr.io/element-hq/synapse
+      image: ghcr.io/element-hq/synapse:v1.162.0@sha256:6b84a7bbac36f080b2d2e51e0289cf1b08b349598ea44a558df38d558f2c2311
+      container:
+        name: synapse
+        # client + federation resources on one listener; /health rides the
+        # same port (gatus)
+        port: 8008
+      replicas: 1
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 2Gi
+      securityContext:
+        # Synapse image default user: uid/gid 991
+        runAsUser: 991
+        runAsGroup: 991
+        fsGroup: 991
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # config, media, signing key live on the /data PVC
+        readOnlyRootFilesystem: false
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      # The main container reads the MAS shared secret via
+      # matrix_authentication_service.secret_path once at startup
+      volumes:
+        secret:
+          - name: matrix-secrets
+            mountPath: /run/secrets/matrix-secrets
+            secretName: matrix-secrets
+            readOnly: true
+      # Render homeserver.yaml from the ConfigMap template into /data on
+      # every boot (tak render-config pattern). The kopia-backed PVC
+      # does hold secret bytes - the rendered homeserver.yaml carries
+      # the DB password and the signing key is copied to /data - that
+      # is the intended tak house pattern. The MAS shared secret stays
+      # out of the rendered file (secret_path reads it at startup).
+      initContainers:
+        - name: render-config
+          # Same image as the main container (no extra pull); entrypoint
+          # overridden to a sed render
+          # renovate: datasource=docker depName=ghcr.io/element-hq/synapse
+          image: ghcr.io/element-hq/synapse:v1.162.0@sha256:6b84a7bbac36f080b2d2e51e0289cf1b08b349598ea44a558df38d558f2c2311
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              sed \
+                -e "s|__SYNAPSE_DB_PASSWORD__|$(cat /run/secrets/matrix-secrets/password)|" \
+                /template/homeserver.yaml > /data/homeserver.yaml
+              cp /template/homeserver.log.config /data/matrix.apocrathia.com.log.config
+              cp /run/secrets/matrix-secrets/signing-key /data/matrix.apocrathia.com.signing.key
+              echo "rendered /data/homeserver.yaml ($(wc -c < /data/homeserver.yaml) bytes)"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          volumes:
+            configMap:
+              - name: matrix-synapse-config
+                mountPath: /template
+                configMapName: matrix-synapse-config
+                readOnly: true
+            secret:
+              - name: matrix-secrets
+                mountPath: /run/secrets/matrix-secrets
+                secretName: matrix-secrets
+                readOnly: true
+          securityContext:
+            runAsUser: 991
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+      service:
+        type: ClusterIP
+        port: 8008
+        targetPort: 8008
+        portName: http
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          # homeserver.yaml, signing key, media store
+          - name: data
+            capacity: 10Gi
+
+    backup:
+      enabled: true
+      volumes:
+        - data
+
+    secrets:
+      # matrix-secrets OnePasswordItem lives in secret.yaml (shared with
+      # MAS and CNPG); the chart would render a duplicate here
+      enabled: false
+
+    authentik:
+      # MAS is the auth layer (upstream Authentik OIDC via
+      # crossplane.yaml); never put an Authentik proxy in front of
+      # Matrix traffic - clients cannot do forward-auth
+      enabled: false
+
+    gatus:
+      enabled: true
+      path: /health
+
+    # Routes are hand-written in httproute.yaml: the server_name host
+    # splits compat login paths to MAS
+    httproute:
+      enabled: false
+
+    # Hand-rolled CNPG Cluster in postgres.yaml (two-database bootstrap)
+    postgres:
+      enabled: false

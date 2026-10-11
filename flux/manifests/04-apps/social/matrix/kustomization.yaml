@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: matrix
+  namespace: matrix
+
+resources:
+  - namespace.yaml
+  - certificate.yaml
+  - referencegrant.yaml
+  - secret.yaml
+  - postgres.yaml
+  - synapse-helmrelease.yaml
+  - mas-helmrelease.yaml
+  - httproute.yaml
+  - crossplane.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # homeserver.yaml template + log config for the render-config init
+  # container: __SYNAPSE_DB_PASSWORD__ is sed-substituted from the
+  # matrix-secrets Secret; the MAS shared secret stays out of the file
+  # (secret_path reads it at startup).
+  - name: matrix-synapse-config
+    namespace: matrix
+    files:
+      - homeserver.yaml=config/homeserver.yaml
+      - homeserver.log.config=config/homeserver.log.config
+  # MAS config: secret-free ConfigMap. MAS is distroless (no shell, no
+  # render step); every credential is a *_file path into the
+  # matrix-secrets Secret mount, so no secret bytes land here either.
+  - name: matrix-mas-config
+    namespace: matrix
+    files:
+      - mas-config.yaml=config/mas-config.yaml
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (authentik.tf); the replacements
+  # fieldPath bracket-escapes it: data.[authentik.tf]. Intentionally NOT
+  # labeled authentik_blueprint: authentik ignores this ConfigMap as a
+  # blueprint source.
+  - name: matrix-authentik-module
+    namespace: matrix
+    files:
+      - authentik.tf
+
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's authentik.tf data into the Workspace's module field.
+  # authentik.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it.
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch:
+  # delete would remove the source before this rule consumes it (verified on
+  # kustomize v5.8.1; no deletions-transformer builtin exists). The
+  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
+  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
+  # update it in place.
+  - source:
+      kind: ConfigMap
+      name: matrix-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: matrix-authentik
+        fieldPaths:
+          - spec.forProvider.module

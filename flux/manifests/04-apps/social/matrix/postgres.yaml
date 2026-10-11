@@ -1,0 +1,49 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: matrix-postgres
+  namespace: matrix
+spec:
+  # PostgreSQL version (house PG17 pin)
+  # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+  imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+
+  # Number of instances
+  instances: 1
+
+  # Storage configuration
+  storage:
+    storageClass: longhorn
+    size: 10Gi
+
+  # Resource limits to prevent OOM kills
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # Bootstrap: initdb creates the synapse database + owner. CNPG initdb
+  # takes a single database/owner, so the dedicated mas role + database
+  # come from the SQL held in the matrix-secrets item (key init-mas.sql:
+  # CREATE ROLE mas LOGIN PASSWORD ...; CREATE DATABASE mas OWNER mas),
+  # executed as superuser at cluster creation only. Both apps connect to
+  # the -rw service directly; MAS must never sit behind a
+  # transaction-pooling pooler (advisory locks).
+  bootstrap:
+    initdb:
+      database: synapse
+      owner: synapse
+      secret:
+        name: matrix-secrets
+      postInitApplicationSQLRefs:
+        secretRefs:
+          - name: matrix-secrets
+            key: init-mas.sql
+
+  # Monitoring
+  monitoring:
+    enablePodMonitor: true

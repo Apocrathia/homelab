@@ -1,0 +1,91 @@
+---
+# Route 1 - the server_name host. In MAS mode Synapse does not register
+# the login/logout/refresh servlets, so those compat paths must go to
+# MAS; everything else (client API, /.well-known/matrix/client,
+# /_synapse/admin, federation resource) goes to Synapse.
+#
+# NOTE: the server_name host attaches to the per-app https-matrix
+# listener on both doors (03-services/gateway/gateway.yaml +
+# 03-services/tailscale/tailnet-gateway.yaml) - the shared listeners
+# are hostname- and cert-scoped to *.gateway.services.apocrathia.com,
+# so this hostname cannot attach there. Dual parentRefs, litellm
+# pattern.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: matrix-apocrathia-com
+  namespace: matrix
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: https-matrix
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-matrix
+  hostnames:
+    - "matrix.apocrathia.com"
+  rules:
+    # Compat login endpoints -> MAS. PathPrefix is deliberately loose:
+    # /logout covers /logout/all, and /login covers the /login/sso/*
+    # redirect paths MAS also serves. r0/v3/unstable cover the client
+    # API versions MAS's compat router answers.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/r0/login
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/r0/logout
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/r0/refresh
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/v3/login
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/v3/logout
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/v3/refresh
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/unstable/login
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/unstable/logout
+        - path:
+            type: PathPrefix
+            value: /_matrix/client/unstable/refresh
+      backendRefs:
+        - name: mas
+          port: 8080
+    # Everything else -> Synapse
+    - backendRefs:
+        - name: synapse
+          port: 8008
+---
+# Route 2 - the MAS OAuth host (http.public_base/issuer). Discovery,
+# oauth, human UI, graphql, assets, and the upstream Authentik callback
+# all live behind this hostname on the web listener. Dual parentRefs:
+# LAN (main-gateway) + tailnet door, litellm pattern.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: matrix-mas
+  namespace: matrix
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: https
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
+  hostnames:
+    - "matrix.gateway.services.apocrathia.com"
+  rules:
+    - backendRefs:
+        - name: mas
+          port: 8080
