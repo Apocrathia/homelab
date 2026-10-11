@@ -25,7 +25,7 @@ spec:
       sourceRef:
         kind: GitRepository
         name: misp
-        namespace: misp
+        namespace: flux-system
       interval: 1h
   # Credentials come from the OnePasswordItem `misp-secrets` (secret.yaml).
   # All values are chart-native; nothing secret is stored in git.
