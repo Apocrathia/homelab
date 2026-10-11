@@ -28,7 +28,7 @@ spec:
       registry: docker.io
       repository: tenzir/tenzir
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-      tag: v6.18.1
+      tag: v6.19.1
 
     # One standalone node: no Tenzir Platform. The chart schema requires a
     # token (see secret `tenzir-node-token`); an empty one keeps the node
