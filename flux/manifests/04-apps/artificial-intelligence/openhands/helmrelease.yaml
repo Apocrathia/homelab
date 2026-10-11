@@ -23,7 +23,7 @@ spec:
       sourceRef:
         kind: GitRepository
         name: openhands
-        namespace: openhands
+        namespace: flux-system
       interval: 1h
   values:
     # Seed OH_SECRET_KEY + the session API key from the 1Password-synced
