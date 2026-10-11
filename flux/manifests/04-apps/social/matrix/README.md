@@ -29,7 +29,7 @@ Three pods: `synapse`, `mas`, `matrix-postgres-1`. MAS is stateless (Postgres ho
 3. Authentik returns `preferred_username` / `name` / `email` claims; MAS provisions the account (localpart = authentik username) and issues Matrix tokens.
 4. Synapse introspects MAS tokens via its own shared-secret channel — `password_config` and registration stay off; Synapse enforces the SSO-only lockdown at startup.
 
-The `matrix` Authentik application (admins-only binding) is created by the tofu Workspace in `crossplane.yaml`; the module ref is pinned to the current generic-app chart tag.
+The `matrix` Authentik application (admins-only binding — the Matrix access gate; friends arrive via federation later, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack — OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create — no prior tfstate: the first workspace sync builds the whole Authentik stack.
 
 ## Required 1Password item
 
