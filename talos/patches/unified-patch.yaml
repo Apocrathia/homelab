@@ -102,8 +102,9 @@ taints:
 apiVersion: v1alpha1
 kind: KubeAPIServerConfig
 certExtraSANs:
-  - "10.100.1.8"
+  - "kubernetes.services.apocrathia.com"
   - "kubernetes.apocrathia.com"
+  - "10.100.1.8"
 extraArgs:
   # Event garbage collection - 1 hour TTL
   event-ttl: "1h"

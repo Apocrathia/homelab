@@ -3,11 +3,12 @@
 # machine.certSANs: not deprecated in 1.14, stays in the v1alpha1 doc
 machine:
   certSANs:
-    - "10.100.1.81"
+    - "kubernetes.services.apocrathia.com"
+    - "kubernetes.apocrathia.com"
     - "10.100.1.8"
+    - "10.100.1.81"
     - "talos-02.apocrathia.com"
     - "talos-02.services.apocrathia.com"
-    - "kubernetes.apocrathia.com"
     - "127.0.0.1"
 ---
 # nodeLabels $patch: delete (v1alpha1) -> delete the single exclude-from-LB label key
