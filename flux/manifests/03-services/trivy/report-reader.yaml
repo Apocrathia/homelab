@@ -82,14 +82,11 @@ spec:
         - name: vuln-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
           image: docker.io/tenzir/tenzir:v6.18.1
+          # tenzir takes exactly one pipeline argument: -f loads it from the
+          # file. Other tokens are not app options and crash the argv parse
+          # (live: "expected exactly one argument, but got 3").
           command: ["tenzir"]
-          args:
-            [
-              "-f",
-              "/etc/trivy-report-reader/vuln-reports.tql",
-              "--cache-directory",
-              "/tmp/tenzir-cache",
-            ]
+          args: ["-f", "/etc/trivy-report-reader/vuln-reports.tql"]
           env:
             - name: HOME
               value: /tmp
@@ -117,14 +114,11 @@ spec:
         - name: secret-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
           image: docker.io/tenzir/tenzir:v6.18.1
+          # tenzir takes exactly one pipeline argument: -f loads it from the
+          # file. Other tokens are not app options and crash the argv parse
+          # (live: "expected exactly one argument, but got 3").
           command: ["tenzir"]
-          args:
-            [
-              "-f",
-              "/etc/trivy-report-reader/secret-reports.tql",
-              "--cache-directory",
-              "/tmp/tenzir-cache",
-            ]
+          args: ["-f", "/etc/trivy-report-reader/secret-reports.tql"]
           env:
             - name: HOME
               value: /tmp
