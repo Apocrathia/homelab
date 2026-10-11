@@ -65,23 +65,24 @@ gate.
 1Password item `vaults/Secrets/items/misp-secrets` (slice 1). Fields and
 consumers:
 
-| Field                 | Consumer                                                                                                                          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `MYSQL_ROOT_PASSWORD` | valuesFrom → `mariadb.auth.rootPassword`                                                                                          |
-| `MYSQL_PASSWORD`      | valuesFrom → `mariadb.auth.password`; ExternalSecret → `misp-mysql-credentials` (`password` key)                                  |
-| `REDIS_PASSWORD`      | valuesFrom → valkey ACL default user; postRenderers → misp/misp-modules pods                                                      |
-| `ADMIN_EMAIL`         | valuesFrom → `env.mispEmail`; postRenderers → `ADMIN_EMAIL` env                                                                   |
-| `ADMIN_PASSWORD`      | postRenderers → `ADMIN_PASSWORD` env (entrypoint resets admin user 1 password on every container start — vault is desired state)  |
-| `OIDC_CLIENT_SECRET`  | ExternalSecret → `misp-oidc-credentials` (`password` key) — authentik-generated, copied by the operator post-merge (step 1 below) |
+| Field                   | Consumer                                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MYSQL_ROOT_PASSWORD`   | valuesFrom → `mariadb.auth.rootPassword`                                                                                                                                                                     |
+| `MYSQL_PASSWORD`        | valuesFrom → `mariadb.auth.password`; ExternalSecret → `misp-mysql-credentials` (`password` key)                                                                                                             |
+| `REDIS_PASSWORD`        | valuesFrom → valkey ACL default user; postRenderers → misp/misp-modules pods                                                                                                                                 |
+| `ADMIN_EMAIL`           | valuesFrom → `env.mispEmail`; postRenderers → `ADMIN_EMAIL` env                                                                                                                                              |
+| `ADMIN_PASSWORD`        | postRenderers → `ADMIN_PASSWORD` env (entrypoint resets admin user 1 password on every container start — vault is desired state)                                                                             |
+| `username` / `password` | OIDC client credentials read directly from the `misp-secrets` Secret: `username` = pinned client_id `misp`, `password` = authentik-generated client secret, copied by the operator post-merge (step 1 below) |
 
 How the chart expects credentials:
 
 - `misp-mysql-credentials` (externalsecret.yaml): `username: misp` (static,
   matches `mariadb.auth.username`) + `password` from the vault — the chart
   template reads `MYSQL_USER`/`MYSQL_PASSWORD` from this shape.
-- `misp-oidc-credentials` (externalsecret.yaml): `username: misp` (the
-  authentik.tf-pinned client_id) + `password` from the vault — the chart
-  template reads `OIDC_CLIENT_ID`/`OIDC_CLIENT_SECRET` from this shape.
+- `misp-secrets` (secret.yaml, OnePasswordItem): carries the app fields plus
+  `username` / `password` (OIDC client_id `misp` + the authentik-generated
+  secret — operator-copied post-merge). The former ESO remap
+  (`misp-oidc-credentials`) is retired.
 - The chart writes the Redis password into ConfigMaps by design; the
   HelmRelease postRenderers strip those keys and inject `REDIS_PASSWORD` /
   `REDIS_PW` from the Secret instead, so the value only lives in Secret
@@ -284,7 +285,7 @@ web UI is read-only — restores go through kopiur `Restore` CRs.
    creates the provider, open authentik → Applications → MISP → provider
    `misp-oidc-provider` and copy the generated client secret into the
    `OIDC_CLIENT_SECRET` field of `vaults/Secrets/items/misp-secrets`
-   (1Password). Until then the `misp-oidc-credentials` ExternalSecret
+   (1Password). Until then the misp pods wait on the missing `username`/`password` fields in `misp-secrets` (the Connect Secret exists; the
    stays not-Ready and the misp pod waits on the missing Secret — that
    ordering is intended (client_id is pinned in `authentik.tf`, so the copy
    is secret-only).

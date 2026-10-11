@@ -129,7 +129,7 @@ datasource), same pattern as generic-app.
    `misp-secrets` 1Password item. The client_id is pinned (`misp`), so the
    copy is secret-only (the module never sets the client secret — authentik
    generates it server-side). The misp pod waits on the resulting
-   `misp-oidc-credentials` Secret until this is done — intended ordering.
+   `username`/`password` fields in `misp-secrets` until this is done — intended ordering.
 2. Live SSO acceptance: authentik login works via the "Login with OIDC"
    button; the authentik `admins` member lands as MISP role 1 (site admin);
    MISP logout returns to the IdP-hosted page.
