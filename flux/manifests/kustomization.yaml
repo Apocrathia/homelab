@@ -53,4 +53,3 @@ resources:
   - 04-apps/productivity/flux-kustomization.yaml
   - 04-apps/security/flux-kustomization.yaml
   - 04-apps/social/flux-kustomization.yaml
-  - 04-apps/security/flux-kustomization.yaml
