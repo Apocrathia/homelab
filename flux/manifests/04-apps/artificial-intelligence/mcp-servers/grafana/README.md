@@ -27,7 +27,21 @@ The Grafana MCP server provides a bridge between AI assistants and Grafana's eco
 
 ## Authentication
 
-LiteLLM forwards `X-Grafana-API-Key` from callers; the MCPServer manifest has no shared Grafana credential. Preserve that `extra_headers` behavior until an explicit authentication design replaces it.
+The server has a **default identity** and a **per-request override**:
+
+- Default: the `mcp-server` Grafana service account token (see
+  [Prerequisites](#grafana-service-account-token)). External Secrets mirrors it
+  into this namespace via `secret-store.yaml` + `externalsecret.yaml`, and the
+  pod mounts it at `/var/run/secrets/grafana/token`
+  (`GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE`). mcp-grafana re-reads the file per
+  request, so token rotation needs no pod restart.
+- Override: callers can still send `X-Grafana-Service-Account-Token` (or the
+  deprecated `X-Grafana-API-Key`, which LiteLLM forwards via `extra_headers`).
+  A request header always wins over the default token.
+
+The operator CR stays in `prometheus-system` because grafana-operator only
+resolves `instanceName` within the CR's own namespace — hence the External
+Secrets mirror instead of a direct mount.
 
 ## kagent Grafana MCP inventory
 
