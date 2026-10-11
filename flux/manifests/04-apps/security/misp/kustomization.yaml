@@ -8,9 +8,8 @@ metadata:
 
 resources:
   - namespace.yaml
-  - secret.yaml
   - externalsecret.yaml
-  - backup-secret.yaml
+  - secret.yaml
   - backup-cronjob.yaml
   - backup.yaml
   - helmrelease.yaml
