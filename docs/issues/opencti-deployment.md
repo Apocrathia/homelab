@@ -90,10 +90,11 @@ consider the LTS app lines.
   `REDIS__PASSWORD`, `MINIO__ACCESS_KEY`, `MINIO__SECRET_KEY` (the last two
   are the rustfs keypair for `opencti-files`, duplicated from
   `opencti-files-secrets`). Slice 5 adds `OIDC_CLIENT_SECRET` (authentik OIDC
-  client secret; the client_id is pinned to `opencti` in the tofu
-  workspace varmap — `crossplane.yaml`, module
-  `terraform/modules/authentik-app` at `generic-app-0.0.84` — so
-  only the secret is copied post-merge; the module never sets it, authentik
+  client secret; the client_id is pinned to `opencti` in `authentik.tf` —
+  the canonical file pair: `crossplane.yaml` carries the Crossplane
+  objects, `authentik.tf` is the single source of truth for the HCL,
+  stitched into the Workspace at kustomize build time — so
+  only the secret is copied post-merge; the HCL never sets it, authentik
   generates the secret server-side). `opencti-files-secrets` holds the same rustfs
   keypair under `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
 - The `opencti-misp-connector` 1Password item is deferred to slice 6 (wired
@@ -120,6 +121,12 @@ consider the LTS app lines.
 
 ## Post-merge operator checklist (slice 5)
 
+- First-plan check: the first plan after merge MUST read as a clean
+  create-set (provider + application + admins binding — nothing else,
+  nothing partial). A read-only plan against live authentik is the
+  authorized post-merge step; it is not run before the merge. Fresh
+  create — no import blocks, no adoption ids; if the state Secret is ever
+  lost, re-adopt via manual `tofu import` — never a blip.
 - Copy the generated OIDC client secret from the authentik UI
   (`opencti-oidc-provider`) into the `opencti-secrets` 1Password item field
   `OIDC_CLIENT_SECRET`, then restart the platform deployment (the secret is

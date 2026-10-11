@@ -173,7 +173,7 @@ spec:
       # by the misp-docker env surface (configure_misp.sh set_up_oidc ->
       # modify_config.php; plugin docs + research doc section 1.6).
       oidcEnable: true
-      # Discovery endpoint for the varmap-pinned authentik provider
+      # Discovery endpoint for the authentik.tf-pinned authentik provider
       # (slug "misp"); the plugin appends .well-known/openid-configuration.
       oidcProviderUrl: https://auth.gateway.services.apocrathia.com/application/o/misp/
       # Chart default (client_secret_jwt) is wrong for authentik; the

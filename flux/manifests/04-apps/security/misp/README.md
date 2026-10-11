@@ -80,7 +80,7 @@ How the chart expects credentials:
   matches `mariadb.auth.username`) + `password` from the vault — the chart
   template reads `MYSQL_USER`/`MYSQL_PASSWORD` from this shape.
 - `misp-oidc-credentials` (externalsecret.yaml): `username: misp` (the
-  tofu-varmap-pinned client_id) + `password` from the vault — the chart
+  authentik.tf-pinned client_id) + `password` from the vault — the chart
   template reads `OIDC_CLIENT_ID`/`OIDC_CLIENT_SECRET` from this shape.
 - The chart writes the Redis password into ConfigMaps by design; the
   HelmRelease postRenderers strip those keys and inject `REDIS_PASSWORD` /
@@ -115,25 +115,32 @@ MISP keeps auto-generating its own admin authkey untouched.
 Native MISP `OidcAuth` core plugin via the misp-docker env surface
 (research doc §1.6). Pieces:
 
-- **Provider** (`crossplane.yaml`): provider-opentofu Workspace
-  `misp-authentik` — the house tofu path (headlamp / chaos-mesh pattern)
-  running the shared module `terraform/modules/authentik-app` pinned at
-  `generic-app-0.0.84`. It creates the confidential client `misp`
-  (client_id pinned in the varmap — only the client secret is a
-  post-merge copy), PKCE S256 client-side, strict redirect
-  `https://misp.gateway.services.apocrathia.com/users/login` (the plugin
-  hardcodes `MISP.baseurl + /users/login` as the callback — plugin source),
-  dashboard tile in the "Security" group, `admins` binding order 10, no
-  user binding. Fresh create (MR unmerged — no adoption import ids); the
-  scoped authentik API token rides the `authentik-terraform-token` Secret
-  (1Password item `crossplane-terraform-secrets` via a namespace-local
-  OnePasswordItem), and the tofu state lives in the `tfstate-default-misp`
-  Secret in this namespace — separate from the CI tofu stack. The
-  Workspace is prune-guarded (`Observe/Create/Update` only): a GitOps prune
-  orphans the stack without destroying the live authentik objects.
-- **Roles claim**: tofu custom scope mapping "MISP Roles" (in the varmap,
-  ported verbatim from the original blueprint) emits
-  `{"roles": ["misp-admin"]}` for the authentik `admins` group; the
+- **Provider** (`crossplane.yaml` + `authentik.tf`): provider-opentofu
+  Workspace `misp-authentik` — the house tofu path (headlamp / chaos-mesh
+  pattern) as the canonical file pair: `crossplane.yaml` carries the
+  Crossplane objects, `authentik.tf` is the single source of truth for the
+  HCL, and kustomization.yaml stitches the HCL bytes into the Workspace's
+  `spec.forProvider.module` at build time (rendered module byte-identical
+  to the file — never render this directory outside kustomize). It creates
+  the confidential client `misp` (client_id pinned in the HCL — only the
+  client secret is a post-merge copy), PKCE S256 client-side, strict
+  redirect `https://misp.gateway.services.apocrathia.com/users/login` (the
+  plugin hardcodes `MISP.baseurl + /users/login` as the callback — plugin
+  source), dashboard tile in the "Security" group, `admins` binding order
+  10, no user binding. Fresh create (MR unmerged — no import blocks, no
+  adoption ids; the first plan after merge MUST read as a clean create-set
+  — a read-only plan against live authentik is the authorized post-merge
+  check, not run now); the scoped authentik API token rides the
+  `authentik-terraform-token` Secret (1Password item
+  `crossplane-terraform-secrets` via a namespace-local OnePasswordItem),
+  and the tofu state lives in the `tfstate-misp-authentik-misp` Secret in
+  this namespace — separate from the CI tofu stack. The Workspace is
+  prune-guarded (`Observe/Create/Update` only): a GitOps prune orphans the
+  stack without destroying the live authentik objects. If the state
+  Secret is ever lost, re-adopt via manual `tofu import` — never a blip.
+- **Roles claim**: the "MISP Roles" custom scope mapping in `authentik.tf`
+  (a hand-written resource, ported verbatim from the original blueprint)
+  emits `{"roles": ["misp-admin"]}` for the authentik `admins` group; the
   HelmRelease `oidcRolesMapping` maps `misp-admin` → MISP role id 1
   (site admin). `oidcScopes` requests the custom `roles` scope.
 - **Logout**: `oidcLogoutUrl` is the provider end-session endpoint;
@@ -279,7 +286,7 @@ web UI is read-only — restores go through kopiur `Restore` CRs.
    `OIDC_CLIENT_SECRET` field of `vaults/Secrets/items/misp-secrets`
    (1Password). Until then the `misp-oidc-credentials` ExternalSecret
    stays not-Ready and the misp pod waits on the missing Secret — that
-   ordering is intended (client_id is pinned in the tofu varmap, so the copy
+   ordering is intended (client_id is pinned in `authentik.tf`, so the copy
    is secret-only).
 2. Pods healthy: `kubectl -n misp get pods` → misp, misp-modules, mariadb,
    valkey all Ready (first misp boot runs schema init — the startup probe

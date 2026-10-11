@@ -114,9 +114,16 @@ datasource), same pattern as generic-app.
 
 ## Operator post-merge steps (slice 3)
 
-1. After the tofu workspace (`crossplane.yaml`, module
-   `terraform/modules/authentik-app` at `generic-app-0.0.84`) creates the
-   provider, copy the
+0. First-plan check: the first plan after merge MUST read as a clean
+   create-set (provider + custom scope mapping + application + admins
+   binding — nothing else, nothing partial). A read-only plan against live
+   authentik is the authorized post-merge step; it is not run before the
+   merge. Fresh create — no import blocks, no adoption ids; if the state
+   Secret is ever lost, re-adopt via manual `tofu import` — never a blip.
+1. After the tofu workspace (the canonical file pair: `crossplane.yaml`
+   carries the Crossplane objects, `authentik.tf` is the single source of
+   truth for the HCL, stitched into the Workspace at kustomize build time)
+   creates the provider, copy the
    authentik-generated OIDC client secret (Applications → MISP →
    `misp-oidc-provider`) into the `OIDC_CLIENT_SECRET` field of the
    `misp-secrets` 1Password item. The client_id is pinned (`misp`), so the
