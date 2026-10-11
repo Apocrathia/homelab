@@ -180,6 +180,9 @@ spec:
       shared: true
       displayName: "CryptPad"
       externalHost: "https://cryptpad.gateway.services.apocrathia.com"
+      # Tile deep-links to /login: single provider + enforced SSO makes it
+      # auto-redirect to Authentik (legacy form: /login#standard-login).
+      ssoLaunchUrl: "https://cryptpad.gateway.services.apocrathia.com/login"
       icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/cryptpad/icon.svg"
       category: "Productivity"
       oidc:

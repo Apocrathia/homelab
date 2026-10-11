@@ -19,7 +19,7 @@ module.exports = {
       client_secret: process.env.OIDC_CLIENT_SECRET,
       id_token_alg: "RS256",
       username_scope: "profile",
-      username_claim: "preferred_username",
+      username_claim: "name",
       use_pkce: true,
       use_nonce: true,
     },
