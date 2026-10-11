@@ -19,6 +19,7 @@ resources:
   - mcp-servers
   - mecatl
   - openclaw
+  - openhands
   - openwebui
   # - odysseus
   - prime-agent
