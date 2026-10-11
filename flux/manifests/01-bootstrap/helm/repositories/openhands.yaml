@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: openhands
+  namespace: openhands
+spec:
+  interval: 1h
+  url: https://github.com/OpenHands/OpenHands.git
+  ref:
+    # renovate: datasource=git-tags depName=https://github.com/OpenHands/OpenHands.git
+    tag: v1.26.0
+  timeout: 3m
