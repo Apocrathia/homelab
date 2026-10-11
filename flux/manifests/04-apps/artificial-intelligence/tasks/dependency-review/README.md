@@ -11,7 +11,8 @@ Hourly agent sweep over open Renovate MRs. Replaces manual triage:
 - A2A judgment turn via git-agent (`prompts/task.md`): bug storms,
   version-specific regressions, release-note signals, source validation
 - posts a verdict note + `agent-review:pass|hold|block` labels on every MR
-  and approves passes. **Merge stays with the operator.**
+  and approves passes — one note per MR, created once and updated in place
+  each sweep (no reposts). **Merge stays with the operator.**
 
 ## Classes
 
@@ -24,8 +25,12 @@ Hourly agent sweep over open Renovate MRs. Replaces manual triage:
 
 ## Idempotency
 
-MRs already carrying a verdict label and untouched for 90 minutes are skipped.
-Retargets (new Renovate push) bump `updated_at` and trigger a re-review.
+Every open Renovate MR is re-reviewed every sweep — no freshness skip: the
+sweep's own note/label writes are the MR activity, and cooldown holds must
+flip to pass once the gate clears. The verdict note is created once per MR
+and updated in place; unchanged bodies skip the write entirely. Labels are
+recomputed each sweep, and no-op label writes are skipped so they don't bump
+`updated_at`.
 
 ## Known upstream gotchas (baked in)
 
