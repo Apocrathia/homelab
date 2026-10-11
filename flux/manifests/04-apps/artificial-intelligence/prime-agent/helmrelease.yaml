@@ -347,7 +347,7 @@ spec:
             value: "gitlab.com"
           # renovate: datasource=github-tags depName=PrimeIntellect-ai/prime-agent versioning=semver
           - name: PRIME_AGENT_VERSION
-            value: "0.9.8"
+            value: "0.10.0"
           # Let kernel bootstrap install uv by itself when missing instead of
           # failing the (non-TTY) install prompt. Normally a no-op: the boot
           # script pre-seeds uv on the PVC.
