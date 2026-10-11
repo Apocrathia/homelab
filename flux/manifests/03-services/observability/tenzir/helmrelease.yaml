@@ -38,12 +38,20 @@ spec:
         token:
           existingSecret: tenzir-node-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
-        # kube-audit-tailer pushes OTLP/HTTP at tenzir-node-default:4318.
+        # kube-audit-tailer and the tetragon-tailer push OTLP/HTTP at
+        # tenzir-node-default:4318; the fleet webhook and the
+        # trivy-report-reader POST to http-ingest 8080; netflow 2055/UDP
+        # sits behind the tenzir-ingest-lb pool IP.
         extraPorts:
           - name: otlp-grpc
             containerPort: 4317
           - name: otlp-http
             containerPort: 4318
+          - name: http-ingest
+            containerPort: 8080
+          - name: netflow
+            containerPort: 2055
+            protocol: UDP
 
     persistence:
       size: 8Gi
@@ -65,21 +73,32 @@ spec:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
               description: |
-                OTLP/HTTP listener for the kube-audit-tailer. Unpacks audit
-                JSON bodies onto the k8s-audit.raw topic.
+                OTLP/HTTP listener for the kube-audit-tailer and the
+                tetragon-tailer. Unpacks audit JSON bodies onto the
+                k8s-audit.raw topic and tetragon export events onto
+                tetragon.raw; OTLP streams without a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
-                homelab::k8s::audit::parse
-                publish "k8s-audit.raw"
+                fork {
+                  homelab::k8s::audit::parse
+                  publish "k8s-audit.raw"
+                }
+                homelab::tetragon::parse
+                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ingest-grpc:
               name: k8s-audit ingest (otlp/grpc)
               description: |
-                OTLP/gRPC listener for future OTLP-native senders.
+                OTLP/gRPC listener for future OTLP-native senders; parses
+                the same source set as the http listener.
               definition: |
                 accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
-                homelab::k8s::audit::parse
-                publish "k8s-audit.raw"
+                fork {
+                  homelab::k8s::audit::parse
+                  publish "k8s-audit.raw"
+                }
+                homelab::tetragon::parse
+                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ocsf:
               name: k8s-audit ocsf mapping
@@ -105,6 +124,125 @@ spec:
                 subscribe "k8s-audit.raw"
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/own"], mapping="direct", refresh_interval=30s
                 publish "detections.sigma"
+              restart-on-error: 1 minute
+            tetragon-ocsf:
+              name: tetragon ocsf mapping
+              description: |
+                tetragon export events -> OCSF (Process/File/Network
+                Activity per event kind), then derive + schema-validate and
+                store in the node. The raw stream keeps flowing to Loki via
+                the tetragon pods' export-stdout sidecar.
+              definition: |
+                subscribe "tetragon.raw"
+                this = {tetragon: this}
+                homelab::tetragon::ocsf::map tetragon, ocsf
+                this = move ocsf
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf.tetragon"
+              restart-on-error: 1 minute
+            netflow-collector:
+              name: netflow collector
+              description: |
+                NetFlow v5/v9/IPFIX from the UniFi exporters behind
+                tenzir-ingest-lb (:2055/UDP). Exporter identity rides in
+                the peer metadata; flows store in the node and publish for
+                future detections. Start ordering matters: the collector
+                must be up before v9/IPFIX template datagrams arrive.
+              definition: |
+                accept_udp "0.0.0.0:2055", binary=true
+                read_netflow
+                fork { import }
+                publish "netflow"
+              restart-on-error: 1 minute
+            http-ingest:
+              name: http ingest (fleet webhook + trivy reader)
+              description: |
+                HTTP listener for push-based SIEM sources: the fleet osquery
+                result webhook (rows envelope) and the trivy-report-reader
+                (report files stamped with report_kind). Routes by payload
+                shape onto per-source raw topics.
+              definition: |
+                accept_http "0.0.0.0:8080" {
+                  read_json
+                }
+                fork {
+                  where report_kind? != null
+                  publish "trivy.raw"
+                }
+                where details? != null
+                homelab::fleet::parse
+                publish "fleet.raw"
+              restart-on-error: 1 minute
+            authentik-events:
+              name: authentik events pull
+              description: |
+                Polls the authentik events API every 5 minutes (Bearer token
+                via the AUTHENTIK_EVENTS_TOKEN managed secret), walking the
+                page-based pagination with a DjangoQL created-time window;
+                deduplicate absorbs the 1-minute overlap on the event pk.
+              definition: |
+                cron "0 */5 * * * *" {
+                  let $since = (now() - 6m).format_time("%Y-%m-%dT%H:%M:%SZ")
+                  let $base = "https://auth.gateway.services.apocrathia.com/api/v3/events/events/"
+                  let $query = f"page_size=100&search=created%20%3E%20%22{$since}%22"
+                  from_http f"{$base}?{$query}",
+                    headers={Authorization: f"Bearer {secret("AUTHENTIK_EVENTS_TOKEN")}"},
+                    paginate=(x => f"{$base}?page={x.pagination?.next?}&{$query}" if x.pagination?.next? > 0) {
+                    read_json
+                  }
+                  unroll results
+                  this = results
+                }
+                deduplicate pk, create_timeout=1h
+                publish "authentik.raw"
+              restart-on-error: 1 minute
+            authentik-ocsf:
+              name: authentik ocsf mapping
+              description: |
+                authentik events -> OCSF: login/logout/login_failed map to
+                Authentication, account mutations to Account Change, and
+                every other action to the Base Event; derive + cast, store
+                in the node, and publish for future detections.
+              definition: |
+                subscribe "authentik.raw"
+                homelab::authentik::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf.authentik"
+              restart-on-error: 1 minute
+            fleet-ocsf:
+              name: fleet ocsf mapping
+              description: |
+                Fleet osquery result rows -> OCSF Base Event (a row's
+                meaning comes from its query; no scheduled query exists
+                yet), derive + cast, store in the node, and publish for
+                future detections.
+              definition: |
+                subscribe "fleet.raw"
+                homelab::fleet::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf.fleet"
+              restart-on-error: 1 minute
+            trivy-ocsf:
+              name: trivy ocsf mapping
+              description: |
+                trivy-operator report files (read by the trivy-report-reader
+                off the alternate-report-storage PVC) -> OCSF:
+                VulnerabilityReport -> Vulnerability Finding with the CVE
+                list, ExposedSecretReport -> Detection Finding; derive +
+                cast, store in the node, and publish for future detections.
+              definition: |
+                subscribe "trivy.raw"
+                homelab::trivy::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf.trivy"
               restart-on-error: 1 minute
             findings-discord:
               name: findings to discord
@@ -145,8 +283,10 @@ spec:
         memory: 2Gi
 
     # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
-    # default AWS chain used by to_s3, plus the Discord webhook as a Tenzir
-    # managed secret named `discord-webhook-url` (TENZIR_SECRETS__ map).
+    # default AWS chain used by to_s3, the Discord webhook as a Tenzir
+    # managed secret named `discord-webhook-url`, and the authentik events
+    # API token as `AUTHENTIK_EVENTS_TOKEN` (TENZIR_SECRETS__ map; the
+    # blueprint's ak-tenzir token is copied once by the operator).
     extraEnv:
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
@@ -163,6 +303,11 @@ spec:
           secretKeyRef:
             name: tenzir-secrets
             key: DISCORD_WEBHOOK_URL
+      - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: AUTHENTIK_EVENTS_TOKEN
 
     # Detection content: the homelab TQL mapping package (IaC-installed at
     # /etc/tenzir/packages/homelab) and the sigma rule directories, all
@@ -184,6 +329,33 @@ spec:
       - name: packages-homelab-findings-discord
         configMap:
           name: tenzir-packages-homelab-findings-discord
+      - name: packages-homelab-tetragon-parse
+        configMap:
+          name: tenzir-packages-homelab-tetragon-parse
+      - name: packages-homelab-tetragon-map
+        configMap:
+          name: tenzir-packages-homelab-tetragon-map
+      - name: packages-homelab-tetragon-exec
+        configMap:
+          name: tenzir-packages-homelab-tetragon-exec
+      - name: packages-homelab-tetragon-exit
+        configMap:
+          name: tenzir-packages-homelab-tetragon-exit
+      - name: packages-homelab-tetragon-kprobe
+        configMap:
+          name: tenzir-packages-homelab-tetragon-kprobe
+      - name: packages-homelab-authentik-map
+        configMap:
+          name: tenzir-packages-homelab-authentik-map
+      - name: packages-homelab-fleet-parse
+        configMap:
+          name: tenzir-packages-homelab-fleet-parse
+      - name: packages-homelab-fleet-map
+        configMap:
+          name: tenzir-packages-homelab-fleet-map
+      - name: packages-homelab-trivy-map
+        configMap:
+          name: tenzir-packages-homelab-trivy-map
       - name: sigma-own
         configMap:
           name: tenzir-sigma-own
@@ -214,6 +386,42 @@ spec:
       - name: packages-homelab-findings-discord
         mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/findings/discord.tql
         subPath: discord.tql
+        readOnly: true
+      - name: packages-homelab-tetragon-parse
+        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/parse.tql
+        subPath: parse.tql
+        readOnly: true
+      - name: packages-homelab-tetragon-map
+        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-tetragon-exec
+        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exec.tql
+        subPath: process_exec.tql
+        readOnly: true
+      - name: packages-homelab-tetragon-exit
+        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exit.tql
+        subPath: process_exit.tql
+        readOnly: true
+      - name: packages-homelab-tetragon-kprobe
+        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
+        subPath: process_kprobe.tql
+        readOnly: true
+      - name: packages-homelab-authentik-map
+        mountPath: /etc/tenzir/packages/homelab/operators/authentik/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-fleet-parse
+        mountPath: /etc/tenzir/packages/homelab/operators/fleet/parse.tql
+        subPath: parse.tql
+        readOnly: true
+      - name: packages-homelab-fleet-map
+        mountPath: /etc/tenzir/packages/homelab/operators/fleet/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-trivy-map
+        mountPath: /etc/tenzir/packages/homelab/operators/trivy/ocsf/map.tql
+        subPath: map.tql
         readOnly: true
       # Sigma stays directory-mounted to keep the 30s rule hot-reload.
       - name: sigma-own

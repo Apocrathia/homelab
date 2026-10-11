@@ -70,12 +70,15 @@ alive if the agent dies (persistent enforcement) — off for now.
 
 - `policies/egress.yaml` adds the upstream tcp_connect visibility policy
   (see above) — its `sock`-arg kprobe events map to OCSF Network Activity.
-- `packages/` stages the Tenzir OCSF mapping package
-  (Process Activity 1007 / File System Activity 1001 / Network Activity
-  4001 per the live schema). It moves under the Tenzir node's homelab
-  package after lap B merges — see
-  [`packages/README.md`](./packages/README.md) for the staging contract and
-  the test harness invocation.
-- The OTLP fan-out leg to the Tenzir node lives in the shared Alloy
-  configmap (`observability/alloy/configmap.yaml`, same
-  `otelcol.exporter.otlphttp` pattern as the kube-audit-tailer).
+- The tetragon→OCSF mapping package (Process Activity 1007 / File System
+  Activity 1001 / Network Activity 4001 per the live schema) lives under the
+  Tenzir node's homelab package
+  ([`../observability/tenzir/packages/homelab/operators/tetragon/`](../observability/tenzir/packages/homelab/operators/tetragon/))
+  with tests.
+- Transport to the Tenzir node: the
+  [`tetragon-tailer`](../observability/tetragon-tailer/) DaemonSet tails the
+  agents' export files and pushes OTLP/HTTP to the node's `accept_otlp`
+  listener. tetragon v1.7.x has no native TCP export (`--export-connection`
+  does not exist), and the export file is 0600 root-owned — hence the
+  dedicated root tailer in the kube-audit-tailer pattern. The pod-logs leg
+  to Loki via the `export-stdout` sidecar is unchanged.

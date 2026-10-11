@@ -1,0 +1,160 @@
+---
+# Tenzir-side reader for the trivy-operator alternate-report-storage PVC.
+# The PVC is namespace-scoped (trivy-system), so the tenzir node cannot
+# mount it; this Deployment co-schedules with trivy-operator (RWO volume,
+# same node), reads the report files as uid 10000, and pushes each report
+# as one JSON body to the Tenzir detection node's HTTP ingest (8080).
+# from_file watch re-emits on the fixed-filename rescan rewrites, so no
+# rename/remove dance is needed. Pipeline files live in the ConfigMap
+# below; the two containers exist because trivy writes single-object JSON
+# for vulnerability reports but a JSON array per source for exposed-secret
+# reports, and the two shapes need different read_json options
+# (arrays_of_objects) — the tenzir engine rejects a mixed glob.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-report-reader-pipelines
+  namespace: trivy-system
+  labels:
+    app.kubernetes.io/name: trivy-report-reader
+data:
+  vuln-reports.tql: |
+    from_file "/mnt/data/trivy-operator/vulnerability_reports/**/*.json", watch=30s, {
+      read_json
+      report_kind = "vulnerability_report"
+    }
+    each {
+      from $this
+      to_http "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/trivy" {
+        write_json
+      }
+    }
+  secret-reports.tql: |
+    from_file "/mnt/data/trivy-operator/secret_reports/**/*.json", watch=30s, {
+      read_json arrays_of_objects=true
+      report_kind = "secret_report"
+    }
+    each {
+      from $this
+      to_http "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/trivy" {
+        write_json
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-report-reader
+  namespace: trivy-system
+  labels:
+    app.kubernetes.io/name: trivy-report-reader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: trivy-report-reader
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: trivy-report-reader
+    spec:
+      # One-way co-scheduling with trivy-operator: the RWO Longhorn volume
+      # is attached on its node, and only pods there may mount it. The
+      # operator must never require the reader back (circular pending).
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: trivy-operator
+              topologyKey: kubernetes.io/hostname
+      # trivy writes dirs 0720 and files 0600 as uid/gid 10000
+      # (helmrelease podSecurityContext), so the reader matches it.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+        seccompProfile:
+          type: RuntimeDefault
+      automountServiceAccountToken: false
+      containers:
+        - name: vuln-reports
+          # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+          image: docker.io/tenzir/tenzir:v6.18.1
+          command: ["tenzir"]
+          args:
+            [
+              "-f",
+              "/etc/trivy-report-reader/vuln-reports.tql",
+              "--cache-directory",
+              "/tmp/tenzir-cache",
+            ]
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: report-storage
+              mountPath: /mnt/data/trivy-operator
+              readOnly: true
+            - name: reader-tmp
+              mountPath: /tmp
+            - name: reader-pipelines
+              mountPath: /etc/trivy-report-reader
+              readOnly: true
+        - name: secret-reports
+          # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+          image: docker.io/tenzir/tenzir:v6.18.1
+          command: ["tenzir"]
+          args:
+            [
+              "-f",
+              "/etc/trivy-report-reader/secret-reports.tql",
+              "--cache-directory",
+              "/tmp/tenzir-cache",
+            ]
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: report-storage
+              mountPath: /mnt/data/trivy-operator
+              readOnly: true
+            - name: reader-tmp
+              mountPath: /tmp
+            - name: reader-pipelines
+              mountPath: /etc/trivy-report-reader
+              readOnly: true
+      volumes:
+        - name: report-storage
+          persistentVolumeClaim:
+            claimName: trivy-operator-pvc
+        - name: reader-tmp
+          emptyDir: {}
+        - name: reader-pipelines
+          configMap:
+            name: trivy-report-reader-pipelines

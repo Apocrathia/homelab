@@ -1,0 +1,85 @@
+// authentik event -> OCSF. The IAM actions map to Authentication (3002)
+// and Account Change (3001, the account-management class in the node's
+// bundled OCSF catalog); every other action falls back to the Base Event.
+// The source record's non-primary fields ride in `unmapped` for
+// provenance; ocsf_cast converts the client_ip string to an ip.
+severity_id = 1
+time = created
+metadata.version = "1.9.0"
+metadata.product = {
+  name: "authentik",
+  vendor_name: "goauthentik",
+}
+
+match action? {
+  "login" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Authentication")
+    activity_id = 1 // Logon
+    status_id = 1 // Success
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  "login_failed" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Authentication")
+    activity_id = 1 // Logon — OCSF has no "failed logon" activity; the failure rides in status
+    status_id = 2 // Failure
+    severity_id = 2 // Low
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  "logout" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Authentication")
+    activity_id = 2 // Logoff
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  "user_write" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Account Change")
+    activity_id = 0 // Unknown — created vs updated is not distinguishable in the event body
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  "password_set" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Account Change")
+    activity_id = 4 // Password Reset
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  "user_offboarded" => {
+    category_uid = ocsf_category_uid("Identity & Access Management")
+    class_uid = ocsf_class_uid("Account Change")
+    activity_id = 6 // Delete
+    src_endpoint.ip = client_ip
+    actor.user.name = user?.username?
+    actor.user.uid = f"{user.pk}" if user?.pk? != null else null
+  }
+  _ => {
+    // Model/flow/policy/system events carry no IAM semantics; they keep
+    // the class triple at zero (Base Event) with the full residue.
+    category_uid = 0
+    class_uid = 0
+    activity_id = 0
+  }
+}
+
+type_uid = (class_uid * 100) + activity_id
+
+unmapped = {
+  event_pk: pk,
+  action: action,
+  app: app,
+  brand: brand,
+  context: context,
+  expires: expires,
+}
+drop pk, action, user, app, context, client_ip, created, expires, brand

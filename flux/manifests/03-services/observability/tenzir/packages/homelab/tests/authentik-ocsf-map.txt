@@ -1,0 +1,319 @@
+{
+  activity_id: 1,
+  activity_name: "Logon",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Authentication",
+  class_uid: 3002,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  status: "Success",
+  status_id: 1,
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Authentication: Logon",
+  type_uid: 300201,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000001",
+    action: "login",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      http_request: {
+        path: "/api/v3/flows/executor/default-authentication-flow/",
+        user_agent: "Mozilla/5.0",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 1,
+  activity_name: "Logon",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Authentication",
+  class_uid: 3002,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Low",
+  severity_id: 2,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  status: "Failure",
+  status_id: 2,
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Authentication: Logon",
+  type_uid: 300201,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000002",
+    action: "login_failed",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      http_request: {
+        path: "/api/v3/flows/executor/default-authentication-flow/",
+        user_agent: "Mozilla/5.0",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 2,
+  activity_name: "Logoff",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Authentication",
+  class_uid: 3002,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Authentication: Logoff",
+  type_uid: 300202,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000003",
+    action: "logout",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      http_request: {
+        path: "/api/v3/flows/executor/default-authentication-flow/",
+        user_agent: "Mozilla/5.0",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 0,
+  activity_name: "Unknown",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Account Change",
+  class_uid: 3001,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Account Change: Unknown",
+  type_uid: 300100,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000004",
+    action: "user_write",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      model: {
+        pk: 6,
+        username: "newuser",
+        email: "new@apocrathia.com",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 4,
+  activity_name: "Password Reset",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Account Change",
+  class_uid: 3001,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Account Change: Password Reset",
+  type_uid: 300104,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000005",
+    action: "password_set",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      http_request: {
+        path: "/api/v3/flows/executor/default-authentication-flow/",
+        user_agent: "Mozilla/5.0",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 6,
+  activity_name: "Delete",
+  actor: {
+    user: {
+      name: "newuser",
+      uid: "6",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Account Change",
+  class_uid: 3001,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Account Change: Delete",
+  type_uid: 300106,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000006",
+    action: "user_offboarded",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      http_request: {
+        path: "/api/v3/flows/executor/default-authentication-flow/",
+        user_agent: "Mozilla/5.0",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
+{
+  activity_id: 0,
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  category_uid: 0,
+  class_name: "Base Event",
+  class_uid: 0,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  time: 2026-10-10T20:15:00.123456Z,
+  type_name: "Base Event: Unknown",
+  type_uid: 0,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000007",
+    action: "model_created",
+    app: "authentik_core",
+    brand: {
+      pk: 1,
+      slug: "default",
+      name: "Default",
+    },
+    context: {
+      model: {
+        pk: "d34dbeef",
+        model: "Policy",
+        name: "test-policy",
+      },
+    },
+    expires: 2026-10-11T20:15:00.123456Z,
+  },
+}
