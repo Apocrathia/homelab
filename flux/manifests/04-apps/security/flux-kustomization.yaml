@@ -17,3 +17,4 @@ spec:
     - name: infrastructure-longhorn
     - name: services-external-secrets
     - name: bootstrap-1password
+    - name: services-postgresql

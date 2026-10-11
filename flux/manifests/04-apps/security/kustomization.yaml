@@ -7,4 +7,6 @@ metadata:
 
 resources:
   - misp
+  - opencanary
   - opencti
+  - opentaxii

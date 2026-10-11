@@ -14,7 +14,7 @@ Applications are organized by functional category:
 - **Management**: Administrative tools and dashboards
 - **Media**: Servers, Arr stack, download clients
 - **Productivity**: Workflow automation, search, notes
-- **Security**: Threat-intelligence platforms
+- **Security**: Threat-intel platforms, honeypot, TAXII feeds
 - **Social**: Community and chat services, field coordination
 
 ## Components
@@ -47,13 +47,13 @@ Plex, Jellyfin, the Arr stack, and download clients.
 
 ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakapi.
 
+### [Security](security/README.md)
+
+MISP and OpenCTI threat-intel platforms, OpenCanary honeypot, OpenTAXII TAXII 2.1 feeds.
+
 ### [Social](social/README.md)
 
 Hypermind, Lemmy, Mumble, TAK, and The Lounge.
-
-### [Security](security/README.md)
-
-MISP for threat-intelligence sharing; OpenCTI for threat-intel knowledge management.
 
 ## Deployment
 

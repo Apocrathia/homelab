@@ -1,0 +1,60 @@
+---
+# TAXII 1.x bootstrap for OpenTAXII. opentaxii-sync-data loads this file on
+# every boot; the entrypoint picks it up from /input.
+#
+# Services run with authentication_required: false, so anonymous callers get
+# full access. That is fine here - the service is ClusterIP-only, nothing
+# outside the cluster can reach it. When a feeder needs real auth, create
+# accounts and flip the flag:
+#   kubectl exec -n opentaxii deploy/opentaxii -- opentaxii-create-account --username <user> --password <pw>
+# TAXII 2.1 API roots and collections are not in this file; see the README.
+services:
+  - id: discovery
+    type: discovery
+    address: /services/discovery
+    description: TAXII 1.x discovery service
+    advertised_services:
+      - discovery
+      - collection_management
+      - poll
+      - inbox
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: collection_management
+    type: collection_management
+    address: /services/collection-management
+    description: TAXII 1.x collection management service
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: poll
+    type: poll
+    address: /services/poll
+    description: TAXII 1.x poll service
+    subscription_required: false
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+  - id: inbox
+    type: inbox
+    address: /services/inbox
+    description: TAXII 1.x inbox service
+    destination_collection_required: true
+    accept_all_content: true
+    authentication_required: false
+    protocol_bindings:
+      - urn:taxii.mitre.org:protocol:http:1.0
+
+collections:
+  - name: stix-feed
+    available: true
+    accept_all_content: true
+    type: DATA_SET
+    service_ids:
+      - inbox
+      - collection_management
+      - poll

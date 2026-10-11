@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: opencanary
+  namespace: opencanary
+  labels:
+    app.kubernetes.io/name: opencanary
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+
+configMapGenerator:
+  - name: opencanary-config
+    namespace: opencanary
+    files:
+      - opencanary.conf
+    options:
+      disableNameSuffixHash: true
