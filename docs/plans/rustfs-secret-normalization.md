@@ -1,20 +1,20 @@
 ---
-title: "RustFS secret normalization: census, root-item rename, orphan cleanup"
+title: "RustFS secret normalization: census, root-item rename"
 status: draft
 found_at: 2026-09-11
 updated_at: 2026-10-10
 area: storage
 ---
 
-# RustFS secret normalization: census, root-item rename, orphan cleanup
+# RustFS secret normalization: census, root-item rename
 
 ## Goal
 
 Normalize 1Password naming for S3/RustFS credentials: codify the two naming
-rules, rename the RustFS root item, and delete six orphaned vault items left
-behind by removed apps. The census was delivered in chat 2026-09-11 (session
-01a090e9) and never filed; this plan is the repo copy, with every claim
-re-verified against `origin/main` @ `2a7b1bc7d` on 2026-10-10.
+rules and rename the RustFS root item. The census was delivered in chat
+2026-09-11 (session 01a090e9) and never filed; this plan is the repo copy,
+with every claim re-verified against `origin/main` @ `2a7b1bc7d` on
+2026-10-10.
 
 ## Scope
 
@@ -25,7 +25,6 @@ re-verified against `origin/main` @ `2a7b1bc7d` on 2026-10-10.
   ("Object Storage Credentials")
 - Vault rename `rustfs-terraform-secrets` -> `rustfs-root-secrets` plus
   field normalization (operator-gated vault writes)
-- Deletion of six orphaned vault items (operator-gated)
 - Repo-side rename diff for the two files that reference the root item
   (this change)
 
@@ -65,43 +64,19 @@ Root-item references in the repo (both updated by this change):
 - [`docs/plans/minio-to-rustfs-migration.md`](./minio-to-rustfs-migration.md) —
   decision #6 (the rename decision itself)
 
-## Orphaned vault items (deletion candidates)
-
-Zero repo references proven 2026-10-10: full-tree `git grep` at `origin/main`
-(`2a7b1bc7d`) for each item name **and** its app-name stem
-(`stoat`, `wandb`, `langfuse`, `kestra`, `flyte`, `mimir-minio`) across
-`flux/`, `docs/`, `helm/`, `.agents/` returned 0 hits each. All six items
-were still live in the vault on the 2026-10-10 read-only `op item list`
-board verification.
-
-| Item                      | S3-related fields (census)                 | Why orphaned                                   |
-| ------------------------- | ------------------------------------------ | ---------------------------------------------- |
-| `stoat-secrets`           | `rustfs-*`                                 | stoat removed entirely (b02105de8, 2026-09-05) |
-| `wandb-secrets`           | `s3-access-key`                            | app gone from repo                             |
-| `langfuse-secrets`        | `s3-root-user`                             | app gone from repo                             |
-| `kestra-secrets`          | `minio-root-user` (plus non-S3 app fields) | app gone from repo                             |
-| `flyte-secrets`           | `minio-username`                           | app gone from repo                             |
-| `mimir-minio-credentials` | `root_user`                                | old NAS MinIO root; MinIO decommissioned       |
-
-Adjacent stale fields (not orphan items): `cloudflare-terraform-secrets`
-carries stale `r2-key-id` / `r2-access-key` fields from the never-wired R2
-plan. Optional cleanup in the same vault sitting.
-
 ## Decisions
 
 | #   | Decision                  | Choice                                                              | Why                                                                                                                                             |
 | --- | ------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Naming rules              | `<app>-secrets` items; `access-key-id` / `access-key-secret` fields | De-facto standard of every live consumer; codified in `docs/configuration-patterns.md`. Env-projecting consumers keep `AWS_*` as the exception. |
 | 2   | Rename over delete+create | `op item edit --title`                                              | The item holds the only working RustFS root identity (migration plan decision #6); the values must survive the rename.                          |
-| 3   | Vault writes              | Operator-gated; deletions use plain `op item delete`                | No agent vault mutation. `op item delete` lands items in Recently Deleted (30-day restore) as the safety net.                                   |
+| 3   | Vault writes              | Operator-gated                                                      | No agent vault mutation; vault edits run in an operator-supervised sitting.                                                                     |
 | 4   | Execution order           | Vault rename + field normalization first, then merge the repo diff  | The runbook's scripts read the item; repo and vault must move in one sitting so no onboarding run breaks.                                       |
 
 ## Steps
 
 - [x] Census delivered 2026-09-11 (session 01a090e9); filed as this plan and
       codified in `docs/configuration-patterns.md` (this change)
-- [x] Zero-reference proof for the six orphans at `origin/main` `2a7b1bc7d`
-      (2026-10-10)
 - [x] Rename diff for the two repo files referencing the root item (this
       change; staged, not executed)
 - [ ] **Operator: rename the root item** —
@@ -113,21 +88,12 @@ plan. Optional cleanup in the same vault sitting.
       must not transit chat or command args)
 - [ ] Merge this branch's repo diff immediately after the vault edits so the
       runbook and the vault stay in sync
-- [ ] **Operator: delete the six orphan items** (each lands in Recently
-      Deleted, restorable for 30 days):
-      `op item delete stoat-secrets`;
-      `op item delete wandb-secrets`;
-      `op item delete langfuse-secrets`;
-      `op item delete kestra-secrets`;
-      `op item delete flyte-secrets`;
-      `op item delete mimir-minio-credentials`
 - [ ] Optional: strip the stale `r2-key-id` / `r2-access-key` fields from
       `cloudflare-terraform-secrets`
 - [ ] Optional: rotate the RustFS root credentials (NAS-side) and store the
       rotated pair in `rustfs-root-secrets` — closes the open rotation step
       on `docs/plans/minio-to-rustfs-migration.md`
-- [ ] Close this plan when the rename and deletions are executed (delete per
-      plans README)
+- [ ] Close this plan when the rename is executed (delete per plans README)
 
 ## Feedback loop
 
@@ -135,8 +101,6 @@ plan. Optional cleanup in the same vault sitting.
   signed-in `op` session)
 - `git grep -n "rustfs-terraform-secrets\|rustfs-root-secrets" origin/main` —
   repo references before/after the rename
-- `git grep -iln "stoat\|wandb\|langfuse\|kestra\|flyte\|mimir-minio" origin/main -- flux/ docs/ helm/ .agents/` —
-  must stay empty (orphan proof)
 - Next RustFS onboarding run: the
   [runbook](../infrastructure/rustfs-bucket-user-creation.md) scripts must
   read the new item name and fields on the first try
@@ -155,3 +119,6 @@ plan. Optional cleanup in the same vault sitting.
   evidence (worker-b, read-only `op item list`); the host `op` daemon
   session had expired by the time this plan was drafted (sign-in is
   operator biometric).
+- Stale fields on the live `cloudflare-terraform-secrets` item
+  (`r2-key-id` / `r2-access-key`, from the never-wired R2 plan): optional
+  cleanup in the same vault sitting.
