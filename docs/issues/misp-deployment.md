@@ -114,11 +114,14 @@ datasource), same pattern as generic-app.
 
 ## Operator post-merge steps (slice 3)
 
-1. After the blueprint import creates the provider, copy the
+1. After the tofu workspace (`crossplane.yaml`, module
+   `terraform/modules/authentik-app` at `generic-app-0.0.84`) creates the
+   provider, copy the
    authentik-generated OIDC client secret (Applications → MISP →
    `misp-oidc-provider`) into the `OIDC_CLIENT_SECRET` field of the
    `misp-secrets` 1Password item. The client_id is pinned (`misp`), so the
-   copy is secret-only. The misp pod waits on the resulting
+   copy is secret-only (the module never sets the client secret — authentik
+   generates it server-side). The misp pod waits on the resulting
    `misp-oidc-credentials` Secret until this is done — intended ordering.
 2. Live SSO acceptance: authentik login works via the "Login with OIDC"
    button; the authentik `admins` member lands as MISP role 1 (site admin);

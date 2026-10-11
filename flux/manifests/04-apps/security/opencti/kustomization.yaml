@@ -11,17 +11,7 @@ resources:
   - helmrelease.yaml
   - httproute.yaml
   - backup.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: authentik-blueprint-opencti
-    namespace: opencti
-    files:
-      - opencti.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"

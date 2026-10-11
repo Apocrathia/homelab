@@ -85,7 +85,7 @@ spec:
       MINIO__SECRET_KEY:
         name: opencti-secrets
         key: MINIO__SECRET_KEY
-      # Authentik generates this when the blueprint creates the OIDC
+      # Authentik generates this when the tofu workspace creates the OIDC
       # provider; it is copied into the 1Password item post-merge (README).
       PROVIDERS__OPENID__CONFIG__CLIENT_SECRET:
         name: opencti-secrets

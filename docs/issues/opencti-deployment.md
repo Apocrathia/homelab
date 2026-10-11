@@ -90,8 +90,11 @@ consider the LTS app lines.
   `REDIS__PASSWORD`, `MINIO__ACCESS_KEY`, `MINIO__SECRET_KEY` (the last two
   are the rustfs keypair for `opencti-files`, duplicated from
   `opencti-files-secrets`). Slice 5 adds `OIDC_CLIENT_SECRET` (authentik OIDC
-  client secret; the client_id is pinned to `opencti` in the blueprint, so
-  only the secret is copied post-merge). `opencti-files-secrets` holds the same rustfs
+  client secret; the client_id is pinned to `opencti` in the tofu
+  workspace varmap — `crossplane.yaml`, module
+  `terraform/modules/authentik-app` at `generic-app-0.0.84` — so
+  only the secret is copied post-merge; the module never sets it, authentik
+  generates the secret server-side). `opencti-files-secrets` holds the same rustfs
   keypair under `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
 - The `opencti-misp-connector` 1Password item is deferred to slice 6 (wired
   there): a single field `MISP_KEY` holding the MISP auth key, minted in the

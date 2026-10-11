@@ -14,17 +14,7 @@ resources:
   - backup-cronjob.yaml
   - backup.yaml
   - helmrelease.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: authentik-blueprint-misp
-    namespace: misp
-    files:
-      - misp.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
