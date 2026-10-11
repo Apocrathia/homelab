@@ -3,7 +3,7 @@ apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
   name: openhands
-  namespace: openhands
+  namespace: flux-system
 spec:
   interval: 1h
   url: https://github.com/OpenHands/OpenHands.git
