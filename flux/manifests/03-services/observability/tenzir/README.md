@@ -25,22 +25,33 @@ plus a 14-day rolling window before export to rustfs).
 
 ## Pipeline
 
-```
-kube-audit-tailer --otlp--> accept_otlp (4317/4318) --+--> homelab::k8s::audit::parse --> k8s-audit.raw
-tetragon-tailer   --otlp--> accept_otlp (4317/4318) --+--> homelab::tetragon::parse   --> tetragon.raw
-fleet result webhook --http--> accept_http (8080) ---+--> homelab::fleet::parse       --> fleet.raw
-trivy-report-reader  --http--> accept_http (8080) ---+--> report files                --> trivy.raw
-authentik events API <---- from_http (cron 5m, Bearer) ------------------------------> authentik.raw
-uniFi exporters -----udp:2055--> accept_udp + read_netflow --------------------------> netflow
-                                                                                  |
-        +-----------------------------------------+------------------------------+---------------------+
-        |                                         |                              |                     |
-  homelab::*::ocsf::map (per source)        sigma (k8s-audit only)          fork { import }        fork { import }
-  ocsf_derive / ocsf_cast                   mapping="direct", hot-reload     publish ocsf.*         publish "netflow"
-  fork { import } / publish ocsf.*           publish detections.sigma
-        |                                         |
-  temporal compaction                       homelab::k8s::audit::findings::discord
-  (k8s-audit 14d -> to_s3 rustfs parquet)   to_http secret("discord-webhook-url")
+```mermaid
+flowchart LR
+    KAT[kube-audit-tailer] -- OTLP --> AO["accept_otlp :4317/:4318"]
+    TT[tetragon-tailer] -- OTLP --> AO
+    FRW[fleet result webhook] -- HTTP --> AH["accept_http :8080"]
+    TRR[trivy-report-reader] -- HTTP --> AH
+    AE[authentik events API] <--> FH["from_http (cron 5m, Bearer)"]
+    UE[UniFi exporters] -- "UDP :2055" --> NF[accept_udp + read_netflow]
+
+    AO --> KA[homelab::k8s::audit::parse] --> KR[k8s-audit.raw]
+    AO --> TP[homelab::tetragon::parse] --> TR[tetragon.raw]
+    AH --> FP[homelab::fleet::parse] --> FR[fleet.raw]
+    AH --> RF[report files] --> TB[trivy.raw]
+    FH --> AR[authentik.raw]
+    NF --> NB[netflow events]
+
+    KA --> MAP["homelab::*::ocsf::map (per source)<br/>ocsf_derive / ocsf_cast"]
+    TR --> MAP
+    FR --> MAP
+    TB --> MAP
+    AR --> MAP
+    MAP -- "fork { import } / publish" --> OCSF[ocsf.*]
+    NB -- "fork { import } / publish" --> OCSF
+
+    KA -- "sigma (k8s-audit only)<br/>mapping = direct, hot-reload" --> SIG[detections.sigma]
+    SIG --> DC["homelab::k8s::audit::findings::discord<br/>to_http secret(discord-webhook-url)"]
+    KA -- "temporal compaction<br/>k8s-audit 14d -> to_s3 rustfs parquet" --> S3[rustfs archive]
 ```
 
 ## Content
