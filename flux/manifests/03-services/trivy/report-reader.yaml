@@ -81,7 +81,7 @@ spec:
       containers:
         - name: vuln-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-          image: docker.io/tenzir/tenzir:v6.18.1
+          image: docker.io/tenzir/tenzir:v6.19.1@sha256:6e96f962bc0a957d94d5149f840f7603c47a7b11d995e0f1fc167c141db7c06f
           command: ["tenzir"]
           args:
             [
@@ -116,7 +116,7 @@ spec:
               readOnly: true
         - name: secret-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-          image: docker.io/tenzir/tenzir:v6.18.1
+          image: docker.io/tenzir/tenzir:v6.19.1@sha256:6e96f962bc0a957d94d5149f840f7603c47a7b11d995e0f1fc167c141db7c06f
           command: ["tenzir"]
           args:
             [
