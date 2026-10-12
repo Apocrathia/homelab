@@ -18,7 +18,7 @@ Policy Reporter watches for PolicyReport resources from policy engines like Kyve
 
 ## Authentication
 
-Policy Reporter UI uses OIDC authentication via Authentik. The OIDC provider is configured through an Authentik blueprint and credentials are stored in 1Password.
+Policy Reporter UI uses OIDC authentication via Authentik. The OIDC provider is owned by the provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair), and credentials are stored in 1Password.
 
 ### 1Password Secret
 

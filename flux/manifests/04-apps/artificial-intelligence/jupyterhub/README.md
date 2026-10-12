@@ -49,7 +49,7 @@ See `helmrelease.yaml` for complete configuration.
 
 ## Authentication
 
-Users authenticate via Authentik OIDC. The Authentik blueprint in this directory creates the provider and application automatically. After deployment, copy the generated client credentials to 1Password.
+Users authenticate via Authentik OIDC. The provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair) owns the provider and application. The generated client credentials live in 1Password.
 
 ## Troubleshooting
 

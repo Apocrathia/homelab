@@ -46,15 +46,15 @@ The deployment reads `renovate-operator-secret`, synced from the existing
 
 - `RENOVATE_TOKEN` - GitLab PAT for platform access (same value as `gitlab-token`)
 - `GITHUB_COM_TOKEN` - GitHub token for changelogs (same value as `github-token`)
-- `oidc-client-id` - Authentik OIDC client ID (copy from the provider after the
-  blueprint applies)
+- `oidc-client-id` - Authentik OIDC client ID (copied from the live provider; feeds the HelmRelease and the tofu ProviderConfig client-id lane)
 - `oidc-client-secret` - Authentik OIDC client secret (same source)
 - `oidc-session-secret` - random string for UI session encryption (generate once)
 
 ## Authentication
 
 Web UI uses native OIDC against Authentik (confidential client, PKCE). The
-`authentik-blueprint.yaml` ConfigMap creates the provider and application.
+provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the
+canonical file pair) owns the provider and application.
 Membership in the `kubernetes-admins` Authentik group grants admin access to
 RenovateJobs; there is no anonymous or reader access. Never expose the UI
 route without OIDC configured - the operator serves it unauthenticated
