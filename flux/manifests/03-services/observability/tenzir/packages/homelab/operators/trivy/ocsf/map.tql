@@ -26,8 +26,12 @@ match report_kind? {
       desc: v?.description?,
       severity: v?.severity?,
       references: v?.links?,
-      first_seen_time: v?.publishedDate?,
-      last_seen_time: v?.lastModifiedDate?,
+      // metav1.Time dates reach the node as RFC3339 strings, but read_json
+      // already parses the common shapes to `time`; time() is a no-op cast
+      // on those and parses any string stragglers, so ocsf_cast always sees
+      // native time and stops warning (live RC5 diagnostic).
+      first_seen_time: time(v?.publishedDate?),
+      last_seen_time: time(v?.lastModifiedDate?),
       cve: {uid: v?.vulnerabilityID?},
       affected_packages: [
         {

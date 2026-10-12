@@ -75,13 +75,13 @@ engine release — no local install needed). Pin the runner to the deployed
 engine version and run from the repo root:
 
 ```sh
-TENZIR_BINARY="uvx tenzir@6.18.1" \
+TENZIR_BINARY="uvx tenzir@6.19.1" \
   uvx tenzir-test --root ./flux/manifests/03-services/observability/tenzir/packages
 ```
 
-`helmrelease.yaml` deploys `tenzir/tenzir:v6.18.1`; bump the runner pin when
+`helmrelease.yaml` deploys `tenzir/tenzir:v6.19.1`; bump the runner pin when
 the node image moves. The runner banner confirms the version on every run:
-`1× tenzir (v6.18.1)`. All baselines must stay warning-free — `ocsf_cast`
+`1× tenzir (v6.19.1)`. All baselines must stay warning-free — `ocsf_cast`
 schema warnings are the mapping's "not done" signal.
 
 ## Secrets

@@ -51,7 +51,7 @@ spec:
             emptyDir: {}
           - name: kube-apiserver-audit
             hostPath:
-              path: /var/log/kube-apiserver
+              path: /var/log/audit/kube
 
     alloy:
       stabilityLevel: public-preview
@@ -71,7 +71,7 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
-      # Root is required to read audit.log (0600 root-owned, 0700 dir).
+      # Root is required to read the audit log (0600 root-owned, 0700 dir).
       # Scope of privilege: one read-only hostPath volume. All capabilities
       # dropped, no privilege escalation, read-only root filesystem.
       securityContext:
@@ -86,7 +86,7 @@ spec:
           - name: alloy-wal
             mountPath: /tmp/alloy
           - name: kube-apiserver-audit
-            mountPath: /var/log/kube-apiserver
+            mountPath: /var/log/audit/kube
             readOnly: true
 
     global:

@@ -8,12 +8,12 @@ metadata:
     app.kubernetes.io/name: kube-audit-tailer
 data:
   config.alloy: |
-    // kube-apiserver audit log dual-writer: tails the host audit.log on each
-    // control plane and ships every line to Loki (native) and to the Tenzir
-    // detection node (OTLP/HTTP).
+    // kube-apiserver audit log dual-writer: tails the host
+    // kube-apiserver.log on each control plane and ships every line
+    // to Loki (native) and to the Tenzir detection node (OTLP/HTTP).
     //
     // Why this is not part of the shared alloy DaemonSet: kube-apiserver creates
-    // audit.log with mode 0600 inside a 0700 directory (k8s apiserver audit.go:
+    // its audit log with mode 0600 inside a 0700 directory (k8s apiserver audit.go:
     // OpenFile(..., 0600), MkdirAll(dir, 0700)), so only root can read it. The
     // shared Alloy runs as UID 10001; this dedicated tailer runs as root with a
     // read-only hostPath mount and nothing else. No taints exist on this
@@ -31,7 +31,7 @@ data:
     local.file_match "kube_audit" {
       path_targets = [
         {
-          __path__ = "/var/log/kube-apiserver/audit.log*",
+          __path__ = "/var/log/audit/kube/kube-apiserver.log*",
         },
       ]
     }
@@ -61,7 +61,7 @@ data:
     }
 
     otelcol.receiver.filelog "kube_audit" {
-      include           = ["/var/log/kube-apiserver/audit.log", "/var/log/kube-apiserver/audit.log-*"]
+      include           = ["/var/log/audit/kube/kube-apiserver.log", "/var/log/audit/kube/kube-apiserver.log-*"]
       start_at          = "end"
       include_file_path = true
       operators = [
