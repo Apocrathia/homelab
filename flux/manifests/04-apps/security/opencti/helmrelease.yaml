@@ -181,6 +181,17 @@ spec:
     # sysctl home).
     opensearch:
       opensearchJavaOpts: "-Xms3g -Xmx3g"
+      # Chart 2.18+/OpenSearch 2.12+ requires the initial admin password
+      # explicitly - the cluster refuses to boot without it (the pod sat
+      # in CrashLoopBackOff on 'No custom admin password found' until
+      # this landed). Single-item pattern: the field lives in the
+      # opencti-secrets vault item.
+      extraEnvs:
+        - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: opencti-secrets
+              key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
       sysctlInit:
         enabled: false
       persistence:
