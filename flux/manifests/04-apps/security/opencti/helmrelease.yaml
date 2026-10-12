@@ -28,8 +28,15 @@ spec:
       # Heap tuned down from the 8GB default (research doc 2.3: tune down for homelab).
       NODE_OPTIONS: "--max-old-space-size=4096"
       # OpenSearch subchart service is named <clusterName>-<nodeGroup>.
-      ELASTICSEARCH__URL: "http://opensearch-cluster-master:9200"
-      RABBITMQ__USERNAME: "user"
+      # TLS is mandatory: the opensearch security plugin (demo config)
+      # enforces it on the REST layer — a plaintext http:// client knocks
+      # produced NotSslRecordException on the engine and "socket hang up"
+      # on the platform side (live diagnosis 2026-10-12). The demo
+      # self-signed certs mean SSL_REJECT_UNAUTHORIZED=false for now;
+      # dedicated certs are a follow-up. Admin user rides the same vault
+      # field as OPENSEARCH_INITIAL_ADMIN_PASSWORD (single-item pattern).
+      ELASTICSEARCH__URL: "https://opensearch-cluster-master:9200"
+      ELASTICSEARCH__SSL_REJECT_UNAUTHORIZED: "false"
       RABBITMQ__HOSTNAME: "opencti-rabbitmq"
       REDIS__HOSTNAME: "opencti-redis"
       # File storage: NAS rustfs bucket (slice 1), HTTP on the LAN segment.
@@ -73,6 +80,15 @@ spec:
       APP__ENCRYPTION_KEY:
         name: opencti-secrets
         key: APP__ENCRYPTION_KEY
+      ELASTICSEARCH__USERNAME:
+        name: opencti-secrets
+        key: ELASTICSEARCH__USERNAME
+      ELASTICSEARCH__PASSWORD:
+        name: opencti-secrets
+        key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+      RABBITMQ__USERNAME:
+        name: opencti-secrets
+        key: RABBITMQ__USERNAME
       RABBITMQ__PASSWORD:
         name: opencti-secrets
         key: RABBITMQ__PASSWORD
