@@ -31,12 +31,15 @@ spec:
           # requires a key on every API call.
           - name: ALLOW_ANON_API
             value: "false"
-          # Honor X-Forwarded-* from the authentik outpost. Note the default
-          # FORWARDED_ALLOW_IPS (127.0.0.1,::1) does not cover the outpost
-          # pod IP, so client-IP restoration stays off until the pod CIDR is
-          # allowlisted; rate-limit buckets key on the outpost IP meanwhile.
+          # Honor X-Forwarded-* from the authentik outpost. Uvicorn >= 0.54
+          # accepts CIDR notation; 10.42.0.0/16 covers the cilium per-node
+          # podCIDRs (10.42.0-3.0/24), so forwarded client IPs are restored
+          # and the hardcoded 60/hour slowapi buckets key per real client
+          # instead of one shared outpost-IP bucket.
           - name: TRUST_PROXY_HEADERS
             value: "true"
+          - name: FORWARDED_ALLOW_IPS
+            value: "10.42.0.0/16"
           # Accepted API keys (comma-split); scan history is isolated per key
           # principal.
           - name: API_KEYS
@@ -52,6 +55,19 @@ spec:
               secretKeyRef:
                 name: prism-secrets
                 key: api-key
+          # AI summary/chat rides the in-cluster LiteLLM proxy (OpenAI-
+          # compatible /v1/chat/completions; LLM_BASE_URL is the full endpoint
+          # URL, see web/app.py llm_providers).
+          - name: LLM_BASE_URL
+            value: "http://litellm.litellm.svc.cluster.local:4000/v1/chat/completions"
+          - name: LLM_MODEL
+            value: "glm-5.3-prime"
+          # Minted in the LiteLLM admin UI (virtual key, least privilege).
+          - name: LLM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: prism-secrets
+                key: llm-api-key
       # TRUSTED_HOSTS intentionally unset: kubelet probes hit the pod-IP
       # Host header and TrustedHostMiddleware would reject them.
       replicas: 1
@@ -79,13 +95,17 @@ spec:
           memory: 512Mi
 
       healthChecks:
-        # GET /healthz -> {"status":"ok"}, unauthenticated
+        # TCP probes only: the app hardcodes a slowapi limit (60/hour per
+        # client IP, web/security.py) that also covers /healthz, so HTTP
+        # probes exhausted their own bucket within ~4 minutes and the
+        # resulting 429s tripped liveness, crashlooping the pod (47 restarts
+        # observed). tcpSocket checks that uvicorn accepts connections
+        # without spending the app-level limiter; /healthz stays available
+        # for gatus and humans.
         livenessProbe:
           enabled: true
-          httpGet:
-            path: /healthz
+          tcpSocket:
             port: 8080
-            scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -93,10 +113,8 @@ spec:
           successThreshold: 1
         readinessProbe:
           enabled: true
-          httpGet:
-            path: /healthz
+          tcpSocket:
             port: 8080
-            scheme: HTTP
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
