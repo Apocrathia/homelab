@@ -20,9 +20,13 @@ spec:
   install:
     remediation:
       retries: 3
+    # The node boots through a multi-minute partition-catalog load before
+    # the :5158 probe can pass; the 5m default races it and rolls back.
+    timeout: 10m
   upgrade:
     remediation:
       retries: 3
+    timeout: 10m
   values:
     image:
       registry: docker.io
