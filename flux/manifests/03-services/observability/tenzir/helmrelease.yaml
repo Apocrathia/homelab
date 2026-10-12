@@ -68,9 +68,25 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
+          # Partition mint-rate control (docs, "Control the partition size"):
+          # the 10s default timeout completes a partition on time alone —
+          # "once reached, Tenzir considers the partition as complete,
+          # regardless of the number of records" — and the tetragon OCSF
+          # fan-out (~125 schema variants at ~800 ev/s) never approaches
+          # the 4Mi max-partition-size record cap, so every 10s flush
+          # minted a ~10-event partition (50,747 process_activity partitions
+          # = 6.25GiB = 80% of the 8Gi volume at the 2026-10-12 ENOSPC).
+          # 60s cuts the mint rate 6x; the async background merge of
+          # undersized partitions consolidates the rest once the node stays
+          # up. max-partition-size stays default: the record cap is not the
+          # binding knob on a timeout-capped stream.
+          active-partition-timeout: 60s
           start:
-            # Hard quota on the 8Gi PVC: erase oldest data past 7GiB, down to
-            # 6GiB. Edge storage is the 14d detection horizon, not a record.
+            # Hard quota on the 8Gi PVC, belt-and-braces alongside
+            # plugins.compaction.space below: the compaction plugin owns the
+            # storage policy, so this quota alone never fired on the way to
+            # the 2026-10-12 ENOSPC. Edge storage is the 14d detection
+            # horizon, not a record.
             disk-budget-high: 7GiB
             disk-budget-low: 6GiB
           pipelines:
@@ -263,6 +279,20 @@ spec:
               restart-on-error: 1 minute
         plugins:
           compaction:
+            # Budget-enforcing deletion: the compaction plugin owns the
+            # storage policy (node log: "catalog takes its storage policy
+            # from the compaction plugin"), and with only the 14-day
+            # archive rule below no budget-driven deletion existed — the
+            # lake grew monotonically to the 2026-10-12 ENOSPC. The space
+            # section is the docs' spatial-compaction path (weighted-age;
+            # default weight 1 = oldest events first, and with no pipeline
+            # the plugin deletes matching events): every 30 minutes,
+            # delete oldest past 7GiB down to 6GiB on the 8Gi PVC.
+            space:
+              mode: weighted-age
+              interval: 30 minutes
+              disk-budget-high: 7GiB
+              disk-budget-low: 6GiB
             time:
               interval: 1 day
               rules:
