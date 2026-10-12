@@ -15,7 +15,7 @@ This deployment includes:
 
 ## Exposed Honeypot Ports
 
-LoadBalancer IP `10.100.1.98` (Cilium L2 announcement, `externalTrafficPolicy: Local` so alerts carry the attacker's real source IP):
+LoadBalancer IP `10.100.1.92` (Cilium L2 announcement, `externalTrafficPolicy: Local` so alerts carry the attacker's real source IP):
 
 | LB Port | Container Port | Service    | What triggers an alert                                       |
 | ------- | -------------- | ---------- | ------------------------------------------------------------ |

@@ -111,7 +111,7 @@ spec:
 
     loadbalancer:
       enabled: true
-      ip: "10.100.1.98"
+      ip: "10.100.1.92"
       # Local keeps the attacker's source IP in alerts; Cilium only announces
       # the L2 VIP on nodes with a local endpoint, so traffic always lands
       # on this pod's node.
