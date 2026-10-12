@@ -58,7 +58,10 @@ spec:
             protocol: UDP
 
     persistence:
-      size: 8Gi
+      # 20Gi: operator-authorized bump — the 8Gi lake ENOSPC'd at the 10s
+      # partition timeout (50K+ tiny tetragon partitions in 2 days); the
+      # 60s timeout + compaction space budgets tame growth from here.
+      size: 20Gi
 
     # Node configuration (renders to the tenzir-node-default-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land
