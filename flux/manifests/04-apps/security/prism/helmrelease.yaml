@@ -61,7 +61,7 @@ spec:
           - name: LLM_BASE_URL
             value: "http://litellm.litellm.svc.cluster.local:4000/v1/chat/completions"
           - name: LLM_MODEL
-            value: "claude-4-5-haiku"
+            value: "glm-5.3-prime"
           # Minted in the LiteLLM admin UI (virtual key, least privilege).
           - name: LLM_API_KEY
             valueFrom:
