@@ -170,6 +170,9 @@ spec:
       OTEL_EXPORTER: "otlp_grpc"
       OTEL_ENDPOINT: "http://alloy.alloy-system.svc.cluster.local:4317"
       OTEL_SERVICE_NAME: "litellm"
+      # Head-sample 25% of traces; OTel export to alloy was resource-exhausted
+      OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
+      OTEL_TRACES_SAMPLER_ARG: "0.25"
       PROXY_BASE_URL: "https://ai.gateway.services.apocrathia.com"
       GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/authorize/"
       GENERIC_TOKEN_ENDPOINT: "https://auth.gateway.services.apocrathia.com/application/o/token/"
@@ -235,9 +238,28 @@ spec:
         helm:
           enabled: true # Auto-deletes old job before creating new one
 
-    # Health check separation
-    separateHealthApp: true
-    separateHealthPort: 8081
+    # Probes: chart 1.104.2 has no separateHealthApp/separateHealthPort
+    # values (silently ignored) — removed. Liveness tuned so load-burst
+    # stalls of the serving loop don't get the pod killed:
+    # 30s period, 10s timeout, 6 failures = ~3 min sustained failure
+    # before a restart (was 15s/5s/5 = 75s).
+    livenessProbe:
+      path: /health/liveliness
+      initialDelaySeconds: 0
+      periodSeconds: 30
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 6
+
+    # Cold start against CNPG (prisma schema check) takes ~60-90s;
+    # 10s x 18 = 180s startup budget before liveness takes over.
+    startupProbe:
+      path: /health/readiness
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 18
 
     # Pod disruption budget
     pdb:
