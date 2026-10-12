@@ -173,12 +173,16 @@ spec:
             cpu: "250m"
             memory: "512Mi"
 
-    # Single-node OpenSearch on Longhorn; vm.max_map_count set by the chart's
-    # privileged busybox initContainer (operator decision: no Talos patch).
+    # Single-node OpenSearch on Longhorn. vm.max_map_count is set at the
+    # NODE level via talos/patches/unified-patch.yaml SysctlConfig - the
+    # chart's privileged sysctl initContainer is disabled (it violates
+    # baseline PodSecurity admission in app namespaces; operator steer
+    # 2026-10-12: no namespace-wide relaxation, node-level is the proper
+    # sysctl home).
     opensearch:
       opensearchJavaOpts: "-Xms3g -Xmx3g"
       sysctlInit:
-        enabled: true
+        enabled: false
       persistence:
         enabled: true
         storageClass: longhorn
