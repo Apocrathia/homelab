@@ -32,6 +32,10 @@ spec:
   valuesFrom:
     - kind: Secret
       name: misp-secrets
+      valuesKey: MYSQL_USER
+      targetPath: mariadb.auth.username
+    - kind: Secret
+      name: misp-secrets
       valuesKey: MYSQL_PASSWORD
       targetPath: mariadb.auth.password
     - kind: Secret
@@ -307,8 +311,9 @@ spec:
         tag: 10.11.9-debian-12-r3@sha256:0a897dbd27c6588fb5b3d421956b0874521a65a32d3ae6fa269ff195be93a6ff
       auth:
         database: misp
-        username: misp
-        # password / rootPassword injected from misp-secrets via valuesFrom
+        # username + password + rootPassword all injected from misp-secrets
+        # via valuesFrom; no credential material rides plaintext (operator
+        # steer 2026-10-12: usernames live in the vault too)
       primary:
         persistence:
           storageClass: longhorn
