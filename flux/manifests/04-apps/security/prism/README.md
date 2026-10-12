@@ -34,6 +34,7 @@ Scan modules run keyless by default (16 of 26). Optional provider keys (Shodan, 
 1Password item `vaults/Secrets/items/prism-secrets` provides:
 
 - `api-key` - the PRISM API key, bound to both `API_KEYS` and `PRISM_UI_API_KEY`
+- `llm-api-key` - LiteLLM virtual key for the AI summary/chat, bound to `LLM_API_KEY`
 
 The UI key is browser-visible by design - the backend injects it into the UI runtime config so the frontend can authenticate API calls. Anyone with lab access can read it; the Authentik gate is the real boundary.
 
