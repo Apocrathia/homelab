@@ -223,6 +223,7 @@ data:
     otelcol.receiver.otlp "default" {
       grpc {
         endpoint = "0.0.0.0:4317"
+        max_recv_msg_size = "20MiB"
       }
       http {
         endpoint = "0.0.0.0:4318"
