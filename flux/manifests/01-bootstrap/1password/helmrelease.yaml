@@ -145,7 +145,7 @@ spec:
         # See: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.
         pathType: Prefix
         hosts:
-          - host: onepassword-connect.k8s.apocrathia.com
+          - host: onepassword-connect.kubernetes.apocrathia.com
             paths: []
         # Extra paths to prepend to the host configuration.
         # This is useful when working with annotation based services.
