@@ -100,14 +100,16 @@ RWO Longhorn PVC.
 - **URL**: `https://crossplane.gateway.services.apocrathia.com` (Gateway API
   HTTPRoute on `main-gateway`, chart-rendered); the SSO entrypoint is
   `/api/auth/oidc` — the root path serves the local login form
-- **Auth**: native OIDC against Authentik — blueprint creates
-  `crossview-oidc-provider` and a Platform-group launchpad entry
-  (`authentik-blueprint.yaml`); local admin fallback via 1Password
+- **Auth**: native OIDC against Authentik — the provider-opentofu
+  Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair)
+  owns `crossview-oidc-provider` and a Platform-group launchpad entry;
+  local admin fallback via 1Password
 - **Exposure**: admins only
 
 ### Bootstrap
 
-1. The blueprint reconciles and creates the OIDC provider + application.
+1. The provider-opentofu Workspace (file pair `crossplane.yaml` +
+   `authentik.tf`) owns and reconciles the OIDC provider + application.
 2. Copy the generated client ID and client secret from Authentik
    (Applications → Providers → `crossview-oidc-provider`) into the 1Password
    item `crossview-secrets` (vault `Secrets`).
@@ -116,15 +118,15 @@ RWO Longhorn PVC.
 
 ### 1Password item fields
 
-| Field                | Used by                                |
-| -------------------- | -------------------------------------- |
-| `oidc-client-id`     | HelmRelease `valuesFrom`               |
-| `oidc-client-secret` | OIDC env (secretKeyRef)                |
-| `admin-username`     | local admin fallback login             |
-| `admin-password`     | local admin fallback login             |
-| `session-secret`     | session cookie signing                 |
-| `db-password`        | chart DB password                      |
-| `password`           | CNPG bootstrap (mirrors `db-password`) |
+| Field                | Used by                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `oidc-client-id`     | HelmRelease `valuesFrom` + tofu ProviderConfig client-id lane |
+| `oidc-client-secret` | OIDC env (secretKeyRef)                                       |
+| `admin-username`     | local admin fallback login                                    |
+| `admin-password`     | local admin fallback login                                    |
+| `session-secret`     | session cookie signing                                        |
+| `db-password`        | chart DB password                                             |
+| `password`           | CNPG bootstrap (mirrors `db-password`)                        |
 
 ## Troubleshooting
 
