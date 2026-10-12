@@ -7,9 +7,12 @@ whether it rides along); the link resolves once it lands on main.
 
 Tenzir Node is the SIEM detection plane: it normalizes kube-apiserver audit,
 tetragon, authentik, fleet, trivy, and NetFlow data to OCSF, runs Sigma
-rules on the audit stream, and delivers Detection Findings to Discord. Loki
-stays the system of record; this node is the detection horizon (hot storage
-plus a 14-day rolling window before export to rustfs).
+rules on the audit stream, stores the matched Detection Findings as the
+immutable record, and ships a flat, query-optimized projection of them to
+Loki (the `tenzir-findings` stream — the searchable surface for pull-side
+triage; the uid fingerprint joins both stores). CRITICAL findings doorbell
+to Discord. Loki stays the system of record; this node is the detection
+horizon (hot storage plus a 14-day rolling window before export to rustfs).
 
 - Namespace: `tenzir-system` (single standalone node, no Tenzir Platform)
 - Chart: `oci://ghcr.io/tenzir/charts/tenzir-node` (see
@@ -50,15 +53,18 @@ flowchart LR
     NB -- "fork { import } / publish" --> OCSF
 
     KA -- "sigma (k8s-audit only)<br/>mapping = direct, hot-reload" --> SIG[detections.sigma]
-    SIG --> DC["homelab::k8s::audit::findings::discord<br/>to_http secret(discord-webhook-url)"]
+    SIG -- "fork { import }" --> LAKE[node lake: ocsf.detection_finding]
+    SIG -- "where severity_id == 5" --> DC["homelab::k8s::audit::findings::discord<br/>to_http secret(discord-webhook-url)"]
+    SIG -- "project + repeat counter<br/>+ deduplicate uid 1h" --> LK["homelab::findings::project<br/>to_http alloy :8080"] --> LOKI[Loki<br/>source=tenzir-findings]
     KA -- "temporal compaction<br/>k8s-audit 14d -> to_s3 rustfs parquet" --> S3[rustfs archive]
+    LAKE -- "temporal compaction<br/>findings 14d -> to_s3 rustfs parquet" --> S3
 ```
 
 ## Content
 
 | Path                              | Purpose                                                                                                                                               |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/homelab/`               | TQL mapping package (`homelab`): OTLP parse, OCSF map, Discord embed formatting, with tests                                                           |
+| `packages/homelab/`               | TQL mapping package (`homelab`): OTLP parse, OCSF map, Discord embed formatting, findings projection (Loki mirror), with tests                        |
 | `sigma/sigmahq/kubernetes-audit/` | Vendored subset of the 16 SigmaHQ `kubernetes/audit` rules, re-copied from the [`third-party/sigmahq`](../../../../../third-party/sigmahq/) submodule |
 | `sigma/own/`                      | Homelab starter rules                                                                                                                                 |
 
@@ -105,9 +111,10 @@ renders the `tenzir-secrets` Secret with:
   against the budget; re-baseline if exporters change
 - After 14 days (event time), `plugins.compaction.time` exports
   `ocsf.api_activity` events as parquet to
-  `s3://tenzir/ocsf/{uuid}.parquet` on rustfs and consumes the originals
-  (`tenzir-ctl compaction list` shows the rule; `tenzir-ctl compaction run
-k8s-audit-archive` forces a cycle for testing)
+  `s3://tenzir/ocsf/{uuid}.parquet` and Detection Findings to
+  `s3://tenzir/findings/{uuid}.parquet` on rustfs, consuming the originals
+  (`tenzir-ctl compaction list` shows both rules; `tenzir-ctl compaction
+run k8s-audit-archive` forces a cycle for testing)
 
 ## Known limitations
 
@@ -120,8 +127,9 @@ k8s-audit-archive` forces a cycle for testing)
 - No per-source provenance beyond the audit pipeline: `receiver.peer_ip` is
   dropped after parse; the Loki pivot is labels + timestamp + auditID
 - NetFlow, authentik, fleet, trivy, and tetragon OCSF events have no sigma
-  detections yet and no compaction rule — only `ocsf.api_activity` exports
-  to rustfs; the disk budget (7 GiB high) is the backstop
+  detections yet — detection content covers `ocsf.api_activity` (6003) and
+  the sigma findings (`ocsf.detection_finding`, both archived to rustfs);
+  the disk budget (7 GiB high) is the backstop for the rest
 - Fleet rows map to the OCSF Base Event: a row's meaning comes from its
   query, and no scheduled query existed at mapping time — grow
   [`fleet/ocsf/map.tql`](./packages/homelab/operators/fleet/ocsf/map.tql)

@@ -37,6 +37,10 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - discord.tql=packages/homelab/operators/k8s/audit/findings/discord.tql
+  - name: tenzir-packages-homelab-findings-project
+    namespace: tenzir-system
+    files:
+      - project.tql=packages/homelab/operators/findings/project.tql
   - name: tenzir-packages-homelab-tetragon-parse
     namespace: tenzir-system
     files:
