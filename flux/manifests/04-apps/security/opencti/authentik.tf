@@ -149,8 +149,21 @@ resource "authentik_provider_oauth2" "app" {
   access_token_validity  = "minutes=5"
   refresh_token_validity = "days=30"
 
-  # grant_types is TF-Computed — never sent by tofu; the API default on
-  # POST/PATCH covers the authentik 2026.5+ empty-grant-types trap.
+  # grant_types MUST be explicit on fresh creates: the API serializer no
+  # longer backfills it in 2026.8 (tfstate showed []), and authentik
+  # rejects every authorize request with invalid_request when the
+  # provider's grant_types is empty. Adopted providers kept their
+  # blueprint-era values, which is why only fresh tofu creates hit this
+  # (live-state evidence 2026-10-12: misp authorize rejected pre-fix).
+  # Schema-verified against goauthentik provider v2026.8.0: grant_types is
+  # Optional+Computed (writable). response_types is NOT in the TF schema
+  # at 2026.8.0 (tofu init rejects the unknown attribute) — and the 2026.8
+  # authorize view never checks the provider's response_types, so leaving
+  # it unmanaged is correct.
+  grant_types = [
+    "authorization_code",
+    "refresh_token",
+  ]
   # token_validity (blueprint days=30) is NOT expressible in provider
   # 2026.8.0 — unmanaged; the fresh create takes the authentik API
   # default.
