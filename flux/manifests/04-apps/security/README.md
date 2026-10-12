@@ -31,6 +31,13 @@ alerts for the threat-intel pipeline.
 TAXII 2.1 server for STIX indicator exchange, backed by CloudNativePG, feeding
 the MISP/OpenCTI pipeline.
 
+### [Prism](./prism/README.md)
+
+Self-hosted OSINT scanner: domain, IP, email, phone, and username
+reconnaissance across 26 modules with OPSEC scoring, entity graphs, and
+report exports. Single FastAPI container, no database; JSON-file persistence
+on Longhorn.
+
 ## Overview
 
 Security tooling that consumes or produces threat intelligence lives here.
