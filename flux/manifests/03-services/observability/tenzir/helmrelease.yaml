@@ -315,7 +315,7 @@ spec:
                   deduplicate uid, create_timeout=1h
                   each {
                     from $this
-                    to_http "http://alloy.alloy-system.svc:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
+                    to_http "http://alloy.alloy-system.svc.cluster.local:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
                   }
                 }
                 summarize uid, rule_id, repeat_count=count(), options={emit: 1h, mode: "reset"}
@@ -325,7 +325,7 @@ spec:
                 time = now()
                 each {
                   from $this
-                  to_http "http://alloy.alloy-system.svc:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
+                  to_http "http://alloy.alloy-system.svc.cluster.local:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
                 }
               restart-on-error: 1 minute
         plugins:
