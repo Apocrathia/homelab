@@ -283,7 +283,9 @@ spec:
         memory: 1Gi
       limits:
         cpu: "1"
-        memory: 4Gi
+        # 4Gi OOMKilled at ~39s under the tetragon flood (live-verified,
+        # 11 restarts); 8Gi buys the compaction cycle room to catch up.
+        memory: 8Gi
 
     # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
     # default AWS chain used by to_s3, the Discord webhook as a Tenzir

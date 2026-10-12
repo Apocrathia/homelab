@@ -71,9 +71,13 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
-      # Root is required to read the audit log (0600 root-owned, 0700 dir).
-      # Scope of privilege: one read-only hostPath volume. All capabilities
-      # dropped, no privilege escalation, read-only root filesystem.
+      # Root alone is NOT sufficient to read the audit log: Talos 1.14's
+      # apiserver runs as uid 65534 and writes /var/log/audit/kube as
+      # 0700-dir/0600-file owned by 65534. Root without caps cannot cross
+      # that DAC barrier (live-verified: Permission denied with drop-ALL).
+      # Scope of privilege: one read-only hostPath volume, the single
+      # DAC_READ_SEARCH cap (file reads only — no write/kill/sys overrides),
+      # no privilege escalation, read-only root filesystem.
       securityContext:
         runAsNonRoot: false
         runAsUser: 0
@@ -81,6 +85,7 @@ spec:
         readOnlyRootFilesystem: true
         capabilities:
           drop: ["ALL"]
+          add: ["DAC_READ_SEARCH"]
       mounts:
         extra:
           - name: alloy-wal
