@@ -16,7 +16,7 @@ Longhorn provides persistent storage with:
 ## Access
 
 - **Web UI**: `https://longhorn.gateway.services.apocrathia.com`
-- **Authentication**: Authentik SSO
+- **Authentication**: Authentik SSO — owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place)
 
 ## Configuration
 

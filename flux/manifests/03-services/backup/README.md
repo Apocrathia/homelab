@@ -51,10 +51,11 @@ each consumer opts in per policy, and `allowedNamespaces` limits tenants.
 
 `spec.server` on the ClusterRepository runs the kopia web UI (htmlui, bundled
 in the kopia binary) as a read-only Deployment + ClusterIP Service in
-`kopiur-system`. Authentik fronts it: the blueprint in this directory creates
-the proxy provider, application, and outpost — the outpost provisions its own
-HTTPRoute on `https://kopia.gateway.services.apocrathia.com` (no hand-written
-route). Admins group only.
+`kopiur-system`. Authentik fronts it: the `crossplane.yaml` + `authentik.tf` file pair
+in this directory manages the proxy provider, application, admins binding,
+and outpost (the retired blueprint's objects, adopted in place) — the outpost
+provisions its own HTTPRoute on `https://kopia.gateway.services.apocrathia.com`
+(no hand-written route). Admins group only.
 
 The UI has no login of its own (`auth.insecure`) — Authentik is the only
 authentication. `networkpolicy.yaml` compensates: ingress to the UI Service is
