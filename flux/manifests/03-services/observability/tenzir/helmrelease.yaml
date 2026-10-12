@@ -179,7 +179,7 @@ spec:
               name: authentik events pull
               description: |
                 Polls the authentik events API every 5 minutes (Bearer token
-                via the AUTHENTIK_EVENTS_TOKEN managed secret), walking the
+                via the authentik-events-token managed secret), walking the
                 page-based pagination with a DjangoQL created-time window;
                 deduplicate absorbs the 1-minute overlap on the event pk.
               definition: |
@@ -188,7 +188,7 @@ spec:
                   let $base = "https://auth.gateway.services.apocrathia.com/api/v3/events/events/"
                   let $query = f"page_size=100&search=created%20%3E%20%22{$since}%22"
                   from_http f"{$base}?{$query}",
-                    headers={Authorization: f"Bearer {secret("AUTHENTIK_EVENTS_TOKEN")}"},
+                    headers={Authorization: f"Bearer {secret("authentik-events-token")}"},
                     paginate=(x => f"{$base}?page={x.pagination?.next?}&{$query}" if x.pagination?.next? > 0) {
                     read_json
                   }
@@ -274,18 +274,21 @@ spec:
                       write_parquet
                     }
 
+    # OOM armor (2026-10-11 diagnosis, RC3): the tetragon OCSF flood
+    # (~800 events/s) OOMKilled the node at the 2Gi limit every 20-60s
+    # (exit 137); 1Gi/4Gi holds the 12-pipeline working set. CPU unchanged.
     resources:
       requests:
         cpu: 200m
-        memory: 384Mi
+        memory: 1Gi
       limits:
         cpu: "1"
-        memory: 2Gi
+        memory: 4Gi
 
     # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
     # default AWS chain used by to_s3, the Discord webhook as a Tenzir
     # managed secret named `discord-webhook-url`, and the authentik events
-    # API token as `AUTHENTIK_EVENTS_TOKEN` (TENZIR_SECRETS__ map; the
+    # API token as `authentik-events-token` (TENZIR_SECRETS__ map; the
     # blueprint's ak-tenzir token is copied once by the operator).
     extraEnv:
       - name: AWS_ACCESS_KEY_ID
