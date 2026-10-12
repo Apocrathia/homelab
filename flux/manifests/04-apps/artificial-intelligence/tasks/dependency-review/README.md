@@ -32,6 +32,16 @@ and updated in place; unchanged bodies skip the write entirely. Labels are
 recomputed each sweep, and no-op label writes are skipped so they don't bump
 `updated_at`.
 
+Agent hold/block verdicts pin. When the judgment turn downgrades an MR, the
+note carries an `agent-pin: hold|block@<sha>` marker, and while the branch sha
+is unchanged the MR leaves the judgment sheet and the pin stands: the
+effective verdict is the more severe of (deterministic, pin), and the
+original agent reason stays in the note — an unchanged branch can no longer
+flip block→pass between sweeps. A rebase or retarget changes the sha, clears
+the pin, and the MR is re-judged fresh; a new downgrade stamps a new pin. The
+operator override for a pinned hold is a manual merge — the automated
+pipeline will not merge it, and there is no label that lifts a pin.
+
 ## Known upstream gotchas (baked in)
 
 - Renovate's declared `[source]` links can be wrong (ghcr.io/trueforge-org/kubectl

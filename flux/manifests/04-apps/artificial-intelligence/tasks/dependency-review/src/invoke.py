@@ -177,6 +177,59 @@ def protect_prior_agent_hold(v: dict, prior_labels: list[str]) -> dict:
     return v
 
 
+# --- Verdict pins ---------------------------------------------------------------
+# Live finding (2026-10-11, MR !5151): the agent blocked a real tenzir data-loss
+# regression, then later sweeps flipped block->pass->hold->pass on the SAME sha —
+# every A2A turn re-judges from scratch, and a successful-but-shallow re-judgment
+# wipes the prior hold (protect_prior_agent_hold only covers failed turns). A pin
+# persists an agent downgrade, keyed to the sha it was judged on: the note carries
+# an agent-pin line, the MR leaves the judgment sheet, and the pin stands until
+# the branch moves (rebase/retarget clears it and a fresh judgment runs).
+
+_PIN_RE = re.compile(r"agent-pin: (hold|block)@([0-9a-f]{40})")
+_VERDICT_LINE_RE = re.compile(r"\*\*Verdict: (PASS|HOLD|BLOCK)\*\*\s*[—-]?\s*(.*)")
+_AGENT_JUDGMENT_RE = re.compile(r"\*\*Agent judgment:\*\* (.*)")
+_PIN_WRAP_RE = re.compile(r"Prior agent (?:hold|block) stands \(branch unchanged since review\): (.*)")
+_SEVERITY = {"pass": 0, "hold": 1, "block": 2}
+
+
+def parse_pin(body: str) -> dict | None:
+    """Agent pin from a prior review note body, or None."""
+    m = _PIN_RE.search(body or "")
+    return {"verdict": m.group(1), "sha": m.group(2)} if m else None
+
+
+def parse_prior_reason(body: str) -> str:
+    """Original agent text from a prior review note body."""
+    m = _AGENT_JUDGMENT_RE.search(body)  # verbatim agent words win
+    if m:
+        return m.group(1).strip()
+    vm = _VERDICT_LINE_RE.search(body)
+    if not vm:
+        return ""
+    reason = vm.group(2).strip()
+    wm = _PIN_WRAP_RE.fullmatch(reason)  # prior sweep's wrapper: unwrap, never nest
+    return (wm.group(1) if wm else reason).strip()
+
+
+def apply_pin(v: dict, pin: dict, prior_reason: str) -> dict:
+    """Pinned MR precedence: effective verdict is the more severe of (deterministic, pin).
+
+    A deterministic cooldown hold clearing to pass does NOT lift the pin — the
+    agent's reason stands until the branch changes. A deterministic OSV block
+    outranks a hold pin (verdict + reason carry); the pin line re-stamps
+    regardless so the downgrade survives once the OSV hit clears.
+    """
+    if _SEVERITY[pin["verdict"]] < _SEVERITY[v["verdict"]]:
+        return v
+    v = dict(v)
+    v["verdict"] = pin["verdict"]
+    reason = (prior_reason or "").strip() or "original agent reason unavailable in prior note"
+    v["reason"] = f"Prior agent {pin['verdict']} stands (branch unchanged since review): {reason}"
+    v["flags"].append(AGENT_HELD_LABEL)
+    return v
+
+
 def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) -> dict:
     """Gates the agent may not upgrade past. Returns verdict dict."""
     verdict, reason, flags = "pass", "", []
@@ -376,7 +429,9 @@ async def collect_fact(http: httpx.AsyncClient, dep: Dep, gh_token: str) -> dict
 # --- MR note -------------------------------------------------------------------
 
 
-def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None, dep_sha: str = "") -> str:
+def build_note(
+    dep: Dep, f: dict, verdict: dict, agent_note: str | None, dep_sha: str = "", pin: tuple[str, str] | None = None
+) -> str:
     v = verdict["verdict"].upper()
     lines = [
         "## 🤖 Agent dependency review",
@@ -408,9 +463,11 @@ def build_note(dep: Dep, f: dict, verdict: dict, agent_note: str | None, dep_sha
         lines.append(f"| source | declared `{dep.declared_source}`, image label `{f['image_label_source']}`{flag} |")
     if agent_note:
         lines += ["", f"**Agent judgment:** {agent_note}"]
+    lines += ["", f"reviewed-sha: {dep_sha}"]
+    if pin:
+        # agent downgrade pinned to this sha: stands until the branch moves
+        lines.append(f"agent-pin: {pin[0]}@{pin[1]}")
     lines += [
-        "",
-        f"reviewed-sha: {dep_sha}",
         "",
         "_Automated dependency-review sweep. Merge decisions stay with the operator._",
     ]
@@ -459,6 +516,29 @@ async def main() -> int:
         return 0
 
     deps = [parse_dep(m) for m in mrs]
+
+    # Pin detection at sweep start: a prior agent downgrade (hold/block) stands
+    # while the branch sha is unchanged. Only verdict-labeled MRs can carry a
+    # sweep note; the fetched note is cached for the write loop below.
+    pins: dict[int, dict] = {}
+    prior_reasons: dict[int, str] = {}
+    existing_notes: dict[int, dict | None] = {}
+    sha_by_iid = {m["iid"]: m.get("sha") or "" for m in mrs}
+    for m in mrs:
+        if not set(m.get("labels") or []) & set(VERDICT_LABELS):
+            continue
+        note = pick_review_note(await gl.list_notes(m["iid"]))
+        existing_notes[m["iid"]] = note
+        if note is None:
+            continue
+        body = note.get("body") or ""
+        p = parse_pin(body)
+        if p and p["sha"] == sha_by_iid[m["iid"]]:
+            pins[m["iid"]] = p
+            prior_reasons[m["iid"]] = parse_prior_reason(body)
+    if pins:
+        LOG.info("pinned agent verdicts: %s", sorted(pins))
+
     async with httpx.AsyncClient(timeout=30.0) as http:
         sem = asyncio.Semaphore(4)
 
@@ -495,24 +575,37 @@ async def main() -> int:
                 "deterministic": verdicts[d.iid],
             }
             for d in deps
+            if d.iid not in pins  # pinned MRs are not re-judged; facts still collected
         ]
-        prompt = prompt_tmpl + "\n\n## MR fact sheet\n\n```json\n" + json.dumps(sheet, indent=1) + "\n```\n"
-        text = await agent_judgment(
-            a2a_url,
-            prompt,
-            continuation,
-            int(_env_float("MAX_TURNS", 6)),
-            _env_float("HTTP_TIMEOUT_S", 300.0),
-        )
+        text = ""
+        if sheet:
+            prompt = prompt_tmpl + "\n\n## MR fact sheet\n\n```json\n" + json.dumps(sheet, indent=1) + "\n```\n"
+            text = await agent_judgment(
+                a2a_url,
+                prompt,
+                continuation,
+                int(_env_float("MAX_TURNS", 6)),
+                _env_float("HTTP_TIMEOUT_S", 300.0),
+            )
         for av in parse_agent_verdicts(text):
             try:
-                agent_verdicts[int(av["iid"])] = av
+                iid = int(av["iid"])
             except (KeyError, TypeError, ValueError):
                 continue
+            if iid in pins:
+                continue  # pinned MRs were not on the sheet: they get no agent verdict
+            agent_verdicts[iid] = av
         LOG.info("agent verdicts parsed: %s", len(agent_verdicts))
 
+    stamped: dict[int, tuple[str, str]] = {}  # iid -> (pin verdict, sha) for the note marker
     for dep in deps:
         v = verdicts[dep.iid]
+        pin = pins.get(dep.iid)
+        if pin:
+            # pinned: no judgment turn ran for it; pin >= deterministic severity
+            verdicts[dep.iid] = v = apply_pin(v, pin, prior_reasons.get(dep.iid, ""))
+            stamped[dep.iid] = (pin["verdict"], sha_by_iid[dep.iid])
+            continue
         av = agent_verdicts.get(dep.iid)
         if not av:
             # judgment unavailable: keep prior agent holds (see protect_prior_agent_hold)
@@ -522,6 +615,7 @@ async def main() -> int:
             if v["verdict"] == "pass" and av.get("verdict") in ("hold", "block"):
                 v["verdict"] = av["verdict"]
                 v["flags"].append(AGENT_HELD_LABEL)
+                stamped[dep.iid] = (av["verdict"], sha_by_iid[dep.iid])  # fresh pin at this sha
             # agent may resolve unknown release dates (helm chart sources, dead repos);
             # cooldown is then re-checked deterministically against that date
             if v["verdict"] == "hold" and av.get("release_at_corrected") and dep.update_type != "major":
@@ -552,14 +646,17 @@ async def main() -> int:
         dep = next(d for d in deps if d.iid == m["iid"])
         f = fs.get(dep.iid, {})
         v = verdicts[dep.iid]
-        note = build_note(dep, f, v, agent_notes.get(dep.iid), m.get("sha") or "")
+        note = build_note(dep, f, v, agent_notes.get(dep.iid), m.get("sha") or "", stamped.get(dep.iid))
         if v["verdict"] == "pass":
             v["flags"] = [fl for fl in v["flags"] if fl != AGENT_HELD_LABEL]
         labels = [f"agent-review:{v['verdict']}"] + v["flags"]
         if dry_run:
             LOG.info("DRY RUN !%s -> %s (%s)\n%s\n---", dep.iid, v["verdict"].upper(), dep.pkg, note)
             continue
-        existing = pick_review_note(await gl.list_notes(dep.iid))
+        if dep.iid in existing_notes:  # fetched during pin detection — no re-fetch
+            existing = existing_notes[dep.iid]
+        else:
+            existing = pick_review_note(await gl.list_notes(dep.iid))
         if existing is None:
             await gl.add_note(dep.iid, note)
             LOG.info("note on !%s created", dep.iid)
