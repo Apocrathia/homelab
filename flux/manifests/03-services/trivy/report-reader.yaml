@@ -101,7 +101,8 @@ spec:
               memory: 128Mi
             limits:
               cpu: 250m
-              memory: 256Mi
+              # OOMKill-looping at 256Mi while buffering vulnerability reports
+              memory: 512Mi
           volumeMounts:
             - name: report-storage
               mountPath: /mnt/data/trivy-operator
