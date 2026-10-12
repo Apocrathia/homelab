@@ -74,6 +74,14 @@ params:
   net.core.somaxconn: "32768"
   net.core.netdev_max_backlog: "16384"
   user.max_user_namespaces: "10000"
+  # OpenSearch (and Elasticsearch) need a high vm.max_map_count for their
+  # mmap'd lucene segments - the 65530 default sits below their bootstrap
+  # floor. OpenCTI was the first thing that needed it, but this is a
+  # platform capability, not an app patch: any future opensearch or
+  # elastic instance can land on any node without its chart shipping a
+  # privileged sysctl initContainer (which baseline PodSecurity admission
+  # rejects in app namespaces anyway).
+  vm.max_map_count: "262144"
 ---
 # machine.install -> UnattendedInstallConfig
 apiVersion: v1alpha1
