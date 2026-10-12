@@ -49,6 +49,22 @@ spec:
   postRenderers:
     - kustomize:
         patches:
+          # The misp core pod mounts the RWO misp-attachments PVC; a
+          # RollingUpdate needs old + new pods attached at once, which a
+          # single RWO volume can never serve (the rollout deadlocks in
+          # ContainerCreating until the stale pod is hand-deleted - bit us
+          # twice). Recreate kills the old pod before starting the new one;
+          # deploys take a brief downtime instead of hanging.
+          - target:
+              group: apps
+              version: v1
+              kind: Deployment
+              name: misp
+            patch: |
+              - op: add
+                path: /spec/strategy
+                value:
+                  type: Recreate
           # The chart writes the Redis password into two ConfigMaps
           # (misp-env REDIS_PASSWORD / misp-modules-env REDIS_PW). Strip
           # those keys and feed both deployments from the Secret instead.
