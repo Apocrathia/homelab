@@ -87,8 +87,8 @@ spec:
             # storage policy, so this quota alone never fired on the way to
             # the 2026-10-12 ENOSPC. Edge storage is the 14d detection
             # horizon, not a record.
-            disk-budget-high: 7GiB
-            disk-budget-low: 6GiB
+            disk-budget-high: 18GiB
+            disk-budget-low: 16GiB
           pipelines:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
@@ -339,8 +339,8 @@ spec:
             space:
               mode: weighted-age
               interval: 30 minutes
-              disk-budget-high: 7GiB
-              disk-budget-low: 6GiB
+              disk-budget-high: 18GiB
+              disk-budget-low: 16GiB
             time:
               interval: 1 day
               rules:
