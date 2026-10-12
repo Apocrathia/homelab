@@ -49,7 +49,7 @@ ChangeDetection.io, CryptPad, Excalidraw, Kiwix, n8n, rclone, SearXNG, and Wakap
 
 ### [Security](security/README.md)
 
-MISP and OpenCTI threat-intel platforms, OpenCanary honeypot, OpenTAXII TAXII 2.1 feeds.
+MISP and OpenCTI threat-intel platforms, OpenCanary honeypot, OpenTAXII TAXII 2.1 feeds, Prism OSINT scanning.
 
 ### [Social](social/README.md)
 

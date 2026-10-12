@@ -1,0 +1,168 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prism
+  namespace: prism
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: prism
+      namespace: prism
+      # renovate: datasource=docker depName=ghcr.io/novacode37/prism-platform
+      image: ghcr.io/novacode37/prism-platform:2.12.1@sha256:1e7152095e989440ebf1101b2c306eeab7c034e978106844361162f2310e79e8
+      container:
+        name: prism
+        # Image CMD is already server mode: uvicorn serving the static UI,
+        # /api, /ws and /healthz on one port. No command/args override.
+        port: 8080
+        env:
+          # .env.example ships ALLOW_ANON_API=true (laptop default); the lab
+          # requires a key on every API call.
+          - name: ALLOW_ANON_API
+            value: "false"
+          # Honor X-Forwarded-* from the authentik outpost. Note the default
+          # FORWARDED_ALLOW_IPS (127.0.0.1,::1) does not cover the outpost
+          # pod IP, so client-IP restoration stays off until the pod CIDR is
+          # allowlisted; rate-limit buckets key on the outpost IP meanwhile.
+          - name: TRUST_PROXY_HEADERS
+            value: "true"
+          # Accepted API keys (comma-split); scan history is isolated per key
+          # principal.
+          - name: API_KEYS
+            valueFrom:
+              secretKeyRef:
+                name: prism-secrets
+                key: api-key
+          # Browser-visible by design: the backend injects it into the UI
+          # runtime config (window.__PRISM_CONFIG__) so the frontend can call
+          # the API. Must be a member of API_KEYS, hence the same vault value.
+          - name: PRISM_UI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: prism-secrets
+                key: api-key
+      # TRUSTED_HOSTS intentionally unset: kubelet probes hit the pod-IP
+      # Host header and TrustedHostMiddleware would reject them.
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+
+      securityContext:
+        # Image runs as uid/gid 1000 (prism); Longhorn ext4 volumes need
+        # fsGroup 1000 for the mount-time chown.
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+
+      resources:
+        # Python/FastAPI with async scans and xhtml2pdf report generation;
+        # upstream documents no footprint.
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      healthChecks:
+        # GET /healthz -> {"status":"ok"}, unauthenticated
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      service:
+        type: ClusterIP
+        port: 8080
+        targetPort: 8080
+        portName: http
+
+      # Longhorn volumes (see storage.longhorn below); names are kebab-case
+      # because the chart derives PV/PVC names from them, mount paths match
+      # the app's on-disk layout.
+      volumeMounts:
+        - name: scan-data
+          mountPath: /app/scan_data
+        - name: results
+          mountPath: /app/results
+        - name: watchlist-data
+          mountPath: /app/watchlist_data
+
+      volumes:
+        # Read-only rootfs: the app creates every writable dir at import
+        # time, so each needs a volume behind it.
+        emptyDir:
+          # Rebuildable TTL module cache; dies with the pod by design.
+          - name: module-cache
+            mountPath: /app/module_cache
+          # /api/metadata spools uploads through tempfile.NamedTemporaryFile
+          - name: tmp
+            mountPath: /tmp
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: scan-data
+            capacity: 10Gi
+          - name: results
+            capacity: 5Gi
+          - name: watchlist-data
+            capacity: 1Gi
+      smb:
+        enabled: false
+
+    secrets:
+      # The OnePasswordItem CR is a kustomize resource (secret.yaml), not a
+      # chart-rendered one, so it stays git-visible alongside the env refs.
+      enabled: false
+
+    authentik:
+      enabled: true
+      mode: "proxy"
+      category: "Security"
+      displayName: "Prism"
+      externalHost: "https://prism.gateway.services.apocrathia.com"
+      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/security/prism/icon.svg"
+
+    gatus:
+      enabled: true
+      group: security
+      path: /healthz
+
+    httproute:
+      # Proxy mode: the authentik outpost owns the route
+      enabled: false
