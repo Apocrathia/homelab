@@ -17,3 +17,18 @@ Shared vocabulary so agents do not invent parallel terms.
 
 K8s / Flux object names should match existing manifest naming in the same
 namespace. Copy neighbors; do not rebrand.
+
+## Authentik tofu consumers
+
+The provider-opentofu pattern is a per-app file pair in the app dir:
+
+- `crossplane.yaml` — `OnePasswordItem authentik-terraform-token`,
+  `ProviderConfig <app>-authentik`, `Workspace <app>-authentik`.
+- `authentik.tf` — the root HCL, single source of truth: partial
+  `backend "kubernetes" {}` block required (without it tofu falls back to
+  the LOCAL backend and plans a duplicate create set), no import blocks
+  (state carries the objects), values inline — no varmap.
+- The kustomization stitch: `configMapGenerator` named
+  `<app>-authentik-module` from `files: [authentik.tf]`, replacements
+  (`data.[authentik.tf]`) into `Workspace spec.forProvider.module`
+  (`source: Inline`, `module: ""` placeholder).

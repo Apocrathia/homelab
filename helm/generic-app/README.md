@@ -907,12 +907,21 @@ authentik:
 
 #### Authentik stack ownership: `managedBy`
 
+> **Deprecated antipattern (operator decision 2026-10-11).** The
+> `managedBy: terraform` lane — generic-app rendering Crossplane objects from
+> helm values — is the documented antipattern. Komga and demo-app still run
+> it; their retirement is planned, and the live workspaces must keep
+> rendering until then. Do not extend the lane or add consumers. The
+> replacement path is the per-app file pair (`crossplane.yaml` +
+> `authentik.tf`, single source of truth) in the consumer's app dir. The
+> mechanics below document the lane as it runs today.
+
 `authentik.managedBy` picks who owns the app's Authentik stack (0.0.84+):
 
 - **`blueprint` (default, legacy)**: the chart renders the blueprint ConfigMap
   (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it. Unchanged
   behavior for every existing app.
-- **`terraform` (fleet path)**: the chart renders the provider-opentofu stack —
+- **`terraform` (fleet path, deprecated antipattern)**: the chart renders the provider-opentofu stack —
   `OnePasswordItem` (workspace token) + `ProviderConfig` (token file +
   per-app backend args) + `Workspace` — pulling the shared module
   `terraform/modules/authentik-app`. Blueprint ConfigMaps are suppressed.
