@@ -14,6 +14,10 @@ area: other
 > Terraform-run-by-Crossplane vs Flux tofu-controller vs the current blueprint
 > sidecar pattern. Follow-ups are proposals until they land as issues/plans or
 > in the tree.
+>
+> Settled 2026-10-11: the file pair won and the generic-app variant is the
+> documented antipattern — see
+> [Outcome](#outcome-2026-10-11-the-file-pair-is-the-pattern-the-chart-lane-is-the-antipattern).
 
 ## Sources
 
@@ -287,6 +291,85 @@ confirm.
   claim is discovery cadence, not re-apply), nothing reconciles on a timer,
   there is no orphan cleanup, and no object ever surfaces status to Flux.
 
+## Outcome (2026-10-11): the file pair is the pattern; the chart lane is the antipattern
+
+The live work landed. The lean toward B held, with two refinements the survey
+could not know: the HCL moved into a per-app inline file pair (no shared
+module pull), and the generic-app variant of B — rendering Crossplane from
+helm values — was rejected as an antipattern (operator decision 2026-10-11).
+
+### The canonical pattern: `crossplane.yaml` + `authentik.tf`
+
+Every standalone provider-opentofu authentik consumer owns two files in its
+app dir, stitched by the app kustomization:
+
+- `crossplane.yaml` — 3 docs:
+  - `OnePasswordItem` `authentik-terraform-token` (`itemPath:
+vaults/Secrets/items/crossplane-terraform-secrets`).
+  - `ProviderConfig` `<app>-authentik`: credentials turn the token Secret
+    into file `authentik-token`; `backendFile` carries the
+    partial-kubernetes-backend args (`secret_suffix`, `namespace`,
+    `in_cluster_config`).
+  - `Workspace` `<app>-authentik`: `source: Inline`, `module: ""` placeholder,
+    `managementPolicies: [Observe, Create, Update]` (the v2-native prune
+    guard), and NO varmap — values live in the HCL.
+- `authentik.tf` — the root HCL, single source of truth:
+  `goauthentik/authentik 2026.8.0`; provider
+  `url = https://auth.gateway.services.apocrathia.com`,
+  `token = file("authentik-token")`; resources inline; NO import blocks (state
+  carries the objects; state loss = manual `tofu import` re-adoption).
+- `kustomization.yaml` — `configMapGenerator` (`name: <app>-authentik-module`,
+  `files: [authentik.tf]`) plus a replacements rule (`data.[authentik.tf]` →
+  `Workspace spec.forProvider.module`). The stitched module is byte-identical
+  to the file; the module ConfigMap renders without the `authentik_blueprint`
+  label, so Authentik ignores it as a blueprint source.
+
+The PARTIAL `backend "kubernetes" {}` block in `authentik.tf` is
+load-bearing: provider-opentofu passes `-backend-config` from `backendFile`,
+and without the block tofu silently falls back to a LOCAL backend — empty
+state, duplicate create set.
+
+`terraform/modules/authentik-app` is not called under the file pair: the
+module cannot be a child module (its gated import blocks are root-module-only,
+house-documented in commit cfa27ee9d), so each `authentik.tf` hand-mirrors
+its semantics. The module stays the engine of the chart-rendered lane until
+that lane retires.
+
+Evidence: MR !5195 (headlamp + chaos-mesh retrofit) merged; first reconcile
+planned No changes, state serials unchanged (5 and 4) after the workdir-residue
+fix below. openhands (commit f6ed6f495) independently landed the same shape
+and is Synced. MISP + OpenCTI converted on a parallel lane (MR !5182,
+merged behind !5195). Recommendation 2's "shared module" shape is the
+part the live work replaced.
+
+### The antipattern: generic-app rendering Crossplane from helm values
+
+Operator decision (2026-10-11, verbatim): "i do not like the generic-app
+inside of crossplane pattern... document that as an antipattern." The
+`authentik.managedBy: terraform` lane — the chart rendering the
+provider-opentofu stack from helm values, including chart-tag-pinned module
+refs
+(`git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-<version>`)
+inside Workspace specs — is the documented antipattern. The lane was built
+for fleet-scale adoption (gated imports + gate-time varmap injection); komga
+and demo-app still run it, retirement planned. Do not extend the lane or add
+consumers; the live workspaces must not break while it winds down. New
+consumers take the file pair.
+
+### The workdir-residue trap: Remote → Inline needs a pod restart
+
+Verified live 2026-10-11, post-merge of !5195. Switching an EXISTING
+Workspace from Remote to Inline collides with leftover Remote-pulled workdir
+files in the provider-opentofu pod (workdirs are pod-local): the inline
+content overwrites `main.tf` but the old `versions.tf` remains → `tofu init`
+fails with "Duplicate required providers configuration" + "Duplicate backend
+configuration". Local `tofu validate` cannot catch this (clean scratch
+dirs). Remedy: delete the provider-opentofu pod. The deployment recreates
+it, all tofu workspaces re-init from clean workdirs, tfstate Secrets are
+untouched, and healthy workspaces re-plan No changes. Any Remote→Inline
+switch gate must include the provider pod restart. Post-fix: all workspaces
+Synced=True, state serials unchanged.
+
 ## Recommendations
 
 1. Spike one app first (`file-issue` candidate): migrate a low-stakes
@@ -333,3 +416,7 @@ confirm.
 - Do not trust the "blueprints re-apply every 60 minutes" doc line when
   reasoning about drift. The 2026.8.2 source is file-event driven, with only
   the discovery path hash-gated (see above).
+- Do not extend the generic-app chart-rendered crossplane lane
+  (`authentik.managedBy: terraform`): antipattern per operator decision
+  2026-10-11. Komga and demo-app run it pending retirement; new consumers
+  take the file pair (`crossplane.yaml` + `authentik.tf`).
