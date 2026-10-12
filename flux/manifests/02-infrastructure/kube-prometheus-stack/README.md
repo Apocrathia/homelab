@@ -137,9 +137,9 @@ Resource limits and requests are configured in `helmrelease.yaml`.
 
 ### Authentik Integration
 
-- **SSO**: Single sign-on for Grafana access
-- **User Management**: Automated user provisioning
-- **Authorization**: Role-based dashboard access
+- **SSO**: Single sign-on for Grafana access via the proxy provider
+- **Ownership**: the `crossplane.yaml` + `authentik.tf` file pair in this directory owns the app's whole Authentik stack (proxy provider, application, admins binding, outpost) through a provider-opentofu Workspace stitched at kustomize build time — the retired blueprint's objects, adopted in place
+- **skip_path_regex**: `/api/`, `/mcp`, and `/sse` stay unauthenticated (the MCP server needs bearer access)
 - **Audit Logging**: Authentication and access logging
 
 ### Longhorn Integration
