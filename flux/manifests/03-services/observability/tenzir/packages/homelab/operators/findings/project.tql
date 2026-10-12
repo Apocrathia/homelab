@@ -1,0 +1,87 @@
+---
+args:
+  positional:
+    - name: source
+      type: string
+      default: "kube-audit"
+---
+
+// Project an OCSF Detection Finding (2004) onto the flat, query-optimized
+// record the Loki findings stream carries (findings-destination lap). One
+// finding in, one flat record out; the shipping pipeline adds the repeat
+// counter and posts the record to the alloy webhook receiver.
+//
+// The `uid` is the stable finding fingerprint: rule id + subject resource,
+// composed with the docs' f-string style so it stays readable where a hash
+// would not. It is the dedup key and the join key back into the node lake —
+// the same composite is recomputable from any stored finding.
+//
+// Subject and evidence-pointer normalization is per source pipeline:
+// kube-audit findings carry the raw audit event in evidences[0].data (the
+// objectRef subject, the kube-audit Loki pivot), trivy findings carry the
+// workload in unmapped.workload (the raw report rides the trivy webhook
+// stream, addressed by report_name). Unknown sources get an empty subject
+// and no evidence pointer; their uid stays rule-unique either way.
+
+_rule_id = (finding_info?.analytic?.uid?).otherwise(finding_info?.uid?)
+
+match $source {
+  "kube-audit" => {
+    _evd = evidences[0]?.data?
+    _subject_key = (
+      f"{_evd?.objectRef?.resource}"
+      + (f"/{_evd?.objectRef?.subresource}" if _evd?.objectRef?.subresource? != null else "")
+      + (f"/{_evd?.objectRef?.namespace}" if _evd?.objectRef?.namespace? != null else "")
+      + (f"/{_evd?.objectRef?.name}" if _evd?.objectRef?.name? != null else "")
+    )
+    _subject_kind = _evd?.objectRef?.resource?
+    _subject_name = _evd?.objectRef?.name?
+    _subject_namespace = _evd?.objectRef?.namespace?
+    _evidence_selector = f"{{source=\"kube-audit\",node=\"{_evd?.node?}\"}}"
+    _evidence_timestamp = _evd?.stageTimestamp?
+  }
+  "trivy" => {
+    _subject_key = (
+      f"{unmapped?.workload?.kind}"
+      + (f"/{unmapped?.workload?.namespace}" if unmapped?.workload?.namespace? != null else "")
+      + (f"/{unmapped?.workload?.name}" if unmapped?.workload?.name? != null else "")
+    )
+    _subject_kind = unmapped?.workload?.kind?
+    _subject_name = unmapped?.workload?.name?
+    _subject_namespace = unmapped?.workload?.namespace?
+    // finding_info.uid is the report CR name — the same value the alloy
+    // trivy arm labels report_name on the raw-report Loki stream.
+    _evidence_selector = f"{{source=\"trivy\",report_name=\"{finding_info?.uid?}\"}}"
+    _evidence_timestamp = time?
+  }
+  _ => {
+    _subject_key = ""
+  }
+}
+
+this = {
+  // Routing marker for the shared alloy webhook receiver: routes this
+  // payload into the findings arm there.
+  ingest_stream: "tenzir-findings",
+  uid: f"{_rule_id}-{_subject_key}",
+  rule_id: _rule_id,
+  rule_name: finding_info?.title?,
+  pipeline: $source,
+  severity_id: severity_id,
+  // The sigma operator sets no confidence_id; 0 = Unknown in OCSF.
+  confidence_id: (confidence_id?).otherwise(0),
+  // ATT&CK technique ids from the sigma tags (sub-technique when present);
+  // the full tactic/technique objects stay on the lake record.
+  attack_ids: concatenate(
+    (finding_info?.attacks?.map(a => a?.technique?.uid?)).otherwise([]),
+    (finding_info?.attacks?.map(a => a?.sub_technique?.uid?)).otherwise([]),
+  ).where(x => x != null),
+  subject_kind: _subject_kind?,
+  subject_name: _subject_name?,
+  subject_namespace: _subject_namespace?,
+  time: time,
+  // The raw-evidence pivot (the unmapped.loki pattern): the Loki selector
+  // plus timestamp that lands on the exact raw line behind the finding.
+  evidence_selector: _evidence_selector?,
+  evidence_timestamp: _evidence_timestamp?,
+}
