@@ -46,7 +46,7 @@ spec:
       app.kubernetes.io/instance: kube-prometheus-stack
   settings:
     title: "Gatus"
-    message: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+    message: '{{ range .Alerts }}{{ .Annotations.summary }}{{ "\n" }}{{ end }}'
   valuesFrom:
     - targetPath: url
       valueFrom:

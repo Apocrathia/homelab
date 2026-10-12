@@ -13,7 +13,7 @@ spec:
       app.kubernetes.io/instance: kube-prometheus-stack
   settings:
     title: "Grafana Alert"
-    message: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+    message: '{{ range .Alerts }}{{ .Annotations.summary }}{{ "\n" }}{{ end }}'
   valuesFrom:
     - targetPath: url
       valueFrom:
