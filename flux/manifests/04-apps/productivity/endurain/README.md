@@ -12,7 +12,7 @@ This deployment includes:
 - PostgreSQL database via CloudNativePG, with continuous WAL archiving and
   nightly barman base backups to rustfs (`s3://cnpg/endurain`, 14d retention)
 - Longhorn volume for activity files and user/server images
-- Authentik SSO via OIDC provider (blueprint-generated)
+- Authentik SSO via OIDC provider — tofu-owned via the file pair (`crossplane.yaml` + `authentik.tf`, adopted in place at the flip gate)
 
 The deployment sets the required startup env vars only (`ENDURAIN_HOST`, DB
 credentials, `SECRET_KEY`, `FERNET_KEY`). Redis is not deployed: a single
@@ -23,17 +23,26 @@ replica runs rate-limit/auth-security state in-process.
 - **URL**: `https://endurain.gateway.services.apocrathia.com`
 - **Front door**: Authentik only — local login is disabled (see below)
 
+## Authentik ownership
+
+- **Workspace-owned, full stack** (`crossplane.yaml` + `authentik.tf`, the canonical file pair — Crossplane provider-opentofu, namespace `endurain`): the OAuth2 provider, the application, and the `admins` policy binding. The chart authentik surface is retired (`authentik.enabled: false` in `helmrelease.yaml` — the blueprint ConfigMap stopped rendering and Helm pruned it); `authentik.tf` is the single source of truth.
+- **Adoption**: the live objects are blueprint-era creations adopted IN PLACE at the flip gate — `authentik.tf` carries import blocks (the application by slug, a name — safe in git; the generated ids via gated adoption variables injected into the rendered Workspace before first apply (gate recipe §8 — the object is born with the varmap), never in git). Steady state: varmap absent → adoption vars default off → gated imports inert → plan reads `No changes` forever.
+- **client_id**: read in-workdir — the ProviderConfig's second credentials entry materializes the `endurain-secrets` key `oidc-client-id` (the chart lane's `valuesFrom` carrier is retired); the HCL does `trimspace(file("oidc-client-id"))`. The value never appears in git.
+- **Token**: same 1Password item as headlamp/chaos-mesh (`crossplane-terraform-secrets`, field `authentik-terraform-token`), materialized into this namespace by the OnePasswordItem in `crossplane.yaml`.
+- **Module (Inline file pair)**: the Workspace is a thin shell — `source: Inline`, with the module content stitched in at kustomize build time from `authentik.tf` (configMapGenerator + replacements; the rendered module byte-identical to the HCL file). No varmap: the app values live in the HCL.
+
 ## Prerequisites
 
 The pod stays pending until the 1Password item exists. Create
 `vaults/Secrets/items/endurain-secrets` with:
 
-| Field        | Description                                       |
-| ------------ | ------------------------------------------------- |
-| `username`   | PostgreSQL database username (must be `endurain`) |
-| `password`   | PostgreSQL database password                      |
-| `secret-key` | `openssl rand -hex 32` — JWT/session signing      |
-| `fernet-key` | `openssl rand -base64 32` — Fernet encryption     |
+| Field            | Description                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `username`       | PostgreSQL database username (must be `endurain`)                                                                                    |
+| `password`       | PostgreSQL database password                                                                                                         |
+| `secret-key`     | `openssl rand -hex 32` — JWT/session signing                                                                                         |
+| `fernet-key`     | `openssl rand -base64 32` — Fernet encryption                                                                                        |
+| `oidc-client-id` | Authentik OAuth2 client id — the tofu lane's `trimspace(file("oidc-client-id"))` reads it (created at flip prep; value never in git) |
 
 The CNPG cluster bootstraps the `endurain` database owner from these
 credentials, so `username` must stay `endurain`.

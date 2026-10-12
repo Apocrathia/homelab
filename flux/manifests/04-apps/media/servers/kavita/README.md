@@ -29,9 +29,9 @@ See `helmrelease.yaml` for complete deployment configuration.
 
 ## Authentication
 
-Uses Authentik OIDC, admins-only (admins group binding from the chart). The blueprint creates the provider and application; Kavita stores the client credentials itself, so they are pasted into Kavita once during setup (below). OPDS and API clients authenticate directly with Kavita using per-user API keys, since the HTTPRoute fronts the app without a proxy.
+Uses Authentik OIDC, admins-only. The Authentik stack (OAuth2 provider, application, `admins` group binding, the `kavita-email-verified-mapping` custom scope mapping) is owned by the file pair — `crossplane.yaml` + `authentik.tf` (Crossplane provider-opentofu workspace, stitched at kustomize build time; the rendered module byte-identical to the HCL). The live blueprint-era objects were adopted in place at the flip gate via `authentik.tf`'s import blocks (the application by slug; generated ids via a gate-time varmap patch, never in git) — steady state reads `No changes` forever. The chart authentik surface is retired (`authentik.enabled: false` in the helmrelease). Kavita stores the client credentials itself, so they are pasted into Kavita once during setup (below); the tofu workdir reads the `kavita-secrets` key `oidc-client-id` in-workdir (ProviderConfig credentials entry) so tofu carries the same live client_id. OPDS and API clients authenticate directly with Kavita using per-user API keys, since the HTTPRoute fronts the app without a proxy.
 
-To share with friends later, set `authentik.shared: true` and `tailnet.enabled: true` in the helmrelease (mirrors jellyfin/copyparty).
+To share with friends later, add the `users` group binding (order 20) to `authentik.tf` — the file pair is the source of truth now (the chart's `authentik.shared` values key is retired with the blueprint surface).
 
 ## Initial Setup
 
@@ -53,9 +53,9 @@ kubectl get pods -n kavita
 # Application logs
 kubectl logs -n kavita deployment/kavita -f
 
-# OIDC issues: confirm the provider exists and check blueprint import
-kubectl get pods -n authentik | grep -c outpost
-kubectl get configmap -n kavita authentik-blueprint-kavita -o yaml | head -5
+# OIDC issues: check the tofu workspace health
+kubectl get workspace -n kavita
+kubectl -n kavita get workspace kavita-authentik -o jsonpath='{.status.conditions}' | head -5
 ```
 
 ## References

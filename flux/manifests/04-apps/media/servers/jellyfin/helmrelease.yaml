@@ -135,12 +135,19 @@ spec:
       volumes:
         - config
 
+    # The tofu stack reads the oidc-client-id field in-workdir (the
+    # ProviderConfig credentials entry in crossplane.yaml); the SSO plugin's
+    # OIDC credentials stay pasted in the plugin config.
     secrets:
-      enabled: false
-
-    # Authentik OIDC integration (creates OAuth2 provider via blueprint)
-    authentik:
       enabled: true
+      itemPath: "vaults/Secrets/items/jellyfin-secrets"
+
+    # Authentik OIDC integration: tofu adopts the live objects at gate time
+    # (see authentik.tf); the chart authentik surface below is suppressed —
+    # the blueprint ConfigMap stops rendering and Helm prunes it, and the
+    # remaining values are inert.
+    authentik:
+      enabled: false
       mode: "oidc"
       shared: true
       displayName: "Jellyfin"

@@ -144,11 +144,21 @@ spec:
             credentialsPath: "vaults/Secrets/items/smb-credentials"
             readOnly: true
 
+    # The tofu stack reads the oidc-client-id field in-workdir (the
+    # ProviderConfig credentials entry in crossplane.yaml); the app's own
+    # OIDC credentials stay pasted in-app.
     secrets:
-      enabled: false # No secrets needed - web UI bootstrap, OIDC configured in-app
-
-    authentik:
       enabled: true
+      itemPath: "vaults/Secrets/items/kavita-secrets"
+
+    # Authentik stack owned by the file pair (crossplane.yaml + authentik.tf):
+    # authentik.enabled=false suppresses the chart authentik surface — the
+    # blueprint ConfigMap stops rendering and Helm prunes it; the live
+    # objects survive, and tofu adopts them at gate time (the import blocks
+    # in authentik.tf; generated ids never in git). The remaining values
+    # below are inert — authentik.tf is the source of truth now.
+    authentik:
+      enabled: false
       mode: oidc
       displayName: "Kavita"
       externalHost: "https://kavita.gateway.services.apocrathia.com"

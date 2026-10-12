@@ -20,7 +20,7 @@ Guest pads are reachable without an account on both doors.
 
 ## Authentication
 
-Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso) plugin (pinned release, fetched by an initContainer into `/cryptpad/lib/plugins/sso`) with Authentik as the IdP. The chart's blueprint creates the OAuth2 provider and application; access is bound to the `admins` and `users` Authentik groups. The dashboard tile deep-links to `/login`, which auto-redirects to Authentik (single provider + enforced SSO; the legacy password form lives at `/login#standard-login`).
+Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso) plugin (pinned release, fetched by an initContainer into `/cryptpad/lib/plugins/sso`) with Authentik as the IdP. The Authentik stack (OAuth2 provider, application, `admins` + `users` group bindings) is owned by the file pair — `crossplane.yaml` + `authentik.tf` (Crossplane provider-opentofu workspace, stitched at kustomize build time; the rendered module byte-identical to the HCL). The live blueprint-era objects were adopted in place at the flip gate via `authentik.tf`'s import blocks (the application by slug; generated ids via a gate-time varmap patch, never in git) — steady state reads `No changes` forever. The chart authentik surface is retired (`authentik.enabled: false`); the retired `valuesFrom` client-id carrier is gone: the tofu workdir reads the `oidc-client-id` field in-workdir (ProviderConfig credentials entry), and the pod env refs the same Secret directly. The dashboard tile deep-links to `/login`, which auto-redirects to Authentik (single provider + enforced SSO; the legacy password form lives at `/login#standard-login`).
 
 Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking). Account names come from the IdP `name` claim (full display name); identity is keyed on `sub`, so claim tweaks never orphan accounts. Config edits in `sso.js`/`config.js` need a pod restart (no checksum rollouts in the chart).
 
@@ -32,7 +32,7 @@ All data stored on NAS via SMB at `Library/CryptPad`. CryptPad uses file-based s
 
 ## Initial Setup
 
-1. The `cryptpad-secrets` 1Password item (`vaults/Secrets/items/cryptpad-secrets`) provides `oidc-client-id` / `oidc-client-secret`; the same values feed the Authentik provider blueprint via `valuesFrom` and the pod env via `secretKeyRef`. The HelmRelease waits for the synced Secret on first apply.
+1. The `cryptpad-secrets` 1Password item (`vaults/Secrets/items/cryptpad-secrets`) provides `oidc-client-id` / `oidc-client-secret`; the tofu workdir reads `oidc-client-id` in-workdir (ProviderConfig credentials in `crossplane.yaml`) and the pod env refs both fields via `secretKeyRef`. The synced Secret must exist before the Workspace first applies.
 2. Log in via the Authentik button on the CryptPad login page.
 3. For admin access, copy your public signing key from Settings and add it to the ConfigMap's `adminKeys` array, then restart the deployment (config changes do not roll pods automatically).
 

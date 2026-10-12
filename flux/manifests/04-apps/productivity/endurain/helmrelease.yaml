@@ -149,8 +149,14 @@ spec:
         storageClass: longhorn
         size: 5Gi
 
+    # Authentik stack owned by the file pair (crossplane.yaml + authentik.tf):
+    # authentik.enabled=false suppresses the chart authentik surface — the
+    # blueprint ConfigMap stops rendering and Helm prunes it; the live
+    # objects survive, and tofu adopts them at gate time (the import blocks
+    # in authentik.tf; generated ids never in git). The remaining values
+    # below are inert — authentik.tf is the source of truth now.
     authentik:
-      enabled: true
+      enabled: false
       mode: "oidc"
       displayName: "Endurain"
       externalHost: "https://endurain.gateway.services.apocrathia.com"

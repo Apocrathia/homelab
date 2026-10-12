@@ -26,7 +26,7 @@ Jellyfin is configured entirely through its web UI after initial deployment. On 
 
 ## SSO Authentication
 
-Jellyfin uses the [SSO-Auth plugin](https://github.com/9p4/jellyfin-plugin-sso) for Authentik OIDC integration. The Authentik OIDC provider is created automatically via blueprint, but the plugin requires manual setup.
+Jellyfin uses the [SSO-Auth plugin](https://github.com/9p4/jellyfin-plugin-sso) for Authentik OIDC integration. The Authentik stack (OAuth2 provider, application, `admins` + `users` group bindings) is owned by the file pair — `crossplane.yaml` + `authentik.tf` (Crossplane provider-opentofu workspace, stitched at kustomize build time; the rendered module byte-identical to the HCL). The live blueprint-era objects were adopted in place at the flip gate via `authentik.tf`'s import blocks (the application by slug; generated ids via a gate-time varmap patch, never in git) — steady state reads `No changes` forever. The chart authentik surface is retired (`authentik.enabled: false` in the helmrelease); the tofu workdir reads the `jellyfin-secrets` key `oidc-client-id` in-workdir (ProviderConfig credentials entry) so tofu carries the same live client_id. The plugin still requires manual setup inside Jellyfin:
 
 ### Plugin Installation
 

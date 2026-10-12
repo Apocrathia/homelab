@@ -16,18 +16,9 @@ spec:
         name: homelab
         namespace: flux-system
       interval: 5m
-  # OIDC client credentials (Secret cryptpad-secrets, synced by the
-  # OnePasswordItem in this kustomization) feed the Authentik provider
-  # blueprint so the app and IdP share one credential source.
-  valuesFrom:
-    - kind: Secret
-      name: cryptpad-secrets
-      valuesKey: oidc-client-id
-      targetPath: authentik.oidc.clientId
-    - kind: Secret
-      name: cryptpad-secrets
-      valuesKey: oidc-client-secret
-      targetPath: authentik.oidc.clientSecret
+  # No valuesFrom: the retired chart authentik surface was the only values
+  # consumer — the tofu stack reads oidc-client-id in-workdir (ProviderConfig
+  # credentials in crossplane.yaml) and the pod env refs the Secret directly.
   values:
     app:
       name: cryptpad
@@ -168,14 +159,20 @@ spec:
             readOnly: false
 
     # Secret sync happens via the plain OnePasswordItem in this kustomization
-    # (must exist before the HelmRelease valuesFrom above can resolve).
+    # (the tofu workdir reads its oidc-client-id field; the pod env refs it
+    # directly).
     secrets:
       enabled: false
 
-    # Native OIDC via the SSO plugin; Authentik provider + app come from the
-    # chart blueprint, access from the admins + users group bindings.
+    # Native OIDC via the SSO plugin. Authentik stack owned by the
+    # file pair (crossplane.yaml + authentik.tf): authentik.enabled=false
+    # suppresses the chart authentik surface — the blueprint ConfigMap stops
+    # rendering and Helm prunes it; the live objects survive, and tofu adopts
+    # them at gate time (the import blocks in authentik.tf; generated ids
+    # never in git). The remaining values below are inert — authentik.tf is
+    # the source of truth now. Access: the admins + users group bindings.
     authentik:
-      enabled: true
+      enabled: false
       mode: "oidc"
       shared: true
       displayName: "CryptPad"
