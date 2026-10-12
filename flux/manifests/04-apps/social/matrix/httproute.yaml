@@ -89,3 +89,29 @@ spec:
     - backendRefs:
         - name: mas
           port: 8080
+---
+# Route 3 - Element Web. Static SPA host on the wildcard doors (litellm
+# pattern, same parentRefs as the MAS host). Login is OIDC-native: the
+# browser pulls /_matrix/client/v1/auth_metadata from Synapse (MAS
+# issuer), then Element Web fronts MAS as the public client registered in
+# mas-config.yaml (client_auth_method: none) - the chain is Element Web
+# -> MAS -> Authentik, and no Authentik objects change.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: matrix-element
+  namespace: matrix
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: cilium-system
+      sectionName: https
+    - name: tailnet-gateway
+      namespace: cilium-system
+      sectionName: https-gateway-services
+  hostnames:
+    - "element.gateway.services.apocrathia.com"
+  rules:
+    - backendRefs:
+        - name: element
+          port: 80

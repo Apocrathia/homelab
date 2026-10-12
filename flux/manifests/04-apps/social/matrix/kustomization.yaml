@@ -14,7 +14,9 @@ resources:
   - postgres.yaml
   - synapse-helmrelease.yaml
   - mas-helmrelease.yaml
+  - element-helmrelease.yaml
   - httproute.yaml
+  - reload-mas-on-configmap-change.yaml
   - crossplane.yaml
 
 generatorOptions:
@@ -37,6 +39,14 @@ configMapGenerator:
     namespace: matrix
     files:
       - mas-config.yaml=config/mas-config.yaml
+  # Element Web config.json: default homeserver + oidc_static_clients
+  # (public client id must byte-match the clients entry in
+  # mas-config.yaml). Mounted over the image's sample config.json; the
+  # image entrypoint copies it to the served config dir on every boot.
+  - name: matrix-element-config
+    namespace: matrix
+    files:
+      - config.json=config/element-config.json
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements

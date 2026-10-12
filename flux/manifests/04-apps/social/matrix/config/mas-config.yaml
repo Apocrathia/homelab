@@ -57,6 +57,19 @@ matrix:
 passwords:
   enabled: false
 
+# Element Web - public static OIDC client (client_auth_method: none). MAS
+# syncs the clients list into the database on startup; removals only take
+# effect via `mas-cli config sync --prune`. The client_id ULID must byte-match
+# oidc_static_clients in element-config.json; the redirect URI is Element
+# Web's own callback route (app root + ?no_universal_links=true, set by
+# getOAuthCallbackUrl in element-web BasePlatform).
+clients:
+  - client_id: 01M4S5FJTV8J9HK8GVTGZXQRT3
+    client_name: Element Web
+    client_auth_method: none
+    redirect_uris:
+      - https://element.gateway.services.apocrathia.com/?no_universal_links=true
+
 secrets:
   # 32-byte hex (64 chars) - immutable after first start
   encryption_file: /run/secrets/matrix-secrets/encryption

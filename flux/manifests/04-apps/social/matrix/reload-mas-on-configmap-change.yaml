@@ -1,0 +1,49 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: reload-mas-on-configmap-change
+  annotations:
+    policies.kyverno.io/title: Reload MAS on ConfigMap change
+    policies.kyverno.io/category: Other
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment, ConfigMap
+    policies.kyverno.io/description: >-
+      The generic-app chart ships the MAS config in a ConfigMap but carries
+      no checksum annotation on the Deployment pod template, so ConfigMap-only
+      changes never roll the pod — MAS is distroless and reads mas-config.yaml
+      only at startup, so a clients or issuer edit sits inert until a manual
+      restart. When matrix-mas-config is written, stamp a changing annotation
+      on the mas Deployment pod template to trigger a rolling restart. Copied
+      from reload-crossview-on-configmap-change (same chart gap); the target
+      must be static — Kyverno resolves mutate.targets variables against the
+      target kind, not the trigger (kyverno#5546).
+spec:
+  # Admission-time only: the rule fires when the ConfigMap is written. The
+  # mutate-existing work itself is done by the background controller (RBAC
+  # already grants it via kyverno/mutate-rbac.yaml).
+  background: false
+  rules:
+    - name: stamp-reload-annotation
+      match:
+        any:
+          - resources:
+              kinds:
+                - ConfigMap
+              names:
+                - matrix-mas-config
+              namespaces:
+                - matrix
+      mutate:
+        mutateExistingOnPolicyUpdate: false
+        targets:
+          - apiVersion: apps/v1
+            kind: Deployment
+            namespace: matrix
+            name: mas
+        patchStrategicMerge:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  apocrathia.com/reloaded-from: "{{ request.object.metadata.name }}@{{ request.object.metadata.resourceVersion }}"
