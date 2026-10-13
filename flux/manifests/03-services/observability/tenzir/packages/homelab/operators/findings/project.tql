@@ -3,7 +3,7 @@ args:
   positional:
     - name: source
       type: string
-      default: "kube-audit"
+      default: "k8s-audit"
 ---
 
 // Project an OCSF Detection Finding (2004) onto the flat, query-optimized
@@ -16,17 +16,21 @@ args:
 // would not. It is the dedup key and the join key back into the node lake —
 // the same composite is recomputable from any stored finding.
 //
-// Subject and evidence-pointer normalization is per source pipeline:
-// kube-audit findings carry the raw audit event in evidences[0].data (the
-// objectRef subject, the kube-audit Loki pivot), trivy findings carry the
-// workload in unmapped.workload (the raw report rides the trivy webhook
-// stream, addressed by report_name). Unknown sources get an empty subject
-// and no evidence pointer; their uid stays rule-unique either way.
+// Subject and evidence-pointer normalization is per source pipeline. The
+// match arms below key on the invocation arg — the SOURCE PIPELINE name
+// (findings-loki passes "k8s-audit"), NOT the Loki source label, which is
+// "kube-audit" for the raw audit lines. k8s-audit findings carry the raw
+// audit event in evidences[0].data (the objectRef subject; the pivot
+// selector keeps source="kube-audit" because that is the Loki label),
+// trivy findings carry the workload in unmapped.workload (the raw report
+// rides the trivy webhook stream, addressed by report_name). Unknown
+// sources get an empty subject and no evidence pointer; their uid stays
+// rule-unique either way.
 
 _rule_id = (finding_info?.analytic?.uid?).otherwise(finding_info?.uid?)
 
 match $source {
-  "kube-audit" => {
+  "k8s-audit" => {
     _evd = evidences[0]?.data?
     _subject_key = (
       f"{_evd?.objectRef?.resource}"
