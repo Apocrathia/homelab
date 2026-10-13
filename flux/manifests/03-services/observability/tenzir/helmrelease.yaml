@@ -58,7 +58,10 @@ spec:
             protocol: UDP
 
     persistence:
-      size: 8Gi
+      # 20Gi: operator-authorized bump — the 8Gi lake ENOSPC'd at the 10s
+      # partition timeout (50K+ tiny tetragon partitions in 2 days); the
+      # 60s timeout + compaction space budgets tame growth from here.
+      size: 20Gi
 
     # Node configuration (renders to the tenzir-node-default-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land
@@ -87,8 +90,8 @@ spec:
             # storage policy, so this quota alone never fired on the way to
             # the 2026-10-12 ENOSPC. Edge storage is the 14d detection
             # horizon, not a record.
-            disk-budget-high: 7GiB
-            disk-budget-low: 6GiB
+            disk-budget-high: 18GiB
+            disk-budget-low: 16GiB
           pipelines:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
@@ -312,7 +315,7 @@ spec:
                   deduplicate uid, create_timeout=1h
                   each {
                     from $this
-                    to_http "http://alloy.alloy-system.svc:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
+                    to_http "http://alloy.alloy-system.svc.cluster.local:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
                   }
                 }
                 summarize uid, rule_id, repeat_count=count(), options={emit: 1h, mode: "reset"}
@@ -322,7 +325,7 @@ spec:
                 time = now()
                 each {
                   from $this
-                  to_http "http://alloy.alloy-system.svc:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
+                  to_http "http://alloy.alloy-system.svc.cluster.local:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
                 }
               restart-on-error: 1 minute
         plugins:
@@ -339,8 +342,8 @@ spec:
             space:
               mode: weighted-age
               interval: 30 minutes
-              disk-budget-high: 7GiB
-              disk-budget-low: 6GiB
+              disk-budget-high: 18GiB
+              disk-budget-low: 16GiB
             time:
               interval: 1 day
               rules:
@@ -380,7 +383,11 @@ spec:
         cpu: "1"
         # 4Gi OOMKilled at ~39s under the tetragon flood (live-verified,
         # 11 restarts); 8Gi buys the compaction cycle room to catch up.
-        memory: 8Gi
+        # 12Gi: the flood + concurrent queries OOMKilled the node twice at
+        # 8Gi (live-verified 2026-10-12; both kills from read-only queries
+        # on top of steady-state flood processing). Limit-only bump (free
+        # on the node; no scheduling change).
+        memory: 12Gi
 
     # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
     # default AWS chain used by to_s3, the Discord webhook as a Tenzir
