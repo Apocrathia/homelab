@@ -268,7 +268,7 @@ spec:
       mispModules:
         image:
           # renovate: datasource=docker depName=ghcr.io/misp/misp-docker/misp-modules
-          tag: v3.0.9@sha256:99572d207973f804e153861bfa9d7b0da0c69c8687babc8e5534a360e1156613
+          tag: v3.0.11@sha256:d5b0a6c5f37d3db9dda86635461456fb5df1aefaacc493d70c9e88098f62520e
           pullPolicy: IfNotPresent
         resources:
           requests:
