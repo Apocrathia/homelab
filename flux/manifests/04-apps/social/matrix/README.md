@@ -1,26 +1,28 @@
 # Matrix (Synapse + MAS)
 
-Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully delegated to Matrix Authentication Service (MAS, 1.26.0), which upstreams to Authentik OIDC. Tailnet-only in phase 1: no federation, user IDs are `@user:matrix.apocrathia.com`, and the first login JIT-provisions the Matrix account from the Authentik claims.
+Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully delegated to Matrix Authentication Service (MAS, 1.26.0), which upstreams to Authentik OIDC; Element Web (1.12.30) is the web client, a public OIDC client of MAS. Tailnet-only: no federation, user IDs are `@user:matrix.apocrathia.com`, and the first login JIT-provisions the Matrix account from the Authentik claims.
 
 > **Navigation**: [← Back to Social README](../README.md)
 
 ## Access
 
-| Hostname                                 | Serves                                                                                      | Route                                                         |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `matrix.apocrathia.com`                  | server_name host: client API, `/.well-known/matrix/client` (MAS discovery block), `/health` | `httproute.yaml` (compat paths split to MAS, rest to Synapse) |
-| `matrix.gateway.services.apocrathia.com` | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                | `httproute.yaml` (dual parentRefs, litellm pattern)           |
+| Hostname                                  | Serves                                                                                      | Route                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `matrix.apocrathia.com`                   | server_name host: client API, `/.well-known/matrix/client` (MAS discovery block), `/health` | `httproute.yaml` (compat paths split to MAS, rest to Synapse) |
+| `matrix.gateway.services.apocrathia.com`  | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                | `httproute.yaml` (dual parentRefs, litellm pattern)           |
+| `element.gateway.services.apocrathia.com` | Element Web SPA (public OIDC client of MAS)                                                 | `httproute.yaml` (wildcard doors, litellm pattern)            |
 
 ## Stack
 
 ```
-Element X ──> gateway (TLS) ──> synapse:8008 ──> matrix-postgres (CNPG, synapse + mas DBs)
+Element Web ─┐
+Element X ───┴─> gateway (TLS) ──> synapse:8008 ──> matrix-postgres (CNPG, synapse + mas DBs)
                  │                  ▲  └─ shared-secret ▶
                  └─ login/refresh ──┤
                                     └──> mas:8080 ──> Authentik OIDC (upstream provider)
 ```
 
-Three pods: `synapse`, `mas`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
+Four pods: `synapse`, `mas`, `element`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
 
 ## SSO flow
 
@@ -28,6 +30,8 @@ Three pods: `synapse`, `mas`, `matrix-postgres-1`. MAS is stateless (Postgres ho
 2. Client follows to `matrix.gateway.services.apocrathia.com`, MAS redirects to the Authentik provider (`.../application/o/matrix/`).
 3. Authentik returns `preferred_username` / `name` / `email` claims; MAS provisions the account (localpart = authentik username) and issues Matrix tokens.
 4. Synapse introspects MAS tokens via its own shared-secret channel — `password_config` and registration stay off; Synapse enforces the SSO-only lockdown at startup.
+
+Element Web walks the same OIDC chain one hop downstream of Element X: it fetches `/_matrix/client/v1/auth_metadata` (Synapse proxies MAS discovery), then fronts MAS itself as the statically registered public client from `mas-config.yaml` (`client_auth_method: none`) — `oidc_static_clients` in `config/element-config.json` carries the matching client id, so no dynamic client registration happens. Its registered redirect URI is the app root plus `?no_universal_links=true` (Element Web builds its callback URL itself; see `BasePlatform.getOAuthCallbackUrl`), and the authorization code returns in the URL fragment. Element Web's token grant and refresh hit the MAS OAuth host, not Authentik — Authentik only sees the MAS session.
 
 The `matrix` Authentik application (admins-only binding — the Matrix access gate; friends arrive via federation later, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack — OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create — no prior tfstate: the first workspace sync builds the whole Authentik stack.
 
@@ -74,7 +78,9 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
 ## Limitations
 
 - **Postgres has no barman/kopia backup in this slice** (recipe scope): the CNPG cluster ships no `barmanObjectStore` block and the kopia policy only covers the synapse Longhorn volume. Rooms/accounts live in the cluster PVC only. Add a `backup:` block + `scheduled-backup` (tak pattern) before trusting it with real data.
-- No Element Web yet (phase 2): MAS serves it as a downstream OIDC client later; no Authentik wiring needed for it.
+- Element Web is registered in `mas-config.yaml` as a static public client: MAS syncs the clients list into its database on startup, and entries are only removed by `mas-cli config sync --prune` (deleting the entry from the file alone does not remove it).
+- Element Web listens on container port 8080 via `ELEMENT_WEB_PORT` — containerd denies the unprivileged uid-101 bind on port 80 — while its Service stays on port 80, so the route backendRef is untouched.
+- MAS config edits (`config/mas-config.yaml` → `matrix-mas-config` ConfigMap) roll the `mas` deployment automatically via the `reload-mas-on-configmap-change` kyverno policy — no manual restart after `mas-cli config sync`.
 
 ## Troubleshooting
 
@@ -90,6 +96,10 @@ kubectl exec -n matrix deployment/synapse -c synapse -- cat /data/homeserver.yam
 
 # MAS self-checks (config validity + upstream wiring)
 kubectl exec -n matrix deployment/mas -c mas -- /usr/local/bin/mas-cli doctor
+
+# Element Web: served config.json must show oidc_static_clients with the
+# client id that matches the clients entry in the MAS config ConfigMap
+kubectl exec -n matrix deployment/element -c element -- cat /tmp/element-web-config/config.json
 ```
 
 ## Federation later (phase 2, recipe §5)

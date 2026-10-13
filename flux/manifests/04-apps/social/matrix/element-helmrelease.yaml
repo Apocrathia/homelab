@@ -1,0 +1,92 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: element
+  namespace: matrix
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: element
+      namespace: matrix
+      # Static nginx image (nginx-unprivileged, uid 101): the image
+      # entrypoint envsubst-renders its nginx conf, then copies
+      # /app/config*.json to /tmp/element-web-config - the dir the nginx
+      # /config location serves. The subPath mount below swaps the built-in
+      # sample config.json for ours, so the copy ships this repo's
+      # config.json to the served root on every boot.
+      # renovate: datasource=docker depName=ghcr.io/element-hq/element-web
+      image: ghcr.io/element-hq/element-web:v1.12.30@sha256:3e7dbd4424de9e11c812bc740acf2725b2abe66ea0d0802023b56fd85d3fa09a
+      container:
+        name: element
+        # element-web docs/install.md v1.12.30 prescribes ELEMENT_WEB_PORT
+        # because containerd-class runtimes deny unprivileged uids (here
+        # 101) a bind on port 80.
+        env:
+          - name: ELEMENT_WEB_PORT
+            value: "8080"
+        port: 8080
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+      securityContext:
+        # nginx-unprivileged image user: uid/gid 101
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Writable on purpose (terminus pattern): the nginx entrypoint
+        # writes /etc/nginx/conf.d/default.conf and /tmp/element-web-config
+        # at every boot. nginx itself only serves read-only files.
+        readOnlyRootFilesystem: false
+      volumes:
+        configMap:
+          - name: matrix-element-config
+            mountPath: /app/config.json
+            subPath: config.json
+            configMapName: matrix-element-config
+            readOnly: true
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+
+    secrets:
+      # No secrets of its own: public static OIDC client, no DB, no PVC.
+      # The chart default would render a demo-app OnePasswordItem here.
+      enabled: false
+
+    authentik:
+      # No Authentik proxy - Element Web is a public OIDC client of MAS
+      # (clients entry in mas-config.yaml); authentik stays upstream of
+      # MAS only
+      enabled: false
+
+    gatus:
+      enabled: true
+      path: /
+
+    # Hand-written route in httproute.yaml (wildcard doors)
+    httproute:
+      enabled: false
+
+    postgres:
+      enabled: false
