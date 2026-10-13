@@ -39,7 +39,7 @@ spec:
               # keep the two in sync so dump client and server versions
               # match.
               # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
-              image: docker.io/bitnamilegacy/mariadb:10.11.9-debian-12-r3@sha256:0a897dbd27c6588fb5b3d421956b0874521a65a32d3ae6fa269ff195be93a6ff
+              image: docker.io/bitnamilegacy/mariadb:11.8.2-debian-12-r3@sha256:2cd074dbfcdcfb3ad99955d1c35c7be51fdadc8c6bfa2d997b66251b271c1e7c
               command:
                 - /bin/bash
                 - -c
