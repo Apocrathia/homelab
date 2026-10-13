@@ -33,7 +33,7 @@ spec:
           initContainers:
             - name: install-deps
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.14@sha256:b9767f56a1cc620aa72d38cc3557d26412e38a4597c92953476136b78894ccbd
+              image: public.ecr.aws/docker/library/python:3.15@sha256:3c24e0b3ef4c5e2409f918894ccd5e05756eea2015ae6ddd289179b20a049f9b
               env:
                 - name: HOME
                   value: /tmp
@@ -75,7 +75,7 @@ spec:
           containers:
             - name: invoke
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.14@sha256:b9767f56a1cc620aa72d38cc3557d26412e38a4597c92953476136b78894ccbd
+              image: public.ecr.aws/docker/library/python:3.15@sha256:3c24e0b3ef4c5e2409f918894ccd5e05756eea2015ae6ddd289179b20a049f9b
               command:
                 - python
                 - /scripts/invoke.py
