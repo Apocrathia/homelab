@@ -10,7 +10,7 @@ spec:
     spec:
       chart: opencti
       # renovate: datasource=helm registryUrl=https://devops-ia.github.io/helm-opencti/ depName=opencti
-      version: "3.0.18"
+      version: "3.0.19"
       sourceRef:
         kind: HelmRepository
         name: devops-ia
