@@ -81,6 +81,10 @@ spec:
       volumeMounts:
         - name: data
           mountPath: /companion
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
 
     storage:
       longhorn:

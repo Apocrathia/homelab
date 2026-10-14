@@ -83,6 +83,21 @@ The LoadBalancer service provides direct external access without requiring Gatew
 
 ## Troubleshooting
 
+Stream Deck, xkeys, and Mirabox connections silently break because
+Companion's drivers create Unix-domain IPC sockets in `/tmp`. The
+generic-app chart ships `readOnlyRootFilesystem: true`, so `/tmp` is
+read-only and socket creation fails with `EROFS`. The fix is an
+`emptyDir` volume mounted at `/tmp` (set in `helmrelease.yaml`).
+
+### Checking the logs
+
+```bash
+kubectl logs -n bitfocus deployment/companion --tail=100 | grep -E "EROFS|Failed to open data channel"
+```
+
+If you see `EROFS: read-only file system /tmp/companion-ipc-*.sock`,
+the `/tmp` emptyDir volume is missing.
+
 ### Common Issues
 
 1. **Stream Deck Connection Issues**
