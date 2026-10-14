@@ -147,7 +147,7 @@ spec:
             k8s-audit-sigma:
               name: k8s-audit sigma detection
               description: |
-                SigmaHQ kubernetes/audit rules + own starters, evaluated with
+                SigmaHQ kubernetes/audit rules + homelab starters, evaluated with
                 direct field matching on the raw audit schema (the SigmaHQ
                 kubernetes corpus names raw audit fields; it is not in the
                 OCSF projection catalog). Hot-reloads every 30s. Matches
@@ -157,7 +157,7 @@ spec:
                 exports them to rustfs after the 24h horizon.
               definition: |
                 subscribe "k8s-audit.raw"
-                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/own"], mapping="direct", refresh_interval=30s
+                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="direct", refresh_interval=30s
                 fork { import }
                 publish "detections.sigma"
               restart-on-error: 1 minute
@@ -477,9 +477,9 @@ spec:
       - name: packages-homelab-trivy-map
         configMap:
           name: tenzir-packages-homelab-trivy-map
-      - name: sigma-own
+      - name: sigma-homelab
         configMap:
-          name: tenzir-sigma-own
+          name: tenzir-sigma-homelab
       - name: sigma-sigmahq-kubernetes-audit
         configMap:
           name: tenzir-sigma-sigmahq-kubernetes-audit
@@ -529,8 +529,8 @@ spec:
         subPath: map.tql
         readOnly: true
       # Sigma stays directory-mounted to keep the 30s rule hot-reload.
-      - name: sigma-own
-        mountPath: /etc/tenzir/sigma/own
+      - name: sigma-homelab
+        mountPath: /etc/tenzir/sigma/homelab
         readOnly: true
       - name: sigma-sigmahq-kubernetes-audit
         mountPath: /etc/tenzir/sigma/sigmahq/kubernetes-audit

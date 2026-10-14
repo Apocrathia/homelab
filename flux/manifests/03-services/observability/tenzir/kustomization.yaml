@@ -87,11 +87,11 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - authentik.tf
-  - name: tenzir-sigma-own
+  - name: tenzir-sigma-homelab
     namespace: tenzir-system
     files:
-      - k8s-audit-secret-created.yml=sigma/own/k8s-audit-secret-created.yml
-      - k8s-audit-pod-portforward.yml=sigma/own/k8s-audit-pod-portforward.yml
+      - k8s-audit-secret-created.yml=sigma/homelab/k8s-audit-secret-created.yml
+      - k8s-audit-pod-portforward.yml=sigma/homelab/k8s-audit-pod-portforward.yml
   - name: tenzir-sigma-sigmahq-kubernetes-audit
     namespace: tenzir-system
     files:

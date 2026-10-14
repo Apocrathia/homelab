@@ -44,7 +44,7 @@ and the rendered Secret keys match them:
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/homelab/`               | TQL mapping package (`homelab`): OTLP parse, OCSF maps, Discord embed formatting, findings projection, with tests                                  |
 | `sigma/sigmahq/kubernetes-audit/` | Vendored subset of the SigmaHQ `kubernetes/audit` rules, re-copied from the [`third-party/sigmahq`](../../../../../third-party/sigmahq/) submodule |
-| `sigma/own/`                      | Homelab starter rules                                                                                                                              |
+| `sigma/homelab/`                  | Homelab starter rules                                                                                                                              |
 
 Everything ships as ConfigMaps (`configMapGenerator` in
 [`kustomization.yaml`](./kustomization.yaml)) and mounts read-only into
