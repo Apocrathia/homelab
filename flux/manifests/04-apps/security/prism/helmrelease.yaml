@@ -180,6 +180,11 @@ spec:
       enabled: true
       group: security
       path: /healthz
+      # Default 60s scrapes sat exactly on the app's hardcoded 60/hour
+      # per-IP slowapi limit: gatus 429'd itself permanently and Grafana
+      # alerted "down" while the app served 200s to everyone else.
+      # 5m = 12/hour, safely under the limit, still a real HTTP check.
+      interval: 5m
 
     httproute:
       # Proxy mode: the authentik outpost owns the route
