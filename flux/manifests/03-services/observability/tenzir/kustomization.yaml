@@ -9,8 +9,6 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
-  - node-token.yaml
-  - node-token-tetragon.yaml
   - crossplane.yaml
   - core
   - tetragon

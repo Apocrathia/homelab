@@ -34,10 +34,15 @@ spec:
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
       tag: v6.19.1
 
+    # Registers into the same hosted Tenzir Platform workspace as the core
+    # node; this node reads its own pre-provisioned token from the
+    # tetragon-token field of the tenzir-secrets Secret. Platform tokens
+    # are per-node, never shared.
     nodes:
       - name: default
         token:
-          existingSecret: tenzir-node-tetragon-token
+          existingSecret: tenzir-secrets
+          key: tetragon-token
         extraPorts:
           - name: otlp-http
             containerPort: 4318
@@ -117,6 +122,21 @@ spec:
       limits:
         cpu: "4"
         memory: 12Gi
+
+    # rustfs S3 credentials for the archive rule's to_s3 (the default AWS
+    # chain): same tenzir-secrets item as the core node, kebab vault labels
+    # as the secretKeyRef keys, env var names stay UPPER.
+    extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-access-key-id
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-secret-access-key
 
     extraVolumes:
       - name: packages-homelab

@@ -34,13 +34,15 @@ spec:
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
       tag: v6.19.1
 
-    # One standalone node: no Tenzir Platform. The chart schema requires a
-    # token (see secret `tenzir-node-token`); an empty one keeps the node
-    # platform-less.
+    # Registers into the hosted Tenzir Platform workspace (app.tenzir.com):
+    # the chart injects the TENZIR_TOKEN env from the tenzir-secrets Secret,
+    # this node reading its own pre-provisioned node token from the
+    # core-token field. Platform tokens are per-node, never shared.
     nodes:
       - name: default
         token:
-          existingSecret: tenzir-node-token
+          existingSecret: tenzir-secrets
+          key: core-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
         # kube-audit-tailer and the shared alloy OTLP log fan-out push at
         # tenzir-node-default:4318 (the tetragon-tailer moved to the
@@ -369,32 +371,35 @@ spec:
         # on the node; no scheduling change).
         memory: 12Gi
 
-    # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
-    # default AWS chain used by to_s3, the Discord webhook as a Tenzir
-    # managed secret named `discord-webhook-url`, and the authentik events
-    # API token as `authentik-events-token` (TENZIR_SECRETS__ map; the
-    # blueprint's ak-tenzir token is copied once by the operator).
+    # Secrets (1Password item tenzir-secrets): vault field labels are
+    # kebab-case and the rendered Secret keys match them, so every
+    # secretKeyRef.key below is the kebab vault label; env var names stay
+    # UPPER. rustfs S3 credentials for the default AWS chain used by to_s3,
+    # the Discord webhook as a Tenzir managed secret named
+    # `discord-webhook-url`, and the authentik events API token as
+    # `authentik-events-token` (TENZIR_SECRETS__ map; tofu mints the token,
+    # the operator copies the key into the vault once).
     extraEnv:
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AWS_ACCESS_KEY_ID
+            key: aws-access-key-id
       - name: AWS_SECRET_ACCESS_KEY
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AWS_SECRET_ACCESS_KEY
+            key: aws-secret-access-key
       - name: TENZIR_SECRETS__DISCORD_WEBHOOK_URL
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: DISCORD_WEBHOOK_URL
+            key: discord-webhook-url
       - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AUTHENTIK_EVENTS_TOKEN
+            key: authentik-events-token
 
     # Detection content: the homelab TQL mapping package (IaC-installed at
     # /etc/tenzir/packages/homelab) and the sigma rule directories, all
