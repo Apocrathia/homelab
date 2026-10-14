@@ -10,10 +10,9 @@ resources:
   - namespace.yaml
   - secret.yaml
   - node-token.yaml
-  - service-ingest.yaml
-  - helmrelease.yaml
   - node-token-tetragon.yaml
-  - helmrelease-tetragon.yaml
+  - core
+  - tetragon
 
 generatorOptions:
   disableNameSuffixHash: true
