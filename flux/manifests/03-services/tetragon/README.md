@@ -76,9 +76,9 @@ alive if the agent dies (persistent enforcement) — off for now.
   ([`../observability/tenzir/packages/homelab/operators/tetragon/`](../observability/tenzir/packages/homelab/operators/tetragon/))
   with tests.
 - Transport to the Tenzir node: the
-  [`tetragon-tailer`](../observability/tetragon-tailer/) DaemonSet tails the
+  [`tetragon alloy`](../observability/alloy/tetragon/) DaemonSet tails the
   agents' export files and pushes OTLP/HTTP to the node's `accept_otlp`
   listener. tetragon v1.7.x has no native TCP export (`--export-connection`
   does not exist), and the export file is 0600 root-owned — hence the
-  dedicated root tailer in the kube-audit-tailer pattern. The pod-logs leg
+  dedicated root alloy in the kube-audit alloy pattern. The pod-logs leg
   to Loki via the `export-stdout` sidecar is unchanged.

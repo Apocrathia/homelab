@@ -326,7 +326,7 @@ data:
 
     // SIEM lap C fan-out leg: OTLP logs reach both Loki and the Tenzir
     // detection node (same otelcol.exporter.otlphttp pattern the
-    // kube-audit-tailer uses for its dedicated stream). Node-side
+    // kube-audit alloy uses for its dedicated stream). Node-side
     // pipelines filter on the resource attributes they own, so OTLP streams
     // without a Tenzir parser yet (e.g. tailscale2otel) are dropped there,
     // not mis-parsed.
@@ -365,7 +365,7 @@ data:
     // tenzir-system; SIEM lap C)
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-core.tenzir-system.svc.cluster.local:4318"
         tls {
           insecure = true
         }

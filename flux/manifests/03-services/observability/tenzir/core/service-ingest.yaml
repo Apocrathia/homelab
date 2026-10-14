@@ -32,4 +32,4 @@ spec:
     app.kubernetes.io/name: tenzir-node
     app.kubernetes.io/instance: tenzir-node
     app.kubernetes.io/component: node
-    app.kubernetes.io/tenzir-node: default
+    app.kubernetes.io/tenzir-node: core

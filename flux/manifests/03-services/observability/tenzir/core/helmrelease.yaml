@@ -34,18 +34,21 @@ spec:
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
       tag: v6.19.1
 
-    # One standalone node: no Tenzir Platform. The chart schema requires a
-    # token (see secret `tenzir-node-token`); an empty one keeps the node
-    # platform-less.
+    # Registers into the hosted Tenzir Platform workspace (app.tenzir.com):
+    # the chart injects the TENZIR_TOKEN env from the tenzir-secrets Secret,
+    # this node reading its own pre-provisioned node token from the
+    # core-token field. Platform tokens are per-node, never shared.
     nodes:
-      - name: default
+      - name: core
         token:
-          existingSecret: tenzir-node-token
+          existingSecret: tenzir-secrets
+          key: core-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
-        # kube-audit-tailer and the tetragon-tailer push OTLP/HTTP at
-        # tenzir-node-default:4318; the fleet webhook and the
-        # trivy-report-reader POST to http-ingest 8080; netflow 2055/UDP
-        # sits behind the tenzir-ingest-lb pool IP.
+        # kube-audit alloy and the shared alloy OTLP log fan-out push at
+        # tenzir-node-core:4318 (the tetragon alloy moved to the
+        # tetragon node); the fleet webhook and the trivy-report-reader
+        # POST to http-ingest 8080; netflow 2055/UDP sits behind the
+        # tenzir-ingest-lb pool IP.
         extraPorts:
           - name: otlp-grpc
             containerPort: 4317
@@ -58,12 +61,14 @@ spec:
             protocol: UDP
 
     persistence:
-      # 20Gi: operator-authorized bump — the 8Gi lake ENOSPC'd at the 10s
-      # partition timeout (50K+ tiny tetragon partitions in 2 days); the
-      # 60s timeout + compaction space budgets tame growth from here.
+      # 20Gi stays a cap, not a capacity plan: at the 24h retention horizon
+      # the core lake peaks near 100 MB (sizing math in core/README.md), so
+      # the PVC buys headroom for archive-rule failure windows and future
+      # horizon changes. Longhorn volumes grow on demand; a smaller request
+      # buys nothing.
       size: 20Gi
 
-    # Node configuration (renders to the tenzir-node-default-config ConfigMap
+    # Node configuration (renders to the tenzir-node-core-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land
     # in a ConfigMap in plaintext. Secrets arrive via extraEnv below.
     tenzir:
@@ -72,56 +77,59 @@ spec:
           package-dirs:
             - /etc/tenzir/packages
           # Partition mint-rate control (docs, "Control the partition size"):
-          # the 10s default timeout completes a partition on time alone —
           # "once reached, Tenzir considers the partition as complete,
-          # regardless of the number of records" — and the tetragon OCSF
-          # fan-out (~125 schema variants at ~800 ev/s) never approaches
-          # the 4Mi max-partition-size record cap, so every 10s flush
-          # minted a ~10-event partition (50,747 process_activity partitions
-          # = 6.25GiB = 80% of the 8Gi volume at the 2026-10-12 ENOSPC).
-          # 60s cuts the mint rate 6x; the async background merge of
-          # undersized partitions consolidates the rest once the node stays
-          # up. max-partition-size stays default: the record cap is not the
-          # binding knob on a timeout-capped stream.
+          # regardless of the number of records" — the core feeds are
+          # low-volume and timeout-capped, so the 60s timeout bounds the
+          # partition count the 24h window mints. max-partition-size stays
+          # at its 4Mi default: the record cap never binds on a
+          # timeout-capped stream.
           active-partition-timeout: 60s
+          # Catalog load knobs (docs, tune-performance: the catalog "keeps
+          # state that grows linear in the number of partitions" and "Tenzir
+          # keeps all sketches in memory"). lazy-sketches defers
+          # Bloom-filter sketches to query time in a memory-bounded LRU
+          # (index.sketch-cache-bytes, default 1GiB) — the direct lever
+          # against boot OOMs on partition-heavy lakes. load-concurrency
+          # caps the boot synopsis loader at 4 threads instead of the
+          # hardware-concurrency default (a boot log once showed 16 loader
+          # threads inside a 1-core cgroup); 4 keeps I/O overlap within
+          # the CPU budget on Longhorn block storage.
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
           start:
-            # Hard quota on the 8Gi PVC, belt-and-braces alongside
-            # plugins.compaction.space below: the compaction plugin owns the
-            # storage policy, so this quota alone never fired on the way to
-            # the 2026-10-12 ENOSPC. Edge storage is the 14d detection
-            # horizon, not a record.
+            # Hard quota on the 20Gi PVC, belt-and-braces alongside
+            # plugins.compaction.space below: at the 24h horizon it never
+            # binds — it exists for archive-rule failure windows and any
+            # future horizon change.
             disk-budget-high: 18GiB
             disk-budget-low: 16GiB
           pipelines:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
               description: |
-                OTLP/HTTP listener for the kube-audit-tailer and the
-                tetragon-tailer. Unpacks audit JSON bodies onto the
-                k8s-audit.raw topic and tetragon export events onto
-                tetragon.raw; OTLP streams without a parser are dropped.
+                OTLP/HTTP listener for the kube-audit alloy and the shared
+                alloy OTLP log fan-out; unpacks audit JSON bodies onto
+                k8s-audit.raw; OTLP streams without a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
                 fork {
                   homelab::k8s::audit::parse
                   publish "k8s-audit.raw"
                 }
-                homelab::tetragon::parse
-                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ingest-grpc:
               name: k8s-audit ingest (otlp/grpc)
               description: |
-                OTLP/gRPC listener for future OTLP-native senders; parses
-                the same source set as the http listener.
+                OTLP/gRPC listener for future OTLP-native senders; unpacks
+                audit JSON bodies onto k8s-audit.raw; OTLP streams without
+                a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
                 fork {
                   homelab::k8s::audit::parse
                   publish "k8s-audit.raw"
                 }
-                homelab::tetragon::parse
-                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ocsf:
               name: k8s-audit ocsf mapping
@@ -139,36 +147,19 @@ spec:
             k8s-audit-sigma:
               name: k8s-audit sigma detection
               description: |
-                SigmaHQ kubernetes/audit rules + own starters, evaluated with
+                SigmaHQ kubernetes/audit rules + homelab starters, evaluated with
                 direct field matching on the raw audit schema (the SigmaHQ
                 kubernetes corpus names raw audit fields; it is not in the
                 OCSF projection catalog). Hot-reloads every 30s. Matches
                 persist in the node lake as immutable OCSF Detection Finding
                 (2004) records via the import fork — the record store half of
                 the two-store findings contract; the findings archive rule
-                exports them to rustfs after the 14d horizon.
+                exports them to rustfs after the 24h horizon.
               definition: |
                 subscribe "k8s-audit.raw"
-                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/own"], mapping="direct", refresh_interval=30s
+                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="direct", refresh_interval=30s
                 fork { import }
                 publish "detections.sigma"
-              restart-on-error: 1 minute
-            tetragon-ocsf:
-              name: tetragon ocsf mapping
-              description: |
-                tetragon export events -> OCSF (Process/File/Network
-                Activity per event kind), then derive + schema-validate and
-                store in the node. The raw stream keeps flowing to Loki via
-                the tetragon pods' export-stdout sidecar.
-              definition: |
-                subscribe "tetragon.raw"
-                this = {tetragon: this}
-                homelab::tetragon::ocsf::map tetragon, ocsf
-                this = move ocsf
-                ocsf_derive
-                ocsf_cast
-                fork { import }
-                publish "ocsf.tetragon"
               restart-on-error: 1 minute
             netflow-collector:
               name: netflow collector
@@ -330,27 +321,33 @@ spec:
               restart-on-error: 1 minute
         plugins:
           compaction:
-            # Budget-enforcing deletion: the compaction plugin owns the
-            # storage policy (node log: "catalog takes its storage policy
-            # from the compaction plugin"), and with only the 14-day
-            # archive rule below no budget-driven deletion existed — the
-            # lake grew monotonically to the 2026-10-12 ENOSPC. The space
-            # section is the docs' spatial-compaction path (weighted-age;
-            # default weight 1 = oldest events first, and with no pipeline
-            # the plugin deletes matching events): every 30 minutes,
-            # delete oldest past 7GiB down to 6GiB on the 8Gi PVC.
+            # Budget backstop: the compaction plugin owns the storage policy
+            # (node log: "catalog takes its storage policy from the
+            # compaction plugin"), and the space section is the docs'
+            # spatial-compaction path (weighted-age; default weight 1 =
+            # oldest events first, and with no pipeline the plugin deletes
+            # matching events): every 30 minutes, erase oldest past 18GiB
+            # down to 16GiB. At the 24h horizon this never binds — it
+            # catches archive-rule failure windows and anything unruly
+            # (netflow has no archive rule yet; its stored schema name is
+            # unconfirmed, so it rides this backstop at ~330 MB/month).
             space:
               mode: weighted-age
               interval: 30 minutes
               disk-budget-high: 18GiB
               disk-budget-low: 16GiB
+            # 24-hour local lake: every stored type archives to the rustfs
+            # `tenzir` bucket as parquet and expires locally. A compaction
+            # rule consumes its input, and a sink-only pipeline returns no
+            # transformed events, so consume + export = archive-then-delete
+            # (preserve-input stays off: keeping the local copy would
+            # defeat the 24h expiry). The parquet is the record — the local
+            # lake is the hot window, and from_s3 replays the history.
             time:
               interval: 1 day
               rules:
-                # Archive: after 14d in edge storage, export OCSF API Activity
-                # events as parquet to the rustfs `tenzir` bucket and consume
-                # the originals. Event-time is the OCSF `time` field.
-                - after: 14 days
+                # OCSF API Activity from the k8s-audit map.
+                - after: 1 day
                   name: k8s-audit-archive
                   field: time
                   types: ["ocsf.api_activity"]
@@ -358,12 +355,10 @@ spec:
                     to_s3 "s3://tenzir/ocsf/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
                       write_parquet
                     }
-                # Findings archive: the record half of the two-store
-                # findings contract. Sigma Detection Findings (2004) persist
-                # in edge storage for the 14d detection horizon, then export
-                # to the rustfs `tenzir` bucket as 1y re-huntable parquet —
-                # same shape as the k8s-audit rule, own prefix.
-                - after: 14 days
+                # Sigma Detection Findings (2004); the type also catches
+                # trivy ExposedSecretReport findings, so those ride this
+                # prefix.
+                - after: 1 day
                   name: findings-archive
                   field: time
                   types: ["ocsf.detection_finding"]
@@ -371,50 +366,81 @@ spec:
                     to_s3 "s3://tenzir/findings/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
                       write_parquet
                     }
+                # authentik map classes: Authentication / Account Change.
+                - after: 1 day
+                  name: authentik-archive
+                  field: time
+                  types: ["ocsf.authentication", "ocsf.account_change"]
+                  pipeline: |
+                    to_s3 "s3://tenzir/authentik/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      write_parquet
+                    }
+                # Fallback prefix, named for the type: fleet rows map to
+                # Base Event and authentik's every-other-action arm lands
+                # here too — two sources share ocsf.base_event.
+                - after: 1 day
+                  name: base-event-archive
+                  field: time
+                  types: ["ocsf.base_event"]
+                  pipeline: |
+                    to_s3 "s3://tenzir/base-event/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      write_parquet
+                    }
+                # trivy VulnerabilityReport findings.
+                - after: 1 day
+                  name: trivy-archive
+                  field: time
+                  types: ["ocsf.vulnerability_finding"]
+                  pipeline: |
+                    to_s3 "s3://tenzir/trivy/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      write_parquet
+                    }
 
-    # OOM armor (2026-10-11 diagnosis, RC3): the tetragon OCSF flood
-    # (~800 events/s) OOMKilled the node at the 2Gi limit every 20-60s
-    # (exit 137); 1Gi/4Gi holds the 12-pipeline working set. CPU unchanged.
+    # Sized by the docs' formula for this node's shape (full math in
+    # core/README.md): detection (+1), normalization on 5 sources (+1.0),
+    # sources+destinations (+0.8) -> ceil(2.8) = 3 cores; the formula's
+    # memory floor is 2 GB at the 24h horizon, and 4Gi doubles it as burst
+    # and import-buffer headroom (ingest spikes, the daily archive and
+    # compaction cycles, max-buffered-events import ceilings). Requests
+    # stay small: talos-04 CPU requests are 92% committed, and limits are
+    # caps, not reservations.
     resources:
       requests:
         cpu: 200m
         memory: 1Gi
       limits:
-        cpu: "1"
-        # 4Gi OOMKilled at ~39s under the tetragon flood (live-verified,
-        # 11 restarts); 8Gi buys the compaction cycle room to catch up.
-        # 12Gi: the flood + concurrent queries OOMKilled the node twice at
-        # 8Gi (live-verified 2026-10-12; both kills from read-only queries
-        # on top of steady-state flood processing). Limit-only bump (free
-        # on the node; no scheduling change).
-        memory: 12Gi
+        cpu: "3"
+        memory: 4Gi
 
-    # Secrets (1Password item tenzir-secrets): rustfs S3 credentials for the
-    # default AWS chain used by to_s3, the Discord webhook as a Tenzir
-    # managed secret named `discord-webhook-url`, and the authentik events
-    # API token as `authentik-events-token` (TENZIR_SECRETS__ map; the
-    # blueprint's ak-tenzir token is copied once by the operator).
+    # Secrets (1Password item tenzir-secrets): vault field labels are
+    # kebab-case and the rendered Secret keys match them, so every
+    # secretKeyRef.key below is the kebab vault label; env var names stay
+    # UPPER. rustfs S3 credentials for the default AWS chain used by to_s3,
+    # the Discord webhook as a Tenzir managed secret named
+    # `discord-webhook-url`, and the authentik events API token as
+    # `authentik-events-token` (TENZIR_SECRETS__ map; tofu mints the token,
+    # the operator copies the key into the vault once).
     extraEnv:
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AWS_ACCESS_KEY_ID
+            key: aws-access-key-id
       - name: AWS_SECRET_ACCESS_KEY
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AWS_SECRET_ACCESS_KEY
+            key: aws-secret-access-key
       - name: TENZIR_SECRETS__DISCORD_WEBHOOK_URL
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: DISCORD_WEBHOOK_URL
+            key: discord-webhook-url
       - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
         valueFrom:
           secretKeyRef:
             name: tenzir-secrets
-            key: AUTHENTIK_EVENTS_TOKEN
+            key: authentik-events-token
 
     # Detection content: the homelab TQL mapping package (IaC-installed at
     # /etc/tenzir/packages/homelab) and the sigma rule directories, all
@@ -439,21 +465,6 @@ spec:
       - name: packages-homelab-findings-project
         configMap:
           name: tenzir-packages-homelab-findings-project
-      - name: packages-homelab-tetragon-parse
-        configMap:
-          name: tenzir-packages-homelab-tetragon-parse
-      - name: packages-homelab-tetragon-map
-        configMap:
-          name: tenzir-packages-homelab-tetragon-map
-      - name: packages-homelab-tetragon-exec
-        configMap:
-          name: tenzir-packages-homelab-tetragon-exec
-      - name: packages-homelab-tetragon-exit
-        configMap:
-          name: tenzir-packages-homelab-tetragon-exit
-      - name: packages-homelab-tetragon-kprobe
-        configMap:
-          name: tenzir-packages-homelab-tetragon-kprobe
       - name: packages-homelab-authentik-map
         configMap:
           name: tenzir-packages-homelab-authentik-map
@@ -466,9 +477,9 @@ spec:
       - name: packages-homelab-trivy-map
         configMap:
           name: tenzir-packages-homelab-trivy-map
-      - name: sigma-own
+      - name: sigma-homelab
         configMap:
-          name: tenzir-sigma-own
+          name: tenzir-sigma-homelab
       - name: sigma-sigmahq-kubernetes-audit
         configMap:
           name: tenzir-sigma-sigmahq-kubernetes-audit
@@ -501,26 +512,6 @@ spec:
         mountPath: /etc/tenzir/packages/homelab/operators/findings/project.tql
         subPath: project.tql
         readOnly: true
-      - name: packages-homelab-tetragon-parse
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/parse.tql
-        subPath: parse.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-map
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/map.tql
-        subPath: map.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-exec
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exec.tql
-        subPath: process_exec.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-exit
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exit.tql
-        subPath: process_exit.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-kprobe
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
-        subPath: process_kprobe.tql
-        readOnly: true
       - name: packages-homelab-authentik-map
         mountPath: /etc/tenzir/packages/homelab/operators/authentik/ocsf/map.tql
         subPath: map.tql
@@ -538,8 +529,8 @@ spec:
         subPath: map.tql
         readOnly: true
       # Sigma stays directory-mounted to keep the 30s rule hot-reload.
-      - name: sigma-own
-        mountPath: /etc/tenzir/sigma/own
+      - name: sigma-homelab
+        mountPath: /etc/tenzir/sigma/homelab
         readOnly: true
       - name: sigma-sigmahq-kubernetes-audit
         mountPath: /etc/tenzir/sigma/sigmahq/kubernetes-audit

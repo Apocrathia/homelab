@@ -2,24 +2,27 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tetragon-tailer-config
-  namespace: tetragon-tailer-system
+  name: alloy-tetragon-config
+  namespace: alloy-tetragon-system
   labels:
-    app.kubernetes.io/name: tetragon-tailer
+    app.kubernetes.io/name: alloy-tetragon
 data:
   config.alloy: |
-    // tetragon export stream -> Tenzir detection node. Tails the tetragon
-    // agent's JSON export file on each node and pushes it as OTLP/HTTP logs
-    // to the Tenzir accept_otlp listener (4318), where the homelab package
-    // filters on the service.name resource attribute.
+    // tetragon export stream -> dedicated Tenzir tetragon node. Tails the
+    // tetragon agent's JSON export file on each node and pushes it as
+    // OTLP/HTTP logs to the tetragon node's accept_otlp listener (4318),
+    // where the homelab package filters on the service.name resource
+    // attribute. The alloy now ships to the dedicated tetragon node
+    // (HelmRelease tenzir-node-tetragon) so the export flood cannot OOM
+    // the core detection node.
     //
-    // Why a dedicated tailer: tetragon v1.7.x has no TCP export
+    // Why a dedicated alloy release: tetragon v1.7.x has no TCP export
     // (--export-connection does not exist; the agent's only sinks are the
     // rotating export file and the pod-local export-stdout sidecar), and the
     // export file is 0600 root-owned on the host, out of reach of the shared
     // Alloy (uid 10001). This DaemonSet runs as root with a read-only
     // hostPath mount and nothing else — the same surface the
-    // kube-audit-tailer carries for the apiserver audit log.
+    // kube-audit alloy carries for the apiserver audit log.
     //
     // No Loki leg: the tetragon pod's export-stdout sidecar already ships
     // the same events to Loki as pod logs, so a second Loki writer would
@@ -60,6 +63,12 @@ data:
           value = sys.env("K8S_NODE_NAME"),
         },
       ]
+      // Downstream backpressure: pause reading and resend the current batch
+      // when the exporter rejects it, instead of dropping filelog batches
+      // (the tenzir 503 queue-full drops, 2026-10-14).
+      retry_on_failure {
+        enabled = true
+      }
       output {
         logs = [otelcol.exporter.otlphttp.tenzir.input]
       }
@@ -67,7 +76,7 @@ data:
 
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-tetragon.tenzir-system.svc.cluster.local:4318"
         tls {
           insecure = true
         }

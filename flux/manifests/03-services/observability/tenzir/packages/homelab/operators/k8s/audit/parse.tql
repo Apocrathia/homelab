@@ -7,7 +7,7 @@ args:
 ---
 
 // Filter the OTLP stream down to kube-apiserver audit lines and unpack the
-// JSON body into the raw audit event. The tailer's node attribute rides
+// JSON body into the raw audit event. The kube-audit alloy's node attribute rides
 // along as `node` for the Loki provenance pivot.
 where body.kind == "string"
 where resource.attributes["service.name"] == $service

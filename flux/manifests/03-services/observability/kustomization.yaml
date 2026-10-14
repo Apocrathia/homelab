@@ -7,7 +7,6 @@ metadata:
 
 resources:
   - alloy
-  - kube-audit-tailer
   - grafana
   - ingest
   - loki
@@ -17,4 +16,3 @@ resources:
   - tailscale2otel
   - tempo
   - tenzir
-  - tetragon-tailer

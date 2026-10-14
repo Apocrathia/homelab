@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kube-audit-tailer-config
-  namespace: kube-audit-tailer-system
+  name: alloy-kube-audit-config
+  namespace: alloy-kube-audit-system
   labels:
-    app.kubernetes.io/name: kube-audit-tailer
+    app.kubernetes.io/name: alloy-kube-audit
 data:
   config.alloy: |
     // kube-apiserver audit log dual-writer: tails the host
@@ -15,7 +15,7 @@ data:
     // Why this is not part of the shared alloy DaemonSet: kube-apiserver creates
     // its audit log with mode 0600 inside a 0700 directory (k8s apiserver audit.go:
     // OpenFile(..., 0600), MkdirAll(dir, 0700)), so only root can read it. The
-    // shared Alloy runs as UID 10001; this dedicated tailer runs as root with a
+    // shared Alloy runs as UID 10001; this dedicated alloy runs as root with a
     // read-only hostPath mount and nothing else. No taints exist on this
     // cluster's control planes (allowSchedulingOnControlPlanes: true), so the
     // DaemonSet schedules everywhere without tolerations.
@@ -76,6 +76,12 @@ data:
           value = sys.env("K8S_NODE_NAME"),
         },
       ]
+      // Downstream backpressure: pause reading and resend the current batch
+      // when the exporter rejects it, instead of dropping filelog batches
+      // (the tenzir 503 queue-full drops, 2026-10-14).
+      retry_on_failure {
+        enabled = true
+      }
       output {
         logs = [otelcol.exporter.otlphttp.tenzir.input]
       }
@@ -83,7 +89,7 @@ data:
 
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-core.tenzir-system.svc.cluster.local:4318"
         tls {
           insecure = true
         }

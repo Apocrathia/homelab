@@ -6,7 +6,7 @@ args:
       default: "tetragon-export"
 ---
 
-// Filter the OTLP stream down to the tetragon-tailer's events and unpack
+// Filter the OTLP stream down to the tetragon alloy's events and unpack
 // the JSON export body. The event itself carries node_name, so unlike the
 // kube-audit parse no node attribute needs merging; the raw stream stays
 // in Loki via the tetragon pod's export-stdout sidecar for pivoting.
