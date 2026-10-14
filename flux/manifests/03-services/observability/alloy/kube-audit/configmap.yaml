@@ -76,6 +76,12 @@ data:
           value = sys.env("K8S_NODE_NAME"),
         },
       ]
+      // Downstream backpressure: pause reading and resend the current batch
+      // when the exporter rejects it, instead of dropping filelog batches
+      // (the tenzir 503 queue-full drops, 2026-10-14).
+      retry_on_failure {
+        enabled = true
+      }
       output {
         logs = [otelcol.exporter.otlphttp.tenzir.input]
       }
