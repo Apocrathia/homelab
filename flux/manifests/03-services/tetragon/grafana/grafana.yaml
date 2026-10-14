@@ -1,0 +1,17 @@
+---
+# Tetragon install overview (grafana.com id 25789, job="tetragon" metrics).
+# JSON lives in ConfigMap tetragon-dashboard (generated from dashboard.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: tetragon
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: tetragon-dashboard
+    key: dashboard.json
+  folder: Security
