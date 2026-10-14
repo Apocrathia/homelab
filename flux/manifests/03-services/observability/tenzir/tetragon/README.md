@@ -3,7 +3,7 @@
 > **Navigation**: [← Tenzir](../README.md) | [Core node](../core/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
-`tenzir-node-tetragon-default`) that owns the tetragon export flood and
+`tenzir-node-tetragon`) that owns the tetragon export flood and
 nothing else. Two pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml): tetragon-ingest-http (the
 OTLP listener for the tetragon-tailer) and tetragon-ocsf (the OCSF
@@ -101,12 +101,18 @@ archive-rule failure windows; the time rule is the front door.
    item, labeled `<role>-token` (same convention as `tetragon-token` /
    `core-token`). The hosted platform issues per-node tokens only;
    workspace tokens are Sovereign-only.
-3. **HelmRelease**: `metadata.name: tenzir-node-<role>` (drives the
-   rendered `tenzir-node-<role>-default` StatefulSet and Service names),
-   chart `tenzir-node` from the `tenzir` HelmRepository, image pinned
-   with the renovate comment, `nodes[0].token.existingSecret:
-tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
-   `extraPorts` for the node's listeners, `persistence.size` per sizing.
+3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
+   `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
+   renovate comment, `nodes[0].name: <role>` — the entry name is the
+   node name, because the chart renders every node resource as
+   `<fullname>-<entry.name>`; every release except the literally named
+   `tenzir-node` also takes `fullnameOverride: tenzir-node` (fullname
+   otherwise defaults to the release name, which doubles the role when
+   the release contains `tenzir-node` and prepends the chart name when it
+   does not — never rename a release into either concat trap),
+   `nodes[0].token.existingSecret: tenzir-secrets` plus
+   `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
+   listeners, `persistence.size` per sizing.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
@@ -123,7 +129,7 @@ tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
    node's HelmRelease.
 9. **Feeder wiring**: point feeders at
-   `tenzir-node-<role>-default.tenzir-system.svc.cluster.local:<port>`;
+   `tenzir-node-<role>.tenzir-system.svc.cluster.local:<port>`;
    the chart auto-generates the Service.
 10. **Root kustomization**: add `- <role>` to `resources:`.
 11. **README**: sizing math, retention profile, and this recipe.
@@ -131,11 +137,11 @@ tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
 ## Troubleshooting
 
 ```sh
-kubectl exec -n tenzir-system tenzir-node-tetragon-default-0 -- \
+kubectl exec -n tenzir-system tenzir-node-tetragon-0 -- \
   tenzir -e localhost:5158 \
   'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
-kubectl logs -n tenzir-system tenzir-node-tetragon-default-0 | grep -i error
+kubectl logs -n tenzir-system tenzir-node-tetragon-0 | grep -i error
 # recent stored events
-kubectl exec -n tenzir-system tenzir-node-tetragon-default-0 -- \
+kubectl exec -n tenzir-system tenzir-node-tetragon-0 -- \
   tenzir -e localhost:5158 'export | head 5'
 ```

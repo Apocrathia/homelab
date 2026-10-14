@@ -3,7 +3,7 @@
 > **Navigation**: [← Tenzir](../README.md) | [Tetragon node](../tetragon/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 The detection plane: one process (HelmRelease `tenzir-node`, rendering
-pod `tenzir-node-default`) that normalizes kube-apiserver audit,
+pod `tenzir-node-core`) that normalizes kube-apiserver audit,
 authentik, fleet, trivy, and NetFlow feeds to OCSF, runs the sigma rule
 corpus over the raw audit stream, and owns every findings egress.
 Twelve pipelines live in [`helmrelease.yaml`](./helmrelease.yaml); the
@@ -107,6 +107,12 @@ front door. A stalled archive cycle grows the lake slowly enough that
 the budget erases oldest long before the PVC fills, and the S3 archive
 keeps the record once the cycle resumes.
 
+Naming note: the entry rename (`default` → `core`) orphans the live
+`state-tenzir-node-default-0` PVC at rollout and the lake re-wipes
+fresh — accepted; the rustfs parquet is the record, and
+`persistence.existingClaim` can adopt the old PVC if the lost hot window
+ever matters.
+
 ## Adding a node
 
 1. **Folder**: create `tenzir/<role>/` with `kustomization.yaml`,
@@ -116,12 +122,18 @@ keeps the record once the cycle resumes.
    item, labeled `<role>-token` (same convention as `core-token` /
    `tetragon-token`). The hosted platform issues per-node tokens only;
    workspace tokens are Sovereign-only.
-3. **HelmRelease**: `metadata.name: tenzir-node-<role>` (drives the
-   rendered `tenzir-node-<role>-default` StatefulSet and Service names),
-   chart `tenzir-node` from the `tenzir` HelmRepository, image pinned
-   with the renovate comment, `nodes[0].token.existingSecret:
-tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
-   `extraPorts` for the node's listeners, `persistence.size` per sizing.
+3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
+   `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
+   renovate comment, `nodes[0].name: <role>` — the entry name is the
+   node name, because the chart renders every node resource as
+   `<fullname>-<entry.name>`; every release except the literally named
+   `tenzir-node` also takes `fullnameOverride: tenzir-node` (fullname
+   otherwise defaults to the release name, which doubles the role when
+   the release contains `tenzir-node` and prepends the chart name when it
+   does not — never rename a release into either concat trap),
+   `nodes[0].token.existingSecret: tenzir-secrets` plus
+   `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
+   listeners, `persistence.size` per sizing.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
@@ -138,7 +150,7 @@ tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
    node's HelmRelease.
 9. **Feeder wiring**: point feeders at
-   `tenzir-node-<role>-default.tenzir-system.svc.cluster.local:<port>`;
+   `tenzir-node-<role>.tenzir-system.svc.cluster.local:<port>`;
    the chart auto-generates the Service.
 10. **Root kustomization**: add `- <role>` to `resources:`.
 11. **README**: sizing math, retention profile, and this recipe.
@@ -146,11 +158,11 @@ tenzir-secrets` plus `nodes[0].token.key: <role>-token`,
 ## Troubleshooting
 
 ```sh
-kubectl exec -n tenzir-system tenzir-node-default-0 -- \
+kubectl exec -n tenzir-system tenzir-node-core-0 -- \
   tenzir -e localhost:5158 \
   'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
-kubectl logs -n tenzir-system tenzir-node-default-0 | grep -i error
+kubectl logs -n tenzir-system tenzir-node-core-0 | grep -i error
 # recent stored events
-kubectl exec -n tenzir-system tenzir-node-default-0 -- \
+kubectl exec -n tenzir-system tenzir-node-core-0 -- \
   tenzir -e localhost:5158 'export | head 5'
 ```

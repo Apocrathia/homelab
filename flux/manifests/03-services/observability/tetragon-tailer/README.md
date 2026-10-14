@@ -30,7 +30,7 @@ node.
   lumberjack-rotated `tetragon-*.log`, stamps
   `service.name=tetragon-export` and `k8s.node.name`, and exports to
   `otelcol.exporter.otlphttp` at
-  `tenzir-node-tetragon-default.tenzir-system.svc:4318`
+  `tenzir-node-tetragon.tenzir-system.svc:4318`
 - No Loki leg: the tetragon pods' `export-stdout` sidecar already ships the
   same events to Loki as pod logs (`{namespace="tetragon"}`); a second Loki
   writer would duplicate the stream. Pivots use the node_name plus exec_id

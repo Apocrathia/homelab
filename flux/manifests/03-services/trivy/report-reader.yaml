@@ -25,7 +25,7 @@ data:
     }
     each {
       from $this
-      to_http "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/trivy" {
+      to_http "http://tenzir-node-core.tenzir-system.svc.cluster.local:8080/trivy" {
         write_json
       }
     }
@@ -36,7 +36,7 @@ data:
     }
     each {
       from $this
-      to_http "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/trivy" {
+      to_http "http://tenzir-node-core.tenzir-system.svc.cluster.local:8080/trivy" {
         write_json
       }
     }

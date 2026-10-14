@@ -39,13 +39,13 @@ spec:
     # this node reading its own pre-provisioned node token from the
     # core-token field. Platform tokens are per-node, never shared.
     nodes:
-      - name: default
+      - name: core
         token:
           existingSecret: tenzir-secrets
           key: core-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
         # kube-audit-tailer and the shared alloy OTLP log fan-out push at
-        # tenzir-node-default:4318 (the tetragon-tailer moved to the
+        # tenzir-node-core:4318 (the tetragon-tailer moved to the
         # tetragon node); the fleet webhook and the trivy-report-reader
         # POST to http-ingest 8080; netflow 2055/UDP sits behind the
         # tenzir-ingest-lb pool IP.
@@ -68,7 +68,7 @@ spec:
       # buys nothing.
       size: 20Gi
 
-    # Node configuration (renders to the tenzir-node-default-config ConfigMap
+    # Node configuration (renders to the tenzir-node-core-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land
     # in a ConfigMap in plaintext. Secrets arrive via extraEnv below.
     tenzir:

@@ -140,7 +140,7 @@ spec:
     environments:
       FLEET_SERVER_ALLOW_PRIVATE_NETWORK_INTEGRATIONS: "true"
       FLEET_OSQUERY_POLICY_UPDATE_INTERVAL: "30m"
-      FLEET_WEBHOOK_RESULT_URL: "http://tenzir-node-default.tenzir-system.svc.cluster.local:8080/fleet"
+      FLEET_WEBHOOK_RESULT_URL: "http://tenzir-node-core.tenzir-system.svc.cluster.local:8080/fleet"
 
     # MDM needs FLEET_SERVER_PRIVATE_KEY — injected via postRenderers above
     # (openssl rand -base64 32). Global enroll secret seeds/overwrites the DB

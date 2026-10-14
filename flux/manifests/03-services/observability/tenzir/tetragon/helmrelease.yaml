@@ -28,6 +28,12 @@ spec:
       retries: 3
     timeout: 10m
   values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-tetragon + entry tetragon would
+    # double to tenzir-node-tetragon-tetragon. The override pins fullname
+    # at tenzir-node so the entry renders tenzir-node-tetragon.
+    fullnameOverride: tenzir-node
     image:
       registry: docker.io
       repository: tenzir/tenzir
@@ -39,7 +45,7 @@ spec:
     # tetragon-token field of the tenzir-secrets Secret. Platform tokens
     # are per-node, never shared.
     nodes:
-      - name: default
+      - name: tetragon
         token:
           existingSecret: tenzir-secrets
           key: tetragon-token
