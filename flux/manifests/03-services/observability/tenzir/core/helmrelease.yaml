@@ -113,10 +113,8 @@ spec:
                 k8s-audit.raw; OTLP streams without a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
-                fork {
-                  homelab::k8s::audit::parse
-                  publish "k8s-audit.raw"
-                }
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
               restart-on-error: 1 minute
             k8s-audit-ingest-grpc:
               name: k8s-audit ingest (otlp/grpc)
@@ -126,10 +124,8 @@ spec:
                 a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
-                fork {
-                  homelab::k8s::audit::parse
-                  publish "k8s-audit.raw"
-                }
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
               restart-on-error: 1 minute
             k8s-audit-ocsf:
               name: k8s-audit ocsf mapping
