@@ -4,8 +4,10 @@
 
 Dedicated Grafana Alloy DaemonSet that tails the tetragon agents' JSON
 export files (`/var/run/cilium/tetragon/tetragon.log` on every node) and
-pushes them as OTLP/HTTP logs to the Tenzir detection node
-(`accept_otlp` 4318).
+pushes them as OTLP/HTTP logs to the dedicated Tenzir tetragon node
+(`accept_otlp` 4318). The tailer ships there (HelmRelease
+`tenzir-node-tetragon`) so the export flood cannot OOM the core detection
+node.
 
 ## Why it is not part of the shared Alloy
 
@@ -27,7 +29,8 @@ pushes them as OTLP/HTTP logs to the Tenzir detection node
   `otelcol.receiver.filelog` (public-preview) tails `tetragon.log` plus the
   lumberjack-rotated `tetragon-*.log`, stamps
   `service.name=tetragon-export` and `k8s.node.name`, and exports to
-  `otelcol.exporter.otlphttp` at `tenzir-node-default.tenzir-system.svc:4318`
+  `otelcol.exporter.otlphttp` at
+  `tenzir-node-tetragon-default.tenzir-system.svc:4318`
 - No Loki leg: the tetragon pods' `export-stdout` sidecar already ships the
   same events to Loki as pod logs (`{namespace="tetragon"}`); a second Loki
   writer would duplicate the stream. Pivots use the node_name plus exec_id

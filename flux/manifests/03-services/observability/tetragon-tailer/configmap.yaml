@@ -8,10 +8,13 @@ metadata:
     app.kubernetes.io/name: tetragon-tailer
 data:
   config.alloy: |
-    // tetragon export stream -> Tenzir detection node. Tails the tetragon
-    // agent's JSON export file on each node and pushes it as OTLP/HTTP logs
-    // to the Tenzir accept_otlp listener (4318), where the homelab package
-    // filters on the service.name resource attribute.
+    // tetragon export stream -> dedicated Tenzir tetragon node. Tails the
+    // tetragon agent's JSON export file on each node and pushes it as
+    // OTLP/HTTP logs to the tetragon node's accept_otlp listener (4318),
+    // where the homelab package filters on the service.name resource
+    // attribute. The tailer now ships to the dedicated tetragon node
+    // (HelmRelease tenzir-node-tetragon) so the export flood cannot OOM
+    // the core detection node.
     //
     // Why a dedicated tailer: tetragon v1.7.x has no TCP export
     // (--export-connection does not exist; the agent's only sinks are the
@@ -67,7 +70,7 @@ data:
 
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-default.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-tetragon-default.tenzir-system.svc.cluster.local:4318"
         tls {
           insecure = true
         }

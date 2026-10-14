@@ -5,21 +5,35 @@
 The SIEM plan document ships separately from this MR (the operator is deciding
 whether it rides along); the link resolves once it lands on main.
 
-Tenzir Node is the SIEM detection plane: it normalizes kube-apiserver audit,
-tetragon, authentik, fleet, trivy, and NetFlow data to OCSF, runs Sigma
-rules on the audit stream, stores the matched Detection Findings as the
-immutable record, and ships a flat, query-optimized projection of them to
-Loki (the `tenzir-findings` stream — the searchable surface for pull-side
-triage; the uid fingerprint joins both stores). CRITICAL findings doorbell
-to Discord. Loki stays the system of record; this node is the detection
-horizon (hot storage plus a 14-day rolling window before export to rustfs).
+Tenzir runs two standalone nodes (no distributed mode; each node is a
+silo with its own store and queries). The core node
+(`tenzir-node-default`) is the SIEM detection plane: it normalizes
+kube-apiserver audit, authentik, fleet, trivy, and NetFlow data to OCSF,
+runs Sigma rules on the audit stream, stores the matched Detection
+Findings as the immutable record, and ships a flat, query-optimized
+projection of them to Loki (the `tenzir-findings` stream — the searchable
+surface for pull-side triage; the uid fingerprint joins both stores).
+CRITICAL findings doorbell to Discord. Loki stays the system of record;
+the core node is the detection horizon (hot storage plus a 14-day rolling
+window before export to rustfs). The heavy tetragon node
+(`tenzir-node-tetragon-default`) runs only the tetragon ingest + OCSF
+pipelines: the 2026-10-12/13 OOM cycle showed the tetragon export flood
+starving the combined node (CPU pinned at the 1-core limit, OOMKilled
+twice in 45 min), so the flood got its own node — tetragon data lives in
+its own node store now.
 
-- Namespace: `tenzir-system` (single standalone node, no Tenzir Platform)
+- Namespace: `tenzir-system` (two standalone nodes, no Tenzir Platform)
+- Nodes: core `tenzir-node-default` (k8s-audit ingest, sigma detections,
+  findings, netflow, authentik, fleet, trivy, http-ingest) and tetragon
+  `tenzir-node-tetragon-default` (tetragon ingest + OCSF only; heavy
+  resources, subprocess pipelines)
 - Chart: `oci://ghcr.io/tenzir/charts/tenzir-node` (see
-  [`helmrelease.yaml`](./helmrelease.yaml))
-- Collector feeds: [`../kube-audit-tailer/`](../kube-audit-tailer/) and
-  [`../tetragon-tailer/`](../tetragon-tailer/) push OTLP/HTTP to the
-  `accept_otlp` listeners (4317/4318); the fleet result webhook and the
+  [`helmrelease.yaml`](./helmrelease.yaml) and
+  [`helmrelease-tetragon.yaml`](./helmrelease-tetragon.yaml))
+- Collector feeds: [`../kube-audit-tailer/`](../kube-audit-tailer/)
+  pushes OTLP/HTTP to the core `accept_otlp` listeners (4317/4318);
+  [`../tetragon-tailer/`](../tetragon-tailer/) pushes to the tetragon
+  node's `accept_otlp` listener (4318); the fleet result webhook and the
   [trivy-report-reader](../../trivy/) POST to the `http-ingest` listener
   (8080); UniFi exporters send NetFlow to the `netflow` port (2055/UDP)
   behind [`tenzir-ingest-lb`](./service-ingest.yaml) on the shared ingest
@@ -31,26 +45,27 @@ horizon (hot storage plus a 14-day rolling window before export to rustfs).
 ```mermaid
 flowchart LR
     KAT[kube-audit-tailer] -- OTLP --> AO["accept_otlp :4317/:4318"]
-    TT[tetragon-tailer] -- OTLP --> AO
+    TT[tetragon-tailer] -- OTLP --> AOT["accept_otlp :4318<br/>(tetragon node)"]
     FRW[fleet result webhook] -- HTTP --> AH["accept_http :8080"]
     TRR[trivy-report-reader] -- HTTP --> AH
     AE[authentik events API] <--> FH["from_http (cron 5m, Bearer)"]
     UE[UniFi exporters] -- "UDP :2055" --> NF[accept_udp + read_netflow]
 
     AO --> KA[homelab::k8s::audit::parse] --> KR[k8s-audit.raw]
-    AO --> TP[homelab::tetragon::parse] --> TR[tetragon.raw]
+    AOT --> TP[homelab::tetragon::parse] --> TR[tetragon.raw]
     AH --> FP[homelab::fleet::parse] --> FR[fleet.raw]
     AH --> RF[report files] --> TB[trivy.raw]
     FH --> AR[authentik.raw]
     NF --> NB[netflow events]
 
     KA --> MAP["homelab::*::ocsf::map (per source)<br/>ocsf_derive / ocsf_cast"]
-    TR --> MAP
     FR --> MAP
     TB --> MAP
     AR --> MAP
     MAP -- "fork { import } / publish" --> OCSF[ocsf.*]
     NB -- "fork { import } / publish" --> OCSF
+    TR --> TMAP["homelab::tetragon::ocsf::map<br/>ocsf_derive / ocsf_cast"]
+    TMAP -- "fork { import } / publish" --> TLAKE[tetragon node lake: ocsf.tetragon]
 
     KA -- "sigma (k8s-audit only)<br/>mapping = direct, hot-reload" --> SIG[detections.sigma]
     SIG -- "fork { import }" --> LAKE[node lake: ocsf.detection_finding]
@@ -70,8 +85,9 @@ flowchart LR
 
 Everything ships as ConfigMaps (`configMapGenerator` in
 [`kustomization.yaml`](./kustomization.yaml)) and is mounted read-only into
-the node. Sigma hot-reloads rule files; mapping-package changes additionally
-need a pod restart (bounce the StatefulSet after editing TQL operators).
+both nodes' pods. Sigma hot-reloads rule files; mapping-package changes
+additionally need a pod restart (bounce the affected node's StatefulSet —
+core or tetragon — after editing TQL operators).
 
 ### Running the package tests
 
@@ -104,12 +120,17 @@ renders the `tenzir-secrets` Secret with:
 
 ## Storage lifecycle
 
-- PVC: 8Gi, Longhorn default class; disk budget 7GiB high / 6GiB low
-  (oldest data is erased at the ceiling)
+- Core node PVC: 20Gi, Longhorn default class; disk budgets 18GiB high /
+  16GiB low (oldest data is erased at the ceiling)
+- Tetragon node PVC: own 20Gi store
+  (`state-tenzir-node-tetragon-default-0`) with the same 18GiB/16GiB
+  budgets; space-only compaction — no archive rule yet (tetragon OCSF is
+  the 14d detection horizon, not a record; Loki keeps the raw stream)
 - NetFlow volume baseline (goflow2 handoff): two active UniFi exporters
   (~1.8 kB/s combined when measured at the 2026-10-10 swap) — negligible
   against the budget; re-baseline if exporters change
-- After 14 days (event time), `plugins.compaction.time` exports
+- After 14 days (event time), `plugins.compaction.time` on the core node
+  exports
   `ocsf.api_activity` events as parquet to
   `s3://tenzir/ocsf/{uuid}.parquet` and Detection Findings to
   `s3://tenzir/findings/{uuid}.parquet` on rustfs, consuming the originals
@@ -118,9 +139,9 @@ run k8s-audit-archive` forces a cycle for testing)
 
 ## Known limitations
 
-- The chart schema requires `nodes[].token`; the standalone node uses an
-  empty `TENZIR_TOKEN` (`node-token.yaml`) — a node with no token never
-  connects to the platform
+- The chart schema requires `nodes[].token`; each standalone node uses an
+  empty `TENZIR_TOKEN` (`node-token.yaml`, `node-token-tetragon.yaml`) — a
+  node with no token never connects to the platform
 - Audit events are detected on the raw schema (SigmaHQ `kubernetes/audit`
   rules name raw audit fields and are not in the OCSF projection catalog);
   OCSF mapping runs in parallel for storage and investigation
@@ -129,7 +150,7 @@ run k8s-audit-archive` forces a cycle for testing)
 - NetFlow, authentik, fleet, trivy, and tetragon OCSF events have no sigma
   detections yet — detection content covers `ocsf.api_activity` (6003) and
   the sigma findings (`ocsf.detection_finding`, both archived to rustfs);
-  the disk budget (7 GiB high) is the backstop for the rest
+  the disk budget (18 GiB high) is the backstop for the rest
 - Fleet rows map to the OCSF Base Event: a row's meaning comes from its
   query, and no scheduled query existed at mapping time — grow
   [`fleet/ocsf/map.tql`](./packages/homelab/operators/fleet/ocsf/map.tql)
@@ -150,4 +171,9 @@ kubectl logs -n tenzir-system tenzir-node-default-0 | grep -i error
 kubectl exec -n tenzir-system tenzir-node-default-0 -- \
   tenzir -e localhost:5158 \
   'export | head 5'
+# tetragon node (tetragon ingest + OCSF only — no detections/findings)
+kubectl exec -n tenzir-system tenzir-node-tetragon-default-0 -- \
+  tenzir -e localhost:5158 \
+  'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
+kubectl logs -n tenzir-system tenzir-node-tetragon-default-0 | grep -i error
 ```

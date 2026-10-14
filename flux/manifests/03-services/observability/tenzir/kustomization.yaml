@@ -12,6 +12,8 @@ resources:
   - node-token.yaml
   - service-ingest.yaml
   - helmrelease.yaml
+  - node-token-tetragon.yaml
+  - helmrelease-tetragon.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

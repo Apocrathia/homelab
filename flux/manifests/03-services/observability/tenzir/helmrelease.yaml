@@ -42,10 +42,11 @@ spec:
         token:
           existingSecret: tenzir-node-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
-        # kube-audit-tailer and the tetragon-tailer push OTLP/HTTP at
-        # tenzir-node-default:4318; the fleet webhook and the
-        # trivy-report-reader POST to http-ingest 8080; netflow 2055/UDP
-        # sits behind the tenzir-ingest-lb pool IP.
+        # kube-audit-tailer and the shared alloy OTLP log fan-out push at
+        # tenzir-node-default:4318 (the tetragon-tailer moved to the
+        # tetragon node); the fleet webhook and the trivy-report-reader
+        # POST to http-ingest 8080; netflow 2055/UDP sits behind the
+        # tenzir-ingest-lb pool IP.
         extraPorts:
           - name: otlp-grpc
             containerPort: 4317
@@ -96,32 +97,28 @@ spec:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
               description: |
-                OTLP/HTTP listener for the kube-audit-tailer and the
-                tetragon-tailer. Unpacks audit JSON bodies onto the
-                k8s-audit.raw topic and tetragon export events onto
-                tetragon.raw; OTLP streams without a parser are dropped.
+                OTLP/HTTP listener for the kube-audit-tailer and the shared
+                alloy OTLP log fan-out; unpacks audit JSON bodies onto
+                k8s-audit.raw; OTLP streams without a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
                 fork {
                   homelab::k8s::audit::parse
                   publish "k8s-audit.raw"
                 }
-                homelab::tetragon::parse
-                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ingest-grpc:
               name: k8s-audit ingest (otlp/grpc)
               description: |
-                OTLP/gRPC listener for future OTLP-native senders; parses
-                the same source set as the http listener.
+                OTLP/gRPC listener for future OTLP-native senders; unpacks
+                audit JSON bodies onto k8s-audit.raw; OTLP streams without
+                a parser are dropped.
               definition: |
                 accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
                 fork {
                   homelab::k8s::audit::parse
                   publish "k8s-audit.raw"
                 }
-                homelab::tetragon::parse
-                publish "tetragon.raw"
               restart-on-error: 1 minute
             k8s-audit-ocsf:
               name: k8s-audit ocsf mapping
@@ -152,23 +149,6 @@ spec:
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/own"], mapping="direct", refresh_interval=30s
                 fork { import }
                 publish "detections.sigma"
-              restart-on-error: 1 minute
-            tetragon-ocsf:
-              name: tetragon ocsf mapping
-              description: |
-                tetragon export events -> OCSF (Process/File/Network
-                Activity per event kind), then derive + schema-validate and
-                store in the node. The raw stream keeps flowing to Loki via
-                the tetragon pods' export-stdout sidecar.
-              definition: |
-                subscribe "tetragon.raw"
-                this = {tetragon: this}
-                homelab::tetragon::ocsf::map tetragon, ocsf
-                this = move ocsf
-                ocsf_derive
-                ocsf_cast
-                fork { import }
-                publish "ocsf.tetragon"
               restart-on-error: 1 minute
             netflow-collector:
               name: netflow collector
@@ -439,21 +419,6 @@ spec:
       - name: packages-homelab-findings-project
         configMap:
           name: tenzir-packages-homelab-findings-project
-      - name: packages-homelab-tetragon-parse
-        configMap:
-          name: tenzir-packages-homelab-tetragon-parse
-      - name: packages-homelab-tetragon-map
-        configMap:
-          name: tenzir-packages-homelab-tetragon-map
-      - name: packages-homelab-tetragon-exec
-        configMap:
-          name: tenzir-packages-homelab-tetragon-exec
-      - name: packages-homelab-tetragon-exit
-        configMap:
-          name: tenzir-packages-homelab-tetragon-exit
-      - name: packages-homelab-tetragon-kprobe
-        configMap:
-          name: tenzir-packages-homelab-tetragon-kprobe
       - name: packages-homelab-authentik-map
         configMap:
           name: tenzir-packages-homelab-authentik-map
@@ -500,26 +465,6 @@ spec:
       - name: packages-homelab-findings-project
         mountPath: /etc/tenzir/packages/homelab/operators/findings/project.tql
         subPath: project.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-parse
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/parse.tql
-        subPath: parse.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-map
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/map.tql
-        subPath: map.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-exec
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exec.tql
-        subPath: process_exec.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-exit
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_exit.tql
-        subPath: process_exit.tql
-        readOnly: true
-      - name: packages-homelab-tetragon-kprobe
-        mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
-        subPath: process_kprobe.tql
         readOnly: true
       - name: packages-homelab-authentik-map
         mountPath: /etc/tenzir/packages/homelab/operators/authentik/ocsf/map.tql
