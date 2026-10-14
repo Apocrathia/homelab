@@ -28,15 +28,16 @@ spec:
       # Heap tuned down from the 8GB default (research doc 2.3: tune down for homelab).
       NODE_OPTIONS: "--max-old-space-size=4096"
       # OpenSearch subchart service is named <clusterName>-<nodeGroup>.
-      # TLS is mandatory: the opensearch security plugin (demo config)
-      # enforces it on the REST layer — a plaintext http:// client knocks
-      # produced NotSslRecordException on the engine and "socket hang up"
-      # on the platform side (live diagnosis 2026-10-12). The demo
-      # self-signed certs mean SSL_REJECT_UNAUTHORIZED=false for now;
-      # dedicated certs are a follow-up. Admin user rides the same vault
-      # field as OPENSEARCH_INITIAL_ADMIN_PASSWORD (single-item pattern).
+      # TLS is mandatory: the opensearch security plugin enforces it on the
+      # REST layer. Allowing the demo SELF-SIGNED CERT for now (operator
+      # decision 2026-10-12; a house internal CA is the future production
+      # model, deferred). The platform's config path is
+      # elasticsearch.ssl.reject_unauthorized, so the env needs the DOUBLE
+      # underscore between SSL and REJECT - the single-underscore form maps
+      # to a path the platform never reads (verified against the
+      # 7.261008.0 engine source).
       ELASTICSEARCH__URL: "https://opensearch-cluster-master:9200"
-      ELASTICSEARCH__SSL_REJECT_UNAUTHORIZED: "false"
+      ELASTICSEARCH__SSL__REJECT_UNAUTHORIZED: "false"
       RABBITMQ__HOSTNAME: "opencti-rabbitmq"
       REDIS__HOSTNAME: "opencti-redis"
       # File storage: NAS rustfs bucket (slice 1), HTTP on the LAN segment.
