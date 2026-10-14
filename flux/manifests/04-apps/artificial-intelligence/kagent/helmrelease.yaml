@@ -168,7 +168,7 @@ spec:
       cilium-debug-agent:
         enabled: true
 
-    # Agent OTLP: Alloy receives gRPC 4317 / HTTP 4318 (see observability/alloy/configmap.yaml)
+    # Agent OTLP: Alloy receives gRPC 4317 / HTTP 4318 (see observability/alloy/logs/configmap.yaml)
     otel:
       tracing:
         enabled: false
