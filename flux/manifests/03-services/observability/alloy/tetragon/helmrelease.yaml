@@ -3,8 +3,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: kube-audit-tailer
-  namespace: kube-audit-tailer-system
+  name: alloy-tetragon
+  namespace: alloy-tetragon-system
 spec:
   interval: 1h
   chart:
@@ -25,7 +25,7 @@ spec:
     remediation:
       retries: 3
   values:
-    # No Service: the tailer only pushes to Loki and Tenzir.
+    # No Service: the alloy only pushes to the Tenzir tetragon node.
     service:
       enabled: false
 
@@ -33,26 +33,21 @@ spec:
     # minimum, so raise the minimum to public-preview.
     controller:
       type: daemonset
-      # The alloy chart reads scheduling keys only under controller: — values
-      # at the root are ignored.
-      # Control planes only (audit.log does not exist on workers). This cluster
-      # runs control-plane-only, so this is 4/4 nodes.
-      nodeSelector:
-        # Talos sets this label with an EMPTY-STRING value on control-plane
-        # nodes; "true" is an exact match against zero nodes (DESIRED 0).
-        node-role.kubernetes.io/control-plane: ""
-      # No tolerations needed: allowSchedulingOnControlPlanes untaints the nodes.
+      # tetragon agents run on every node, so no nodeSelector: the alloy
+      # schedules everywhere they export. No tolerations needed on this
+      # cluster (allowSchedulingOnControlPlanes untaints the nodes).
       tolerations: []
       # Writable WAL/offsets dir for the read-only root filesystem, mirroring
-      # the shared alloy release. The audit-log hostPath backs the
-      # kube-apiserver-audit mount below (read-only at the volumeMount).
+      # the shared alloy release. The tetragon export hostPath backs the
+      # tetragon-export mount below (read-only at the volumeMount).
       volumes:
         extra:
           - name: alloy-wal
             emptyDir: {}
-          - name: kube-apiserver-audit
+          - name: tetragon-export
             hostPath:
-              path: /var/log/audit/kube
+              path: /var/run/cilium/tetragon
+              type: DirectoryOrCreate
 
     alloy:
       stabilityLevel: public-preview
@@ -63,7 +58,7 @@ spec:
       listenAddr: 127.0.0.1
       configMap:
         create: false
-        name: kube-audit-tailer-config
+        name: alloy-tetragon-config
         key: config.alloy
       resources:
         requests:
@@ -72,13 +67,10 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
-      # Root alone is NOT sufficient to read the audit log: Talos 1.14's
-      # apiserver runs as uid 65534 and writes /var/log/audit/kube as
-      # 0700-dir/0600-file owned by 65534. Root without caps cannot cross
-      # that DAC barrier (live-verified: Permission denied with drop-ALL).
-      # Scope of privilege: one read-only hostPath volume, the single
-      # DAC_READ_SEARCH cap (file reads only — no write/kill/sys overrides),
-      # no privilege escalation, read-only root filesystem.
+      # Root is required to read the export file (tetragon writes it 0600
+      # root-owned into the export directory). Scope of privilege: one
+      # read-only hostPath volume. All capabilities dropped, no privilege
+      # escalation, read-only root filesystem.
       securityContext:
         runAsNonRoot: false
         runAsUser: 0
@@ -86,13 +78,12 @@ spec:
         readOnlyRootFilesystem: true
         capabilities:
           drop: ["ALL"]
-          add: ["DAC_READ_SEARCH"]
       mounts:
         extra:
           - name: alloy-wal
             mountPath: /tmp/alloy
-          - name: kube-apiserver-audit
-            mountPath: /var/log/audit/kube
+          - name: tetragon-export
+            mountPath: /var/run/cilium/tetragon
             readOnly: true
 
     global:
@@ -106,5 +97,5 @@ spec:
     serviceAccount:
       create: true
       annotations: {}
-      # Zero-RBAC tailer: no token ever mounted into the pod.
+      # Zero-RBAC alloy: no token ever mounted into the pod.
       automountServiceAccountToken: false

@@ -44,8 +44,8 @@ spec:
           existingSecret: tenzir-secrets
           key: core-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
-        # kube-audit-tailer and the shared alloy OTLP log fan-out push at
-        # tenzir-node-core:4318 (the tetragon-tailer moved to the
+        # kube-audit alloy and the shared alloy OTLP log fan-out push at
+        # tenzir-node-core:4318 (the tetragon alloy moved to the
         # tetragon node); the fleet webhook and the trivy-report-reader
         # POST to http-ingest 8080; netflow 2055/UDP sits behind the
         # tenzir-ingest-lb pool IP.
@@ -108,7 +108,7 @@ spec:
             k8s-audit-ingest-http:
               name: k8s-audit ingest (otlp/http)
               description: |
-                OTLP/HTTP listener for the kube-audit-tailer and the shared
+                OTLP/HTTP listener for the kube-audit alloy and the shared
                 alloy OTLP log fan-out; unpacks audit JSON bodies onto
                 k8s-audit.raw; OTLP streams without a parser are dropped.
               definition: |

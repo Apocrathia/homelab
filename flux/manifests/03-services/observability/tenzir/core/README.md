@@ -11,7 +11,7 @@ manifest is the source of truth for tunables (sizes, limits, retention
 values, ports).
 
 - k8s-audit-ingest-http / k8s-audit-ingest-grpc: OTLP listeners for the
-  kube-audit-tailer and the alloy log fan-out
+  kube-audit alloy and the alloy log fan-out
 - k8s-audit-ocsf, authentik-ocsf, fleet-ocsf, trivy-ocsf: per-source
   OCSF mapping into the lake
 - k8s-audit-sigma: sigma detection over the raw audit stream
@@ -26,7 +26,7 @@ values, ports).
 
 ```mermaid
 flowchart LR
-    KAT[kube-audit-tailer] -->|"OTLP :4317/:4318"| AO[accept_otlp]
+    KAT[kube-audit alloy] -->|"OTLP :4317/:4318"| AO[accept_otlp]
     ALY["alloy OTLP fan-out"] -->|"OTLP :4318"| AO
     FRW["fleet result webhook"] -->|"HTTP :8080"| AH[accept_http]
     TRR[trivy-report-reader] -->|"HTTP :8080"| AH

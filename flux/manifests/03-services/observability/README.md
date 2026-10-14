@@ -19,15 +19,17 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 ### 2. **Grafana Alloy** (`alloy/`)
 
-- **Purpose**: Log collection, metrics forwarding, and external syslog/CEF ingestion
-- **Deployment**: Via Grafana Alloy Helm chart
-- **Features**:
+- **Purpose**: Parent folder for three Alloy releases, one per subfolder:
+  `alloy` (shared collector, `logs/`), `alloy-tetragon` (`tetragon/`),
+  `alloy-kube-audit` (`kube-audit/`)
+- **Shared collector features**:
   - Kubernetes pod log collection
   - Syslog ingestion (RFC3164/5424) on ports 6514/TCP and 514/UDP
   - CEF log ingestion from UniFi devices on port 1514/TCP
   - OpenTelemetry trace collection (OTLP gRPC/HTTP)
   - Integration with Loki for log storage
 - **External Access**: Via shared ingest LoadBalancer IP (`ingest.services.apocrathia.com`)
+- **Details**: See [`alloy/README.md`](./alloy/README.md)
 
 ### 3. **Loki** (`loki/`)
 
@@ -118,13 +120,13 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - OAuth client credentials from 1Password (`tailscale2otel-secrets` item)
 - **Details**: See [`tailscale2otel/README.md`](./tailscale2otel/README.md)
 
-### 12. **kube-audit-tailer** (`kube-audit-tailer/`)
+### 12. **kube-audit alloy** (`alloy/kube-audit/`)
 
 - **Purpose**: Tail the kube-apiserver audit log on control planes and
   dual-write it to Loki and the Tenzir detection node
 - **Deployment**: Grafana Alloy chart as a dedicated root DaemonSet (the
   audit file is root-only; the shared Alloy runs non-root)
-- **Details**: See [`kube-audit-tailer/README.md`](./kube-audit-tailer/README.md)
+- **Details**: See [`alloy/kube-audit/README.md`](./alloy/kube-audit/README.md)
 
 ### 13. **Tenzir** (`tenzir/`)
 
@@ -137,13 +139,13 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   `tenzir-node-tetragon` (tetragon flood isolate)
 - **Details**: See [`tenzir/README.md`](./tenzir/README.md)
 
-### 14. **tetragon-tailer** (`tetragon-tailer/`)
+### 14. **tetragon alloy** (`alloy/tetragon/`)
 
 - **Purpose**: Root DaemonSet that tails the tetragon agents' JSON export
   files (0600 root-owned, out of reach of the shared Alloy) and pushes them
-  as OTLP/HTTP logs to the Tenzir detection node; the pod-logs leg to Loki
+  as OTLP/HTTP logs to the Tenzir tetragon node; the pod-logs leg to Loki
   via the tetragon `export-stdout` sidecar is unchanged
-- **Details**: See [`tetragon-tailer/README.md`](./tetragon-tailer/README.md)
+- **Details**: See [`alloy/tetragon/README.md`](./alloy/tetragon/README.md)
 
 ## Architecture
 

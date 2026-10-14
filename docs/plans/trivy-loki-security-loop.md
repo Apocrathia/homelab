@@ -69,7 +69,7 @@ repeatable path from alert/query → `docs/issues/` remediations.
 ### Phase A — Loki query surface
 
 - [ ] Fix `loki.process "trivy_reports"` JSON expressions in
-      `flux/manifests/03-services/observability/alloy/configmap.yaml` to use
+      `flux/manifests/03-services/observability/alloy/logs/configmap.yaml` to use
       `operatorObject.kind`, `operatorObject.apiVersion`,
       `operatorObject.metadata.name`, `operatorObject.metadata.namespace`
       (and keep `Verb` / `verb` if that field remains PascalCase in payloads)

@@ -6,7 +6,7 @@ One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
 nothing else. Two pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml): tetragon-ingest-http (the
-OTLP listener for the tetragon-tailer) and tetragon-ocsf (the OCSF
+OTLP listener for the tetragon alloy) and tetragon-ocsf (the OCSF
 mapping into the lake). The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node.
 
@@ -25,7 +25,7 @@ later, drop the directive on the affected pipeline or scope it with
 
 ```mermaid
 flowchart LR
-    TT[tetragon-tailer] -->|"OTLP :4318"| AO[accept_otlp]
+    TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
     TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf.tetragon"]
     LAKE -->|"24h archive rule"| S3["rustfs parquet: s3://tenzir/tetragon/"]
@@ -41,7 +41,7 @@ in [`helmrelease.yaml`](./helmrelease.yaml).
 ```text
 CPU = max(2, ceil(
     69 / 250       # flood ingest ~69 GB/day raw: 800 ev/s (peak measured) * ~1,000 B (docs EDR range, assumed)
-    + 1 * 0.1      # 1 source: the tetragon-tailer OTLP stream (docs: 0.1 per source)
+    + 1 * 0.1      # 1 source: the tetragon alloy OTLP stream (docs: 0.1 per source)
     + 1 * 0.1      # 1 destination: rustfs S3 archive (docs: 0.1 per destination)
     + 1 * 0.2      # normalization on: OCSF fan-out (docs: 0.2 per source)
     + 0            # detection off
@@ -85,7 +85,7 @@ Tetragon flood (measured on-disk rate):
   3.9 GiB/day * 1 day ~ 3.9 GiB          # peak flood footprint: a fifth of the 18 GiB budget
 
 Tetragon steady state (assumed, post-filter):
-  3.9 GiB/day * 20% ~ 0.8 GiB/day        # the tailer drops the tcp_connect leg at the transport
+  3.9 GiB/day * 20% ~ 0.8 GiB/day        # the tetragon alloy drops the tcp_connect leg at the transport
   0.8 GiB/day * 1 day ~ 0.8 GiB          # steady-state peak footprint
 ```
 

@@ -93,7 +93,7 @@ spec:
             tetragon-ingest-http:
               name: tetragon ingest (otlp/http)
               description: |
-                OTLP/HTTP listener for the tetragon-tailer only. Parses tetragon
+                OTLP/HTTP listener for the tetragon alloy only. Parses tetragon
                 export events onto tetragon.raw; OTLP streams without a parser
                 are dropped.
               definition: |

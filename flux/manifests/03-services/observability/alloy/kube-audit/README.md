@@ -1,6 +1,6 @@
-# kube-audit-tailer
+# alloy-kube-audit
 
-> **Navigation**: [← Observability](../README.md) | [Tenzir](../tenzir/)
+> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../tenzir/)
 
 Dedicated Grafana Alloy DaemonSet that tails
 `/var/log/audit/kube/kube-apiserver.log` on every control plane and dual-writes
@@ -40,7 +40,7 @@ smallest root surface that can read the file.
 ## Talos audit policy
 
 The audit log only becomes useful after
-[`talos/patches/unified-patch.yaml`](../../../../../talos/patches/unified-patch.yaml)
+[`talos/patches/unified-patch.yaml`](../../../../../../talos/patches/unified-patch.yaml)
 sets `cluster.apiServer.auditPolicy` (Request level for exec/attach/
 port-forward/proxy, Metadata otherwise). Applying the machine config is an
 operator step.
@@ -56,6 +56,6 @@ operator step.
 ## Troubleshooting
 
 ```sh
-kubectl -n kube-audit-tailer-system get pods -o wide
-kubectl -n kube-audit-tailer-system logs daemonset/kube-audit-tailer-alloy -c alloy | grep -i error
+kubectl -n alloy-kube-audit-system get pods -o wide
+kubectl -n alloy-kube-audit-system logs daemonset/alloy-kube-audit -c alloy | grep -i error
 ```

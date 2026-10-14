@@ -1,11 +1,11 @@
-# tetragon-tailer
+# alloy-tetragon
 
-> **Navigation**: [← Observability](../README.md) | [Tenzir](../tenzir/) | [Tetragon](../../tetragon/)
+> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../tenzir/) | [Tetragon](../../../tetragon/)
 
 Dedicated Grafana Alloy DaemonSet that tails the tetragon agents' JSON
 export files (`/var/run/cilium/tetragon/tetragon.log` on every node) and
 pushes them as OTLP/HTTP logs to the dedicated Tenzir tetragon node
-(`accept_otlp` 4318). The tailer ships there (HelmRelease
+(`accept_otlp` 4318). The alloy ships there (HelmRelease
 `tenzir-node-tetragon`) so the export flood cannot OOM the core detection
 node.
 
@@ -16,10 +16,10 @@ node.
   `export-stdout` sidecar), so the chart offers no native push path
 - The export file is written `0600` root-owned on the host — out of reach
   of the shared Alloy DaemonSet (uid 10001)
-- This tailer runs as root with a read-only hostPath mount, all
+- This alloy runs as root with a read-only hostPath mount, all
   capabilities dropped, no privilege escalation, and no Service, ports, or
   cluster access — the same root surface the
-  [`kube-audit-tailer`](../kube-audit-tailer/) carries for the apiserver
+  [`kube-audit alloy`](../kube-audit/) carries for the apiserver
   audit log
 
 ## Configuration
@@ -43,13 +43,13 @@ node.
 
 The tenzir pipelines filter this stream on
 `resource.attributes["service.name"] == "tetragon-export"`
-([`homelab::tetragon::parse`](../tenzir/packages/homelab/operators/tetragon/parse.tql))
+([`homelab::tetragon::parse`](../../tenzir/packages/homelab/operators/tetragon/parse.tql))
 and map it to OCSF (Process / File / Network Activity) — see the
-[Tenzir README](../tenzir/).
+[Tenzir README](../../tenzir/).
 
 ## Troubleshooting
 
 ```sh
-kubectl -n tetragon-tailer-system get pods -o wide
-kubectl -n tetragon-tailer-system logs daemonset/tetragon-tailer-alloy -c alloy | grep -i error
+kubectl -n alloy-tetragon-system get pods -o wide
+kubectl -n alloy-tetragon-system logs daemonset/alloy-tetragon -c alloy | grep -i error
 ```
