@@ -11,6 +11,7 @@ resources:
   - secret.yaml
   - node-token.yaml
   - node-token-tetragon.yaml
+  - crossplane.yaml
   - core
   - tetragon
 
@@ -78,16 +79,16 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - map.tql=packages/homelab/operators/trivy/ocsf/map.tql
-  # Per-app authentik blueprint (gatus pattern): the k8s-sidecar in the
-  # authentik namespace discovers ConfigMaps labeled authentik_blueprint
-  # across all namespaces and syncs them into /blueprints/user.
-  - name: authentik-blueprint-tenzir
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (authentik.tf); the replacements
+  # fieldPath bracket-escapes it: data.[authentik.tf]. No authentik_blueprint
+  # label lands on this ConfigMap — the tofu lane replaced the blueprint
+  # sidecar pattern.
+  - name: tenzir-authentik-module
     namespace: tenzir-system
     files:
-      - tenzir-events-reader.yaml=authentik-blueprint.yaml
-    options:
-      labels:
-        authentik_blueprint: "true"
+      - authentik.tf
   - name: tenzir-sigma-own
     namespace: tenzir-system
     files:
@@ -112,3 +113,27 @@ configMapGenerator:
       - kubernetes_audit_serviceaccount_creation.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_serviceaccount_creation.yml
       - kubernetes_audit_sidecar_injection.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_sidecar_injection.yml
       - kubernetes_audit_unauthorized_unauthenticated_actions.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_unauthorized_unauthenticated_actions.yml
+
+replacements:
+  # Build-time stitch, chaos-mesh shape: copy the generated ConfigMap's
+  # authentik.tf data into the Workspace's module field. authentik.tf is
+  # the single source of truth for the HCL; the rendered module must stay
+  # byte-identical to it.
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch:
+  # delete would remove the source before this rule consumes it (verified
+  # on kustomize v5.8.1; no deletions-transformer builtin exists). The
+  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
+  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
+  # update it in place.
+  - source:
+      kind: ConfigMap
+      name: tenzir-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: tenzir-authentik
+        fieldPaths:
+          - spec.forProvider.module
