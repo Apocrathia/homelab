@@ -20,6 +20,45 @@ Both nodes register into one hosted Tenzir Platform workspace
 on the nodes; the events flowing through them never route through the
 platform.
 
+## Architecture
+
+A Tenzir node is a standalone process with TQL pipelines and its own
+node-local lake; listeners (`accept_otlp`, `accept_http`, `read_netflow`)
+feed pipelines that parse, normalize to OCSF, detect, and egress. The
+chart shows the shape both nodes share and the roles they split — core as
+the detection plane, tetragon as the flood isolate, so the export flood
+cannot starve detection; per-node wiring (ports, pipelines, sources)
+lives in each deployment's own connectivity chart:
+[core](./core/README.md), [tetragon](./tetragon/README.md).
+
+```mermaid
+flowchart LR
+    FEED[feeders] --> CL
+    FLOOD["tetragon export flood"] --> TL
+
+    subgraph CORE["core node — detection plane"]
+        CL["listeners"] --> CP["parse (homelab TQL package)"]
+        CP --> OC["normalize to OCSF"]
+        CP --> SG["sigma detection"]
+        OC --> CLK["node-local lake (24h hot window)"]
+        SG -->|"findings: the record"| CLK
+    end
+
+    subgraph TET["tetragon node — flood isolate (so the flood cannot starve detection)"]
+        TL["listeners"] --> TCP["parse (homelab TQL package)"]
+        TCP --> TOC["normalize to OCSF"]
+        TOC --> TLK["node-local lake (24h hot window)"]
+    end
+
+    SG -->|"CRITICAL doorbell"| DISC[Discord]
+    SG -->|"findings projection for triage"| LOKI["Loki (raw record)"]
+    CLK -->|"after 24h"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
+    TLK -->|"after 24h"| S3
+
+    CORE -.->|"one outbound WebSocket:<br/>control-plane only, events never route through it"| PLAT["Tenzir Platform workspace (app.tenzir.com)"]
+    TET -.->|"one outbound WebSocket"| PLAT
+```
+
 ## Secrets
 
 1Password item `tenzir-secrets` (`vaults/Secrets/items/tenzir-secrets`)

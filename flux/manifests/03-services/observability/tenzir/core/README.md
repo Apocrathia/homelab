@@ -26,9 +26,9 @@ values, ports).
 
 ```mermaid
 flowchart LR
-    KAT[kube-audit alloy] -->|"OTLP :4317/:4318"| AO[accept_otlp]
+    KAT[kube-audit alloy] -->|"OTLP :4318"| AO[accept_otlp]
     ALY["alloy OTLP fan-out"] -->|"OTLP :4318"| AO
-    FRW["fleet result webhook"] -->|"HTTP :8080"| AH[accept_http]
+    FRW["fleet result webhook"] -->|"HTTP :8080"| AH["http-ingest :8080<br/>(fleet + trivy push)"]
     TRR[trivy-report-reader] -->|"HTTP :8080"| AH
     AKE["authentik events API"] -->|"from_http cron 5m"| AR["authentik raw"]
     UE["UniFi exporters"] -->|"UDP :2055 via tenzir-ingest-lb"| NF[netflow]
