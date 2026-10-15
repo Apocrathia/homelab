@@ -35,7 +35,6 @@ spec:
     isDefault: false
     jsonData:
       # In-memory DuckDB; the S3 secret is created per-process by initSql.
-      path: ""
       maxOpenConns: 4
       # Layout contract (tenzir restructure): the archive is one class_uid
       # hive-partitioned dataset (s3://tenzir/ocsf/class_uid=<NNNN>/...); the
