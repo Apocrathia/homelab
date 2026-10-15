@@ -1,0 +1,37 @@
+---
+# ServiceAccount for the BackupVolume prune CronJob (see prune-cronjob.yaml)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: longhorn-backup-volume-prune
+  namespace: longhorn-system
+automountServiceAccountToken: true
+---
+# Least-privilege: list live volumes, list + delete orphan BackupVolumes.
+# Nothing else.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: longhorn-backup-volume-prune
+  namespace: longhorn-system
+rules:
+  - apiGroups: ["longhorn.io"]
+    resources: ["volumes"]
+    verbs: ["list"]
+  - apiGroups: ["longhorn.io"]
+    resources: ["backupvolumes"]
+    verbs: ["list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: longhorn-backup-volume-prune
+  namespace: longhorn-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: longhorn-backup-volume-prune
+subjects:
+  - kind: ServiceAccount
+    name: longhorn-backup-volume-prune
+    namespace: longhorn-system

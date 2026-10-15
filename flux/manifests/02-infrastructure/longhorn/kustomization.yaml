@@ -9,6 +9,8 @@ resources:
   - secret.yaml
   - helmrelease.yaml
   - recurringjobs.yaml
+  - prune-rbac.yaml
+  - prune-cronjob.yaml
   # - httproute.yaml
   - crossplane.yaml
 
@@ -16,6 +18,11 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
+  # Prune script mounted by longhorn-backup-volume-prune (prune-cronjob.yaml)
+  - name: backup-volume-prune
+    namespace: longhorn-system
+    files:
+      - backup-volume-prune.sh
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements

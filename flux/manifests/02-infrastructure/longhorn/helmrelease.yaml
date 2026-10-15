@@ -45,9 +45,23 @@ spec:
     keepHistory: false
   values:
     defaultBackupStore:
-      backupTarget: cifs://storage.services.apocrathia.com/Backup
+      # NAS rustfs (S3-compatible) — same box that served CIFS, S3 protocol.
+      # Longhorn URL syntax: s3://<bucket>@<region>/ (trailing slash
+      # required); the real endpoint rides in AWS_ENDPOINTS on the credential
+      # secret. See README.md ("CIFS -> S3 migration") for the tradeoff:
+      # CIFS-era backups become invisible in longhorn and stay on the NAS.
+      backupTarget: s3://longhorn@us-east-1/
       backupTargetCredentialSecret: longhorn-backup-target-secret
-      pollInterval: 300
+      # BackupVolume sync cadence (seconds). v1.13.0 syncs every BackupVolume
+      # against the target per pass (backup head + listing per volume). Under
+      # CIFS each probe did a full SMB mount/ls/umount subprocess chain and a
+      # pass over the whole CR set could not drain inside 300s, so the gate
+      # re-opened immediately and the sync loop livelocked — the dominant
+      # continuous longhorn-manager process churn (62-88% of node export bytes
+      # during the 2026-10 flood). 1800s gives each pass room to finish even
+      # if the CR set grows back; cron-driven backups are unaffected.
+      # See README.md ("Backup store sync livelock").
+      pollInterval: 1800
     defaultSettings:
       # Backup and restore settings
       restoreVolumeRecurringJobs: true

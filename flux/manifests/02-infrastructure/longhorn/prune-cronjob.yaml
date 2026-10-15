@@ -1,0 +1,87 @@
+---
+# Recurring prune of orphan BackupVolume CRs (backups of deleted volumes).
+# longhorn v1.13.0 never GCs them; each orphan costs the backup-target sync
+# loop a mount/ls/umount subprocess chain every pass. The job cross-checks
+# BackupVolume base names (strip "-<8 hex>") against live volumes and deletes
+# non-matching CRs — longhorn's deletion flow also removes the target-side
+# data, so orphans cannot regrow. Ships in dry-run; flip PRUNE_MODE to
+# "delete" in git to arm. Script + mechanics: backup-volume-prune.sh.
+# Policy: see README.md ("Orphan BackupVolume prune").
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: longhorn-backup-volume-prune
+  namespace: longhorn-system
+  annotations:
+    ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in prune-rbac.yaml"
+spec:
+  # 0400 America/Denver (1100/1000 UTC) — clear of the 0600-0900 UTC
+  # recurring-job window (snapshot-cleanup / backups / snapshot-delete)
+  schedule: "0 4 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          serviceAccountName: longhorn-backup-volume-prune
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: prune
+              # renovate: datasource=docker depName=docker.io/alpine/kubectl
+              # busybox sh needed by the prune script; registry.k8s.io/kubectl
+              # went distroless (no /bin/sh).
+              image: docker.io/alpine/kubectl:1.37.0@sha256:954b65dea0eb140219b440413ede17c2eca205866df350d3c1fbc84d28af14ae
+              command:
+                - /bin/sh
+                - /scripts/backup-volume-prune.sh
+              env:
+                # "delete" actually prunes; anything else = log-only dry-run
+                - name: PRUNE_MODE
+                  value: "dry-run"
+                # Orphans whose newest backup is younger than this are kept
+                # (post-mortem restore window; protects in-flight restores)
+                - name: PRUNE_GRACE_DAYS
+                  value: "14"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+              securityContext:
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: scripts
+              configMap:
+                name: backup-volume-prune
+                defaultMode: 0755
+            - name: tmp
+              emptyDir: {}
