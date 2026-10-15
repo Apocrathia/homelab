@@ -40,20 +40,20 @@ flowchart LR
         CL["listeners"] --> CP["parse (homelab TQL package)"]
         CP --> OC["normalize to OCSF"]
         CP --> SG["sigma detection"]
-        OC --> CLK["node-local lake (24h hot window)"]
+        OC --> CLK["node-local lake (15-minute hot window)"]
         SG -->|"findings: the record"| CLK
     end
 
     subgraph TET["tetragon node — flood isolate (so the flood cannot starve detection)"]
         TL["listeners"] --> TCP["parse (homelab TQL package)"]
         TCP --> TOC["normalize to OCSF"]
-        TOC --> TLK["node-local lake (24h hot window)"]
+        TOC --> TLK["node-local lake (15-minute hot window)"]
     end
 
     SG -->|"CRITICAL doorbell"| DISC[Discord]
     SG -->|"findings projection for triage"| LOKI["Loki (raw record)"]
-    CLK -->|"after 24h"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
-    TLK -->|"after 24h"| S3
+    CLK -->|"after 15 min"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
+    TLK -->|"after 15 min"| S3
 
     CORE -.->|"one outbound WebSocket:<br/>control-plane only, events never route through it"| PLAT["Tenzir Platform workspace (app.tenzir.com)"]
     TET -.->|"one outbound WebSocket"| PLAT
