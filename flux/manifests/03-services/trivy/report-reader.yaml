@@ -19,7 +19,7 @@ metadata:
     app.kubernetes.io/name: trivy-report-reader
 data:
   vuln-reports.tql: |
-    from_file "/mnt/data/trivy-operator/vulnerability_reports/**/*.json", watch=30s, {
+    from_file "/mnt/data/trivy-operator/vulnerability_reports/**/*.json", watch=30s, max_age=1h, {
       read_json
       report_kind = "vulnerability_report"
     }
@@ -30,7 +30,7 @@ data:
       }
     }
   secret-reports.tql: |
-    from_file "/mnt/data/trivy-operator/secret_reports/**/*.json", watch=30s, {
+    from_file "/mnt/data/trivy-operator/secret_reports/**/*.json", watch=30s, max_age=1h, {
       read_json arrays_of_objects=true
       report_kind = "secret_report"
     }
@@ -100,9 +100,9 @@ spec:
               cpu: 50m
               memory: 128Mi
             limits:
-              cpu: 250m
-              # OOMKill-looping at 256Mi while buffering vulnerability reports
-              memory: 512Mi
+              cpu: 500m
+              # 512Mi OOMKilled on 370-434Mi report-event spikes over a ~170Mi baseline (2026-10-15, 448 restarts); 1Gi headroom
+              memory: 1Gi
           volumeMounts:
             - name: report-storage
               mountPath: /mnt/data/trivy-operator
