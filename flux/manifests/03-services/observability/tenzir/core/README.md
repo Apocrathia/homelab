@@ -26,7 +26,7 @@ values, ports).
 
 ```mermaid
 flowchart LR
-    KAT[kube-audit alloy] -->|"OTLP :4317/:4318"| AO[accept_otlp]
+    KAT[kube-audit alloy] -->|"OTLP :4318"| AO[accept_otlp]
     ALY["alloy OTLP fan-out"] -->|"OTLP :4318"| AO
     FRW["fleet result webhook"] -->|"HTTP :8080"| AH[accept_http]
     TRR[trivy-report-reader] -->|"HTTP :8080"| AH
