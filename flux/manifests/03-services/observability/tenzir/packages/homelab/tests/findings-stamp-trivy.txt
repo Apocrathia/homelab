@@ -1,0 +1,65 @@
+warning: field `_object_ref` not found
+  --> operators/findings/stamp.tql:51:82
+   |
+51 |   drop _rule_id, _subject_key, _subject_kind, _subject_name, _subject_namespace, _object_ref
+   |                                                                                  ~~~~~~~~~~~
+   |
+  --> tests/findings-stamp-trivy.tql:4:1
+   |
+ 4 | homelab::findings::stamp
+   | ~~~~~~~~~~~~~~~~~~~~~~~~ called from here
+   |
+   = hint: append `?` to suppress this warning
+{
+  time: 2026-10-13T01:00:00Z,
+  class_uid: 2004,
+  category_uid: 2,
+  activity_id: 1,
+  type_uid: 200401,
+  status_id: 1,
+  severity_id: 4,
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "trivy",
+      vendor_name: "aqua",
+    },
+  },
+  finding_info: {
+    uid: "exposedsecretreport-64b7f9d5c7",
+    title: "trivy secrets: Pod/sketchy-app",
+  },
+  unmapped: {
+    workload: {
+      kind: "Pod",
+      name: "sketchy-app",
+      namespace: "apps",
+      container: "main",
+    },
+  },
+  uid: "exposedsecretreport-64b7f9d5c7-Pod/apps/sketchy-app",
+  rule_id: "exposedsecretreport-64b7f9d5c7",
+  subject_kind: "Pod",
+  subject_name: "sketchy-app",
+  subject_namespace: "apps",
+}
+{
+  time: 2026-10-13T01:05:00Z,
+  class_uid: 2002,
+  category_uid: 2,
+  activity_id: 2,
+  type_uid: 200202,
+  status_id: 1,
+  severity_id: 3,
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "trivy",
+      vendor_name: "aqua",
+    },
+  },
+  finding_info: {
+    uid: "vulnerabilityreport-abc123",
+    title: "trivy: Pod/web-app",
+  },
+}

@@ -1,4 +1,4 @@
 from_file env("TENZIR_INPUT") {
   read_json
 }
-homelab::findings::project "trivy"
+homelab::findings::stamp

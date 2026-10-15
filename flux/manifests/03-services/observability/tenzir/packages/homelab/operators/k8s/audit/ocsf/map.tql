@@ -1,6 +1,6 @@
-// k8s audit event -> OCSF API Activity (6003). Lineage: the Loki pivot
-// (stream selector + node + timestamp + auditID) is stamped into
-// `unmapped.loki` so a finding pivots to the exact raw Loki line.
+// k8s audit event -> OCSF API Activity (6003). The raw audit lines keep
+// flowing to Loki via the shared alloy fan-out; the pivot there is by
+// hand (label + time window), not stamped per event.
 class_uid = 6003
 category_uid = 6
 activity_id = 1 if verb in ["create"] else 2 if verb in ["get", "list", "watch"] else 3 if verb in ["update", "patch"] else 4 if verb in ["delete", "deletecollection"] else 0
@@ -24,9 +24,5 @@ unmapped = {
   user_groups: user?.groups,
   response_code: responseStatus?.code,
   request_object: requestObject,
-  loki: {
-    selector: f"source=\"kube-audit\",node=\"{node}\"",
-    timestamp: stageTimestamp,
-  },
 }
-drop stageTimestamp, kind, apiVersion, level, auditID, stage, requestURI, verb, user, sourceIPs, userAgent, objectRef, responseStatus, requestObject, requestReceivedTimestamp, node
+drop stageTimestamp, kind, apiVersion, level, auditID, stage, requestURI, verb, user, sourceIPs, userAgent, objectRef, responseStatus, requestObject, requestReceivedTimestamp

@@ -1,0 +1,65 @@
+---
+description: |
+  NetFlow v5/v9/IPFIX flow records -> OCSF Network Activity (4001,
+  Traffic). The read_netflow reader decodes IANA-standard information
+  elements; this map projects the common flow fields onto the OCSF
+  endpoints/traffic attributes and keeps the reader's metadata record
+  (exporter identity, template, sequence) as the unmapped residue. Template
+  fields the map does not name are dropped: the OCSF event stream replaces
+  the raw netflow.v9 record, which is no longer stored.
+args:
+  positional:
+    - name: input
+      description: The read_netflow flow record to read.
+      type: field
+    - name: ocsf
+      description: The OCSF event to build.
+      type: field
+---
+
+// Flow records only; the pipeline filters options records out before the
+// map runs. Every read is guarded: the v5 fixed record and each exporter's
+// v9/IPFIX template carry different field sets, and a missing template
+// field must yield null, not an error.
+$ocsf.metadata = {
+  version: "1.9.0",
+  product: {
+    name: "netflow",
+    vendor_name: "ubiquiti",
+  },
+}
+$ocsf.severity_id = 1
+$ocsf.category_uid = ocsf_category_uid("Network Activity")
+$ocsf.class_uid = ocsf_class_uid("Network Activity")
+$ocsf.activity_id = 6 // Traffic — a flow record is a traffic report
+
+$ocsf.time = ($input.flow_start?).otherwise($input.flow_start_seconds?).otherwise($input.flow_start_milliseconds?).otherwise($input.netflow?.export_time?)
+$ocsf.start_time = ($input.flow_start?).otherwise($input.flow_start_seconds?).otherwise($input.flow_start_milliseconds?)
+$ocsf.end_time = ($input.flow_end?).otherwise($input.flow_end_seconds?).otherwise($input.flow_end_milliseconds?)
+$ocsf.src_endpoint = {
+  ip: ($input.source_ipv4_address?).otherwise($input.source_ipv6_address?),
+  port: $input.source_transport_port?,
+  // OCSF interface_uid is a string; the reader yields interface indexes
+  // as ints, so the f-string cast keeps ocsf_cast warning-free.
+  interface_uid: (f"{$input.ingress_interface?}" if $input.ingress_interface? != null else null),
+}
+$ocsf.dst_endpoint = {
+  ip: ($input.destination_ipv4_address?).otherwise($input.destination_ipv6_address?),
+  port: $input.destination_transport_port?,
+  interface_uid: (f"{$input.egress_interface?}" if $input.egress_interface? != null else null),
+}
+$ocsf.traffic = {
+  bytes: $input.octet_delta_count?,
+  packets: $input.packet_delta_count?,
+}
+$ocsf.connection_info = {
+  protocol_num: $input.protocol_identifier?,
+}
+$ocsf.type_uid = $ocsf.class_uid * 100 + $ocsf.activity_id
+
+// The reader's metadata record is the provenance residue: exporter
+// identity, template id, sequence. The flow fields it carries stay mapped
+// above; everything else the template held is intentionally not kept.
+$ocsf.unmapped = {
+  netflow: $input.netflow?,
+}
