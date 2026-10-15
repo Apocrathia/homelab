@@ -40,20 +40,20 @@ flowchart LR
         CL["listeners"] --> CP["parse (homelab TQL package)"]
         CP --> OC["normalize to OCSF"]
         CP --> SG["sigma detection"]
-        OC --> CLK["node-local lake (24h hot window)"]
+        OC --> CLK["node-local lake (15-minute hot window)"]
         SG -->|"findings: the record"| CLK
     end
 
     subgraph TET["tetragon node — flood isolate (so the flood cannot starve detection)"]
         TL["listeners"] --> TCP["parse (homelab TQL package)"]
         TCP --> TOC["normalize to OCSF"]
-        TOC --> TLK["node-local lake (24h hot window)"]
+        TOC --> TLK["node-local lake (15-minute hot window)"]
     end
 
     SG -->|"CRITICAL doorbell"| DISC[Discord]
     SG -->|"findings projection for triage"| LOKI["Loki (raw record)"]
-    CLK -->|"after 24h"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
-    TLK -->|"after 24h"| S3
+    CLK -->|"after 15 min"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
+    TLK -->|"after 15 min"| S3
 
     CORE -.->|"one outbound WebSocket:<br/>control-plane only, events never route through it"| PLAT["Tenzir Platform workspace (app.tenzir.com)"]
     TET -.->|"one outbound WebSocket"| PLAT
@@ -103,6 +103,8 @@ All baselines must stay warning-free.
 
 ## Storage lifecycle
 
-The local lakes keep 24 hours; everything older archives to rustfs
-parquet under `s3://tenzir/` and expires locally. The parquet is the
-record: query it back with `from_s3`. Detail lives in the node READMEs.
+The local lakes keep 15 minutes; everything older archives to rustfs
+parquet under `s3://tenzir/` and expires locally. The lake is a transit
+buffer between ingest and the archive, not a query surface; the parquet
+is the record: query it back with `from_s3`. Detail lives in the node
+READMEs.

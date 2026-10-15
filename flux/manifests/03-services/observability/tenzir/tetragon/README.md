@@ -28,7 +28,7 @@ flowchart LR
     TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
     TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf.tetragon"]
-    LAKE -->|"24h archive rule"| S3["rustfs parquet: s3://tenzir/tetragon/"]
+    LAKE -->|"15m archive rule"| S3["rustfs parquet: s3://tenzir/tetragon/"]
     TP["tetragon pods"] -.->|"export-stdout sidecar, raw JSON, independent of this node"| LOKI[Loki]
 ```
 
@@ -49,13 +49,13 @@ CPU = max(2, ceil(
 ```
 
 ```text
-Storage = 69 * 30 * (1/30) / 10 / 1000   # flood GB/day * days/mo * months (1 day = 1/30 mo) / Zstd 10x / GB to TB
-        = 0.0069 TB by formula
+Storage = 69 * 30 * (1/2880) / 10 / 1000 # flood GB/day * days/mo * months (15 min = 1/2880 mo) / Zstd 10x / GB to TB
+        = 0.0000719 TB by formula
 ```
 
 ```text
 RAM = max(2,
-    0.0069 * 2     # catalog term: 2 GB per TB retained (docs); ~0 at a 24h window
+    0.0000719 * 2  # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 2 * 0.1      # sources (1) + destinations (1)
     + 0            # no detection, no enrichment
 ) = 2 GB
@@ -69,12 +69,15 @@ floods.
 
 ## Retention
 
-Same 24-hour horizon as the core node: the tetragon OCSF types archive
-to `s3://tenzir/tetragon/` as parquet at `after: 1 day` and then expire
-locally (archive-then-expire; `preserve-input` off). The parquet is the
-OCSF record past the window. Loki keeps the raw JSON stream via the
-tetragon pods' export-stdout sidecar, but raw JSON is not
-OCSF-queryable; replay the record with `from_s3`.
+Same 15-minute horizon as the core node: the tetragon OCSF types archive
+to `s3://tenzir/tetragon/` as parquet at `after: 15 minutes` and then
+expire locally (archive-then-expire; `preserve-input` off). The lake is
+a transit buffer between ingest and the archive, not a query surface.
+The parquet is the OCSF record past the window; the compaction pass
+runs every 5 minutes, so the true window at pass boundaries is 15-20
+minutes. Loki keeps the raw JSON stream via the tetragon pods'
+export-stdout sidecar, but raw JSON is not OCSF-queryable; replay the
+record with `from_s3`.
 
 Horizon math (flood rate measured 2026-10-12; steady state assumed):
 
@@ -82,11 +85,15 @@ Horizon math (flood rate measured 2026-10-12; steady state assumed):
 Tetragon flood (measured on-disk rate):
   6.25 GiB / 2 days = 80% of volume      # 50,747 process_activity partitions (measured)
   ~ 7.8 GiB / 2 days ~ 3.9 GiB/day total   # full-volume rate implied by the 80% share (measured)
-  3.9 GiB/day * 1 day ~ 3.9 GiB          # peak flood footprint: a fifth of the 18 GiB budget
+  3.9 GiB/day / 96 ~ 42 MiB              # 15-minute flood window: ~0.2% of the 18 GiB budget
+
+Tetragon worst case (transit-buffer bound, operator-measured drain):
+  253 GB/day / 96 ~ 2.6 GB raw           # the lake holds one window at worst-case flood rate:
+                                         # a 15-minute buffer a 12Gi node can never OOM on again
 
 Tetragon steady state (assumed, post-filter):
   3.9 GiB/day * 20% ~ 0.8 GiB/day        # the tetragon alloy drops the tcp_connect leg at the transport
-  0.8 GiB/day * 1 day ~ 0.8 GiB          # steady-state peak footprint
+  0.8 GiB/day / 96 ~ 9 MiB               # steady-state 15-minute peak footprint
 ```
 
 The disk budgets (18 GiB high / 16 GiB low) are the backstop for

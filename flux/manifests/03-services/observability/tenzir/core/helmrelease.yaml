@@ -61,9 +61,9 @@ spec:
             protocol: UDP
 
     persistence:
-      # 20Gi stays a cap, not a capacity plan: at the 24h retention horizon
-      # the core lake peaks near 100 MB (sizing math in core/README.md), so
-      # the PVC buys headroom for archive-rule failure windows and future
+      # 20Gi stays a cap, not a capacity plan: at the 15-minute retention
+      # horizon the core lake peaks near 1 MB (sizing math in core/README.md),
+      # so the PVC buys headroom for archive-rule failure windows and future
       # horizon changes. Longhorn volumes grow on demand; a smaller request
       # buys nothing.
       size: 20Gi
@@ -80,8 +80,8 @@ spec:
           # "once reached, Tenzir considers the partition as complete,
           # regardless of the number of records" — the core feeds are
           # low-volume and timeout-capped, so the 60s timeout bounds the
-          # partition count the 24h window mints. max-partition-size stays
-          # at its 4Mi default: the record cap never binds on a
+          # partition count the 15-minute window mints. max-partition-size
+          # stays at its 4Mi default: the record cap never binds on a
           # timeout-capped stream.
           active-partition-timeout: 60s
           # Catalog load knobs (docs, tune-performance: the catalog "keeps
@@ -99,9 +99,9 @@ spec:
             load-concurrency: 4
           start:
             # Hard quota on the 20Gi PVC, belt-and-braces alongside
-            # plugins.compaction.space below: at the 24h horizon it never
-            # binds — it exists for archive-rule failure windows and any
-            # future horizon change.
+            # plugins.compaction.space below: at the 15-minute horizon it
+            # never binds — it exists for archive-rule failure windows and
+            # any future horizon change.
             disk-budget-high: 18GiB
             disk-budget-low: 16GiB
           pipelines:
@@ -150,7 +150,7 @@ spec:
                 persist in the node lake as immutable OCSF Detection Finding
                 (2004) records via the import fork — the record store half of
                 the two-store findings contract; the findings archive rule
-                exports them to rustfs after the 24h horizon.
+                exports them to rustfs after the 15-minute horizon.
               definition: |
                 subscribe "k8s-audit.raw"
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="direct", refresh_interval=30s
@@ -323,27 +323,30 @@ spec:
             # spatial-compaction path (weighted-age; default weight 1 =
             # oldest events first, and with no pipeline the plugin deletes
             # matching events): every 30 minutes, erase oldest past 18GiB
-            # down to 16GiB. At the 24h horizon this never binds — it
+            # down to 16GiB. At the 15-minute horizon this never binds — it
             # catches archive-rule failure windows and anything unruly
-            # (netflow has no archive rule yet; its stored schema name is
-            # unconfirmed, so it rides this backstop at ~330 MB/month).
+            # (a stored type without a time rule rides this backstop;
+            # every known stored type has a time rule as of 2026-10-15).
             space:
               mode: weighted-age
               interval: 30 minutes
               disk-budget-high: 18GiB
               disk-budget-low: 16GiB
-            # 24-hour local lake: every stored type archives to the rustfs
+            # 15-minute local lake: every stored type archives to the rustfs
             # `tenzir` bucket as parquet and expires locally. A compaction
             # rule consumes its input, and a sink-only pipeline returns no
             # transformed events, so consume + export = archive-then-delete
             # (preserve-input stays off: keeping the local copy would
-            # defeat the 24h expiry). The parquet is the record — the local
-            # lake is the hot window, and from_s3 replays the history.
+            # defeat the 15-minute expiry). The lake is a transit buffer
+            # between ingest and the archive, not a query surface: the
+            # parquet is the record past the window, and from_s3 replays
+            # the history. The pass runs every 5 minutes, so the true
+            # window at pass boundaries is 15-20 minutes.
             time:
-              interval: 1 day
+              interval: 5 minutes
               rules:
                 # OCSF API Activity from the k8s-audit map.
-                - after: 1 day
+                - after: 15 minutes
                   name: k8s-audit-archive
                   field: time
                   types: ["ocsf.api_activity"]
@@ -354,7 +357,7 @@ spec:
                 # Sigma Detection Findings (2004); the type also catches
                 # trivy ExposedSecretReport findings, so those ride this
                 # prefix.
-                - after: 1 day
+                - after: 15 minutes
                   name: findings-archive
                   field: time
                   types: ["ocsf.detection_finding"]
@@ -363,7 +366,7 @@ spec:
                       write_parquet
                     }
                 # authentik map classes: Authentication / Account Change.
-                - after: 1 day
+                - after: 15 minutes
                   name: authentik-archive
                   field: time
                   types: ["ocsf.authentication", "ocsf.account_change"]
@@ -374,7 +377,7 @@ spec:
                 # Fallback prefix, named for the type: fleet rows map to
                 # Base Event and authentik's every-other-action arm lands
                 # here too — two sources share ocsf.base_event.
-                - after: 1 day
+                - after: 15 minutes
                   name: base-event-archive
                   field: time
                   types: ["ocsf.base_event"]
@@ -383,7 +386,7 @@ spec:
                       write_parquet
                     }
                 # trivy VulnerabilityReport findings.
-                - after: 1 day
+                - after: 15 minutes
                   name: trivy-archive
                   field: time
                   types: ["ocsf.vulnerability_finding"]
@@ -391,13 +394,31 @@ spec:
                     to_s3 "s3://tenzir/trivy/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
                       write_parquet
                     }
+                # NetFlow v9 from the UniFi exporters. Stored schema name
+                # live-confirmed on the running core node (2026-10-15,
+                # read-only catalog query: netflow.v9, ~255k events in
+                # ~163 partitions) — the deferred-at-reshape rule, landed.
+                # Event time is the datagram export_time, nested in the
+                # reader's netflow record: the rule must spell its
+                # qualified path netflow.export_time (live-probed 2026-10-15:
+                # the bare leaf matches 0 events, the dotted path
+                # resolves). The flow records carry no OCSF-style time
+                # field.
+                - after: 15 minutes
+                  name: netflow-archive
+                  field: netflow.export_time
+                  types: ["netflow.v9"]
+                  pipeline: |
+                    to_s3 "s3://tenzir/netflow/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      write_parquet
+                    }
 
     # Sized by the docs' formula for this node's shape (full math in
     # core/README.md): detection (+1), normalization on 5 sources (+1.0),
     # sources+destinations (+0.8) -> ceil(2.8) = 3 cores; the formula's
-    # memory floor is 2 GB at the 24h horizon, and 4Gi doubles it as burst
-    # and import-buffer headroom (ingest spikes, the daily archive and
-    # compaction cycles, max-buffered-events import ceilings). Requests
+    # memory floor is 2 GB at the 15-minute horizon, and 4Gi doubles it as
+    # burst and import-buffer headroom (ingest spikes, the 5-minute archive
+    # and compaction cadence, max-buffered-events import ceilings). Requests
     # stay small: talos-04 CPU requests are 92% committed, and limits are
     # caps, not reservations.
     resources:

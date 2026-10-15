@@ -43,7 +43,7 @@ flowchart LR
     TRR --> MAP
     NF --> LAKE["node lake"]
     MAP --> LAKE
-    LAKE -->|"24h archive rules"| S3["rustfs parquet: s3://tenzir/ ocsf, findings, authentik, base-event, trivy"]
+    LAKE -->|"15m archive rules"| S3["rustfs parquet: s3://tenzir/ ocsf, findings, authentik, base-event, trivy, netflow"]
 ```
 
 ## Sizing
@@ -63,17 +63,17 @@ CPU = max(2, ceil(
 ```
 
 ```text
-Storage = 1 * 30 * (1/30) / 10 / 1000   # ingest GB/day * days/mo * months (1 day = 1/30 mo) / Zstd 10x / GB to TB
-        = 0.0001 TB (~100 MB for the full 24h window)
+Storage = 1 * 30 * (1/2880) / 10 / 1000  # ingest GB/day * days/mo * months (15 min = 1/2880 mo) / Zstd 10x / GB to TB
+        = 0.000001 TB (~1 MB for the full 15-minute window)
 ```
 
 ```text
 RAM = max(2,
-    0.0001 * 2     # catalog term: 2 GB per TB retained (docs); ~0 at a 24h window
+    0.000001 * 2   # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 8 * 0.1      # sources (5) + destinations (3)
     + 0            # enrichment off (no context operators)
     + 1            # detection state (docs: +1)
-) = max(2, 1.803) = 2 GB
+) = max(2, 1.800002) = 2 GB
 ```
 
 The memory limit doubles the 2 GB floor as burst and import-buffer
@@ -82,14 +82,22 @@ recovery and adjust in the manifest, not here.
 
 ## Retention
 
-24-hour local horizon; the rustfs parquet archive is the record. Every
-stored OCSF type has an archive rule at `after: 1 day` in
+15-minute local horizon; the rustfs parquet archive is the record. Every
+stored type has an archive rule at `after: 15 minutes` in
 [`helmrelease.yaml`](./helmrelease.yaml): the rule exports the events as
 parquet to its `s3://tenzir/<prefix>/` and consumes the originals
-(archive-then-expire; `preserve-input` stays off). NetFlow has no archive
-rule yet because its stored schema name is unconfirmed, so it rides the
-weighted-age disk-budget backstop at ~330 MB/month until the schema is
-confirmed and the rule lands.
+(archive-then-expire; `preserve-input` stays off). NetFlow's stored
+schema is `netflow.v9`, live-confirmed on the running node (2026-10-15,
+read-only catalog query). The reader nests the datagram time under the
+`netflow` record, so the rule spells its qualified path
+`field: netflow.export_time` (live-probed: the bare leaf matches 0
+events, the dotted path resolves). The flow records carry no OCSF-style
+`time` field. The compaction pass runs every 5 minutes, so the true
+window at pass boundaries is 15-20 minutes.
+
+The lake is a transit buffer between ingest and the archive, not a query
+surface: it is sized to hold one window at worst-case flood rate, and the
+parquet plus `from_s3` is the queryable history.
 
 Horizon math, same inputs as the sizing block:
 
@@ -97,8 +105,8 @@ Horizon math, same inputs as the sizing block:
 Core (assumed ~1 GB/day raw ingest):
   1 GB/day raw / 10                # Zstd ~10x reduction (docs default)
   ~ 100 MB/day on disk             # on-disk rate after the reduction above
-  100 MB/day * 1 day               # 24h horizon
-  ~ 100 MB peak local footprint    # vs the 18 GiB disk budget: never binds
+  100 MB/day / 96                  # 15-minute horizon (96 windows per day)
+  ~ 1 MB peak local footprint      # vs the 18 GiB disk budget: never binds
 ```
 
 The disk budgets (18 GiB high / 16 GiB low) are the backstop for
