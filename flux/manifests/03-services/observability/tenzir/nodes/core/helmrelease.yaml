@@ -297,12 +297,12 @@ spec:
                     value=ingress.events,
                     timestamp=timestamp,
                     labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
-                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
-                    name="tenzir_pipeline_egress_events",
-                    value=egress.events,
-                    timestamp=timestamp,
-                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
                 }
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_pipeline_egress_events",
+                  value=egress.events,
+                  timestamp=timestamp,
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
               restart-on-error: 1 minute
             sigma-metrics-to-mimir:
               name: sigma metrics to mimir
@@ -318,10 +318,10 @@ spec:
                   to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
                     name="tenzir_sigma_rule_evaluations",
                     value=rule_evaluations
-                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
-                    name="tenzir_sigma_matches",
-                    value=matches
                 }
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_sigma_matches",
+                  value=matches
               restart-on-error: 1 minute
             error-diagnostics-to-mimir:
               name: error diagnostics to mimir
