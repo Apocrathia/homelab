@@ -21,6 +21,6 @@ flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webu
 # (Same rationale as the webui exemption above.)
 flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
 
-# Vendored YARA rules: byte-identical copies from the third-party/signature-base
+# Vendored YARA rules: byte-identical copies from the third-party/yara-signature-base
 # submodule at the pinned gitlink — same re-copy discipline as the sigma rules.
 flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**

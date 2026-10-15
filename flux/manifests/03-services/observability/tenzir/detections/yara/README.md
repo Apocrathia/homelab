@@ -6,7 +6,7 @@ source (a file ingest, an image-layer scanner, a captured-payload feed)
 and none of those pipelines exist yet.
 
 - [`signature-base/`](./signature-base/) holds a small, byte-identical
-  vendored subset of the [`third-party/signature-base`](../../../../../third-party/signature-base/)
+  vendored subset of the [`third-party/yara-signature-base`](../../../../../../../third-party/yara-signature-base/)
   submodule (Neo23x0 signature-base; pinned gitlink and Renovate bump
   channel, same mechanics as the SigmaHQ setup). Re-copy the subset on
   submodule bumps; never reformat. The `.prettierignore` and `.yamllint`
