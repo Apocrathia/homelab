@@ -208,7 +208,7 @@ Restarts engines for degraded volumes to force Longhorn reconciliation. This hel
 
 ### `apply-backup-tier-labels.sh`
 
-Applies the backup-tier group labels (`recurring-job-group.longhorn.io/<tier>=enabled` — critical / stateful / cache) to all live volumes per the embedded classification, and removes the auto-applied `default` group label so tier volumes stop riding the daily catch-all. Idempotent; reports live volumes missing from the classification. Tier policy + per-volume rationale: [`flux/manifests/02-infrastructure/longhorn/README.md`](../../flux/manifests/02-infrastructure/longhorn/README.md). That script's tier lists are the source of truth — add new volumes there, then re-run.
+Applies the backup-tier group labels (`recurring-job-group.longhorn.io/<tier>=enabled` — critical / stateful / cache) to all live volumes per the embedded classification, and removes the auto-applied `default` group label so tier volumes stop riding the catch-all backup job. Idempotent; reports live volumes missing from the classification. Tier policy and rationale: [`flux/manifests/02-infrastructure/longhorn/README.md`](../../flux/manifests/02-infrastructure/longhorn/README.md). The tier lists embedded in this script are the source of truth — add new volumes here, then re-run.
 
 **Usage:**
 
