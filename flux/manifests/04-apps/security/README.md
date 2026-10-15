@@ -46,6 +46,50 @@ API HTTPRoutes, hostnames under `security.gateway.services.apocrathia.com` are
 reserved but app routes follow the `<app>.gateway.services.apocrathia.com`
 convention.
 
+## Threat-intel flow
+
+```mermaid
+flowchart LR
+    subgraph inbound[Inbound]
+        FEEDS["Community TAXII / STIX feeds"]
+        CANARY["OpenCanary honeypot alerts"]
+        MISPFEEDS["Curated MISP feeds"]
+    end
+
+    subgraph security[security apps]
+        MISP["MISP
+(threat sharing, REST)"]
+        OCTI["OpenCTI
+(STIX knowledge graph)"]
+        OTAXII["OpenTAXII
+(staging hub, CNPG)"]
+    end
+
+    subgraph consume[Consumers]
+        TENZIR["Tenzir funnel (SIEM)"]
+        PARTNERS["TAXII consumers / partners"]
+        OPS["Operator - authentik SSO"]
+    end
+
+    MISPFEEDS --> MISP
+    MISP -->|"external-import connector (REST, 5m poll)"| OCTI
+    FEEDS --> OTAXII
+    CANARY -->|"triage -> STIX push"| OTAXII
+    OTAXII -->|"TAXII2 import connector"| OCTI
+
+    OCTI -->|"embedded TAXII 2.1 / live streams"| TENZIR
+    OCTI -->|"embedded TAXII 2.1 / CSV feeds"| PARTNERS
+    OPS -.->|gateway URLs| MISP
+    OPS -.->|gateway URLs| OCTI
+
+```
+
+Normalization is the graph: MISP events and external STIX both land in
+OpenCTI, which is the single source of TAXII 2.1 for downstream consumers.
+OpenTAXII is the on-ramp for anything that speaks STIX but is neither MISP
+nor OpenCTI. OpenCanary alerts flow Loki-side for now; the STIX push path
+is aspirational until a triage script exists.
+
 ## References
 
 - **[MISP](https://www.misp-project.org/)** - Threat sharing platform
