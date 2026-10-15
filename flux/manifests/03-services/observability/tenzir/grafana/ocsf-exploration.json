@@ -55,7 +55,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  class_uid::VARCHAR AS metric,\n  count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
@@ -111,7 +111,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT CASE severity_id\n         WHEN 0 THEN '0 Unknown'\n         WHEN 1 THEN '1 Informational'\n         WHEN 2 THEN '2 Low'\n         WHEN 3 THEN '3 Medium'\n         WHEN 4 THEN '4 High'\n         WHEN 5 THEN '5 Critical'\n         WHEN 6 THEN '6 Fatal'\n         ELSE '99 Other'\n       END AS severity,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
@@ -167,7 +167,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT class_uid::VARCHAR AS class,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC",
           "refId": "A"
@@ -219,7 +219,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT actor.user.name AS actor,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
@@ -275,7 +275,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT api.operation AS operation,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 15",
           "refId": "A"
@@ -318,7 +318,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT unmapped.object_ref.resource AS resource,\n       unmapped.object_ref.namespace AS namespace,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
           "refId": "A"
@@ -373,7 +373,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE status_id WHEN 1 THEN 'success' WHEN 2 THEN 'failure' ELSE 'unknown' END AS status,\n  count(*) AS logins\nFROM ocsf\nWHERE class_uid = 3002\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
@@ -416,7 +416,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT time,\n       unmapped.action AS action,\n       actor.user.name AS actor,\n       src_endpoint.ip AS source_ip\nFROM ocsf\nWHERE class_uid = 3001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
@@ -471,7 +471,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE activity_id WHEN 1 THEN 'launch' WHEN 2 THEN 'terminate' ELSE 'other' END AS activity,\n  count(*) AS events\nFROM ocsf\nWHERE class_uid = 1007\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
@@ -523,7 +523,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT process.path AS binary,\n       count(*) AS launches\nFROM ocsf\nWHERE class_uid = 1007\n  AND activity_id = 1\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
@@ -566,7 +566,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT time,\n       file.path AS file,\n       file.xattributes.permission AS permission,\n       actor.process.path AS actor_binary,\n       actor.process.container.name AS actor_container,\n       unmapped.pod.name AS pod,\n       unmapped.pod.namespace AS pod_namespace,\n       device.hostname AS node\nFROM ocsf\nWHERE class_uid = 1001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
@@ -609,7 +609,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT dst_endpoint.ip AS destination,\n       CASE WHEN unmapped.policy_name IS NOT NULL THEN 'tetragon' ELSE 'netflow' END AS source,\n       count(*) AS flows,\n       sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
           "refId": "A"
@@ -664,7 +664,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND traffic IS NOT NULL\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
           "refId": "A"
@@ -707,7 +707,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT u.cve.uid AS cve,\n       u.severity AS severity,\n       u.title AS description,\n       u.affected_packages[1].name AS package,\n       u.affected_packages[1].fixed_in_version AS fixed_in,\n       unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       time AS seen\nFROM ocsf\nCROSS JOIN unnest(vulnerabilities) AS t(u)\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY seen DESC\nLIMIT 20",
           "refId": "A"
@@ -750,7 +750,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT time AS last_scan,\n       unmapped.workload.kind || '/' || unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       unmapped.workload.container AS container,\n       severity_id,\n       unmapped.summary.criticalCount AS critical,\n       unmapped.summary.highCount AS high,\n       unmapped.summary.mediumCount AS medium,\n       unmapped.summary.lowCount AS low\nFROM ocsf\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
