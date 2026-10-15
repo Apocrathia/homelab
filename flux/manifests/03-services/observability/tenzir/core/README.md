@@ -88,9 +88,12 @@ stored type has an archive rule at `after: 15 minutes` in
 parquet to its `s3://tenzir/<prefix>/` and consumes the originals
 (archive-then-expire; `preserve-input` stays off). NetFlow's stored
 schema is `netflow.v9`, live-confirmed on the running node (2026-10-15,
-read-only catalog query), so it archives with `field: export_time` — the
-flow records carry no OCSF-style `time` field. The compaction pass runs
-every 5 minutes, so the true window at pass boundaries is 15-20 minutes.
+read-only catalog query). The reader nests the datagram time under the
+`netflow` record, so the rule spells its qualified path
+`field: netflow.export_time` (live-probed: the bare leaf matches 0
+events, the dotted path resolves). The flow records carry no OCSF-style
+`time` field. The compaction pass runs every 5 minutes, so the true
+window at pass boundaries is 15-20 minutes.
 
 The lake is a transit buffer between ingest and the archive, not a query
 surface: it is sized to hold one window at worst-case flood rate, and the
