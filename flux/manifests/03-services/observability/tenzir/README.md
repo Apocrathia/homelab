@@ -1,19 +1,15 @@
 # Tenzir
 
-> **Navigation**: [← Observability](../README.md) | [Core node](./core/README.md) | [Tetragon node](./tetragon/README.md) | [SIEM plan](../../../../../docs/plans/siem-on-lgtm.md) | [Upstream docs](https://tenzir.com/docs/)
-
-The SIEM plan document ships separately from this tree; the link resolves
-once it lands on main.
+> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Detections](./detections/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 Two standalone Tenzir nodes in namespace `tenzir-system`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
-pipelines. The [core node](./core/README.md) is the detection plane: it
-normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
-feeds to OCSF, runs sigma rules over the audit stream, and owns the
-findings egress (Discord for CRITICAL, Loki projection for triage,
-rustfs parquet as the record). The [tetragon
-node](./tetragon/README.md) owns only the tetragon export flood, so its
-CPU and memory behavior cannot starve detection.
+pipelines. The [core node](./nodes/core/README.md) is the detection plane:
+it normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
+feeds to a unified OCSF bus, runs one sigma pass over it, and owns the
+archive. The [tetragon node](./nodes/tetragon/README.md) owns only the
+tetragon export flood, so its CPU and memory behavior cannot starve
+detection.
 
 Both nodes register into one hosted Tenzir Platform workspace
 (app.tenzir.com) over a single outbound WebSocket. Pipelines run entirely
@@ -22,18 +18,13 @@ platform.
 
 ## Architecture
 
-A Tenzir node is a standalone process with TQL pipelines and its own
-node-local lake. The pattern: sources push into a listener; pipelines
-parse them to raw topics, then normalize to OCSF and run sigma; findings
-egress as a CRITICAL alert to Discord and a Loki projection for triage
-(findings only — raw events never go to Loki). Past the hot window,
-everything archives to rustfs parquet, which is the single record; the
-archive is hunted with SQL. One node runs per role — core is the
-detection plane, tetragon is the flood isolate — and each node registers
-to the hosted Tenzir Platform over a single outbound WebSocket that
-never carries events. Actual wiring (ports, pipelines, sources) lives in
-each deployment's own chart: [core](./core/README.md),
-[tetragon](./tetragon/README.md).
+Three planes: live detection runs in-node (feeds publish OCSF events onto
+the bus, sigma evaluates them as they arrive); findings and events live in
+the one OCSF dataset at `s3://tenzir/ocsf/`, class-partitioned parquet on
+rustfs; querying and alerting live in Grafana over MotherDuck, which reads
+the parquet directly. Grafana owns notifications; there is no other
+findings egress. The class taxonomy and the bus semantics live in
+[`detections/README.md`](./detections/README.md).
 
 ```mermaid
 flowchart LR
@@ -42,21 +33,19 @@ flowchart LR
     subgraph NODE["tenzir node — one per role"]
         IN --> PARSE["parse (homelab TQL package)"]
         PARSE --> OCSF["normalize to OCSF"]
-        OCSF --> SIGMA["sigma detection"]
-        OCSF --> LAKE["node lake (hot window)"]
-        SIGMA -->|"findings"| LAKE
+        OCSF --> BUS["ocsf topic (the bus)"]
+        BUS --> SIGMA["sigma detection"]
+        SIGMA -->|"findings"| LAKE["node lake (15-minute hot window)"]
+        OCSF --> LAKE
     end
 
-    SIGMA -->|"CRITICAL"| DISC[Discord]
-    SIGMA -->|"triage projection"| LOKI["Loki (findings only)"]
-    LAKE -->|"past the window"| RUST["rustfs parquet — the record"]
+    LAKE -->|"after 15 min"| RUST["rustfs parquet · s3://tenzir/ocsf/<br/>class_uid-partitioned"]
+    RUST -.->|"reads"| GRAF["Grafana over MotherDuck<br/>(querying + alerting)"]
     NODE -.-> PLAT["Tenzir Platform"]
 ```
 
-The chart shows the pattern the cluster is moving to: sigma evaluates
-the OCSF-normalized events. The detection restructure MR (in flight)
-lands this shape — today the deployed sigma still matches against the
-raw audit stream.
+The chart is the whole topology: feeders, the bus, sigma, the lake, the
+archive, and the Grafana query plane. Nothing else consumes findings.
 
 ## Secrets
 
@@ -68,7 +57,8 @@ and the rendered Secret keys match them:
   user for the `tenzir` bucket (see the [rustfs bucket/user creation
   doc](../../../../../docs/infrastructure/rustfs-bucket-user-creation.md);
   bucket and user creation is an operator step)
-- `discord-webhook-url`: webhook bound to the Discord security channel
+- `discord-webhook-url`: unused by the manifests; the vault field stays
+  for the operator's off-repo use
 - `authentik-events-token`: the ak-tenzir events pull token, minted by
   the tofu pair ([`crossplane.yaml`](./crossplane.yaml) +
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
@@ -78,16 +68,16 @@ and the rendered Secret keys match them:
 
 ## Content
 
-| Path                              | Purpose                                                                                                                                            |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/homelab/`               | TQL mapping package (`homelab`): OTLP parse, OCSF maps, Discord embed formatting, findings projection, with tests                                  |
-| `sigma/sigmahq/kubernetes-audit/` | Vendored subset of the SigmaHQ `kubernetes/audit` rules, re-copied from the [`third-party/sigmahq`](../../../../../third-party/sigmahq/) submodule |
-| `sigma/homelab/`                  | Homelab starter rules                                                                                                                              |
+| Path                | Purpose                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `packages/homelab/` | TQL mapping package (`homelab`): OTLP parse, OCSF maps, the findings uid stamp, with tests                         |
+| `detections/sigma/` | Sigma rules evaluated over the bus: homelab starters (OCSF field paths) + vendored SigmaHQ kubernetes-audit corpus |
+| `detections/yara/`  | YARA scaffold: pinned signature-base submodule plus a vendored subset; no consumer pipeline yet                    |
 
 Everything ships as ConfigMaps (`configMapGenerator` in
 [`kustomization.yaml`](./kustomization.yaml)) and mounts read-only into
 the nodes' pods. Sigma hot-reloads rule files; mapping-package changes
-also need a pod restart.
+need a pod restart.
 
 ### Running the package tests
 
@@ -102,8 +92,15 @@ All baselines must stay warning-free.
 
 ## Storage lifecycle
 
-The local lakes keep 15 minutes; everything older archives to rustfs
-parquet under `s3://tenzir/` and expires locally. The lake is a transit
+The local lakes keep 15 minutes; every OCSF class that can name itself
+archives to the one rustfs dataset at `s3://tenzir/ocsf/` as
+class-partitioned parquet and expires locally. The lake is a transit
 buffer between ingest and the archive, not a query surface; the parquet
-is the record: query it back with `from_s3`. Detail lives in the node
-READMEs.
+is the record. DuckDB and MotherDuck read it as one table:
+
+```sql
+read_parquet('s3://tenzir/ocsf/**/*.parquet', hive_partitioning = true,
+             union_by_name = true)
+```
+
+Detail lives in the node READMEs.

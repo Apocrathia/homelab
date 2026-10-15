@@ -27,10 +27,18 @@ later, drop the directive on the affected pipeline or scope it with
 flowchart LR
     TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
-    TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf.tetragon"]
-    LAKE -->|"15m archive rule"| S3["rustfs parquet: s3://tenzir/tetragon/"]
+    TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf topic"]
+    LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
+    S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
     TP["tetragon pods"] -.->|"export-stdout sidecar, raw JSON, independent of this node"| LOKI[Loki]
 ```
+
+The unmapped residue on every mapped event is a selected projection (pod
+identity, kprobe policy name), not the full raw record: re-storing the
+raw tetragon event duplicated every process object at ~4.8 KB per event
+of pure lake cost (measured live, 2026-10-15 rate diagnosis). The
+OCSF-mapped fields carry the process identity, endpoints, files, and
+containers; the residue keeps only what no OCSF field carries.
 
 ## Sizing
 
@@ -69,10 +77,14 @@ floods.
 
 ## Retention
 
-Same 15-minute horizon as the core node: the tetragon OCSF types archive
-to `s3://tenzir/tetragon/` as parquet at `after: 15 minutes` and then
-expire locally (archive-then-expire; `preserve-input` off). The lake is
-a transit buffer between ingest and the archive, not a query surface.
+Same 15-minute horizon as the core node, same archive: the tetragon OCSF
+classes (Process Activity 1007, File System Activity 1001, Network
+Activity 4001) export to the one dataset at `s3://tenzir/ocsf/` with
+class_uid partitions at `after: 15 minutes` and then expire locally
+(archive-then-expire; `preserve-input` off). The Base Event fallback
+for unknown export kinds cannot name a class and is not archived: it
+expires with the window on the weighted-age backstop. The lake is a
+transit buffer between ingest and the archive, not a query surface.
 The parquet is the OCSF record past the window; the compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15-20
 minutes. Loki keeps the raw JSON stream via the tetragon pods'
@@ -85,7 +97,7 @@ Horizon math (flood rate measured 2026-10-12; steady state assumed):
 Tetragon flood (measured on-disk rate):
   6.25 GiB / 2 days = 80% of volume      # 50,747 process_activity partitions (measured)
   ~ 7.8 GiB / 2 days ~ 3.9 GiB/day total   # full-volume rate implied by the 80% share (measured)
-  3.9 GiB/day / 96 ~ 42 MiB              # 15-minute flood window: ~0.2% of the 18 GiB budget
+  3.9 GiB/day / 96 ~ 42 MiB              # 15-minute flood window: ~0.7% of the 6 GiB budget
 
 Tetragon worst case (transit-buffer bound, operator-measured drain):
   253 GB/day / 96 ~ 2.6 GB raw           # the lake holds one window at worst-case flood rate:
@@ -96,12 +108,30 @@ Tetragon steady state (assumed, post-filter):
   0.8 GiB/day / 96 ~ 9 MiB               # steady-state 15-minute peak footprint
 ```
 
-The disk budgets (18 GiB high / 16 GiB low) are the backstop for
-archive-rule failure windows; the time rule is the front door.
+The disk budgets (6 GiB high / 4 GiB low) are the backstop for
+archive-rule failure windows; the time rule is the front door. The old
+18/16 corridor was sized for a 24-hour horizon and left the eraser
+effectively unreachable on a 20Gi PVC; at the 15-minute reality:
+
+```python
+  6 GiB high  = 30% of the 20Gi PVC                  # single-digit, reachable, leaves the PVC as the second backstop
+  4 GiB low    = the erase target                     # a 2 GiB corridor so one eraser pass reclaims real space
+  worst stall  ~ 2.6 GB / 15 min (extreme drain)      # the corridor tolerates several stalled windows before erasing
+```
+
+## Known detection noise
+
+The secret-file-access kprobe stream is mostly operational PAM noise,
+not detections: opencti-redis (DRAGONFLY image) runs a su-based
+healthcheck loop walking `/etc/pam.d` and shadow at several events per
+second, and firecrawl postgres wrappers do similar. Measured residual
+egress baseline over ~3.5 days: host `?` 3.9M, qbittorrent 2.3M, slskd
+1.6M, archiveteam-warrior 1.3M. Threshold or triage work on these
+classes starts from that baseline, not from zero.
 
 ## Adding a node
 
-1. **Folder**: create `tenzir/<role>/` with `kustomization.yaml`,
+1. **Folder**: create `tenzir/nodes/<role>/` with `kustomization.yaml`,
    `helmrelease.yaml`, `README.md`.
 2. **Token**: provision a node in the app.tenzir.com workspace and add
    its `tnz_...` token as a field on the `tenzir-secrets` 1Password
@@ -110,13 +140,13 @@ archive-rule failure windows; the time rule is the front door.
    workspace tokens are Sovereign-only.
 3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
    `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
-   renovate comment, `nodes[0].name: <role>` — the entry name is the
+   renovate comment, `nodes[0].name: <role>`: the entry name is the
    node name, because the chart renders every node resource as
    `<fullname>-<entry.name>`; every release except the literally named
    `tenzir-node` also takes `fullnameOverride: tenzir-node` (fullname
    otherwise defaults to the release name, which doubles the role when
    the release contains `tenzir-node` and prepends the chart name when it
-   does not — never rename a release into either concat trap),
+   does not, never rename a release into either concat trap),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
    `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
    listeners, `persistence.size` per sizing.
@@ -128,9 +158,9 @@ archive-rule failure windows; the time rule is the front door.
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
-7. **Egress**: if the node runs detections, copy the `findings-*`
-   pipeline shapes from the core node and give it its own S3 archive
-   prefix `s3://tenzir/<role>/`.
+7. **Archive**: the node writes into the shared `s3://tenzir/ocsf/`
+   dataset with class_uid partitions; no per-node prefix. Detections run
+   on the core node only; this node owns its feeds and its lake.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
@@ -138,7 +168,7 @@ archive-rule failure windows; the time rule is the front door.
 9. **Feeder wiring**: point feeders at
    `tenzir-node-<role>.tenzir-system.svc.cluster.local:<port>`;
    the chart auto-generates the Service.
-10. **Root kustomization**: add `- <role>` to `resources:`.
+10. **Root kustomization**: add `- nodes/<role>` to `resources:`.
 11. **README**: sizing math, retention profile, and this recipe.
 
 ## Troubleshooting

@@ -1,26 +1,28 @@
 # Tenzir core node
 
-> **Navigation**: [← Tenzir](../README.md) | [Tetragon node](../tetragon/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Tenzir](../README.md) | [Tetragon node](../tetragon/README.md) | [Detections](../../detections/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-The detection plane: one process (HelmRelease `tenzir-node`, rendering
-pod `tenzir-node-core`) that normalizes kube-apiserver audit,
-authentik, fleet, trivy, and NetFlow feeds to OCSF, runs the sigma rule
-corpus over the raw audit stream, and owns every findings egress.
-Twelve pipelines live in [`helmrelease.yaml`](./helmrelease.yaml); the
-manifest is the source of truth for tunables (sizes, limits, retention
-values, ports).
+The detection plane: one process (HelmRelease `tenzir-node`, rendering pod
+`tenzir-node-core`) that normalizes every feed except the tetragon flood
+to OCSF, publishes onto the unified `ocsf` bus, and runs the one sigma
+pass. Thirteen pipelines live in
+[`helmrelease.yaml`](./helmrelease.yaml); the manifest is the source of
+truth for tunables (sizes, limits, retention values, ports).
 
 - k8s-audit-ingest-http / k8s-audit-ingest-grpc: OTLP listeners for the
-  kube-audit alloy and the alloy log fan-out
+  kube-audit alloy and the shared alloy OTLP log fan-out (the :4318
+  listener carries both stream types)
 - k8s-audit-ocsf, authentik-ocsf, fleet-ocsf, trivy-ocsf: per-source
-  OCSF mapping into the lake
-- k8s-audit-sigma: sigma detection over the raw audit stream
-  (direct field mapping, hot-reloaded)
-- netflow-collector: NetFlow v5/v9/IPFIX from the UniFi exporters
+  OCSF maps onto the bus (the trivy arm also stamps its Detection
+  Findings with the uid)
+- sigma-detection: sigma over the bus with `mapping="auto"`, uid stamp,
+  import into the lake
+- netflow-collector: NetFlow v5/v9/IPFIX from the UniFi exporters, mapped
+  to OCSF Network Activity in the pipeline
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-events: cron pull of the authentik events API
-- findings-discord / findings-loki: the CRITICAL alert and the Loki
-  projection
+- pipeline-metrics-to-mimir / sigma-metrics-to-mimir /
+  error-diagnostics-to-mimir: the node's own operational metrics
 
 ## Connectivity
 
@@ -31,26 +33,24 @@ flowchart LR
     FRW["fleet result webhook"] -->|"HTTP :8080"| FLT["fleet.raw"]
     TRR["trivy-report-reader"] -->|"HTTP :8080"| TRV["trivy.raw"]
     AKE["authentik events API"] -.->|"pull every 5m"| ATH["authentik.raw"]
-    UE["UniFi exporters<br/>(via tenzir-ingest-lb)"] -->|"NetFlow :2055"| NET["netflow"]
+    UE["UniFi exporters<br/>(via tenzir-ingest-lb)"] -->|"NetFlow :2055"| NET["netflow collector"]
 
-    subgraph CORE["core node"]
-        AUD --> MAP["OCSF maps"]
-        FLT --> MAP
-        TRV --> MAP
-        ATH --> MAP
-        MAP --> SIG["sigma detection"]
-        NET --> LAKE["node lake"]
-        MAP --> LAKE
-        SIG -->|"findings"| LAKE
-    end
-
-    SIG -->|"CRITICAL"| DSC[Discord]
-    SIG -->|"projection via alloy"| LOKI["Loki · tenzir-findings"]
-    LAKE -->|"past the window"| RUST["rustfs parquet · s3://tenzir/"]
+    AUD --> MAP["OCSF maps: audit, fleet, trivy, authentik"]
+    FLT --> MAP
+    TRV --> MAP
+    ATH --> MAP
+    NET --> MAP
+    MAP --> BUS["ocsf topic (the bus)"]
+    BUS --> SIG["sigma detection<br/>(mapping=auto)"]
+    SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]
+    BUS --> LAKE
+    LAKE -->|"after 15 min"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
+    S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
 ```
 
-As deployed, sigma matches the raw audit stream; the detection restructure
-MR (see the root pattern chart) moves it onto the OCSF-mapped events.
+The chart is this node's whole world: feeders, the bus, sigma, the lake,
+the class-partitioned archive, and the Grafana query plane. Grafana owns
+alerting off the archive; there is no other findings egress.
 
 ## Sizing
 
@@ -62,10 +62,10 @@ marked assumed wait for post-recovery re-measurement.
 CPU = max(2, ceil(
     1 / 250        # ingest ~1 GB/day raw (assumed; netflow measured at 0.15 GB/day)
     + 5 * 0.1      # 5 sources: audit OTLP, authentik API, fleet, trivy, netflow (docs: 0.1 per source)
-    + 3 * 0.1      # 3 destinations: rustfs S3, Discord, Loki (docs: 0.1 per destination)
-    + 5 * 0.2      # normalization on: OCSF maps on audit, authentik, fleet, trivy (docs: 0.2 per source)
-    + 1            # detection on: sigma over the audit stream (docs: +1)
-)) = max(2, ceil(2.804)) = 3 cores
+    + 1 * 0.1      # 1 destination: rustfs S3 (docs: 0.1 per destination)
+    + 5 * 0.2      # normalization on: OCSF maps on audit, authentik, fleet, trivy, netflow (docs: 0.2 per source)
+    + 1            # detection on: sigma over the bus (docs: +1)
+)) = max(2, ceil(2.9)) = 3 cores
 ```
 
 ```python
@@ -76,34 +76,34 @@ Storage = 1 * 30 * (1/2880) / 10 / 1000  # ingest GB/day * days/mo * months (15 
 ```python
 RAM = max(2,
     0.000001 * 2   # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
-    + 8 * 0.1      # sources (5) + destinations (3)
+    + 6 * 0.1      # sources (5) + destination (1)
     + 0            # enrichment off (no context operators)
     + 1            # detection state (docs: +1)
-) = max(2, 1.800002) = 2 GB
+) = max(2, 1.6) = 2 GB
 ```
 
 The memory limit doubles the 2 GB floor as burst and import-buffer
 headroom; the CPU limit matches the formula. Re-measure both after
-recovery and adjust in the manifest, not here.
+recovery and adjust in the manifest, not here. The :4318 listener counts
+two stream types (kube-audit alloy plus the shared alloy fan-out); both
+are low-volume and the formula's source term already carries them.
 
 ## Retention
 
-15-minute local horizon; the rustfs parquet archive is the record. Every
-stored type has an archive rule at `after: 15 minutes` in
-[`helmrelease.yaml`](./helmrelease.yaml): the rule exports the events as
-parquet to its `s3://tenzir/<prefix>/` and consumes the originals
-(archive-then-expire; `preserve-input` stays off). NetFlow's stored
-schema is `netflow.v9`, live-confirmed on the running node (2026-10-15,
-read-only catalog query). The reader nests the datagram time under the
-`netflow` record, so the rule spells its qualified path
-`field: netflow.export_time` (live-probed: the bare leaf matches 0
-events, the dotted path resolves). The flow records carry no OCSF-style
-`time` field. The compaction pass runs every 5 minutes, so the true
-window at pass boundaries is 15-20 minutes.
+15-minute local horizon; the rustfs parquet archive is the record. One
+rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every mappable
+class to `s3://tenzir/ocsf/**/{uuid}.parquet` with
+`partition_by=[class_uid]` and consumes the originals
+(archive-then-expire; `preserve-input` stays off). The compaction pass
+runs every 5 minutes, so the true window at pass boundaries is 15 to 20
+minutes.
 
 The lake is a transit buffer between ingest and the archive, not a query
-surface: it is sized to hold one window at worst-case flood rate, and the
-parquet plus `from_s3` is the queryable history.
+surface: it is sized to hold one window at worst-case flood rate, and
+the parquet plus `from_s3` is the queryable history. Classes that
+cannot map to OCSF (the Base Event fallback for fleet rows and
+authentik's non-IAM arm) are not archived: they expire here and
+nowhere else.
 
 Horizon math, same inputs as the sizing block:
 
@@ -112,24 +112,30 @@ Core (assumed ~1 GB/day raw ingest):
   1 GB/day raw / 10                # Zstd ~10x reduction (docs default)
   ~ 100 MB/day on disk             # on-disk rate after the reduction above
   100 MB/day / 96                  # 15-minute horizon (96 windows per day)
-  ~ 1 MB peak local footprint      # vs the 18 GiB disk budget: never binds
+  ~ 1 MB peak local footprint      # vs the 6 GiB disk budget: never binds
 ```
 
-The disk budgets (18 GiB high / 16 GiB low) are the backstop for
-archive-rule failure windows, not the front door; the time rules are the
-front door. A stalled archive cycle grows the lake slowly enough that
-the budget erases oldest long before the PVC fills, and the S3 archive
-keeps the record once the cycle resumes.
+The disk-budget corridor (6 GiB high / 4 GiB low, both the
+`tenzir.start` quota and the compaction space budgets) is the backstop
+for archive-rule failure windows, not the front door; the time rule is
+the front door. The old 18/16 corridor was sized for a 24-hour horizon
+and left the eraser unreachable on a 20Gi PVC:
 
-Naming note: the entry rename (`default` → `core`) orphans the live
+```python
+  6 GiB high  = 30% of the 20Gi PVC  # single-digit, reachable, leaves the PVC itself as the second backstop
+  4 GiB low   = the erase target     # a 2 GiB corridor so one eraser pass reclaims real space
+  6 GiB headroom at the worst stall  # core grows ~100 MB/day: the corridor never binds in practice
+```
+
+Naming note: the entry rename (`default` -> `core`) orphans the live
 `state-tenzir-node-default-0` PVC at rollout and the lake re-wipes
-fresh — accepted; the rustfs parquet is the record, and
+fresh; accepted, the rustfs parquet is the record, and
 `persistence.existingClaim` can adopt the old PVC if the lost hot window
 ever matters.
 
 ## Adding a node
 
-1. **Folder**: create `tenzir/<role>/` with `kustomization.yaml`,
+1. **Folder**: create `tenzir/nodes/<role>/` with `kustomization.yaml`,
    `helmrelease.yaml`, `README.md`.
 2. **Token**: provision a node in the app.tenzir.com workspace and add
    its `tnz_...` token as a field on the `tenzir-secrets` 1Password
@@ -138,27 +144,21 @@ ever matters.
    workspace tokens are Sovereign-only.
 3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
    `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
-   renovate comment, `nodes[0].name: <role>` — the entry name is the
-   node name, because the chart renders every node resource as
-   `<fullname>-<entry.name>`; every release except the literally named
-   `tenzir-node` also takes `fullnameOverride: tenzir-node` (fullname
-   otherwise defaults to the release name, which doubles the role when
-   the release contains `tenzir-node` and prepends the chart name when it
-   does not — never rename a release into either concat trap),
-   `nodes[0].token.existingSecret: tenzir-secrets` plus
-   `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
-   listeners, `persistence.size` per sizing.
+   renovate comment, `nodes[0].name: <role>` (the entry name is the node
+   name; every release except the literally named `tenzir-node` also
+   takes `fullnameOverride: tenzir-node`), `nodes[0].token.existingSecret:
+tenzir-secrets` plus `nodes[0].token.key: <role>-token`, `extraPorts`
+   for the node's listeners, `persistence.size` per sizing.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
-   (weighted-age space rules as the backstop, archive-then-expire time
-   rules for every record type it stores).
+   (weighted-age space rules as the backstop, one archive rule with
+   class-partitioned `to_s3` for every class it stores).
 6. **Catalog knobs**: the `tenzir.index` block from this node's
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
-7. **Egress**: if the node runs detections, copy the `findings-*`
-   pipeline shapes from this node and give it its own S3 archive prefix
-   `s3://tenzir/<role>/`.
+7. **Archive**: the node writes into the shared `s3://tenzir/ocsf/`
+   dataset; no per-node prefix.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
@@ -166,7 +166,7 @@ ever matters.
 9. **Feeder wiring**: point feeders at
    `tenzir-node-<role>.tenzir-system.svc.cluster.local:<port>`;
    the chart auto-generates the Service.
-10. **Root kustomization**: add `- <role>` to `resources:`.
+10. **Root kustomization**: add `- nodes/<role>` to `resources:`.
 11. **README**: sizing math, retention profile, and this recipe.
 
 ## Troubleshooting
@@ -180,3 +180,8 @@ kubectl logs -n tenzir-system tenzir-node-core-0 | grep -i error
 kubectl exec -n tenzir-system tenzir-node-core-0 -- \
   tenzir -e localhost:5158 'export | head 5'
 ```
+
+Sigma skip warnings (one per rule revision) name the rules the bus
+cannot resolve; expect them from the parked SigmaHQ corpus. The
+`tenzir.metrics.sigma` events size the rule-evaluation load. Known
+detection noise lives on the tetragon node; see its README.
