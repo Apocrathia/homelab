@@ -12,6 +12,7 @@ resources:
   - crossplane.yaml
   - core
   - tetragon
+  - grafana/
 
 generatorOptions:
   disableNameSuffixHash: true
