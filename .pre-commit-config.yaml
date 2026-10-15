@@ -20,8 +20,11 @@ repos:
       # a trailing newline) — appending one breaks the sha pins in
       # test_dashboard.py. Same rationale as the .prettierignore exemption.
       - id: end-of-file-fixer
-        exclude: ^flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/
+        exclude: ^flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|^flux/manifests/03-services/observability/tenzir/detections/(sigma/sigmahq|yara/signature-base)/
       - id: trailing-whitespace
+        # Vendored detection rules are upstream bytes re-copied from pinned
+        # submodules; reformatting breaks byte-identity with the gitlink.
+        exclude: ^flux/manifests/03-services/observability/tenzir/detections/(sigma/sigmahq|yara/signature-base)/
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

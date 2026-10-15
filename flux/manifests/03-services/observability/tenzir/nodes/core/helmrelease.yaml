@@ -1,0 +1,543 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node
+  namespace: tenzir-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # The node boots through a multi-minute partition-catalog load before
+    # the :5158 probe can pass; the 5m default races it and rolls back.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  values:
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.19.1
+
+    # Registers into the hosted Tenzir Platform workspace (app.tenzir.com):
+    # the chart injects the TENZIR_TOKEN env from the tenzir-secrets Secret,
+    # this node reading its own pre-provisioned node token from the
+    # core-token field. Platform tokens are per-node, never shared.
+    nodes:
+      - name: core
+        token:
+          existingSecret: tenzir-secrets
+          key: core-token
+        # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
+        # kube-audit alloy and the shared alloy OTLP log fan-out push at
+        # tenzir-node-core:4318 (the tetragon alloy moved to the
+        # tetragon node); the fleet webhook and the trivy-report-reader
+        # POST to http-ingest 8080; netflow 2055/UDP sits behind the
+        # tenzir-ingest-lb pool IP.
+        extraPorts:
+          - name: otlp-grpc
+            containerPort: 4317
+          - name: otlp-http
+            containerPort: 4318
+          - name: http-ingest
+            containerPort: 8080
+          - name: netflow
+            containerPort: 2055
+            protocol: UDP
+
+    persistence:
+      # 20Gi stays a cap, not a capacity plan: at the 15-minute retention
+      # horizon the core lake peaks near 1 MB (sizing math in nodes/core/README.md),
+      # so the PVC buys headroom for archive-rule failure windows and future
+      # horizon changes. Longhorn volumes grow on demand; a smaller request
+      # buys nothing.
+      size: 20Gi
+
+    # Node configuration (renders to the tenzir-node-core-config ConfigMap
+    # and rolls the pod on change). Nothing secret may live here: values land
+    # in a ConfigMap in plaintext. Secrets arrive via extraEnv below.
+    tenzir:
+      config:
+        tenzir:
+          package-dirs:
+            - /etc/tenzir/packages
+          # Partition mint-rate control (docs, "Control the partition size"):
+          # "once reached, Tenzir considers the partition as complete,
+          # regardless of the number of records" — the core feeds are
+          # low-volume and timeout-capped, so the 60s timeout bounds the
+          # partition count the 15-minute window mints. max-partition-size
+          # stays at its 4Mi default: the record cap never binds on a
+          # timeout-capped stream.
+          active-partition-timeout: 60s
+          # Catalog load knobs (docs, tune-performance: the catalog "keeps
+          # state that grows linear in the number of partitions" and "Tenzir
+          # keeps all sketches in memory"). lazy-sketches defers
+          # Bloom-filter sketches to query time in a memory-bounded LRU
+          # (index.sketch-cache-bytes, default 1GiB) — the direct lever
+          # against boot OOMs on partition-heavy lakes. load-concurrency
+          # caps the boot synopsis loader at 4 threads instead of the
+          # hardware-concurrency default (a boot log once showed 16 loader
+          # threads inside a 1-core cgroup); 4 keeps I/O overlap within
+          # the CPU budget on Longhorn block storage.
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+          start:
+            # Hard quota on the 20Gi PVC, belt-and-braces alongside
+            # plugins.compaction.space below: at the 15-minute horizon it
+            # never binds — it exists for archive-rule failure windows and
+            # any future horizon change. Corridor matches the compaction
+            # space budgets (retune math in nodes/core/README.md).
+            disk-budget-high: 6GiB
+            disk-budget-low: 4GiB
+          pipelines:
+            k8s-audit-ingest-http:
+              name: k8s-audit ingest (otlp/http)
+              description: |
+                OTLP/HTTP listener for the kube-audit alloy and the shared
+                alloy OTLP log fan-out; unpacks audit JSON bodies onto
+                k8s-audit.raw; OTLP streams without a parser are dropped.
+              definition: |
+                accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
+              restart-on-error: 1 minute
+            k8s-audit-ingest-grpc:
+              name: k8s-audit ingest (otlp/grpc)
+              description: |
+                OTLP/gRPC listener for future OTLP-native senders; unpacks
+                audit JSON bodies onto k8s-audit.raw; OTLP streams without
+                a parser are dropped.
+              definition: |
+                accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
+                homelab::k8s::audit::parse
+                publish "k8s-audit.raw"
+              restart-on-error: 1 minute
+            k8s-audit-ocsf:
+              name: k8s-audit ocsf mapping
+              description: |
+                k8s audit -> OCSF API Activity (6003), then derive +
+                schema-validate and store in the node. Publishes onto the
+                unified OCSF bus every normalized feed shares.
+              definition: |
+                subscribe "k8s-audit.raw"
+                homelab::k8s::audit::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            sigma-detection:
+              name: sigma detection (ocsf bus)
+              description: |
+                One sigma pass over the unified OCSF bus. mapping="auto"
+                selects behavior per input schema: OCSF-shaped schemas get
+                translated rules; a rule whose fields do not resolve for a
+                schema is skipped with one warning per revision, never
+                weakened. The homelab rules are written against OCSF field
+                paths; the vendored SigmaHQ kubernetes corpus names raw
+                audit fields and stays parked until upstream translates it
+                (detections/README.md documents the skip). Matches become
+                OCSF Detection Findings (2004) stamped with the stable uid
+                (rule id + subject composite) and import into the node
+                lake; the ocsf archive rule exports them to rustfs after
+                the 15-minute horizon. Grafana owns alerting off the
+                archive — there is no other egress.
+              definition: |
+                subscribe "ocsf"
+                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="auto", refresh_interval=30s
+                homelab::findings::stamp
+                fork { import }
+              restart-on-error: 1 minute
+            netflow-collector:
+              name: netflow collector
+              description: |
+                NetFlow v5/v9/IPFIX from the UniFi exporters behind
+                tenzir-ingest-lb (:2055/UDP). Flow records map to OCSF
+                Network Activity (4001, Traffic) in the pipeline; options
+                records are dropped. The raw netflow.v9 schema is not
+                stored anymore — the OCSF event stream replaces it, on the
+                bus and in the archive. Start ordering matters: the
+                collector must be up before v9/IPFIX template datagrams
+                arrive.
+              definition: |
+                accept_udp "0.0.0.0:2055", binary=true
+                read_netflow
+                where netflow.record_type == "flow"
+                this = {netflow: this}
+                homelab::netflow::ocsf::map netflow, ocsf
+                this = move ocsf
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            http-ingest:
+              name: http ingest (fleet webhook + trivy reader)
+              description: |
+                HTTP listener for push-based SIEM sources: the fleet osquery
+                result webhook (rows envelope) and the trivy-report-reader
+                (report files stamped with report_kind). Routes by payload
+                shape onto per-source raw topics.
+              definition: |
+                accept_http "0.0.0.0:8080" {
+                  read_json
+                }
+                fork {
+                  where report_kind? != null
+                  publish "trivy.raw"
+                }
+                where details? != null
+                homelab::fleet::parse
+                publish "fleet.raw"
+              restart-on-error: 1 minute
+            authentik-events:
+              name: authentik events pull
+              description: |
+                Polls the authentik events API every 5 minutes (Bearer token
+                via the authentik-events-token managed secret), walking the
+                page-based pagination with a DjangoQL created-time window;
+                deduplicate absorbs the 1-minute overlap on the event pk.
+              definition: |
+                cron "0 */5 * * * *" {
+                  let $since = (now() - 6m).format_time("%Y-%m-%dT%H:%M:%SZ")
+                  let $base = "https://auth.gateway.services.apocrathia.com/api/v3/events/events/"
+                  let $query = f"page_size=100&search=created%20%3E%20%22{$since}%22"
+                  from_http f"{$base}?{$query}",
+                    headers={Authorization: f"Bearer {secret("authentik-events-token")}"},
+                    paginate=(x => f"{$base}?page={x.pagination?.next?}&{$query}" if x.pagination?.next? > 0) {
+                    read_json
+                  }
+                  unroll results
+                  this = results
+                }
+                deduplicate pk, create_timeout=1h
+                publish "authentik.raw"
+              restart-on-error: 1 minute
+            authentik-ocsf:
+              name: authentik ocsf mapping
+              description: |
+                authentik events -> OCSF: login/logout/login_failed map to
+                Authentication, account mutations to Account Change, and
+                every other action to the Base Event; derive + cast, store
+                in the node, and publish onto the unified OCSF bus.
+              definition: |
+                subscribe "authentik.raw"
+                homelab::authentik::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            fleet-ocsf:
+              name: fleet ocsf mapping
+              description: |
+                Fleet osquery result rows -> OCSF Base Event (a row's
+                meaning comes from its query; no scheduled query exists
+                yet), derive + cast, store in the node, and publish onto
+                the unified OCSF bus.
+              definition: |
+                subscribe "fleet.raw"
+                homelab::fleet::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            trivy-ocsf:
+              name: trivy ocsf mapping
+              description: |
+                trivy-operator report files (read by the trivy-report-reader
+                off the alternate-report-storage PVC) -> OCSF:
+                VulnerabilityReport -> Vulnerability Finding with the CVE
+                list, ExposedSecretReport -> Detection Finding; derive +
+                cast, stamp the Detection Findings with the same uid rule
+                the sigma pipeline uses, store in the node, and publish
+                onto the unified OCSF bus.
+              definition: |
+                subscribe "trivy.raw"
+                homelab::trivy::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                homelab::findings::stamp
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            pipeline-metrics-to-mimir:
+              name: pipeline metrics to mimir
+              description: |
+                Pushes the node's tenzir.metrics.pipeline events (per-pipeline
+                ingress/egress event counts, emitted every 10s) to the Mimir
+                remote-write endpoint kube-prometheus-stack remote-writes to;
+                the mimir gateway injects the tenant header, so no auth here.
+                Raw shape, not shape="prometheus" — that transform drops all
+                non-health schemas, pipeline metrics included. Grafana reads
+                the tenzir_pipeline_{ingress,egress}_events series; note this
+                pipeline (and its siblings) also self-report in those series.
+              definition: |
+                metrics "pipeline", live=true
+                fork {
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_pipeline_ingress_events",
+                    value=ingress.events,
+                    timestamp=timestamp,
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_pipeline_egress_events",
+                    value=egress.events,
+                    timestamp=timestamp,
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                }
+              restart-on-error: 1 minute
+            sigma-metrics-to-mimir:
+              name: sigma metrics to mimir
+              description: |
+                Pushes the tenzir.metrics.sigma events (rule evaluations and
+                matches per input batch) to Mimir as tenzir_sigma_* series —
+                matches are the findings volume the dashboard shows. No
+                pipeline labels: the sigma metric schema documents only the
+                count fields.
+              definition: |
+                metrics "sigma", live=true
+                fork {
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_sigma_rule_evaluations",
+                    value=rule_evaluations
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_sigma_matches",
+                    value=matches
+                }
+              restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors sample (value 1, pipeline
+                labels) to Mimir for every live error diagnostic, so the
+                dashboard can count pipeline errors with sum_over_time. Errors
+                otherwise live only in the diagnostics stream, not in metrics.
+              definition: |
+                diagnostics live=true
+                where severity == "error"
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_pipeline_errors",
+                  value=1,
+                  timestamp=timestamp,
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+              restart-on-error: 1 minute
+        plugins:
+          compaction:
+            # Budget backstop: the compaction plugin owns the storage policy
+            # (node log: "catalog takes its storage policy from the
+            # compaction plugin"), and the space section is the docs'
+            # spatial-compaction path (weighted-age; default weight 1 =
+            # oldest events first, and with no pipeline the plugin deletes
+            # matching events): every 30 minutes, erase oldest past 6GiB
+            # down to 4GiB. Sized for the 15-minute window: the core lake
+            # peaks near 1 MB (sizing math in nodes/core/README.md), so
+            # the corridor only exists for archive-rule failure windows;
+            # 6Gi holds hours of the worst stall with room to spare on the
+            # 20Gi PVC. A stored type without a time rule rides this
+            # backstop by design — the base-event class expires here and
+            # nowhere else.
+            space:
+              mode: weighted-age
+              interval: 30 minutes
+              disk-budget-high: 6GiB
+              disk-budget-low: 4GiB
+            # 15-minute local lake: the archive is ONE OCSF dataset —
+            # every mappable class exports to the rustfs `tenzir` bucket
+            # under s3://tenzir/ocsf/, partitioned hive-style by class_uid
+            # (to_s3 + partition_by writes class_uid=<NNNN>/ directories;
+            # the partition field is stripped from the records and comes
+            # back at read time with hive_partitioning=true). DuckDB and
+            # MotherDuck read it as one table:
+            # read_parquet('s3://tenzir/ocsf/**/*.parquet',
+            # hive_partitioning=true) + union_by_name. Classes that cannot
+            # map to OCSF (the Base Event fallback) are NOT archived: they
+            # expire with the window on the weighted-age backstop. A
+            # compaction rule consumes its input, and a sink-only pipeline
+            # returns no transformed events, so consume + export =
+            # archive-then-delete (preserve-input stays off: keeping the
+            # local copy would defeat the 15-minute expiry). The lake is
+            # a transit buffer between ingest and the archive, not a query
+            # surface: the parquet is the record past the window, and
+            # from_s3 replays the history. The pass runs every 5 minutes,
+            # so the true window at pass boundaries is 15-20 minutes.
+            time:
+              interval: 5 minutes
+              rules:
+                # The one OCSF dataset: all mappable classes this node
+                # stores — API Activity (6003) from k8s-audit,
+                # Authentication (3002) / Account Change (3001) from
+                # authentik, Detection Finding (2004) from sigma and
+                # trivy ExposedSecretReport, Vulnerability Finding (2002)
+                # from trivy VulnerabilityReport, Network Activity (4001)
+                # from netflow. ocsf.base_event is deliberately absent:
+                # fleet rows and authentik's non-IAM arm cannot name a
+                # class and archive nowhere.
+                - after: 15 minutes
+                  name: ocsf-archive
+                  field: time
+                  types:
+                    [
+                      "ocsf.api_activity",
+                      "ocsf.authentication",
+                      "ocsf.account_change",
+                      "ocsf.detection_finding",
+                      "ocsf.vulnerability_finding",
+                      "ocsf.network_activity",
+                    ]
+                  pipeline: |
+                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      partition_by=[class_uid]
+                      write_parquet
+                    }
+
+    # Sized by the docs' formula for this node's shape (full math in
+    # core/README.md): detection (+1), normalization on 5 sources (+1.0),
+    # sources+destinations (+0.8) -> ceil(2.8) = 3 cores; the formula's
+    # memory floor is 2 GB at the 15-minute horizon, and 4Gi doubles it as
+    # burst and import-buffer headroom (ingest spikes, the 5-minute archive
+    # and compaction cadence, max-buffered-events import ceilings). Requests
+    # stay small: talos-04 CPU requests are 92% committed, and limits are
+    # caps, not reservations.
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: "3"
+        memory: 4Gi
+
+    # Secrets (1Password item tenzir-secrets): vault field labels are
+    # kebab-case and the rendered Secret keys match them, so every
+    # secretKeyRef.key below is the kebab vault label; env var names stay
+    # UPPER. rustfs S3 credentials for the default AWS chain used by to_s3,
+    # and the authentik events API token as `authentik-events-token`
+    # (TENZIR_SECRETS__ map; tofu mints the token, the operator copies the
+    # key into the vault once).
+    extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-access-key-id
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-secret-access-key
+      - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: authentik-events-token
+
+    # Detection content: the homelab TQL mapping package (IaC-installed at
+    # /etc/tenzir/packages/homelab) and the sigma rule directories, all
+    # rendered by configMapGenerator in this kustomization. Package files
+    # mount file-level (subPath; see extraVolumeMounts for why); sigma rule
+    # dirs stay directory mounts and hot-reload every 30s. subPath does not
+    # see ConfigMap updates, so mapping-package changes need a StatefulSet
+    # bounce (nothing checksum-rolls these ConfigMaps either).
+    extraVolumes:
+      - name: packages-homelab
+        configMap:
+          name: tenzir-packages-homelab
+      - name: packages-homelab-audit-parse
+        configMap:
+          name: tenzir-packages-homelab-audit-parse
+      - name: packages-homelab-ocsf-map
+        configMap:
+          name: tenzir-packages-homelab-ocsf-map
+      - name: packages-homelab-findings-stamp
+        configMap:
+          name: tenzir-packages-homelab-findings-stamp
+      - name: packages-homelab-authentik-map
+        configMap:
+          name: tenzir-packages-homelab-authentik-map
+      - name: packages-homelab-fleet-parse
+        configMap:
+          name: tenzir-packages-homelab-fleet-parse
+      - name: packages-homelab-fleet-map
+        configMap:
+          name: tenzir-packages-homelab-fleet-map
+      - name: packages-homelab-trivy-map
+        configMap:
+          name: tenzir-packages-homelab-trivy-map
+      - name: packages-homelab-netflow-map
+        configMap:
+          name: tenzir-packages-homelab-netflow-map
+      - name: sigma-homelab
+        configMap:
+          name: tenzir-sigma-homelab
+      - name: sigma-sigmahq-kubernetes-audit
+        configMap:
+          name: tenzir-sigma-sigmahq-kubernetes-audit
+
+    extraVolumeMounts:
+      # Package files mount file-level: kubelet's atomic ConfigMap writer
+      # keeps ..data/..2026_* internals at every directory-mount root, and
+      # inside the walked package tree they fail Tenzir's operator-path
+      # segment check (SRE-20261010-001 crashloop). subPath binds the single
+      # projected file; kubelet auto-creates parent dirs, and the walked tree
+      # contains only the package files. subPath does not live-propagate
+      # ConfigMap updates — package changes need a pod roll.
+      - name: packages-homelab
+        mountPath: /etc/tenzir/packages/homelab/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-homelab-audit-parse
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/parse.tql
+        subPath: parse.tql
+        readOnly: true
+      - name: packages-homelab-ocsf-map
+        mountPath: /etc/tenzir/packages/homelab/operators/k8s/audit/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-findings-stamp
+        mountPath: /etc/tenzir/packages/homelab/operators/findings/stamp.tql
+        subPath: stamp.tql
+        readOnly: true
+      - name: packages-homelab-authentik-map
+        mountPath: /etc/tenzir/packages/homelab/operators/authentik/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-fleet-parse
+        mountPath: /etc/tenzir/packages/homelab/operators/fleet/parse.tql
+        subPath: parse.tql
+        readOnly: true
+      - name: packages-homelab-fleet-map
+        mountPath: /etc/tenzir/packages/homelab/operators/fleet/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-trivy-map
+        mountPath: /etc/tenzir/packages/homelab/operators/trivy/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-homelab-netflow-map
+        mountPath: /etc/tenzir/packages/homelab/operators/netflow/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      # Sigma stays directory-mounted to keep the 30s rule hot-reload.
+      - name: sigma-homelab
+        mountPath: /etc/tenzir/sigma/homelab
+        readOnly: true
+      - name: sigma-sigmahq-kubernetes-audit
+        mountPath: /etc/tenzir/sigma/sigmahq/kubernetes-audit
+        readOnly: true

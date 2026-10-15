@@ -45,8 +45,26 @@ if $input.process_exec? != null {
 // Every arm gets the occurrence time and the node: the OCSF 1.9.0 Base
 // Event schema carries `time` as required and `device` as recommended, so
 // the fallback arm is schema-proper too. The event type derives from what
-// the arm set, and the source record is the residue.
+// the arm set.
 $ocsf.time = move $input.time?
 $ocsf.device.hostname = move $input.node_name?
 $ocsf.type_uid = $ocsf.class_uid * 100 + $ocsf.activity_id
-$ocsf.unmapped = move $input
+
+// The unmapped residue is a selected projection, not the raw record:
+// re-storing the full source event duplicated every process object
+// (binary, arguments, the parent's pod, credentials, caps, namespaces) at
+// ~4.8 KB per event of pure self-inflicted lake cost (measured live,
+// 2026-10-15 rate diagnosis). The arms above already map process
+// identity, endpoints, files, and containers into OCSF; the residue keeps
+// only what no OCSF field carries: the pod the process ran in (name and
+// namespace — the container profile holds the container, not the pod) and
+// the tetragon policy for kprobe events. Everything else the raw event
+// held is intentionally not kept.
+_pod = ($input.process_exec?.process?.pod?).otherwise($input.process_exit?.process?.pod?).otherwise($input.process_kprobe?.process?.pod?)
+$ocsf.unmapped = {
+  pod: {
+    name: _pod?.name?,
+    namespace: _pod?.namespace?,
+  },
+  policy_name: $input.process_kprobe?.policy_name?,
+}

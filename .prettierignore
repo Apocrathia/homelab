@@ -19,4 +19,8 @@ flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webu
 # Vendored SigmaHQ rules: byte-identical copies from the third-party/sigmahq
 # submodule at the pinned gitlink — re-copy on rule updates, never reformat.
 # (Same rationale as the webui exemption above.)
-flux/manifests/03-services/observability/tenzir/sigma/sigmahq/**
+flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
+
+# Vendored YARA rules: byte-identical copies from the third-party/yara-signature-base
+# submodule at the pinned gitlink — same re-copy discipline as the sigma rules.
+flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**

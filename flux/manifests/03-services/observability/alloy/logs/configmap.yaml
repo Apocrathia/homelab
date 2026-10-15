@@ -152,10 +152,8 @@ data:
     }
 
     // ==========================================================================
-    // Webhook Receiver (:8080, raw-Loki endpoint)
-    // Receives Trivy operator reports and — since the findings-destination
-    // lap — the Tenzir findings projection; the router below splits them
-    // into their own Loki streams by payload marker.
+    // Trivy Webhook Receiver
+    // Receives vulnerability and security reports from Trivy operator via webhook
     // ==========================================================================
 
     loki.source.api "trivy_webhook" {
@@ -163,88 +161,14 @@ data:
         listen_address = "0.0.0.0"
         listen_port    = 8080
       }
-      forward_to = [loki.process.ingest_router.receiver]
-    }
-
-    // Shared-webhook router (SIEM findings-destination lap): the Tenzir
-    // findings projection arm POSTs flat finding records to the raw-Loki
-    // endpoint here, next to the Trivy reports. Payloads from that arm
-    // carry ingest_stream="tenzir-findings"; the marker routes them to the
-    // findings stream, everything without it flows on to the trivy stream
-    // unchanged. No new receiver, port, or service.
-    loki.process "ingest_router" {
-      stage.json {
-        expressions = {
-          ingest_stream = "ingest_stream",
-        }
+      labels = {
+        source = "trivy",
+        job    = "trivy-operator",
       }
-      stage.labels {
-        values = {
-          ingest_stream = "",
-        }
-      }
-      forward_to = [loki.process.tenzir_findings.receiver, loki.process.trivy_reports.receiver]
-    }
-
-    // Tenzir findings projection: the flat, query-optimized mirror of the
-    // Detection Findings kept in the Tenzir lake. One line per deduplicated
-    // finding (uid = rule + subject fingerprint; the payload carries the
-    // repeat count and the raw-evidence Loki pivot). Bounded labels only —
-    // subject name stays in the JSON body.
-    loki.process "tenzir_findings" {
-      stage.match {
-        selector = "{ingest_stream!=\"tenzir-findings\"}"
-        action   = "drop"
-      }
-      stage.static_labels {
-        values = {
-          source    = "tenzir-findings",
-          job       = "tenzir-findings",
-          cluster   = "kubernetes",
-          component = "siem",
-        }
-      }
-      stage.json {
-        expressions = {
-          rule_id      = "rule_id",
-          severity_id  = "severity_id",
-          pipeline     = "pipeline",
-          namespace    = "subject_namespace",
-          subject_kind = "subject_kind",
-        }
-      }
-      stage.labels {
-        values = {
-          rule_id      = "",
-          severity_id  = "",
-          pipeline     = "",
-          namespace    = "",
-          subject_kind = "",
-        }
-      }
-      // The routing marker served its purpose; the stream stays addressable
-      // as {source="tenzir-findings"} without the extra label.
-      stage.label_drop {
-        values = ["ingest_stream"]
-      }
-      forward_to = [loki.write.default.receiver]
+      forward_to = [loki.process.trivy_reports.receiver]
     }
 
     loki.process "trivy_reports" {
-      // Findings-projection payloads carry the ingest_stream marker and are
-      // handled by the findings arm above; drop them here.
-      stage.match {
-        selector = "{ingest_stream=\"tenzir-findings\"}"
-        action   = "drop"
-      }
-      // source/job moved here from loki.source.api when the receiver became
-      // shared; the trivy stream's label set is unchanged.
-      stage.static_labels {
-        values = {
-          source = "trivy",
-          job    = "trivy-operator",
-        }
-      }
       // Extract top-level fields from Trivy webhook payload
       stage.json {
         expressions = {

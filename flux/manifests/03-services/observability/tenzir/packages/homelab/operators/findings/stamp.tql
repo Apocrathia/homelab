@@ -1,0 +1,52 @@
+---
+description: |
+  Stamp OCSF Detection Findings (2004) with the stable uid: rule id +
+  subject fingerprint, composed with the docs' f-string style so it stays
+  readable where a hash would not. The uid is the archive dedup and
+  lifecycle-join key, and it is recomputable from the stamped rule_id and
+  the subject fields on any stored finding. The stamp adds flat columns to
+  the OCSF record (DuckDB/MotherDuck select them directly); the flat
+  notification-era projection this operator used to be is gone with the
+  egress pipelines.
+---
+
+if class_uid? == 2004 {
+  match metadata.product.name? {
+    "trivy" => {
+      // trivy's own 2004s (ExposedSecretReport): the workload subject
+      // rides in unmapped.workload; the report CR name is the rule id.
+      _rule_id = finding_info?.uid?
+      _subject_key = (
+        f"{unmapped?.workload?.kind}"
+        + (f"/{unmapped?.workload?.namespace}" if unmapped?.workload?.namespace? != null else "")
+        + (f"/{unmapped?.workload?.name}" if unmapped?.workload?.name? != null else "")
+      )
+      _subject_kind = unmapped?.workload?.kind?
+      _subject_name = unmapped?.workload?.name?
+      _subject_namespace = unmapped?.workload?.namespace?
+    }
+    _ => {
+      // sigma findings: evidences[0].data is the OCSF source event; for
+      // k8s-audit-derived events the subject objectRef rides in
+      // evidences[0].data.unmapped.object_ref. Other feeds have no
+      // subject; their uid stays rule-unique.
+      _rule_id = (finding_info?.analytic?.uid?).otherwise(finding_info?.uid?)
+      _object_ref = evidences[0]?.data?.unmapped?.object_ref?
+      _subject_key = (
+        f"{_object_ref?.resource}"
+        + (f"/{_object_ref?.subresource}" if _object_ref?.subresource? != null else "")
+        + (f"/{_object_ref?.namespace}" if _object_ref?.namespace? != null else "")
+        + (f"/{_object_ref?.name}" if _object_ref?.name? != null else "")
+      )
+      _subject_kind = _object_ref?.resource?
+      _subject_name = _object_ref?.name?
+      _subject_namespace = _object_ref?.namespace?
+    }
+  }
+  uid = f"{_rule_id}-{_subject_key}"
+  rule_id = _rule_id
+  subject_kind = _subject_kind?
+  subject_name = _subject_name?
+  subject_namespace = _subject_namespace?
+  drop _rule_id, _subject_key, _subject_kind, _subject_name, _subject_namespace, _object_ref
+}
