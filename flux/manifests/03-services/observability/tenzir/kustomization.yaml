@@ -10,8 +10,8 @@ resources:
   - namespace.yaml
   - secret.yaml
   - crossplane.yaml
-  - core
-  - tetragon
+  - nodes/core
+  - nodes/tetragon
   - grafana/
 
 generatorOptions:
@@ -91,27 +91,27 @@ configMapGenerator:
   - name: tenzir-sigma-homelab
     namespace: tenzir-system
     files:
-      - k8s-audit-secret-created.yml=sigma/homelab/k8s-audit-secret-created.yml
-      - k8s-audit-pod-portforward.yml=sigma/homelab/k8s-audit-pod-portforward.yml
+      - k8s-audit-secret-created.yml=detections/sigma/homelab/k8s-audit-secret-created.yml
+      - k8s-audit-pod-portforward.yml=detections/sigma/homelab/k8s-audit-pod-portforward.yml
   - name: tenzir-sigma-sigmahq-kubernetes-audit
     namespace: tenzir-system
     files:
-      - kubernetes_audit_change_admission_controller.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_change_admission_controller.yml
-      - kubernetes_audit_cronjob_modification.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_cronjob_modification.yml
-      - kubernetes_audit_deployment_deleted.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_deployment_deleted.yml
-      - kubernetes_audit_events_deleted.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_events_deleted.yml
-      - kubernetes_audit_exec_into_container.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_exec_into_container.yml
-      - kubernetes_audit_hostpath_mount.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_hostpath_mount.yml
-      - kubernetes_audit_pod_in_system_namespace.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_pod_in_system_namespace.yml
-      - kubernetes_audit_potential_enumeration_activity.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_potential_enumeration_activity.yml
-      - kubernetes_audit_privileged_pod_creation.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_privileged_pod_creation.yml
-      - kubernetes_audit_rbac_permisions_listing.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_rbac_permisions_listing.yml
-      - kubernetes_audit_rolebinding_modification.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_rolebinding_modification.yml
-      - kubernetes_audit_secrets_enumeration.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_secrets_enumeration.yml
-      - kubernetes_audit_secrets_modified_or_deleted.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_secrets_modified_or_deleted.yml
-      - kubernetes_audit_serviceaccount_creation.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_serviceaccount_creation.yml
-      - kubernetes_audit_sidecar_injection.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_sidecar_injection.yml
-      - kubernetes_audit_unauthorized_unauthenticated_actions.yml=sigma/sigmahq/kubernetes-audit/kubernetes_audit_unauthorized_unauthenticated_actions.yml
+      - kubernetes_audit_change_admission_controller.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_change_admission_controller.yml
+      - kubernetes_audit_cronjob_modification.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_cronjob_modification.yml
+      - kubernetes_audit_deployment_deleted.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_deployment_deleted.yml
+      - kubernetes_audit_events_deleted.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_events_deleted.yml
+      - kubernetes_audit_exec_into_container.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_exec_into_container.yml
+      - kubernetes_audit_hostpath_mount.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_hostpath_mount.yml
+      - kubernetes_audit_pod_in_system_namespace.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_pod_in_system_namespace.yml
+      - kubernetes_audit_potential_enumeration_activity.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_potential_enumeration_activity.yml
+      - kubernetes_audit_privileged_pod_creation.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_privileged_pod_creation.yml
+      - kubernetes_audit_rbac_permisions_listing.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_rbac_permisions_listing.yml
+      - kubernetes_audit_rolebinding_modification.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_rolebinding_modification.yml
+      - kubernetes_audit_secrets_enumeration.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_secrets_enumeration.yml
+      - kubernetes_audit_secrets_modified_or_deleted.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_secrets_modified_or_deleted.yml
+      - kubernetes_audit_serviceaccount_creation.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_serviceaccount_creation.yml
+      - kubernetes_audit_sidecar_injection.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_sidecar_injection.yml
+      - kubernetes_audit_unauthorized_unauthenticated_actions.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_unauthorized_unauthenticated_actions.yml
 
 replacements:
   # Build-time stitch, chaos-mesh shape: copy the generated ConfigMap's

@@ -80,7 +80,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 - **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and the
   Tenzir detection node owns NetFlow natively via its `read_netflow`
-  operator behind [`tenzir-ingest-lb`](./tenzir/core/service-ingest.yaml)
+  operator behind [`tenzir-ingest-lb`](./tenzir/nodes/core/service-ingest.yaml)
   (`:2055/UDP` on the shared pool IP, Tenzir namespace); UniFi exporters
   keep their `:2055` target.
 
