@@ -15,17 +15,47 @@ resources:
   - configmap.yaml
   - helmrelease.yaml
   - grafana.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: authentik-blueprint-gatus
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (authentik.tf); the replacements
+  # fieldPath bracket-escapes it: data.[authentik.tf]. The authentik-
+  # blueprint-gatus generator entry is retired (this MR): the blueprint CM
+  # stops rendering and Flux prunes it, the live authentik objects survive
+  # for tofu to adopt, and no authentik_blueprint label lands on this
+  # ConfigMap — the blanket labels block died with the retirement, so
+  # authentik's blueprint sidecar ignores it.
+  - name: gatus-authentik-module
     namespace: gatus
     files:
-      - gatus.yaml=authentik-blueprint.yaml
+      - authentik.tf
 
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's authentik.tf data into the Workspace's module field.
+  # authentik.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it (the Workspace is adopted with
+  # live authentik objects — drift here plans against the wrong HCL).
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch:
+  # delete would remove the source before this rule consumes it (verified on
+  # kustomize v5.8.1; no deletions-transformer builtin exists). The
+  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
+  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
+  # update it in place.
+  - source:
+      kind: ConfigMap
+      name: gatus-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: gatus-authentik
+        fieldPaths:
+          - spec.forProvider.module

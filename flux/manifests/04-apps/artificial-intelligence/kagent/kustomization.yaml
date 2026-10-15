@@ -14,17 +14,49 @@ resources:
   - crds-helmrelease.yaml
   - helmrelease.yaml
   - hello-substrate.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: authentik-blueprint-kagent
-    namespace: authentik
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (authentik.tf); the replacements
+  # fieldPath bracket-escapes it: data.[authentik.tf]. The authentik-
+  # blueprint-kagent generator entry is retired (this MR): the blueprint CM
+  # stops rendering and Flux prunes it, the live authentik objects survive
+  # for tofu to adopt, and no authentik_blueprint label lands on this
+  # ConfigMap — the blanket labels block died with the retirement, so
+  # authentik's blueprint sidecar ignores it.
+  # The retired blueprint CM rendered in ns authentik (the standard sidecar
+  # pattern); this module CM rides kagent's OWN namespace, never authentik.
+  - name: kagent-authentik-module
+    namespace: kagent
     files:
-      - kagent.yaml=authentik-blueprint.yaml
+      - authentik.tf
 
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's authentik.tf data into the Workspace's module field.
+  # authentik.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it (the Workspace is adopted with
+  # live authentik objects — drift here plans against the wrong HCL).
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch:
+  # delete would remove the source before this rule consumes it (verified on
+  # kustomize v5.8.1; no deletions-transformer builtin exists). The
+  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
+  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
+  # update it in place.
+  - source:
+      kind: ConfigMap
+      name: kagent-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: kagent-authentik
+        fieldPaths:
+          - spec.forProvider.module
