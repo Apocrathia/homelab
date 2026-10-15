@@ -55,7 +55,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
@@ -111,7 +111,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
@@ -167,7 +167,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT coalesce(finding_info.title, finding_info.uid) AS rule,\n       count(*) AS hits\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
@@ -223,7 +223,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT coalesce(metadata.product.name, 'unknown') AS source,\n       count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
@@ -278,7 +278,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "time_series",
+          "format": 0,
           "rawQuery": true,
           "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  coalesce(finding_info.title, finding_info.uid) AS rule,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
@@ -321,7 +321,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT subject_kind AS kind,\n       subject_namespace AS namespace,\n       subject_name AS name,\n       count(*) AS hits\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2, 3\nORDER BY 4 DESC\nLIMIT 15",
           "refId": "A"
@@ -364,7 +364,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT time,\n       CASE severity_id WHEN 5 THEN '5 Critical' WHEN 4 THEN '4 High' WHEN 3 THEN '3 Medium' WHEN 2 THEN '2 Low' WHEN 1 THEN '1 Informational' ELSE '0 Unknown' END AS severity,\n       CASE status_id WHEN 1 THEN '1 Success' WHEN 2 THEN '2 Failure' WHEN 99 THEN '99 Other' ELSE '0 Unknown' END AS status,\n       finding_info.title AS finding,\n       coalesce(metadata.product.name, 'unknown') AS source,\n       rule_id,\n       subject_kind AS subject_kind,\n       subject_namespace AS subject_namespace,\n       subject_name AS subject_name\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 100",
           "refId": "A"
@@ -407,7 +407,7 @@
             "uid": "tenzir-ocsf"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": 1,
           "rawQuery": true,
           "rawSql": "SELECT time,\n       finding_info.title AS finding,\n       evidences[1].data.actor.user.name AS evidence_user,\n       evidences[1].data.api.operation AS evidence_operation,\n       evidences[1].data.unmapped.object_ref.resource AS evidence_resource,\n       evidences[1].data.unmapped.object_ref.namespace AS evidence_namespace,\n       evidences[1].data.unmapped.object_ref.name AS evidence_object\nFROM ocsf\nWHERE class_uid = 2004\n  AND evidences IS NOT NULL\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50",
           "refId": "A"
