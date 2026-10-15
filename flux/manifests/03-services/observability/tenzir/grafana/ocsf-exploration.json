@@ -1,0 +1,778 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Cross-class hunt over the tenzir OCSF archive (s3://tenzir/ocsf/, class_uid hive partitions) through the tenzir-ocsf DuckDB datasource and its lazy `ocsf` view. Panels are empty until the archive parquet flows (the 15-minute node windows archive every 5 minutes). Class panels filter with class_uid: API Activity 6003 (k8s audit), Authentication 3002 / Account Change 3001 (authentik), Detection Finding 2004 (sigma + trivy secrets), Vulnerability Finding 2002 (trivy), Network Activity 4001 (netflow + tetragon), Process Activity 1007 / File System Activity 1001 (tetragon).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Events per bucket for every archived class: API Activity 6003, Authentication 3002, Account Change 3001, Detection Finding 2004, Vulnerability Finding 2002, Network Activity 4001, Process Activity 1007, File System Activity 1001. The archive is the s3://tenzir/ocsf/ class-partitioned parquet read through the tenzir-ocsf datasource view.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  class_uid::VARCHAR AS metric,\n  count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Event rate by class_uid",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "severity_id captions across all classes in the window (OCSF: 0 Unknown, 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical, 6 Fatal). k8s-audit 6003 rows carry no severity; they fall into 0 Unknown.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "displayLabels": ["name"],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": ["value"]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "list"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE severity_id\n         WHEN 0 THEN '0 Unknown'\n         WHEN 1 THEN '1 Informational'\n         WHEN 2 THEN '2 Low'\n         WHEN 3 THEN '3 Medium'\n         WHEN 4 THEN '4 High'\n         WHEN 5 THEN '5 Critical'\n         WHEN 6 THEN '6 Fatal'\n         ELSE '99 Other'\n       END AS severity,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Severity distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Total events per class_uid in the window.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "never",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "class"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT class_uid::VARCHAR AS class,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Event volume by class_uid",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Most active kube-apiserver callers in the window (class_uid 6003).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT actor.user.name AS actor,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "API Activity: top actors (user.name)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Most frequent api.operation values in the window (class_uid 6003).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "groupWidth": 0.7,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "never",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "operation"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT api.operation AS operation,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "API Activity: top operations (api.operation)",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Kubernetes resources touched most in the window (unmapped.object_ref from the k8s audit mapper; class_uid 6003).",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT unmapped.object_ref.resource AS resource,\n       unmapped.object_ref.namespace AS namespace,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "API Activity: top resources",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Authentication (3002) events split by status_id caption (1 Success, 2 Failure).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE status_id WHEN 1 THEN 'success' WHEN 2 THEN 'failure' ELSE 'unknown' END AS status,\n  count(*) AS logins\nFROM ocsf\nWHERE class_uid = 3002\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Authentik: logins by status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Account Change (3001) events in the window: action, actor, source IP.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time,\n       unmapped.action AS action,\n       actor.user.name AS actor,\n       src_endpoint.ip AS source_ip\nFROM ocsf\nWHERE class_uid = 3001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Authentik: account changes",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Process Activity (1007) events split by activity (1 Launch, 2 Terminate, other = container-escape namespace access).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE activity_id WHEN 1 THEN 'launch' WHEN 2 THEN 'terminate' ELSE 'other' END AS activity,\n  count(*) AS events\nFROM ocsf\nWHERE class_uid = 1007\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Tetragon: process activity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Most launched process binaries in the window (1007, activity_id = 1).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT process.path AS binary,\n       count(*) AS launches\nFROM ocsf\nWHERE class_uid = 1007\n  AND activity_id = 1\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Tetragon: top launched binaries",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "File System Activity (1001) hits from the secret-file-access kprobe: file, permission, actor, pod, node.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 11,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time,\n       file.path AS file,\n       file.xattributes.permission AS permission,\n       actor.process.path AS actor_binary,\n       actor.process.container.name AS actor_container,\n       unmapped.pod.name AS pod,\n       unmapped.pod.namespace AS pod_namespace,\n       device.hostname AS node\nFROM ocsf\nWHERE class_uid = 1001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Tetragon: secret-file-access",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "NetFlow (4001, traffic data) and tetragon kprobe connect attempts (4001, policy_name set) by destination.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT dst_endpoint.ip AS destination,\n       CASE WHEN unmapped.policy_name IS NOT NULL THEN 'tetragon' ELSE 'netflow' END AS source,\n       count(*) AS flows,\n       sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
+          "refId": "A"
+        }
+      ],
+      "title": "Network Activity: top destinations",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Bytes per bucket for netflow Network Activity (4001) rows (traffic is netflow-only).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND traffic IS NOT NULL\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "NetFlow: traffic volume",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Vulnerability Finding (2002) CVEs in the window (unnested from vulnerabilities[]): CVE, severity, package, fix, workload.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 56
+      },
+      "id": 14,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT u.cve.uid AS cve,\n       u.severity AS severity,\n       u.title AS description,\n       u.affected_packages[1].name AS package,\n       u.affected_packages[1].fixed_in_version AS fixed_in,\n       unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       time AS seen\nFROM ocsf\nCROSS JOIN unnest(vulnerabilities) AS t(u)\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY seen DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Trivy: latest CVEs",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "motherduck-duckdb-datasource",
+        "uid": "tenzir-ocsf"
+      },
+      "description": "Latest trivy VulnerabilityReport state per workload (2002, update-shaped rescans): severity and summary counts.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 56
+      },
+      "id": 15,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "motherduck-duckdb-datasource",
+            "uid": "tenzir-ocsf"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS last_scan,\n       unmapped.workload.kind || '/' || unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       unmapped.workload.container AS container,\n       severity_id,\n       unmapped.summary.criticalCount AS critical,\n       unmapped.summary.highCount AS high,\n       unmapped.summary.mediumCount AS medium,\n       unmapped.summary.lowCount AS low\nFROM ocsf\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "refId": "A"
+        }
+      ],
+      "title": "Trivy: workload scan summary",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["tenzir", "security", "ocsf"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Tenzir OCSF Exploration",
+  "uid": "tenzir-ocsf-exploration",
+  "version": 1
+}

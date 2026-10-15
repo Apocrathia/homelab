@@ -7,6 +7,8 @@ metadata:
 
 resources:
   - grafana.yaml
+  - ocsf-exploration.yaml
+  - ocsf-findings.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -16,3 +18,11 @@ configMapGenerator:
     namespace: prometheus-system
     files:
       - dashboard.json
+  - name: tenzir-ocsf-exploration
+    namespace: prometheus-system
+    files:
+      - ocsf-exploration.json
+  - name: tenzir-ocsf-findings
+    namespace: prometheus-system
+    files:
+      - ocsf-findings.json

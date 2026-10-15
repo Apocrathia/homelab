@@ -1,0 +1,19 @@
+---
+# OCSF exploration dashboard: the cross-class hunt over the tenzir
+# OCSF archive (s3://tenzir/ocsf/ class_uid partitions) via the tenzir-ocsf
+# datasource. JSON rides in ConfigMap tenzir-ocsf-exploration (generated
+# from ocsf-exploration.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: tenzir-ocsf-exploration
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: tenzir-ocsf-exploration
+    key: ocsf-exploration.json
+  folder: Security
