@@ -12,7 +12,7 @@ spec:
   groups:
     - default
   retain: 3
-  concurrency: 10 # Increased to process more volumes per day
+  concurrency: 10
 ---
 # Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2
