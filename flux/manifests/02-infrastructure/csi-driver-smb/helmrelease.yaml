@@ -24,3 +24,7 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
+    # Talos linux/amd64-only cluster: the chart's default windows DaemonSet
+    # schedules 0 pods and its windows/amd64-only image fails trivy scan jobs
+    windows:
+      enabled: false

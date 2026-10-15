@@ -114,12 +114,8 @@ spec:
           readOnly: true
     trivy:
       storageClassName: longhorn
-      # Remove --list-all-pkgs to reduce report size significantly
-      listAllPackages: false
       # Increase timeout
       timeout: 10m
-      # Skip Java DB update to speed up scans
-      skipJavaDBUpdate: true
     resources:
       limits:
         cpu: 1000m
