@@ -3,3 +3,8 @@
 	url = https://github.com/SigmaHQ/sigma.git
 	branch = master
 	shallow = true
+[submodule "third-party/signature-base"]
+	path = third-party/signature-base
+	url = https://github.com/Neo23x0/signature-base.git
+	branch = master
+	shallow = true
