@@ -1,0 +1,19 @@
+---
+# OCSF findings dashboard: Detection Finding (2004) surfacing over the
+# tenzir OCSF archive via the tenzir-ocsf datasource — severity, rules,
+# subjects, and the evidence user. JSON rides in ConfigMap
+# tenzir-ocsf-findings (generated from ocsf-findings.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: tenzir-ocsf-findings
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: tenzir-ocsf-findings
+    key: ocsf-findings.json
+  folder: Security

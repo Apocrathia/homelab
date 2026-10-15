@@ -35,13 +35,14 @@ spec:
     isDefault: false
     jsonData:
       # In-memory DuckDB; the S3 secret is created per-process by initSql.
-      path: ""
       maxOpenConns: 4
       # Layout contract (tenzir restructure): the archive is one class_uid
       # hive-partitioned dataset (s3://tenzir/ocsf/class_uid=<NNNN>/...); the
       # flat ocsf/ form and per-feed prefixes are retired. Dashboards query
       # the `ocsf` view, not raw globs.
       initSql: |
+        -- the plugin process resolves DuckDB home to '' (container HOME sits on the read-only root layer); point at the writable grafana data PVC before installing extensions
+        SET home_directory = '/var/lib/grafana';
         INSTALL 'httpfs'; LOAD 'httpfs';
         CREATE SECRET tenzir_s3 (
           TYPE S3,
