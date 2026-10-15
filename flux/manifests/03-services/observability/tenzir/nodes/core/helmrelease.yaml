@@ -403,8 +403,7 @@ spec:
                       "ocsf.network_activity",
                     ]
                   pipeline: |
-                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
-                      partition_by=[class_uid]
+                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
                       write_parquet
                     }
 
