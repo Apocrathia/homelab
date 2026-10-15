@@ -80,8 +80,10 @@ CNPG bootstrap and the Gatus container both consume this Secret.
 
 ## Authentication
 
-Authentik proxy outpost (Platform group). Chart `httpRoute` / `ingress` stay off;
-the outpost owns the Gateway API route.
+Authentik proxy outpost (Platform group) — owned by the `crossplane.yaml` +
+`authentik.tf` file pair in this directory (the retired blueprint's objects,
+adopted in place). Chart `httpRoute` / `ingress` stay off; the outpost owns
+the Gateway API route.
 
 ## Metrics
 

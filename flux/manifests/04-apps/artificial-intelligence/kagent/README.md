@@ -15,7 +15,7 @@ AI agent orchestration platform for managing and deploying AI agents in Kubernet
 
 - **LLM Provider**: LiteLLM proxy (OpenAI-compatible)
 - **Database**: PostgreSQL via CNPG
-- **Authentication**: Authentik proxy (kagent has no native OIDC)
+- **Authentication**: Authentik proxy (kagent has no native OIDC) — owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place)
 - **Built-in Agents**: All disabled - agents deployed separately
 
 ## Caveats

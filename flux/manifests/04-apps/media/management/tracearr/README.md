@@ -38,7 +38,7 @@ Create a 1Password item at `vaults/Secrets/items/tracearr-secrets` with:
 
 ## Authentication
 
-Tracearr uses local owner accounts (no native OIDC). External access goes through an Authentik **proxy** outpost; you still create the Tracearr owner account in the setup wizard after deployment.
+Tracearr uses local owner accounts (no native OIDC). External access goes through an Authentik **proxy** outpost — owned by the `crossplane.yaml` + `authentik.tf` file pair in this directory (the retired blueprint's objects, adopted in place); you still create the Tracearr owner account in the setup wizard after deployment.
 
 ## Initial Setup
 
