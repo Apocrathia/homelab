@@ -10,8 +10,8 @@ distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./core/README.md) is the detection plane: it
 normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
 feeds to OCSF, runs sigma rules over the audit stream, and owns the
-findings egress (Discord doorbell for CRITICAL, Loki projection for
-triage, rustfs parquet as the record). The [tetragon
+findings egress (Discord for CRITICAL, Loki projection for triage,
+rustfs parquet as the record). The [tetragon
 node](./tetragon/README.md) owns only the tetragon export flood, so its
 CPU and memory behavior cannot starve detection.
 
@@ -23,41 +23,40 @@ platform.
 ## Architecture
 
 A Tenzir node is a standalone process with TQL pipelines and its own
-node-local lake; listeners (`accept_otlp`, `accept_http`, `read_netflow`)
-feed pipelines that parse, normalize to OCSF, detect, and egress. The
-chart shows the shape both nodes share and the roles they split — core as
-the detection plane, tetragon as the flood isolate, so the export flood
-cannot starve detection; per-node wiring (ports, pipelines, sources)
-lives in each deployment's own connectivity chart:
-[core](./core/README.md), [tetragon](./tetragon/README.md).
+node-local lake. The pattern: sources push into a listener; pipelines
+parse them to raw topics, then normalize to OCSF and run sigma; findings
+egress as a CRITICAL alert to Discord and a Loki projection for triage
+(findings only — raw events never go to Loki). Past the hot window,
+everything archives to rustfs parquet, which is the single record; the
+archive is hunted with SQL. One node runs per role — core is the
+detection plane, tetragon is the flood isolate — and each node registers
+to the hosted Tenzir Platform over a single outbound WebSocket that
+never carries events. Actual wiring (ports, pipelines, sources) lives in
+each deployment's own chart: [core](./core/README.md),
+[tetragon](./tetragon/README.md).
 
 ```mermaid
 flowchart LR
-    FEED[feeders] --> CL
-    FLOOD["tetragon export flood"] --> TL
+    SRC["sources"] -->|"OTLP · HTTP · NetFlow"| IN[listener]
 
-    subgraph CORE["core node — detection plane"]
-        CL["listeners"] --> CP["parse (homelab TQL package)"]
-        CP --> OC["normalize to OCSF"]
-        CP --> SG["sigma detection"]
-        OC --> CLK["node-local lake (15-minute hot window)"]
-        SG -->|"findings: the record"| CLK
+    subgraph NODE["tenzir node — one per role"]
+        IN --> PARSE["parse (homelab TQL package)"]
+        PARSE --> OCSF["normalize to OCSF"]
+        OCSF --> SIGMA["sigma detection"]
+        OCSF --> LAKE["node lake (hot window)"]
+        SIGMA -->|"findings"| LAKE
     end
 
-    subgraph TET["tetragon node — flood isolate (so the flood cannot starve detection)"]
-        TL["listeners"] --> TCP["parse (homelab TQL package)"]
-        TCP --> TOC["normalize to OCSF"]
-        TOC --> TLK["node-local lake (15-minute hot window)"]
-    end
-
-    SG -->|"CRITICAL doorbell"| DISC[Discord]
-    SG -->|"findings projection for triage"| LOKI["Loki (raw record)"]
-    CLK -->|"after 15 min"| S3["rustfs parquet, s3://tenzir/<br/>the OCSF record"]
-    TLK -->|"after 15 min"| S3
-
-    CORE -.->|"one outbound WebSocket:<br/>control-plane only, events never route through it"| PLAT["Tenzir Platform workspace (app.tenzir.com)"]
-    TET -.->|"one outbound WebSocket"| PLAT
+    SIGMA -->|"CRITICAL"| DISC[Discord]
+    SIGMA -->|"triage projection"| LOKI["Loki (findings only)"]
+    LAKE -->|"past the window"| RUST["rustfs parquet — the record"]
+    NODE -.-> PLAT["Tenzir Platform"]
 ```
+
+The chart shows the pattern the cluster is moving to: sigma evaluates
+the OCSF-normalized events. The detection restructure MR (in flight)
+lands this shape — today the deployed sigma still matches against the
+raw audit stream.
 
 ## Secrets
 

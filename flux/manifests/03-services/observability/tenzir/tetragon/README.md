@@ -38,7 +38,7 @@ The upstream size-a-node formula at the flood peak (the sizing case):
 a steady-state estimator run with this node's burst inputs. Limits live
 in [`helmrelease.yaml`](./helmrelease.yaml).
 
-```text
+```python
 CPU = max(2, ceil(
     69 / 250       # flood ingest ~69 GB/day raw: 800 ev/s (peak measured) * ~1,000 B (docs EDR range, assumed)
     + 1 * 0.1      # 1 source: the tetragon alloy OTLP stream (docs: 0.1 per source)
@@ -48,12 +48,12 @@ CPU = max(2, ceil(
 )) = max(2, ceil(0.676)) = 2 cores
 ```
 
-```text
+```python
 Storage = 69 * 30 * (1/2880) / 10 / 1000 # flood GB/day * days/mo * months (15 min = 1/2880 mo) / Zstd 10x / GB to TB
         = 0.0000719 TB by formula
 ```
 
-```text
+```python
 RAM = max(2,
     0.0000719 * 2  # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 2 * 0.1      # sources (1) + destinations (1)
@@ -81,7 +81,7 @@ record with `from_s3`.
 
 Horizon math (flood rate measured 2026-10-12; steady state assumed):
 
-```text
+```python
 Tetragon flood (measured on-disk rate):
   6.25 GiB / 2 days = 80% of volume      # 50,747 process_activity partitions (measured)
   ~ 7.8 GiB / 2 days ~ 3.9 GiB/day total   # full-volume rate implied by the 80% share (measured)

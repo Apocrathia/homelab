@@ -19,32 +19,38 @@ values, ports).
 - netflow-collector: NetFlow v5/v9/IPFIX from the UniFi exporters
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-events: cron pull of the authentik events API
-- findings-discord / findings-loki: the CRITICAL doorbell and the Loki
+- findings-discord / findings-loki: the CRITICAL alert and the Loki
   projection
 
 ## Connectivity
 
 ```mermaid
 flowchart LR
-    KAT[kube-audit alloy] -->|"OTLP :4318"| AO[accept_otlp]
-    ALY["alloy OTLP fan-out"] -->|"OTLP :4318"| AO
-    FRW["fleet result webhook"] -->|"HTTP :8080"| AH["http-ingest :8080<br/>(fleet + trivy push)"]
-    TRR[trivy-report-reader] -->|"HTTP :8080"| AH
-    AKE["authentik events API"] -->|"from_http cron 5m"| AR["authentik raw"]
-    UE["UniFi exporters"] -->|"UDP :2055 via tenzir-ingest-lb"| NF[netflow]
+    KAT["kube-audit alloy"] -->|"OTLP :4318"| AUD["k8s-audit.raw"]
+    ALY["alloy logs fan-out"] -->|"OTLP :4318"| AUD
+    FRW["fleet result webhook"] -->|"HTTP :8080"| FLT["fleet.raw"]
+    TRR["trivy-report-reader"] -->|"HTTP :8080"| TRV["trivy.raw"]
+    AKE["authentik events API"] -.->|"pull every 5m"| ATH["authentik.raw"]
+    UE["UniFi exporters<br/>(via tenzir-ingest-lb)"] -->|"NetFlow :2055"| NET["netflow"]
 
-    AO --> KR["k8s-audit raw"]
-    KR -->|"sigma, direct mapping"| SIG[detections.sigma]
-    SIG -->|"severity_id 5"| DSC["Discord webhook"]
-    SIG -->|"projection via alloy"| LOKI["Loki: tenzir-findings"]
-    KR --> MAP["OCSF maps: audit, fleet, trivy, authentik"]
-    AR --> MAP
-    FRW --> MAP
-    TRR --> MAP
-    NF --> LAKE["node lake"]
-    MAP --> LAKE
-    LAKE -->|"15m archive rules"| S3["rustfs parquet: s3://tenzir/ ocsf, findings, authentik, base-event, trivy, netflow"]
+    subgraph CORE["core node"]
+        AUD --> MAP["OCSF maps"]
+        FLT --> MAP
+        TRV --> MAP
+        ATH --> MAP
+        MAP --> SIG["sigma detection"]
+        NET --> LAKE["node lake"]
+        MAP --> LAKE
+        SIG -->|"findings"| LAKE
+    end
+
+    SIG -->|"CRITICAL"| DSC[Discord]
+    SIG -->|"projection via alloy"| LOKI["Loki · tenzir-findings"]
+    LAKE -->|"past the window"| RUST["rustfs parquet · s3://tenzir/"]
 ```
+
+As deployed, sigma matches the raw audit stream; the detection restructure
+MR (see the root pattern chart) moves it onto the OCSF-mapped events.
 
 ## Sizing
 
@@ -52,7 +58,7 @@ The upstream size-a-node formula, with this node's inputs. Limits that
 follow from it live in [`helmrelease.yaml`](./helmrelease.yaml); inputs
 marked assumed wait for post-recovery re-measurement.
 
-```text
+```python
 CPU = max(2, ceil(
     1 / 250        # ingest ~1 GB/day raw (assumed; netflow measured at 0.15 GB/day)
     + 5 * 0.1      # 5 sources: audit OTLP, authentik API, fleet, trivy, netflow (docs: 0.1 per source)
@@ -62,12 +68,12 @@ CPU = max(2, ceil(
 )) = max(2, ceil(2.804)) = 3 cores
 ```
 
-```text
+```python
 Storage = 1 * 30 * (1/2880) / 10 / 1000  # ingest GB/day * days/mo * months (15 min = 1/2880 mo) / Zstd 10x / GB to TB
         = 0.000001 TB (~1 MB for the full 15-minute window)
 ```
 
-```text
+```python
 RAM = max(2,
     0.000001 * 2   # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 8 * 0.1      # sources (5) + destinations (3)
@@ -101,7 +107,7 @@ parquet plus `from_s3` is the queryable history.
 
 Horizon math, same inputs as the sizing block:
 
-```text
+```python
 Core (assumed ~1 GB/day raw ingest):
   1 GB/day raw / 10                # Zstd ~10x reduction (docs default)
   ~ 100 MB/day on disk             # on-disk rate after the reduction above
