@@ -315,6 +315,67 @@ spec:
                   to_http "http://alloy.alloy-system.svc.cluster.local:8080/loki/api/v1/raw", buffer_all=true { write_ndjson }
                 }
               restart-on-error: 1 minute
+            pipeline-metrics-to-mimir:
+              name: pipeline metrics to mimir
+              description: |
+                Pushes the node's tenzir.metrics.pipeline events (per-pipeline
+                ingress/egress event counts, emitted every 10s) to the Mimir
+                remote-write endpoint kube-prometheus-stack remote-writes to;
+                the mimir gateway injects the tenant header, so no auth here.
+                Raw shape, not shape="prometheus" — that transform drops all
+                non-health schemas, pipeline metrics included. Grafana reads
+                the tenzir_pipeline_{ingress,egress}_events series; note this
+                pipeline (and its siblings) also self-report in those series.
+              definition: |
+                metrics "pipeline", live=true
+                fork {
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_pipeline_ingress_events",
+                    value=ingress.events,
+                    timestamp=timestamp,
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_pipeline_egress_events",
+                    value=egress.events,
+                    timestamp=timestamp,
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                }
+              restart-on-error: 1 minute
+            sigma-metrics-to-mimir:
+              name: sigma metrics to mimir
+              description: |
+                Pushes the tenzir.metrics.sigma events (rule evaluations and
+                matches per input batch) to Mimir as tenzir_sigma_* series —
+                matches are the findings volume the dashboard shows. No
+                pipeline labels: the sigma metric schema documents only the
+                count fields.
+              definition: |
+                metrics "sigma", live=true
+                fork {
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_sigma_rule_evaluations",
+                    value=rule_evaluations
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_sigma_matches",
+                    value=matches
+                }
+              restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors sample (value 1, pipeline
+                labels) to Mimir for every live error diagnostic, so the
+                dashboard can count pipeline errors with sum_over_time. Errors
+                otherwise live only in the diagnostics stream, not in metrics.
+              definition: |
+                diagnostics live=true
+                where severity == "error"
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_pipeline_errors",
+                  value=1,
+                  timestamp=timestamp,
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+              restart-on-error: 1 minute
         plugins:
           compaction:
             # Budget backstop: the compaction plugin owns the storage policy
