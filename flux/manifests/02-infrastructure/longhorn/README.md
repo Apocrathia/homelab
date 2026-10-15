@@ -125,11 +125,11 @@ executor and source of truth).
 | `pvc-743ac2a3-8746-44f8-aa69-b64989ae410d` | `mealie-postgres-1`                                     | recipe database                                                                    |
 | `pvc-8b3bc323-c524-44a9-9c9b-dcf53a84d161` | `authentik-postgres-1`                                  | identity provider database                                                         |
 | `pvc-9c6c2822-9f91-41ff-a5e8-786a5df4c219` | `data-tracearr-timescale-0`                             | tracearr database                                                                  |
-| `pvc-9ca35119-8f18-4b47-9852-7dc554b03996` | `state-tenzir-node-tetragon-0`                          | SIEM node state (operator: critical)                                               |
 | `pvc-a1fa04a6-841d-4275-8b8d-3d8df3534eb8` | `misp-attachments`                                      | MISP indicator attachments — threat intel (git has misp backup cronjob for the DB) |
 | `pvc-a70b364c-c5df-4a5a-96f3-a471d19853fb` | `matrix-postgres-1`                                     | matrix database                                                                    |
 | `pvc-aa0ab391-ed51-4d43-85f0-b5502fc32445` | `gatus-postgres-1`                                      | uptime database                                                                    |
 | `pvc-aa536dd0-ef26-4d09-ac93-30ea6eb75356` | `chaptarr-postgres-1`                                   | chaptarr database                                                                  |
+| `pvc-b6ef3dc9-da28-44a0-ba2e-a4229ca48551` | `state-tenzir-node-tetragon-0`                          | SIEM node state (operator: critical)                                               |
 | `pvc-bbae135d-facb-45e3-a31b-02b914d10064` | `state-tenzir-node-core-0`                              | SIEM node state (operator: critical)                                               |
 | `pvc-bdcea90a-cb5f-4d45-b97d-097ab1f575c6` | `data-mariadb-0`                                        | MISP database                                                                      |
 | `pvc-c1815ef1-a229-4058-a33a-fe012a20e1ef` | `litellm-postgres-1`                                    | LLM gateway database                                                               |
@@ -278,7 +278,7 @@ chain — the sync livelock above — while S3 does listing without per-op mount
 Existing in-cluster rustfs consumers (loki, mimir, tempo, kopia, tenzir) use
 the same endpoint shape.
 
-**Accepted tradeoff (operator, 2026-10-16):** switching targets makes all
+**Accepted tradeoff (operator, 2026-10-15):** switching targets makes all
 CIFS-era backups **invisible to longhorn** — they stop showing in the UI and
 cannot be restored from it. The data itself **remains on the NAS** under
 `storage.services.apocrathia.com/Backup` until separately cleaned; nothing

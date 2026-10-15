@@ -42,11 +42,11 @@ CRITICAL_VOLUMES=(
   "pvc-743ac2a3-8746-44f8-aa69-b64989ae410d" \
   "pvc-8b3bc323-c524-44a9-9c9b-dcf53a84d161" \
   "pvc-9c6c2822-9f91-41ff-a5e8-786a5df4c219" \
-  "pvc-9ca35119-8f18-4b47-9852-7dc554b03996" \
   "pvc-a1fa04a6-841d-4275-8b8d-3d8df3534eb8" \
   "pvc-a70b364c-c5df-4a5a-96f3-a471d19853fb" \
   "pvc-aa0ab391-ed51-4d43-85f0-b5502fc32445" \
   "pvc-aa536dd0-ef26-4d09-ac93-30ea6eb75356" \
+  "pvc-b6ef3dc9-da28-44a0-ba2e-a4229ca48551" \
   "pvc-bbae135d-facb-45e3-a31b-02b914d10064" \
   "pvc-bdcea90a-cb5f-4d45-b97d-097ab1f575c6" \
   "pvc-c1815ef1-a229-4058-a33a-fe012a20e1ef" \
@@ -161,21 +161,28 @@ ALL_TIERED=("${CRITICAL_VOLUMES[@]}" "${STATEFUL_VOLUMES[@]}" "${CACHE_VOLUMES[@
 apply_tier() {
   local volume="$1" tier="$2"
   local tier_label="${LABEL_PREFIX}/${tier}"
-  local current current_default
-  current="$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json \
-    | jq -r --arg key "${tier_label}" '.metadata.labels[$key] // ""' 2>/dev/null || echo "")"
-  current_default="$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json \
-    | jq -r --arg key "${LABEL_PREFIX}/default" '.metadata.labels[$key] // ""' 2>/dev/null || echo "")"
+  local vol_json current current_default
+  # The cluster can change mid-run (volume deleted, PVC recreated): a NotFound
+  # here means the list drifted from live state — skip and report instead of
+  # dying under set -e.
+  if ! vol_json="$(kubectl get volume.longhorn.io "${volume}" -n "${NAMESPACE}" -o json 2>/dev/null)"; then
+    echo "  ✗ ${volume} not found (deleted mid-run or stale list entry) — skipped"
+    return 0
+  fi
+  current="$(jq -r --arg key "${tier_label}" '.metadata.labels[$key] // ""' <<<"${vol_json}")"
+  current_default="$(jq -r --arg key "${LABEL_PREFIX}/default" '.metadata.labels[$key] // ""' <<<"${vol_json}")"
 
   if [[ "${current}" == "enabled" && "${current_default}" != "enabled" ]]; then
     echo "  ✓ ${volume} already ${tier}"
     return 0
   fi
-  # Label the tier, drop the auto-default label if present.
+  # Label the tier, drop the auto-default label if present. "${args[@]+…}"
+  # (not "${args[@]:-}") expands to zero words when args is empty: the :- form
+  # passes a single empty-string argument on bash 3.2 (the operator's machine).
   local args=()
   [[ "${current_default}" == "enabled" ]] && args+=("${LABEL_PREFIX}/default-")
   kubectl label volume.longhorn.io "${volume}" -n "${NAMESPACE}" \
-    "${tier_label}=enabled" "${args[@]:-}" --overwrite >/dev/null
+    "${tier_label}=enabled" "${args[@]+"${args[@]}"}" --overwrite >/dev/null
   echo "  ✓ ${volume} -> ${tier}${current_default:+ (default label removed)}"
 }
 
@@ -193,7 +200,7 @@ for tier in critical stateful cache; do
     stateful) list=("${STATEFUL_VOLUMES[@]}") ;;
     cache) list=("${CACHE_VOLUMES[@]}") ;;
   esac
-  echo "  ${tier} (${#list[@]} volumes): ${list[0]:-} ... ${list[-1]:-}"
+  echo "  ${tier} (${#list[@]} volumes): ${list[0]:-} ... ${list[${#list[@]}-1]:-}"
 done
 
 echo ""
