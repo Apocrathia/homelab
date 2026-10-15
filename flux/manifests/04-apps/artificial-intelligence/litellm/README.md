@@ -29,7 +29,7 @@ Create a 1Password item:
 - `prime-api-key`: Prime Inference API key for cloud model routes
 - `prime-team-id`: Prime team ID for `X-Prime-Team-ID` billing header
 - `redis-password`: Shared password for Valkey (`litellm-valkey`) and LiteLLM `REDIS_PASSWORD`
-- `oidc-client-id`: Authentik OIDC provider Client ID (from provider after blueprint apply)
+- `oidc-client-id`: Authentik OIDC provider Client ID (from the provider-opentofu Workspace's provider)
 - `oidc-client-secret`: Authentik OIDC provider Client Secret
 - `hermes-a2a-authorization`: Full `Bearer <token>` Authorization header value for Hermes Agent inbound A2A (same token as `hermes-agent-secrets`/`a2a-bearer-token`)
 - `prime-a2a-authorization`: Full `Bearer <token>` Authorization header value for Prime Agent inbound A2A (same token as `prime-agent-secrets`/`a2a-webhook-token`)
@@ -49,7 +49,7 @@ Create a 1Password item:
 
 ## Authentication
 
-Admin UI uses native LiteLLM SSO (OIDC) with Authentik as the IdP. Traffic is routed directly to LiteLLM via HTTPRoute; no Authentik proxy. API access uses the master key. Username/password remain for fallback login at `/fallback/login`. After applying the blueprint, copy the OIDC provider Client ID and Client Secret from Authentik into the 1Password item.
+Admin UI uses native LiteLLM SSO (OIDC) with Authentik as the IdP. Traffic is routed directly to LiteLLM via HTTPRoute; no Authentik proxy. API access uses the master key. Username/password remain for fallback login at `/fallback/login`. The provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair) owns the OIDC provider and the launchpad entry; copy the OIDC provider Client ID and Client Secret from Authentik into the 1Password item once (the Workspace reads the live client_id from the same `litellm-secrets` item).
 
 ## Security Considerations
 

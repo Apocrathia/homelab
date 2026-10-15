@@ -16,21 +16,49 @@ resources:
   - helmrelease.yaml
   - httproute.yaml
   - rbac.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the generated
+  # ConfigMap's authentik.tf data into the Workspace's module field.
+  # authentik.tf stays the single source of truth for the HCL; the rendered
+  # module must stay byte-identical to it (the Workspace adopts live
+  # authentik objects — a drift here would fight the state).
+  #
+  # The intermediate ConfigMap cannot be dropped from the render: kustomize
+  # applies patches and transformers before replacements, so a $patch:
+  # delete would remove the source before this rule consumes it (verified on
+  # kustomize v5.8.1; no deletions-transformer builtin exists). The
+  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
+  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
+  # update it in place.
+  - source:
+      kind: ConfigMap
+      name: litellm-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: litellm-authentik
+        fieldPaths:
+          - spec.forProvider.module
+
 configMapGenerator:
-  - name: authentik-blueprint-litellm
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at build
+  # time. Data key is the literal filename (authentik.tf); the replacements
+  # fieldPath bracket-escapes it: data.[authentik.tf]. Intentionally NOT
+  # labeled authentik_blueprint (the retired blueprint generator and its
+  # blanket label died with this migration): authentik ignores this
+  # ConfigMap as a blueprint source.
+  - name: litellm-authentik-module
     namespace: litellm
     files:
-      - litellm.yaml=authentik-blueprint.yaml
+      - authentik.tf
   - name: litellm-config
     namespace: litellm
     files:
       - models.yaml=litellm.yml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
