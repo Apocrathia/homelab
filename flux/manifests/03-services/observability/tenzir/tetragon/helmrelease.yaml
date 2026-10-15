@@ -54,11 +54,12 @@ spec:
             containerPort: 4318
 
     persistence:
-      # 20Gi stays a cap, not a capacity plan: at the 24h retention horizon
-      # a full flood day is ~3.9 GiB on disk (measured 2026-10-12; sizing
-      # math in tetragon/README.md), a fifth of the 18GiB compaction
-      # budget. Longhorn volumes grow on demand; a smaller request buys
-      # nothing.
+      # 20Gi stays a cap, not a capacity plan: at the 15-minute retention
+      # horizon a flood window is ~42 MiB on disk (measured 2026-10-12
+      # rate; sizing math in tetragon/README.md), and even the raw
+      # worst-case slice of the current extreme drain (253 GB/day, 15
+      # minutes ~ 2.6 GB) cannot OOM a 12Gi node. Longhorn volumes grow on
+      # demand; a smaller request buys nothing.
       size: 20Gi
 
     tenzir:
@@ -131,20 +132,23 @@ spec:
               interval: 30 minutes
               disk-budget-high: 18GiB
               disk-budget-low: 16GiB
-            # 24-hour local lake, same horizon as the core node: the
+            # 15-minute local lake, same horizon as the core node: the
             # tetragon OCSF types archive to the rustfs `tenzir` bucket as
             # parquet, then expire locally (consume + export =
-            # archive-then-delete; preserve-input stays off). The parquet
-            # is the OCSF record past the window — Loki keeps the raw JSON
-            # stream via the tetragon pods' export-stdout sidecar, but not
-            # OCSF-query semantics; from_s3 replays the record.
+            # archive-then-delete; preserve-input stays off). The lake is a
+            # transit buffer between ingest and the archive, not a query
+            # surface; the parquet is the OCSF record past the window —
+            # Loki keeps the raw JSON stream via the tetragon pods'
+            # export-stdout sidecar, but not OCSF-query semantics; from_s3
+            # replays the record. The pass runs every 5 minutes, so the
+            # true window at pass boundaries is 15-20 minutes.
             time:
-              interval: 1 day
+              interval: 5 minutes
               rules:
                 # Type names from the tetragon map's OCSF dispatch:
                 # Process Activity (1007), File System Activity (1001),
                 # Network Activity (4001), and Base Event for the rest.
-                - after: 1 day
+                - after: 15 minutes
                   name: tetragon-archive
                   field: time
                   types:

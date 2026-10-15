@@ -103,6 +103,8 @@ All baselines must stay warning-free.
 
 ## Storage lifecycle
 
-The local lakes keep 24 hours; everything older archives to rustfs
-parquet under `s3://tenzir/` and expires locally. The parquet is the
-record: query it back with `from_s3`. Detail lives in the node READMEs.
+The local lakes keep 15 minutes; everything older archives to rustfs
+parquet under `s3://tenzir/` and expires locally. The lake is a transit
+buffer between ingest and the archive, not a query surface; the parquet
+is the record: query it back with `from_s3`. Detail lives in the node
+READMEs.

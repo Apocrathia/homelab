@@ -133,7 +133,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **Purpose**: SIEM detection plane — OCSF normalization of kube-apiserver
   audit, tetragon, authentik, fleet, trivy, and NetFlow data, SigmaHQ +
   homelab Sigma rules on the audit stream, Detection Findings to Discord,
-  24-hour hot window with rustfs parquet archive
+  15-minute hot window with rustfs parquet archive
 - **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), two
   nodes in `tenzir-system`: `tenzir-node-core` (detection plane) and
   `tenzir-node-tetragon` (tetragon flood isolate)
