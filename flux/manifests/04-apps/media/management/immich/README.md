@@ -24,8 +24,8 @@ Create a 1Password item:
 
 - `username`: PostgreSQL database username (e.g., `immich`)
 - `password`: PostgreSQL database password
-- `oidc-client-id`: OAuth client ID from Authentik (retrieve after blueprint instantiation)
-- `oidc-client-secret`: OAuth client secret from Authentik (retrieve after blueprint instantiation)
+- `oidc-client-id`: OAuth client ID from Authentik (retrieve from the provider-opentofu Workspace's provider)
+- `oidc-client-secret`: OAuth client secret from Authentik (retrieve from the provider-opentofu Workspace's provider)
 - `immich-api-key`: API key for CLI import job (create in Immich UI → User Settings → API Keys)
 
 **Note**: OAuth credentials are injected via Flux `valuesFrom` into the Immich configuration. No manual UI setup required once secrets are populated.
@@ -55,7 +55,7 @@ Create a 1Password item:
 
 Authentication is handled through Authentik OIDC with config-file based setup:
 
-1. **Blueprint Deployment**: Authentik blueprint creates OIDC provider automatically
+1. **Workspace Ownership**: the provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`, the canonical file pair) owns the OIDC provider
 2. **Retrieve Credentials**: Get client ID/secret from Authentik admin UI → Applications → immich
 3. **Update 1Password**: Add `oidc-client-id` and `oidc-client-secret` to the immich-secrets item
 4. **Reconcile**: Flux will inject credentials into Immich configuration automatically

@@ -28,7 +28,8 @@ key come from `OPENAI_API_BASE_URLS` / `OPENAI_API_KEYS` (key in
 3. OpenWebUI creates/authenticates the user from those headers
 
 Trusted header names are configured in the HelmRelease `sso.trustedHeader`
-section; Authentik sends them via the proxy provider blueprint.
+section; Authentik sends them via the proxy provider owned by the
+provider-opentofu Workspace (`crossplane.yaml` + `authentik.tf`).
 
 ## Security
 
