@@ -56,7 +56,7 @@ spec:
     persistence:
       # 20Gi stays a cap, not a capacity plan: at the 15-minute retention
       # horizon a flood window is ~42 MiB on disk (measured 2026-10-12
-      # rate; sizing math in tetragon/README.md), and even the raw
+      # rate; sizing math in nodes/tetragon/README.md), and even the raw
       # worst-case slice of the current extreme drain (253 GB/day, 15
       # minutes ~ 2.6 GB) cannot OOM a 12Gi node. Longhorn volumes grow on
       # demand; a smaller request buys nothing.
@@ -88,8 +88,10 @@ spec:
             lazy-sketches: true
             load-concurrency: 4
           start:
-            disk-budget-high: 18GiB
-            disk-budget-low: 16GiB
+            # Corridor matched to the compaction space budgets below;
+            # retune math in nodes/tetragon/README.md.
+            disk-budget-high: 6GiB
+            disk-budget-low: 4GiB
           pipelines:
             tetragon-ingest-http:
               name: tetragon ingest (otlp/http)
@@ -108,8 +110,10 @@ spec:
               description: |
                 tetragon export events -> OCSF (Process/File/Network
                 Activity per event kind), then derive + schema-validate and
-                store in the node. The raw stream keeps flowing to Loki via
-                the tetragon pods' export-stdout sidecar.
+                store in the node. The unmapped residue is a selected
+                projection (pod identity + policy name), not the full raw
+                record. The raw stream keeps flowing to Loki via the
+                tetragon pods' export-stdout sidecar.
               definition: |
                 // parallelism: 4
                 subscribe "tetragon.raw"
@@ -119,47 +123,56 @@ spec:
                 ocsf_derive
                 ocsf_cast
                 fork { import }
-                publish "ocsf.tetragon"
+                publish "ocsf"
               restart-on-error: 1 minute
         plugins:
           compaction:
-            # Budget backstop, same weighted-age path as the core node and
-            # sized for this node's own 20Gi PVC: every 30 minutes, erase
-            # oldest past 18GiB down to 16GiB. The time rule below is the
-            # front door.
+            # Budget backstop, same weighted-age path as the core node:
+            # every 30 minutes, erase oldest past 6GiB down to 4GiB. Sized
+            # for the 15-minute window (retune math in
+            # nodes/tetragon/README.md): a flood window is ~42 MiB on disk,
+            # the worst-case extreme drain ~2.6 GB per 15 minutes, so the
+            # corridor only exists for archive-rule failure windows and
+            # holds several worst-case stalls on the 20Gi PVC.
             space:
               mode: weighted-age
               interval: 30 minutes
-              disk-budget-high: 18GiB
-              disk-budget-low: 16GiB
-            # 15-minute local lake, same horizon as the core node: the
-            # tetragon OCSF types archive to the rustfs `tenzir` bucket as
-            # parquet, then expire locally (consume + export =
-            # archive-then-delete; preserve-input stays off). The lake is a
-            # transit buffer between ingest and the archive, not a query
-            # surface; the parquet is the OCSF record past the window —
-            # Loki keeps the raw JSON stream via the tetragon pods'
-            # export-stdout sidecar, but not OCSF-query semantics; from_s3
-            # replays the record. The pass runs every 5 minutes, so the
-            # true window at pass boundaries is 15-20 minutes.
+              disk-budget-high: 6GiB
+              disk-budget-low: 4GiB
+            # 15-minute local lake, same horizon as the core node, same
+            # archive: the tetragon OCSF classes export to the ONE OCSF
+            # dataset at s3://tenzir/ocsf/ with hive class_uid partitions,
+            # then expire locally (consume + export = archive-then-delete;
+            # preserve-input stays off). DuckDB/MotherDuck read both
+            # nodes' classes as one table; the class-partition layout makes
+            # per-class hunts cheap. The Base Event fallback (unknown
+            # export kinds) is NOT archived: it cannot name a class and
+            # expires with the window on the weighted-age backstop. The
+            # lake is a transit buffer between ingest and the archive, not
+            # a query surface; the parquet is the OCSF record past the
+            # window — Loki keeps the raw JSON stream via the tetragon
+            # pods' export-stdout sidecar, but not OCSF-query semantics;
+            # from_s3 replays the record. The pass runs every 5 minutes,
+            # so the true window at pass boundaries is 15-20 minutes.
             time:
               interval: 5 minutes
               rules:
                 # Type names from the tetragon map's OCSF dispatch:
                 # Process Activity (1007), File System Activity (1001),
-                # Network Activity (4001), and Base Event for the rest.
+                # Network Activity (4001). ocsf.base_event is deliberately
+                # absent (cannot map -> not archived).
                 - after: 15 minutes
-                  name: tetragon-archive
+                  name: ocsf-archive
                   field: time
                   types:
                     [
                       "ocsf.process_activity",
                       "ocsf.file_system_activity",
                       "ocsf.network_activity",
-                      "ocsf.base_event",
                     ]
                   pipeline: |
-                    to_s3 "s3://tenzir/tetragon/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" {
+                      partition_by=[class_uid]
                       write_parquet
                     }
 

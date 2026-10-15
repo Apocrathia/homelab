@@ -34,14 +34,10 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - map.tql=packages/homelab/operators/k8s/audit/ocsf/map.tql
-  - name: tenzir-packages-homelab-findings-discord
+  - name: tenzir-packages-homelab-findings-stamp
     namespace: tenzir-system
     files:
-      - discord.tql=packages/homelab/operators/k8s/audit/findings/discord.tql
-  - name: tenzir-packages-homelab-findings-project
-    namespace: tenzir-system
-    files:
-      - project.tql=packages/homelab/operators/findings/project.tql
+      - stamp.tql=packages/homelab/operators/findings/stamp.tql
   - name: tenzir-packages-homelab-tetragon-parse
     namespace: tenzir-system
     files:
@@ -78,6 +74,10 @@ configMapGenerator:
     namespace: tenzir-system
     files:
       - map.tql=packages/homelab/operators/trivy/ocsf/map.tql
+  - name: tenzir-packages-homelab-netflow-map
+    namespace: tenzir-system
+    files:
+      - map.tql=packages/homelab/operators/netflow/ocsf/map.tql
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements
