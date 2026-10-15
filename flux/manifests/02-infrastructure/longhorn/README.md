@@ -54,8 +54,8 @@ spec:
 ## Backup
 
 - **Target**: S3 on the NAS rustfs; target URL and credential wiring live in `helmrelease.yaml` (see the CIFS → S3 migration note below)
-- **Schedule**: Recurring jobs in `recurringjobs.yaml` — tiered, see below
-- **Retention**: Per tier (see below)
+- **Schedule**: Recurring jobs configured in `recurringjobs.yaml`
+- **Retention**: Configurable per backup job
 
 ```bash
 # List volumes
@@ -67,42 +67,6 @@ kubectl get backups -n longhorn-system
 # Check backup target
 kubectl get backuptargets -n longhorn-system
 ```
-
-### Backup tier policy
-
-All volumes are classified into three tiers. A tier is a RecurringJob _group_;
-the group a volume belongs to is selected by a label on the Longhorn Volume:
-
-```text
-recurring-job-group.longhorn.io/<tier>=enabled     # tier membership
-```
-
-Mechanics (longhorn v1.13.0, verified against longhorn-manager source):
-
-- A RecurringJob applies only to volumes labeled with one of its `spec.groups`.
-- A volume with **no** recurring-job label is auto-labeled into the `default`
-  group (`datastore.FixupRecurringJob`), so new/unclassified volumes always
-  land in the catch-all backup job. Classify them by adding them to
-  [`scripts/longhorn/apply-backup-tier-labels.sh`](../../../../scripts/longhorn/apply-backup-tier-labels.sh)
-  and re-running it (it also removes the auto `default` label, which would
-  otherwise keep tier volumes on the catch-all schedule).
-- Jobs in `default` groups lists are maintenance (snapshot cleanup, snapshot
-  deletion, filesystem trim) and apply to **every** tier, including caches —
-  trim reclaims space and snapshot deletion clears local snapshots (local
-  snapshots are not the backup story; the NAS is).
-
-Why tiers: backup spend should track how much losing a volume actually costs.
-Databases, identity, and SIEM state are loss-intolerant, so they back up
-often and keep short retention; app data and configs tolerate a slower
-cadence; caches are re-downloadable or rebuildable and get no backups at all,
-only maintenance. Rules of thumb: databases/identity/SIEM state → critical;
-app data, configs, uploads, libraries → stateful; build caches, model caches,
-scratch, re-downloadable data → cache.
-
-Schedules and retention per tier live in `recurringjobs.yaml`. The
-per-volume classification — which volume rides which tier, and why — lives
-in the arrays embedded in `apply-backup-tier-labels.sh`. That script is both
-the executor and the source of truth: add new volumes there, then re-run.
 
 ### Orphan BackupVolume prune
 

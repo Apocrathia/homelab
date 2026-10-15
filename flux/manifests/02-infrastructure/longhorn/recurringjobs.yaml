@@ -1,19 +1,6 @@
 ---
-# Longhorn recurring jobs — tiered backup groups.
-#
-# Tier policy + volume classification: see README.md ("Backup tier policy").
-# Group mechanics (longhorn v1.13.0): a volume labeled
-# recurring-job-group.longhorn.io/<group>=enabled gets exactly that group's
-# jobs. A volume with NO recurring-job label is auto-labeled into the default
-# group (datastore.FixupRecurringJob), so new/unclassified volumes always
-# land in daily-backup. Classify volumes with
-# scripts/longhorn/apply-backup-tier-labels.sh.
-#
+# Daily backup of all volumes
 # All times are UTC (cluster timezone). MST = UTC-7.
----
-# Daily backup — catch-all for unclassified volumes (tier: default).
-# Everything in a named tier is out of this group; only new, not-yet-
-# classified volumes ride here until they are tiered.
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
@@ -27,37 +14,7 @@ spec:
   retain: 3
   concurrency: 10
 ---
-# Daily backup — critical tier (databases, identity, SIEM/tenzir state,
-# agent harness state, loss-intolerant PKI). 34 volumes.
-apiVersion: longhorn.io/v1beta2
-kind: RecurringJob
-metadata:
-  name: daily-backup-critical
-  namespace: longhorn-system
-spec:
-  cron: "0 7 * * *" # 0000 MST = 0700 UTC (same window; backup-concurrent-limit 10 caps the cluster)
-  task: "backup"
-  groups:
-    - critical
-  retain: 3
-  concurrency: 10
----
-# Weekly backup — stateful tier (app data, configs, media metadata,
-# uploads, libraries). 67 volumes.
-apiVersion: longhorn.io/v1beta2
-kind: RecurringJob
-metadata:
-  name: weekly-backup-stateful
-  namespace: longhorn-system
-spec:
-  cron: "0 7 * * 1" # 0000 MST Monday = 0700 UTC Monday
-  task: "backup"
-  groups:
-    - stateful
-  retain: 4 # ~1 month of weekly restore points
-  concurrency: 10
----
-# Weekly filesystem trim — all tiers (trim reclaims space on caches too)
+# Weekly filesystem trim
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
@@ -68,9 +25,6 @@ spec:
   task: "filesystem-trim"
   groups:
     - default
-    - critical
-    - stateful
-    - cache
   retain: 3
   concurrency: 2
 ---
@@ -87,9 +41,6 @@ spec:
   task: "snapshot-cleanup"
   groups:
     - default
-    - critical
-    - stateful
-    - cache
   concurrency: 2
 ---
 # Snapshot deletion - removes ALL local snapshots
@@ -105,8 +56,5 @@ spec:
   task: "snapshot-delete"
   groups:
     - default
-    - critical
-    - stateful
-    - cache
   retain: 0 # Keep ZERO local snapshots - backups are on NAS
   concurrency: 5
