@@ -162,7 +162,7 @@ spec:
                 subscribe "ocsf"
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="auto", refresh_interval=30s
                 homelab::findings::stamp
-                fork { import }
+                import
               restart-on-error: 1 minute
             netflow-collector:
               name: netflow collector
