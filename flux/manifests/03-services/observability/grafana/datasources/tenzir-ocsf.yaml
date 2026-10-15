@@ -41,6 +41,8 @@ spec:
       # flat ocsf/ form and per-feed prefixes are retired. Dashboards query
       # the `ocsf` view, not raw globs.
       initSql: |
+        -- the plugin process resolves DuckDB home to '' (container HOME sits on the read-only root layer); point at the writable grafana data PVC before installing extensions
+        SET home_directory = '/var/lib/grafana';
         INSTALL 'httpfs'; LOAD 'httpfs';
         CREATE SECRET tenzir_s3 (
           TYPE S3,
