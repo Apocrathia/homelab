@@ -22,6 +22,10 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
   Talos note) and a trimmed export denylist — the chart default mutes host,
   cilium, and kube-system events, which on Talos hides the host-side signal.
 - `policies/`: detection-only TracingPolicies (see below).
+- `grafana/`: Grafana dashboard (grafana.com id 25789, 27 panels, shipped in
+  [!5275](https://gitlab.com/Apocrathia/homelab/-/merge_requests/5275)); all
+  panels query `job="tetragon"`. Provisioned via the per-app GrafanaDashboard
+  pattern; folder Security.
 
 ## Event and alert flow
 
@@ -64,7 +68,6 @@ alive if the agent dies (persistent enforcement) — off for now.
   a values-only edit to the matchArgs list.
 - Base exec events (shells, sudo, SUID) need no policy — they ride the
   exec event stream; triage via Loki queries.
-- Grafana dashboard for `tetragon_*` metrics once the baseline lands.
 
 ## SIEM (lap C)
 
