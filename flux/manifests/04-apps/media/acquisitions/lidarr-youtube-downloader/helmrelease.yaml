@@ -20,7 +20,7 @@ spec:
     app:
       name: lidarr-youtube-downloader
       # renovate: datasource=docker depName=angrido/lidarr-downloader
-      image: angrido/lidarr-downloader@sha256:86ad8668792426e8671a30a20b47b0faca313ba3f03e8ad024b8c4d9e86e7d6e
+      image: angrido/lidarr-downloader@sha256:ec60744f60f0c13363401d4b615b3541188470ea2c3b6d74e77e09fe8db9ba81
       container:
         name: lidarr-youtube-downloader
         port: 5000
