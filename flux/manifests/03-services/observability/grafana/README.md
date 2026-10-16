@@ -62,6 +62,10 @@ spec:
     }
 ```
 
+## Token sync to 1Password
+
+[`push-secret.yaml`](./push-secret.yaml) mirrors the grafana-operator service-account token (Secret `mcp-server-token`, ns `prometheus-system`) into the 1Password item `grafana-mcp-service-account` (vault `Secrets`, field `token`) every hour, keeping the vault copy fresh when the operator rotates the token. That vault item is the paste source for `gcx login` against the homelab Grafana.
+
 ## References
 
 - **[Grafana Operator Documentation](https://grafana.github.io/grafana-operator/docs/)** - Primary documentation source
