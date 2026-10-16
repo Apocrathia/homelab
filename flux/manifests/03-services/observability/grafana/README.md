@@ -2,7 +2,7 @@
 
 The Grafana Operator manages dashboards and datasources for the existing kube-prometheus-stack Grafana instance through Kubernetes Custom Resources.
 
-> **Navigation**: [← Back to Observability README](../README.md)
+> **Navigation**: [← Back to Observability README](../README.md) · [Agent instructions →](./AGENTS.md)
 
 ## Overview
 
