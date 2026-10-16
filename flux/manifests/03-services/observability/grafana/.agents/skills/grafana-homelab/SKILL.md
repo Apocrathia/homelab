@@ -35,9 +35,10 @@ description: >
   hint banner goes to stderr.
 - Destructive commands fail in agent mode unless `--force` (or
   `GCX_AUTO_APPROVE`); `resources push` is idempotent.
-- The 24 gcx workflow skills (installed per
-  [../AGENTS.md](../../../AGENTS.md)) cover dashboards, alerting, SLO, synthetic
-  monitoring; consult the matching skill before non-trivial live Grafana work.
+- gcx bundles 24 workflow skills (dashboards, alerting, SLO, synthetic
+  monitoring); consult the matching one before non-trivial live Grafana work —
+  read on demand with `gcx agent skills get <name>` (installation details in
+  [../AGENTS.md](../../../AGENTS.md)).
 
 ## Service accounts and token architecture
 

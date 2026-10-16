@@ -36,9 +36,14 @@ any agentic harness.
 Installation (once per machine):
 
 ```sh
-brew install gcx                 # or: curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
-gcx agent skills install --all   # 24 workflow skills -> ~/.agents/skills
+brew install gcx   # or: curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
 ```
+
+gcx bundles 24 workflow skills (dashboards, alerting, SLO, synthetic
+monitoring, …). They live with the gcx binary, not this repo — read any
+on demand with `gcx agent skills get <name>` (no installation needed).
+Install them into `~/.agents/skills` (`gcx agent skills install --all`)
+only if a machine wants them in every agent session.
 
 Connect (self-hosted; token from the 1Password item `homelab-gcx-token`, see
 the skill for the credential architecture):
