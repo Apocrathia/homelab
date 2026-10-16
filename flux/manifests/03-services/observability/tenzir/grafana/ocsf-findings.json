@@ -57,7 +57,7 @@
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -280,7 +280,7 @@
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket('$__interval', time) AS time,\n  coalesce(finding_info.title, finding_info.uid) AS rule,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  coalesce(finding_info.title, finding_info.uid) AS rule,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
