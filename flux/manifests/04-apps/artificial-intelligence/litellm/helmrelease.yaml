@@ -97,8 +97,8 @@ spec:
       tag: "v1.104.2"
 
     # Replica configuration
-    # 2 replicas so a NotReady pod doesn't empty the Service endpoints
-    replicaCount: 2
+    # 3 replicas so a NotReady pod doesn't empty the Service endpoints
+    replicaCount: 3
 
     # Keep replicas on separate nodes; NotReady flaps stay node-local
     affinity:
