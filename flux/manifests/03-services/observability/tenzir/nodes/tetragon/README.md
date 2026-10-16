@@ -27,7 +27,7 @@ later, drop the directive on the affected pipeline or scope it with
 flowchart LR
     TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
-    TR -->|"OCSF map (~125 variants) -> cast null_fill, one layout per class"| LAKE["node lake: ocsf topic"]
+    TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf topic"]
     LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
     S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
     TP["tetragon pods"] -.->|"export-stdout sidecar, raw JSON, independent of this node"| LOKI[Loki]
