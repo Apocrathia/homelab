@@ -66,7 +66,7 @@ spec:
 
 Two ESO PushSecrets mirror grafana-operator service-account tokens into 1Password so the vault stays the paste source for `gcx login`:
 
-- [`push-secret.yaml`](./push-secret.yaml): Secret `mcp-server-token` → item `grafana-mcp-service-account`
+- [`push-secret-mcp.yaml`](./push-secret-mcp.yaml): Secret `mcp-server-token` → item `grafana-mcp-service-account`
 - [`push-secret-gcx.yaml`](./push-secret-gcx.yaml): Secret `gcx-token` → item `homelab-gcx-token` (pre-created `API_CREDENTIAL`; the update path preserves category, the create path would hardcode `SERVER`)
 
 Both use `refreshInterval: 168h` with `deletionPolicy: None`. ESO v2.12 PushSecret PUTs the provider item on every reconcile even when the value is unchanged, which bumps the item's updated-at and floats it to the top of the vault list — so the refresh interval IS the bump frequency until upstream adds change-gating. Tokens rotate rarely; convergence is ≤7 days, and a stale vault token fails closed (401 in gcx) and heals on the next reconcile.

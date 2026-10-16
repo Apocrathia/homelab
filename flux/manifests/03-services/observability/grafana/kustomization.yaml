@@ -13,7 +13,7 @@ resources:
   - secret.yaml
   - gcx-service-account.yaml
   - push-secret-gcx.yaml
-  - push-secret.yaml
+  - push-secret-mcp.yaml
   - datasources/home-assistant.yaml
   - datasources/tenzir-ocsf.yaml
   - alerting/
