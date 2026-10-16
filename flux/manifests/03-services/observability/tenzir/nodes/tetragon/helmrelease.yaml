@@ -72,22 +72,12 @@ spec:
           # the node process down (in-process mode shared fate). The
           # accept_otlp listener stays in-process by design.
           pipeline-subprocesses: true
-          # Archive file-size + flood memory control. The real mint driver
-          # was never the timeout: the tetragon map's conditional fields
-          # and metadata.profiles made every batch a new ocsf_cast layout,
-          # minting a ~10-event partition per 1s import batch (50,747
-          # process_activity partitions at the 2026-10-12 ENOSPC).
-          # ocsf_cast null_fill=true in tetragon-ocsf collapses the layout
-          # churn (~125 map variants -> a handful of stable cast targets,
-          # two per class from the pod/host profiles conditional), so
-          # partitions mint on this timeout alone and the archive rule
-          # writes one parquet file per 60s window per class layout —
-          # small at today's trickle, thousands of rows at flood, which is
-          # when file count mattered. The timeout stays 60s: a partition's
-          # store builder buffers in RAM until flush, and at flood rates
-          # (800 ev/s) a longer window would add GiB-scale memory to a
-          # working set already measured at 12.1Gi of a 12Gi limit.
-          # max-partition-size stays default.
+          # Partition mint-rate control, same 60s as the core: this node
+          # owns the flood that minted ~10-event partitions (50,747
+          # process_activity partitions = 6.25GiB = 80% of the volume at
+          # the 2026-10-12 ENOSPC); 60s cuts the mint rate 6x, and the
+          # async background merge consolidates undersized partitions once
+          # the node stays up. max-partition-size stays default.
           active-partition-timeout: 60s
           # Catalog load knobs, same shape as the core node: lazy-sketches
           # defers Bloom-filter sketches to query time in a memory-bounded
@@ -131,7 +121,7 @@ spec:
                 homelab::tetragon::ocsf::map tetragon, ocsf
                 this = move ocsf
                 ocsf_derive
-                ocsf_cast null_fill=true
+                ocsf_cast
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -164,9 +154,6 @@ spec:
             # pods' export-stdout sidecar, but not OCSF-query semantics;
             # from_s3 replays the record. The pass runs every 5 minutes,
             # so the true window at pass boundaries is 15-20 minutes.
-            # File size follows the lake partition: one parquet per 60s
-            # window per class layout (ocsf_cast null_fill=true collapsed
-            # the churn).
             time:
               interval: 5 minutes
               rules:
