@@ -97,12 +97,12 @@ resource "authentik_provider_proxy" "app" {
   # first apply after the gate.
   intercept_header_auth = false
 
-  # Live parity: the three unauthenticated path regexes (API, MCP, SSE
-  # endpoints — the MCP server needs bearer access), byte-identical to
-  # the live row (18 chars, NO trailing newline — the retired blueprint's
-  # block scalar declared 19 with one, and adoption keeps live, not the
-  # blueprint).
-  skip_path_regex = "^/api/\n^/mcp\n^/sse"
+  # Unauthenticated path regexes (REST API, k8s-style API, MCP, SSE
+  # endpoints — the MCP server needs bearer access). ^/api carries no
+  # trailing slash so it also matches /apis, where Grafana 12+ serves the
+  # Kubernetes-style API that gcx's login validation probes, and bare /api
+  # for client-go legacy core discovery. NO trailing newline.
+  skip_path_regex = "^/api\n^/mcp\n^/sse"
 
   # hours=1 is the authentik model default the live row sits at — the TF
   # resource default minutes=10 would PATCH the live row on the first
