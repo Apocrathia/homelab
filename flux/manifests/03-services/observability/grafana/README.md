@@ -64,7 +64,11 @@ spec:
 
 ## Token sync to 1Password
 
-[`push-secret.yaml`](./push-secret.yaml) mirrors the grafana-operator service-account token (Secret `mcp-server-token`, ns `prometheus-system`) into the 1Password item `grafana-mcp-service-account` (vault `Secrets`, field `token`) every hour, keeping the vault copy fresh when the operator rotates the token. That vault item is the paste source for `gcx login` against the homelab Grafana.
+[`vault-token-sync.yaml`](./vault-token-sync.yaml) runs a diff-gated sync every 30 minutes: it reads the grafana-operator service-account tokens (Secrets `gcx-token` and `mcp-server-token`, ns `prometheus-system`) and updates the 1Password items `homelab-gcx-token` and `grafana-mcp-service-account` (vault `Secrets`, field `token`) **only when the value actually changed** — Connect API reads never bump the item's updated-at, so tokens stay off the top of the vault list. On rotation, convergence is ≤30 minutes.
+
+`gcx-service-account.yaml` is the dedicated Grafana service account for gcx consumers, decoupled from the mcp-server account. The vault items are the paste source for `gcx login` against the homelab Grafana.
+
+Extend the sync by adding pairs to the `sync.py` ConfigMap table (see also the ESO PushSecrets under chaos-mesh and kuber-ios, which PUT unconditionally and bump their items daily — candidates for the same migration).
 
 ## References
 

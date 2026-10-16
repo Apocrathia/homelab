@@ -1,0 +1,147 @@
+---
+# Diff-gated vault sync for Grafana service-account tokens: reads the
+# grafana-operator-written k8s Secrets (ns prometheus-system), reads the 1Password
+# items through the Connect API, and PUTs an item ONLY when its token field
+# differs from the live secret. Connect GETs do not bump the item's updatedAt, so
+# items stay off the top of the vault list; a PUT happens at most once per token
+# rotation. Replaces the mcp-server PushSecret (ESO v2.12 PushSecret PUTs
+# unconditionally on every refresh tick, bumping the item daily/hourly).
+# Pairs live in the sync.py ConfigMap below; extend the table to cover more
+# secrets.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-token-sync
+  namespace: onepassword-system
+  labels:
+    app.kubernetes.io/name: vault-token-sync
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-token-sync
+  namespace: onepassword-system
+  labels:
+    app.kubernetes.io/name: vault-token-sync
+data:
+  sync.py: |
+    import base64, json, os, urllib.request
+
+    CONNECT = "http://onepassword-connect.onepassword-system.svc:8080"
+    VAULT_NAME = "Secrets"
+    PAIRS = [
+        {"secret_ns": "prometheus-system", "secret_name": "gcx-token",
+         "item_title": "homelab-gcx-token"},
+        {"secret_ns": "prometheus-system", "secret_name": "mcp-server-token",
+         "item_title": "grafana-mcp-service-account"},
+    ]
+
+    with open("/var/run/secrets/kubernetes.io/serviceaccount/token") as f:
+        KSA = f.read()
+    with open("/var/secrets/1password-token/token") as f:
+        OP = f.read().strip()
+
+    def get(url, headers):
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.load(r)
+
+    hdrs = {"Authorization": f"Bearer {OP}"}
+
+    def k8s_token(ns, name):
+        d = get(f"https://kubernetes.default.svc/api/v1/namespaces/{ns}/secrets/{name}",
+                {"Authorization": f"Bearer {KSA}"})
+        return base64.b64decode(d["data"]["token"]).decode()
+
+    vaults = get(f"{CONNECT}/v1/vaults", hdrs)
+    vault_id = next(v["id"] for v in vaults if v["name"] == VAULT_NAME)
+    items = get(f"{CONNECT}/v1/items?vault_id={vault_id}", hdrs)
+    by_title = {i["title"]: i["id"] for i in items}
+
+    changed = False
+    for p in PAIRS:
+        item_id = by_title[p["item_title"]]
+        item = get(f"{CONNECT}/v1/items/{item_id}?vault_id={vault_id}", hdrs)
+        field = next(f for f in item["fields"] if f["label"] == "token")
+        live = k8s_token(p["secret_ns"], p["secret_name"])
+        if field["value"] == live:
+            print(f"unchanged: {p['item_title']}")
+            continue
+        field["value"] = live
+        req = urllib.request.Request(
+            f"{CONNECT}/v1/items/{item_id}?vault_id={vault_id}",
+            data=json.dumps(item).encode(),
+            headers={**hdrs, "Content-Type": "application/json"}, method="PUT")
+        with urllib.request.urlopen(req, timeout=15) as r:
+            r.read()
+        print(f"UPDATED: {p['item_title']}")
+        changed = True
+    print("sync complete")
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: vault-token-sync-read-grafana-tokens
+  namespace: prometheus-system
+  labels:
+    app.kubernetes.io/name: vault-token-sync
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["gcx-token", "mcp-server-token"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: vault-token-sync-read-grafana-tokens
+  namespace: prometheus-system
+  labels:
+    app.kubernetes.io/name: vault-token-sync
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: vault-token-sync-read-grafana-tokens
+subjects:
+  - kind: ServiceAccount
+    name: vault-token-sync
+    namespace: onepassword-system
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-token-sync
+  namespace: onepassword-system
+  labels:
+    app.kubernetes.io/name: vault-token-sync
+    app.kubernetes.io/part-of: observability
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          serviceAccountName: vault-token-sync
+          restartPolicy: Never
+          containers:
+            - name: sync
+              image: python:3.12-alpine
+              command: ["python", "/app/sync.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                - name: 1password-token
+                  mountPath: /var/secrets/1password-token
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: vault-token-sync
+            - name: 1password-token
+              secret:
+                secretName: 1password-token

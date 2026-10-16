@@ -11,7 +11,8 @@ resources:
   - grafana.yaml
   - mcp-service-account.yaml
   - secret.yaml
-  - push-secret.yaml
+  - gcx-service-account.yaml
+  - vault-token-sync.yaml
   - datasources/home-assistant.yaml
   - datasources/tenzir-ocsf.yaml
   - alerting/
