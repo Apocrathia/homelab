@@ -103,7 +103,7 @@ spec:
     # Keep replicas on separate nodes; NotReady flaps stay node-local
     affinity:
       podAntiAffinity:
-        preferredDuringSchedulingIgnoringDuringExecution:
+        preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 100
             podAffinityTerm:
               topologyKey: kubernetes.io/hostname
