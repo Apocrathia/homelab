@@ -76,14 +76,19 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
-          # Partition mint-rate control (docs, "Control the partition size"):
-          # "once reached, Tenzir considers the partition as complete,
-          # regardless of the number of records" — the core feeds are
-          # low-volume and timeout-capped, so the 60s timeout bounds the
-          # partition count the 15-minute window mints. max-partition-size
-          # stays at its 4Mi default: the record cap never binds on a
-          # timeout-capped stream.
-          active-partition-timeout: 60s
+          # Partition mint-rate + archive file-size control (docs,
+          # "Control the partition size"): ocsf_cast null_fill=true below
+          # gives every class one stable layout, so partitions mint on this
+          # timeout alone — and the archive rule writes ONE parquet file per
+          # lake partition per class, so this timeout now sets the archive
+          # file size: ~10 minutes of a class's events per file (the
+          # ~29-row-per-file layout churn is the 2026-10-16 finding, see
+          # nodes/core/README.md). 10m widens the true retention window to
+          # 15-25 minutes (10m partition + 15m rule); the lake is a transit
+          # buffer, never queried, so the wider window costs nothing.
+          # max-partition-size stays at its 4Mi default: the record cap
+          # never binds on a timeout-capped stream.
+          active-partition-timeout: 10m
           # Catalog load knobs (docs, tune-performance: the catalog "keeps
           # state that grows linear in the number of partitions" and "Tenzir
           # keeps all sketches in memory"). lazy-sketches defers
@@ -138,7 +143,7 @@ spec:
                 subscribe "k8s-audit.raw"
                 homelab::k8s::audit::ocsf::map
                 ocsf_derive
-                ocsf_cast
+                ocsf_cast null_fill=true
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -183,7 +188,7 @@ spec:
                 homelab::netflow::ocsf::map netflow, ocsf
                 this = move ocsf
                 ocsf_derive
-                ocsf_cast
+                ocsf_cast null_fill=true
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -240,7 +245,7 @@ spec:
                 subscribe "authentik.raw"
                 homelab::authentik::ocsf::map
                 ocsf_derive
-                ocsf_cast
+                ocsf_cast null_fill=true
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -273,7 +278,7 @@ spec:
                 subscribe "trivy.raw"
                 homelab::trivy::ocsf::map
                 ocsf_derive
-                ocsf_cast
+                ocsf_cast null_fill=true
                 homelab::findings::stamp
                 fork { import }
                 publish "ocsf"
@@ -376,8 +381,11 @@ spec:
             # local copy would defeat the 15-minute expiry). The lake is
             # a transit buffer between ingest and the archive, not a query
             # surface: the parquet is the record past the window, and
-            # from_s3 replays the history. The pass runs every 5 minutes,
-            # so the true window at pass boundaries is 15-20 minutes.
+            # from_s3 replays the history. The pass runs every 5 minutes
+            # over partitions flushed by the 10-minute active-partition-timeout,
+            # so the true window at pass boundaries is 15-25 minutes, and
+            # one pass exports one file per class per ~10-minute lake
+            # partition (partition size = file size).
             time:
               interval: 5 minutes
               rules:

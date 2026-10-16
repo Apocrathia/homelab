@@ -53,6 +53,9 @@ spec:
           USE_SSL false
         );
         SET memory_limit = '512MB';
+        -- Footer cache shared by the plugin's 4 connections (entries inside the 512MB memory budget); enable_object_cache is a no-op placeholder on DuckDB >= 1.2.
+        SET parquet_metadata_cache = true;
+        SET enable_http_metadata_cache = true;
         CREATE OR REPLACE VIEW ocsf AS
           SELECT * FROM read_parquet(
             's3://tenzir/ocsf/class_uid=*/**',

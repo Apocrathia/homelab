@@ -95,8 +95,11 @@ rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every mappable
 class to `s3://tenzir/ocsf/**/{uuid}.parquet` with
 `partition_by=[class_uid]` and consumes the originals
 (archive-then-expire; `preserve-input` stays off). The compaction pass
-runs every 5 minutes, so the true window at pass boundaries is 15 to 20
-minutes.
+runs every 5 minutes, so the true window at pass boundaries is 15 to 25
+minutes. Archive file size follows the lake partition: the rule exports
+one parquet file per class per ~10-minute partition (ocsf_cast
+null_fill=true keeps one layout per class; before that, each OTLP push
+was its own layout and its own ~29-row file).
 
 The lake is a transit buffer between ingest and the archive, not a query
 surface: it is sized to hold one window at worst-case flood rate, and
