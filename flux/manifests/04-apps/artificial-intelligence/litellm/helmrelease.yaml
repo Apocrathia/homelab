@@ -96,9 +96,18 @@ spec:
       # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
       tag: "v1.104.2"
 
-    # Replica configuration
-    # 3 replicas so a NotReady pod doesn't empty the Service endpoints
-    replicaCount: 3
+    # Chart-native HPA; min 3 keeps a NotReady pod from emptying endpoints.
+    # CPU-only signal — chart 1.104.2's hpa.yaml supports it, but we (like
+    # chart defaults) deliberately omit targetMemoryUtilizationPercentage:
+    # prisma query-engine memory ratchets to worst-ever-write and never
+    # releases. One-time first-apply blip: 3-way merge drops spec.replicas,
+    # ReplicaSet scales 3→1, HPA restores 3 in ~15s but cold start 60–90s —
+    # net ~90–120s one ready pod; apply in a quiet window.
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 60
 
     # Keep replicas on separate nodes; NotReady flaps stay node-local
     affinity:
