@@ -1,7 +1,7 @@
 # The `homelab` TQL package
 
 Anatomy of [`packages/homelab/`](../../packages/homelab/README.md), the
-TQL package both nodes mount read-only at `/etc/tenzir/packages`
+TQL package all three nodes mount read-only at `/etc/tenzir/packages`
 (rendered as ConfigMaps by the root
 [`kustomization.yaml`](../../kustomization.yaml)). Vendored docs:
 package [guides](../skills/tenzir/guides/packages/) (create / install /
@@ -44,9 +44,10 @@ Durable guidance: before writing any new TQL operator, OCSF mapping, or
 detection package here, check
 [github.com/tenzir/library](https://github.com/tenzir/library) first —
 leverage its packages wherever possible instead of inventing our own.
-Precedent: `packages/homelab/operators/netflow/` (flow record → OCSF
-Network Activity map) was hand-rolled before this rule and is a candidate
-to revisit against tenzir/library.
+Precedent: the hand-rolled `homelab` netflow map was retired in favor of
+the official library `netflow` package — vendored at
+[`packages/netflow/`](../../packages/netflow/README.md), wired into the
+netflow node as `netflow::ocsf::normalize`.
 
 ## Adding a feed end to end
 

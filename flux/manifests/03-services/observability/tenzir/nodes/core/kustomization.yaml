@@ -7,4 +7,3 @@ metadata:
 
 resources:
   - helmrelease.yaml
-  - service-ingest.yaml

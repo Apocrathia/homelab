@@ -13,19 +13,21 @@ lake and its own pipelines; there is no distributed mode.
 
 Synthesized from the subtree's READMEs (sources at the bottom):
 
-- Two standalone nodes in namespace `tenzir`: the
+- Three standalone nodes in namespace `tenzir`: the
   [core node](../../nodes/core/README.md) is the detection plane — it
-  normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
-  feeds onto a unified OCSF bus, runs the one sigma pass over it, and owns
-  the archive. The [tetragon node](../../nodes/tetragon/README.md) owns
-  only the tetragon export flood, so its CPU and memory behavior cannot
-  starve detection.
+  normalizes kube-apiserver audit, authentik, fleet, and trivy feeds onto
+  a unified OCSF bus, runs the one sigma pass over it, and owns the
+  archive. The [tetragon node](../../nodes/tetragon/README.md) owns only
+  the tetragon export flood, and the [netflow
+  node](../../nodes/netflow/README.md) owns only the NetFlow collector
+  (UniFi exporters behind `tenzir-ingest-lb`), so neither feed's behavior
+  can starve detection.
 - Three planes (detail in [`architecture.md`](./architecture.md)): live
   detection runs in-node; findings and events live in the one OCSF dataset
   at `s3://tenzir/ocsf/` (class-partitioned parquet on rustfs — the
   record); querying and alerting run in Grafana over MotherDuck, which
   reads the parquet directly.
-- Both nodes register into one hosted Tenzir Platform workspace
+- All three nodes register into one hosted Tenzir Platform workspace
   (app.tenzir.com) over a single outbound WebSocket; pipelines run
   entirely on the nodes and never route events through the platform.
 - Content ships as ConfigMaps from this folder (the `homelab` TQL package
@@ -70,5 +72,7 @@ Code-level questions beyond the vendored docs:
   pipelines, sizing, retention
 - [`nodes/tetragon/README.md`](../../nodes/tetragon/README.md) — flood
   node, residue projection
+- [`nodes/netflow/README.md`](../../nodes/netflow/README.md) — collector
+  node, template-datagram ordering
 - [`detections/README.md`](../../detections/README.md) — bus semantics,
   sigma mapping, class taxonomy

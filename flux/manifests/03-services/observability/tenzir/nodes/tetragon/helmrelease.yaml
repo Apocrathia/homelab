@@ -143,7 +143,7 @@ spec:
             # archive: the tetragon OCSF classes export to the ONE OCSF
             # dataset at s3://tenzir/ocsf/ with hive class_uid partitions,
             # then expire locally (consume + export = archive-then-delete;
-            # preserve-input stays off). DuckDB/MotherDuck read both
+            # preserve-input stays off). DuckDB/MotherDuck read the
             # nodes' classes as one table; the class-partition layout makes
             # per-class hunts cheap. The Base Event fallback (unknown
             # export kinds) is NOT archived: it cannot name a class and

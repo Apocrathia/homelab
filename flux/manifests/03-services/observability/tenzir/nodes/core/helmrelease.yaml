@@ -51,10 +51,10 @@ spec:
           key: core-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
         # kube-audit alloy and the shared alloy OTLP log fan-out push at
-        # tenzir-node-core:4318 (the tetragon alloy moved to the
-        # tetragon node); the fleet webhook and the trivy-report-reader
-        # POST to http-ingest 8080; netflow 2055/UDP sits behind the
-        # tenzir-ingest-lb pool IP.
+        # tenzir-node-core:4318 (the tetragon alloy moved to the tetragon
+        # node); the fleet webhook and the trivy-report-reader POST to
+        # http-ingest 8080. NetFlow 2055/UDP moved to the netflow node,
+        # tenzir-ingest-lb selector flipped with it.
         extraPorts:
           - name: otlp-grpc
             containerPort: 4317
@@ -62,9 +62,6 @@ spec:
             containerPort: 4318
           - name: http-ingest
             containerPort: 8080
-          - name: netflow
-            containerPort: 2055
-            protocol: UDP
 
     persistence:
       # 20Gi stays a cap, not a capacity plan: at the 15-minute retention
@@ -171,29 +168,6 @@ spec:
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="auto", refresh_interval=30s
                 homelab::findings::stamp
                 import
-              restart-on-error: 1 minute
-            netflow-collector:
-              name: netflow collector
-              description: |
-                NetFlow v5/v9/IPFIX from the UniFi exporters behind
-                tenzir-ingest-lb (:2055/UDP). Flow records map to OCSF
-                Network Activity (4001, Traffic) in the pipeline; options
-                records are dropped. The raw netflow.v9 schema is not
-                stored anymore — the OCSF event stream replaces it, on the
-                bus and in the archive. Start ordering matters: the
-                collector must be up before v9/IPFIX template datagrams
-                arrive.
-              definition: |
-                accept_udp "0.0.0.0:2055", binary=true
-                read_netflow
-                where netflow.record_type == "flow"
-                this = {netflow: this}
-                homelab::netflow::ocsf::map netflow, ocsf
-                this = move ocsf
-                ocsf_derive
-                ocsf_cast
-                fork { import }
-                publish "ocsf"
               restart-on-error: 1 minute
             http-ingest:
               name: http ingest (fleet webhook + trivy reader)
@@ -396,11 +370,12 @@ spec:
                 # (3002) / Account Change (3001) from authentik, Detection
                 # Finding (2004) from sigma and trivy ExposedSecretReport,
                 # Vulnerability Finding (2002) from trivy
-                # VulnerabilityReport, Network Activity (4001) from
-                # netflow, and the Base Event fallback (fleet rows and
-                # authentik's non-IAM arm), added 2026-10-17: without a
-                # time rule those partitions accumulated locally and
-                # bloated the boot catalog load.
+                # VulnerabilityReport, and the Base Event fallback (fleet
+                # rows and authentik's non-IAM arm), added 2026-10-17:
+                # without a time rule those partitions accumulated locally
+                # and bloated the boot catalog load. Network Activity
+                # (4001) left with the netflow collector for the netflow
+                # node, whose own archive rule owns the class there.
                 # Dual-write transition window (clickhouse rollout MR-3,
                 # plan D8): the rule forks a to_clickhouse leg ahead of
                 # the unchanged to_s3 tail — ClickHouse is becoming the
@@ -421,7 +396,6 @@ spec:
                       "ocsf.account_change",
                       "ocsf.detection_finding",
                       "ocsf.vulnerability_finding",
-                      "ocsf.network_activity",
                       "ocsf.base_event",
                     ]
                   pipeline: |
@@ -440,8 +414,8 @@ spec:
                     }
 
     # Sized by the docs' formula for this node's shape (full math in
-    # core/README.md): detection (+1), normalization on 5 sources (+1.0),
-    # sources+destinations (+0.8) -> ceil(2.8) = 3 cores; the formula's
+    # core/README.md): detection (+1), normalization on 4 sources (+0.8),
+    # sources+destinations (+0.5) -> ceil(2.304) = 3 cores; the formula's
     # memory floor is 2 GB at the 15-minute horizon, but the boot catalog
     # load pulls 76k partition synopses into RAM and OOMKilled the node at
     # ~94% of load under the old 4Gi on every start (the tetragon sibling:
@@ -522,9 +496,6 @@ spec:
       - name: packages-homelab-trivy-map
         configMap:
           name: tenzir-packages-homelab-trivy-map
-      - name: packages-homelab-netflow-map
-        configMap:
-          name: tenzir-packages-homelab-netflow-map
       - name: sigma-homelab
         configMap:
           name: tenzir-sigma-homelab
@@ -570,10 +541,6 @@ spec:
         readOnly: true
       - name: packages-homelab-trivy-map
         mountPath: /etc/tenzir/packages/homelab/operators/trivy/ocsf/map.tql
-        subPath: map.tql
-        readOnly: true
-      - name: packages-homelab-netflow-map
-        mountPath: /etc/tenzir/packages/homelab/operators/netflow/ocsf/map.tql
         subPath: map.tql
         readOnly: true
       # Sigma stays directory-mounted to keep the 30s rule hot-reload.

@@ -1,0 +1,316 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node-netflow
+  namespace: tenzir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # Sibling parity: the fresh netflow node boots an empty partition
+    # catalog, so the 10m timeout is headroom, not a race workaround.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-netflow + entry netflow would
+    # double to tenzir-node-netflow-netflow. The override pins fullname
+    # at tenzir-node so the entry renders tenzir-node-netflow.
+    fullnameOverride: tenzir-node
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.19.1
+
+    # Registers into the same hosted Tenzir Platform workspace as the core
+    # and tetragon nodes; this node reads its own pre-provisioned token from
+    # the netflow-token field of the tenzir-secrets Secret. Platform tokens
+    # are per-node, never shared.
+    nodes:
+      - name: netflow
+        token:
+          existingSecret: tenzir-secrets
+          key: netflow-token
+        # The collector listener: UniFi exporters send NetFlow v5/v9/IPFIX
+        # datagrams here via the tenzir-ingest-lb pool IP (10.100.1.96).
+        extraPorts:
+          - name: netflow
+            containerPort: 2055
+            protocol: UDP
+
+    persistence:
+      # 20Gi stays a cap, not a capacity plan: netflow measures ~0.15 GB/day
+      # raw (~15% of the core node's ~1 GB/day), so the 15-minute window is
+      # ~150 KB on disk — the PVC buys headroom for archive-rule failure
+      # windows and the day the UniFi vendor renderer fix lands and real
+      # exporter traffic shows up. Longhorn volumes grow on demand; a smaller
+      # request buys nothing (both siblings' exact argument).
+      size: 20Gi
+
+    # Node configuration (renders to the tenzir-node-netflow-config ConfigMap
+    # and rolls the pod on change). Nothing secret may live here: values land
+    # in a ConfigMap in plaintext. Secrets arrive via extraEnv below.
+    tenzir:
+      config:
+        tenzir:
+          package-dirs:
+            - /etc/tenzir/packages
+          # Partition mint-rate control, same 60s as the siblings: this node
+          # runs a low-volume collector, and 60s caps the partition count the
+          # 15-minute window mints; the async background merge consolidates
+          # undersized partitions. max-partition-size stays at its 4Mi
+          # default.
+          active-partition-timeout: 60s
+          # Catalog knobs, sibling shape (recipe step 6): on a ~150 KB lake
+          # lazy-sketches and load-concurrency 4 are harmless consistency
+          # with core and tetragon, not load-driven tuning. max-partition-
+          # size stays default.
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+          start:
+            # Corridor matched to the compaction space budgets below,
+            # identical math to the siblings (backstop only).
+            disk-budget-high: 6GiB
+            disk-budget-low: 4GiB
+          pipelines:
+            netflow-collector:
+              name: netflow collector
+              description: |
+                NetFlow v5/v9/IPFIX from the UniFi exporters behind
+                tenzir-ingest-lb (:2055/UDP). Flow records map to OCSF
+                Network Activity (4001, Traffic) through the official
+                `netflow` library package (vendored at packages/netflow/
+                from github.com/tenzir/library); options records are
+                dropped. This dedicated node owns the collector, moved off
+                the core detection node: the pipeline stores into this
+                node's lake and publishes onto its node-local `ocsf`
+                topic, feeding this node's own archive rule — no sigma
+                pass sees the flow stream (no homelab rule targets
+                netflow fields). Start ordering matters: the collector
+                must be up before v9/IPFIX template datagrams arrive.
+              definition: |
+                accept_udp "0.0.0.0:2055", binary=true
+                read_netflow
+                where netflow.record_type == "flow"
+                netflow::ocsf::normalize
+                ocsf_derive
+                ocsf_cast
+                fork { import }
+                publish "ocsf"
+              restart-on-error: 1 minute
+            # A dead UDP collector is a silent black hole: the Node
+            # Pipelines dashboard heartbeat panel is this node's only
+            # liveness view, so the two metrics pipelines come over from
+            # the core node (tetragon ships none — deviation, deliberate).
+            # No series collision: the `pipeline_id` metric label is
+            # node-qualified (<node>/<pipeline>, vendored metrics docs:
+            # example demo-node/m57-suricata), so netflow/* and core/*
+            # stay distinct label sets; only the dashboard's
+            # `{{pipeline_name}}` legend shows multiple nodes' self-reports
+            # under one name — split on pipeline_id when it matters.
+            # sigma-metrics-to-mimir stays core-only: no sigma here.
+            pipeline-metrics-to-mimir:
+              name: pipeline metrics to mimir
+              description: |
+                Pushes the node's tenzir.metrics.pipeline events (per-pipeline
+                ingress/egress event counts, emitted every 10s) to the Mimir
+                remote-write endpoint kube-prometheus-stack remote-writes to;
+                the mimir gateway injects the tenant header, so no auth here.
+                Raw shape, not shape="prometheus" — that transform drops all
+                non-health schemas, pipeline metrics included. Grafana reads
+                the tenzir_pipeline_{ingress,egress}_events series; note this
+                pipeline (and its siblings) also self-report in those series.
+              definition: |
+                metrics "pipeline", live=true
+                fork {
+                  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                    name="tenzir_pipeline_ingress_events",
+                    value=ingress.events,
+                    timestamp=timestamp,
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                }
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_pipeline_egress_events",
+                  value=egress.events,
+                  timestamp=timestamp,
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+              restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors sample (value 1, pipeline
+                labels) to Mimir for every live error diagnostic, so the
+                dashboard can count pipeline errors with sum_over_time. Errors
+                otherwise live only in the diagnostics stream, not in metrics.
+              definition: |
+                diagnostics live=true
+                where severity == "error"
+                to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+                  name="tenzir_pipeline_errors",
+                  value=1,
+                  timestamp=timestamp,
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+              restart-on-error: 1 minute
+        plugins:
+          compaction:
+            # Budget backstop, same weighted-age path as the siblings: every
+            # 30 minutes, erase oldest past 6GiB down to 4GiB. Sized for the
+            # 15-minute window (sizing math in nodes/netflow/README.md): the
+            # netflow lake peaks near ~150 KB on disk, so the corridor only
+            # exists for archive-rule failure windows and holds days of the
+            # worst stall on the 20Gi PVC.
+            space:
+              mode: weighted-age
+              interval: 30 minutes
+              disk-budget-high: 6GiB
+              disk-budget-low: 4GiB
+            # 15-minute local lake, same horizon and same archive as the
+            # siblings: the netflow OCSF class exports to the ONE OCSF
+            # dataset at s3://tenzir/ocsf/ with hive class_uid partitions,
+            # then expires locally (consume + export = archive-then-delete;
+            # preserve-input stays off). DuckDB/MotherDuck read every
+            # node's classes as one table. The lake is a transit buffer
+            # between ingest and the archive, not a query surface; the
+            # parquet is the OCSF record past the window, and from_s3
+            # replays it. The pass runs every 5 minutes, so the true
+            # window at pass boundaries is 15-20 minutes.
+            time:
+              interval: 5 minutes
+              rules:
+                # The one OCSF class this node stores: Network Activity
+                # (4001) from the vendored netflow package's dispatch.
+                # Dual-write transition window (clickhouse rollout MR-3,
+                # plan D8): the rule forks a to_clickhouse leg ahead of
+                # the unchanged to_s3 tail — ClickHouse is becoming the
+                # OCSF query store (per-class ocsf.<Class_Name> tables),
+                # while the parquet lane stays the record until the MR-5
+                # cut-over. fork passes events through, so
+                # archive-then-delete semantics are unchanged;
+                # mode="append" fails loudly when the MR-1 DDL is
+                # missing (the second net for the Keeper first-boot
+                # race), and max_batch_rows bounds the insert buffers.
+                - after: 15 minutes
+                  name: ocsf-archive
+                  field: time
+                  types: ["ocsf.network_activity"]
+                  pipeline: |
+                    fork {
+                      to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+                        host="clickhouse-ocsf.clickhouse.svc.cluster.local",
+                        port=9000,
+                        user="tenzir",
+                        password=secret("clickhouse-password"),
+                        tls=false,
+                        mode="append",
+                        max_batch_rows=65536
+                    }
+                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
+                      write_parquet
+                    }
+
+    # Sized by the docs' size-a-node formula for this node's shape (full
+    # math in nodes/netflow/README.md): CPU = max(2, ceil(0.15/250 ingest
+    # + 1*0.1 source + 2*0.1 destinations (rustfs + clickhouse dual-write)
+    # + 1*0.2 normalization)) = 2 (the formula's 2-core floor binds); the
+    # formula's RAM floor is 2 GB and a fresh tiny lake carries none of
+    # core's 76k-synopsis boot history, so 4Gi is the floor plus 2x
+    # headroom. Detection is off: no sigma pipeline. Requests small:
+    # talos-04 CPU requests are 92% committed, and limits are caps, not
+    # reservations.
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+    # rustfs S3 credentials for the archive rule's to_s3 (the default AWS
+    # chain): same tenzir-secrets item as the siblings, kebab vault labels
+    # as the secretKeyRef keys, env var names stay UPPER. The ClickHouse
+    # writer password rides the dedicated clickhouse-secrets item (this
+    # namespace materializes its own OnePasswordItem in ../secret.yaml):
+    # the env var maps to config key tenzir.secrets.clickhouse-password,
+    # so the to_clickhouse archive leg reads it as
+    # secret("clickhouse-password") — same env-var shape as the siblings.
+    # No authentik token: no authentik pipeline runs here.
+    extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-access-key-id
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: aws-secret-access-key
+      - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
+
+    extraVolumes:
+      - name: packages-netflow
+        configMap:
+          name: tenzir-packages-netflow
+      - name: packages-netflow-ocsf-base
+        configMap:
+          name: tenzir-packages-netflow-ocsf-base
+      - name: packages-netflow-ocsf-normalize
+        configMap:
+          name: tenzir-packages-netflow-ocsf-normalize
+      - name: packages-netflow-ocsf-map
+        configMap:
+          name: tenzir-packages-netflow-ocsf-map
+      - name: packages-netflow-ocsf-events-network-activity
+        configMap:
+          name: tenzir-packages-netflow-ocsf-events-network-activity
+
+    extraVolumeMounts:
+      # Same file-level subPath mounts as the siblings (kubelet ..data
+      # internals fail Tenzir's operator-path segment check in a walked package
+      # tree). subPath does not live-propagate ConfigMap updates — package
+      # changes need a pod roll. Generator entries stay at the root
+      # kustomization: the source files never move, only the mount side
+      # moved here from the core node.
+      - name: packages-netflow
+        mountPath: /etc/tenzir/packages/netflow/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-netflow-ocsf-base
+        mountPath: /etc/tenzir/packages/netflow/operators/ocsf/base.tql
+        subPath: base.tql
+        readOnly: true
+      - name: packages-netflow-ocsf-normalize
+        mountPath: /etc/tenzir/packages/netflow/operators/ocsf/normalize.tql
+        subPath: normalize.tql
+        readOnly: true
+      - name: packages-netflow-ocsf-map
+        mountPath: /etc/tenzir/packages/netflow/operators/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-netflow-ocsf-events-network-activity
+        mountPath: /etc/tenzir/packages/netflow/operators/ocsf/events/network_activity.tql
+        subPath: network_activity.tql
+        readOnly: true

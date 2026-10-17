@@ -12,6 +12,7 @@ resources:
   - crossplane.yaml
   - nodes/core
   - nodes/tetragon
+  - nodes/netflow
   - grafana/
 
 generatorOptions:
@@ -74,10 +75,26 @@ configMapGenerator:
     namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/trivy/ocsf/map.tql
-  - name: tenzir-packages-homelab-netflow-map
+  - name: tenzir-packages-netflow
     namespace: tenzir
     files:
-      - map.tql=packages/homelab/operators/netflow/ocsf/map.tql
+      - package.yaml=packages/netflow/package.yaml
+  - name: tenzir-packages-netflow-ocsf-base
+    namespace: tenzir
+    files:
+      - base.tql=packages/netflow/operators/ocsf/base.tql
+  - name: tenzir-packages-netflow-ocsf-normalize
+    namespace: tenzir
+    files:
+      - normalize.tql=packages/netflow/operators/ocsf/normalize.tql
+  - name: tenzir-packages-netflow-ocsf-map
+    namespace: tenzir
+    files:
+      - map.tql=packages/netflow/operators/ocsf/map.tql
+  - name: tenzir-packages-netflow-ocsf-events-network-activity
+    namespace: tenzir
+    files:
+      - network_activity.tql=packages/netflow/operators/ocsf/events/network_activity.tql
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements
