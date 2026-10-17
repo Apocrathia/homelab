@@ -289,7 +289,7 @@ same names the storage config's `from_env` reads).
 
 `00-storage-tiered.xml` (in the CHI `configuration.files`) is the
 prototype's storage config with the cold-disk endpoint at the dedicated
-bucket root `http://storage.services.apocrathia.com:9009/clickhouse/`
+bucket's `tenzir` prefix `http://storage.services.apocrathia.com:9009/clickhouse/tenzir/`
 — rest identical (type s3, from_env creds, 32 MiB single-part cap). The S3
 cache-disk layer stays out of MR-1 (not prototype-validated; follow-up
 option). Note the shape change: every replica runs this same disk config —

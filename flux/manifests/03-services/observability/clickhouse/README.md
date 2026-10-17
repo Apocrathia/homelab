@@ -71,7 +71,7 @@ host_regexp default.
 `config.d/00-storage-tiered.xml` (inside `cluster/cluster.yaml`): storage policy
 `tiered` = hot volume on the Longhorn PVC (`/var/lib/clickhouse/hot/`) +
 cold volume as an S3 disk into the dedicated rustfs `clickhouse` bucket
-(bucket root) with the dedicated clickhouse bucket-user creds
+(the `tenzir` prefix) with the dedicated clickhouse bucket-user creds
 (`from_env`, no values in git). Each replica runs the same config, so each
 replica uploads its own copy of every cold part - the bucket grows ~3x the
 single-node shape; keep that in mind when watching rustfs capacity.
