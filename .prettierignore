@@ -24,3 +24,12 @@ flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
 # Vendored YARA rules: byte-identical copies from the third-party/yara-signature-base
 # submodule at the pinned gitlink — same re-copy discipline as the sigma rules.
 flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
+
+# Vendored gcx agent skills (grafana .agents/skills): byte-identical copies
+# from github.com/grafana/gcx at the pinned tag — re-copy on refresh, never
+# reformat. The hand-authored grafana-homelab skill and this tree's README
+# stay prettier-clean (re-included below the exclusion).
+flux/manifests/03-services/observability/grafana/.agents/skills/**
+!flux/manifests/03-services/observability/grafana/.agents/skills/README.md
+!flux/manifests/03-services/observability/grafana/.agents/skills/grafana-homelab/
+!flux/manifests/03-services/observability/grafana/.agents/skills/grafana-homelab/**
