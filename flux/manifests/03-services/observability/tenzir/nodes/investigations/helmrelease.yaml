@@ -65,7 +65,7 @@ spec:
     # core-token; the platform issues per-node tokens only).
     #
     # The API-token bootstrap is operator-side, once, because web-server
-    # tokens are NODE STATE, not config: `tenzir web generate-token`
+    # tokens are NODE STATE, not config: `tenzir-ctl web generate-token`
     # prints the token and persists it under the state directory
     # (plugins/web/authenticator.svs on the PVC). No config key or env
     # var seeds it, so the manifest cannot wire it: exec into the pod

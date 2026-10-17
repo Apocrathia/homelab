@@ -109,8 +109,14 @@ flowchart LR
 
    ```sh
    kubectl exec -n tenzir tenzir-node-investigations-0 -- \
-     tenzir web generate-token
+     tenzir-ctl web generate-token
    ```
+
+   `tenzir` alone is the pipeline runner (one pipeline argument, no
+   subcommands) — the control binary is `tenzir-ctl`, which ships in the
+   node image (`/nix/store/...-tenzir-6.19.1/bin/tenzir-ctl`, verified
+   live on the core node) and also runs from a workstation as
+   `uvx --from tenzir@6.19.1 tenzir-ctl` against an endpoint.
 
 5. **Vault copy**: paste the printed token into the
    `investigations-api-token` field of the `tenzir-secrets` item and hand
