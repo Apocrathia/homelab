@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Cross-class hunt over the tenzir OCSF archive (s3://tenzir/ocsf/, class_uid hive partitions) through the tenzir-ocsf DuckDB datasource and its lazy `ocsf` view. Panels are empty until the archive parquet flows (the 15-minute node windows archive every 5 minutes). Class panels filter with class_uid: API Activity 6003 (k8s audit), Authentication 3002 / Account Change 3001 (authentik), Detection Finding 2004 (sigma + trivy secrets), Vulnerability Finding 2002 (trivy), Network Activity 4001 (netflow + tetragon), Process Activity 1007 / File System Activity 1001 (tetragon).",
+  "description": "Cross-class hunt over the OCSF classes the nodes write into the per-class ClickHouse tables, through the ocsf-clickhouse datasource. Panels are empty until the to_clickhouse legs write (the nodes dual-write the 15-minute windows every 5 minutes). Class panels filter with class_uid: API Activity 6003 (k8s audit), Authentication 3002 / Account Change 3001 (authentik), Detection Finding 2004 (sigma + trivy secrets), Vulnerability Finding 2002 (trivy), Network Activity 4001 (netflow + tetragon), Process Activity 1007 / File System Activity 1001 (tetragon).",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -11,10 +11,10 @@
   "panels": [
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
-      "description": "Events per bucket for every archived class: API Activity 6003, Authentication 3002, Account Change 3001, Detection Finding 2004, Vulnerability Finding 2002, Network Activity 4001, Process Activity 1007, File System Activity 1001. The archive is the s3://tenzir/ocsf/ class-partitioned parquet read through the tenzir-ocsf datasource view.",
+      "description": "Events per bucket for every archived class: API Activity 6003, Authentication 3002, Account Change 3001, Detection Finding 2004, Vulnerability Finding 2002, Network Activity 4001, Process Activity 1007, File System Activity 1001. The union spans all nine per-class ocsf tables; class-0 base events land in Base_Event.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -51,13 +51,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  class_uid::VARCHAR AS metric,\n  count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  toString(class_uid) AS metric,\n  count() AS events\nFROM (SELECT time, class_uid FROM ocsf.Base_Event\n  UNION ALL SELECT time, class_uid FROM ocsf.API_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.Authentication\n  UNION ALL SELECT time, class_uid FROM ocsf.Account_Change\n  UNION ALL SELECT time, class_uid FROM ocsf.Detection_Finding\n  UNION ALL SELECT time, class_uid FROM ocsf.Vulnerability_Finding\n  UNION ALL SELECT time, class_uid FROM ocsf.Network_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.Process_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.File_System_Activity)\nWHERE $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -66,8 +66,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "severity_id captions across all classes in the window (OCSF: 0 Unknown, 1 Informational, 2 Low, 3 Medium, 4 High, 5 Critical, 6 Fatal). k8s-audit 6003 rows carry no severity; they fall into 0 Unknown.",
       "fieldConfig": {
@@ -107,13 +107,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT CASE severity_id\n         WHEN 0 THEN '0 Unknown'\n         WHEN 1 THEN '1 Informational'\n         WHEN 2 THEN '2 Low'\n         WHEN 3 THEN '3 Medium'\n         WHEN 4 THEN '4 High'\n         WHEN 5 THEN '5 Critical'\n         WHEN 6 THEN '6 Fatal'\n         ELSE '99 Other'\n       END AS severity,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1",
+          "rawSql": "SELECT CASE severity_id\n         WHEN 0 THEN '0 Unknown'\n         WHEN 1 THEN '1 Informational'\n         WHEN 2 THEN '2 Low'\n         WHEN 3 THEN '3 Medium'\n         WHEN 4 THEN '4 High'\n         WHEN 5 THEN '5 Critical'\n         WHEN 6 THEN '6 Fatal'\n         ELSE '99 Other'\n       END AS severity,\n       count() AS events\nFROM (SELECT time, severity_id FROM ocsf.Base_Event\n  UNION ALL SELECT time, severity_id FROM ocsf.API_Activity\n  UNION ALL SELECT time, severity_id FROM ocsf.Authentication\n  UNION ALL SELECT time, severity_id FROM ocsf.Account_Change\n  UNION ALL SELECT time, severity_id FROM ocsf.Detection_Finding\n  UNION ALL SELECT time, severity_id FROM ocsf.Vulnerability_Finding\n  UNION ALL SELECT time, severity_id FROM ocsf.Network_Activity\n  UNION ALL SELECT time, severity_id FROM ocsf.Process_Activity\n  UNION ALL SELECT time, severity_id FROM ocsf.File_System_Activity)\nWHERE $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
         }
       ],
@@ -122,8 +122,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Total events per class_uid in the window.",
       "fieldConfig": {
@@ -163,13 +163,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT class_uid::VARCHAR AS class,\n       count(*) AS events\nFROM ocsf\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC",
+          "rawSql": "SELECT toString(class_uid) AS class,\n       count() AS events\nFROM (SELECT time, class_uid FROM ocsf.Base_Event\n  UNION ALL SELECT time, class_uid FROM ocsf.API_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.Authentication\n  UNION ALL SELECT time, class_uid FROM ocsf.Account_Change\n  UNION ALL SELECT time, class_uid FROM ocsf.Detection_Finding\n  UNION ALL SELECT time, class_uid FROM ocsf.Vulnerability_Finding\n  UNION ALL SELECT time, class_uid FROM ocsf.Network_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.Process_Activity\n  UNION ALL SELECT time, class_uid FROM ocsf.File_System_Activity)\nWHERE $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC",
           "refId": "A"
         }
       ],
@@ -178,8 +178,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Most active kube-apiserver callers in the window (class_uid 6003).",
       "fieldConfig": {
@@ -215,13 +215,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT actor.user.name AS actor,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
+          "rawSql": "SELECT `actor.user.name` AS actor,\n       count() AS calls\nFROM ocsf.API_Activity\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
         }
       ],
@@ -230,8 +230,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Most frequent api.operation values in the window (class_uid 6003).",
       "fieldConfig": {
@@ -271,13 +271,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT api.operation AS operation,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 15",
+          "rawSql": "SELECT `api.operation` AS operation,\n       count() AS calls\nFROM ocsf.API_Activity\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 15",
           "refId": "A"
         }
       ],
@@ -286,8 +286,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Kubernetes resources touched most in the window (unmapped.object_ref from the k8s audit mapper; class_uid 6003).",
       "fieldConfig": {
@@ -314,13 +314,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT unmapped.object_ref.resource AS resource,\n       unmapped.object_ref.namespace AS namespace,\n       count(*) AS calls\nFROM ocsf\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
+          "rawSql": "SELECT toString(unmapped.object_ref.resource) AS resource,\n       toString(unmapped.object_ref.namespace) AS namespace,\n       count() AS calls\nFROM ocsf.API_Activity\nWHERE class_uid = 6003\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
           "refId": "A"
         }
       ],
@@ -329,8 +329,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Authentication (3002) events split by status_id caption (1 Success, 2 Failure).",
       "fieldConfig": {
@@ -369,13 +369,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  CASE status_id WHEN 1 THEN 'success' WHEN 2 THEN 'failure' ELSE 'unknown' END AS status,\n  count(*) AS logins\nFROM ocsf\nWHERE class_uid = 3002\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  CASE status_id WHEN 1 THEN 'success' WHEN 2 THEN 'failure' ELSE 'unknown' END AS status,\n  count() AS logins\nFROM ocsf.Authentication\nWHERE class_uid = 3002\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -384,8 +384,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Account Change (3001) events in the window: action, actor, source IP.",
       "fieldConfig": {
@@ -412,13 +412,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT time,\n       unmapped.action AS action,\n       actor.user.name AS actor,\n       src_endpoint.ip AS source_ip\nFROM ocsf\nWHERE class_uid = 3001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "rawSql": "SELECT time,\n       toString(unmapped.action) AS action,\n       `actor.user.name` AS actor,\n       `src_endpoint.ip` AS source_ip\nFROM ocsf.Account_Change\nWHERE class_uid = 3001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -427,8 +427,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Process Activity (1007) events split by activity (1 Launch, 2 Terminate, other = container-escape namespace access).",
       "fieldConfig": {
@@ -467,13 +467,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  CASE activity_id WHEN 1 THEN 'launch' WHEN 2 THEN 'terminate' ELSE 'other' END AS activity,\n  count(*) AS events\nFROM ocsf\nWHERE class_uid = 1007\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  CASE activity_id WHEN 1 THEN 'launch' WHEN 2 THEN 'terminate' ELSE 'other' END AS activity,\n  count() AS events\nFROM ocsf.Process_Activity\nWHERE class_uid = 1007\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -482,8 +482,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Most launched process binaries in the window (1007, activity_id = 1).",
       "fieldConfig": {
@@ -519,13 +519,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT process.path AS binary,\n       count(*) AS launches\nFROM ocsf\nWHERE class_uid = 1007\n  AND activity_id = 1\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
+          "rawSql": "SELECT `process.path` AS binary,\n       count() AS launches\nFROM ocsf.Process_Activity\nWHERE class_uid = 1007\n  AND activity_id = 1\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
         }
       ],
@@ -534,8 +534,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "File System Activity (1001) hits from the secret-file-access kprobe: file, permission, actor, pod, node.",
       "fieldConfig": {
@@ -562,13 +562,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT time,\n       file.path AS file,\n       file.xattributes.permission AS permission,\n       actor.process.path AS actor_binary,\n       actor.process.container.name AS actor_container,\n       unmapped.pod.name AS pod,\n       unmapped.pod.namespace AS pod_namespace,\n       device.hostname AS node\nFROM ocsf\nWHERE class_uid = 1001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "rawSql": "SELECT time,\n       `file.path` AS file,\n       `file.xattributes.permission` AS permission,\n       `actor.process.path` AS actor_binary,\n       `actor.process.container.name` AS actor_container,\n       toString(unmapped.pod.name) AS pod,\n       toString(unmapped.pod.namespace) AS pod_namespace,\n       `device.hostname` AS node\nFROM ocsf.File_System_Activity\nWHERE class_uid = 1001\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -577,8 +577,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "NetFlow (4001, traffic data) and tetragon kprobe connect attempts (4001, policy_name set) by destination.",
       "fieldConfig": {
@@ -605,13 +605,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT dst_endpoint.ip AS destination,\n       CASE WHEN unmapped.policy_name IS NOT NULL THEN 'tetragon' ELSE 'netflow' END AS source,\n       count(*) AS flows,\n       sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
+          "rawSql": "SELECT `dst_endpoint.ip` AS destination,\n       CASE WHEN unmapped.policy_name IS NOT NULL THEN 'tetragon' ELSE 'netflow' END AS source,\n       count() AS flows,\n       sum(`traffic.bytes`) AS bytes\nFROM ocsf.Network_Activity\nWHERE class_uid = 4001\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 3 DESC\nLIMIT 15",
           "refId": "A"
         }
       ],
@@ -620,8 +620,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Bytes per bucket for netflow Network Activity (4001) rows (traffic is netflow-only).",
       "fieldConfig": {
@@ -660,13 +660,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  sum(traffic.bytes) AS bytes\nFROM ocsf\nWHERE class_uid = 4001\n  AND traffic IS NOT NULL\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  sum(`traffic.bytes`) AS bytes\nFROM ocsf.Network_Activity\nWHERE class_uid = 4001\n  AND `traffic.bytes` IS NOT NULL\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -675,8 +675,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Vulnerability Finding (2002) CVEs in the window (unnested from vulnerabilities[]): CVE, severity, package, fix, workload.",
       "fieldConfig": {
@@ -703,13 +703,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT u.cve.uid AS cve,\n       u.severity AS severity,\n       u.title AS description,\n       u.affected_packages[1].name AS package,\n       u.affected_packages[1].fixed_in_version AS fixed_in,\n       unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       time AS seen\nFROM ocsf\nCROSS JOIN unnest(vulnerabilities) AS t(u)\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY seen DESC\nLIMIT 20",
+          "rawSql": "SELECT u.cve.uid AS cve,\n       u.severity AS severity,\n       u.title AS description,\n       JSONExtract(toString(u.affected_packages[1]), 'name', 'String') AS package,\n       JSONExtract(toString(u.affected_packages[1]), 'fixed_in_version', 'String') AS fixed_in,\n       concat(toString(unmapped.workload.namespace), '/', toString(unmapped.workload.name)) AS workload,\n       time AS seen\nFROM ocsf.Vulnerability_Finding\nARRAY JOIN CAST(event.vulnerabilities, 'Array(JSON)') AS u\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY seen DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
@@ -718,8 +718,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Latest trivy VulnerabilityReport state per workload (2002, update-shaped rescans): severity and summary counts.",
       "fieldConfig": {
@@ -746,13 +746,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT time AS last_scan,\n       unmapped.workload.kind || '/' || unmapped.workload.namespace || '/' || unmapped.workload.name AS workload,\n       unmapped.workload.container AS container,\n       severity_id,\n       unmapped.summary.criticalCount AS critical,\n       unmapped.summary.highCount AS high,\n       unmapped.summary.mediumCount AS medium,\n       unmapped.summary.lowCount AS low\nFROM ocsf\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
+          "rawSql": "SELECT time AS last_scan,\n       concat(toString(unmapped.workload.kind), '/', toString(unmapped.workload.namespace), '/', toString(unmapped.workload.name)) AS workload,\n       toString(unmapped.workload.container) AS container,\n       severity_id,\n       toString(unmapped.summary.criticalCount) AS critical,\n       toString(unmapped.summary.highCount) AS high,\n       toString(unmapped.summary.mediumCount) AS medium,\n       toString(unmapped.summary.lowCount) AS low\nFROM ocsf.Vulnerability_Finding\nWHERE class_uid = 2002\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 20",
           "refId": "A"
         }
       ],
