@@ -11,7 +11,12 @@ machine:
       rotate-server-certificates: "false"
       feature-gates: "MemoryQoS=true"
     extraConfig:
-      maxPods: 200
+      maxPods: 250
+      # Prune unused images at 50% imagefs usage (down to 40%) instead of the
+      # 85/80 defaults — ~1.3k stale images/node filled the disks past
+      # Longhorn's 25%-free scheduling watermark (2026-10 archisteamfarm RCA).
+      imageGCHighThresholdPercent: 50
+      imageGCLowThresholdPercent: 40
     extraMounts:
       # Longhorn https://longhorn.io/docs/1.9.0/advanced-resources/os-distro-specific/talos-linux-support/
       - destination: /var/lib/longhorn
