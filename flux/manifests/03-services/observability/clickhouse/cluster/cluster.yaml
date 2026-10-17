@@ -8,14 +8,14 @@
 #
 # In-cluster endpoints (operator-created Services; pattern prefixes are
 # fixed by the operator namer):
-#   clickhouse-ocsf.clickhouse.svc.cluster.local  - CR-level service,
+#   clickhouse-tenzir.clickhouse.svc.cluster.local  - CR-level service,
 #     load-balanced across all hosts, HTTP 8123 + native 9000
-#   chi-ocsf-ocsf-<shard>-<replica>...                   - per-host services
+#   chi-tenzir-ocsf-<shard>-<replica>...                   - per-host services
 #   The {cluster} macro value is "ocsf" (the single cluster below).
 apiVersion: clickhouse.altinity.com/v1
 kind: ClickHouseInstallation
 metadata:
-  name: ocsf
+  name: tenzir
   namespace: clickhouse
 spec:
   configuration:
