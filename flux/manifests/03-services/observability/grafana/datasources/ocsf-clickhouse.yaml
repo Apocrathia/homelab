@@ -1,0 +1,60 @@
+---
+# ClickHouse OCSF query store datasource (rollout plan MR-2,
+# docs/plans/clickhouse-rollout.md). Talks to the Altinity operator
+# service `clickhouse-tenzir` (CR-level Service, load-balanced across the
+# 1x3 replica cluster in clickhouse) through the
+# grafana-clickhouse-datasource plugin's default native protocol.
+# Provisioning schema verified against the pinned plugin tag v4.20.0
+# (docs/sources/configure.md + pkg/plugin/settings.go): jsonData
+# host/port/protocol/username + secureJsonData password - the plugin
+# dials host:port itself, there is no `url` field. The plugin is NOT
+# bundled with the grafana image; it is installed pinned via the
+# kube-prometheus-stack `grafana.plugins:` value in
+# flux/manifests/02-infrastructure/kube-prometheus-stack/helmrelease.yaml.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: ocsf-clickhouse
+  namespace: prometheus-system
+spec:
+  # Same kube-prometheus-stack Grafana instance as the sibling datasources.
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  # grafana-operator v5 preferred field (spec.datasource.uid is deprecated).
+  # MR-4 dashboard JSON references this uid when panels cut over.
+  uid: ocsf-clickhouse
+  # ClickHouse auth (username + password) substituted from the
+  # grafana-secrets 1Password item (vaults/Secrets/items/grafana-secrets)
+  # via the operator valuesFrom mechanism - git holds only the ${...}
+  # field-name placeholders, never values. The password value must match
+  # the `clickhouse-grafana-password` field on the tenzir-secrets item
+  # (chi.yaml grafana user in clickhouse); the username is the
+  # same `grafana` user chi.yaml defines.
+  valuesFrom:
+    - targetPath: "jsonData.username"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "clickhouse-grafana-user"
+    - targetPath: "secureJsonData.password"
+      valueFrom:
+        secretKeyRef:
+          name: "grafana-secrets"
+          key: "clickhouse-grafana-password"
+  datasource:
+    name: OCSF ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    isDefault: false
+    jsonData:
+      # Native TCP 9000 is the plugin default (http/8123 is the plugin's
+      # alternative; the CR-level service exposes both).
+      host: clickhouse-tenzir.clickhouse.svc.cluster.local
+      port: 9000
+      protocol: native
+      username: "${clickhouse-grafana-user}"
+      defaultDatabase: ocsf
+    secureJsonData:
+      password: "${clickhouse-grafana-password}"
