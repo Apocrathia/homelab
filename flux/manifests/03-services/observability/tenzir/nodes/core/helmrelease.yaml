@@ -79,6 +79,17 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
+          # Server-log verbosity: the chart's injected default
+          # (tenzir.file-verbosity: quiet) writes nothing to server.log,
+          # so pipeline failures that point at it — the 2026-10-17
+          # class_uid compaction incident surfaced "partition transform:
+          # pipeline failed; see server log for diagnostics" with an
+          # empty log behind it — stay blind. warning puts the file at
+          # the problem surface ([warning]/[error]/[critical], the lines
+          # the docs' troubleshooting grep filters for) without the
+          # info-level chatter. server.log lives in the state directory
+          # on the PVC and rotates at 10 MiB.
+          file-verbosity: warning
           # Partition mint-rate control (docs, "Control the partition
           # size"): 60s, reverted from !5287's 10m — a partition's store
           # builder buffers in RAM until flush, and the wider window added
