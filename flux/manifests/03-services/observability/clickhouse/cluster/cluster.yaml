@@ -137,7 +137,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Base_Event
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `class_name` LowCardinality(Nullable(String)),
             `activity_id` Nullable(UInt8),
             `severity_id` UInt8 DEFAULT 0,
@@ -156,7 +156,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.API_Activity
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `actor.user.name` LowCardinality(Nullable(String)),
             `api.operation` LowCardinality(Nullable(String)),
@@ -175,7 +175,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Authentication
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `status_id` Nullable(UInt8),
             `actor.user.name` LowCardinality(Nullable(String)),
@@ -194,7 +194,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Account_Change
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `actor.user.name` LowCardinality(Nullable(String)),
             `src_endpoint.ip` Nullable(IPv6),
@@ -212,7 +212,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Detection_Finding
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `status_id` Nullable(UInt8),
             `uid` Nullable(String),
@@ -236,7 +236,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Vulnerability_Finding
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `finding_info.title` Nullable(String),
             `metadata.product.name` LowCardinality(Nullable(String)),
@@ -253,7 +253,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Network_Activity
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `src_endpoint.ip` Nullable(IPv6),
             `dst_endpoint.ip` Nullable(IPv6),
@@ -272,7 +272,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.Process_Activity
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `activity_id` Nullable(UInt8),
             `process.path` Nullable(String),
@@ -291,7 +291,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS ocsf.File_System_Activity
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `severity_id` UInt8 DEFAULT 0,
             `file.path` Nullable(String),
             `file.xattributes.permission` Nullable(String),
