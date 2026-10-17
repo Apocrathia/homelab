@@ -10,7 +10,7 @@ Vendored docs for the general shapes: node
 
 ## Nodes
 
-Two standalone Tenzir nodes in namespace `tenzir-system` — Tenzir has no
+Two standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines ([core](../../nodes/core/README.md),
 [tetragon](../../nodes/tetragon/README.md)). Both register into one hosted

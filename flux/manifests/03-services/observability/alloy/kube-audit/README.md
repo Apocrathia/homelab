@@ -28,7 +28,7 @@ smallest root surface that can read the file.
     `node="<K8S_NODE_NAME>"`)
   - Tenzir leg: `otelcol.receiver.filelog` (public-preview) ->
     `otelcol.exporter.otlphttp` at
-    `tenzir-node-core.tenzir-system.svc:4318`
+    `tenzir-node-core.tenzir.svc:4318`
 - Both legs start at end-of-file: the pre-existing node-local backlog is
   not re-shipped on first deploy
 - Node identity rides in both legs: `node` Loki label and

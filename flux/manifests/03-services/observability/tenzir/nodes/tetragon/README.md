@@ -166,7 +166,7 @@ classes starts from that baseline, not from zero.
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
    node's HelmRelease.
 9. **Feeder wiring**: point feeders at
-   `tenzir-node-<role>.tenzir-system.svc.cluster.local:<port>`;
+   `tenzir-node-<role>.tenzir.svc.cluster.local:<port>`;
    the chart auto-generates the Service.
 10. **Root kustomization**: add `- nodes/<role>` to `resources:`.
 11. **README**: sizing math, retention profile, and this recipe.
@@ -174,11 +174,11 @@ classes starts from that baseline, not from zero.
 ## Troubleshooting
 
 ```sh
-kubectl exec -n tenzir-system tenzir-node-tetragon-0 -- \
+kubectl exec -n tenzir tenzir-node-tetragon-0 -- \
   tenzir -e localhost:5158 \
   'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
-kubectl logs -n tenzir-system tenzir-node-tetragon-0 | grep -i error
+kubectl logs -n tenzir tenzir-node-tetragon-0 | grep -i error
 # recent stored events
-kubectl exec -n tenzir-system tenzir-node-tetragon-0 -- \
+kubectl exec -n tenzir tenzir-node-tetragon-0 -- \
   tenzir -e localhost:5158 'export | head 5'
 ```
