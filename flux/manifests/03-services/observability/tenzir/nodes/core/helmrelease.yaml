@@ -76,19 +76,16 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
-          # Partition mint-rate + archive file-size control (docs,
-          # "Control the partition size"): ocsf_cast null_fill=true below
-          # gives every class one stable layout, so partitions mint on this
-          # timeout alone — and the archive rule writes ONE parquet file per
-          # lake partition per class, so this timeout now sets the archive
-          # file size: ~10 minutes of a class's events per file (the
-          # ~29-row-per-file layout churn is the 2026-10-16 finding, see
-          # nodes/core/README.md). 10m widens the true retention window to
-          # 15-25 minutes (10m partition + 15m rule); the lake is a transit
-          # buffer, never queried, so the wider window costs nothing.
-          # max-partition-size stays at its 4Mi default: the record cap
-          # never binds on a timeout-capped stream.
-          active-partition-timeout: 10m
+          # Partition mint-rate control (docs, "Control the partition
+          # size"): 60s, reverted from !5287's 10m — a partition's store
+          # builder buffers in RAM until flush, and the wider window added
+          # GiB-scale memory to a node that already OOMs at boot (the
+          # catalog load dies at ~94% on every start). 60s bounds the
+          # partition count the 15-minute window mints; the async
+          # background merge consolidates undersized partitions once the
+          # node stays up. max-partition-size stays at its 4Mi default:
+          # the record cap never binds on a timeout-capped stream.
+          active-partition-timeout: 60s
           # Catalog load knobs (docs, tune-performance: the catalog "keeps
           # state that grows linear in the number of partitions" and "Tenzir
           # keeps all sketches in memory"). lazy-sketches defers
@@ -143,7 +140,7 @@ spec:
                 subscribe "k8s-audit.raw"
                 homelab::k8s::audit::ocsf::map
                 ocsf_derive
-                ocsf_cast null_fill=true
+                ocsf_cast
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -188,7 +185,7 @@ spec:
                 homelab::netflow::ocsf::map netflow, ocsf
                 this = move ocsf
                 ocsf_derive
-                ocsf_cast null_fill=true
+                ocsf_cast
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -245,7 +242,7 @@ spec:
                 subscribe "authentik.raw"
                 homelab::authentik::ocsf::map
                 ocsf_derive
-                ocsf_cast null_fill=true
+                ocsf_cast
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
@@ -278,7 +275,7 @@ spec:
                 subscribe "trivy.raw"
                 homelab::trivy::ocsf::map
                 ocsf_derive
-                ocsf_cast null_fill=true
+                ocsf_cast
                 homelab::findings::stamp
                 fork { import }
                 publish "ocsf"
@@ -357,8 +354,8 @@ spec:
             # the corridor only exists for archive-rule failure windows;
             # 6Gi holds hours of the worst stall with room to spare on the
             # 20Gi PVC. A stored type without a time rule rides this
-            # backstop by design — the base-event class expires here and
-            # nowhere else.
+            # backstop by design — none remain: ocsf.base_event moved to
+            # the time rule below with every other stored type.
             space:
               mode: weighted-age
               interval: 30 minutes
@@ -372,32 +369,32 @@ spec:
             # back at read time with hive_partitioning=true). DuckDB and
             # MotherDuck read it as one table:
             # read_parquet('s3://tenzir/ocsf/**/*.parquet',
-            # hive_partitioning=true) + union_by_name. Classes that cannot
-            # map to OCSF (the Base Event fallback) are NOT archived: they
-            # expire with the window on the weighted-age backstop. A
+            # hive_partitioning=true) + union_by_name. The Base Event
+            # fallback (ocsf.base_event) archives with the mappable
+            # classes — its partitions used to accumulate locally with no
+            # time rule (16x the tetragon sibling's partition count at
+            # the 2026-10-17 boot OOM). A
             # compaction rule consumes its input, and a sink-only pipeline
             # returns no transformed events, so consume + export =
             # archive-then-delete (preserve-input stays off: keeping the
             # local copy would defeat the 15-minute expiry). The lake is
             # a transit buffer between ingest and the archive, not a query
             # surface: the parquet is the record past the window, and
-            # from_s3 replays the history. The pass runs every 5 minutes
-            # over partitions flushed by the 10-minute active-partition-timeout,
-            # so the true window at pass boundaries is 15-25 minutes, and
-            # one pass exports one file per class per ~10-minute lake
-            # partition (partition size = file size).
+            # from_s3 replays the history. The pass runs every 5 minutes,
+            # so the true window at pass boundaries is 15-20 minutes.
             time:
               interval: 5 minutes
               rules:
-                # The one OCSF dataset: all mappable classes this node
-                # stores — API Activity (6003) from k8s-audit,
-                # Authentication (3002) / Account Change (3001) from
-                # authentik, Detection Finding (2004) from sigma and
-                # trivy ExposedSecretReport, Vulnerability Finding (2002)
-                # from trivy VulnerabilityReport, Network Activity (4001)
-                # from netflow. ocsf.base_event is deliberately absent:
-                # fleet rows and authentik's non-IAM arm cannot name a
-                # class and archive nowhere.
+                # The one OCSF dataset: all classes this node stores —
+                # API Activity (6003) from k8s-audit, Authentication
+                # (3002) / Account Change (3001) from authentik, Detection
+                # Finding (2004) from sigma and trivy ExposedSecretReport,
+                # Vulnerability Finding (2002) from trivy
+                # VulnerabilityReport, Network Activity (4001) from
+                # netflow, and the Base Event fallback (fleet rows and
+                # authentik's non-IAM arm), added 2026-10-17: without a
+                # time rule those partitions accumulated locally and
+                # bloated the boot catalog load.
                 - after: 15 minutes
                   name: ocsf-archive
                   field: time
@@ -409,6 +406,7 @@ spec:
                       "ocsf.detection_finding",
                       "ocsf.vulnerability_finding",
                       "ocsf.network_activity",
+                      "ocsf.base_event",
                     ]
                   pipeline: |
                     to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
@@ -418,18 +416,19 @@ spec:
     # Sized by the docs' formula for this node's shape (full math in
     # core/README.md): detection (+1), normalization on 5 sources (+1.0),
     # sources+destinations (+0.8) -> ceil(2.8) = 3 cores; the formula's
-    # memory floor is 2 GB at the 15-minute horizon, and 4Gi doubles it as
-    # burst and import-buffer headroom (ingest spikes, the 5-minute archive
-    # and compaction cadence, max-buffered-events import ceilings). Requests
-    # stay small: talos-04 CPU requests are 92% committed, and limits are
-    # caps, not reservations.
+    # memory floor is 2 GB at the 15-minute horizon, but the boot catalog
+    # load pulls 76k partition synopses into RAM and OOMKilled the node at
+    # ~94% of load under the old 4Gi on every start (the tetragon sibling:
+    # 4.7k synopses under 12Gi) — 8Gi clears the boot load with ingest and
+    # import headroom. Requests stay small: talos-04 CPU requests are 92%
+    # committed, and limits are caps, not reservations.
     resources:
       requests:
         cpu: 200m
         memory: 1Gi
       limits:
         cpu: "3"
-        memory: 4Gi
+        memory: 8Gi
 
     # Secrets (1Password item tenzir-secrets): vault field labels are
     # kebab-case and the rendered Secret keys match them, so every
