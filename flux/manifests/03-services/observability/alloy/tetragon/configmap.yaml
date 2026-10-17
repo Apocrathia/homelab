@@ -38,20 +38,6 @@ data:
       start_at          = "end"
       include_file_path = true
       operators = [
-        // Egress-flood trim, transport-side only: the stanza filter
-        // operator drops entries whose expr-lang expression is true, and
-        // the only tetragon export events carrying policy_name
-        // "monitor-network-activity-outside-cluster-cidr-range" are the
-        // tcp_connect kprobe events (~800 ev/s at the 2026-10-12 incident
-        // peak; 80% of the Tenzir volume as ~10-event OCSF partitions).
-        // process_exec/process_exit and the other kprobe policies
-        // (secret-file-access, container-escape-namespace-access) keep
-        // shipping. The TracingPolicy and the export-stdout Loki leg are
-        // untouched: the raw egress stream stays pivotable in Loki.
-        {
-          type  = "filter",
-          expr  = "body matches \"monitor-network-activity-outside-cluster-cidr-range\"",
-        },
         {
           type  = "add",
           field = "resource[\"service.name\"]",
