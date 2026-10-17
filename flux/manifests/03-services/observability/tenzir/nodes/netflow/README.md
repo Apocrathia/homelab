@@ -4,19 +4,24 @@
 
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
-Four pipelines live in
+Five pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 netflow-ingest (the UDP
-listener + OCSF mapping), the two metrics pushers
-(pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a dead UDP
-collector is a silent black hole, so this node keeps the core node's
-liveness series; the tetragon isolate ships the diagnostics pair but
-no pipeline-metrics by design), and diagnostics-to-loki (live pipeline
-diagnostics as `job=tenzir-diagnostics` Loki log lines). The split
-exists so the collector's lifecycle (listener restarts, pod rolls,
-future vendor-traffic surprises) cannot touch the detection plane, and
-so flow ingest has room to grow when the UniFi renderer fix lands.
+listener + OCSF mapping + endpoint enrichment), geo-open-loader (the
+daily GeoIP context builder for that enrichment), the two metrics
+pushers (pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a
+dead UDP collector is a silent black hole, so this node keeps the
+core node's liveness series; the tetragon isolate ships the
+diagnostics pair but no pipeline-metrics by design), and
+diagnostics-to-loki (live pipeline diagnostics as
+`job=tenzir-diagnostics` Loki log lines). The split exists so the
+collector's lifecycle (listener restarts, pod rolls, future
+vendor-traffic surprises) cannot touch the detection plane, and so
+flow ingest has room to grow when the UniFi renderer fix lands; the
+loader is equally decoupled — a slow or failed MMDB fetch never
+stalls flow ingest (the context keeps serving the last good
+database).
 
 The collector moved here from the core node (2026-10-17); the
 `tenzir-ingest-lb` LoadBalancer moved with it
@@ -30,7 +35,9 @@ this pod.
 flowchart LR
     UE["UniFi exporters<br/>UXG-Pro manual NETFLOW section"] -->|"UDP :2055<br/>via tenzir-ingest-lb"| AU[accept_udp + read_netflow]
     AU -->|"flow records only<br/>(options dropped)"| NORM["netflow::ocsf::normalize<br/>(vendored library package)"]
-    NORM -->|"ocsf_derive + ocsf_cast"| BUS["node-local ocsf topic"]
+    NORM -->|"ocsf_derive + ocsf_cast"| ENR["endpoint enrichment<br/>(geo-open context + dns_lookup)"]
+    CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -->|"every 24h<br/>geo-open-loader"| ENR
+    ENR -->|"geo/ASN/hostname<br/>into OCSF endpoint fields"| BUS["node-local ocsf topic"]
     BUS --> LAKE["node lake"]
     LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
@@ -69,7 +76,8 @@ Storage = 0.15 * 30 * (1/2880) / 10 / 1000  # netflow GB/day * days/mo * months 
 RAM = max(2,
     0.00000016 * 2  # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 2 * 0.1       # sources (1) + destination (1)
-    + 0             # no detection, no enrichment
+    + 0.1           # enrichment: the geo-open context holds the ~80 MiB Geo Open MMDB in memory
+    + 0             # no detection
 ) = 2 GB
 ```
 
@@ -193,6 +201,12 @@ kubectl logs -n tenzir tenzir-node-netflow-0 | grep -i error
 # recent stored events
 kubectl exec -n tenzir tenzir-node-netflow-0 -- \
   tenzir -e localhost:5158 'export | head 5'
+# enrichment state: geo-open should list configured: true
+kubectl exec -n tenzir tenzir-node-netflow-0 -- \
+  tenzir -e localhost:5158 'context_list'
+# sanity lookup against the loaded MMDB (any public IP)
+kubectl exec -n tenzir tenzir-node-netflow-0 -- \
+  tenzir -e localhost:5158 'from {ip: 1.1.1.1} | context_enrich "geo-open", key=ip, into=geo'
 ```
 
 The Node Pipelines dashboard (Grafana) is this node's liveness view:

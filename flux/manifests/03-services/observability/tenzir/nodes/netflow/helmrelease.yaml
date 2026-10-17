@@ -126,6 +126,18 @@ spec:
             # identical math to the siblings (backstop only).
             disk-budget-high: 6GiB
             disk-budget-low: 4GiB
+          # Node-resident enrichment state (contexts are per-node,
+          # shared across this node's pipelines, and survive pipeline
+          # restarts; creation arguments apply only at creation, so
+          # this block never reconfigures an existing context — the
+          # geo-open-loader pipeline is the refresh path). The geoip
+          # context is created empty at boot and filled by context_load
+          # of CIRCL's free Geo Open country+ASN MMDB (~80 MiB in node
+          # memory); no GeoLite2/MaxMind route, so no license-key
+          # secret rides this node (see geo-open-loader).
+          contexts:
+            geo-open:
+              type: geoip
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
@@ -143,8 +155,47 @@ spec:
                 node's lake and publishes onto its node-local `ocsf`
                 topic, feeding this node's own archive rule — no sigma
                 pass sees the flow stream (no homelab rule targets
-                netflow fields). Start ordering matters: the collector
-                must be up before v9/IPFIX template datagrams arrive.
+                netflow fields). Enrichment runs after the OCSF map
+                and before the store/publish legs, so lake, archive,
+                and Grafana all see the enriched record: both
+                endpoints gain geo country + ASN from the
+                node-resident geo-open context (filled by
+                geo-open-loader) and a reverse-DNS hostname from
+                dns_lookup's TTL cache, mapped into OCSF fields
+                (endpoint location.country, autonomous_system,
+                hostname) rather than raw appends; private addresses
+                stay bare — Geo Open marks them not routed and the
+                pipeline filters those markers. Start ordering
+                matters: the collector must be up before v9/IPFIX
+                template datagrams arrive.
+              definition: ""
+              restart-on-error: 1 minute
+            geo-open-loader:
+              name: geo open loader
+              description: |
+                Builder pipeline for the geo-open geoip context (declared
+                in the contexts block above): fetches CIRCL's free Geo
+                Open country+ASN MMDB and atomically replaces the
+                context state — the two-pipeline builder/consumer shape
+                from the vendored add-enrichment-contexts tutorial. Geo
+                Open over GeoLite2 on purpose: MaxMind needs a license
+                account plus out-of-band download plumbing (tar.gz
+                extract, initContainer or CronJob) for city/coords this
+                lab's flow triage does not need; Geo Open answers
+                country + ASN in one MMDB fetched in-band, no license,
+                no extra volume, no secret. The read_all binary=true /
+                write_all data round trip is not redundant: from_http
+                requires a parser, so read_all wraps the ~80 MiB
+                download into one event and write_all unwraps it to the
+                byte stream context_load consumes. context_load replaces
+                the whole state, so a failed fetch never half-updates —
+                the context keeps serving the last good database and
+                restart-on-error retries in a minute. every 24h fires
+                its first run at pipeline start (fresh node: context
+                filled seconds after boot; until then the collector
+                passes flows through unenriched with one warning, by
+                design). CIRCL publishes a fresh snapshot daily, so 24h
+                keeps lookups current without hammering the mirror.
               definition: ""
               restart-on-error: 1 minute
             # A dead UDP collector is a silent black hole: the Node
