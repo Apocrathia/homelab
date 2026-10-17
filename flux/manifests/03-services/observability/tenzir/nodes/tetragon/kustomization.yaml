@@ -7,4 +7,4 @@ metadata:
 
 resources:
   - helmrelease.yaml
-  - pvc-recurring-job.yaml
+  - storage.yaml

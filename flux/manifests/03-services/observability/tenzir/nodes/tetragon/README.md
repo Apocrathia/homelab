@@ -88,7 +88,7 @@ transit buffer between ingest and the archive, not a query surface.
 The parquet is the OCSF record past the window; the compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15-20
 minutes. The Longhorn volume sits out the daily-backup RecurringJob
-([`pvc-recurring-job.yaml`](./pvc-recurring-job.yaml)): a daily chain of
+([`storage.yaml`](./storage.yaml)): a daily chain of
 a 15-minute buffer is redundant with the parquet record. Filesystem trim
 and snapshot hygiene still run on the volume. No raw tetragon JSON is
 kept anywhere past the window (the export-stdout sidecar is gone; the
