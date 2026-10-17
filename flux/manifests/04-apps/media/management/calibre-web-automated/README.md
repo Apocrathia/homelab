@@ -1,6 +1,6 @@
 # Calibre-Web Automated
 
-Automated Calibre ebook library: ingests books, pulls metadata, converts formats, and files everything into a clean author/title structure that Kavita serves.
+Automated Calibre ebook library: ingests books, pulls metadata, converts formats, and files everything into a clean author/title structure on the Library share.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -12,7 +12,6 @@ This deployment includes:
 - Auto-created Calibre library at the Books share root (metadata.db, organized folders)
 - Format conversion via bundled Calibre (MOBI to EPUB, etc.)
 - NETWORK_SHARE_MODE for the SMB library (SQLite WAL off, polling watcher)
-- Kavita reads the organized library read-only
 
 ## Access
 

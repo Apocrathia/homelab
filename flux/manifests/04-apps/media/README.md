@@ -18,7 +18,6 @@ Media applications are organized into three categories:
 - **[Invidious](./servers/invidious/README.md)** - Privacy-focused YouTube frontend with companion-sidecar video streaming
 - **[Jellyfin](./servers/jellyfin/README.md)** - Open-source media server with SSO plugin for Authentik
 - **[Jellyfin AI Upscaler](./servers/jellyfin-ai-upscaler/README.md)** - CPU ONNX inference sidecar for the Jellyfin AI Upscaler plugin
-- **[Kavita](./servers/kavita/README.md)** - Digital library for comics, manga, and ebooks with a built-in web reader
 - **[Komga](./servers/komga/README.md)** - Media server for comics, manga, magazines, and eBooks with OPDS support
 - **[Restreamer](./servers/restreamer/README.md)** - Self-hosted video streaming server with restreaming to external services
 - **[Tunarr](./servers/tunarr/README.md)** - Virtual TV channel creator with HDHomeRun emulation for Plex/Jellyfin
