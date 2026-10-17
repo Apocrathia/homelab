@@ -140,7 +140,26 @@ spec:
             `class_uid` Int32 DEFAULT 0,
             `class_name` LowCardinality(Nullable(String)),
             `activity_id` Nullable(UInt8),
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `device.hostname` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.`null`
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` Int32 DEFAULT 0,
+            `class_name` LowCardinality(Nullable(String)),
+            `activity_id` Nullable(UInt8),
+            `severity_id` Int8 DEFAULT 0,
             `metadata.product.name` LowCardinality(Nullable(String)),
             `device.hostname` LowCardinality(Nullable(String)),
             `unmapped` JSON CODEC(ZSTD(3)),
@@ -157,7 +176,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `actor.user.name` LowCardinality(Nullable(String)),
             `api.operation` LowCardinality(Nullable(String)),
             `metadata.product.name` LowCardinality(Nullable(String)),
@@ -176,7 +195,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `status_id` Nullable(UInt8),
             `actor.user.name` LowCardinality(Nullable(String)),
             `src_endpoint.ip` Nullable(IPv6),
@@ -195,7 +214,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `actor.user.name` LowCardinality(Nullable(String)),
             `src_endpoint.ip` Nullable(IPv6),
             `metadata.product.name` LowCardinality(Nullable(String)),
@@ -213,7 +232,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `status_id` Nullable(UInt8),
             `uid` Nullable(String),
             `rule_id` Nullable(String),
@@ -237,7 +256,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `finding_info.title` Nullable(String),
             `metadata.product.name` LowCardinality(Nullable(String)),
             `unmapped` JSON CODEC(ZSTD(3)),
@@ -254,7 +273,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `src_endpoint.ip` Nullable(IPv6),
             `dst_endpoint.ip` Nullable(IPv6),
             `traffic.bytes` Nullable(UInt64),
@@ -273,7 +292,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `activity_id` Nullable(UInt8),
             `process.path` Nullable(String),
             `device.hostname` LowCardinality(Nullable(String)),
@@ -292,7 +311,7 @@ spec:
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
             `class_uid` Int32 DEFAULT 0,
-            `severity_id` UInt8 DEFAULT 0,
+            `severity_id` Int8 DEFAULT 0,
             `file.path` Nullable(String),
             `file.xattributes.permission` Nullable(String),
             `actor.process.path` Nullable(String),
