@@ -11,13 +11,13 @@ everything past the retention horizon. Live plan and slice breakdown:
 
 ## Objects
 
-| File               | What it is                                                                                          |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| `namespace.yaml`   | `clickhouse-system` namespace                                                                       |
-| `helmrelease.yaml` | Altinity clickhouse-operator (chart installs the CRDs via hook)                                     |
-| `secret.yaml`      | OnePasswordItem `clickhouse-secrets` (existing `tenzir-secrets` vault item, second materialization) |
-| `keeper.yaml`      | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                             |
-| `chi.yaml`         | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap       |
+| File             | What it is                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| `namespace.yaml` | `clickhouse-system` namespace                                                                       |
+| `operator.yaml`  | Altinity clickhouse-operator (chart installs the CRDs via hook)                                     |
+| `secret.yaml`    | OnePasswordItem `clickhouse-secrets` (existing `tenzir-secrets` vault item, second materialization) |
+| `keeper.yaml`    | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                             |
+| `cluster.yaml`   | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap       |
 
 The operator watches `clickhouse-system` only (`watchNamespaces`).
 
@@ -34,7 +34,7 @@ The operator creates the Services; name prefixes are fixed by its namer:
 - Keeper services (`chk-keeper-...`) - operator-internal; the CHI references
   the Keeper CR by name and the operator wires the endpoints.
 
-## Users (all in `chi.yaml`, `spec.configuration.users`)
+## Users (all in `cluster.yaml`, `spec.configuration.users`)
 
 The operator renders these into `users.d` and injects the passwords as env
 vars from the `clickhouse-secrets` Secret (1Password item
@@ -52,7 +52,7 @@ host_regexp default.
 
 ## Storage tiers and retention
 
-`config.d/00-storage-tiered.xml` (inside `chi.yaml`): storage policy
+`config.d/00-storage-tiered.xml` (inside `cluster.yaml`): storage policy
 `tiered` = hot volume on the Longhorn PVC (`/var/lib/clickhouse/hot/`) +
 cold volume as an S3 disk into the existing rustfs `tenzir` bucket
 (`tenzir/clickhouse/` prefix) with the existing tenzir bucket-user creds
@@ -60,12 +60,12 @@ cold volume as an S3 disk into the existing rustfs `tenzir` bucket
 replica uploads its own copy of every cold part - the bucket grows ~3x the
 single-node shape; keep that in mind when watching rustfs capacity.
 
-Retention (every table, in the DDL inside `chi.yaml`):
+Retention (every table, in the DDL inside `cluster.yaml`):
 
 - **90 days -> `TO VOLUME 'cold'`** - parts move to rustfs automatically
   (part-level, can lag merges; prototype measured seconds on LAN rustfs).
 - **400 days -> `DELETE`** - retention horizon cap, **operator-tunable**:
-  change `INTERVAL 400 DAY` in `chi.yaml` for new installs; for live
+  change `INTERVAL 400 DAY` in `cluster.yaml` for new installs; for live
   tables, `ALTER TABLE ... MODIFY TTL ...` server-side. Day partitions +
   `ttl_only_drop_parts = 1` keep the delete a cheap partition drop.
 - Schema metadata (incl. S3 disk metadata under
@@ -108,7 +108,7 @@ init scripts never ALTER existing tables.
 ## Adding a class
 
 1. Add a `CREATE TABLE IF NOT EXISTS ocsf.<Class_Name>` block to
-   `config.d/10-startup-scripts.xml` in `chi.yaml`.
+   `config.d/10-startup-scripts.xml` in `cluster.yaml`.
 2. `kubectl exec` the `ALTER` on existing replicas if the class is not new
    (CREATE only runs on fresh data dirs otherwise).
 3. Point the Tenzir pipeline at it (per-class table naming:
@@ -121,10 +121,10 @@ kustomize build flux/manifests/03-services/observability > /dev/null
 helm repo add altinity https://helm.altinity.com
 helm template altinity-operator altinity/altinity-clickhouse-operator \
   --version 0.27.4 -n clickhouse-system \
-  -f <(yq '.spec.values' flux/manifests/03-services/observability/clickhouse/helmrelease.yaml)
+  -f <(yq '.spec.values' flux/manifests/03-services/observability/clickhouse/operator.yaml)
 ```
 
-Both CRs (`chi.yaml`, `keeper.yaml`) were validated against the exact CRD
+Both CRs (`cluster.yaml`, `keeper.yaml`) were validated against the exact CRD
 schemas shipped in operator chart 0.27.4; the DDL + tiered-policy XML were
 executed end-to-end on `clickhouse-server:25.8.33.6` with a Keeper
 (tables, grants enforcement, dotted-column inserts, TTL move-to-cold, 400d

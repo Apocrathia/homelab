@@ -369,7 +369,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   operator review; nothing else in 01-bootstrap moves).
 - `flux/manifests/03-services/observability/clickhouse/`:
   - `namespace.yaml` (`clickhouse-system`)
-  - `helmrelease.yaml` — `altinity-clickhouse-operator` 0.27.4 (CRDs via
+  - `operator.yaml` — `altinity-clickhouse-operator` 0.27.4 (CRDs via
     the chart's pre-install hook), `watchNamespaces: ["clickhouse-system"]`,
     operator resources, ServiceMonitor (ch-metrics + op-metrics) with the
     `release: kube-prometheus-stack` label; keeper metrics intentionally
@@ -380,7 +380,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
     `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
     hostname anti-affinity (keeper quorum must not share nodes)
-  - `chi.yaml` — ClickHouseInstallation `ocsf`: 1 shard x 3 replicas
+  - `cluster.yaml` — ClickHouseInstallation `ocsf`: 1 shard x 3 replicas
     (`clickhouse/clickhouse-server:25.8.33.6`, prototype-validated build),
     Longhorn data PVC per replica (100Gi cap), required hostname
     anti-affinity, /ping probes, podTemplate env for the rustfs creds,
@@ -678,7 +678,7 @@ helm template ch-operator altinity/altinity-clickhouse-operator \
   --version 0.27.4 -n clickhouse-system -f <rendered-mr1-values>
 pre-commit run --all            # yamllint --strict, kube-linter flux/, gitleaks, prettier
 # CR field check (Warn-mode strips misspelled CHI/CHK fields): validate
-# chi.yaml + keeper.yaml against the CRD schemas shipped in chart 0.27.4
+# cluster.yaml + keeper.yaml against the CRD schemas shipped in chart 0.27.4
 grep -rn "clickhouse" flux/manifests | sort    # reference sanity for the CR/datasource names
 ```
 

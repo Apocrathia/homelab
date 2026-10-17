@@ -24,7 +24,7 @@ spec:
     remediation:
       retries: 3
   values:
-    # The operator manages both ClickHouseInstallation (chi.yaml) and
+    # The operator manages both ClickHouseInstallation (cluster.yaml) and
     # ClickHouseKeeperInstallation (keeper.yaml) CRs. watchNamespaces feeds
     # the operator's config.yaml watch.namespaces.include; empty would also
     # watch the operator's own namespace, but the explicit list documents

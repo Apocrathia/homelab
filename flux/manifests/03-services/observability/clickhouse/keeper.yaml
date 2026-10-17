@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhousekeeperinstallations.clickhouse-keeper.altinity.com.yaml
-# ClickHouse Keeper ensemble for the CHI in chi.yaml: 3 nodes (odd - quorum
+# ClickHouse Keeper ensemble for the CHI in cluster.yaml: 3 nodes (odd - quorum
 # tolerates one node loss). Managed by the Altinity operator through the
 # ClickHouseKeeperInstallation CRD (the keeper mechanism the operator
 # supports; installed with the operator chart); the CHI references this CR
@@ -47,7 +47,7 @@ spec:
             fsGroup: 101
           containers:
             - name: clickhouse-keeper
-              # Same ClickHouse tree as the server image in chi.yaml; the
+              # Same ClickHouse tree as the server image in cluster.yaml; the
               # operator's default is clickhouse/clickhouse-keeper:latest.
               # renovate: datasource=docker depName=clickhouse/clickhouse-keeper
               image: clickhouse/clickhouse-keeper:25.8.33.6
