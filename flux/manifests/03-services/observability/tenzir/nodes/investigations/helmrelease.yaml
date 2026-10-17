@@ -241,21 +241,23 @@ spec:
             mode: server
             bind: 0.0.0.0
             port: 5160
-            # TODO: certfile/keyfile mounted from a cert-manager
-            # Certificate for SAN
-            # tenzir-node-investigations.tenzir.svc.cluster.local
-            # (internal CA); agent callers verify against the cluster CA.
-            # certfile: /etc/tenzir/tls/tls.crt
-            # keyfile: /etc/tenzir/tls/tls.key
-            # Bootstrap note (source-verified v6.19.1,
-            # plugins/web/src/configuration.cpp): server mode sets
-            # require_tls and FAILS validation without both certfile and
-            # keyfile ("either keyfile or certfile argument is missing").
-            # A failed start command logs an error and the node keeps
-            # running (start_command.cpp runs commands detached), so with
-            # the pair commented out the node boots and the ingest lane
-            # works; the web server (query lane) comes up only once the
-            # TODO lands. Until then agents cannot call /api/v0.
+            # TLS pair (operator decision 2026-10-17: self-signed
+            # ClusterIssuer): the cert-manager Certificate in
+            # certificate.yaml issues Secret
+            # tenzir-node-investigations-web-tls (SANs = the Service DNS
+            # forms the chart renders), mounted read-only at /etc/tenzir/
+            # tls via the web-tls extraVolume/extraVolumeMounts pair
+            # below. Server mode sets require_tls and fails validation
+            # without both certfile and keyfile (source-verified v6.19.1,
+            # plugins/web/src/configuration.cpp: "either keyfile or
+            # certfile argument is missing") — with the pair wired, `web
+            # server` validates and the query lane binds TLS + token.
+            # Agent callers skip CA verification: the X-Tenzir-Token is
+            # the real auth and NetworkPolicy scopes the callers (homelab
+            # posture; a prod cluster would verify against the issued CA
+            # or run mTLS).
+            certfile: /etc/tenzir/tls/tls.crt
+            keyfile: /etc/tenzir/tls/tls.key
 
     # Sized with the docs' size-a-node formula at investigations volume
     # (near zero): 1 source (accept_http) + 1 destination (ClickHouse)
@@ -304,6 +306,11 @@ spec:
       - name: packages-homelab-investigations-map
         configMap:
           name: tenzir-packages-homelab-investigations-map
+      # The web server's TLS pair, issued by the cert-manager
+      # Certificate (certificate.yaml) via the self-signed ClusterIssuer.
+      - name: web-tls
+        secret:
+          secretName: tenzir-node-investigations-web-tls
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the sibling nodes (kubelet
@@ -317,6 +324,14 @@ spec:
       - name: packages-homelab-investigations-map
         mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/map.tql
         subPath: map.tql
+        readOnly: true
+      # Web server TLS pair (plugins.web certfile/keyfile): directory
+      # mount of the Certificate's Secret, no subPath. The web server
+      # reads the pair only at its start, so renewals land on the next
+      # pod roll — any config change re-checksums tenzir.yaml and rolls
+      # the pod, well inside the 90d validity window.
+      - name: web-tls
+        mountPath: /etc/tenzir/tls
         readOnly: true
 
     # Containment stack, part 4: chart NetworkPolicy. Ingress only (the

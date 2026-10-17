@@ -1,0 +1,35 @@
+---
+# TLS pair for the investigations node's web server (the query lane).
+# Server mode requires the certfile/keyfile pair (source-verified v6.19.1:
+# "either keyfile or certfile argument is missing"), so without this the
+# `web server` start command fails its config validation and /api/v0 stays
+# down while the node keeps running. Operator decision 2026-10-17: the
+# existing self-signed ClusterIssuer issues it — fine for an in-mesh
+# service, and cert-manager rotates it automatically. Agent callers
+# skip CA verification (the X-Tenzir-Token is the real auth; homelab
+# posture). SANs cover the Service DNS forms of the pod/Service names
+# the chart renders for this node (helm template, fullnameOverride
+# tenzir-node): Service tenzir-node-investigations, and the pod
+# tenzir-node-investigations-0 behind the headless Service
+# tenzir-node-investigations-headless. The HelmRelease mounts the
+# issued Secret at /etc/tenzir/tls.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tenzir-node-investigations-web-tls
+  namespace: tenzir
+spec:
+  secretName: tenzir-node-investigations-web-tls
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - tenzir-node-investigations
+    - tenzir-node-investigations.tenzir
+    - tenzir-node-investigations.tenzir.svc
+    - tenzir-node-investigations.tenzir.svc.cluster.local
+    - tenzir-node-investigations-0.tenzir-node-investigations-headless.tenzir
+    - tenzir-node-investigations-0.tenzir-node-investigations-headless.tenzir.svc
+    - tenzir-node-investigations-0.tenzir-node-investigations-headless.tenzir.svc.cluster.local
+  issuerRef:
+    name: self-signed
+    kind: ClusterIssuer
