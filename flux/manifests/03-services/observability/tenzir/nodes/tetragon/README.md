@@ -29,6 +29,7 @@ flowchart LR
     AO -->|"tetragon parse"| TR["tetragon raw"]
     TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf topic"]
     LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
+    LAKE -->|"15m archive rule, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
     S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
     TP["tetragon pods"] -.->|"export-stdout sidecar, raw JSON, independent of this node"| LOKI[Loki]
 ```
@@ -90,6 +91,14 @@ runs every 5 minutes, so the true window at pass boundaries is 15-20
 minutes. Loki keeps the raw JSON stream via the tetragon pods'
 export-stdout sidecar, but raw JSON is not OCSF-queryable; replay the
 record with `from_s3`.
+
+Dual-write transition window (MR-3): the same rule forks a
+`to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
+archived batch also lands in the per-class `ocsf.<Class_Name>` tables on
+the ClickHouse OCSF store — `mode="append"` fails loudly if the DDL is
+missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
+the insert buffers on the flood classes. The parquet lane stays the
+record until the MR-5 cut-over.
 
 Horizon math (flood rate measured 2026-10-12; steady state assumed):
 
