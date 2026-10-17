@@ -1,0 +1,9 @@
+metrics "sigma", live=true
+fork {
+  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+    name="tenzir_sigma_rule_evaluations",
+    value=rule_evaluations
+}
+to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+  name="tenzir_sigma_matches",
+  value=matches

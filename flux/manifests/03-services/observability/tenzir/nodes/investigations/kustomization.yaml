@@ -7,3 +7,28 @@ metadata:
 
 resources:
   - helmrelease.yaml
+
+# TQL definitions live as .tql files under pipelines/ (one per
+# pipeline, plus ocsf-archive.tql for the compaction rule where
+# present); the generator below packages them and the replacements
+# stitch them into the HelmRelease at build time.
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: tenzir-investigations-pipelines
+    namespace: tenzir
+    files:
+      - investigations-ingest-http.tql=pipelines/investigations-ingest-http.tql
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: tenzir-investigations-pipelines
+      fieldPath: data.[investigations-ingest-http.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-investigations
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.investigations-ingest-http.definition

@@ -1,0 +1,14 @@
+cron "0 */5 * * * *" {
+  let $since = (now() - 6m).format_time("%Y-%m-%dT%H:%M:%SZ")
+  let $base = "https://auth.gateway.services.apocrathia.com/api/v3/events/events/"
+  let $query = f"page_size=100&search=created%20%3E%20%22{$since}%22"
+  from_http f"{$base}?{$query}",
+    headers={Authorization: f"Bearer {secret("authentik-events-token")}"},
+    paginate=(x => f"{$base}?page={x.pagination?.next?}&{$query}" if x.pagination?.next? > 0) {
+    read_json
+  }
+  unroll results
+  this = results
+}
+deduplicate pk, create_timeout=1h
+publish "authentik.raw"

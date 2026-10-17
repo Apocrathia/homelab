@@ -1,0 +1,9 @@
+// parallelism: 4
+subscribe "tetragon.raw"
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+fork { import }
+publish "ocsf"

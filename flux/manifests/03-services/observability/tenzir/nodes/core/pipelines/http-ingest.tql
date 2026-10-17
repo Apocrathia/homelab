@@ -1,0 +1,10 @@
+accept_http "0.0.0.0:8080" {
+  read_json
+}
+fork {
+  where report_kind? != null
+  publish "trivy.raw"
+}
+where details? != null
+homelab::fleet::parse
+publish "fleet.raw"

@@ -6,8 +6,10 @@ The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
 `ocsf` bus, and runs the one sigma pass. Thirteen pipelines live in
-[`helmrelease.yaml`](./helmrelease.yaml); the manifest is the source of
-truth for tunables (sizes, limits, retention values, ports). The NetFlow
+[`pipelines/`](./pipelines/), one `.tql` each, stitched back into
+[`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
+manifest stays the source of truth for tunables (sizes, limits,
+retention values, ports). The NetFlow
 collector moved to the dedicated
 [netflow node](../netflow/README.md), and the `tenzir-ingest-lb`
 LoadBalancer (pool IP `10.100.1.96`) moved with it — this node owns no
@@ -96,9 +98,10 @@ are low-volume and the formula's source term already carries them.
 ## Retention
 
 15-minute local horizon; the ClickHouse OCSF store is the record. One
-rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every class it
-stores to the per-class `ocsf.<Class_Name>` tables on the ClickHouse
-OCSF store and consumes the originals
+rule in [`helmrelease.yaml`](./helmrelease.yaml) — TQL in
+[`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql) — exports
+every class it stores to the per-class `ocsf.<Class_Name>` tables on
+the ClickHouse OCSF store and consumes the originals
 (archive-then-expire; `preserve-input` stays off). The compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15 to 20
 minutes.

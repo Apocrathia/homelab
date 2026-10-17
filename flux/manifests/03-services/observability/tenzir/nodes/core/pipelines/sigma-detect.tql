@@ -1,0 +1,6 @@
+subscribe "ocsf"
+sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],
+      mapping="auto",
+      refresh_interval=30s
+homelab::findings::stamp
+import

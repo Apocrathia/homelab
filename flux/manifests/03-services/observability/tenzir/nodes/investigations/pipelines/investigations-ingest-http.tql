@@ -1,0 +1,14 @@
+accept_http "0.0.0.0:8080" {
+  read_json
+}
+homelab::investigations::ocsf::map
+ocsf_derive
+ocsf_cast
+to_clickhouse table="investigations.records",
+  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+  port=9000,
+  user="investigations-writer",
+  password=secret("investigations-writer-password"),
+  tls=false,
+  mode="append",
+  max_batch_rows=65536

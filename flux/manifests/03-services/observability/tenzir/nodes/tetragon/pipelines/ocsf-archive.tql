@@ -1,0 +1,8 @@
+to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+              host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+              port=9000,
+              user="tenzir",
+              password=secret("clickhouse-password"),
+              tls=false,
+              mode="append",
+              max_batch_rows=65536

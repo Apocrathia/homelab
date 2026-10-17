@@ -1,0 +1,3 @@
+accept_otlp "0.0.0.0:4317", transport="grpc", schema="record", signals=["logs"]
+homelab::k8s::audit::parse
+publish "k8s-audit.raw"

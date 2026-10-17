@@ -5,7 +5,9 @@
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
 Four pipelines live in
-[`helmrelease.yaml`](./helmrelease.yaml): netflow-ingest (the UDP
+[`pipelines/`](./pipelines/), one `.tql` each, stitched back into
+[`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
+netflow-ingest (the UDP
 listener + OCSF mapping), the two metrics pushers
 (pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a dead UDP
 collector is a silent black hole, so this node keeps the core node's

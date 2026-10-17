@@ -8,3 +8,72 @@ metadata:
 resources:
   - helmrelease.yaml
   - storage.yaml
+
+# TQL definitions live as .tql files under pipelines/ (one per
+# pipeline, plus ocsf-archive.tql for the compaction rule where
+# present); the generator below packages them and the replacements
+# stitch them into the HelmRelease at build time.
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: tenzir-tetragon-pipelines
+    namespace: tenzir
+    files:
+      - tetragon-ingest-http.tql=pipelines/tetragon-ingest-http.tql
+      - tetragon-ocsf.tql=pipelines/tetragon-ocsf.tql
+      - error-diagnostics-to-mimir.tql=pipelines/error-diagnostics-to-mimir.tql
+      - diagnostics-to-loki.tql=pipelines/diagnostics-to-loki.tql
+      - ocsf-archive.tql=pipelines/ocsf-archive.tql
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[tetragon-ingest-http.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.tetragon-ingest-http.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[tetragon-ocsf.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.tetragon-ocsf.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[error-diagnostics-to-mimir.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.error-diagnostics-to-mimir.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[diagnostics-to-loki.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.diagnostics-to-loki.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[ocsf-archive.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.plugins.compaction.time.rules.0.pipeline

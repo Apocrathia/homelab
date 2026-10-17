@@ -1,0 +1,6 @@
+subscribe "fleet.raw"
+homelab::fleet::ocsf::map
+ocsf_derive
+ocsf_cast
+fork { import }
+publish "ocsf"
