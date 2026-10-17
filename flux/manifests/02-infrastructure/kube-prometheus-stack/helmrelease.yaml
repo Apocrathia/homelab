@@ -139,6 +139,13 @@ spec:
       plugins:
         - grafana-llm-app
         - grafana-advisor-app
+        # ClickHouse datasource (signed first-party catalog plugin, NOT
+        # bundled in the grafana image). Pinned per the rollout plan's
+        # operator lock on the 4.20.x line; chart 92.3.0 renders this list
+        # into GF_PLUGINS_PREINSTALL_SYNC (`id@[version][@url]` entries,
+        # catalog download when no URL is given), so the version here is
+        # the single bump point. The entries above stay unpinned (latest).
+        - grafana-clickhouse-datasource@4.20.0
       ingress:
         enabled: false
       admin:

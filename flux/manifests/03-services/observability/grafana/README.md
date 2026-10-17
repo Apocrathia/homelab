@@ -62,6 +62,21 @@ spec:
     }
 ```
 
+### Managed datasources
+
+Datasources deployed by this folder ([`datasources/`](./datasources/)):
+
+- `homeassistant` — InfluxDB (Home Assistant), InfluxQL
+- `ocsf-clickhouse` — ClickHouse OCSF query store via the pinned
+  `grafana-clickhouse-datasource@4.20.0` catalog plugin (kube-prometheus-stack
+  `grafana.plugins:` value), native protocol on the `clickhouse-tenzir` service
+- `tenzir-ocsf` — DuckDB (motherduck plugin) over the rustfs OCSF parquet lake;
+  retired by the rollout plan MR-5 once ClickHouse parity is proven
+
+Secrets never land in git: every CR substitutes `${field-name}` placeholders
+from the `grafana-secrets` Secret (1Password item
+`vaults/Secrets/items/grafana-secrets`) through the operator's `valuesFrom`.
+
 ## Token sync to 1Password
 
 Two ESO PushSecrets mirror grafana-operator service-account tokens into 1Password so the vault stays the paste source for `gcx login`:
