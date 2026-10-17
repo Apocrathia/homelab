@@ -7,7 +7,7 @@ is the subtree-local mirror, scoped to tenzir work only.
 
 ## What this is
 
-Two standalone Tenzir nodes in namespace `tenzir-system` — Tenzir has no
+Two standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The core node is the detection plane; the tetragon node owns
 the export flood. Telemetry normalizes onto one OCSF bus, sigma evaluates

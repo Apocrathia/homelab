@@ -89,7 +89,7 @@ data:
 
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-core.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-core.tenzir.svc.cluster.local:4318"
         tls {
           insecure = true
         }

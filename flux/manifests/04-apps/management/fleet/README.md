@@ -156,10 +156,10 @@ path end to end with one throwaway query:
    pipeline shows the POSTs, and the stored rows show up as product
    fleet/fleetdm Base Events:
    ```sh
-   kubectl exec -n tenzir-system tenzir-node-core-0 -- \
+   kubectl exec -n tenzir tenzir-node-core-0 -- \
      tenzir -e localhost:5158 \
      'metrics "pipeline" | summarize ingress_events=sum(ingress.events), pipeline_id'
-   kubectl exec -n tenzir-system tenzir-node-core-0 -- \
+   kubectl exec -n tenzir tenzir-node-core-0 -- \
      tenzir -e localhost:5158 \
      'export | where metadata.product.name == "fleet" | head 5'
    ```

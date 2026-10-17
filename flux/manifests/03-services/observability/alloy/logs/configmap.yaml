@@ -286,10 +286,10 @@ data:
     }
 
     // Fan out OTLP logs to the Tenzir detection node (accept_otlp 4318 in
-    // tenzir-system; SIEM lap C)
+    // tenzir; SIEM lap C)
     otelcol.exporter.otlphttp "tenzir" {
       client {
-        endpoint = "http://tenzir-node-core.tenzir-system.svc.cluster.local:4318"
+        endpoint = "http://tenzir-node-core.tenzir.svc.cluster.local:4318"
         tls {
           insecure = true
         }

@@ -13,7 +13,7 @@ lake and its own pipelines; there is no distributed mode.
 
 Synthesized from the subtree's READMEs (sources at the bottom):
 
-- Two standalone nodes in namespace `tenzir-system`: the
+- Two standalone nodes in namespace `tenzir`: the
   [core node](../../nodes/core/README.md) is the detection plane — it
   normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
   feeds onto a unified OCSF bus, runs the one sigma pass over it, and owns

@@ -1,6 +1,6 @@
 # Tenzir subtree router
 
-Two standalone Tenzir nodes in namespace `tenzir-system`; the core node is
+Two standalone Tenzir nodes in namespace `tenzir`; the core node is
 the detection plane. Narrative:
 [`.agents/context/tenzir.md`](./.agents/context/tenzir.md); full story and
 manifest wiring: [`README.md`](./README.md).

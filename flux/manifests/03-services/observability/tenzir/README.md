@@ -2,7 +2,7 @@
 
 > **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-Two standalone Tenzir nodes in namespace `tenzir-system`; Tenzir has no
+Two standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow

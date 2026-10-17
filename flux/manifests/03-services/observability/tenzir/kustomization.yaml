@@ -4,7 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
   name: tenzir
-  namespace: tenzir-system
+  namespace: tenzir
 
 resources:
   - namespace.yaml
@@ -23,59 +23,59 @@ generatorOptions:
 # the on-disk file names.
 configMapGenerator:
   - name: tenzir-packages-homelab
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - package.yaml=packages/homelab/package.yaml
   - name: tenzir-packages-homelab-audit-parse
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - parse.tql=packages/homelab/operators/k8s/audit/parse.tql
   - name: tenzir-packages-homelab-ocsf-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/k8s/audit/ocsf/map.tql
   - name: tenzir-packages-homelab-findings-stamp
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - stamp.tql=packages/homelab/operators/findings/stamp.tql
   - name: tenzir-packages-homelab-tetragon-parse
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - parse.tql=packages/homelab/operators/tetragon/parse.tql
   - name: tenzir-packages-homelab-tetragon-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/tetragon/ocsf/map.tql
   - name: tenzir-packages-homelab-tetragon-exec
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - process_exec.tql=packages/homelab/operators/tetragon/ocsf/events/process_exec.tql
   - name: tenzir-packages-homelab-tetragon-exit
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - process_exit.tql=packages/homelab/operators/tetragon/ocsf/events/process_exit.tql
   - name: tenzir-packages-homelab-tetragon-kprobe
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - process_kprobe.tql=packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
   - name: tenzir-packages-homelab-authentik-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/authentik/ocsf/map.tql
   - name: tenzir-packages-homelab-fleet-parse
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - parse.tql=packages/homelab/operators/fleet/parse.tql
   - name: tenzir-packages-homelab-fleet-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/fleet/ocsf/map.tql
   - name: tenzir-packages-homelab-trivy-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/trivy/ocsf/map.tql
   - name: tenzir-packages-homelab-netflow-map
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - map.tql=packages/homelab/operators/netflow/ocsf/map.tql
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
@@ -85,16 +85,16 @@ configMapGenerator:
   # label lands on this ConfigMap — the tofu lane replaced the blueprint
   # sidecar pattern.
   - name: tenzir-authentik-module
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - authentik.tf
   - name: tenzir-sigma-homelab
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - k8s-audit-secret-created.yml=detections/sigma/homelab/k8s-audit-secret-created.yml
       - k8s-audit-pod-portforward.yml=detections/sigma/homelab/k8s-audit-pod-portforward.yml
   - name: tenzir-sigma-sigmahq-kubernetes-audit
-    namespace: tenzir-system
+    namespace: tenzir
     files:
       - kubernetes_audit_change_admission_controller.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_change_admission_controller.yml
       - kubernetes_audit_cronjob_modification.yml=detections/sigma/sigmahq/kubernetes-audit/kubernetes_audit_cronjob_modification.yml

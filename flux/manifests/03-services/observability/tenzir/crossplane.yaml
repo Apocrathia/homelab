@@ -3,7 +3,7 @@ apiVersion: onepassword.com/v1
 kind: OnePasswordItem
 metadata:
   name: authentik-terraform-token
-  namespace: tenzir-system
+  namespace: tenzir
 spec:
   # Scoped Authentik service-account token. Never a bare managed Secret —
   # the operator creates the 1Password item crossplane-terraform-secrets
@@ -17,7 +17,7 @@ apiVersion: opentofu.m.upbound.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: tenzir-authentik
-  namespace: tenzir-system
+  namespace: tenzir
 spec:
   # Materializes the OnePasswordItem-backed Secret as a file in the tofu
   # workdir; the module's provider block reads it with file("authentik-token").
@@ -27,24 +27,24 @@ spec:
       source: Secret
       secretRef:
         name: authentik-terraform-token
-        namespace: tenzir-system
+        namespace: tenzir
         key: authentik-terraform-token
   # Per-app state args for the module's PARTIAL kubernetes backend: the
   # provider writes this as crossplane.remote.tfbackend and passes it via
   # -backend-config at tofu init. The state Secret is
-  # tfstate-tenzir-authentik-tenzir in tenzir-system — deliberately
+  # tfstate-tenzir-authentik-tenzir in tenzir — deliberately
   # separate from the CI tofu stack (terraform/, GitLab HTTP backend).
   # Two stacks, two states.
   backendFile: |
     secret_suffix     = "tenzir"
-    namespace         = "tenzir-system"
+    namespace         = "tenzir"
     in_cluster_config = true
 ---
 apiVersion: opentofu.m.upbound.io/v1beta1
 kind: Workspace
 metadata:
   name: tenzir-authentik
-  namespace: tenzir-system
+  namespace: tenzir
 spec:
   # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
   # action the provider releases the finalizer WITHOUT running tofu destroy,

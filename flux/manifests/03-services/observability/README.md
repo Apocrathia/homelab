@@ -136,7 +136,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   findings in the rustfs OCSF archive after the 15-minute hot window;
   Grafana owns alerting
 - **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), two
-  nodes in `tenzir-system`: `tenzir-node-core` (detection plane) and
+  nodes in `tenzir`: `tenzir-node-core` (detection plane) and
   `tenzir-node-tetragon` (tetragon flood isolate)
 - **Details**: See [`tenzir/README.md`](./tenzir/README.md)
 
