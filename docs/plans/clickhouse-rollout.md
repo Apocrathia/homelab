@@ -165,15 +165,15 @@ with an operator-confirmation gate for any discovered gap).
 
 App dir `flux/manifests/03-services/observability/clickhouse/`, namespace
 `clickhouse` (operator decision: no `-system` suffix unless required).
-The CHI CR is named `ocsf` (so the operator's CR-level Service comes out as
-`clickhouse-ocsf`) and the cluster inside it is `ocsf` - the `{cluster}`
+The CHI CR is named `tenzir` (so the operator's CR-level Service comes out as
+`clickhouse-tenzir`) and the cluster inside it is `ocsf` - the `{cluster}`
 macro value is `ocsf`. In-cluster DNS (operator-created Services):
 
-- `clickhouse-ocsf.clickhouse.svc.cluster.local` - load-balanced over
+- `clickhouse-tenzir.clickhouse.svc.cluster.local` - load-balanced over
   all replicas; HTTP 8123 (Grafana, probes) and native 9000 (Tenzir
   `to_clickhouse`). This replaces the old `clickhouse.observability.svc`
   and `clickhouse.clickhouse.svc` sketches.
-- Per-host `chi-ocsf-ocsf-<shard>-<replica>` services for ad-hoc
+- Per-host `chi-tenzir-ocsf-<shard>-<replica>` services for ad-hoc
   `clickhouse-client` against a specific replica.
 
 ### D3 — Table strategy: per-class tables with typed hot columns + JSON catch-all
@@ -341,7 +341,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   pass-through; the rule stays sink-only at the tail (`to_s3`), so
   archive-then-delete semantics are unchanged. `to_clickhouse`:
   `table=f"ocsf.{class_name.replace(\" \", \"_\")}"`,
-  `host="clickhouse-ocsf.clickhouse.svc.cluster.local"` (the CR-level
+  `host="clickhouse-tenzir.clickhouse.svc.cluster.local"` (the CR-level
   Service, load-balanced over the three replicas; ReplicatedMergeTree
   replicates an insert from whichever replica takes it), `port=9000`,
   `user="tenzir"`, `password=secret(\"CLICKHOUSE_PASSWORD\")`, `tls=false`,
@@ -392,7 +392,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
     - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
       `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
       hostname anti-affinity (keeper quorum must not share nodes)
-    - `cluster.yaml` — ClickHouseInstallation `ocsf`: 1 shard x 3 replicas
+    - `cluster.yaml` — ClickHouseInstallation `tenzir`: 1 shard x 3 replicas
       (`clickhouse/clickhouse-server:25.8.33.6`, prototype-validated build),
       Longhorn data PVC per replica (100Gi cap), required hostname
       anti-affinity, /ping probes, podTemplate env for the rustfs creds,
@@ -494,7 +494,7 @@ are missing (keeper race on first boot), restart the CHI pods once.
   machinery untouched in this MR (still needed until MR-5).
 - `flux/manifests/03-services/observability/grafana/datasources/ocsf-clickhouse.yaml`:
   GrafanaDatasource CR from the prototype sketch, corrected: URL
-  `http://clickhouse-ocsf.clickhouse.svc.cluster.local:8123`, uid
+  `http://clickhouse-tenzir.clickhouse.svc.cluster.local:8123`, uid
   `ocsf-clickhouse`, instanceSelector same as tenzir-ocsf.yaml, auth shape
   per D7 verification (valuesFrom from `grafana-secrets`).
 - Register in `observability/grafana/kustomization.yaml`; update

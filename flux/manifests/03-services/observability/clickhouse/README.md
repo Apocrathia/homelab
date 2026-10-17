@@ -12,15 +12,15 @@ everything past the retention horizon. Live plan and slice breakdown:
 
 ## Objects
 
-| File                              | What it is                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `namespace.yaml`                  | `clickhouse` namespace                                                                        |
-| `operator.yaml`                   | Altinity clickhouse-operator (chart installs the CRDs via pre-install hook)                   |
-| `flux-kustomization.yaml`         | Flux Kustomization `services-clickhouse` (operator layer)                                     |
-| `cluster/flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (CR layer)                                   |
-| `cluster/secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)              |
-| `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                       |
-| `cluster/cluster.yaml`            | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
+| File                              | What it is                                                                                      |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `namespace.yaml`                  | `clickhouse` namespace                                                                          |
+| `operator.yaml`                   | Altinity clickhouse-operator (chart installs the CRDs via pre-install hook)                     |
+| `flux-kustomization.yaml`         | Flux Kustomization `services-clickhouse` (operator layer)                                       |
+| `cluster/flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (CR layer)                                     |
+| `cluster/secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)                |
+| `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                         |
+| `cluster/cluster.yaml`            | ClickHouseInstallation `tenzir` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
 
 The operator watches `clickhouse` only (`watchNamespaces`).
 
@@ -41,11 +41,11 @@ CR apply can no longer block the rest of observability.
 
 The operator creates the Services; name prefixes are fixed by its namer:
 
-- `clickhouse-ocsf.clickhouse.svc.cluster.local` - CR-level service,
+- `clickhouse-tenzir.clickhouse.svc.cluster.local` - CR-level service,
   load-balanced over all three replicas. HTTP 8123 (Grafana datasource,
   MR-2), native TCP 9000 (Tenzir `to_clickhouse`, MR-3).
-- `chi-ocsf-ocsf-<shard>-<replica>` services - per-host (e.g.
-  `chi-ocsf-ocsf-0-0`); ad-hoc `clickhouse-client` targets when you need a
+- `chi-tenzir-ocsf-<shard>-<replica>` services - per-host (e.g.
+  `chi-tenzir-ocsf-0-0`); ad-hoc `clickhouse-client` targets when you need a
   specific replica.
 - Keeper services (`chk-keeper-...`) - operator-internal; the CHI references
   the Keeper CR by name and the operator wires the endpoints.
@@ -112,7 +112,7 @@ is not yet serving when a replica first boots, the tables silently do not
 get created until the next server restart. After any apply, verify:
 
 ```bash
-kubectl exec -n clickhouse chi-ocsf-ocsf-0-0-0 -- \
+kubectl exec -n clickhouse chi-tenzir-ocsf-0-0-0 -- \
   clickhouse-client --query "SHOW TABLES FROM ocsf"
 ```
 
