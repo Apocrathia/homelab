@@ -18,7 +18,7 @@ entries:
       group: "Infrastructure"
       meta_launch_url: "https://diskstation.apocrathia.com:5001"
       open_in_new_tab: true
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/synology.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/synology.svg"
       meta_description: "Synology DiskStation"
       meta_publisher: "Synology"
 

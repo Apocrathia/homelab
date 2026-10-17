@@ -86,7 +86,7 @@ resource "authentik_application" "openhands" {
   group             = "Artificial Intelligence"
   meta_launch_url   = "https://openhands.gateway.services.apocrathia.com"
   open_in_new_tab   = true
-  meta_icon         = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/openhands/icon.svg"
+  meta_icon         = "https://icons.gateway.services.apocrathia.com/openhands.svg"
   meta_description  = "AI software-engineering agent platform for coding agents"
   meta_publisher    = "OpenHands"
   protocol_provider = authentik_provider_proxy.openhands-proxy-provider.id

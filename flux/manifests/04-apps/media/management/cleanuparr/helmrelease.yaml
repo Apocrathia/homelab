@@ -80,4 +80,4 @@ spec:
       category: "Media"
       displayName: "Cleanuparr"
       externalHost: "https://cleanuparr.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/cleanuparr/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/cleanuparr.svg"

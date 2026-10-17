@@ -198,7 +198,7 @@ spec:
       category: "Media"
       displayName: "SABnzbd"
       externalHost: "https://sabnzbd.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/acquisitions/sabnzbd/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/sabnzbd.svg"
 
     gatus:
       enabled: true

@@ -235,7 +235,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/litellm/icon.png"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/litellm.png"
   meta_description = "LiteLLM Proxy Admin UI - Unified LLM API Gateway Management"
   meta_publisher   = "BerriAI"
 

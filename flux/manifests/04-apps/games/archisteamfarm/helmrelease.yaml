@@ -174,7 +174,7 @@ spec:
       category: "Gaming"
       displayName: "ArchiSteamFarm"
       externalHost: "https://asf.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/games/archisteamfarm/icon.png"
+      icon: "https://icons.gateway.services.apocrathia.com/archisteamfarm.png"
 
     httproute:
       enabled: false

@@ -416,7 +416,7 @@ spec:
       displayName: "TAK"
       externalHost: "https://tak.gateway.services.apocrathia.com"
       # TAK brand mark (tak.gov)
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/tak/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/tak.svg"
       metaDescription: "TAK server for ATAK - CoT streaming, missions, datapackages"
       metaPublisher: "OpenTAKServer"
       # The SPA authenticates against the OTS API with its own session

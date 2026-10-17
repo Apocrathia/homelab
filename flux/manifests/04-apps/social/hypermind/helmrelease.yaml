@@ -83,7 +83,7 @@ spec:
       mode: "proxy"
       displayName: "Hypermind"
       externalHost: "https://hypermind.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/hypermind/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/hypermind.svg"
       category: "Social"
 
     httproute:

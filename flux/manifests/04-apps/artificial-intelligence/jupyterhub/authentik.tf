@@ -232,7 +232,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/jupyterhub/icon.svg"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/jupyterhub.svg"
   meta_description = "Multi-user Jupyter notebook server for interactive computing"
   meta_publisher   = "Project Jupyter"
 

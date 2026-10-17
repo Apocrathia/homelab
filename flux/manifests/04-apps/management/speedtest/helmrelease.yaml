@@ -100,7 +100,7 @@ spec:
       category: "Productivity"
       displayName: "LibreSpeed"
       externalHost: "https://speedtest.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/speedtest/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/speedtest.svg"
       metaDescription: "Self-hosted HTML5 network speed test"
       metaPublisher: "LibreSpeed"
 

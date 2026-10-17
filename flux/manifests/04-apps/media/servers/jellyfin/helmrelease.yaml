@@ -146,7 +146,7 @@ spec:
       displayName: "Jellyfin"
       externalHost: "https://jellyfin.gateway.services.apocrathia.com"
       ssoLaunchUrl: "https://jellyfin.gateway.services.apocrathia.com/sso/OID/start/Authentik"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/servers/jellyfin/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/jellyfin.svg"
       category: "Media"
       oidc:
         redirectUris:

@@ -193,7 +193,7 @@ spec:
       displayName: "ProjectSend"
       externalHost: "https://projectsend.gateway.services.apocrathia.com"
       ssoLaunchUrl: "https://projectsend.gateway.services.apocrathia.com/auth/oidc/redirect"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/projectsend/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/projectsend.svg"
       category: "Productivity"
       metaDescription: "Client file sharing with per-client portals"
       metaPublisher: "ProjectSend"

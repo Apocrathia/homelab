@@ -289,7 +289,7 @@ spec:
       shared: true
       displayName: "RomM"
       externalHost: "https://romm.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/games/romm/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/romm.svg"
       category: "Gaming"
       metaDescription: "Self-hosted ROM management platform for organizing, scanning, and playing retro games"
       metaPublisher: "RomM"

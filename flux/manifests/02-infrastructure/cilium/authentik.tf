@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://hubble.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/02-infrastructure/cilium/icon.svg"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/cilium.svg"
   meta_description = "Network observability platform for cloud native environments"
   meta_publisher   = "Cilium"
 

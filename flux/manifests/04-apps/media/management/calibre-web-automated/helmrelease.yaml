@@ -129,7 +129,7 @@ spec:
       mode: oidc
       displayName: "Calibre"
       externalHost: "https://calibre.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/calibre-web-automated/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/calibre-web-automated.svg"
       category: "Media"
       metaDescription: "Automated Calibre library management and ebook organization"
       metaPublisher: "Calibre-Web Automated"

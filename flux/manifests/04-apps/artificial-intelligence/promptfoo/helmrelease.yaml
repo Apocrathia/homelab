@@ -282,7 +282,7 @@ spec:
       category: "Artificial Intelligence"
       displayName: "Promptfoo"
       externalHost: "https://promptfoo.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/promptfoo/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/promptfoo.svg"
       metaDescription: "LLM eval framework and red-teaming platform for AI applications"
       metaPublisher: "Promptfoo (OpenAI)"
 

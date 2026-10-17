@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/jetkvm/icon.png"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/jetkvm.png"
   meta_description = "JetKVM Cloud Dashboard - KVM-over-IP management"
   meta_publisher   = "JetKVM"
 }
