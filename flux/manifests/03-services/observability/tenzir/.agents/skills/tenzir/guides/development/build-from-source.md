@@ -1,0 +1,196 @@
+---
+title: "Build from source"
+canonical: https://tenzir.com/docs/guides/development/build-from-source
+source: https://tenzir.com/docs/guides/development/build-from-source.md
+section: "Docs"
+---
+
+# Build from source
+
+> Tenzir uses CMake as build system with a C++23 compiler.
+
+Tenzir uses [CMake](https://cmake.org) as build system with a C++23 compiler.
+
+## Manual
+
+### Compile
+
+Clone the repository:
+
+```sh
+git clone --recursive https://github.com/tenzir/tenzir
+cd tenzir
+```
+
+Ensure all [dependencies](build-from-source.md#dependencies) are available, then configure and build using a preset:
+
+```sh
+cmake --list-presets          # discover available presets
+cmake --preset <preset-name>
+cmake --build --preset <preset-name>
+```
+
+Two families of macOS presets exist:
+
+| Preset family   | Toolchain                        | Use case                            |
+| --------------- | -------------------------------- | ----------------------------------- |
+| `macos-clang-*` | Homebrew LLVM with custom libc++ | When you need latest Clang features |
+| `macos-xcode-*` | Apple Clang (Xcode)              | Simpler setup, standard toolchain   |
+
+For example, to build a release on macOS with Xcode:
+
+```sh
+cmake --preset macos-xcode-release
+cmake --build --preset macos-xcode-release
+```
+
+Or with Homebrew LLVM:
+
+```sh
+cmake --preset macos-clang-release
+cmake --build --preset macos-clang-release
+```
+
+For custom configurations without presets:
+
+```sh
+cmake -B build -G Ninja
+cmake --build build
+```
+
+Note
+
+CMake defaults to a `Debug` build. When performance matters, use `-DCMAKE_BUILD_TYPE=Release`.
+
+### Test
+
+Run unit tests via CTest:
+
+```sh
+ctest --test-dir build
+```
+
+Run integration tests via [tenzir-test](https://github.com/tenzir/tenzir-test):
+
+```sh
+cd test
+uvx tenzir-test
+```
+
+### Install
+
+Install Tenzir system-wide:
+
+```sh
+cmake --install build
+```
+
+Options:
+
+* `--prefix /path/to/prefix` - custom install location
+* `--strip` - remove debug symbols
+* `--component Runtime` - install only runtime files, not development headers
+
+### Clean
+
+Delete the build tree to start fresh:
+
+```sh
+rm -rf build
+```
+
+This avoids configuration glitches when switching build types.
+
+## Docker
+
+The [Dockerfile](https://github.com/tenzir/tenzir/blob/main/Dockerfile) provides multiple build targets.
+
+Build the default image:
+
+```sh
+docker build -t tenzir/tenzir .
+```
+
+Build the node image (runs `tenzir-node` as entrypoint):
+
+```sh
+docker build -t tenzir/tenzir-node --target tenzir-node .
+```
+
+Build the development image with all build-time dependencies for creating custom plugins:
+
+```sh
+docker build -t tenzir/tenzir-dev --target development .
+```
+
+## Nix
+
+We use [Nix](https://nixos.org) for reproducible builds on Linux and macOS. The flake provides all [dependencies](build-from-source.md#dependencies):
+
+```sh
+nix develop
+cmake --preset nix-clang-release
+cmake --build --preset nix-clang-release
+```
+
+For pre-built dependencies, configure the Tenzir binary cache:
+
+```sh
+nix run nixpkgs#cachix -- use tenzir
+```
+
+You can also delegate the entire build to Nix with `nix build .#tenzir-de`, but this doesn’t support incremental builds.
+
+To build static binaries on Linux:
+
+```sh
+nix develop .#tenzir-static.unchecked
+cmake --preset nix-static-release
+cmake --build --preset nix-static-release
+```
+
+## Dependencies
+
+| Required | Dependency                                                     | Version        | Description                                                                                                                                                      |
+| -------- | -------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✓        | C++ Compiler                                                   | C++23 required | Tenzir is tested to compile with GCC >= 14.0 and Clang >= 19.0.                                                                                                  |
+| ✓        | [CMake](https://cmake.org)                                     | >= 3.30        | Cross-platform tool for building, testing and packaging software.                                                                                                |
+| ✓        | [CAF](https://github.com/actor-framework/actor-framework)      | >= 1.1.0       | Implementation of the actor model in C++. (Bundled as submodule.)                                                                                                |
+| ✓        | [OpenSSL](https://www.openssl.org)                             |                | Utilities for secure networking and cryptography.                                                                                                                |
+| ✓        | [FlatBuffers](https://google.github.io/flatbuffers/)           | >= 2.0.8       | Memory-efficient cross-platform serialization library.                                                                                                           |
+| ✓        | [Boost](https://www.boost.org)                                 | >= 1.83.0      | Required as a general utility library.                                                                                                                           |
+| ✓        | [Apache Arrow](https://arrow.apache.org)                       | >= 18.0.0      | Required for Parquet, Feather, and storage. Must be built with Compute, Filesystem, S3, Zstd and Parquet enabled. For the `gcs` plugin, GCS needs to be enabled. |
+| ✓        | [re2](https://github.com/google/re2)                           |                | Required for regular expression evaluation.                                                                                                                      |
+| ✓        | [yaml-cpp](https://github.com/jbeder/yaml-cpp)                 | >= 0.6.2       | Required for reading YAML configuration files.                                                                                                                   |
+| ✓        | [simdjson](https://github.com/simdjson/simdjson)               | >= 4.0.0       | Required for high-performance JSON parsing. (Bundled as submodule.)                                                                                              |
+| ✓        | [spdlog](https://github.com/gabime/spdlog)                     | >= 1.5         | Required for logging.                                                                                                                                            |
+| ✓        | [fmt](https://fmt.dev)                                         | >= 10.0.0      | Required for formatted text output.                                                                                                                              |
+| ✓        | [xxHash](https://github.com/Cyan4973/xxHash)                   | >= 0.8.0       | Required for computing fast hash digests.                                                                                                                        |
+| ✓        | [robin-map](https://github.com/Tessil/robin-map)               | >= 0.6.3       | Fast hash map and hash set using robin hood hashing. (Bundled as subtree.)                                                                                       |
+| ✓        | [libbacktrace](https://github.com/ianlancetaylor/libbacktrace) | >= 1.0         | Required for generating stack traces. (Only on Linux.)                                                                                                           |
+| ✓        | [libmaxminddb](https://github.com/maxmind/libmaxminddb)        | >= 1.8.0       | Required for the `geoip` context.                                                                                                                                |
+| ✓        | [reproc++](https://github.com/DaanDeMeyer/reproc)              | >= v14.2.5     | Required for subprocess control.                                                                                                                                 |
+|          | [libpcap](https://www.tcpdump.org)                             |                | Required for building the `pcap` plugin.                                                                                                                         |
+|          | [librdkafka](https://github.com/confluentinc/librdkafka)       |                | Required for building the `kafka` plugin.                                                                                                                        |
+|          | [http-parser](https://github.com/nodejs/http-parser)           |                | Required for building the `web` plugin.                                                                                                                          |
+|          | [cppzmq](https://github.com/zeromq/cppzmq)                     |                | Required for building the `zmq` plugin.                                                                                                                          |
+|          | [clickhouse-cpp](https://github.com/clickhouse/clickhouse-cpp) | >= fbd7945     | Required for building the `clickhouse` plugin. (Bundled as submodule.)                                                                                           |
+|          | [pfs](https://github.com/dtrugman/pfs)                         |                | Required for the `processes` and `sockets` operators on Linux.                                                                                                   |
+|          | [Protocol Buffers](https://protobuf.dev)                       | >= 1.4.1       | Required for building the `velociraptor` plugin.                                                                                                                 |
+|          | [gRPC](https://grpci.io)                                       | >= 1.51        | Required for building the `velociraptor` plugin.                                                                                                                 |
+|          | [rabbitmq-c](https://github.com/alanxz/rabbitmq-c)             |                | Required for building the `rabbitmq` plugin.                                                                                                                     |
+|          | [yara](https://yara.readthedocs.io/)                           | >= 4.4.0       | Required for building the `yara` plugin.                                                                                                                         |
+|          | [poetry](https://python-poetry.org)                            |                | Required for building the Python bindings.                                                                                                                       |
+|          | [Doxygen](http://www.doxygen.org)                              |                | Required to build documentation for libtenzir.                                                                                                                   |
+|          | [Pandoc](https://github.com/jgm/pandoc)                        |                | Required to build the manpage for Tenzir.                                                                                                                        |
+|          | [bash](https://www.gnu.org/software/bash/)                     | >= 4.0.0       | Required to run the integration tests.                                                                                                                           |
+|          | [bats](https://bats-core.readthedocs.io)                       | >= 1.8.0       | Required to run the integration tests.                                                                                                                           |
+|          | [uv](https://github.com/astral-sh/uv)                          | >= 0.7.2       | Required to run the python operator.                                                                                                                             |
+
+The minimum specified versions reflect those used in CI and manual testing. Older versions may still work.
+
+### SBOM
+
+Every [release](https://github.com/tenzir/tenzir/releases) includes an [SBOM](https://en.wikipedia.org/wiki/Software_bill_of_materials) in [SPDX](https://spdx.dev) format listing all dependencies and their versions:
+
+[Latest SBOMDownload the Software Bill of Materials in SPDX format](https://github.com/tenzir/tenzir/releases/latest/download/tenzir.spdx.json)

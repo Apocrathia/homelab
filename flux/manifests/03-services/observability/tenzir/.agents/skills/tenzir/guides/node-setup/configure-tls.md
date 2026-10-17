@@ -1,0 +1,125 @@
+---
+title: "Configure TLS"
+description: "Set up TLS encryption for operators and platform connections"
+canonical: https://tenzir.com/docs/guides/node-setup/configure-tls
+source: https://tenzir.com/docs/guides/node-setup/configure-tls.md
+section: "Docs"
+---
+
+# Configure TLS
+
+> Set up TLS encryption for operators and platform connections
+
+Tenzir supports Transport Layer Security (TLS) for encrypting network connections. You can configure TLS settings centrally in `tenzir.yaml` so they apply to all compatible operators, or override them per-operator as needed.
+
+## Node-level TLS configuration
+
+Instead of passing TLS options to each operator individually, configure them once under `tenzir.tls` in your `tenzir.yaml`:
+
+tenzir.yaml
+
+```yaml
+tenzir:
+  tls:
+    tls-min-version: "1.2"
+    tls-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256"
+    cacert: "/etc/ssl/certs/ca-certificates.crt"
+```
+
+These settings apply automatically to operators that use node-level TLS, including:
+
+* [`accept_relp`](https://tenzir.com/docs/reference/operators/accept_relp.md)
+* [`accept_splunk`](https://tenzir.com/docs/reference/operators/accept_splunk.md)
+* [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md)
+* [`to_opensearch`](https://tenzir.com/docs/reference/operators/to_opensearch.md)
+* [`accept_opensearch`](https://tenzir.com/docs/reference/operators/accept_opensearch.md)
+* [`to_splunk`](https://tenzir.com/docs/reference/operators/to_splunk.md)
+
+### Available options
+
+| Option                   | Description                                                         |
+| ------------------------ | ------------------------------------------------------------------- |
+| `enable`                 | Enable TLS on all operators that support it                         |
+| `skip-peer-verification` | Disable certificate verification (not recommended for production)   |
+| `cacert`                 | Path to a CA certificate bundle for server verification             |
+| `certfile`               | Path to a client certificate file                                   |
+| `keyfile`                | Path to a client private key file                                   |
+| `password`               | Password to decrypt the private key in `keyfile`                    |
+| `tls-min-version`        | Minimum TLS protocol version: `"1.0"`, `"1.1"`, `"1.2"`, or `"1.3"` |
+| `tls-ciphers`            | OpenSSL cipher list string                                          |
+
+### Precedence
+
+Arguments passed directly to operators always take precedence over node-level settings. This lets you override specific connections when needed:
+
+```tql
+// Uses node-level TLS settings
+from_http "https://api.example.com/data"
+
+
+// Overrides with a custom certificate
+from_http "https://internal.example.com/data", tls={cacert: "/path/to/internal-ca.crt"}
+```
+
+## Mutual TLS (mTLS)
+
+For server-mode operators, you can require clients to present valid certificates. This enables mutual TLS authentication where both sides verify each other’s identity.
+
+tenzir.yaml
+
+```yaml
+tenzir:
+  tls:
+    certfile: "/etc/tenzir/server.crt"
+    keyfile: "/etc/tenzir/server.key"
+    tls-client-ca: "/etc/tenzir/client-ca.crt"
+    require-client-cert: true
+```
+
+| Option                | Description                                                           |
+| --------------------- | --------------------------------------------------------------------- |
+| `tls-client-ca`       | Path to a CA certificate for validating client certificates           |
+| `require-client-cert` | Require clients to present valid certificates signed by the client CA |
+
+When `require-client-cert` is enabled, connections from clients without valid certificates are rejected.
+
+## Platform connection TLS
+
+When connecting a node to the Tenzir Platform, you can configure outbound-client TLS settings specifically for this connection under `plugins.platform`. These options have the same semantics as the matching [node-level TLS config](configure-tls.md#node-level-tls-configuration), but only apply to the node ↔ platform connection.
+
+tenzir.yaml
+
+```yaml
+plugins:
+  platform:
+    skip-peer-verification: false
+    cacert: "/etc/ssl/certs/ca-certificates.crt"
+    certfile: "/etc/tenzir/platform-client.crt"
+    keyfile: "/etc/tenzir/platform-client.key"
+    tls-min-version: "1.2"
+    tls-ciphers: "HIGH:!aNULL:!MD5"
+```
+
+Any option specified here overrides the corresponding node-level `tenzir.tls` setting.
+
+## Generate test certificates
+
+For testing purposes, generate a certificate from a local CA:
+
+```bash
+uv run --with trustme python -m trustme
+```
+
+Caution
+
+Don’t use self-signed certificates in production. Obtain certificates from a trusted certificate authority instead.
+
+## Verify TLS connections
+
+Test a TLS connection using OpenSSL:
+
+```bash
+openssl s_client -connect 127.0.0.1:443
+```
+
+This shows the certificate chain and connection details, helping you diagnose TLS configuration issues.

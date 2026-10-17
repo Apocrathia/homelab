@@ -1,0 +1,220 @@
+---
+title: "Publish a package"
+canonical: https://tenzir.com/docs/guides/packages/publish-a-package
+source: https://tenzir.com/docs/guides/packages/publish-a-package.md
+section: "Docs"
+---
+
+# Publish a package
+
+> This guide shows you how to publish your package. You’ll learn how to contribute to the Tenzir Community Library and how to set up your own package repository with automated testing.
+
+This guide shows you how to publish your package. You’ll learn how to contribute to the Tenzir Community Library and how to set up your own package repository with automated testing.
+
+## Contribute to the Community Library
+
+The [Tenzir Community Library](https://github.com/tenzir/library) is a collection of open-source packages that appear in the [Tenzir Library](https://app.tenzir.com/library). Contributing your package makes it discoverable and installable by the entire community.
+
+### Prepare your package
+
+Before submitting, verify your package meets these requirements:
+
+* Has a complete `package.yaml` with descriptive metadata, valid top-level `categories` (`sources`, `destinations`, `mappings`, or `contexts`), and inputs or contexts where needed
+* Exposes reusable logic as user-defined operators under `operators/`
+* Ships optional operational pipelines disabled by default
+* Includes focused examples in the `examples/` directory
+* Has passing tests that cover the main public operators and examples
+* Uses an SVG icon for `package_icon` (host it in your package directory)
+
+### Submit a pull request
+
+1. Fork the [tenzir/library](https://github.com/tenzir/library) repository.
+
+2. Add your package directory to the repository root (see structure below).
+
+3. Push your changes and open a pull request.
+
+4. The CI pipeline automatically detects your package and runs its tests.
+
+5. After review and merge, your package appears in the Tenzir Library.
+
+* library/
+
+  * your-package/
+
+    * package.yaml
+
+    * package.svg Your package icon
+
+    * examples/
+
+      * …
+
+    * operators/
+
+      * …
+
+    * pipelines/
+
+      * …
+
+    * tests/
+
+      * …
+
+Get feedback first
+
+Before opening a pull request, consider sharing your package on our [Discord server](https://discord.tenzir.com) in the `show-and-tell` channel. Community feedback helps refine your package before it reaches a wider audience.
+
+## Host your own package repository
+
+For private packages or custom distribution, host packages in your own Git repository. This approach works well for organization-specific integrations or packages under development.
+
+### Repository structure
+
+Organize your repository with one package per directory:
+
+* my-packages/
+
+  * .github/
+
+    * workflows/
+
+      * test.yml CI workflow
+
+    * scripts/
+
+      * detect-touched-packages.sh
+
+  * package-one/
+
+    * package.yaml
+
+    * operators/
+
+      * …
+
+    * tests/
+
+      * …
+
+  * package-two/
+
+    * package.yaml
+
+    * pipelines/
+
+      * …
+
+    * tests/
+
+      * …
+
+### Set up CI with GitHub Actions
+
+Create a workflow that tests packages on pull requests and pushes. The following workflow mirrors the approach used in the Community Library.
+
+.github/workflows/test.yml
+
+```yaml
+name: Tests
+
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+
+
+jobs:
+  test:
+    name: Test packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+
+      - name: Detect touched packages
+        id: touched
+        shell: bash
+        run: |
+          packages=$(.github/scripts/detect-touched-packages.sh "${{ github.event.pull_request.base.sha || '' }}")
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+
+
+      - name: Run package tests
+        if: steps.touched.outputs.packages != ''
+        run: uvx tenzir-test ${{ steps.touched.outputs.packages }}
+```
+
+### Detect changed packages
+
+Create a script that identifies which packages changed in a pull request:
+
+.github/scripts/detect-touched-packages.sh
+
+```bash
+#!/usr/bin/env bash
+set -eo pipefail
+
+
+base_ref="${1:-}"
+
+
+# Without a base ref, test all packages.
+if [[ -z "$base_ref" ]]; then
+  printf '.\n'
+  exit 0
+fi
+
+
+# If the diff fails (e.g., shallow clone), test all packages.
+if ! diff_output=$(git diff --name-only "${base_ref}"...HEAD 2>/dev/null); then
+  printf '.\n'
+  exit 0
+fi
+
+
+# Extract top-level directories from changed files.
+candidate_lines=$(printf '%s\n' "$diff_output" \
+  | awk -F/ 'NF>1 && $1 !~ /^\./ {print $1}' \
+  | sort -u)
+
+
+# Filter to directories that contain a package.yaml.
+filtered=()
+while IFS= read -r candidate; do
+  [[ -z "$candidate" ]] && continue
+  if [[ -f "$candidate/package.yaml" ]]; then
+    filtered+=("$candidate")
+  fi
+done <<< "$candidate_lines"
+
+
+if (( ${#filtered[@]} == 0 )); then
+  printf '\n'
+else
+  printf '%s\n' "${filtered[*]}"
+fi
+```
+
+Make the script executable:
+
+```bash
+chmod +x .github/scripts/detect-touched-packages.sh
+```
+
+## See also
+
+* [Create a package](create-a-package.md)
+* [Test packages](test-packages.md)
+* [Install a package](install-a-package.md)
+* [Onboard a data source](../../tutorials/onboard-a-data-source.md)

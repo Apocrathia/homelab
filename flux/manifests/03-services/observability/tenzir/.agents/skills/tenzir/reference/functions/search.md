@@ -1,0 +1,234 @@
+---
+title: "search"
+canonical: https://tenzir.com/docs/reference/functions/search
+source: https://tenzir.com/docs/reference/functions/search.md
+section: "Docs"
+---
+
+# search
+
+> Searches recursively for a value within data structures.
+
+Searches recursively for a value within data structures.
+
+```tql
+search(input:any, target:any, [exact=bool], [ignore_case=bool]) -> bool
+```
+
+## Description
+
+The `search` function returns `true` if the `target` value is found anywhere within the `input` data structure, and `false` otherwise. The search is performed recursively, meaning it will look inside nested records, lists, and other compound data structures.
+
+By default, strings match via substring search and subnets use containment checks. When `exact` is set to `true`, only exact matches are considered.
+
+Set `ignore_case=true` to compare strings using full Unicode case folding instead of case-sensitive matching.
+
+### `input: any`
+
+The data structure to search within. Can be any type including primitives, records, lists, and nested structures.
+
+### `target: any`
+
+The value to search for. Cannot be a list or record.
+
+### `exact: bool` (optional)
+
+Controls the matching behavior:
+
+* When `false` (default): strings match via substring search, and subnets/IPs use containment checks
+* When `true`: only exact equality matches are considered
+
+### `ignore_case: bool` (optional)
+
+If `true`, string comparisons use full Unicode case folding.
+
+Defaults to `false`.
+
+## Examples
+
+### Search within records
+
+```tql
+from {name: "Alice", age: 30, active: true}
+found_alice = search(this, "Alice")
+found_bob = search(this, "Bob")
+found_30 = search(this, 30)
+```
+
+```tql
+{
+  name: "Alice",
+  age: 30,
+  active: true,
+  found_alice: true,
+  found_bob: false,
+  found_30: true,
+}
+```
+
+### Search within nested structures
+
+```tql
+from {user: {profile: {name: "John", settings: {theme: "dark"}}}}
+found_john = search(this, "John")
+found_theme = search(user, "dark")
+found_missing = search(this, "light")
+```
+
+```tql
+{
+  user: {
+    profile: {
+      name: "John",
+      settings: {
+        theme: "dark",
+      },
+    },
+  },
+  found_john: true,
+  found_theme: true,
+  found_missing: false,
+}
+```
+
+### Search within lists
+
+```tql
+from {numbers: [1, 2, 3, 42], tags: ["important", "urgent"]}
+found_42 = search(numbers, 42)
+found_important = search(tags, "important")
+found_missing = search(numbers, 99)
+```
+
+```tql
+{
+  numbers: [1, 2, 3, 42],
+  tags: ["important", "urgent"],
+  found_42: true,
+  found_important: true,
+  found_missing: false,
+}
+```
+
+### Search with numeric type compatibility
+
+```tql
+from {values: {int_val: 42, uint_val: 42.uint(), double_val: 42.0}}
+search_int = search(values, 42)
+search_uint = search(values, 42.uint())
+search_double = search(values, 42.0)
+```
+
+```tql
+{
+  values: {
+    int_val: 42,
+    uint_val: 42,
+    double_val: 42.0,
+  },
+  search_int: true,
+  search_uint: true,
+  search_double: true,
+}
+```
+
+### Search in deeply nested structures
+
+```tql
+from {
+  data: {
+    level1: {
+      level2: {
+        level3: {
+          target: "found"
+        }
+      }
+    }
+  }
+}
+deep_search = search(data, "found")
+```
+
+```tql
+{
+  data: {
+    level1: {
+      level2: {
+        level3: {
+          target: "found",
+        },
+      },
+    },
+  },
+  deep_search: true,
+}
+```
+
+### Substring search in strings
+
+```tql
+from {message: "Hello, World!"}
+substring_match = search(message, "World")
+exact_match = search(message, "World", exact=true)
+partial_no_match = search(message, "Universe")
+exact_no_match = search(message, "Hello, World", exact=true)
+```
+
+```tql
+{
+  message: "Hello, World!",
+  substring_match: true,
+  exact_match: false,
+  partial_no_match: false,
+  exact_no_match: false,
+}
+```
+
+### Search case-insensitively
+
+```tql
+from {
+  record: {host: "HOST-A"},
+  value: "STRASSE",
+}
+record_match = search(record, "host-a", ignore_case=true)
+value_match = search(value, "straße", ignore_case=true)
+exact_match = search(value, "straße", exact=true, ignore_case=true)
+```
+
+```tql
+{
+  record: {
+    host: "HOST-A",
+  },
+  value: "STRASSE",
+  record_match: true,
+  value_match: true,
+  exact_match: true,
+}
+```
+
+### Subnet and IP containment
+
+```tql
+from {subnet: 10.0.0.0/8}
+contains_ip = search(subnet, 10.1.2.3)
+contains_subnet = search(subnet, 10.0.0.0/16)
+exact_subnet = search(subnet, 10.0.0.0/8, exact=true)
+```
+
+```tql
+{
+  subnet: 10.0.0.0/8,
+  contains_ip: true,
+  contains_subnet: true,
+  exact_subnet: true,
+}
+```
+
+## See Also
+
+* [`equals`](https://tenzir.com/docs/reference/functions/equals.md)
+* [`has`](https://tenzir.com/docs/reference/functions/has.md)
+* [`match_regex`](https://tenzir.com/docs/reference/functions/match_regex.md)
+* [Manipulate strings](../../guides/shape/manipulate-strings.md)

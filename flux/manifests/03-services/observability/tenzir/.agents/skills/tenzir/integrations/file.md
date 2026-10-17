@@ -1,0 +1,105 @@
+---
+title: "File integration"
+description: "Read from and write to files."
+canonical: https://tenzir.com/integrations/file
+source: https://tenzir.com/integrations/file.md
+section: "Integrations"
+---
+
+# File integration
+
+> Read from and write to files.
+
+Tenzir can read from and write to local files, cloud object storage, standard input, standard output, and standard error.
+
+File
+
+When `~` is the first character in the file path, the operator substitutes it with the `$HOME` environment variable.
+
+Use [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) to read files with glob patterns, automatic format detection, and file monitoring. For writing, use [`to_file`](https://tenzir.com/docs/reference/operators/to_file.md) with a print operator.
+
+## Examples
+
+### Read a file
+
+Read from a file and parse it in the format implied by the file extension:
+
+```tql
+from_file "/tmp/file.json"
+```
+
+The operator automatically decompresses the file when the suffix list contains a supported compression algorithm:
+
+```tql
+from_file "/tmp/file.json.gz"
+```
+
+### Read multiple files with a glob pattern
+
+```tql
+from_file "/var/log/*.json"
+```
+
+### Watch a directory for new files
+
+Set `watch` to a duration to continuously monitor for new files:
+
+```tql
+from_file "/var/log/app/*.json", watch=10s
+```
+
+### Write a file
+
+Write to a file in a specific format:
+
+```tql
+version
+to_file "/tmp/tenzir-version.json" {
+  write_json
+}
+```
+
+With compression:
+
+```tql
+version
+to_file "/tmp/tenzir-version.json.bz2" {
+  write_json
+  compress_bz2
+}
+```
+
+### Append to a file
+
+In case the file exists and you do not want to overwrite it, pass `append=true` as option:
+
+```tql
+from {x: 42}
+to_file "/tmp/event.csv", append=true {
+  write_csv
+}
+```
+
+### Read or write a Unix domain socket
+
+Use the dedicated Unix domain socket operators for local socket streams. When Tenzir connects to an existing socket, use [`from_unix_socket`](https://tenzir.com/docs/reference/operators/from_unix_socket.md) or [`to_unix_socket`](https://tenzir.com/docs/reference/operators/to_unix_socket.md):
+
+```tql
+from_unix_socket "/tmp/socket" {
+  read_ndjson
+}
+```
+
+```tql
+to_unix_socket "/tmp/socket" {
+  write_ndjson
+}
+```
+
+When Tenzir owns the listening socket path, use [`accept_unix_socket`](https://tenzir.com/docs/reference/operators/accept_unix_socket.md):
+
+```tql
+accept_unix_socket "/tmp/socket" {
+  read_ndjson
+}
+```

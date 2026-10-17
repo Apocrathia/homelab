@@ -1,0 +1,88 @@
+# Remediation Activity (remediation_activity)
+
+Remediation Activity events report on attempts at remediating a compromised device or computer network.
+
+- **Class UID**: `7001`
+- **Category**: Remediation
+- **Extends**: [Base Event (base_event)](base_event.md)
+- **Profiles**: [Cloud](../profiles/cloud.md), [Date/Time](../profiles/datetime.md), [Host](../profiles/host.md), [OSINT](../profiles/osint.md), [Record Integrity](../profiles/record_integrity.md), [Security Control](../profiles/security_control.md)
+
+## Inherited attributes
+
+**From Base Event:**
+- `category_uid` (required)
+- `class_uid` (required)
+- `metadata` (required)
+- `severity_id` (required)
+- `time` (required)
+- `type_uid` (required)
+- `message` (recommended)
+- `observables` (recommended)
+- `status` (recommended)
+- `status_code` (recommended)
+- `status_detail` (recommended)
+- `timezone_offset` (recommended)
+
+## Attributes
+
+### `activity_id`
+
+- **Type**: `integer_t`
+- **Sibling**: `activity_name`
+
+#### Enum values
+
+- `1`: `Isolate` - Creates logical or physical barriers in a system which reduces opportunities for adversaries to create further accesses.
+- `2`: `Evict` - Removes an adversary or malicious resource from a device or computer network.
+- `3`: `Restore` - Returns the system to a better state.
+- `4`: `Harden` - Increases the opportunity cost of computer network exploitation.
+- `5`: `Detect` - Identify adversary access to or unauthorized activity on computer networks.
+- `6`: `Deceive` - Advertise, entice, and allow potential attackers access to an observed or controlled environment.
+
+Matches the countermeasure tactic. Note: the Model tactic is not supported by the OCSF Remediation event class.
+
+### `command_uid`
+
+- **Type**: `string_t`
+- **Requirement**: required
+- **Group**: primary
+
+The unique identifier of the remediation command that pertains to this event.
+
+### `countermeasures`
+
+- **Type**: [`d3fend`](../objects/d3fend.md)
+- **Requirement**: recommended
+- **Group**: primary
+
+The MITRE D3FEND™ Matrix Countermeasures associated with a remediation.
+
+### `remediation`
+
+- **Type**: [`remediation`](../objects/remediation.md)
+- **Requirement**: optional
+- **Group**: context
+
+Describes the recommended remediation steps to address identified issue(s).
+
+### `scan`
+
+- **Type**: [`scan`](../objects/scan.md)
+- **Requirement**: optional
+- **Group**: context
+
+The remediation scan that pertains to this event.
+
+### `status_id`
+
+- **Type**: `integer_t`
+- **Sibling**: `status`
+
+#### Enum values
+
+- `3`: `Does Not Exist` - The target of the remediation does not exist.
+- `4`: `Partial` - The remediation was partially completed.
+- `5`: `Unsupported` - The remediation was not supported.
+- `6`: `Error` - There was an error during the remediation process.
+
+The normalized status identifier. See specific usage.

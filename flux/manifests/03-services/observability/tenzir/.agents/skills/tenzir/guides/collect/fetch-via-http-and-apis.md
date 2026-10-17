@@ -1,0 +1,434 @@
+---
+title: "Fetch via HTTP and APIs"
+canonical: https://tenzir.com/docs/guides/collect/fetch-via-http-and-apis
+source: https://tenzir.com/docs/guides/collect/fetch-via-http-and-apis.md
+section: "Docs"
+---
+
+# Fetch via HTTP and APIs
+
+> This guide shows you how to interact with HTTP APIs using fromhttp and tohttp operators. You’ll learn to make GET requests, send data, handle authentication, and implement pagination for large result sets.
+
+This guide shows you how to interact with HTTP APIs using [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) and [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md) operators. You’ll learn to make GET requests, send data, handle authentication, and implement pagination for large result sets.
+
+## Choosing the Right Operator
+
+Tenzir has two HTTP client operators that share the same core client options:
+
+* [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) is a **input** operator that starts a pipeline with an HTTP request and parses the response into events. It streams response body chunks into the parser sub-pipeline as they arrive. Use it for standalone API calls and paginated API ingestion.
+* [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md) is an **output** operator that sends all events from one invocation as a single HTTP request. It streams the request body from its printer sub-pipeline into the HTTP connection. Use it for webhooks and HTTP-based ingestion APIs, and wrap it in `every` when you want time-based batches.
+
+Most examples in this guide use `from_http`, because it is the operator for fetching data from APIs.
+
+## Basic API Requests
+
+Start with these fundamental patterns for making HTTP requests to APIs.
+
+### Simple GET Requests
+
+To fetch data from an API endpoint, pass the URL as the first parameter:
+
+```tql
+from_http "https://api.example.com/data.json"
+```
+
+The operator makes a GET request by default and sends the response body to the parser. As the server sends response chunks, Tenzir forwards them to the parser pipeline incrementally. If the response has a supported `Content-Type` header or the URL path has a supported extension, Tenzir infers the parser automatically.
+
+### Parsing the HTTP response body
+
+You can omit the parsing sub-pipeline when Tenzir can infer the response format. Tenzir first checks a non-empty `Content-Type` response header and then falls back to the URL path extension.
+
+Use an explicit parsing sub-pipeline when the response format is ambiguous, custom, or not reflected by the header or URL.
+
+The operator automatically handles HTTP `Content-Encoding`. If the downloaded file itself is compressed, add the matching decompressor to the sub-pipeline.
+
+For example, if an API returns CSV data, you can parse it as follows:
+
+```tql
+from_http "https://api.example.com/users" {
+  read_csv
+}
+```
+
+This parses the response from CSV into structured events that you can process further.
+
+If the downloaded file itself is compressed, add the decompressor explicitly:
+
+```tql
+from_http "https://example.org/archive.json.gz" {
+  decompress_gzip
+  read_json
+}
+```
+
+This decompresses the downloaded gzip file and then parses the response as JSON.
+
+### POST Requests with Data
+
+Send data to APIs by specifying the `method` parameter as “post” and providing the request body in the `body` parameter:
+
+```tql
+let $body = {"name": "John", "email": "john@example.com"}
+from_http "https://api.example.com/users", method="post", body=$body {
+  read_json
+}
+```
+
+Use [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md) when you want to send existing events to an HTTP API:
+
+```tql
+from {name: "John", email: "john@example.com"}
+to_http "https://api.example.com/users" {
+  write_json
+}
+```
+
+The `from_http` operator automatically uses `post` when you specify a body. The `to_http` operator uses `post` by default and sends all events from that operator invocation in one request, streaming the request body as the printer pipeline produces bytes.
+
+## Request Configuration
+
+Configure requests with headers, authentication, and other options for different API requirements.
+
+### Adding Headers
+
+Include custom headers by providing the `headers` parameter as a record containing key-value pairs:
+
+```tql
+let $headers = {
+  "Authorization": f"Bearer {secret("YOUR_BEARER_TOKEN")}"
+}
+from_http "https://api.example.com/data", headers=$headers {
+  read_json
+}
+```
+
+Headers help you authenticate with APIs and specify request formats. Use the [`secret`](https://tenzir.com/docs/reference/functions/secret.md) function to retrieve sensitive API tokens, as in the above example.
+
+### TLS and Security
+
+Configure TLS by passing a record to the `tls` parameter with certificate paths:
+
+```tql
+from_http "https://secure-api.example.com/data",
+  tls={
+    certfile: "/path/to/client.crt",
+    keyfile: "/path/to/client.key",
+  } {
+  read_json
+}
+```
+
+Use these options when APIs require client certificate authentication.
+
+To skip peer verification (e.g., for self-signed certificates in development):
+
+```tql
+from_http "https://dev-api.example.com/data",
+  tls={skip_peer_verification: true} {
+  read_json
+}
+```
+
+### Timeout and Retry Configuration
+
+Configure timeouts and retry behavior by setting the `connection_timeout`, `max_retry_count`, and `retry_delay` parameters:
+
+```tql
+from_http "https://api.example.com/data",
+  connection_timeout=10s,
+  max_retry_count=3,
+  retry_delay=2s {
+  read_json
+}
+```
+
+These settings retry transient transport failures and HTTP `429` and `5xx` responses with exponential backoff.
+
+## Response metadata
+
+Use `from_http` to inspect HTTP response metadata while parsing the response.
+
+### Accessing response metadata
+
+With `from_http`, use the `$response` variable inside a parsing pipeline to access HTTP status codes and headers:
+
+```tql
+from_http "https://api.example.com/status" {
+  read_json
+  status_code = $response.code
+  server = $response.headers.Server
+}
+```
+
+## Pagination and Bulk Processing
+
+Handle APIs that return large datasets across multiple pages.
+
+### Link Header Pagination
+
+Many REST APIs (such as GitHub, GitLab, and Jira) include pagination URLs in the HTTP `Link` response header following [RFC 8288](https://datatracker.ietf.org/doc/html/rfc8288). Use `paginate="link"` to follow these automatically:
+
+```tql
+from_http "https://api.github.com/repos/tenzir/tenzir/issues?per_page=10",
+  paginate="link" {
+  read_json
+}
+```
+
+The operator parses the `Link` header, finds the `rel=next` relation, and continues fetching pages until the response no longer includes a next link.
+
+This works with any API that returns a header like:
+
+```plaintext
+Link: <https://api.example.com/items?page=2>; rel="next"
+```
+
+Relative URLs in the `Link` header are resolved against the request URL, so both absolute and relative pagination links work correctly.
+
+### [OData](https://www.oasis-open.org/standard/odata-v4-01-os/) pagination
+
+Some APIs return an OData collection envelope with records in a top-level `value` array and the next page URL in `@odata.nextLink`. Microsoft Graph uses this pagination shape for many collection endpoints. Use `paginate="odata"` with [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) to unpack the envelope and follow the next link automatically:
+
+```tql
+from_http "https://graph.microsoft.com/v1.0/users",
+  headers={
+    "Authorization": f"Bearer {secret("MICROSOFT_GRAPH_TOKEN")}",
+    "ConsistencyLevel": "eventual",
+  },
+  paginate="odata" {
+  read_json
+}
+```
+
+The operator emits each object from the top-level `value` array as an event. It follows a top-level string `@odata.nextLink` as an opaque URL, so you do not need to inspect or rebuild query parameters such as `$skiptoken`. Pagination stops when the response omits `@odata.nextLink` or when the field is not a string. Follow-up requests use `GET` and reuse the configured request headers.
+
+### Lambda-based pagination
+
+The `from_http` operator also supports lambda-based pagination for APIs with custom pagination schemes. Provide a lambda to `paginate` that extracts the next page URL from the parsed response:
+
+```tql
+from_http "https://api.example.com/search?q=tenzir",
+  paginate=(x => x.next_url if x.has_more) {
+  read_json
+}
+```
+
+The operator continues making requests as long as the pagination lambda returns a valid URL.
+
+You can also build pagination URLs dynamically:
+
+```tql
+let $base = "https://api.example.com/items"
+from_http f"{$base}?category=security&page=1",
+  paginate=(x => f"{$base}?category=security&page={x.page + 1}" if x.page < x.total_pages) {
+  read_json
+}
+```
+
+For APIs that put pagination state in the request body, return a request record from the lambda. Each request record patches the request that produced the current page. This is useful for OpenSearch-compatible APIs, including OpenSearch, Elasticsearch, and the Wazuh indexer, that use a `search_after` cursor in the request body.
+
+Keep the `from_http` subpipeline focused on parsing the response envelope. Move operators such as `unroll` after `from_http`, because the pagination lambda receives the parsed page envelope.
+
+```tql
+let $headers = {
+  "Authorization": f"Bearer {secret("OPENSEARCH_TOKEN")}",
+}
+
+
+from_http "https://opensearch.example.com/logs-*/_search",
+  headers=$headers,
+  body={
+    size: 1000,
+    sort: [{"@timestamp": "asc"}, {"_id": "asc"}],
+    query: {match_all: {}},
+  },
+  paginate=(x => {
+    body: {
+      size: 1000,
+      sort: [{"@timestamp": "asc"}, {"_id": "asc"}],
+      query: {match_all: {}},
+      search_after: x.hits.hits[-1].sort,
+    },
+  } if x.hits.hits != []) {
+  read_json
+}
+unroll hits.hits
+this = hits.hits._source
+```
+
+The first request uses `POST` because it has a body. Follow-up requests inherit that method and the configured headers. The returned request record replaces only the body.
+
+Scroll-style APIs can change the URL and body for the next request while they keep the method and headers:
+
+```tql
+let $search = "https://opensearch.example.com/logs/_search?scroll=1m"
+let $scroll = "https://opensearch.example.com/_search/scroll"
+let $headers = {
+  "Authorization": f"Bearer {secret("OPENSEARCH_TOKEN")}",
+}
+
+
+from_http $search,
+  headers=$headers,
+  body={size: 1000, query: {match_all: {}}},
+  paginate=(x => {
+    url: $scroll,
+    body: {
+      scroll: "1m",
+      scroll_id: x._scroll_id,
+    },
+  } if x.hits.hits != []) {
+  read_json
+}
+unroll hits.hits
+this = hits.hits._source
+```
+
+See the [OpenSearch integration](../../integrations/opensearch.md) and the [Wazuh integration](../../integrations/wazuh.md) for more search-backend examples that use the same pagination pattern.
+
+### Rate limiting
+
+Control request frequency by configuring `paginate_delay` to add delays between pagination requests:
+
+```tql
+from_http "https://api.example.com/scan?q=example.com",
+  paginate=(x => x.next_url if x.has_next),
+  paginate_delay=500ms {
+  read_json
+}
+```
+
+Use `paginate_delay` to manage request rates appropriately.
+
+## Controlling Batching with `to_http`
+
+When sending events to an HTTP endpoint, you can control how many events go into each request.
+
+### Send all events in a single request
+
+By default, `to_http` collects all input events into one request. The printer sub-pipeline serializes the events and Tenzir streams the body to the connection:
+
+```tql
+from {message: "event-1"},
+     {message: "event-2"},
+     {message: "event-3"}
+to_http "https://example.com/ingest" {
+  write_ndjson
+}
+```
+
+This is useful for one-shot pipelines that produce a finite set of events.
+
+### Send one request per event
+
+Wrap `to_http` in [`each`](https://tenzir.com/docs/reference/operators/each.md) to send a separate HTTP request for every event:
+
+```tql
+from {message: "event-1"},
+     {message: "event-2"},
+     {message: "event-3"}
+each {
+  from $this
+  to_http "https://example.com/webhook" {
+    write_json
+  }
+}
+```
+
+This sends three independent `POST` requests, each carrying one event as JSON. Use `parallel` to control how many requests run concurrently:
+
+```tql
+subscribe "alerts"
+each parallel=4 {
+  from $this
+  to_http "https://example.com/webhook" {
+    write_json
+  }
+}
+```
+
+Getting responses back
+
+When sending a single event and either using JSON or form encoding, [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) can be used. This makes code more concise, but also allows response processing.
+
+```tql
+subscribe "alerts"
+each {
+  from_http f"https://example.com/webhook", body=$this {
+    read_json
+  }
+}
+```
+
+Per-event delivery is ideal for webhooks that expect one payload per call or when each event must be sent immediately.
+
+### Send periodic batches
+
+Wrap `to_http` in [`every`](https://tenzir.com/docs/reference/operators/every.md) to accumulate events over a time window and then flush them as one request:
+
+```tql
+subscribe "stream-of-events"
+every 5m {
+  to_http "https://example.com/ingest" {
+    write_parquet
+  }
+}
+```
+
+Every 5 minutes, `every` stops the input, causing `to_http` to finish the request wait for response and then restart.
+
+## Practical Examples
+
+These examples demonstrate typical use cases for API integration in real-world scenarios.
+
+### API Monitoring
+
+Monitor API health and response times:
+
+```tql
+from_http "https://api.example.com/health" {
+  read_json
+  date = $response.headers.Date.parse_time("%a, %d %b %Y %H:%M:%S %Z")
+  latency = now() - date
+}
+```
+
+The above example parses the `Date` header from the HTTP response via [`parse_time`](https://tenzir.com/docs/reference/functions/parse_time.md) into a timestamp and then compares it to the current wallclock time using the [`now`](https://tenzir.com/docs/reference/functions/now.md) function.
+
+## Error Handling
+
+Handle API errors and failures gracefully in your data pipelines.
+
+### Retry Configuration
+
+Configure automatic retries by setting `max_retry_count` to control the number of retry attempts and `retry_delay` to control the base delay between retries:
+
+```tql
+from_http "https://unreliable-api.example.com/data",
+  max_retry_count=5,
+  retry_delay=2s {
+  read_json
+}
+```
+
+### Status code handling
+
+By default, `from_http` fails the pipeline for non-`2xx` responses and emits an error instead of producing an event.
+
+If you want to handle HTTP errors gracefully, set `error_field` so `from_http` stores the error as a `blob` in that field and continues emitting events:
+
+```tql
+from_http "https://my-server/health", error_field="error" {
+  read_lines
+}
+where error != null
+```
+
+## Best Practices
+
+Follow these practices for reliable and efficient API integration:
+
+1. **Secure credentials**. Access API keys and tokens via [secrets](../../explanations/secrets.md), not in code.
+2. **Respect rate limits**. Use `paginate_delay` to control request rates.
+3. **Configure approriate retry logic**. Configure `max_retry_count` and `retry_delay` for handling network or server unavailablity.
+4. **Handle errors gracefully**. Use `error_field` in `from_http` if you want to keep processing non-`2xx` responses instead of failing the pipeline.

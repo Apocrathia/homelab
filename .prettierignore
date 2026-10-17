@@ -25,6 +25,11 @@ flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
 # submodule at the pinned gitlink — same re-copy discipline as the sigma rules.
 flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
 
+# Vendored tenzir skills (.agents/skills/{tenzir,tenzir-ocsf}): byte-identical
+# copies from github.com/tenzir/skills at the pinned upstream commit — re-copy
+# on refresh, never reformat. Same discipline as the vendored trees above.
+flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir/**
+flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir-ocsf/**
 # Vendored gcx agent skills (grafana .agents/skills): byte-identical copies
 # from github.com/grafana/gcx at the pinned tag — re-copy on refresh, never
 # reformat. The hand-authored grafana-homelab skill and this tree's README

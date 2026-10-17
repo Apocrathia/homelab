@@ -1,0 +1,190 @@
+---
+title: "Read and watch files"
+canonical: https://tenzir.com/docs/guides/collect/read-and-watch-files
+source: https://tenzir.com/docs/guides/collect/read-and-watch-files.md
+section: "Docs"
+---
+
+# Read and watch files
+
+> This guide shows you how to read files and monitor directories using the fromfile operator. You’ll learn to read individual files, batch process directories, and set up real-time file monitoring.
+
+This guide shows you how to read files and monitor directories using the [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) operator. You’ll learn to read individual files, batch process directories, and set up real-time file monitoring.
+
+## Basic file reading
+
+The [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) operator handles various file types and formats. Start with these fundamental patterns for reading individual files.
+
+### Single files
+
+To read a single file, specify the path to the [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) operator:
+
+```tql
+from_file "/path/to/file.json"
+```
+
+The operator automatically detects the file format from the file extension. This works for all supported formats including JSON, CSV, Parquet, and others.
+
+### Compressed files
+
+The operator handles compressed files automatically. You need no additional configuration:
+
+```tql
+from_file "/path/to/file.csv.gz"
+```
+
+Supported compression formats include gzip, bzip2, and Zstd.
+
+### Custom parsing
+
+When automatic format detection doesn’t suffice, specify a custom [parsing](../../reference/operators.md#parsing) pipeline:
+
+```tql
+from_file "/path/to/file.log" {
+  read_syslog
+}
+```
+
+The parsing pipeline runs on the file content and must return events.
+
+When file names or extensions don’t identify the format reliably, use [`read_auto`](https://tenzir.com/docs/reference/operators/read_auto.md) to detect the format from the file content:
+
+```tql
+from_file "/dropzone/**" {
+  read_auto fallback="lines"
+}
+```
+
+This pattern helps with upload directories, partner file drops, and rapid prototyping with mixed sample files. Keep `fallback="none"` if unknown formats should fail instead of becoming line-oriented text.
+
+## Directory processing
+
+You can process multiple files efficiently using glob patterns. This section covers batch processing and recursive directory operations.
+
+### Processing multiple files
+
+Use glob patterns to process multiple files at once:
+
+```tql
+from_file "/path/to/directory/*.csv.zst"
+```
+
+This example processes all Zstd-compressed CSV files in the specified directory.
+
+You can also use glob patterns to consume files regardless of their format:
+
+```tql
+from_file "~/data/**"
+```
+
+This processes all files in the `~/data` directory and its subdirectories, automatically detecting and parsing each file format.
+
+### Recursive directory processing
+
+Use `**` to match files recursively through subdirectories:
+
+```tql
+from_file "/path/to/directory/**.csv"
+```
+
+### Custom parsing for multiple files
+
+When you process multiple files with custom parsing, the pipeline runs separately for each file:
+
+```tql
+from_file "/path/to/directory/*.log" {
+  read_lines
+}
+```
+
+### Batch data processing
+
+Process all files in a data directory using recursive globbing:
+
+```tql
+from_file "/data/exports/**.parquet"
+```
+
+## File monitoring
+
+Set up real-time file processing by monitoring directories for changes. These features enable continuous data ingestion workflows.
+
+### Watch for new files
+
+Set `watch` to a duration to monitor a directory for new files. The duration specifies the interval between filesystem scans:
+
+```tql
+from_file "/path/to/directory/*.csv", watch=10s
+```
+
+This sets up continuous monitoring, processing new files as they appear in the directory.
+
+### Remove files after processing
+
+Combine watching with automatic file removal using the `remove` parameter:
+
+```tql
+from_file "/path/to/directory/*.csv", watch=10s, remove=true
+```
+
+This approach helps you implement file-based queues where the system should automatically clean up processed files.
+
+### Real-time log processing
+
+Monitor a log directory and process files as they arrive:
+
+```tql
+from_file "/var/log/application/*.log", watch=10s {
+  read_lines
+}
+```
+
+### Archive processing with cleanup
+
+Process archived data and remove files after successful ingestion:
+
+```tql
+from_file "/archive/*.csv.gz", remove=true
+```
+
+## Cloud storage integration
+
+Access files directly from cloud storage providers using their native URLs. The operator supports major cloud platforms transparently.
+
+### Amazon S3
+
+Access [Amazon S3](../../integrations/amazon/s3.md) buckets directly using `s3://` URLs:
+
+```tql
+from_file "s3://bucket/path/to/file.csv"
+```
+
+Glob patterns work with S3 as well:
+
+```tql
+from_file "s3://bucket/data/**/*.parquet"
+```
+
+### Google Cloud Storage
+
+Access [GCS](../../integrations/google/cloud-storage.md) buckets using `gs://` URLs:
+
+```tql
+from_file "gs://bucket/path/to/file.csv"
+```
+
+### Azure Blob Storage
+
+Access [Azure Blob Storage](../../integrations/microsoft/azure-blob-storage.md) using `abfs://` URLs:
+
+```tql
+from_file "abfs://container/path/to/file.csv"
+```
+
+Glob patterns work with Azure Blob Storage as well:
+
+```tql
+from_file "abfs://container/data/**/*.parquet"
+```
+
+Cloud storage integration uses Apache Arrow’s filesystem APIs and supports the same glob patterns and options as local files, including recursive globbing across cloud storage hierarchies.

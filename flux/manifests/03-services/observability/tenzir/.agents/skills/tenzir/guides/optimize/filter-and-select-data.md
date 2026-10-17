@@ -1,0 +1,368 @@
+---
+title: "Filter and select data"
+canonical: https://tenzir.com/docs/guides/optimize/filter-and-select-data
+source: https://tenzir.com/docs/guides/optimize/filter-and-select-data.md
+section: "Docs"
+---
+
+# Filter and select data
+
+> Filtering and selecting are fundamental operations when working with data streams. This guide shows you how to filter events based on conditions and select specific fields from your data.
+
+Filtering and selecting are fundamental operations when working with data streams. This guide shows you how to filter events based on conditions and select specific fields from your data.
+
+## Understanding operators vs functions
+
+Before we dive in, it’s important to understand a key distinction in TQL:
+
+* **Operators** like [`where`](https://tenzir.com/docs/reference/operators/where.md), [`select`](https://tenzir.com/docs/reference/operators/select.md), and [`drop`](https://tenzir.com/docs/reference/operators/drop.md) work on entire event streams.
+* **Functions** like [`starts_with`](https://tenzir.com/docs/reference/functions/starts_with.md) or mathematical comparisons work on individual values within events.
+
+You’ll see both in action throughout this guide.
+
+## Filter events with conditions
+
+Use the [`where`](https://tenzir.com/docs/reference/operators/where.md) operator to keep only events that match specific conditions.
+
+### Basic filtering
+
+Filter events based on a simple condition. This example keeps only successful HTTP requests (status code 200):
+
+```tql
+from {status: 200, path: "/api/users"},
+     {status: 404, path: "/api/missing"},
+     {status: 200, path: "/home"}
+where status == 200
+```
+
+```tql
+{status: 200, path: "/api/users"}
+{status: 200, path: "/home"}
+```
+
+The event with `status: 404` is filtered out because it doesn’t match our condition.
+
+### Combining conditions
+
+Use logical operators (`and`, `or`, `not`) to combine multiple conditions:
+
+```tql
+from {status: 200, path: "/api/users", size: 1024},
+     {status: 404, path: "/api/missing", size: 512},
+     {status: 200, path: "/home", size: 2048}
+where status == 200 and size > 1000
+```
+
+```tql
+{status: 200, path: "/api/users", size: 1024}
+{status: 200, path: "/home", size: 2048}
+```
+
+You can also use `or` and `not` with functions like [`starts_with`](https://tenzir.com/docs/reference/functions/starts_with.md):
+
+```tql
+from {status: 200, path: "/api/users"},
+     {status: 404, path: "/api/missing"},
+     {status: 500, path: "/api/error"}
+where status == 200 or not path.starts_with("/api/m")
+```
+
+```tql
+{status: 200, path: "/api/users"}
+{status: 500, path: "/api/error"}
+```
+
+### Using functions in filters
+
+Functions work on values to create more sophisticated filters. For example, [`ends_with`](https://tenzir.com/docs/reference/functions/ends_with.md) checks string suffixes:
+
+```tql
+from {user: "alice", email: "alice@example.com"},
+     {user: "bob", email: "bob@gmail.com"},
+     {user: "charlie", email: "charlie@example.com"}
+where email.ends_with("example.com")
+```
+
+```tql
+{user: "alice", email: "alice@example.com"}
+{user: "charlie", email: "charlie@example.com"}
+```
+
+### Filtering with patterns
+
+Match patterns using regular expressions with [`match_regex`](https://tenzir.com/docs/reference/functions/match_regex.md):
+
+```tql
+from {log: "Error: Connection timeout"},
+     {log: "Info: Request processed"},
+     {log: "Error: Invalid input"}
+where log.match_regex("Error:")
+```
+
+```tql
+{log: "Error: Connection timeout"}
+{log: "Error: Invalid input"}
+```
+
+## Select specific fields
+
+The [`select`](https://tenzir.com/docs/reference/operators/select.md) operator lets you pick which fields to keep in your output.
+
+### Basic field selection
+
+Select only the fields you need:
+
+```tql
+from {name: "alice", age: 30, city: "NYC"},
+     {name: "bob", age: 25, city: "SF"}
+select name, age
+```
+
+```tql
+{name: "alice", age: 30}
+{name: "bob", age: 25}
+```
+
+### Renaming fields
+
+You can rename fields while selecting them. This is useful when standardizing field names from different data sources:
+
+```tql
+from {first_name: "alice", years: 30},
+     {first_name: "bob", years: 25}
+select name=first_name, age=years
+```
+
+```tql
+{name: "alice", age: 30}
+{name: "bob", age: 25}
+```
+
+Here `first_name` becomes `name` and `years` becomes `age` in the output.
+
+Note that `select` restricts the output to only the listed fields. If you want to rename fields while keeping everything else, use an assignment with [`move`](https://tenzir.com/docs/reference/expressions.md#moving-fields) instead.
+
+### Computing new fields
+
+Create new fields with expressions during selection:
+
+```tql
+from {price: 100, tax_rate: 0.08},
+     {price: 50, tax_rate: 0.08}
+select price, tax=price * tax_rate, total=price * (1 + tax_rate)
+```
+
+```tql
+{price: 100, tax: 8.0, total: 108.0}
+{price: 50, tax: 4.0, total: 54.0}
+```
+
+### Selecting fields by name pattern
+
+The [`select`](https://tenzir.com/docs/reference/operators/select.md) operator requires explicit field names. When you need to shape a record value by matching field names, use [`select_matching`](https://tenzir.com/docs/reference/functions/select_matching.md):
+
+```tql
+from {
+  user_id: "u-123",
+  session_id: "s-456",
+  message: "login",
+}
+select identifiers = this.select_matching("_id$")
+```
+
+```tql
+{
+  identifiers: {
+    user_id: "u-123",
+    session_id: "s-456",
+  },
+}
+```
+
+## Remove unwanted fields
+
+The [`drop`](https://tenzir.com/docs/reference/operators/drop.md) operator removes specified fields, keeping everything else.
+
+### Basic field removal
+
+Remove fields you don’t need:
+
+```tql
+from {user: "alice", password: "secret", email: "alice@example.com"},
+     {user: "bob", password: "hidden", email: "bob@example.com"}
+drop password
+```
+
+```tql
+{user: "alice", email: "alice@example.com"}
+{user: "bob", email: "bob@example.com"}
+```
+
+### Dropping multiple fields
+
+Remove several fields at once:
+
+```tql
+from {id: 1, internal_id: "xyz", debug: true, name: "alice"},
+     {id: 2, internal_id: "abc", debug: false, name: "bob"}
+drop internal_id, debug
+```
+
+```tql
+{id: 1, name: "alice"}
+{id: 2, name: "bob"}
+```
+
+### Dropping fields by name pattern
+
+Use [`drop_matching`](https://tenzir.com/docs/reference/functions/drop_matching.md) when you want to remove top-level fields from a record based on a regular expression:
+
+```tql
+from {
+  message: "login",
+  debug_trace: "abc",
+  debug_flags: ["verbose"],
+  user: "alice",
+}
+select cleaned = this.drop_matching("^debug_")
+```
+
+```tql
+{
+  cleaned: {
+    message: "login",
+    user: "alice",
+  },
+}
+```
+
+## Add computed fields
+
+Use the [`set`](https://tenzir.com/docs/reference/operators/set.md) operator to override existing fields and add new fields without removing existing ones.
+
+Implied operator
+
+The [`set`](https://tenzir.com/docs/reference/operators/set.md) operator is *implied*, i.e., you can omit it to keep your pipeline definitions terse. In other words, it suffices to write an assignment in the form `x = y` instead of `set x = y`.
+
+### Adding simple fields
+
+Add a constant field to all events:
+
+```tql
+from {user: "alice"},
+     {user: "bob"}
+set source = "api"
+```
+
+```tql
+{user: "alice", source: "api"}
+{user: "bob", source: "api"}
+```
+
+### Computing field values
+
+Add fields based on calculations:
+
+```tql
+from {bytes_sent: 1024, bytes_received: 2048},
+     {bytes_sent: 512, bytes_received: 1024}
+set total_bytes = bytes_sent + bytes_received
+```
+
+```tql
+{bytes_sent: 1024, bytes_received: 2048, total_bytes: 3072}
+{bytes_sent: 512, bytes_received: 1024, total_bytes: 1536}
+```
+
+### Using the `else` keyword
+
+Use the `else` word to provide default values for null fields:
+
+```tql
+from {name: "alice", score: 85},
+     {name: "bob"},
+     {name: "charlie", score: 95}
+score = score? else 0
+```
+
+```tql
+{name: "alice", score: 85}
+{name: "bob", score: 0}
+{name: "charlie", score: 95}
+```
+
+Accessing non-existent fields
+
+Because the second event had no `score` field, the `else` keyword filled in a default value of `0`. However, accessing non-existent fields generates a warning. We use the trailing question mark (`?`) to suppress warnings when accessing fields that may not exist, i.e., `score? else 0` in the above example. This is distinctively different from an existing field with a null value, which does not elicit a warning.
+
+## Rename fields
+
+TQL has no dedicated `rename` operator. Instead, use the [`move`](https://tenzir.com/docs/reference/expressions.md#moving-fields) keyword in an assignment to relocate a value from one field to another, removing the original:
+
+```tql
+from {first_name: "alice", years: 30, city: "NYC"},
+     {first_name: "bob", years: 25, city: "SF"}
+name = move first_name
+age = move years
+```
+
+```tql
+{city: "NYC", name: "alice", age: 30}
+{city: "SF", name: "bob", age: 25}
+```
+
+Unlike [`select`](https://tenzir.com/docs/reference/operators/select.md), which restricts the output to only the listed fields, an assignment with `move` preserves all other fields.
+
+### Renaming into nested fields
+
+You can move fields into nested structures:
+
+```tql
+from {src_ip: 1.2.3.4, src_port: 443}
+src.ip = move src_ip
+src.port = move src_port
+```
+
+```tql
+{src: {ip: 1.2.3.4, port: 443}}
+```
+
+## Combining operations
+
+Real-world pipelines often combine multiple operations:
+
+```tql
+from {method: "GET", path: "/api/users", status: 200, duration_ms: 45},
+     {method: "POST", path: "/api/users", status: 201, duration_ms: 120},
+     {method: "GET", path: "/api/users/123", status: 404, duration_ms: 15}
+where status >= 200 and status < 300
+select method, path, duration = duration_ms.milliseconds()
+```
+
+```tql
+{method: "GET", path: "/api/users", duration: 45ms}
+{method: "POST", path: "/api/users", duration: 120ms}
+```
+
+## Best practices
+
+1. **Filter early**: Apply [`where`](https://tenzir.com/docs/reference/operators/where.md) conditions as early as possible to reduce the amount of data flowing through your pipeline.
+
+2. **Select only what you need**: Use [`select`](https://tenzir.com/docs/reference/operators/select.md) to keep only necessary fields, especially when dealing with large events.
+
+3. **Choose the right operator**:
+
+   * Use [`select`](https://tenzir.com/docs/reference/operators/select.md) when you want to restrict the output to specific fields.
+   * Use [`drop`](https://tenzir.com/docs/reference/operators/drop.md) when you want to remove a few fields from many.
+   * Use [`set`](https://tenzir.com/docs/reference/operators/set.md) when you want to add/override fields without changing existing ones.
+   * Use an assignment with `move` when you want to rename fields without affecting the rest of the event.
+
+4. **Understand null handling**: The [`where`](https://tenzir.com/docs/reference/operators/where.md) operator skips events where the condition evaluates to null or false. Use the question mark operator (`?`) to suppress warnings when accessing fields that may not exist.
+
+## See also
+
+* [`drop_matching`](https://tenzir.com/docs/reference/functions/drop_matching.md)
+* [`select_matching`](https://tenzir.com/docs/reference/functions/select_matching.md)
+* [Transform values](../shape/transform-values.md)
+* [Slice and sample data](slice-and-sample-data.md)
+* [Reshape complex data](../shape/reshape-complex-data.md)

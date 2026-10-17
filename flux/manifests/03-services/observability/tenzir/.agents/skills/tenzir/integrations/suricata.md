@@ -1,0 +1,70 @@
+---
+title: "Suricata integration"
+description: "Detect, log, and analyze network traffic for intrusion detection, prevention, and monitoring."
+canonical: https://tenzir.com/integrations/suricata
+source: https://tenzir.com/integrations/suricata.md
+section: "Integrations"
+---
+
+# Suricata integration
+
+> Detect, log, and analyze network traffic for intrusion detection, prevention, and monitoring.
+
+[Suricata](https://suricata.io/) is a network monitor with a rule matching engine to detect threats. Use Tenzir to acquire, process, and store Suricata logs.
+
+Suricata
+
+## Examples
+
+### Ingest EVE JSON logs into a node
+
+[EVE JSON](https://docs.suricata.io/en/latest/output/eve/eve-json-output.html) is the log format in which Suricata generates events.
+
+A typical Suricata configuration looks like this:
+
+suricata.yaml
+
+```yaml
+outputs:
+  # Extensible Event Format (nicknamed EVE) event log in JSON format
+  - eve-log:
+      enabled: yes
+      filetype: regular #regular|syslog|unix_dgram|unix_stream|redis
+      filename: eve.json
+```
+
+The `filetype` setting determines how you’d process the log file and defaults to `regular`.
+
+Onboard Suricata EVE JSON logs via the [`read_suricata`](https://tenzir.com/docs/reference/operators/read_suricata.md) operator as follows:
+
+```tql
+from_file "/path/to/eve.json" {
+  read_suricata
+}
+publish "suricata"
+```
+
+### Ingest EVE JSON from a Unix domain socket
+
+Suricata can also send EVE JSON to a Unix stream socket:
+
+suricata.yaml
+
+```yaml
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: unix_stream
+      filename: /run/suricata/eve.sock
+```
+
+Start Tenzir before Suricata so that Tenzir creates the socket and accepts the incoming stream:
+
+```tql
+accept_unix_socket "/run/suricata/eve.sock" {
+  read_suricata
+}
+publish "suricata"
+```
+
+This is different from Suricata’s `unix-command` socket. The command socket is for JSON control commands, for example through `suricatasc`; it doesn’t carry EVE events.

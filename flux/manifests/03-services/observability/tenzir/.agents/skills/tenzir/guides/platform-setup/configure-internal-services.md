@@ -1,0 +1,138 @@
+---
+title: "Configure internal services"
+canonical: https://tenzir.com/docs/guides/platform-setup/configure-internal-services
+source: https://tenzir.com/docs/guides/platform-setup/configure-internal-services.md
+section: "Docs"
+---
+
+# Configure internal services
+
+> This guide shows you how to configure the three internal Tenzir services: the UI, Gateway, and Platform API. You’ll set environment variables that control authentication, connectivity, and feature settings.
+
+This guide shows you how to configure the three internal Tenzir services: the UI, Gateway, and Platform API. You’ll set environment variables that control authentication, connectivity, and feature settings.
+
+The platform runs as a set of containers in a Docker Compose stack. The [example files](https://github.com/tenzir/platform/tree/main/examples) read configuration parameters from environment variables.
+
+Create a file named `.env` in the same directory as your `docker-compose.yaml` file, and set the environment variables described below.
+
+## Tenzir Platform API
+
+This section describes how to configure the Tenzir Platform API.
+
+### Admin rules
+
+The platform distinguishes between *regular* and *admin* users. Admin users can create new workspaces and view, edit, and delete all existing workspaces.
+
+Currently, only admin users can create shared workspaces by creating a new workspace and editing the access rules.
+
+Configure admin users by providing a list of authentication rules. The platform considers any user who matches the provided rules an admin and allows them to use the `tenzir-platform admin` CLI commands.
+
+Use the `tenzir-platform tools print-auth-rule` CLI command to generate valid rules for insertion here.
+
+```sh
+# Make everybody an admin.
+# Use for deployments with few users who fully trust each other.
+TENZIR_PLATFORM_ADMIN_RULES=[{"auth_fn":"auth_allow_all"}]
+
+
+# Make the two users with IDs `google-oauth2:12345678901` and
+# `google-oauth2:12345678902` admins of this platform instance.
+TENZIR_PLATFORM_ADMIN_RULES=[{"auth_fn":"auth_user","user_id":"google-oauth2:12345678901"}, {"auth_fn":"auth_user","user_id":"google-oauth2:12345678902"}]
+```
+
+### Random seeds
+
+The platform requires random strings for encryption functions. Generate these strings with a secure random number generator and use unique values for each platform instance.
+
+```sh
+# Random string to encrypt frontend cookies.
+# Generate with `openssl rand -hex 32`.
+TENZIR_PLATFORM_INTERNAL_AUTH_SECRET=
+
+
+# Random string to generate user keys.
+# Generate with `openssl rand 32 | base64`.
+TENZIR_PLATFORM_INTERNAL_TENANT_TOKEN_ENCRYPTION_KEY=
+
+
+# Random string for the app to access restricted API endpoints.
+# Generate with `openssl rand -hex 32`.
+TENZIR_PLATFORM_INTERNAL_APP_API_KEY=
+```
+
+### Node blob storage configuration
+
+Advanced Topic
+
+This is an advanced setting mostly relevant for enterprise use cases. You can most likely skip it when you first set up the Tenzir Platform.
+
+When the Tenzir UI and Tenzir Nodes run in separate networks, the nodes may need to use a different URL to reach the blob storage service from the one the UI uses.
+
+For example, the Tenzir UI may run on a browser of a remote employee, who accesses the configured blob storage via `https://downloads.example.com`. However, the nodes may run in a strictly regulated network that only allows access to the outside world through a reverse proxy. In this example, these nodes would have to talk to `https://downloads.corporate-proxy.example.com`. To allow both sides to use different URLs to talk to the same blob storage service, you can override the public endpoint.
+
+Use the `BLOB_STORAGE__NODES_PUBLIC_ENDPOINT_URL` environment variable to override the URL that nodes use to access S3-compatible blob storage. Note that you need to add this variable to the `platform` container directly, since it currently doesn’t appear in any of the example setups:
+
+```sh
+# Override the blob storage URL for nodes
+BLOB_STORAGE__NODES_PUBLIC_ENDPOINT_URL=https://s3.internal.example.com
+```
+
+This setting is particularly useful when:
+
+* Nodes run in a separate network from the Tenzir UI
+* Internal DNS resolution differs between the UI and node networks
+* You need to route node traffic through specific network paths
+
+## Tenzir UI
+
+This section describes how to configure the Tenzir Platform UI.
+
+### Internal proxy
+
+Advanced Topic
+
+This is an advanced setting mostly relevant for enterprise use cases. You can most likely skip it when you first set up the Tenzir Platform.
+
+By default, the Tenzir UI sends requests directly from the browser to the Tenzir Gateway to query the status of connected nodes. This setup can cause problems in some network topologies, especially in zero-trust networks where accessing the Tenzir Gateway requires additional authentication headers.
+
+Enable the internal proxy to route these requests through the Tenzir UI backend instead, which makes all requests from the Tenzir UI frontend go to the same domain. This approach adds some latency through an additional proxy hop.
+
+```sh
+TENZIR_PLATFORM_USE_INTERNAL_WS_PROXY=true
+```
+
+### External JWT authentication
+
+Advanced Topic
+
+This is an advanced setting mostly relevant for enterprise use cases. You can most likely skip it when you first set up the Tenzir Platform.
+
+The Tenzir Platform supports accepting externally-supplied JWTs from HTTP headers, which is useful when running behind authentication proxies like Google Cloud IAP or other enterprise authentication systems.
+
+Configure the `app` service to accept JWTs from a specific HTTP header. Note that you need to add this variable to the `app` container directly, since it currently doesn’t appear in any of the example setups:
+
+```sh
+# Accept JWTs from the specified HTTP header
+PRIVATE_JWT_FROM_HEADER=X-Goog-IAP-JWT-Assertion
+```
+
+When you set this variable, the platform bypasses the normal OIDC login flow and instead validates the JWT token provided in the specified header.
+
+You must also configure the trusted issuers and audiences to match the values that the external JWT contains using the `TENZIR_PLATFORM_OIDC_TRUSTED_AUDIENCES` environment variable for the Tenzir Platform API.
+
+For more information about external JWT configuration, see the [external JWT authentication section](configure-identity-provider.md#external-jwt-authentication) in the identity provider configuration guide.
+
+## Tenzir Gateway
+
+### CORS
+
+When the Tenzir UI frontend connects directly to the Tenzir Gateway from the browser - the default when `TENZIR_PLATFORM_USE_INTERNAL_WS_PROXY` is `false` - and the UI and gateway are served from different origins (for example, on different ports or domains), the browser enforces Cross-Origin Resource Sharing (CORS) restrictions. You must explicitly allow the UI’s origin by setting `CORS_ALLOWED_ORIGINS` on the `websocket-gateway` service in your `docker-compose.yaml`:
+
+```yaml
+services:
+  websocket-gateway:
+    environment:
+      - CORS_ALLOWED_ORIGINS=https://app.platform.example:3000
+```
+
+Specify the full origin including scheme and port. Separate multiple allowed origins with commas.

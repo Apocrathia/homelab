@@ -1,0 +1,758 @@
+---
+title: "Maintain a changelog"
+canonical: https://tenzir.com/docs/guides/packages/maintain-a-changelog
+source: https://tenzir.com/docs/guides/packages/maintain-a-changelog.md
+section: "Docs"
+---
+
+# Maintain a changelog
+
+> This guide shows you how to manage changelog entries and publish releases with tenzir-ship. You’ll learn the complete workflow from adding your first entry to publishing a release on GitHub.
+
+This guide shows you how to manage changelog entries and publish releases with [`tenzir-ship`](https://tenzir.com/docs/reference/ship-framework.md). You’ll learn the complete workflow from adding your first entry to publishing a release on GitHub.
+
+## Prerequisites
+
+* Python 3.12 or newer
+* [`uv`](https://docs.astral.sh/uv/) installed locally
+* Access to the repository that hosts the changelog files
+
+## Quick start
+
+Initialize the changelog project:
+
+```sh
+uvx tenzir-ship init
+```
+
+The `init` command scaffolds a `changelog/` subdirectory for standalone projects, writes `config.yaml`, and creates `unreleased/`. In repositories that already expose `package.yaml` next to `changelog/`, the CLI switches to package mode automatically and reuses the package `id` and `name` without creating an extra config file.
+
+For non-interactive setup, pass `--yes`. Standalone mode requires an explicit project identifier:
+
+```sh
+uvx tenzir-ship init --yes --id my-project
+```
+
+Then create your first changelog entry:
+
+```sh
+uvx tenzir-ship add
+```
+
+The wizard will guide you through the process of creating a new changelog entry. It will ask you for the title, type, and description of the change, as well as the author. The first invocation of `add` can still bootstrap a missing changelog automatically, but `init` is the clearer entry point when you only want to set up the workspace.
+
+View the current changelog for your working tree:
+
+```sh
+uvx tenzir-ship show
+```
+
+The default table lists every entry with row numbers, making it easy to reference specific items. Row numbers count backward from the newest entry, so `#1` always targets the latest change.
+
+Inspect a card layout with `uvx tenzir-ship show --card 1` or export release notes with `uvx tenzir-ship show v0.2.0 --release --markdown`.
+
+Add entries as you prepare pull requests:
+
+```sh
+uvx tenzir-ship add \
+  --title "Introduce pipeline builder" \
+  --type feature \
+  --pr 101
+```
+
+Pass flags for authors, projects, and descriptions to avoid interactive prompts, or provide the details interactively when prompted - there is no GitHub auto-detection.
+
+## Daily development workflow
+
+These tasks cover the most common operations you’ll perform while working on pull requests and reviewing pending changes.
+
+### Add entries for pull requests
+
+Run `uvx tenzir-ship add` while preparing pull requests to capture changes:
+
+```sh
+uvx tenzir-ship add \
+  --title "Fix authentication timeout" \
+  --type bugfix \
+  --description "Resolves session expiry issue." \
+  --pr 102
+```
+
+The CLI prompts for missing information interactively. Use one-key shortcuts for change types: `0` for breaking, `1` for feature, `2` for bugfix, `3` for change.
+
+### Add co-authors
+
+Use `--co-author` to credit an additional human contributor alongside the automatically inferred author:
+
+```sh
+uvx tenzir-ship add \
+  --title "Implement caching layer" \
+  --type feature \
+  --co-author alice
+```
+
+The CLI infers the primary author from environment variables or the GitHub CLI, then appends human co-authors in the order you specify. You can combine `--author` with `--co-author` to set the primary author explicitly:
+
+```sh
+uvx tenzir-ship add \
+  --title "Fix race condition" \
+  --type bugfix \
+  --author alice \
+  --co-author bob
+```
+
+Author metadata represents people. Do not record coding agents, bots, tools, providers, or models through `--author`, `--co-author`, or entry frontmatter. Inference can resolve to an automation account in CI or an agent environment, so inspect the generated `authors` metadata. Confirm that every inferred login belongs to a human contributor. Pass `--author` for a known human, or remove the author metadata when no human can be identified confidently. Record tool provenance in commit metadata instead.
+
+### View pending changes
+
+List all unreleased entries:
+
+```sh
+uvx tenzir-ship show unreleased
+```
+
+Show detailed information for a specific entry:
+
+```sh
+uvx tenzir-ship show --card 1
+```
+
+Entry IDs are scoped to each release. If the same slug appears in more than one release or in `unreleased/`, an exact ID lookup returns every occurrence with its release context:
+
+```sh
+uvx tenzir-ship show --card dependency-compatibility-updates
+```
+
+The card view displays detailed metadata and the full entry body:
+
+```text
+❯ tenzir-ship show --card 1
+╭─ 🐞 Fix authentication timeout ──────────────────────────────────────────╮
+│ Entry ID:  fix-authentication-timeout                                    │
+│ Type:      bugfix                                                        │
+│ Created:   2025-10-27                                                    │
+│ Authors:   @alice                                                        │
+│ Status:    Released in v0.4.1                                            │
+│ ──────────────────────────────────────────────────────────────────────── │
+│ Sessions no longer expire prematurely during active use.                 │
+╰──────────────────────────────────────────────────────────────────────────╯
+```
+
+Filter by project when working with multiple projects:
+
+```sh
+uvx tenzir-ship show --project core
+```
+
+### Validate changelog structure
+
+Run validation checks to catch issues early:
+
+```sh
+uvx tenzir-ship validate
+```
+
+The validator reports missing metadata, missing release-local entry files, duplicate IDs within one release manifest, and configuration drift. Reusing an ID in a different release is valid. Validation also checks changelog directory layout and flags stray items (for example an unexpected `changelog/next/` directory). Add this to CI pipelines to enforce metadata completeness.
+
+If your changelog configuration sets `require_pr: true`, plain validation also fails for unreleased entries without `prs` metadata. Use lenient validation in pre-push hooks so missing PR numbers stay warnings until you create the pull request:
+
+```sh
+uvx tenzir-ship validate --lenient
+```
+
+Set `require_author: true` to require a non-empty `authors` list on each unreleased entry. Missing authors and other validation errors still fail in lenient mode.
+
+Entry metadata policies apply to unreleased entries by default. This lets you adopt `require_author`, `require_pr`, `omit_author`, or `omit_pr` without rewriting published releases. Audit the complete history against the current policies when needed:
+
+```sh
+uvx tenzir-ship validate --all-entries
+```
+
+For a strict history audit, don’t combine `--all-entries` with `--lenient`. Lenient mode also demotes missing PRs in released entries, but missing authors and forbidden metadata remain errors.
+
+### View project statistics
+
+Get an overview of your project’s release history and entry distribution:
+
+```sh
+uvx tenzir-ship stats
+```
+
+Single projects show a vertical card layout with sections for project metadata, releases, entry types, and status. Multi-module projects display a compact table comparing all modules. The next release uses the same automatic resolution as `release create`. When an active release candidate exists, it reports that candidate’s stable target.
+
+Export statistics as JSON for automation:
+
+```sh
+uvx tenzir-ship stats --json
+```
+
+## Release workflow
+
+Once you’ve accumulated unreleased entries, you can cut a release, export notes, and publish to GitHub.
+
+### Create a release
+
+Preview the release before committing changes:
+
+```sh
+uvx tenzir-ship release create
+```
+
+The command shows which entries will be included and performs a dry run. When the summary looks good, re-run with `--yes` to commit the changes:
+
+```sh
+uvx tenzir-ship release create --yes
+```
+
+This auto-bumps the version from the unreleased entry types, creates `releases/<resolved-version>/`, generates `notes.md`, and updates `manifest.yaml`.
+
+For a project whose latest stable release is `0.x`, a breaking entry triggers a minor bump. For example, a breaking entry after `v0.4.2` produces `v0.5.0`. Automatic inference never selects `v1.0.0` from a `0.x` release. Use `--major` or pass `v1.0.0` explicitly when you want to declare the first stable release. Breaking entries trigger major bumps after the project reaches `v1.0.0`.
+
+The `--patch`, `--minor`, and `--major` shortcuts resolve from the latest stable release. The same stable-only rule applies to `show latest`, and `release version`. In contrast, `release publish` without a version targets the latest release, including release candidates.
+
+By default, `release create` also updates common package-manager version files (`package.json`, `pyproject.toml`, `project.toml`, `Cargo.toml`) when present in the changelog root or, for `changelog/` projects, in the parent directory. When `package.json` has a sibling `package-lock.json`, the lockfile’s root package version metadata is updated as part of the same release step. When `pyproject.toml` has a sibling `uv.lock`, `release create` runs `uv lock` after updating the manifest so uv regenerates the lockfile metadata. For advanced repositories with custom release scripts, disable built-in bumps in `config.yaml`:
+
+```yaml
+release:
+  version_bump_mode: off
+```
+
+If changelog structure is invalid, `release create` and `release publish` fail fast with detailed errors. Other commands emit warnings so you can fix layout problems before cutting a release.
+
+Use version bump shortcuts instead of typing the full version:
+
+```sh
+uvx tenzir-ship release create --patch --yes
+uvx tenzir-ship release create --minor --yes
+uvx tenzir-ship release create --major --yes
+```
+
+Use these manual bump flags only when the automatic detection is not the right fit for the release.
+
+Pass an explicit stable version only as a rare exact override, for example when you need to re-cut a failed tagged release or match an externally dictated version:
+
+```sh
+uvx tenzir-ship release create v5.4.0 --yes
+```
+
+Add an inline intro summary:
+
+```sh
+uvx tenzir-ship release create \
+  --intro "Major stability improvements." \
+  --yes
+```
+
+Alternatively, provide intro content from a file:
+
+```sh
+uvx tenzir-ship release create \
+  --intro-file intro.md \
+  --yes
+```
+
+The intro file can include Markdown links, call-outs, or image references. The command embeds its content in `manifest.yaml` and includes it in `notes.md`.
+
+### Create a release candidate
+
+Create or continue a release candidate with:
+
+```sh
+uvx tenzir-ship release create --rc --yes
+```
+
+This snapshots the current `unreleased/` queue into a `vX.Y.Z-rc.N` release without consuming those entry files. Each new `-rc.N` supersedes the previous RC snapshot for that stable target, so the active candidate stays cumulative while old RC manifests do not remain in release history.
+
+To steer the inferred base version, prefer a manual bump such as `release create --rc --minor`. Pass an explicit stable version only when you need an exact base:
+
+```sh
+uvx tenzir-ship release create v5.4.0 --rc --yes
+```
+
+### Promote an existing release candidate
+
+Once release candidates exist for a stable target, keep the workflow on that series:
+
+```sh
+# Continue the RC series
+uvx tenzir-ship release create --rc --yes
+
+
+# Promote the latest release candidate automatically
+uvx tenzir-ship release create --yes
+```
+
+The RC workflow has three outcomes only:
+
+* Run `release create --rc` to continue the current RC series.
+* Run `release create` without a version or bump flag to promote the active RC.
+* Run `release create <new-version>` or a manual bump flag to leave the RC cycle and ship a different stable release instead.
+
+Promotion is cumulative: entries added to `unreleased/` after the last candidate snapshot are folded into the stable release and consumed from the queue, just as a follow-up candidate would include them. The active candidate’s stable target takes precedence over entry-driven inference, so a breaking entry added during a `v1.0.0-rc.N` cycle does not change the promotion target to `v2.0.0`.
+
+Promoting to stable closes the RC cycle and removes that cycle’s `vX.Y.Z-rc.N` manifests from `releases/`. An explicit version matching the active RC base is rejected, and manual bump flags never promote the active RC.
+
+### Export release notes
+
+Export release notes for a specific version:
+
+```sh
+uvx tenzir-ship show v5.4.0 --release --markdown
+```
+
+Export as JSON for programmatic use:
+
+```sh
+uvx tenzir-ship show v5.4.0 --release --json
+```
+
+Use compact format for bullet-list layout:
+
+```sh
+uvx tenzir-ship show v5.4.0 --release --compact --markdown
+```
+
+Preview unreleased entries as if they were already released:
+
+```sh
+uvx tenzir-ship show unreleased --release --markdown
+```
+
+Export all releases in a single invocation for batch processing:
+
+```sh
+uvx tenzir-ship show all --release --json
+```
+
+This exports every release as a JSON array, useful for documentation sync scripts that need all release data at once.
+
+To render the latest stable release without spelling out the version, use:
+
+```sh
+uvx tenzir-ship show latest --release --markdown
+```
+
+This resolves the newest stable release only. Release candidates never replace `latest`.
+
+### Publish to GitHub
+
+Publish directly from the changelog project using the CLI:
+
+```sh
+uvx tenzir-ship release publish --yes
+```
+
+Include tagging and pushing via the CLI:
+
+```sh
+uvx tenzir-ship release publish --tag --yes
+```
+
+If you do pass a version, `tenzir-ship` publishes that exact release:
+
+```sh
+uvx tenzir-ship release publish v5.4.0 --yes
+```
+
+Draft or prerelease variants:
+
+```sh
+uvx tenzir-ship release publish v5.4.0 --draft --yes
+uvx tenzir-ship release publish v5.4.0 --prerelease --yes
+```
+
+When you publish `vX.Y.Z-rc.N`, `tenzir-ship` automatically creates a GitHub prerelease and prevents GitHub from marking it as the latest release. You don’t need to add `--prerelease` or `--no-latest` for RC tags. Because version-less publish now targets the latest release, the same command works after both stable releases and RCs.
+
+### Trigger the bundled GitHub Actions workflow
+
+If you want to cut releases from GitHub Actions, start by adding a workflow file to your repository:
+
+.github/workflows/release.yaml
+
+```yaml
+name: Release
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump type
+        required: false
+        default: auto
+        type: choice
+        options:
+          - auto
+          - minor
+          - patch
+          - major
+      version:
+        description: Explicit stable version override
+        required: false
+        type: string
+      rc:
+        description: Create or continue the release-candidate series
+        required: false
+        default: false
+        type: boolean
+      intro:
+        description: 1-2 sentence release introduction
+        required: true
+        type: string
+      title:
+        description: User-facing release title
+        required: false
+        type: string
+
+
+jobs:
+  release:
+    uses: tenzir/ship/.github/workflows/release.yaml@<pinned-ref>
+    with:
+      bump: ${{ inputs.bump }}
+      version: ${{ inputs.version }}
+      rc: ${{ inputs.rc }}
+      intro: ${{ inputs.intro }}
+      title: ${{ inputs.title }}
+    secrets: inherit
+```
+
+Replace `<pinned-ref>` with a released tag or full commit SHA, for example `v1.6.1`. Add the advanced inputs from the [Ship Framework](../../reference/ship-framework.md) only when your repository needs them.
+
+That `release.yaml` wrapper mirrors the CLI options. Use `rc: true` to create or continue a release-candidate series:
+
+```sh
+gh workflow run release.yaml \
+  -f intro="Preview the upcoming release." \
+  -f title="Release candidate" \
+  -f rc=true
+```
+
+When an RC is already outstanding, trigger the same workflow without `rc`, `bump`, or `version` to promote the latest candidate automatically:
+
+```sh
+gh workflow run release.yaml \
+  -f intro="Ship the latest release candidate." \
+  -f title="Stable release"
+```
+
+To leave the RC cycle and ship a different stable release instead, pass that new explicit version, such as `v5.4.1` or `v5.5.0`.
+
+#### Plain setup
+
+The simplest configuration uses the caller repository’s `GITHUB_TOKEN` and chains a publish job that checks out the tagged release:
+
+.github/workflows/release.yaml
+
+```yaml
+name: Release and Publish
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      intro:
+        description: 1-2 sentence release introduction
+        required: true
+        type: string
+      title:
+        description: User-facing release title (auto-generated if omitted)
+        required: false
+        type: string
+
+
+jobs:
+  release:
+    name: Create GitHub release
+    uses: tenzir/ship/.github/workflows/release.yaml@<pinned-ref>
+    permissions:
+      contents: write
+    with:
+      intro: ${{ inputs.intro }}
+      title: ${{ inputs.title }}
+
+
+  publish:
+    name: Publish package to npm
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ needs.release.outputs.version }}
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+
+      - name: Publish to npm
+        run: npm publish
+```
+
+The `publish` job uses `needs.release.outputs.version` to check out the exact tag created by the release workflow. Replace the npm steps with whatever publish logic your project needs.
+
+#### Signed setup with GitHub App
+
+When you need signed commits and tags or want pushes to trigger downstream workflows, use a GitHub App token with GPG signing. A pre-validation job catches missing secrets early:
+
+.github/workflows/release.yaml
+
+```yaml
+name: Release
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      intro:
+        description: 1-2 sentence release introduction
+        required: true
+        type: string
+      title:
+        description: User-facing release title (auto-generated if omitted)
+        required: false
+        type: string
+
+
+jobs:
+  validate-release-config:
+    name: Validate release workflow configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate release configuration
+        env:
+          TENZIR_GITHUB_APP_ID: ${{ vars.TENZIR_GITHUB_APP_ID }}
+          TENZIR_GITHUB_APP_PRIVATE_KEY: ${{ secrets.TENZIR_GITHUB_APP_PRIVATE_KEY }}
+          TENZIR_BOT_GPG_SIGNING_KEY: ${{ secrets.TENZIR_BOT_GPG_SIGNING_KEY }}
+        run: |
+          if [ -z "$TENZIR_GITHUB_APP_ID" ]; then
+            echo "::error::Repository variable 'TENZIR_GITHUB_APP_ID' must be set."
+            exit 1
+          fi
+          if [ -z "$TENZIR_GITHUB_APP_PRIVATE_KEY" ]; then
+            echo "::error::Repository secret 'TENZIR_GITHUB_APP_PRIVATE_KEY' must be set."
+            exit 1
+          fi
+          if [ -z "$TENZIR_BOT_GPG_SIGNING_KEY" ]; then
+            echo "::error::Repository secret 'TENZIR_BOT_GPG_SIGNING_KEY' must be set."
+            exit 1
+          fi
+
+
+  release:
+    name: Create GitHub release
+    needs: validate-release-config
+    permissions:
+      contents: write
+    uses: tenzir/ship/.github/workflows/release.yaml@<pinned-ref>
+    with:
+      intro: ${{ inputs.intro }}
+      title: ${{ inputs.title }}
+      github_app_id: ${{ vars.TENZIR_GITHUB_APP_ID }}
+      git_user_name: tenzir-bot
+      git_user_email: engineering@tenzir.com
+      sign_commits: true
+      sign_tags: true
+    secrets:
+      github_app_private_key: ${{ secrets.TENZIR_GITHUB_APP_PRIVATE_KEY }}
+      gpg_private_key: ${{ secrets.TENZIR_BOT_GPG_SIGNING_KEY }}
+```
+
+The validation job fails fast with clear error messages before the release job attempts to mint a token or import a GPG key. See the [Ship Framework](../../reference/ship-framework.md) for the full list of auth and signing inputs.
+
+Terminology
+
+We use the verb “publish” in prose even though the GitHub CLI subcommand to create a release is `gh release create`. If you created a draft first, you can publish it with `gh release edit v5.4.0 --draft=false`.
+
+## End-to-end Walkthrough
+
+This walkthrough shows how to initialize a repository, add entries, preview the backlog, and publish a release manifest with custom introductory content.
+
+### Create a project
+
+Initialize a new changelog project from your project root:
+
+```sh
+cd my-project
+uvx tenzir-ship add \
+  --title "Add pipeline builder" \
+  --type feature \
+  --description "Introduces the new pipeline builder UI." \
+  --author alice \
+  --pr 101
+```
+
+The first `add` invocation scaffolds the project automatically, creating a `changelog/` subdirectory - no manual config editing needed. After the command completes, inspect `changelog/config.yaml` (or update `package.yaml` if you’re using the package layout):
+
+```yaml
+id: my-project
+name: My Project
+```
+
+### Capture entries
+
+Record additional changes with authors and pull request numbers:
+
+```sh
+uvx tenzir-ship add \
+  --title "Fix ingest crash" \
+  --type bugfix \
+  --description "Resolves ingest worker crash when tokens expire." \
+  --author bob \
+  --pr 102 \
+  --pr 115
+
+
+uvx tenzir-ship add \
+  --title "Improve CLI help" \
+  --type change \
+  --description "Tweaks command descriptions for clarity." \
+  --author carol \
+  --pr 103
+```
+
+Each invocation writes a Markdown file inside `changelog/unreleased/`. For example, `add-pipeline-builder.md` looks like:
+
+```markdown
+---
+title: Add pipeline builder
+type: feature
+author: alice
+created: 2025-10-16T09:30:00Z
+pr: 101
+---
+
+
+Introduces the new pipeline builder UI.
+```
+
+The filename must be unique among the current unreleased entries. It may reuse a filename from an older release; `tenzir-ship` treats every release directory as a separate namespace.
+
+You can use either singular (`author`, `pr`, `component`) or plural (`authors`, `prs`, `components`) keys. The singular form is shorthand for single values.
+
+If an entry spans multiple pull requests, repeat `--pr` during `add`. The CLI stores a `prs:` list in the generated frontmatter automatically.
+
+### Preview the changelog
+
+View all entries in table format:
+
+```sh
+uvx tenzir-ship show
+```
+
+Inspect a detailed card for any entry:
+
+```sh
+uvx tenzir-ship show --card 1
+```
+
+### Prepare release notes
+
+Author an intro snippet that can include Markdown links, call-outs, or image references. Save it as `intro.md`:
+
+```markdown
+Welcome to the first release of the Tenzir changelog!
+
+
+![Release Overview](images/release-overview.png)
+
+
+We cover breaking changes, highlights, upgrades, and fixes below.
+```
+
+### Cut the release
+
+Create the release with the custom intro file:
+
+```sh
+uvx tenzir-ship release create v0.1.0 \
+  --intro-file intro.md \
+  --yes
+```
+
+The tool writes release artifacts under `releases/v0.1.0/`:
+
+* `manifest.yaml` records the release date and intro:
+
+  ```yaml
+  created: 2025-10-18
+  intro: |-
+    Welcome to the first release of the Tenzir changelog!
+
+
+    ![Release Overview](images/release-overview.png)
+
+
+    We cover breaking changes, highlights, upgrades, and fixes below.
+  ```
+
+* `notes.md` stitches together the intro and generated sections:
+
+  ```markdown
+  Welcome to the first release of the Tenzir changelog!
+
+
+  ![Release Overview](images/release-overview.png)
+
+
+  We cover breaking changes, highlights, upgrades, and fixes below.
+
+
+  ## Features
+
+
+  - **Add pipeline builder**: Introduces the new pipeline builder UI.
+
+
+  ## Bug fixes
+
+
+  - **Fix ingest crash**: Resolves ingest worker crash when tokens expire.
+
+
+  ## Changes
+
+
+  - **Improve CLI help**: Tweaks command descriptions for clarity.
+  ```
+
+* `entries/` contains the archived entry files moved from `unreleased/`.
+
+### Validate the project
+
+Verify everything is correct:
+
+```sh
+uvx tenzir-ship validate
+```
+
+A clean run prints `All changelog files look good!`. You can remove `intro.md` now that its content is embedded in the release file.
+
+### Export the release
+
+Print the release notes:
+
+```sh
+uvx tenzir-ship show v0.1.0 --release --markdown
+```
+
+Export as JSON for programmatic use:
+
+```sh
+uvx tenzir-ship show v0.1.0 --release --json
+```
+
+## See also
+
+* [Ship Framework](../../reference/ship-framework.md)
+* [Onboard a data source](../../tutorials/onboard-a-data-source.md)

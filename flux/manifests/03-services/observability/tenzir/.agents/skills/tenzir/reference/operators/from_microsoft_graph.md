@@ -1,0 +1,160 @@
+---
+title: "from_microsoft_graph"
+canonical: https://tenzir.com/docs/reference/operators/from_microsoft_graph
+source: https://tenzir.com/docs/reference/operators/from_microsoft_graph.md
+section: "Docs"
+---
+
+# from_microsoft_graph
+
+> Reads events from a Microsoft Graph collection.
+
+Reads events from a Microsoft Graph collection.
+
+```tql
+from_microsoft_graph resource:string, auth=record, [delta=bool, poll_interval=duration, version=string, odata=record, tls=bool|record]
+```
+
+## Description
+
+The `from_microsoft_graph` operator sends authenticated `GET` requests to the [Microsoft Graph API](https://learn.microsoft.com/en-us/graph/overview) and emits each object in the OData `value` array as a separate event.
+
+The operator uses Microsoft Entra client credentials to fetch access tokens, adds the `Authorization` header, and refreshes the token when needed. It follows `@odata.nextLink` URLs until the collection is exhausted.
+
+The operator doesn’t inject its own `@` fields into emitted events. Microsoft Graph may include annotation fields on resource objects, and the operator handles them as follows:
+
+| Field         | Behavior                                                                           |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `@odata.etag` | Omitted from the emitted event when it appears as a top-level resource field.      |
+| `@odata.type` | Preserved because it can identify polymorphic Graph resource types.                |
+| `@removed`    | Preserved because delta query responses use it to mark deleted or removed objects. |
+
+The operator doesn’t emit OData envelope metadata such as `@odata.context`, `@odata.nextLink`, or `@odata.deltaLink` as events.
+
+By default, the operator performs a one-shot collection read. With `delta=true`, it uses Microsoft Graph delta queries: the initial request reads the resource’s `/delta` endpoint, stores the final `@odata.deltaLink`, and polls that link for incremental changes.
+
+The operator retries throttled and transient Microsoft Graph responses with a bounded default HTTP retry policy. It honors `Retry-After` for throttling responses such as `429 Too Many Requests` and also retries transient service failures such as `503 Service Unavailable` and `504 Gateway Timeout`. Permanent client and authorization failures such as `400 Bad Request`, `401 Unauthorized`, and `403 Forbidden` fail without retries.
+
+Delta query state is in memory. If the pipeline restarts without an executor snapshot that contains the operator state, the next run starts a new initial delta query.
+
+### `resource: string`
+
+The Microsoft Graph resource path to read, without a leading slash or API version. For example, use `users`, `groups`, or `auditLogs/signIns`.
+
+### `auth = record`
+
+Microsoft Entra application credentials for app-only authentication.
+
+The `auth` record supports the following fields:
+
+| Field           | Type                 | Description                                                           |
+| --------------- | -------------------- | --------------------------------------------------------------------- |
+| `tenant_id`     | `string` or `secret` | The Microsoft Entra tenant ID or tenant domain.                       |
+| `client_id`     | `string` or `secret` | The application client ID.                                            |
+| `client_secret` | `string` or `secret` | The application client secret.                                        |
+| `scope`         | `string` or `secret` | The OAuth scope. Defaults to `https://graph.microsoft.com/.default`.  |
+| `authority`     | `string` or `secret` | The OAuth authority. Defaults to `https://login.microsoftonline.com`. |
+
+The application must have the Microsoft Graph application permissions required for the selected resource. For example, reading sign-in logs requires an application permission such as `AuditLog.Read.All`.
+
+### `odata = record (optional)`
+
+OData query options to append to the initial request. Microsoft Graph decides which query options are valid for each resource. In delta mode, these options apply only to the initial `/delta` request. Later polls use the `@odata.deltaLink` exactly as Microsoft Graph returned it.
+
+For example, Microsoft Graph supports `$select` for `users` and `groups` delta queries, but doesn’t support `$top` there. Filters for those delta queries are limited to object ID scoping.
+
+The `odata` record supports the following fields:
+
+| Field    | Type                | Description                                             |
+| -------- | ------------------- | ------------------------------------------------------- |
+| `filter` | `string`            | A `$filter` expression.                                 |
+| `select` | `list<string>`      | Fields to request with `$select`.                       |
+| `top`    | `uint64` or `int64` | The page size to request with `$top`; must be positive. |
+
+### `delta = bool (optional)`
+
+Whether to use Microsoft Graph delta queries. Defaults to `false`.
+
+When `delta=true`, pass a Microsoft Graph collection resource that supports delta queries, such as `users` or `groups`. The operator appends `/delta` unless the resource already ends with `/delta`.
+
+The operator doesn’t maintain its own list of delta-capable Microsoft Graph resources. Microsoft Graph support can differ by resource, API version, tenant, and licensing. If a resource doesn’t support delta queries, Microsoft Graph returns the error and Tenzir reports it.
+
+### `poll_interval = duration (optional)`
+
+The time between delta polls after the initial delta query completes. Defaults to `1min`. The value must be positive and is only valid with `delta=true`.
+
+### `version = string (optional)`
+
+The Microsoft Graph API version to use for the initial request. Supported values are `v1.0` and `beta`. Defaults to `v1.0`.
+
+### `tls = bool | record (optional)`
+
+TLS options for Microsoft Graph requests. Use a record to configure options such as `cacert` when a local proxy or custom trust store intercepts HTTPS traffic.
+
+## Examples
+
+### Read Microsoft Entra sign-in logs
+
+```tql
+from_microsoft_graph "auditLogs/signIns",
+  auth={
+    tenant_id: "contoso.onmicrosoft.com",
+    client_id: "00000000-0000-0000-0000-000000000000",
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    filter: "createdDateTime ge 2026-04-24T00:00:00Z",
+    select: ["id", "createdDateTime", "userPrincipalName", "status"],
+    top: 1000,
+  }
+```
+
+### Read users
+
+```tql
+from_microsoft_graph "users",
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "userPrincipalName"],
+  }
+```
+
+### Read beta users
+
+```tql
+from_microsoft_graph "users",
+  version="beta",
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "signInActivity"],
+  }
+```
+
+### Poll user changes with delta queries
+
+```tql
+from_microsoft_graph "users",
+  delta=true,
+  poll_interval=5min,
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "userPrincipalName"],
+  }
+```
+
+## See Also
+
+* [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md)
+* [Microsoft Graph](../../integrations/microsoft/graph.md)
