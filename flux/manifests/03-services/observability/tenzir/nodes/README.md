@@ -5,7 +5,7 @@ HelmRelease, its kustomization, and a README with the node's own
 connectivity chart, sizing math, and retention profile.
 
 - [`core/`](./core/README.md): the detection plane, every feed that is not
-  the tetragon flood or the netflow collector
+  the tetragon flood or the netflow ingest
 - [`tetragon/`](./tetragon/README.md): the tetragon export flood isolate
 - [`netflow/`](./netflow/README.md): the NetFlow collector isolate (UniFi
   exporters behind `tenzir-ingest-lb`)

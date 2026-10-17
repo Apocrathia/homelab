@@ -1,6 +1,6 @@
 # Sigma rules
 
-The sigma rule corpus the core node's sigma-detection pipeline evaluates
+The sigma rule corpus the core node's sigma-detect pipeline evaluates
 over the OCSF bus with `mapping="auto"`.
 
 - [`homelab/`](./homelab/README.md): rules written against OCSF field

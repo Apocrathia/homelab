@@ -20,22 +20,25 @@ WebSocket; pipelines run entirely on the nodes and events never route
 through the platform.
 
 - **Core node** — the detection plane. Normalizes every feed except the
-  tetragon flood and the netflow collector (kube-apiserver audit,
+  tetragon flood and the netflow ingest (kube-apiserver audit,
   authentik, fleet, trivy) onto the unified `ocsf` bus and runs the one
-  sigma pass. Twelve pipelines live in its HelmRelease.
+  sigma pass. Thirteen pipelines live in its HelmRelease.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
-  memory behavior cannot starve the detection plane. Two pipelines (OTLP
-  ingest + OCSF map), subprocess-isolated so a pipeline blowup dies alone.
+  memory behavior cannot starve the detection plane. Four pipelines (OTLP
+  ingest + OCSF map, plus the error-diagnostics-to-mimir and
+  diagnostics-to-loki shippers), subprocess-isolated so a pipeline blowup
+  dies alone.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
   behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). One
   collector pipeline (UDP accept + OCSF map via the vendored library
-  package) plus the two metrics pushers; its 4001 class feeds its own
+  package) plus the pipeline-metrics, error-diagnostics, and
+  Loki-diagnostics shippers; its 4001 class feeds its own
   node-local archive rule, tetragon-style.
 
 ## Detection plane
 
 Feeds publish OCSF-normalized events onto the `ocsf` topic and the
-`sigma-detection` pipeline evaluates rules as events arrive, with
+`sigma-detect` pipeline evaluates rules as events arrive, with
 `mapping="auto"`: per-schema behavior, and a rule whose fields do not
 resolve for a schema is skipped with one warning per revision, never
 weakened. Detection Findings (2004) are stamped with a stable uid (rule
@@ -80,11 +83,16 @@ endpoint on them. Three pipelines on the core node
 (`pipeline-metrics-to-mimir`, `sigma-metrics-to-mimir`,
 `error-diagnostics-to-mimir`) push `tenzir_pipeline_*`,
 `tenzir_sigma_*`, and the error series to Mimir; the netflow node ships
-the pipeline and error pair (a dead UDP collector is a silent black hole,
-and its `pipeline_id` label is node-qualified so the series stay
-distinct), and the tetragon flood isolate ships none. The Grafana Node
-Pipelines dashboard reads the series in Mimir; the receiving stack is
-outside this subtree.
+the pipeline and error pair (a dead UDP collector is a silent black hole),
+and the tetragon flood isolate ships the error pair but no
+pipeline-metrics — its ingest/egress/heartbeat lanes stay absent by
+design. Same-id pushers across nodes stamp a `node` label (`core`,
+`netflow`, `tetragon`) because the `pipeline_id` label is the bare
+pipeline id, so each node's series stay distinct. Every node also ships
+its live, not-hidden pipeline diagnostics to Loki as
+`job=tenzir-diagnostics` log lines (`diagnostics-to-loki`), with the
+node baked into the stream labels. The Grafana Node Pipelines dashboard
+reads the series in Mimir; the receiving stack is outside this subtree.
 
 ## Sources
 

@@ -72,7 +72,7 @@ match action? {
   }
 }
 
-type_uid = (class_uid * 100) + activity_id
+type_uid = class_uid * 100 + activity_id
 
 unmapped = {
   event_pk: pk,

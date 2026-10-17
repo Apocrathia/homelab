@@ -4,8 +4,8 @@
 
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
-flood and the netflow collector to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Twelve pipelines live in
+flood and the netflow ingest to OCSF, publishes onto the unified
+`ocsf` bus, and runs the one sigma pass. Thirteen pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml); the manifest is the source of
 truth for tunables (sizes, limits, retention values, ports). The NetFlow
 collector moved to the dedicated
@@ -19,12 +19,14 @@ LB service anymore.
 - k8s-audit-ocsf, authentik-ocsf, fleet-ocsf, trivy-ocsf: per-source
   OCSF maps onto the bus (the trivy arm also stamps its Detection
   Findings with the uid)
-- sigma-detection: sigma over the bus with `mapping="auto"`, uid stamp,
+- sigma-detect: sigma over the bus with `mapping="auto"`, uid stamp,
   import into the lake
 - http-ingest: fleet webhook and trivy-report-reader payloads
-- authentik-events: cron pull of the authentik events API
+- authentik-pull: cron pull of the authentik events API
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir /
   error-diagnostics-to-mimir: the node's own operational metrics
+- diagnostics-to-loki: live pipeline diagnostics as
+  `job=tenzir-diagnostics` Loki log lines (node=core)
 
 ## Connectivity
 

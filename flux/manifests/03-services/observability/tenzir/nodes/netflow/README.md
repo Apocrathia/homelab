@@ -4,12 +4,14 @@
 
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
-Three pipelines live in
-[`helmrelease.yaml`](./helmrelease.yaml): netflow-collector (the UDP
-listener + OCSF mapping) and the two metrics pushers
+Four pipelines live in
+[`helmrelease.yaml`](./helmrelease.yaml): netflow-ingest (the UDP
+listener + OCSF mapping), the two metrics pushers
 (pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a dead UDP
 collector is a silent black hole, so this node keeps the core node's
-liveness series; the tetragon flood isolate ships none). The split
+liveness series; the tetragon isolate ships the diagnostics pair but
+no pipeline-metrics by design), and diagnostics-to-loki (live pipeline
+diagnostics as `job=tenzir-diagnostics` Loki log lines). The split
 exists so the collector's lifecycle (listener restarts, pod rolls,
 future vendor-traffic surprises) cannot touch the detection plane, and
 so flow ingest has room to grow when the UniFi renderer fix lands.
@@ -193,7 +195,10 @@ kubectl exec -n tenzir tenzir-node-netflow-0 -- \
 
 The Node Pipelines dashboard (Grafana) is this node's liveness view:
 the heartbeat panel reads the `tenzir_pipeline_*` series this node's
-metrics pipelines push; split on `pipeline_id` (`netflow/...`) when the
+metrics pipelines push; the `pipeline_id` label is the bare pipeline id,
+so this node's and the core node's same-id exporters collide —
+distinguish nodes by the `node` label (`netflow` here, `core` there)
+when the
 `{{pipeline_name}}` legend shows multiple nodes' self-reports under one
 name. If the exporter went quiet, check the UXG's manual NETFLOW
 section first — a controller config push kills it

@@ -60,7 +60,7 @@ match report_kind? {
   }
 }
 
-type_uid = (class_uid * 100) + activity_id
+type_uid = class_uid * 100 + activity_id
 metadata.version = "1.9.0"
 metadata.product = {
   name: "trivy",
