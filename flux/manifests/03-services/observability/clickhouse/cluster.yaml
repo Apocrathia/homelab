@@ -30,7 +30,8 @@ spec:
     # ClickHouse users, rendered by the operator into users.d
     # (chop-generated-users). Passwords arrive as env vars the operator
     # injects from the clickhouse-secrets Secret (OnePasswordItem on the
-    # existing tenzir-secrets vault item) - no secret values in git, ever.
+    # dedicated clickhouse-secrets vault item) - no secret values in git,
+    # ever.
     # The operator also merges in localhost networks + a host_regexp for the
     # CHI's own service FQDNs on every user; networks below add the cilium
     # pod CIDR so in-cluster writers/readers connect from their pod IPs.
@@ -64,8 +65,8 @@ spec:
       # Tiered storage policy, prototype-validated (.scratch/
       # clickhouse-prototype/VERDICT.md): hot volume on the Longhorn-backed
       # data PVC, cold volume as an S3 disk writing CH-internal parts into
-      # the existing rustfs `tenzir` bucket (dedicated clickhouse/ prefix)
-      # with the existing tenzir bucket-user creds injected from_env. Each
+      # the dedicated rustfs `clickhouse` bucket (bucket root) with the
+      # dedicated clickhouse bucket-user creds injected from_env. Each
       # replica runs this same disk config - each replica uploads its own
       # copy of every cold part (3x rustfs cold growth; see the rollout
       # plan).
@@ -79,7 +80,7 @@ spec:
                     </hot>
                     <cold>
                         <type>s3</type>
-                        <endpoint>http://storage.services.apocrathia.com:9009/tenzir/clickhouse/</endpoint>
+                        <endpoint>http://storage.services.apocrathia.com:9009/clickhouse/</endpoint>
                         <access_key_id from_env="CH_S3_ACCESS_KEY_ID"/>
                         <secret_access_key from_env="CH_S3_SECRET_ACCESS_KEY"/>
                         <!-- files > 32 MiB upload multipart (rustfs multipart
@@ -361,9 +362,9 @@ spec:
                   containerPort: 9009
               env:
                 # rustfs creds for the cold S3 disk (from_env in
-                # 00-storage-tiered.xml); existing tenzir bucket user,
-                # existing values - the OnePasswordItem materializes them
-                # into this namespace.
+                # 00-storage-tiered.xml); dedicated clickhouse bucket user,
+                # new onboarding values - the OnePasswordItem materializes
+                # them into this namespace.
                 - name: CH_S3_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:

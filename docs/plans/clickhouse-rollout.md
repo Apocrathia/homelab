@@ -13,7 +13,8 @@ area: observability
 Turn the validated ClickHouse hot/cold prototype
 (`.scratch/clickhouse-prototype/`, verdict: design holds) into shipped MRs:
 ClickHouse 25.8 as the OCSF query store (hot Longhorn disk, cold S3 disk in
-the rustfs `tenzir` bucket, TTL + DELETE cap), Tenzir writing live via
+the dedicated rustfs `clickhouse` bucket, TTL + DELETE cap), Tenzir
+writing live via
 `to_clickhouse`, Grafana querying via the first-party ClickHouse plugin, and
 the DuckDB/MotherDuck parquet lane retired after a history backfill. Five
 logical MRs, each small enough to review whole.
@@ -78,10 +79,13 @@ where:
 
 ## Operator-locked decisions (do not re-litigate)
 
-1. **Architecture A** — hot local disk + cold S3-disk tier into the existing
-   rustfs `tenzir` bucket, reusing the existing tenzir bucket-user creds
-   (1Password item `tenzir-secrets`, fields `aws-access-key-id` /
-   `aws-secret-access-key`). No new S3 user, no new bucket.
+1. **Architecture A** — hot local disk + cold S3-disk tier into the
+   dedicated rustfs `clickhouse` bucket with its own bucket-scoped user
+   and the dedicated 1Password item `clickhouse-secrets` (fields
+   `aws-access-key-id` / `aws-secret-access-key`). Amended 2026-10-17 by
+   the operator split directive, which REVERSED the original
+   reuse-the-existing-bucket decision — the ClickHouse instance is not
+   exclusively tenzir's and does not ride tenzir credentials.
 2. **TTL with a DELETE cap** — move-to-cold at 90d; DELETE horizon is an
    operator value pick (strawman: 400d, decide at MR-1 review).
 3. **Retire `to_s3` only AFTER the history backfill** — backfill runs via
@@ -130,7 +134,7 @@ operator source):**
 **Storage cost of the shape (operator-visible): replication means 3x the
 single-node footprint on both tiers.** Hot: three Longhorn PVCs, one per
 replica, each sized for the full ~90d window (3x 100Gi caps). Cold: every
-replica runs the same S3 disk into the rustfs `tenzir` bucket and uploads
+replica runs the same S3 disk into the rustfs `clickhouse` bucket and uploads
 its own copy of every cold part, so rustfs cold growth is ~3x the
 single-node shape. Watch both when sizing.
 
@@ -272,13 +276,14 @@ network exposure beyond the CHI's own services).
 
 Env vars on the ClickHouse pods via the CHI podTemplate `secretKeyRef`
 against the `clickhouse-secrets` Secret (OnePasswordItem `clickhouse-secrets`
-→ existing vault item `tenzir-secrets`, per D6): `CH_S3_ACCESS_KEY_ID` ←
-`aws-access-key-id`, `CH_S3_SECRET_ACCESS_KEY` ← `aws-secret-access-key`
-(same names the storage config's `from_env` reads).
+→ the dedicated vault item `clickhouse-secrets`, per D6):
+`CH_S3_ACCESS_KEY_ID` ← `aws-access-key-id`, `CH_S3_SECRET_ACCESS_KEY` ←
+`aws-secret-access-key` (the dedicated rustfs `clickhouse` user's keypair;
+same names the storage config's `from_env` reads).
 
 `00-storage-tiered.xml` (in the CHI `configuration.files`) is the
-prototype's storage config with the cold-disk endpoint moved to the
-production prefix `http://storage.services.apocrathia.com:9009/tenzir/clickhouse/`
+prototype's storage config with the cold-disk endpoint at the dedicated
+bucket root `http://storage.services.apocrathia.com:9009/clickhouse/`
 — rest identical (type s3, from_env creds, 32 MiB single-part cap). The S3
 cache-disk layer stays out of MR-1 (not prototype-validated; follow-up
 option). Note the shape change: every replica runs this same disk config —
@@ -287,33 +292,34 @@ growth; see the Shape decision).
 
 ### D6 — Secrets inventory (1Password Item CR pattern; values never in git)
 
-| Vault item        | Field (kebab label)                                                              | Consumed by                                                                                                                                                                         | Exists?                        |
-| ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `tenzir-secrets`  | `aws-access-key-id`, `aws-secret-access-key`                                     | ClickHouse cold disk (env) + Tenzir to_s3 (existing)                                                                                                                                | yes — reference, do not create |
-| `tenzir-secrets`  | `clickhouse-tenzir-password`                                                     | ClickHouse env `CLICKHOUSE_TENZIR_PASSWORD` → users.d                                                                                                                               | **operator adds value**        |
-| `tenzir-secrets`  | `clickhouse-grafana-password`                                                    | ClickHouse env `CLICKHOUSE_GRAFANA_PASSWORD` → users.d                                                                                                                              | **operator adds value**        |
-| `tenzir-secrets`  | `clickhouse-password`                                                            | Tenzir nodes `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` (same password as `clickhouse-tenzir-password`; one field, both consumers — pick ONE label: `clickhouse-password`, used by both) | **operator adds value**        |
-| `grafana-secrets` | `clickhouse-grafana-user` + `clickhouse-grafana-key` (final shape depends on D7) | GrafanaDatasource `valuesFrom` → `secureJsonData`                                                                                                                                   | **operator adds values**       |
+**Split decision (2026-10-17 operator directive; supersedes the original
+reuse plan): the ClickHouse instance is not exclusively tenzir's — it gets
+a dedicated `clickhouse-secrets` vault item and a dedicated rustfs
+`clickhouse` bucket with its own bucket-scoped user (provisioned via
+`docs/infrastructure/rustfs-bucket-user-creation.md`, admin-API steps 1–5).
+Nothing clickhouse consumes rides tenzir credentials; the original
+one-item-carries-all-fields tradeoff is dead.**
 
-Consolidation: use ONE vault field `clickhouse-password` on `tenzir-secrets`
-for the Tenzir writer password — ClickHouse's env key can read the same
-field (`CLICKHOUSE_TENZIR_PASSWORD` ← secretKeyRef key `clickhouse-password`);
-drop the separate `clickhouse-tenzir-password` label. Grafana's user+key ride
-on `grafana-secrets` because the datasource `valuesFrom` substitutes from
-that Secret (same mechanism as the current tenzir-ocsf S3 creds). The
+| Vault item           | Field (kebab label)                                                              | Consumed by                                                                                                                          | Exists?                            |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| `clickhouse-secrets` | `aws-access-key-id`, `aws-secret-access-key`                                     | ClickHouse cold disk (env) — the dedicated rustfs `clickhouse` bucket user                                                           | new item — rustfs onboarding       |
+| `clickhouse-secrets` | `clickhouse-password`                                                            | ClickHouse users.d (`valueFrom.secretKeyRef`) + Tenzir nodes `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` (MR-3; one field, both consumers) | new item — **operator adds value** |
+| `clickhouse-secrets` | `clickhouse-grafana-password`                                                    | ClickHouse users.d (`valueFrom.secretKeyRef`)                                                                                        | new item — **operator adds value** |
+| `grafana-secrets`    | `clickhouse-grafana-user` + `clickhouse-grafana-key` (final shape depends on D7) | GrafanaDatasource `valuesFrom` → `secureJsonData`                                                                                    | **operator adds values**           |
+
+Consolidation: use ONE vault field `clickhouse-password` on
+`clickhouse-secrets` for the Tenzir writer password — ClickHouse's users.d
+reads the same field (`valueFrom.secretKeyRef` key `clickhouse-password`);
+drop the separate `clickhouse-tenzir-password` label. Grafana's user+key
+ride on `grafana-secrets` because the datasource `valuesFrom` substitutes
+from that Secret (same mechanism as the current tenzir-ocsf S3 creds). The
 operator fills values; git only ever names fields. The
-`clickhouse/secret.yaml` OnePasswordItem (`itemPath: vaults/Secrets/items/tenzir-secrets`)
-renders the `clickhouse-secrets` Secret in `clickhouse` — same item, second
-materialization (1Password operator supports multiple OnePasswordItem CRs
-on one item); the CHI users config and podTemplate env read from it.
-
-Named tradeoff: the `clickhouse-secrets` materialization in
-`clickhouse` carries all `tenzir-secrets` fields (including tenzir
-platform node tokens). Accepted for the rollout (values live only in the
-cluster's own namespaces; k8s Secret access is cluster-RBAC-scoped); the
-security-review pass may propose a dedicated `clickhouse-secrets` vault item
-with a copied S3 keypair instead — that is an operator decision if raised,
-not a blocker for MR-1.
+`clickhouse/secret.yaml` OnePasswordItem
+(`itemPath: vaults/Secrets/items/clickhouse-secrets`) renders the
+`clickhouse-secrets` Secret in `clickhouse`; the CHI users config and
+podTemplate env read from it. MR-3 materializes the same item in the
+tenzir namespace (one item, multiple OnePasswordItem CRs — the
+1Password-operator pattern, now pointing at the dedicated item).
 
 ### D7 — Grafana datasource auth shape (verify in MR-2)
 
@@ -374,8 +380,8 @@ plugin documents wins; creds arrive via `valuesFrom` from
     operator resources, ServiceMonitor (ch-metrics + op-metrics) with the
     `release: kube-prometheus-stack` label; keeper metrics intentionally
     out (operator-generated keeper services publish only zk/raft by default)
-  - `secret.yaml` — OnePasswordItem `clickhouse-secrets` on the EXISTING
-    `tenzir-secrets` vault item (new field names only; operator fills
+  - `secret.yaml` — OnePasswordItem `clickhouse-secrets` on the dedicated
+    new `clickhouse-secrets` vault item (fields per D6; operator fills
     values; never secret values in git)
   - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
     `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
@@ -420,9 +426,12 @@ plugin documents wins; creds arrive via `valuesFrom` from
 - No `helm/generic-app/**` changes anywhere in the diff; no edits under
   `tenzir/.agents/**` (vendored, protected).
 
-**Operator-led (named, not in the MR):** vault prep (add the
-`clickhouse-password` and `clickhouse-grafana-password` field values to
-`tenzir-secrets`), apply, watch keeper quorum (3/3 Ready), watch the CHI
+**Operator-led (named, not in the MR):** vault + rustfs prep (provision
+the rustfs `clickhouse` bucket + bucket-scoped user via the onboarding
+runbook — admin-API steps 1–5 + verification battery; create the
+`clickhouse-secrets` vault item with the new user's keypair; add the
+`clickhouse-password` and `clickhouse-grafana-password` field values),
+apply, watch keeper quorum (3/3 Ready), watch the CHI
 status (Completed), run the README's `SHOW TABLES FROM ocsf` validation on
 each replica, confirm `system.disks` shows `cold` on each replica, watch
 rustfs capacity + the pvc-capacity alert for the three new PVCs. If tables
@@ -481,10 +490,12 @@ No pipeline convention is re-derived from memory or scratch copies.
   - compaction rule `ocsf-archive` pipeline becomes
     `fork { to_clickhouse ... } to_s3 ...` (D8; to_s3 leg unchanged —
     it keeps flowing until MR-5);
-  - `extraEnv` gains `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` from
-    `tenzir-secrets` / `clickhouse-password` (AUTHENTIK_EVENTS_TOKEN
-    precedent shape).
-- `tenzir/secret.yaml` field-list comment gains `clickhouse-password`;
+  - `extraEnv` gains `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` from the
+    `clickhouse-secrets` item / `clickhouse-password`, materialized in the
+    tenzir namespace by its own OnePasswordItem CR (AUTHENTIK_EVENTS_TOKEN
+    precedent shape for the env wiring).
+- a tenzir-namespace OnePasswordItem CR materializing `clickhouse-secrets`
+  (field-list comment: `clickhouse-password`);
   `tenzir/README.md` (architecture section: CH as the OCSF query store,
   dual-write transition window), both node READMEs (pipeline change, batch
   sizing), `tenzir/grafana/README.md` untouched (dashboards still query
@@ -634,8 +645,11 @@ permanently cap history at the cutover day (MR-5 needs the backfill done).
 - No edits to `tenzir/.agents/**` — the vendored skills and subtree context
   are generated/hand-maintained local to that subtree (protected `.agents/`
   path); laps read and cite them, never modify.
-- No rustfs changes: no `mc admin`, no bucket/policy/user creation, no
-  quota — the `tenzir` bucket and its user stay exactly as they are.
+- No rustfs changes inside the MR diffs: the dedicated `clickhouse`
+  bucket + bucket-scoped user are provisioned via the onboarding runbook
+  (`docs/infrastructure/rustfs-bucket-user-creation.md`, admin-API steps
+  1–5) outside the MRs; no `mc admin`, no quota — existing consumers are
+  untouched.
 - No changes to the existing parquet archive layout
   (`s3://tenzir/ocsf/...`): no rewrite, no re-partition, no lifecycle
   policy, no deletion of existing objects. It becomes read-only history
