@@ -88,7 +88,7 @@ spec:
       # Storage settings — explicit Longhorn chart defaults (questions.yaml / values.yaml comments)
       storageOverProvisioningPercentage: "100"
       storageMinimalAvailablePercentage: "25"
-      storageReservedPercentageForDefaultDisk: "30"
+      storageReservedPercentageForDefaultDisk: "25"
       defaultDataLocality: "best-effort"
 
       # Engine and replica settings
