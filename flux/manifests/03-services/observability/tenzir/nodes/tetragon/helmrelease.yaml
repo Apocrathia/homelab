@@ -184,7 +184,7 @@ spec:
                   pipeline: |
                     fork {
                       to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
-                        host="clickhouse-ocsf.clickhouse.svc.cluster.local",
+                        host="clickhouse-tenzir.clickhouse.svc.cluster.local",
                         port=9000,
                         user="tenzir",
                         password=secret("clickhouse-password"),
