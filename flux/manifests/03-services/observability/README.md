@@ -153,7 +153,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **Purpose**: OCSF query store for the Tenzir SIEM plane - Altinity
   operator, 1 shard x 3 replicas behind a 3-node ClickHouse Keeper
   ensemble, tiered storage (hot Longhorn PVCs, cold parts in the rustfs
-  `tenzir` bucket), TTL with a retention-horizon DELETE cap
+  `clickhouse` bucket), TTL with a retention-horizon DELETE cap
 - **Deployment**: Altinity `altinity-clickhouse-operator` Helm chart
   (CRDs installed by the chart hook) + `ClickHouseKeeperInstallation` +
   `ClickHouseInstallation` CRs in `clickhouse`
