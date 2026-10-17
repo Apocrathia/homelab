@@ -99,11 +99,12 @@ flowchart LR
    workspace and copy its `tnz_...` token into the
    `investigations-token` field — the HelmRelease reads it via
    `nodes[].token`.
-3. **Apply**: the node boots with the write lane; the web server start
-   command fails its config validation until the TLS TODO below lands
-   (server mode requires the certfile/keyfile pair) — the node keeps
-   running, see the bootstrap note in
-   [`helmrelease.yaml`](./helmrelease.yaml).
+3. **Apply**: cert-manager auto-issues the web server's TLS pair
+   ([`certificate.yaml`](./certificate.yaml), self-signed ClusterIssuer),
+   so the node boots with both lanes — the write lane and the web server
+   (`:5160`, TLS + token). Agent callers use the `X-Tenzir-Token` and
+   skip CA verification (the token is the real auth; the NetworkPolicy
+   scopes who may call).
 4. **Generate the API token** (operator-side, once — web-server tokens
    are node state on the PVC, not config):
 
@@ -142,10 +143,6 @@ ever moves or deletes a part.
 
 ## Known limitations
 
-- **Web-server TLS pair pending** — the `certfile`/`keyfile` TODO in
-  [`helmrelease.yaml`](./helmrelease.yaml): server mode fails validation
-  without the pair, so the query lane boots only after the cert-manager
-  Certificate lands. The write lane is unaffected.
 - **Static API token, no per-caller identity** — attribution is
   record-level (envelope fields + `ai_operation` stamping), not
   caller-level; per-caller tokens are the upgrade path.
