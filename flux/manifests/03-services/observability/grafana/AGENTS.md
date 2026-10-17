@@ -39,11 +39,13 @@ Installation (once per machine):
 brew install gcx   # or: curl -fsSL https://raw.githubusercontent.com/grafana/gcx/main/scripts/install.sh | sh
 ```
 
-gcx bundles 24 workflow skills (dashboards, alerting, SLO, synthetic
-monitoring, …). They live with the gcx binary, not this repo — read any
-on demand with `gcx agent skills get <name>` (no installation needed).
-Install them into `~/.agents/skills` (`gcx agent skills install --all`)
-only if a machine wants them in every agent session.
+The 24 gcx workflow skills (dashboards, alerting, SLO, synthetic
+monitoring, …) are vendored byte-identical into
+[`.agents/skills/`](./.agents/skills/README.md) from gcx v1.6.0 — agents
+working this folder read them there. Any live gcx install can also read
+them from the binary (`gcx agent skills get <name>`), and machine-wide
+installation (`gcx agent skills install --all`) is optional for other
+hosts. Vendoring refresh procedure lives in the skills README.
 
 Connect (self-hosted; token from the 1Password item `homelab-gcx-token`, see
 the skill for the credential architecture):

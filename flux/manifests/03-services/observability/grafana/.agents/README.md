@@ -6,9 +6,9 @@ Portable agent configuration scoped to this folder, following the same
 Grafana manifests so agents landing here get instance facts and tooling
 instructions without repo-root context.
 
-| Path      | Role                                                                   |
-| --------- | ---------------------------------------------------------------------- |
-| `skills/` | Procedural skills scoped to this folder — start with `grafana-homelab` |
+| Path      | Role                                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skills/` | 24 gcx workflow skills vendored byte-identical from upstream + the hand-authored `grafana-homelab` state skill — see [`skills/README.md`](./skills/README.md) |
 
 ## Loading
 

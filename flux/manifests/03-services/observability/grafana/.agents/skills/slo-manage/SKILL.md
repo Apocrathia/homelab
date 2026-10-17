@@ -1,0 +1,210 @@
+---
+name: slo-manage
+description: Creates, updates, syncs, and deletes Grafana SLO definitions via gcx with dry-run validation and GitOps pull/push workflows. Use when the user wants to create, update, pull, push, or delete SLO definitions. Trigger on phrases like "create an SLO", "update SLO objective", "push SLO", "pull SLOs", "delete SLO", or "GitOps sync SLOs". For checking SLO health or status, use slo-check-status instead. For investigating a breaching SLO, use slo-investigate instead.
+allowed-tools: Bash, Read, Write, Edit
+---
+
+# SLO Management
+
+Create, update, sync, and delete SLO definitions using gcx.
+
+## Core Principles
+
+1. Use gcx commands exclusively — do not call Grafana APIs directly
+2. Always run `--dry-run` before any push operation; proceed only if dry-run succeeds
+3. Trust the user's expertise — skip explanations of SLO concepts
+4. Use `-o json` for agent processing; default table/yaml for user display
+5. Auto-resolve datasource UIDs; only ask if auto-discovery fails
+
+## Query Type Decision Table
+
+Select query type based on what the user describes:
+
+| User describes | Query type |
+|----------------|------------|
+| "percentage of successful requests", "success rate", "error rate" | `ratio` |
+| "raw PromQL expression", "custom metric formula" | `freeform` |
+| "metric above/below threshold", "latency under X ms", "availability percentage" | `threshold` |
+
+## Metric-Pattern Decision Table
+
+Use the metric name suffix to pick the query type when the user provides a metric name:
+
+| Metric suffix / type | Query type | Rationale |
+|----------------------|------------|-----------|
+| `_total` counter | `ratio` | success_total / all_total |
+| `_bucket` histogram | `threshold` | use le-bound threshold on quantile |
+| `_gauge` or `up` metric | `threshold` | compare to fixed threshold |
+| None of the above | `freeform` | last resort only |
+
+**Guardrail:** Freeform is a last resort. Before choosing freeform, verify the SLI cannot be expressed as ratio or threshold.
+
+**Hard requirement:** Freeform queries MUST use `$__rate_interval` in all `rate()`/`increase()` calls. Literal ranges like `[5m]` are rejected by the SLO API.
+
+## Workflow 1: Create New SLO
+
+### Step 1: Determine query type using the decision table above
+
+### Step 2: Resolve destination datasource UID
+
+```bash
+gcx datasources list --type prometheus
+```
+
+Use the UID from the output. Some stacks do not populate `type` in the list
+response, so the filter can come back empty even though Prometheus datasources
+exist — in that case list everything and pick the canonical Grafana Cloud
+Prometheus entry (name like `grafanacloud-<stack>-prom`):
+
+```bash
+gcx datasources list
+```
+
+If that leaves zero or multiple plausible Prometheus candidates, ask the user
+which UID to use rather than guessing (the stack's `default: true` datasource
+is not necessarily Prometheus).
+
+### Step 3: Build YAML from the appropriate template
+
+For complete ratio, freeform, and threshold templates (including alerting, labels, and folder fields), see [references/slo-templates.md](references/slo-templates.md). Key structure:
+
+```yaml
+apiVersion: slo.ext.grafana.app/v1alpha1
+kind: SLO
+metadata:
+  name: ""        # leave empty for new SLO (server assigns UUID on create)
+spec:
+  name: "my-api-availability"
+  description: "API availability over 28 days"
+  query:
+    type: ratio   # freeform | ratio | threshold
+    ratio:        # field matches type
+      successMetric:
+        prometheusMetric: http_requests_total{status!~"5.."}
+      totalMetric:
+        prometheusMetric: http_requests_total
+      groupByLabels: [cluster, service]
+  objectives:
+    - value: 0.999   # 0.9 to 0.9999 typical range
+      window: 28d    # 7d | 14d | 28d | 30d
+  destinationDatasource:
+    uid: <prometheus-uid>
+```
+
+### Step 4: Preview with dry-run, then push
+
+```bash
+gcx resources push slos -p slo.yaml --dry-run
+gcx resources push slos -p slo.yaml
+```
+
+**Push semantics:**
+- `metadata.name` set to UUID → update if it exists; otherwise match by the SLO name before creating.
+- Empty `metadata.name` → match by the SLO name before creating; the server assigns a UUID only when creating.
+- A dry-run against an adapter without server validation is reported as unverified and sends no writes; it does not establish that the backend accepts the manifest.
+
+Run `gcx slo definitions list` to confirm.
+
+## Workflow 2: Update Existing SLO
+
+### Step 1: Get current definition
+
+```bash
+gcx slo definitions get <UUID> -o yaml > slo.yaml
+```
+
+### Step 2: Modify the YAML file
+
+Edit the relevant fields (objective value, query, alerting, etc.).
+Do not modify `metadata.name` (UUID) or `readOnly` fields.
+
+### Step 3: Dry-run, then push
+
+```bash
+gcx resources push slos -p slo.yaml --dry-run
+gcx resources push slos -p slo.yaml
+```
+
+## Workflow 3: GitOps Sync (Pull/Push)
+
+### Pull all SLOs to disk
+
+```bash
+gcx resources pull slos -p ./slos -o yaml
+# Writes to ./slos/slos.v1alpha1.slo.ext.grafana.app/<uuid>.yaml
+```
+
+### Push directory of SLOs
+
+```bash
+gcx resources push slos -p ./slos --dry-run
+gcx resources push slos -p ./slos
+```
+
+## Workflow 4: Delete SLO
+
+### Step 1: Confirm SLO identity
+
+```bash
+gcx slo definitions list
+gcx slo definitions get <UUID>
+```
+
+Confirm the UUID and name with the user before deletion.
+
+### Step 2: Delete
+
+```bash
+gcx slo definitions delete <UUID> --force
+```
+
+Use `--force` to skip the confirmation prompt when running in agent mode
+(there is no `-f` shorthand on delete).
+
+## Configuration Guidance
+
+**Objective values** (stored as 0–1, displayed as percentage):
+- Typical range: 0.9 (90%) to 0.9999 (99.99%)
+- Common starting points: 0.99 (99%), 0.999 (99.9%), 0.9999 (99.99%)
+
+**Window options:** `7d`, `14d`, `28d`, `30d`
+- 28d is most common; matches many SLO frameworks
+- Shorter windows (7d) react faster but have higher variance
+
+**Alerting best practices:**
+- `fastBurn`: Pages on-call (high burn rate, short window — catches rapid budget consumption)
+- `slowBurn`: Creates tickets (low burn rate, long window — catches gradual degradation)
+
+**Labels:** Use consistent label keys (team, service, environment, tier) for filtering and grouping.
+
+**GroupByLabels** (ratio/threshold queries): Add labels like `cluster`, `service`, `endpoint` for dimensional breakdown in status and investigation.
+
+## Output Format
+
+After create/update:
+```
+SLO: <name>
+UUID: <uuid>
+Status: Created | Updated
+Objective: <value>% over <window>
+Datasource: <uid>
+```
+
+After pull:
+```
+Pulled <N> SLO definitions to <dir>/SLO/
+```
+
+After delete:
+```
+Deleted: <uuid> (<name>)
+```
+
+## Error Handling
+
+- **Push fails with 400**: Check YAML structure matches template; verify `destinationDatasource.uid` is valid
+- **Push fails with 404 on update**: UUID in `metadata.name` not found; check with `gcx slo definitions list`
+- **Pull creates empty directory**: No SLOs in this context; check `gcx config view` for active context
+- **`--type prometheus` filter returns empty**: the list API may not populate `type` on this stack; run `gcx datasources list` without the filter and match the Cloud Prometheus name pattern before concluding none exist
+- **Dry-run shows unexpected diff**: Show diff to user and ask for confirmation before proceeding
+- **Delete fails with 404**: UUID already deleted or wrong UUID; verify with `gcx slo definitions list`
