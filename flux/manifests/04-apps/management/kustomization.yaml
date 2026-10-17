@@ -6,8 +6,8 @@ metadata:
   name: management
 
 resources:
+  - cdn
   - fleet
-  - icons
   - jetkvm
   - kuber-ios
   - scripts/unifi

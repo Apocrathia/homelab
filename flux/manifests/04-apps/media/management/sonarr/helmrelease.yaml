@@ -124,6 +124,6 @@ spec:
       category: "Media"
       displayName: "Sonarr"
       externalHost: "https://sonarr.gateway.services.apocrathia.com"
-      icon: "https://icons.gateway.services.apocrathia.com/sonarr.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/management/sonarr/icon.svg"
       skipPathRegex:
         - "^/api/"

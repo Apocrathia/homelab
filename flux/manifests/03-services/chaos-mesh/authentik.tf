@@ -133,7 +133,7 @@ resource "authentik_application" "app" {
 
   # Optional metadata: null = attribute omitted — live DB rows are NULL
   # for many apps; the config must not invent values.
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/chaos-mesh.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/chaos-mesh/icon.svg"
   meta_description = "Chaos engineering platform for Kubernetes"
   meta_publisher   = "Chaos Mesh"
 

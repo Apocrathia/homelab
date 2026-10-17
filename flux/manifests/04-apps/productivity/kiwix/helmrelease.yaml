@@ -77,7 +77,7 @@ spec:
       category: "Productivity"
       displayName: "Kiwix"
       externalHost: "https://wiki.gateway.services.apocrathia.com"
-      icon: "https://icons.gateway.services.apocrathia.com/kiwix.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/kiwix/icon.svg"
       # OPDS catalog is metadata-only (titles, languages, counts); ZIM content stays authenticated
       skipPathRegex:
         - "^/catalog/"

@@ -163,7 +163,7 @@ spec:
       displayName: "Komga"
       externalHost: "https://komga.gateway.services.apocrathia.com"
       ssoLaunchUrl: "https://komga.gateway.services.apocrathia.com/oauth2/authorization/authentik"
-      icon: "https://icons.gateway.services.apocrathia.com/komga.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/servers/komga/icon.svg"
       category: "Media"
       metaDescription: "Self-hosted media server for comics, manga, and eBooks"
       metaPublisher: "Komga"

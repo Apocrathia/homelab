@@ -136,7 +136,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://chat.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/openwebui.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/artificial-intelligence/openwebui/icon.svg"
   meta_description = "User-friendly web interface for chat interactions with LLMs"
   meta_publisher   = "OpenWebUI"
 

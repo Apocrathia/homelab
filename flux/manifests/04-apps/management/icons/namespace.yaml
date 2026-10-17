@@ -1,8 +1,0 @@
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: icons
-  labels:
-    app.kubernetes.io/name: icons
-    app.kubernetes.io/part-of: icons

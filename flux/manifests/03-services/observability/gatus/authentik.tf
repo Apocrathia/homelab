@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://gatus.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/gatus.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/observability/gatus/icon.svg"
   meta_description = "In-cluster uptime monitoring"
   meta_publisher   = "TwiN"
 

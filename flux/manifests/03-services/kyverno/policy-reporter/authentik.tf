@@ -231,7 +231,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/policy-reporter.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/kyverno/policy-reporter/icon.svg"
   meta_description = "Monitoring and observability tool for PolicyReport CRDs"
   meta_publisher   = "Kyverno"
 

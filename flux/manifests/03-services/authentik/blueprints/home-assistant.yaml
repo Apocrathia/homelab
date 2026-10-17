@@ -18,7 +18,7 @@ entries:
       group: "Home"
       meta_launch_url: "https://home.services.apocrathia.com"
       open_in_new_tab: true
-      icon: "https://icons.gateway.services.apocrathia.com/home-assistant.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/blueprints/icons/home-assistant.svg"
       meta_description: "Home automation platform"
       meta_publisher: "Home Assistant"
 

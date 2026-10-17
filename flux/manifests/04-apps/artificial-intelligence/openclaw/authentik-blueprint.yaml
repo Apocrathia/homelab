@@ -21,7 +21,7 @@ entries:
       provider: null
       meta_launch_url: "https://kagent.gateway.services.apocrathia.com/api/agentharnesses/openclaw/openclaw/gateway"
       open_in_new_tab: true
-      icon: "https://icons.gateway.services.apocrathia.com/openclaw.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/artificial-intelligence/openclaw/icon.svg"
       meta_description: "OpenClaw coding harness on Agent Substrate"
       meta_publisher: "OpenClaw"
 

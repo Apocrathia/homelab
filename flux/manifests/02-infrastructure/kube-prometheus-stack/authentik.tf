@@ -119,7 +119,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://grafana.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/kube-prometheus-stack.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/02-infrastructure/kube-prometheus-stack/icon.svg"
   meta_description = "Open source analytics and interactive visualization platform"
   meta_publisher   = "Grafana Labs"
 

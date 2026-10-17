@@ -1,0 +1,120 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cdn
+  namespace: cdn
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: cdn
+      # Two replicas are safe: each pod clones its own copy (git-sync
+      # sidecar + emptyDir), and the chart anti-affinity spreads them.
+      replicas: 2
+      # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:42f630b748ea564bfae750a1b170972e0d087fb57fdc7d03cc00bcbe02d1c465
+      volumes:
+        configMap:
+          - name: cdn-nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
+        # The emptyDir block auto-mounts all three in the main container
+        # (chart template); the sidecar references repo by name.
+        emptyDir:
+          # git-sync clone root, shared with the git-sync sidecar
+          - name: repo
+            mountPath: /git
+          # nginx writable paths (read-only rootfs)
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
+      sidecars:
+        # Public repo, zero credentials, depth-1, 60s pull loop. Publishes
+        # the synced worktree at /git/homelab via an atomic symlink flip;
+        # nginx serves the clone root, so URLs are /homelab/<repo path>.
+        - name: git-sync
+          # renovate: datasource=docker depName=registry.k8s.io/git-sync/git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.7.1@sha256:c5e1976da735bf0b53979f079a07475d77174c51863cd084e928ff6074480717
+          args:
+            - --repo=https://gitlab.com/Apocrathia/homelab.git
+            - --ref=main
+            - --depth=1
+            - --root=/git
+            - --link=homelab
+            - --period=60s
+            - --stale-worktree-timeout=90s
+          volumeMounts:
+            - name: repo
+              mountPath: /git
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      # Liveness: nginx itself. Readiness: the full sync chain - the pod is
+      # only routable once a real repo file actually serves.
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /homelab/flux/manifests/03-services/authentik/blueprints/icons/gitlab.svg
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    # Public bytes only; no secrets.
+    secrets:
+      enabled: false
+
+    # Browser <img> fetches happen outside authentik sessions - the host
+    # must stay unauthenticated (the served tree is a public repo clone).
+    authentik:
+      enabled: false
+
+    # In-cluster uptime probe doubles as a sync-chain canary: 200 on a real
+    # repo file proves clone -> serve end to end.
+    gatus:
+      enabled: true
+      path: /homelab/flux/manifests/03-services/authentik/blueprints/icons/gitlab.svg
+
+    # Unauthenticated LAN route via the wildcard cert + external-dns
+    # (gateway defaults: main-gateway / cilium-system / https).
+    httproute:
+      enabled: true
+      hostname: cdn.gateway.services.apocrathia.com
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
