@@ -16,7 +16,7 @@ live one level up ([../README.md](../README.md)).
 | File                      | What it is                                                                                      |
 | ------------------------- | ----------------------------------------------------------------------------------------------- |
 | `secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)                |
-| `keeper.yaml`             | ClickHouseKeeperInstallation `keeper` - 3-node Keeper ensemble                                  |
+| `keeper.yaml`             | ClickHouseKeeperInstallation `tenzir` - 3-node Keeper ensemble                                  |
 | `cluster.yaml`            | ClickHouseInstallation `tenzir` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
 | `flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (this layer's gate)                            |
 | `kustomization.yaml`      | kustomize assembly for the three CRs above                                                      |

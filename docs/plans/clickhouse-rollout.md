@@ -396,7 +396,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
     - `secret.yaml` — OnePasswordItem `clickhouse-secrets` on the dedicated
       new `clickhouse-secrets` vault item (fields per D6; operator fills
       values; never secret values in git)
-    - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
+    - `keeper.yaml` — ClickHouseKeeperInstallation `tenzir`, 3 replicas,
       `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
       hostname anti-affinity (keeper quorum must not share nodes)
     - `cluster.yaml` — ClickHouseInstallation `tenzir`: 1 shard x 3 replicas
