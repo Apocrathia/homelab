@@ -44,15 +44,13 @@ flowchart LR
     BUS --> SIG["sigma detection<br/>(mapping=auto)"]
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]
     BUS --> LAKE
-    LAKE -->|"after 15 min"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
-    LAKE -->|"after 15 min, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
-    S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
+    LAKE -->|"after 15 min"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
+    CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
 
 The chart is this node's whole world: feeders, the bus, sigma, the lake,
-the class-partitioned archive, the ClickHouse dual-write, and the Grafana
-query plane. Grafana owns alerting off the archive; there is no other
-findings egress.
+the ClickHouse archive, and the Grafana query plane. Grafana owns
+alerting off the archive; there is no other findings egress.
 
 ## Sizing
 
@@ -64,7 +62,7 @@ marked assumed wait for post-recovery re-measurement.
 CPU = max(2, ceil(
     1 / 250        # ingest ~1 GB/day raw (assumed; netflow measured at 0.15 GB/day)
     + 5 * 0.1      # 5 sources: audit OTLP, authentik API, fleet, trivy, netflow (docs: 0.1 per source)
-    + 1 * 0.1      # 1 destination: rustfs S3 (docs: 0.1 per destination)
+    + 1 * 0.1      # 1 destination: ClickHouse (docs: 0.1 per destination)
     + 5 * 0.2      # normalization on: OCSF maps on audit, authentik, fleet, trivy, netflow (docs: 0.2 per source)
     + 1            # detection on: sigma over the bus (docs: +1)
 )) = max(2, ceil(2.9)) = 3 cores
@@ -95,25 +93,27 @@ are low-volume and the formula's source term already carries them.
 
 ## Retention
 
-15-minute local horizon; the rustfs parquet archive is the record. One
+15-minute local horizon; the ClickHouse OCSF store is the record. One
 rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every class it
-stores to `s3://tenzir/ocsf/**/{uuid}.parquet` with
-`partition_by=[class_uid]` and consumes the originals
+stores to the per-class `ocsf.<Class_Name>` tables on the ClickHouse
+OCSF store and consumes the originals
 (archive-then-expire; `preserve-input` stays off). The compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15 to 20
 minutes.
 
-Dual-write transition window (MR-3): the same rule forks a
-`to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
-archived batch also lands in the per-class `ocsf.<Class_Name>` tables on
-the ClickHouse OCSF store — `mode="append"` fails loudly if the DDL is
+`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
+its `fork` wrapper retired with the MR-5 teardown — a sink-only
+pipeline keeps consume + export = archive-then-delete semantics):
+`mode="append"` fails loudly if the DDL is
 missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
-the insert buffers per table. ClickHouse is becoming the query store;
-the parquet lane stays the record until the MR-5 cut-over.
+the insert buffers per table.
 
 The lake is a transit buffer between ingest and the archive, not a query
 surface: it is sized to hold one window at worst-case flood rate, and
-the parquet plus `from_s3` is the queryable history. The Base Event
+ClickHouse is the queryable history. The retired
+`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs bucket
+as frozen history; deleting it is a separate operator call. The Base
+Event
 fallback for fleet rows and authentik's non-IAM arm archives with the
 mappable classes (added 2026-10-17): without a time rule those
 partitions accumulated locally instead.
@@ -142,7 +142,7 @@ and left the eraser unreachable on a 20Gi PVC:
 
 Naming note: the entry rename (`default` -> `core`) orphans the live
 `state-tenzir-node-default-0` PVC at rollout and the lake re-wipes
-fresh; accepted, the rustfs parquet is the record, and
+fresh; accepted, ClickHouse is the record, and
 `persistence.existingClaim` can adopt the old PVC if the lost hot window
 ever matters.
 
@@ -165,13 +165,13 @@ ever matters.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
-   (weighted-age space rules as the backstop, one archive rule with
-   class-partitioned `to_s3` for every class it stores).
+   (weighted-age space rules as the backstop, one `to_clickhouse`
+   archive rule for every class it stores).
 6. **Catalog knobs**: the `tenzir.index` block from this node's
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
-7. **Archive**: the node writes into the shared `s3://tenzir/ocsf/`
-   dataset; no per-node prefix.
+7. **Archive**: the node writes into the shared ClickHouse OCSF
+   tables; no per-node prefix.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the

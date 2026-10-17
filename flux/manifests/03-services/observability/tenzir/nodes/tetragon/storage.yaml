@@ -1,10 +1,11 @@
 ---
 # Longhorn recurring-job exclusion for the tetragon lake PVC.
 #
-# The lake is a 15-minute transit buffer between ingest and the OCSF
-# parquet archive; the daily-backup RecurringJob (default group, 02-
-# infrastructure/longhorn/recurringjobs.yaml) snapshots a ~0.84GiB chain
-# of it to rustfs daily — redundant with the record in s3://tenzir/ocsf/.
+# The lake is a 15-minute transit buffer between ingest and the
+# ClickHouse OCSF archive; the daily-backup RecurringJob (default group,
+# 02-infrastructure/longhorn/recurringjobs.yaml) snapshots a ~0.84GiB
+# chain of it to rustfs daily — redundant with the record in the
+# ClickHouse ocsf.* tables.
 #
 # Mechanism (verified against longhorn-manager v1.13.0 source):
 #   - recurring-job.longhorn.io/source: enabled makes this PVC the

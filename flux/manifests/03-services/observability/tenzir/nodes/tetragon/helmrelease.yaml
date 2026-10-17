@@ -112,8 +112,8 @@ spec:
                 Activity per event kind), then derive + schema-validate and
                 store in the node. The unmapped residue is a selected
                 projection (pod identity + policy name), not the full raw
-                record. No raw stream lands in Loki; the OCSF parquet
-                archive is the record.
+                record. No raw stream lands in Loki; the ClickHouse OCSF
+                store is the record.
               definition: |
                 // parallelism: 4
                 subscribe "tetragon.raw"
@@ -140,18 +140,20 @@ spec:
               disk-budget-high: 6GiB
               disk-budget-low: 4GiB
             # 15-minute local lake, same horizon as the core node, same
-            # archive: the tetragon OCSF classes export to the ONE OCSF
-            # dataset at s3://tenzir/ocsf/ with hive class_uid partitions,
-            # then expire locally (consume + export = archive-then-delete;
-            # preserve-input stays off). DuckDB/MotherDuck read both
-            # nodes' classes as one table; the class-partition layout makes
-            # per-class hunts cheap. The Base Event fallback (unknown
+            # archive: the tetragon OCSF classes export to the ClickHouse
+            # OCSF query store's per-class ocsf.<Class_Name> tables, then
+            # expire locally (consume + export = archive-then-delete;
+            # preserve-input stays off). The s3://tenzir/ocsf/ parquet
+            # lane retired with the MR-5 teardown: the existing objects
+            # stay untouched in the rustfs bucket as frozen, unqueried
+            # history — deleting them is a separate operator call. The
+            # Base Event fallback (unknown
             # export kinds) is NOT archived: it cannot name a class and
             # expires with the window on the weighted-age backstop. The
             # lake is a transit buffer between ingest and the archive, not
-            # a query surface; the parquet is the OCSF record past the
+            # a query surface; ClickHouse is the OCSF record past the
             # window (no raw stream lands in Loki; export-stdout sidecar
-            # dropped); from_s3 replays the record. The pass runs every
+            # dropped). The pass runs every
             # 5 minutes,
             # so the true window at pass boundaries is 15-20 minutes.
             time:
@@ -161,13 +163,12 @@ spec:
                 # Process Activity (1007), File System Activity (1001),
                 # Network Activity (4001). ocsf.base_event is deliberately
                 # absent (cannot map -> not archived).
-                # Dual-write transition window (clickhouse rollout MR-3,
-                # plan D8): the rule forks a to_clickhouse leg ahead of
-                # the unchanged to_s3 tail — ClickHouse is becoming the
-                # OCSF query store (per-class ocsf.<Class_Name> tables),
-                # while the parquet lane stays the record until the MR-5
-                # cut-over. fork passes events through, so
-                # archive-then-delete semantics are unchanged;
+                # ClickHouse is the archive (rollout MR-5 teardown, plan
+                # D8 end state): the retired to_s3 tail and its fork
+                # wrapper are gone, so to_clickhouse is the rule's sole,
+                # terminal sink — a sink-only pipeline returns no
+                # transformed events, so consume + export =
+                # archive-then-delete semantics are unchanged.
                 # mode="append" fails loudly when the MR-1 DDL is
                 # missing (the second net for the Keeper first-boot
                 # race), and max_batch_rows bounds the insert buffers on
@@ -182,19 +183,14 @@ spec:
                       "ocsf.network_activity",
                     ]
                   pipeline: |
-                    fork {
-                      to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
-                        host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-                        port=9000,
-                        user="tenzir",
-                        password=secret("clickhouse-password"),
-                        tls=false,
-                        mode="append",
-                        max_batch_rows=65536
-                    }
-                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
-                      write_parquet
-                    }
+                    to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+                      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                      port=9000,
+                      user="tenzir",
+                      password=secret("clickhouse-password"),
+                      tls=false,
+                      mode="append",
+                      max_batch_rows=65536
 
     # OOM armor: 12Gi is the live-verified working set of the flood
     # (12.1Gi at the ceiling on the combined node); 4 cores = 4x the
@@ -208,26 +204,17 @@ spec:
         cpu: "4"
         memory: 12Gi
 
-    # rustfs S3 credentials for the archive rule's to_s3 (the default AWS
-    # chain): same tenzir-secrets item as the core node, kebab vault labels
-    # as the secretKeyRef keys, env var names stay UPPER. The ClickHouse
+    # The ClickHouse
     # writer password rides the dedicated clickhouse-secrets item (this
     # namespace materializes its own OnePasswordItem in ../secret.yaml):
     # the env var maps to config key tenzir.secrets.clickhouse-password,
     # so the to_clickhouse archive leg reads it as
     # secret("clickhouse-password") — kebab name, same env-var shape as
-    # the core node's authentik token.
+    # the core node's authentik token. The retired to_s3 tail's rustfs
+    # AWS_* env entries are gone with the MR-5 teardown; the aws-* fields
+    # stay on the tenzir-secrets item, unused, for the operator to
+    # delete.
     extraEnv:
-      - name: AWS_ACCESS_KEY_ID
-        valueFrom:
-          secretKeyRef:
-            name: tenzir-secrets
-            key: aws-access-key-id
-      - name: AWS_SECRET_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            name: tenzir-secrets
-            key: aws-secret-access-key
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:

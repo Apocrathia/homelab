@@ -10,12 +10,13 @@ README documents the architecture; the node wiring lives in
 - **Live detection** runs in-node: feeds publish OCSF-normalized events
   onto the `ocsf` topic and the sigma pipeline evaluates rules against
   them as they arrive.
-- **Findings and events** live in the one OCSF dataset at
-  `s3://tenzir/ocsf/`, class-partitioned parquet on rustfs. It is the
-  record: everything else is a buffer.
-- **Querying and alerting** live in Grafana over MotherDuck, which reads
-  the parquet directly. Grafana owns notifications; there is no other
-  findings egress (the Discord doorbell and the Loki findings projection
+- **Findings and events** live in the ClickHouse OCSF query store
+  (per-class `ocsf.<Class_Name>` tables). It is the record: everything
+  else is a buffer. The retired `s3://tenzir/ocsf/` parquet archive
+  stays untouched in the rustfs bucket as frozen, unqueried history.
+- **Querying and alerting** live in Grafana over the `ocsf-clickhouse`
+  datasource. Grafana owns notifications; there is no other findings
+  egress (the Discord doorbell and the Loki findings projection
   are gone, cut with this restructure).
 
 ## The bus

@@ -13,7 +13,6 @@ fields, never values.
 | ----------------- | ---------------------- | ----------------------------- | -------------------------------------------------------------- |
 | `homeassistant`   | `home-assistant.yaml`  | influxdb                      | Home Assistant InfluxQL                                        |
 | `ocsf-clickhouse` | `ocsf-clickhouse.yaml` | grafana-clickhouse-datasource | OCSF query store in `clickhouse` via the pinned catalog plugin |
-| `tenzir-ocsf`     | `tenzir-ocsf.yaml`     | motherduck-duckdb-datasource  | DuckDB over the rustfs OCSF parquet lake                       |
 
 ## `ocsf-clickhouse`
 
@@ -29,10 +28,3 @@ substituted from `grafana-secrets` fields `clickhouse-grafana-user` and
 `clickhouse-grafana-password` — the password value must match the
 `clickhouse-grafana-password` field on the `tenzir-secrets` item that
 materializes the `clickhouse-secrets` Secret in `clickhouse`.
-
-## `tenzir-ocsf` (transition window)
-
-The DuckDB parquet lane stays live until the ClickHouse cutover is proven:
-dashboards migrate to `ocsf-clickhouse` in MR-4 and the parquet lane retires
-in MR-5. Do not remove either datasource or its plugin machinery before
-MR-5.

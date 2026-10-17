@@ -133,7 +133,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **Purpose**: SIEM detection plane — OCSF normalization of kube-apiserver
   audit, tetragon, authentik, fleet, trivy, and NetFlow data, SigmaHQ +
   homelab Sigma rules over the unified OCSF bus (`mapping="auto"`),
-  findings in the rustfs OCSF archive after the 15-minute hot window;
+  findings in the ClickHouse OCSF store after the 15-minute hot window;
   Grafana owns alerting
 - **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), two
   nodes in `tenzir`: `tenzir-node-core` (detection plane) and

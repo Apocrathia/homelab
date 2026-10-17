@@ -20,20 +20,19 @@ platform.
 
 Three planes: live detection runs in-node (feeds publish OCSF events onto
 the bus, sigma evaluates them as they arrive); findings and events live in
-the one OCSF dataset at `s3://tenzir/ocsf/`, class-partitioned parquet on
-rustfs; querying and alerting live in Grafana over MotherDuck, which reads
-the parquet directly. Grafana owns notifications; there is no other
-findings egress. The class taxonomy and the bus semantics live in
+the ClickHouse OCSF query store (per-class `ocsf.<Class_Name>` tables);
+querying and alerting live in Grafana over the `ocsf-clickhouse`
+datasource. Grafana owns notifications; there is no other findings
+egress. The class taxonomy and the bus semantics live in
 [`detections/README.md`](./detections/README.md).
 
-ClickHouse is becoming the OCSF query store: the nodes' `ocsf-archive`
-rules dual-write (MR-3, rollout plan
-[`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md))
-— every archived batch lands in the per-class `ocsf.<Class_Name>` tables
-on the ClickHouse OCSF cluster alongside the unchanged parquet. The
-transition window keeps the parquet lane flowing as the dashboards'
-comparison oracle until the MR-5 cut-over; until then Grafana still
-queries MotherDuck.
+The parquet lane is retired (rollout MR-5 teardown, plan
+[`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md)):
+the nodes' `ocsf-archive` rules write ClickHouse alone, and the existing
+`s3://tenzir/ocsf/` archive stays untouched in the rustfs bucket as
+frozen, unqueried history — deleting it is a separate operator call. No
+backfill replays it into ClickHouse (operator decision 2026-10-17: the
+parquet history has no value to preserve).
 
 ```mermaid
 flowchart LR
@@ -48,9 +47,8 @@ flowchart LR
         OCSF --> LAKE
     end
 
-    LAKE -->|"after 15 min"| RUST["rustfs parquet · s3://tenzir/ocsf/<br/>class_uid-partitioned"]
-    LAKE -->|"after 15 min, fork"| CH["ClickHouse ocsf.* tables<br/>(OCSF query store, accumulating)"]
-    RUST -.->|"reads"| GRAF["Grafana over MotherDuck<br/>(querying + alerting)"]
+    LAKE -->|"after 15 min"| CH["ClickHouse ocsf.* tables<br/>(OCSF query store, the record)"]
+    CH -.->|"queries"| GRAF["Grafana over ClickHouse<br/>(querying + alerting)"]
     NODE -.-> PLAT["Tenzir Platform"]
 ```
 
@@ -64,9 +62,11 @@ renders the `tenzir-secrets` Secret. Vault field labels are kebab-case
 and the rendered Secret keys match them:
 
 - `aws-access-key-id` / `aws-secret-access-key`: rustfs bucket-scoped
-  user for the `tenzir` bucket (see the [rustfs bucket/user creation
-  doc](../../../../../docs/infrastructure/rustfs-bucket-user-creation.md);
-  bucket and user creation is an operator step)
+  user for the `tenzir` bucket; unused by the manifests since the parquet
+  lane retirement (MR-5) — the vault fields stay for the operator to
+  delete (see the [rustfs bucket/user creation
+  doc](../../../../../docs/infrastructure/rustfs-bucket-user-creation.md)
+  for the original provisioning)
 - `discord-webhook-url`: unused by the manifests; the vault field stays
   for the operator's off-repo use
 - `authentik-events-token`: the ak-tenzir events pull token, minted by
@@ -110,14 +110,11 @@ All baselines must stay warning-free.
 ## Storage lifecycle
 
 The local lakes keep 15 minutes; every OCSF class that can name itself
-archives to the one rustfs dataset at `s3://tenzir/ocsf/` as
-class-partitioned parquet and expires locally. The lake is a transit
-buffer between ingest and the archive, not a query surface; the parquet
-is the record. DuckDB and MotherDuck read it as one table:
-
-```sql
-read_parquet('s3://tenzir/ocsf/**/*.parquet', hive_partitioning = true,
-             union_by_name = true)
-```
+archives to the ClickHouse OCSF query store (per-class
+`ocsf.<Class_Name>` tables) and expires locally. The lake is a transit
+buffer between ingest and the archive, not a query surface; ClickHouse is
+the record. The retired `s3://tenzir/ocsf/` parquet archive stays
+untouched in the rustfs bucket as frozen history (deleting it is a
+separate operator call).
 
 Detail lives in the node READMEs.
