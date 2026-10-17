@@ -5,7 +5,7 @@
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Thirteen pipelines live in
+`ocsf` bus, and runs the one sigma pass. Fourteen pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
@@ -19,12 +19,17 @@ LB service anymore.
   kube-audit alloy and the shared alloy OTLP log fan-out (the :4318
   listener carries both stream types)
 - k8s-audit-ocsf, authentik-ocsf, fleet-ocsf, trivy-ocsf: per-source
-  OCSF maps onto the bus (the trivy arm also stamps its Detection
-  Findings with the uid)
+  OCSF maps onto the bus; the audit and authentik arms enrich their
+  src endpoints with geo country + ASN from the node-resident geo-open
+  context before the store/publish legs (the trivy arm also stamps its
+  Detection Findings with the uid)
 - sigma-detect: sigma over the bus with `mapping="auto"`, uid stamp,
   import into the lake
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-pull: cron pull of the authentik events API
+- geo-open-loader: the daily CIRCL Geo Open MMDB builder for the
+  enrichment context (decoupled from the detection plane — a failed
+  fetch never stalls the sigma pass)
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir /
   error-diagnostics-to-mimir: the node's own operational metrics
 - diagnostics-to-loki: live pipeline diagnostics as
@@ -44,6 +49,8 @@ flowchart LR
     FLT --> MAP
     TRV --> MAP
     ATH --> MAP
+    CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -.->|"every 24h<br/>geo-open-loader"| GEO["geo-open context"]
+    GEO -->|"login-geo / API-caller<br/>src_endpoint enrichment"| MAP
     MAP --> BUS["ocsf topic (the bus)"]
     BUS --> SIG["sigma detection<br/>(mapping=auto)"]
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]
@@ -51,6 +58,22 @@ flowchart LR
     LAKE -->|"after 15 min"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
+
+Enrichment scope is source-grounded: the kube-audit map always sets
+`src_endpoint.ip` from `sourceIPs[0]` (a clean, always-present
+source-IP field, grounded in the audit fixtures), so API Activity
+gains geo country + ASN on the API caller unconditionally — the
+dominant cluster-internal callers stay bare through the Geo Open
+not-routed markers, and only external API callers geolocate. The
+authentik map sets `src_endpoint.ip` from `client_ip` on every IAM
+arm, so Authentication (login geo) and Account Change (mutation
+origin) both enrich, while the Base Event arm passes through the
+fork_merge complementary-where gate untouched (a null-key
+context_enrich still writes its into-field, so the mixed-class
+stream cannot run the operators unconditionally). No dns_lookup on
+either: pod/service PTRs are NXDOMAIN noise, LAN clients have no
+homelab PTRs, and attacker PTRs are absent or ISP-generic — the geo
+ASN name already carries the provider. Private addresses stay bare.
 
 The chart is this node's whole world: feeders, the bus, sigma, the lake,
 the ClickHouse archive, and the Grafana query plane. Grafana owns
@@ -81,9 +104,9 @@ Storage = 1 * 30 * (1/2880) / 10 / 1000  # ingest GB/day * days/mo * months (15 
 RAM = max(2,
     0.000001 * 2   # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 5 * 0.1      # sources (4) + destination (1)
-    + 0            # enrichment off (no context operators)
+    + 0.1          # enrichment: the geo-open context holds the ~80 MiB Geo Open MMDB in memory
     + 1            # detection state (docs: +1)
-) = max(2, 1.5) = 2 GB
+) = max(2, 1.6) = 2 GB
 ```
 
 The memory limit is 8Gi: the formula's 2 GB floor plus the boot
@@ -197,6 +220,12 @@ kubectl logs -n tenzir tenzir-node-core-0 | grep -i error
 # recent stored events
 kubectl exec -n tenzir tenzir-node-core-0 -- \
   tenzir -e localhost:5158 'export | head 5'
+# enrichment state: geo-open should list configured: true
+kubectl exec -n tenzir tenzir-node-core-0 -- \
+  tenzir -e localhost:5158 'context_list'
+# sanity lookup against the loaded MMDB (any public IP)
+kubectl exec -n tenzir tenzir-node-core-0 -- \
+  tenzir -e localhost:5158 'from {ip: 1.1.1.1} | context_enrich "geo-open", key=ip, into=geo'
 ```
 
 Sigma skip warnings (one per rule revision) name the rules the bus

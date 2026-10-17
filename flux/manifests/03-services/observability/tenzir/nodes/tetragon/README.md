@@ -4,16 +4,20 @@
 
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
-nothing else. Four pipelines live in
+nothing else. Five pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 tetragon-ingest-http (the
 OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
-mapping into the lake), and the diagnostics pair
+mapping into the lake, with endpoint enrichment on the Network
+Activity arm), geo-open-loader (the daily GeoIP context builder for
+that enrichment), and the diagnostics pair
 (error-diagnostics-to-mimir, diagnostics-to-loki) — the flood node
 gets the error/warning and Loki lanes but ships no pipeline-metrics
 by design. The split exists so the flood's CPU and memory
-behavior cannot starve the detection plane on the core node.
+behavior cannot starve the detection plane on the core node, and
+the loader is equally decoupled — a slow or failed MMDB fetch never
+stalls ingest (the context keeps serving the last good database).
 
 The chart runs the pipelines in subprocesses (`pipeline-subprocesses`):
 a pipeline blowup dies alone instead of taking the node process down,
@@ -32,10 +36,27 @@ later, drop the directive on the affected pipeline or scope it with
 flowchart LR
     TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
-    TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf topic"]
+    TR -->|"OCSF map, ~125 schema variants"| ENR["network-activity enrichment<br/>(geo-open context + dns_lookup)"]
+    CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -->|"every 24h<br/>geo-open-loader"| ENR
+    ENR -->|"geo/ASN/hostname into OCSF<br/>endpoint fields"| LAKE["node lake: ocsf topic"]
     LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
+
+Enrichment scope is class-grounded, not blanket: only the Network
+Activity (4001) arm carries IP endpoints (from the monitor-network
+kprobe's sock argument), so only it gains geo country + ASN
+(`endpoint.location.country`, `network_endpoint.autonomous_system`)
+plus a reverse-DNS hostname on both endpoints — Process Activity
+(1007) and File System Activity (1001) map process identity and file
+paths with no IP anywhere in the source event, and stay untouched
+(fork_merge complementary-where gate; a null-key context_enrich
+still writes its into-field, so mixed-class streams cannot run the
+operators unconditionally). Private addresses stay bare — Geo Open
+marks them not routed and the gated assignments filter those
+markers. The enrichment sits after `ocsf_cast` and before the
+store/publish legs, so the lake, the archive, and the node-local
+ocsf bus all carry the enriched record.
 
 The unmapped residue on every mapped event is a selected projection (pod
 identity, kprobe policy name), not the full raw record: re-storing the
@@ -69,7 +90,8 @@ Storage = 69 * 30 * (1/2880) / 10 / 1000 # flood GB/day * days/mo * months (15 m
 RAM = max(2,
     0.0000719 * 2  # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
     + 2 * 0.1      # sources (1) + destinations (1)
-    + 0            # no detection, no enrichment
+    + 0.1          # enrichment: the geo-open context holds the ~80 MiB Geo Open MMDB in memory
+    + 0            # no detection
 ) = 2 GB
 ```
 
@@ -199,4 +221,10 @@ kubectl logs -n tenzir tenzir-node-tetragon-0 | grep -i error
 # recent stored events
 kubectl exec -n tenzir tenzir-node-tetragon-0 -- \
   tenzir -e localhost:5158 'export | head 5'
+# enrichment state: geo-open should list configured: true
+kubectl exec -n tenzir tenzir-node-tetragon-0 -- \
+  tenzir -e localhost:5158 'context_list'
+# sanity lookup against the loaded MMDB (any public IP)
+kubectl exec -n tenzir tenzir-node-tetragon-0 -- \
+  tenzir -e localhost:5158 'from {ip: 1.1.1.1} | context_enrich "geo-open", key=ip, into=geo'
 ```

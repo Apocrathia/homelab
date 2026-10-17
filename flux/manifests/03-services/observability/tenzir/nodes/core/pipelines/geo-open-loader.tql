@@ -1,0 +1,7 @@
+every 24h {
+  from_http "https://cra.circl.lu/opendata/geo-open/mmdb-country-asn/latest.mmdb" {
+    read_all binary=true
+  }
+  write_all data
+  context_load "geo-open"
+}

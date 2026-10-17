@@ -159,6 +159,18 @@ spec:
             # space budgets (retune math in nodes/core/README.md).
             disk-budget-high: 6GiB
             disk-budget-low: 4GiB
+          # Node-resident enrichment state (contexts are per-node, shared
+          # across this node's pipelines, and survive pipeline restarts;
+          # creation arguments apply only at creation, so this block never
+          # reconfigures an existing context — the geo-open-loader pipeline
+          # is the refresh path). The geoip context is created empty at
+          # boot and filled by context_load of CIRCL's free Geo Open
+          # country+ASN MMDB (~80 MiB in node memory, headroom the 8Gi
+          # limit absorbs); no GeoLite2/MaxMind route, so no
+          # license-key secret rides this node (see geo-open-loader).
+          contexts:
+            geo-open:
+              type: geoip
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
@@ -183,8 +195,28 @@ spec:
               name: k8s-audit ocsf
               description: |
                 k8s audit -> OCSF API Activity (6003), then derive +
-                schema-validate and store in the node. Publishes onto the
-                unified OCSF bus every normalized feed shares.
+                schema-validate and store in the node. Enrichment runs
+                after the cast and before the store/publish legs, so the
+                lake, the archive, the sigma pass, and the unified OCSF
+                bus all see the enriched record: the API caller's origin
+                (src_endpoint.ip, sourceIPs[0] — a clean, always-present
+                source-IP field in the audit fixtures) gains geo country +
+                ASN from the node-resident geo-open context (filled by
+                geo-open-loader), mapped into OCSF endpoint fields
+                (endpoint.location.country,
+                network_endpoint.autonomous_system). Unconditional
+                operators are safe here: every event is API Activity with
+                src_endpoint set by the map, and a null IP (empty
+                sourceIPs) degrades to a bare endpoint via the gated
+                assignments. sourceIPs[0] is dominantly cluster-internal
+                (pod/service CIDRs) — Geo Open marks those not routed and
+                the filters leave the endpoint bare, so only external
+                API callers (operator kubectl, anything outside the
+                cluster) actually geolocate. No dns_lookup: pod/service
+                PTRs are NXDOMAIN noise in the homelab DNS and external
+                callers already carry the provider in the ASN name.
+                Publishes onto the unified OCSF bus every normalized feed
+                shares.
               definition: ""
               restart-on-error: 1 minute
             sigma-detect:
@@ -230,6 +262,28 @@ spec:
                 Authentication, account mutations to Account Change, and
                 every other action to the Base Event; derive + cast, store
                 in the node, and publish onto the unified OCSF bus.
+                Enrichment runs after the cast and before the
+                store/publish legs, so the lake, the archive, the sigma
+                pass, and the bus all see the enriched record: the login
+                geo — src_endpoint.ip (client_ip) gains country + ASN from
+                the node-resident geo-open context (filled by
+                geo-open-loader), mapped into OCSF endpoint fields
+                (endpoint.location.country,
+                network_endpoint.autonomous_system). The fork_merge
+                complementary-where gate covers both IAM classes, which
+                all carry src_endpoint (login/logout/login_failed and the
+                account mutations alike — geo answers "from where was this
+                account changed", not just where the login happened);
+                the Base Event arm has no endpoint and passes through
+                untouched (a null-key context_enrich still writes its
+                into-field, probed on v6.19.1, so the mixed-class stream
+                cannot run the operators unconditionally). No dns_lookup:
+                LAN clients have no PTRs in the homelab DNS and attacker
+                PTRs are absent or ISP-generic — the ASN name already
+                carries the provider, and a hostname would add no triage
+                signal a failed-login hunt actually uses. Private
+                addresses stay bare; Geo Open marks them not routed and
+                the gated assignments filter those markers.
               definition: ""
               restart-on-error: 1 minute
             fleet-ocsf:
@@ -251,6 +305,37 @@ spec:
                 cast, stamp the Detection Findings with the same uid rule
                 the sigma pipeline uses, store in the node, and publish
                 onto the unified OCSF bus.
+              definition: ""
+              restart-on-error: 1 minute
+            geo-open-loader:
+              name: geo open loader
+              description: |
+                Builder pipeline for the geo-open geoip context (declared
+                in the contexts block above): fetches CIRCL's free Geo
+                Open country+ASN MMDB and atomically replaces the context
+                state — the two-pipeline builder/consumer shape from the
+                vendored add-enrichment-contexts tutorial. Geo Open over
+                GeoLite2 on purpose: MaxMind needs a license account plus
+                out-of-band download plumbing (tar.gz extract,
+                initContainer or CronJob) for city/coords this lab's
+                login-geo and API-caller triage does not need; Geo Open
+                answers country + ASN in one MMDB fetched in-band, no
+                license, no extra volume, no secret. The read_all
+                binary=true / write_all data round trip is not redundant:
+                from_http requires a parser, so read_all wraps the ~80 MiB
+                download into one event and write_all unwraps it to the
+                byte stream context_load consumes. context_load replaces
+                the whole state, so a failed fetch never half-updates —
+                the context keeps serving the last good database and
+                restart-on-error retries in a minute. every 24h fires its
+                first run at pipeline start (fresh node: context filled
+                seconds after boot; until then the audit and authentik
+                maps pass events through unenriched with one warning, by
+                design). CIRCL publishes a fresh snapshot daily, so 24h
+                keeps lookups current without hammering the mirror. The
+                loader is decoupled from the detection plane: a slow or
+                failed MMDB fetch never stalls the sigma pass or the
+                bus (the context keeps serving the last good database).
               definition: ""
               restart-on-error: 1 minute
             pipeline-metrics-to-mimir:
