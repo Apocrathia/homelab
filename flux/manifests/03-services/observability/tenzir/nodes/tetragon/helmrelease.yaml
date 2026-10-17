@@ -67,6 +67,12 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
+          # Server-log verbosity, same warning level as the core node: the
+          # chart default (tenzir.file-verbosity: quiet) writes nothing to
+          # server.log, so pipeline failures that point at the log for
+          # their diagnostics surface blind (docs: file-verbosity levels
+          # quiet, error, warning, info, verbose, debug, trace).
+          file-verbosity: warning
           # Crash isolation for the flood: run pipelines in subprocesses so the
           # tetragon OCSF pipeline's memory blowups die alone instead of taking
           # the node process down (in-process mode shared fate). The
