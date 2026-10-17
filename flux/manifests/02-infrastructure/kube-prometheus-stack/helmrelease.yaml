@@ -126,16 +126,6 @@ spec:
       enabled: true
       deploymentStrategy:
         type: Recreate
-      # Ubuntu (glibc) image instead of the chart-default distroless/static:
-      # the motherduck-duckdb-datasource backend plugin (installed via the
-      # extraInitContainers below) ships glibc-dynamic binaries that cannot
-      # exec in a static image. Keep the tag in lockstep with the chart
-      # appVersion so grafana upgrades stay on the matching -ubuntu build.
-      image:
-        registry: docker.io
-        repository: grafana/grafana
-        # renovate: datasource=docker depName=docker.io/grafana/grafana
-        tag: "13.2.3-ubuntu"
       plugins:
         - grafana-llm-app
         - grafana-advisor-app
@@ -156,10 +146,6 @@ spec:
       grafana.ini:
         feature_toggles:
           enable: grafanaAdvisor
-        plugins:
-          # Unsigned (rejected from catalog due to CGO): loaded from the
-          # storage PVC by the install-motherduck-plugin init container.
-          allow_loading_unsigned_plugins: motherduck-duckdb-datasource
         auth:
           disable_login_form: true
           disable_signout_menu: true
@@ -216,49 +202,6 @@ spec:
             storage: persistent
           annotations:
             description: "Grafana persistent storage"
-      # Unsigned plugin install (motherduck-duckdb-datasource is rejected from
-      # the catalog, so the chart `plugins:` mechanism cannot fetch it): pin the
-      # GitHub release asset + sha256 and extract onto the storage PVC. Idempotent
-      # - skips the 140MB download when 0.4.5 is already present, so restarts are
-      # cheap and plugin + DuckDB extension caches survive pod churn.
-      # wget/unzip/sha256sum are busybox applets baked into the pinned alpine
-      # image; runtime apk installs cannot work on the read-only rootfs.
-      extraContainerVolumes:
-        - name: plugin-install-tmp
-          emptyDir: {}
-      extraInitContainers:
-        - name: install-motherduck-plugin
-          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
-          image: public.ecr.aws/docker/library/alpine:3.24.2@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
-          command: ["/bin/sh", "-ec"]
-          args:
-            - |
-              PLUGIN_DIR=/var/lib/grafana/plugins/motherduck-duckdb-datasource
-              if [ -f "$PLUGIN_DIR/plugin.json" ] && grep -q '"version": "0.4.5"' "$PLUGIN_DIR/plugin.json"; then
-                echo "motherduck-duckdb-datasource 0.4.5 already installed"
-                exit 0
-              fi
-              wget -q -O /tmp/duckdb.zip \
-                https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v0.4.5/motherduck-duckdb-datasource-0.4.5.zip
-              echo "156c6ab8caad03d6a8956dfae1f685697101d14a1f0921528d8c6258f03a3c40  /tmp/duckdb.zip" | sha256sum -c -
-              unzip -oq /tmp/duckdb.zip -d /var/lib/grafana/plugins
-              rm -f /tmp/duckdb.zip
-          securityContext:
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 472
-            runAsGroup: 472
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            seccompProfile:
-              type: RuntimeDefault
-          volumeMounts:
-            - name: storage
-              mountPath: /var/lib/grafana
-            - name: plugin-install-tmp
-              mountPath: /tmp
       defaultDashboardsEnabled: true
       sidecar:
         dashboards:

@@ -25,8 +25,9 @@ data:
     // kube-audit alloy carries for the apiserver audit log.
     //
     // No Loki leg: no raw tetragon stream lands in Loki (the tetragon
-    // HelmRelease drops the chart's export-stdout sidecar); the OCSF
-    // parquet record is the record, so a Loki writer would duplicate it.
+    // HelmRelease drops the chart's export-stdout sidecar); the
+    // ClickHouse OCSF store is the record, so a Loki writer would
+    // duplicate it.
     //
     // The file rotates at 10 MiB (lumberjack renames to tetragon-*.log),
     // so the include set covers the live file and its rotated siblings;

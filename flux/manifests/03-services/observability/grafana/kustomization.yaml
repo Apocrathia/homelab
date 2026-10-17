@@ -16,5 +16,4 @@ resources:
   - push-secret-mcp.yaml
   - datasources/home-assistant.yaml
   - datasources/ocsf-clickhouse.yaml
-  - datasources/tenzir-ocsf.yaml
   - alerting/

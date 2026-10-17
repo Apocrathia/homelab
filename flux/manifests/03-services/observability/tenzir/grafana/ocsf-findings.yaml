@@ -1,6 +1,7 @@
 ---
 # OCSF findings dashboard: Detection Finding (2004) surfacing over the
-# tenzir OCSF archive via the tenzir-ocsf datasource — severity, rules,
+# tenzir OCSF store (ClickHouse ocsf.* per-class tables) via the
+# ocsf-clickhouse datasource — severity, rules,
 # subjects, and the evidence user. JSON rides in ConfigMap
 # tenzir-ocsf-findings (generated from ocsf-findings.json).
 apiVersion: grafana.integreatly.org/v1beta1

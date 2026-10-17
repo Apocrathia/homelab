@@ -8,7 +8,7 @@ JSON, all in the Grafana `Security` folder:
   (`tenzir_pipeline_*`, `tenzir_sigma_*`, and the error series the node's
   metrics pipelines push to Mimir).
 - **Tenzir OCSF Exploration** ([`ocsf-exploration.json`](./ocsf-exploration.json))
-  — the cross-class hunt over the `s3://tenzir/ocsf/` archive: event rate
+  — the cross-class hunt over the ClickHouse OCSF store: event rate
   by `class_uid`, severity distribution, and per-class panels (k8s audit
   API Activity 6003, authentik Authentication 3002 / Account Change 3001,
   tetragon Process Activity 1007 / File System Activity 1001 / Network
@@ -18,7 +18,7 @@ JSON, all in the Grafana `Security` folder:
   affected subjects, the findings table (stamp fields), and the sigma
   evidence detail (acting user and matched k8s object).
 
-The OCSF dashboards query the `tenzir-ocsf` MotherDuck datasource, whose
-initSql exposes the `ocsf` view over the class-partitioned parquet, so they
-render empty until the archive parquet flows and every panel reads real
-archived fields only.
+The OCSF dashboards query the `ocsf-clickhouse` datasource over the
+per-class `ocsf.*` tables on the ClickHouse OCSF store (the retired
+duckdb/parquet lane is gone since the MR-5 teardown), so every panel
+reads real archived fields only.

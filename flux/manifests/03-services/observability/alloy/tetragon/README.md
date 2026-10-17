@@ -34,8 +34,8 @@ node.
 - No Loki leg: no raw tetragon stream lands in Loki at all — the chart's
   `export-stdout` sidecar is dropped
   ([`../../../tetragon/helmrelease.yaml`](../../../tetragon/helmrelease.yaml))
-  and the OCSF parquet record is the record. Pivots use the node_name plus
-  exec_id carried inside each event.
+  and the ClickHouse OCSF store is the record. Pivots use the node_name
+  plus exec_id carried inside each event.
 - Both legs start at end-of-file: the pre-existing node-local backlog is
   not re-shipped
 - No nodeSelector: tetragon agents export on every node
