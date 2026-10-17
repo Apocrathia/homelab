@@ -3,7 +3,8 @@
 [Altinity Kubernetes Operator for ClickHouse](https://github.com/Altinity/clickhouse-operator)
 manages a 1-shard, 3-replica ClickHouse cluster ("ocsf") with a 3-node
 ClickHouse Keeper ensemble. Tiered storage keeps ~90 days hot on Longhorn
-and moves older parts to the rustfs `tenzir` bucket; a TTL cap deletes
+and moves older parts to the dedicated rustfs `clickhouse` bucket; a
+TTL cap deletes
 everything past the retention horizon. Live plan and slice breakdown:
 [`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md).
 
@@ -11,13 +12,13 @@ everything past the retention horizon. Live plan and slice breakdown:
 
 ## Objects
 
-| File             | What it is                                                                                          |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| `namespace.yaml` | `clickhouse` namespace                                                                              |
-| `operator.yaml`  | Altinity clickhouse-operator (chart installs the CRDs via hook)                                     |
-| `secret.yaml`    | OnePasswordItem `clickhouse-secrets` (existing `tenzir-secrets` vault item, second materialization) |
-| `keeper.yaml`    | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                             |
-| `cluster.yaml`   | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap       |
+| File             | What it is                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `namespace.yaml` | `clickhouse` namespace                                                                        |
+| `operator.yaml`  | Altinity clickhouse-operator (chart installs the CRDs via hook)                               |
+| `secret.yaml`    | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)              |
+| `keeper.yaml`    | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                       |
+| `cluster.yaml`   | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
 
 The operator watches `clickhouse` only (`watchNamespaces`).
 
@@ -38,7 +39,7 @@ The operator creates the Services; name prefixes are fixed by its namer:
 
 The operator renders these into `users.d` and injects the passwords as env
 vars from the `clickhouse-secrets` Secret (1Password item
-`vaults/Secrets/items/tenzir-secrets`); git only ever names fields:
+`vaults/Secrets/items/clickhouse-secrets`); git only ever names fields:
 
 | User      | Password vault field          | Grants on `ocsf.*` | Networks                                              |
 | --------- | ----------------------------- | ------------------ | ----------------------------------------------------- |
@@ -54,8 +55,8 @@ host_regexp default.
 
 `config.d/00-storage-tiered.xml` (inside `cluster.yaml`): storage policy
 `tiered` = hot volume on the Longhorn PVC (`/var/lib/clickhouse/hot/`) +
-cold volume as an S3 disk into the existing rustfs `tenzir` bucket
-(`tenzir/clickhouse/` prefix) with the existing tenzir bucket-user creds
+cold volume as an S3 disk into the dedicated rustfs `clickhouse` bucket
+(bucket root) with the dedicated clickhouse bucket-user creds
 (`from_env`, no values in git). Each replica runs the same config, so each
 replica uploads its own copy of every cold part - the bucket grows ~3x the
 single-node shape; keep that in mind when watching rustfs capacity.
