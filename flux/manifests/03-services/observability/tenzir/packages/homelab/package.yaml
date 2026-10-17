@@ -6,4 +6,5 @@ categories:
 description: |
   Homelab detection-plane content: source parse + OCSF mapping operators
   (k8s audit, tetragon, authentik, fleet, trivy) and finding formatting
-  for the Tenzir detection node.
+  for the Tenzir detection node; plus investigations-plane envelope
+  mapping (case/evidence envelopes -> OCSF) for the investigations node.

@@ -1,0 +1,195 @@
+---
+description: |
+  Agent case/evidence envelopes -> OCSF records for the investigations
+  plane. Agents POST thin JSON envelopes to the investigations node's
+  accept_http write lane; this operator validates the envelope, stamps
+  the OCSF spine, and consumes the envelope-only fields. Case envelopes
+  map to Incident Finding (2005) lifecycle records (Create/Update/Close,
+  the tenzir/library Defender incident mapper's lifecycle idiom);
+  evidence envelopes map to Datastore Activity (6005, Query) carrying
+  the pinned query text, its bounded snapshot, and the lake event
+  links, with agent identity stamped per the ai_operation profile (the
+  anthropic/openai library idiom). The ingest pipeline runs ocsf_derive
+  + ocsf_cast after this operator and INSERTs into the
+  investigations.records table — append-only; nothing ever updates or
+  deletes a row. Envelope contract and flow: the investigations node
+  README.
+---
+
+// ---- envelope validation ---------------------------------------------------
+// assert (not where) so a malformed POST drops with a WARNING diagnostic:
+// pollution stays visible in the node's diagnostics stream. The request
+// still completes (accept_http's default 200) — write confirmation is the
+// query-lane read-back, not the POST response.
+assert kind? == "case" or kind? == "evidence", message="envelope must name kind: case | evidence"
+
+// The case id: carried by update/close/evidence envelopes; minted here on
+// open so agents stay dumb about id minting. finding_info_list[0].uid and
+// metadata.correlation_uid carry it on every record of the case.
+if case_uid? == null and kind? == "case" and action? == "open" {
+  case_uid = uuid()
+}
+assert case_uid? != null, message="envelope must name case_uid (or be a case open)"
+
+// ---- record metadata (every record) -----------------------------------------
+metadata.uid = uuid()
+metadata.version = "1.9.0"
+// The case spine: groups the case's lifecycle records and evidence pins.
+metadata.correlation_uid = case_uid
+metadata.product = {
+  name: "homelab-investigations",
+  vendor_name: "apocrathia",
+  version: "0.1.0",
+}
+// Envelope time (case open time = incident creation time) rides when the
+// envelope names one; now() stamps the record's write time otherwise.
+time = time(time? if time? != null else now())
+
+// ---- OCSF spine per envelope kind -------------------------------------------
+match kind? {
+  "case" => {
+    assert action? in ["open", "update", "close"], message="case envelope must name action: open | update | close"
+    category_uid = 2
+    class_uid = 2005
+    severity_id = severity_id? if severity_id? != null else 3
+    // incident_finding implicitly includes the incident profile; the class
+    // doc says to add it to metadata.profiles.
+    metadata.profiles = ["incident"]
+    // Class constraint: at least one of assignee/assignee_group — every
+    // record carries an assignee, so lazy envelopes cannot mint
+    // constraint-violating records.
+    assignee = {name: assignee? if assignee? != null else "unassigned"}
+    match action? {
+      "open" => {
+        assert title? != null, message="case open envelope must name title"
+        activity_id = 1 // Create
+        status_id = 1 // New
+        finding_info_list = [{
+          uid: case_uid,
+          title: title,
+          created_time: time,
+          related_events: related_events?,
+        }]
+      }
+      "update" => {
+        activity_id = 2 // Update
+        status_id = status_id? if status_id? != null else 2 // In Progress
+        // Each record carries full current state: update-type tools read the
+        // latest case record first and the envelope is the state carrier.
+        // When the envelope omits finding_info_list, the minimal spine
+        // (uid is required on finding_info) keeps the record class-valid;
+        // server-side carry of the unchanged required attrs is the P-2
+        // upgrade path.
+        if finding_info_list? == null {
+          finding_info_list = [{uid: case_uid}]
+        }
+      }
+      "close" => {
+        assert verdict_id? != null, message="case close envelope must name verdict_id"
+        activity_id = 3 // Close
+        status_id = 5 // Closed
+        // verdict is the caption sibling of verdict_id — ocsf_derive stamps
+        // it. Free-text disposition rides desc (the envelope's verdict
+        // field moves there when desc is absent).
+        desc = desc? if desc? != null else verdict?
+        if finding_info_list? == null {
+          finding_info_list = [{uid: case_uid}]
+        }
+      }
+      _ => {} // unreachable: the action assert above drops other values
+    }
+  }
+  "evidence" => {
+    assert query_string? != null, message="evidence envelope must name query_string"
+    category_uid = 6
+    class_uid = 6005
+    activity_id = 4 // Query
+    severity_id = 1
+    // Class constraint: at least one of database/databucket/table names the
+    // datastore the pinned query ran against (the lake's ocsf database by
+    // default).
+    database = {name: database? if database? != null else "ocsf"}
+    table = {name: table? if table? != null else "events"}
+    // The pinned query and its bounded snapshot (query_info shapes per the
+    // splunk CIM datastore mapper): the pin is the durable copy of what the
+    // agent already fetched over the query lane, not a re-query.
+    query_info = {
+      query_string: query_string,
+      data: data? if data? != null else [],
+      // TODO: metadata.is_truncated + untruncated_size when the agent caps
+      // the snapshot (truncation disclosure); bytes/query_time/uid ride when
+      // the envelope names them — not invented here.
+    }
+    // Required class attr: the writer endpoint is the node's write lane.
+    src_endpoint = {hostname: "tenzir-node-investigations"}
+    actor = {application: {name: "homelab-investigations"}}
+    // ai_operation stamping (anthropic/openai library idiom): the envelope's
+    // agent object carries the agent identity natively on this class — the
+    // node API token is per-caller-blind, so attribution is record-level.
+    // A pin without the agent object stays valid: it keeps the actor and
+    // correlation spine, just without ai attribution.
+    if agent? != null {
+      metadata.profiles = ["ai_operation"]
+      ai_agent = {
+        uid: agent?.uid?,
+        instance_uid: agent?.instance_uid?,
+        name: agent?.name? else agent?.uid?,
+        type_id: 1,
+        ai_model: {name: agent?.model?} if agent?.model? != null else null,
+      }
+      if agent?.delegation_uid? != null {
+        delegation = {uid: agent.delegation_uid}
+      }
+      message_context = {
+        name: f"{case_uid} pin",
+        ai_role_id: 3, // Tool — the write lane is the invoked tool
+        prompt_text: agent?.prompt?,
+      }
+    }
+    // observables ride through with one normalization: read_json infers
+    // an `ip` type for IP-looking strings, and the OCSF observable value
+    // is string_t — stringify so cast keeps the value instead of nulling
+    // it. event_uid links the raw lake event rows the snapshot came from
+    // (the pinned-evidence-to-lake pivot).
+    if observables? != null {
+      observables = observables.map(o => {
+        ...o,
+        value: string(o.value?) if o.value? != null else null,
+      })
+    }
+  }
+  _ => {} // unreachable: the kind assert above drops other values
+}
+
+type_uid = (class_uid * 100) + activity_id
+
+// ---- record_integrity attestation (commented placeholder) -------------------
+// The record_integrity profile stamps attestation_list with a fingerprint
+// over a CANONICAL SERIALIZATION of the record — the implementation crux:
+// stable field ordering/normalization is defined neither in OCSF nor in
+// Tenzir and may need an upstream ask. Tracked in
+// docs/issues/tenzir-record-integrity-attestations.md (same profile, same
+// crux as the detection-plane issue; this platform's P-2 verification lane
+// shares the solution). Until it lands, no attestation_list is stamped and
+// record_integrity is not claimed in metadata.profiles — records stay
+// honest about what is and is not attested. The P-2 shape once the
+// canonical form is pinned:
+//
+//   metadata.profiles = [..., "record_integrity"]
+//   attestation_list = [{
+//     chain_uid: case_uid, // per-case chain; the verifier walks prev_event
+//                          // per chain_uid
+//     prev_event: null, // TODO(P-2): previous fingerprint in the case_uid
+//                       // chain — a read-side fetch of the chain tail at
+//                       // stamp time
+//     fingerprint: null, // hash_sha256 over the canonical serialization
+//     authority_uid: "tenzir-node-investigations",
+//   }]
+
+// ---- cleanup: consume the envelope, keep the record OCSF-clean -------------
+// Envelope-only fields left in place would ride the record until ocsf_cast
+// warns about them and removes them — noise. The consumed OCSF-named
+// envelope fields (desc, severity_id, status_id, verdict_id, notes,
+// observables, assignee, finding_info_list, ...) stay.
+drop kind, action?, title?, case_uid?, related_events?, query_string?,
+  data?, agent?, verdict?

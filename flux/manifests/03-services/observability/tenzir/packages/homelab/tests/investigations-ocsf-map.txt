@@ -1,0 +1,251 @@
+{
+  activity_id: 1,
+  activity_name: "Create",
+  assignee: {
+    name: "hermes-agent",
+  },
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Incident Finding",
+  class_uid: 2005,
+  desc: "AS64496 logon for svc-backup 9 minutes after a LAN session",
+  finding_info_list: [
+    {
+      created_time: 2026-10-17T09:00:00Z,
+      related_events: [
+        {
+          severity: "Medium",
+          severity_id: 3,
+          type_uid: 300201,
+          uid: "ev-lake-77c1",
+        },
+      ],
+      title: "Impossible travel: svc-backup",
+      uid: "case-3f9a2c",
+    },
+  ],
+  metadata: {
+    correlation_uid: "case-3f9a2c",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+    ],
+    uid: "test-record-uid",
+    version: "1.9.0",
+  },
+  severity: "Medium",
+  severity_id: 3,
+  status: "New",
+  status_id: 1,
+  time: 2026-10-17T09:00:00Z,
+  type_name: "Incident Finding: Create",
+  type_uid: 200501,
+}
+{
+  activity_id: 4,
+  activity_name: "Query",
+  actor: {
+    application: {
+      name: "homelab-investigations",
+    },
+  },
+  ai_agent: {
+    ai_model: {
+      name: "claude-sonnet-4-5",
+    },
+    instance_uid: "run-20261017-3",
+    name: "hermes-agent",
+    type: "Native",
+    type_id: 1,
+    uid: "hermes-agent",
+  },
+  category_name: "Application Activity",
+  category_uid: 6,
+  class_name: "Datastore Activity",
+  class_uid: 6005,
+  database: {
+    name: "ocsf",
+  },
+  delegation: {
+    uid: "del-operator-hermes",
+  },
+  message_context: {
+    ai_role: "Tool",
+    ai_role_id: 3,
+    name: "case-3f9a2c pin",
+    prompt_text: "pin the auth history for svc-backup around 08:50Z",
+  },
+  metadata: {
+    correlation_uid: "case-3f9a2c",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "ai_operation",
+    ],
+    uid: "test-record-uid",
+    version: "1.9.0",
+  },
+  observables: [
+    {
+      event_uid: "ev-lake-77c1",
+      name: "src_endpoint.ip",
+      type: "IP Address",
+      type_id: 2,
+      value: "203.0.113.9",
+    },
+  ],
+  query_info: {
+    data: [
+      {
+        time: 2026-10-17T08:51:23Z,
+        "src_endpoint.ip": 203.0.113.9,
+        status_id: 2,
+      },
+    ],
+    query_string: "SELECT time, src_endpoint.ip, status_id FROM ocsf.Authentication WHERE actor.user.name = 'svc-backup' AND time > now() - INTERVAL 2 DAY ORDER BY time LIMIT 100",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    hostname: "tenzir-node-investigations",
+  },
+  table: {
+    name: "Authentication",
+  },
+  time: 2026-10-17T09:05:00Z,
+  type_name: "Datastore Activity: Query",
+  type_uid: 600504,
+}
+{
+  activity_id: 2,
+  activity_name: "Update",
+  assignee: {
+    name: "hermes-agent",
+  },
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Incident Finding",
+  class_uid: 2005,
+  finding_info_list: [
+    {
+      created_time: 2026-10-17T09:00:00Z,
+      title: "Impossible travel: svc-backup",
+      uid: "case-3f9a2c",
+    },
+  ],
+  metadata: {
+    correlation_uid: "case-3f9a2c",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+    ],
+    uid: "test-record-uid",
+    version: "1.9.0",
+  },
+  notes: [
+    {
+      comment: "Pinned auth history; travel window confirmed",
+      owner: {
+        name: "hermes-agent",
+      },
+    },
+  ],
+  severity: "Medium",
+  severity_id: 3,
+  status: "In Progress",
+  status_id: 2,
+  time: 2026-10-17T09:10:00Z,
+  type_name: "Incident Finding: Update",
+  type_uid: 200502,
+}
+{
+  activity_id: 3,
+  activity_name: "Close",
+  assignee: {
+    name: "hermes-agent",
+  },
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Incident Finding",
+  class_uid: 2005,
+  desc: "True Positive: rotated credential abuse from AS64496 - sessions revoked, credential rotated",
+  finding_info_list: [
+    {
+      uid: "case-3f9a2c",
+    },
+  ],
+  metadata: {
+    correlation_uid: "case-3f9a2c",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+    ],
+    uid: "test-record-uid",
+    version: "1.9.0",
+  },
+  severity: "Medium",
+  severity_id: 3,
+  status: "Closed",
+  status_id: 5,
+  time: 2026-10-17T10:00:00Z,
+  type_name: "Incident Finding: Close",
+  type_uid: 200503,
+  verdict: "True Positive",
+  verdict_id: 2,
+}
+{
+  activity_id: 4,
+  activity_name: "Query",
+  actor: {
+    application: {
+      name: "homelab-investigations",
+    },
+  },
+  category_name: "Application Activity",
+  category_uid: 6,
+  class_name: "Datastore Activity",
+  class_uid: 6005,
+  database: {
+    name: "ocsf",
+  },
+  metadata: {
+    correlation_uid: "case-3f9a2c",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    uid: "test-record-uid",
+    version: "1.9.0",
+  },
+  query_info: {
+    data: [],
+    query_string: "SELECT count() FROM ocsf.Authentication WHERE status_id = 2",
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    hostname: "tenzir-node-investigations",
+  },
+  table: {
+    name: "events",
+  },
+  time: 2026-10-17T09:15:00Z,
+  type_name: "Datastore Activity: Query",
+  type_uid: 600504,
+}

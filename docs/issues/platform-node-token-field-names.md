@@ -29,6 +29,9 @@ kind is self-describing.
 - All three field labels renamed on the `tenzir-secrets` vault item
   (values unchanged — same tokens, per-node, never regenerated for a
   rename)
+- The investigations node (in flight 2026-10-17) adds a fourth,
+  `investigations-token`, in the current sibling shape — the rename sweep
+  covers it too
 - `nodes/*/helmrelease.yaml` `nodes[].token.key` values updated to match
 - `secret.yaml` field-comment list updated
 - Node README "Adding a node" convention line updated
@@ -41,6 +44,7 @@ kind is self-describing.
 - kustomize build flux/manifests/03-services/observability/tenzir
 - Flux MCP read: HelmRelease/pod status per node after apply
 - grep: no `<role>-token` (old shape) refs left in the tenzir subtree
+  (investigations-token included once it lands)
 
 ## Implementation hint
 
