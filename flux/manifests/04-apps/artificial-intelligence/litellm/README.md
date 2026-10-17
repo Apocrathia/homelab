@@ -12,6 +12,7 @@ This deployment includes:
 - PostgreSQL database for model configurations and usage tracking
 - Valkey for exact response caching (Redis protocol; `REDIS_HOST=litellm-valkey`)
 - Master key-based API access control
+- Chart-native HPA autoscaling (CPU-based; min 3 / max 6 / 60% target)
 
 ## Configuration
 
