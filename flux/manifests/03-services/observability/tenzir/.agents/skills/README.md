@@ -23,3 +23,10 @@ git -C /tmp/tenzir-skills checkout a47ab4c6bd0518bf132be3751d95ae7e61468c29  # o
 rsync -a --delete --exclude README.md /tmp/tenzir-skills/skills/tenzir/    tenzir/
 rsync -a --delete --exclude README.md /tmp/tenzir-skills/skills/tenzir-ocsf/ tenzir-ocsf/
 ```
+
+After the copy, re-apply the `tenzir-ocsf` prune: keep only the
+version-neutral content (introduction, FAQs, articles) and the latest
+stable OCSF version directory + summary page (today `v1.9.0/`,
+`v1.9.0.md`); `git rm` every other `v*/` tree and `v*.md` page. Bump
+the kept version when the tenzir engine's OCSF default moves. Rationale
+and provenance: [`tenzir-ocsf/README.md`](./tenzir-ocsf/README.md).
