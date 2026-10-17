@@ -104,6 +104,7 @@
         "type": "prometheus",
         "uid": "${mimir}"
       },
+      "description": "Egress = events exiting the pipeline per tenzir.metrics.pipeline: internal bus publishes, import writes, and external sinks - not external export only. Flows internal to Tenzir are flagged in the source metric; the Mimir mapping pushes raw totals. authentik events pull moves ~0 events, so its 0 egress is correct; netflow collector generates events internally (egress >> ingress); ocsf mapping publishes + imports (~2x ingest).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -194,12 +195,29 @@
         "type": "prometheus",
         "uid": "${mimir}"
       },
+      "description": "Green 'reporting' = the pipeline pushed metrics within the trailing 3m (10s push cadence). Rows are generated dynamically: every pipeline with samples in the dashboard range gets a lane \u2014 nothing is pinned, so new and renamed pipelines appear without dashboard changes. A pipeline that stops reporting mid-range shows a gap in its lane (red segments appear up to 3m late \u2014 the staleness window). The unnamed red DOWN lane is the all-down guard: it appears only when NO pipeline pushed samples in the trailing 3m (the guard arm yields nothing whenever any lane reports, so it never pollutes the per-pipeline rows) \u2014 one red row instead of a blank panel. Residual limit: a pipeline absent longer than the dashboard range renders no lane at all (PromQL cannot enumerate nonexistent series) \u2014 node-level absence is caught by the guard lane and the metric/stdout panels.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "reporting"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -225,16 +243,17 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["sum"],
-          "fields": "",
-          "values": false
+        "alignValue": "left",
+        "legend": {
+          "showLegend": false
         },
-        "textMode": "auto"
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -243,14 +262,14 @@
             "uid": "${mimir}"
           },
           "editorMode": "code",
-          "expr": "count_over_time(tenzir_pipeline_ingress_events[3m]) > bool 0",
+          "expr": "count_over_time(tenzir_pipeline_ingress_events[3m]) > bool 0 or (1 - absent_over_time(tenzir_pipeline_ingress_events[3m]))",
           "legendFormat": "{{pipeline_name}}",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Pipeline heartbeat (1 = reporting; missing = down)",
-      "type": "stat"
+      "title": "Pipeline reporting status",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -486,6 +505,214 @@
       ],
       "title": "Detections per 5m",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 7,
+      "panels": [],
+      "title": "Node Logs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
+      },
+      "description": "tenzir node pod stdout/stderr filtered to warning/error families: platform disconnect blips, compaction stalls, request_receiver_down, sink-operator errors. Some lines carry raw ANSI color escapes.",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "id": 8,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "{namespace=~\"tenzir-system|tenzir\", pod=~\"tenzir-node-($node)-.*\"} |~ \"(?i)(warn|error|fail|crash|stall|lost|down|reconnect|in flight)\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Node stdout \u2014 warnings/errors",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
+      },
+      "description": "All tenzir node pod stdout/stderr, newest first (no filter). Includes benign banner/catalog lines.",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "{namespace=~\"tenzir-system|tenzir\", pod=~\"tenzir-node-($node)-.*\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Node stdout \u2014 recent (all)",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${mimir}"
+      },
+      "description": "Warning-severity pipeline diagnostics (value 1 per warning, pipeline labels), pushed by the same error-diagnostics-to-mimir arms as the errors stat; dark while no warnings fire.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 33
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${mimir}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (pipeline_name) (sum_over_time(tenzir_pipeline_warnings[6h]))",
+          "legendFormat": "{{pipeline_name}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline warnings (6h)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Pipeline Diagnostics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
+      },
+      "description": "Per-pipeline diagnostics from the tenzir node diagnostics stores. Live entries ship via each node's native diagnostics-to-loki pipeline (job=tenzir-diagnostics; labels: pipeline, severity, node \u2014 the referenced fields are consumed out of the shipped body, which keeps the rest of the record verbatim); pre-landing history stays visible from the scratch draft shipper (job=tenzir-diagnostics-draft; body: timestamp, pipeline_name, severity, message). Filter by node, then pipeline, then severity. Lines are JSON.",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "id": 12,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "{job=~\"tenzir-diagnostics.*\", namespace=~\"tenzir-system|tenzir\", node=~\"$node\", pipeline=~\"$pipeline\", severity=~\"$severity\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline logs",
+      "type": "logs"
     }
   ],
   "refresh": "30s",
@@ -508,6 +735,108 @@
         "refresh": 1,
         "regex": "",
         "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Loki",
+          "value": "loki"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Loki",
+        "name": "loki",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "${loki}"
+        },
+        "definition": "label_values({job=~\"tenzir-diagnostics.*\", namespace=~\"tenzir-system|tenzir\"}, node)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Node",
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "label": "node",
+          "query": "{job=~\"tenzir-diagnostics.*\", namespace=~\"tenzir-system|tenzir\"}",
+          "refId": "LokiVariableQueryEditor-Node"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "${loki}"
+        },
+        "definition": "label_values({job=~\"tenzir-diagnostics.*\", namespace=~\"tenzir-system|tenzir\", node=~\"$node\"}, pipeline)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Pipeline",
+        "multi": true,
+        "name": "pipeline",
+        "options": [],
+        "query": {
+          "label": "pipeline",
+          "query": "{job=~\"tenzir-diagnostics.*\", namespace=~\"tenzir-system|tenzir\", node=~\"$node\"}",
+          "refId": "LokiVariableQueryEditor-Pipeline"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "warning|error",
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "Severity",
+        "multi": true,
+        "name": "severity",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "warning",
+            "value": "warning"
+          },
+          {
+            "selected": false,
+            "text": "error",
+            "value": "error"
+          }
+        ],
+        "query": "warning, error",
+        "type": "custom"
       }
     ]
   },
