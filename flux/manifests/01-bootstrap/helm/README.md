@@ -118,13 +118,6 @@ Helm repositories provide access to packaged applications and services. This set
 - **Update Interval**: 30 minutes
 - **Usage**: Windows file share mounting
 
-#### MinIO (`minio.yaml`)
-
-- **Repository**: `https://charts.min.io`
-- **Purpose**: S3-compatible object storage
-- **Update Interval**: 30 minutes
-- **Usage**: Backup storage, object storage
-
 ## Repository Management
 
 ### Update Strategy

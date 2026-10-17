@@ -46,7 +46,7 @@ spec:
         http:
           enabled: true
 
-    # Storage configuration - using external MinIO
+    # Storage configuration - using external RustFS
     storage:
       trace:
         backend: s3
@@ -146,7 +146,7 @@ spec:
       # Multi-tenancy disabled for homelab
       multitenancyEnabled: false
 
-    # Disable internal MinIO - using external MinIO
+    # Disable internal MinIO - using external RustFS
     minio:
       enabled: false
 

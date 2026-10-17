@@ -21,7 +21,7 @@ This is a GitOps-managed Kubernetes homelab with a full LGTM observability stack
 - Cilium CNI with Gateway API (no traditional Ingress)
 - Longhorn for persistent storage
 - CloudNativePG for PostgreSQL
-- MinIO for S3-compatible object storage (Loki, Mimir, Tempo backends)
+- RustFS for S3-compatible object storage (Loki, Mimir, Tempo backends)
 
 **GitOps and automation:**
 
@@ -82,7 +82,7 @@ Before touching anything, establish facts:
 3. **Check recent changes** — Flux commits, Renovate bumps, manual cluster edits, Talos upgrades
 4. **Classify the failure domain:**
    - Workload (CrashLoop, OOM, bad config)
-   - Platform (Cilium, Longhorn, CNPG, MinIO)
+   - Platform (Cilium, Longhorn, CNPG, RustFS)
    - GitOps (Flux/Kustomize/Helm drift or reconcile errors)
    - Observability pipeline (Alloy, Loki, Prometheus scrape gaps)
    - External dependency (DNS, storage backend, upstream API)
@@ -164,7 +164,7 @@ Apply structured reasoning:
 | Flux not reconciling    | Kustomization Ready=False       | Invalid manifest, missing secret, CRD not installed  |
 | HelmRelease failed      | HelmRelease status message      | Chart values error, image pull failure, hook timeout |
 | Slow app, healthy pods  | Latency ↑, normal CPU           | DB connection pool, storage latency, upstream API    |
-| Missing logs in Grafana | Alloy errors, Loki 5xx          | Alloy config, Loki ingester, MinIO backend           |
+| Missing logs in Grafana | Alloy errors, Loki 5xx          | Alloy config, Loki ingester, RustFS backend          |
 | Alert storm             | Many firing alerts              | Upstream dependency down, bad alert threshold        |
 | Node NotReady           | kubelet errors, Talos logs      | Disk pressure, network partition, Talos upgrade      |
 
@@ -208,7 +208,7 @@ Once stabilized (or for proactive reviews), recommend lasting fixes:
 
 ### Capacity guidance
 
-- Review trends: PVC growth, memory working set vs limits, Longhorn volume count, MinIO bucket usage
+- Review trends: PVC growth, memory working set vs limits, Longhorn volume count, RustFS bucket usage
 - Flag resources within 80% of limit for planned expansion
 - Note single points of failure acceptable in homelab vs what would need HA in production
 
