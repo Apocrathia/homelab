@@ -13,19 +13,19 @@ everything past the retention horizon. Live plan and slice breakdown:
 
 | File             | What it is                                                                                          |
 | ---------------- | --------------------------------------------------------------------------------------------------- |
-| `namespace.yaml` | `clickhouse-system` namespace                                                                       |
+| `namespace.yaml` | `clickhouse` namespace                                                                              |
 | `operator.yaml`  | Altinity clickhouse-operator (chart installs the CRDs via hook)                                     |
 | `secret.yaml`    | OnePasswordItem `clickhouse-secrets` (existing `tenzir-secrets` vault item, second materialization) |
 | `keeper.yaml`    | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                             |
 | `cluster.yaml`   | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap       |
 
-The operator watches `clickhouse-system` only (`watchNamespaces`).
+The operator watches `clickhouse` only (`watchNamespaces`).
 
 ## In-cluster endpoints
 
 The operator creates the Services; name prefixes are fixed by its namer:
 
-- `clickhouse-ocsf.clickhouse-system.svc.cluster.local` - CR-level service,
+- `clickhouse-ocsf.clickhouse.svc.cluster.local` - CR-level service,
   load-balanced over all three replicas. HTTP 8123 (Grafana datasource,
   MR-2), native TCP 9000 (Tenzir `to_clickhouse`, MR-3).
 - `chi-ocsf-ocsf-<shard>-<replica>` services - per-host (e.g.
@@ -96,7 +96,7 @@ is not yet serving when a replica first boots, the tables silently do not
 get created until the next server restart. After any apply, verify:
 
 ```bash
-kubectl exec -n clickhouse-system chi-ocsf-ocsf-0-0-0 -- \
+kubectl exec -n clickhouse chi-ocsf-ocsf-0-0-0 -- \
   clickhouse-client --query "SHOW TABLES FROM ocsf"
 ```
 
@@ -120,7 +120,7 @@ init scripts never ALTER existing tables.
 kustomize build flux/manifests/03-services/observability > /dev/null
 helm repo add altinity https://helm.altinity.com
 helm template altinity-operator altinity/altinity-clickhouse-operator \
-  --version 0.27.4 -n clickhouse-system \
+  --version 0.27.4 -n clickhouse \
   -f <(yq '.spec.values' flux/manifests/03-services/observability/clickhouse/operator.yaml)
 ```
 

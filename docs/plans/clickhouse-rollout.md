@@ -112,7 +112,7 @@ for the decision trail).
 operator source):**
 
 - Operator HelmRelease + `ClickHouseKeeperInstallation` (CHK) +
-  `ClickHouseInstallation` (CHI) CRs in `clickhouse-system`; the operator
+  `ClickHouseInstallation` (CHI) CRs in `clickhouse`; the operator
   watches that namespace only. CRDs install via the chart's pre-install
   hook.
 - Keeper is deployed by the operator itself via the CHK CRD (the supported
@@ -160,15 +160,15 @@ with an operator-confirmation gate for any discovered gap).
 ### D2 — Naming and placement
 
 App dir `flux/manifests/03-services/observability/clickhouse/`, namespace
-`clickhouse-system` (matches `loki-system`/`mimir-system`/`tempo-system`).
+`clickhouse` (operator decision: no `-system` suffix unless required).
 The CHI CR is named `ocsf` (so the operator's CR-level Service comes out as
 `clickhouse-ocsf`) and the cluster inside it is `ocsf` - the `{cluster}`
 macro value is `ocsf`. In-cluster DNS (operator-created Services):
 
-- `clickhouse-ocsf.clickhouse-system.svc.cluster.local` - load-balanced over
+- `clickhouse-ocsf.clickhouse.svc.cluster.local` - load-balanced over
   all replicas; HTTP 8123 (Grafana, probes) and native 9000 (Tenzir
   `to_clickhouse`). This replaces the old `clickhouse.observability.svc`
-  and `clickhouse.clickhouse-system.svc` sketches.
+  and `clickhouse.clickhouse.svc` sketches.
 - Per-host `chi-ocsf-ocsf-<shard>-<replica>` services for ad-hoc
   `clickhouse-client` against a specific replica.
 
@@ -303,12 +303,12 @@ on `grafana-secrets` because the datasource `valuesFrom` substitutes from
 that Secret (same mechanism as the current tenzir-ocsf S3 creds). The
 operator fills values; git only ever names fields. The
 `clickhouse/secret.yaml` OnePasswordItem (`itemPath: vaults/Secrets/items/tenzir-secrets`)
-renders the `clickhouse-secrets` Secret in `clickhouse-system` — same item, second
+renders the `clickhouse-secrets` Secret in `clickhouse` — same item, second
 materialization (1Password operator supports multiple OnePasswordItem CRs
 on one item); the CHI users config and podTemplate env read from it.
 
 Named tradeoff: the `clickhouse-secrets` materialization in
-`clickhouse-system` carries all `tenzir-secrets` fields (including tenzir
+`clickhouse` carries all `tenzir-secrets` fields (including tenzir
 platform node tokens). Accepted for the rollout (values live only in the
 cluster's own namespaces; k8s Secret access is cluster-RBAC-scoped); the
 security-review pass may propose a dedicated `clickhouse-secrets` vault item
@@ -335,7 +335,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   pass-through; the rule stays sink-only at the tail (`to_s3`), so
   archive-then-delete semantics are unchanged. `to_clickhouse`:
   `table=f"ocsf.{class_name.replace(\" \", \"_\")}"`,
-  `host="clickhouse-ocsf.clickhouse-system.svc.cluster.local"` (the CR-level
+  `host="clickhouse-ocsf.clickhouse.svc.cluster.local"` (the CR-level
   Service, load-balanced over the three replicas; ReplicatedMergeTree
   replicates an insert from whichever replica takes it), `port=9000`,
   `user="tenzir"`, `password=secret(\"CLICKHOUSE_PASSWORD\")`, `tls=false`,
@@ -368,9 +368,9 @@ plugin documents wins; creds arrive via `valuesFrom` from
   `repositories/kustomization.yaml` (**protected path touch** — flagged for
   operator review; nothing else in 01-bootstrap moves).
 - `flux/manifests/03-services/observability/clickhouse/`:
-  - `namespace.yaml` (`clickhouse-system`)
+  - `namespace.yaml` (`clickhouse`)
   - `operator.yaml` — `altinity-clickhouse-operator` 0.27.4 (CRDs via
-    the chart's pre-install hook), `watchNamespaces: ["clickhouse-system"]`,
+    the chart's pre-install hook), `watchNamespaces: ["clickhouse"]`,
     operator resources, ServiceMonitor (ch-metrics + op-metrics) with the
     `release: kube-prometheus-stack` label; keeper metrics intentionally
     out (operator-generated keeper services publish only zk/raft by default)
@@ -444,7 +444,7 @@ are missing (keeper race on first boot), restart the CHI pods once.
   machinery untouched in this MR (still needed until MR-5).
 - `flux/manifests/03-services/observability/grafana/datasources/ocsf-clickhouse.yaml`:
   GrafanaDatasource CR from the prototype sketch, corrected: URL
-  `http://clickhouse-ocsf.clickhouse-system.svc.cluster.local:8123`, uid
+  `http://clickhouse-ocsf.clickhouse.svc.cluster.local:8123`, uid
   `ocsf-clickhouse`, instanceSelector same as tenzir-ocsf.yaml, auth shape
   per D7 verification (valuesFrom from `grafana-secrets`).
 - Register in `observability/grafana/kustomization.yaml`; update
@@ -675,7 +675,7 @@ permanently cap history at the cutover day (MR-5 needs the backfill done).
 kustomize build flux/manifests/03-services/observability > /dev/null
 helm repo add altinity https://helm.altinity.com
 helm template ch-operator altinity/altinity-clickhouse-operator \
-  --version 0.27.4 -n clickhouse-system -f <rendered-mr1-values>
+  --version 0.27.4 -n clickhouse -f <rendered-mr1-values>
 pre-commit run --all            # yamllint --strict, kube-linter flux/, gitleaks, prettier
 # CR field check (Warn-mode strips misspelled CHI/CHK fields): validate
 # cluster.yaml + keeper.yaml against the CRD schemas shipped in chart 0.27.4

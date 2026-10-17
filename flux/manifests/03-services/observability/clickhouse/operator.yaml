@@ -4,7 +4,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: altinity-clickhouse-operator
-  namespace: clickhouse-system
+  namespace: clickhouse
 spec:
   interval: 1h
   chart:
@@ -28,9 +28,9 @@ spec:
     # ClickHouseKeeperInstallation (keeper.yaml) CRs. watchNamespaces feeds
     # the operator's config.yaml watch.namespaces.include; empty would also
     # watch the operator's own namespace, but the explicit list documents
-    # the blast radius: this operator manages clickhouse-system only.
+    # the blast radius: this operator manages clickhouse only.
     watchNamespaces:
-      - clickhouse-system
+      - clickhouse
 
     # CRDs (ClickHouseInstallation, ClickHouseInstallationTemplate,
     # ClickHouseOperatorConfiguration, ClickHouseKeeperInstallation) are

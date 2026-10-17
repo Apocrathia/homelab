@@ -156,7 +156,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   `tenzir` bucket), TTL with a retention-horizon DELETE cap
 - **Deployment**: Altinity `altinity-clickhouse-operator` Helm chart
   (CRDs installed by the chart hook) + `ClickHouseKeeperInstallation` +
-  `ClickHouseInstallation` CRs in `clickhouse-system`
+  `ClickHouseInstallation` CRs in `clickhouse`
 - **Details**: See [`clickhouse/README.md`](./clickhouse/README.md); rollout
   plan:
   [`docs/plans/clickhouse-rollout.md`](../../../../docs/plans/clickhouse-rollout.md)
