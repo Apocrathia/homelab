@@ -86,7 +86,12 @@ spec:
       backupConcurrentLimit: "10" # Increased to match recurring job concurrency (75 volumes need higher throughput)
 
       # Storage settings — explicit Longhorn chart defaults (questions.yaml / values.yaml comments)
-      storageOverProvisioningPercentage: "100"
+      # 2026-10-17: booked (storageScheduled) capacity saturated the replica-scheduling
+      # precheck on all four nodes (~2.6 TiB booked vs ~530 GiB actual data) and blocked
+      # all new replica scheduling, including rebuilds. 200% halves booked-weight (thin
+      # provisioning); the real-space guard is storageMinimalAvailablePercentage below,
+      # and kubelet image-GC (50/40) caps the containerd side.
+      storageOverProvisioningPercentage: "200"
       storageMinimalAvailablePercentage: "25"
       storageReservedPercentageForDefaultDisk: "25"
       defaultDataLocality: "best-effort"
