@@ -26,6 +26,15 @@ the parquet directly. Grafana owns notifications; there is no other
 findings egress. The class taxonomy and the bus semantics live in
 [`detections/README.md`](./detections/README.md).
 
+ClickHouse is becoming the OCSF query store: the nodes' `ocsf-archive`
+rules dual-write (MR-3, rollout plan
+[`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md))
+— every archived batch lands in the per-class `ocsf.<Class_Name>` tables
+on the ClickHouse OCSF cluster alongside the unchanged parquet. The
+transition window keeps the parquet lane flowing as the dashboards'
+comparison oracle until the MR-5 cut-over; until then Grafana still
+queries MotherDuck.
+
 ```mermaid
 flowchart LR
     SRC["sources"] -->|"OTLP · HTTP · NetFlow"| IN[listener]
@@ -40,6 +49,7 @@ flowchart LR
     end
 
     LAKE -->|"after 15 min"| RUST["rustfs parquet · s3://tenzir/ocsf/<br/>class_uid-partitioned"]
+    LAKE -->|"after 15 min, fork"| CH["ClickHouse ocsf.* tables<br/>(OCSF query store, accumulating)"]
     RUST -.->|"reads"| GRAF["Grafana over MotherDuck<br/>(querying + alerting)"]
     NODE -.-> PLAT["Tenzir Platform"]
 ```
@@ -65,6 +75,13 @@ and the rendered Secret keys match them:
   vault after the first apply
 - `core-token` / `tetragon-token`: the pre-provisioned Tenzir Platform
   node tokens, one per node
+
+A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
+Secret in this namespace (MR-3; the same item the clickhouse namespace
+renders — one item, multiple OnePasswordItem CRs). Its `clickhouse-password`
+field is the ClickHouse `tenzir` writer password both nodes read as
+`TENZIR_SECRETS__CLICKHOUSE_PASSWORD` for the `to_clickhouse` archive
+legs. The operator adds the value.
 
 ## Content
 

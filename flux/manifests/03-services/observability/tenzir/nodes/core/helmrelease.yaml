@@ -401,6 +401,16 @@ spec:
                 # authentik's non-IAM arm), added 2026-10-17: without a
                 # time rule those partitions accumulated locally and
                 # bloated the boot catalog load.
+                # Dual-write transition window (clickhouse rollout MR-3,
+                # plan D8): the rule forks a to_clickhouse leg ahead of
+                # the unchanged to_s3 tail — ClickHouse is becoming the
+                # OCSF query store (per-class ocsf.<Class_Name> tables),
+                # while the parquet lane stays the record until the MR-5
+                # cut-over. fork passes events through, so
+                # archive-then-delete semantics are unchanged;
+                # mode="append" fails loudly when the MR-1 DDL is
+                # missing (the second net for the Keeper first-boot
+                # race), and max_batch_rows bounds the insert buffers.
                 - after: 15 minutes
                   name: ocsf-archive
                   field: time
@@ -415,6 +425,16 @@ spec:
                       "ocsf.base_event",
                     ]
                   pipeline: |
+                    fork {
+                      to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+                        host="clickhouse-ocsf.clickhouse.svc.cluster.local",
+                        port=9000,
+                        user="tenzir",
+                        password=secret("clickhouse-password"),
+                        tls=false,
+                        mode="append",
+                        max_batch_rows=65536
+                    }
                     to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
                       write_parquet
                     }
@@ -442,7 +462,12 @@ spec:
     # UPPER. rustfs S3 credentials for the default AWS chain used by to_s3,
     # and the authentik events API token as `authentik-events-token`
     # (TENZIR_SECRETS__ map; tofu mints the token, the operator copies the
-    # key into the vault once).
+    # key into the vault once). The ClickHouse writer password rides the
+    # dedicated clickhouse-secrets item (this namespace materializes its
+    # own OnePasswordItem in secret.yaml): the env var maps to config key
+    # tenzir.secrets.clickhouse-password, so the to_clickhouse archive
+    # legs read it as secret("clickhouse-password") — kebab name, the
+    # same env-var shape as the authentik token.
     extraEnv:
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
@@ -459,6 +484,11 @@ spec:
           secretKeyRef:
             name: tenzir-secrets
             key: authentik-events-token
+      - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
 
     # Detection content: the homelab TQL mapping package (IaC-installed at
     # /etc/tenzir/packages/homelab) and the sigma rule directories, all

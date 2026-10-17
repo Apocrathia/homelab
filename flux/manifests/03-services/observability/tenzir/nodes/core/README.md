@@ -45,12 +45,14 @@ flowchart LR
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]
     BUS --> LAKE
     LAKE -->|"after 15 min"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
+    LAKE -->|"after 15 min, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
     S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
 ```
 
 The chart is this node's whole world: feeders, the bus, sigma, the lake,
-the class-partitioned archive, and the Grafana query plane. Grafana owns
-alerting off the archive; there is no other findings egress.
+the class-partitioned archive, the ClickHouse dual-write, and the Grafana
+query plane. Grafana owns alerting off the archive; there is no other
+findings egress.
 
 ## Sizing
 
@@ -100,6 +102,14 @@ stores to `s3://tenzir/ocsf/**/{uuid}.parquet` with
 (archive-then-expire; `preserve-input` stays off). The compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15 to 20
 minutes.
+
+Dual-write transition window (MR-3): the same rule forks a
+`to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
+archived batch also lands in the per-class `ocsf.<Class_Name>` tables on
+the ClickHouse OCSF store — `mode="append"` fails loudly if the DDL is
+missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
+the insert buffers per table. ClickHouse is becoming the query store;
+the parquet lane stays the record until the MR-5 cut-over.
 
 The lake is a transit buffer between ingest and the archive, not a query
 surface: it is sized to hold one window at worst-case flood rate, and

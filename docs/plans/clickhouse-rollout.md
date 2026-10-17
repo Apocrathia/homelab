@@ -73,8 +73,10 @@ where:
   files do NOT contain `class_uid`; Tenzir `read_parquet` has no hive
   partition support — backfill must re-derive `class_uid` per class prefix
   (to_s3 doc + read_parquet doc, fetched 2026-10-17).
-- Tenzir managed secrets: env `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` →
-  `secret("CLICKHOUSE_PASSWORD")`
+- Tenzir managed secrets: env `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` maps
+  `__`→`.` and `_`→`-` to config key `tenzir.secrets.clickhouse-password`,
+  which the pipeline reads as `secret("clickhouse-password")` — same shape
+  as the live authentik wiring
   (`.scratch/tenzir/raw/docs__explanations__secrets.md.md`).
 
 ## Operator-locked decisions (do not re-litigate)
@@ -344,10 +346,15 @@ plugin documents wins; creds arrive via `valuesFrom` from
   `host="clickhouse-tenzir.clickhouse.svc.cluster.local"` (the CR-level
   Service, load-balanced over the three replicas; ReplicatedMergeTree
   replicates an insert from whichever replica takes it), `port=9000`,
-  `user="tenzir"`, `password=secret(\"CLICKHOUSE_PASSWORD\")`, `tls=false`,
+  `user="tenzir"`, `password=secret(\"clickhouse-password\")`, `tls=false`,
   `mode="append"`, `max_batch_rows=65536` (per the integration guide's
   per-class pattern; `mode="append"` fails loudly if the DDL is missing —
-  good).
+  good). The secret name is kebab, not the UPPER env literal: the env var
+  `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` maps `__`→`.` and `_`→`-` to config
+  key `tenzir.secrets.clickhouse-password` — reviewer-sanctioned deviation
+  from the docs' generic UPPER example; same shape as the live authentik
+  wiring (`TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN` →
+  `authentik-events-token`).
 - **Backfill (one-time, operator-led)**: per class, a bounded replay
   `from_s3 "s3://tenzir/ocsf/class_uid=<NNNN>/**.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" { read_parquet }`
   → `where time < <cutover>` → `class_uid = <NNNN>` (re-derive the
