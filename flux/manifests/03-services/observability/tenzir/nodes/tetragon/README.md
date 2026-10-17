@@ -142,11 +142,11 @@ classes starts from that baseline, not from zero.
    `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
    renovate comment, `nodes[0].name: <role>`: the entry name is the
    node name, because the chart renders every node resource as
-   `<fullname>-<entry.name>`; every release except the literally named
-   `tenzir-node` also takes `fullnameOverride: tenzir-node` (fullname
-   otherwise defaults to the release name, which doubles the role when
-   the release contains `tenzir-node` and prepends the chart name when it
-   does not, never rename a release into either concat trap),
+   `<fullname>-<entry.name>`; every release takes
+   `fullnameOverride: tenzir-node` (fullname otherwise defaults to the
+   release name, which doubles the role when the release contains
+   `tenzir-node` and prepends the chart name when it does not, never
+   rename a release into either concat trap),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
    `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
    listeners, `persistence.size` per sizing.

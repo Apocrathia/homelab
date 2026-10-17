@@ -3,7 +3,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: tenzir-node
+  name: tenzir-node-core
   namespace: tenzir-system
 spec:
   interval: 1h
@@ -28,6 +28,12 @@ spec:
       retries: 3
     timeout: 10m
   values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-core + entry core would
+    # double to tenzir-node-core-core. The override pins fullname
+    # at tenzir-node so the entry renders tenzir-node-core.
+    fullnameOverride: tenzir-node
     image:
       registry: docker.io
       repository: tenzir/tenzir
