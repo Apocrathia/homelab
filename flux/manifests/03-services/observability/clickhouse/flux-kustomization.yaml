@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: services-clickhouse
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  path: ./flux/manifests/03-services/observability/clickhouse
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: homelab
+  dependsOn:
+    # altinity HelmRepository (bootstrap layer).
+    - name: bootstrap-helm
+    # The operator chart renders a ServiceMonitor; its CRD ships with
+    # kube-prometheus-stack (house pattern from services-tetragon).
+    - name: infrastructure-kube-prometheus-stack
