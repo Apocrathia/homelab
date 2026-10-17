@@ -6,7 +6,6 @@ severity: low
 source: human
 found_at: 2026-10-17
 found_by: operator
-area: security
 ---
 
 # Rename platform node-token fields to <role>-node-token
@@ -14,9 +13,10 @@ area: security
 ## Problem / desired state
 
 The `tenzir-secrets` 1Password item labels the Tenzir Platform node
-tokens `core-token`, `tetragon-token`, `netflow-token`. The labels
-under-specify what they are — during the netflow-node deploy
-(2026-10-17) the operator first read `netflow-token` as a possible
+tokens `core-token`, `tetragon-token`, `netflow-token`. This is a
+naming-ergonomics gap, not a security one: the label should say what the
+value is for at a glance, and during the netflow-node deploy (2026-10-17)
+it didn't — the operator first read `netflow-token` as a possible
 UniFi/exporter token. They are per-node platform registration tokens
 (`tnz_...`, app.tenzir.com workspace), nothing to do with feed sources.
 
