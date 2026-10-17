@@ -151,7 +151,9 @@ talosctl gen config \
 
 # Pre-flight validate the rendered bundle (catches config errors before
 # any node is touched)
-talosctl validate --config rendered/controlplane.yaml --mode metal --strict
+talosctl validate \
+  --config rendered/controlplane.yaml \
+  --mode metal --strict
 
 # Build + validate the final per-node configs locally
 for i in {1..4}; do
@@ -159,23 +161,31 @@ for i in {1..4}; do
   talosctl machineconfig patch rendered/controlplane.yaml \
     --patch "@patches/talos-${NODE_NUM}-patch.yaml" \
     -o "rendered/talos-${NODE_NUM}.yaml"
-  talosctl validate --config "rendered/talos-${NODE_NUM}.yaml" --mode metal --strict
+  talosctl validate \
+    --config "rendered/talos-${NODE_NUM}.yaml" \
+    --mode metal --strict
 done
+
+# Point talosctl at the rendered config + direct node IPs (not the VIP)
+# BEFORE the live backup step: get machineconfig needs direct node
+# access, and a fresh rendered/talosconfig has no endpoints configured
+export TALOSCONFIG="rendered/talosconfig"
+talosctl config endpoint 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
+talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 
 # Keep a rollback copy of each node's CURRENT config
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
-  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" get machineconfig v1alpha1 -o jsonpath='{.spec}' > "rendered/live-backup-talos-${NODE_NUM}.yaml"
+  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" \
+    get machineconfig v1alpha1 -o jsonpath='{.spec}' \
+    > "rendered/live-backup-talos-${NODE_NUM}.yaml"
+  test -s "rendered/live-backup-talos-${NODE_NUM}.yaml" \
+    || echo "WARNING: empty backup for talos-${NODE_NUM}"
 done
 
-# Configure talosconfig to connect directly to nodes (not VIP) for apply-config operations
-export TALOSCONFIG="rendered/talosconfig"
-talosctl config endpoint 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
-talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
-
-# Apply new configurations one node at a time (quorum-safe); with mode auto
-# (the default) the config applies live, no reboot
+# Apply new configurations one node at a time (quorum-safe); with
+# mode auto (the default) the config applies live, no reboot
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
