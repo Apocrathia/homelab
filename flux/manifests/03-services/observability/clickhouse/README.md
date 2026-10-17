@@ -12,15 +12,30 @@ everything past the retention horizon. Live plan and slice breakdown:
 
 ## Objects
 
-| File             | What it is                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `namespace.yaml` | `clickhouse` namespace                                                                        |
-| `operator.yaml`  | Altinity clickhouse-operator (chart installs the CRDs via hook)                               |
-| `secret.yaml`    | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)              |
-| `keeper.yaml`    | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                       |
-| `cluster.yaml`   | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
+| File                              | What it is                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `namespace.yaml`                  | `clickhouse` namespace                                                                        |
+| `operator.yaml`                   | Altinity clickhouse-operator (chart installs the CRDs via pre-install hook)                   |
+| `flux-kustomization.yaml`         | Flux Kustomization `services-clickhouse` (operator layer)                                     |
+| `cluster/flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (CR layer)                                   |
+| `cluster/secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)              |
+| `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                       |
+| `cluster/cluster.yaml`            | ClickHouseInstallation `ocsf` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
 
 The operator watches `clickhouse` only (`watchNamespaces`).
+
+## Apply order
+
+The Altinity operator HelmRelease installs the
+`clickhouse.altinity.com` / `clickhouse-keeper.altinity.com` CRDs through the
+chart's pre-install hook job - CRs applied before the hook completes fail
+with "no matches for kind". The two Flux Kustomizations above split the
+layers: `services-clickhouse` (namespace + operator HelmRelease) reconciles
+first, then `services-clickhouse-cluster` (OnePasswordItem + both CRs)
+applies gated on it via `dependsOn` - the services-tetragon-policies /
+services-chaos-mesh-experiments / services-renovate-operator-config pattern.
+`services-observability` no longer carries the clickhouse dir, so a failed
+CR apply can no longer block the rest of observability.
 
 ## In-cluster endpoints
 
@@ -35,7 +50,7 @@ The operator creates the Services; name prefixes are fixed by its namer:
 - Keeper services (`chk-keeper-...`) - operator-internal; the CHI references
   the Keeper CR by name and the operator wires the endpoints.
 
-## Users (all in `cluster.yaml`, `spec.configuration.users`)
+## Users (all in `cluster/cluster.yaml`, `spec.configuration.users`)
 
 The operator renders these into `users.d` and injects the passwords as env
 vars from the `clickhouse-secrets` Secret (1Password item
@@ -53,7 +68,7 @@ host_regexp default.
 
 ## Storage tiers and retention
 
-`config.d/00-storage-tiered.xml` (inside `cluster.yaml`): storage policy
+`config.d/00-storage-tiered.xml` (inside `cluster/cluster.yaml`): storage policy
 `tiered` = hot volume on the Longhorn PVC (`/var/lib/clickhouse/hot/`) +
 cold volume as an S3 disk into the dedicated rustfs `clickhouse` bucket
 (bucket root) with the dedicated clickhouse bucket-user creds
@@ -61,12 +76,12 @@ cold volume as an S3 disk into the dedicated rustfs `clickhouse` bucket
 replica uploads its own copy of every cold part - the bucket grows ~3x the
 single-node shape; keep that in mind when watching rustfs capacity.
 
-Retention (every table, in the DDL inside `cluster.yaml`):
+Retention (every table, in the DDL inside `cluster/cluster.yaml`):
 
 - **90 days -> `TO VOLUME 'cold'`** - parts move to rustfs automatically
   (part-level, can lag merges; prototype measured seconds on LAN rustfs).
 - **400 days -> `DELETE`** - retention horizon cap, **operator-tunable**:
-  change `INTERVAL 400 DAY` in `cluster.yaml` for new installs; for live
+  change `INTERVAL 400 DAY` in `cluster/cluster.yaml` for new installs; for live
   tables, `ALTER TABLE ... MODIFY TTL ...` server-side. Day partitions +
   `ttl_only_drop_parts = 1` keep the delete a cheap partition drop.
 - Schema metadata (incl. S3 disk metadata under
@@ -109,7 +124,7 @@ init scripts never ALTER existing tables.
 ## Adding a class
 
 1. Add a `CREATE TABLE IF NOT EXISTS ocsf.<Class_Name>` block to
-   `config.d/10-startup-scripts.xml` in `cluster.yaml`.
+   `config.d/10-startup-scripts.xml` in `cluster/cluster.yaml`.
 2. `kubectl exec` the `ALTER` on existing replicas if the class is not new
    (CREATE only runs on fresh data dirs otherwise).
 3. Point the Tenzir pipeline at it (per-class table naming:
@@ -119,13 +134,15 @@ init scripts never ALTER existing tables.
 
 ```bash
 kustomize build flux/manifests/03-services/observability > /dev/null
+kustomize build flux/manifests/03-services/observability/clickhouse > /dev/null
+kustomize build flux/manifests/03-services/observability/clickhouse/cluster > /dev/null
 helm repo add altinity https://helm.altinity.com
 helm template altinity-operator altinity/altinity-clickhouse-operator \
   --version 0.27.4 -n clickhouse \
   -f <(yq '.spec.values' flux/manifests/03-services/observability/clickhouse/operator.yaml)
 ```
 
-Both CRs (`cluster.yaml`, `keeper.yaml`) were validated against the exact CRD
+Both CRs (`cluster/cluster.yaml`, `cluster/keeper.yaml`) were validated against the exact CRD
 schemas shipped in operator chart 0.27.4; the DDL + tiered-policy XML were
 executed end-to-end on `clickhouse-server:25.8.33.6` with a Keeper
 (tables, grants enforcement, dotted-column inserts, TTL move-to-cold, 400d

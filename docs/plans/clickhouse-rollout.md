@@ -314,7 +314,7 @@ drop the separate `clickhouse-tenzir-password` label. Grafana's user+key
 ride on `grafana-secrets` because the datasource `valuesFrom` substitutes
 from that Secret (same mechanism as the current tenzir-ocsf S3 creds). The
 operator fills values; git only ever names fields. The
-`clickhouse/secret.yaml` OnePasswordItem
+`clickhouse/cluster/secret.yaml` OnePasswordItem
 (`itemPath: vaults/Secrets/items/clickhouse-secrets`) renders the
 `clickhouse-secrets` Secret in `clickhouse`; the CHI users config and
 podTemplate env read from it. MR-3 materializes the same item in the
@@ -380,40 +380,81 @@ plugin documents wins; creds arrive via `valuesFrom` from
     operator resources, ServiceMonitor (ch-metrics + op-metrics) with the
     `release: kube-prometheus-stack` label; keeper metrics intentionally
     out (operator-generated keeper services publish only zk/raft by default)
-  - `secret.yaml` — OnePasswordItem `clickhouse-secrets` on the dedicated
-    new `clickhouse-secrets` vault item (fields per D6; operator fills
-    values; never secret values in git)
-  - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
-    `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
-    hostname anti-affinity (keeper quorum must not share nodes)
-  - `cluster.yaml` — ClickHouseInstallation `ocsf`: 1 shard x 3 replicas
-    (`clickhouse/clickhouse-server:25.8.33.6`, prototype-validated build),
-    Longhorn data PVC per replica (100Gi cap), required hostname
-    anti-affinity, /ping probes, podTemplate env for the rustfs creds,
-    users (tenzir + grafana per D5/D6 with `<grants>`), keeper reference,
-    `config.d/00-storage-tiered.xml` (tiered policy, from_env creds), and
-    `config.d/10-startup-scripts.xml` (D3/D4 DDL — nine CREATE IF NOT
-    EXISTS statements: eight per-class tables + Base_Event fallback; TTL
-    move 90d + DELETE cap 400d, the 400 an operator-tunable value flagged
-    in-file)
+  - `flux-kustomization.yaml` — Flux Kustomization `services-clickhouse`
+    (operator layer: namespace + operator HelmRelease)
+  - `cluster/` — the CR layer behind Flux Kustomization
+    `services-clickhouse-cluster` (cluster/flux-kustomization.yaml),
+    gated on `services-clickhouse` via `dependsOn` (see Apply order
+    below):
+    - `secret.yaml` — OnePasswordItem `clickhouse-secrets` on the dedicated
+      new `clickhouse-secrets` vault item (fields per D6; operator fills
+      values; never secret values in git)
+    - `keeper.yaml` — ClickHouseKeeperInstallation `keeper`, 3 replicas,
+      `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
+      hostname anti-affinity (keeper quorum must not share nodes)
+    - `cluster.yaml` — ClickHouseInstallation `ocsf`: 1 shard x 3 replicas
+      (`clickhouse/clickhouse-server:25.8.33.6`, prototype-validated build),
+      Longhorn data PVC per replica (100Gi cap), required hostname
+      anti-affinity, /ping probes, podTemplate env for the rustfs creds,
+      users (tenzir + grafana per D5/D6 with `<grants>`), keeper reference,
+      `config.d/00-storage-tiered.xml` (tiered policy, from_env creds), and
+      `config.d/10-startup-scripts.xml` (D3/D4 DDL — nine CREATE IF NOT
+      EXISTS statements: eight per-class tables + Base_Event fallback; TTL
+      move 90d + DELETE cap 400d, the 400 an operator-tunable value flagged
+      in-file)
   - `kustomization.yaml` + `README.md` (folder README operator rule: shape,
     endpoints, TTL values + where the horizon lives, vault fields, the
     keeper-race caveat + apply-validation query, how to add a class, schema
     evolution = operator-led ALTER only)
-- Register `clickhouse` in
-  `flux/manifests/03-services/observability/kustomization.yaml`
-  (alphabetical: between `alloy` and `grafana`) and add the component to
-  `observability/README.md`.
+- Registration (the CRD-ordering fix MR): clickhouse is
+  NOT a resource of `observability/kustomization.yaml` (it left the
+  `services-observability` kustomization — the dir is applied by its own
+  two Flux Kustomizations instead); both
+  `03-services/observability/clickhouse/flux-kustomization.yaml` and
+  `03-services/observability/clickhouse/cluster/flux-kustomization.yaml`
+  register in `flux/manifests/kustomization.yaml` (parent-then-child,
+  the tetragon/policies + chaos-mesh/experiments pattern).
 - `docs/plans/clickhouse-rollout.md` — this plan, amended in-place (this
   document; the shape decision section is the amendment record).
 
+**Apply order (the CRD-ordering fix MR):** MR-1 shipped the operator HelmRelease and
+the CHI/CHK CRs in one kustomization under `services-observability`; Flux
+applied the CRs before the operator chart's pre-install CRD hook completed,
+so the live `services-observability` reconcile failed with "no matches for
+kind ClickHouseKeeperInstallation" and the whole observability dir sat
+blocked behind it (clickhouse ns created, nothing inside). Fix (follow-up
+commit on `feat/clickhouse-storage-split`, merges with the split): split
+the dir into two Flux Kustomizations — `services-clickhouse` (namespace +
+operator HelmRelease; the altinity HelmRepository applies from
+`bootstrap-helm`, the ServiceMonitor CRD gates on
+`infrastructure-kube-prometheus-stack`) and
+`services-clickhouse-cluster` (`cluster/` path: OnePasswordItem + CHK +
+CHI; `dependsOn: services-clickhouse`, `bootstrap-1password`,
+`infrastructure-longhorn`). This is the house pattern for
+operator-installed CRDs (`services-tetragon-policies`,
+`services-chaos-mesh-experiments`, `services-renovate-operator-config`).
+On merge, `services-observability` unblocks (clickhouse left its tree)
+and the CRs wait for the operator instead of racing it. Not a separate MR:
+the ordering fix alone would unblock the kustomization into a broken
+state — CHI users materialize from `tenzir-secrets`, whose ClickHouse
+password fields are already removed from the vault, and the split's
+itemPath re-point to `clickhouse-secrets` is what makes the unblock safe.
+
 **Acceptance:**
 
-- `kustomize build flux/manifests/03-services/observability` green —
-  rendered objects include the operator Deployment, both CRs, namespace,
-  OnePasswordItem; the CRs structurally validated against the CRD schemas
+- `kustomize build` green on the observability tree plus both clickhouse
+  layers (`clickhouse/`, `clickhouse/cluster/` — rendered objects include
+  the operator Deployment, both CRs, namespace, OnePasswordItem); the CRs
+  structurally validated against the CRD schemas
   shipped in chart 0.27.4 (jsonschema check — Warn-mode silently drops
   misspelled CHI/CHK fields, so the CR schema IS the field check).
+- Apply-order proof (the CRD-ordering fix MR): `kustomize build flux/manifests`
+  renders `services-clickhouse-cluster` with
+  `dependsOn: services-clickhouse` (plus `bootstrap-1password`,
+  `infrastructure-longhorn`), and the observability render drops exactly
+  the 5 clickhouse objects (namespace, operator HelmRelease,
+  OnePasswordItem, CHK, CHI — now applied by the two clickhouse
+  Kustomizations instead).
 - `helm template` against the real `altinity-clickhouse-operator` chart
   with the release's values proves the values drive the chart.
 - The DDL + storage XML executed end-to-end locally on
@@ -692,7 +733,7 @@ helm template ch-operator altinity/altinity-clickhouse-operator \
   --version 0.27.4 -n clickhouse -f <rendered-mr1-values>
 pre-commit run --all            # yamllint --strict, kube-linter flux/, gitleaks, prettier
 # CR field check (Warn-mode strips misspelled CHI/CHK fields): validate
-# cluster.yaml + keeper.yaml against the CRD schemas shipped in chart 0.27.4
+# cluster/cluster.yaml + cluster/keeper.yaml against the CRD schemas shipped in chart 0.27.4
 grep -rn "clickhouse" flux/manifests | sort    # reference sanity for the CR/datasource names
 ```
 
