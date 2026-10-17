@@ -10,6 +10,10 @@ Administrative tools and developer infrastructure.
 
 Open-source device management (osquery) for endpoint inventory, queries, and vulnerability visibility.
 
+### [Icons](./icons/README.md)
+
+Self-hosted authentik dashboard icon server: every repo icon served from one flat, unauthenticated LAN URL (replaces GitLab raw fetches on dashboard tiles).
+
 ### [JetKVM](./jetkvm/README.md)
 
 Self-hosted JetKVM Cloud API and Dashboard for KVM-over-IP device management.

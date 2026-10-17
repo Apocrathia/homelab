@@ -65,7 +65,7 @@ spec:
       category: "Social"
       displayName: "Lemmy"
       externalHost: "https://lemmy.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/social/lemmy/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/lemmy.svg"
 
     httproute:
       enabled: false

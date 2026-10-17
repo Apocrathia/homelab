@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://kopia.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/backup/icon.svg"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/backup.svg"
   meta_description = "Kopia backup repository (kopiur pilot)"
   meta_publisher   = "Kopia Project"
 

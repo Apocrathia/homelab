@@ -555,7 +555,7 @@ spec:
       category: "Artificial Intelligence"
       externalHost: "https://prime.gateway.services.apocrathia.com"
       openInNewTab: true
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/prime-agent/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/prime-agent.svg"
       metaDescription: "The prime-agent conversations dashboard"
     # The Authentik proxy outpost creates the hostname's HTTPRoute itself
     httproute:

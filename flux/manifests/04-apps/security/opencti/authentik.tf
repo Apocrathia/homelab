@@ -179,7 +179,7 @@ resource "authentik_application" "app" {
   open_in_new_tab = true
 
   # Dashboard metadata — the blueprint-era values.
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/security/opencti/icon.svg"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/opencti.svg"
   meta_description = "Open Cyber Threat Intelligence platform - threat-intel knowledge graph"
   meta_publisher   = "Filigran"
 

@@ -161,7 +161,7 @@ spec:
       category: "Artificial Intelligence"
       displayName: "DuckDB"
       externalHost: "https://duckdb.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/artificial-intelligence/duckdb/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/duckdb.svg"
       metaDescription: "In-process analytical database with notebook UI for ad-hoc SQL and data exploration"
       metaPublisher: "DuckDB Foundation"
 

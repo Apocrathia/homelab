@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: icons
+  namespace: icons
+  labels:
+    app.kubernetes.io/name: icons
+
+resources:
+  - namespace.yaml
+  - helmrelease.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # nginx.conf mount for the serving container (demo-app pattern): stable
+  # name so the HelmRelease can mount it; the file ships in this directory.
+  - name: icons-nginx-config
+    namespace: icons
+    files:
+      - nginx.conf

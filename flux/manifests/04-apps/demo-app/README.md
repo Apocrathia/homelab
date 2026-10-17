@@ -183,7 +183,7 @@ authentik:
   category: "Platform"
   displayName: "Demo Application"
   externalHost: "https://demo.gateway.services.apocrathia.com"
-  icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/demo-app/icon.png"
+  icon: "https://icons.gateway.services.apocrathia.com/demo-app.png"
 
 httproute:
   enabled: false

@@ -69,7 +69,7 @@ entries:
       meta_launch_url: "https://game.services.apocrathia.com/"
       group: "Gaming"
       open_in_new_tab: true
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/blueprints/icons/amp.png"
+      icon: "https://icons.gateway.services.apocrathia.com/amp.png"
       meta_description: "Server management and hosting solution for game servers"
       meta_publisher: "CubeCoders"
 

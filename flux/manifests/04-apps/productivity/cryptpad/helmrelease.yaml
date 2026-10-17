@@ -183,7 +183,7 @@ spec:
       # Tile deep-links to /login: single provider + enforced SSO makes it
       # auto-redirect to Authentik (legacy form: /login#standard-login).
       ssoLaunchUrl: "https://cryptpad.gateway.services.apocrathia.com/login"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/cryptpad/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/cryptpad.svg"
       category: "Productivity"
       oidc:
         redirectUris:

@@ -99,7 +99,7 @@ entries:
       meta_launch_url: "https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/init/"
       open_in_new_tab: true
       group: "Home"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/fleet.svg"
       meta_description: "Device management (osquery) — inventory, queries, vulnerabilities"
       meta_publisher: "Fleet"
 
@@ -146,7 +146,7 @@ entries:
       slug: "fleetdm-mdm"
       provider: !Find [authentik_providers_saml.samlprovider, [name, "fleetdm-mdm-saml-provider"]]
       group: "Home"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/management/fleet/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/fleet.svg"
       meta_hide: true
       meta_description: "Fleet MDM end-user authentication (device setup / ADE)"
       meta_publisher: "Fleet"

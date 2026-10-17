@@ -127,7 +127,7 @@ spec:
       category: "Productivity"
       displayName: "RClone Manager"
       externalHost: "https://rclone.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/rclone/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/rclone.svg"
 
     gatus:
       enabled: true

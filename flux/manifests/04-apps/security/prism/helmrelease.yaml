@@ -174,7 +174,7 @@ spec:
       category: "Security"
       displayName: "Prism"
       externalHost: "https://prism.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/security/prism/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/prism.svg"
 
     gatus:
       enabled: true

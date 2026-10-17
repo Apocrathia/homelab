@@ -143,7 +143,7 @@ spec:
       category: "Productivity"
       displayName: "Wakapi"
       externalHost: "https://wakapi.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/wakapi/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/wakapi.svg"
       interceptHeaderAuth: true
       metaDescription: "Self-hosted WakaTime-compatible coding statistics backend"
       metaPublisher: "Wakapi"

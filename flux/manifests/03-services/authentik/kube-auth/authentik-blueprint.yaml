@@ -107,7 +107,7 @@ entries:
       group: "Platform"
       # Hidden from library - Headlamp is the user-facing entry
       meta_launch_url: "blank://blank"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/03-services/authentik/kube-auth/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/kube-auth.svg"
       meta_description: "Kubernetes cluster authentication via OIDC"
       meta_publisher: "Kubernetes"
 

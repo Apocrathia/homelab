@@ -120,7 +120,7 @@ spec:
       category: "Media"
       displayName: "Houndarr"
       externalHost: "https://houndarr.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/houndarr/icon.png"
+      icon: "https://icons.gateway.services.apocrathia.com/houndarr.png"
 
     # Proxy auth mode 401s unauthenticated probes on /; /api/health is public
     gatus:

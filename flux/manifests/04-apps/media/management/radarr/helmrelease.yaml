@@ -116,6 +116,6 @@ spec:
       category: "Media"
       displayName: "Radarr"
       externalHost: "https://radarr.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/radarr/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/radarr.svg"
       skipPathRegex:
         - "^/api/"

@@ -157,7 +157,7 @@ spec:
       displayName: "Aurral"
       externalHost: "https://aurral.gateway.services.apocrathia.com"
       ssoLaunchUrl: "https://aurral.gateway.services.apocrathia.com/api/auth/oidc/login"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/aurral/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/aurral.svg"
       oidc:
         redirectUris:
           - url: "https://aurral.gateway.services.apocrathia.com/sso/callback"

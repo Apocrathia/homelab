@@ -94,7 +94,7 @@ spec:
       category: "Gaming"
       displayName: "Moonlight"
       externalHost: "https://moonlight.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/games/moonlight-web/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/moonlight-web.svg"
       interceptHeaderAuth: true
       metaDescription: "Browser Moonlight client for Sunshine game streaming"
       metaPublisher: "moonlight-web-stream"

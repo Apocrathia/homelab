@@ -135,7 +135,7 @@ spec:
       mode: "proxy"
       displayName: "n8n"
       externalHost: "https://n8n.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/n8n/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/n8n.svg"
       category: "Productivity"
       interceptHeaderAuth: true
       metaDescription: "n8n workflow automation platform"

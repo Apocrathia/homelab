@@ -154,7 +154,7 @@ spec:
       mode: "oidc"
       displayName: "Endurain"
       externalHost: "https://endurain.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/productivity/endurain/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/endurain.svg"
       category: "Productivity"
       metaDescription: "Self-hosted fitness tracking service"
       metaPublisher: "Endurain"

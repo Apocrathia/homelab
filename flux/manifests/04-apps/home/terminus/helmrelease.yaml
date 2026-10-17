@@ -222,7 +222,7 @@ spec:
       category: "Home"
       displayName: "Terminus"
       externalHost: "https://terminus.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/home/terminus/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/terminus.svg"
       metaDescription: "Self-hosted TRMNL BYOS server for e-ink devices"
       metaPublisher: "TRMNL"
       skipPathRegex:

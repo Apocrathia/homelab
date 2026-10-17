@@ -116,6 +116,6 @@ spec:
       category: "Media"
       displayName: "Lidarr"
       externalHost: "https://lidarr.gateway.services.apocrathia.com"
-      icon: "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/04-apps/media/management/lidarr/icon.svg"
+      icon: "https://icons.gateway.services.apocrathia.com/lidarr.svg"
       skipPathRegex:
         - "^/api/"

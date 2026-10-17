@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://longhorn.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://gitlab.com/Apocrathia/homelab/-/raw/main/flux/manifests/02-infrastructure/longhorn/icon.svg"
+  meta_icon        = "https://icons.gateway.services.apocrathia.com/longhorn.svg"
   meta_description = "Distributed block storage system for Kubernetes"
   meta_publisher   = "Rancher Labs"
 
