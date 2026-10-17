@@ -1,0 +1,666 @@
+---
+title: "Shape lists"
+canonical: https://tenzir.com/docs/guides/shape/shape-lists
+source: https://tenzir.com/docs/guides/shape/shape-lists.md
+section: "Docs"
+---
+
+# Shape lists
+
+> Lists (arrays) contain ordered sequences of values. This guide shows you how to work with lists - accessing elements, sorting and slicing, transforming values, and combining data structures.
+
+Lists (arrays) contain ordered sequences of values. This guide shows you how to work with lists - accessing elements, sorting and slicing, transforming values, and combining data structures.
+
+## Access list elements
+
+Get values from specific positions:
+
+```tql
+from {items: ["first", "second", "third", "fourth"]}
+first_item = items[0]
+last_item = items[-1]
+length = items.length()
+```
+
+```tql
+{
+  items: ["first", "second", "third", "fourth"],
+  first_item: "first",
+  last_item: "fourth",
+  length: 4
+}
+```
+
+Index notation:
+
+* `[0]` - First element (0-based indexing)
+* `[-1]` - Last element (negative indices count from end)
+* `.length()` - Get the number of elements
+
+## Add elements to lists
+
+Use [`append`](https://tenzir.com/docs/reference/functions/append.md) and [`prepend`](https://tenzir.com/docs/reference/functions/prepend.md):
+
+```tql
+from {colors: ["red", "green"]}
+with_blue = colors.append("blue")
+with_yellow = with_blue.prepend("yellow")
+multi_append = colors.append("blue").append("purple")
+```
+
+```tql
+{
+  colors: ["red", "green"],
+  with_blue: ["red", "green", "blue"],
+  with_yellow: ["yellow", "red", "green", "blue"],
+  multi_append: ["red", "green", "blue", "purple"]
+}
+```
+
+## Combine lists with spread
+
+Use the spread operator `...` to combine lists. Spread keeps the resulting list visible where you construct it, and lets you mix existing lists with literals or computed values:
+
+```tql
+from {
+  list1: [1, 2, 3],
+  list2: [4, 5, 6],
+  list3: [7, 8, 9]
+}
+combined = [...list1, ...list2, ...list3]
+with_value = [...list1, 10, ...list2]
+```
+
+```tql
+{
+  list1: [1, 2, 3],
+  list2: [4, 5, 6],
+  list3: [7, 8, 9],
+  combined: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  with_value: [1, 2, 3, 10, 4, 5, 6]
+}
+```
+
+Use optional access when a list fragment may be missing. If the spread expression evaluates to `null`, it contributes no elements, so an explicit `else []` fallback is not necessary:
+
+```tql
+from {
+  event: {},
+}
+labels = [
+  "production",
+  ...event.tags?,
+]
+```
+
+```tql
+{
+  event: {},
+  labels: [
+    "production",
+  ],
+}
+```
+
+This also works when a nullable list is transformed before spreading. If [`map`](https://tenzir.com/docs/reference/functions/map.md) receives `null`, it returns `null`, and the spread contributes no elements:
+
+```tql
+from {xs: null}
+ys = [
+  ...xs.map(x => x + 1),
+  0,
+]
+```
+
+```tql
+{
+  xs: null,
+  ys: [
+    0,
+  ],
+}
+```
+
+The [`concatenate`](https://tenzir.com/docs/reference/functions/concatenate.md) function returns the same result for two lists, including `null` fragments, but prefer spread in transformation code when you construct the resulting list.
+
+## Transform list elements
+
+Apply functions to each element with [`map`](https://tenzir.com/docs/reference/functions/map.md):
+
+```tql
+from {
+  prices: [10, 20, 30],
+  names: ["alice", "bob", "charlie"]
+}
+with_tax = prices.map(p => p * 1.1)
+uppercase = names.map(n => n.to_upper())
+squared = prices.map(x => x * x)
+```
+
+```tql
+{
+  prices: [10, 20, 30],
+  names: ["alice", "bob", "charlie"],
+  with_tax: [11.0, 22.0, 33.0],
+  uppercase: ["ALICE", "BOB", "CHARLIE"],
+  squared: [100, 400, 900]
+}
+```
+
+## Filter list elements
+
+Keep only elements that match a condition with [`where`](https://tenzir.com/docs/reference/functions/where.md):
+
+```tql
+from {
+  numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  users: ["alice", "bob", "anna", "alex"]
+}
+// Note: The modulo operator (%) is not currently supported in TQL
+// Here's an alternative approach for filtering:
+big_nums = numbers.where(n => n > 5)
+small_nums = numbers.where(n => n <= 5)
+a_names = users.where(u => u.starts_with("a"))
+```
+
+```tql
+{
+  numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  users: ["alice", "bob", "anna", "alex"],
+  big_nums: [6, 7, 8, 9, 10],
+  small_nums: [1, 2, 3, 4, 5],
+  a_names: ["alice", "anna", "alex"]
+}
+```
+
+## Sort lists
+
+Order elements with [`sort`](https://tenzir.com/docs/reference/functions/sort.md):
+
+```tql
+from {
+  numbers: [3, 1, 4, 1, 5, 9],
+  words: ["zebra", "apple", "banana"]
+}
+sorted_nums = numbers.sort()
+sorted_words = words.sort()
+```
+
+```tql
+{
+  numbers: [3, 1, 4, 1, 5, 9],
+  words: ["zebra", "apple", "banana"],
+  sorted_nums: [1, 1, 3, 4, 5, 9],
+  sorted_words: ["apple", "banana", "zebra"]
+}
+```
+
+Sort in descending order with `desc`:
+
+```tql
+from {numbers: [3, 1, 4, 1, 5, 9]}
+descending = numbers.sort(desc=true)
+```
+
+```tql
+{numbers: [3, 1, 4, 1, 5, 9], descending: [9, 5, 4, 3, 1, 1]}
+```
+
+Use a custom comparator to sort records by a specific field:
+
+```tql
+from {
+  users: [
+    {name: "Charlie", age: 35},
+    {name: "Alice", age: 30},
+    {name: "Bob", age: 25}
+  ]
+}
+by_age = users.sort(cmp=(a, b) => a.age < b.age)
+by_name = users.sort(cmp=(a, b) => a.name < b.name)
+```
+
+```tql
+{
+  users: [
+    {name: "Charlie", age: 35},
+    {name: "Alice", age: 30},
+    {name: "Bob", age: 25}
+  ],
+  by_age: [
+    {name: "Bob", age: 25},
+    {name: "Alice", age: 30},
+    {name: "Charlie", age: 35}
+  ],
+  by_name: [
+    {name: "Alice", age: 30},
+    {name: "Bob", age: 25},
+    {name: "Charlie", age: 35}
+  ]
+}
+```
+
+## Slice lists
+
+Extract portions of a list with [`slice`](https://tenzir.com/docs/reference/functions/slice.md):
+
+Get the first N elements:
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+first_three = xs.slice(end=3)
+```
+
+```tql
+{xs: [1, 2, 3, 4, 5], first_three: [1, 2, 3]}
+```
+
+Get the last N elements:
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+last_three = xs.slice(begin=-3)
+```
+
+```tql
+{xs: [1, 2, 3, 4, 5], last_three: [3, 4, 5]}
+```
+
+Extract a range:
+
+```tql
+from {xs: [10, 20, 30, 40, 50, 60, 70]}
+middle = xs.slice(begin=2, end=5)
+```
+
+```tql
+{xs: [10, 20, 30, 40, 50, 60, 70], middle: [30, 40, 50]}
+```
+
+Reverse a list:
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+reversed = xs.slice(stride=-1)
+```
+
+```tql
+{xs: [1, 2, 3, 4, 5], reversed: [5, 4, 3, 2, 1]}
+```
+
+Select every Nth element:
+
+```tql
+from {xs: [1, 2, 3, 4, 5, 6, 7, 8]}
+every_other = xs.slice(stride=2)
+```
+
+```tql
+{xs: [1, 2, 3, 4, 5, 6, 7, 8], every_other: [1, 3, 5, 7]}
+```
+
+## Top-k and bottom-k
+
+Chain [`sort`](https://tenzir.com/docs/reference/functions/sort.md) and [`slice`](https://tenzir.com/docs/reference/functions/slice.md) to implement a top-k query over list elements:
+
+```tql
+from {scores: [72, 95, 88, 61, 83, 97, 56]}
+top_3 = scores.sort(desc=true).slice(end=3)
+bottom_3 = scores.sort().slice(end=3)
+```
+
+```tql
+{
+  scores: [72, 95, 88, 61, 83, 97, 56],
+  top_3: [97, 95, 88],
+  bottom_3: [56, 61, 72]
+}
+```
+
+## Get unique values
+
+Remove duplicates with [`distinct`](https://tenzir.com/docs/reference/functions/distinct.md):
+
+```tql
+from {
+  items: ["a", "b", "a", "c", "b", "d"],
+  numbers: [1, 2, 2, 3, 3, 3, 4]
+}
+unique_items = distinct(items).sort()
+unique_nums = distinct(numbers).sort()
+```
+
+```tql
+{
+  items: ["a", "b", "a", "c", "b", "d"],
+  numbers: [1, 2, 2, 3, 3, 3, 4],
+  unique_items: ["a", "b", "c", "d"],
+  unique_nums: [1, 2, 3, 4]
+}
+```
+
+## Use lists as sets
+
+Use [`add`](https://tenzir.com/docs/reference/functions/add.md) for set-insertion (append only if absent) and [`remove`](https://tenzir.com/docs/reference/functions/remove.md) to delete all occurrences:
+
+```tql
+from {tags: ["info", "warning", "info"]}
+with_error = tags.add("error")
+still_same = tags.add("info")
+without_info = tags.remove("info")
+```
+
+```tql
+{
+  tags: ["info", "warning", "info"],
+  with_error: ["info", "warning", "info", "error"],
+  still_same: ["info", "warning", "info"],
+  without_info: ["warning"]
+}
+```
+
+Combine `add()` with [`distinct`](https://tenzir.com/docs/reference/functions/distinct.md) when you need a deduplicated collection:
+
+```tql
+from {xs: [1, 2, 2, 3]}
+unique = distinct(xs).sort()
+with_4 = unique.add(4)
+with_2 = unique.add(2)
+```
+
+```tql
+{
+  xs: [1, 2, 2, 3],
+  unique: [1, 2, 3],
+  with_4: [1, 2, 3, 4],
+  with_2: [1, 2, 3]
+}
+```
+
+## Flatten nested lists
+
+Note: Direct list flattening is not currently supported in TQL. The [`flatten`](https://tenzir.com/docs/reference/functions/flatten.md) function is designed for flattening records, not lists. To work with nested lists, you would need to process them element by element.
+
+## Combine lists and records
+
+Work with collections of records:
+
+```tql
+from {
+  users: [
+    {name: "Alice", age: 30, city: "NYC"},
+    {name: "Bob", age: 25, city: "SF"},
+    {name: "Charlie", age: 35, city: "NYC"}
+  ]
+}
+names = users.map(u => u.name)
+nyc_users = users.where(u => u.city == "NYC")
+avg_age = users.map(u => u.age).sum() / users.length()
+```
+
+```tql
+{
+  users: [
+    {name: "Alice", age: 30, city: "NYC"},
+    {name: "Bob", age: 25, city: "SF"},
+    {name: "Charlie", age: 35, city: "NYC"}
+  ],
+  names: ["Alice", "Bob", "Charlie"],
+  nyc_users: [
+    {name: "Alice", age: 30, city: "NYC"},
+    {name: "Charlie", age: 35, city: "NYC"}
+  ],
+  avg_age: 30.0
+}
+```
+
+## Turn parallel lists into a record
+
+When an API supplies field names and values in separate lists, pass both to [`collect_record`](https://tenzir.com/docs/reference/functions/collect_record.md). This creates named fields directly, without an intermediate [`zip`](https://tenzir.com/docs/reference/functions/zip.md) result. The lists must have the same length. Keys are automatically converted with [`string`](https://tenzir.com/docs/reference/functions/string.md), so `42` becomes `"42"` and `null` becomes `"null"`.
+
+```tql
+from {
+  names: ["service", "port", "enabled"],
+  values: ["ssh", 22, true],
+}
+select config=collect_record(names, values)
+```
+
+```tql
+{
+  config: {
+    service: "ssh",
+    port: 22,
+    enabled: true,
+  },
+}
+```
+
+The function preserves each value’s type. For a single list of key/value entries, follow our guide on [building records from dynamic field names](shape-records.md#build-records-from-dynamic-field-names).
+
+To split a record back into parallel lists, use [`keys`](https://tenzir.com/docs/reference/functions/keys.md) and [`values`](https://tenzir.com/docs/reference/functions/values.md). They list the fields in the same order, so `collect_record(config.keys(), config.values())` returns `config`.
+
+## Advanced transformations
+
+### Zip lists together
+
+Combine parallel lists with [`zip`](https://tenzir.com/docs/reference/functions/zip.md):
+
+```tql
+from {
+  names: ["Alice", "Bob", "Charlie"],
+  ages: [30, 25, 35],
+  cities: ["NYC", "SF", "LA"]
+}
+// Note: zip only takes 2 arguments, returns records with left/right fields
+name_age = zip(names, ages)
+zipped = zip(name_age, cities)
+users = zipped.map(z => {
+  name: z.left.left,
+  age: z.left.right,
+  city: z.right
+})
+```
+
+```tql
+{
+  names: ["Alice", "Bob", "Charlie"],
+  ages: [30, 25, 35],
+  cities: ["NYC", "SF", "LA"],
+  name_age: [
+    {left: "Alice", right: 30},
+    {left: "Bob", right: 25},
+    {left: "Charlie", right: 35}
+  ],
+  zipped: [
+    {left: {left: "Alice", right: 30}, right: "NYC"},
+    {left: {left: "Bob", right: 25}, right: "SF"},
+    {left: {left: "Charlie", right: 35}, right: "LA"}
+  ],
+  users: [
+    {name: "Alice", age: 30, city: "NYC"},
+    {name: "Bob", age: 25, city: "SF"},
+    {name: "Charlie", age: 35, city: "LA"}
+  ]
+}
+```
+
+### Practical example: Pairing related data
+
+Combine parallel arrays with transformations for data normalization:
+
+```tql
+from {
+  // DNS query data with parallel arrays
+  answers: ["192.168.1.1", "10.0.0.1", "172.16.0.1"],
+  ttls: [300s, 600s, 900s],
+  // Certificate SAN names
+  domains: ["example.com", "www.example.com", "api.example.com"]
+}
+
+
+// Pair DNS answers with their TTLs and transform
+dns_records = zip(answers, ttls).map(x => {
+  rdata: x.left,
+  ttl_seconds: x.right.count_seconds(),
+  cached_until: now() + x.right
+})
+
+
+// Transform simple arrays to structured data
+san_entries = domains.map(name => {
+  name: name,
+  type: "DNSName",
+  verified: name.ends_with(".example.com")
+})
+```
+
+```tql
+{
+  answers: ["192.168.1.1", "10.0.0.1", "172.16.0.1"],
+  ttls: [300s, 600s, 900s],
+  domains: ["example.com", "www.example.com", "api.example.com"],
+  dns_records: [
+    {
+      rdata: "192.168.1.1",
+      ttl_seconds: 300,
+      cached_until: 2025-08-14T12:36:45.123456Z
+    },
+    {
+      rdata: "10.0.0.1",
+      ttl_seconds: 600,
+      cached_until: 2025-08-14T12:41:45.123456Z
+    },
+    {
+      rdata: "172.16.0.1",
+      ttl_seconds: 900,
+      cached_until: 2025-08-14T12:46:45.123456Z
+    }
+  ],
+  san_entries: [
+    {
+      name: "example.com",
+      type: "DNSName",
+      verified: false
+    },
+    {
+      name: "www.example.com",
+      type: "DNSName",
+      verified: true
+    },
+    {
+      name: "api.example.com",
+      type: "DNSName",
+      verified: true
+    }
+  ]
+}
+```
+
+This pattern is particularly useful when:
+
+* Converting parallel arrays from APIs or logs into structured records
+* Normalizing data for standard formats (like OCSF)
+* Adding computed fields during the transformation
+
+### Enumerate with indices
+
+Add row numbers to your data using the [`enumerate`](https://tenzir.com/docs/reference/operators/enumerate.md) operator:
+
+```tql
+from {item: "apple"}, {item: "banana"}, {item: "cherry"}
+enumerate row
+```
+
+```tql
+{row: 0, item: "apple"}
+{row: 1, item: "banana"}
+{row: 2, item: "cherry"}
+```
+
+This is useful for tracking position in sequences or creating unique identifiers for each event.
+
+## Practical examples
+
+### Extract and transform nested data
+
+```tql
+from {
+  response: {
+    status: 200,
+    data: {
+      users: [
+        {id: 1, name: "Alice", scores: [85, 92, 88]},
+        {id: 2, name: "Bob", scores: [78, 81, 85]}
+      ]
+    }
+  }
+}
+users = response.data.users
+summaries = users.map(u => {
+  name: u.name,
+  avg_score: u.scores.sum() / u.scores.length(),
+  max_score: u.scores.max()
+})
+```
+
+```tql
+{
+  response: {...},
+  users: [
+    {id: 1, name: "Alice", scores: [85, 92, 88]},
+    {id: 2, name: "Bob", scores: [78, 81, 85]}
+  ],
+  summaries: [
+    {name: "Alice", avg_score: 88.33333333333333, max_score: 92},
+    {name: "Bob", avg_score: 81.33333333333333, max_score: 85}
+  ]
+}
+```
+
+### Work with indexed data
+
+Create lookups by extracting specific fields:
+
+```tql
+from {
+  items: [
+    {id: "A001", name: "Widget", price: 10},
+    {id: "B002", name: "Gadget", price: 20},
+    {id: "C003", name: "Tool", price: 15}
+  ]
+}
+first_item = items.first()
+ids = items.map(item => item.id)
+names = items.map(item => item.name)
+expensive = items.where(item => item.price > 15)
+```
+
+```tql
+{
+  items: [...],
+  first_item: {id: "A001", name: "Widget", price: 10},
+  ids: ["A001", "B002", "C003"],
+  names: ["Widget", "Gadget", "Tool"],
+  expensive: [
+    {id: "B002", name: "Gadget", price: 20}
+  ]
+}
+```
+
+## Best practices
+
+1. **Choose the right structure**: Use lists for ordered data, records for named fields
+2. **Avoid deep nesting**: Flatten structures when possible for easier access
+3. **Use functional methods**: Prefer `map()`, `filter()`, etc. over manual loops
+4. **Handle empty collections**: Check length before accessing elements
+5. **Preserve immutability**: Collection functions return new values, not modify existing
+
+## See Also
+
+* [`sort`](https://tenzir.com/docs/reference/functions/sort.md)
+* [`slice`](https://tenzir.com/docs/reference/functions/slice.md)
+* [Shape records](shape-records.md)
+* [Filter and select data](../optimize/filter-and-select-data.md)
+* [Transform values](transform-values.md)
+* [Reshape complex data](reshape-complex-data.md)

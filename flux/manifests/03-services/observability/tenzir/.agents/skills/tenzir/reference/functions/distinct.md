@@ -1,0 +1,44 @@
+---
+title: "distinct"
+canonical: https://tenzir.com/docs/reference/functions/distinct
+source: https://tenzir.com/docs/reference/functions/distinct.md
+section: "Docs"
+---
+
+# distinct
+
+> Creates a sorted list without duplicates of non-null grouped values.
+
+Creates a sorted list without duplicates of non-null grouped values.
+
+```tql
+distinct(xs:list) -> list
+```
+
+## Description
+
+The `distinct` function returns a sorted list containing unique, non-null values in `xs`.
+
+### `xs: list`
+
+The values to deduplicate.
+
+## Examples
+
+### Get distinct values in a list
+
+```tql
+from {x: 1}, {x: 2}, {x: 2}, {x: 3}
+summarize unique=distinct(x)
+```
+
+```tql
+{unique: [1, 2, 3]}
+```
+
+## See Also
+
+* [`collect`](https://tenzir.com/docs/reference/functions/collect.md)
+* [`count_distinct`](https://tenzir.com/docs/reference/functions/count_distinct.md)
+* [`value_counts`](https://tenzir.com/docs/reference/functions/value_counts.md)
+* [Aggregate event streams](../../guides/analyze/aggregate-event-streams.md)

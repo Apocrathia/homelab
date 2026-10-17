@@ -1,0 +1,368 @@
+---
+title: "Use agent skills"
+description: "Install Tenzir agent skills for documentation and security schemas"
+canonical: https://tenzir.com/docs/guides/ai-workbench/use-agent-skills
+source: https://tenzir.com/docs/guides/ai-workbench/use-agent-skills.md
+section: "Docs"
+---
+
+# Use agent skills
+
+> Install Tenzir agent skills for documentation and security schemas
+
+This guide shows you how to install and manage Tenzir’s agent skills. You’ll learn which skills are available, how to add skills globally or per project, install individual skills, and keep them up to date.
+
+Tenzir publishes agent skills in the [`tenzir/skills`](https://github.com/tenzir/skills) repository.
+
+Agent Skills
+
+[Agent Skills](https://agentskills.io) is an open specification for packaging knowledge that AI agents can use. Skills provide structured documentation with progressive disclosure, letting agents load a condensed overview first and drill into details only when needed.
+
+## Available skills
+
+Tenzir publishes the following skills:
+
+### Schemas
+
+* `tenzir-asim`: Microsoft Sentinel ASIM schema and mapping guidance for schemas, fields, aliases, and roles.
+* `tenzir-cef`: ArcSight CEF reference for headers, the extension dictionary, the ESM event schema, and timestamps.
+* `tenzir-cim`: Splunk CIM data models, datasets, fields, tags, constraints, lookups, and mapping guidance.
+* `tenzir-ecs`: ECS fields, fieldsets, categorization values, custom fields, and OpenTelemetry alignment.
+* `tenzir-edm`: FortiSIEM Event Data Model reference for data models, event attributes, types, and names.
+* `tenzir-leef`: IBM QRadar LEEF reference for headers, delimiters, predefined event attributes, and timestamps.
+* `tenzir-ocsf`: OCSF schema reference for event classes, objects, attributes, profiles, and extensions.
+* `tenzir-udm`: Google SecOps UDM schema and normalization guidance for fields, event types, and entities.
+
+### Tenzir Users
+
+* `tenzir`: Tenzir documentation for TQL, operators, functions, integrations, and deployment, plus entry points to the changelog, blog, and product pages.
+
+## Install skills
+
+Several skill installers work with the `tenzir/skills` repository. The [`skills`](https://github.com/vercel-labs/skills) CLI supports 40+ coding agents including Claude Code, Cursor, Codex, GitHub Copilot, and more. If you prefer not to run npm tooling, `skeel` (via uv) and the `gh skill` extension (via the GitHub CLI) install the same skills.
+
+The remaining examples on this page use `npx skills`; substitute your preferred installer.
+
+### Install all skills
+
+Install all Tenzir skills into the current project:
+
+* gh skill
+
+  ```bash
+  gh skill install tenzir/skills --all
+  ```
+
+* uvx skeel
+
+  ```bash
+  uvx skeel add tenzir/skills
+  ```
+
+* npx skills
+
+  ```bash
+  npx skills add tenzir/skills
+  ```
+
+The installers auto-detect which coding agents you have installed and prompt you to select targets.
+
+### Install individual skills
+
+Name a specific skill from the available skills:
+
+* gh skill
+
+  ```bash
+  gh skill install tenzir/skills <skill-name>
+  ```
+
+* uvx skeel
+
+  ```bash
+  uvx skeel add tenzir/skills <skill-name>
+  ```
+
+* npx skills
+
+  ```bash
+  npx skills add tenzir/skills@<skill-name>
+  ```
+
+### Use the tenzir skill
+
+Install the Tenzir documentation skill when you want an agent to answer questions about TQL, write or debug pipelines, look up operators and functions, or help with parsing, transformation, enrichment, integrations, deployment, and configuration:
+
+```bash
+npx skills add tenzir/skills@tenzir
+```
+
+The `tenzir` skill packages the entire Tenzir documentation with progressive disclosure, so the agent loads a condensed overview first and drills into individual operator, function, and guide pages only when needed. It also points the agent at live entry points for the changelog, blog, and other tenzir.com pages that the skill does not bundle.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir skill to show me how to read Suricata EVE JSON from a file
+and aggregate the alerts by signature.
+```
+
+```text
+Use the tenzir skill to explain the difference between the summarize and
+top operators.
+```
+
+### Use the ASIM skill
+
+Install the Microsoft Sentinel ASIM schema skill when you want an agent to help choose ASIM schemas, map events or entities, inspect normalized fields, or resolve aliases:
+
+```bash
+npx skills add tenzir/skills@tenzir-asim
+```
+
+The `tenzir-asim` skill is generated from Microsoft Defender Docs and is optimized for schema-first mapping. Ask the agent to choose the ASIM schema before it maps fields, then use canonical ASIM field names such as `EventSchema`, `EventSchemaVersion`, `SrcIpAddr`, and `DstIpAddr`.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-asim skill to map this firewall event to a Microsoft
+Sentinel ASIM NetworkSession record.
+```
+
+```text
+Use the tenzir-asim skill to explain the required and recommended
+fields for ASIM DNS events.
+```
+
+### Use the CEF skill
+
+Install the ArcSight CEF skill when you want an agent to generate, parse, or map events in the Common Event Format, build ArcSight SmartConnector integrations, or look up predefined CEF extension keys and the ESM event schema behind them:
+
+```bash
+npx skills add tenzir/skills@tenzir-cef
+```
+
+The `tenzir-cef` skill is generated from the official OpenText CEF Implementation Standard and the ArcSight ESM Console User’s Guide. It documents the CEF header and escaping rules, all 174 predefined extension keys with types, lengths, and producer/consumer audience, the 479 ESM data fields across 18 schema groups, and the accepted date formats.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-cef skill to render these events as CEF messages, using
+predefined extension keys where possible.
+```
+
+```text
+Use the tenzir-cef skill to look up which ArcSight ESM field backs each
+CEF extension key in this event.
+```
+
+### Use the CIM skill
+
+Install the Splunk CIM schema skill when you want an agent to choose CIM data models, inspect datasets, apply tags, normalize fields, or use CIM lookup values:
+
+```bash
+npx skills add tenzir/skills@tenzir-cim
+```
+
+The `tenzir-cim` skill is generated from Splunk CIM 8.5. Ask the agent to choose the data model and dataset before it maps fields, then apply the tags, constraints, and recommended fields documented for that dataset.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-cim skill to map this firewall event to Splunk CIM Network
+Traffic / All_Traffic fields.
+```
+
+```text
+Use the tenzir-cim skill to explain the tags and recommended fields for CIM DNS
+events.
+```
+
+### Use the ECS skill
+
+Install the Elastic Common Schema skill when you want an agent to map events to ECS fields, choose categorization values, design custom fields, or align data with OpenTelemetry:
+
+```bash
+npx skills add tenzir/skills@tenzir-ecs
+```
+
+The `tenzir-ecs` skill is generated from the latest supported ECS release in the Tenzir skills repository. Ask the agent to choose `event.kind`, `event.category`, and `event.type` values before it maps fieldsets such as `source`, `destination`, `network`, `host`, `user`, or `observer`.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-ecs skill to map this firewall event to ECS. Use nested TQL
+records that serialize to ECS field paths.
+```
+
+```text
+Use the tenzir-ecs skill to choose event.category and event.type values for
+this authentication event.
+```
+
+### Use the EDM skill
+
+Install the FortiSIEM Event Data Model skill when you want an agent to choose FortiSIEM data models, inspect event attributes, or map events into FortiSIEM event attributes for built-in or custom parsers:
+
+```bash
+npx skills add tenzir/skills@tenzir-edm
+```
+
+The `tenzir-edm` skill is generated from the FortiSIEM 7.5.0 Event Data Model documentation. Ask the agent to choose the data model before it maps attributes, then populate the base event attributes first and use camelCase attribute names such as `eventType`, `srcIpAddr`, and `destIpAddr`.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-edm skill to map this firewall event to FortiSIEM network
+traffic event attributes.
+```
+
+```text
+Use the tenzir-edm skill to explain which attributes every FortiSIEM event
+carries.
+```
+
+### Use the LEEF skill
+
+Install the IBM QRadar LEEF skill when you want an agent to generate, parse, or map events in the Log Event Extended Format, build QRadar or JSA integrations, or look up predefined LEEF event attributes:
+
+```bash
+npx skills add tenzir/skills@tenzir-leef
+```
+
+The `tenzir-leef` skill is generated from the official IBM LEEF Version 2 format guide. It documents the LEEF 1.0 and 2.0 headers, delimiter rules, all 45 predefined event attributes with types and limits, custom event key guidelines, and `devTime`/`devTimeFormat` timestamp patterns. For QRadar-specific delivery examples, see [IBM QRadar](../../integrations/qradar.md).
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-leef skill to render these events as LEEF 2.0 messages for
+QRadar, using predefined attribute keys where possible.
+```
+
+```text
+Use the tenzir-leef skill to explain the LEEF 2.0 header fields and how to
+specify a custom attribute delimiter.
+```
+
+### Use the OCSF skill
+
+Install the OCSF schema skill when you want an agent to choose OCSF event classes, inspect attributes, use profiles, or map source events into OCSF:
+
+```bash
+npx skills add tenzir/skills@tenzir-ocsf
+```
+
+The `tenzir-ocsf` skill tracks OCSF versions and schema reference files. Ask the agent to choose the OCSF version, event class, and profiles before it maps attributes.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-ocsf skill to map this Zeek connection event to an OCSF Network
+Activity event.
+```
+
+```text
+Use the tenzir-ocsf skill to explain which attributes are required for OCSF DNS
+Activity.
+```
+
+### Use the UDM skill
+
+Install the Google SecOps UDM schema skill when you want an agent to help generate UDM API ingestion payloads or write detection logic:
+
+```bash
+npx skills add tenzir/skills@tenzir-udm
+```
+
+The `tenzir-udm` skill supports two primary workflows. Generated UDM field headings can show two forms, for example `event_type / eventType`:
+
+* Use the right-side ingestion object form when the agent maps logs into UDM event or entity objects for Google SecOps UDM API ingestion, including TQL mapping output such as `metadata.eventType`.
+* Use the left-side field path form when the agent writes YARA-L, Detect Engine, CBN, or other dotted paths, such as `$event.metadata.event_type`.
+
+Tell the agent which context you want:
+
+```text
+Use the tenzir-udm skill to map this firewall event to a UDM event object. Use
+ingestion object field names in the TQL output.
+```
+
+```text
+Use the tenzir-udm skill to write YARA-L detection logic for a UDM network
+connection event. Use field path names.
+```
+
+### Choose the installation scope
+
+Skills support two installation scopes:
+
+| Scope       | Flag        | Location            | Use case                                            |
+| ----------- | ----------- | ------------------- | --------------------------------------------------- |
+| **Project** | *(default)* | `./<agent>/skills/` | Committed with your project, shared with your team. |
+| **Global**  | `-g`        | `~/<agent>/skills/` | Available across all projects on your machine.      |
+
+Install globally so skills are available everywhere:
+
+```bash
+npx skills add -g tenzir/skills
+```
+
+Install a specific skill globally:
+
+```bash
+npx skills add -g tenzir/skills@tenzir
+```
+
+### Target specific agents
+
+To install skills for specific agents only, use the `-a` flag:
+
+```bash
+npx skills add tenzir/skills -a pi
+npx skills add tenzir/skills -a claude-code -a cursor -a codex
+```
+
+## Manage skills
+
+### List installed skills
+
+```bash
+npx skills list
+```
+
+Filter by scope or agent:
+
+```bash
+npx skills list -g
+npx skills list -a pi
+```
+
+### Check for updates
+
+```bash
+npx skills check
+```
+
+### Update skills
+
+```bash
+npx skills update
+```
+
+### Remove skills
+
+Remove interactively:
+
+```bash
+npx skills remove
+```
+
+Remove a specific skill:
+
+```bash
+npx skills remove tenzir
+```
+
+Remove all installed Tenzir skills:
+
+```bash
+npx skills remove --all
+```

@@ -1,0 +1,365 @@
+---
+title: "from_http"
+canonical: https://tenzir.com/docs/reference/operators/from_http
+source: https://tenzir.com/docs/reference/operators/from_http.md
+section: "Docs"
+---
+
+# from_http
+
+> Sends an HTTP/1.1 request and returns the response as events.
+
+Sends an HTTP/1.1 request and returns the response as events.
+
+```tql
+from_http url:string, [method=string, body=record|string|blob, encode=string,
+          headers=record, error_field=field, paginate=string|lambda,
+          paginate_delay=duration, connection_timeout=duration,
+          max_retry_count=int, retry_delay=duration, tls=record]
+          [{ … }]
+```
+
+## Description
+
+The `from_http` operator issues an HTTP request and returns the response as events.
+
+The `from_http` operator streams the HTTP response body to a parser sub-pipeline as bytes. As response chunks arrive from the server, Tenzir forwards them to the parser pipeline without buffering the entire response body in memory first. You can provide the sub-pipeline explicitly, or omit it when Tenzir can infer the response format.
+
+When you omit the parser sub-pipeline, Tenzir infers the parser for each response page in this order:
+
+1. Use a non-empty `Content-Type` response header.
+2. Use the URL path extension.
+3. Emit an error that asks you to provide an explicit parser sub-pipeline.
+
+If a response contains a non-empty unsupported `Content-Type` header, Tenzir doesn’t fall back to the URL extension. Provide an explicit parser sub-pipeline for ambiguous or custom formats.
+
+Use the sub-pipeline to parse the response body. The operator automatically handles HTTP `Content-Encoding`. If the downloaded file itself is compressed, add the appropriate decompressor to the sub-pipeline. For example, use `decompress_gzip` followed by `read_json` for a downloaded gzip-compressed JSON file.
+
+### `url: string`
+
+URL to connect to. Both `http://` and `https://` schemes are supported. If the scheme is omitted, `https://` is assumed.
+
+The URL is resolved as a [secret](../../explanations/secrets.md), so you can pass a secret name to avoid hardcoding sensitive URLs.
+
+### `method = string (optional)`
+
+One of the following HTTP methods to use:
+
+* `get`
+* `head`
+* `post`
+* `put`
+* `del`
+* `connect`
+* `options`
+* `trace`
+
+Defaults to `get`, or `post` when you set `body`.
+
+### `headers = record (optional)`
+
+Record of headers to send with the request. Each value is resolved as a [secret](../../explanations/secrets.md), so you can pass secret names to avoid hardcoding tokens or API keys directly in the pipeline.
+
+### `timeout = duration (optional)`
+
+Timeout for the overall request.
+
+Defaults to `90s`.
+
+### `connection_timeout = duration (optional)`
+
+Timeout for establishing the connection.
+
+Defaults to `5s`.
+
+### `max_retry_count = int (optional)`
+
+Maximum number of retry attempts per request.
+
+A request is retried on transient transport failures and HTTP `429` and `5xx` responses.
+
+Defaults to `5`.
+
+### `retry_delay = duration (optional)`
+
+Base duration between retry attempts.
+
+Tenzir uses exponential backoff starting at `retry_delay` and capping at `16 * retry_delay`. A `Retry-After` response header overrides this delay.
+
+Defaults to `1s`.
+
+### `body = blob|record|string (optional)`
+
+Body to send with the HTTP request.
+
+Tenzir resolves secrets in string bodies and in nested record values before it sends the request.
+
+If the value is a `record`, the body is encoded according to the `encode` option and Tenzir sets an appropriate `Content-Type` header.
+
+### `encode = string (optional)`
+
+Specifies how to encode `record` bodies. Supported values:
+
+* `json`
+* `form`
+
+Defaults to `json`.
+
+### `paginate = record -> string | record | null | string (optional)`
+
+Controls automatic pagination of HTTP responses.
+
+**Lambda mode**: A lambda expression to evaluate against the parsed result of a request. The lambda receives one parsed page envelope. If the parser emits multiple events for one page, Tenzir emits a warning and stops pagination.
+
+If the lambda returns `null`, pagination stops. If it returns a non-null string, Tenzir uses that string as the URL for a new `GET` request with the same headers.
+
+If the lambda returns a record, Tenzir patches the next request. The record supports these fields:
+
+* `url`: The next URL as a `string`. Relative URLs are resolved against the current request URL.
+* `method`: The next HTTP method as a `string`.
+* `headers`: A record of request headers. Header names are matched case-insensitively. String values set or replace headers, and `null` values delete headers.
+* `body`: The next request body as a `blob`, `record`, or `string`. Set this field to `null` to clear the body.
+
+Each request record is a patch against the request that produced the current page. Setting `body` does not change the method. Set `method` explicitly if the next request must use a different method. If `body` is a record, the `encode` option also applies to paginated request bodies.
+
+This request-record pagination behavior applies to [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) only. It does not change [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md), [`accept_http`](https://tenzir.com/docs/reference/operators/accept_http.md), or [`serve_http`](https://tenzir.com/docs/reference/operators/serve_http.md).
+
+**Link mode**: The string `"link"` to automatically follow pagination links in the HTTP `Link` response header as defined in [RFC 8288](https://datatracker.ietf.org/doc/html/rfc8288). Tenzir follows the `rel=next` relation until the response no longer contains one.
+
+**[OData](https://www.oasis-open.org/standard/odata-v4-01-os/) mode**: The string `"odata"` to follow OData collection responses such as Microsoft Graph. The response body must be a JSON object with a top-level `value` array. Tenzir emits each object from `value`, follows a top-level string `@odata.nextLink` as an opaque URL, and sends follow-up requests as `GET` requests with the same headers.
+
+### `paginate_delay = duration (optional)`
+
+The duration to wait between consecutive pagination requests.
+
+Defaults to `0s`.
+
+### `error_field = field (optional)`
+
+Field to insert the response body for HTTP error responses (status codes not in the 2xx or 3xx range).
+
+When set, any HTTP response with a status code outside the 200–399 range will have its body stored in this field as a `blob`. Otherwise, error responses are skipped and an error is emitted.
+
+Retryable HTTP responses (`429` and `5xx`) are retried before the operator emits the final error response.
+
+### `tls = record (optional)`
+
+TLS configuration. Provide an empty record (`tls={}`) to enable TLS with defaults or set fields to customize it.
+
+```tql
+{
+  skip_peer_verification: bool, // skip certificate verification.
+  cacert: string,               // CA bundle to verify peers.
+  certfile: string,             // client certificate to present.
+  keyfile: string,              // private key for the client certificate.
+  min_version: string,          // minimum TLS version (`"1.0"`, `"1.1"`, `"1.2"`, "1.3"`).
+  ciphers: string,              // OpenSSL cipher list string.
+  client_ca: string,            // CA to validate client certificates.
+  require_client_cert: bool,    // require clients to present a certificate.
+}
+```
+
+The `client_ca` and `require_client_cert` options are only valid for operators that accept incoming client connections.
+
+Any value not specified in the record will either be picked up from the configuration or if not configured will not be used by the operator.
+
+See the [Node TLS Setup guide](../../guides/node-setup/configure-tls.md) for more details.
+
+### Migration from `server=true`
+
+The `server=true` flag is no longer supported. Use [`accept_http`](https://tenzir.com/docs/reference/operators/accept_http.md) to listen for incoming HTTP requests.
+
+### `{ … } (optional)`
+
+An optional pipeline that receives the response body as bytes, allowing parsing per request. Explicit parser sub-pipelines take precedence over inferred formats. This is especially useful for ambiguous formats, custom parsing, or scenarios where the response body can be parsed into multiple events.
+
+Tenzir feeds the pipeline incrementally as response chunks arrive, so parsers can emit events before the full response has been downloaded.
+
+Inside the pipeline, the `$response` variable is available as a record with the following fields:
+
+| Field     | Type     | Description                           |
+| --------- | -------- | ------------------------------------- |
+| `code`    | `uint64` | The HTTP status code of the response. |
+| `headers` | `record` | The response headers.                 |
+
+The pipeline must return events.
+
+## Examples
+
+### Make a GET request
+
+Make a request to [urlscan.io](https://urlscan.io/docs/api#search) to search for scans for `tenzir.com` and get the first result.
+
+```tql
+from_http "https://urlscan.io/api/v1/search?q=tenzir.com" {
+  read_json
+}
+unroll results
+head 1
+```
+
+```tql
+{
+  results: {
+    submitter: { ... },
+    task: { ... },
+    stats: { ... },
+    page: { ... },
+    _id: "0196edb1-521e-761f-9d62-1ca4cfad5b30",
+    _score: null,
+    sort: [ "1747744570133", "\"0196edb1-521e-761f-9d62-1ca4cfad5b30\"" ],
+    result: "https://urlscan.io/api/v1/result/0196edb1-521e-761f-9d62-1ca4cfad5b30/",
+    screenshot: "https://urlscan.io/screenshots/0196edb1-521e-761f-9d62-1ca4cfad5b30.png",
+  },
+  total: 9,
+  took: 296,
+  has_more: false,
+}
+```
+
+### Infer the parser
+
+Omit the parser sub-pipeline when the response declares a supported `Content-Type` header or the URL path has a supported extension:
+
+```tql
+from_http "https://example.com/events.json"
+```
+
+Explicit parser sub-pipelines still take precedence:
+
+```tql
+from_http "https://example.com/events" {
+  read_ndjson
+}
+```
+
+### Send a POST request with JSON body
+
+```tql
+from_http "https://httpbin.org/post", body={key: "value"}, encode="json" {
+  read_json
+}
+```
+
+### Access response metadata
+
+Use the `$response` variable inside a parsing pipeline to access the HTTP response code and headers:
+
+```tql
+from_http "https://example.com/api", method="put" {
+  read_json
+  where $response.code == 200
+  response = $response
+}
+```
+
+### Paginate via Link Headers
+
+Use `paginate="link"` to automatically follow RFC 8288 `Link` headers with `rel=next`:
+
+```tql
+from_http "https://api.github.com/repos/tenzir/tenzir/issues?per_page=10",
+  paginate="link" {
+  read_json
+}
+```
+
+Many APIs (such as GitHub, GitLab, and Jira) use the `Link` header for pagination. The operator extracts the `rel=next` URL from the header and continues fetching until no more pages are available.
+
+### Paginate [OData](https://www.oasis-open.org/standard/odata-v4-01-os/) collection responses
+
+Use `paginate="odata"` for APIs that return an OData collection envelope, such as Microsoft Graph:
+
+```tql
+from_http "https://graph.microsoft.com/v1.0/users",
+  headers={
+    "Authorization": f"Bearer {secret("MICROSOFT_GRAPH_TOKEN")}",
+    "ConsistencyLevel": "eventual",
+  },
+  paginate="odata" {
+  read_json
+}
+```
+
+The response body must be a JSON object with a top-level `value` array. The operator emits each object from `value`, follows a top-level string `@odata.nextLink` as an opaque URL, and stops when the field is absent or not a string. Follow-up requests use `GET` with the same headers as the initial request.
+
+### Paginate with request records
+
+Use a request record when an API expects pagination state in the request body instead of the URL. This OpenSearch example uses `search_after` from the last hit in the previous page. The next request inherits the URL, method, and headers, but replaces the body:
+
+```tql
+let $headers = {
+  "Authorization": f"Bearer {secret("OPENSEARCH_TOKEN")}",
+}
+
+
+from_http "https://opensearch.example.com/logs-*/_search",
+  headers=$headers,
+  body={
+    size: 1000,
+    sort: [{"@timestamp": "asc"}, {"_id": "asc"}],
+    query: {match_all: {}},
+  },
+  paginate=(x => {
+    body: {
+      size: 1000,
+      sort: [{"@timestamp": "asc"}, {"_id": "asc"}],
+      query: {match_all: {}},
+      search_after: x.hits.hits[-1].sort,
+    },
+  } if x.hits.hits != []) {
+  read_json
+}
+unroll hits.hits
+this = hits.hits._source
+```
+
+For scroll-style APIs, return both a new URL and a new body. The next request keeps the configured method and headers:
+
+```tql
+let $search = "https://opensearch.example.com/logs/_search?scroll=1m"
+let $scroll = "https://opensearch.example.com/_search/scroll"
+let $headers = {
+  "Authorization": f"Bearer {secret("OPENSEARCH_TOKEN")}",
+}
+
+
+from_http $search,
+  headers=$headers,
+  body={size: 1000, query: {match_all: {}}},
+  paginate=(x => {
+    url: $scroll,
+    body: {
+      scroll: "1m",
+      scroll_id: x._scroll_id,
+    },
+  } if x.hits.hits != []) {
+  read_json
+}
+unroll hits.hits
+this = hits.hits._source
+```
+
+Keep operators such as [`unroll`](https://tenzir.com/docs/reference/operators/unroll.md) after [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) for these pagination styles. The pagination lambda receives the parsed page envelope, so the parsing subpipeline must emit one event for the whole response.
+
+### Retry Failed Requests
+
+Configure retries for failed requests:
+
+```tql
+from_http "https://api.example.com/data", max_retry_count=3, retry_delay=2s {
+  read_json
+}
+```
+
+This retries transient transport failures and HTTP `429` and `5xx` responses up to 3 times. The delay starts at 2 seconds and backs off exponentially. Tenzir emits a diagnostic before each retry with the reason and wait time.
+
+## See Also
+
+* [`accept_http`](https://tenzir.com/docs/reference/operators/accept_http.md)
+* [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md)
+* [`serve_http`](https://tenzir.com/docs/reference/operators/serve_http.md)
+* [Fetch via HTTP and APIs](../../guides/collect/fetch-via-http-and-apis.md)
+* [Enrich with threat intel](../../guides/enrich/enrich-with-threat-intel.md)
+* [Use lookup tables](../../guides/enrich/use-lookup-tables.md)
+* [HTTP](../../integrations/http.md)

@@ -1,0 +1,223 @@
+---
+title: "Deduplicate events"
+canonical: https://tenzir.com/docs/guides/optimize/deduplicate-events
+source: https://tenzir.com/docs/guides/optimize/deduplicate-events.md
+section: "Docs"
+---
+
+# Deduplicate events
+
+> The deduplicate operator provides a powerful mechanism to remove duplicate events in a pipeline.
+
+The [`deduplicate`](https://tenzir.com/docs/reference/operators/deduplicate.md) operator provides a powerful mechanism to remove duplicate events in a pipeline.
+
+There are numerous use cases for deduplication, such as reducing noise, optimizing costs and making threat detection and response more efficient.
+
+## Basic deduplication
+
+Let’s start with a simple example to understand how deduplication works. Imagine you’re monitoring user logins and want to see only unique users, regardless of how many times they log in:
+
+```tql
+from {user: "alice", action: "login", time: 1},
+     {user: "bob", action: "login", time: 2},
+     {user: "alice", action: "login", time: 3},
+     {user: "alice", action: "logout", time: 4}
+deduplicate user
+```
+
+```tql
+{user: "alice", action: "login", time: 1}
+{user: "bob", action: "login", time: 2}
+```
+
+The operator keeps only the first occurrence of each unique value for the specified field(s). In this example:
+
+* Alice’s first login (time: 1) is kept
+* Bob’s login (time: 2) is kept
+* Alice’s second login (time: 3) is dropped because we already saw `user: "alice"`
+* Note that Alice’s logout (time: 4) would also be dropped with this simple deduplication
+
+## Deduplicate by multiple fields
+
+Often you need more nuanced deduplication. For example, you might want to track unique user-action pairs to see each distinct activity per user:
+
+```tql
+from {user: "alice", action: "login", time: 1},
+     {user: "bob", action: "login", time: 2},
+     {user: "alice", action: "login", time: 3},
+     {user: "alice", action: "logout", time: 4}
+deduplicate user, action
+```
+
+```tql
+{user: "alice", action: "login", time: 1}
+{user: "bob", action: "login", time: 2}
+{user: "alice", action: "logout", time: 4}
+```
+
+Now we keep unique combinations of user and action:
+
+* Alice’s first login is kept (unique: alice+login)
+* Bob’s login is kept (unique: bob+login)
+* Alice’s second login is dropped (duplicate: alice+login already seen)
+* Alice’s logout is kept (unique: alice+logout is a new combination)
+
+This approach is useful for tracking distinct user activities rather than just unique users.
+
+## Analyze unique host pairs
+
+When investigating network incidents, you often want to identify all unique communication patterns between hosts. This example shows network connections with nested ID fields containing origin and response hosts:
+
+```tql
+from {id: {orig_h: 10.0.0.1, resp_h: 192.168.1.1}, bytes: 1024},
+     {id: {orig_h: 10.0.0.2, resp_h: 192.168.1.1}, bytes: 2048},
+     {id: {orig_h: 10.0.0.1, resp_h: 192.168.1.1}, bytes: 512},
+     {id: {orig_h: 10.0.0.1, resp_h: 192.168.1.2}, bytes: 256}
+deduplicate id.orig_h, id.resp_h
+```
+
+```tql
+{id: {orig_h: 10.0.0.1, resp_h: 192.168.1.1}, bytes: 1024}
+{id: {orig_h: 10.0.0.2, resp_h: 192.168.1.1}, bytes: 2048}
+{id: {orig_h: 10.0.0.1, resp_h: 192.168.1.2}, bytes: 256}
+```
+
+The deduplication works on the extracted host pairs:
+
+* First connection (10.0.0.1 → 192.168.1.1) is kept
+* Second connection (10.0.0.2 → 192.168.1.1) is kept (different origin)
+* Third connection (10.0.0.1 → 192.168.1.1) is dropped (duplicate of first)
+* Fourth connection (10.0.0.1 → 192.168.1.2) is kept (different destination)
+
+Note that flipped connections (A→B vs B→A) are considered different pairs. This helps identify bidirectional communication patterns.
+
+## Remove duplicate alerts
+
+Security monitoring often generates duplicate alerts that create noise and fatigue. Here’s how to suppress repeated alerts for the same threat pattern:
+
+```tql
+from {src_ip: 10.0.0.1, dest_ip: 8.8.8.8, signature: "Suspicious DNS", time: 1},
+     {src_ip: 10.0.0.1, dest_ip: 8.8.8.8, signature: "Suspicious DNS", time: 2},
+     {src_ip: 10.0.0.2, dest_ip: 8.8.8.8, signature: "Suspicious DNS", time: 3},
+     {src_ip: 10.0.0.1, dest_ip: 8.8.8.8, signature: "Port Scan", time: 4}
+deduplicate src_ip, dest_ip, signature
+```
+
+```tql
+{src_ip: 10.0.0.1, dest_ip: 8.8.8.8, signature: "Suspicious DNS", time: 1}
+{src_ip: 10.0.0.2, dest_ip: 8.8.8.8, signature: "Suspicious DNS", time: 3}
+{src_ip: 10.0.0.1, dest_ip: 8.8.8.8, signature: "Port Scan", time: 4}
+```
+
+The deduplication creates a composite key from source, destination, and signature:
+
+* First “Suspicious DNS” from 10.0.0.1 is kept
+* Second identical alert (time: 2) is suppressed as a duplicate
+* “Suspicious DNS” from different source 10.0.0.2 is kept (different pattern)
+* “Port Scan” from 10.0.0.1 is kept (different signature)
+
+This approach reduces alert volume while preserving visibility into distinct threat patterns.
+
+### Using timeout for time-based deduplication
+
+In production environments, you often want to suppress duplicates only within a certain time window. This ensures you don’t miss recurring issues that happen over longer periods.
+
+The `create_timeout` parameter resets the deduplication state after the specified duration:
+
+```tql
+deduplicate src_ip, dest_ip, signature, create_timeout=1h
+```
+
+This configuration:
+
+* Suppresses duplicate alerts for the same source/destination/signature combination
+* Resets after 1 hour, allowing the same alert pattern through again
+* Helps balance noise reduction with visibility into persistent threats
+
+For example, if a host is repeatedly targeted:
+
+* 9:00 AM: First “Port Scan” alert is shown
+* 9:15 AM: Duplicate suppressed
+* 9:30 AM: Duplicate suppressed
+* 10:05 AM: Same alert shown again (timeout expired)
+
+## Tracking dropped events
+
+Sometimes you need visibility into how many duplicates were suppressed. The `count_field` option adds a field to each output event showing the number of dropped events for that deduplication key.
+
+### Monitoring alert suppression
+
+When deduplicating security alerts, you may want to know how many duplicates were suppressed to understand the volume of repeated activity:
+
+```tql
+from {src_ip: 10.0.0.1, signature: "Port Scan", time: 1},
+     {src_ip: 10.0.0.1, signature: "Port Scan", time: 2},
+     {src_ip: 10.0.0.1, signature: "Port Scan", time: 3},
+     {src_ip: 10.0.0.2, signature: "Port Scan", time: 4},
+     {src_ip: 10.0.0.2, signature: "Port Scan", time: 5},
+     {src_ip: 10.0.0.1, signature: "Port Scan", time: 6}
+deduplicate src_ip, signature, distance=2, count_field=suppressed
+```
+
+```tql
+{src_ip: 10.0.0.1, signature: "Port Scan", time: 1, suppressed: 0}
+{src_ip: 10.0.0.2, signature: "Port Scan", time: 4, suppressed: 0}
+{src_ip: 10.0.0.1, signature: "Port Scan", time: 6, suppressed: 2}
+```
+
+The `suppressed` field shows how many events were dropped for each key:
+
+* First alert from `10.0.0.1` passes with `suppressed: 0`
+* Alerts at times 2 and 3 are suppressed (duplicates within distance)
+* Alert from `10.0.0.2` passes with `suppressed: 0` (different key)
+* At time 6, `10.0.0.1` reappears after the distance threshold, showing `suppressed: 2` for the two dropped events
+
+In production, combine `count_field` with `create_timeout` for time-based deduplication:
+
+```tql
+deduplicate src_ip, signature, create_timeout=1h, count_field=suppressed
+```
+
+A high suppression count indicates persistent activity from a specific source, such as ongoing scanning attempts or noisy sensors.
+
+## Best practices
+
+1. **Choose fields carefully**: Deduplicate on fields that truly identify unique events for your use case. Too few fields may drop important events; too many may not deduplicate effectively.
+
+2. **Consider order**: The [`deduplicate`](https://tenzir.com/docs/reference/operators/deduplicate.md) operator keeps the *first* occurrence. If you need the latest, consider using [`reverse`](https://tenzir.com/docs/reference/operators/reverse.md) first:
+
+   ```tql
+   reverse | deduplicate user | reverse
+   ```
+
+3. **Use timeout wisely**: For streaming data, `create_timeout` prevents memory from growing indefinitely while still reducing noise. Choose durations based on your threat detection windows.
+
+4. **Combine with other operators**: Often you’ll want to filter ([`where`](https://tenzir.com/docs/reference/operators/where.md)) or transform ([`set`](https://tenzir.com/docs/reference/operators/set.md)) data before deduplication to normalize keys:
+
+   ```tql
+   normalized_ip = src_ip.string()
+   deduplicate normalized_ip
+   ```
+
+5. **Track suppression for context**: Use `count_field` when you need visibility into duplicate volume, especially for security monitoring where the number of repeated events can indicate severity or persistence of threats.
+
+## Coming from Cribl?
+
+If you’re familiar with [Cribl’s Suppress function](https://docs.cribl.io/stream/suppress-function/), here’s how Tenzir’s `deduplicate` compares:
+
+| Feature               | Cribl `suppress`                   | Tenzir `deduplicate`            |
+| --------------------- | ---------------------------------- | ------------------------------- |
+| Key-based suppression | `keyExpr`                          | `keys…`                         |
+| Allow N events        | `numEventsToAllow` (default: 1)    | `limit` (default: 1)            |
+| Time-based window     | `suppressPeriodSec` (default: 30s) | `create_timeout` (no default)   |
+| Count dropped events  | `suppressCount` (automatic)        | `count_field` (explicit)        |
+| Position-based window | ❌                                  | `distance`                      |
+| Drop vs. tag mode     | `dropEventsMode` toggle            | always drops                    |
+| Fine-grained timeouts | ❌                                  | `write_timeout`, `read_timeout` |
+
+Tenzir’s `deduplicate` offers several advantages:
+
+* **Flexible deduplication modes**: Beyond time-based windows, Tenzir supports position-based deduplication via `distance` - useful when event order matters more than wall-clock time.
+* **Precise timeout control**: Three distinct timeout types (`create_timeout`, `write_timeout`, `read_timeout`) give you fine-grained control over when suppression state resets.
+* **No arbitrary defaults**: Tenzir doesn’t impose a default timeout, letting you choose the right behavior for your use case rather than inheriting a 30-second window you might not want.
+* **Explicit is better**: The `count_field` parameter makes suppression tracking opt-in, keeping your schema clean when you don’t need it.

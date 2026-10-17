@@ -1,0 +1,398 @@
+# OSINT (osint)
+
+The OSINT (Open Source Intelligence) object contains details related to an indicator such as the indicator itself, related indicators, geolocation, registrar information, subdomains, analyst commentary, and other contextual information. This information can be used to further enrich a detection or finding by providing decisioning support to other analysts and engineers.
+
+- **Extends**: [Object (object)](object.md)
+
+## Attributes
+
+### `answers`
+
+- **Type**: [`dns_answer`](dns_answer.md)
+- **Requirement**: optional
+
+Any pertinent DNS answers information related to an indicator or OSINT analysis.
+
+### `attacks`
+
+- **Type**: [`attack`](attack.md)
+- **Requirement**: optional
+
+MITRE ATT&CK Tactics, Techniques, and/or Procedures (TTPs) pertinent to an indicator or OSINT analysis.
+
+### `autonomous_system`
+
+- **Type**: [`autonomous_system`](autonomous_system.md)
+- **Requirement**: optional
+
+Any pertinent autonomous system information related to an indicator or OSINT analysis.
+
+### `comment`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Analyst commentary or source commentary about an indicator or OSINT analysis.
+
+### `confidence`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The confidence of an indicator being malicious and/or pertinent, normalized to the caption of the confidence_id value. In the case of 'Other', it is defined by the event source or analyst.
+
+### `confidence_id`
+
+- **Type**: `integer_t`
+- **Requirement**: recommended
+- **Sibling**: `confidence`
+
+#### Enum values
+
+- `0`: `Unknown` - The normalized confidence is unknown.
+- `1`: `Low`
+- `2`: `Medium`
+- `3`: `High`
+- `99`: `Other` - The confidence is not mapped to the defined enum values. See the `confidence` attribute, which contains a data source specific value.
+
+The normalized confidence refers to the accuracy of collected information related to the OSINT or how pertinent an indicator or analysis is to a specific event or finding. A low confidence means that the information collected or analysis conducted lacked detail or is not accurate enough to qualify an indicator as fully malicious.
+
+### `campaign`
+
+- **Type**: [`campaign`](campaign.md)
+- **Requirement**: optional
+
+The campaign object describes details about the campaign that was the source of the activity.
+
+### `category`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Categorizes the threat indicator based on its functional or operational role.
+
+### `created_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: optional
+
+The timestamp when the indicator was initially created or identified.
+
+### `creator`
+
+- **Type**: [`user`](user.md)
+- **Requirement**: optional
+
+The identifier of the user, system, or organization that contributed the indicator.
+
+### `desc`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+A detailed explanation of the indicator, including its context, purpose, and relevance.
+
+### `email`
+
+- **Type**: [`email`](email.md)
+- **Requirement**: optional
+
+Any email information pertinent to an indicator or OSINT analysis.
+
+### `email_auth`
+
+- **Type**: [`email_auth`](email_auth.md)
+- **Requirement**: optional
+
+Any email authentication information pertinent to an indicator or OSINT analysis.
+
+### `expiration_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: optional
+
+The expiration date of the indicator, after which it is no longer considered reliable.
+
+### `external_uid`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+A unique identifier assigned by an external system for cross-referencing.
+
+### `file`
+
+- **Type**: [`file`](file.md)
+- **Requirement**: optional
+
+Any pertinent file information related to an indicator or OSINT analysis.
+
+### `detection_pattern`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The specific detection pattern or signature associated with the indicator.
+
+### `detection_pattern_type`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The detection pattern type, normalized to the caption of the detection_pattern_type_id value. In the case of 'Other', it is defined by the event source.
+
+### `detection_pattern_type_id`
+
+- **Type**: `integer_t`
+- **Requirement**: optional
+- **Sibling**: `detection_pattern_type`
+
+#### Enum values
+
+- `0`: `Unknown` - The type is not mapped.
+- `1`: `STIX`
+- `2`: `PCRE`
+- `3`: `SIGMA`
+- `4`: `Snort`
+- `5`: `Suricata`
+- `6`: `YARA`
+- `99`: `Other` - The detection pattern type is not mapped. See the `detection_pattern_type` attribute, which contains a data source specific value.
+
+Specifies the type of detection pattern used to identify the associated threat indicator.
+
+### `intrusion_sets`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+A grouping of adversarial behaviors and resources believed to be associated with specific threat actors or campaigns. Intrusion sets often encompass multiple campaigns and are used to organize related activities under a common label.
+
+### `kill_chain`
+
+- **Type**: [`kill_chain_phase`](kill_chain_phase.md)
+- **Requirement**: optional
+
+Lockheed Martin Kill Chain Phases pertinent to an indicator or OSINT analysis.
+
+### `labels`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Tags or keywords associated with the indicator to enhance searchability.
+
+### `location`
+
+- **Type**: [`location`](location.md)
+- **Requirement**: optional
+
+Any pertinent geolocation information related to an indicator or OSINT analysis.
+
+### `malware`
+
+- **Type**: [`malware`](malware.md)
+- **Requirement**: optional
+
+A list of Malware objects, describing details about the identified malware.
+
+### `modified_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: optional
+
+The timestamp of the last modification or update to the indicator.
+
+### `name`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The `name` is a pointer/reference to an attribute within the OCSF event data. For example: file.name.
+
+### `related_analytics`
+
+- **Type**: [`analytic`](analytic.md)
+- **Requirement**: optional
+
+Any analytics related to an indicator or OSINT analysis.
+
+### `reputation`
+
+- **Type**: [`reputation`](reputation.md)
+- **Requirement**: optional
+
+Related reputational analysis from third-party engines and analysts for a given indicator or OSINT analysis.
+
+### `risk_score`
+
+- **Type**: `integer_t`
+- **Requirement**: optional
+
+A numerical representation of the threat indicator’s risk level.
+
+### `references`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Provides a reference to an external source of information related to the CTI being represented. This may include a URL, a document, or some other type of reference that provides additional context or information about the CTI.
+
+### `script`
+
+- **Type**: [`script`](script.md)
+- **Requirement**: optional
+
+Any pertinent script information related to an indicator or OSINT analysis.
+
+### `severity`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Represents the severity level of the threat indicator, typically reflecting its potential impact or damage.
+
+### `severity_id`
+
+- **Type**: `integer_t`
+- **Requirement**: optional
+- **Sibling**: `severity`
+
+#### Enum values
+
+- `0`: `Unknown` - The event/finding severity is unknown.
+- `1`: `Informational` - Informational message. No action required.
+- `2`: `Low` - The user decides if action is needed.
+- `3`: `Medium` - Action is required but the situation is not serious at this time.
+- `4`: `High` - Action is required immediately.
+- `5`: `Critical` - Action is required immediately and the scope is broad.
+- `6`: `Fatal` - An error occurred but it is too late to take remedial action.
+- `99`: `Other` - The event/finding severity is not mapped. See the `severity` attribute, which contains a data source specific value.
+
+The normalized severity level of the threat indicator, typically reflecting its potential impact or damage.
+
+### `signatures`
+
+- **Type**: [`digital_signature`](digital_signature.md)
+- **Requirement**: optional
+
+Any digital signatures or hashes related to an indicator or OSINT analysis.
+
+### `src_url`
+
+- **Type**: `url_t`
+- **Requirement**: optional
+
+The source URL of an indicator or OSINT analysis, e.g., a URL back to a TIP, report, or otherwise.
+
+### `subdomains`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+Any pertinent subdomain information - such as those generated by a Domain Generation Algorithm - related to an indicator or OSINT analysis.
+
+### `subnet`
+
+- **Type**: `subnet_t`
+- **Requirement**: optional
+
+A CIDR or network block related to an indicator or OSINT analysis.
+
+### `threat_actor`
+
+- **Type**: [`threat_actor`](threat_actor.md)
+- **Requirement**: optional
+
+A threat actor is an individual or group that conducts malicious cyber activities, often with financial, political, or ideological motives.
+
+### `tlp`
+
+- **Type**: `string_t`
+- **Requirement**: recommended
+
+#### Enum values
+
+- `AMBER`: `TLP:AMBER` - TLP:AMBER is for limited disclosure, recipients can only spread this on a need-to-know basis within their organization and its clients. Note that TLP:AMBER+STRICT restricts sharing to the organization only. Sources may use TLP:AMBER when information requires support to be effectively acted upon, yet carries risk to privacy, reputation, or operations if shared outside of the organizations involved. Recipients may share TLP:AMBER information with members of their own organization and its clients, but only on a need-to-know basis to protect their organization and its clients and prevent further harm. Note: if the source wants to restrict sharing to the organization only, they must specify TLP:AMBER+STRICT.
+- `AMBER STRICT`: `TLP:AMBER+STRICT` - TLP:AMBER is for limited disclosure, recipients can only spread this on a need-to-know basis within their organization and its clients. Note that TLP:AMBER+STRICT restricts sharing to the organization only. Sources may use TLP:AMBER when information requires support to be effectively acted upon, yet carries risk to privacy, reputation, or operations if shared outside of the organizations involved. Recipients may share TLP:AMBER information with members of their own organization and its clients, but only on a need-to-know basis to protect their organization and its clients and prevent further harm. Note: if the source wants to restrict sharing to the organization only, they must specify TLP:AMBER+STRICT.
+- `CLEAR`: `TLP:CLEAR` - TLP:CLEAR denotes that recipients can spread this to the world, there is no limit on disclosure. Sources may use TLP:CLEAR when information carries minimal or no foreseeable risk of misuse, in accordance with applicable rules and procedures for public release. Subject to standard copyright rules, TLP:CLEAR information may be shared without restriction.
+- `GREEN`: `TLP:GREEN` - TLP:GREEN is for limited disclosure, recipients can spread this within their community. Sources may use TLP:GREEN when information is useful to increase awareness within their wider community. Recipients may share TLP:GREEN information with peers and partner organizations within their community, but not via publicly accessible channels. TLP:GREEN information may not be shared outside of the community. Note: when “community” is not defined, assume the cybersecurity/defense community.
+- `RED`: `TLP:RED` - TLP:RED is for the eyes and ears of individual recipients only, no further disclosure. Sources may use TLP:RED when information cannot be effectively acted upon without significant risk for the privacy, reputation, or operations of the organizations involved. Recipients may therefore not share TLP:RED information with anyone else. In the context of a meeting, for example, TLP:RED information is limited to those present at the meeting.
+- `WHITE`: `TLP:WHITE` - TLP:WHITE and TLP:CLEAR may be used interchangeably, TLP:WHITE is the most up to date (as of TLP 2.0) usage.
+
+The [Traffic Light Protocol](https://www.first.org/tlp/) was created to facilitate greater sharing of potentially sensitive information and more effective collaboration. TLP provides a simple and intuitive schema for indicating with whom potentially sensitive information can be shared.
+
+### `type`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The OSINT indicator type.
+
+### `type_id`
+
+- **Type**: `integer_t`
+- **Requirement**: required
+- **Sibling**: `type`
+
+#### Enum values
+
+- `0`: `Unknown` - The indicator type is ambiguous or there is not a related indicator for the OSINT object.
+- `1`: `IP Address` - An IPv4 or IPv6 address.
+- `10`: `Vulnerability` - A CVE ID, CWE ID, or other identifier for a weakness, exploit, bug, or misconfiguration.
+- `11`: `File` - A file or metadata about a file.
+- `12`: `Registry Key` - A Windows Registry Key.
+- `13`: `Registry Value` - A Windows Registry Value.
+- `14`: `Command Line` - A partial or full Command Line used to invoke scripts or other remote commands.
+- `2`: `Domain` - A full-qualified domain name (FQDN), subdomain, or partial domain.
+- `3`: `Hostname` - A hostname or computer name.
+- `4`: `Hash` - Any type of hash e.g., MD5, SHA1, SHA2, BLAKE, BLAKE2, SSDEEP, VHASH, etc. generated from a file, malware sample, request header, or otherwise used to identify a pertinent artifact.
+- `5`: `URL` - A Uniform Resource Locator (URL) or Uniform Resource Indicator (URI).
+- `6`: `User Agent` - A User Agent typically seen in HTTP request headers.
+- `7`: `Digital Certificate` - The serial number, fingerprint, or full content of an X.509 digital certificate.
+- `8`: `Email` - The contents of an email or any related information to an email object.
+- `9`: `Email Address` - An email address.
+- `99`: `Other` - The indicator type is not directly listed.
+
+The OSINT indicator type ID.
+
+### `uid`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The unique identifier for the OSINT object.
+
+### `uploaded_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: optional
+
+The timestamp indicating when the associated indicator or intelligence was added to the system or repository.
+
+### `value`
+
+- **Type**: `string_t`
+- **Requirement**: required
+
+The actual indicator value in scope, e.g., a SHA-256 hash hexdigest or a domain name.
+
+### `vendor_name`
+
+- **Type**: `string_t`
+- **Requirement**: optional
+
+The vendor name of a tool which generates intelligence or provides indicators.
+
+### `vulnerabilities`
+
+- **Type**: [`vulnerability`](vulnerability.md)
+- **Requirement**: optional
+
+Any vulnerabilities related to an indicator or OSINT analysis.
+
+### `whois`
+
+- **Type**: [`whois`](whois.md)
+- **Requirement**: optional
+
+Any pertinent WHOIS information related to an indicator or OSINT analysis.

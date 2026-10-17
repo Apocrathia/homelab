@@ -1,0 +1,104 @@
+---
+title: "package_list"
+canonical: https://tenzir.com/docs/reference/operators/package_list
+source: https://tenzir.com/docs/reference/operators/package_list.md
+section: "Docs"
+---
+
+# package_list
+
+> Shows installed packages.
+
+Shows installed packages.
+
+```tql
+package_list [format=string]
+```
+
+## Description
+
+The `package_list` operator returns the list of all installed packages.
+
+### `format = string (optional)`
+
+Controls the output format. Valid options are `compact` and `extended`.
+
+Defaults to `compact`.
+
+## Schemas
+
+The `package_list` operator produces two output formats, controlled by the `format` option:
+
+* `compact`: succinct output in a human-readable format
+* `extended`: verbose output in a machine-readable format
+
+The formats generate the following schemas below.
+
+### `tenzir.package.compact`
+
+The compact format prints the package information according to the following schema:
+
+| Field         | Type     | Description                             |
+| ------------- | -------- | --------------------------------------- |
+| `id`          | `string` | The unique package id.                  |
+| `name`        | `string` | The name of this package.               |
+| `author`      | `string` | The package author.                     |
+| `description` | `string` | The description of this package.        |
+| `config`      | `record` | The user-provided package configuration |
+
+### `tenzir.package.extended`
+
+The `extended` format is mainly intended for use by non-human consumers, like shell scripts or frontend code. It contains all available information about a package.
+
+| Field                | Type     | Description                                                                                                                                                         |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package_definition` | `record` | The original package definition object asa found in the library.                                                                                                    |
+| `resolved_package`   | `record` | The effective package definition that was produced by applying all inputs and overrides from the `config` section and removing all disabled pipelines and contexts. |
+| `config`             | `record` | The user-provided package configuration.                                                                                                                            |
+| `package_status`     | `record` | Run-time information about the package provided the package manager.                                                                                                |
+
+The `config` object has the following schema, where all fields are optional:
+
+| Field       | Type     | Description                                                   |
+| ----------- | -------- | ------------------------------------------------------------- |
+| `version`   | `string` | The package version.                                          |
+| `source`    | `record` | The upstream location of the package definition.              |
+| `inputs`    | `record` | User-provided values for the package inputs.                  |
+| `overrides` | `record` | User-provided overrides for fields in the package definition. |
+| `metadata`  | `record` | An opaque record that can be set during installation.         |
+
+The `package_status` object has the following schema:
+
+| Field                | Type     | Description                                                                                     |
+| -------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `install_state`      | `string` | The install state of this package. One of `installing`, `installed`, `removing` or `zombie`.    |
+| `from_configuration` | `bool`   | Whether the package was installed from the `package add` operator or from a configuration file. |
+
+## Examples
+
+### Show all installed packages
+
+```tql
+package_list
+```
+
+```tql
+{
+  "id": "suricata-ocsf",
+  "name": "Suricata OCSF Mappings",
+  "author": "Tenzir",
+  "description": "[Suricata](https://suricata.io) is an open-source network monitor and\nthreat detection tool.\n\nThis package converts all Suricata events published on the topic `suricata` to\nOCSF and publishes the converted events on the topic `ocsf`.\n",
+  "config": {
+    "inputs": {},
+    "overrides": {}
+  }
+}
+```
+
+## See Also
+
+* [`package_add`](https://tenzir.com/docs/reference/operators/package_add.md)
+* [`package_remove`](https://tenzir.com/docs/reference/operators/package_remove.md)
+* [`pipeline_list`](https://tenzir.com/docs/reference/operators/pipeline_list.md)
+* [Install a package](../../guides/packages/install-a-package.md)
+* [Onboard a data source](../../tutorials/onboard-a-data-source.md)

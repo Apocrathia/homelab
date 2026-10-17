@@ -1,0 +1,146 @@
+# DNS Activity (dns_activity)
+
+DNS Activity events report DNS queries and answers as seen on the network.
+
+- **Class UID**: `4003`
+- **Category**: Network Activity
+- **Extends**: [Network (network)](network.md)
+- **Profiles**: [Network Proxy](../profiles/network_proxy.md), [Load Balancer](../profiles/load_balancer.md), [Cloud](../profiles/cloud.md), [Date/Time](../profiles/datetime.md), [Host](../profiles/host.md), [OSINT](../profiles/osint.md), [Security Control](../profiles/security_control.md)
+
+## Constraints
+
+- **At least one of**: `dst_endpoint`, `src_endpoint`
+
+## Inherited attributes
+
+**From Network:**
+- `proxy` (recommended)
+- `src_endpoint` (recommended)
+
+**From Base Event:**
+- `category_uid` (required)
+- `class_uid` (required)
+- `metadata` (required)
+- `severity_id` (required)
+- `time` (required)
+- `type_uid` (required)
+- `message` (recommended)
+- `observables` (recommended)
+- `status` (recommended)
+- `status_code` (recommended)
+- `status_detail` (recommended)
+- `status_id` (recommended)
+- `timezone_offset` (recommended)
+
+## Attributes
+
+### `activity_id`
+
+- **Type**: `integer_t`
+- **Sibling**: `activity_name`
+
+#### Enum values
+
+- `1`: `Query` - The DNS query request.
+- `2`: `Response` - The DNS query response.
+- `6`: `Traffic` - Bidirectional DNS request and response traffic.
+
+The normalized identifier of the activity that triggered the event.
+
+### `answers`
+
+- **Type**: [`dns_answer`](../objects/dns_answer.md)
+- **Requirement**: recommended
+- **Group**: primary
+
+The Domain Name System (DNS) answers.
+
+### `connection_info`
+
+- **Type**: [`network_connection_info`](../objects/network_connection_info.md)
+- **Requirement**: optional
+- **Group**: context
+
+The network connection information.
+
+### `dst_endpoint`
+
+- **Type**: [`network_endpoint`](../objects/network_endpoint.md)
+- **Requirement**: recommended
+
+The network destination endpoint.
+
+### `query`
+
+- **Type**: [`dns_query`](../objects/dns_query.md)
+- **Requirement**: recommended
+- **Group**: primary
+
+The Domain Name System (DNS) query.
+
+### `query_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: recommended
+- **Group**: occurrence
+
+The Domain Name System (DNS) query time.
+
+### `rcode`
+
+- **Type**: `string_t`
+- **Requirement**: recommended
+- **Group**: primary
+
+The DNS server response code, normalized to the caption of the rcode_id value. In the case of 'Other', it is defined by the event source.
+
+### `rcode_id`
+
+- **Type**: `integer_t`
+- **Requirement**: recommended
+- **Group**: primary
+- **Sibling**: `rcode`
+
+#### Enum values
+
+- `0`: `NoError` - No Error.
+- `1`: `FormError` - Format Error.
+- `2`: `ServError` - Server Failure.
+- `3`: `NXDomain` - Non-Existent Domain.
+- `4`: `NotImp` - Not Implemented.
+- `5`: `Refused` - Query Refused.
+- `6`: `YXDomain` - Name Exists when it should not.
+- `7`: `YXRRSet` - RR Set Exists when it should not.
+- `8`: `NXRRSet` - RR Set that should exist does not.
+- `9`: `NotAuth` - Not Authorized or Server Not Authoritative for zone.
+- `10`: `NotZone` - Name not contained in zone.
+- `11`: `DSOTYPENI` - DSO-TYPE Not Implemented.
+- `16`: `BADSIG_VERS` - TSIG Signature Failure or Bad OPT Version.
+- `17`: `BADKEY` - Key not recognized.
+- `18`: `BADTIME` - Signature out of time window.
+- `19`: `BADMODE` - Bad TKEY Mode.
+- `20`: `BADNAME` - Duplicate key name.
+- `21`: `BADALG` - Algorithm not supported.
+- `22`: `BADTRUNC` - Bad Truncation.
+- `23`: `BADCOOKIE` - Bad/missing Server Cookie.
+- `24`: `Unassigned` - The codes deemed to be unassigned by the RFC (unassigned codes: 12-15, 24-3840, 4096-65534).
+- `25`: `Reserved` - The codes deemed to be reserved by the RFC (codes: 3841-4095, 65535).
+- `99`: `Other` - The dns response code is not defined by the RFC.
+
+The normalized identifier of the DNS server response code. See [RFC-6895](https://datatracker.ietf.org/doc/html/rfc6895).
+
+### `response_time`
+
+- **Type**: `timestamp_t`
+- **Requirement**: recommended
+- **Group**: occurrence
+
+The Domain Name System (DNS) response time.
+
+### `traffic`
+
+- **Type**: [`network_traffic`](../objects/network_traffic.md)
+- **Requirement**: optional
+- **Group**: context
+
+The network traffic refers to the amount of data moving across a network at a given point of time. Intended to be used alongside Network Connection.

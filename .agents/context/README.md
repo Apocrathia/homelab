@@ -29,6 +29,14 @@ manual chores. Not a fake enterprise platform.
 | `.scratch/`       | Throwaway renders and dumps (gitignored)                                                       |
 | `.worktrees/`     | Linked git worktrees for agent edits (gitignored; see [`worktrees.md`](../rules/worktrees.md)) |
 
+## Nested `.agents/` trees
+
+App folders can carry their own `.agents/` tree — a nested `AGENTS.md`
+router, `context/` modules, and vendored `skills/` — isolated from the root
+skill pool and loaded only when working inside that subtree. First instance:
+the Tenzir stack
+([`flux/manifests/03-services/observability/tenzir/AGENTS.md`](../../flux/manifests/03-services/observability/tenzir/AGENTS.md)).
+
 ## How agents should behave here
 
 Permissions and hard stops: root [`AGENTS.md`](../../AGENTS.md) and

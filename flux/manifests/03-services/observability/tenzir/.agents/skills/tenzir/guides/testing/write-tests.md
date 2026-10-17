@@ -1,0 +1,353 @@
+---
+title: "Write tests"
+canonical: https://tenzir.com/docs/guides/testing/write-tests
+source: https://tenzir.com/docs/guides/testing/write-tests.md
+section: "Docs"
+---
+
+# Write tests
+
+> This guide shows you how to create integration tests with the tenzir-test framework. You’ll set up a standalone repository, write test scenarios, and record reference output to verify your pipelines work as expected. If you already have tests and want to run them, see the run tests guide.
+
+This guide shows you how to create integration tests with the [`tenzir-test`](https://tenzir.com/docs/reference/test-framework.md) framework. You’ll set up a standalone repository, write test scenarios, and record reference output to verify your pipelines work as expected. If you already have tests and want to run them, see the [run tests](run-tests.md) guide.
+
+## Prerequisites
+
+* Python 3.12 or newer.
+
+* [`uv`](https://docs.astral.sh/uv/) installed locally.
+
+* A working installation of Tenzir. The harness automatically detects `tenzir` and `tenzir-node` using this precedence:
+
+  1. `TENZIR_BINARY` / `TENZIR_NODE_BINARY` environment variables
+  2. Local binary on `PATH`
+  3. Fallback to `uvx tenzir` / `uvx --from tenzir tenzir-node` when `uv` is installed
+
+  Most users need no configuration because the harness uses `uvx` to fetch Tenzir on demand.
+
+## Step 1: Scaffold a project
+
+Create a clean directory that holds nothing but integration tests and their shared assets. The harness treats this directory as the **project root**.
+
+```sh
+mkdir demo
+cd demo
+```
+
+## Step 2: Check the harness
+
+Run the harness through `uvx` to make sure the tooling works without setting up a virtual environment. `uvx` downloads and caches the latest release when needed.
+
+```sh
+uvx tenzir-test --help
+```
+
+If the command succeeds, you’re ready to add tests.
+
+## Step 3: Add shared data
+
+Populate `inputs/` with artifacts that tests will read. The example below stores a short NDJSON dataset that models a few alerts.
+
+```json
+{"id": 1, "severity": 5, "message": "Disk usage above 90%"}
+{"id": 2, "severity": 2, "message": "Routine backup completed"}
+{"id": 3, "severity": 7, "message": "Authentication failure on admin"}
+```
+
+Save the snippet as `inputs/alerts.ndjson`.
+
+## Step 4: Author a pipeline test
+
+Create your first scenario under `tests/`. The harness discovers tests recursively, so you can organize them by feature or risk level. Here, you create `tests/high-severity.tql`.
+
+tests/high-severity.tql
+
+```tql
+from_file f"{env("TENZIR_INPUTS")}/alerts.ndjson" {
+  read_ndjson
+}
+where severity >= 5
+select id, message
+```
+
+The harness also injects a unique scratch directory into `TENZIR_TMP_DIR` while each test executes. Use it for transient files you do not want under version control; pass `--keep` when you run `tenzir-test` if you need to inspect the generated artifacts afterwards.
+
+### Stream raw output while iterating
+
+During early iterations you may want to inspect command output before you record reference artifacts. Enable *passthrough mode* via `--passthrough` (`-p`) to pipe the `tenzir` process output directly to your terminal while the harness still provisions fixtures and environment variables:
+
+```sh
+uvx tenzir-test --passthrough tests/high-severity.tql
+```
+
+The harness enforces the exit code but skips comparisons, letting you decide when to capture the baseline with `--update`.
+
+## Step 5: Capture the reference output
+
+Run the harness once in update mode to execute the pipeline and write the expected output next to the test.
+
+```sh
+uvx tenzir-test --update
+```
+
+The command produces `tests/high-severity.txt` with the captured stdout.
+
+```tql
+{
+  id: 1,
+  message: "Disk usage above 90%",
+}
+{
+  id: 3,
+  message: "Authentication failure on admin",
+}
+```
+
+Review the reference file, adjust the pipeline if needed, and rerun `--update` until you are satisfied with the results. Commit the `.tql` test and `.txt` baseline together so future runs can compare against known-good output. At this point you can [run the test suite](run-tests.md) without `--update` to verify that the actual output matches the baseline.
+
+If the pipeline emits the right events in a varying order, as `summarize` does for its groups, add `pre-compare: sort` to the frontmatter instead of ending the pipeline with a `sort` operator. See [pre-compare transforms](../../reference/test-framework.md#pre-compare-transforms).
+
+If runtime warnings are irrelevant to what a test checks, add `quiet: true` to its frontmatter to exclude them from the baseline. Leave this setting disabled when the warning diagnostics themselves are part of the expected output. Errors and compilation diagnostics remain visible. You can also set this key in `test.yaml` for a directory and override it with `quiet: false` in individual tests. Read about [runtime warning suppression](../../reference/test-framework.md#runtime-warning-suppression) for the full behavior.
+
+## Step 6: Provide stdin input
+
+Some tests need data piped to stdin rather than read from files. Place a `.stdin` file next to the test to provide this content automatically. This simplifies TQL tests by letting pipelines start with a parser directly.
+
+### TQL pipelines with stdin
+
+Create `tests/parsing/csv.stdin` with your test data:
+
+tests/parsing/csv.stdin
+
+```csv
+name,count
+alice,42
+bob,23
+```
+
+Create `tests/parsing/csv.tql` that reads from stdin:
+
+tests/parsing/csv.tql
+
+```tql
+read_csv
+```
+
+Run the test with `--update` to capture the baseline:
+
+```sh
+uvx tenzir-test --update tests/parsing/csv.tql
+```
+
+The harness pipes the CSV data to tenzir’s stdin, so `read_csv` processes it directly. This is an alternative to using `.input` files with `from_file env("TENZIR_INPUT")` - choose whichever fits your test better.
+
+### Shell scripts with stdin
+
+The same mechanism works for shell scripts. Create `tests/shell/echo.sh`:
+
+tests/shell/echo.sh
+
+```sh
+#!/bin/sh
+cat
+```
+
+Create `tests/shell/echo.stdin` with the input data:
+
+tests/shell/echo.stdin
+
+```text
+Hello from stdin!
+```
+
+The harness pipes the contents of `echo.stdin` to the script’s stdin.
+
+### Combine stdin with input files
+
+Tests can use both `.stdin` and `.input` files together. The stdin content gets piped to the process, while the input file path is available via `TENZIR_INPUT`.
+
+Create `tests/shell/process.sh`:
+
+tests/shell/process.sh
+
+```sh
+#!/bin/sh
+echo "from stdin:"
+cat
+echo "from TENZIR_INPUT:"
+cat "$TENZIR_INPUT"
+```
+
+Create the corresponding files:
+
+tests/shell/process.stdin
+
+```text
+stdin content
+```
+
+tests/shell/process.input
+
+```text
+input file content
+```
+
+Run `--update` to capture both sources in the baseline output. The output looks like this:
+
+tests/shell/process.txt
+
+```text
+from stdin:
+stdin content
+from TENZIR_INPUT:
+input file content
+```
+
+## Step 7: Introduce a fixture
+
+Fixtures let you bootstrap external resources and expose their configuration through environment variables. Add a simple `node`-driven test to exercise a running Tenzir node.
+
+Create `tests/node/ping.tql` with the following contents:
+
+```tql
+---
+fixtures: [node]
+timeout: 10
+---
+
+
+// Get the version from the running node.
+version
+```
+
+Because the test needs a node to run, include the built-in `node` fixture and give it a reasonable timeout. The fixture starts `tenzir-node`, injects connection details into the environment, and tears the process down after the run. Capture the baseline via `--update` just like before.
+
+The fixture launches `tenzir-node` from the directory that owns the test file, so `tenzir-node.yaml` placed next to the scenario can refer to files with relative paths (for example `../inputs/alerts.ndjson`).
+
+### Reuse fixtures with suites
+
+When several tests should share the same fixture lifecycle, promote their directory to a **suite**. Add `suite:` to the directory’s `test.yaml` and keep the fixture selection alongside the other defaults:
+
+tests/http/test.yaml
+
+```yaml
+suite: smoke-http
+fixtures: [http]
+timeout: 45
+retry: 2
+```
+
+The `suite` key accepts either a plain string (as shown earlier) or a mapping with `name` and `mode` keys:
+
+tests/pubsub/test.yaml
+
+```yaml
+suite:
+  name: parallel-pubsub
+  mode: parallel
+fixtures: [node]
+timeout: 30
+```
+
+The `mode` key controls how suite members execute:
+
+* `sequential` (default): members run one after another in lexicographic order of their relative paths.
+* `parallel`: all members run concurrently on separate threads while sharing the same fixture lifecycle. Use this when tests are independent and can safely share fixtures at the same time, for example in publish/subscribe workflows where a publisher and multiple subscribers must run simultaneously.
+
+When `mode` is omitted or set to `sequential`, the behavior is identical to the plain string form.
+
+Key behaviour:
+
+* Suites are directory-scoped. Once a `test.yaml` declares `suite`, every test in that directory *and its subdirectories* joins automatically. Move the scenarios that should remain independent into a sibling directory.
+* In sequential mode, the harness activates the shared fixtures once, executes members in lexicographic order, and tears the fixtures down afterwards. In parallel mode, the harness activates fixtures once, runs all members concurrently, and tears down after every member finishes. Fixture assertions are serialized during parallel execution to maintain correctness.
+* Other suites (and standalone tests) still run in parallel when `--jobs` allows it.
+* Per-test frontmatter cannot introduce `suite`, and suite members may not define their own `fixtures` or `retry`. Keep those policies in the directory defaults so every member agrees on the shared lifecycle. Outside a suite, frontmatter can still set `fixtures`, `retry`, or `timeout` as before.
+* Tests can override other keys (for example `inputs:` or additional metadata) on a per-file basis when necessary.
+
+Run the `http` directory that defines the suite when you iterate on it:
+
+```sh
+uvx tenzir-test tests/http
+```
+
+Selecting a single file inside that suite fails fast with a descriptive error, which keeps the fixture lifecycle predictable and prevents partial runs from leaving shared state behind.
+
+### Drive fixtures manually
+
+When you switch to the Python runner you can drive fixtures manually. The controller API makes it easy to start, stop, or even crash the same `node` fixture inside a single test:
+
+```python
+# runner: python
+# fixtures: [node]
+
+
+import signal
+
+
+# Context-manager style: `with` automatically calls `start()` and `stop()` on
+# the fixture.
+with acquire_fixture("node") as node:
+    tenzir = Executor.from_env(node.env)
+    tenzir.run("remove { version }")  # talk to the running node
+
+
+# Without the context manager, you need to call `start()` and `stop()` manually.
+node.start()
+Executor.from_env(node.env).run("version")
+node.stop()
+```
+
+This imperative style complements the declarative `fixtures: [node]` flow and is especially useful for fault-injection scenarios. The harness preloads helpers like `acquire_fixture`, `Executor`, and `fixtures()`, so Python-mode tests can call them directly.
+
+When you restart the same controller, the node keeps using the state and cache directories it created during the first `start()`. Those paths (exported via `TENZIR_NODE_STATE_DIRECTORY` and `TENZIR_NODE_CACHE_DIRECTORY`) live inside the test’s scratch directory by default. The node’s complete process output is available through `TENZIR_NODE_STDOUT_LOG` and `TENZIR_NODE_STDERR_LOG` in the same workspace. The harness removes these files after the run unless you pass `--keep`. Acquire a fresh controller when you need a brand-new workspace.
+
+## Step 8: Organize defaults with `test.yaml`
+
+As suites grow, you can extract shared configuration into directory-level defaults. Place a `tests/node/test.yaml` file with convenient settings:
+
+```yaml
+fixtures: [node]
+timeout: 120
+# Optional: reuse datasets that live in tests/data/ instead of the project root.
+inputs: ../data
+```
+
+The harness merges this mapping into every test under `tests/node/`. Relative paths resolve against the directory that owns the YAML file, so `inputs: ../data` points at `tests/data/`. Individual files still override keys in their frontmatter when necessary.
+
+## Step 9: Skip suites by capability
+
+Some suites only make sense when certain capabilities are present in the runtime environment. Declare requirements in `test.yaml` with the `requires` key and opt into graceful skipping with `skip: {on: capability-unavailable}`:
+
+tests/gcs/test.yaml
+
+```yaml
+suite: gcs-smoke
+requires:
+  operators: [from_google_cloud_storage]
+skip:
+  on: capability-unavailable
+```
+
+Before executing the suite, the harness asks each runner to check the listed requirements. When a required operator is missing, the suite is skipped instead of failing. Without the `skip` opt-in, missing requirements cause a hard error.
+
+You can combine this with `fixture-unavailable` when a suite depends on both capabilities and fixtures:
+
+```yaml
+skip:
+  on:
+    - fixture-unavailable
+    - capability-unavailable
+```
+
+See the [capability requirements](../../reference/test-framework.md#capability-requirements) reference for details on how runners implement the probes.
+
+## Next steps
+
+You now have a project that owns its inputs, tests, fixtures, and baselines. From here you can:
+
+* [Run tests](run-tests.md) to learn about executing the suite, selecting tests, and setting up CI.
+* Add custom runners under `runners/` when you need specialized logic around `tenzir` invocations.
+* Build Python fixtures that publish or verify data through the helper APIs in `tenzir_test.fixtures`.
+* Explore coverage collection by passing `--coverage` to the harness.
+
+Refer back to the [test framework reference](../../reference/test-framework.md) whenever you need deeper details about runners, fixtures, or configuration knobs.

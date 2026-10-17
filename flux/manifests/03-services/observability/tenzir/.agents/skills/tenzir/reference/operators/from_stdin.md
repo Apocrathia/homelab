@@ -1,0 +1,72 @@
+---
+title: "from_stdin"
+canonical: https://tenzir.com/docs/reference/operators/from_stdin
+source: https://tenzir.com/docs/reference/operators/from_stdin.md
+section: "Docs"
+---
+
+# from_stdin
+
+> Reads and parses events from standard input.
+
+Reads and parses events from standard input.
+
+```tql
+from_stdin { … }
+```
+
+## Description
+
+The `from_stdin` operator reads bytes from standard input and passes them through the provided parsing pipeline to produce events. This is useful when piping data into the `tenzir` executable as part of a shell script or command chain.
+
+### `{ … }`
+
+The pipeline to parse the incoming bytes into events. The pipeline receives raw bytes and must produce events. For example, `{ read_json }` parses the input as JSON.
+
+## Examples
+
+### Parse JSON from standard input
+
+```sh
+echo '{"foo": 42}' | tenzir
+```
+
+```tql
+from_stdin {
+  read_json
+}
+```
+
+```tql
+{
+  foo: 42,
+}
+```
+
+### Parse CSV data piped from another command
+
+```sh
+cat data.csv | tenzir -f pipeline.tql
+```
+
+```tql
+from_stdin {
+  read_csv
+}
+```
+
+### Parse Syslog messages
+
+```sh
+tail -f /var/log/syslog | tenzir -f pipeline.tql
+```
+
+```tql
+from_stdin {
+  read_syslog
+}
+```
+
+## See Also
+
+* [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md)

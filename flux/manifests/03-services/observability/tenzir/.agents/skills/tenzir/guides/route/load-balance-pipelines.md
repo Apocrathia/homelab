@@ -1,0 +1,123 @@
+---
+title: "Load-balance pipelines"
+canonical: https://tenzir.com/docs/guides/route/load-balance-pipelines
+source: https://tenzir.com/docs/guides/route/load-balance-pipelines.md
+section: "Docs"
+---
+
+# Load-balance pipelines
+
+> This guide shows you how to distribute events across multiple destinations using the loadbalance operator. You’ll learn to route events to multiple endpoints for high availability and throughput.
+
+This guide shows you how to distribute events across multiple destinations using the [`load_balance`](https://tenzir.com/docs/reference/operators/load_balance.md) operator. You’ll learn to route events to multiple endpoints for high availability and throughput.
+
+## How load balancing works
+
+The `load_balance` operator spawns a nested pipeline for each element in a configuration list. Incoming events are distributed to exactly one of the nested pipelines, enabling you to spread load across multiple destinations.
+
+```tql
+let $endpoints = ["host1:8080", "host2:8080", "host3:8080"]
+subscribe "events"
+load_balance $endpoints {
+  to_tcp $endpoints { write_json }
+}
+```
+
+Each event goes to exactly one endpoint. The operator may reorder the event stream to optimize throughput.
+
+## Basic patterns
+
+### Multiple TCP endpoints
+
+Distribute events across multiple TCP receivers:
+
+```tql
+let $cfg = ["192.168.0.30:8080", "192.168.0.31:8080"]
+
+
+subscribe "input"
+load_balance $cfg {
+  to_tcp $cfg { write_json }
+}
+```
+
+### Multiple Kafka brokers
+
+Balance writes across Kafka clusters:
+
+```tql
+let $brokers = [
+  {host: "kafka1.example.com", topic: "events"},
+  {host: "kafka2.example.com", topic: "events"},
+]
+
+
+subscribe "events"
+load_balance $brokers {
+  to_kafka $brokers.topic, options={"bootstrap.servers": $brokers.host}
+}
+```
+
+## Complex configurations
+
+### Splunk with different credentials
+
+Route to multiple Splunk instances, each with its own authentication:
+
+```tql
+let $cfg = [
+  {ip: "192.168.0.30", token: "token-1234"},
+  {ip: "192.168.0.31", token: "token-5678"},
+]
+
+
+subscribe "input"
+load_balance $cfg {
+  let $endpoint = f"{$cfg.ip}:8088"
+  to_splunk $endpoint, hec_token=$cfg.token
+}
+```
+
+### OpenSearch with index routing
+
+Balance across OpenSearch clusters with per-cluster configuration:
+
+```tql
+let $clusters = [
+  {url: "https://es1.example.com:9200", index: "logs-primary"},
+  {url: "https://es2.example.com:9200", index: "logs-secondary"},
+]
+
+
+subscribe "logs"
+load_balance $clusters {
+  to_opensearch $clusters.url, action="index", index=$clusters.index
+}
+```
+
+## When to use load\_balance
+
+Use `load_balance` when you need to:
+
+* **Scale throughput**: Distribute events across multiple receivers
+* **Achieve high availability**: Route to backup endpoints when primary is busy
+* **Handle heterogeneous destinations**: Route to endpoints with different credentials or configurations
+
+### Comparison with other operators
+
+| Operator                                                                      | Behavior                        | Use case                       |
+| ----------------------------------------------------------------------------- | ------------------------------- | ------------------------------ |
+| [`load_balance`](https://tenzir.com/docs/reference/operators/load_balance.md) | Events go to exactly one target | Throughput scaling, HA         |
+| [`fork`](https://tenzir.com/docs/reference/operators/fork.md)                 | Events copied to all targets    | Parallel processing, archiving |
+| [`publish`](https://tenzir.com/docs/reference/operators/publish.md)           | Events go to all subscribers    | Fan-out to pipelines           |
+
+## Requirements
+
+The nested pipeline inside `load_balance` must end with a sink operator. The configuration variable must be declared with `let` before use.
+
+## See also
+
+* [Send to destinations](send-to-destinations.md)
+* [Split and merge streams](split-and-merge-streams.md)
+* [`load_balance`](https://tenzir.com/docs/reference/operators/load_balance.md)
+* [`fork`](https://tenzir.com/docs/reference/operators/fork.md)
