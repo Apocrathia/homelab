@@ -1,7 +1,7 @@
 # ClickHouse - OCSF query store
 
 [Altinity Kubernetes Operator for ClickHouse](https://github.com/Altinity/clickhouse-operator)
-manages a 1-shard, 3-replica ClickHouse cluster ("ocsf") with a 3-node
+manages a 1-shard, 2-replica ClickHouse cluster ("ocsf") with a 3-node
 ClickHouse Keeper ensemble. Tiered storage keeps ~90 days hot on Longhorn
 and moves older parts to the dedicated rustfs `clickhouse` bucket; a
 TTL cap deletes
@@ -20,7 +20,7 @@ everything past the retention horizon. Live plan and slice breakdown:
 | `cluster/flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (CR layer)                                     |
 | `cluster/secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)                |
 | `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `tenzir` - 3-node ensemble                                         |
-| `cluster/cluster.yaml`            | ClickHouseInstallation `tenzir` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
+| `cluster/cluster.yaml`            | ClickHouseInstallation `tenzir` - 1 shard x 2 replicas, users, tiered storage, schema bootstrap |
 
 The operator watches `clickhouse` only (`watchNamespaces`).
 
@@ -42,7 +42,7 @@ CR apply can no longer block the rest of observability.
 The operator creates the Services; name prefixes are fixed by its namer:
 
 - `clickhouse-tenzir.clickhouse.svc.cluster.local` - CR-level service,
-  load-balanced over all three replicas. HTTP 8123 (Grafana datasource,
+  load-balanced over both replicas. HTTP 8123 (Grafana datasource,
   MR-2), native TCP 9000 (Tenzir `to_clickhouse`, MR-3).
 - `chi-tenzir-ocsf-<shard>-<replica>` services - per-host (e.g.
   `chi-tenzir-ocsf-0-0`); ad-hoc `clickhouse-client` targets when you need a
@@ -73,7 +73,7 @@ host_regexp default.
 cold volume as an S3 disk into the dedicated rustfs `clickhouse` bucket
 (the `tenzir` prefix) with the dedicated clickhouse bucket-user creds
 (`from_env`, no values in git). Each replica runs the same config, so each
-replica uploads its own copy of every cold part - the bucket grows ~3x the
+replica uploads its own copy of every cold part - the bucket grows ~2x the
 single-node shape; keep that in mind when watching rustfs capacity.
 
 Retention (every table, in the DDL inside `cluster/cluster.yaml`):
@@ -85,8 +85,8 @@ Retention (every table, in the DDL inside `cluster/cluster.yaml`):
   tables, `ALTER TABLE ... MODIFY TTL ...` server-side. Day partitions +
   `ttl_only_drop_parts = 1` keep the delete a cheap partition drop.
 - Schema metadata (incl. S3 disk metadata under
-  `/var/lib/clickhouse/disks/`) lives on the PVC only - losing ALL three
-  PVCs orphans the S3 parts. Replication (3 copies) is the resilience
+  `/var/lib/clickhouse/disks/`) lives on the PVC only - losing BOTH PVCs
+  orphans the S3 parts. Replication (2 copies) is the resilience
   mechanism; there is no kopiur/snapshot wiring on these PVCs by design.
 
 ## Schema bootstrap and evolution

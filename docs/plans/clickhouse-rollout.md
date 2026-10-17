@@ -108,13 +108,15 @@ where:
 
 ## Shape decision (operator, 2026-10-17 - supersedes D1 below)
 
-**Deploy via the Altinity Kubernetes Operator for ClickHouse - 1 shard x 3
+**Deploy via the Altinity Kubernetes Operator for ClickHouse - 1 shard x 2
 replicas of `clickhouse-server` plus a 3-node ClickHouse Keeper ensemble -
 NOT the generic-app single-pod shape D1 originally picked.** HA and
 replication are now in scope: a pod or PVC loss re-syncs from the sibling
 replicas instead of orphaning cold S3 parts. Everything else in this plan
 carries over; D1/D2/D4/D5/MR-1 below are amended accordingly (they are kept
-for the decision trail).
+for the decision trail). The shape was 1 shard x 3 replicas until the
+operator decision of 2026-10-17 shrank the data plane to 2 replicas (Keeper
+stays at 3 - a 2-node Raft has zero failure tolerance).
 
 **Deployment mechanics (all verified against operator chart 0.27.4 from
 `https://helm.altinity.com`, the CRDs shipped in that chart, and the
@@ -136,11 +138,11 @@ operator source):**
 - Users are defined in the CHI (`spec.configuration.users`) with
   `valueFrom.secretKeyRef` passwords and users.xml-level `<grants>` RBAC.
 
-**Storage cost of the shape (operator-visible): replication means 3x the
-single-node footprint on both tiers.** Hot: three Longhorn PVCs, one per
-replica, each sized for the full ~90d window (3x 100Gi caps). Cold: every
+**Storage cost of the shape (operator-visible): replication means 2x the
+single-node footprint on both tiers.** Hot: two Longhorn PVCs, one per
+replica, each sized for the full ~90d window (2x 100Gi caps). Cold: every
 replica runs the same S3 disk into the rustfs `clickhouse` bucket and uploads
-its own copy of every cold part, so rustfs cold growth is ~3x the
+its own copy of every cold part, so rustfs cold growth is ~2x the
 single-node shape. Watch both when sizing.
 
 **Local validation evidence (2026-10-17, clickhouse-server:25.8.33.6 +
@@ -162,7 +164,7 @@ error on 25.8.
 
 Kept for the decision trail. The original generic-app choice (one pod,
 Recreate, no HA) was rejected on 2026-10-17 in favor of the Altinity
-operator + 1 shard x 3 replicas + Keeper. The generic-app chart stays
+operator + 1 shard x 2 replicas + Keeper. The generic-app chart stays
 untouched by this rollout (`helm/generic-app/**` remains a protected path
 with an operator-confirmation gate for any discovered gap).
 
@@ -293,7 +295,7 @@ bucket's `tenzir` prefix `http://storage.services.apocrathia.com:9009/clickhouse
 — rest identical (type s3, from_env creds, 32 MiB single-part cap). The S3
 cache-disk layer stays out of MR-1 (not prototype-validated; follow-up
 option). Note the shape change: every replica runs this same disk config —
-each replica uploads its own copy of every cold part (3x rustfs cold
+each replica uploads its own copy of every cold part (2x rustfs cold
 growth; see the Shape decision).
 
 ### D6 — Secrets inventory (1Password Item CR pattern; values never in git)
@@ -348,7 +350,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   archive-then-delete semantics are unchanged. `to_clickhouse`:
   `table=f"ocsf.{class_name.replace(\" \", \"_\")}"`,
   `host="clickhouse-tenzir.clickhouse.svc.cluster.local"` (the CR-level
-  Service, load-balanced over the three replicas; ReplicatedMergeTree
+  Service, load-balanced over the two replicas; ReplicatedMergeTree
   replicates an insert from whichever replica takes it), `port=9000`,
   `user="tenzir"`, `password=secret(\"clickhouse-password\")`, `tls=false`,
   `mode="append"`, `max_batch_rows=65536` (per the integration guide's
@@ -401,7 +403,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
     - `keeper.yaml` — ClickHouseKeeperInstallation `tenzir`, 3 replicas,
       `clickhouse/clickhouse-keeper:25.8.33.6`, Longhorn PVCs (5Gi), required
       hostname anti-affinity (keeper quorum must not share nodes)
-    - `cluster.yaml` — ClickHouseInstallation `tenzir`: 1 shard x 3 replicas
+    - `cluster.yaml` — ClickHouseInstallation `tenzir`: 1 shard x 2 replicas
       (`clickhouse/clickhouse-server:25.8.33.6`, prototype-validated build),
       Longhorn data PVC per replica (100Gi cap), required hostname
       anti-affinity, /ping probes, podTemplate env for the rustfs creds,
@@ -484,7 +486,7 @@ runbook — admin-API steps 1–5 + verification battery; create the
 apply, watch keeper quorum (3/3 Ready), watch the CHI
 status (Completed), run the README's `SHOW TABLES FROM ocsf` validation on
 each replica, confirm `system.disks` shows `cold` on each replica, watch
-rustfs capacity + the pvc-capacity alert for the three new PVCs. If tables
+rustfs capacity + the pvc-capacity alert for the two new PVCs. If tables
 are missing (keeper race on first boot), restart the CHI pods once.
 
 ### MR-2 — Grafana plugin + ClickHouse datasource
@@ -728,7 +730,7 @@ dashboards read ClickHouse would blank every OCSF panel (MR-5 needs 4).
 - No parquet format changes anywhere (write side retires; format stays).
 - No Grafana alert-rule migration (verified none query tenzir-ocsf).
 - No ClickHouse **sharding** or a second cluster — the shape decision
-  (2026-10-17) made replication IN scope (1 shard x 3 replicas + Keeper),
+  (2026-10-17) made replication IN scope (1 shard x 2 replicas + Keeper),
   but the dataset stays single-shard; revisit only if write volume forces
   horizontal partitioning.
 - No ClickHouse S3 cache-disk layer (follow-up after rollout, per D5).
@@ -740,19 +742,19 @@ dashboards read ClickHouse would blank every OCSF panel (MR-5 needs 4).
 
 ## Risks → named verification gates
 
-| Risk                                                              | Gate                                                                                                                                                                                                      |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| to_clickhouse append drops real events (typed column mismatch)    | MR-3 live phase: D8 shape-risk spot-check (1007, 2004) before MR-4                                                                                                                                        |
-| Plugin provisioning keys mis-spelled (silent CR no-op)            | MR-2: verify against pinned plugin PROVISIONING doc + operator Save & Test                                                                                                                                |
-| Plugin pin syntax wrong for GF_INSTALL_PLUGINS                    | MR-2: verify chart→grafana-cli install path before merge                                                                                                                                                  |
-| Grafana 13.2.3 + plugin 4.20.x incompatibility                    | MR-2 operator validation; fallback is a newer plugin patch in 4.20.x line                                                                                                                                 |
-| ~~Backfill double-insert (live leg + replay overlap)~~ superseded | No backfill (2026-10-17 decision) — the risk is void: no replay pipeline exists, no overlap window to bound                                                                                               |
-| Tetragon flood RAM bump from the fork leg                         | MR-3 live watch (fork adds a sink to the archive rule; batch sizes bounded by max_batch_rows)                                                                                                             |
-| Cold-tier orphaning on ALL-PVC loss                               | Replication (3 replicas) absorbs single pod/PVC loss via re-sync; losing all three PVCs orphans the S3 parts (no kopiur on these PVCs by design) — the README names it as the one real data-loss scenario |
-| Keeper quorum loss (2 keepers down)                               | Required hostname anti-affinity on keepers; reads keep working, replicated writes stall until quorum returns                                                                                              |
-| First-boot keeper race: startup_scripts run before Keeper serves  | README validation query after apply + MR-3 append fail-loud; restart CHI pods once if tables are missing                                                                                                  |
-| 3x storage growth (3 Longhorn PVCs + 3x rustfs cold parts)        | Shape decision section; watch rustfs capacity + pvc-capacity alert first week                                                                                                                             |
-| ClickHouse resource sizing unknown (fresh workload class)         | MR-1 per-replica requests/limits strawman (500m/2Gi requests, 2/6Gi limits), operator watches first week + pvc-capacity alert                                                                             |
+| Risk                                                              | Gate                                                                                                                                                                                                 |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| to_clickhouse append drops real events (typed column mismatch)    | MR-3 live phase: D8 shape-risk spot-check (1007, 2004) before MR-4                                                                                                                                   |
+| Plugin provisioning keys mis-spelled (silent CR no-op)            | MR-2: verify against pinned plugin PROVISIONING doc + operator Save & Test                                                                                                                           |
+| Plugin pin syntax wrong for GF_INSTALL_PLUGINS                    | MR-2: verify chart→grafana-cli install path before merge                                                                                                                                             |
+| Grafana 13.2.3 + plugin 4.20.x incompatibility                    | MR-2 operator validation; fallback is a newer plugin patch in 4.20.x line                                                                                                                            |
+| ~~Backfill double-insert (live leg + replay overlap)~~ superseded | No backfill (2026-10-17 decision) — the risk is void: no replay pipeline exists, no overlap window to bound                                                                                          |
+| Tetragon flood RAM bump from the fork leg                         | MR-3 live watch (fork adds a sink to the archive rule; batch sizes bounded by max_batch_rows)                                                                                                        |
+| Cold-tier orphaning on ALL-PVC loss                               | Replication (2 replicas) absorbs single pod/PVC loss via re-sync; losing both PVCs orphans the S3 parts (no kopiur on these PVCs by design) — the README names it as the one real data-loss scenario |
+| Keeper quorum loss (2 keepers down)                               | Required hostname anti-affinity on keepers; reads keep working, replicated writes stall until quorum returns                                                                                         |
+| First-boot keeper race: startup_scripts run before Keeper serves  | README validation query after apply + MR-3 append fail-loud; restart CHI pods once if tables are missing                                                                                             |
+| 2x storage growth (2 Longhorn PVCs + 2x rustfs cold parts)        | Shape decision section; watch rustfs capacity + pvc-capacity alert first week                                                                                                                        |
+| ClickHouse resource sizing unknown (fresh workload class)         | MR-1 per-replica requests/limits strawman (500m/2Gi requests, 2/6Gi limits), operator watches first week + pvc-capacity alert                                                                        |
 
 ## Feedback loop (local, no cluster mutation)
 
