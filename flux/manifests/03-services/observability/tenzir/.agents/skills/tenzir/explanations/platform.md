@@ -1,0 +1,74 @@
+---
+title: "Platform"
+canonical: https://tenzir.com/docs/explanations/platform
+source: https://tenzir.com/docs/explanations/platform.md
+section: "Docs"
+---
+
+# Platform
+
+> The platform provides fleet management for nodes. With an API and web interface, the platform offers user and workspace administration, authentication via external identity providers (IdP), and dashboards consisting of pipeline-powered charts.
+
+The **platform** provides *fleet management* for [nodes](node.md). With an API and web interface, the platform offers user and workspace administration, authentication via external identity providers (IdP), and dashboards consisting of pipeline-powered charts.
+
+There exist three primary entities in the platform:
+
+1. **Users**: Authenticated by an Identity Provider (IdP)
+2. **Organizations**: Manage billing/license, members, and workspaces
+3. **Workspaces**: A logical grouping of nodes, secrets, and dashboards.
+
+The diagram below illustrates their relationship.
+
+Platform Components
+
+### Users
+
+A **user** is an individual account authenticated by an external Identity Provider (IdP). Users can own personal workspaces directly or join an organization to collaborate with others.
+
+### Organizations
+
+An **organization** groups users under a shared entity for team collaboration. Organizations manage billing, licenses, members, and workspaces. A user inside an organization is called a **member**.
+
+Each user can belong to at most one organization. This single-organization constraint simplifies access control and ensures a clear ownership model.
+
+Organizations have two roles:
+
+* **Admin**: Full control over the organization, including managing members, invitations, workspaces, and organization settings.
+* **Member**: Can view organization details and access organization-owned workspaces, but cannot make administrative changes.
+
+The creator of an organization automatically becomes its first admin.
+
+Organizations
+
+Organizations are not available in the free **Community Edition**. Please see [tenzir.com/pricing](https://tenzir.com/pricing.md) for a detailed feature comparison.
+
+### Workspaces
+
+A **workspace** is a logical grouping of nodes, secrets, and dashboards. Workspaces can be owned by a user (personal workspaces) or by an organization (shared workspaces). When an organization owns a workspace, all organization members automatically gain access to it.
+
+For details on managing these entities, see the platform management guides:
+
+* [Manage organizations](../guides/platform-management/manage-organizations.md)
+* [Manage organization members](../guides/platform-management/manage-organization-members.md)
+* [Manage organization workspaces](../guides/platform-management/manage-organization-workspaces.md)
+
+## Data Model
+
+The following diagram visualizes the platform’s data model (highlighted) and how the entities relate to each other with respect to their multiplicities.
+
+Platform Data Model
+
+It’s important to note that a node can only be part of one workspace. There is no support for “multi-homing” as it would create non-trivial questions about how to reconcile secrets and permissions from multiple workspaces.
+
+## Deployment Modes
+
+Based on the [Edition](https://tenzir.com/pricing.md) of Tenzir, you have different deployment modes of the platform. The below diagram illustrates the variants.
+
+Deployment Modes
+
+* **Community Edition**: geared towards single-user deployments, the Community Edition only associates a personal workspace with every user.
+* **Professional Edition**: geared towards small-business deployments, the Professional Edition features organizations for allowing multiple users to collaborate.
+* **Enterprise Edition**: geared towards large enterprise deployments, the Enterprise Edition supports multiple additional enterprise features like external secrets management, RBAC, and audit logs.
+* **Sovereign Edition**: geared towards on-prem deployments, the Sovereign Edition allows full control over all aspects of the Tenzir Platform, including multiple platform instances, multiple organizations within each platform, and integration with existing on-prem infrastructure.
+
+The Sovereign Edition is best suited for service providers that need strict data segregation, either by deploying one platform instance per customer or by instantiating one organization per customer. Dedicated platforms per customer provide physical data separation at the cost of higher management overhead, whereas an organization-based multi tenancy approach is a logical separation method with shared underlying resources, yet easier to manage.

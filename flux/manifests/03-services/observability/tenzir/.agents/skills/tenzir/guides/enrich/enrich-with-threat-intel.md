@@ -1,0 +1,401 @@
+---
+title: "Enrich with threat intel"
+description: "Add threat intelligence to OCSF enrichments, observables, and OSINT fields"
+canonical: https://tenzir.com/docs/guides/enrich/enrich-with-threat-intel
+source: https://tenzir.com/docs/guides/enrich/enrich-with-threat-intel.md
+section: "Docs"
+---
+
+# Enrich with threat intel
+
+> Add threat intelligence to OCSF enrichments, observables, and OSINT fields
+
+This guide shows you how to enrich OCSF events with threat intelligence from lookup tables. Use this pattern when you ingest indicators of compromise, reputation scores, malware names, campaign context, or OSINT from external feeds.
+
+Start with the OCSF `enrichments` array when you want to attach the source record as inline context. For production mappings, prefer one lookup table per OCSF object and place the result in semantic fields such as `observables`, `osint`, or nested `reputation` objects. This keeps threat intelligence queryable without requiring every downstream consumer to understand a provider-specific `enrichment` payload.
+
+## Choose the OCSF target
+
+Pick the enrichment target based on what the lookup table value represents:
+
+| Lookup table value                                                  | OCSF target   |
+| ------------------------------------------------------------------- | ------------- |
+| Raw or provider-specific indicator context                          | `enrichments` |
+| Observable with reputation for a hostname, IP address, URL, or hash | `observables` |
+| OSINT indicator details                                             | `osint`       |
+| OSINT indicator details with related malware                        | `osint`       |
+
+## Prepare threat intelligence tables
+
+Create separate lookup tables in setup pipelines for the OCSF objects you plan to enrich:
+
+| Lookup table                   | OCSF target                     |
+| ------------------------------ | ------------------------------- |
+| `domain_indicator_enrichments` | `enrichments`                   |
+| `domain_reputation`            | `observables` with `reputation` |
+| `domain_osint`                 | `osint`                         |
+| `domain_malware`               | `osint` with `malware`          |
+
+Separate tables let each value match a specific OCSF target. They also let you refresh high-churn reputation data more frequently than slower-moving malware or campaign metadata.
+
+Populate these tables from feed ingestion pipelines, package pipelines, or internal intelligence exports. Keep each table value close to the OCSF object it will produce, then use the enrichment pipeline only to look up and place the value.
+
+## Enrich into `enrichments`
+
+Use `format="ocsf"` with `mode="append"` to attach a match as an OCSF `enrichment` object:
+
+```tql
+from {
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  dst_endpoint: {
+    ip: 192.0.2.53,
+    port: 53,
+  },
+  enrichments: [],
+}
+context_enrich "domain_indicator_enrichments",
+  key=query.hostname,
+  into=enrichments,
+  mode="append",
+  format="ocsf"
+```
+
+```tql
+{
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  dst_endpoint: {
+    ip: 192.0.2.53,
+    port: 53,
+  },
+  enrichments: [{
+    created_time: 2024-08-22T09:13:02.069981,
+    data: {
+      provider: "threat-intel",
+      indicator: "malware.example",
+      indicator_type: "domain",
+      threat_type: "payload_delivery",
+      confidence_level: 95,
+      tags: ["malware"],
+    },
+    name: "query.hostname",
+    provider: "domain_indicator_enrichments",
+    value: "malware.example",
+  }],
+}
+```
+
+This is the safest default when you don’t yet know where the feed belongs in the OCSF event. The result stays attached to the event, with the lookup result in `data` and the context name in `provider`, but it remains a generic enrichment object because Tenzir does not infer an enrichment `type`.
+
+## Enrich observables with reputation
+
+For detection and hunting workflows, reputation belongs with the observable that matched. Populate a table whose values are OCSF observables with nested `reputation` objects:
+
+```tql
+from {
+  indicator: "malware.example",
+  observable: {
+    name: "query.hostname",
+    type_id: 1,
+    type: "Hostname",
+    value: "malware.example",
+    reputation: {
+      provider: "threat-intel",
+      base_score: 95,
+      score_id: 10,
+      score: "Malicious",
+    },
+  },
+}
+context_update "domain_reputation", key=indicator, value=observable
+```
+
+Attach the reputation to an OCSF observable for `query.hostname`:
+
+```tql
+from {
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  observables: [],
+}
+context_enrich "domain_reputation",
+  key=query.hostname,
+  into=observables,
+  mode="append"
+```
+
+```tql
+{
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  observables: [{
+    name: "query.hostname",
+    type_id: 1,
+    type: "Hostname",
+    value: "malware.example",
+    reputation: {
+      provider: "threat-intel",
+      base_score: 95,
+      score_id: 10,
+      score: "Malicious",
+    },
+  }],
+}
+```
+
+This makes reputation available through the standard OCSF observable model instead of burying it inside `enrichments[].data`.
+
+## Enrich the OSINT profile
+
+When a feed provides indicator details, store values as OCSF OSINT objects and append them to the event’s `osint` list:
+
+```tql
+from {
+  indicator: "malware.example",
+  osint: {
+    type_id: 2,
+    type: "Domain",
+    value: "malware.example",
+    name: "query.hostname",
+    vendor_name: "threat-intel",
+    category: "malware_delivery",
+    desc: "Domain associated with malware delivery.",
+    confidence_id: 3,
+    confidence: "High",
+    risk_score: 95,
+    labels: ["malware"],
+    reputation: {
+      provider: "threat-intel",
+      base_score: 95,
+      score_id: 10,
+      score: "Malicious",
+    },
+  },
+}
+context_update "domain_osint", key=indicator, value=osint
+```
+
+Append the OSINT object directly:
+
+```tql
+from {
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+    profiles: ["osint"],
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  osint: [],
+}
+context_enrich "domain_osint",
+  key=query.hostname,
+  into=osint,
+  mode="append"
+```
+
+```tql
+{
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+    profiles: ["osint"],
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  osint: [{
+    type_id: 2,
+    type: "Domain",
+    value: "malware.example",
+    name: "query.hostname",
+    vendor_name: "threat-intel",
+    category: "malware_delivery",
+    desc: "Domain associated with malware delivery.",
+    confidence_id: 3,
+    confidence: "High",
+    risk_score: 95,
+    labels: ["malware"],
+    reputation: {
+      provider: "threat-intel",
+      base_score: 95,
+      score_id: 10,
+      score: "Malicious",
+    },
+  }],
+}
+```
+
+Use this shape when the threat intelligence is valuable in its own right, not only as a note about one event field.
+
+## Enrich related malware
+
+If analysts frequently query by malware family, keep malware details in their own lookup table and then place them under the OSINT object:
+
+```tql
+from {
+  indicator: "malware.example",
+  osint: {
+    type_id: 2,
+    type: "Domain",
+    value: "malware.example",
+    name: "query.hostname",
+    vendor_name: "threat-intel",
+    malware: [{
+      name: "ExampleBot",
+      classification_ids: [3],
+      classifications: ["Bot"],
+      severity_id: 4,
+      severity: "High",
+    }],
+  },
+}
+context_update "domain_malware", key=indicator, value=osint
+```
+
+Append the OSINT record with the malware object:
+
+```tql
+from {
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+    profiles: ["osint"],
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  osint: [],
+}
+context_enrich "domain_malware",
+  key=query.hostname,
+  into=osint,
+  mode="append"
+```
+
+```tql
+{
+  time: 2024-08-22T09:13:01,
+  category_uid: 4,
+  class_uid: 4003,
+  activity_id: 2,
+  type_uid: 400302,
+  severity_id: 1,
+  metadata: {
+    version: "1.9.0",
+    profiles: ["osint"],
+  },
+  query: {
+    hostname: "malware.example",
+  },
+  rcode_id: 0,
+  rcode: "NoError",
+  osint: [{
+    type_id: 2,
+    type: "Domain",
+    value: "malware.example",
+    name: "query.hostname",
+    vendor_name: "threat-intel",
+    malware: [{
+      name: "ExampleBot",
+      classification_ids: [3],
+      classifications: ["Bot"],
+      severity_id: 4,
+      severity: "High",
+    }],
+  }],
+}
+```
+
+This keeps malware-specific fields in an OCSF `malware` object, while the OSINT object ties that malware context back to the indicator that matched the event.
+
+## Choose field-specific keys
+
+Use separate tables for different indicator types instead of mixing unrelated keys into one catch-all table:
+
+| Indicator type     | Example OCSF key                       | Example target                      |
+| ------------------ | -------------------------------------- | ----------------------------------- |
+| Domain or hostname | `query.hostname`                       | `observables[].reputation`, `osint` |
+| IP address         | `src_endpoint.ip` or `dst_endpoint.ip` | `observables[].reputation`          |
+| URL                | `http_request.url.url_string`          | `observables[].reputation`, `osint` |
+| File hash          | `file.hashes[].value`                  | `observables[].reputation`, `osint` |
+
+Keeping one table per OCSF object and indicator type prevents ambiguous values, lets you set different expiration policies, and makes each enrichment pipeline state exactly which semantic field it changes.
+
+## See Also
+
+* [Use lookup tables](use-lookup-tables.md)
+* [Enrich with asset inventory](enrich-with-asset-inventory.md)
+* [Enrich events with AI](enrich-events-with-ai.md)
+* [Enrichment](../../explanations/enrichment.md)

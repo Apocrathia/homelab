@@ -1,0 +1,230 @@
+---
+title: "Programs"
+canonical: https://tenzir.com/docs/reference/programs
+source: https://tenzir.com/docs/reference/programs.md
+section: "Docs"
+---
+
+# Programs
+
+> TQL programs compose statements into complete data processing workflows that can execute. Valid TQL programs adhere to the following rules:
+
+TQL **programs** compose [statements](statements.md) into complete data processing workflows that can execute. Valid TQL programs adhere to the following rules:
+
+1. Adjacent operators must have identical types.
+2. A pipeline must be **closed**, i.e., begin with void input and end with void output.
+
+Pipeline Auto-Completion
+
+When a pipeline is not closed, Tenzir attempts to *auto-complete* it in interactive execution contexts. For the command-line execution context described in [Run pipelines](../guides/basic-usage/run-pipelines.md#on-the-command-line), Tenzir uses standard input and standard output as the missing source or sink. For event pipelines, it prepends `from_stdin { read_json }` or appends `to_stdout { write_tql }`. For byte pipelines, it reads raw bytes from standard input or writes raw bytes to standard output. For the web execution context described in [Run pipelines](../guides/basic-usage/run-pipelines.md#in-the-platform), auto-completion takes place with an output operator: The web app appends [`serve_http`](https://tenzir.com/docs/reference/operators/serve_http.md) to turn the dataflow into a REST API, allowing your browser to access it by routing the data through the platform.
+
+## Statement chaining
+
+You chain statements with either a newline (`\n`) or pipe symbol (`|`). We purposefully offer choice to cater to two primary styles:
+
+1. Vertical structuring with newlines for full-text editing
+2. Horizontal inline pipe composition for command-line usage
+
+Prefer the vertical approach for readability in files and documentation. Throughout this documentation, we only use the vertical style for clarity and consistency.
+
+Let’s juxtapose the two styles. Here’s a vertical TQL program:
+
+```tql
+let $ports = [22, 443]
+
+
+from_file "/tmp/logs.json"
+where port in $ports
+select src_ip, dst_ip, bytes
+summarize src_ip, total=sum(bytes)
+```
+
+And here a horziontal one:
+
+```tql
+let $ports = [22, 443] | from_file "/tmp/logs.json" | where port in $ports | select src_ip, dst_ip, bytes | summarize src_ip, total=sum(bytes)
+```
+
+In theory, you can combine pipes and newlines to write programs that resemble Kusto and similar languages. However, [we discourage](../tutorials/learn-idiomatic-tql.md) this practice because it can make the code harder to read and maintain, especially when adding nested pipelines that increase the level of indentation.
+
+## Diagnostics
+
+TQL’s diagnostic system is designed to give you insights into what happens during data processing. There exist two types of diagnostics:
+
+1. **Errors**: Stop pipeline execution immediately (critical failures)
+2. **Warnings**: Signal data quality issues but continue processing
+
+When a pipeline emits an error, it stops execution. Unless you configured the pipeline to restart on error, it now requires human intervention to resolve the issue and resume execution.
+
+Warnings do not cause a screeching halt of the pipeline. They are useful for identifying potential issues that may impact the quality of the processed data, such as missing or unexpected values.
+
+Best Practices
+
+We have a dedicated [section on warnings and errors](../tutorials/learn-idiomatic-tql.md#data-quality) in our [learning idiomatic TQL tutorial](../tutorials/learn-idiomatic-tql.md).
+
+## Pipeline nesting
+
+Subpipelines are nested pipelines that an outer operator executes based on its own semantics. You define subpipelines within a block of curly braces (`{}`). They are a first-class part of TQL and the standard pattern for separating transport from parsing or printing.
+
+There are three types of subpipelines based on what they expect and produce:
+
+1. **Closed subpipelines** (void-to-void): Complete programs that run independently, used by operators like [`every`](https://tenzir.com/docs/reference/operators/every.md) and [`subscribe`](https://tenzir.com/docs/reference/operators/subscribe.md).
+
+2. **Parsing subpipelines** (bytes-to-events): Transform raw bytes into structured events, used by input operators like [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) and [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md).
+
+3. **Printing subpipelines** (events-to-bytes): Transform structured events into raw bytes, used by output operators like [`to_file`](https://tenzir.com/docs/reference/operators/to_file.md) and [`to_http`](https://tenzir.com/docs/reference/operators/to_http.md).
+
+### Closed subpipelines
+
+The [`every`](https://tenzir.com/docs/reference/operators/every.md) operator executes a closed subpipeline at regular intervals:
+
+```tql
+every 1h {
+  from_http "api.example.com"
+  select domain, risk
+  context_update "domains", key=domain, value=risk
+}
+```
+
+### Parsing subpipelines
+
+Input operators like [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) or [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md) that read raw bytes use parsing subpipelines to convert bytes into events. This pattern separates *where* data comes from (the outer operator) from *how* it’s parsed (the subpipeline):
+
+```tql
+from_file "data.log" {
+  read_lines
+}
+```
+
+The subpipeline contains `read_*` operators that perform the actual parsing. You can also chain bytes-to-bytes transformations like `decompress_*` before parsing:
+
+```tql
+from_file "logs.gz" {
+  decompress_gzip
+  read_json
+}
+```
+
+When the input operator can infer the format automatically (e.g., from the file extension), you can omit the subpipeline:
+
+```tql
+from_file "data.json"  // Automatically uses read_json
+```
+
+Operators that produce events directly, like [`from_kafka`](https://tenzir.com/docs/reference/operators/from_kafka.md) or [`accept_udp`](https://tenzir.com/docs/reference/operators/accept_udp.md), don’t take a parsing subpipeline because the data format is inherent to the source.
+
+## Comments
+
+Comments make implicit choices and assumptions explicit. They have no semantic effect and the compiler ignores them during parsing.
+
+TQL features C-style comments, both single and multi-line.
+
+### Single-line comments
+
+Use a double slash (`//`) to comment until the end of the line.
+
+Here’s an example where a comment spans a full line:
+
+```tql
+// the app only supports lower-case user names
+let $user = "jane"
+```
+
+Here’s an example where a comment starts in the middle of a line:
+
+```tql
+let $users = [
+  "jane", // NB: also admin!
+  "john", // Been here since day 1.
+]
+```
+
+### Multi-line comments
+
+Use a slash-star (`/*`) to start a multi-line comment and a star-slash (`*/`) to end it.
+
+Here’s an example where a comment spans multiple lines:
+
+```tql
+/*
+ * User validation logic
+ * ---------------------
+ * Validate user input against a set of rules.
+ * If any rule fails, the user is rejected.
+ * If all rules pass, the user is accepted.
+ */
+let $user = "jane"
+```
+
+## Execution Model
+
+TQL pipelines execute on a streaming engine that processes data incrementally. Understanding the execution model helps you write efficient pipelines and predict performance characteristics.
+
+Key execution principles:
+
+* **Stream processing by default**: Data flows through operators as it arrives
+* **Lazy evaluation**: Operations execute only when data flows through them
+* **Back-pressure handling**: Automatic flow control prevents memory exhaustion
+* **Network transparency**: Pipelines can span multiple nodes seamlessly
+
+### Streaming vs blocking
+
+Understanding operator behavior helps write efficient pipelines:
+
+**Streaming operators** process events incrementally:
+
+* [`where`](https://tenzir.com/docs/reference/operators/where.md): Filters one event at a time
+* [`select`](https://tenzir.com/docs/reference/operators/select.md): Transforms fields immediately
+* [`drop`](https://tenzir.com/docs/reference/operators/drop.md): Removes fields as events flow
+
+**Blocking operators** need all input before producing output:
+
+* [`sort`](https://tenzir.com/docs/reference/operators/sort.md): Must see all events to order them
+* [`summarize`](https://tenzir.com/docs/reference/operators/summarize.md): Aggregates across the stream
+* [`reverse`](https://tenzir.com/docs/reference/operators/reverse.md): Needs complete input to reverse order
+
+ Efficient: streaming operations first:
+
+```tql
+from_file "large_file.json"
+where severity == "critical"    // Streaming: reduces data early
+select relevant_fields          // Streaming: drops unnecessary data
+sort timestamp                  // Blocking: but on reduced dataset
+```
+
+L Less efficient: blocking operation on full data:
+
+```tql
+from_file "large_file.json"
+sort timestamp                  // Blocking: processes everything
+where severity == "critical"    // Then filters
+```
+
+### Constant vs runtime evaluation
+
+Understanding when expressions evaluate helps write efficient pipelines:
+
+Constants: evaluated once at pipeline start
+
+```tql
+let $threshold = 1Ki
+let $start_time = 2024-01-15T09:00:00  // Would be now() - 1h in real usage
+let $config = {
+  ports: [80, 443, 8080],
+  networks: [10.0.0.0/8, 192.168.0.0/16],
+}
+
+
+// Runtime: evaluated per event
+from {bytes: 2Ki, timestamp: 2024-01-15T09:30:00},
+     {bytes: 512, timestamp: 2024-01-15T09:45:00},
+     {bytes: 3Ki, timestamp: 2024-01-15T10:00:00}
+where bytes > $threshold            // Constant comparison
+where timestamp > $start_time       // Constant comparison
+current_time = 2024-01-15T10:30:00  // Would be now() in real usage
+age = current_time - timestamp      // Runtime calculation
+```
+
+### Network transparency
+
+TQL pipelines can span network boundaries seamlessly. For example, the [`import`](https://tenzir.com/docs/reference/operators/import.md) operator implicitly performs a network connection based on where it runs. If the `tenzir` binary executes the pipeline, the executor establishesa transparent network connection. If the pipeline runs within a node, the executor passes the data directly to the next operator in the same process.

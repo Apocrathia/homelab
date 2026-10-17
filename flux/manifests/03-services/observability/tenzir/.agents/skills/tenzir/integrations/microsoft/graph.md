@@ -1,0 +1,119 @@
+---
+title: "Microsoft Graph integration"
+description: "Microsoft Graph is the unified API for Microsoft 365, Microsoft Entra ID, and other Microsoft cloud services."
+canonical: https://tenzir.com/integrations/microsoft/graph
+source: https://tenzir.com/integrations/microsoft/graph.md
+section: "Integrations"
+---
+
+# Microsoft Graph integration
+
+> Microsoft Graph is the unified API for Microsoft 365, Microsoft Entra ID, and other Microsoft cloud services.
+
+Microsoft Graph is the unified API for Microsoft 365, Microsoft Entra ID, and other Microsoft cloud services.
+
+Use [`from_microsoft_graph`](https://tenzir.com/docs/reference/operators/from_microsoft_graph.md) to read events and inventory data from Microsoft Graph collection resources. The operator handles Microsoft Entra client-credentials authentication, emits each object from the OData `value` array, follows `@odata.nextLink` pagination, and uses a bounded default HTTP retry policy for throttling and transient service failures. When Microsoft Graph returns `Retry-After`, the operator waits for that duration before retrying. For resources that support Microsoft Graph delta queries, the operator can store the returned `@odata.deltaLink` in memory and poll for incremental changes.
+
+Common security use cases include collecting Microsoft Entra audit and sign-in logs, reading users and groups for enrichment, and extracting inventory from Microsoft 365 services that expose collection resources through Microsoft Graph.
+
+Prerequisites
+
+Create a Microsoft Entra application registration, grant the application permissions required by the Microsoft Graph resource that you want to read, and create a client secret. For example, reading `auditLogs/signIns` requires an application permission such as `AuditLog.Read.All`.
+
+## Prepare Microsoft Graph access
+
+Before you run a pipeline, prepare the Microsoft Entra application and verify that it can read the Microsoft Graph resource you want to collect:
+
+1. [Register an application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) in Microsoft Entra ID and record the **Application (client) ID** and tenant ID.
+2. [Create a client secret](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials?tabs=client-secret) for the application and record the secret value.
+3. [Add Microsoft Graph application permissions](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis#application-permission-to-microsoft-graph) for the API calls you plan to make. The `from_microsoft_graph` operator uses application permissions because it authenticates without a signed-in user.
+4. [Grant administrator consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent) for those application permissions.
+5. Look up the required permissions in the [Microsoft Graph permissions reference](https://learn.microsoft.com/en-us/graph/permissions-reference) or on the reference page for the resource.
+
+Useful Microsoft Graph reference pages:
+
+* [Use the Microsoft Graph API](https://learn.microsoft.com/en-us/graph/use-the-api)
+* [Get access without a user](https://learn.microsoft.com/en-us/graph/auth-v2-service)
+* [Microsoft Graph permissions reference](https://learn.microsoft.com/en-us/graph/permissions-reference)
+* [Sign-ins API](https://learn.microsoft.com/en-us/graph/api/signin-list)
+* [Directory audits API](https://learn.microsoft.com/en-us/graph/api/directoryaudit-list)
+* [Users API](https://learn.microsoft.com/en-us/graph/api/user-list)
+* [Groups API](https://learn.microsoft.com/en-us/graph/api/group-list)
+
+## Read sign-in logs
+
+The following pipeline reads Microsoft Entra sign-in logs and requests only a subset of fields:
+
+```tql
+from_microsoft_graph "auditLogs/signIns",
+  auth={
+    tenant_id: "contoso.onmicrosoft.com",
+    client_id: "00000000-0000-0000-0000-000000000000",
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    filter: "createdDateTime ge 2026-04-24T00:00:00Z",
+    select: ["id", "createdDateTime", "userPrincipalName", "status"],
+    top: 1000,
+  }
+```
+
+## Read directory objects
+
+You can read users, groups, or other directory collections for enrichment and inventory workflows:
+
+```tql
+from_microsoft_graph "users",
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "userPrincipalName"],
+  }
+```
+
+Use `version="beta"` to read Microsoft Graph beta collections:
+
+```tql
+from_microsoft_graph "users",
+  version="beta",
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "signInActivity"],
+  }
+```
+
+## Poll changes with delta queries
+
+Use `delta=true` for Microsoft Graph resources that support delta queries, such as `users` and `groups`. Pass the collection resource without `/delta`; the operator appends `/delta` for the initial request and then polls the returned `@odata.deltaLink`.
+
+```tql
+from_microsoft_graph "users",
+  delta=true,
+  poll_interval=5min,
+  auth={
+    tenant_id: secret("ms-graph-tenant-id"),
+    client_id: secret("ms-graph-client-id"),
+    client_secret: secret("ms-graph-client-secret"),
+  },
+  odata={
+    select: ["id", "displayName", "userPrincipalName"],
+  }
+```
+
+The operator doesn’t maintain its own list of delta-capable Microsoft Graph resources. Microsoft Graph support can differ by resource, API version, tenant, and licensing. If a resource doesn’t support delta queries, Microsoft Graph returns the error and Tenzir reports it.
+
+The `odata` options apply only to the initial delta request. Microsoft Graph decides which query options are valid for each resource. For example, Microsoft Graph supports `$select` for `users` and `groups` delta queries, but doesn’t support `$top` there. Filters for those delta queries are limited to object ID scoping. Later polls use the stored delta link exactly as Microsoft Graph returned it. Delta state is stored in memory, so a pipeline restart starts a new initial delta query unless the executor restores a snapshot that contains the operator state.
+
+## See Also
+
+* [`from_microsoft_graph`](https://tenzir.com/docs/reference/operators/from_microsoft_graph.md)
+* [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md)
+* [Microsoft Defender](defender.md)
+* [Microsoft Sentinel](sentinel.md)

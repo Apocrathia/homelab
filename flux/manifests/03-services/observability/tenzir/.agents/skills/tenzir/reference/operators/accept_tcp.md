@@ -1,0 +1,137 @@
+---
+title: "accept_tcp"
+canonical: https://tenzir.com/docs/reference/operators/accept_tcp
+source: https://tenzir.com/docs/reference/operators/accept_tcp.md
+section: "Docs"
+---
+
+# accept_tcp
+
+> Listens for incoming TCP or TLS connections and receives events.
+
+Listens for incoming TCP or TLS connections and receives events.
+
+```tql
+accept_tcp endpoint:string, [max_connections=int, resolve_hostnames=bool,
+                           tls=record, auto_detect_tls=bool { … }]
+```
+
+## Description
+
+Listens on the specified endpoint for incoming TCP connections. For each accepted connection, the operator spawns the nested pipeline and feeds it the bytes received from that connection.
+
+### `endpoint: string`
+
+The endpoint to listen on. Must be of the form `[tcp://]<hostname>:<port>`. Use `0.0.0.0` as the host to accept connections on all interfaces.
+
+### `tls = record (optional)`
+
+TLS configuration. Provide an empty record (`tls={}`) to enable TLS with defaults or set fields to customize it.
+
+```tql
+{
+  skip_peer_verification: bool, // skip certificate verification.
+  cacert: string,               // CA bundle to verify peers.
+  certfile: string,             // client certificate to present.
+  keyfile: string,              // private key for the client certificate.
+  min_version: string,          // minimum TLS version (`"1.0"`, `"1.1"`, `"1.2"`, "1.3"`).
+  ciphers: string,              // OpenSSL cipher list string.
+  client_ca: string,            // CA to validate client certificates.
+  require_client_cert: bool,    // require clients to present a certificate.
+}
+```
+
+The `client_ca` and `require_client_cert` options are only valid for operators that accept incoming client connections.
+
+Any value not specified in the record will either be picked up from the configuration or if not configured will not be used by the operator.
+
+See the [Node TLS Setup guide](../../guides/node-setup/configure-tls.md) for more details.
+
+### `auto_detect_tls = bool (optional)`
+
+Accept plaintext and TLS clients on the same endpoint.
+
+When enabled, `accept_tcp` reads the first bytes from each client. Connections that start with a TLS ClientHello use the configured TLS settings. Other connections continue as plaintext, and the bytes read during detection are forwarded to the nested pipeline.
+
+You must also set `tls` to enable TLS. Defaults to `false`.
+
+### `max_connections = int (optional)`
+
+The maximum number of simultaneous incoming connections to accept. Additional connections beyond this limit are rejected.
+
+Defaults to `128`.
+
+### `resolve_hostnames = bool (optional)`
+
+Perform reverse DNS lookups for accepted peers and expose the result as `$peer.hostname` inside the nested pipeline.
+
+When enabled, the `hostname` field exists on `$peer` and is `null` if no PTR record is available. When disabled, the `hostname` field is omitted.
+
+Defaults to `false`.
+
+### `{ … } (optional)`
+
+The pipeline to run for each individual TCP connection. If none is specified, no transformations are applied to the output streams. Unless you are sure that there is at most one active connection at a time, it is recommended to specify a pipeline that parses the individual connection streams into events, for instance `{ read_json }`. Otherwise, the output can be interleaved.
+
+Inside the pipeline, the `$peer` variable is available as a record with the following fields:
+
+| Field      | Type     | Description                                     |
+| ---------- | -------- | ----------------------------------------------- |
+| `ip`       | `ip`     | The IP address of the connected peer.           |
+| `port`     | `int64`  | The port number of the connected peer.          |
+| `hostname` | `string` | The reverse-DNS hostname of the connected peer. |
+
+## Examples
+
+### Accept incoming JSON over TCP
+
+```tql
+accept_tcp "0.0.0.0:8090" {
+  read_json
+}
+```
+
+### Accept incoming Syslog over TCP
+
+```tql
+accept_tcp "0.0.0.0:514" {
+  read_syslog
+}
+```
+
+### Enrich events with peer hostnames
+
+```tql
+accept_tcp "0.0.0.0:514", resolve_hostnames=true {
+  read_syslog
+  collector = $peer
+}
+```
+
+### Accept connections with TLS
+
+```tql
+accept_tcp "0.0.0.0:4443", tls={certfile: "cert.pem", keyfile: "key.pem"} {
+  read_json
+}
+```
+
+### Accept plaintext and TLS clients on one endpoint
+
+```tql
+accept_tcp "0.0.0.0:514",
+           tls={certfile: "cert.pem", keyfile: "key.pem"},
+           auto_detect_tls=true {
+  read_syslog
+}
+```
+
+Use this mode when you migrate clients from plaintext TCP to TLS and need to keep one listening port during the transition.
+
+## See Also
+
+* [`from_tcp`](https://tenzir.com/docs/reference/operators/from_tcp.md)
+* [`to_tcp`](https://tenzir.com/docs/reference/operators/to_tcp.md)
+* [`serve_tcp`](https://tenzir.com/docs/reference/operators/serve_tcp.md)
+* [`accept_unix_socket`](https://tenzir.com/docs/reference/operators/accept_unix_socket.md)
+* [TCP](../../integrations/tcp.md)

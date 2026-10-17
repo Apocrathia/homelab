@@ -1,0 +1,126 @@
+---
+title: "slice"
+canonical: https://tenzir.com/docs/reference/functions/slice
+source: https://tenzir.com/docs/reference/functions/slice.md
+section: "Docs"
+---
+
+# slice
+
+> Slices a string or list with offsets and strides.
+
+Slices a string or list with offsets and strides.
+
+```tql
+slice(x:string, [begin=int, end=int, stride=int])
+slice(x:list, [begin=int, end=int, stride=int])
+```
+
+## Description
+
+The `slice` function takes a string or list as input and selects parts from it.
+
+### `x: string|list`
+
+The string or list to slice.
+
+### `begin = int (optional)`
+
+The offset to start slice from.
+
+If negative, offset is calculated from the end of the input.
+
+Defaults to `0`.
+
+### `end = int (optional)`
+
+The offset to end the slice at.
+
+If negative, offset is calculated from the end of the input.
+
+If unspecified, ends at the input’s end.
+
+### `stride = int (optional)`
+
+The step size between elements to select.
+
+For strings, stride must be positive. For lists, stride can be negative. When negative, elements are selected in reverse order from the range defined by `begin` and `end`.
+
+Defaults to `1`.
+
+## Examples
+
+### Get the first 3 characters of a string
+
+```tql
+from {x: "123456789"}
+x = x.slice(end=3)
+```
+
+```tql
+{x: "123"}
+```
+
+### Get the 1st, 3rd, and 5th characters
+
+```tql
+from {x: "1234567890"}
+x = x.slice(stride=2, end=6)
+```
+
+```tql
+{x: "135"}
+```
+
+### Select a substring from the 2nd character up to the 8th character
+
+```tql
+from {x: "1234567890"}
+x = x.slice(begin=1, end=8)
+```
+
+```tql
+{x: "2345678"}
+```
+
+### Get the first 3 elements of a list
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+xs = xs.slice(end=3)
+```
+
+```tql
+{xs: [1, 2, 3]}
+```
+
+### Slice a list with a negative begin offset
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+xs = xs.slice(begin=-3)
+```
+
+```tql
+{xs: [3, 4, 5]}
+```
+
+### Reverse a list
+
+```tql
+from {xs: [1, 2, 3, 4, 5]}
+xs = xs.slice(stride=-1)
+```
+
+```tql
+{xs: [5, 4, 3, 2, 1]}
+```
+
+## See Also
+
+* [`sort`](https://tenzir.com/docs/reference/functions/sort.md)
+* [`split`](https://tenzir.com/docs/reference/functions/split.md)
+* [`length_chars`](https://tenzir.com/docs/reference/functions/length_chars.md)
+* [Shape lists](../../guides/shape/shape-lists.md)
+* [Manipulate strings](../../guides/shape/manipulate-strings.md)
+* [Mask sensitive data](../../guides/protect/mask-sensitive-data.md)

@@ -1,0 +1,891 @@
+---
+title: "Transform values"
+canonical: https://tenzir.com/docs/guides/shape/transform-values
+source: https://tenzir.com/docs/guides/shape/transform-values.md
+section: "Docs"
+---
+
+# Transform values
+
+> Transforming values is a fundamental part of data processing. This guide shows you how to convert between different data types, perform basic calculations, and manipulate simple values within your events.
+
+Transforming values is a fundamental part of data processing. This guide shows you how to convert between different data types, perform basic calculations, and manipulate simple values within your events.
+
+## Type conversions
+
+TQL provides functions to convert values between different types. This is essential when data arrives in the wrong format or when you need specific types for further processing.
+
+### Convert to numbers
+
+Use [`int`](https://tenzir.com/docs/reference/functions/int.md) and [`float`](https://tenzir.com/docs/reference/functions/float.md) to convert values to numeric types:
+
+```tql
+from {price: "42", quantity: "3.5"},
+     {price: "99", quantity: "1.0"}
+price = price.int()
+quantity = quantity.float()
+```
+
+```tql
+{price: 42, quantity: 3.5}
+{price: 99, quantity: 1.0}
+```
+
+### Convert to strings
+
+Use format strings to build strings from values. TQL formats each embedded expression as if you had called [`string`](https://tenzir.com/docs/reference/functions/string.md):
+
+```tql
+from {status: 200, ratio: 0.95},
+     {status: 404, ratio: 0.05}
+message = f"{status} - {ratio * 100}%"
+```
+
+```tql
+{status: 200, ratio: 0.95, message: "200 - 95.0%"}
+{status: 404, ratio: 0.05, message: "404 - 5.0%"}
+```
+
+### Parse times and durations
+
+Convert strings to time values with [`time`](https://tenzir.com/docs/reference/functions/time.md):
+
+```tql
+from {timestamp: "2024-01-15"},
+     {timestamp: "2024-02-20"}
+parsed_time = timestamp.time()
+```
+
+```tql
+{timestamp: "2024-01-15", parsed_time: 2024-01-15T00:00:00Z}
+{timestamp: "2024-02-20", parsed_time: 2024-02-20T00:00:00Z}
+```
+
+Convert strings to durations with [`duration`](https://tenzir.com/docs/reference/functions/duration.md):
+
+```tql
+from {interval: "5s"},
+     {interval: "2.5min"}
+parsed_duration = interval.duration()
+```
+
+```tql
+{interval: "5s", parsed_duration: 5s}
+{interval: "2.5min", parsed_duration: 2.5min}
+```
+
+### Convert to unsigned integers
+
+Use [`uint`](https://tenzir.com/docs/reference/functions/uint.md) for non-negative integers:
+
+```tql
+from {count: "42", ratio: 3.7},
+     {count: "-5", ratio: 2.3}
+count_uint = count.uint()
+ratio_uint = ratio.uint()
+```
+
+```tql
+{count: "42", ratio: 3.7, count_uint: 42, ratio_uint: 3}
+{count: "-5", ratio: 2.3, count_uint: null, ratio_uint: 2}
+```
+
+This pipeline elicits the following warning:
+
+```txt
+warning: `uint` failed to convert some string
+ --> /tmp/pipeline.tql:3:14
+  |
+3 | count_uint = count.uint()
+  |              ~~~~~
+  |
+```
+
+### Work with IP addresses and subnets
+
+TQL supports IP address and subnet literals directly. You can also parse them from strings using [`ip`](https://tenzir.com/docs/reference/functions/ip.md) and [`subnet`](https://tenzir.com/docs/reference/functions/subnet.md):
+
+```tql
+from {direct_ip: 192.168.1.1, direct_subnet: 10.0.0.0/24},
+     {direct_ip: ::1, direct_subnet: 2001:db8::/32}
+ipv6_check = direct_ip.is_v6()
+```
+
+```tql
+{
+  direct_ip: 192.168.1.1,
+  direct_subnet: 10.0.0.0/24,
+  ipv6_check: false,
+}
+{
+  direct_ip: ::1,
+  direct_subnet: 2001:db8::/32,
+  ipv6_check: true,
+}
+```
+
+Parse from strings when needed:
+
+```tql
+from {client: "192.168.1.1", network: "10.0.0.0/24"},
+     {client: "10.0.0.5", network: "192.168.0.0/16"}
+client_ip = client.ip()
+network_subnet = network.subnet()
+```
+
+```tql
+{
+  client: "192.168.1.1",
+  network: "10.0.0.0/24",
+  client_ip: 192.168.1.1,
+  network_subnet: 10.0.0.0/24,
+}
+{
+  client: "10.0.0.5",
+  network: "192.168.0.0/16",
+  client_ip: 10.0.0.5,
+  network_subnet: 192.168.0.0/16,
+}
+```
+
+## IP address inspection
+
+Analyze and categorize IP addresses with inspection functions:
+
+### Check IP address types
+
+Use IP inspection functions like [`is_v4`](https://tenzir.com/docs/reference/functions/is_v4.md), [`is_v6`](https://tenzir.com/docs/reference/functions/is_v6.md), [`is_private`](https://tenzir.com/docs/reference/functions/is_private.md), [`is_global`](https://tenzir.com/docs/reference/functions/is_global.md), [`is_loopback`](https://tenzir.com/docs/reference/functions/is_loopback.md), and [`is_multicast`](https://tenzir.com/docs/reference/functions/is_multicast.md) to analyze addresses:
+
+```tql
+from {ip1: 192.168.1.1, ip2: 8.8.8.8, ip3: ::1},
+     {ip1: 10.0.0.1, ip2: 224.0.0.1, ip3: 2001:db8::1}
+is_v4 = ip1.is_v4()
+is_v6 = ip3.is_v6()
+is_private = ip1.is_private()
+is_global = ip2.is_global()
+is_loopback = ip3.is_loopback()
+is_multicast = ip2.is_multicast()
+```
+
+```tql
+{
+  ip1: 192.168.1.1,
+  ip2: 8.8.8.8,
+  ip3: ::1,
+  is_v4: true,
+  is_v6: true,
+  is_private: true,
+  is_global: true,
+  is_loopback: true,
+  is_multicast: false,
+}
+{
+  ip1: 10.0.0.1,
+  ip2: 224.0.0.1,
+  ip3: 2001:db8::1,
+  is_v4: true,
+  is_v6: true,
+  is_private: true,
+  is_global: false,
+  is_loopback: false,
+  is_multicast: true,
+}
+```
+
+### Categorize IP addresses
+
+Get detailed IP address classification with [`ip_category`](https://tenzir.com/docs/reference/functions/ip_category.md):
+
+```tql
+from {client: "192.168.1.100", server: "8.8.8.8", local: "127.0.0.1"},
+     {client: "10.0.0.5", server: "224.0.0.251", local: "::1"}
+client_category = client.ip().ip_category()
+server_category = server.ip().ip_category()
+local_category = local.ip().ip_category()
+```
+
+```tql
+{
+  client: "192.168.1.100",
+  server: "8.8.8.8",
+  local: "127.0.0.1",
+  client_category: "private",
+  server_category: "global",
+  local_category: "loopback",
+}
+{
+  client: "10.0.0.5",
+  server: "224.0.0.251",
+  local: "::1",
+  client_category: "private",
+  server_category: "multicast",
+  local_category: "loopback",
+}
+```
+
+### Check link-local addresses
+
+Identify link-local addresses with [`is_link_local`](https://tenzir.com/docs/reference/functions/is_link_local.md):
+
+```tql
+from {addr1: 169.254.1.1, addr2: fe80::1, addr3: 192.168.1.1},
+     {addr1: 169.254.0.1, addr2: 2001:db8::1, addr3: 10.0.0.1}
+link_local1 = addr1.is_link_local()
+link_local2 = addr2.is_link_local()
+link_local3 = addr3.is_link_local()
+```
+
+```tql
+{
+  addr1: 169.254.1.1,
+  addr2: fe80::1,
+  addr3: 192.168.1.1,
+  link_local1: true,
+  link_local2: true,
+  link_local3: false,
+}
+{
+  addr1: 169.254.0.1,
+  addr2: 2001:db8::1,
+  addr3: 10.0.0.1,
+  link_local1: true,
+  link_local2: false,
+  link_local3: false,
+}
+```
+
+## Classify values with `match`
+
+Use [`match`](https://tenzir.com/docs/reference/statements.md#match) when a transformation depends on a small set of cases. A `match` statement checks patterns from top to bottom and runs the first matching branch. Patterns can be constants, alternatives, ranges, or the wildcard `_`. Guards add boolean conditions to matching branches.
+
+### Normalize firewall actions
+
+Firewall and network devices often use vendor-specific action names. Use `|` to put equivalent values in the same branch and normalize them into a shared verdict before routing or aggregating the events:
+
+```tql
+from {vendor: "fortinet", action: "accept", src_ip: 10.0.0.5},
+     {vendor: "paloalto", action: "deny", src_ip: 203.0.113.10},
+     {vendor: "checkpoint", action: "drop", src_ip: 192.168.1.20},
+     {vendor: "custom", action: "reset", src_ip: 198.51.100.7}
+match action {
+  "accept" | "allow" | "pass" => {
+    verdict = "allowed"
+  }
+  "deny" | "drop" | "block" => {
+    verdict = "blocked"
+  }
+  _ => {
+    verdict = "unknown"
+  }
+}
+```
+
+```tql
+{
+  vendor: "fortinet",
+  action: "accept",
+  src_ip: 10.0.0.5,
+  verdict: "allowed",
+}
+{
+  vendor: "paloalto",
+  action: "deny",
+  src_ip: 203.0.113.10,
+  verdict: "blocked",
+}
+{
+  vendor: "checkpoint",
+  action: "drop",
+  src_ip: 192.168.1.20,
+  verdict: "blocked",
+}
+{
+  vendor: "custom",
+  action: "reset",
+  src_ip: 198.51.100.7,
+  verdict: "unknown",
+}
+```
+
+Every `match` statement must include an unguarded final wildcard branch. Use it to handle all values that don’t match earlier branches.
+
+### Classify numeric ranges
+
+Range patterns use `lower..upper` and exclude both bounds. They’re useful for bucketizing status codes, ports, scores, or severities:
+
+```tql
+from {status: 200},
+     {status: 204},
+     {status: 404},
+     {status: 503}
+match status {
+  199..300 => {
+    status_class = "success"
+  }
+  399..500 => {
+    status_class = "client_error"
+  }
+  499..600 => {
+    status_class = "server_error"
+  }
+  _ => {
+    status_class = "other"
+  }
+}
+```
+
+```tql
+{
+  status: 200,
+  status_class: "success",
+}
+{
+  status: 204,
+  status_class: "success",
+}
+{
+  status: 404,
+  status_class: "client_error",
+}
+{
+  status: 503,
+  status_class: "server_error",
+}
+```
+
+### Add context with guards
+
+Use a guard when the same pattern needs different handling depending on another field. This is common for retry decisions: the status code tells you that a request failed, but the retry counter decides whether you should retry, page, or throttle.
+
+```tql
+from {service: "api", status: 503, attempts: 1, max_attempts: 3},
+     {service: "api", status: 503, attempts: 3, max_attempts: 3},
+     {service: "api", status: 429, attempts: 2, max_attempts: 2},
+     {service: "api", status: 404, attempts: 1, max_attempts: 3}
+match status {
+  499..600 | 429 if attempts < max_attempts => {
+    action = "retry"
+  }
+  499..600 => {
+    action = "page"
+  }
+  429 => {
+    action = "throttle"
+  }
+  _ => {
+    action = "ignore"
+  }
+}
+```
+
+```tql
+{
+  service: "api",
+  status: 503,
+  attempts: 1,
+  max_attempts: 3,
+  action: "retry",
+}
+{
+  service: "api",
+  status: 503,
+  attempts: 3,
+  max_attempts: 3,
+  action: "page",
+}
+{
+  service: "api",
+  status: 429,
+  attempts: 2,
+  max_attempts: 2,
+  action: "throttle",
+}
+{
+  service: "api",
+  status: 404,
+  attempts: 1,
+  max_attempts: 3,
+  action: "ignore",
+}
+```
+
+The guarded branch catches retryable server errors and rate limits only while attempts remain. When the guard is false, the event continues to the later arms, so exhausted `503` errors become pages and exhausted `429` errors become throttling signals.
+
+Constants can also be lists or records. These values are compared by equality, so the whole value must match:
+
+```tql
+from {id: 1, value: ["prod", "checkout"]},
+     {id: 2, value: ["prod"]},
+     {id: 3, value: {action: "allow", port: 443}},
+     {id: 4, value: {action: "allow"}}
+match value {
+  ["prod", "checkout"] => {
+    class = "checkout"
+  }
+  {action: "allow", port: 443} => {
+    class = "allow_web"
+  }
+  _ => {
+    class = "other"
+  }
+}
+sort id
+```
+
+```tql
+{
+  id: 1,
+  value: [
+    "prod",
+    "checkout",
+  ],
+  class: "checkout",
+}
+{
+  id: 2,
+  value: [
+    "prod",
+  ],
+  class: "other",
+}
+{
+  id: 3,
+  value: {
+    action: "allow",
+    port: 443,
+  },
+  class: "allow_web",
+}
+{
+  id: 4,
+  value: {
+    action: "allow",
+  },
+  class: "other",
+}
+```
+
+## Basic string operations
+
+Transform strings with simple operations to clean and standardize your data.
+
+### Change case
+
+Convert strings to different cases:
+
+```tql
+from {name: "alice smith", code: "xyz"},
+     {name: "BOB JONES", code: "ABC"}
+name = name.to_title()
+code = code.to_upper()
+```
+
+```tql
+{name: "Alice Smith", code: "XYZ"}
+{name: "Bob Jones", code: "ABC"}
+```
+
+### Trim whitespace
+
+Remove unwanted whitespace from strings:
+
+```tql
+from {input: "  hello  ", data: "world   "},
+     {input: "   test", data: "  value  "}
+input = input.trim()
+data = data.trim()
+```
+
+```tql
+{input: "hello", data: "world"}
+{input: "test", data: "value"}
+```
+
+### Capitalize strings
+
+Capitalize the first letter of a string:
+
+```tql
+from {word: "hello", phrase: "good morning"},
+     {word: "world", phrase: "how are you"}
+word = word.capitalize()
+```
+
+```tql
+{word: "Hello", phrase: "good morning"}
+{word: "World", phrase: "how are you"}
+```
+
+## Mathematical operations
+
+Perform calculations on numeric values within your events.
+
+### Basic arithmetic
+
+Use standard arithmetic operators:
+
+```tql
+from {a: 10, b: 3},
+     {a: 20, b: 4}
+sum = a + b
+diff = a - b
+product = a * b
+quotient = (a / b).int()
+```
+
+```tql
+{a: 10, b: 3, sum: 13, diff: 7, product: 30, quotient: 3}
+{a: 20, b: 4, sum: 24, diff: 16, product: 80, quotient: 5}
+```
+
+### Rounding numbers
+
+Round numbers to specific precision:
+
+```tql
+from {value: 3.14159},
+     {value: 2.71828}
+rounded = value.round()
+ceil_val = value.ceil()
+floor_val = value.floor()
+```
+
+```tql
+{value: 3.14159, rounded: 3, ceil_val: 4, floor_val: 3}
+{value: 2.71828, rounded: 3, ceil_val: 3, floor_val: 2}
+```
+
+### Mathematical functions
+
+Use [`abs`](https://tenzir.com/docs/reference/functions/abs.md) for absolute values and [`sqrt`](https://tenzir.com/docs/reference/functions/sqrt.md) for square roots:
+
+```tql
+from {x: -5, y: 16},
+     {x: -10, y: 25}
+abs_x = x.abs()
+sqrt_y = y.sqrt()
+```
+
+```tql
+{
+  x: -5,
+  y: 16,
+  abs_x: 5,
+  sqrt_y: 4.0,
+}
+{
+  x: -10,
+  y: 25,
+  abs_x: 10,
+  sqrt_y: 5.0,
+}
+```
+
+### Enforce a geographic access boundary
+
+Use [`geo_distance`](https://tenzir.com/docs/reference/functions/geo_distance.md) to compare geolocated authentication events with an allowed location. This example keeps logins more than 50 kilometers from a San Francisco office:
+
+```tql
+from {
+  user: {name: "alice"},
+  src_endpoint: {
+    location: {city: "Oakland", long: -122.2711, lat: 37.8044},
+  },
+}, {
+  user: {name: "bob"},
+  src_endpoint: {
+    location: {city: "Berlin", long: 13.405, lat: 52.52},
+  },
+}
+distance_to_hq_m = int(
+  geo_distance(
+    src_endpoint.location.long,
+    src_endpoint.location.lat,
+    -122.4194,
+    37.7749,
+    spheroid=true,
+  ),
+)
+where distance_to_hq_m > 50000
+select user=user.name, city=src_endpoint.location.city, distance_to_hq_m
+```
+
+```tql
+{
+  user: "bob",
+  city: "Berlin",
+  distance_to_hq_m: 9128788,
+}
+```
+
+[`geo_distance`](https://tenzir.com/docs/reference/functions/geo_distance.md) takes longitude before latitude and returns meters. The `spheroid=true` argument uses the WGS-84 reference ellipsoid for the more accurate distance calculation.
+
+## Working with null values
+
+Handle missing or null values gracefully in your data.
+
+### Provide default values
+
+Use the `else` keyword to replace null values:
+
+```tql
+from {name: "alice", age: 30},
+     {name: "bob"},
+     {name: "charlie", age: 25}
+age = age? else 0
+status = status? else "unknown"
+```
+
+```tql
+{name: "alice", age: 30, status: "unknown"}
+{name: "bob", age: 0, status: "unknown"}
+{name: "charlie", age: 25, status: "unknown"}
+```
+
+### Normalize sentinel values
+
+Many data sources use string placeholders like `"None"`, `"N/A"`, `"-"`, or empty strings to represent missing values. Use [`replace`](https://tenzir.com/docs/reference/operators/replace.md) to normalize these to actual `null`:
+
+```tql
+from {status: "active", error: "None"},
+     {status: "N/A", error: "timeout"},
+     {status: "-", error: ""}
+replace what="None", with=null
+replace what="N/A", with=null
+replace what="-", with=null
+replace what="", with=null
+```
+
+```tql
+{status: "active", error: null}
+{status: null, error: "timeout"}
+{status: null, error: null}
+```
+
+To normalize a specific field rather than all matching strings, specify the field name:
+
+```tql
+from {enabled: "YES", disabled: "NO"}
+replace enabled, what="YES", with=true
+replace enabled, what="NO", with=false
+replace disabled, what="YES", with=true
+replace disabled, what="NO", with=false
+```
+
+```tql
+{enabled: true, disabled: false}
+```
+
+## Create new values
+
+Generate new values using built-in functions:
+
+### Generate unique identifiers
+
+Use [`uuid`](https://tenzir.com/docs/reference/functions/uuid.md) to create unique identifiers:
+
+```tql
+from {user: "alice", action: "login"},
+     {user: "bob", action: "create"}
+event_id = uuid(version="v7")
+session_id = uuid()
+```
+
+```tql
+{
+  user: "alice",
+  action: "login",
+  event_id: "0198147a-d167-7292-80fa-2665c1263279",
+  session_id: "a09a7f44-b665-4f95-bc44-c52fbdb8f428",
+}
+{
+  user: "bob",
+  action: "create",
+  event_id: "0198147a-d167-72ad-80b4-e052c2287add",
+  session_id: "030349dc-2585-49ad-af58-d448ff718c05",
+}
+```
+
+### Generate random numbers
+
+Use [`random`](https://tenzir.com/docs/reference/functions/random.md) to generate random values:
+
+```tql
+from {
+  random_float: random(),
+  random_int: (random() * 100).int(),
+  random_choice: "heads" if random() < 0.5 else "tails",
+}
+```
+
+```tql
+{
+  random_float: 0.3215780368890365,
+  random_int: 88,
+  random_choice: "tails",
+}
+```
+
+## Access external values
+
+Retrieve values from external sources like the environment, configuration, or files:
+
+### Read environment variables
+
+Use [`env`](https://tenzir.com/docs/reference/functions/env.md) to access environment variables:
+
+```tql
+from {
+  home_dir: env("HOME"),
+  shell: env("SHELL"),
+  custom_var: env("MY_APP_CONFIG") else "/default/config",
+}
+```
+
+```tql
+{
+  home_dir: "/Users/alice",
+  shell: "/opt/homebrew/bin/fish",
+  custom_var: "/default/config",
+}
+```
+
+### Access configuration
+
+Use [`config`](https://tenzir.com/docs/reference/functions/config.md) to read Tenzir’s configuration:
+
+```tql
+from {
+  tenzir_config: config(),
+}
+```
+
+### Read file contents
+
+Use [`file_contents`](https://tenzir.com/docs/reference/functions/file_contents.md) to read files:
+
+```tql
+from {
+  api_key: file_contents("/etc/secrets/api_key"),
+}
+```
+
+### Access secrets
+
+Use [`secret`](https://tenzir.com/docs/reference/functions/secret.md) to retrieve [secrets](../../explanations/secrets.md) and pass them to the operator or function that needs them:
+
+```tql
+from_http "https://api.example.com/events",
+  headers={Authorization: f"Bearer {secret("AUTH_TOKEN")}"}
+```
+
+Secrets never appear in events. If you assign a secret to a field, Tenzir stores the string `"***"` instead and emits a warning.
+
+## Type inspection
+
+Examine data types at runtime:
+
+### Get type information
+
+Use [`type_of`](https://tenzir.com/docs/reference/functions/type_of.md) to inspect value types. Note that this function returns detailed type information as objects:
+
+```tql
+from {
+  str: "hello",
+  num: 42,
+  float: 3.14,
+  bool: true,
+  arr: [1, 2, 3],
+  obj: {key: "value"}
+}
+str_type = str.type_of()
+num_type = num.type_of()
+float_type = float.type_of()
+bool_type = bool.type_of()
+arr_type = arr.type_of()
+obj_type = obj.type_of()
+```
+
+```tql
+{
+  str: "hello",
+  num: 42,
+  float: 3.14,
+  bool: true,
+  arr: [1, 2, 3],
+  obj: {key: "value"},
+  str_type: {name: null, kind: "string", attributes: [], state: null},
+  num_type: {name: null, kind: "int", attributes: [], state: null},
+  float_type: {name: null, kind: "float", attributes: [], state: null},
+  bool_type: {name: null, kind: "bool", attributes: [], state: null},
+  arr_type: {name: null, kind: "list", attributes: [], state: {type: {name: null, kind: "int", attributes: [], state: null}}},
+  obj_type: {name: null, kind: "record", attributes: [], state: {fields: [{name: "key", type: {name: null, kind: "string", attributes: [], state: null}}]}}
+}
+```
+
+### Get type identifiers
+
+Use [`type_id`](https://tenzir.com/docs/reference/functions/type_id.md) for type comparison:
+
+```tql
+from {value1: "text", value2: 123, value3: "456"}
+type1 = value1.type_id()
+type2 = value2.type_id()
+type3 = value3.type_id()
+same_type = value1.type_id() == value3.type_id()
+```
+
+```tql
+{
+  value1: "text",
+  value2: 123,
+  value3: "456",
+  type1: "70005bc71c6facc1",
+  type2: "b8b6a92d4662d78e",
+  type3: "70005bc71c6facc1",
+  same_type: true,
+}
+```
+
+## Combining transformations
+
+Real-world data often requires multiple transformations:
+
+```tql
+from {temp_f: "72.5", location: "  new york  "},
+     {temp_f: "89.1", location: "los angeles"}
+temp_c = ((temp_f.float() - 32) * 5 / 9).round()
+location = location.trim().to_title()
+reading = f"{temp_c}°C in {location}"
+```
+
+```tql
+{
+  temp_f: "72.5",
+  location: "New York",
+  temp_c: 23,
+  reading: "23°C in New York",
+}
+{
+  temp_f: "89.1",
+  location: "Los Angeles",
+  temp_c: 32,
+  reading: "32°C in Los Angeles",
+}
+```
+
+## Best practices
+
+1. **Validate before converting**: Check that values can be converted to avoid errors.
+
+2. **Use appropriate types**: Convert to the most specific type needed (e.g., `int` instead of `float` for whole numbers).
+
+3. **Handle edge cases**: Always consider what happens with null values or invalid input.
+
+4. **Chain operations efficiently**: Combine multiple transformations in a single `set` statement when possible.
+
+## See also
+
+* [Filter and select data](../optimize/filter-and-select-data.md)
+* [Manipulate strings](manipulate-strings.md)
+* [Clean up values](../parse/clean-up-values.md)

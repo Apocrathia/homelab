@@ -1,0 +1,317 @@
+---
+title: "Statements"
+canonical: https://tenzir.com/docs/reference/statements
+source: https://tenzir.com/docs/reference/statements.md
+section: "Docs"
+---
+
+# Statements
+
+> TQL programs are a sequence of statements. Operator statements perform various actions on data streams. Each operator statement can be thought of as a modular unit that processes data and can be combined with other operators to create complex dataflows.
+
+TQL programs are a sequence of statements. Operator statements perform various actions on data streams. Each operator statement can be thought of as a modular unit that processes data and can be combined with other operators to create complex dataflows.
+
+[Statements](statements.md) provide control and structure with bindings, operators, assignments, and control-flow primitives.
+
+## Operator
+
+Operator statements consist of the operator name, followed by an arbitrary number of arguments. Arguments are delimited by commas and may optionally be enclosed in parentheses. If the last argument is a pipeline expression, the preceding comma can be omitted for brevity.
+
+Arguments can be of two kinds:
+
+* **Positional**, where the order matters
+* **Named**, where each argument is explicitly associated with a parameter name.
+
+Additionally, arguments can be either:
+
+* **Required**, meaning they must be provided
+* **Optional**, which means they do not necessarily need to be provided, usually meaning they have a default value.
+
+Finally, some operators require [constant arguments](expressions.md#constant-expressions), while others can take expressions, which are evaluated per event.
+
+```tql
+select foo, bar.baz
+drop qux
+head 42
+sort abs(x)
+```
+
+Operators read, transform, and write data:
+
+```tql
+where src_endpoint.port in $critical_ports
+```
+
+Operators have an *upstream* and *downstream* type, which can be:
+
+* **void**: No data (used at pipeline boundaries)
+* **bytes**: Unstructured binary data (files, network streams)
+* **events**: Structured, typed records (the primary data model)
+
+The diagram below illustrates the cross-product of upstream and downstream types:
+
+Upstream and Downstream Types
+
+Here are visual examples that illustrate the upstream and downstream operator types.
+
+```tql
+from_file "/path/to/file.json"
+where src_ip in 10.0.0.0/8
+to_file "s3://bucket/dir/file.parquet"
+```
+
+This pipeline consists of three operators:
+
+Operator Composition Example 1
+
+Let’s break it down:
+
+1. [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md): A void-to-events input operator that reads events from a URI.
+2. [`where`](https://tenzir.com/docs/reference/operators/where.md): An events-to-events transformation operator that filters events matching a predicate.
+3. [`to_file`](https://tenzir.com/docs/reference/operators/to_file.md): An events-to-void output operator that writes to the specified URI.
+
+Some source and sink operators infer the format of the data being read or written, i.e., JSON due to the `.json` extension and Parquet due to the `.parquet` extension. You can also write the specific operators for these operations yourself:
+
+```tql
+from_file "events.ndjson" {
+  read_ndjson
+}
+select host, message
+to_zmq "tcp://1.2.3.4", encoding="yaml"
+```
+
+Operator Composition Example 2
+
+Here, we use a separate set of operators that go through bytes explicitly. Let’s break it down as well:
+
+1. [`from_kafka`](https://tenzir.com/docs/reference/operators/from_kafka.md): A void-to-events input operator that reads from a Kafka topic.
+2. [`read_ndjson`](https://tenzir.com/docs/reference/operators/read_ndjson.md): An bytes-to-events transformation operator (aka. *parser*) that reads newline-delimited JSON.
+3. [`select`](https://tenzir.com/docs/reference/operators/select.md): An events-to-events transformation operator that selects specific fields from events.
+4. [`write_yaml`](https://tenzir.com/docs/reference/operators/write_yaml.md): An events-to-bytes transformation operator that turns events to YAML foramt.
+5. [`to_zmq`](https://tenzir.com/docs/reference/operators/to_zmq.md): A bytes-to-void output operator that writes bytes to a ZeroMQ socket.
+
+### Line continuation
+
+TQL uses newlines to separate statements. When spreading operator arguments across multiple lines, you must signal continuation using one of these methods:
+
+1. **Trailing comma**: A comma at the end of a line signals more arguments follow
+2. **Backslash**: A `\` at line end explicitly continues to the next line
+3. **Delimiters**: Inside `()`, `[]`, or `{}` (records only), newlines are allowed freely
+
+A newline immediately after an operator name ends the statement. For example, `drop` followed by a newline is a complete statement that drops all fields.
+
+## Assignment
+
+An assignment statement in TQL is structured as `<place> = <expression>`, where `<place>` typically refers to a field or item of a list. If the specified place already exists, the assignment will overwrite its current value. If it does not exist, a new field will be created.
+
+The `<place>` can also reference a field path. For example, the statement `foo.bar = 42` assigns the value 42 to the field `bar` within the record `foo`. If `foo` is not a record or does not exist before, it will be set to a record containing just the field `bar`.
+
+Use brackets to derive a field name from an expression. Tenzir evaluates the expression separately for each event, and the result must be a string. If the result is `null` or has another type, Tenzir emits a warning and skips the assignment for that event.
+
+```tql
+from {key: "latency", value: 42}
+metrics[key] = value
+```
+
+```tql
+{
+  key: "latency",
+  value: 42,
+  metrics: {
+    latency: 42,
+  },
+}
+```
+
+```tql
+category_name = "Network Activity"
+type_uid = class_uid * 100 + activity_id
+traffic.bytes_out = event.sent_bytes
+```
+
+Assignments modify fields:
+
+```tql
+risk_score = bytes / 1Ki * severity_weight
+```
+
+When you write an assignment outside an explicit operator context, it implicitly uses the [`set`](https://tenzir.com/docs/reference/operators/set.md) operator:
+
+```tql
+severity = "high"
+// ...is actually shorthand for:
+set severity = "high"
+```
+
+This design keeps pipelines concise while maintaining clarity about what’s happening.
+
+## `let`
+
+The `let` statement binds a constant to a specific name within the pipeline’s scope. The syntax for a `let` statement is `let $<identifier> = <expression>`. For instance, `let $meaning = 42` creates a constant `$meaning` that holds the value 42.
+
+More complex expressions can also be assigned, such as `let $start = now() - 1h`, which binds `$start` to a value representing one hour before the pipeline was started.
+
+Constants defined with `let` can be referenced in subsequent statements, including other `let` statements. For example, `let $end = $start + 30min` can be used to define `$end` depending on the value of `$start`.
+
+```tql
+let $meaning = 42
+let $start = now() - 1h
+let $end = $start + 30min
+```
+
+A `let` statement introduces a constant that gets substituted during [expression evaluation](expressions.md#let-substitution).
+
+## `if`
+
+The `if` statement is a primitive designed to route data based on a predicate. Its typical usage follows the syntax `if <expression> { … } else { … }`, where two subpipelines are specified within the braces. Because `if` routes incoming events, it cannot be the first statement in a pipeline.
+
+When its expression evaluates to `true`, the first pipeline processes the event. Conversely, when it evaluates to `false` or `null`, it is routed through the second one without a warning. In this predicate position, `null` is falsy. This describes which branch Tenzir takes and does not convert `null` into the boolean value `false`. Other non-boolean values produce a type warning and follow the second branch.
+
+After the `if` statement the event flow from both pipelines is joined together. The `else` clause can be omitted, resulting in the syntax `if <expression> { … }`, which has the same behavior as `if <expression> { … } else {}`. Additionally, the `else` keyword can be followed by another `if` statement, allowing for chained `if` statements. This chaining can be repeated, enabling complex conditional logic to be implemented.
+
+```tql
+if score < 100 {
+  severity = "low"
+  drop details
+} else if score < 200 {
+  severity = "medium"
+} else {
+  severity = "high"
+}
+```
+
+The `if` statement allows for branching into different statements:
+
+```tql
+if src_ip.is_private() {
+  zone = "internal"
+} else {
+  zone = "external"
+}
+```
+
+## `match`
+
+The `match` statement routes events by comparing one expression against patterns. Tenzir evaluates the expression for each event, checks the arms from top to bottom, and sends the event to the first matching arm.
+
+```tql
+from {action: "accept"},
+     {action: "deny"},
+     {action: "reset"}
+match action {
+  "accept" | "allow" => {
+    verdict = "allowed"
+  }
+  "deny" | "drop" => {
+    verdict = "blocked"
+  }
+  _ => {
+    verdict = "unknown"
+  }
+}
+```
+
+Use `|` to list multiple alternatives for the same arm. Each arm contains one or more patterns, an optional guard, and a pipeline in braces. Constant patterns include strings, numbers, booleans, `null`, durations, times, IP addresses, subnets, lists, and records. A negative numeric literal, such as `-1`, is also valid.
+
+Use `_` as a wildcard fallback for all remaining events. The wildcard must be the only pattern in its arm and must be the final arm, unless the arm has a guard. A guarded wildcard can fail and later arms can still match, but it does not make the `match` exhaustive. Every `match` statement must include an unguarded final wildcard arm, so Tenzir can prove at compile time that the arms cover every possible value.
+
+```tql
+from {record_type: "A"},
+     {record_type: "CNAME"},
+     {record_type: "TXT"}
+match record_type {
+  "A" | "AAAA" => {
+    record_family = "address"
+  }
+  "CNAME" | "DNAME" => {
+    record_family = "alias"
+  }
+  _ => {
+    record_family = "other"
+  }
+}
+```
+
+Branch pipelines follow the same output type rules as `if` branches.
+
+### Guards
+
+Add `if` between the pattern list and `=>` to require an additional boolean condition. Tenzir evaluates patterns first. If a pattern matches, Tenzir evaluates the guard for that event. The arm only receives events where the guard is `true`; events where the guard is `false` or `null` continue to later arms without a warning. In this predicate position, `null` is falsy without becoming the boolean value `false`.
+
+```tql
+from {status: 503, retries: 1},
+     {status: 503, retries: 0},
+     {status: 404, retries: 0}
+match status {
+  499..600 | 429 if retries > 0 => {
+    action = "retry"
+  }
+  499..600 => {
+    action = "page"
+  }
+  _ => {
+    action = "ignore"
+  }
+}
+```
+
+A guard expression must evaluate to `bool` or `null`. If it evaluates to another type, Tenzir emits a warning and treats the arm as not matching for those events.
+
+A wildcard arm with a guard is not a fallback for every remaining event:
+
+```tql
+from {status: 404},
+     {status: 500}
+match status {
+  _ if status == 404 => {
+    class = "not_found"
+  }
+  _ => {
+    class = "other"
+  }
+}
+```
+
+List and record constants are compared by equality:
+
+```tql
+from {value: ["prod", "checkout"]},
+     {value: ["prod"]},
+     {value: {action: "allow", port: 443}},
+     {value: {action: "allow"}}
+match value {
+  ["prod", "checkout"] => {
+    class = "checkout"
+  }
+  {action: "allow", port: 443} => {
+    class = "allow web"
+  }
+  _ => {
+    class = "other"
+  }
+}
+```
+
+### Range patterns
+
+Range patterns use `lower..upper` and exclude both bounds.
+
+```tql
+from {status: 200},
+     {status: 404},
+     {status: 503}
+match status {
+  199..300 => {
+    class = "success"
+  }
+  399..500 => {
+    class = "client error"
+  }
+  499..600 => {
+    class = "server error"
+  }
+  _ => {
+    class = "other"
+  }
+}
+```

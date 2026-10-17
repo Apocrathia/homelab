@@ -1,0 +1,504 @@
+---
+title: "Deploy a node"
+canonical: https://tenzir.com/docs/guides/node-setup/deploy-a-node
+source: https://tenzir.com/docs/guides/node-setup/deploy-a-node.md
+section: "Docs"
+---
+
+# Deploy a node
+
+> Deploying a node means spinning it up in one of the supported runtimes. The primary choice is between a containerized with Docker or a native deployment with our static binary that runs on amd64 and arm64 architectures.
+
+Deploying a node means spinning it up in one of the supported runtimes. The primary choice is between a containerized with Docker or a native deployment with our static binary that runs on amd64 and arm64 architectures.
+
+## Docker
+
+We recommend using Docker to deploy a Tenzir node, as it’s the easiest way to get started.
+
+After [provisioning a node](provision-a-node.md), proceed as follows:
+
+1. Select the Docker tab and click the download button to obtain the `docker-compose.NODE.yaml` configuration file, where `NODE` is the name you entered for your node.
+
+2. Run
+
+   ```bash
+   docker compose -f docker-compose.NODE.yaml up --detach
+   ```
+
+Edit the Docker Compose file and change [environment variables](../../explanations/configuration.md) to adjust your configuration.
+
+### Stop a node
+
+Stop a node via the `down` command:
+
+```bash
+docker compose -f docker-compose.NODE.yaml down
+```
+
+Stop a node and delete its persistent state by adding `--volumes`:
+
+```bash
+docker compose -f docker-compose.NODE.yaml down --volumes
+```
+
+### Update a node
+
+Run the following commands to update a Docker Compose deployment with a configuration file `docker-compose.NODE.yaml`:
+
+```bash
+docker compose -f docker-compose.NODE.yaml pull
+docker compose -f docker-compose.NODE.yaml down
+docker compose -f docker-compose.NODE.yaml up --detach
+```
+
+Note that we `pull` first so that the subsequent downtime between `down` and `up` is minimal.
+
+### Verify container image signatures
+
+Tenzir signs all container images to ensure authenticity and integrity. You can verify signatures using [Cosign](https://docs.sigstore.dev/cosign/overview/) or configure [Podman](https://podman.io/) for automatic verification.
+
+#### Cosign
+
+Use Cosign with keyless OIDC verification to validate the image was built by Tenzir’s GitHub Actions:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp="https://github.com/tenzir/tenzir/.github/workflows/.*" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  ghcr.io/tenzir/tenzir:latest
+```
+
+#### Podman
+
+Configure Podman for automatic signature verification using the public key from the [tenzir/tenzir repository](https://github.com/tenzir/tenzir/blob/main/container-signing.pub).
+
+Create `/etc/containers/registries.d/tenzir.yaml`:
+
+```yaml
+docker:
+  ghcr.io/tenzir:
+    use-sigstore-attachments: true
+```
+
+Add the following to the `docker` key under `transports` in `/etc/containers/policy.json`:
+
+```json
+"ghcr.io/tenzir": [
+  {
+    "type": "sigstoreSigned",
+    "keyPath": "/etc/pki/containers/container-signing.pub"
+  }
+]
+```
+
+Copy the public key to the configured path. Podman then verifies signatures automatically when pulling Tenzir images.
+
+## Linux
+
+For native Linux deployments, first [install Tenzir](../installation.md) to get the `tenzir-node` binary.
+
+### Deploy with the curl installer
+
+The curl installer both installs Tenzir and starts a node as a systemd service:
+
+1. [Provision the node](provision-a-node.md) and download its config.
+
+2. Create a directory for the platform configuration.
+
+   ```bash
+   mkdir -p /opt/tenzir/etc/tenzir/plugin
+   ```
+
+3. Move the downloaded `platform.yaml` configuration file to the directory so that the node can find it during startup:
+
+   ```bash
+   mv platform.yaml /opt/tenzir/etc/tenzir/plugin
+   ```
+
+4. Run the installer and follow the instructions to download and start the node:
+
+   ```bash
+   curl https://get.tenzir.app | sh
+   ```
+
+The installer script asks for confirmation before performing the installation. See the [configuration documentation](../../explanations/configuration.md) for details on how the node loads config files at startup.
+
+### Start a node manually
+
+The installer script uses the package manager of your Linux distribution to install the Tenzir package. This typically also creates a [systemd](https://systemd.io) unit and starts the node automatically.
+
+For testing, development, our troubleshooting, run the `tenzir-node` executable to start a node manually:
+
+```bash
+tenzir-node
+```
+
+```plaintext
+      _____ _____ _   _ ________ ____
+     |_   _| ____| \ | |__  /_ _|  _ \
+       | | |  _| |  \| | / / | || |_) |
+       | | | |___| |\  |/ /_ | ||  _ <
+       |_| |_____|_| \_/____|___|_| \_\
+
+
+          v4.0.0-rc6-0-gf193b51f1f
+Visit https://app.tenzir.com to get started.
+
+
+[16:50:26.741] node listens for node-to-node connections on tcp://127.0.0.1:5158
+[16:50:26.982] node connected to platform via wss://ws.tenzir.app:443/production
+```
+
+### Stop a node
+
+There exist two ways stop a server:
+
+1. Hit CTRL+C in the same TTY where you ran `tenzir-node`.
+2. Send the process a SIGINT or SIGTERM signal, e.g., via `pkill -2 tenzir-node`.
+
+Hitting CTRL+C is equivalent to manually sending a SIGTERM signal.
+
+## AWS
+
+The recommended way to run a Tenzir node in AWS is with [Elastic Container Service (ECS)](https://aws.amazon.com/ecs/). The diagram below shows the high-level architecture of an AWS deployment.
+
+Prerequisites
+
+Before you begin, you’ll need a valid `TENZIR_TOKEN` for your node. Obtain one by [provisioning a node](provision-a-node.md), select the *other* tab, and click on the text box to copy the shown token.
+
+<!--?xml version="1.0" standalone="no"?-->AWS Architecture
+
+You can deploy a Tenzir node using either [CloudFormation](https://aws.amazon.com/cloudformation/) for automated setup or manually through the AWS console. Both methods support deploying as many nodes as you need.
+
+### Subscribe to Tenzir Node on AWS Marketplace
+
+Before deploying with either method, you need to subscribe to the Tenzir Node product:
+
+1. Go to [AWS Marketplace](https://console.aws.amazon.com/marketplace/) and subscribe to the free [Tenzir Node](https://console.aws.amazon.com/marketplace/search/listing/prodview-gsofc3z6f3vsu) product.
+
+2. Accept the terms to subscribe to the offering.
+
+### Choose your deployment method
+
+* CloudFormation
+
+  Deploy a Tenzir node using our CloudFormation template for automated setup. Click the button below to launch the CloudFormation console with our template pre-loaded:
+
+  [Launch CloudFormation Stack](https://console.aws.amazon.com/cloudformation/home?#/stacks/create?templateURL=https://s3.amazonaws.com/tenzir-marketplace-resources/single-node-container.yaml)
+
+  After clicking the button above, follow these steps in the AWS console:
+
+  1. **Review the pre-filled template**: The CloudFormation console will open with our single-node container template already loaded:
+
+  2. **Configure your stack**:
+
+     * **Stack name**: Choose a unique name for your stack (e.g., `tenzir-node-prod`)
+     * **Parameters**: Enter your `TENZIR_TOKEN` in the provided field
+
+     Double-check that the container image URL points to the Tenzir Node version you want to deploy.
+
+  3. **Accept the default stack options**: For most deployments, the defaults work perfectly:
+
+  4. **Review and acknowledge**: Confirm your configuration and check the acknowledgment box:
+
+  5. **Deploy your node**: Click *Submit* to start the deployment. Monitor progress in the *Events* tab.
+
+  6. **Wait for connection**: Your node will automatically connect to your workspace once the stack creation completes (typically 2-3 minutes).
+
+  ### Update your node
+
+  To update your Tenzir node to a new version, you need to update the **Container image URL** parameter with a new version tag. The image URL format is:
+
+  ```plaintext
+  709825985650.dkr.ecr.us-east-1.amazonaws.com/tenzir/tenzir-node:v<MAJOR>.<MINOR>.<PATCH>
+  ```
+
+  Replace `v<MAJOR>.<MINOR>.<PATCH>` with the desired version (e.g., `v4.30.3`). Check our [changelog](https://tenzir.com/changelog.md) for the latest version.
+
+  * Console
+
+    1. Navigate to [CloudFormation](https://console.aws.amazon.com/cloudformation/) in the AWS console.
+    2. Select your stack and click *Update*.
+    3. Choose *Use current template* and click *Next*.
+    4. Update the **Container image URL** parameter with the new version.
+    5. Click through the remaining screens and submit the update.
+
+  * CLI
+
+    ```bash
+    aws cloudformation update-stack \
+      --stack-name tenzir-node-prod \
+      --use-previous-template \
+      --parameters \
+        ParameterKey=ContainerImageUrl,ParameterValue=709825985650.dkr.ecr.us-east-1.amazonaws.com/tenzir/tenzir-node:v4.30.3 \
+        ParameterKey=TenzirToken,UsePreviousValue=true \
+      --capabilities CAPABILITY_IAM
+    ```
+
+    Replace `tenzir-node-prod` with your stack name and `v4.30.3` with the desired version.
+
+  Your node will restart with the new version automatically.
+
+  ### Delete your node
+
+  To remove the node and all associated resources, delete the stack.
+
+  * Console
+
+    1. Navigate to [CloudFormation](https://console.aws.amazon.com/cloudformation/) in the AWS console.
+    2. Select your stack and click *Delete*.
+    3. Confirm the deletion.
+
+  * CLI
+
+    ```bash
+    aws cloudformation delete-stack --stack-name tenzir-node-prod
+    ```
+
+    Replace `tenzir-node-prod` with your stack name.
+
+* Manual
+
+  1. Navigate to [CloudFormation](https://console.aws.amazon.com/cloudformation/) in the AWS console.
+  2. Select your stack and click *Update*.
+  3. Choose *Use current template* and click *Next*.
+  4. Update the **Container image URL** parameter with the new version.
+  5. Click through the remaining screens and submit the update.
+
+* Console
+
+  ```bash
+  aws cloudformation update-stack \
+    --stack-name tenzir-node-prod \
+    --use-previous-template \
+    --parameters \
+      ParameterKey=ContainerImageUrl,ParameterValue=709825985650.dkr.ecr.us-east-1.amazonaws.com/tenzir/tenzir-node:v4.30.3 \
+      ParameterKey=TenzirToken,UsePreviousValue=true \
+    --capabilities CAPABILITY_IAM
+  ```
+
+  Replace `tenzir-node-prod` with your stack name and `v4.30.3` with the desired version.
+
+* CLI
+
+  1. Navigate to [CloudFormation](https://console.aws.amazon.com/cloudformation/) in the AWS console.
+  2. Select your stack and click *Delete*.
+  3. Confirm the deletion.
+
+* Console
+
+  ```bash
+  aws cloudformation delete-stack --stack-name tenzir-node-prod
+  ```
+
+  Replace `tenzir-node-prod` with your stack name.
+
+* CLI
+
+  Follow these steps for manual deployment through the AWS console:
+
+  1. Navigate to [Amazon Elastic Container Service (ECS)](https://console.aws.amazon.com/ecs).
+
+  2. Create a new cluster. Choose between **EC2** or **Fargate** based on your needs:
+
+     * **EC2 clusters** give you full control over the underlying instances. They’re ideal for long-running workloads with consistent resource requirements.
+     * **Fargate clusters** provide serverless container execution where you pay only for the resources you use. They’re cost-effective for workloads with variable demand.
+
+  3. Create a task definition to specify how the Tenzir node container should run.
+
+     In the *Containers* section, enter the repository URL from your AWS Marketplace subscription:
+
+     ```plaintext
+     709825985650.dkr.ecr.us-east-1.amazonaws.com/tenzir/tenzir-node:v<MAJOR>.<MINOR>.<PATCH>
+     ```
+
+     Each node version has its own image tag. Replace `v<MAJOR>.<MINOR>.<PATCH>` with the desired version. Check the [changelog](https://tenzir.com/changelog.md) for the latest version.
+
+  4. Return to your cluster, navigate to the *Tasks* tab, and click *Run new task*. Select the task definition you just created.
+
+     In the *Container overrides* section, add the `TENZIR_TOKEN` environment variable with the token value corresponding to your node.
+
+     Click *Create* to launch your node.
+
+  5. Once the container starts successfully, your node will automatically connect to your workspace.
+
+## Azure
+
+To run a node in Azure, we recommend using [Azure Container Instances (ACI)](https://azure.microsoft.com/en-us/products/container-instances), which allows you to run Docker containers without having to setup VMs.
+
+Prerequisites
+
+Before you begin, you’ll need a valid `TENZIR_TOKEN` for your node. Obtain one by [provisioning a node](provision-a-node.md), select the *other* tab, and click on the text box to copy the shown token.
+
+### Azure Container Instances (ACI)
+
+The following steps guide you through deploying a Tenzir Node using ACI.
+
+#### Create a new container instance
+
+1. Open [portal.azure.com](https://portal.azure.com/).
+2. Navigate to the *Container instances*.
+3. Click the *Create* button.
+
+#### Basics
+
+In the *Basics* tab, perform the following action:
+
+1. Choose a container name.
+2. For *Image source*, select *Other registry*.
+3. For *Image*, enter `tenzir/tenzir-node`.
+
+#### Networking
+
+In the *Networking* tab, configure the ports you plan to use for pipelines that receive incoming connections.
+
+#### Advanced
+
+In the *Advanced* tab, enter the `TENZIR_TOKEN` environment variable from your Docker Compose file.
+
+#### Create
+
+Once you’ve completed the configuration, click the *Create* button. Your node is now up and running.
+
+## Kubernetes
+
+Deploy one or more `tenzir-node` instances on a Kubernetes cluster with the [Tenzir Helm chart](../../reference/node/helm-chart.md). The chart deploys nodes only
+
+* it does not deploy the Tenzir Platform. Each node connects out to a Platform you have already provisioned, either cloud-hosted at `app.tenzir.com` or self-hosted through the Sovereign Edition. Each entry in the chart’s `nodes` list renders as its own `StatefulSet` with a persistent volume and a Kubernetes `Service`.
+
+The chart is distributed as an OCI artifact at `oci://ghcr.io/tenzir/charts/tenzir-node`. You need Kubernetes 1.27 or later and Helm 3.8 or later.
+
+After [provisioning a node](provision-a-node.md) in your Platform workspace, proceed as follows.
+
+1. Create a namespace and store the node’s token in a Kubernetes Secret:
+
+   ```bash
+   kubectl create namespace tenzir
+   kubectl -n tenzir create secret generic tenzir-node-token \
+     --from-literal=TENZIR_TOKEN=tnz_...
+   ```
+
+2. Create a values file that references the Secret:
+
+   values.yaml
+
+   ```yaml
+   nodes:
+     - name: default
+       token:
+         existingSecret: tenzir-node-token
+   ```
+
+3. Install the chart:
+
+   ```bash
+   helm install tenzir-node oci://ghcr.io/tenzir/charts/tenzir-node \
+     --version 0.1.0 \
+     --namespace tenzir \
+     -f values.yaml
+   ```
+
+4. Verify the deployment:
+
+   ```bash
+   helm test tenzir-node -n tenzir
+   ```
+
+### Pin the image
+
+The chart defaults to `image.tag: latest`, which always pulls the newest Tenzir release. For production deployments, override the tag with a specific version so upgrades become explicit, reviewable changes:
+
+values.yaml
+
+```yaml
+image:
+  tag: v6.2.0
+```
+
+See the [Tenzir changelog](https://tenzir.com/changelog/tenzir/) for the list of available releases. Bumping the tag and re-running `helm upgrade` becomes your version-bump workflow. To roll back, set the previous tag and `helm upgrade` again.
+
+### Update a node
+
+Edit your values file and apply the change:
+
+```bash
+helm upgrade tenzir-node oci://ghcr.io/tenzir/charts/tenzir-node \
+  --version 0.1.0 \
+  --namespace tenzir \
+  -f values.yaml
+```
+
+The chart only restarts nodes whose configuration changed. See [Helm chart](../../reference/node/helm-chart.md#change-the-node-configuration) for how the chart’s checksum annotation decides.
+
+### Stop a node
+
+Remove the release. The persistent volumes survive so you can reinstall against the same state later:
+
+```bash
+helm uninstall tenzir-node -n tenzir
+```
+
+To delete the persistent state as well, remove the namespace:
+
+```bash
+kubectl delete namespace tenzir
+```
+
+### Verify the chart signature
+
+The chart is signed with [Cosign](https://docs.sigstore.dev/cosign/overview/) keyless via the GitHub Actions OIDC token, the same scheme used for the [`tenzir` container image](https://tenzir.com/docs/guides/node-setup/deploy-a-node.md#verify-container-image-signatures). Verify a specific version with:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp="https://github.com/tenzir/helm-charts/.*" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  ghcr.io/tenzir/charts/tenzir-node:0.1.0
+```
+
+## macOS
+
+Looking for a native macOS package? We’re not quite there yet - but you can still run Tenzir smoothly on macOS using [Docker](deploy-a-node.md#docker).
+
+Want to see a native macOS build? Let us know! Drop your vote in our [Discord community](https://discord.tenzir.com) - we prioritize what our users need most.
+
+Tenzir *does* run well on macOS under the hood. Docker just bridges the gap for now.
+
+## Ansible
+
+The Ansible role for Tenzir allows for easy integration of Tenzir into existing Ansible setups. The role uses either the Tenzir Debian package or the tarball installation method depending on which is appropriate for the target environment. The role definition is in the [`ansible/roles/tenzir`](https://github.com/tenzir/tenzir/tree/main/ansible/roles/tenzir) directory of the Tenzir repository. You need a local copy of this directory so you can use it in your playbook.
+
+### Example
+
+This example playbook shows how to run a Tenzir service on the machine `example_tenzir_server`:
+
+```yaml
+- name: Deploy Tenzir
+  become: true
+  hosts: example_tenzir_server
+  remote_user: example_ansible_user
+  roles:
+    - role: tenzir
+      vars:
+        tenzir_config_dir: ./tenzir
+        tenzir_read_write_paths: [/tmp]
+        tenzir_archive: ./tenzir.tar.gz
+        tenzir_debian_package: ./tenzir.deb
+```
+
+### Variables
+
+#### `tenzir_config_dir` (required)
+
+A path to directory containing a [`tenzir.yaml`](https://tenzir.com/docs/reference/node/configuration.md) relative to the playbook.
+
+#### `tenzir_read_write_paths`
+
+A list of paths that Tenzir shall be granted access to in addition to its own state and log directories.
+
+#### `tenzir_archive`
+
+A tarball of Tenzir structured like those that can be downloaded from the [GitHub Releases Page](https://github.com/tenzir/tenzir/releases). This is used for target distributions that are not based on the `apt` package manager.
+
+#### `tenzir_debian_package`
+
+A Debian package (`.deb`). This package is used for Debian and Debian-based Linux distributions.

@@ -1,0 +1,281 @@
+---
+title: "Parse delimited text"
+canonical: https://tenzir.com/docs/guides/parse/parse-delimited-text
+source: https://tenzir.com/docs/guides/parse/parse-delimited-text.md
+section: "Docs"
+---
+
+# Parse delimited text
+
+> This guide shows you how to parse text streams into structured events. You’ll learn to split byte streams on newlines or custom delimiters, and parse line-based formats like JSON lines, CSV, TSV, key-value pairs, Syslog, and CEF.
+
+This guide shows you how to parse text streams into structured events. You’ll learn to split byte streams on newlines or custom delimiters, and parse line-based formats like JSON lines, CSV, TSV, key-value pairs, Syslog, and CEF.
+
+The examples use [`from_file`](https://tenzir.com/docs/reference/operators/from_file.md) with a [parsing subpipeline](../../reference/programs.md#parsing-subpipelines) to illustrate each technique.
+
+## Auto-detect structured text
+
+Use [`read_auto`](https://tenzir.com/docs/reference/operators/read_auto.md) when you don’t know the text format yet, or when you want to prototype against sample files before choosing a concrete reader. It detects common structured text formats such as NDJSON, CSV, TSV, key-value text, YAML, Syslog, CEF, and LEEF from the first bytes of the stream:
+
+```tql
+from_file "sample.log" {
+  read_auto fallback="lines"
+}
+```
+
+With `fallback="lines"`, unsupported UTF-8 input still becomes one event per line. Keep the default `fallback="none"` when unknown formats should fail fast. After you know the exact format, switch to the concrete reader when you need format-specific options.
+
+## Split on newlines
+
+Use [`read_lines`](https://tenzir.com/docs/reference/operators/read_lines.md) to split a byte stream on newline characters. Given this input file:
+
+app.log
+
+```txt
+2024-01-15 10:30:45 INFO Application started
+2024-01-15 10:30:46 DEBUG Processing request
+```
+
+This pipeline produces one event per line:
+
+```tql
+from_file "app.log" {
+  read_lines
+}
+```
+
+```tql
+{line: "2024-01-15 10:30:45 INFO Application started"}
+{line: "2024-01-15 10:30:46 DEBUG Processing request"}
+```
+
+The same pattern works for network streams:
+
+```tql
+accept_tcp "0.0.0.0:9000" {
+  read_lines
+}
+```
+
+## Split on custom delimiters
+
+Use [`read_delimited`](https://tenzir.com/docs/reference/operators/read_delimited.md) when records use separators other than newlines. Given this input file:
+
+records.dat
+
+```txt
+first record|||second record|||third record
+```
+
+This pipeline splits on every occurrence of `|||`:
+
+```tql
+from_file "records.dat" {
+  read_delimited "|||"
+}
+```
+
+```tql
+{data: "first record"}
+{data: "second record"}
+{data: "third record"}
+```
+
+### Blank line separators
+
+Some formats use blank lines to separate records, such as paragraphs or multi-line entries. Given this input file:
+
+paragraphs.txt
+
+```txt
+First paragraph with
+multiple lines.
+
+
+Second paragraph here.
+
+
+Third paragraph.
+```
+
+This pipeline splits on blank lines:
+
+```tql
+from_file "paragraphs.txt" {
+  read_delimited "\n\n"
+}
+```
+
+```tql
+{data: "First paragraph with\nmultiple lines."}
+{data: "Second paragraph here."}
+{data: "Third paragraph."}
+```
+
+### Null byte terminators
+
+Some protocols use null bytes as record terminators:
+
+```tql
+accept_tcp "0.0.0.0:9000" {
+  read_delimited "\x00", binary=true
+}
+```
+
+Add `binary=true` for non-UTF-8 data to produce `blob` output instead of `string`.
+
+### XML document streams
+
+XML streams often contain multiple documents without a top-level wrapper. Use `include_separator` to keep the closing tag as part of each event:
+
+```tql
+from_file "windows_events.xml" {
+  read_delimited "</Event>\n", include_separator=true
+}
+this = data.parse_winlog()
+```
+
+See [Microsoft Windows Event Logs](../../integrations/microsoft/windows-event-logs.md) for a complete example.
+
+## Line-based structured formats
+
+Several `read_*` operators parse line-based formats directly into structured events.
+
+### JSON lines
+
+Given this input file with dotted keys:
+
+conn.jsonl
+
+```jsonl
+{"ts": "2024-01-15T10:30:45Z", "id.orig_h": "192.168.1.100", "id.orig_p": 52311, "id.resp_h": "93.184.216.34", "id.resp_p": 443}
+{"ts": "2024-01-15T10:30:46Z", "id.orig_h": "192.168.1.101", "id.orig_p": 52312, "id.resp_h": "93.184.216.34", "id.resp_p": 80}
+```
+
+Use [`read_ndjson`](https://tenzir.com/docs/reference/operators/read_ndjson.md) with `unflatten_separator` to convert dotted keys into nested records:
+
+```tql
+from_file "conn.jsonl" {
+  read_ndjson unflatten_separator="."
+}
+```
+
+```tql
+{ts: 2024-01-15T10:30:45Z, id: {orig_h: 192.168.1.100, orig_p: 52311, resp_h: 93.184.216.34, resp_p: 443}}
+{ts: 2024-01-15T10:30:46Z, id: {orig_h: 192.168.1.101, orig_p: 52312, resp_h: 93.184.216.34, resp_p: 80}}
+```
+
+For regular JSON arrays or objects, use [`read_json`](https://tenzir.com/docs/reference/operators/read_json.md) instead.
+
+### CSV / TSV / SSV / XSV
+
+Given this input file:
+
+users.csv
+
+```csv
+id,name,email,role
+1,alice,alice@example.com,admin
+2,bob,bob@example.com,user
+3,carol,carol@example.com,user
+```
+
+Use [`read_csv`](https://tenzir.com/docs/reference/operators/read_csv.md) to parse the file with automatic header detection:
+
+```tql
+from_file "users.csv" {
+  read_csv
+}
+```
+
+```tql
+{id: 1, name: "alice", email: "alice@example.com", role: "admin"}
+{id: 2, name: "bob", email: "bob@example.com", role: "user"}
+{id: 3, name: "carol", email: "carol@example.com", role: "user"}
+```
+
+For tab-separated or space-separated data, use [`read_tsv`](https://tenzir.com/docs/reference/operators/read_tsv.md) or [`read_ssv`](https://tenzir.com/docs/reference/operators/read_ssv.md). For custom delimiters, use [`read_xsv`](https://tenzir.com/docs/reference/operators/read_xsv.md).
+
+### Key-value pairs (KV)
+
+Given this input file:
+
+records.txt
+
+```txt
+name=alice age=30
+name=bob age=25
+name=carol age=35
+```
+
+Use [`read_kv`](https://tenzir.com/docs/reference/operators/read_kv.md) to parse each line as key-value pairs:
+
+```tql
+from_file "records.txt" {
+  read_kv
+}
+```
+
+```tql
+{name: "alice", age: 30}
+{name: "bob", age: 25}
+{name: "carol", age: 35}
+```
+
+### CEF
+
+Given this Common Event Format (CEF) input:
+
+events.cef
+
+```txt
+CEF:0|Security|IDS|1.0|100|Intrusion detected|7|src=192.168.1.100 dst=10.0.0.1 spt=54321 dpt=443
+CEF:0|Security|IDS|1.0|101|Malware found|9|src=192.168.1.101 dst=10.0.0.2 spt=12345 dpt=80
+```
+
+Use [`read_cef`](https://tenzir.com/docs/reference/operators/read_cef.md) to parse security events:
+
+```tql
+from_file "events.cef" {
+  read_cef
+}
+```
+
+```tql
+{cef_version: 0, device_vendor: "Security", device_product: "IDS", device_version: "1.0", signature_id: "100", name: "Intrusion detected", severity: "7", extension: {src: 192.168.1.100, dst: 10.0.0.1, spt: 54321, dpt: 443}}
+{cef_version: 0, device_vendor: "Security", device_product: "IDS", device_version: "1.0", signature_id: "101", name: "Malware found", severity: "9", extension: {src: 192.168.1.101, dst: 10.0.0.2, spt: 12345, dpt: 80}}
+```
+
+For IBM QRadar logs, use [`read_leef`](https://tenzir.com/docs/reference/operators/read_leef.md).
+
+### Syslog messages
+
+Given this input file:
+
+syslog.txt
+
+```txt
+<14>Jan 15 10:30:45 myhost app[1234]: User logged in
+<11>Jan 15 10:30:46 myhost app[1234]: Error occurred
+```
+
+Use [`read_syslog`](https://tenzir.com/docs/reference/operators/read_syslog.md) to parse each line:
+
+```tql
+from_file "syslog.txt" {
+  read_syslog
+}
+```
+
+```tql
+{facility: 1, severity: 6, timestamp: "Jan 15 10:30:45", hostname: "myhost", app_name: "app", process_id: "1234", content: "User logged in"}
+{facility: 1, severity: 3, timestamp: "Jan 15 10:30:46", hostname: "myhost", app_name: "app", process_id: "1234", content: "Error occurred"}
+```
+
+## See also
+
+* [`read_auto`](https://tenzir.com/docs/reference/operators/read_auto.md)
+* [Parse binary data](parse-binary-data.md)
+* [Parse string fields](parse-string-fields.md)
+* [Read and watch files](../collect/read-and-watch-files.md)
+* [Microsoft Windows Event Logs](../../integrations/microsoft/windows-event-logs.md)

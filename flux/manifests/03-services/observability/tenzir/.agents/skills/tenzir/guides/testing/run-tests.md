@@ -1,0 +1,226 @@
+---
+title: "Run tests"
+canonical: https://tenzir.com/docs/guides/testing/run-tests
+source: https://tenzir.com/docs/guides/testing/run-tests.md
+section: "Docs"
+---
+
+# Run tests
+
+> This guide shows you how to run existing integration tests with the tenzir-test framework. You’ll learn how to execute the test suite, control output verbosity, select specific tests, handle flaky scenarios, and run multi-project setups.
+
+This guide shows you how to run existing integration tests with the [`tenzir-test`](https://tenzir.com/docs/reference/test-framework.md) framework. You’ll learn how to execute the test suite, control output verbosity, select specific tests, handle flaky scenarios, and run multi-project setups.
+
+When you’re ready to create your own tests, see the [write tests](write-tests.md) guide.
+
+## Run the test suite
+
+Execute all tests from the project root:
+
+```sh
+uvx tenzir-test
+```
+
+The harness discovers tests under `tests/`, runs them against their baselines, and returns a non-zero exit code when any output diverges. By default (quiet mode) the harness only shows failures, which keeps large test runs readable.
+
+## Control output
+
+Add `--verbose` to see passing and skipped tests as they complete:
+
+```sh
+uvx tenzir-test --verbose
+```
+
+Use `--debug` to see comparison targets alongside the usual harness diagnostics. Debug mode automatically enables verbose output so you see all test results. For CI-only visibility you can set `TENZIR_TEST_DEBUG=1`.
+
+Add `--summary` together with `--verbose` when you also want the tabular breakdown and failure tree at the end:
+
+```sh
+uvx tenzir-test --verbose --summary
+```
+
+Use `--passthrough` to stream raw stdout/stderr to the terminal instead of comparing against baselines. This is useful during early iterations when you want to inspect command output before recording reference artifacts:
+
+```sh
+uvx tenzir-test --passthrough tests/high-severity.tql
+```
+
+## Select tests
+
+### By path
+
+Pass individual files or directories as positional arguments:
+
+```sh
+uvx tenzir-test tests/alerts/high-severity.tql
+```
+
+You can list multiple paths in a single invocation:
+
+```sh
+uvx tenzir-test tests/alerts tests/parsing/csv.tql
+```
+
+### By name pattern
+
+Use `--match` to select tests whose relative path contains a given substring:
+
+```sh
+uvx tenzir-test --match context
+```
+
+Bare strings without glob metacharacters perform a **substring match** against the test’s relative POSIX path from the project root. For example, `--match mysql` matches any test whose path contains `mysql`, such as `tests/mysql/connect.tql`. This means you no longer need to wrap the keyword in wildcards—`--match mysql` works the same as `--match "*mysql*"`.
+
+Patterns containing `*`, `?`, or `[` still use [fnmatch](https://docs.python.org/3/library/fnmatch.html) glob syntax with case-sensitive comparison, so existing glob patterns continue to work:
+
+```sh
+uvx tenzir-test --match 'tests/*/connect.tql'
+```
+
+Multiple patterns act as an OR filter—a test runs if it matches any pattern:
+
+```sh
+uvx tenzir-test --match create --match update
+```
+
+You can combine `--match` with positional paths. The harness intersects both selections, so only tests matching both the path selection and a pattern are run. This lets you narrow a directory to a subset of its tests:
+
+```sh
+uvx tenzir-test tests/context/ --match create
+```
+
+Suite expansion
+
+If a matched test belongs to a suite (configured via `test.yaml`), all tests in that suite are included automatically. Empty and whitespace-only patterns are silently ignored.
+
+### By fixture
+
+Use `--fixture-name` to select tests that request a fixture directly:
+
+```sh
+uvx tenzir-test --fixture-name node
+uvx tenzir-test --fixture-name docker-compose
+```
+
+Fixture-name matching is case-sensitive and uses the configured fixture name, not fixture options.
+
+Use `--fixture-tag` to select tests by fixture metadata:
+
+```sh
+uvx tenzir-test --fixture-tag container
+```
+
+The harness assigns fixture tags from the abstractions that fixtures use. For example, fixtures that use `tenzir_test.fixtures.container_runtime` inherit the `container` tag. The built-in Docker Compose fixture has both the `container` and `docker-compose` tags:
+
+```sh
+uvx tenzir-test --fixture-tag docker-compose
+```
+
+Repeat `--fixture-name` or `--fixture-tag` to match any selected fixture name or tag. Combine fixture selectors with paths and `--match` to narrow the selection:
+
+```sh
+uvx tenzir-test tests/integrations/ --match kafka --fixture-name docker-compose
+uvx tenzir-test tests/integrations/ --match kafka --fixture-tag container
+```
+
+Use `--fixture` only to start fixtures in standalone foreground mode. It doesn’t select tests.
+
+## Retry flaky tests
+
+If a scenario fails intermittently, add a `retry` entry to its frontmatter so the harness reruns it before flagging a failure. The value is the **total** attempt budget:
+
+```yaml
+---
+retry: 3
+---
+```
+
+With `retry: 3`, the test runs up to three times. Intermediate attempts stay quiet; the final result line includes `attempts=3/3` (or the actual number on a success). Use this as a guardrail while you investigate the underlying flake and keep the budget small to avoid masking issues.
+
+## Override skip configuration
+
+The harness provides two levels of control for running skipped tests.
+
+### Run all skipped tests
+
+Pass `--run-skipped` to bypass all skip configuration unconditionally and force every skipped test to execute:
+
+```sh
+uvx tenzir-test --run-skipped
+```
+
+Both static skips (`skip: reason`) and conditional skips (`skip: {on: fixture-unavailable}`) are bypassed. This is the sledgehammer approach—useful when you want to verify that every skipped test still works.
+
+### Filter by skip reason
+
+Use `--run-skipped-reason` to selectively run skipped tests whose reason matches a pattern. The flag uses the same substring and glob matching semantics as `--match`:
+
+```sh
+uvx tenzir-test --run-skipped-reason maintenance
+uvx tenzir-test --run-skipped-reason '*docker*'
+```
+
+Bare strings match as substrings, and patterns containing `*`, `?`, or `[` use fnmatch syntax. The match applies to the final displayed skip reason, which includes the `fixture unavailable:` prefix for conditional skips. For example, a suite with `skip: {on: fixture-unavailable, reason: requires docker}` produces the displayed reason `fixture unavailable: requires docker`, and `--run-skipped-reason docker` matches it as a substring.
+
+The flag is repeatable—a skipped test runs if its reason matches any provided pattern:
+
+```sh
+uvx tenzir-test --run-skipped-reason maintenance --run-skipped-reason '*docker*'
+```
+
+When no skipped tests match the reason filters, the harness prints a diagnostic so you know the patterns had no effect.
+
+### Combining both flags
+
+When both `--run-skipped` and `--run-skipped-reason` are provided, `--run-skipped` takes precedence and all skipped tests run unconditionally.
+
+## Run multiple projects
+
+Large organisations often split tests across several repositories but still want an aggregated run. List additional project directories after `--root` and add `--all-projects` to execute the root alongside its satellites under a single invocation:
+
+```sh
+uvx tenzir-test --root example-project --all-projects ../example-satellite
+```
+
+The root project (`example-project` above) supplies the shared fixtures and runners. Satellites inherit those definitions, can register their own helpers, and run their tests in isolation. Because the selection only listed the satellite, `--all-projects` keeps the root in scope. The CLI prints a compact summary showing how many tests each project contributes and which runners are involved. Add `--verbose` to see individual test results as they complete, and combine it with `--summary` for the tabular breakdown and detailed failure listing after each project.
+
+## Load packages
+
+When your tests need packages, point `--package-dirs` at the package directories (or a parent that contains them). The flag is repeatable and supports comma-separated lists:
+
+```sh
+uvx tenzir-test --package-dirs example-library example-library
+```
+
+Here `example-library` contains multiple packages, so the harness loads them all and makes sibling packages visible for cross-imports. You can also declare package directories in a directory `test.yaml` via `package-dirs:`; those entries merge with `--package-dirs`.
+
+## Automate runs
+
+Once the suite passes locally, integrate it into your CI pipeline. Configure the job to install Python 3.13, install `tenzir-test`, provision or download the required Tenzir binaries, and execute `uvx tenzir-test --root .`. For reproducible results, keep your datasets small and deterministic, and prefer fixtures that wipe state between runs.
+
+### Export CI reports
+
+Write a structured report when you need CI to identify failed tests without searching terminal logs. Run the command from the checkout root so paths in the report match files in your repository:
+
+```sh
+uvx tenzir-test --root test --report-json artifacts/tests.json
+```
+
+The report includes final outcomes, failed test paths, diagnostics, and plain diffs. It also records skipped tests and harness-level errors. Keep the raw log as a companion artifact because diagnostic fields can be truncated.
+
+Upload the report even when the test step fails. For example, after provisioning the binaries in a GitHub Actions job:
+
+```yaml
+- name: Run integration tests
+  run: uvx tenzir-test --root test --report-json artifacts/tests.json
+- name: Upload test reports
+  if: always()
+  uses: actions/upload-artifact@v7
+  with:
+    name: test-results
+    path: artifacts/tests.json
+```
+
+Your CI wrapper can use the report to publish test summaries and source-file annotations. The harness does not create those automatically.
+
+If tests run inside a build sandbox that cannot export a report file, use `--report-json -` instead. This emits tagged JSON records alongside the normal log, so the wrapper can retain partial results as tests finish. Treat a missing completion record as an incomplete run, not a success. The [structured report reference](../../reference/test-framework.md#structured-reports) describes the schema, stream protocol, path validation, and diagnostic limits.

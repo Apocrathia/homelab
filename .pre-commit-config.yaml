@@ -15,16 +15,27 @@ repos:
           )$
       - id: check-merge-conflict
       - id: detect-private-key
+        # Vendored tenzir doc skills (.agents/skills) are upstream bytes
+        # re-copied from the pinned upstream commit — decrypt_hpke.md ships
+        # PEM-format prose (a literal private-key header as input-format
+        # documentation). Byte-identity wins over the hook; gitleaks still
+        # scans every vendored file.
+        exclude: ^flux/manifests/03-services/observability/tenzir/\.agents/skills/
       # webui payload is byte-frozen (hash-verified syncs from scratch; the
       # vendored marked/purify pin upstream jsdelivr bytes that ship without
       # a trailing newline) — appending one breaks the sha pins in
       # test_dashboard.py. Same rationale as the .prettierignore exemption.
       - id: end-of-file-fixer
-        exclude: ^flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|^flux/manifests/03-services/observability/tenzir/detections/(sigma/sigmahq|yara/signature-base)/
+        # Vendored tenzir doc skills (.agents/skills) are upstream bytes
+        # re-copied from the pinned upstream commit — appending a final
+        # newline breaks byte-identity. Same discipline as the detection-rule
+        # trees below.
+        exclude: ^flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|^flux/manifests/03-services/observability/tenzir/(detections/(sigma/sigmahq|yara/signature-base)|\.agents/skills/(tenzir|tenzir-ocsf))/
       - id: trailing-whitespace
         # Vendored detection rules are upstream bytes re-copied from pinned
         # submodules; reformatting breaks byte-identity with the gitlink.
-        exclude: ^flux/manifests/03-services/observability/tenzir/detections/(sigma/sigmahq|yara/signature-base)/
+        # Same for the vendored tenzir doc skills (.agents/skills).
+        exclude: ^flux/manifests/03-services/observability/tenzir/(detections/(sigma/sigmahq|yara/signature-base)|\.agents/skills/(tenzir|tenzir-ocsf))/
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

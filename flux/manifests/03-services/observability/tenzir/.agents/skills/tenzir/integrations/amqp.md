@@ -1,0 +1,42 @@
+---
+title: "AMQP integration"
+description: "Send and receive messages between systems using a standardized, protocol-based approach."
+canonical: https://tenzir.com/integrations/amqp
+source: https://tenzir.com/integrations/amqp.md
+section: "Integrations"
+---
+
+# AMQP integration
+
+> Send and receive messages between systems using a standardized, protocol-based approach.
+
+The [Advanced Message Queuing Protocol (AMQP)](https://www.amqp.org/) is an open standard for message-oriented middleware. It defines how producers, exchanges, queues, and consumers route messages between systems.
+
+The diagram below shows the key abstractions and how they relate to a pipeline:
+
+AMQP Diagram
+
+Tenzir supports sending and receiving messages via AMQP version 0-9-1.
+
+When receiving messages, Tenzir emits each AMQP payload in the `message` field as a blob. Parse this field in the pipeline when the payload contains structured data.
+
+## Examples
+
+### Send events to an AMQP exchange
+
+```tql
+from {
+  x: 42,
+  y: "foo",
+}
+to_amqp "amqp://admin:pass@0.0.0.1:5672/vhost"
+```
+
+By default, `to_amqp` sends each input event as NDJSON. Use the `message` parameter to send a specific string or blob field instead.
+
+### Receive events from an AMQP queue
+
+```tql
+from_amqp "amqp://admin:pass@0.0.0.1:5672/vhost", queue="events"
+this = string(message).parse_json()
+```

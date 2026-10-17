@@ -1,0 +1,50 @@
+---
+title: "where"
+canonical: https://tenzir.com/docs/reference/functions/where
+source: https://tenzir.com/docs/reference/functions/where.md
+section: "Docs"
+---
+
+# where
+
+> Filters list elements based on a predicate.
+
+Filters list elements based on a predicate.
+
+```tql
+where(xs:list, any->bool) -> list
+```
+
+## Description
+
+The `where` function keeps only elements of a list for which a predicate evaluates to `true`. A `null` result is falsy, so the function discards the element. See [Null is falsy in predicates](../expressions.md#null).
+
+### `xs: list`
+
+A list of values.
+
+### `function: any -> bool`
+
+A lambda function that is evaluated for each list element.
+
+## Examples
+
+### Keep only elements greater than 3
+
+```tql
+from {
+  xs: [1, 2, 3, 4, 5]
+}
+xs = xs.where(x => x > 3)
+```
+
+```tql
+{
+  xs: [4, 5]
+}
+```
+
+## See Also
+
+* [`map`](https://tenzir.com/docs/reference/functions/map.md)
+* [Shape lists](../../guides/shape/shape-lists.md)

@@ -1,0 +1,1114 @@
+---
+title: "Test Framework"
+canonical: https://tenzir.com/docs/reference/test-framework
+source: https://tenzir.com/docs/reference/test-framework.md
+section: "Docs"
+---
+
+# Test Framework
+
+> The tenzir-test harness discovers and runs integration tests for pipelines, fixtures, and custom runners. Use this page as a reference for concepts, configuration, and CLI details. For step-by-step walkthroughs, see the guides for running tests, writing tests, creating fixtures, adding custom runners, and configuring project hooks.
+
+The [`tenzir-test`](https://github.com/tenzir/test) harness discovers and runs integration tests for pipelines, fixtures, and custom runners. Use this page as a reference for concepts, configuration, and CLI details. For step-by-step walkthroughs, see the guides for [running tests](../guides/testing/run-tests.md), [writing tests](../guides/testing/write-tests.md), [creating fixtures](../guides/testing/create-fixtures.md), [adding custom runners](../guides/testing/add-custom-runners.md), and [configuring project hooks](../guides/testing/configure-project-hooks.md).
+
+## Install
+
+`tenzir-test` ships as a Python package that requires Python 3.13 or later. Install it with [`uv`](https://docs.astral.sh/uv/) (or `pip`) and verify the console script:
+
+```sh
+uv add tenzir-test
+uvx tenzir-test --help
+```
+
+## Core concepts
+
+* **Project root** – Directory passed to `--root`; typically contains `fixtures/`, `inputs/`, `runners/`, and `tests/`.
+* **Mode** – Auto-detected as *project* or *package*. A `package.yaml` in the current directory (or its parent when you run from `<package>/tests`) switches to package mode.
+* **Library** – A root that contains multiple packages (each with a `package.yaml` and its own `tests/`). The harness can discover all packages under such a library root and run their suites in one invocation. Use `--package-dirs` to load packages so their operators can cross-import.
+* **Test** – Any supported file under `tests/`; frontmatter controls execution.
+* **Runner** – Named strategy that executes a test (`tenzir`, `python`, custom entries).
+* **Hook** – Project-level Python callback registered under `hooks/` or `hooks.py` and invoked at stable lifecycle points.
+* **Fixture** – Reusable environment provider registered under `fixtures/` and requested via frontmatter.
+* **Suite** – Directory-owned group of tests that share fixtures. Declare it with `suite:` in a `test.yaml`; all descendants join automatically. Members run sequentially by default, or concurrently when `mode: parallel` is set.
+* **Input** – Data accessed with `TENZIR_INPUTS`; defaults to `<root>/inputs` but you can override it per directory or per test with an `inputs:` setting. The harness also supports inline inputs via `TENZIR_INPUT` for test-specific data files.
+* **Stdin** – Content piped to the test process via a `.stdin` file placed next to the test. The harness exposes the file path via `TENZIR_STDIN` and automatically pipes its content to the subprocess stdin.
+* **Scratch directory** – Ephemeral workspace exposed as `TENZIR_TMP_DIR` during each test run.
+* **Artifact / Baseline** – Runner output persisted next to the test; regenerate with `--update`. For TQL and shell tests, the baseline records diagnostics from stderr before normal output from stdout. The harness captures both channels separately, so their runtime scheduling does not affect the baseline.
+* **Configuration sources** – Frontmatter plus inherited `test.yaml` files; `tenzir.yaml` still configures the Tenzir binary.
+
+A typical project layout looks like this:
+
+```text
+project-root/
+├── fixtures/
+│   └── __init__.py
+├── hooks/
+│   └── __init__.py
+├── inputs/
+│   └── sample.ndjson
+├── runners/
+│   └── __init__.py
+└── tests/
+    ├── alerts/
+    │   ├── sample.tql
+    │   └── sample.txt
+    ├── parsing/
+    │   ├── csv.input           # Inline input for this test
+    │   ├── csv.tql
+    │   └── csv.txt
+    ├── shell/
+    │   ├── echo.sh
+    │   ├── echo.stdin          # Stdin content piped to the test
+    │   └── echo.txt
+    └── python/
+        └── quick-check.py
+```
+
+For a package layout (with `package.yaml`), the structure may look like:
+
+```text
+my-package/
+├── package.yaml
+├── operators/
+│   └── custom-op.tql
+├── pipelines/
+│   └── smoke.tql
+└── tests/
+    ├── inputs/
+    │   └── sample.ndjson
+    ├── fixtures/
+    │   └── __init__.py
+    ├── runners/
+    │   └── __init__.py
+    └── pipelines/
+        ├── custom-op.tql
+        └── custom-op.txt
+```
+
+## Execution modes and packages
+
+* Mode resolution:
+
+  * `--root` with `tests/` → **project mode**.
+  * `--root` (or its parent when named `tests`) with a `package.yaml` → **package mode**.
+
+* In **package mode** the harness exposes:
+
+  * `TENZIR_PACKAGE_ROOT` – Absolute package directory.
+  * `TENZIR_INPUTS` – `<package>/tests/inputs/` unless a directory `test.yaml` or the test frontmatter overrides it.
+  * `--package-dirs=<package>` – Passed automatically to the `tenzir` binary.
+
+* Without a manifest the harness stays in **project mode**, recursively discovers tests under `tests/`, and applies global fixtures, runners, and inputs.
+
+## CLI reference
+
+Run the tests from the project root:
+
+```sh
+uvx tenzir-test
+```
+
+Useful options:
+
+* `--update`: Rewrite reference artifacts next to each test.
+* `--purge`: Remove generated artifacts (diffs, text outputs) from previous runs.
+* `--jobs N`: Control concurrency (`4 * CPU cores` by default).
+* `--coverage` and `--coverage-source-dir`: Enable LLVM coverage.
+* `--keep`: Preserve per-test scratch directories instead of deleting them (same as setting `TENZIR_KEEP_TMP_DIRS=1`).
+* `--package-dirs <path>`: Extra package directories for Tenzir binaries. Repeatable and accepts comma-separated lists. Entries merge with any `package-dirs:` declared in directory `test.yaml` files, then get normalized, de-duplicated, and exported via `TENZIR_PACKAGE_DIRS`.
+* `--debug`: Emit framework-level diagnostics (fixture lifecycle, discovery notes, comparison targets, etc.) and automatically enable verbose output so you see all test results (pass/skip/fail) instead of only failures. The same mode is available via `TENZIR_TEST_DEBUG=1`.
+* `--summary`: Print the tabular breakdown and failure tree after each project.
+* `--report-json FILE`: Write a versioned JSON report. Use `-` to emit tagged JSON records in stdout for CI wrappers and sandboxed builds. Reports also work with `--no-hooks` and `--no-diff`, but not with standalone `--fixture` mode.
+* `--diff/--no-diff`: Toggle unified diff output for failed comparisons. Diffs are shown by default; disable them when you only need aggregated statistics.
+* `--diff-stat/--no-diff-stat`: Show (or suppress) the per-file change counter, which summarises additions and deletions even when the diff body is hidden.
+* `--passthrough`: Stream raw stdout/stderr to the terminal instead of comparing against reference artifacts. The harness forces single-job execution (overriding `--jobs` when necessary) and ignores `--update` while passthrough is active. Passthrough mode automatically enables verbose output.
+* `--verbose`: Print individual test results as they complete. By default (quiet mode) the harness only shows failures and a compact summary, significantly reducing noise for large test suites. Verbose mode displays passing and skipped tests alongside failures. Use `--summary` together with `--verbose` to include the tree summary at the end of the run.
+* `--run-skipped`: Run all skipped tests unconditionally. Both static skips (`skip: reason`) and conditional skips (`skip: {on: fixture-unavailable}`) are bypassed. When a fixture raises `FixtureUnavailable` and `--run-skipped` is active, the exception propagates as a hard failure instead of being caught. This is the sledgehammer approach—use it when you want to force every skipped test to execute regardless of its skip reason.
+* `--run-skipped-reason`: Selectively run skipped tests whose reason matches a substring or glob pattern. Bare strings match as substrings; patterns containing `*`, `?`, or `[` use fnmatch syntax—the same matching semantics as `--match`. Repeatable; a test runs if its skip reason matches any provided pattern. The match applies to the final displayed reason, including the `fixture unavailable:` prefix for conditional skips. When both `--run-skipped` and `--run-skipped-reason` are provided, `--run-skipped` takes precedence and all skipped tests run. When no skipped tests match the reason filters, the harness prints a diagnostic message.
+* `--all-projects`: Run the root project together with any satellites provided on the command line.
+* `--match`: Select tests whose relative path matches a substring or glob pattern. Bare strings (without `*`, `?`, or `[`) match as substrings, so `--match mysql` selects any test with “mysql” anywhere in its path. Patterns containing glob metacharacters use fnmatch syntax. Repeatable; tests matching any pattern are selected. When combined with positional TEST paths, only tests matching both are run (intersection).
+* `--fixture-name`: Select tests that request a fixture with the given name. Matching is case-sensitive and uses the configured fixture name, not fixture options. Repeatable; tests matching any selected fixture name or fixture tag are selected.
+* `--fixture-tag`: Select tests that request fixtures with the given tag. Repeatable; tests matching any selected fixture tag or fixture name are selected. When combined with positional TEST paths or `--match` patterns, only tests matching all selectors are run (intersection). Use `--fixture-tag container` to run tests backed by container fixtures, or `--fixture-tag docker-compose` to run tests using the built-in Docker Compose fixture.
+* `--fixture`: Activate fixtures in standalone foreground mode without running tests. Repeatable. Accepts bare names (`--fixture mysql`) or YAML mapping specs (`--fixture 'kafka: {port: 9092}'`). When provided, positional TEST arguments are not allowed. See the [run fixtures](../guides/testing/run-fixtures.md) guide.
+* `--no-hooks`: Disable project hook loading and invocation. Use this when you need to recover from a broken hook or compare behavior without hook side effects.
+* `--disable-inline-dependency-install`: Disable runtime installation for inline Python dependencies declared by tests or fixtures. Use this when another tool provisions the Python environment.
+
+Set `TENZIR_TEST_DEBUG=1` in CI when you want the same diagnostics without passing `--debug` on the command line.
+
+## Structured reports
+
+Use `--report-json` to collect test results without parsing terminal output:
+
+```sh
+uvx tenzir-test --root test --report-json artifacts/tests.json
+```
+
+Reports do not change the test exit code or terminal output. They work with `--no-hooks`, `--no-diff`, parallel jobs, suites, retries, and satellite projects. Report paths are relative to the working directory at the start of the invocation, independently of `--root` and the report file’s location. Run the harness from the checkout root to produce repository-relative paths for CI. Paths use forward slashes and can contain `..` for projects outside that directory. Consumers must validate paths before linking or annotating source files.
+
+### File format
+
+The report is a UTF-8 JSON document with these fields:
+
+* `schema_version`: The format version, currently `1`.
+* `root`: The absolute working directory at the start of the invocation.
+* `exit_code`: The harness exit code.
+* `interrupted`: Whether the run was interrupted.
+* `errors`: Harness-level errors, such as configuration or hook failures.
+* `summary`: Counts named `total`, `passed`, `failed`, and `skipped`.
+* `tests`: Final results sorted by project and path.
+
+Each test result contains:
+
+* `path` and `project`: The test file and project directory, relative to `root`.
+* `runner` and `suite`: The runner name and optional suite name.
+* `outcome`: `passed`, `failed`, or `skipped`.
+* `attempts` and `duration`: The attempt count and elapsed seconds.
+* `reason`: A failure diagnostic or skip reason, when available.
+* `stdout`, `stderr`, and `returncode`: Captured subprocess output and exit code for a failing test. These describe the last subprocess captured through the harness’s `run_subprocess` helper. Output from custom runners that bypass that helper or stream output in passthrough mode is not captured.
+* `diff`: Plain unified diffs, including reference filenames, for mismatched expectations. Multiple comparisons are concatenated.
+* `truncated`: Whether any diagnostic was shortened.
+
+Diagnostic text has no ANSI styling. Each text field is bounded to 6,000 characters after JSON encoding. Keep raw logs as a companion artifact when you need complete output. Only the final retry contributes diagnostics; a test that passes after retrying has no failure output.
+
+A suite-level fixture failure appears as a failed result for the suite’s `test.yaml`, with `runner` set to `suite`. It contributes to report counts even if no individual test ran. Harness-level errors do not increase failed-test counts, so consumers must also check `exit_code`, `errors`, and `interrupted`.
+
+The harness writes reports on normal completion, test failures, harness errors, and handled interruptions. It atomically replaces an existing report and creates parent directories when needed. A forced process kill cannot write a final report. An error writing a report fails the invocation rather than silently leaving an old result behind.
+
+### Forward reports through build logs
+
+When tests run in a build sandbox, use `--report-json -`:
+
+```sh
+uvx tenzir-test --root test --report-json -
+```
+
+Instead of a JSON document, this emits tagged JSON lines alongside normal terminal output. Every record begins with the literal `TENZIR_TEST_REPORT `, followed by a JSON object containing `schema_version: 1` and an `event`:
+
+* `start`: Contains `root` and begins one invocation.
+* `test`: Contains one final test result in `test`.
+* `finish`: Contains `exit_code`, `interrupted`, `errors`, and `summary`.
+
+Records are flushed as tests complete, so consumers can preserve partial results when the build is interrupted. A missing `finish` means the invocation is incomplete, not successful. Multiple invocations can share one build log; each `start` begins a separate report. Build tools may prepend a log prefix to each line. Consumers should remove that prefix, decode only tagged records, and keep the remaining lines as human-readable logs. Do not infer failures from terminal symbols or parse diffs from display formatting.
+
+Within schema version 1, consumers should ignore unknown fields and events. Incompatible format changes increment `schema_version`.
+
+## Python API
+
+The harness is also available as a typed Python library. Import `tenzir_test` and call `execute()` when you need to run scenarios from automation or another tool without shelling out to the CLI:
+
+```python
+from pathlib import Path
+
+
+from tenzir_test import ExecutionResult, execute
+
+
+result: ExecutionResult = execute(tests=[Path("tests/pipeline.tql")])
+if result.exit_code:
+    # propagate non-zero status to your orchestration layer
+    raise SystemExit(result.exit_code)
+for project in result.project_results:
+    print(project.selection.root, project.summary.total)
+```
+
+The helper mirrors the CLI options but returns an `ExecutionResult` with aggregated `Summary` objects and metadata you can inspect or serialize. Errors surface as `HarnessError` exceptions so callers can control reporting and retry logic.
+
+The `execute()` and `tenzir_test.run.run_cli()` helpers accept `report_json` as an optional `Path` argument:
+
+```python
+result = execute(
+    root=Path("test"),
+    report_json=Path("artifacts/tests.json"),
+)
+```
+
+## Selections
+
+A *selection* is the ordered list of positional paths you pass after the CLI flags. Each element can point to a single test file, a directory, or an entire project. The harness resolves every element relative to the current working directory first and then relative to the root project. How you shape the selection determines which projects run:
+
+* No positional arguments → run every test in the root project.
+* Paths inside the root project → run only those targets (plus any explicitly named satellites).
+* Paths that resolve to satellite projects → run those satellites, skipping the root unless you also request it.
+
+Use `--all-projects` when you want the root project to execute alongside a selection that only names satellites. This keeps the CLI predictable: the selection lists the exact satellites you care about, and the flag opts the root back in without duplicating its path on the command line.
+
+## Suites
+
+Suites let you run several tests under one shared fixture lifecycle. Declare a suite in a directory-level `test.yaml`; the definition applies to every test under that directory, including nested subdirectories.
+
+The `suite` key accepts a plain string or a mapping with `name` and `mode`:
+
+```yaml
+# tests/http/test.yaml  -  sequential (default)
+suite: smoke-http
+fixtures: [http]
+timeout: 45
+```
+
+The mapping form adds a `mode` field:
+
+```yaml
+# tests/pubsub/test.yaml  -  parallel execution
+suite:
+  name: parallel-pubsub
+  mode: parallel
+fixtures: [node]
+timeout: 30
+```
+
+Adding `min_jobs` ensures the suite only starts when enough workers are available:
+
+```yaml
+# tests/pubsub/test.yaml  -  parallel with minimum worker requirement
+suite:
+  name: parallel-pubsub
+  mode: parallel
+  min_jobs: 2
+fixtures: [node]
+timeout: 30
+```
+
+The `mode` field controls how members execute:
+
+* `sequential` (default): members run one after another in lexicographic order.
+* `parallel`: all members run concurrently on separate threads while sharing the same fixture lifecycle. Fixture assertions are serialized to maintain correctness. Use this when tests are independent and can safely share fixtures at the same time.
+
+The optional `min_jobs` key (positive integer) declares how many concurrent workers a parallel suite needs for correct execution. When set, the run fails immediately if `--jobs` is lower than `min_jobs`, and it also fails at runtime if the suite cannot reserve at least that many workers under slot contention. Use this for suites whose members must run concurrently (for example, publisher/subscriber pairs). The harness also warns when a parallel suite has more tests than available jobs, since not all members can run at once.
+
+The plain string form (`suite: smoke-http`) is equivalent to `suite: {name: smoke-http, mode: sequential}`.
+
+Key rules:
+
+* Suites are directory-owned. Once a `test.yaml` sets `suite`, all descendants belong to that suite. Put tests that should remain independent outside the suite directory or in a sibling directory with a different suite.
+* Per-test frontmatter may not declare `suite`.
+* Suite members inherit the directory defaults and can still override most keys on a per-file basis. The exceptions are `fixtures` and `retry`, which must be defined at the directory level once a suite is active so every member agrees on the shared lifecycle. Outside suites you can still set those keys directly in frontmatter.
+* Each suite occupies a single worker. Different suites (and standalone tests) can run in parallel when `--jobs` allows it.
+* The CLI executes all suites before any remaining standalone tests so shared fixtures start and stop predictably.
+* Run the directory that defines the suite (for example `tenzir-test tests/http`) when you want to focus on it. Selecting an individual member now raises an error so every run exercises the full lifecycle and shared fixtures stay in sync.
+
+## Inputs
+
+Tests access input data through the `TENZIR_INPUTS` environment variable. By default this points to `<root>/inputs` or `<package>/tests/inputs/` in package mode. The harness supports two additional mechanisms for placing inputs closer to the tests that use them.
+
+### Inline inputs
+
+Place a `.input` file next to a test to provide test-specific input data. The harness exposes the file path via `TENZIR_INPUT` (singular):
+
+```text
+tests/parsing/
+  parse-csv.input      # Input data for this test
+  parse-csv.tql        # Test file
+  parse-csv.txt        # Expected output baseline
+```
+
+Access the inline input in TQL:
+
+```tql
+from_file env("TENZIR_INPUT") {
+  read_csv
+}
+```
+
+Or in a shell script:
+
+```sh
+cat "$TENZIR_INPUT" | tenzir 'read_csv'
+```
+
+The harness sets `TENZIR_INPUT` only when a matching `.input` file exists. Tests can use both `TENZIR_INPUT` and `TENZIR_INPUTS` together when they need a test-specific file plus access to shared data.
+
+### Local inputs directories
+
+Place an `inputs/` directory at any level in the test hierarchy to provide shared inputs for tests in that subtree. The harness walks up from each test directory and uses the nearest `inputs/` directory it finds:
+
+```text
+tests/
+  network/
+    inputs/               # Shared inputs for network tests
+      sample.pcap
+      flows.ndjson
+    tcp/
+      analysis.tql        # env("TENZIR_INPUTS") → ../inputs/
+      analysis.txt
+    udp/
+      stats.tql
+      stats.txt
+inputs/                   # Global inputs (fallback)
+  common.json
+```
+
+Resolution hierarchy for `TENZIR_INPUTS`:
+
+1. `inputs:` override in test frontmatter or `test.yaml` (highest priority)
+2. Nearest `inputs/` directory walking up from the test directory
+3. Package-level `tests/inputs/` directory
+4. Project-level `inputs/` directory (fallback)
+
+When multiple `inputs/` directories exist in the hierarchy, the nearest one shadows the others. This keeps the mental model simple: move inputs closer to the tests that use them without worrying about inheritance.
+
+### Stdin inputs
+
+Place a `.stdin` file next to a test to provide content that the harness pipes to the subprocess stdin. For TQL tests, this lets pipelines start with a parser directly as an alternative to using `.input` files with `from_file`:
+
+```text
+tests/parsing/
+  csv.stdin          # CSV data piped to stdin
+  csv.tql            # Test file starting with read_csv
+  csv.txt            # Expected output baseline
+```
+
+The TQL test reads directly from stdin:
+
+```tql
+read_csv
+sort name
+```
+
+For shell scripts, the same mechanism applies:
+
+```text
+tests/shell/
+  echo.stdin         # Content piped to stdin
+  echo.sh            # Test file
+  echo.txt           # Expected output baseline
+```
+
+```sh
+#!/bin/sh
+cat
+```
+
+The harness pipes the contents of the `.stdin` file automatically. Tests can combine `.stdin` with `.input` when they need both stdin content and a test-specific input file:
+
+```text
+tests/shell/
+  process.stdin      # Content piped to stdin
+  process.input      # Input file accessible via TENZIR_INPUT
+  process.sh         # Test file
+  process.txt        # Expected output baseline
+```
+
+A script using both mechanisms:
+
+```sh
+#!/bin/sh
+echo "from stdin:"
+cat
+echo "from TENZIR_INPUT:"
+cat "$TENZIR_INPUT"
+```
+
+The harness sets `TENZIR_STDIN` only when a matching `.stdin` file exists. TQL tests can also combine both mechanisms - start with a parser for stdin data while using `env("TENZIR_INPUT")` to reference additional files.
+
+## Run a subset of tests
+
+Pass individual files or directories to run specific tests:
+
+```sh
+uvx tenzir-test tests/alerts/high-severity.tql
+```
+
+You can list multiple paths in a single invocation. `tenzir-test` wires every argument into the same runner and fixture registry, so you can mix scenarios from the project and external checkouts:
+
+```sh
+uvx tenzir-test tests/alerts ../contrib/plugins/*/tests
+```
+
+### Filter tests by pattern
+
+Use `--match` to select tests by matching against their relative path. Bare strings default to substring matching, so you can write short keywords without glob syntax:
+
+```sh
+uvx tenzir-test --match mysql         # runs every test with "mysql" in its path
+uvx tenzir-test --match connect       # runs every test with "connect" in its path
+```
+
+Patterns containing glob metacharacters (`*`, `?`, `[`) still use fnmatch syntax, which is fully backwards-compatible:
+
+```sh
+uvx tenzir-test --match '*mysql*'             # equivalent to --match mysql
+uvx tenzir-test --match 'tests/*/connect.tql' # glob with wildcard
+```
+
+Repeat the flag to match multiple patterns (logical OR):
+
+```sh
+uvx tenzir-test --match context --match create     # tests matching either substring
+```
+
+When you combine positional TEST paths with `--match` patterns, the harness runs only tests that satisfy both constraints (intersection):
+
+```sh
+uvx tenzir-test tests/integrations/ --match mysql  # only mysql tests under integrations/
+```
+
+If a matched test belongs to a suite (configured via `test.yaml`), all tests in that suite are included automatically so the shared fixture lifecycle stays intact.
+
+### Filter tests by fixture
+
+Use `--fixture-name` to select tests that request a fixture directly:
+
+```sh
+uvx tenzir-test --fixture-name node
+uvx tenzir-test --fixture-name docker-compose
+```
+
+Fixture-name matching is case-sensitive and uses the fixture name from the `fixtures` configuration, ignoring fixture options.
+
+Use `--fixture-tag` to select tests by metadata inherited from their requested fixtures:
+
+```sh
+uvx tenzir-test --fixture-tag container
+uvx tenzir-test --fixture-tag docker-compose
+```
+
+Fixture tags are cumulative. The built-in `docker-compose` fixture has both the `container` and `docker-compose` tags, so `--fixture-tag container` includes Docker Compose tests and `--fixture-tag docker-compose` selects only tests that request the Docker Compose fixture.
+
+Repeat fixture selectors to match any selected fixture name or tag:
+
+```sh
+uvx tenzir-test --fixture-name node --fixture-name sink
+uvx tenzir-test --fixture-tag container --fixture-tag node
+uvx tenzir-test --fixture-name node --fixture-tag container
+```
+
+Combine fixture selectors with positional paths or `--match` patterns to narrow the selection:
+
+```sh
+uvx tenzir-test tests/integrations/ --match kafka --fixture-name docker-compose
+uvx tenzir-test tests/integrations/ --match kafka --fixture-tag container
+```
+
+The fixture selector is separate from `--fixture`, which starts fixtures in standalone foreground mode without running tests.
+
+The harness infers tags from tagged fixture abstractions. Fixtures that use `tenzir_test.fixtures.container_runtime` inherit the `container` tag automatically. Fixtures that use custom abstractions can pass explicit tags at registration time:
+
+```python
+from tenzir_test import fixture
+
+
+@fixture(name="localstack", tags=("container", "localstack"))
+def localstack():
+    ...
+```
+
+If a selected test belongs to a suite, the harness includes every test in that suite to keep the shared fixture lifecycle intact.
+
+### Run multiple projects with one command
+
+Pass additional project directories after `--root` to execute several projects in one go. Include `--all-projects` so the root executes next to its satellites. The directory given to `--root` acts as the **root project**; all other directories are treated as **satellites**:
+
+```sh
+uvx tenzir-test --root example-project --all-projects example-satellite
+```
+
+The harness prints a project listing before execution that identifies each project with a marker and path:
+
+```text
+i found 3 projects
+i   ■ test
+i   □ ../contrib/plugins/context/test
+i   □ ../contrib/plugins/packages/test
+```
+
+Marker semantics:
+
+* **Filled markers** indicate the root project; **empty markers** indicate satellites.
+* **Squares** (■ □) represent regular projects; **circles** (● ○) represent packages or libraries.
+
+Satellite paths display relative to the root project, making projects with identical directory names distinguishable.
+
+Key rules:
+
+* The root project provides the baseline configuration (fixtures, runners, `test.yaml` defaults, inputs). Satellites layer their own fixtures and runners on top; duplicate names raise an error so conflicts surface early.
+* Paths printed in the CLI summary are relative to the working directory. The harness announces each project before running it and lists the runner mix per project for quick insight.
+* You can target subsets inside each project with additional positional arguments (`tenzir-test --root main --all-projects secondary tests/smoke`). When you skip `--root` entirely and only list satellite directories, the harness runs those satellites in isolation.
+* Satellites keep their own `tests/`, `inputs/`, `fixtures/`, and `runners/` folders. A root project can host shared assets that satellites reuse without duplication - for example, the example repository includes an `example-satellite/` directory that consumes the `xxd` runner exported by the root project while defining a satellite-specific fixture.
+
+To regenerate baselines while targeting a specific binary and project root:
+
+```sh
+TENZIR_BINARY=/opt/tenzir/bin/tenzir \
+TENZIR_NODE_BINARY=/opt/tenzir/bin/tenzir-node \
+uvx tenzir-test --root tests --update
+```
+
+## Hooks
+
+Hooks are Python callbacks in `hooks/__init__.py` or `hooks.py` at the project root. They can run at invocation, project, and test lifecycle points. The harness doesn’t load hooks from nested test directories.
+
+Available events:
+
+| Event            | When it runs                                                                |
+| ---------------- | --------------------------------------------------------------------------- |
+| `startup`        | Once per invocation, before settings and binary discovery.                  |
+| `shutdown`       | Once before the invocation exits normally.                                  |
+| `project_start`  | Before the harness starts executing a root project or satellite.            |
+| `project_finish` | After the harness finishes a root project or satellite.                     |
+| `test_start`     | Before a logical test starts. Static skips don’t trigger this event.        |
+| `test_finish`    | After the final outcome for passed, failed, skipped, and parse-error tests. |
+| `test_failure`   | After `test_finish` for failed tests, before `TENZIR_TMP_DIR` cleanup.      |
+
+For examples and lifecycle details, see the [configure project hooks](../guides/testing/configure-project-hooks.md) guide.
+
+## Runners
+
+| Runner   | Command/behavior                       | Input extension | Artifact |
+| -------- | -------------------------------------- | --------------- | -------- |
+| `tenzir` | `tenzir -f <test>`                     | `.tql`          | `.txt`   |
+| `python` | Execute with the active Python runtime | `.py`           | `.txt`   |
+| `shell`  | `sh -eu <test>` via the harness helper | `.sh`           | varies   |
+
+Selection flow:
+
+1. The harness chooses the first registered runner that claimed the file extension.
+2. Default suffix mapping applies when no runner explicitly claims an extension: `.tql → tenzir`, `.py → python`, `.sh → shell`.
+3. A `runner: <name>` frontmatter entry overrides the automatic choice.
+4. If no runner claims the extension and none is specified in frontmatter, the harness fails with an error instead of guessing.
+
+### Shell runner
+
+Place scripts (for example under `tests/shell/`) with the `.sh` suffix to run them under `bash -eu` via the `shell` runner. The harness also prepends `<root>/_shell` to `PATH` so project-specific helper binaries become discoverable. The runner captures stdout and stderr (like `2>&1`) and compares the combined output with `<test>.txt`; run `tenzir-test --update path/to/test.sh` when you need to refresh the baseline.
+
+Register custom runners in `runners/__init__.py` via `tenzir_test.runners.register()` or the `@tenzir_test.runners.startup()` decorator. Use `replace=True` to override a bundled runner or `register_alias()` to publish alternate names.
+
+The [runner guide](../guides/testing/add-custom-runners.md) contains a full example (`XxdRunner`).
+
+### Passthrough-aware subprocesses
+
+When passthrough mode is active the harness streams stdout/stderr directly to the terminal and skips reference comparisons. Runner implementations can respect this automatically by spawning processes through `tenzir_test.run.run_subprocess(...)`. The helper captures output when the harness needs it and inherits the parent descriptors otherwise. Pass `force_capture=True` when your runner must collect stdout even in passthrough mode. If you need to branch on the current behavior, call `tenzir_test.run.get_harness_mode()` or `tenzir_test.run.is_passthrough_enabled()`.
+
+The harness cycles between three internal modes:
+
+* `HarnessMode.COMPARE` – default behavior; compare actual output with stored baselines.
+* `HarnessMode.UPDATE` – engaged when you pass `--update`; runners should overwrite reference files.
+* `HarnessMode.PASSTHROUGH` – enabled via `--passthrough`; stream output directly without touching baselines.
+
+`get_harness_mode()` returns the current enum value so custom runners can adapt logic if needed.
+
+## Configuration and frontmatter
+
+`tenzir-test` merges configuration sources in this order (later wins):
+
+1. Project defaults (`test.yaml` files, applied per directory).
+2. Per-test frontmatter (YAML for `.tql`/`.xxd`, `# key: value` comments for Python and shell scripts).
+
+Common frontmatter keys:
+
+| Key            | Type            | Default   | Description                                                                                                                                                                                    |
+| -------------- | --------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `runner`       | string          | by suffix | Runner name (`tenzir`, `python`, `shell`, custom).                                                                                                                                             |
+| `fixtures`     | list            | `[]`      | Requested fixtures. Accepts bare names and structured options mappings.                                                                                                                        |
+| `timeout`      | integer (s)     | `30`      | Command timeout. (`--coverage` multiplies it by five.)                                                                                                                                         |
+| `error`        | boolean         | `false`   | Expect a non-zero exit code.                                                                                                                                                                   |
+| `quiet`        | boolean         | `false`   | Suppress runtime warnings from the test pipeline with the `tenzir` runner. See [runtime warning suppression](test-framework.md#runtime-warning-suppression). |
+| `skip`         | string or dict  | unset     | Mark tests as skipped. See [skip configuration](test-framework.md#skip-configuration).                                                                       |
+| `requires`     | mapping         | unset     | Capability requirements. See [capability requirements](test-framework.md#capability-requirements). Directory-level only.                                     |
+| `inputs`       | string          | project   | Override `TENZIR_INPUTS` for this directory or test.                                                                                                                                           |
+| `assertions`   | mapping         | `{}`      | Post-test assertion payloads. See [assertions](test-framework.md#assertions).                                                                                |
+| `pre-compare`  | string or list  | `[]`      | Transform the baseline and the actual output before comparing them. See [pre-compare transforms](test-framework.md#pre-compare-transforms).                  |
+| `retry`        | integer         | `1`       | Total attempt budget for flaky tests (see below).                                                                                                                                              |
+| `package-dirs` | list of strings | inherit   | Directory-only; extra packages merged with CLI `--package-dirs`.                                                                                                                               |
+
+`test.yaml` files accept the same keys and apply recursively to child directories. A relative `inputs:` value resolves against the file that defines it, so `inputs: ../data` inside `tests/alerts/test.yaml` points at `tests/data/`. Frontmatter values follow the same rule and win over directory defaults. Adjacent `tenzir.yaml` files still configure the Tenzir binary; the harness appends `--config=<file>` automatically. The lookup keeps working even when you point the CLI at extra directories on the command line.
+
+`retry` represents the **total number of attempts** the harness should make before declaring the test failed. Intermediate attempts stay quiet; the final outcome line includes `attempts=N/M` whenever the budget exceeds one. Keep the value small and treat it as a temporary guardrail while you fix the underlying flakiness.
+
+### Runtime warning suppression
+
+Set `quiet: true` when runtime warnings are irrelevant to the behavior your test verifies. Leave it disabled when the warning diagnostics themselves are part of the expected output.
+
+For example, this test checks the result of parsing an invalid timestamp, not the warning diagnostic:
+
+```tql
+---
+quiet: true
+---
+from {time: "not a timestamp"}
+time = time.parse_time("%Y-%m-%d")
+```
+
+The `tenzir` runner evaluates the test inside a [`quiet`](https://tenzir.com/docs/reference/operators/quiet.md) block. Runtime warnings from the pipeline and its nested pipelines are suppressed, while events and bytes flow through unchanged. Errors still fail the test unless you set `error: true`, and compilation diagnostics remain visible. The setting works in comparison, update, and passthrough modes and requires a Tenzir binary that supports `quiet`.
+
+To apply the setting to a directory and its descendants, add it to `test.yaml`:
+
+```yaml
+quiet: true
+```
+
+Set `quiet: false` in a test’s frontmatter or a child directory’s `test.yaml` to restore runtime warnings. The setting does not suppress warnings from fixtures, other runners, or command-line logging. It suppresses all runtime warnings from the test pipeline, not individual warning messages. To limit suppression to part of a pipeline, use the TQL `quiet` operator directly instead.
+
+Diagnostic line numbers reflect the additional `quiet` block around the test. Use `--keep` to retain the wrapped pipeline in `TENZIR_TMP_DIR` for inspection.
+
+### Skip configuration
+
+The `skip` key supports two forms:
+
+**String form** marks the test (or every test in the directory) as unconditionally skipped. The value is the reason:
+
+```yaml
+skip: "pending upstream fix"
+```
+
+**Structured form** conditionally skips tests when a runtime condition occurs. Use this when a fixture or suite capability depends on an external resource that may not be available in every environment:
+
+```yaml
+skip:
+  on: fixture-unavailable
+```
+
+The `on` field accepts the following values:
+
+* `fixture-unavailable` - skip when a fixture raises `FixtureUnavailable` during initialization. See [Fixture unavailability](test-framework.md#fixture-unavailability).
+* `capability-unavailable` - skip when a required capability (declared via [`requires`](https://tenzir.com/docs/reference/test-framework.md#capability-requirements)) is missing from the runtime environment. This value is only valid in directory-level `test.yaml` files.
+
+`fixture-unavailable` follows fixture activation scope. If a fixture is selected by one test, put `skip: {on: fixture-unavailable}` in that test’s frontmatter or inherit it from a directory-level `test.yaml`; only that test is skipped when the fixture is unavailable. If a suite fixture is selected in `test.yaml`, put the skip opt-in in the suite’s directory-level configuration; suite setup happens before any member test runs, so member frontmatter cannot control a suite fixture failure.
+
+You can combine multiple conditions by passing a list:
+
+```yaml
+skip:
+  on:
+    - fixture-unavailable
+    - capability-unavailable
+```
+
+When the triggering condition occurs and the active scope carries the matching `on` value, the affected test or suite is marked as skipped with exit code 0. Without the opt-in configuration the exception propagates normally and causes a test failure.
+
+The optional `reason` field provides additional context that is combined with the condition message in the skip output.
+
+### Capability requirements
+
+The `requires` key declares capabilities that must be present for a suite to run. It is only allowed in directory-level `test.yaml` files. Currently, the only supported category is `operators`:
+
+tests/gcs/test.yaml
+
+```yaml
+suite: gcs-integration
+requires:
+  operators: [from_google_cloud_storage, to_google_cloud_storage]
+skip:
+  on: capability-unavailable
+  reason: requires GCS operators
+```
+
+Before running the suite, the harness asks each runner to check the listed requirements. If any are missing and the suite carries `skip: {on: capability-unavailable}`, the tests are skipped. Without the skip opt-in, missing capabilities cause a hard failure with a message listing the missing entries.
+
+Capability probes are runner-aware. Each runner implements its own `check_requirements` method. For example, the built-in TQL runner checks operators by querying `plugins | where name == "<operator>"`. Custom runners can override this method to probe their own environment. Runners that do not implement capability probes report all requirement categories as unsupported, which raises a hard error.
+
+### Tenzir configuration files
+
+* The harness inspects the directory that owns each test. If it finds `tenzir.yaml`, it appends `--config=<path>` to every invocation of the bundled `tenzir`/`tql`/`diff` runners. The path also seeds `TENZIR_CONFIG` unless you set that variable yourself. Custom runners that call the Tenzir binary should either use `run.get_test_env_and_config_args(test)` or honour the exported environment variables explicitly.
+* The built-in `node` fixture uses the same discovery process and starts `tenzir-node` from the directory that owns the test file, so relative paths inside `tenzir-node.yaml` resolve against the test location. See the [built-in node fixture](test-framework.md#built-in-node-fixture) section for precedence rules.
+* This lets you keep one config for CLI-driven scenarios while passing a different config to the embedded node, for example to tweak endpoints or data directories independently.
+
+## Fixtures
+
+### Declaring fixtures
+
+* List fixture names in frontmatter (`fixtures: [node, http]`). Entries can be bare strings or single-key mappings with structured options:
+
+  ```yaml
+  # Bare names (backward compatible)
+  fixtures: [node, http]
+
+
+  # With structured options
+  fixtures:
+    - node:
+        tls: true
+        port: 8443
+    - http
+
+
+  # Mixed form
+  fixtures:
+    - node:
+        tls: true
+    - http
+  ```
+
+  Importing the project `fixtures` package is enough to register custom fixtures thanks to the side effects in `fixtures/__init__.py`.
+
+* The harness encodes requests in `TENZIR_TEST_FIXTURES` and exposes helper APIs in `tenzir_test.fixtures`:
+
+  * `fixtures()` – Read-only view of active fixtures. Attribute access is supported, e.g. `fixtures().node` returns `True` if the fixture was requested and raises `AttributeError` otherwise.
+  * `acquire_fixture("name")` – Manual controller for the named fixture. Use it as a context manager for automatic `start()`/`stop()` or call those methods explicitly to interleave lifecycle steps and optional hooks (for example `kill()` or `restart()`).
+  * `require("name")` – Assert that a fixture was requested.
+  * `Executor()` – Convenience wrapper that runs Tenzir commands with resolved binaries and timeout budget.
+
+Example use from a Python helper:
+
+```python
+from tenzir_test.fixtures import Executor
+
+
+executor = Executor()
+result = executor.run("from_file 'inputs/events.ndjson' | where severity >= 5\n")
+assert result.returncode == 0
+```
+
+### Built-in node fixture
+
+* Request the fixture with `fixtures: [node]`; the harness will start `tenzir-node` with the binaries discovered for the current test.
+
+* Configuration precedence:
+
+  1. `TENZIR_NODE_CONFIG` in the environment.
+  2. A `tenzir-node.yaml` placed next to the test file (exported automatically).
+  3. The Tenzir defaults (no config file).
+
+* The node process inherits the test directory as its current working directory, letting `tenzir-node.yaml` reference files with relative paths (for example `state/` or `schemas/`).
+
+* Each controller reuses its state and cache directories across `start()`/`stop()` cycles. By default, they and the node process logs live under the per-test scratch directory (`TENZIR_TMP_DIR/tenzir-node-*`). The harness removes the scratch directory after the run unless you pass `--keep`. Starting a fresh controller (for example in another test run) yields a brand-new workspace.
+
+* The fixture reuses other inherited arguments (for example `--package-dirs=…`) but replaces any existing `--config=` flag so the node process always honours the chosen configuration file.
+
+* Tests can read `TENZIR_NODE_CLIENT_ENDPOINT`, `TENZIR_NODE_CLIENT_BINARY`, `TENZIR_NODE_CLIENT_TIMEOUT`, `TENZIR_NODE_STATE_DIRECTORY`, and `TENZIR_NODE_CACHE_DIRECTORY` from the environment to connect to the spawned node and inspect its working tree.
+
+* `TENZIR_NODE_STDOUT_LOG` and `TENZIR_NODE_STDERR_LOG` point to the complete process logs. For example, `tail "$TENZIR_NODE_STDERR_LOG"` shows the latest node diagnostics. Pass `--keep` to retain both logs after the run.
+
+* Pipelines launched by the bundled Tenzir runners automatically receive `--endpoint=<value>` when this fixture is active, so they talk to the transient node without additional wiring.
+
+* CLI and node configuration are independent: configure the CLI with `tenzir.yaml` and drop a `tenzir-node.yaml` (or set `TENZIR_NODE_CONFIG`) only when the node needs custom settings.
+
+* The fixture drains node output while it waits for the client endpoint, so large startup diagnostics cannot block the process. When `tenzir-node` fails to start, the fixture reports the exit code and stderr output. When an active node exits unexpectedly, it reports the exit code and recent stderr output.
+
+### Built-in docker-compose fixture
+
+* Request the fixture with `fixtures: [docker-compose]` or pass structured options in `test.yaml` or frontmatter. The fixture manages Docker Compose services for the duration of the test or suite.
+* The fixture requires `docker compose` (v2) on the host. When Docker Compose is not available, it raises `FixtureUnavailable` so tests can skip gracefully via `skip: {on: fixture-unavailable}`.
+* Configuration uses three nested dataclasses: `DockerComposeOptions` (top level), `DockerComposeWaitOptions` (readiness polling), and `DockerComposeDownOptions` (teardown behavior).
+
+#### Options reference
+
+Top-level options (`DockerComposeOptions`):
+
+| Field            | Type           | Default     | Description                                                                               |
+| ---------------- | -------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `file`           | string         | `""`        | Path to the Compose file, resolved relative to the test directory.                        |
+| `project_name`   | string         | `""`        | Compose project name. Auto-generated from the test file name when empty.                  |
+| `profiles`       | list of string | `[]`        | Compose profiles to activate.                                                             |
+| `services`       | list of string | `[]`        | Services to start. When empty, all services in the Compose file start.                    |
+| `env_file`       | string or null | `null`      | Path to an env file passed to `docker compose --env-file`, resolved relative to the test. |
+| `env`            | dict           | `{}`        | Extra environment variables injected into the Compose process.                            |
+| `pull`           | string         | `"missing"` | Image pull policy: `missing`, `always`, or `never`.                                       |
+| `build`          | boolean        | `false`     | Pass `--build` to `docker compose up`.                                                    |
+| `wait`           | object         | see below   | Readiness polling settings.                                                               |
+| `down`           | object         | see below   | Teardown settings.                                                                        |
+| `log_on_failure` | boolean        | `true`      | Collect and attach Docker Compose logs when the fixture fails.                            |
+
+Wait options (`DockerComposeWaitOptions`):
+
+| Field                   | Type  | Default | Description                                        |
+| ----------------------- | ----- | ------- | -------------------------------------------------- |
+| `timeout_seconds`       | float | `120.0` | Maximum time to wait for all services to be ready. |
+| `poll_interval_seconds` | float | `1.0`   | Interval between readiness checks.                 |
+
+Down options (`DockerComposeDownOptions`):
+
+| Field             | Type    | Default | Description                                      |
+| ----------------- | ------- | ------- | ------------------------------------------------ |
+| `volumes`         | boolean | `true`  | Remove volumes on teardown (`--volumes`).        |
+| `remove_orphans`  | boolean | `true`  | Remove orphan containers (`--remove-orphans`).   |
+| `timeout_seconds` | integer | `20`    | Timeout for `docker compose down` (`--timeout`). |
+
+#### Example configuration
+
+Minimal configuration in `test.yaml`:
+
+```yaml
+suite: compose-demo
+fixtures:
+  - docker-compose:
+      file: compose.yaml
+skip:
+  on: fixture-unavailable
+  reason: requires docker compose
+```
+
+Full configuration with all options:
+
+```yaml
+fixtures:
+  - docker-compose:
+      file: compose.yaml
+      project_name: my-project
+      profiles: [integration]
+      services: [redis, postgres]
+      env_file: compose.env
+      env:
+        COMPOSE_PARALLEL_LIMIT: 8
+      pull: always
+      build: true
+      wait:
+        timeout_seconds: 90
+        poll_interval_seconds: 2.0
+      down:
+        volumes: true
+        remove_orphans: true
+        timeout_seconds: 30
+      log_on_failure: true
+```
+
+#### Readiness detection
+
+The fixture polls each container until it is ready. If a container defines a health check, the fixture waits for the `healthy` status. Otherwise, it falls back to checking that the container is in the `running` state. The `wait.timeout_seconds` setting controls how long the fixture waits before raising an error.
+
+#### Exported environment variables
+
+Once all services are running, the fixture exports the following variables to the test environment:
+
+| Variable                                            | Description                                                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `DOCKER_COMPOSE_PROVIDER`                           | Always `docker`.                                                                                     |
+| `DOCKER_COMPOSE_PROJECT_NAME`                       | The Compose project name (explicit or auto-generated).                                               |
+| `DOCKER_COMPOSE_FILE`                               | Absolute path to the resolved Compose file.                                                          |
+| `DOCKER_COMPOSE_SERVICE_<NAME>_CONTAINER_ID`        | Container ID for the service. `<NAME>` is the uppercased, normalized service name.                   |
+| `DOCKER_COMPOSE_SERVICE_<NAME>_HOST`                | Always `127.0.0.1`.                                                                                  |
+| `DOCKER_COMPOSE_SERVICE_<NAME>_PORT_<PORT>_<PROTO>` | Host-mapped port for a specific container port and protocol (for example `_PORT_6379_TCP`).          |
+| `DOCKER_COMPOSE_SERVICE_<NAME>_PORT`                | Shorthand for the single published port, set only when the service exposes exactly one port binding. |
+
+Service names are normalized to uppercase with non-alphanumeric characters replaced by underscores. For a service named `redis`, the prefix is `DOCKER_COMPOSE_SERVICE_REDIS_`.
+
+#### Teardown
+
+When the test (or suite) completes, the fixture runs `docker compose down` with the configured teardown options. Volumes are removed by default to avoid leaking state between test runs. The fixture always attempts teardown even when the test fails.
+
+### Registering fixtures
+
+Implement fixtures in `fixtures/` and register them with `@tenzir_test.fixture()`. Decorate a generator function, yield the environment mapping, and handle cleanup in a `finally` block:
+
+```python
+from tenzir_test import fixture
+
+
+@fixture()
+def http():
+    server = _start_server()
+    try:
+        yield {"HTTP_FIXTURE_URL": server.url}
+    finally:
+        server.stop()
+```
+
+`@fixture` also accepts regular callables returning dictionaries, context managers, or `FixtureHandle` instances for advanced scenarios.
+
+The [fixture guide](../guides/testing/create-fixtures.md) demonstrates an HTTP echo server that exposes `HTTP_FIXTURE_URL` and tears down cleanly.
+
+### Fixture dependencies
+
+Project fixture modules can declare Python package dependencies with a PEP 723 script metadata block:
+
+```python
+# /// script
+# dependencies = ["boto3"]
+# ///
+
+
+from tenzir_test import fixture
+```
+
+This applies to normal test execution and standalone fixture mode with `tenzir-test --fixture`. When fixture files declare dependencies, `uv` must be available on `PATH`. See the [fixture guide](../guides/testing/create-fixtures.md#declare-python-dependencies) for a complete example.
+
+### Fixture options
+
+Fixtures can declare a frozen dataclass via `options=` on `@fixture()`. The harness constructs a typed instance from frontmatter values:
+
+```python
+@dataclass(frozen=True)
+class HttpOptions:
+    port: int = 0
+
+
+@fixture(options=HttpOptions)
+def http() -> Iterator[dict[str, str]]:
+    opts = current_options("http")  # HttpOptions instance
+    ...
+```
+
+```yaml
+fixtures:
+  - http:
+      port: 9090
+```
+
+Bare names (`fixtures: [http]`) produce the dataclass defaults.
+
+Note
+
+Option fields can be nested dataclasses. The harness instantiates them recursively. See the [fixture guide](../guides/testing/create-fixtures.md) for a complete walkthrough.
+
+### Fixture unavailability
+
+Fixtures can signal that they cannot provide their service by raising `FixtureUnavailable` during initialization (before yielding). This is useful when a fixture depends on an external tool or runtime that may not be present in every environment.
+
+```python
+from tenzir_test.fixtures import FixtureUnavailable, fixture
+
+
+@fixture()
+def mysql():
+    if not shutil.which("docker"):
+        raise FixtureUnavailable("docker not found")
+    # ... start container, yield env, cleanup ...
+```
+
+By default the exception propagates and causes a test failure. To convert a suite fixture failure into a skip, add a structured `skip` entry to the suite’s `test.yaml`:
+
+tests/mysql/test.yaml
+
+```yaml
+suite: mysql-integration
+fixtures: [mysql]
+skip:
+  on: fixture-unavailable
+  reason: "needs container runtime"
+```
+
+When the fixture raises `FixtureUnavailable` and the suite carries this configuration, the harness marks every test in the suite as skipped (exit code 0) and logs the combined reason. Without the opt-in configuration the exception surfaces as a regular failure. See [skip configuration](test-framework.md#skip-configuration) for the full syntax of the `skip` key.
+
+For fixtures that are selected by individual tests, use the same skip mapping in test frontmatter:
+
+```yaml
+---
+fixtures: [mysql]
+skip:
+  on: fixture-unavailable
+  reason: "needs container runtime"
+---
+```
+
+In this form, an unavailable fixture skips only that test. Suite fixture skips remain controlled by directory-level configuration.
+
+### Container runtime helpers
+
+The `tenzir_test.fixtures.container_runtime` module provides shared building blocks for fixtures that manage containers directly (without Docker Compose): runtime detection, detached container startup, readiness polling, and lifecycle management. Fixtures that use these helpers inherit the `container` fixture tag, so you can select their tests with `tenzir-test --fixture-tag container`.
+
+The built-in `docker-compose` fixture has both the `container` and `docker-compose` tags. Use `tenzir-test --fixture-tag docker-compose` when you want only tests that request that fixture.
+
+See the [create fixtures](../guides/testing/create-fixtures.md#use-container-runtime-helpers) guide for a step-by-step walkthrough.
+
+## Assertions
+
+The `assertions` frontmatter key holds post-test validation payloads. Each top-level key inside `assertions` identifies an assertion category. The harness evaluates assertions after the test succeeds but before teardown, so resources are still live when checks run. A raised exception fails the test.
+
+### Fixture assertions
+
+Fixture assertions let a fixture verify what happened during the test. Declare payloads under `assertions.fixtures.<name>`:
+
+```yaml
+assertions:
+  fixtures:
+    http:
+      expected_request:
+        count: 1
+        method: POST
+        path: /status/not-found
+        body: '{"foo":"bar"}'
+```
+
+The harness constructs a typed instance from the fixture’s registered assertions dataclass and invokes its `assert_test` hook. Omitting the block skips the hook. For suite tests the hook runs after each member rather than once at the end.
+
+The [fixture guide](../guides/testing/create-fixtures.md#add-fixture-assertions) walks through the full implementation.
+
+## Environment variables
+
+`tenzir-test` recognises the following environment variables:
+
+* `TENZIR_TEST_ROOT` – Default test root when `--root` is omitted.
+* `TENZIR_BINARY` / `TENZIR_NODE_BINARY` – Override binary auto-detection. Supports multi-part commands like `TENZIR_BINARY="uvx tenzir"` or `TENZIR_NODE_BINARY="docker exec container tenzir-node"`.
+* `TENZIR_INPUTS` – Preferred data directory. Defaults to the nearest `inputs/` directory walking up from the test, falling back to the project-level inputs folder. Reflects any `inputs:` override from `test.yaml` or frontmatter.
+* `TENZIR_INPUT` – Path to the inline input file when a `.input` file exists next to the test. Not set otherwise.
+* `TENZIR_STDIN` – Path to the stdin file when a `.stdin` file exists next to the test. The harness pipes this file’s content to the subprocess stdin. Not set otherwise.
+* `TENZIR_KEEP_TMP_DIRS` – Keep per-test scratch directories (equivalent to `--keep`).
+* `TENZIR_TEST_DEBUG` – Enable debug logging and verbose output (equivalent to `--debug`).
+* `TENZIR_TEST_DISABLE_HOOKS` – Disable project hook loading and invocation (equivalent to `--no-hooks`).
+* `TENZIR_TEST_DISABLE_INLINE_DEPENDENCY_INSTALL` – Disable runtime installation for inline Python dependencies declared by tests or fixtures. Equivalent to `--disable-inline-dependency-install`.
+
+### Binary resolution
+
+The harness automatically detects `tenzir` and `tenzir-node` binaries using this precedence:
+
+1. `TENZIR_BINARY` / `TENZIR_NODE_BINARY` environment variable (highest priority)
+2. Local installation found via `PATH` lookup (`shutil.which`)
+3. Fallback to `uvx tenzir` / `uvx --from tenzir tenzir-node` when `uv` is installed
+
+Most users can run `tenzir-test` without any configuration. When `uv` is installed, the harness automatically uses `uvx` to fetch and run Tenzir on demand.
+
+Environment variables support multi-part commands, allowing invocations like `TENZIR_BINARY="uvx tenzir"` or `TENZIR_BINARY="docker exec node tenzir"`. The harness splits these values into argument lists using shell tokenization rules.
+
+Fixtures often publish additional variables (for example `TENZIR_NODE_CLIENT_*`, `TENZIR_NODE_STATE_DIRECTORY`, `TENZIR_NODE_CACHE_DIRECTORY`, `TENZIR_NODE_STDOUT_LOG`, `TENZIR_NODE_STDERR_LOG`, `HTTP_FIXTURE_URL`).
+
+During execution the harness also adds transient variables such as `TENZIR_TMP_DIR` so tests and fixtures can create temporary artifacts without polluting the repository. Combine it with `--keep` (or `TENZIR_KEEP_TMP_DIRS=1`) when you need to inspect the generated files after a run.
+
+## Baselines and artifacts
+
+Regenerate reference output whenever behavior changes intentionally:
+
+```sh
+uvx tenzir-test --update
+```
+
+`--purge` removes stale artifacts (diffs, temporary files). Keep generated `.txt` files under version control so future runs can diff against them.
+
+The harness rewrites absolute paths in captured output, such as the ones that `tenzir` prints in diagnostics, as relative paths. Paths inside the package that owns a test are relative to that package, so a baseline stays valid whether you run the harness on the package, on its `tests` directory, or on the surrounding library. All other paths are relative to the project root.
+
+For example, a baseline that captures a diagnostic from a test in the `microsoft` package refers to that package’s operators without the package prefix:
+
+```text
+warning: assertion failed: unsupported OCSF to ASIM mapping
+  --> operators/asim/ocsf/map.tql:61:12
+```
+
+### Pre-compare transforms
+
+Use `pre-compare` when a test produces the right events in an unpredictable order. The harness transforms the baseline and the actual output the same way, then compares the results.
+
+`sort` is the only transform. It moves the ordering requirement out of the pipeline, so a test no longer needs a trailing `sort` operator that the package itself would never run.
+
+Before, where the last operator exists only to make the baseline stable:
+
+```tql
+from_file "events.ndjson" {
+  read_ndjson
+}
+summarize severity, events=count()
+sort severity
+```
+
+After, where the frontmatter carries that requirement:
+
+```tql
+---
+pre-compare: sort
+---
+from_file "events.ndjson" {
+  read_ndjson
+}
+summarize severity, events=count()
+```
+
+`sort` orders whole events, not lines. It reads a `{` alone in the first column as the start of an event and the matching `}` in the first column as its end, which is how TQL prints events by default. Everything else counts as one unit per line, so NDJSON sorts one event per line.
+
+Two kinds of output have no first-column braces, so `sort` shuffles their lines and destroys them. Do not use it on either one:
+
+* Indented structured output, such as a pretty-printed JSON array.
+* Multiline diagnostics, where the continuation lines sort away from the header they belong to.
+
+`--update` writes raw output to the baseline. Transforms run at comparison time only, so the file on disk keeps the order the test produced.
+
+## Troubleshooting
+
+* **Missing binaries** – The harness auto-detects binaries on `PATH` and falls back to `uvx tenzir` when `uv` is installed. If neither is available, set the `TENZIR_BINARY` and `TENZIR_NODE_BINARY` environment variables to point at your installation.
+* **Unexpected exits** – Set `error: true` in frontmatter when a non-zero exit is expected.
+* **Skipped tests** – Use `skip: reason` to document temporary skips; baseline files can stay empty. For fixture-dependent suites, put `skip: {on: fixture-unavailable}` in `test.yaml`. For fixtures selected by one test, use the same mapping in frontmatter. For capability-dependent suites, combine `requires` with `skip: {on: capability-unavailable}`.
+* **Noisy output** – Use `--jobs 1` to serialize worker logs, and enable `--debug` (or set `TENZIR_TEST_DEBUG=1`) when you need to trace comparisons and fixture activity. Note that `--debug` automatically enables verbose output.
+
+## See Also
+
+* [Run tests](../guides/testing/run-tests.md)
+* [Write tests](../guides/testing/write-tests.md)
+* [Create fixtures](../guides/testing/create-fixtures.md)
+* [Add custom runners](../guides/testing/add-custom-runners.md)
+* [Run fixtures](../guides/testing/run-fixtures.md)

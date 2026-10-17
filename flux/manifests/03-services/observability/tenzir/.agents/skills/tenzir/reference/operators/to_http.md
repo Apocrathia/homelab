@@ -1,0 +1,221 @@
+---
+title: "to_http"
+canonical: https://tenzir.com/docs/reference/operators/to_http
+source: https://tenzir.com/docs/reference/operators/to_http.md
+section: "Docs"
+---
+
+# to_http
+
+> Sends events as a single HTTP request to a webhook or API endpoint.
+
+Sends events as a single HTTP request to a webhook or API endpoint.
+
+```tql
+to_http url:string, [method=string, headers=record, buffer_all=bool,
+        timeout=duration, tls=record, connection_timeout=duration,
+        max_retry_count=int, retry_delay=duration] { … }
+```
+
+## Description
+
+The `to_http` operator collects all input events into a single HTTP request to a webhook or API endpoint. A required printer sub-pipeline turns the events into bytes, which Tenzir streams as the request body. The request body flows from the printer sub-pipeline into the HTTP connection as chunks become available, without buffering the entire body in memory first. By default, the operator sends requests with the `POST` method.
+
+To split events across multiple requests, wrap `to_http` in the [`every`](https://tenzir.com/docs/reference/operators/every.md) operator. For example, `every 1m { to_http ... }` sends one request per minute with the events that arrived during that window.
+
+The operator retries transient connection errors and HTTP `429` and `5xx` responses up to `max_retry_count` times, but only before any body data has been sent. Once the body stream has started, retries are not possible because the data cannot be replayed. Set `buffer_all` to buffer the entire body in memory, which enables retries regardless of how much data has been sent. For retried HTTP responses, a `Retry-After` header overrides the configured delay.
+
+Non-2xx HTTP status codes cause pipeline errors.
+
+### `url: string`
+
+URL to send the request to.
+
+The URL is resolved as a [secret](../../explanations/secrets.md), so you can pass a secret name to avoid hardcoding sensitive URLs.
+
+### `method = string (optional)`
+
+One of the following HTTP methods to use:
+
+* `get`
+* `head`
+* `post`
+* `put`
+* `del`
+* `connect`
+* `options`
+* `trace`
+
+Defaults to `post`.
+
+### `buffer_all = bool (optional)`
+
+Buffer the entire request body in memory before sending it.
+
+When set to `true`, the operator accumulates all output from the printer sub-pipeline and sends the request with a `Content-Length` header instead of `Transfer-Encoding: chunked`. This is required for servers that don’t support chunked transfer encoding.
+
+Buffering also enables retries for every failure, because the full body is always available for replay. Without `buffer_all`, retries are only possible before the body stream starts.
+
+Defaults to `false`.
+
+### `headers = record (optional)`
+
+Record of headers to send with the request. Each value is resolved as a [secret](../../explanations/secrets.md), so you can pass secret names to avoid hardcoding tokens or API keys directly in the pipeline.
+
+### `timeout = duration (optional)`
+
+Timeout for the overall request.
+
+Defaults to `90s`.
+
+### `connection_timeout = duration (optional)`
+
+Timeout for establishing the connection.
+
+Defaults to `5s`.
+
+### `max_retry_count = int (optional)`
+
+Maximum number of retry attempts per request.
+
+A request is retried on transient transport failures and HTTP `429` and `5xx` responses, but only before any request body bytes have been sent.
+
+Defaults to `5`.
+
+### `retry_delay = duration (optional)`
+
+Base duration between retry attempts.
+
+Tenzir uses exponential backoff starting at `retry_delay` and capping at `16 * retry_delay`. For retried HTTP `429` and `5xx` responses, a `Retry-After` response header overrides this delay.
+
+Defaults to `1s`.
+
+### `{ … }`
+
+A required pipeline that receives events and must return bytes. The output of this pipeline becomes the HTTP request body.
+
+Tenzir reads this pipeline incrementally and forwards the emitted chunks to the HTTP client as they are produced. Use this pipeline to choose the request format explicitly. For example, use `write_ndjson`, `write_json`, or another byte-producing pipeline.
+
+### `tls = record (optional)`
+
+TLS configuration. Provide an empty record (`tls={}`) to enable TLS with defaults or set fields to customize it.
+
+```tql
+{
+  skip_peer_verification: bool, // skip certificate verification.
+  cacert: string,               // CA bundle to verify peers.
+  certfile: string,             // client certificate to present.
+  keyfile: string,              // private key for the client certificate.
+  min_version: string,          // minimum TLS version (`"1.0"`, `"1.1"`, `"1.2"`, "1.3"`).
+  ciphers: string,              // OpenSSL cipher list string.
+  client_ca: string,            // CA to validate client certificates.
+  require_client_cert: bool,    // require clients to present a certificate.
+}
+```
+
+The `client_ca` and `require_client_cert` options are only valid for operators that accept incoming client connections.
+
+Any value not specified in the record will either be picked up from the configuration or if not configured will not be used by the operator.
+
+See the [Node TLS Setup guide](../../guides/node-setup/configure-tls.md) for more details.
+
+## Examples
+
+### Send all events in a single request
+
+By default, `to_http` collects all input events into a single HTTP request:
+
+```tql
+from {message: "hello", severity: "info"},
+     {message: "world", severity: "warn"}
+to_http "https://example.com/webhook" {
+  write_ndjson
+}
+```
+
+This sends one `POST` request whose body contains both events as NDJSON. Use any printer, such as `write_json`, `write_csv`, or `write_parquet`, to control the wire format.
+
+### Send one request per event
+
+Wrap `to_http` in [`each`](https://tenzir.com/docs/reference/operators/each.md) to send a separate HTTP request for every incoming event:
+
+```tql
+from {message: "hello", severity: "info"},
+     {message: "world", severity: "warn"}
+each {
+  from $this
+  to_http "https://example.com/webhook" {
+    write_json
+  }
+}
+```
+
+Each event becomes an independent `POST` request with a JSON body. Use the `parallel` option of [`each`](https://tenzir.com/docs/reference/operators/each.md) to control concurrency.
+
+### Send events in periodic batches
+
+Use [`every`](https://tenzir.com/docs/reference/operators/every.md) to group events into time-based batches, with each batch sent as a separate HTTP request:
+
+```tql
+subscribe "stream-of-events"
+every 1m {
+  to_http "https://example.com/ingest" {
+    write_parquet
+  }
+}
+```
+
+Every minute, `every` stops the input, causing `to_http` to finish the request, wait for response and then restart. Adjust the interval to control batch size - use `every 5s` for near-real-time delivery or `every 10m` for larger batches.
+
+### Control the request body format
+
+Use the printer sub-pipeline to control how the operator serializes events:
+
+```tql
+from {foo: "bar"}
+to_http "https://example.com/api" {
+  write_csv
+}
+```
+
+### Set a custom method and headers
+
+```tql
+from {foo: "bar"}
+to_http "192.168.1.10", method="put", headers={"X-Custom": "value"} {
+  write_ndjson
+}
+```
+
+### Send events with TLS
+
+```tql
+from {data: "sensitive"}
+to_http "https://secure.example.com/api", tls={skip_peer_verification: true} {
+  write_ndjson
+}
+```
+
+### Buffer the full body
+
+Some HTTP servers don’t support chunked transfer encoding and require a `Content-Length` header. Use `buffer_all` to send the complete body at once:
+
+```tql
+subscribe "events"
+head 1000
+to_http "https://s3.example.com/bucket/key", method="put", buffer_all=true {
+  write_ndjson
+}
+```
+
+The `head 1000` limits the input so that `buffer_all` has a finite body to buffer. Without a bound, `subscribe` streams indefinitely and the buffer grows without limit. Use [`every`](https://tenzir.com/docs/reference/operators/every.md) instead of `head` when you want periodic flushing.
+
+## See Also
+
+* [`from_http`](https://tenzir.com/docs/reference/operators/from_http.md)
+* [`accept_http`](https://tenzir.com/docs/reference/operators/accept_http.md)
+* [`serve_http`](https://tenzir.com/docs/reference/operators/serve_http.md)
+* [`each`](https://tenzir.com/docs/reference/operators/each.md)
+* [`every`](https://tenzir.com/docs/reference/operators/every.md)
+* [Fetch via HTTP and APIs](../../guides/collect/fetch-via-http-and-apis.md)
+* [HTTP](../../integrations/http.md)

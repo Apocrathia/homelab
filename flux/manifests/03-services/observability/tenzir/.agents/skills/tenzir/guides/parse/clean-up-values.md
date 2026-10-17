@@ -1,0 +1,290 @@
+---
+title: "Clean up values"
+canonical: https://tenzir.com/docs/guides/parse/clean-up-values
+source: https://tenzir.com/docs/guides/parse/clean-up-values.md
+section: "Docs"
+---
+
+# Clean up values
+
+> This guide shows you how to clean and normalize values in your data before mapping to a schema. You’ll learn to handle null placeholders, normalize sentinel values, fix types, and provide defaults.
+
+This guide shows you how to clean and normalize values in your data before mapping to a schema. You’ll learn to handle null placeholders, normalize sentinel values, fix types, and provide defaults.
+
+## Replace null placeholders
+
+Many data sources use string placeholders instead of actual null values. Common patterns include `"None"`, `"N/A"`, `"-"`, and empty strings.
+
+### Normalize across all fields
+
+Use [`replace`](https://tenzir.com/docs/reference/operators/replace.md) to convert placeholders to null across all string fields:
+
+```tql
+from {status: "active", error: "None"},
+     {status: "N/A", error: "timeout"},
+     {status: "-", error: ""}
+replace what="None", with=null
+replace what="N/A", with=null
+replace what="-", with=null
+replace what="", with=null
+```
+
+```tql
+{status: "active", error: null}
+{status: null, error: "timeout"}
+{status: null, error: null}
+```
+
+### Normalize specific fields
+
+When you only want to normalize certain fields, specify them explicitly:
+
+```tql
+from {enabled: "YES", disabled: "NO", status: "YES"}
+replace enabled, what="YES", with=true
+replace enabled, what="NO", with=false
+replace disabled, what="YES", with=true
+replace disabled, what="NO", with=false
+// status remains unchanged
+```
+
+```tql
+{enabled: true, disabled: false, status: "YES"}
+```
+
+### Chain replacements
+
+Combine multiple replacements for thorough cleanup:
+
+```tql
+from {value: "N/A"},
+     {value: "null"},
+     {value: "undefined"},
+     {value: ""}
+replace what="N/A", with=null
+replace what="null", with=null
+replace what="undefined", with=null
+replace what="", with=null
+```
+
+## Normalize sentinel values
+
+Some systems use specific values to indicate special states. Normalize these to consistent representations.
+
+### Boolean conversions
+
+Convert string booleans to actual boolean values:
+
+```tql
+from {active: "true", verified: "1", enabled: "yes"},
+     {active: "false", verified: "0", enabled: "no"}
+active = active == "true"
+verified = verified == "1"
+enabled = enabled == "yes"
+```
+
+```tql
+{active: true, verified: true, enabled: true}
+{active: false, verified: false, enabled: false}
+```
+
+### Numeric sentinels
+
+Convert special numeric values:
+
+```tql
+from {port: -1, count: 4294967295, size: -999}
+// -1 often means "any port" or "not applicable"
+port = null if port == -1 else port
+// 4294967295 (0xFFFFFFFF) often means "unknown" in network data
+count = null if count == 4294967295 else count
+// -999 is sometimes used as a missing value indicator
+size = null if size == -999 else size
+```
+
+```tql
+{
+  port: null,
+  count: null,
+  size: null,
+}
+```
+
+## Fix types
+
+Raw data often arrives with incorrect types. Convert strings to appropriate native types.
+
+### Parse timestamps
+
+Convert string timestamps to proper time values:
+
+```tql
+from {ts: "2024-01-15T10:30:45Z", epoch: "1705316445"}
+ts = ts.time()
+epoch = epoch.int().seconds().from_epoch()
+```
+
+```tql
+{ts: 2024-01-15T10:30:45Z, epoch: 2024-01-15T11:00:45Z}
+```
+
+### Parse IP addresses
+
+Convert string IPs to native IP types:
+
+```tql
+from {src: "192.168.1.100", dst: "10.0.0.1"}
+src = src.ip()
+dst = dst.ip()
+```
+
+```tql
+{src: 192.168.1.100, dst: 10.0.0.1}
+```
+
+### Parse subnets
+
+Convert CIDR notation strings to subnet types:
+
+```tql
+from {network: "10.0.0.0/8", allowed: "192.168.0.0/16"}
+network = network.subnet()
+allowed = allowed.subnet()
+```
+
+```tql
+{network: 10.0.0.0/8, allowed: 192.168.0.0/16}
+```
+
+### Parse numbers
+
+Convert numeric strings to integers or floats:
+
+```tql
+from {port: "443", ratio: "0.95", count: "1000"}
+port = port.int()
+ratio = ratio.float()
+count = count.int()
+```
+
+```tql
+{port: 443, ratio: 0.95, count: 1000}
+```
+
+### Parse durations
+
+Convert duration strings to duration types:
+
+```tql
+from {timeout: "30s", interval: "5min", ttl: "24h"}
+timeout = timeout.duration()
+interval = interval.duration()
+ttl = ttl.duration()
+```
+
+```tql
+{timeout: 30s, interval: 5min, ttl: 24h}
+```
+
+## Provide default values
+
+Use the `else` keyword to fill in missing values:
+
+```tql
+from {name: "alice", score: 85},
+     {name: "bob"},
+     {name: "charlie", score: null}
+score = score? else 0
+status = status? else "unknown"
+```
+
+```tql
+{name: "alice", score: 85, status: "unknown"}
+{name: "bob", score: 0, status: "unknown"}
+{name: "charlie", score: 0, status: "unknown"}
+```
+
+The `?` operator suppresses warnings when accessing fields that don’t exist.
+
+## Trim and normalize strings
+
+Clean up whitespace and case inconsistencies:
+
+```tql
+from {name: "  ALICE  ", email: "  Bob@Example.COM  "}
+name = name.trim().to_title()
+email = email.trim().to_lower()
+```
+
+```tql
+{name: "Alice", email: "bob@example.com"}
+```
+
+## Drop null fields from nested records
+
+Remove null fields from nested records to reduce event size:
+
+```tql
+from {user: {name: "alice", email: null, phone: null}}
+drop_null_fields user
+```
+
+```tql
+{user: {name: "alice"}}
+```
+
+Avoid using `drop_null_fields` without arguments on the top-level record. Each unique combination of present fields creates a distinct schema, leading to *schema fragmentation* that defeats the purpose of normalization. It also removes fields you just normalized.
+
+## Practical example
+
+Here’s a complete cleanup pipeline for raw firewall logs:
+
+```tql
+from_kafka "firewall-raw"
+this = message.parse_json()
+
+
+// Replace string nulls
+replace what="N/A", with=null
+replace what="-", with=null
+replace what="", with=null
+
+
+// Convert types
+src_ip = src_ip?.ip()
+dst_ip = dst_ip?.ip()
+src_port = src_port?.int()
+dst_port = dst_port?.int()
+timestamp = timestamp?.time()
+bytes = bytes?.int()
+
+
+// Normalize booleans
+blocked = action? == "block"
+
+
+// Provide defaults
+action = action? else "unknown"
+protocol = protocol? else "unknown"
+
+
+// Drop nulls from user context (e.g., domain, group may be missing)
+drop_null_fields user
+```
+
+## Best practices
+
+1. **Clean early**: Apply cleanup transformations at the start of your pipeline before any business logic.
+
+2. **Handle missing fields**: Use `?` when accessing fields that might not exist, and provide sensible defaults with `else`.
+
+3. **Document your assumptions**: Comment which sentinel values you’re normalizing and why.
+
+4. **Test edge cases**: Verify cleanup handles unusual values like empty strings, whitespace-only strings, and mixed case.
+
+5. **Consider performance**: The `replace` operator is efficient for bulk replacements, but be mindful of chaining many replacements.
+
+## See also
+
+* [Transform values](../shape/transform-values.md)
+* [Manipulate strings](../shape/manipulate-strings.md)

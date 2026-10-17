@@ -1,0 +1,170 @@
+---
+title: "Run fixtures"
+canonical: https://tenzir.com/docs/guides/testing/run-fixtures
+source: https://tenzir.com/docs/guides/testing/run-fixtures.md
+section: "Docs"
+---
+
+# Run fixtures
+
+> This guide shows you how to start fixtures in standalone mode without running tests. You’ll learn how to use the --fixture CLI option to bring up managed services, inspect their environment variables, and tear them down cleanly.
+
+This guide shows you how to start fixtures in standalone mode without running tests. You’ll learn how to use the `--fixture` CLI option to bring up managed services, inspect their environment variables, and tear them down cleanly.
+
+Standalone fixture mode is useful when you want to develop or debug against a service that a fixture manages (a database, message broker, HTTP server, etc.) without waiting for the full test suite.
+
+## Prerequisites
+
+* Install `tenzir-test` (see the [test framework](../../reference/test-framework.md) reference).
+* Have a project with registered fixtures, either built-in ones like `node` or custom ones under `fixtures/`.
+
+## Start a fixture
+
+Pass `--fixture` with the fixture name:
+
+```sh
+uvx tenzir-test --fixture mysql
+```
+
+The harness discovers project fixtures, activates the one you requested, and blocks until you interrupt it. While it runs, it prints the environment variables the fixture exports:
+
+```text
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+```
+
+You can copy these values into another terminal session or feed them to an external tool.
+
+## Pass options to a fixture
+
+Fixtures that declare structured options accept them through a YAML mapping spec. Append a colon and braces after the fixture name:
+
+```sh
+uvx tenzir-test --fixture 'kafka: {port: 9092}'
+```
+
+This follows the same syntax as the `fixtures:` frontmatter key in test files. Bare names use the fixture’s default options; the mapping overrides specific fields. The fixture receives the values through `current_options()`.
+
+## Start multiple fixtures
+
+The `--fixture` flag is repeatable:
+
+```sh
+uvx tenzir-test --fixture mysql --fixture redis
+```
+
+All requested fixtures start together. Their combined environment variables appear in the output, sorted by key.
+
+## Combine with other flags
+
+Several flags from the regular test path also work in fixture mode:
+
+* `--debug` enables verbose fixture lifecycle logging so you can see startup and health-check details.
+* `-k` / `--keep` preserves temporary directories after shutdown, which is helpful for inspecting state or log files that a fixture wrote.
+* `--package-dirs` forwards package directories to the fixture environment so fixtures that start Tenzir nodes find the correct packages.
+
+```sh
+uvx tenzir-test --fixture node --debug --keep
+```
+
+## Shut down
+
+Press **Ctrl+C** or send `SIGTERM` to stop. The harness tears fixtures down in reverse order, just as it does after a regular test run. Temporary directories are cleaned up unless you passed `--keep`.
+
+Note
+
+`--fixture` and positional TEST arguments are mutually exclusive. To run a specific test with a fixture, declare it in frontmatter or `test.yaml` instead.
+
+## Use the built-in docker-compose fixture
+
+When your tests need Docker Compose services such as databases or message brokers, the harness provides a built-in `docker-compose` fixture. It starts services before a test (or suite), waits for readiness, exports connection details as environment variables, and tears everything down afterwards. You do not need to write any fixture code for this workflow.
+
+### Step 1: Create a Compose file
+
+Place a `compose.yaml` next to your test or in the same directory as your `test.yaml`:
+
+tests/docker-compose/compose.yaml
+
+```yaml
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+```
+
+Publish ports without a fixed host binding (use `"6379"` instead of `"6379:6379"`) so the fixture discovers the dynamically assigned host port.
+
+### Step 2: Configure the fixture in test.yaml
+
+Reference the Compose file and select the services to start:
+
+tests/docker-compose/test.yaml
+
+```yaml
+suite: docker-compose-demo
+fixtures:
+  - docker-compose:
+      file: compose.yaml
+      services: [redis]
+      wait:
+        timeout_seconds: 90
+skip:
+  on: fixture-unavailable
+  reason: requires docker compose
+```
+
+The `skip` entry ensures the suite skips cleanly on machines without Docker Compose instead of failing.
+
+### Step 3: Write a test that uses the services
+
+The fixture exports environment variables for each service. Use them in a shell script or TQL pipeline to connect to the running containers:
+
+tests/docker-compose/check.sh
+
+```sh
+#!/bin/sh
+set -eu
+
+
+: "${DOCKER_COMPOSE_PROVIDER:?}"
+: "${DOCKER_COMPOSE_PROJECT_NAME:?}"
+: "${DOCKER_COMPOSE_FILE:?}"
+: "${DOCKER_COMPOSE_SERVICE_REDIS_CONTAINER_ID:?}"
+: "${DOCKER_COMPOSE_SERVICE_REDIS_HOST:?}"
+: "${DOCKER_COMPOSE_SERVICE_REDIS_PORT_6379_TCP:?}"
+: "${DOCKER_COMPOSE_SERVICE_REDIS_PORT:?}"
+
+
+echo "docker-compose fixture ok"
+```
+
+For a service named `redis` that publishes port 6379, the fixture sets `DOCKER_COMPOSE_SERVICE_REDIS_HOST` to `127.0.0.1` and `DOCKER_COMPOSE_SERVICE_REDIS_PORT_6379_TCP` to the dynamically assigned host port. When a service exposes exactly one port, the shorthand `DOCKER_COMPOSE_SERVICE_REDIS_PORT` is also available.
+
+```tql
+from {
+  host: env("DOCKER_COMPOSE_SERVICE_REDIS_HOST"),
+  port: env("DOCKER_COMPOSE_SERVICE_REDIS_PORT_6379_TCP"),
+  shorthand: env("DOCKER_COMPOSE_SERVICE_REDIS_PORT"),
+}
+```
+
+```tql
+{
+  host: "127.0.0.1",
+  port: "49152", // dynamically assigned
+  shorthand: "49152",
+}
+```
+
+See the [test framework reference](../../reference/test-framework.md#built-in-docker-compose-fixture) for the full options reference, including all configuration fields, readiness detection behavior, and the complete list of exported environment variables.
+
+## See also
+
+* [Create fixtures](create-fixtures.md)
+* [Test Framework](../../reference/test-framework.md)
