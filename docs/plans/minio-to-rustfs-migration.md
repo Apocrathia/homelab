@@ -133,7 +133,7 @@ credentials):
 
 - [ ] Rotate the RustFS root credentials (NAS-side); store in
       `rustfs-root-secrets` (emergency-only)
-- [ ] Doc drift fixes: remove the stale `minio.yaml` HelmRepository section
+- [x] Doc drift fixes: remove the stale `minio.yaml` HelmRepository section
       from `flux/manifests/01-bootstrap/helm/README.md`; fix the MinIO backup
       claims in `flux/manifests/02-infrastructure/longhorn/README.md` (actual
       target is CIFS); fix the in-cluster-MinIO claims in

@@ -42,7 +42,7 @@ spec:
 
     # Loki configuration
     loki:
-      # Storage configuration - using external MinIO
+      # Storage configuration - using external RustFS
       storage:
         type: s3
         bucketNames:
@@ -89,7 +89,7 @@ spec:
         reject_old_samples: false
         retention_period: 1440h # 60 days
 
-    # MinIO subchart disabled - using external MinIO
+    # MinIO subchart disabled - using external RustFS
     minio:
       enabled: false
 

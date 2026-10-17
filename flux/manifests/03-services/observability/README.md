@@ -37,10 +37,10 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **Deployment**: Via Loki Helm chart
 - **Features**:
   - Log collection from Kubernetes pods
-  - S3-compatible storage (MinIO)
+  - S3-compatible storage (RustFS on the NAS)
   - Grafana integration for log querying
   - Log retention and management
-- **Storage**: MinIO with Longhorn persistent volumes
+- **Storage**: S3-compatible storage (RustFS on the NAS)
 
 ### 4. **Mimir** (`mimir/`)
 
@@ -51,7 +51,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - Long-term retention and scalability
   - Grafana integration for metrics visualization
   - Multi-tenant support
-- **Storage**: S3-compatible storage (MinIO)
+- **Storage**: S3-compatible storage (RustFS on the NAS)
 
 ### 5. **Tempo** (`tempo/`)
 
@@ -63,7 +63,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   - Trace-to-metrics with Prometheus
   - Service graph and node graph visualization
   - Metrics generation from traces
-- **Storage**: S3-compatible storage (MinIO)
+- **Storage**: S3-compatible storage (RustFS on the NAS)
 
 ### 6. **OpenTelemetry Operator** (`otel-operator/`)
 
@@ -167,22 +167,22 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
   - Grafana Alloy for log, metrics, and trace collection
   - OpenTelemetry Operator for auto-instrumentation and collector management
 
-- **Data flow**: All components store data in MinIO (S3-compatible storage) and feed into the kube-prometheus-stack Grafana instance for unified visualization.
+- **Data flow**: All components store data in RustFS (S3-compatible storage on the NAS) and feed into the kube-prometheus-stack Grafana instance for unified visualization.
 
 ## Data Flow
 
-1. **Pod Logs**: Kubernetes pods → Grafana Alloy → Loki → MinIO storage → Grafana
+1. **Pod Logs**: Kubernetes pods → Grafana Alloy → Loki → RustFS storage → Grafana
 2. **Syslog/CEF**: Network devices → Alloy (via ingest LB) → Loki → Grafana
 3. **NetFlow/IPFIX**: Network devices → Tenzir `read_netflow` (goflow2 removed)
-4. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → MinIO storage → Grafana
-5. **Metrics**: Prometheus → Mimir → MinIO storage → Grafana
+4. **Traces**: Applications (OTLP) → Grafana Alloy → Tempo → RustFS storage → Grafana
+5. **Metrics**: Prometheus → Mimir → RustFS storage → Grafana
 6. **Trace Metrics**: Tempo metrics generator → Mimir (service graphs, span metrics)
 
 ## Configuration
 
 - **Authentication**: Integrated with Authentik for SSO
-- **Storage**: MinIO for S3-compatible object storage
-- **Persistence**: Longhorn storage class for MinIO
+- **Storage**: RustFS for S3-compatible object storage
+- **Persistence**: Longhorn storage class for local component data
 - **Monitoring**: ServiceMonitors for Prometheus integration
 - **Security**: RBAC, network policies, and security contexts
 - **Log Collection**: Grafana Alloy with pod log discovery and forwarding
@@ -216,7 +216,7 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 
 ## Dependencies
 
-- **Infrastructure**: Longhorn storage, MinIO
+- **Infrastructure**: Longhorn storage, RustFS on the NAS
 - **Security**: Authentik for authentication
 - **Networking**: Gateway API for external access (HTTP, TCP, UDP)
 - **Monitoring**: Prometheus stack for component metrics
@@ -224,7 +224,6 @@ The observability stack integrates with the existing kube-prometheus-stack deplo
 ## Maintenance
 
 - **Updates**: Managed via Renovate bot
-- **Backups**: MinIO data backed up via Longhorn
 - **Scaling**: Horizontal scaling supported for all components
 - **Monitoring**: Self-monitoring via ServiceMonitors
 

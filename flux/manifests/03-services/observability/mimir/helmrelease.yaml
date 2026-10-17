@@ -67,7 +67,7 @@ spec:
       targetPath: mimir.structuredConfig.alertmanager_storage.s3.secret_access_key
 
   values:
-    # Disable internal MinIO - using external MinIO
+    # Disable internal MinIO - using external RustFS
     minio:
       enabled: false
 
@@ -95,7 +95,7 @@ spec:
           # Compactor-enforced block storage retention: 90d
           compactor_blocks_retention_period: 90d
 
-        # Configure external MinIO storage with separate buckets
+        # Configure external RustFS storage with separate buckets
         blocks_storage:
           backend: s3
           s3:

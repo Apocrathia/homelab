@@ -25,7 +25,7 @@ This keeps query and ingestion paths separate while staying lightweight for home
 Loki uses an **external S3-compatible endpoint** for object storage.
 
 - **Storage Type**: `s3`
-- **Endpoint**: `http://storage.services.apocrathia.com:9000`
+- **Endpoint**: `http://storage.services.apocrathia.com:9009`
 - **Buckets**: `loki` for chunks, ruler, and admin data
 - **Auth**: Credentials injected from `loki-secrets` via `valuesFrom`
 

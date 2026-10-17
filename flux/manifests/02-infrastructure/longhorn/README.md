@@ -173,7 +173,7 @@ kubectl describe node <node-name>
 
 ```bash
 kubectl get backups -n longhorn-system
-kubectl exec -n minio-system deployment/minio -- mc admin info local
+kubectl get backuptargets -n longhorn-system
 ```
 
 ## References
