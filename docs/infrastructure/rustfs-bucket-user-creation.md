@@ -137,7 +137,7 @@ await call("PUT", path, ROOT_AK, ROOT_SK)
 ### 5. Verify with the NEW user's credentials (not root)
 
 ```python
-# roundtrip in the new bucket: PUT + GET + DELETE all 200
+# roundtrip in the new bucket: PUT + GET 200, DELETE 204
 # cross-bucket read: 403
 # bucket creation:   403
 ```
@@ -148,9 +148,12 @@ creation 403.
 
 ### Known wart
 
-Non-root `ListBuckets` (GET `/`) returns **500** on this build
-(`errBucketMetadataNotInitialized`, beta.12, upstream fix pending). Cosmetic:
-apps address buckets by name. Expect it during verification and ignore.
+Non-root `ListBuckets` (GET `/`) used to return **500** on this build
+(`errBucketMetadataNotInitialized`, beta.12). No longer reproduces — verified
+live 2026-10-17 (clickhouse consumer onboarding): a new user's GET `/`
+returns a **scoped 200** listing only the user's own bucket. Cosmetic either
+way — apps address buckets by name. Expect the scoped listing during
+verification, not a 500.
 
 ## Console (manual) path
 
@@ -185,6 +188,7 @@ permissions); the flow is always bucket → policy → user + attach.
   rclone data back. The rustfs agent session holds the full stored recipe.
 - No quotas are set on any bucket. The admin API supports them; ask the
   operator before adding one.
-- Existing consumers (2026-09-11): `loki`, `mimir-blocks`, `mimir-ruler`,
-  `mimir-alertmanager`, `tempo`, `kopia` (kopiur backup pilot). All use the
-  same per-app policy shape as step 2.
+- Existing consumers (census 2026-10-17): `loki`, `mimir-blocks`,
+  `mimir-ruler`, `mimir-alertmanager`, `tempo`, `kopia` (kopiur backup
+  pilot), `tenzir`, `clickhouse`. All use the same per-app policy shape
+  as step 2.
