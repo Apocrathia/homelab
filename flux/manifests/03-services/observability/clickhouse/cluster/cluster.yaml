@@ -20,12 +20,12 @@ metadata:
 spec:
   configuration:
     # Keeper reference: the operator resolves the per-replica endpoints of
-    # the ClickHouseKeeperInstallation named keeper (keeper.yaml) and
+    # the ClickHouseKeeperInstallation named tenzir (keeper.yaml) and
     # renders the zookeeper config itself; it also waits for keeper pods to
     # be Running before reconciling this CHI.
     zookeeper:
       keeper:
-        name: keeper
+        name: tenzir
 
     # ClickHouse users, rendered by the operator into users.d
     # (chop-generated-users). Passwords arrive as env vars the operator

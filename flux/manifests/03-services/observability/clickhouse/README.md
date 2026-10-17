@@ -19,7 +19,7 @@ everything past the retention horizon. Live plan and slice breakdown:
 | `flux-kustomization.yaml`         | Flux Kustomization `services-clickhouse` (operator layer)                                       |
 | `cluster/flux-kustomization.yaml` | Flux Kustomization `services-clickhouse-cluster` (CR layer)                                     |
 | `cluster/secret.yaml`             | OnePasswordItem `clickhouse-secrets` (dedicated `clickhouse-secrets` vault item)                |
-| `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `keeper` - 3-node ensemble                                         |
+| `cluster/keeper.yaml`             | ClickHouseKeeperInstallation `tenzir` - 3-node ensemble                                         |
 | `cluster/cluster.yaml`            | ClickHouseInstallation `tenzir` - 1 shard x 3 replicas, users, tiered storage, schema bootstrap |
 
 The operator watches `clickhouse` only (`watchNamespaces`).
@@ -47,7 +47,7 @@ The operator creates the Services; name prefixes are fixed by its namer:
 - `chi-tenzir-ocsf-<shard>-<replica>` services - per-host (e.g.
   `chi-tenzir-ocsf-0-0`); ad-hoc `clickhouse-client` targets when you need a
   specific replica.
-- Keeper services (`chk-keeper-...`) - operator-internal; the CHI references
+- Keeper services (`chk-tenzir-ocsf-...`) - operator-internal; the CHI references
   the Keeper CR by name and the operator wires the endpoints.
 
 ## Users (all in `cluster/cluster.yaml`, `spec.configuration.users`)

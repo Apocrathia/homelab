@@ -10,12 +10,12 @@
 apiVersion: clickhouse-keeper.altinity.com/v1
 kind: ClickHouseKeeperInstallation
 metadata:
-  name: keeper
+  name: tenzir
   namespace: clickhouse
 spec:
   configuration:
     clusters:
-      - name: keeper
+      - name: ocsf
         layout:
           replicasCount: 3
 
