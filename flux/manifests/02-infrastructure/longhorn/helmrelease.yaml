@@ -112,6 +112,10 @@ spec:
       disableSchedulingOnCordonedNode: true # Don't schedule on cordoned nodes
       replicaZoneSoftAntiAffinity: true # Prefer same zone for replicas
       replicaDiskSoftAntiAffinity: true # Allow same disk for replicas
+      # Instance-manager CPU request = % of node allocatable. Default 12% = ~1.9c
+      # per node against 0.07-0.26c observed usage; 4% (~0.64c) frees ~1.3c/node
+      # of CPU request headroom for scheduling.
+      guaranteedInstanceManagerCPU: 4
 
       # Volume creation settings
       allowVolumeCreationWithDegradedAvailability: true # Allow creation without all replicas
