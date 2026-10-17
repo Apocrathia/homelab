@@ -88,7 +88,10 @@ expires with the window on the weighted-age backstop. The lake is a
 transit buffer between ingest and the archive, not a query surface.
 The parquet is the OCSF record past the window; the compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15-20
-minutes. Loki keeps the raw JSON stream via the tetragon pods'
+minutes. The Longhorn volume sits out the daily-backup RecurringJob
+([`pvc-recurring-job.yaml`](./pvc-recurring-job.yaml)): a daily chain of
+a 15-minute buffer is redundant with the parquet record. Filesystem trim
+and snapshot hygiene still run on the volume. Loki keeps the raw JSON stream via the tetragon pods'
 export-stdout sidecar, but raw JSON is not OCSF-queryable; replay the
 record with `from_s3`.
 
