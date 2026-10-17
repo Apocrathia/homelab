@@ -8,6 +8,7 @@ metadata:
 
 resources:
   - 1password.yaml
+  - altinity.yaml
   - aqua.yaml
   - authentik.yaml
   - cert-manager.yaml

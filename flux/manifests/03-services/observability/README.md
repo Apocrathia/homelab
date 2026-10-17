@@ -148,6 +148,19 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   via the tetragon `export-stdout` sidecar is unchanged
 - **Details**: See [`alloy/tetragon/README.md`](./alloy/tetragon/README.md)
 
+### 15. **ClickHouse** (`clickhouse/`)
+
+- **Purpose**: OCSF query store for the Tenzir SIEM plane - Altinity
+  operator, 1 shard x 3 replicas behind a 3-node ClickHouse Keeper
+  ensemble, tiered storage (hot Longhorn PVCs, cold parts in the rustfs
+  `tenzir` bucket), TTL with a retention-horizon DELETE cap
+- **Deployment**: Altinity `altinity-clickhouse-operator` Helm chart
+  (CRDs installed by the chart hook) + `ClickHouseKeeperInstallation` +
+  `ClickHouseInstallation` CRs in `clickhouse`
+- **Details**: See [`clickhouse/README.md`](./clickhouse/README.md); rollout
+  plan:
+  [`docs/plans/clickhouse-rollout.md`](../../../../docs/plans/clickhouse-rollout.md)
+
 ## Architecture
 
 The observability stack integrates with the existing kube-prometheus-stack deployment:

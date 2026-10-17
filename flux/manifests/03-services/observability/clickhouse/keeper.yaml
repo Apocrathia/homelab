@@ -1,0 +1,71 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhousekeeperinstallations.clickhouse-keeper.altinity.com.yaml
+# ClickHouse Keeper ensemble for the CHI in cluster.yaml: 3 nodes (odd - quorum
+# tolerates one node loss). Managed by the Altinity operator through the
+# ClickHouseKeeperInstallation CRD (the keeper mechanism the operator
+# supports; installed with the operator chart); the CHI references this CR
+# by name via spec.configuration.zookeeper.keeper.name and the operator
+# resolves the per-replica endpoints itself. server_id/raft wiring is
+# operator-generated from the layout - nothing to hand-roll here.
+apiVersion: clickhouse-keeper.altinity.com/v1
+kind: ClickHouseKeeperInstallation
+metadata:
+  name: keeper
+  namespace: clickhouse
+spec:
+  configuration:
+    clusters:
+      - name: keeper
+        layout:
+          replicasCount: 3
+
+  defaults:
+    templates:
+      podTemplate: keeper-pod
+      dataVolumeClaimTemplate: keeper-data
+
+  templates:
+    podTemplates:
+      - name: keeper-pod
+        spec:
+          # Keeper quorum requires 3 nodes on 3 distinct hosts; a two-on-one
+          # placement turns a single node failure into quorum loss.
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: clickhouse-keeper.altinity.com/app
+                        operator: In
+                        values:
+                          - chop
+                  topologyKey: kubernetes.io/hostname
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            fsGroup: 101
+          containers:
+            - name: clickhouse-keeper
+              # Same ClickHouse tree as the server image in cluster.yaml; the
+              # operator's default is clickhouse/clickhouse-keeper:latest.
+              # renovate: datasource=docker depName=clickhouse/clickhouse-keeper
+              image: clickhouse/clickhouse-keeper:25.8.33.6
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 500m
+                  memory: 1Gi
+
+    volumeClaimTemplates:
+      - name: keeper-data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: longhorn
+          resources:
+            requests:
+              # Raft logs + snapshots only; 5 Gi is generous headroom.
+              storage: 5Gi

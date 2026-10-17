@@ -1,0 +1,412 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml
+# ClickHouse OCSF query store. Altinity operator shape (operator decision
+# 2026-10-17, supersedes the generic-app shape in the old plan draft):
+# 1 shard x 3 replicas of clickhouse-server behind a Keeper ensemble
+# (keeper.yaml) - ReplicatedMergeTree tables, replication for pod/PVC-loss
+# resilience, rolling updates orchestrated by the operator.
+#
+# In-cluster endpoints (operator-created Services; pattern prefixes are
+# fixed by the operator namer):
+#   clickhouse-ocsf.clickhouse.svc.cluster.local  - CR-level service,
+#     load-balanced across all hosts, HTTP 8123 + native 9000
+#   chi-ocsf-ocsf-<shard>-<replica>...                   - per-host services
+#   The {cluster} macro value is "ocsf" (the single cluster below).
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: ocsf
+  namespace: clickhouse
+spec:
+  configuration:
+    # Keeper reference: the operator resolves the per-replica endpoints of
+    # the ClickHouseKeeperInstallation named keeper (keeper.yaml) and
+    # renders the zookeeper config itself; it also waits for keeper pods to
+    # be Running before reconciling this CHI.
+    zookeeper:
+      keeper:
+        name: keeper
+
+    # ClickHouse users, rendered by the operator into users.d
+    # (chop-generated-users). Passwords arrive as env vars the operator
+    # injects from the clickhouse-secrets Secret (OnePasswordItem on the
+    # existing tenzir-secrets vault item) - no secret values in git, ever.
+    # The operator also merges in localhost networks + a host_regexp for the
+    # CHI's own service FQDNs on every user; networks below add the cilium
+    # pod CIDR so in-cluster writers/readers connect from their pod IPs.
+    # grants are users.xml-level RBAC (ClickHouse <grants> config): with
+    # grants present, access is exactly what is granted.
+    users:
+      # Live writer + backfill user (Tenzir to_clickhouse, MR-3/MR-5).
+      # SELECT is required by to_clickhouse's table-description refresh
+      # (DESCRIBE) and the live-leg validation queries.
+      tenzir/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
+      tenzir/networks/ip:
+        - 10.42.0.0/16
+      tenzir/grants/query:
+        - GRANT INSERT, SELECT ON ocsf.*
+      # Grafana datasource user (MR-2), SELECT-only.
+      grafana/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-grafana-password
+      grafana/networks/ip:
+        - 10.42.0.0/16
+      grafana/grants/query:
+        - GRANT SELECT ON ocsf.*
+
+    files:
+      # Tiered storage policy, prototype-validated (.scratch/
+      # clickhouse-prototype/VERDICT.md): hot volume on the Longhorn-backed
+      # data PVC, cold volume as an S3 disk writing CH-internal parts into
+      # the existing rustfs `tenzir` bucket (dedicated clickhouse/ prefix)
+      # with the existing tenzir bucket-user creds injected from_env. Each
+      # replica runs this same disk config - each replica uploads its own
+      # copy of every cold part (3x rustfs cold growth; see the rollout
+      # plan).
+      config.d/00-storage-tiered.xml: |
+        <clickhouse>
+            <storage_configuration>
+                <disks>
+                    <hot>
+                        <type>local</type>
+                        <path>/var/lib/clickhouse/hot/</path>
+                    </hot>
+                    <cold>
+                        <type>s3</type>
+                        <endpoint>http://storage.services.apocrathia.com:9009/tenzir/clickhouse/</endpoint>
+                        <access_key_id from_env="CH_S3_ACCESS_KEY_ID"/>
+                        <secret_access_key from_env="CH_S3_SECRET_ACCESS_KEY"/>
+                        <!-- files > 32 MiB upload multipart (rustfs multipart
+                             verified in the prototype); smaller ones PUT single -->
+                        <max_single_part_upload_size>33554432</max_single_part_upload_size>
+                    </cold>
+                </disks>
+                <policies>
+                    <tiered>
+                        <volumes>
+                            <hot>
+                                <disk>hot</disk>
+                            </hot>
+                            <cold>
+                                <disk>cold</disk>
+                            </cold>
+                        </volumes>
+                    </tiered>
+                </policies>
+            </storage_configuration>
+        </clickhouse>
+
+      # Schema bootstrap: ClickHouse startup_scripts (server-side SQL run at
+      # every start, in order; the Altinity-documented bootstrap mechanism -
+      # docs/chi-examples/18-schema-init-02-startup-scripts.yaml). Runs on
+      # every replica independently: per-node idempotent CREATE IF NOT EXISTS
+      # with the operator-provided {installation}/{cluster}/{shard}/
+      # {database}/{table}/{replica} macros; no ON CLUSTER. A replica with a
+      # fresh PVC re-CREATEs and re-attaches to its existing Keeper replica
+      # path, recovering from siblings.
+      #
+      # Table strategy per the rollout plan (D3): one table per OCSF class,
+      # typed hot columns only for dashboard hot paths (dotted column names
+      # select nested input paths), unmapped JSON, and a `tenzir:catch_all`
+      # JSON column absorbing every other field (ocsf_cast schema churn lands
+      # there instead of dropping events - the prototype's rigid Tuple
+      # columns would).
+      #
+      # TTL (operator-tunable):
+      #   - 90 DAY TO VOLUME 'cold': move parts to the rustfs tier
+      #   - 400 DAY DELETE: retention horizon cap (strawman 400d confirmed at
+      #     MR-1 review; every table uses the same value - change it here,
+      #     then ALTER per-table server-side for already-created tables)
+      # SETTINGS ttl_only_drop_parts keeps the DELETE cap a cheap partition
+      # drop (day partitions).
+      config.d/10-startup-scripts.xml: |
+        <clickhouse>
+            <startup_scripts>
+                <throw_on_error>false</throw_on_error>
+                <scripts>
+                    <query>CREATE DATABASE IF NOT EXISTS ocsf</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Base_Event
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `class_name` LowCardinality(Nullable(String)),
+            `activity_id` Nullable(UInt8),
+            `severity_id` UInt8 DEFAULT 0,
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `device.hostname` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.API_Activity
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `actor.user.name` LowCardinality(Nullable(String)),
+            `api.operation` LowCardinality(Nullable(String)),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `src_endpoint.ip` Nullable(IPv6),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Authentication
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `status_id` Nullable(UInt8),
+            `actor.user.name` LowCardinality(Nullable(String)),
+            `src_endpoint.ip` Nullable(IPv6),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Account_Change
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `actor.user.name` LowCardinality(Nullable(String)),
+            `src_endpoint.ip` Nullable(IPv6),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Detection_Finding
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `status_id` Nullable(UInt8),
+            `uid` Nullable(String),
+            `rule_id` Nullable(String),
+            `subject_kind` LowCardinality(Nullable(String)),
+            `subject_name` Nullable(String),
+            `subject_namespace` Nullable(String),
+            `finding_info.title` Nullable(String),
+            `finding_info.uid` Nullable(String),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Vulnerability_Finding
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `finding_info.title` Nullable(String),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Network_Activity
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `src_endpoint.ip` Nullable(IPv6),
+            `dst_endpoint.ip` Nullable(IPv6),
+            `traffic.bytes` Nullable(UInt64),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.Process_Activity
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `activity_id` Nullable(UInt8),
+            `process.path` Nullable(String),
+            `device.hostname` LowCardinality(Nullable(String)),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS ocsf.File_System_Activity
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `severity_id` UInt8 DEFAULT 0,
+            `file.path` Nullable(String),
+            `file.xattributes.permission` Nullable(String),
+            `actor.process.path` Nullable(String),
+            `actor.process.container.name` LowCardinality(Nullable(String)),
+            `device.hostname` LowCardinality(Nullable(String)),
+            `metadata.product.name` LowCardinality(Nullable(String)),
+            `unmapped` JSON CODEC(ZSTD(3)),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY toDate(`time`)
+        ORDER BY (class_uid, `time`)
+        TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+        SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+            </startup_scripts>
+        </clickhouse>
+
+    clusters:
+      - name: ocsf
+        layout:
+          shardsCount: 1
+          replicasCount: 3
+
+  defaults:
+    templates:
+      podTemplate: clickhouse-pod
+      dataVolumeClaimTemplate: data
+
+  templates:
+    podTemplates:
+      - name: clickhouse-pod
+        spec:
+          # Replication covers data safety, but two replicas on one host
+          # turn a single node crash into a 2-of-3 replica loss; require
+          # spread across hosts (3 replicas, 4 nodes).
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: clickhouse.altinity.com/app
+                        operator: In
+                        values:
+                          - chop
+                  topologyKey: kubernetes.io/hostname
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            fsGroup: 101
+          containers:
+            - name: clickhouse
+              # Official image (prototype-validated build: rustfs multipart,
+              # tiered storage, JSON types, startup_scripts all verified on
+              # 25.8.33.6). The operator's own default is the same repo at
+              # :latest - pin instead, renovate bumps.
+              # renovate: datasource=docker depName=clickhouse/clickhouse-server
+              image: clickhouse/clickhouse-server:25.8.33.6
+              ports:
+                - name: http
+                  containerPort: 8123
+                - name: client
+                  containerPort: 9000
+                # interserver HTTP: part fetches between replicas
+                - name: interserver
+                  containerPort: 9009
+              env:
+                # rustfs creds for the cold S3 disk (from_env in
+                # 00-storage-tiered.xml); existing tenzir bucket user,
+                # existing values - the OnePasswordItem materializes them
+                # into this namespace.
+                - name: CH_S3_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-secrets
+                      key: aws-access-key-id
+                - name: CH_S3_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: clickhouse-secrets
+                      key: aws-secret-access-key
+              resources:
+                # Strawman sizing (plan risk table): one Tenzir writer, LAN
+                # rustfs cold reads, dashboards. Watch the first week.
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  cpu: "2"
+                  memory: 6Gi
+              readinessProbe:
+                httpGet:
+                  path: /ping
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+              livenessProbe:
+                httpGet:
+                  path: /ping
+                  port: http
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                timeoutSeconds: 5
+
+    volumeClaimTemplates:
+      - name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: longhorn
+          resources:
+            requests:
+              # Hot tier per replica (~90d): each replica holds a full copy
+              # of the data (replication), so the cluster reserves 3x this
+              # cap; Longhorn grows on demand, so this is a ceiling.
+              storage: 100Gi
