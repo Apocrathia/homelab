@@ -74,8 +74,9 @@ and the rendered Secret keys match them:
   for the original provisioning)
 - `discord-webhook-url`: unused by the manifests; the vault field stays
   for the operator's off-repo use
-- `authentik-events-token`: the ak-tenzir events pull token, minted by
-  the tofu pair ([`crossplane.yaml`](./crossplane.yaml) +
+- `authentik-events-token`: the ak-tenzir token for the core node's
+  `authentik-pull` pipeline, minted by the tofu pair
+  ([`crossplane.yaml`](./crossplane.yaml) +
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
 - `core-token` / `tetragon-token` / `netflow-token` / `investigations-token`: the

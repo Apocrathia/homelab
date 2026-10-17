@@ -4,7 +4,7 @@ The official `netflow` TQL package, vendored byte-for-byte from
 [github.com/tenzir/library](https://github.com/tenzir/library) @
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). It maps
 `read_netflow` v5/v9/IPFIX records to OCSF 1.9.0 Network Activity through
-the `netflow::ocsf::*` operators; the netflow node's netflow-collector
+the `netflow::ocsf::*` operators; the netflow node's netflow-ingest
 pipeline calls `netflow::ocsf::normalize`
 ([wiring](../../nodes/netflow/helmrelease.yaml)). It replaced the hand-rolled
 `homelab::netflow::ocsf::map` per the library-first rule

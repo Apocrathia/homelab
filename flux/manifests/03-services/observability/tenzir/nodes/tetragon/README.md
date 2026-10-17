@@ -4,16 +4,19 @@
 
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
-nothing else. Two pipelines live in
+nothing else. Four pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml): tetragon-ingest-http (the
-OTLP listener for the tetragon alloy) and tetragon-ocsf (the OCSF
-mapping into the lake). The split exists so the flood's CPU and memory
+OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
+mapping into the lake), and the diagnostics pair
+(error-diagnostics-to-mimir, diagnostics-to-loki) — the flood node
+gets the error/warning and Loki lanes but ships no pipeline-metrics
+by design. The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node.
 
 The chart runs the pipelines in subprocesses (`pipeline-subprocesses`):
 a pipeline blowup dies alone instead of taking the node process down,
 and the `accept_otlp` listener stays in-process by design. Both
-pipelines carry `// parallelism: 4`, matching the node's 4-core limit;
+flood pipelines carry `// parallelism: 4`, matching the node's 4-core limit;
 the parse and OCSF-map chains replicate across cores while the listener
 and `import` stay single-instance regardless of the directive. Parallel
 instances emit in arbitrary order, which is harmless while both

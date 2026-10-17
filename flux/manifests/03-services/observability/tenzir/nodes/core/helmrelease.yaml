@@ -123,7 +123,7 @@ spec:
             disk-budget-low: 4GiB
           pipelines:
             k8s-audit-ingest-http:
-              name: k8s-audit ingest (otlp/http)
+              name: k8s-audit ingest http
               description: |
                 OTLP/HTTP listener for the kube-audit alloy and the shared
                 alloy OTLP log fan-out; unpacks audit JSON bodies onto
@@ -134,7 +134,7 @@ spec:
                 publish "k8s-audit.raw"
               restart-on-error: 1 minute
             k8s-audit-ingest-grpc:
-              name: k8s-audit ingest (otlp/grpc)
+              name: k8s-audit ingest grpc
               description: |
                 OTLP/gRPC listener for future OTLP-native senders; unpacks
                 audit JSON bodies onto k8s-audit.raw; OTLP streams without
@@ -145,7 +145,7 @@ spec:
                 publish "k8s-audit.raw"
               restart-on-error: 1 minute
             k8s-audit-ocsf:
-              name: k8s-audit ocsf mapping
+              name: k8s-audit ocsf
               description: |
                 k8s audit -> OCSF API Activity (6003), then derive +
                 schema-validate and store in the node. Publishes onto the
@@ -158,8 +158,8 @@ spec:
                 fork { import }
                 publish "ocsf"
               restart-on-error: 1 minute
-            sigma-detection:
-              name: sigma detection (ocsf bus)
+            sigma-detect:
+              name: sigma detect
               description: |
                 One sigma pass over the unified OCSF bus. mapping="auto"
                 selects behavior per input schema: OCSF-shaped schemas get
@@ -176,12 +176,14 @@ spec:
                 the archive — there is no other egress.
               definition: |
                 subscribe "ocsf"
-                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="auto", refresh_interval=30s
+                sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],
+                      mapping="auto",
+                      refresh_interval=30s
                 homelab::findings::stamp
                 import
               restart-on-error: 1 minute
             http-ingest:
-              name: http ingest (fleet webhook + trivy reader)
+              name: http ingest
               description: |
                 HTTP listener for push-based SIEM sources: the fleet osquery
                 result webhook (rows envelope) and the trivy-report-reader
@@ -199,8 +201,8 @@ spec:
                 homelab::fleet::parse
                 publish "fleet.raw"
               restart-on-error: 1 minute
-            authentik-events:
-              name: authentik events pull
+            authentik-pull:
+              name: authentik pull
               description: |
                 Polls the authentik events API every 5 minutes (Bearer token
                 via the authentik-events-token managed secret), walking the
@@ -223,7 +225,7 @@ spec:
                 publish "authentik.raw"
               restart-on-error: 1 minute
             authentik-ocsf:
-              name: authentik ocsf mapping
+              name: authentik ocsf
               description: |
                 authentik events -> OCSF: login/logout/login_failed map to
                 Authentication, account mutations to Account Change, and
@@ -238,7 +240,7 @@ spec:
                 publish "ocsf"
               restart-on-error: 1 minute
             fleet-ocsf:
-              name: fleet ocsf mapping
+              name: fleet ocsf
               description: |
                 Fleet osquery result rows -> OCSF Base Event (a row's
                 meaning comes from its query; no scheduled query exists
@@ -253,7 +255,7 @@ spec:
                 publish "ocsf"
               restart-on-error: 1 minute
             trivy-ocsf:
-              name: trivy ocsf mapping
+              name: trivy ocsf
               description: |
                 trivy-operator report files (read by the trivy-report-reader
                 off the alternate-report-storage PVC) -> OCSF:
@@ -344,14 +346,14 @@ spec:
                     name="tenzir_pipeline_errors",
                     value=1,
                     timestamp=timestamp,
-                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "core"}
                 }
                 where severity == "warning"
                 to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
                   name="tenzir_pipeline_warnings",
                   value=1,
                   timestamp=timestamp,
-                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name}
+                  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "core"}
               restart-on-error: 1 minute
             diagnostics-to-loki:
               name: diagnostics to loki
@@ -428,7 +430,7 @@ spec:
                 # rows and authentik's non-IAM arm), added 2026-10-17:
                 # without a time rule those partitions accumulated locally
                 # and bloated the boot catalog load. Network Activity
-                # (4001) left with the netflow collector for the netflow
+                # (4001) left with the netflow ingest for the netflow
                 # node, whose own archive rule owns the class there.
                 # ClickHouse is the archive (rollout MR-5 teardown, plan
                 # D8 end state): the retired to_s3 tail and its fork
@@ -453,13 +455,13 @@ spec:
                     ]
                   pipeline: |
                     to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
-                      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-                      port=9000,
-                      user="tenzir",
-                      password=secret("clickhouse-password"),
-                      tls=false,
-                      mode="append",
-                      max_batch_rows=65536
+                                  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                                  port=9000,
+                                  user="tenzir",
+                                  password=secret("clickhouse-password"),
+                                  tls=false,
+                                  mode="append",
+                                  max_batch_rows=65536
 
     # Sized by the docs' formula for this node's shape (full math in
     # core/README.md): detection (+1), normalization on 4 sources (+0.8),

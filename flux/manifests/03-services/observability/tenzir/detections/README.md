@@ -28,7 +28,7 @@ Finding 2004). The tetragon node publishes its own node-local `ocsf`
 topic with Process Activity (1007), File System Activity (1001), and
 Network Activity (4001), and the netflow node likewise: its collector
 publishes Network Activity (4001) node-local and feeds its own archive
-rule. One `sigma-detection` pipeline on the core node subscribes —
+rule. One `sigma-detect` pipeline on the core node subscribes —
 netflow events reach the archive and Grafana, not the sigma pass (no
 sigma rule targets netflow fields, so no coverage is lost; the tetragon
 and netflow node-local topics have no sigma consumer by design).
