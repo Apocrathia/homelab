@@ -81,7 +81,7 @@ spec:
       category: "Productivity"
       displayName: "Excalidraw"
       externalHost: "https://excalidraw.gateway.services.apocrathia.com"
-      icon: "https://icons.gateway.services.apocrathia.com/excalidraw.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/excalidraw/icon.svg"
       interceptHeaderAuth: false
 
     httproute:

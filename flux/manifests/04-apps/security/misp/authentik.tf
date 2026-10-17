@@ -200,7 +200,7 @@ resource "authentik_application" "app" {
   open_in_new_tab = true
 
   # Dashboard metadata — the blueprint-era values.
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/misp.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/misp/icon.svg"
   meta_description = "MISP threat intelligence sharing platform - IOCs, feeds, and event data"
   meta_publisher   = "CIRCL"
 

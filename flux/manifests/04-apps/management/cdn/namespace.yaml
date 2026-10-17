@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cdn
+  labels:
+    app.kubernetes.io/name: cdn
+    app.kubernetes.io/part-of: cdn

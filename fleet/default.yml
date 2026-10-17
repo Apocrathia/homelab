@@ -25,7 +25,7 @@ org_settings:
   sso_settings:
     enable_sso: true
     idp_name: Authentik
-    idp_image_url: https://gitlab.com/Apocrathia/homelab/-/raw/main/fleet/platforms/all/icons/authentik.svg
+    idp_image_url: https://cdn.gateway.services.apocrathia.com/homelab/fleet/platforms/all/icons/authentik.svg
     entity_id: https://fleet.gateway.services.apocrathia.com
     issuer_uri: authentik
     metadata_url: https://auth.gateway.services.apocrathia.com/application/saml/fleetdm/metadata/

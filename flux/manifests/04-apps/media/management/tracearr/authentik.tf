@@ -116,7 +116,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://tracearr.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/tracearr.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/management/tracearr/icon.svg"
   meta_description = "Real-time monitoring for Plex, Jellyfin, and Emby"
   meta_publisher   = "Tracearr"
 

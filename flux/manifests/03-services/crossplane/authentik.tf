@@ -225,7 +225,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/crossplane.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/crossplane/icon.svg"
   meta_description = "Crossplane resource dashboard"
   meta_publisher   = "Crossplane Contrib"
 

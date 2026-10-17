@@ -224,7 +224,7 @@ resource "authentik_application" "app" {
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
   # sheet).
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/renovate-operator.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/renovate-operator/icon.svg"
   meta_description = "Dependency update automation - Renovate as Kubernetes Jobs"
   meta_publisher   = "mogenius"
 

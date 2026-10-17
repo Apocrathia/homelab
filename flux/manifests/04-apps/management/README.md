@@ -6,13 +6,13 @@ Administrative tools and developer infrastructure.
 
 ## Applications
 
+### [CDN](./cdn/README.md)
+
+Self-hosted static file host for the homelab repo tree: every repo file served under one unauthenticated LAN/tailnet URL (replaces GitLab raw fetches on dashboard tiles).
+
 ### [Fleet](./fleet/README.md)
 
 Open-source device management (osquery) for endpoint inventory, queries, and vulnerability visibility.
-
-### [Icons](./icons/README.md)
-
-Self-hosted authentik dashboard icon server: every repo icon served from one flat, unauthenticated LAN URL (replaces GitLab raw fetches on dashboard tiles).
 
 ### [JetKVM](./jetkvm/README.md)
 

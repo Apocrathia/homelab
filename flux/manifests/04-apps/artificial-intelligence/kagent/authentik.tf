@@ -120,7 +120,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://kagent.gateway.services.apocrathia.com"
   open_in_new_tab = true
 
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/kagent.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/artificial-intelligence/kagent/icon.svg"
   meta_description = "kagent - AI Agent Orchestration Platform"
   meta_publisher   = "kagent-dev"
 

@@ -155,7 +155,7 @@ resource "authentik_application" "app" {
 
   # Optional metadata: null = attribute omitted — the config must not
   # invent values.
-  meta_icon        = "https://icons.gateway.services.apocrathia.com/matrix.svg"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/icon.svg"
   meta_description = "Matrix homeserver (Synapse) with SSO via Matrix Authentication Service"
   meta_publisher   = "Matrix"
 

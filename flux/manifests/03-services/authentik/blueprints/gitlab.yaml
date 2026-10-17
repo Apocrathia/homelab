@@ -18,7 +18,7 @@ entries:
       group: "Platform"
       meta_launch_url: "https://gitlab.com/Apocrathia/homelab"
       open_in_new_tab: true
-      icon: "https://icons.gateway.services.apocrathia.com/gitlab.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/blueprints/icons/gitlab.svg"
       meta_description: "GitLab repository"
       meta_publisher: "GitLab"
 

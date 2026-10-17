@@ -252,7 +252,7 @@ spec:
       category: "Artificial Intelligence"
       displayName: "Hermes Agent"
       externalHost: "https://hermes-agent.gateway.services.apocrathia.com"
-      icon: "https://icons.gateway.services.apocrathia.com/hermes-agent.png"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/artificial-intelligence/hermes-agent/icon.png"
       oidc:
         # Confidential + PKCE — same pattern as other generic-app OIDC apps.
         # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
