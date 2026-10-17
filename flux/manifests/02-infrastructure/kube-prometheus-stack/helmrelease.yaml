@@ -135,7 +135,7 @@ spec:
         registry: docker.io
         repository: grafana/grafana
         # renovate: datasource=docker depName=docker.io/grafana/grafana
-        tag: "13.2.3-ubuntu"
+        tag: "13.2.4-ubuntu"
       plugins:
         - grafana-llm-app
         - grafana-advisor-app
