@@ -360,8 +360,9 @@ spec:
                 job=tenzir-diagnostics entries (node label = core).
                 to_fluent_bit resolves $pipeline_name and $severity per event
                 and consumes both out of the shipped body (live-verified
-                2026-10-17 probe), so the line keeps the rest of the
-                diagnostic record verbatim — timestamp, message, notes,
+                2026-10-17 probe); drop discards the ANSI escape-coded
+                rendered field, so the line keeps the rest of the diagnostic
+                record — pipeline_id, hidden, run, timestamp, message, notes,
                 annotations — and the labels carry pipeline + severity.
                 Hidden entries (platform-UI pipeline deprecation noise) stay
                 out. Plain HTTP to loki-write, cluster-internal. live=true
@@ -373,6 +374,7 @@ spec:
               definition: |
                 diagnostics live=true
                 where not hidden
+                drop rendered
                 to_fluent_bit "loki", options={host: "loki-write.loki-system.svc", port: "3100", labels: "job=tenzir-diagnostics,namespace=tenzir,node=core,pipeline=$pipeline_name,severity=$severity"}
               restart-on-error: 1 minute
         plugins:
