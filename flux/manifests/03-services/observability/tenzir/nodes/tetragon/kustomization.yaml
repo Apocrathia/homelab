@@ -7,3 +7,4 @@ metadata:
 
 resources:
   - helmrelease.yaml
+  - storage.yaml

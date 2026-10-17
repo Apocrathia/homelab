@@ -112,8 +112,8 @@ spec:
                 Activity per event kind), then derive + schema-validate and
                 store in the node. The unmapped residue is a selected
                 projection (pod identity + policy name), not the full raw
-                record. The raw stream keeps flowing to Loki via the
-                tetragon pods' export-stdout sidecar.
+                record. No raw stream lands in Loki; the OCSF parquet
+                archive is the record.
               definition: |
                 // parallelism: 4
                 subscribe "tetragon.raw"
@@ -150,9 +150,9 @@ spec:
             # expires with the window on the weighted-age backstop. The
             # lake is a transit buffer between ingest and the archive, not
             # a query surface; the parquet is the OCSF record past the
-            # window — Loki keeps the raw JSON stream via the tetragon
-            # pods' export-stdout sidecar, but not OCSF-query semantics;
-            # from_s3 replays the record. The pass runs every 5 minutes,
+            # window (no raw stream lands in Loki; export-stdout sidecar
+            # dropped); from_s3 replays the record. The pass runs every
+            # 5 minutes,
             # so the true window at pass boundaries is 15-20 minutes.
             time:
               interval: 5 minutes
