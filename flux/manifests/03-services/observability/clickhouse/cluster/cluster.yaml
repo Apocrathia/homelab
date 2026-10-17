@@ -94,7 +94,8 @@ spec:
       # read-only behavior (with grants present, access is exactly what is
       # granted).
       investigations-reader/grants/query:
-        - GRANT SELECT ON investigations.*, ocsf.*
+        - GRANT SELECT ON investigations.*
+        - GRANT SELECT ON ocsf.*
 
     files:
       # Tiered storage policy, prototype-validated (.scratch/
