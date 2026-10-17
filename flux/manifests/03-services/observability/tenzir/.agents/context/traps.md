@@ -45,9 +45,6 @@ docs — nothing invented. Vendored debugging docs:
   other findings egress — the Discord doorbell and the Loki findings
   projection are gone. Do not add another lane.
   ([detections](../../detections/README.md))
-- **Netflow was hand-rolled before the library-first rule.** Candidate
-  to revisit against tenzir/library.
-  ([tenzir.md](./tenzir.md))
 
 ## Sources
 

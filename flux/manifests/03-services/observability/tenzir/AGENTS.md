@@ -1,7 +1,8 @@
 # Tenzir subtree router
 
-Two standalone Tenzir nodes in namespace `tenzir`; the core node is
-the detection plane. Narrative:
+Three standalone Tenzir nodes in namespace `tenzir`; the core node is
+the detection plane, the tetragon node the flood isolate, the netflow
+node the NetFlow collector isolate. Narrative:
 [`.agents/context/tenzir.md`](./.agents/context/tenzir.md); full story and
 manifest wiring: [`README.md`](./README.md).
 

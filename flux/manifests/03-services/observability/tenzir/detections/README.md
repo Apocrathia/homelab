@@ -24,10 +24,14 @@ README documents the architecture; the node wiring lives in
 Every normalized feed publishes to the unified `ocsf` topic: k8s audit
 (API Activity 6003), authentik (Authentication 3002, Account Change
 3001), fleet (Base Event), trivy (Vulnerability Finding 2002, Detection
-Finding 2004), netflow (Network Activity 4001). The tetragon node
-publishes its own node-local `ocsf` topic with Process Activity (1007),
-File System Activity (1001), and Network Activity (4001). One
-`sigma-detection` pipeline on the core node subscribes.
+Finding 2004). The tetragon node publishes its own node-local `ocsf`
+topic with Process Activity (1007), File System Activity (1001), and
+Network Activity (4001), and the netflow node likewise: its collector
+publishes Network Activity (4001) node-local and feeds its own archive
+rule. One `sigma-detection` pipeline on the core node subscribes —
+netflow events reach the archive and Grafana, not the sigma pass (no
+sigma rule targets netflow fields, so no coverage is lost; the tetragon
+and netflow node-local topics have no sigma consumer by design).
 
 ## Sigma semantics
 
@@ -54,7 +58,7 @@ pipeline.
 | API Activity          | 6003 | kube-apiserver audit (k8s map)                                                                             |
 | Authentication        | 3002 | authentik logins (authentik map)                                                                           |
 | Account Change        | 3001 | authentik account mutations (authentik map)                                                                |
-| Network Activity      | 4001 | netflow flows, tetragon kprobe connect attempts (netflow/tetragon maps)                                    |
+| Network Activity      | 4001 | netflow flows (tenzir/library map), tetragon kprobe connect attempts (tetragon map)                        |
 | Detection Finding     | 2004 | sigma matches, trivy ExposedSecretReport                                                                   |
 | Vulnerability Finding | 2002 | trivy VulnerabilityReport (homelab convention: Tenzir upstream documents no vulnerability-finding mapping) |
 | Process Activity      | 1007 | tetragon exec and exit (tetragon map)                                                                      |

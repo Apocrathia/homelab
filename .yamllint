@@ -42,6 +42,9 @@ rules:
       # Vendored SigmaHQ rule files are upstream bytes; no document marker.
       flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
       flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
+      # Vendored tenzir library `netflow` package: upstream bytes; its
+      # package.yaml ships without a document marker.
+      flux/manifests/03-services/observability/tenzir/packages/netflow/**
   document-end: disable
   truthy:
     check-keys: false

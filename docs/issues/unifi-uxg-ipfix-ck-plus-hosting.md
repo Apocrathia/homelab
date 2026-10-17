@@ -18,8 +18,9 @@ The UDP/2055 ingest path is healthy (LB VIP `10.100.1.96` /
 `ingest.services.apocrathia.com`). At filing time the collector was goflow2 —
 healthy, scrapable (Mimir `up{job="goflow2"}=1`), and reached by cluster
 probes. goflow2 has since been removed (SIEM lap C): NetFlow collection is
-moving to the Tenzir detection node's `read_netflow` listener (lap-C part 2,
-same LB pool IP `10.100.1.96`, UDP :2055).
+moving to the Tenzir netflow node's `read_netflow` listener (lap-C part 2,
+same LB pool IP `10.100.1.96`, UDP :2055; the collector moved to the
+dedicated node 2026-10-17).
 
 UniFi Network UI has NetFlow (IPFIX) configured (v10, collector hostname/port
 2055, networks selected), but the **UXG-Pro emits nothing**. Gateway
@@ -40,8 +41,8 @@ Desired: run UniFi Network on a host that unlocks UXG Traffic Flows (spare NUC
 → UniFi OS Server preferred over paid Official Hosting / UCK-Enterprise), then
 confirm the UXG actually emits IPFIX to the collector.
 
-Related in-repo: the Tenzir detection node owns NetFlow via its
-`read_netflow` listener (lap-C part 2,
+Related in-repo: the dedicated Tenzir netflow node owns NetFlow via
+its `read_netflow` listener (lap-C part 2,
 `flux/manifests/03-services/observability/tenzir/`), keeping the
 `ingest.services.apocrathia.com:2055` / `10.100.1.96` pool IP for flow
 exporters. The old goflow2 collector and its Grafana dashboard were removed
@@ -54,8 +55,8 @@ with it (SIEM lap C).
 2. SSH to Gateway: `tcpdump -ni any udp port 2055` → no packets.
 3. Cluster (at filing time, on goflow2): `Udp: InDatagrams` stayed flat
    except artificial probes; no flow records from the UXG `remote_ip`.
-   Post-removal equivalent: the Tenzir `read_netflow` listener (lap-C part 2)
-   shows no records from the UXG's IP.
+   Post-removal equivalent: the Tenzir netflow node's `read_netflow`
+   listener (lap-C part 2) shows no records from the UXG's IP.
 
 ## Acceptance
 
@@ -65,15 +66,15 @@ with it (SIEM lap C).
 - With NetFlow (IPFIX) enabled, Gateway `tcpdump` shows UDP/2055 toward
   `10.100.1.96` (or the configured collector)
 - The flow collector exposes non-probe records labeled with the UXG as
-  exporter — i.e. the Tenzir `read_netflow` listener (lap-C part 2) ingests
-  flow records from the UXG. There is no Grafana collector dashboard since
-  the goflow2 removal; flows are Tenzir-side.
+  exporter — i.e. the Tenzir netflow node's `read_netflow` listener
+  (lap-C part 2) ingests flow records from the UXG. There is no Grafana
+  collector dashboard since the goflow2 removal; flows are Tenzir-side.
 
 ## Feedback loop
 
 - Gateway: `tcpdump -ni any udp port 2055` (must leave silence)
-- Cluster: the Tenzir `read_netflow` intake (lap-C part 2) shows flow
-  records from the UXG's exporter IP
+- Cluster: the Tenzir netflow node's `read_netflow` intake (lap-C
+  part 2) shows flow records from the UXG's exporter IP
 - UniFi UI: Insights → Flows shows All Traffic after hosting change
 
 ## Implementation hint
@@ -120,10 +121,10 @@ Remaining acceptance before closing: confirm live IPFIX receipt
 post-cutover — UXG's restored netflow config (enabled, v10, port 2055,
 target `ingest.services.apocrathia.com`, seven networks) provisions the
 exporter and the ingest path to the flow collector is up. With goflow2
-removed (SIEM lap C), the confirming check is the Tenzir `read_netflow`
-listener (lap-C part 2, same pool IP `10.100.1.96:2055`) showing flow
-records from the UXG — there is no Grafana flows dashboard anymore. Close
-on confirmation.
+removed (SIEM lap C), the confirming check is the Tenzir netflow
+node's `read_netflow` listener (lap-C part 2, same pool IP
+`10.100.1.96:2055`) showing flow records from the UXG — there is no
+Grafana flows dashboard anymore. Close on confirmation.
 
 ## Resolution (2026-09-21): flows live via manual NETFLOW section — stock export is controller-broken
 
@@ -132,8 +133,8 @@ Prometheus → Mimir → Grafana `goflow2-collector`. Series:
 `goflow2_flow_traffic_packets_total{remote_ip="10.100.1.1"}`. The
 remaining acceptance above is answered — but not the way anyone expected.
 (That goflow2 → Mimir → Grafana chain was removed in SIEM lap C; the same
-UXG → `10.100.1.96:2055` path now feeds the Tenzir `read_netflow`
-listener, lap-C part 2.)
+UXG → `10.100.1.96:2055` path now feeds the Tenzir netflow node's
+`read_netflow` listener, lap-C part 2.)
 
 ### Root cause (primary): renderer omission
 
@@ -194,9 +195,9 @@ setting change re-renders `udapi-net-cfg.json`). Flows stop; re-apply:
 4. `systemctl restart udapi-server` — **bounces SSH (management plane
    rides udapi-server); reconnect after ~30 s.**
 5. Confirm: `lsmod | grep NETFLOW`; `journalctl -u udapi-server | grep
-flow-accounting` (no resolving errors); the Tenzir `read_netflow`
-   listener (lap-C part 2, `10.100.1.96:2055`) shows flow records from
-   the UXG's exporter IP.
+flow-accounting` (no resolving errors); the Tenzir netflow node's
+   `read_netflow` listener (lap-C part 2, `10.100.1.96:2055`) shows flow
+   records from the UXG's exporter IP.
 
 ### Re-test trigger (vendor-fix check)
 

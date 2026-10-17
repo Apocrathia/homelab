@@ -4,6 +4,10 @@
 # goflow2 collector on the same IP and port so UniFi exporters keep pointing
 # at ingest.services.apocrathia.com:2055. The tenzir node accepts the UDP
 # datagrams itself (accept_udp "0.0.0.0:2055", binary=true + read_netflow).
+# Moved from nodes/core with only the selector flipped to the dedicated
+# netflow node's pod: name, namespace, pool IP, and the alloy pairing
+# annotations stay identical, so Flux updates the Service in place and only
+# the endpoint set changes.
 apiVersion: v1
 kind: Service
 metadata:
@@ -30,6 +34,6 @@ spec:
       targetPort: 2055
   selector:
     app.kubernetes.io/name: tenzir-node
-    app.kubernetes.io/instance: tenzir-node-core
+    app.kubernetes.io/instance: tenzir-node-netflow
     app.kubernetes.io/component: node
-    app.kubernetes.io/tenzir-node: core
+    app.kubernetes.io/tenzir-node: netflow

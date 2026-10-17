@@ -78,9 +78,10 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 ### 7. **NetFlow → Tenzir** (removed: goflow2)
 
-- **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and the
-  Tenzir detection node owns NetFlow natively via its `read_netflow`
-  operator behind [`tenzir-ingest-lb`](./tenzir/nodes/core/service-ingest.yaml)
+- **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and
+  the dedicated Tenzir netflow node owns NetFlow natively via its
+  `read_netflow` operator behind
+  [`tenzir-ingest-lb`](./tenzir/nodes/netflow/service-ingest.yaml)
   (`:2055/UDP` on the shared pool IP, Tenzir namespace); UniFi exporters
   keep their `:2055` target.
 
@@ -135,9 +136,10 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   homelab Sigma rules over the unified OCSF bus (`mapping="auto"`),
   findings in the ClickHouse OCSF store after the 15-minute hot window;
   Grafana owns alerting
-- **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts), two
-  nodes in `tenzir`: `tenzir-node-core` (detection plane) and
-  `tenzir-node-tetragon` (tetragon flood isolate)
+- **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts),
+  three nodes in `tenzir`: `tenzir-node-core` (detection plane),
+  `tenzir-node-tetragon` (tetragon flood isolate), and
+  `tenzir-node-netflow` (NetFlow collector isolate)
 - **Details**: See [`tenzir/README.md`](./tenzir/README.md)
 
 ### 14. **tetragon alloy** (`alloy/tetragon/`)

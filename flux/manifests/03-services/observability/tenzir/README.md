@@ -1,17 +1,18 @@
 # Tenzir
 
-> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-Two standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
+Three standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
-it normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
-feeds to a unified OCSF bus, runs one sigma pass over it, and owns the
-archive. The [tetragon node](./nodes/tetragon/README.md) owns only the
-tetragon export flood, so its CPU and memory behavior cannot starve
-detection.
+it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to a
+unified OCSF bus, runs one sigma pass over it, and owns the archive. The
+[tetragon node](./nodes/tetragon/README.md) owns only the tetragon export
+flood, and the [netflow node](./nodes/netflow/README.md) owns only the
+NetFlow collector (UniFi exporters behind `tenzir-ingest-lb`), so neither
+feed's lifecycle can starve or disturb detection.
 
-Both nodes register into one hosted Tenzir Platform workspace
+All three nodes register into one hosted Tenzir Platform workspace
 (app.tenzir.com) over a single outbound WebSocket. Pipelines run entirely
 on the nodes; the events flowing through them never route through the
 platform.
@@ -73,13 +74,13 @@ and the rendered Secret keys match them:
   the tofu pair ([`crossplane.yaml`](./crossplane.yaml) +
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
-- `core-token` / `tetragon-token`: the pre-provisioned Tenzir Platform
-  node tokens, one per node
+- `core-token` / `tetragon-token` / `netflow-token`: the pre-provisioned
+  Tenzir Platform node tokens, one per node
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace
 renders — one item, multiple OnePasswordItem CRs). Its `clickhouse-password`
-field is the ClickHouse `tenzir` writer password both nodes read as
+field is the ClickHouse `tenzir` writer password all three nodes read as
 `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` for the `to_clickhouse` archive
 legs. The operator adds the value.
 

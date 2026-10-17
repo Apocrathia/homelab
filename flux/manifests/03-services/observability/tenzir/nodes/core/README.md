@@ -3,11 +3,15 @@
 > **Navigation**: [← Tenzir](../README.md) | [Tetragon node](../tetragon/README.md) | [Detections](../../detections/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
-pod `tenzir-node-core`) that normalizes every feed except the tetragon flood
-to OCSF, publishes onto the unified `ocsf` bus, and runs the one sigma
-pass. Thirteen pipelines live in
+pod `tenzir-node-core`) that normalizes every feed except the tetragon
+flood and the netflow collector to OCSF, publishes onto the unified
+`ocsf` bus, and runs the one sigma pass. Twelve pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml); the manifest is the source of
-truth for tunables (sizes, limits, retention values, ports).
+truth for tunables (sizes, limits, retention values, ports). The NetFlow
+collector moved to the dedicated
+[netflow node](../netflow/README.md), and the `tenzir-ingest-lb`
+LoadBalancer (pool IP `10.100.1.96`) moved with it — this node owns no
+LB service anymore.
 
 - k8s-audit-ingest-http / k8s-audit-ingest-grpc: OTLP listeners for the
   kube-audit alloy and the shared alloy OTLP log fan-out (the :4318
@@ -17,8 +21,6 @@ truth for tunables (sizes, limits, retention values, ports).
   Findings with the uid)
 - sigma-detection: sigma over the bus with `mapping="auto"`, uid stamp,
   import into the lake
-- netflow-collector: NetFlow v5/v9/IPFIX from the UniFi exporters, mapped
-  to OCSF Network Activity in the pipeline
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-events: cron pull of the authentik events API
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir /
@@ -33,13 +35,11 @@ flowchart LR
     FRW["fleet result webhook"] -->|"HTTP :8080"| FLT["fleet.raw"]
     TRR["trivy-report-reader"] -->|"HTTP :8080"| TRV["trivy.raw"]
     AKE["authentik events API"] -.->|"pull every 5m"| ATH["authentik.raw"]
-    UE["UniFi exporters<br/>(via tenzir-ingest-lb)"] -->|"NetFlow :2055"| NET["netflow collector"]
 
     AUD --> MAP["OCSF maps: audit, fleet, trivy, authentik"]
     FLT --> MAP
     TRV --> MAP
     ATH --> MAP
-    NET --> MAP
     MAP --> BUS["ocsf topic (the bus)"]
     BUS --> SIG["sigma detection<br/>(mapping=auto)"]
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]
@@ -60,12 +60,12 @@ marked assumed wait for post-recovery re-measurement.
 
 ```python
 CPU = max(2, ceil(
-    1 / 250        # ingest ~1 GB/day raw (assumed; netflow measured at 0.15 GB/day)
-    + 5 * 0.1      # 5 sources: audit OTLP, authentik API, fleet, trivy, netflow (docs: 0.1 per source)
+    1 / 250        # ingest ~1 GB/day raw (assumed)
+    + 4 * 0.1      # 4 sources: audit OTLP, authentik API, fleet, trivy (docs: 0.1 per source)
     + 1 * 0.1      # 1 destination: ClickHouse (docs: 0.1 per destination)
-    + 5 * 0.2      # normalization on: OCSF maps on audit, authentik, fleet, trivy, netflow (docs: 0.2 per source)
+    + 4 * 0.2      # normalization on: OCSF maps on audit, authentik, fleet, trivy (docs: 0.2 per source)
     + 1            # detection on: sigma over the bus (docs: +1)
-)) = max(2, ceil(2.9)) = 3 cores
+)) = max(2, ceil(2.304)) = 3 cores
 ```
 
 ```python
@@ -76,10 +76,10 @@ Storage = 1 * 30 * (1/2880) / 10 / 1000  # ingest GB/day * days/mo * months (15 
 ```python
 RAM = max(2,
     0.000001 * 2   # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
-    + 6 * 0.1      # sources (5) + destination (1)
+    + 5 * 0.1      # sources (4) + destination (1)
     + 0            # enrichment off (no context operators)
     + 1            # detection state (docs: +1)
-) = max(2, 1.6) = 2 GB
+) = max(2, 1.5) = 2 GB
 ```
 
 The memory limit is 8Gi: the formula's 2 GB floor plus the boot
