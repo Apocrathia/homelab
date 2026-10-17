@@ -9,8 +9,8 @@ ClickHouse, written by agents, read by the operator in Grafana. Two
 lanes, one blast radius:
 
 - **Write lane** — the standing
-  [`investigations-ingest-http`](./helmrelease.yaml) pipeline: agents
-  POST thin JSON envelopes to `accept_http :8080`; the
+  [`investigations-ingest-http`](./pipelines/investigations-ingest-http.tql)
+  pipeline: agents POST thin JSON envelopes to `accept_http :8080`; the
   [`homelab::investigations::ocsf::map`](../../packages/homelab/operators/investigations/ocsf/README.md)
   operator validates the envelope and stamps the OCSF spine, and the
   `to_clickhouse` leg INSERTs into `investigations.records` with the

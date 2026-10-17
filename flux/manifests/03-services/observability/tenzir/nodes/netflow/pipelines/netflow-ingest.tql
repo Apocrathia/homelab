@@ -1,0 +1,8 @@
+accept_udp "0.0.0.0:2055", binary=true
+read_netflow
+where netflow.record_type == "flow"
+netflow::ocsf::normalize
+ocsf_derive
+ocsf_cast
+fork { import }
+publish "ocsf"

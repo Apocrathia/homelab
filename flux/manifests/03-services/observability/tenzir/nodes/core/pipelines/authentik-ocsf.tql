@@ -1,0 +1,6 @@
+subscribe "authentik.raw"
+homelab::authentik::ocsf::map
+ocsf_derive
+ocsf_cast
+fork { import }
+publish "ocsf"

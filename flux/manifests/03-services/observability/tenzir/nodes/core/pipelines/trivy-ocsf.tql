@@ -1,0 +1,7 @@
+subscribe "trivy.raw"
+homelab::trivy::ocsf::map
+ocsf_derive
+ocsf_cast
+homelab::findings::stamp
+fork { import }
+publish "ocsf"

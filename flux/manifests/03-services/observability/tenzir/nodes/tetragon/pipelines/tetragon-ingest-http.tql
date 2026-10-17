@@ -1,0 +1,4 @@
+// parallelism: 4
+accept_otlp "0.0.0.0:4318", transport="http", schema="record", signals=["logs"]
+homelab::tetragon::parse
+publish "tetragon.raw"

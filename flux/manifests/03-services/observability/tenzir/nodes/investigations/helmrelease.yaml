@@ -156,6 +156,9 @@ spec:
             # — the agent query lane.
             commands:
               - web server
+          # Pipeline definitions live in pipelines/<id>.tql; this
+          # kustomization's replacements stitch them back into these
+          # empty definition fields at build time.
           pipelines:
             investigations-ingest-http:
               name: investigations ingest (case/evidence envelopes)
@@ -179,21 +182,7 @@ spec:
                 ClickHouse is the only durable copy, and the node lake
                 stays empty by construction (the PVC carries node state,
                 not records).
-              definition: |
-                accept_http "0.0.0.0:8080" {
-                  read_json
-                }
-                homelab::investigations::ocsf::map
-                ocsf_derive
-                ocsf_cast
-                to_clickhouse table="investigations.records",
-                  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-                  port=9000,
-                  user="investigations-writer",
-                  password=secret("investigations-writer-password"),
-                  tls=false,
-                  mode="append",
-                  max_batch_rows=65536
+              definition: ""
               restart-on-error: 1 minute
 
         # Web server options. Config-file layout (source-verified

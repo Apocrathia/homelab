@@ -5,7 +5,9 @@
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
 nothing else. Four pipelines live in
-[`helmrelease.yaml`](./helmrelease.yaml): tetragon-ingest-http (the
+[`pipelines/`](./pipelines/), one `.tql` each, stitched back into
+[`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
+tetragon-ingest-http (the
 OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
 mapping into the lake), and the diagnostics pair
 (error-diagnostics-to-mimir, diagnostics-to-loki) — the flood node
