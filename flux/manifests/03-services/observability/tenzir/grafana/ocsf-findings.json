@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Detection Finding (2004) surfacing over the tenzir OCSF archive (s3://tenzir/ocsf/, class_uid=2004 partitions) through the tenzir-ocsf DuckDB datasource view. Findings come from two sources: sigma matches on the core node's OCSF bus (stamped rule_id + subject) and trivy ExposedSecretReport findings (same stamp via the trivy pipeline). Grafana owns alerting off this archive; there is no other findings egress. Panels are empty until the archive parquet flows.",
+  "description": "Detection Finding (2004) surfacing from the ocsf.Detection_Finding ClickHouse table through the ocsf-clickhouse datasource. Findings come from two sources: sigma matches on the core node's OCSF bus (stamped rule_id + subject) and trivy ExposedSecretReport findings (same stamp via the trivy pipeline). Grafana owns alerting off this data; there is no other findings egress. Panels are empty until findings land in ClickHouse.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -11,8 +11,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Detection Finding (2004) rate per bucket split by severity_id caption. Sources: sigma matches (k8s-audit derived) and trivy ExposedSecretReport findings.",
       "fieldConfig": {
@@ -51,13 +51,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count() AS findings\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -66,8 +66,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "severity_id captions for Detection Findings in the window.",
       "fieldConfig": {
@@ -107,13 +107,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
+          "rawSql": "SELECT CASE severity_id\n    WHEN 0 THEN '0 Unknown'\n    WHEN 1 THEN '1 Informational'\n    WHEN 2 THEN '2 Low'\n    WHEN 3 THEN '3 Medium'\n    WHEN 4 THEN '4 High'\n    WHEN 5 THEN '5 Critical'\n    ELSE '99 Other'\n  END AS severity,\n  count() AS findings\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
         }
       ],
@@ -122,8 +122,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Detection Findings per rule (finding_info.title) in the window.",
       "fieldConfig": {
@@ -163,13 +163,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT coalesce(finding_info.title, finding_info.uid) AS rule,\n       count(*) AS hits\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
+          "rawSql": "SELECT coalesce(`finding_info.title`, `finding_info.uid`) AS rule,\n       count() AS hits\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1\nORDER BY 2 DESC\nLIMIT 10",
           "refId": "A"
         }
       ],
@@ -178,8 +178,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Detecting engine per finding: metadata.product.name (sigma findings report the engine; trivy findings report trivy).",
       "fieldConfig": {
@@ -219,13 +219,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT coalesce(metadata.product.name, 'unknown') AS source,\n       count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
+          "rawSql": "SELECT coalesce(`metadata.product.name`, 'unknown') AS source,\n       count() AS findings\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1",
           "refId": "A"
         }
       ],
@@ -234,8 +234,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Per-rule Detection Finding rate per bucket (finding_info.title).",
       "fieldConfig": {
@@ -274,13 +274,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 0,
           "rawQuery": true,
-          "rawSql": "SELECT time_bucket($__interval, time) AS time,\n  coalesce(finding_info.title, finding_info.uid) AS rule,\n  count(*) AS findings\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT $__timeInterval(time) AS time,\n  coalesce(`finding_info.title`, `finding_info.uid`) AS rule,\n  count() AS findings\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -289,8 +289,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Objects the findings point at: the stable stamp fields subject_kind/subject_namespace/subject_name (rule id + subject composite).",
       "fieldConfig": {
@@ -317,13 +317,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT subject_kind AS kind,\n       subject_namespace AS namespace,\n       subject_name AS name,\n       count(*) AS hits\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2, 3\nORDER BY 4 DESC\nLIMIT 15",
+          "rawSql": "SELECT `subject_kind` AS kind,\n       `subject_namespace` AS namespace,\n       `subject_name` AS name,\n       count() AS hits\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nGROUP BY 1, 2, 3\nORDER BY 4 DESC\nLIMIT 15",
           "refId": "A"
         }
       ],
@@ -332,8 +332,8 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
       "description": "Detection Findings (2004) in the window: severity/status captions, rule, source, and the stamp subject fields (subject_kind/subject_namespace/subject_name).",
       "fieldConfig": {
@@ -360,13 +360,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT time,\n       CASE severity_id WHEN 5 THEN '5 Critical' WHEN 4 THEN '4 High' WHEN 3 THEN '3 Medium' WHEN 2 THEN '2 Low' WHEN 1 THEN '1 Informational' ELSE '0 Unknown' END AS severity,\n       CASE status_id WHEN 1 THEN '1 Success' WHEN 2 THEN '2 Failure' WHEN 99 THEN '99 Other' ELSE '0 Unknown' END AS status,\n       finding_info.title AS finding,\n       coalesce(metadata.product.name, 'unknown') AS source,\n       rule_id,\n       subject_kind AS subject_kind,\n       subject_namespace AS subject_namespace,\n       subject_name AS subject_name\nFROM ocsf\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 100",
+          "rawSql": "SELECT time,\n       CASE severity_id WHEN 5 THEN '5 Critical' WHEN 4 THEN '4 High' WHEN 3 THEN '3 Medium' WHEN 2 THEN '2 Low' WHEN 1 THEN '1 Informational' ELSE '0 Unknown' END AS severity,\n       CASE status_id WHEN 1 THEN '1 Success' WHEN 2 THEN '2 Failure' WHEN 99 THEN '99 Other' ELSE '0 Unknown' END AS status,\n       `finding_info.title` AS finding,\n       coalesce(`metadata.product.name`, 'unknown') AS source,\n       `rule_id`,\n       `subject_kind` AS subject_kind,\n       `subject_namespace` AS subject_namespace,\n       `subject_name` AS subject_name\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 100",
           "refId": "A"
         }
       ],
@@ -375,10 +375,10 @@
     },
     {
       "datasource": {
-        "type": "motherduck-duckdb-datasource",
-        "uid": "tenzir-ocsf"
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
       },
-      "description": "The OCSF source event behind each sigma Detection Finding (first evidence): acting user, api.operation, and the k8s object_ref the rule matched on. trivy findings carry no evidence. Resolves once the first sigma finding archives; until then the column set does not exist in the 2004 partitions.",
+      "description": "The OCSF source event behind each sigma Detection Finding (first evidence): acting user, api.operation, and the k8s object_ref the rule matched on. trivy findings carry no evidence. Resolves once the first sigma finding lands in ocsf.Detection_Finding; until then the evidences key is not materialized in the event JSON.",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -403,13 +403,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "motherduck-duckdb-datasource",
-            "uid": "tenzir-ocsf"
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
           },
           "editorMode": "code",
           "format": 1,
           "rawQuery": true,
-          "rawSql": "SELECT time,\n       finding_info.title AS finding,\n       evidences[1].data.actor.user.name AS evidence_user,\n       evidences[1].data.api.operation AS evidence_operation,\n       evidences[1].data.unmapped.object_ref.resource AS evidence_resource,\n       evidences[1].data.unmapped.object_ref.namespace AS evidence_namespace,\n       evidences[1].data.unmapped.object_ref.name AS evidence_object\nFROM ocsf\nWHERE class_uid = 2004\n  AND evidences IS NOT NULL\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50",
+          "rawSql": "SELECT time,\n       `finding_info.title` AS finding,\n       JSONExtract(toString(event.evidences[1]), 'data', 'actor', 'user', 'name', 'String') AS evidence_user,\n       JSONExtract(toString(event.evidences[1]), 'data', 'api', 'operation', 'String') AS evidence_operation,\n       JSONExtract(toString(event.evidences[1]), 'data', 'unmapped', 'object_ref', 'resource', 'String') AS evidence_resource,\n       JSONExtract(toString(event.evidences[1]), 'data', 'unmapped', 'object_ref', 'namespace', 'String') AS evidence_namespace,\n       JSONExtract(toString(event.evidences[1]), 'data', 'unmapped', 'object_ref', 'name', 'String') AS evidence_object\nFROM ocsf.Detection_Finding\nWHERE class_uid = 2004\n  AND event.evidences IS NOT NULL\n  AND $__timeFilter(time)\nORDER BY time DESC\nLIMIT 50",
           "refId": "A"
         }
       ],
