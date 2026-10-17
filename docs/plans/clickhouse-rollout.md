@@ -16,7 +16,9 @@ ClickHouse 25.8 as the OCSF query store (hot Longhorn disk, cold S3 disk in
 the dedicated rustfs `clickhouse` bucket, TTL + DELETE cap), Tenzir
 writing live via
 `to_clickhouse`, Grafana querying via the first-party ClickHouse plugin, and
-the DuckDB/MotherDuck parquet lane retired after a history backfill. Five
+the DuckDB/MotherDuck parquet lane retired outright — teardown only, no
+backfill (operator decision 2026-10-17: the existing parquet history has
+no value to preserve; supersedes the original backfill shape). Five
 logical MRs, each small enough to review whole.
 
 ## Evidence base
@@ -90,9 +92,10 @@ where:
    exclusively tenzir's and does not ride tenzir credentials.
 2. **TTL with a DELETE cap** — move-to-cold at 90d; DELETE horizon is an
    operator value pick (strawman: 400d, decide at MR-1 review).
-3. **Retire `to_s3` only AFTER the history backfill** — backfill runs via
-   Tenzir `from_s3 → to_clickhouse` replay per class; never make
-   CH-`s3()`-over-parquet a standing query surface.
+3. **~~Retire `to_s3` only AFTER the history backfill~~ superseded
+   (2026-10-17)**: no backfill — retire `to_s3` outright once MR-4 is
+   live; the parquet history is not preserved, and
+   CH-`s3()`-over-parquet never becomes a standing query surface.
 4. **Grafana plugin via the standard `grafana.plugins:` chart value** —
    first-party signed `grafana-clickhouse-datasource`, pinned 4.20.x; NOT
    bundled in the deployed Grafana 13.2.3 (image-verified in the prototype
@@ -260,9 +263,10 @@ Users live in the CHI (`spec.configuration.users`); the operator renders
 them into users.d and injects passwords from the `clickhouse-secrets`
 Secret as env vars (its `valueFrom.secretKeyRef`):
 
-- `tenzir` — INSERT + SELECT on `ocsf.*` (live writer + backfill user;
-  SELECT is required by to_clickhouse's table-description refresh and the
-  live-leg validation). Password ← vault field `clickhouse-password`.
+- `tenzir` — INSERT + SELECT on `ocsf.*` (live writer; SELECT is required
+  by to_clickhouse's table-description refresh and the live-leg
+  validation — the backfill-user role died with the no-backfill
+  decision). Password ← vault field `clickhouse-password`.
 - `grafana` — SELECT-only on `ocsf.*` (datasource user). Password ← vault
   field `clickhouse-grafana-password`.
 
@@ -335,7 +339,7 @@ finalizing the CR + vault field shape (D6 last row). Whichever shape the
 plugin documents wins; creds arrive via `valuesFrom` from
 `grafana-secrets`, never literal.
 
-### D8 — Dual-write and backfill mechanics
+### D8 — Dual-write mechanics (backfill leg superseded, 2026-10-17)
 
 - **Live dual-write** (transition window): the `ocsf-archive` compaction
   rule pipeline becomes
@@ -355,14 +359,12 @@ plugin documents wins; creds arrive via `valuesFrom` from
   from the docs' generic UPPER example; same shape as the live authentik
   wiring (`TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN` →
   `authentik-events-token`).
-- **Backfill (one-time, operator-led)**: per class, a bounded replay
-  `from_s3 "s3://tenzir/ocsf/class_uid=<NNNN>/**.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http" { read_parquet }`
-  → `where time < <cutover>` → `class_uid = <NNNN>` (re-derive the
-  hive-stripped partition field) → same `to_clickhouse ... mode="append"`.
-  The `where time < cutover` bound prevents double-insert of events the
-  live leg already wrote (TTL is not a dedup; there is no dedup). TQL files
-  land in git under the tenzir node folder (one per class); execution is
-  operator-led via the tenzir CLI against the node, after MR-3 is live.
+- **~~Backfill (one-time, operator-led)~~ superseded (2026-10-17
+  no-backfill decision)**: the per-class bounded replay never runs — the
+  parquet history is not preserved. Recorded shape for the historical
+  record only: `from_s3 { read_parquet }` → `where time < <cutover>` →
+  `class_uid = <NNNN>` re-derivation → `to_clickhouse ... mode="append"`.
+  No backfill TQL files land in git; nothing executes.
 - **Live-leg validation before full trust**: MR-3's live phase spot-checks
   one real event of each of the two shape-risk classes (tetragon 1007 —
   schema churn; core 2004 — deep nested evidence records) inserted into
@@ -595,33 +597,40 @@ them in the dashboard JSON); pre-commit green.
 confirm refresh 5m holds. Do not delete the duckdb datasource yet — the
 parquet lane is still the comparison oracle until MR-5.
 
-### MR-5 — Transition + teardown: backfill manifests, to_s3 retirement, duckdb removal
+### MR-5 — Teardown: to_s3 retirement, duckdb removal (no backfill)
 
-**Branch:** `feat/clickhouse-cutover`
+**Branch:** `feat/clickhouse-teardown`
 
-**Merge ONLY after the operator has run the backfill and validated parity
-(see gate below). The MR text must name that gate explicitly.**
+**Teardown-only (operator decision 2026-10-17): no backfill. The existing
+`s3://tenzir/ocsf/` parquet history has no value to preserve — it is NOT
+replayed into ClickHouse, and the archive objects stay untouched in the
+rustfs bucket as frozen history; deleting them is a separate operator
+call.** Supersedes the original backfill shape (backfill manifests,
+cutover timestamp, parity check — all gone).
+
+**Merge gate: MR-4 live first** (dashboards already query
+`ocsf-clickhouse` and stop reading the duckdb datasource). The MR text
+must name that gate explicitly.
 
 **Skill gate (in force for the whole lap):** same as MR-3 — TQL authored
-against the vendored `tenzir` skill (operator pages: `from_s3`,
-`read_parquet`, `where`, field assignment, `to_clickhouse`), and each class
-uid → class_name → table mapping verified against the `tenzir-ocsf` skill
-(v1.9.0 class pages: 6003 API Activity, 3002 Authentication, 3001 Account
-Change, 2004 Detection Finding, 2002 Vulnerability Finding, 4001 Network
-Activity, 1007 Process Activity, 1001 File System Activity).
+against the vendored `tenzir` skill (operator pages: `fork`,
+`to_clickhouse`, `to_s3`; `secret` function; compaction-rule semantics in
+the store guide), citing those pages in the lap notes. The retirement
+only removes operators MR-3 added, but the surviving `to_clickhouse`
+pipeline and the sink-only compaction-rule form must still match the
+skill verbatim.
 
 **Scope / files:**
 
-- Backfill manifests (added here, executed operator-led per D8):
-  `tenzir/nodes/core/backfill/*.tql` (one per class; per-class prefix +
-  `class_uid` re-derivation + `where time < cutover` bound + to_clickhouse
-  append) + `tenzir/nodes/core/backfill/README.md` (operator runbook:
-  cutover timestamp choice, per-class execution order, parity check
-  commands, the duplicate-window reasoning).
 - `to_s3` retirement: both node helmreleases — the `ocsf-archive` rule
   pipeline drops the `fork` wrapper and the `to_s3` sink, keeping only
-  `to_clickhouse`; rule comments updated (CH is the archive now; the lake
-  remains the 15-min transit buffer).
+  `to_clickhouse` as the sole, terminal sink (sink-only pipeline keeps
+  consume + export = archive-then-delete semantics; rule comments updated
+  — CH is the archive now, the lake remains the 15-min transit buffer).
+  The `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` `extraEnv` entries
+  (to_s3's default AWS chain) go with it; the `aws-*` vault fields on
+  `tenzir-secrets` become vestigial — flag-only, the operator deletes
+  them.
 - Duckdb machinery teardown (all in
   `flux/manifests/02-infrastructure/kube-prometheus-stack/helmrelease.yaml`,
   per the verdict's inventory):
@@ -634,37 +643,47 @@ Activity, 1007 Process Activity, 1001 File System Activity).
 motherduck-duckdb-datasource` → gone (ini auth/proxy blocks
     untouched);
   - `flux/manifests/03-services/observability/grafana/datasources/tenzir-ocsf.yaml`
-    → deleted; kustomization + grafana README updated.
+    → deleted; kustomization updated. The `tenzir-s3-*` fields on
+    `grafana-secrets` become vestigial — flag-only, the operator deletes
+    them. When MR-2's datasource tables (grafana README "Managed
+    datasources" + `datasources/README.md`) have landed, drop their
+    `tenzir-ocsf` rows too.
 - `tenzir/README.md` final architecture (mermaid + planes text: single
-  store in ClickHouse, rustfs parquet is read-only history), node READMEs,
-  `tenzir/grafana/README.md` final state.
+  store in ClickHouse, rustfs parquet is frozen history), node READMEs,
+  `detections/README.md` planes, observability README Tenzir entry,
+  `tenzir/grafana/README.md` query-plane description, and the
+  GrafanaDashboard CR comment headers (the dashboards' JSON content is
+  MR-4's; the naming sweep is MR-5's).
 
-**Acceptance:** kustomize build green; pre-commit green; backfill TQL files
-cite their skill reference pages in comments and match them verbatim; the
-KPS diff shows ONLY removals from the duckdb inventory (no unrelated
-grafana values churn); `tenzir-ocsf` no longer referenced anywhere except
-historical docs (`grep -r tenzir-ocsf flux/` → only allowed mentions); no
-`mc`/rustfs changes anywhere (see out of scope).
+**Acceptance:** kustomize build green (tenzir + grafana + full trees);
+pre-commit green; helm template KPS with the modified values renders the
+stock grafana image, no init container, and the `grafana.plugins` list
+intact; the KPS diff shows ONLY removals from the duckdb inventory (no
+unrelated grafana values churn); byte-stable renders across repeated
+builds; `tenzir-ocsf` no longer referenced by live manifests
+(`grep -r tenzir-ocsf flux/` → only allowed mentions: the CHI service
+names, dashboard uids `tenzir-ocsf-*` per the no-renames rule, and
+vendored docs); no `mc`/rustfs changes anywhere (see out of scope).
 
 **Operator-led, in order (this order keeps dashboards working throughout):**
 
-1. Backfill execution per the backfill README (after ≥ a few days of MR-3
-   live data so continuity is proven, cutover timestamp recorded).
-2. Parity check: per class, row counts in `ocsf.*` ≥ parquet row counts
-   (count parquet rows via a one-off Tenzir query or rustfs object count
-   sanity); spot-check oldest-window panel queries against the duckdb
-   datasource one last time.
-3. Merge + apply MR-5 (dashboards already run on CH since MR-4 — the
+1. Merge + apply MR-5 (dashboards already run on CH since MR-4 — the
    duckdb lane's death changes nothing user-visible).
-4. PVC cleanup: `kubectl exec` one-time removal of
+2. PVC cleanup: `kubectl exec` one-time removal of
    `/var/lib/grafana/plugins/motherduck-duckdb-datasource` (survives on
    the storage PVC after the init container is gone).
+3. Vestigial vault fields, operator's call, no rush: `aws-access-key-id`
+   / `aws-secret-access-key` on `tenzir-secrets`, `tenzir-s3-access-key-id`
+   / `tenzir-s3-secret-access-key` on `grafana-secrets`.
+4. Frozen `s3://tenzir/ocsf/` archive: leave untouched; deleting the
+   bucket prefix (and the `tenzir` rustfs bucket + its user, if nothing
+   else uses them) is a separate operator call, never a manifest change.
 
 ## Merge order + dependencies
 
 ```
 MR-1 clickhouse service ──► MR-2 grafana plugin+datasource ─┐
-        │                                                    ├─► MR-4 dashboards on CH ─► (operator backfill+parity) ─► MR-5 cutover/teardown
+        │                                                    ├─► MR-4 dashboards on CH ─► MR-5 teardown (no backfill)
         └──► MR-3 tenzir to_clickhouse legs ─────────────────┘
 ```
 
@@ -676,15 +695,19 @@ MR-1 clickhouse service ──► MR-2 grafana plugin+datasource ─┐
    plugin must be installed before the datasource CR applies).
 4. **MR-4** after both MR-2 and MR-3 are live (datasource exists + data
    flows). Wait for ≥ a day of live data so panels have content.
-5. **MR-5** last — gated on the operator-run backfill + parity check
-   (MR-3's live legs must have data continuity proven before the parquet
-   writer dies).
+5. **MR-5** last — gated on MR-4 being live (dashboards must query
+   ClickHouse before the duckdb datasource dies; the MR body carries the
+   same gate). ~~Gated on the operator-run backfill + parity check~~ —
+   superseded by the 2026-10-17 no-backfill decision; the original
+   why-forced clause (retiring to_s3 before backfill execution would cap
+   history at the cutover day) is moot with no backfill: history before
+   the MR-3 live legs is simply not preserved, by decision.
 
 Why the order is forced: the datasource CR with an unknown type or dead
 URL lands broken (MR-2 needs 1); append-mode pipelines hard-fail on
 missing tables (MR-3 needs 1); dashboards show empty panels without live
-rows (MR-4 needs 2+3); retiring to_s3 before backfill execution would
-permanently cap history at the cutover day (MR-5 needs the backfill done).
+rows (MR-4 needs 2+3); killing the duckdb datasource before the
+dashboards read ClickHouse would blank every OCSF panel (MR-5 needs 4).
 
 ## Out of scope (explicit)
 
@@ -717,19 +740,19 @@ permanently cap history at the cutover day (MR-5 needs the backfill done).
 
 ## Risks → named verification gates
 
-| Risk                                                             | Gate                                                                                                                                                                                                      |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| to_clickhouse append drops real events (typed column mismatch)   | MR-3 live phase: D8 shape-risk spot-check (1007, 2004) before MR-4                                                                                                                                        |
-| Plugin provisioning keys mis-spelled (silent CR no-op)           | MR-2: verify against pinned plugin PROVISIONING doc + operator Save & Test                                                                                                                                |
-| Plugin pin syntax wrong for GF_INSTALL_PLUGINS                   | MR-2: verify chart→grafana-cli install path before merge                                                                                                                                                  |
-| Grafana 13.2.3 + plugin 4.20.x incompatibility                   | MR-2 operator validation; fallback is a newer plugin patch in 4.20.x line                                                                                                                                 |
-| Backfill double-insert (live leg + replay overlap)               | D8 `where time < cutover` bound; MR-5 merge gate includes parity check                                                                                                                                    |
-| Tetragon flood RAM bump from the fork leg                        | MR-3 live watch (fork adds a sink to the archive rule; batch sizes bounded by max_batch_rows)                                                                                                             |
-| Cold-tier orphaning on ALL-PVC loss                              | Replication (3 replicas) absorbs single pod/PVC loss via re-sync; losing all three PVCs orphans the S3 parts (no kopiur on these PVCs by design) — the README names it as the one real data-loss scenario |
-| Keeper quorum loss (2 keepers down)                              | Required hostname anti-affinity on keepers; reads keep working, replicated writes stall until quorum returns                                                                                              |
-| First-boot keeper race: startup_scripts run before Keeper serves | README validation query after apply + MR-3 append fail-loud; restart CHI pods once if tables are missing                                                                                                  |
-| 3x storage growth (3 Longhorn PVCs + 3x rustfs cold parts)       | Shape decision section; watch rustfs capacity + pvc-capacity alert first week                                                                                                                             |
-| ClickHouse resource sizing unknown (fresh workload class)        | MR-1 per-replica requests/limits strawman (500m/2Gi requests, 2/6Gi limits), operator watches first week + pvc-capacity alert                                                                             |
+| Risk                                                              | Gate                                                                                                                                                                                                      |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| to_clickhouse append drops real events (typed column mismatch)    | MR-3 live phase: D8 shape-risk spot-check (1007, 2004) before MR-4                                                                                                                                        |
+| Plugin provisioning keys mis-spelled (silent CR no-op)            | MR-2: verify against pinned plugin PROVISIONING doc + operator Save & Test                                                                                                                                |
+| Plugin pin syntax wrong for GF_INSTALL_PLUGINS                    | MR-2: verify chart→grafana-cli install path before merge                                                                                                                                                  |
+| Grafana 13.2.3 + plugin 4.20.x incompatibility                    | MR-2 operator validation; fallback is a newer plugin patch in 4.20.x line                                                                                                                                 |
+| ~~Backfill double-insert (live leg + replay overlap)~~ superseded | No backfill (2026-10-17 decision) — the risk is void: no replay pipeline exists, no overlap window to bound                                                                                               |
+| Tetragon flood RAM bump from the fork leg                         | MR-3 live watch (fork adds a sink to the archive rule; batch sizes bounded by max_batch_rows)                                                                                                             |
+| Cold-tier orphaning on ALL-PVC loss                               | Replication (3 replicas) absorbs single pod/PVC loss via re-sync; losing all three PVCs orphans the S3 parts (no kopiur on these PVCs by design) — the README names it as the one real data-loss scenario |
+| Keeper quorum loss (2 keepers down)                               | Required hostname anti-affinity on keepers; reads keep working, replicated writes stall until quorum returns                                                                                              |
+| First-boot keeper race: startup_scripts run before Keeper serves  | README validation query after apply + MR-3 append fail-loud; restart CHI pods once if tables are missing                                                                                                  |
+| 3x storage growth (3 Longhorn PVCs + 3x rustfs cold parts)        | Shape decision section; watch rustfs capacity + pvc-capacity alert first week                                                                                                                             |
+| ClickHouse resource sizing unknown (fresh workload class)         | MR-1 per-replica requests/limits strawman (500m/2Gi requests, 2/6Gi limits), operator watches first week + pvc-capacity alert                                                                             |
 
 ## Feedback loop (local, no cluster mutation)
 
@@ -745,6 +768,8 @@ grep -rn "clickhouse" flux/manifests | sort    # reference sanity for the CR/dat
 ```
 
 MR-3/MR-4 add: JSON panel diff review against `sql/40_queries.sql`; MR-5
-adds the `grep -r tenzir-ocsf flux/` reference sweep. All live applies,
-backfill execution, and PVC cleanup are operator-led and named per slice;
-this plan never authorizes cluster mutation.
+adds the `grep -r tenzir-ocsf flux/` reference sweep plus a KPS helm
+template check (stock image renders, plugins list intact, no init
+container). All live applies, PVC cleanup, vestigial vault-field
+deletion, and the frozen `s3://tenzir/ocsf/` archive are operator-led
+and named per slice; this plan never authorizes cluster mutation.

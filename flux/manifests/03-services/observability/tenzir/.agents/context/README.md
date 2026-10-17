@@ -12,9 +12,9 @@ distributed mode, so each node is a process with its own lake and its own
 pipelines. The core node is the detection plane; the tetragon node owns
 the export flood; the netflow node owns the NetFlow collector. Telemetry
 normalizes onto one OCSF bus, sigma evaluates live, and everything
-archives to one class-partitioned parquet dataset at `s3://tenzir/ocsf/`
-that Grafana queries over MotherDuck. Full topology and secrets: the
-app folder's [`README.md`](../../README.md).
+archives to the ClickHouse OCSF query store (per-class `ocsf.*` tables)
+that Grafana queries over its ClickHouse datasource. Full topology and
+secrets: the app folder's [`README.md`](../../README.md).
 
 ## Shape of the subtree
 
@@ -23,7 +23,7 @@ app folder's [`README.md`](../../README.md).
 | `nodes/`          | The three node HelmReleases + READMEs (pipelines, sizing, retention)        |
 | `packages/`       | The `homelab` TQL package: parse / OCSF map / findings operators + tests    |
 | `detections/`     | Sigma rules (homelab + vendored SigmaHQ/YARA) and the bus semantics         |
-| `grafana/`        | The three Tenzir dashboards + MotherDuck datasource ConfigMaps              |
+| `grafana/`        | The three Tenzir dashboards (OCSF panels query the ClickHouse store)        |
 | `.agents/skills/` | Vendored tenzir + tenzir-ocsf doc skills (generated upstream, never edited) |
 
 ## Module map

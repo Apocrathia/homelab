@@ -51,22 +51,26 @@ OCSF projection, and stays parked. Bus semantics and the class taxonomy:
 
 15-minute local lake on each node — a transit buffer between ingest and
 the archive, not a query surface. Archive-then-expire: every mappable
-class exports to `s3://tenzir/ocsf/` as class-partitioned parquet on
-rustfs, then expires locally; the parquet is the record. Classes that
-cannot name themselves (the Base Event fallback) are not archived — they
-expire with the window. The compaction pass runs every 5 minutes on every
-node, but the true window at pass boundaries is per-node: 15-25 minutes
-on the core node, where the 10-minute partition flush adds up to 10
-minutes on top of the 15-minute expiry, and 15-20 minutes on the tetragon
-and netflow nodes, whose 60-second flushes add almost nothing.
+class exports to the ClickHouse OCSF query store (per-class
+`ocsf.<Class_Name>` tables) and expires locally; ClickHouse is the
+record. The retired `s3://tenzir/ocsf/` parquet archive stays untouched
+in the rustfs bucket as frozen history — deleting it is a separate
+operator call. Classes that cannot name themselves (the Base Event
+fallback) are not archived — they expire with the window. The compaction
+pass runs every 5 minutes on every node, but the true window at pass
+boundaries is per-node: 15-25 minutes on the core node, where the
+10-minute partition flush adds up to 10 minutes on top of the 15-minute
+expiry, and 15-20 minutes on the tetragon and netflow nodes, whose
+60-second flushes add almost nothing.
 
-## SQL plane (Grafana + MotherDuck)
+## SQL plane (Grafana + ClickHouse)
 
-Querying and alerting live in Grafana over MotherDuck, which reads the
-parquet directly: the `tenzir-ocsf` MotherDuck datasource exposes the
-`ocsf` view over the archive via its initSql. Grafana owns notifications;
-there is no other findings egress — the Discord doorbell and the Loki
-findings projection were cut with the zero-egress restructure. The three
+Querying and alerting live in Grafana over the `ocsf-clickhouse`
+datasource on the ClickHouse OCSF store, reading the per-class `ocsf.*`
+tables directly — the MotherDuck datasource and the duckdb/parquet lane
+retired with the MR-5 teardown. Grafana owns notifications; there is no
+other findings egress — the Discord doorbell and the Loki findings
+projection were cut with the zero-egress restructure. The three
 dashboards live in [`grafana/`](../../grafana/README.md).
 
 ## Metrics plane (push-only)
@@ -91,5 +95,5 @@ outside this subtree.
   node, subprocess isolation
 - [`detections/README.md`](../../detections/README.md) — bus, sigma
   semantics, class taxonomy
-- [`grafana/README.md`](../../grafana/README.md) — dashboards, MotherDuck
+- [`grafana/README.md`](../../grafana/README.md) — dashboards, ClickHouse
   datasource

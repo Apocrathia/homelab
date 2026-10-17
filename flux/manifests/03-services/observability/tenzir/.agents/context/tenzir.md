@@ -23,10 +23,10 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   (UniFi exporters behind `tenzir-ingest-lb`), so neither feed's behavior
   can starve detection.
 - Three planes (detail in [`architecture.md`](./architecture.md)): live
-  detection runs in-node; findings and events live in the one OCSF dataset
-  at `s3://tenzir/ocsf/` (class-partitioned parquet on rustfs — the
-  record); querying and alerting run in Grafana over MotherDuck, which
-  reads the parquet directly.
+  detection runs in-node; findings and events live in the ClickHouse OCSF
+  query store (per-class `ocsf.<Class_Name>` tables — the record);
+  querying and alerting run in Grafana over its ClickHouse datasource
+  reading the `ocsf.*` tables directly.
 - All three nodes register into one hosted Tenzir Platform workspace
   (app.tenzir.com) over a single outbound WebSocket; pipelines run
   entirely on the nodes and never route events through the platform.

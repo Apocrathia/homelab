@@ -67,7 +67,7 @@ alive if the agent dies (persistent enforcement) — off for now.
   operator wants treated as "internal" are still a follow-up — adding them is
   a values-only edit to the matchArgs list.
 - Base exec events (shells, sudo, SUID) need no policy — they ride the
-  exec event stream; triage via the OCSF parquet record or the
+  exec event stream; triage via the ClickHouse OCSF record or the
   `tetragon_events_total` metrics.
 
 ## SIEM (lap C)

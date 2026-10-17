@@ -160,9 +160,9 @@ spec:
                 (detections/README.md documents the skip). Matches become
                 OCSF Detection Findings (2004) stamped with the stable uid
                 (rule id + subject composite) and import into the node
-                lake; the ocsf archive rule exports them to rustfs after
-                the 15-minute horizon. Grafana owns alerting off the
-                archive — there is no other egress.
+                lake; the ocsf archive rule exports them to ClickHouse
+                after the 15-minute horizon. Grafana owns alerting off
+                the archive — there is no other egress.
               definition: |
                 subscribe "ocsf"
                 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"], mapping="auto", refresh_interval=30s
@@ -341,15 +341,13 @@ spec:
               interval: 30 minutes
               disk-budget-high: 6GiB
               disk-budget-low: 4GiB
-            # 15-minute local lake: the archive is ONE OCSF dataset —
-            # every mappable class exports to the rustfs `tenzir` bucket
-            # under s3://tenzir/ocsf/, partitioned hive-style by class_uid
-            # (to_s3 + partition_by writes class_uid=<NNNN>/ directories;
-            # the partition field is stripped from the records and comes
-            # back at read time with hive_partitioning=true). DuckDB and
-            # MotherDuck read it as one table:
-            # read_parquet('s3://tenzir/ocsf/**/*.parquet',
-            # hive_partitioning=true) + union_by_name. The Base Event
+            # 15-minute local lake: the archive is the ClickHouse OCSF
+            # query store — every mappable class exports to the per-class
+            # ocsf.<Class_Name> tables (the s3://tenzir/ocsf/ parquet
+            # lane retired with the MR-5 teardown; the existing objects
+            # stay untouched in the rustfs bucket as frozen, unqueried
+            # history — deleting them is a separate operator call). The
+            # Base Event
             # fallback (ocsf.base_event) archives with the mappable
             # classes — its partitions used to accumulate locally with no
             # time rule (16x the tetragon sibling's partition count at
@@ -359,8 +357,8 @@ spec:
             # archive-then-delete (preserve-input stays off: keeping the
             # local copy would defeat the 15-minute expiry). The lake is
             # a transit buffer between ingest and the archive, not a query
-            # surface: the parquet is the record past the window, and
-            # from_s3 replays the history. The pass runs every 5 minutes,
+            # surface: ClickHouse is the record past the window. The pass
+            # runs every 5 minutes,
             # so the true window at pass boundaries is 15-20 minutes.
             time:
               interval: 5 minutes
@@ -376,13 +374,12 @@ spec:
                 # and bloated the boot catalog load. Network Activity
                 # (4001) left with the netflow collector for the netflow
                 # node, whose own archive rule owns the class there.
-                # Dual-write transition window (clickhouse rollout MR-3,
-                # plan D8): the rule forks a to_clickhouse leg ahead of
-                # the unchanged to_s3 tail — ClickHouse is becoming the
-                # OCSF query store (per-class ocsf.<Class_Name> tables),
-                # while the parquet lane stays the record until the MR-5
-                # cut-over. fork passes events through, so
-                # archive-then-delete semantics are unchanged;
+                # ClickHouse is the archive (rollout MR-5 teardown, plan
+                # D8 end state): the retired to_s3 tail and its fork
+                # wrapper are gone, so to_clickhouse is the rule's sole,
+                # terminal sink — a sink-only pipeline returns no
+                # transformed events, so consume + export =
+                # archive-then-delete semantics are unchanged.
                 # mode="append" fails loudly when the MR-1 DDL is
                 # missing (the second net for the Keeper first-boot
                 # race), and max_batch_rows bounds the insert buffers.
@@ -399,19 +396,14 @@ spec:
                       "ocsf.base_event",
                     ]
                   pipeline: |
-                    fork {
-                      to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
-                        host="clickhouse-ocsf.clickhouse.svc.cluster.local",
-                        port=9000,
-                        user="tenzir",
-                        password=secret("clickhouse-password"),
-                        tls=false,
-                        mode="append",
-                        max_batch_rows=65536
-                    }
-                    to_s3 "s3://tenzir/ocsf/**/{uuid}.parquet?endpoint_override=storage.services.apocrathia.com:9009&scheme=http", partition_by=[class_uid] {
-                      write_parquet
-                    }
+                    to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+                      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                      port=9000,
+                      user="tenzir",
+                      password=secret("clickhouse-password"),
+                      tls=false,
+                      mode="append",
+                      max_batch_rows=65536
 
     # Sized by the docs' formula for this node's shape (full math in
     # core/README.md): detection (+1), normalization on 4 sources (+0.8),
@@ -433,26 +425,19 @@ spec:
     # Secrets (1Password item tenzir-secrets): vault field labels are
     # kebab-case and the rendered Secret keys match them, so every
     # secretKeyRef.key below is the kebab vault label; env var names stay
-    # UPPER. rustfs S3 credentials for the default AWS chain used by to_s3,
-    # and the authentik events API token as `authentik-events-token`
-    # (TENZIR_SECRETS__ map; tofu mints the token, the operator copies the
-    # key into the vault once). The ClickHouse writer password rides the
+    # UPPER. The authentik events API token rides as
+    # `authentik-events-token` (TENZIR_SECRETS__ map; tofu mints the
+    # token, the operator copies the key into the vault once). The
+    # ClickHouse writer password rides the
     # dedicated clickhouse-secrets item (this namespace materializes its
     # own OnePasswordItem in secret.yaml): the env var maps to config key
     # tenzir.secrets.clickhouse-password, so the to_clickhouse archive
     # legs read it as secret("clickhouse-password") — kebab name, the
-    # same env-var shape as the authentik token.
+    # same env-var shape as the authentik token. The retired to_s3 tail's
+    # rustfs AWS_* env entries are gone with the MR-5 teardown; the
+    # aws-* fields stay on the tenzir-secrets item, unused, for the
+    # operator to delete.
     extraEnv:
-      - name: AWS_ACCESS_KEY_ID
-        valueFrom:
-          secretKeyRef:
-            name: tenzir-secrets
-            key: aws-access-key-id
-      - name: AWS_SECRET_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            name: tenzir-secrets
-            key: aws-secret-access-key
       - name: TENZIR_SECRETS__AUTHENTIK_EVENTS_TOKEN
         valueFrom:
           secretKeyRef:

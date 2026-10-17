@@ -8,3 +8,4 @@ metadata:
 resources:
   - helmrelease.yaml
   - service-ingest.yaml
+  - storage.yaml

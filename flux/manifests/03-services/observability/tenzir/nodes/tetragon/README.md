@@ -28,9 +28,8 @@ flowchart LR
     TT[tetragon alloy] -->|"OTLP :4318"| AO[accept_otlp]
     AO -->|"tetragon parse"| TR["tetragon raw"]
     TR -->|"OCSF map, ~125 schema variants"| LAKE["node lake: ocsf topic"]
-    LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
-    LAKE -->|"15m archive rule, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
-    S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
+    LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
+    CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
 
 The unmapped residue on every mapped event is a selected projection (pod
@@ -50,7 +49,7 @@ in [`helmrelease.yaml`](./helmrelease.yaml).
 CPU = max(2, ceil(
     69 / 250       # flood ingest ~69 GB/day raw: 800 ev/s (peak measured) * ~1,000 B (docs EDR range, assumed)
     + 1 * 0.1      # 1 source: the tetragon alloy OTLP stream (docs: 0.1 per source)
-    + 1 * 0.1      # 1 destination: rustfs S3 archive (docs: 0.1 per destination)
+    + 1 * 0.1      # 1 destination: ClickHouse archive (docs: 0.1 per destination)
     + 1 * 0.2      # normalization on: OCSF fan-out (docs: 0.2 per source)
     + 0            # detection off
 )) = max(2, ceil(0.676)) = 2 cores
@@ -79,28 +78,30 @@ floods.
 
 Same 15-minute horizon as the core node, same archive: the tetragon OCSF
 classes (Process Activity 1007, File System Activity 1001, Network
-Activity 4001) export to the one dataset at `s3://tenzir/ocsf/` with
-class_uid partitions at `after: 15 minutes` and then expire locally
-(archive-then-expire; `preserve-input` off). The Base Event fallback
+Activity 4001) export to the per-class `ocsf.<Class_Name>` tables on
+the ClickHouse OCSF store at `after: 15 minutes` and then expire
+locally (archive-then-expire; `preserve-input` off). The Base Event
+fallback
 for unknown export kinds cannot name a class and is not archived: it
 expires with the window on the weighted-age backstop. The lake is a
 transit buffer between ingest and the archive, not a query surface.
-The parquet is the OCSF record past the window; the compaction pass
+ClickHouse is the OCSF record past the window; the compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15-20
 minutes. The Longhorn volume sits out the daily-backup RecurringJob
 ([`storage.yaml`](./storage.yaml)): a daily chain of
-a 15-minute buffer is redundant with the parquet record. Filesystem trim
-and snapshot hygiene still run on the volume. No raw tetragon JSON is
-kept anywhere past the window (the export-stdout sidecar is gone; the
-OCSF parquet is the record); replay the record with `from_s3`.
+a 15-minute buffer is redundant with the ClickHouse record. Filesystem
+trim and snapshot hygiene still run on the volume. No raw tetragon JSON
+is kept anywhere past the window (the export-stdout sidecar is gone; the
+ClickHouse OCSF store is the record), and the retired
+`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
+bucket as frozen history; deleting it is a separate operator call.
 
-Dual-write transition window (MR-3): the same rule forks a
-`to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
-archived batch also lands in the per-class `ocsf.<Class_Name>` tables on
-the ClickHouse OCSF store — `mode="append"` fails loudly if the DDL is
+`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
+its `fork` wrapper retired with the MR-5 teardown — a sink-only
+pipeline keeps consume + export = archive-then-delete semantics):
+`mode="append"` fails loudly if the DDL is
 missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
-the insert buffers on the flood classes. The parquet lane stays the
-record until the MR-5 cut-over.
+the insert buffers on the flood classes.
 
 Horizon math (flood rate measured 2026-10-12; steady state assumed):
 
@@ -170,8 +171,8 @@ classes starts from that baseline, not from zero.
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
-7. **Archive**: the node writes into the shared `s3://tenzir/ocsf/`
-   dataset with class_uid partitions; no per-node prefix. Detections run
+7. **Archive**: the node writes into the shared ClickHouse OCSF
+   tables; no per-node prefix. Detections run
    on the core node only; this node owns its feeds and its lake.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in

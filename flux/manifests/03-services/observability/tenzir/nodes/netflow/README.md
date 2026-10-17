@@ -28,9 +28,8 @@ flowchart LR
     AU -->|"flow records only<br/>(options dropped)"| NORM["netflow::ocsf::normalize<br/>(vendored library package)"]
     NORM -->|"ocsf_derive + ocsf_cast"| BUS["node-local ocsf topic"]
     BUS --> LAKE["node lake"]
-    LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
-    LAKE -->|"15m archive rule, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
-    S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
+    LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
+    CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
 
 Flow records publish onto this node's own `ocsf` topic and feed this
@@ -51,10 +50,10 @@ The upstream size-a-node formula with this node's inputs. Limits live in
 CPU = max(2, ceil(
     0.15 / 250     # netflow ingest ~0.15 GB/day raw (measured; core README sizing input)
     + 1 * 0.1      # 1 source: the UniFi exporters via the LB (docs: 0.1 per source)
-    + 2 * 0.1      # 2 destinations: rustfs S3 + ClickHouse dual-write (docs: 0.1 per destination)
+    + 1 * 0.1      # 1 destination: ClickHouse (docs: 0.1 per destination)
     + 1 * 0.2      # normalization on: the netflow OCSF map (docs: 0.2 per source)
     + 0            # detection off
-)) = max(2, ceil(0.50)) = 2 cores
+)) = max(2, ceil(0.40)) = 2 cores
 ```
 
 ```python
@@ -65,7 +64,7 @@ Storage = 0.15 * 30 * (1/2880) / 10 / 1000  # netflow GB/day * days/mo * months 
 ```python
 RAM = max(2,
     0.00000016 * 2  # catalog term: 2 GB per TB retained (docs); ~0 at a 15-minute window
-    + 3 * 0.1       # sources (1) + destinations (2)
+    + 2 * 0.1       # sources (1) + destination (1)
     + 0             # no detection, no enrichment
 ) = 2 GB
 ```
@@ -81,19 +80,25 @@ today's probe-only traffic with room for the exporter fix
 ## Retention
 
 Same 15-minute horizon as the siblings, same archive: the one OCSF
-class this node stores (Network Activity 4001) exports to the one
-dataset at `s3://tenzir/ocsf/` with class_uid partitions at
+class this node stores (Network Activity 4001) exports to the
+per-class `ocsf.<Class_Name>` tables on the ClickHouse OCSF store at
 `after: 15 minutes` and then expires locally (archive-then-expire;
-`preserve-input` off). The compaction pass runs every 5 minutes, so the
-true window at pass boundaries is 15-20 minutes. The lake is a transit
-buffer between ingest and the archive, not a query surface; the parquet
-is the record past the window, and `from_s3` replays it.
+`preserve-input` off). The lake is a transit buffer between ingest and
+the archive, not a query surface. ClickHouse is the OCSF record past
+the window; the compaction pass runs every 5 minutes, so the true
+window at pass boundaries is 15-20 minutes. The Longhorn volume sits
+out the daily-backup RecurringJob
+([`storage.yaml`](./storage.yaml)): a daily chain of a 15-minute
+buffer is redundant with the ClickHouse record. Filesystem trim and
+snapshot hygiene still run on the volume. The retired
+`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
+bucket as frozen history; deleting it is a separate operator call.
 
-Dual-write transition window (MR-3): the same rule forks a
-`to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
-archived batch also lands in the `ocsf.Network_Activity` table on the
-ClickHouse OCSF store — `mode="append"` fails loudly if the DDL is
-missing. The parquet lane stays the record until the MR-5 cut-over.
+`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
+its `fork` wrapper retired with the MR-5 teardown — a sink-only
+pipeline keeps consume + export = archive-then-delete semantics):
+`mode="append"` fails loudly if the DDL is missing, and
+`max_batch_rows` bounds the insert buffers.
 
 Horizon math:
 
@@ -154,12 +159,15 @@ volume on demand and a smaller request buys nothing.
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
    (weighted-age space rules as the backstop, archive-then-expire time
-   rules for every record type it stores).
+   rules for every record type it stores), and a `storage.yaml` label
+   overlay sitting the transit-lake PVC out of the daily-backup
+   RecurringJob (same shape as the tetragon and netflow nodes).
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
-7. **Archive**: the node writes into the shared `s3://tenzir/ocsf/`
-   dataset with class_uid partitions; no per-node prefix. Detections
+7. **Archive**: `to_clickhouse` into the per-class `ocsf.<Class_Name>`
+   tables on the ClickHouse OCSF store — same terminal sink, same
+   `mode="append"` + `max_batch_rows` shape as every sibling. Detections
    run on the core node only; this node owns its feeds and its lake.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in
