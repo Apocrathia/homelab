@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: altinity-clickhouse-operator
+  namespace: clickhouse-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: altinity-clickhouse-operator
+      # renovate: datasource=helm registryUrl=https://helm.altinity.com depName=altinity-clickhouse-operator
+      version: "0.27.4"
+      sourceRef:
+        kind: HelmRepository
+        name: altinity
+        namespace: flux-system
+      interval: 1m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # The operator manages both ClickHouseInstallation (chi.yaml) and
+    # ClickHouseKeeperInstallation (keeper.yaml) CRs. watchNamespaces feeds
+    # the operator's config.yaml watch.namespaces.include; empty would also
+    # watch the operator's own namespace, but the explicit list documents
+    # the blast radius: this operator manages clickhouse-system only.
+    watchNamespaces:
+      - clickhouse-system
+
+    # CRDs (ClickHouseInstallation, ClickHouseInstallationTemplate,
+    # ClickHouseOperatorConfiguration, ClickHouseKeeperInstallation) are
+    # installed and updated by the chart's pre-install/pre-upgrade hook jobs
+    # (crdHook.enabled default true) - no separate CRD kustomization needed.
+
+    operator:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+    # Operator self-metrics (op-metrics 9999) + per-instance ClickHouse
+    # metrics scraped through the operator's metrics-exporter (ch-metrics
+    # 8888). Keeper metrics are NOT in MR-1: the operator-managed keeper
+    # services publish only zk/raft ports by default (the chart documents
+    # the CHK-side opt-in); revisit as a follow-up if keeper visibility is
+    # wanted.
+    serviceMonitor:
+      enabled: true
+      additionalLabels:
+        release: kube-prometheus-stack
