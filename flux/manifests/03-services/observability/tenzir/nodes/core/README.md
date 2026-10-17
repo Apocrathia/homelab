@@ -82,31 +82,31 @@ RAM = max(2,
 ) = max(2, 1.6) = 2 GB
 ```
 
-The memory limit doubles the 2 GB floor as burst and import-buffer
-headroom; the CPU limit matches the formula. Re-measure both after
-recovery and adjust in the manifest, not here. The :4318 listener counts
+The memory limit is 8Gi: the formula's 2 GB floor plus the boot
+catalog load, which pulled 76k partition synopses into RAM and
+OOMKilled the node at ~94% of load under the old 4Gi on every start
+(the tetragon sibling: 4.7k synopses under 12Gi). The CPU limit
+matches the formula. Re-measure both after recovery and adjust in the
+manifest, not here. The :4318 listener counts
 two stream types (kube-audit alloy plus the shared alloy fan-out); both
 are low-volume and the formula's source term already carries them.
 
 ## Retention
 
 15-minute local horizon; the rustfs parquet archive is the record. One
-rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every mappable
-class to `s3://tenzir/ocsf/**/{uuid}.parquet` with
+rule in [`helmrelease.yaml`](./helmrelease.yaml) exports every class it
+stores to `s3://tenzir/ocsf/**/{uuid}.parquet` with
 `partition_by=[class_uid]` and consumes the originals
 (archive-then-expire; `preserve-input` stays off). The compaction pass
-runs every 5 minutes, so the true window at pass boundaries is 15 to 25
-minutes. Archive file size follows the lake partition: the rule exports
-one parquet file per class per ~10-minute partition (ocsf_cast
-null_fill=true keeps one layout per class; before that, each OTLP push
-was its own layout and its own ~29-row file).
+runs every 5 minutes, so the true window at pass boundaries is 15 to 20
+minutes.
 
 The lake is a transit buffer between ingest and the archive, not a query
 surface: it is sized to hold one window at worst-case flood rate, and
-the parquet plus `from_s3` is the queryable history. Classes that
-cannot map to OCSF (the Base Event fallback for fleet rows and
-authentik's non-IAM arm) are not archived: they expire here and
-nowhere else.
+the parquet plus `from_s3` is the queryable history. The Base Event
+fallback for fleet rows and authentik's non-IAM arm archives with the
+mappable classes (added 2026-10-17): without a time rule those
+partitions accumulated locally instead.
 
 Horizon math, same inputs as the sizing block:
 
