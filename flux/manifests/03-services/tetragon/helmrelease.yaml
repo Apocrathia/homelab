@@ -43,14 +43,24 @@ spec:
         cpu: 500m
         memory: 256Mi
 
+    # The chart default (export.mode=stdout) adds an export-stdout sidecar
+    # (hubble-export-stdout) that tails the JSON export file to pod logs,
+    # which the shared Alloy ships to Loki: ~173GB/day of raw JSON, 60d
+    # retention, 64% of the loki bucket at rest. No raw tetragon logs in
+    # Loki — the OCSF record in the parquet archive is the record. "" is
+    # the chart's documented off value; the file export feeding
+    # alloy-tetragon -> tenzir OCSF below stays fully enabled.
+    export:
+      mode: ""
+
     tetragon:
       # Credentials (uid/gid/caps) and namespaces on exec/kprobe events:
       # the context that makes exec anomalies triageable.
       enableProcessCred: true
       enableProcessNs: true
-      # Export: JSON file -> export-stdout sidecar -> pod logs -> Alloy ->
-      # Loki. The chart default denylist also mutes host (""),
-      # cilium, and kube-system events; on Talos that hides exactly the
+      # Export: JSON file -> alloy-tetragon tailer -> tenzir OCSF. The
+      # chart default denylist also mutes host (""), cilium, and
+      # kube-system events; on Talos that hides exactly the
       # host-side activity worth seeing, so deny only health checks.
       exportDenyList: |-
         {"health_check":true}
