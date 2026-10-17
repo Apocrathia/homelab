@@ -31,8 +31,7 @@ docs — nothing invented. Vendored debugging docs:
   accident to fix. ([tetragon node](../../nodes/tetragon/README.md))
 - **Release-name concat trap.** The chart renders every node resource as
   `<fullname>-<entry.name>`; never rename a release into either concat
-  trap — every release except the literally named `tenzir-node` takes
-  `fullnameOverride: tenzir-node`.
+  trap — every release takes `fullnameOverride: tenzir-node`.
   ([tetragon node](../../nodes/tetragon/README.md))
 - **Class uids by name, not number.** Resolve classes with the lookup
   idiom — `ocsf_class_uid("Network Activity")`, not hard-coded `4001`;

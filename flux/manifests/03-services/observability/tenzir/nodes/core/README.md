@@ -2,8 +2,8 @@
 
 > **Navigation**: [← Tenzir](../README.md) | [Tetragon node](../tetragon/README.md) | [Detections](../../detections/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-The detection plane: one process (HelmRelease `tenzir-node`, rendering pod
-`tenzir-node-core`) that normalizes every feed except the tetragon flood
+The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
+pod `tenzir-node-core`) that normalizes every feed except the tetragon flood
 to OCSF, publishes onto the unified `ocsf` bus, and runs the one sigma
 pass. Thirteen pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml); the manifest is the source of
@@ -148,10 +148,10 @@ ever matters.
 3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
    `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
    renovate comment, `nodes[0].name: <role>` (the entry name is the node
-   name; every release except the literally named `tenzir-node` also
-   takes `fullnameOverride: tenzir-node`), `nodes[0].token.existingSecret:
-tenzir-secrets` plus `nodes[0].token.key: <role>-token`, `extraPorts`
-   for the node's listeners, `persistence.size` per sizing.
+   name; every release takes `fullnameOverride: tenzir-node`),
+   `nodes[0].token.existingSecret: tenzir-secrets` plus
+   `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
+   listeners, `persistence.size` per sizing.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
