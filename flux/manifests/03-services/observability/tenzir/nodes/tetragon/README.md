@@ -31,7 +31,6 @@ flowchart LR
     LAKE -->|"15m archive rule"| S3["rustfs parquet<br/>s3://tenzir/ocsf/, class_uid partitions"]
     LAKE -->|"15m archive rule, fork"| CH["ClickHouse<br/>ocsf.* per-class tables"]
     S3 -.->|"reads"| GRAF["Grafana over MotherDuck"]
-    TP["tetragon pods"] -.->|"export-stdout sidecar, raw JSON, independent of this node"| LOKI[Loki]
 ```
 
 The unmapped residue on every mapped event is a selected projection (pod
@@ -91,9 +90,9 @@ runs every 5 minutes, so the true window at pass boundaries is 15-20
 minutes. The Longhorn volume sits out the daily-backup RecurringJob
 ([`pvc-recurring-job.yaml`](./pvc-recurring-job.yaml)): a daily chain of
 a 15-minute buffer is redundant with the parquet record. Filesystem trim
-and snapshot hygiene still run on the volume. Loki keeps the raw JSON stream via the tetragon pods'
-export-stdout sidecar, but raw JSON is not OCSF-queryable; replay the
-record with `from_s3`.
+and snapshot hygiene still run on the volume. No raw tetragon JSON is
+kept anywhere past the window (the export-stdout sidecar is gone; the
+OCSF parquet is the record); replay the record with `from_s3`.
 
 Dual-write transition window (MR-3): the same rule forks a
 `to_clickhouse` leg ahead of the unchanged `to_s3` tail, so every
@@ -115,9 +114,10 @@ Tetragon worst case (transit-buffer bound, operator-measured drain):
   253 GB/day / 96 ~ 2.6 GB raw           # the lake holds one window at worst-case flood rate:
                                          # a 15-minute buffer a 12Gi node can never OOM on again
 
-Tetragon steady state (assumed, post-filter):
-  3.9 GiB/day * 20% ~ 0.8 GiB/day        # the tetragon alloy drops the tcp_connect leg at the transport
-  0.8 GiB/day / 96 ~ 9 MiB               # steady-state 15-minute peak footprint
+Tetragon steady state (assumed):
+  3.9 GiB/day / 96 ~ 42 MiB              # steady-state 15-minute peak footprint
+                                         # egress tcp_connect rides along now: the transport-side
+                                         # drop is gone, Network Activity 4001 archives too
 ```
 
 The disk budgets (6 GiB high / 4 GiB low) are the backstop for

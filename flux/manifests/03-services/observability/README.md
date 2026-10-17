@@ -144,8 +144,8 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 
 - **Purpose**: Root DaemonSet that tails the tetragon agents' JSON export
   files (0600 root-owned, out of reach of the shared Alloy) and pushes them
-  as OTLP/HTTP logs to the Tenzir tetragon node; the pod-logs leg to Loki
-  via the tetragon `export-stdout` sidecar is unchanged
+  as OTLP/HTTP logs to the Tenzir tetragon node; no raw tetragon stream
+  in Loki (export-stdout sidecar dropped)
 - **Details**: See [`alloy/tetragon/README.md`](./alloy/tetragon/README.md)
 
 ### 15. **ClickHouse** (`clickhouse/`)

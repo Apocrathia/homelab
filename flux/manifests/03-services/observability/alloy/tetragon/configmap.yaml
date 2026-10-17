@@ -24,14 +24,14 @@ data:
     // hostPath mount and nothing else — the same surface the
     // kube-audit alloy carries for the apiserver audit log.
     //
-    // No Loki leg: the tetragon pod's export-stdout sidecar already ships
-    // the same events to Loki as pod logs, so a second Loki writer would
-    // duplicate the stream.
+    // No Loki leg: no raw tetragon stream lands in Loki (the tetragon
+    // HelmRelease drops the chart's export-stdout sidecar); the OCSF
+    // parquet record is the record, so a Loki writer would duplicate it.
     //
     // The file rotates at 10 MiB (lumberjack renames to tetragon-*.log),
     // so the include set covers the live file and its rotated siblings;
     // both start at end-of-file: the pre-existing node-local backlog is
-    // already in Loki and is not re-shipped.
+    // not re-shipped.
 
     otelcol.receiver.filelog "tetragon_export" {
       include           = ["/var/run/cilium/tetragon/tetragon.log", "/var/run/cilium/tetragon/tetragon-*.log"]

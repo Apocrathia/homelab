@@ -29,12 +29,12 @@ it needs (BTF, BPF LSM) with no kernel-module story at all.
 
 ## Event and alert flow
 
-- Export: JSON events -> `export-stdout` sidecar -> pod logs. Alloy ships
-  agent logs to Loki like any other pod (no sidecar config needed here).
-- Alerting: Grafana alert rules over Loki LogQL (per policy name, e.g.
-  `process_kprobe{policy_name="secret-file-access"}`) or over the
-  `tetragon_policy_events_total` metric -> existing notification policy ->
-  the alert-agent-invoke bridge (agent triage before operator noise).
+- Export: JSON events -> the rotating export file ->
+  [tetragon alloy](../observability/alloy/tetragon/) -> tenzir -> OCSF
+  parquet. No raw tetragon stream in Loki; the OCSF record is the record.
+- Alerting: Grafana alert rules over the `tetragon_policy_events_total`
+  metric -> existing notification policy -> the alert-agent-invoke
+  bridge (agent triage before operator noise).
 - Metrics: agent `:2112`, operator `:2113`, ServiceMonitors from the chart;
   kube-prometheus-stack scrapes them (its selectors are namespace-wide).
 
@@ -67,7 +67,8 @@ alive if the agent dies (persistent enforcement) — off for now.
   operator wants treated as "internal" are still a follow-up — adding them is
   a values-only edit to the matchArgs list.
 - Base exec events (shells, sudo, SUID) need no policy — they ride the
-  exec event stream; triage via Loki queries.
+  exec event stream; triage via the OCSF parquet record or the
+  `tetragon_events_total` metrics.
 
 ## SIEM (lap C)
 
@@ -83,5 +84,6 @@ alive if the agent dies (persistent enforcement) — off for now.
   agents' export files and pushes OTLP/HTTP to the node's `accept_otlp`
   listener. tetragon v1.7.x has no native TCP export (`--export-connection`
   does not exist), and the export file is 0600 root-owned — hence the
-  dedicated root alloy in the kube-audit alloy pattern. The pod-logs leg
-  to Loki via the `export-stdout` sidecar is unchanged.
+  dedicated root alloy in the kube-audit alloy pattern. Raw tetragon
+  events no longer land in Loki (export-stdout sidecar dropped); the
+  OCSF record is the record.
