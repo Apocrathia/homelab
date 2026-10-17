@@ -43,7 +43,7 @@ spec:
       # Stay on 3.13: modelaudit declares Requires-Python >=3.10,<3.14, so
       # 3.14 breaks the init-container bootstrap. Deny renovate's 3.14 bump.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.13@sha256:1c92e57232040332324c170d2533ef25b0093c253c727b763779e2878cad5df7
+      image: public.ecr.aws/docker/library/python:3.13@sha256:f758b6ca6fd1a733d6d50584acca528421c0d86d260107ede3f14ba1928b1343
       replicas: 1
 
       # Run promptfoo's server entry directly (matches the upstream Dockerfile
@@ -60,7 +60,7 @@ spec:
       initContainers:
         - name: install
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.13@sha256:1c92e57232040332324c170d2533ef25b0093c253c727b763779e2878cad5df7
+          image: public.ecr.aws/docker/library/python:3.13@sha256:f758b6ca6fd1a733d6d50584acca528421c0d86d260107ede3f14ba1928b1343
           command: ["/bin/bash", "-c"]
           env:
             - name: HOME
