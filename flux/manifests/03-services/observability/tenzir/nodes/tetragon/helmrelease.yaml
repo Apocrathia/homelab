@@ -27,6 +27,41 @@ spec:
     remediation:
       retries: 3
     timeout: 10m
+  # Startup gate, grafted after render: tenzir-node 0.1.0 ships no
+  # startupProbe hook (a values key renders nothing — verified against the
+  # extracted chart), so the liveness probe alone owns boot and kills the
+  # pod at 120s (initialDelay 30 + 3x30) against the multi-minute
+  # partition-catalog load before :5158 accepts. The kustomize postRenderer
+  # grafts a startupProbe onto the rendered StatefulSet instead: kubelet
+  # holds readiness/liveness gated until it passes, trading the 120s kill
+  # for a 10-minute boot budget (10s period x 60 failures) that matches
+  # the 10m install/upgrade timeouts above. When upstream ships a
+  # startupProbe values hook, this patch deletes and the block moves to
+  # values.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: StatefulSet
+              name: tenzir-node-tetragon
+            patch: |-
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: tenzir-node-tetragon
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: tenzir-node
+                        startupProbe:
+                          tcpSocket:
+                            port: node
+                          periodSeconds: 10
+                          timeoutSeconds: 5
+                          failureThreshold: 60
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
