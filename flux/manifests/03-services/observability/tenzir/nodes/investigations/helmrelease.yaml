@@ -1,0 +1,321 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node-investigations
+  namespace: tenzir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # Core parity: the fresh node boots an empty partition catalog, so
+    # the 10m timeout is headroom, not a race workaround.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  values:
+    # Blast-radius isolation is why this node exists (the investigations
+    # plane design): agent query storms, malformed POSTs, and
+    # experimental TQL die on a pod that owns no detection feed, no
+    # archive rule, and no credentials beyond the two investigations
+    # ClickHouse users. The detection plane (core node) is untouched by
+    # anything that happens here; the planes share only the ClickHouse
+    # cluster and vault items. The containment stack on this node:
+    #   - operator denylist + no-location-overrides (tenzir.config below)
+    #   - INSERT/SELECT-scoped ClickHouse users, no ALTER/TRUNCATE/DROP
+    #     (the CHI users block, clickhouse/cluster/cluster.yaml)
+    #   - chart NetworkPolicy scoping ingress to the agent namespaces
+    #   - append-only discipline: nothing ever updates or deletes a row
+    #     of investigations.records (residual risk floor = visible,
+    #     attributed, easily-recoverable pollution, not destruction)
+    #
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-investigations + entry
+    # investigations would double to
+    # tenzir-node-investigations-investigations. The override pins
+    # fullname at tenzir-node so the entry renders
+    # tenzir-node-investigations (pod, Service, and ConfigMap; the
+    # Service is the agent-facing name).
+    fullnameOverride: tenzir-node
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.19.1
+
+    # Registers into the same hosted Tenzir Platform workspace as the
+    # core and tetragon nodes; this node reads its own pre-provisioned
+    # token from the investigations-token field of the tenzir-secrets
+    # Secret (NEW vault field, same convention as tetragon-token /
+    # core-token; the platform issues per-node tokens only).
+    #
+    # The API-token bootstrap is operator-side, once, because web-server
+    # tokens are NODE STATE, not config: `tenzir web generate-token`
+    # prints the token and persists it under the state directory
+    # (plugins/web/authenticator.svs on the PVC). No config key or env
+    # var seeds it, so the manifest cannot wire it: exec into the pod
+    # once, generate the token, copy the value into the tenzir-secrets
+    # item as investigations-api-token (NEW field), and hand that field
+    # to the investigator agent. Static bearer token — the residual risk
+    # the investigations design accepts inside the NetworkPolicy scope.
+    # Bootstrap order in the node README.
+    nodes:
+      - name: investigations
+        token:
+          existingSecret: tenzir-secrets
+          key: investigations-token
+        extraPorts:
+          # Write lane: accept_http listener for agent POSTs (case
+          # open/update/close + evidence pin envelopes).
+          - name: http-ingest
+            containerPort: 8080
+          # Query lane: the web server's node REST API (default port from
+          # the v6.19.1 web plugin).
+          - name: web-api
+            containerPort: 5160
+
+    persistence:
+      # Minimal by design: the node never imports a record — the local
+      # lake stays empty by construction (no import in the ingest
+      # pipeline, no archive rule), and the PVC carries node state only
+      # (platform registration, web-token state, diagnostics). The
+      # siblings' 20Gi buys headroom for archive-failure windows this
+      # node does not have. Longhorn grows on demand anyway.
+      size: 5Gi
+
+    # Node configuration (renders to the tenzir-node-investigations-config
+    # ConfigMap and rolls the pod on change). Nothing secret may live
+    # here: values land in a ConfigMap in plaintext. Secrets arrive via
+    # extraEnv below.
+    tenzir:
+      config:
+        tenzir:
+          package-dirs:
+            - /etc/tenzir/packages
+          # Containment stack, part 1: the operator denylist. Each entry
+          # forbids a pipeline operator/builtin node-wide (upstream docs,
+          # "Control the plugins"):
+          #   shell   - arbitrary command execution from a pipeline; the
+          #             single worst containment breach an injected
+          #             pipeline definition could achieve
+          #   python  - the python operator executes embedded Python
+          #             node-side; same RCE class as shell with a nicer
+          #             syntax
+          #   to_file - filesystem write from a pipeline; nothing on this
+          #             node may write files (the chart mounts /tmp and
+          #             the PVC writable, but the write tool here is
+          #             ClickHouse, not a filesystem)
+          # Open item (investigations design): decide the egress trio
+          # to_http / to_s3 / to_tcp — denylisting them hard-blocks
+          # pipeline exfiltration; this node legitimately uses none of
+          # them (the only sink is to_clickhouse), so the denylist
+          # decision is safe either way and only needs the operator's
+          # call on future flexibility.
+          disable-plugins:
+            - shell
+            - python
+            - to_file
+          # Containment stack, part 2: forbid `local`/`remote` keyword
+          # overrides in pipeline definitions (e.g., an API-launched
+          # pipeline remotely reading from a file).
+          no-location-overrides: true
+          # Containment stack, part 3: pipelines stay in-process (the
+          # pipeline-subprocesses default, kept). The tetragon node turns
+          # subprocesses on for flood crash-isolation; here the node IS
+          # the isolation boundary, the volume is tiny, and in-process
+          # keeps the API-launched query pipelines cheap.
+          # Catalog knobs, sibling parity (tetragon shape): dormant on an
+          # empty lake — nothing is imported, no partitions mint — but
+          # kept so a future import lane inherits the OOM lessons
+          # (lazy-sketches defers Bloom-filter sketches to query time;
+          # load-concurrency caps the boot synopsis loader at 4).
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+          start:
+            # Start the web server (node REST API) — the guide's
+            # mechanism (start-the-api: options ride the plugins.web
+            # block below; the server command reads its options from the
+            # plugins.web config group). The API surface:
+            # /api/v0/pipeline/{launch,list,update,delete}, /api/v0/serve
+            # — the agent query lane.
+            commands:
+              - web server
+          pipelines:
+            investigations-ingest-http:
+              name: investigations ingest (case/evidence envelopes)
+              description: |
+                Standing write lane: agents POST thin JSON envelopes
+                (case open/update/close, evidence pin) to the accept_http
+                listener; the homelab investigations mapping package
+                validates the envelope and stamps the OCSF spine (case
+                lifecycle as Incident Finding 2005, evidence pins as
+                Datastore Activity 6005 Query with the ai_operation agent
+                identity); ocsf_derive + ocsf_cast schema-validate; the
+                to_clickhouse leg INSERTs into investigations.records on
+                the OCSF query store with the INSERT/SELECT-scoped
+                investigations-writer user. The map call rides after the
+                listener braces like the core node's http-ingest pipeline
+                (not inside them): malformed POSTs drop with
+                assert-WARNINGS in the node diagnostics while the request
+                still completes with accept_http's default 200 — write
+                confirmation is the query-lane read-back, not the POST
+                response. No archive rule and no local import:
+                ClickHouse is the only durable copy, and the node lake
+                stays empty by construction (the PVC carries node state,
+                not records).
+              definition: |
+                accept_http "0.0.0.0:8080" {
+                  read_json
+                }
+                homelab::investigations::ocsf::map
+                ocsf_derive
+                ocsf_cast
+                to_clickhouse table="investigations.records",
+                  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                  port=9000,
+                  user="investigations-writer",
+                  password=secret("investigations-writer-password"),
+                  tls=false,
+                  mode="append",
+                  max_batch_rows=65536
+              restart-on-error: 1 minute
+
+        # Web server options. Config-file layout (source-verified
+        # v6.19.1, plugins/web/tenzir.yaml.example + the config loader):
+        # plugin keys stay top-level in tenzir.yaml, so in values they
+        # ride under tenzir.config.plugins, NOT under
+        # tenzir.config.tenzir — the chart renders this block as the
+        # top-level plugins: key.
+        #
+        # Query lane exposure (operator decision, investigations
+        # design): IN-CLUSTER ONLY — no Gateway HTTPRoute; agents reach
+        # tenzir-node-investigations.tenzir.svc:5160 directly, and the
+        # chart NetworkPolicy scopes who may call. upstream mode is out
+        # (source-verified v6.19.1: refuses non-localhost binds), and dev
+        # mode is out (drops token auth) — server mode binds the pod
+        # interface with TLS + token. Homelab posture: a prod cluster
+        # would add mTLS and per-caller identities; here NetworkPolicy +
+        # static token + INSERT/SELECT-scoped users is the boundary.
+        plugins:
+          web:
+            mode: server
+            bind: 0.0.0.0
+            port: 5160
+            # TODO: certfile/keyfile mounted from a cert-manager
+            # Certificate for SAN
+            # tenzir-node-investigations.tenzir.svc.cluster.local
+            # (internal CA); agent callers verify against the cluster CA.
+            # certfile: /etc/tenzir/tls/tls.crt
+            # keyfile: /etc/tenzir/tls/tls.key
+            # Bootstrap note (source-verified v6.19.1,
+            # plugins/web/src/configuration.cpp): server mode sets
+            # require_tls and FAILS validation without both certfile and
+            # keyfile ("either keyfile or certfile argument is missing").
+            # A failed start command logs an error and the node keeps
+            # running (start_command.cpp runs commands detached), so with
+            # the pair commented out the node boots and the ingest lane
+            # works; the web server (query lane) comes up only once the
+            # TODO lands. Until then agents cannot call /api/v0.
+
+    # Sized with the docs' size-a-node formula at investigations volume
+    # (near zero): 1 source (accept_http) + 1 destination (ClickHouse)
+    # + normalization = 0.1+0.1+0.2 = 0.4 -> the formula's max(2, ·)
+    # floor pins 2 cores; RAM floor 2 GB (catalog term ~0 at empty lake;
+    # the same floor the formula gives the siblings). Requests stay
+    # small: limits are caps, not reservations.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
+    # Secrets (vault items already materialized in this namespace by
+    # ../secret.yaml — the tenzir-secrets and clickhouse-secrets
+    # OnePasswordItems): the investigations ClickHouse users' passwords
+    # ride the dedicated clickhouse-secrets item as NEW fields
+    # (clickhouse-investigations-writer-password /
+    # clickhouse-investigations-reader-password — the CHI users block in
+    # clickhouse/cluster/cluster.yaml renders the users from them). Env
+    # vars map to config keys tenzir.secrets.* (same env-var shape as
+    # the siblings' TENZIR_SECRETS__CLICKHOUSE_PASSWORD): the ingest
+    # pipeline's to_clickhouse leg reads
+    # secret("investigations-writer-password"), and API-launched
+    # from_clickhouse pipelines read
+    # secret("investigations-reader-password") node-side — agents never
+    # hold ClickHouse credentials, only the node API token.
+    extraEnv:
+      - name: TENZIR_SECRETS__INVESTIGATIONS_WRITER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-writer-password
+      - name: TENZIR_SECRETS__INVESTIGATIONS_READER_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-reader-password
+
+    extraVolumes:
+      - name: packages-homelab
+        configMap:
+          name: tenzir-packages-homelab
+      - name: packages-homelab-investigations-map
+        configMap:
+          name: tenzir-packages-homelab-investigations-map
+
+    extraVolumeMounts:
+      # Same file-level subPath mounts as the sibling nodes (kubelet
+      # ..data internals fail Tenzir's operator-path segment check in a
+      # walked package tree). subPath does not live-propagate ConfigMap
+      # updates — package changes need a pod roll.
+      - name: packages-homelab
+        mountPath: /etc/tenzir/packages/homelab/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-homelab-investigations-map
+        mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+
+    # Containment stack, part 4: chart NetworkPolicy. Ingress only (the
+    # chart policy has no egress hook — open item: decide whether a
+    # standalone egress NetworkPolicy locking node egress to ClickHouse
+    # + the platform websocket is wanted; as rendered, egress is
+    # default-allowed). Same-namespace covers probes and in-cluster debug
+    # pods; the two agent lanes open to the known agent namespaces only
+    # (the investigations design's in-cluster callers) — the future
+    # investigator agent lands in one of them.
+    networkPolicy:
+      enabled: true
+      allowSameNamespace: true
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kagent
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: hermes-agent
+          ports:
+            - port: 8080
+              protocol: TCP
+            - port: 5160
+              protocol: TCP

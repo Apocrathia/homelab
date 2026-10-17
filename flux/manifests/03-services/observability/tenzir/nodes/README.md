@@ -9,6 +9,8 @@ connectivity chart, sizing math, and retention profile.
 - [`tetragon/`](./tetragon/README.md): the tetragon export flood isolate
 - [`netflow/`](./netflow/README.md): the NetFlow collector isolate (UniFi
   exporters behind `tenzir-ingest-lb`)
+- [`investigations/`](./investigations/README.md): the agent investigations
+  plane (case/evidence records, isolated blast radius)
 
 Adding a node is a recipe, not a design exercise: see
 [`core/README.md`](./core/README.md#adding-a-node).

@@ -60,6 +60,41 @@ spec:
         - 10.42.0.0/16
       grafana/grants/query:
         - GRANT SELECT ON ocsf.*
+      # Investigations-plane users (tenzir/nodes/investigations/). The
+      # standing ingest pipeline writes with investigations-writer;
+      # API-launched from_clickhouse pipelines read with
+      # investigations-reader. Neither user can ALTER, TRUNCATE, or DROP
+      # anything - wipe is not a permitted operation on this database;
+      # the residual risk floor is append-only pollution (visible,
+      # attributed, recoverable), not destruction.
+      investigations-writer/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-writer-password
+      investigations-writer/networks/ip:
+        - 10.42.0.0/16
+      # INSERT-only is the design intent, but SELECT rides along for the
+      # same live-verified reason the tenzir user carries it above:
+      # to_clickhouse's table-description refresh runs DESCRIBE on the
+      # target table. The grant stays scoped to investigations.*, and no
+      # read pipeline ever runs with this user - the query lane is the
+      # reader.
+      investigations-writer/grants/query:
+        - GRANT INSERT, SELECT ON investigations.*
+      investigations-reader/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-reader-password
+      investigations-reader/networks/ip:
+        - 10.42.0.0/16
+      # The agent query lane: read the case store AND the lake tables
+      # (evidence hunts pivot into ocsf.*). GRANT-mode RBAC already yields
+      # read-only behavior (with grants present, access is exactly what is
+      # granted).
+      investigations-reader/grants/query:
+        - GRANT SELECT ON investigations.*, ocsf.*
 
     files:
       # Tiered storage policy, prototype-validated (.scratch/
@@ -326,6 +361,49 @@ spec:
         ORDER BY (class_uid, `time`)
         TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
         SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+                </scripts>
+                <!-- Investigations case/evidence store (tenzir/nodes/
+                     investigations/): one database, one table - every
+                     OCSF record the investigations plane writes (case
+                     lifecycle rows, incident_finding 2005; evidence
+                     pins, datastore_activity 6005). Same idempotent
+                     per-replica CREATE IF NOT EXISTS + macros as the
+                     ocsf tables; NO TTL by design - a case record is a
+                     durable audit record, and the tiered storage_policy
+                     rides only for consistency (no TTL clause ever moves
+                     or deletes a part; the tutorial's per-class tables +
+                     Merge view is the upgrade path if retention is ever
+                     demanded). Dotted column names select the nested
+                     input paths to_clickhouse writes (the lake tables'
+                     hot-column pattern): metadata.correlation_uid is the
+                     case uid spine, assignee.name the working agent
+                     principal or operator, query_info.query_string the
+                     pinned query text (empty on case rows). The two
+                     users' grants live in the users block above - the
+                     authoritative grant mechanism. -->
+                <scripts>
+                    <query>CREATE DATABASE IF NOT EXISTS investigations</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS investigations.records
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `activity_id` LowCardinality(Int8),
+            `type_uid` Int32,
+            `severity_id` LowCardinality(Nullable(Int8)),
+            `status_id` Nullable(Int8),
+            `verdict_id` Nullable(Int8),
+            `priority_id` Nullable(Int8),
+            `metadata.correlation_uid` String,
+            `assignee.name` LowCardinality(Nullable(String)),
+            `query_info.query_string` Nullable(String),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY (class_uid, toYYYYMM(`time`))
+        ORDER BY (`metadata.correlation_uid`, `time`)
+        SETTINGS storage_policy = 'tiered'</query>
                 </scripts>
             </startup_scripts>
         </clickhouse>
