@@ -134,7 +134,8 @@ extraArgs:
   goaway-chance: "0.01"
 resources:
   requests:
-    cpu: "2000m"
+    # 0.22-0.53c observed usage across nodes; 1c keeps 2x headroom (was 2000m)
+    cpu: "1000m"
     memory: "4Gi" # Increased for larger CRD watch cache
   limits:
     cpu: "5000m" # Allow bursting
