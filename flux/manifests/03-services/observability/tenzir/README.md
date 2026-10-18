@@ -1,8 +1,8 @@
 # Tenzir
 
-> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-Four standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
+Five standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
@@ -14,9 +14,12 @@ owns only the NetFlow collector (UniFi exporters behind
 detection. The [investigations node](./nodes/investigations/README.md)
 owns the agent investigations plane: case/evidence envelopes in,
 `investigations.records` on ClickHouse out — an isolated blast radius the
-detection plane never shares.
+detection plane never shares. The [enrichment
+node](./nodes/enrichment/README.md) is the fleet's context factory: it
+builds the curated lookup tables — fleet assets, threat intel, baselines —
+into ClickHouse for the other nodes to pull.
 
-All four nodes register into one hosted Tenzir Platform workspace
+All five nodes register into one hosted Tenzir Platform workspace
 (app.tenzir.com) over a single outbound WebSocket. Pipelines run entirely
 on the nodes; the events flowing through them never route through the
 platform.
@@ -79,8 +82,9 @@ and the rendered Secret keys match them:
   ([`crossplane.yaml`](./crossplane.yaml) +
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
-- `core-token` / `tetragon-token` / `netflow-token` / `investigations-token`: the
-  pre-provisioned Tenzir Platform node tokens, one per node
+- `core-token` / `tetragon-token` / `netflow-token` / `investigations-token` /
+  `enrichment-token`: the pre-provisioned Tenzir Platform node tokens, one
+  per node
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace
