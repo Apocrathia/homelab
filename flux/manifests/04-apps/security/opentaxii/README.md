@@ -56,7 +56,7 @@ Any `OPENTAXII_*` env var overrides config keys (`__` separates nesting). See `h
 
 ## Authentication
 
-Zero accounts at boot. TAXII 1.x services run with `authentication_required: no`, which grants anonymous full access - fine while the service is reachable only inside the cluster. TAXII 2.1 collections follow their api-root public flag.
+Zero accounts at boot. TAXII 1.x services run with `authentication_required: no`, which grants anonymous full access - fine while the service is reachable only inside the cluster. TAXII 2.1 collections follow their api-root public flag: the bootstrapped `stix-feed` collection runs public read + public write, the same in-cluster anonymous stance as the 1.x services. Accounts stay optional until an external feeder exists.
 
 When a feeder needs real auth, create accounts out-of-band:
 
@@ -69,7 +69,7 @@ Then flip `authentication_required: yes` on the affected services in `config/dat
 
 ## TAXII 2.1 bootstrap
 
-TAXII 2.1 api roots and collections are not part of `data-configuration.yml`; create them via CLI once, then point feeders at `/taxii2/<api-root-id>/`:
+TAXII 2.1 api roots and collections are not part of `data-configuration.yml`; they are created via CLI once (commands kept for re-bootstrap), then feeders point at `/taxii2/<api-root-id>/`:
 
 ```bash
 kubectl exec -n opentaxii deploy/opentaxii -- \
@@ -77,6 +77,13 @@ kubectl exec -n opentaxii deploy/opentaxii -- \
 kubectl exec -n opentaxii deploy/opentaxii -- \
   opentaxii-add-collection --rootid <api-root-id> --title "stix-feed" --public
 ```
+
+Bootstrap performed (2026-10-18, live state):
+
+- api root `9d2329b4-6a06-4f01-9c94-a2c3e6d1a501` - title "Default", default + public
+- collection `952c801c-e4c8-4316-a565-5f97221e799f` - title "stix-feed", public read + public write
+
+The OpenCTI taxii2 import connector consumes discovery at `http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/` with collections defaulting to `*.*` (polls the single api root/collection), so no per-collection env is needed.
 
 ## Troubleshooting
 
@@ -98,9 +105,11 @@ kubectl run -it --rm curl --image=curlimages/curl -n opentaxii -- \
 
 The entrypoint prints `cp: cannot create regular file '/opentaxii.yml'` on every boot - expected under non-root; the working config is `/tmp/opentaxii.yml` via `OPENTAXII_CONFIG`.
 
+CNPG-restart stale-pool flake: after a postgres pod restart, the gunicorn app pool can hold dead SSL connections and serve 500s - log signature `psycopg2.OperationalError: SSL SYSCALL error / decryption failed or bad record mac`. Requests self-heal as SQLAlchemy invalidates the poisoned connections (retries succeed ~9/10). Durable fix: `pool_pre_ping` is wired for all three DB pools via the `OPENTAXII_*__ENGINE_PARAMETERS__POOL_PRE_PING` env vars in `helmrelease.yaml`; the manual remedy remains `kubectl rollout restart deploy/opentaxii -n opentaxii`.
+
 ## References
 
 - [OpenTAXII GitHub repository](https://github.com/EclecticIQ/OpenTAXII) - source and issues
 - [OpenTAXII documentation](https://opentaxii.readthedocs.io/en/latest/) - install, configuration, docker pages
 - [Changelog](https://github.com/EclecticIQ/OpenTAXII/blob/master/CHANGES.rst) - TAXII version support history
-- [OpenCTI TAXII 2 connector](https://github.com/OpenCTI-Platform/connectors/tree/master/external-import/taxii2) - future consumer of this server
+- [OpenCTI TAXII 2 connector](https://github.com/OpenCTI-Platform/connectors/tree/master/external-import/taxii2) - import consumer of this server, deployed via the opencti HelmRelease `connectors:` list

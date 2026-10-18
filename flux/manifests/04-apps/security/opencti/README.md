@@ -50,6 +50,11 @@ Stack layout (all in the `opencti` namespace):
   a 7-day interval. First run on deploy seeds ATT&CK into the graph — the
   platform version here has no built-in dataset-import UI anymore, so the
   connector is the seeding mechanism (2026-10-18 lap note).
+- **TAXII2 connector**: `opencti-taxii2-connector` Deployment (chart
+  `connectors:` values) polls the OpenTAXII staging hub in-cluster — TAXII
+  2.1 discovery at
+  `http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/`, collections
+  default `*.*` (the single Default api root / stix-feed collection).
 
 ## Access
 
