@@ -11,6 +11,9 @@ connectivity chart, sizing math, and retention profile.
   exporters behind `tenzir-ingest-lb`)
 - [`investigations/`](./investigations/README.md): the agent investigations
   plane (case/evidence records, isolated blast radius)
+- [`enrichment/`](./enrichment/README.md): the fleet's context factory
+  (curated lookup tables — fleet assets, threat intel, baselines — into
+  ClickHouse; ships idle until its first factory pipeline)
 
 Adding a node is a recipe, not a design exercise: see
 [`core/README.md`](./core/README.md#adding-a-node).

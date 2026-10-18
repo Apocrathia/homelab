@@ -1,8 +1,11 @@
 # Tenzir subtree router
 
-Three standalone Tenzir nodes in namespace `tenzir`; the core node is
+Five standalone Tenzir nodes in namespace `tenzir`; the core node is
 the detection plane, the tetragon node the flood isolate, the netflow
-node the NetFlow collector isolate. Narrative:
+node the NetFlow collector isolate, the investigations node the agent
+investigations plane, and the enrichment node the context factory
+(builds curated lookup tables into ClickHouse for the other nodes'
+loaders; no ingest, no pipelines yet). Narrative:
 [`.agents/context/tenzir.md`](./.agents/context/tenzir.md); full story and
 manifest wiring: [`README.md`](./README.md).
 

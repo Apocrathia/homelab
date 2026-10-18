@@ -13,7 +13,7 @@ lake and its own pipelines; there is no distributed mode.
 
 Synthesized from the subtree's READMEs (sources at the bottom):
 
-- Three standalone nodes in namespace `tenzir`: the
+- Five standalone nodes in namespace `tenzir`: the
   [core node](../../nodes/core/README.md) is the detection plane — it
   normalizes kube-apiserver audit, authentik, fleet, and trivy feeds onto
   a unified OCSF bus, runs the one sigma pass over it, and owns the
@@ -21,13 +21,21 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   the tetragon export flood, and the [netflow
   node](../../nodes/netflow/README.md) owns only the NetFlow collector
   (UniFi exporters behind `tenzir-ingest-lb`), so neither feed's behavior
-  can starve detection.
+  can starve detection. The [investigations
+  node](../../nodes/investigations/README.md) owns the agent
+  investigations plane (case/evidence envelopes in,
+  `investigations.records` on ClickHouse out), and the [enrichment
+  node](../../nodes/enrichment/README.md) is the fleet's context factory:
+  it builds curated lookup tables — fleet assets, threat intel, baselines
+  — into ClickHouse for the other nodes' loaders (lap 2 starts with
+  `fleet_assets`); it ships idle for now — no ingest, no pipelines — and
+  live-event enrichment stays in-stream at the ingress nodes.
 - Three planes (detail in [`architecture.md`](./architecture.md)): live
   detection runs in-node; findings and events live in the ClickHouse OCSF
   query store (per-class `ocsf.<Class_Name>` tables — the record);
   querying and alerting run in Grafana over its ClickHouse datasource
   reading the `ocsf.*` tables directly.
-- All three nodes register into one hosted Tenzir Platform workspace
+- All five nodes register into one hosted Tenzir Platform workspace
   (app.tenzir.com) over a single outbound WebSocket; pipelines run
   entirely on the nodes and never route events through the platform.
 - Content ships as ConfigMaps from this folder (the `homelab` TQL package
@@ -74,5 +82,9 @@ Code-level questions beyond the vendored docs:
   node, residue projection
 - [`nodes/netflow/README.md`](../../nodes/netflow/README.md) — collector
   node, template-datagram ordering
+- [`nodes/investigations/README.md`](../../nodes/investigations/README.md) —
+  agent investigations plane, isolated blast radius
+- [`nodes/enrichment/README.md`](../../nodes/enrichment/README.md) —
+  context-factory node, idle until its first factory pipeline
 - [`detections/README.md`](../../detections/README.md) — bus semantics,
   sigma mapping, class taxonomy
