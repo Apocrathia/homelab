@@ -22,6 +22,7 @@ configMapGenerator:
     files:
       - tetragon-ingest-http.tql=pipelines/tetragon-ingest-http.tql
       - tetragon-ocsf.tql=pipelines/tetragon-ocsf.tql
+      - geo-open-loader.tql=pipelines/geo-open-loader.tql
       - error-diagnostics-to-mimir.tql=pipelines/error-diagnostics-to-mimir.tql
       - diagnostics-to-loki.tql=pipelines/diagnostics-to-loki.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
@@ -47,6 +48,16 @@ replacements:
           name: tenzir-node-tetragon
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.tetragon-ocsf.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[geo-open-loader.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.geo-open-loader.definition
   - source:
       kind: ConfigMap
       name: tenzir-tetragon-pipelines

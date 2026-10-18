@@ -5,5 +5,32 @@ homelab::tetragon::ocsf::map tetragon, ocsf
 this = move ocsf
 ocsf_derive
 ocsf_cast
+fork_merge {
+  where class_uid == ocsf_class_uid("Network Activity")
+  context_enrich "geo-open", key=src_endpoint?.ip, into=src_endpoint.geo
+  context_enrich "geo-open", key=dst_endpoint?.ip, into=dst_endpoint.geo
+  dns_lookup src_endpoint?.ip, result=src_endpoint.rdns
+  dns_lookup dst_endpoint?.ip, result=dst_endpoint.rdns
+  src_endpoint.location = {
+    country: src_endpoint.geo?.country?.iso_code?,
+  } if src_endpoint.geo?.country?.iso_code? not in [null, "None"] else null
+  src_endpoint.autonomous_system = {
+    number: src_endpoint.geo?.country?.AutonomousSystemNumber?.int(),
+    name: src_endpoint.geo?.country?.AutonomousSystemOrganization?,
+  } if src_endpoint.geo?.country?.AutonomousSystemNumber? not in [null, "0"] else null
+  src_endpoint.hostname = src_endpoint.rdns?.hostname?
+  dst_endpoint.location = {
+    country: dst_endpoint.geo?.country?.iso_code?,
+  } if dst_endpoint.geo?.country?.iso_code? not in [null, "None"] else null
+  dst_endpoint.autonomous_system = {
+    number: dst_endpoint.geo?.country?.AutonomousSystemNumber?.int(),
+    name: dst_endpoint.geo?.country?.AutonomousSystemOrganization?,
+  } if dst_endpoint.geo?.country?.AutonomousSystemNumber? not in [null, "0"] else null
+  dst_endpoint.hostname = dst_endpoint.rdns?.hostname?
+  drop src_endpoint.geo, dst_endpoint.geo, src_endpoint.rdns, dst_endpoint.rdns
+  drop_null_fields src_endpoint, dst_endpoint
+}, {
+  where class_uid != ocsf_class_uid("Network Activity")
+}
 fork { import }
 publish "ocsf"

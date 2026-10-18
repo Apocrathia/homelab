@@ -2,5 +2,15 @@ subscribe "k8s-audit.raw"
 homelab::k8s::audit::ocsf::map
 ocsf_derive
 ocsf_cast
+context_enrich "geo-open", key=src_endpoint?.ip, into=src_endpoint.geo
+src_endpoint.location = {
+  country: src_endpoint.geo?.country?.iso_code?,
+} if src_endpoint.geo?.country?.iso_code? not in [null, "None"] else null
+src_endpoint.autonomous_system = {
+  number: src_endpoint.geo?.country?.AutonomousSystemNumber?.int(),
+  name: src_endpoint.geo?.country?.AutonomousSystemOrganization?,
+} if src_endpoint.geo?.country?.AutonomousSystemNumber? not in [null, "0"] else null
+drop src_endpoint.geo
+drop_null_fields src_endpoint
 fork { import }
 publish "ocsf"
