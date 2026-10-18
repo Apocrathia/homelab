@@ -86,7 +86,11 @@ spec:
               cpu: 100m
               memory: 512Mi
             limits:
-              cpu: 8000m
+              # 2026-10-17: 8000m -> 4000m. Transcode workers consume
+              # whatever the limit allows (3.5c life-avg observed on
+              # talos-02 against a 100m request); the big-file backlog is
+              # done, so cap each node's tdarr worker at 4 cores.
+              cpu: 4000m
               memory: 8Gi
       volumes:
         - name: tv
