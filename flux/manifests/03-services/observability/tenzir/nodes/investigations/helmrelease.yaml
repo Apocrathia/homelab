@@ -142,6 +142,15 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
+          # Server-log verbosity, same warning level as the siblings:
+          # the chart default (tenzir.file-verbosity: quiet) writes
+          # nothing to server.log, so pipeline failures that point at
+          # the log for their diagnostics surface blind. server.log
+          # opens at /var/log/tenzir on every boot, which
+          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # emptyDir (extraVolumes below) backs the path; keep the
+          # key/mount pair together on any new node.
+          file-verbosity: warning
           # Containment stack, part 1: the operator denylist. Each entry
           # forbids a pipeline operator/builtin node-wide (upstream docs,
           # "Control the plugins"):
@@ -311,6 +320,14 @@ spec:
       - name: web-tls
         secret:
           secretName: tenzir-node-investigations-web-tls
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem makes unwritable. This is the app's own
+      # logger, not a pipeline write lane — to_file stays on the
+      # denylist. emptyDir, same lifecycle as the tmp mount; the 10 MiB
+      # rotation cap bounds the disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the sibling nodes (kubelet
@@ -333,6 +350,9 @@ spec:
       - name: web-tls
         mountPath: /etc/tenzir/tls
         readOnly: true
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir
 
     # Containment stack, part 4: chart NetworkPolicy. Ingress only (the
     # chart policy has no egress hook — open item: decide whether a

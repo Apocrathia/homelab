@@ -122,8 +122,11 @@ spec:
           # empty log behind it — stay blind. warning puts the file at
           # the problem surface ([warning]/[error]/[critical], the lines
           # the docs' troubleshooting grep filters for) without the
-          # info-level chatter. server.log lives in the state directory
-          # on the PVC and rotates at 10 MiB.
+          # info-level chatter. server.log lands at /var/log/tenzir (the
+          # image's TENZIR_LOG_FILE=/var/log/tenzir/server.log) and
+          # rotates at 10 MiB — readOnlyRootFilesystem made that path
+          # unwritable, the 2026-10-17 crashloop, until the tenzir-logs
+          # emptyDir (extraVolumes below) backed it.
           file-verbosity: warning
           # Partition mint-rate control (docs, "Control the partition
           # size"): 60s, reverted from !5287's 10m — a partition's store
@@ -475,6 +478,13 @@ spec:
       - name: sigma-sigmahq-kubernetes-audit
         configMap:
           name: tenzir-sigma-sigmahq-kubernetes-audit
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem made unwritable — the 2026-10-17
+      # crashloop. emptyDir, same lifecycle as the tmp mount; the 10 MiB
+      # rotation cap bounds the disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
 
     extraVolumeMounts:
       # Package files mount file-level: kubelet's atomic ConfigMap writer
@@ -523,3 +533,6 @@ spec:
       - name: sigma-sigmahq-kubernetes-audit
         mountPath: /etc/tenzir/sigma/sigmahq/kubernetes-audit
         readOnly: true
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir
