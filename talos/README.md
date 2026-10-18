@@ -173,29 +173,52 @@ export TALOSCONFIG="rendered/talosconfig"
 talosctl config endpoint 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 talosctl config node 10.100.1.80 10.100.1.81 10.100.1.82 10.100.1.83
 
-# Keep a rollback copy of each node's CURRENT config
+# Keep a rollback copy of each node's CURRENT config. A failed backup
+# is FATAL: never apply configs with no rollback copy on disk.
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
   talosctl --nodes "10.100.1.${IP_LAST_OCTET}" \
     get machineconfig v1alpha1 -o jsonpath='{.spec}' \
     > "rendered/live-backup-talos-${NODE_NUM}.yaml"
-  test -s "rendered/live-backup-talos-${NODE_NUM}.yaml" \
-    || echo "WARNING: empty backup for talos-${NODE_NUM}"
+  test -s "rendered/live-backup-talos-${NODE_NUM}.yaml" || {
+    echo "FATAL: empty backup for talos-${NODE_NUM} - aborting"
+    exit 1
+  }
 done
 
 # Apply new configurations one node at a time (quorum-safe); with
-# mode auto (the default) the config applies live, no reboot
+# mode auto (the default) the config applies live, no reboot.
+# HARD GATES: apply-config restarts the node's apiserver static pod,
+# and kubelet can take 3-5 minutes to finish the recreate - the API
+# may refuse connections in that window. NEVER continue to the next
+# node on a failed or unreachable gate: on 2026-10-17 an ungated
+# loop applied to three nodes while the first apiserver was wedged.
 for i in {1..4}; do
   NODE_NUM=$(printf "%02d" $i)
   IP_LAST_OCTET=$((79 + i))
   echo "Updating talos-${NODE_NUM} (10.100.1.${IP_LAST_OCTET})..."
   talosctl apply-config \
     --nodes "10.100.1.${IP_LAST_OCTET}" \
-    --file "rendered/talos-${NODE_NUM}.yaml"
-  # Verify before proceeding to the next node
-  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" get mc
-  kubectl get node "talos-${NODE_NUM}"
+    --file "rendered/talos-${NODE_NUM}.yaml" || exit 1
+  talosctl --nodes "10.100.1.${IP_LAST_OCTET}" get mc >/dev/null || {
+    echo "FATAL: talos-${NODE_NUM} config verify failed - stop here"
+    exit 1
+  }
+  OK=""
+  for j in $(seq 1 36); do
+    if kubectl get node "talos-${NODE_NUM}" >/dev/null 2>&1; then
+      OK=1
+      break
+    fi
+    echo "waiting for API on talos-${NODE_NUM} ($((j * 10))s)..."
+    sleep 10
+  done
+  if [ -z "$OK" ]; then
+    echo "FATAL: API not back on talos-${NODE_NUM} after 6m"
+    echo "check: talosctl --nodes 10.100.1.${IP_LAST_OCTET} get staticpodstatus"
+    exit 1
+  fi
 done
 
 # Reboot only if you need changes that only take effect on reboot (most
