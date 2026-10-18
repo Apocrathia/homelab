@@ -43,13 +43,17 @@ spec:
       replicas: 1
       podAntiAffinity:
         enabled: false
+      # Right-sized 2026-10-17: upscaling runs client-side in the browser
+      # (WebGL, local GPU); this service only serves model files. Life-avg
+      # CPU was 2.8m against a 500m request (203x). Tight limits also stop
+      # a stray server-side upscale task from burning the node.
       resources:
         requests:
-          cpu: 500m
-          memory: 2Gi
+          cpu: 100m
+          memory: 512Mi
         limits:
-          cpu: 4000m
-          memory: 8Gi
+          cpu: 1000m
+          memory: 2Gi
       securityContext:
         runAsUser: 999
         runAsGroup: 999
