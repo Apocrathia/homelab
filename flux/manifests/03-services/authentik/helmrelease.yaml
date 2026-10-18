@@ -137,12 +137,20 @@ spec:
 
     worker:
       serviceAccountName: authentik
-      replicas: 4
+      # TEMPORARY drain posture for the 2026-10 task-storm (90k-task
+      # backlog, OOM loop at 2Gi; see .scratch/authentik-task-autopsy.md):
+      # one replica + 6Gi so a single boot can drain the queue without
+      # dying. Revert to 4 replicas + 4Gi after the drain completes.
+      replicas: 1
       env:
         - name: AUTHENTIK_WORKER__THREADS
           value: "4"
         - name: AUTHENTIK_WORKER__SCHEDULER_INTERVAL
           value: "hours=1"
+        # Cut done-task retention 30d -> 2d (worker.task_expiration):
+        # 723k done rows / 914MB table bloat fed the OOM cycle. Permanent.
+        - name: AUTHENTIK_WORKER__TASK_EXPIRATION
+          value: "days=2"
         - name: AUTHENTIK_CACHE__TIMEOUT
           value: "60"
         - name: AUTHENTIK_CACHE__TIMEOUT_FLOWS
@@ -155,7 +163,10 @@ spec:
           memory: 512Mi
         limits:
           cpu: 2000m
-          memory: 4Gi
+          # TEMPORARY 6Gi for the drain; revert to the 4Gi permanent
+          # limit (fix/authentik-worker-mem) after the 90k-task
+          # backlog is drained.
+          memory: 6Gi
       livenessProbe:
         timeoutSeconds: 30
         failureThreshold: 5
