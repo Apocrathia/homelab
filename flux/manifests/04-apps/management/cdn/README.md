@@ -1,7 +1,7 @@
 # CDN
 
 A `git clone` behind nginx, cosplaying as a CDN. Two pods re-clone this repo
-every 60 seconds and serve the whole damn tree over HTTP with a straight
+every 180 seconds and serve the whole damn tree over HTTP with a straight
 face. Is it a real CDN? No. Does it technically count? The operator has
 ruled that it does: "this is such a makeshift shitty cdn, but it
 technically counts."
@@ -47,7 +47,7 @@ Two pods, two containers, one emptyDir per pod, zero credentials - a
 content delivery architecture you can draw on a napkin:
 
 1. **git-sync** clones the public repo
-   (`https://gitlab.com/Apocrathia/homelab.git`, depth-1, 60s loop, no
+   (`https://gitlab.com/Apocrathia/homelab.git`, depth-1, 180s loop, no
    auth - the repo is public) into the `repo` emptyDir and publishes the
    synced worktree at `/git/homelab` with an atomic symlink flip.
 2. **nginx** serves the clone root (`nginx.conf`, demo-app pattern:
@@ -59,9 +59,9 @@ Replicas: 2. Safe because each pod clones independently (per-pod git-sync
 plus its own emptyDir - no shared volume) and chart anti-affinity spreads
 the pods across nodes - even a CDN that is a `git clone` gets redundancy.
 
-Icons land within roughly one git-sync period (60s) of hitting `main`.
+Icons land within roughly one git-sync period (180s) of hitting `main`.
 The pods serve straight off `main`, bypassing the flux apply gate - fine
-for public bytes. The cache-invalidation story is "wait a minute."
+for public bytes. The cache-invalidation story is "wait three minutes."
 
 ## Why the tailnet door (load-bearing)
 
@@ -74,10 +74,20 @@ hostname, no extra route.
 
 ## Failure modes
 
+- **Read-only rootfs**: git-sync's image sets `HOME=/tmp` and writes its
+  gitconfig there at startup, pre-clone - the sidecar needs /tmp
+  writable (the `git-sync-tmp` emptyDir, this container only) or it dies
+  instantly.
 - **GitLab outage**: new commits stop syncing; the cached tree keeps
-  serving stale icons with total confidence. A cold start mid-outage
-  waits (pod stays not-ready on the readiness probe against a real repo
-  file) until the first successful clone.
+  serving stale icons with total confidence. git-sync runs
+  `--max-failures=-1` (retry forever), so a 429 storm degrades to
+  staleness instead of a sidecar crash-loop; nginx never stops serving
+  the stale tree. A cold start mid-outage waits (pod stays not-ready on
+  the readiness probe against a real repo file) until the first
+  successful clone.
+- **GitLab rate limits**: the poll runs every 180s, keeping the 2
+  replicas around ~40 unauth req/hr from the home IP - under gitlab's
+  observed ~60/hr per-IP cap. The poll stays that slow on purpose.
 - **Host down**: tiles render iconless; cosmetic and self-healing.
 - **Removed files** drop out on the next sync tick - serving straight
   off the synced tree means no flat-copy drift.
@@ -103,4 +113,4 @@ curl -fsSI https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03
 ## References
 
 - **[git-sync](https://github.com/kubernetes/git-sync)** - the "edge" of
-  this CDN (v4, `--period=60s`)
+  this CDN (v4, `--period=180s`)

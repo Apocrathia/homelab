@@ -42,9 +42,11 @@ spec:
           - name: nginx-run
             mountPath: /run
       sidecars:
-        # Public repo, zero credentials, depth-1, 60s pull loop. Publishes
-        # the synced worktree at /git/homelab via an atomic symlink flip;
-        # nginx serves the clone root, so URLs are /homelab/<repo path>.
+        # Public repo, zero credentials, depth-1, 180s poll loop
+        # (2 replicas ~= 40 unauth req/hr, under gitlab's observed ~60/hr
+        # per-IP cap). Publishes the synced worktree at /git/homelab via
+        # an atomic symlink flip; nginx serves the clone root, so URLs are
+        # /homelab/<repo path>.
         - name: git-sync
           # renovate: datasource=docker depName=registry.k8s.io/git-sync/git-sync
           image: registry.k8s.io/git-sync/git-sync:v4.7.1@sha256:c5e1976da735bf0b53979f079a07475d77174c51863cd084e928ff6074480717
@@ -54,11 +56,25 @@ spec:
             - --depth=1
             - --root=/git
             - --link=homelab
-            - --period=60s
+            - --period=180s
+            # v4.7.1 default 0 exits on ANY sync failure; -1 retries
+            # forever at --period, so a gitlab 429 storm degrades to
+            # staleness instead of crash-looping the sidecar (nginx keeps
+            # serving the stale tree).
+            - --max-failures=-1
             - --stale-worktree-timeout=90s
           volumeMounts:
             - name: repo
               mountPath: /git
+          # Image HOME is /tmp; git-sync writes its gitconfig there at
+          # startup, pre-clone. With readOnlyRootFilesystem and no /tmp
+          # mount it dies instantly (EROFS gitconfig FATAL), so give it a
+          # scratch emptyDir on this sidecar only - never inside the
+          # web-served tree.
+          volumes:
+            emptyDir:
+              - name: git-sync-tmp
+                mountPath: /tmp
           resources:
             requests:
               cpu: 20m
