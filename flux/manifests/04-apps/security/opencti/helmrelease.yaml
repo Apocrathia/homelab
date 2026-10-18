@@ -230,6 +230,44 @@ spec:
           limits:
             cpu: "250m"
             memory: "512Mi"
+      - name: taxii2
+        enabled: true
+        replicas: 1
+        image:
+          # Same repo-override reason as the MISP connector: Filigran
+          # publishes connectors as opencti/connector-<name>; the tag rides
+          # the chart appVersion.
+          repository: opencti/connector-taxii2
+        env:
+          # OpenTAXII staging hub via its in-cluster ClusterIP service -
+          # TAXII 2.1 discovery endpoint. Collections default *.* polls
+          # every api root/collection, here the single Default root /
+          # stix-feed collection, so no TAXII2_COLLECTIONS env is needed.
+          # Everything else trusts connector defaults (verified against
+          # the connector source): PT60M poll period, TAXII2_V21=true
+          # (matches OpenTAXII 0.10 TAXII 2.1), anonymous collection so
+          # no auth vars. Default log level is error; info keeps the poll
+          # runs visible.
+          TAXII2_DISCOVERY_URL: http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/
+          CONNECTOR_LOG_LEVEL: info
+        envFromSecrets:
+          # Same platform-token vault ref as the worker and MISP connector:
+          # the chart only auto-derives OPENCTI_TOKEN from plaintext values.
+          OPENCTI_TOKEN:
+            name: opencti-secrets
+            key: APP__ADMIN__TOKEN
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
 
     # Single-node OpenSearch on Longhorn. vm.max_map_count is set at the
     # NODE level via talos/patches/unified-patch.yaml SysctlConfig - the
