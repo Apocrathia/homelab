@@ -7,10 +7,13 @@ is the subtree-local mirror, scoped to tenzir work only.
 
 ## What this is
 
-Three standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
+Five standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The core node is the detection plane; the tetragon node owns
-the export flood; the netflow node owns the NetFlow collector. Telemetry
+the export flood; the netflow node owns the NetFlow collector; the
+investigations node owns the agent investigations plane; the enrichment
+node is the idle context factory (curated lookup tables into ClickHouse
+for the other nodes' loaders; no ingest, no pipelines yet). Telemetry
 normalizes onto one OCSF bus, sigma evaluates live, and everything
 archives to the ClickHouse OCSF query store (per-class `ocsf.*` tables)
 that Grafana queries over its ClickHouse datasource. Full topology and
@@ -20,7 +23,7 @@ secrets: the app folder's [`README.md`](../../README.md).
 
 | Path              | What lives there                                                            |
 | ----------------- | --------------------------------------------------------------------------- |
-| `nodes/`          | The three node HelmReleases + READMEs (pipelines, sizing, retention)        |
+| `nodes/`          | The five node HelmReleases + READMEs (pipelines, sizing, retention)         |
 | `packages/`       | The `homelab` TQL package: parse / OCSF map / findings operators + tests    |
 | `detections/`     | Sigma rules (homelab + vendored SigmaHQ/YARA) and the bus semantics         |
 | `grafana/`        | The three Tenzir dashboards (OCSF panels query the ClickHouse store)        |
