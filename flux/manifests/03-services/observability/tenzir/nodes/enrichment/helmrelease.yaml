@@ -1,0 +1,167 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node-enrichment
+  namespace: tenzir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # Sibling parity: the fresh node boots an empty partition catalog,
+    # so the 10m timeout is headroom, not a race workaround.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  # Startup gate, grafted after render: tenzir-node 0.1.0 ships no
+  # startupProbe hook (a values key renders nothing — verified against the
+  # extracted chart), so the liveness probe alone owns boot and kills the
+  # pod at 120s (initialDelay 30 + 3x30) if registration or state load
+  # ever stalls. The kustomize postRenderer grafts a startupProbe onto the
+  # rendered StatefulSet instead: kubelet holds readiness/liveness gated
+  # until it passes, trading the 120s kill for a 10-minute boot budget
+  # (10s period x 60 failures) that matches the 10m install/upgrade
+  # timeouts above. When upstream ships a startupProbe values hook, this
+  # patch deletes and the block moves to values.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: StatefulSet
+              name: tenzir-node-enrichment
+            patch: |-
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: tenzir-node-enrichment
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: tenzir-node
+                        startupProbe:
+                          tcpSocket:
+                            port: node
+                          periodSeconds: 10
+                          timeoutSeconds: 5
+                          failureThreshold: 60
+  values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-enrichment + entry enrichment
+    # would double to tenzir-node-enrichment-enrichment. The override pins
+    # fullname at tenzir-node so the entry renders
+    # tenzir-node-enrichment (pod, Service; verified by helm template
+    # against chart 0.1.0).
+    fullnameOverride: tenzir-node
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.19.1
+
+    # Registers into the same hosted Tenzir Platform workspace as the
+    # sibling nodes; this node reads its own pre-provisioned token from
+    # the enrichment-token field of the tenzir-secrets Secret (vault
+    # field added by the operator; the platform node is already
+    # registered). Platform tokens are per-node, never shared.
+    #
+    # Lap 1 ships ZERO pipelines: the node is a bare platform-registered
+    # puller with no listeners. No extraPorts (no ingest surface — the
+    # chart-rendered main Service on :5158 carries node RPC only), no
+    # web server (no certificate.yaml), no ClickHouse env wiring yet
+    # (the lap-2 factory pipelines add TENZIR_SECRETS__CLICKHOUSE_
+    # PASSWORD from clickhouse-secrets, same shape as netflow). The
+    # zero-pipeline shape is grounded: helm template against chart
+    # 0.1.0 with no pipelines values renders a tenzir.yaml without a
+    # pipelines key, and the node boots with zero pipelines — the
+    # config schema starts pipelines defined under tenzir.pipelines,
+    # of which an absent map defines none.
+    nodes:
+      - name: enrichment
+        token:
+          existingSecret: tenzir-secrets
+          key: enrichment-token
+
+    persistence:
+      # 5Gi, investigations parity: lap 1 imports nothing, so the lake
+      # stays empty and the PVC carries node state only (platform
+      # registration, diagnostics). The lap-2+ factory pipelines pull
+      # external data and write lookup tables to ClickHouse — the lake
+      # stays a small transit buffer, not a query surface. Longhorn
+      # grows on demand anyway.
+      size: 5Gi
+
+    # Node configuration (renders to the tenzir-node-enrichment-config
+    # ConfigMap and rolls the pod on change). Nothing secret may live
+    # here: values land in a ConfigMap in plaintext.
+    tenzir:
+      config:
+        tenzir:
+          # Server-log verbosity, same warning level as the siblings:
+          # the chart default (tenzir.file-verbosity: quiet) writes
+          # nothing to server.log, so future factory-pipeline failures
+          # that point at the log for their diagnostics would surface
+          # blind. server.log opens at /var/log/tenzir on every boot,
+          # which readOnlyRootFilesystem makes unwritable — the
+          # tenzir-logs emptyDir (extraVolumes below) backs the path;
+          # keep the key/mount pair together on any new node.
+          file-verbosity: warning
+          # Zero pipelines: the tenzir.pipelines map is absent on
+          # purpose. Lap 2 adds it together with the first factory
+          # pipeline (pipelines/<id>.tql + the kustomization stitch,
+          # same generator/replacements shape as the siblings), so this
+          # release never carries a placeholder pipeline.
+          # Catalog knobs, sibling shape: dormant on an empty lake, but
+          # kept so the lap-2 import lanes inherit the OOM lessons
+          # (lazy-sketches defers Bloom-filter sketches to query time;
+          # load-concurrency caps the boot synopsis loader at 4).
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+
+    # Sized with the docs' size-a-node formula at lap-1 volume (zero):
+    # no sources, no destinations, no normalization — the formula's
+    # max(2, ·) floor pins 2 cores and the 2 GB RAM floor (catalog term
+    # ~0 at an empty lake; investigations parity at near-zero volume).
+    # Lap 2 revisits when the factory pipelines land (batch pullers:
+    # from_http/from_clickhouse + to_clickhouse legs). Requests stay
+    # small: limits are caps, not reservations.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
+    extraVolumes:
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
+      # crashloop on the warning-level siblings. emptyDir, same
+      # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
+      # disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
+
+    extraVolumeMounts:
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir
