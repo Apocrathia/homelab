@@ -64,6 +64,14 @@ spec:
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_MAPPING: '["admins:Administrators"]'
 
     envFromSecrets:
+      # Enterprise Edition license (PEM): the platform reads conf key
+      # app:enterprise_edition_license from this env (APP__ prefix mapping).
+      # Config-path license takes precedence over a UI-pasted
+      # (DB-stored) one, so the vault stays the source of truth;
+      # rotation = vault edit + item sync + pod recreate.
+      APP__ENTERPRISE_EDITION_LICENSE:
+        name: opencti-secrets
+        key: APP__ENTERPRISE_EDITION_LICENSE
       APP__ADMIN__EMAIL:
         name: opencti-secrets
         key: APP__ADMIN__EMAIL

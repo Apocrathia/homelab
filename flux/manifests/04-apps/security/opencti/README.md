@@ -75,17 +75,18 @@ sensitive is stored in this repo.
 
 Item `vaults/Secrets/items/opencti-secrets` (created in slice 1):
 
-| Field                  | Used for                               |
-| ---------------------- | -------------------------------------- |
-| `APP__ADMIN__EMAIL`    | bootstrap admin account                |
-| `APP__ADMIN__PASSWORD` | bootstrap admin account                |
-| `APP__ADMIN__TOKEN`    | admin API token (worker + health gate) |
-| `APP__ENCRYPTION_KEY`  | at-rest crypto for sensitive config    |
-| `RABBITMQ__PASSWORD`   | RabbitMQ auth (app + subchart)         |
-| `REDIS__PASSWORD`      | dragonfly auth (app + subchart)        |
-| `MINIO__ACCESS_KEY`    | rustfs `opencti-files` keypair         |
-| `MINIO__SECRET_KEY`    | rustfs `opencti-files` keypair         |
-| `OIDC_CLIENT_SECRET`   | Authentik OIDC provider client secret  |
+| Field                             | Used for                                                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP__ADMIN__EMAIL`               | bootstrap admin account                                                                                                                                                   |
+| `APP__ADMIN__PASSWORD`            | bootstrap admin account                                                                                                                                                   |
+| `APP__ADMIN__TOKEN`               | admin API token (worker + health gate)                                                                                                                                    |
+| `APP__ENCRYPTION_KEY`             | at-rest crypto for sensitive config                                                                                                                                       |
+| `RABBITMQ__PASSWORD`              | RabbitMQ auth (app + subchart)                                                                                                                                            |
+| `REDIS__PASSWORD`                 | dragonfly auth (app + subchart)                                                                                                                                           |
+| `MINIO__ACCESS_KEY`               | rustfs `opencti-files` keypair                                                                                                                                            |
+| `MINIO__SECRET_KEY`               | rustfs `opencti-files` keypair                                                                                                                                            |
+| `OIDC_CLIENT_SECRET`              | Authentik OIDC provider client secret                                                                                                                                     |
+| `APP__ENTERPRISE_EDITION_LICENSE` | OpenCTI EE license (PEM); provider login (SSO) is EE-gated on 7.26 CE — wired as `APP__ENTERPRISE_EDITION_LICENSE` env which takes precedence over a UI-pasted DB license |
 
 Item `vaults/Secrets/items/opencti-misp-connector` (created post-merge in
 slice 6 — a running MISP must mint the key first; materialized by the
