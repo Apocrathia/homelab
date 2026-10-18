@@ -4,17 +4,18 @@
 
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
-Five pipelines live in
+Three pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 netflow-ingest (the UDP
 listener + OCSF mapping + endpoint enrichment), geo-open-loader (the
-daily GeoIP context builder for that enrichment), the two metrics
-pushers (pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a
-dead UDP collector is a silent black hole, so this node keeps the
-core node's liveness series), and
-diagnostics-to-loki (live pipeline diagnostics as
-`job=tenzir-diagnostics` Loki log lines). The split exists so the
+daily GeoIP context builder for that enrichment), and
+pipeline-metrics-to-mimir (a dead UDP collector is a silent black
+hole, so this node keeps the core node's liveness series). The former
+diagnostics pushers (error-diagnostics-to-mimir, diagnostics-to-loki)
+retired with the introspection lap: the central poller on the
+introspection node ships this node's diagnostics to Loki and Mimir
+now. The split exists so the
 collector's lifecycle (listener restarts, pod rolls, future
 vendor-traffic surprises) cannot touch the detection plane, and so
 flow ingest has room to grow when the UniFi renderer fix lands; the

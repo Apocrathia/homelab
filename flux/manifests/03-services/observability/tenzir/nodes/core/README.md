@@ -5,7 +5,7 @@
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Fourteen pipelines live in
+`ocsf` bus, and runs the one sigma pass. Twelve pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
@@ -30,10 +30,11 @@ LB service anymore.
 - geo-open-loader: the daily CIRCL Geo Open MMDB builder for the
   enrichment context (decoupled from the detection plane — a failed
   fetch never stalls the sigma pass)
-- pipeline-metrics-to-mimir / sigma-metrics-to-mimir /
-  error-diagnostics-to-mimir: the node's own operational metrics
-- diagnostics-to-loki: live pipeline diagnostics as
-  `job=tenzir-diagnostics` Loki log lines (node=core)
+- pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
+  operational metrics (the diagnostics-to-loki / error-diagnostics-to-mimir
+  pair retired with the introspection lap: the central poller on the
+  introspection node ships this node's diagnostics to Loki and Mimir
+  now, so the lanes would have double-shipped every event)
 
 ## Connectivity
 

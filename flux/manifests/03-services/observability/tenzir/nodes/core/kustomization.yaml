@@ -31,8 +31,6 @@ configMapGenerator:
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - sigma-metrics-to-mimir.tql=pipelines/sigma-metrics-to-mimir.tql
-      - error-diagnostics-to-mimir.tql=pipelines/error-diagnostics-to-mimir.tql
-      - diagnostics-to-loki.tql=pipelines/diagnostics-to-loki.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
 
 replacements:
@@ -156,26 +154,6 @@ replacements:
           name: tenzir-node-core
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.sigma-metrics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-core-pipelines
-      fieldPath: data.[error-diagnostics-to-mimir.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-core
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.error-diagnostics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-core-pipelines
-      fieldPath: data.[diagnostics-to-loki.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-core
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.diagnostics-to-loki.definition
   - source:
       kind: ConfigMap
       name: tenzir-core-pipelines

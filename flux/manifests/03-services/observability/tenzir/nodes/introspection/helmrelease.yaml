@@ -1,0 +1,195 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node-introspection
+  namespace: tenzir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # Sibling parity: the fresh node boots an empty partition catalog,
+    # so the 10m timeout is headroom, not a race workaround.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  # Startup gate, grafted after render: tenzir-node 0.1.0 ships no
+  # startupProbe hook (a values key renders nothing — verified against the
+  # extracted chart), so the liveness probe alone owns boot and kills the
+  # pod at 120s (initialDelay 30 + 3x30) if registration or state load
+  # ever stalls. The kustomize postRenderer grafts a startupProbe onto the
+  # rendered StatefulSet instead: kubelet holds readiness/liveness gated
+  # until it passes, trading the 120s kill for a 10-minute boot budget
+  # (10s period x 60 failures) that matches the 10m install/upgrade
+  # timeouts above. When upstream ships a startupProbe values hook, this
+  # patch deletes and the block moves to values.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: StatefulSet
+              name: tenzir-node-introspection
+            patch: |-
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: tenzir-node-introspection
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: tenzir-node
+                        startupProbe:
+                          tcpSocket:
+                            port: node
+                          periodSeconds: 10
+                          timeoutSeconds: 5
+                          failureThreshold: 60
+  values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-introspection + entry
+    # introspection would double to
+    # tenzir-node-introspection-introspection. The override pins fullname
+    # at tenzir-node so the entry renders tenzir-node-introspection (pod,
+    # Service; verified by helm template against chart 0.1.0).
+    fullnameOverride: tenzir-node
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      tag: v6.19.1
+
+    # Registers into the same hosted Tenzir Platform workspace as the
+    # sibling nodes; this node reads its own pre-provisioned token from
+    # the introspection-token field of the tenzir-secrets Secret (vault
+    # field added by the operator; the platform node is already
+    # registered — workspace t-vrj4igpf). Platform tokens are per-node,
+    # never shared.
+    #
+    # Pure diagnostics puller: no extraPorts (no ingest surface — the
+    # chart-rendered main Service on :5158 carries node RPC only; the
+    # poller dials OUT to the siblings' :5158, nothing calls in). The
+    # central poller is NOT this StatefulSet: it is the sibling
+    # Deployment in poller.yaml — v6.19.1 node-config TQL cannot pull a
+    # remote node's diagnostics (remote{} is a no-op location marker in
+    # the new executor), so a separate pod runs the tenzir CLI against
+    # each target's :5158 and ships via the same to_fluent_bit /
+    # to_prometheus lanes these local pipelines use.
+    nodes:
+      - name: introspection
+        token:
+          existingSecret: tenzir-secrets
+          key: introspection-token
+
+    persistence:
+      # 5Gi, investigations/enrichment parity: the node imports nothing,
+      # so the lake stays empty and the PVC carries node state only
+      # (platform registration, diagnostics store). Longhorn grows on
+      # demand anyway.
+      size: 5Gi
+
+    # Node configuration (renders to the tenzir-node-introspection-config
+    # ConfigMap and rolls the pod on change). Nothing secret may live
+    # here: values land in a ConfigMap in plaintext.
+    tenzir:
+      config:
+        tenzir:
+          # Server-log verbosity, same warning level as the siblings:
+          # the chart default (tenzir.file-verbosity: quiet) writes
+          # nothing to server.log, so pipeline failures that point at the
+          # log for their diagnostics would surface blind. server.log
+          # opens at /var/log/tenzir on every boot, which
+          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # emptyDir (extraVolumes below) backs the path; keep the
+          # key/mount pair together on any new node.
+          file-verbosity: warning
+          # Catalog knobs, sibling shape: dormant on an empty lake, but
+          # kept so a future import lane inherits the OOM lessons
+          # (lazy-sketches defers Bloom-filter sketches to query time;
+          # load-concurrency caps the boot synopsis loader at 4).
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+          # Pipeline definitions live in pipelines/<id>.tql; this
+          # kustomization's replacements stitch them back into these
+          # empty definition fields at build time.
+          pipelines:
+            diagnostics-to-loki:
+              name: diagnostics to loki
+              description: |
+                Ships every live, not-hidden pipeline diagnostic to Loki as
+                job=tenzir-diagnostics entries (node label = introspection)
+                — the sibling lanes' exact shape, covering this node's own
+                two pipelines so the poller's host is not the one blind
+                spot. to_fluent_bit resolves $pipeline_name and $severity
+                per event and consumes both out of the shipped body
+                (live-verified 2026-10-17 probe); drop discards the ANSI
+                escape-coded rendered field, so the line keeps the rest of
+                the diagnostic record — pipeline_id, hidden, run,
+                timestamp, message, notes, annotations — and the labels
+                carry pipeline + severity. Hidden entries (platform-UI
+                pipeline deprecation noise) stay out. Plain HTTP to
+                loki-write, cluster-internal. live=true without retro: no
+                store-backlog replay on start, so restarts never re-ship
+                history (Loki has no dedup); the poller Deployment owns
+                the other five nodes' diagnostics.
+              definition: ""
+              restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors / tenzir_pipeline_warnings
+                sample (value 1, pipeline labels, node label =
+                introspection) to Mimir for every live error / warning
+                diagnostic, so the dashboard can count both severities
+                with sum_over_time. They otherwise live only in the
+                diagnostics stream, not in metrics. Sibling lanes' exact
+                shape; the poller Deployment ships the other five nodes'
+                samples.
+              definition: ""
+              restart-on-error: 1 minute
+
+    # Sized with the docs' size-a-node formula at introspection volume
+    # (near zero): no sources, no destinations beyond the two thin ship
+    # lanes — the formula's max(2, ·) floor pins 2 cores and the 2 GB RAM
+    # floor (investigations/enrichment parity at near-zero volume).
+    # Requests stay small: limits are caps, not reservations.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
+    extraVolumes:
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
+      # crashloop on the warning-level siblings. emptyDir, same
+      # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
+      # disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
+
+    extraVolumeMounts:
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir

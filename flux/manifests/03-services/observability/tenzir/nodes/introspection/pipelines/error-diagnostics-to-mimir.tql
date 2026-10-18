@@ -5,11 +5,11 @@ fork {
     name="tenzir_pipeline_errors",
     value=1,
     timestamp=timestamp,
-    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "tetragon"}
+    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "introspection"}
 }
 where severity == "warning"
 to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
   name="tenzir_pipeline_warnings",
   value=1,
   timestamp=timestamp,
-  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "tetragon"}
+  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "introspection"}

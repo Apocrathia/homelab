@@ -24,8 +24,6 @@ configMapGenerator:
       - netflow-ingest.tql=pipelines/netflow-ingest.tql
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
-      - error-diagnostics-to-mimir.tql=pipelines/error-diagnostics-to-mimir.tql
-      - diagnostics-to-loki.tql=pipelines/diagnostics-to-loki.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
 
 replacements:
@@ -59,26 +57,6 @@ replacements:
           name: tenzir-node-netflow
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.pipeline-metrics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-netflow-pipelines
-      fieldPath: data.[error-diagnostics-to-mimir.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-netflow
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.error-diagnostics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-netflow-pipelines
-      fieldPath: data.[diagnostics-to-loki.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-netflow
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.diagnostics-to-loki.definition
   - source:
       kind: ConfigMap
       name: tenzir-netflow-pipelines
