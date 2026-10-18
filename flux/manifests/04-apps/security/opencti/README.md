@@ -44,6 +44,12 @@ Stack layout (all in the `opencti` namespace):
 - **MISP connector** (slice 6): `opencti-misp-connector` Deployment (chart
   `connectors:` values) polls MISP every 5 minutes over its gateway URL and
   imports events as reports/indicators/observables — one-way MISP → OpenCTI.
+- **MITRE ATT&CK connector**: `opencti-mitre-connector` Deployment (chart
+  `connectors:` values) pulls the ATT&CK Enterprise/Mobile/ICS STIX bundles
+  plus CAPEC from upstream (`mitre-attack/attack-stix-data`, `mitre/cti`) on
+  a 7-day interval. First run on deploy seeds ATT&CK into the graph — the
+  platform version here has no built-in dataset-import UI anymore, so the
+  connector is the seeding mechanism (2026-10-18 lap note).
 
 ## Access
 
@@ -271,8 +277,10 @@ filters, and hand over the URL + token — see the slice-7 checklist in
 2. Health green:
    `curl "https://opencti.gateway.services.apocrathia.com/health?health_access_key=<APP__ADMIN__TOKEN value>"`
    → `status: success` (the token value lives in 1Password).
-3. MITRE seed: ATT&CK techniques visible under Data → Entities after first
-   boot completes; if empty, import the MITRE dataset from the UI.
+3. MITRE seed: ATT&CK techniques visible under Data → Entities once the
+   `opencti-mitre-connector` completes its first run (7-day interval; first
+   run starts on deploy). The 7.x platform has no built-in dataset-import
+   UI — the connector is the only seeding mechanism.
 4. File storage smoke test (research §2.6): import a file via the UI
    (Data → Import), then confirm the object landed in the rustfs
    `opencti-files` bucket (multipart upload is the point of the test).
