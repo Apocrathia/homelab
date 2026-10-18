@@ -29,8 +29,10 @@ The Status UI is available at
 - `ClusterRoleBinding/flux-web-admins` maps the Authentik `flux-admins` group
   to `flux-web-admin`.
 
-`authentik-blueprint.yaml` is generated into the
-`authentik-blueprint-flux-operator` ConfigMap by this kustomization.
+The Authentik objects live in the canonical file pair (`crossplane.yaml` +
+`authentik.tf`): a Crossplane opentofu Workspace manages both gates and
+adopts the retired blueprint's live objects in place; `kustomization.yaml`
+stitches the HCL into the Workspace at build time.
 
 ## Secrets
 

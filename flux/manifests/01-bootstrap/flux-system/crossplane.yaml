@@ -1,0 +1,88 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: flux-system
+spec:
+  # Scoped Authentik service-account token. Never a bare managed Secret —
+  # the operator creates the 1Password item crossplane-terraform-secrets
+  # (vault "Secrets", field authentik-terraform-token), and the OnePassword
+  # Connect operator syncs it as the authentik-terraform-token Secret
+  # consumed by the ProviderConfig in this file. Same item as every other
+  # file-pair app; the namespace differs.
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: flux-operator-authentik
+  namespace: flux-system
+spec:
+  # Materializes the OnePasswordItem-backed Secret as a file in the tofu
+  # workdir; authentik.tf's provider block reads it with
+  # file("authentik-token"). The token itself never appears in a manifest.
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: flux-system
+        key: authentik-terraform-token
+    # client_id lane (oidc gate): the SAME 1Password-backed Secret key the
+    # HelmRelease consumes (valuesFrom -> flux-operator-secrets/
+    # oidc-client-id -> web.config.authentication.oauth2.clientID)
+    # materializes as the oidc-client-id file in the tofu workdir, so
+    # authentik.tf's client_id = trimspace(file("oidc-client-id")) reads
+    # the live blueprint-minted client_id — the value NEVER appears in
+    # git, and tofu and the app stay in lockstep on it.
+    - filename: oidc-client-id
+      source: Secret
+      secretRef:
+        name: flux-operator-secrets
+        namespace: flux-system
+        key: oidc-client-id
+  # Per-app state args for the PARTIAL kubernetes backend in authentik.tf:
+  # the provider writes this as crossplane.remote.tfbackend and passes it
+  # via -backend-config at tofu init. The state Secret is
+  # tfstate-flux-operator-authentik-flux-operator in this namespace —
+  # deliberately separate from the CI tofu stack (terraform/, GitLab HTTP
+  # backend). Two stacks, two states.
+  backendFile: |
+    secret_suffix     = "flux-operator"
+    namespace         = "flux-system"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: flux-operator-authentik
+  namespace: flux-system
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu
+  # destroy, so a GitOps prune of this object can NEVER destroy the live
+  # authentik stack (v2-native Orphan). Deliberate decommission therefore
+  # requires temporarily restoring ["*"] (or a manual tofu destroy) — the
+  # guard is intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: flux-operator-authentik
+  forProvider:
+    # Inline module, stitched at kustomize build time: kustomization.yaml's
+    # configMapGenerator packages authentik.tf and the replacements rule
+    # copies its bytes into this module field — crossplane.yaml +
+    # authentik.tf are the canonical file pair, and the HCL file is the
+    # single source of truth (never render this directory outside
+    # kustomize). No varmap in git — ever: the app values live in the HCL,
+    # and the ADOPTION varmap (recipe §8, born-with-varmap) exists only as
+    # a gate-time patch on the applied Workspace. The live objects are
+    # blueprint-created and ride in tofu state only after the gated
+    # imports adopt them; the first reconcile of the unsuspended tree
+    # plans No changes.
+    source: Inline
+    module: ""
