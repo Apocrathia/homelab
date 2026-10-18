@@ -424,6 +424,24 @@ spec:
             </startup_scripts>
         </clickhouse>
 
+      # TEMPORARY repair-B allowance (revert at GATE 6 of the repair lap):
+      # ocsf.API_Activity cannot attach on either replica - 117 zero-byte
+      # broken parts exceed the default max_suspicious_broken_parts (100),
+      # TOO_MANY_UNEXPECTED_DATA_PARTS, which blocks the whole ocsf database
+      # load (ASYNC_LOAD_WAIT_FAILED). Raise the global merge_tree limit to
+      # 200 so the attach drops them (deletion accepted by the operator
+      # 2026-10-18). One setting only - everything else in <merge_tree>
+      # stays default.
+      #
+      # See docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md
+      # (Repair B) and MR !5353.
+      config.d/20-max-suspicious-broken-parts.xml: |
+        <clickhouse>
+            <merge_tree>
+                <max_suspicious_broken_parts>200</max_suspicious_broken_parts>
+            </merge_tree>
+        </clickhouse>
+
     clusters:
       - name: ocsf
         layout:
