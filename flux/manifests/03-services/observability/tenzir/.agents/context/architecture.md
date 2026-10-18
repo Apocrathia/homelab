@@ -24,12 +24,11 @@ through the platform.
 - **Core node** — the detection plane. Normalizes every feed except the
   tetragon flood and the netflow ingest (kube-apiserver audit,
   authentik, fleet, trivy) onto the unified `ocsf` bus and runs the one
-  sigma pass. Thirteen pipelines live in its HelmRelease.
+  sigma pass. Fourteen pipelines live in its HelmRelease.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
-  memory behavior cannot starve the detection plane. Four pipelines (OTLP
-  ingest + OCSF map, plus the error-diagnostics-to-mimir and
-  diagnostics-to-loki shippers), subprocess-isolated so a pipeline blowup
-  dies alone.
+  memory behavior cannot starve the detection plane. Six pipelines (OTLP
+  ingest + OCSF map, the geo-open loader, and the three observability
+  arms), subprocess-isolated so a pipeline blowup dies alone.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
   behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). One
   collector pipeline (UDP accept + OCSF map via the vendored library
@@ -70,11 +69,10 @@ record. The retired `s3://tenzir/ocsf/` parquet archive stays untouched
 in the rustfs bucket as frozen history — deleting it is a separate
 operator call. Classes that cannot name themselves (the Base Event
 fallback) are not archived — they expire with the window. The compaction
-pass runs every 5 minutes on every node, but the true window at pass
-boundaries is per-node: 15-25 minutes on the core node, where the
-10-minute partition flush adds up to 10 minutes on top of the 15-minute
-expiry, and 15-20 minutes on the tetragon and netflow nodes, whose
-60-second flushes add almost nothing.
+pass runs every 5 minutes on core, tetragon, and netflow, and the true
+window at pass boundaries is 15-20 minutes on all three: the 15-minute
+expiry plus the pass interval, with each node's 60-second partition
+flush adding almost nothing.
 
 ## SQL plane (Grafana + ClickHouse)
 
@@ -89,20 +87,23 @@ dashboards live in [`grafana/`](../../grafana/README.md).
 ## Metrics plane (push-only)
 
 The nodes push their own operational metrics; there is no scrape
-endpoint on them. Three pipelines on the core node
-(`pipeline-metrics-to-mimir`, `sigma-metrics-to-mimir`,
-`error-diagnostics-to-mimir`) push `tenzir_pipeline_*`,
-`tenzir_sigma_*`, and the error series to Mimir; the netflow node ships
-the pipeline and error pair (a dead UDP collector is a silent black hole),
-and the tetragon flood isolate ships the error pair but no
-pipeline-metrics — its ingest/egress/heartbeat lanes stay absent by
-design. Same-id pushers across nodes stamp a `node` label (`core`,
-`netflow`, `tetragon`) because the `pipeline_id` label is the bare
-pipeline id, so each node's series stay distinct. Every node also ships
-its live, not-hidden pipeline diagnostics to Loki as
-`job=tenzir-diagnostics` log lines (`diagnostics-to-loki`), with the
-node baked into the stream labels. The Grafana Node Pipelines dashboard
-reads the series in Mimir; the receiving stack is outside this subtree.
+endpoint on them. All four pipeline-carrying nodes (core, tetragon,
+netflow, investigations) ship the same three arms.
+`pipeline-metrics-to-mimir` pushes the `tenzir_pipeline_*` ingress and
+egress series with a `node` and `internal` label each — the
+`pipeline_id` label is the bare pipeline id, so the `node` label keeps
+same-id pushers distinct, and `internal` separates bus-internal flow
+from external export. `error-diagnostics-to-mimir` pushes an error and
+a warning sample per live diagnostic (`tenzir_pipeline_errors` /
+`tenzir_pipeline_warnings`). `diagnostics-to-loki` ships every live,
+not-hidden pipeline diagnostic to Loki as `job=tenzir-diagnostics`
+log lines via `to_fluent_bit` (the ANSI `rendered` field dropped, the
+rest of the record verbatim, the node baked into the stream labels).
+Core adds `sigma-metrics-to-mimir` (`tenzir_sigma_*` — sigma runs only
+there). The enrichment node ships no arms in lap 1 (zero pipelines by
+design) and must gain the same three-arm set in its lap 2. The Grafana
+Node Pipelines dashboard reads the series in Mimir; the receiving stack
+is outside this subtree.
 
 ## Sources
 

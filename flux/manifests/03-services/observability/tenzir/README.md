@@ -5,8 +5,8 @@
 Five standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
-it normalizes kube-apiserver audit, authentik, fleet, trivy, and NetFlow
-feeds to a unified OCSF bus, runs one sigma pass over it, and owns the
+it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
+a unified OCSF bus, runs one sigma pass over it, and owns the
 archive. The [tetragon node](./nodes/tetragon/README.md) owns only the
 tetragon export flood, and the [netflow node](./nodes/netflow/README.md)
 owns only the NetFlow collector (UniFi exporters behind
