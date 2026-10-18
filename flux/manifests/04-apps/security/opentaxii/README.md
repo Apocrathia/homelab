@@ -105,7 +105,7 @@ kubectl run -it --rm curl --image=curlimages/curl -n opentaxii -- \
 
 The entrypoint prints `cp: cannot create regular file '/opentaxii.yml'` on every boot - expected under non-root; the working config is `/tmp/opentaxii.yml` via `OPENTAXII_CONFIG`.
 
-CNPG-restart stale-pool flake: after a postgres pod restart, the gunicorn app pool can hold dead SSL connections and serve 500s - log signature `psycopg2.OperationalError: SSL SYSCALL error / decryption failed or bad record mac`. Requests self-heal as SQLAlchemy invalidates the poisoned connections (retries succeed ~9/10). Durable fix: `pool_pre_ping` is wired for all three DB pools via the `OPENTAXII_*__ENGINE_PARAMETERS__POOL_PRE_PING` env vars in `helmrelease.yaml`; the manual remedy remains `kubectl rollout restart deploy/opentaxii -n opentaxii`.
+CNPG-restart stale-pool flake: after a postgres pod restart, the gunicorn app pool can hold dead SSL connections and serve 500s - log signature `psycopg2.OperationalError: SSL SYSCALL error / decryption failed or bad record mac`. Requests self-heal as SQLAlchemy invalidates the poisoned connections (retries succeed ~9/10). Durable fix: `pool_pre_ping` is wired for all three DB pools via the `OPENTAXII_*__PARAMETERS__POOL_PRE_PING` env vars in `helmrelease.yaml` (config `parameters:` keys map 1:1 to the API constructor kwargs, which flow through `**engine_parameters` into `create_engine`); the manual remedy remains `kubectl rollout restart deploy/opentaxii -n opentaxii`.
 
 ## References
 

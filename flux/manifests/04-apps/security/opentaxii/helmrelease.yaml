@@ -38,16 +38,21 @@ spec:
           # Advertised TAXII 1 service addresses in discovery responses
           - name: OPENTAXII_DOMAIN
             value: opentaxii.opentaxii.svc.cluster.local:9000
-          # SQLAlchemy engine_parameters via the OPENTAXII_* config override chain
-          # (BaseSQLDatabaseAPI **engine_parameters -> create_engine). Heals stale
-          # pooled SSL connections after a CNPG pod restart without a rollout:
-          # 2026-10-18 every TAXII surface 500ed (psycopg2 SSL SYSCALL error / bad
-          # record mac) until the app was restarted. See README troubleshooting.
-          - name: OPENTAXII_PERSISTENCE_API__PARAMETERS__ENGINE_PARAMETERS__POOL_PRE_PING
+          # SQLAlchemy pool_pre_ping via the OPENTAXII_* config override chain:
+          # persistence parameters map 1:1 to API constructor kwargs, and
+          # BaseSQLDatabaseAPI.__init__(**engine_parameters) passes unknown
+          # kwargs straight to sqlalchemy.create_engine. Do NOT nest an extra
+          # ENGINE_PARAMETERS__ level - that arrives as a literal constructor
+          # kwarg and crashes create_engine (verified the hard way, 2026-10-18).
+          # Heals stale pooled SSL connections after a CNPG pod restart without
+          # a rollout: every TAXII surface 500ed (psycopg2 SSL SYSCALL error /
+          # bad record mac) until the app was restarted. See README
+          # troubleshooting.
+          - name: OPENTAXII_PERSISTENCE_API__PARAMETERS__POOL_PRE_PING
             value: "true"
-          - name: OPENTAXII_TAXII2__PERSISTENCE_API__PARAMETERS__ENGINE_PARAMETERS__POOL_PRE_PING
+          - name: OPENTAXII_TAXII2__PERSISTENCE_API__PARAMETERS__POOL_PRE_PING
             value: "true"
-          - name: OPENTAXII_AUTH_API__PARAMETERS__ENGINE_PARAMETERS__POOL_PRE_PING
+          - name: OPENTAXII_AUTH_API__PARAMETERS__POOL_PRE_PING
             value: "true"
           - name: DATABASE_HOST
             value: opentaxii-postgres-rw.opentaxii.svc.cluster.local
