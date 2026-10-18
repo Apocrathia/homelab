@@ -25,3 +25,9 @@ resources:
   # Cert Manager (managed by Helm chart)
   # renovate: datasource=github-releases depName=cert-manager/cert-manager
   # - https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml
+  # OpenTofu CRDs — pre-staged (vendored from live cluster; see file headers).
+  # The root bootstrap kustomization applies the tofu ProviderConfig/Workspace
+  # CRs at layer 01, before the provider xpkg that owns these CRDs installs
+  # at layer 03; the pre-stage guarantees T0 CRD existence on a fresh cluster.
+  - providerconfigs.opentofu.m.upbound.io.yaml
+  - workspaces.opentofu.m.upbound.io.yaml

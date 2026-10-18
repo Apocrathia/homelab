@@ -11,15 +11,52 @@ resources:
   - helmrelease.yaml
   - secret.yaml
   - rbac.yaml
+  - crossplane.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: authentik-blueprint-flux-operator
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
+  # so the replacements rule below can copy it into the Workspace at
+  # build time. Data key is the literal filename (authentik.tf); the
+  # replacements fieldPath bracket-escapes it: data.[authentik.tf]. The
+  # authentik-blueprint-flux-operator generator entry is retired (this
+  # MR): the blueprint CM stops rendering from git, but Flux does NOT
+  # prune it — the root flux-system Kustomization runs prune: false, so
+  # the CM lingers labeled authentik_blueprint=true and authentik
+  # co-manages the adopted objects (reverting tofu changes at
+  # re-discovery) until the merge gate deletes it explicitly (delete
+  # step in the authentik.tf header gate note). The live authentik
+  # objects survive for tofu to adopt, and no authentik_blueprint label
+  # lands on this ConfigMap — the blanket labels block died with the
+  # retirement, so authentik's blueprint sidecar ignores it.
+  - name: flux-operator-authentik-module
     namespace: flux-system
     files:
-      - flux-operator.yaml=authentik-blueprint.yaml
-    options:
-      labels:
-        authentik_blueprint: "true"
+      - authentik.tf
+
+replacements:
+  # Build-time stitch, house pattern from gitlab/runner: copy the
+  # generated ConfigMap's authentik.tf data into the Workspace's module
+  # field. authentik.tf stays the single source of truth for the HCL; the
+  # rendered module must stay byte-identical to it (the Workspace adopts
+  # live authentik objects — drift here plans against the wrong HCL).
+  #
+  # The intermediate ConfigMap cannot be dropped from the render:
+  # kustomize applies patches and transformers before replacements, so a
+  # $patch: delete would remove the source before this rule consumes it
+  # (verified on kustomize v5.8.1; no deletions-transformer builtin
+  # exists). The ConfigMap is harmless in-cluster (no authentik_blueprint
+  # label) and keeps a stable name (disableNameSuffixHash), so
+  # authentik.tf edits update it in place.
+  - source:
+      kind: ConfigMap
+      name: flux-operator-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: flux-operator-authentik
+        fieldPaths:
+          - spec.forProvider.module
