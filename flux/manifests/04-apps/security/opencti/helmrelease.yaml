@@ -165,6 +165,14 @@ spec:
           MISP_CREATE_REPORTS: true
           MISP_CREATE_INDICATORS: true
           MISP_CREATE_OBSERVABLES: true
+          # MISP `timestamp` is the source event's last-modified, NOT the local
+          # creation time: the CIRCL archive import bulk-touched events to
+          # 2026-10-16 00:59:xx and feed-imported events (abuse.ch backfill)
+          # carry historical timestamps, so a live timestamp cursor strands
+          # them below the watermark. import_from_date is the initial cursor
+          # when the connector state resets — the documented re-import
+          # mechanism for the 2026-10 backlog strand (see README).
+          MISP_IMPORT_FROM_DATE: "2000-01-01T00:00:00Z"
         envFromSecrets:
           # Same platform-token vault ref as the worker: the chart only
           # auto-derives OPENCTI_TOKEN from plaintext values.
