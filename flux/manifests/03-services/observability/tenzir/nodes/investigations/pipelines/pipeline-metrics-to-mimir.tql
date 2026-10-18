@@ -1,0 +1,13 @@
+metrics "pipeline", live=true
+fork {
+  to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+    name="tenzir_pipeline_ingress_events",
+    value=ingress.events,
+    timestamp=timestamp,
+    labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "investigations", internal: ingress.internal}
+}
+to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+  name="tenzir_pipeline_egress_events",
+  value=egress.events,
+  timestamp=timestamp,
+  labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "investigations", internal: egress.internal}

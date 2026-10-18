@@ -228,6 +228,61 @@ spec:
                 not records).
               definition: ""
               restart-on-error: 1 minute
+            pipeline-metrics-to-mimir:
+              name: pipeline metrics to mimir
+              description: |
+                Pushes the node's tenzir.metrics.pipeline events (per-pipeline
+                ingress/egress event counts, emitted every 10s) to the Mimir
+                remote-write endpoint kube-prometheus-stack remote-writes to;
+                the mimir gateway injects the tenant header, so no auth here.
+                Raw shape, not shape="prometheus" — that transform drops all
+                non-health schemas, pipeline metrics included. Grafana reads
+                the tenzir_pipeline_{ingress,egress}_events series; note this
+                pipeline (and its siblings) also self-report in those series.
+                The internal label carries the metric event's per-direction
+                internal flag (ingress.internal / egress.internal), so
+                bus-internal flow (publish, import, subscribe) is separable
+                from external export in the series; the node label pins the
+                pushing node — pipeline_ids are not node-qualified
+                (live-verified 2026-10-17: the vendored docs'
+                demo-node/m57-suricata example applies to platform pipelines,
+                not node-config pipelines), and without it the same-named
+                self-reports from this node and the siblings collide on one
+                series (observed live: core and netflow interleaved samples
+                on the shared pipeline-metrics-to-mimir series with Mimir's
+                same-timestamp handling eating roughly half of them).
+              definition: ""
+              restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors / tenzir_pipeline_warnings
+                sample (value 1, pipeline labels) to Mimir for every live
+                error / warning diagnostic, so the dashboard can count both
+                severities with sum_over_time. They otherwise live only in
+                the diagnostics stream, not in metrics.
+              definition: ""
+              restart-on-error: 1 minute
+            diagnostics-to-loki:
+              name: diagnostics to loki
+              description: |
+                Ships every live, not-hidden pipeline diagnostic to Loki as
+                job=tenzir-diagnostics entries (node label = investigations).
+                to_fluent_bit resolves $pipeline_name and $severity per event
+                and consumes both out of the shipped body (live-verified
+                2026-10-17 probe); drop discards the ANSI escape-coded
+                rendered field, so the line keeps the rest of the diagnostic
+                record — pipeline_id, hidden, run, timestamp, message, notes,
+                annotations — and the labels carry pipeline + severity.
+                Hidden entries (platform-UI pipeline deprecation noise) stay
+                out. Plain HTTP to loki-write, cluster-internal. live=true
+                without retro: no store-backlog replay on start, so restarts
+                never re-ship history (Loki has no dedup) — the pre-landing
+                backlog stays visible from the draft shipper lane
+                (job=tenzir-diagnostics-draft), and the dashboard's
+                job=~"tenzir-diagnostics.*" matcher spans both.
+              definition: ""
+              restart-on-error: 1 minute
 
         # Web server options. Config-file layout (source-verified
         # v6.19.1, plugins/web/tenzir.yaml.example + the config loader):
