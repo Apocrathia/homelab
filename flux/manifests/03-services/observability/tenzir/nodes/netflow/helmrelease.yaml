@@ -108,6 +108,15 @@ spec:
         tenzir:
           package-dirs:
             - /etc/tenzir/packages
+          # Server-log verbosity, same warning level as core and tetragon:
+          # the chart default (tenzir.file-verbosity: quiet) writes
+          # nothing to server.log, so pipeline failures that point at
+          # the log for their diagnostics surface blind. server.log
+          # opens at /var/log/tenzir on every boot, which
+          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # emptyDir (extraVolumes below) backs the path; keep the
+          # key/mount pair together on any new node.
+          file-verbosity: warning
           # Partition mint-rate control, same 60s as the siblings: this node
           # runs a low-volume collector, and 60s caps the partition count the
           # 15-minute window mints; the async background merge consolidates
@@ -369,6 +378,14 @@ spec:
       - name: packages-netflow-ocsf-events-network-activity
         configMap:
           name: tenzir-packages-netflow-ocsf-events-network-activity
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
+      # crashloop on the warning-level siblings. emptyDir, same
+      # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
+      # disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the siblings (kubelet ..data
@@ -397,3 +414,6 @@ spec:
         mountPath: /etc/tenzir/packages/netflow/operators/ocsf/events/network_activity.tql
         subPath: network_activity.tql
         readOnly: true
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir

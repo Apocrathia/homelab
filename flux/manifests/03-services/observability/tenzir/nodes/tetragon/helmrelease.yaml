@@ -301,6 +301,13 @@ spec:
       - name: packages-homelab-tetragon-kprobe
         configMap:
           name: tenzir-packages-homelab-tetragon-kprobe
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem made unwritable — the 2026-10-17
+      # crashloop. emptyDir, same lifecycle as the tmp mount; the 10 MiB
+      # rotation cap bounds the disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the core node (kubelet ..data
@@ -331,3 +338,6 @@ spec:
         mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
         subPath: process_kprobe.tql
         readOnly: true
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir
