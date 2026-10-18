@@ -259,6 +259,13 @@ not exist until the next server restart - the operator-led apply
 validation (SHOW TABLES after first boot) is a required step, and MR-3's
 `mode="append"` fail-loud is the second net.
 
+**D3/D4 pairing gate (mandatory on CHI changes, added 2026-10-18):** any
+startup-DDL edit MR ships its matching live `ALTER`s in the same lap plus
+the post-apply D4 validation query (`SHOW TABLES FROM ocsf` + `DESCRIBE`
+the changed columns). A text-only edit diverges live state and aborts the
+whole file at the next fresh replica (see
+`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`).
+
 ### D5 — ClickHouse users (CHI users config, from_env, no creds in git) — amended
 
 Users live in the CHI (`spec.configuration.users`); the operator renders

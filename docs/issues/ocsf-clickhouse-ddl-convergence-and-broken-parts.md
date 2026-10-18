@@ -1,7 +1,7 @@
 ---
 title: "ocsf ClickHouse: startup-DDL parse abort + broken parts on both replicas"
 kind: bug
-status: open
+status: closed
 severity: blocker
 source: agent
 found_at: 2026-10-18
@@ -69,21 +69,75 @@ forensic recovery) is an explicit operator decision.
 
 ## Acceptance
 
-- [ ] Convergence `ALTER`s executed live (severity_id → Int8; class_uid →
-      Int32 where divergent; missing typed columns added) — OR the shipped
-      DDL text reverted to match live structure if the fresh-install intent
-      is dropped.
-- [ ] Startup-scripts file parses at boot; `investigations.records` and the
-      null-class catch-all self-create on the next boot.
-- [ ] The D3/D4 pairing gate is recorded as a rule: any startup-DDL edit MR
-      ships with its live `ALTER`s in the same lap plus the post-apply
-      validation query — a mandatory check on CHI changes.
-- [ ] Both replicas attach `ocsf.API_Activity` clean (no
-      `TOO_MANY_UNEXPECTED_DATA_PARTS` at boot).
-- [ ] `SHOW TABLES FROM ocsf` returns; `ocsf` queries work cluster-wide.
-- [ ] Broken-parts disposition recorded (117-part deletion accepted vs
-      forensic recovery attempted).
-- [ ] `to_clickhouse` inserts to `ocsf` tables resume on the core node.
+- [x] Convergence `ALTER`s executed live (severity_id → Int8; class_uid →
+      Int32 where divergent; missing typed columns added) — done 2026-10-18
+      across two parallel lanes: severity_id → Int8 on 8 tables by the
+      operator's lane (02:36Z) and on `API_Activity` by the repair lap
+      (02:53Z); class_uid was already Int32 live; no columns were missing.
+      The follow-on id/status pairing (`status_id`, `activity_id` → Int8)
+      landed as !5363 with its own live `ALTER`s.
+- [x] Startup-scripts file parses at boot; `investigations.records` and the
+      null-class catch-all self-create on the next boot — verified at the
+      02:27Z/02:28Z boots (both objects created) and re-verified after the
+      final roll: the file executes end-to-end on both replicas.
+- [x] The D3/D4 pairing gate is recorded as a rule — see the D3/D4 note in
+      `docs/plans/clickhouse-rollout.md`; both repair-era DDL MRs (!5359,
+      !5363) shipped their live `ALTER`s in the same lap.
+- [x] Both replicas attach `ocsf.API_Activity` clean — no
+      `TOO_MANY_UNEXPECTED_DATA_PARTS` at boot after the temporary
+      allowance (!5362, reverted as !5370); fresh boot logs clean on both
+      replicas.
+- [x] `SHOW TABLES FROM ocsf` returns; `ocsf` queries work cluster-wide —
+      all 10 tables on both replicas; `SELECT count() FROM
+ocsf.API_Activity` works on both (1.5M+ rows, replication in sync).
+- [x] Broken-parts disposition recorded — 117 parts, 0.00 B in total:
+      deletion accepted (operator, 2026-10-18 ~02:07Z authorization) and
+      executed at the 02:47Z attach; no forensic recovery attempted
+      (zero-byte parts, surviving replica copy intact).
+- [x] `to_clickhouse` inserts to `ocsf` tables resume on the core node —
+      verified live: 1,059 `INSERT INTO ocsf.*` statements in 5 minutes at
+      final verification, row counts growing on both replicas.
+
+## Outcome (2026-10-18 repair lap)
+
+Both incidents repaired; the ocsf query store is fully restored. Repair
+history, for the record:
+
+- **The `LowCardinality(Int8)` fix** (!5359, branch
+  `fix/chi-investigations-ddl-int8`): the reordered startup scripts made
+  `investigations.records`' CREATE the first live execution — and it failed
+  Code 455 (`SUSPICIOUS_TYPE_FOR_LOW_CARDINALITY`) on the shipped text. Fixed
+  by dropping LowCardinality from the int columns; live pairing = the CREATE
+  itself (out-of-band CHI apply ~02:25Z, operator-rolled 02:27Z/02:28Z,
+  MR merged 02:24Z).
+- **The id/status pairing** (!5363, branch `fix/chi-ocsf-id-status-int8`,
+  merged 04:08Z): `status_id` (Authentication, Detection_Finding) and
+  `activity_id` (Base_Event, null, Process_Activity) aligned to
+  `Nullable(Int8)` in the shipped text **and** live via `ALTER`s in the same
+  lap — the D3/D4 gate practiced.
+- **Repair A executed in parallel lanes**: 8 tables' `severity_id → Int8`
+  `ALTER`s ran out-of-band from the operator's lane at 02:36Z;
+  `API_Activity`'s ran from this lap at 02:53Z (it was still
+  broken-parts-blocked until the allowance MR !5362 applied).
+- **Repair B**: 117 broken parts (0.00 B) dropped at attach under the
+  temporary `max_suspicious_broken_parts=200` allowance (!5362), reverted as
+  !5370 once both replicas attached clean. Disposition: deletion accepted +
+  executed; no forensic recovery (zero-byte parts; sibling copy intact).
+- **Incident C** (new during the lap): replica 0-0-0's `ocsf` metadata and
+  table store dirs were found absent mid-repair; presumed self-inflicted
+  during the 10-17/10-18 DDL fix attempts (operator assessment), not
+  forensically investigated. The replica was rebuilt from the startup script
+  - replication; data parity verified (row counts match).
+- **Mechanism refinement** (corrects the Incident A description above): the
+  Code 122 "Table columns structure in ZooKeeper is different from local
+  table structure" abort fires only on a **fresh `CREATE` against a divergent
+  ZK structure**; replicas holding local metadata silently skip divergent
+  `IF NOT EXISTS` text. The "every boot validates and aborts" phrasing was
+  directionally right but overstated the failure domain.
+- **Final convergence matrix**: all 11 tables (investigations.records + 10
+  ocsf), every column, zero divergences vs origin/main on BOTH replicas —
+  verified via `system.columns` diff at 04:2xZ and re-verified after the
+  final roll.
 
 ## Feedback loop
 
@@ -100,6 +154,11 @@ ocsf.API_Activity`) — `severity_id Int8`, `class_uid Int32`,
 - Insert smoke: POST to the investigations ingest lane, confirm via the
   query-lane read-back (the POST itself 200s even while failing —
   `accept_http` documented behavior; the read-back is the confirmation).
+  **BLOCKED 2026-10-18**: two benign case-open POSTs 200'd but never landed
+  in `investigations.records` on either replica; the ingest lane silently
+  drops accepted events — the table side is proven clean, the defect is in
+  the lane itself. Filed as
+  [`investigations-ingest-lane-silent-drop.md`](./investigations-ingest-lane-silent-drop.md).
 
 ## Implementation hint
 
