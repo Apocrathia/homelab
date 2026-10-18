@@ -217,6 +217,31 @@ spec:
                 the last good database).
               definition: ""
               restart-on-error: 1 minute
+            pipeline-metrics-to-mimir:
+              name: pipeline metrics to mimir
+              description: |
+                Pushes the node's tenzir.metrics.pipeline events (per-pipeline
+                ingress/egress event counts, emitted every 10s) to the Mimir
+                remote-write endpoint kube-prometheus-stack remote-writes to;
+                the mimir gateway injects the tenant header, so no auth here.
+                Raw shape, not shape="prometheus" — that transform drops all
+                non-health schemas, pipeline metrics included. Grafana reads
+                the tenzir_pipeline_{ingress,egress}_events series; note this
+                pipeline (and its siblings) also self-report in those series.
+                The internal label carries the metric event's per-direction
+                internal flag (ingress.internal / egress.internal), so
+                bus-internal flow (publish, import, subscribe) is separable
+                from external export in the series; the node label pins the
+                pushing node — pipeline_ids are not node-qualified
+                (live-verified 2026-10-17: the vendored docs'
+                demo-node/m57-suricata example applies to platform pipelines,
+                not node-config pipelines), and without it the same-named
+                self-reports from this node and the siblings collide on one
+                series (observed live: core and netflow interleaved samples
+                on the shared pipeline-metrics-to-mimir series with Mimir's
+                same-timestamp handling eating roughly half of them).
+              definition: ""
+              restart-on-error: 1 minute
             error-diagnostics-to-mimir:
               name: error diagnostics to mimir
               description: |
@@ -227,8 +252,8 @@ spec:
                 the diagnostics stream, not in metrics. This node previously
                 shipped no metrics arms at all (the netflow lap's noted
                 deviation); the dashboard lap adds this diagnostics pair on
-                every node — tetragon still ships no pipeline-metrics arm,
-                so its ingest/egress/heartbeat lanes stay absent by design.
+                every node, and this follow-up lap adds the
+                pipeline-metrics arm — the sibling arm set is now complete.
               definition: ""
               restart-on-error: 1 minute
             diagnostics-to-loki:
