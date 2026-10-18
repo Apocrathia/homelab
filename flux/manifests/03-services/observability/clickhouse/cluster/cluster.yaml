@@ -166,6 +166,64 @@ spec:
         <clickhouse>
             <startup_scripts>
                 <throw_on_error>false</throw_on_error>
+                <!--
+                  ORDERING IS LOAD-BEARING: startup_scripts executes sequentially
+                  and aborts at the FIRST failing query (one try/catch wraps the
+                  whole loop; verified in ClickHouse 25.8 Server.cpp
+                  loadStartupScripts - the "Failed to parse startup scripts file"
+                  boot aborts were this loop). The investigations block runs FIRST
+                  so a failing ocsf CREATE (see
+                  docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
+                  cannot starve investigations.records of its bootstrap. Do not
+                  reorder below the ocsf section until the ocsf DDL/live
+                  convergence lands. Also: no second config.d startup-scripts
+                  file - ConfigProcessor merges same-identifier <scripts>
+                  pairwise, so a separate file would overwrite ocsf CREATEs
+                  (verified 2026-10-18).
+                -->
+                <!-- Investigations case/evidence store (tenzir/nodes/
+                     investigations/): one database, one table - every
+                     OCSF record the investigations plane writes (case
+                     lifecycle rows, incident_finding 2005; evidence
+                     pins, datastore_activity 6005). Same idempotent
+                     per-replica CREATE IF NOT EXISTS + macros as the
+                     ocsf tables; NO TTL by design - a case record is a
+                     durable audit record, and the tiered storage_policy
+                     rides only for consistency (no TTL clause ever moves
+                     or deletes a part; the tutorial's per-class tables +
+                     Merge view is the upgrade path if retention is ever
+                     demanded). Dotted column names select the nested
+                     input paths to_clickhouse writes (the lake tables'
+                     hot-column pattern): metadata.correlation_uid is the
+                     case uid spine, assignee.name the working agent
+                     principal or operator, query_info.query_string the
+                     pinned query text (empty on case rows). The two
+                     users' grants live in the users block above - the
+                     authoritative grant mechanism. -->
+                <scripts>
+                    <query>CREATE DATABASE IF NOT EXISTS investigations</query>
+                </scripts>
+                <scripts>
+                    <query>CREATE TABLE IF NOT EXISTS investigations.records
+        (
+            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+            `class_uid` UInt32 DEFAULT 0,
+            `activity_id` LowCardinality(Int8),
+            `type_uid` Int32,
+            `severity_id` LowCardinality(Nullable(Int8)),
+            `status_id` Nullable(Int8),
+            `verdict_id` Nullable(Int8),
+            `priority_id` Nullable(Int8),
+            `metadata.correlation_uid` String,
+            `assignee.name` LowCardinality(Nullable(String)),
+            `query_info.query_string` Nullable(String),
+            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+        )
+        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+        PARTITION BY (class_uid, toYYYYMM(`time`))
+        ORDER BY (`metadata.correlation_uid`, `time`)
+        SETTINGS storage_policy = 'tiered'</query>
+                </scripts>
                 <scripts>
                     <query>CREATE DATABASE IF NOT EXISTS ocsf</query>
                 </scripts>
@@ -362,49 +420,6 @@ spec:
         ORDER BY (class_uid, `time`)
         TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
         SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
-                </scripts>
-                <!-- Investigations case/evidence store (tenzir/nodes/
-                     investigations/): one database, one table - every
-                     OCSF record the investigations plane writes (case
-                     lifecycle rows, incident_finding 2005; evidence
-                     pins, datastore_activity 6005). Same idempotent
-                     per-replica CREATE IF NOT EXISTS + macros as the
-                     ocsf tables; NO TTL by design - a case record is a
-                     durable audit record, and the tiered storage_policy
-                     rides only for consistency (no TTL clause ever moves
-                     or deletes a part; the tutorial's per-class tables +
-                     Merge view is the upgrade path if retention is ever
-                     demanded). Dotted column names select the nested
-                     input paths to_clickhouse writes (the lake tables'
-                     hot-column pattern): metadata.correlation_uid is the
-                     case uid spine, assignee.name the working agent
-                     principal or operator, query_info.query_string the
-                     pinned query text (empty on case rows). The two
-                     users' grants live in the users block above - the
-                     authoritative grant mechanism. -->
-                <scripts>
-                    <query>CREATE DATABASE IF NOT EXISTS investigations</query>
-                </scripts>
-                <scripts>
-                    <query>CREATE TABLE IF NOT EXISTS investigations.records
-        (
-            `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
-            `activity_id` LowCardinality(Int8),
-            `type_uid` Int32,
-            `severity_id` LowCardinality(Nullable(Int8)),
-            `status_id` Nullable(Int8),
-            `verdict_id` Nullable(Int8),
-            `priority_id` Nullable(Int8),
-            `metadata.correlation_uid` String,
-            `assignee.name` LowCardinality(Nullable(String)),
-            `query_info.query_string` Nullable(String),
-            `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
-        )
-        ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-        PARTITION BY (class_uid, toYYYYMM(`time`))
-        ORDER BY (`metadata.correlation_uid`, `time`)
-        SETTINGS storage_policy = 'tiered'</query>
                 </scripts>
             </startup_scripts>
         </clickhouse>
