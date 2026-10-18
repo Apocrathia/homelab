@@ -210,20 +210,14 @@ spec:
             # A dead UDP collector is a silent black hole: the Node
             # Pipelines dashboard heartbeat panel is this node's only
             # liveness view, so the metrics pipelines come over from
-            # the core node (tetragon ships no pipeline-metrics arm —
-            # deliberate; the dashboard lap gives it the diagnostics
-            # pair instead). Series-collision CORRECTION
-            # (live-verified 2026-10-17): pipeline_ids are NOT
-            # node-qualified — the vendored docs' demo-node/m57-suricata
-            # example applies to platform pipelines, not node-config
-            # pipelines — so netflow and core pushed the SAME
-            # pipeline-metrics-to-mimir series, interleaving samples
-            # (values 2 vs 9) with Mimir's same-timestamp handling
-            # eating roughly half. The node label added below (with the
-            # per-direction internal flag) pins each node's series;
-            # the dashboard's `{{pipeline_name}}` legend still shows
-            # both nodes under one name — split on node when it
-            # matters.
+            # the core node. pipeline_ids are NOT node-qualified
+            # (live-verified 2026-10-17: the vendored docs'
+            # demo-node/m57-suricata example applies to platform
+            # pipelines, not node-config pipelines), so each arm stamps
+            # a node label (plus the per-direction internal flag) that
+            # pins this node's series; the dashboard's
+            # `{{pipeline_name}}` legend still shows every node under
+            # one name — split on node when it matters.
             # sigma-metrics-to-mimir stays core-only: no sigma here.
             pipeline-metrics-to-mimir:
               name: pipeline metrics to mimir

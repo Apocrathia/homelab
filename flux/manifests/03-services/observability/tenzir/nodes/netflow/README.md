@@ -12,8 +12,7 @@ listener + OCSF mapping + endpoint enrichment), geo-open-loader (the
 daily GeoIP context builder for that enrichment), the two metrics
 pushers (pipeline-metrics-to-mimir, error-diagnostics-to-mimir — a
 dead UDP collector is a silent black hole, so this node keeps the
-core node's liveness series; the tetragon isolate ships the
-diagnostics pair but no pipeline-metrics by design), and
+core node's liveness series), and
 diagnostics-to-loki (live pipeline diagnostics as
 `job=tenzir-diagnostics` Loki log lines). The split exists so the
 collector's lifecycle (listener restarts, pod rolls, future
@@ -212,9 +211,9 @@ kubectl exec -n tenzir tenzir-node-netflow-0 -- \
 The Node Pipelines dashboard (Grafana) is this node's liveness view:
 the heartbeat panel reads the `tenzir_pipeline_*` series this node's
 metrics pipelines push; the `pipeline_id` label is the bare pipeline id,
-so this node's and the core node's same-id exporters collide —
-distinguish nodes by the `node` label (`netflow` here, `core` there)
-when the
+so the `node` label stamped by every pipeline-metrics arm is what
+separates same-id exporters across nodes — split on `node`
+(`netflow` here) when the
 `{{pipeline_name}}` legend shows multiple nodes' self-reports under one
 name. If the exporter went quiet, check the UXG's manual NETFLOW
 section first — a controller config push kills it

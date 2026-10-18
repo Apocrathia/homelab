@@ -4,9 +4,11 @@ Three dashboards, each in its own ConfigMap generated from the matching
 JSON, all in the Grafana `Security` folder:
 
 - **Tenzir Node Pipelines** ([`dashboard.json`](./dashboard.json)) — the
-  six-panel operations view of the node's own metrics
-  (`tenzir_pipeline_*`, `tenzir_sigma_*`, and the error series the node's
-  metrics pipelines push to Mimir).
+  operations view of the node's own metrics and logs: pipeline rate
+  timeseries, a reporting-status state timeline, and error, warning,
+  and detection stats over `tenzir_pipeline_*` / `tenzir_sigma_*` in
+  Mimir, plus the Node Logs and Pipeline Diagnostics rows over node
+  stdout and `job=tenzir-diagnostics` Loki lines.
 - **Tenzir OCSF Exploration** ([`ocsf-exploration.json`](./ocsf-exploration.json))
   — the cross-class hunt over the ClickHouse OCSF store: event rate
   by `class_uid`, severity distribution, and per-class panels (k8s audit
