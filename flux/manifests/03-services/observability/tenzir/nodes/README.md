@@ -14,6 +14,10 @@ connectivity chart, sizing math, and retention profile.
 - [`enrichment/`](./enrichment/README.md): the fleet's context factory
   (curated lookup tables — fleet assets, threat intel, baselines — into
   ClickHouse; ships idle until its first factory pipeline)
+- [`introspection/`](./introspection/README.md): the diagnostics
+  observability plane (the node's local diagnostics pair plus the
+  central poller Deployment that ships every fleet node's diagnostics
+  to Loki and Mimir)
 
 Adding a node is a recipe, not a design exercise: see
 [`core/README.md`](./core/README.md#adding-a-node).

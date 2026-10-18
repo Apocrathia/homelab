@@ -15,6 +15,7 @@ resources:
   - nodes/netflow
   - nodes/investigations
   - nodes/enrichment
+  - nodes/introspection
   - grafana/
 
 generatorOptions:

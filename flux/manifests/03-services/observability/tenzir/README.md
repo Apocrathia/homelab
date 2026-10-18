@@ -1,8 +1,8 @@
 # Tenzir
 
-> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-Five standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
+Six standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
@@ -17,9 +17,12 @@ owns the agent investigations plane: case/evidence envelopes in,
 detection plane never shares. The [enrichment
 node](./nodes/enrichment/README.md) is the fleet's context factory: it
 builds the curated lookup tables — fleet assets, threat intel, baselines —
-into ClickHouse for the other nodes to pull.
+into ClickHouse for the other nodes to pull. The [introspection
+node](./nodes/introspection/README.md) is the diagnostics observability
+plane: its central poller ships every fleet node's pipeline diagnostics
+to Loki and Mimir, superseding the per-node diagnostics lanes.
 
-All five nodes register into one hosted Tenzir Platform workspace
+All six nodes register into one hosted Tenzir Platform workspace
 (app.tenzir.com) over a single outbound WebSocket. Pipelines run entirely
 on the nodes; the events flowing through them never route through the
 platform.
@@ -83,8 +86,8 @@ and the rendered Secret keys match them:
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
 - `core-token` / `tetragon-token` / `netflow-token` / `investigations-token` /
-  `enrichment-token`: the pre-provisioned Tenzir Platform node tokens, one
-  per node
+  `enrichment-token` / `introspection-token`: the pre-provisioned Tenzir
+  Platform node tokens, one per node
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace

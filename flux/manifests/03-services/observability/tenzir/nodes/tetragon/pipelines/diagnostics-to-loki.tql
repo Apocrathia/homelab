@@ -1,4 +1,0 @@
-diagnostics live=true
-where not hidden
-drop rendered
-to_fluent_bit "loki", options={host: "loki-write.loki-system.svc", port: "3100", labels: "job=tenzir-diagnostics,namespace=tenzir,node=tetragon,pipeline=$pipeline_name,severity=$severity"}

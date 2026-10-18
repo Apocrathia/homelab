@@ -4,17 +4,19 @@
 
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
-nothing else. Six pipelines live in
+nothing else. Four pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 tetragon-ingest-http (the
 OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
 mapping into the lake, with endpoint enrichment on the Network
 Activity arm), geo-open-loader (the daily GeoIP context builder for
-that enrichment), and the observability arms
-(pipeline-metrics-to-mimir, error-diagnostics-to-mimir,
-diagnostics-to-loki — the same three-arm set every pipeline-carrying
-node ships). The split exists so the flood's CPU and memory
+that enrichment), and pipeline-metrics-to-mimir (the flood node's
+liveness arm — the same series shape every pipeline-carrying node
+ships). The former diagnostics pair (error-diagnostics-to-mimir,
+diagnostics-to-loki) retired with the introspection lap — the
+central poller on the introspection node ships this node's
+diagnostics to Loki and Mimir now. The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node, and
 the loader is equally decoupled — a slow or failed MMDB fetch never
 stalls ingest (the context keeps serving the last good database).

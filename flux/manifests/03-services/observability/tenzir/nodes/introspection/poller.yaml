@@ -1,0 +1,214 @@
+---
+# Central diagnostics poller for the Tenzir fleet (introspection slice).
+#
+# Why a Deployment instead of a pipeline on the introspection node:
+# v6.19.1 node-config TQL cannot pull a REMOTE node's diagnostics — the
+# remote{} keyword is a no-op location marker in the new executor
+# (live-probed 2026-10-18), and diagnostics/export/metrics are
+# node-local operators. The only live-verified cross-node surface is the
+# tenzir CLI against each node's :5158 node API (no auth in-namespace,
+# exposed on every node Service). This pod runs that CLI per target and
+# ships via the same operators the retired per-node lanes used
+# (to_fluent_bit to loki-write, to_prometheus to the Mimir gateway), so
+# the shipped bodies and labels are byte-parity with the native lanes
+# and the Grafana tenzir-node-pipelines dashboard keeps working
+# unchanged (job=tenzir-diagnostics continuity; the old-name sweep is a
+# deliberately deferred follow-up MR).
+#
+# Hidden-diagnostics parity is per arm, matching each retired native
+# lane exactly: the Loki arm filters `where not hidden` (the native
+# diagnostics-to-loki lanes did), while the Mimir arms ship hidden
+# entries too (the native error-diagnostics-to-mimir lanes had no
+# hidden filter, so the dashboard's series always counted hidden). The
+# split matters: most warning volume is hidden (live 2026-10-18 store
+# reads: netflow 306 hidden vs 3 visible warnings; investigations
+# 1104 hidden), so a shared filter would crater
+# sum_over_time(tenzir_pipeline_warnings[6h]) versus the native lanes.
+#
+# Targets: core, tetragon, netflow, investigations, enrichment —
+# the five non-introspection fleet nodes. Core, tetragon, and netflow
+# are the nodes whose per-node lanes retired in this slice;
+# investigations gained the same pair mid-flight via MR !5354 and
+# this MR retires it the same way for the central-poller
+# architecture; enrichment never had lanes (a zero-pipeline lap-1
+# node, it joined in this round after its own merge). The
+# introspection node itself keeps its LOCAL pair
+# (../helmrelease.yaml). Watermark semantics: the
+# per-target wall-clock window (candidate captured before each poll,
+# kept only on success) ships every event exactly once across cycles;
+# in-memory (draft-shipper parity) — a poller restart loses the
+# in-flight window, and the first cycle after start ships nothing (no
+# store-backlog replay, same no-dedup trade the native lanes made).
+#
+# Down targets are non-fatal: an unreachable or not-yet-deployed
+# target fails its poll with a logged warning (the CLI exits non-zero
+# on a refused or unresolvable endpoint, or the per-call timeout
+# trips), its watermark stays open, and the cycle continues with the
+# next target — poll() treats target-down state as a skipped cycle, so
+# a missing target cannot crash-loop the pod.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: introspection-diagnostics-poller-script
+  namespace: tenzir
+  labels:
+    app.kubernetes.io/name: introspection-diagnostics-poller
+data:
+  poller.py: |
+    """Central diagnostics poller for the Tenzir fleet.
+
+    Every cycle, per target: run the tenzir CLI against the target's
+    :5158 node API with a retro scan of the diagnostics store, filtered
+    to events newer than the target's watermark, and ship them through
+    the same to_fluent_bit / to_prometheus lanes the retired per-node
+    pipelines used. Hidden-diagnostics parity is per arm: the Loki arm
+    drops hidden entries (native diagnostics-to-loki filtered them);
+    the Mimir error/warning arms count them (native
+    error-diagnostics-to-mimir had no hidden filter). The window is
+    wall-clock: the candidate watermark is captured before the poll
+    runs and is kept only on success, so a failed or timed-out poll
+    retries the same window next cycle — events ship exactly once
+    across cycles, no event-store parsing.
+    """
+
+    import logging
+    import subprocess
+    import time
+    from datetime import datetime, timezone
+
+    TARGETS = ["core", "tetragon", "netflow", "investigations", "enrichment"]
+    INTERVAL = 120  # seconds between cycles (draft-shipper precedent)
+    POLL_TIMEOUT = 60  # seconds per target invocation (draft-shipper precedent)
+
+    PIPELINE = """diagnostics retro=true
+    where timestamp > {watermark}
+    drop rendered
+    fork {
+      where not hidden
+      to_fluent_bit "loki", options={host: "loki-write.loki-system.svc", port: "3100", labels: "job=tenzir-diagnostics,namespace=tenzir,node={node},pipeline=$pipeline_name,severity=$severity"}
+    }
+    fork {
+      where severity == "error"
+      to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+        name="tenzir_pipeline_errors",
+        value=1,
+        timestamp=timestamp,
+        labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "{node}"}
+    }
+    where severity == "warning"
+    to_prometheus "http://mimir-gateway.mimir-system.svc:80/api/v1/push",
+      name="tenzir_pipeline_warnings",
+      value=1,
+      timestamp=timestamp,
+      labels={pipeline_id: pipeline_id, pipeline_name: pipeline_name, node: "{node}"}
+    """
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    log = logging.getLogger("poller")
+
+
+    def now_iso():
+        return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+    def poll(target, watermark):
+        endpoint = "tenzir-node-{}.tenzir.svc:5158".format(target)
+        pipeline = PIPELINE.replace("{watermark}", watermark).replace("{node}", target)
+        try:
+            proc = subprocess.run(
+                ["tenzir", "-e", endpoint, pipeline],
+                timeout=POLL_TIMEOUT,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.TimeoutExpired:
+            log.warning("target %s: poll timed out after %ss, window stays open", target, POLL_TIMEOUT)
+            return False
+        if proc.returncode != 0:
+            log.warning("target %s: poll failed rc=%s stderr=%s", target, proc.returncode, proc.stderr[-500:])
+            return False
+        log.info("target %s: window > %s shipped", target, watermark)
+        return True
+
+
+    def main():
+        watermarks = {t: now_iso() for t in TARGETS}
+        log.info("poller up; targets=%s; first cycle ships nothing (no backlog replay)", ",".join(TARGETS))
+        while True:
+            for target in TARGETS:
+                candidate = now_iso()
+                if poll(target, watermarks[target]):
+                    watermarks[target] = candidate
+            time.sleep(INTERVAL)
+
+
+    if __name__ == "__main__":
+        main()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: introspection-diagnostics-poller
+  namespace: tenzir
+  labels:
+    app.kubernetes.io/name: introspection-diagnostics-poller
+spec:
+  # Exactly one: two replicas would double-ship every window (Loki has
+  # no dedup; the watermark is pod-local).
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: introspection-diagnostics-poller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: introspection-diagnostics-poller
+    spec:
+      # Outbound-only: dials the sibling nodes' :5158, loki-write, and
+      # the Mimir gateway; no ServiceAccount, no API access.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        # 999: the tenzir image user (the node StatefulSets and the
+        # retired draft shipper both ran as it; live-verified on the
+        # node pods).
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: poller
+          # Same image as the node HelmReleases: used for its tenzir CLI
+          # (the :5158 client) and python3 (this loop) — the retired
+          # draft shipper's proven mechanism, now Flux-owned.
+          # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+          image: docker.io/tenzir/tenzir:v6.19.1@sha256:6e96f962bc0a957d94d5149f840f7603c47a7b11d995e0f1fc167c141db7c06f
+          command: ["python3"]
+          args: ["/etc/introspection-diagnostics-poller/poller.py"]
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: poller-script
+              mountPath: /etc/introspection-diagnostics-poller
+              readOnly: true
+            - name: poller-tmp
+              mountPath: /tmp
+      volumes:
+        - name: poller-script
+          configMap:
+            name: introspection-diagnostics-poller-script
+        - name: poller-tmp
+          emptyDir: {}

@@ -22,8 +22,6 @@ configMapGenerator:
     files:
       - investigations-ingest-http.tql=pipelines/investigations-ingest-http.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
-      - error-diagnostics-to-mimir.tql=pipelines/error-diagnostics-to-mimir.tql
-      - diagnostics-to-loki.tql=pipelines/diagnostics-to-loki.tql
 
 replacements:
   - source:
@@ -46,23 +44,3 @@ replacements:
           name: tenzir-node-investigations
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.pipeline-metrics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-investigations-pipelines
-      fieldPath: data.[error-diagnostics-to-mimir.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-investigations
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.error-diagnostics-to-mimir.definition
-  - source:
-      kind: ConfigMap
-      name: tenzir-investigations-pipelines
-      fieldPath: data.[diagnostics-to-loki.tql]
-    targets:
-      - select:
-          kind: HelmRelease
-          name: tenzir-node-investigations
-        fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.diagnostics-to-loki.definition
