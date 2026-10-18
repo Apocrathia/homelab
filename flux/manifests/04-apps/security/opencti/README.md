@@ -143,6 +143,24 @@ Wiring notes (verified against the chart templates):
 - **Logout**: local by default (`logout_remote` unset) — the OpenCTI session
   ends, the authentik session persists.
 
+### MISP connector watermark + backlog imports
+
+The connector's cursor (`last_event_date`, platform-side state) tracks MISP's
+`timestamp` field — the **source event's last-modified time**, not local
+creation. Two consequences (live-verified 2026-10-18):
+
+- The 2026-10-16 CIRCL archive import bulk-touched the maltrail events, so the
+  connector's first boot (10-day lookback default) imported only the touched
+  tail and stranded ~2.1k archive events below the cursor.
+- Feed-imported events (abuse.ch backfill) carry historical `timestamp`s and
+  always land below the cursor.
+
+Re-import mechanism: `MISP_IMPORT_FROM_DATE` (pinned to epoch in
+`helmrelease.yaml`) becomes the initial cursor when the connector state
+resets. Reset the state (UI: Data → Ingestion → Connectors → MISP → state
+reset) **after** any bulk backfill completes — the next PT5M run re-imports
+everything with `timestamp` above 2000-01-01.
+
 ### MISP → OpenCTI connector (slice 6)
 
 The official Filigran-verified external-import connector
