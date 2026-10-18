@@ -98,6 +98,23 @@ configMapGenerator:
     namespace: tenzir
     files:
       - network_activity.tql=packages/netflow/operators/ocsf/events/network_activity.tql
+  # Vendored library `tenzir` utilities package (packages/tenzir/): this
+  # lane mounts its OSINT pair — update_context (the core node's
+  # opencti-osint-loader) and enrich (unconsumed until a category-4
+  # ingress node wires in-stream enrichment). The package's detect/ocsf
+  # operators stay repo-side only.
+  - name: tenzir-packages-tenzir
+    namespace: tenzir
+    files:
+      - package.yaml=packages/tenzir/package.yaml
+  - name: tenzir-packages-tenzir-osint-update-context
+    namespace: tenzir
+    files:
+      - update_context.tql=packages/tenzir/operators/osint/update_context.tql
+  - name: tenzir-packages-tenzir-osint-enrich
+    namespace: tenzir
+    files:
+      - enrich.tql=packages/tenzir/operators/osint/enrich.tql
   - name: tenzir-packages-homelab-investigations-map
     namespace: tenzir
     files:

@@ -13,7 +13,9 @@ connectivity chart, sizing math, and retention profile.
   plane (case/evidence records, isolated blast radius)
 - [`enrichment/`](./enrichment/README.md): the fleet's context factory
   (curated lookup tables — fleet assets, threat intel, baselines — into
-  ClickHouse; ships idle until its first factory pipeline)
+  ClickHouse; the first row — OpenCTI TAXII threat intel — has its
+  table and the core node's loader shipped, with the factory row
+  itself pending engine 6.20)
 - [`introspection/`](./introspection/README.md): the diagnostics
   observability plane (the node's local diagnostics pair plus the
   central poller Deployment that ships every fleet node's diagnostics

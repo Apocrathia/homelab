@@ -5,7 +5,7 @@
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Twelve pipelines live in
+`ocsf` bus, and runs the one sigma pass. Thirteen pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
@@ -30,6 +30,12 @@ LB service anymore.
 - geo-open-loader: the daily CIRCL Geo Open MMDB builder for the
   enrichment context (decoupled from the detection plane — a failed
   fetch never stalls the sigma pass)
+- opencti-osint-loader: the intel factory's consumer half — reads the
+  enrichment node's ocsf.OSINT_Inventory_Info ClickHouse table into
+  the node-local ocsf-osint lookup-table context (the vendored
+  `tenzir` library package's update_context, entries aging out after
+  30d); in-stream consumption of the context stays with the category-4
+  ingress nodes per the factory doctrine
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
   operational metrics (the diagnostics-to-loki / error-diagnostics-to-mimir
   pair retired with the introspection lap: the central poller on the
@@ -52,6 +58,7 @@ flowchart LR
     ATH --> MAP
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -.->|"every 24h<br/>geo-open-loader"| GEO["geo-open context"]
     GEO -->|"login-geo / API-caller<br/>src_endpoint enrichment"| MAP
+    CHOS["ClickHouse<br/>ocsf.OSINT_Inventory_Info<br/>(enrichment node factory)"] -.->|"every 24h<br/>opencti-osint-loader"| OCTX["ocsf-osint context"]
     MAP --> BUS["ocsf topic (the bus)"]
     BUS --> SIG["sigma detection<br/>(mapping=auto)"]
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]

@@ -17,7 +17,13 @@ owns the agent investigations plane: case/evidence envelopes in,
 detection plane never shares. The [enrichment
 node](./nodes/enrichment/README.md) is the fleet's context factory: it
 builds the curated lookup tables — fleet assets, threat intel, baselines —
-into ClickHouse for the other nodes to pull. The [introspection
+into ClickHouse for the other nodes to pull.
+The first row — OpenCTI TAXII threat intel — has its
+`ocsf.OSINT_Inventory_Info` table and the core node's
+[opencti-osint-loader](./nodes/core/pipelines/opencti-osint-loader.tql)
+shipped; the factory row itself lands with engine 6.20 (its vendored
+package requires it; see the enrichment node README).
+The [introspection
 node](./nodes/introspection/README.md) is the diagnostics observability
 plane: its central poller ships every fleet node's pipeline diagnostics
 to Loki and Mimir, superseding the per-node diagnostics lanes.
@@ -90,6 +96,11 @@ and the rendered Secret keys match them:
 - `core-token` / `tetragon-token` / `netflow-token` / `investigations-token` /
   `enrichment-token` / `introspection-token`: the pre-provisioned Tenzir
   Platform node tokens, one per node
+- `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
+  by the opencti lane — its slice-7 handoff
+  ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md)).
+  The enrichment node reads it when the intel factory row lands with
+  engine 6.20; the field exists regardless
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace
@@ -106,6 +117,8 @@ the values.
 | Path                | Purpose                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `packages/homelab/` | TQL mapping package (`homelab`): OTLP parse, OCSF maps, the findings uid stamp, with tests                         |
+| `packages/netflow/` | Vendored library `netflow` package: NetFlow v5/v9/IPFIX → OCSF Network Activity (netflow node ingest)              |
+| `packages/tenzir/`  | Vendored library `tenzir` utilities: the OSINT pair (`update_context` / `enrich`) this lane wires core-side        |
 | `clickhouse/`       | The ClickHouse datalake: CHI + Keeper CRs, extracted server config, the single-JSON-column investigations store    |
 | `detections/sigma/` | Sigma rules evaluated over the bus: homelab starters (OCSF field paths) + vendored SigmaHQ kubernetes-audit corpus |
 | `detections/yara/`  | YARA scaffold: pinned signature-base submodule plus a vendored subset; no consumer pipeline yet                    |
