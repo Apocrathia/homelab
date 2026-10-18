@@ -189,6 +189,39 @@ spec:
           limits:
             cpu: "250m"
             memory: "512Mi"
+      - name: mitre
+        enabled: true
+        replicas: 1
+        image:
+          # Same repo-override reason as the MISP connector: Filigran
+          # publishes connectors as opencti/connector-<name>; the tag rides
+          # the chart appVersion.
+          repository: opencti/connector-mitre
+        env:
+          # Default log level is error; info keeps the seed/import runs
+          # visible. Everything else trusts connector defaults (verified
+          # against the connector source): MITRE_INTERVAL=7 days, bundle
+          # URLs = mitre-attack/attack-stix-data (enterprise/mobile/ics) +
+          # mitre/cti CAPEC, CONNECTOR_ID ships a built-in UUID.
+          CONNECTOR_LOG_LEVEL: info
+        envFromSecrets:
+          # Same platform-token vault ref as the worker and MISP connector:
+          # the chart only auto-derives OPENCTI_TOKEN from plaintext values.
+          OPENCTI_TOKEN:
+            name: opencti-secrets
+            key: APP__ADMIN__TOKEN
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
 
     # Single-node OpenSearch on Longhorn. vm.max_map_count is set at the
     # NODE level via talos/patches/unified-patch.yaml SysctlConfig - the
