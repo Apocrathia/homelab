@@ -103,6 +103,16 @@ ocsf.API_Activity`) — `severity_id Int8`, `class_uid Int32`,
 
 ## Implementation hint
 
+Update 2026-10-18 (verified against ClickHouse 25.8 source): the split-file
+isolation option from the audit is DEAD - startup_scripts reads the fully
+merged config view and aborts at the first failing query across ALL files
+(Server.cpp loadStartupScripts, one try/catch around the whole loop), and a
+second config.d file would deterministically overwrite same-identifier
+<scripts> blocks (ConfigProcessor mergeRecursive). The interim unblock is
+script ORDERING: investigations DDL runs first in the single file
+(fix/chi-startup-script-ordering, in review). The convergence ALTERs (or
+DDL revert) remain the root fix.
+
 Full vendor-doc vs homelab audit (live-verified 2026-10-18):
 `/Users/ianyoung/Projects/homelab/.scratch/agent-investigation/clickhouse-path-audit.md`.
 `.scratch` is gitignored — promote it to `docs/research/` if it needs to
