@@ -111,8 +111,10 @@ resource "authentik_application" "app" {
 
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
-  # sheet). meta_icon is live-verbatim (see the header note).
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/blueprints/icons/home-assistant.svg"
+  # sheet). meta_icon diverges from the live row ON PURPOSE: the tofu-
+  # tiles migration deleted blueprints/icons/, so the live value 404s;
+  # the tile's own icon at tiles/<name>/icon.<ext> replaces it.
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/tiles/home-assistant/icon.svg"
   meta_description = "Home automation platform"
   meta_publisher   = "Home Assistant"
 }
