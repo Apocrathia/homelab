@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -217,6 +217,7 @@ spec:
           memory: 512Mi
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "proxy"
       category: "Home"
