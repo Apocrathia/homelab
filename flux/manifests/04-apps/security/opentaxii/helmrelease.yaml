@@ -54,6 +54,21 @@ spec:
             value: "true"
           - name: OPENTAXII_AUTH_API__PARAMETERS__POOL_PRE_PING
             value: "true"
+          # Connector account creds for the postStart ensure-hook below.
+          # opentaxii-sync-data prunes accounts not declared in
+          # data-configuration.yml on every boot (utils.py sync_accounts), so
+          # the account is re-created at start; fields live in the
+          # opentaxii-secrets vault item (taxii2-username / taxii2-password).
+          - name: TAXII2_ACCOUNT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: opentaxii-secrets
+                key: taxii2-username
+          - name: TAXII2_ACCOUNT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: opentaxii-secrets
+                key: taxii2-password
           - name: DATABASE_HOST
             value: opentaxii-postgres-rw.opentaxii.svc.cluster.local
           - name: DATABASE_NAME
@@ -105,6 +120,38 @@ spec:
         limits:
           cpu: 500m
           memory: 512Mi
+
+      # postStart waits for the entrypoint's sync-data prune to finish
+      # (gunicorn listening on :9000), then re-ensures the connector account.
+      # Failures are logged but non-fatal - a postStart failure would kill
+      # the container.
+      lifecycle:
+        postStart:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                i=0
+                until python3 -c "import urllib.request as u; u.urlopen('http://localhost:9000/management/health', timeout=2)" 2>/dev/null; do
+                  i=$((i+1))
+                  if [ "$i" -gt 90 ]; then echo "poststart: app never came up; skipping account ensure"; exit 0; fi
+                  sleep 2
+                done
+                python3 - <<'PYEOF' || echo "poststart: account ensure failed (non-fatal)"
+                import os
+                from opentaxii.cli import app
+                user = os.environ["TAXII2_ACCOUNT_USERNAME"]
+                pw = os.environ["TAXII2_ACCOUNT_PASSWORD"]
+                with app.app_context():
+                    auth = app.taxii_server.auth
+                    existing = [a for a in auth.get_accounts() if a.username == user]
+                    if existing:
+                        auth.update_account(existing[0], password=pw)
+                    else:
+                        auth.api.create_account(username=user, password=pw, is_admin=False)
+                print("poststart: account ensured")
+                PYEOF
 
       healthChecks:
         # Built-in management blueprint: GET /management/health -> 200

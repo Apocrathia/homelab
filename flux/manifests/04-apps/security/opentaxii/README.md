@@ -56,7 +56,7 @@ Any `OPENTAXII_*` env var overrides config keys (`__` separates nesting). See `h
 
 ## Authentication
 
-One account exists: the non-admin `opencti-taxii2` service account (created 2026-10-19) for the OpenCTI taxii2 connector's authenticated pull. The public collection is not enough for that client: the connector's requests-based client always sends a basic-auth header (`HTTPBasicAuth(None, None)` with no credentials configured), and OpenTAXII 401s well-formed basic auth against a missing account. Anonymous headerless access still applies to the public TAXII 2.1 collection and the TAXII 1.x services - `authentication_required: no` on the 1.x side grants anonymous full access (fine while the service is reachable only inside the cluster), and `stix-feed` keeps public read + public write. Accounts stay optional for every other feeder.
+One account exists: the non-admin `opencti-taxii2` service account (created 2026-10-19) for the OpenCTI taxii2 connector's authenticated pull. That account cannot be declared in `data-configuration.yml` (its password must not land in git), and `opentaxii-sync-data` prunes accounts not declared there on every boot - so accounts created out-of-band die on the next container restart. A postStart lifecycle hook in `helmrelease.yaml` re-ensures the account after sync-data completes, using the `taxii2-username` / `taxii2-password` fields of the `opentaxii-secrets` 1Password item. The public collection is not enough for that client: the connector's requests-based client always sends a basic-auth header (`HTTPBasicAuth(None, None)` with no credentials configured), and OpenTAXII 401s well-formed basic auth against a missing account. Anonymous headerless access still applies to the public TAXII 2.1 collection and the TAXII 1.x services - `authentication_required: no` on the 1.x side grants anonymous full access (fine while the service is reachable only inside the cluster), and `stix-feed` keeps public read + public write. Accounts stay optional for every other feeder.
 
 When a feeder needs real auth, create accounts out-of-band:
 
@@ -106,6 +106,15 @@ kubectl run -it --rm curl --image=curlimages/curl -n opentaxii -- \
 The entrypoint prints `cp: cannot create regular file '/opentaxii.yml'` on every boot - expected under non-root; the working config is `/tmp/opentaxii.yml` via `OPENTAXII_CONFIG`.
 
 CNPG-restart stale-pool flake: after a postgres pod restart, the gunicorn app pool can hold dead SSL connections and serve 500s - log signature `psycopg2.OperationalError: SSL SYSCALL error / decryption failed or bad record mac`. Requests self-heal as SQLAlchemy invalidates the poisoned connections (retries succeed ~9/10). Durable fix: `pool_pre_ping` is wired for all three DB pools via the `OPENTAXII_*__PARAMETERS__POOL_PRE_PING` env vars in `helmrelease.yaml` (config `parameters:` keys map 1:1 to the API constructor kwargs, which flow through `**engine_parameters` into `create_engine`); the manual remedy remains `kubectl rollout restart deploy/opentaxii -n opentaxii`.
+
+Account missing after a restart (connector 401s with correct creds): the postStart hook should heal it within ~a minute of pod start. Manual remedy:
+
+```bash
+kubectl exec -n opentaxii deploy/opentaxii -- \
+  opentaxii-create-account --username <user> --password <pw>
+```
+
+Hook failures are logged in pod events/logs but never crash the container.
 
 ## References
 
