@@ -159,8 +159,8 @@
     }
   ],
   "timezone": "America/Denver",
-  "prHourlyLimit": 100,
-  "prConcurrentLimit": 100,
+  "prHourlyLimit": 30,
+  "prConcurrentLimit": 30,
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
   "rangeStrategy": "replace",
