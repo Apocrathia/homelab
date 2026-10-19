@@ -85,7 +85,7 @@ backlog
 
 Already done by the operator: the node is registered in the
 app.tenzir.com workspace and its `tnz_...` token copied into the
-`intel-token` field of the `tenzir-secrets` 1Password item
+`intel-node-token` field of the `tenzir-secrets` 1Password item
 ([`../../secret.yaml`](../../secret.yaml) materializes the Secret in
 this namespace; the OnePasswordItem CR is field-agnostic, so the new
 key arrives with the operator's next item sync — no manifest change).

@@ -95,9 +95,9 @@ spec:
 
     # Registers into the same hosted Tenzir Platform workspace as the
     # core and tetragon nodes; this node reads its own pre-provisioned
-    # token from the investigations-token field of the tenzir-secrets
-    # Secret (NEW vault field, same convention as tetragon-token /
-    # core-token; the platform issues per-node tokens only).
+    # token from the investigations-node-token field of the tenzir-secrets
+    # Secret (NEW vault field, same convention as tetragon-node-token /
+    # core-node-token; the platform issues per-node tokens only).
     #
     # The API-token bootstrap is operator-side, once, because web-server
     # tokens are NODE STATE, not config: `tenzir-ctl web generate-token`
@@ -113,7 +113,7 @@ spec:
       - name: investigations
         token:
           existingSecret: tenzir-secrets
-          key: investigations-token
+          key: investigations-node-token
         extraPorts:
           # Write lane: accept_http listener for agent POSTs (case
           # open/update/close + evidence pin envelopes).

@@ -88,7 +88,7 @@ spec:
 
     # Registers into the same hosted Tenzir Platform workspace as the
     # sibling nodes; this node reads its own pre-provisioned token from
-    # the intel-token field of the tenzir-secrets Secret (vault field
+    # the intel-node-token field of the tenzir-secrets Secret (vault field
     # added by the operator; the platform node is already registered).
     # Platform tokens are per-node, never shared.
     #
@@ -100,7 +100,7 @@ spec:
       - name: intel
         token:
           existingSecret: tenzir-secrets
-          key: intel-token
+          key: intel-node-token
 
     persistence:
       # 5Gi, enrichment/investigations parity: the factory row streams

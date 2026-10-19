@@ -98,7 +98,7 @@ spikes live inside the 500m/512Mi limits.
 
 Already done by the operator: the node is registered in the
 app.tenzir.com workspace (`t-vrj4igpf`) and its `tnz_...` token copied
-into the `introspection-token` field of the `tenzir-secrets` 1Password
+into the `introspection-node-token` field of the `tenzir-secrets` 1Password
 item (`../secret.yaml` materializes the Secret in this namespace; the
 OnePasswordItem CR is field-agnostic, so the new key arrives with the
 operator's next item sync — no manifest change). There is nothing else

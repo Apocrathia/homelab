@@ -77,13 +77,13 @@ spec:
 
     # Registers into the same hosted Tenzir Platform workspace as the core
     # node; this node reads its own pre-provisioned token from the
-    # tetragon-token field of the tenzir-secrets Secret. Platform tokens
+    # tetragon-node-token field of the tenzir-secrets Secret. Platform tokens
     # are per-node, never shared.
     nodes:
       - name: tetragon
         token:
           existingSecret: tenzir-secrets
-          key: tetragon-token
+          key: tetragon-node-token
         extraPorts:
           - name: otlp-http
             containerPort: 4318

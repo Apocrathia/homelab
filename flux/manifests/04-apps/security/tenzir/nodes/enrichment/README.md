@@ -108,7 +108,7 @@ small, limits justified in [`helmrelease.yaml`](./helmrelease.yaml).
 ## Bootstrap
 
 Done by the operator: the node is registered in the app.tenzir.com
-workspace and its `tnz_...` token copied into the `enrichment-token`
+workspace and its `tnz_...` token copied into the `enrichment-node-token`
 field of the `tenzir-secrets` 1Password item (`../secret.yaml`
 materializes the Secret in this namespace); the ClickHouse `tenzir`
 writer user already exists (the archive legs' user, grants
