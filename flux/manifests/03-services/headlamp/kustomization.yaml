@@ -15,22 +15,11 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  # One-shot state: absent companion: deletes the blueprint-era Authentik
-  # objects so the provider-opentofu Workspace can take over. Keep forever.
-  - name: authentik-blueprint-headlamp-cleanup
-    namespace: headlamp
-    files:
-      - headlamp-cleanup.yaml=authentik-blueprint-cleanup.yaml
-    options:
-      labels:
-        authentik_blueprint: "true"
   # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
   # so the replacements rule below can copy it into the Workspace at build
   # time. Data key is the literal filename (authentik.tf); the replacements
   # fieldPath bracket-escapes it: data.[authentik.tf]. Intentionally NOT
-  # labeled authentik_blueprint: the authentik-blueprint labels above sit
-  # on the cleanup ConfigMap's own options only, so this module ConfigMap
-  # never carries them — authentik ignores it as a blueprint source.
+  # labeled authentik_blueprint — authentik ignores it as a blueprint source.
   - name: headlamp-authentik-module
     namespace: headlamp
     files:
