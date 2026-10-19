@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- OpenCTI brand mark: opencti-front/src/static/images/logo_dark.svg
-     from github.com/OpenCTI-Platform/opencti @ 5f0be2a (2026-10-10), kept verbatim. -->
-<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+     from github.com/OpenCTI-Platform/opencti @ 5f0be2a (2026-10-10).
+     Upstream has width="36" height="36" on the root; that intrinsic size made
+     the authentik launchpad render this icon at 36px in its ~87px tile (the
+     grid CSS uses position:absolute + object-fit:contain, which resolves a
+     replaced element with width:auto to its intrinsic size, not the box).
+     Root dims of 256x256 sit above every dashboard slot, so the launchpad
+     scales down to fill; intrinsic-size contexts get a sane default too. -->
+<svg width="256" height="256" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_342_3292)">
 <path fill-rule="evenodd" clip-rule="evenodd" d="M34.4242 35.5365L0.34021 1.81516L1.98252 0.190323L36.0665 33.9117L34.4242 35.5365Z" fill="#0FBCFF"/>
 <path fill-rule="evenodd" clip-rule="evenodd" d="M0.34021 33.9117L34.4242 0.190323L36.0665 1.81516L1.98252 35.5365L0.34021 33.9117Z" fill="#0FBCFF"/>
