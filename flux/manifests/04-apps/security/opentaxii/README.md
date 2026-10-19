@@ -56,7 +56,7 @@ Any `OPENTAXII_*` env var overrides config keys (`__` separates nesting). See `h
 
 ## Authentication
 
-Zero accounts at boot. TAXII 1.x services run with `authentication_required: no`, which grants anonymous full access - fine while the service is reachable only inside the cluster. TAXII 2.1 collections follow their api-root public flag: the bootstrapped `stix-feed` collection runs public read + public write, the same in-cluster anonymous stance as the 1.x services. Accounts stay optional until an external feeder exists.
+One account exists: the non-admin `opencti-taxii2` service account (created 2026-10-19) for the OpenCTI taxii2 connector's authenticated pull. The public collection is not enough for that client: the connector's requests-based client always sends a basic-auth header (`HTTPBasicAuth(None, None)` with no credentials configured), and OpenTAXII 401s well-formed basic auth against a missing account. Anonymous headerless access still applies to the public TAXII 2.1 collection and the TAXII 1.x services - `authentication_required: no` on the 1.x side grants anonymous full access (fine while the service is reachable only inside the cluster), and `stix-feed` keeps public read + public write. Accounts stay optional for every other feeder.
 
 When a feeder needs real auth, create accounts out-of-band:
 

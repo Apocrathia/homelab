@@ -300,9 +300,13 @@ spec:
           # stix-feed collection, so no TAXII2_COLLECTIONS env is needed.
           # Everything else trusts connector defaults (verified against
           # the connector source): PT60M poll period, TAXII2_V21=true
-          # (matches OpenTAXII 0.10 TAXII 2.1), anonymous collection so
-          # no auth vars. Default log level is error; info keeps the poll
-          # runs visible.
+          # (matches OpenTAXII 0.10 TAXII 2.1). The collection is public
+          # but this client cannot use anonymous access: the connector
+          # always sends HTTPBasicAuth(None, None) when no credentials
+          # are configured, and OpenTAXII rejects unknown-account basic
+          # auth with 401 - the opencti-taxii2 account provides the
+          # authenticated pull (basic auth, envFromSecrets below).
+          # Default log level is error; info keeps the poll runs visible.
           TAXII2_DISCOVERY_URL: http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/
           CONNECTOR_LOG_LEVEL: info
         envFromSecrets:
@@ -311,6 +315,18 @@ spec:
           OPENCTI_TOKEN:
             name: opencti-secrets
             key: APP__ADMIN__TOKEN
+          # OpenTAXII basic auth for the authenticated pull (see the env
+          # comment above). Consolidated into the opencti-secrets item
+          # (fields `taxii2-username` / `taxii2-password`, kebab per the
+          # tenzir-secrets style, same as `misp-key`); the operator adds
+          # the fields post-merge — until they sync the connector pod waits
+          # on the missing keys.
+          TAXII2_USERNAME:
+            name: opencti-secrets
+            key: taxii2-username
+          TAXII2_PASSWORD:
+            name: opencti-secrets
+            key: taxii2-password
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
