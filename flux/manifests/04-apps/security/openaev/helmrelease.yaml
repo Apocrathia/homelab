@@ -102,6 +102,12 @@ spec:
           # Broker: openaev-rabbitmq release in this namespace (rabbitmq.yaml).
           - name: OPENAEV_RABBITMQ_HOSTNAME
             value: "openaev-rabbitmq"
+            # Kubernetes injects the openaev-rabbitmq service link as
+            # OPENAEV_RABBITMQ_PORT=tcp://<IP>:5672, which collides with the
+            # Spring binding for openaev.rabbitmq.port and crashes boot.
+            # Explicit env beats the service link; pin the port.
+          - name: OPENAEV_RABBITMQ_PORT
+            value: "5672"
           - name: OPENAEV_RABBITMQ_USER
             valueFrom:
               secretKeyRef:
