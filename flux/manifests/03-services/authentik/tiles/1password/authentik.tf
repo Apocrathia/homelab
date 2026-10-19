@@ -111,8 +111,10 @@ resource "authentik_application" "app" {
 
   # Optional metadata: null = attribute omitted — the config must not
   # invent values (live rows verified field-by-field in the witness
-  # sheet). meta_icon is live-verbatim (see the header note).
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/blueprints/icons/1password.svg"
+  # sheet). meta_icon diverges from the live row ON PURPOSE: the tofu-
+  # tiles migration deleted blueprints/icons/, so the live value 404s;
+  # the tile's own icon at tiles/<name>/icon.<ext> replaces it.
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/tiles/1password/icon.svg"
   meta_description = "1Password management interface"
   meta_publisher   = "AgileBits Inc."
 }
