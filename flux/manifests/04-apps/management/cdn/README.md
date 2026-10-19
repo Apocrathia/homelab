@@ -25,11 +25,16 @@ https://cdn.gateway.services.apocrathia.com/homelab/<repo-relative-path>
 - App icons: `flux/manifests/.../<app-dir>/icon.svg|icon.png` serves at its
   repo path - e.g.
   `https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/home/mealie/icon.svg`.
-- Blueprint icons live at
-  `/homelab/flux/manifests/03-services/authentik/blueprints/icons/<name>.svg|png` -
-  e.g. `.../icons/gitlab.svg`.
+- Tofu-lane tiles (the former blueprint apps) live at
+  `/homelab/flux/manifests/03-services/authentik/tiles/<name>/icon.svg` -
+  e.g. `.../tiles/gitlab/icon.svg`.
 - Any other tracked repo file is also right there. No flattening, no
   registry, no CDN features - just the tree, with a rate limit.
+
+Readiness/gatus probe: repo-root file (`/homelab/README.md`), never a
+lane-owned path - the tofu-tiles migration deleted
+`blueprints/icons/gitlab.svg` and 404'd the probe, taking the whole
+icon fleet down (2026-10-19 incident).
 
 The `/homelab` prefix is deliberate, not indecision: it names the synced
 repo in the URL space, so a future second repo gets its own slot
