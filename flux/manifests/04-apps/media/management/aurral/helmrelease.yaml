@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -151,6 +151,7 @@ spec:
       itemPath: "vaults/Secrets/items/aurral-secrets"
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: oidc
       category: "Media"
@@ -159,6 +160,11 @@ spec:
       ssoLaunchUrl: "https://aurral.gateway.services.apocrathia.com/api/auth/oidc/login"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/management/aurral/icon.svg"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         redirectUris:
           - url: "https://aurral.gateway.services.apocrathia.com/sso/callback"
             matchingMode: "strict"
