@@ -5,7 +5,7 @@ semgrep:
   stage: test
   image:
     # renovate: datasource=docker depName=semgrep/semgrep
-    name: semgrep/semgrep:1.180.0-nonroot@sha256:fe51a9f5b261bd38d0f77bda48921c2ba27615ccb74ec2d6b0edbf3cf4e27d54
+    name: semgrep/semgrep:1.181.0-nonroot@sha256:4c37ae86cb02b5536f8c9ff6aabbc991944117e4678609e14e0f19a2bd7ea879
     entrypoint: [""]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
