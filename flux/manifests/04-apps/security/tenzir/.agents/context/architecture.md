@@ -41,10 +41,12 @@ through the platform.
   case/evidence envelopes in, `investigations.records` on ClickHouse
   out — an isolated blast radius the detection plane never shares.
 - **Enrichment node** — the internal-reference-data factory, shipped
-  idle in lap 1 (zero pipelines, no ingest); from lap 2 its factory
-  pipelines (first: `fleet_assets`) build the curated lookup tables —
-  fleet assets, baselines — into ClickHouse for the other nodes'
-  loaders; live-event enrichment stays in-stream at the ingress nodes.
+  idle in lap 1 (no ingest); lap 2 shipped its first factory pipeline,
+  fleet-assets-pull (the hourly Fleet host inventory into
+  `ocsf.fleet_assets`, consumed by the core node's fleet-assets-loader);
+  later factory lanes build the curated lookup tables — fleet assets,
+  baselines — into ClickHouse for the other nodes' loaders;
+  live-event enrichment stays in-stream at the ingress nodes.
 - **Intel node** — the CTI factory plane: its opencti-taxii-factory
   pipeline pulls external threat intel from OpenCTI's TAXII 2.1
   indicator collection, normalizes it to OCSF 5021, and appends it to
@@ -109,8 +111,10 @@ not-hidden pipeline diagnostic to Loki as `job=tenzir-diagnostics`
 log lines via `to_fluent_bit` (the ANSI `rendered` field dropped, the
 rest of the record verbatim, the node baked into the stream labels).
 Core adds `sigma-metrics-to-mimir` (`tenzir_sigma_*` — sigma runs only
-there). The enrichment node ships no arms in lap 1 (zero pipelines by
-design) and must gain the same three-arm set in its lap 2. The Grafana
+there). The enrichment node shipped its first pipeline in lap 2
+(fleet-assets-pull) but no metrics arms yet — it must gain the same
+set in a later lap so the dashboard shows the factory's own
+pipelines. The Grafana
 Node Pipelines dashboard reads the series in Mimir; the receiving stack
 is outside this subtree.
 

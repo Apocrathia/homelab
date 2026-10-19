@@ -162,11 +162,11 @@ spec:
           # Node-resident enrichment state (contexts are per-node, shared
           # across this node's pipelines, and survive pipeline restarts;
           # creation arguments apply only at creation, so this block never
-          # reconfigures an existing context — the geo-open-loader pipeline
-          # is the refresh path). The geoip context is created empty at
-          # boot and filled by context_load of CIRCL's free Geo Open
-          # country+ASN MMDB (~80 MiB in node memory, headroom the 8Gi
-          # limit absorbs); no GeoLite2/MaxMind route, so no
+          # reconfigures an existing context — each context's loader
+          # pipeline is the refresh path). The geoip context is created
+          # empty at boot and filled by context_load of CIRCL's free Geo
+          # Open country+ASN MMDB (~80 MiB in node memory, headroom the
+          # 8Gi limit absorbs); no GeoLite2/MaxMind route, so no
           # license-key secret rides this node (see geo-open-loader).
           # The osint lookup table is the consumer half of the intel
           # node's factory row: opencti-osint-loader applies the
@@ -174,10 +174,18 @@ spec:
           # tenzir::osint::update_context, entries expiring 30d after
           # their last application (the operator's max_age); declared
           # empty at boot, same pattern as geo-open.
+          # The fleet_assets lookup table (lap 2) is filled hourly by the
+          # fleet-assets-loader pipeline below from the enrichment
+          # node's ClickHouse output — the factory/loader split of the
+          # vendored asset-inventory guide; contexts are per-node, so
+          # this node's own loader owns its copy (the enrichment node
+          # only writes the shared source table).
           contexts:
             geo-open:
               type: geoip
             ocsf-osint:
+              type: lookup-table
+            fleet_assets:
               type: lookup-table
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
@@ -372,6 +380,30 @@ spec:
                 of live events with this context stays at the category-4
                 (Network Activity) ingress nodes per the doctrine; no
                 consumer of the context runs on this node yet.
+              definition: ""
+              restart-on-error: 1 minute
+            fleet-assets-loader:
+              name: fleet assets loader
+              description: |
+                Lap-2 consumer half of the fleet_assets factory: reads
+                the enrichment node's ocsf.fleet_assets output from the
+                ClickHouse query store and fills this node's
+                fleet_assets lookup-table context (declared in the
+                contexts block above; contexts are per-node, so this
+                node needs its own loader — the enrichment node only
+                writes the shared table). SELECT ... FINAL collapses
+                each Fleet host uuid to its highest-last_seen row (the
+                ReplacingMergeTree version column); ORDER BY last_seen
+                ASC makes context_update's last-write-wins land the
+                freshest host on any IP shared across hosts (DHCP
+                reuse). Rows without a primary_ip cannot join events
+                and are skipped in the SQL. every 1h fires at pipeline
+                start, then hourly — authentik and k8s-audit events
+                pass unenriched until the first successful load (the
+                empty lookup table is a no-op miss, the geo-open
+                boot-window precedent). restart-on-error retries a
+                missing table on a fresh cluster until the CHI startup
+                script lands the DDL.
               definition: ""
               restart-on-error: 1 minute
             pipeline-metrics-to-mimir:

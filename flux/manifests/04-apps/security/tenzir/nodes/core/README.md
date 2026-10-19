@@ -5,7 +5,7 @@
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Thirteen pipelines live in
+`ocsf` bus, and runs the one sigma pass. Fourteen pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
@@ -21,21 +21,30 @@ LB service anymore.
 - k8s-audit-ocsf, authentik-ocsf, fleet-ocsf, trivy-ocsf: per-source
   OCSF maps onto the bus; the audit and authentik arms enrich their
   src endpoints with geo country + ASN from the node-resident geo-open
-  context before the store/publish legs (the trivy arm also stamps its
-  Detection Findings with the uid)
+  context plus Fleet hostname + OS from the node-resident fleet_assets
+  context (fed by fleet-assets-loader) before the store/publish legs
+  (the trivy arm also stamps its Detection Findings with the uid)
 - sigma-detect: sigma over the bus with `mapping="auto"`, uid stamp,
   import into the lake
 - http-ingest: fleet webhook and trivy-report-reader payloads
 - authentik-pull: cron pull of the authentik events API
 - geo-open-loader: the daily CIRCL Geo Open MMDB builder for the
-  enrichment context (decoupled from the detection plane — a failed
-  fetch never stalls the sigma pass)
+  geo-open enrichment context (decoupled from the detection plane — a
+  failed fetch never stalls the sigma pass)
 - opencti-osint-loader: the intel factory's consumer half — reads the
   intel node's ocsf.OSINT_Inventory_Info ClickHouse table into
   the node-local ocsf-osint lookup-table context (the vendored
   `tenzir` library package's update_context, entries aging out after
   30d); in-stream consumption of the context stays with the category-4
   ingress nodes per the factory doctrine
+- fleet-assets-loader: the hourly consumer half of the fleet_assets
+  factory — pulls the enrichment node's ocsf.fleet_assets table from
+  ClickHouse (FINAL, latest per Fleet host uuid) into this node's
+  fleet_assets lookup-table context, keyed on primary_ip, so the
+  audit and authentik arms above can stamp host identity onto
+  src_endpoint (decoupled like the geo loader: a failed read never
+  stalls the maps, and events pass unenriched until the first
+  successful load)
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
   operational metrics (the diagnostics-to-loki / error-diagnostics-to-mimir
   pair retired with the introspection lap: the central poller on the
@@ -57,6 +66,8 @@ flowchart LR
     TRV --> MAP
     ATH --> MAP
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -.->|"every 24h<br/>geo-open-loader"| GEO["geo-open context"]
+    CH -.->|"every 1h<br/>fleet-assets-loader"| FA["fleet_assets context<br/>(Fleet host inventory)"]
+    FA -->|"hostname + OS<br/>src_endpoint enrichment"| MAP
     GEO -->|"login-geo / API-caller<br/>src_endpoint enrichment"| MAP
     CHOS["ClickHouse<br/>ocsf.OSINT_Inventory_Info<br/>(intel node factory)"] -.->|"every 24h<br/>opencti-osint-loader"| OCTX["ocsf-osint context"]
     MAP --> BUS["ocsf topic (the bus)"]
@@ -78,7 +89,14 @@ arm, so Authentication (login geo) and Account Change (mutation
 origin) both enrich, while the Base Event arm passes through the
 fork_merge complementary-where gate untouched (a null-key
 context_enrich still writes its into-field, so the mixed-class
-stream cannot run the operators unconditionally). No dns_lookup on
+stream cannot run the operators unconditionally). The same arms also
+look up the src endpoint IP in the fleet_assets context (keyed on
+Fleet's primary_ip) and stamp `src_endpoint.hostname` +
+`src_endpoint.os.name` in the vendored tenzir-ocsf Network Endpoint
+shape — the audit and authentik src IPs are mostly cluster-internal
+and miss, but a homelab login from a Fleet-managed LAN host gains
+its inventory identity (fleet_assets rows without a primary_ip cannot
+join and are skipped by the loader). No dns_lookup on
 either: pod/service PTRs are NXDOMAIN noise, LAN clients have no
 homelab PTRs, and attacker PTRs are absent or ISP-generic — the geo
 ASN name already carries the provider. Private addresses stay bare.
