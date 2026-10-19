@@ -12,6 +12,8 @@ This deployment includes:
 - **User Management**: Multi-tenant user directory with policy-based access control
 - **Application Integration**: Outpost-based application SSO
 - **Blueprints**: GitOps-driven configuration management via ConfigMaps
+- **Tiles**: Tofu-managed dashboard tiles (`tiles/`) — one workspace per
+  tile, adopting the blueprint-created application rows
 - **PostgreSQL**: Primary database for user data and configuration
 - **Longhorn**: Persistent storage for database
 
