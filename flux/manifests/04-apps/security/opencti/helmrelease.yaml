@@ -288,11 +288,13 @@ spec:
         enabled: true
         replicas: 1
         image:
-          # Filigran publishes as opencti/connector-<name>. This connector
-          # does NOT ride the chart appVersion cadence (its tags are 1.0.0 /
-          # rolling); pinned to the version tag, renovate bumps it.
+          # Filigran publishes as opencti/connector-<name>. Tag rides the
+          # chart appVersion, same as the MISP/MITRE connectors: the image
+          # publishes the platform's date-based tags (7.261008.0, 7.261016.0,
+          # ... verified on Docker Hub — an early 1.0.0 pin read a truncated
+          # tag list and was wrong). No tag/renovate anchor needed: the chart
+          # version stays the single deliberate update knob.
           repository: opencti/connector-alienvault
-          tag: 1.0.0
         env:
           # Default PT30M. Info keeps the import runs visible.
           CONNECTOR_LOG_LEVEL: info
