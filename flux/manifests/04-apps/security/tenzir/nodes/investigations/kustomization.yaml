@@ -21,6 +21,7 @@ configMapGenerator:
     namespace: tenzir
     files:
       - investigations-ingest-http.tql=pipelines/investigations-ingest-http.tql
+      - investigations-attest-verify.tql=pipelines/investigations-attest-verify.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
 
 replacements:
@@ -34,6 +35,16 @@ replacements:
           name: tenzir-node-investigations
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.investigations-ingest-http.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-investigations-pipelines
+      fieldPath: data.[investigations-attest-verify.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-investigations
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.investigations-attest-verify.definition
   - source:
       kind: ConfigMap
       name: tenzir-investigations-pipelines

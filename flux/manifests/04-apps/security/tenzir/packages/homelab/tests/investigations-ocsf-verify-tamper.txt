@@ -1,0 +1,114 @@
+{
+  "records_checked": 6
+}
+{
+  metadata: {
+    uid: "attest-break-case-attest-1-case-attest-1-open",
+    version: "1.9.0",
+    correlation_uid: "case-attest-1",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+  },
+  time: 2026-10-17T11:00:00Z,
+  category_uid: 2,
+  class_uid: 2004,
+  activity_id: 1,
+  severity_id: 4,
+  status_id: 1,
+  type_uid: 200401,
+  finding_info_list: [
+    {
+      uid: "investigations-attest-case-attest-1",
+      title: "Investigations record chain break",
+      created_time: 2026-10-17T09:00:00Z,
+      desc: "fingerprint_mismatch on record case-attest-1-open of case case-attest-1",
+    },
+  ],
+  unmapped: {
+    break: "fingerprint_mismatch",
+    chain_uid: "case-attest-1",
+    record_uid: "case-attest-1-open",
+    record_time: 2026-10-17T09:00:00Z,
+    stored_fingerprint: "b5cacf1b0a02224a8833d850138f621ad04a68513fd74866329733787112d7b6",
+    computed_fingerprint: "10b0d89d90ba604640ad16e9be6b3c85a1ce875e0a6176775566c99b90b5f0e9",
+    prev_event_fingerprint: null,
+    predecessor_fingerprint: null,
+  },
+}
+{
+  metadata: {
+    uid: "attest-break-case-attest-1-case-attest-1-close",
+    version: "1.9.0",
+    correlation_uid: "case-attest-1",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+  },
+  time: 2026-10-17T11:00:00Z,
+  category_uid: 2,
+  class_uid: 2004,
+  activity_id: 1,
+  severity_id: 4,
+  status_id: 1,
+  type_uid: 200401,
+  finding_info_list: [
+    {
+      uid: "investigations-attest-case-attest-1",
+      title: "Investigations record chain break",
+      created_time: 2026-10-17T10:00:00Z,
+      desc: "chain_link_mismatch on record case-attest-1-close of case case-attest-1",
+    },
+  ],
+  unmapped: {
+    break: "chain_link_mismatch",
+    chain_uid: "case-attest-1",
+    record_uid: "case-attest-1-close",
+    record_time: 2026-10-17T10:00:00Z,
+    stored_fingerprint: "e311573a4a6b10dab3e658d390ba27b81ce9a5551d6d90a0d65e5c437edd9969",
+    computed_fingerprint: "e311573a4a6b10dab3e658d390ba27b81ce9a5551d6d90a0d65e5c437edd9969",
+    prev_event_fingerprint: "459aa99b6aea30f55826de64447d40cec34cf57e972a1bfef6073073ad8dce41",
+    predecessor_fingerprint: "b5cacf1b0a02224a8833d850138f621ad04a68513fd74866329733787112d7b6",
+  },
+}
+{
+  metadata: {
+    uid: "attest-break-case-attest-4-case-attest-4-close",
+    version: "1.9.0",
+    correlation_uid: "case-attest-4",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+  },
+  time: 2026-10-17T11:00:00Z,
+  category_uid: 2,
+  class_uid: 2004,
+  activity_id: 1,
+  severity_id: 4,
+  status_id: 1,
+  type_uid: 200401,
+  finding_info_list: [
+    {
+      uid: "investigations-attest-case-attest-4",
+      title: "Investigations record chain break",
+      created_time: 2026-10-17T10:15:00Z,
+      desc: "chain_head_missing on record case-attest-4-close of case case-attest-4",
+    },
+  ],
+  unmapped: {
+    break: "chain_head_missing",
+    chain_uid: "case-attest-4",
+    record_uid: "case-attest-4-close",
+    record_time: 2026-10-17T10:15:00Z,
+    stored_fingerprint: "d81ab49f0826e9dc7d0834d8a04208f0692a33b03c6f550c92fa440a4582cd03",
+    computed_fingerprint: "d81ab49f0826e9dc7d0834d8a04208f0692a33b03c6f550c92fa440a4582cd03",
+    prev_event_fingerprint: "f702baa3409285a31e4c364a2a1303f8e43f15989e58a0aaefbb54cf38c9c15b",
+    predecessor_fingerprint: null,
+  },
+}

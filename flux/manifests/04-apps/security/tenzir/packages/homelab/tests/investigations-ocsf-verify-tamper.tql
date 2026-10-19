@@ -1,0 +1,28 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The same stored-shape fixture with three post-stamp mutations applied
+// in the store — the verification lane's threat model, one per break
+// type. (1) The case-attest-1 open record's desc was edited after
+// stamping with its attestation left stale: the per-record fingerprint
+// recompute must flag it. (2) The case-attest-1 evidence record was
+// deleted: the close record's prev_event no longer references its
+// immediate predecessor, and the walk must flag the broken link. (3) The
+// case-attest-4 open record was deleted: its close is now the first
+// record the walk sees yet still references a predecessor, and the walk
+// must flag the missing chain head. The determinism pair and the restart
+// record ride along intact and must stay silent. Expected: the summary
+// line plus three findings — fingerprint_mismatch on the case-attest-1
+// open, chain_link_mismatch on the case-attest-1 close, and
+// chain_head_missing on the case-attest-4 close.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::investigations::ocsf::verify
+// Findings only reach here (the walk drops intact records); pin the
+// finding time for the baseline — the operator stamps now() live.
+time = 2026-10-17T11:00:00Z

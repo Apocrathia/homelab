@@ -1,0 +1,49 @@
+{
+  type_uid: 200501,
+  time: 2026-10-17T09:00:00Z,
+  status_id: 1,
+  severity_id: 3,
+  metadata: {
+    version: "1.9.0",
+    uid: "determinism-probe",
+    profiles: [
+      "record_integrity",
+    ],
+    product: {
+      version: "0.1.0",
+      vendor_name: "apocrathia",
+      name: "homelab-investigations",
+    },
+    correlation_uid: "case-determinism",
+  },
+  finding_info_list: [
+    {
+      uid: "case-determinism",
+      title: "Determinism probe",
+      related_events: null,
+      created_time: 2026-10-17T09:00:00Z,
+    },
+  ],
+  desc: "determinism probe: same content, different key insertion order",
+  class_uid: 2005,
+  category_uid: 2,
+  assignee: {
+    name: "hermes-agent",
+  },
+  activity_id: 1,
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-investigations",
+      chain_uid: "case-determinism",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "b74c74036e0e6f14bad7f75c6f409f8f24b317e10afa3e209d7e3d80d51bc3cb",
+      },
+    },
+  ],
+  insertion_order_sensitive: true,
+  fingerprints_identical: true,
+}
