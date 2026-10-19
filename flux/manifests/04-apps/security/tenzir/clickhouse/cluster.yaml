@@ -148,7 +148,7 @@ spec:
               # 25.8.33.6). The operator's own default is the same repo at
               # :latest - pin instead, renovate bumps.
               # renovate: datasource=docker depName=clickhouse/clickhouse-server
-              image: clickhouse/clickhouse-server:25.8.33.6
+              image: clickhouse/clickhouse-server:25.12.11.4@sha256:8a790dd3468db22b1d4e7b18a176f378ff5ff6053b9c48dd4ea1fa71a24c5ba6
               ports:
                 - name: http
                   containerPort: 8123
