@@ -1,0 +1,126 @@
+---
+# openaev platform egress: default-deny-on-select (prime-agent pattern), allowlist
+# only what the platform verifiably needs — in-namespace dependencies, RustFS
+# object storage, and the Authentik OIDC round-trip. Deliberately NO world 443:
+# upstream telemetry (telemetry.oaev.filigran.io) has no opt-out switch and
+# self-disables when its export endpoint is unreachable; XTM hub is disabled via
+# OPENAEV_XTM_HUB_ENABLE on the platform release.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: openaev-egress
+  namespace: openaev
+  labels:
+    app.kubernetes.io/name: openaev
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: security
+    app.kubernetes.io/managed-by: flux
+spec:
+  # Selects only the platform pod (app: openaev); rabbitmq/opensearch/postgres
+  # pods are not selected and keep unrestricted egress.
+  endpointSelector:
+    matchLabels:
+      app: openaev
+  egress:
+    # DNS for the RustFS FQDN rule below (and cluster service names).
+    - toEndpoints:
+        - matchLabels:
+            k8s:k8s-app: kube-dns
+            io.kubernetes.pod.namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # In-namespace dependencies: CNPG postgres, rabbitmq broker, opensearch engine.
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: openaev-postgres
+            io.kubernetes.pod.namespace: openaev
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: openaev-rabbitmq
+            io.kubernetes.pod.namespace: openaev
+      toPorts:
+        - ports:
+            - port: "5672"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: openaev-opensearch
+            io.kubernetes.pod.namespace: openaev
+      toPorts:
+        - ports:
+            - port: "9200"
+              protocol: TCP
+    # Object storage: NAS RustFS instance (S3-compatible, plain HTTP on the LAN
+    # segment). First locked-namespace consumer of the NAS via toFQDNs; tighten
+    # to toCIDR later if wanted.
+    - toFQDNs:
+        - matchName: storage.services.apocrathia.com
+      toPorts:
+        - ports:
+            - port: "9009"
+              protocol: TCP
+    # OIDC hairpin (jupyterhub pattern): in-cluster traffic to the gateway LB IP
+    # is socket-redirected to the node-local Envoy, so the token exchange needs
+    # the reserved:ingress entity…
+    - toEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # …and the gateway preserves the pod identity upstream, so the authentik
+    # server pods must be allowed directly.
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: authentik
+            app.kubernetes.io/component: server
+            io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+---
+# opensearch runs the security plugin DISABLED (plain HTTP, no auth) per
+# official OpenAEV compose parity — this CNP is the compensating control: the
+# openaev-opensearch pod accepts 9200 only from the platform pod and from the
+# kubelet itself (liveness/readiness/startup httpGet probes originate on the
+# host). Everything else is denied by default-deny-on-select.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: openaev-opensearch-ingress
+  namespace: openaev
+  labels:
+    app.kubernetes.io/name: openaev
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: security
+    app.kubernetes.io/managed-by: flux
+spec:
+  endpointSelector:
+    matchLabels:
+      app: openaev-opensearch
+  ingress:
+    # kubelet health probes (reserved:host).
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "9200"
+              protocol: TCP
+    # The platform pod is the only cluster consumer of the engine.
+    - fromEndpoints:
+        - matchLabels:
+            app: openaev
+            io.kubernetes.pod.namespace: openaev
+      toPorts:
+        - ports:
+            - port: "9200"
+              protocol: TCP

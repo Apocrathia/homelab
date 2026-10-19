@@ -1,0 +1,131 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openaev-opensearch
+  namespace: openaev
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: openaev-opensearch
+      namespace: openaev
+      # Single-node OpenSearch — OpenAEV's mandatory search "engine"
+      # (ENGINE_ENGINE-SELECTOR=opensearch on the platform). Plain HTTP per
+      # official OpenAEV compose parity: DISABLE_SECURITY_PLUGIN=true means no
+      # TLS/auth on the REST layer, so the openaev-opensearch-ingress CNP
+      # (networkpolicy.yaml) is the compensating control — only the platform
+      # pod may reach this service. vm.max_map_count is patched node-level
+      # via talos/patches/unified-patch.yaml.
+      # renovate: datasource=docker depName=docker.io/opensearchproject/opensearch
+      image: docker.io/opensearchproject/opensearch:3.9.0@sha256:adfa61f85025d06b4aeb562e7e74fde7e31c437039c93c3862c17e9acebd6c7c
+      container:
+        name: opensearch
+        port: 9200
+        env:
+          # Dotted env name is intentional and valid k8s — the stock entrypoint
+          # converts it to the discovery.type setting.
+          - name: discovery.type
+            value: single-node
+          - name: DISABLE_SECURITY_PLUGIN
+            value: "true"
+          # Heap half the 3Gi request; rest is page cache + off-heap.
+          - name: OPENSEARCH_JAVA_OPTS
+            value: "-Xms2g -Xmx2g"
+
+      service:
+        type: ClusterIP
+        port: 9200
+        targetPort: 9200
+        portName: http
+
+      resources:
+        requests:
+          cpu: "1"
+          memory: 3Gi
+        limits:
+          cpu: "2"
+          memory: 4.5Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Stock image writes logs under /usr/share/opensearch/logs; data lives
+        # on the Longhorn volume below.
+        readOnlyRootFilesystem: false
+
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/opensearch/data
+
+      # GET / returns cluster info without auth (security plugin off) —
+      # listener-level health; index-level state rides the platform's probes.
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 30Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+    httproute:
+      enabled: false

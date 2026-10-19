@@ -1,0 +1,117 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openaev-rabbitmq
+  namespace: openaev
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: openaev-rabbitmq
+      namespace: openaev
+      # Broker for exercise injects/notifications (firecrawl-rabbitmq pattern).
+      # ECR mirror of the docker library image, digest-pinned.
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/rabbitmq
+      image: public.ecr.aws/docker/library/rabbitmq:4.3.6-management-alpine@sha256:3505b6096cdbc083bcc363e74366f575ecd0c1a55be4dadcbc60fa08e34647e1
+      container:
+        name: rabbitmq
+        port: 5672
+        env:
+          # Same keys the platform's OPENAEV_RABBITMQ_USER/PASS read — the
+          # entrypoint creates this user on boot.
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rabbitmq-user
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rabbitmq-pass
+
+      service:
+        type: ClusterIP
+        port: 5672
+        targetPort: 5672
+        portName: amqp
+
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+
+      volumes:
+        configMap:
+          - name: rabbitmq-config
+            mountPath: /etc/rabbitmq/rabbitmq.conf
+            subPath: rabbitmq.conf
+            readOnly: true
+            configMapName: openaev-rabbitmq-config
+
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/rabbitmq
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - rabbitmq-diagnostics
+              - -q
+              - check_running
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - rabbitmq-diagnostics
+              - -q
+              - check_running
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 8Gi
+      smb:
+        enabled: false
+
+    postgres:
+      enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: false
+    httproute:
+      enabled: false
