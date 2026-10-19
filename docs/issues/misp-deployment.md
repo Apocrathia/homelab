@@ -107,6 +107,9 @@ datasource), same pattern as generic-app.
   see the slice-6 steps below and the joint checklist in the OpenCTI issue.
 - Chart appVersion lags MISP upstream by a few releases (research risk 1) —
   accepted.
+- misp-core memory limit temporarily raised 4Gi → 8Gi (2026-10-18) for the
+  one-time abuse.ch archive backfill (container OOMKilled 3x at 4Gi
+  mid-fetch); trim candidate back to 4Gi once the backlog has filled.
 
 ## Operator pre-deploy checklist
 
