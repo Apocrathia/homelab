@@ -93,7 +93,7 @@ apiVersion: v1alpha1
 kind: UnattendedInstallConfig
 installer:
   # renovate: datasource=github-releases depName=siderolabs/talos
-  image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.2
+  image: factory.talos.dev/metal-installer/8b583b5320ff41bf40bd1aea9287923ada45e32a1e2ba0045cb3f6758920ef4a:v1.14.4
 provisioning:
   diskSelector:
     match: disk.dev_path == "/dev/sda"
