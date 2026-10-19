@@ -12,3 +12,4 @@ resources:
   - rbac-sidecar.yaml
   - blueprints
   - kube-auth
+  - tiles

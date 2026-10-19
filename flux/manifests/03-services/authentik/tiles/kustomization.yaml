@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: authentik-tiles
+
+resources:
+  - authentik-terraform-token.yaml
+  - 1password
+  - amp
+  - gitlab
+  - home-assistant
+  - proxmox
+  - synology
+  - truenas
+  - unifi-network
+  - unifi-protect

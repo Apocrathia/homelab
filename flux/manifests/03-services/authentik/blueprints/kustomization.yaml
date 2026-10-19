@@ -9,42 +9,6 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: authentik-blueprint-truenas
-    namespace: authentik
-    files:
-      - truenas.yaml
-  - name: authentik-blueprint-unifi-network
-    namespace: authentik
-    files:
-      - unifi-network.yaml
-  - name: authentik-blueprint-unifi-protect
-    namespace: authentik
-    files:
-      - unifi-protect.yaml
-  - name: authentik-blueprint-proxmox
-    namespace: authentik
-    files:
-      - proxmox.yaml
-  - name: authentik-blueprint-synology
-    namespace: authentik
-    files:
-      - synology.yaml
-  - name: authentik-blueprint-gitlab
-    namespace: authentik
-    files:
-      - gitlab.yaml
-  - name: authentik-blueprint-home-assistant
-    namespace: authentik
-    files:
-      - home-assistant.yaml
-  - name: authentik-blueprint-amp
-    namespace: authentik
-    files:
-      - amp.yaml
-  - name: authentik-blueprint-1password
-    namespace: authentik
-    files:
-      - 1password.yaml
   - name: authentik-blueprint-okta
     namespace: authentik
     files:

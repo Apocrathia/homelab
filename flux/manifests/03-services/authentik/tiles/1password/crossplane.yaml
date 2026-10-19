@@ -1,0 +1,65 @@
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: 1password-authentik
+  namespace: authentik
+spec:
+  # Materializes the shared 1Password-item-backed Secret as a file in the
+  # tofu workdir; authentik.tf's provider block reads it with
+  # file("authentik-token"). The token itself never appears in a manifest.
+  # The tiles have no app namespace of their own (they are authentik-owned
+  # dashboard entries), so ALL tofu objects ride ns authentik and share the
+  # ONE tiles-level authentik-terraform-token OnePasswordItem/Secret —
+  # same 1Password item (crossplane-terraform-secrets) every other
+  # authentik-consumer pair copies.
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: authentik
+        key: authentik-terraform-token
+  # Per-tile state args for the PARTIAL kubernetes backend in authentik.tf:
+  # the provider writes this as crossplane.remote.tfbackend and passes it
+  # via -backend-config at tofu init. The state Secret is
+  # tfstate-1password-authentik-1password in ns authentik — unique
+  # suffix per tile, deliberately separate from the CI tofu stack
+  # (terraform/, GitLab HTTP backend). Two stacks, two states.
+  backendFile: |
+    secret_suffix     = "1password"
+    namespace         = "authentik"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: 1password-authentik
+  namespace: authentik
+spec:
+  # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
+  # action the provider releases the finalizer WITHOUT running tofu destroy,
+  # so a GitOps prune of this object can NEVER destroy the live authentik
+  # stack (v2-native Orphan). Deliberate decommission therefore requires
+  # temporarily restoring ["*"] (or a manual tofu destroy) — the guard is
+  # intentional.
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: 1password-authentik
+  forProvider:
+    # Inline module, stitched at kustomize build time: kustomization.yaml's
+    # configMapGenerator packages authentik.tf and the replacements rule
+    # copies its bytes into this module field — crossplane.yaml +
+    # authentik.tf are the canonical file pair, and the HCL file is the
+    # single source of truth (never render this directory outside
+    # kustomize). No varmap in git — ever: the tile values live in the HCL,
+    # and the ADOPTION varmap (recipe §8, born-with-varmap) exists only as
+    # a gate-time patch on the applied Workspace. The live objects are
+    # blueprint-created and ride in tofu state only after the gate imports
+    # them; the first reconcile of the unsuspended tree plans No changes.
+    source: Inline
+    module: ""
