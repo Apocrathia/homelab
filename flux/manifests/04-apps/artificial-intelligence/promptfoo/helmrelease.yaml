@@ -88,7 +88,7 @@ spec:
               # renovate: datasource=npm depName=promptfoo
               PROMPTFOO_VERSION="0.124.1"
               # renovate: datasource=pypi depName=modelaudit
-              MODELAUDIT_VERSION="0.2.52"
+              MODELAUDIT_VERSION="0.2.54"
 
               OPT=/opt/promptfoo
               mkdir -p "$OPT"
