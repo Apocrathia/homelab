@@ -93,7 +93,7 @@ flowchart LR
    `investigations-api-token`. On the `clickhouse-secrets` item:
    `clickhouse-investigations-writer-password` and
    `clickhouse-investigations-reader-password` (values for the CHI users
-   block in `clickhouse/cluster/cluster.yaml`; git only names the
+   block in [`../../clickhouse/cluster.yaml`](../../clickhouse/cluster.yaml); git only names the
    fields).
 2. **Platform node token**: provision a node in the app.tenzir.com
    workspace and copy its `tnz_...` token into the

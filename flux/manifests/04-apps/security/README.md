@@ -47,6 +47,19 @@ reconnaissance across 26 modules with OPSEC scoring, entity graphs, and
 report exports. Single FastAPI container, no database; JSON-file persistence
 on Longhorn.
 
+### [Tenzir](./tenzir/README.md)
+
+SIEM detection + investigations plane: six standalone Tenzir nodes that
+normalize kube-apiserver audit, tetragon, authentik, fleet, trivy, and
+NetFlow feeds to a unified OCSF bus, run SigmaHQ + homelab Sigma rules
+over it, and archive findings into the ClickHouse datalake after a
+15-minute hot window. The ClickHouse cluster is nested under the tenzir
+tree ([`tenzir/clickhouse/`](./tenzir/clickhouse/README.md) — the OCSF
+lake and the single-JSON-column investigations store); the Altinity
+operator managing it stays at
+[`03-services/clickhouse/`](../../03-services/clickhouse/README.md).
+Grafana owns querying and alerting over the `ocsf-clickhouse` datasource.
+
 ## Overview
 
 Security tooling that consumes or produces threat intelligence lives here.
@@ -75,7 +88,7 @@ flowchart LR
     end
 
     subgraph consume[Consumers]
-        TENZIR["Tenzir funnel (SIEM)"]
+        TENZIR["Tenzir funnel (SIEM)<br/>(./tenzir/)"]
         PARTNERS["TAXII consumers / partners"]
         OPS["Operator - authentik SSO"]
     end

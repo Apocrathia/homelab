@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: clickhouse-cluster
+  namespace: clickhouse
+
+resources:
+  - secret.yaml
+  - keeper.yaml
+  - cluster.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Server config extraction (the authentik.tf / chaos-mesh build-time
+# stitch shape): configMapGenerator packages the ClickHouse config.d XML
+# files and the replacements rules byte-copy them into the CHI's
+# spec.configuration.files map - config/ is the single source of truth
+# for the storage policy and the schema bootstrap, never the placeholder
+# keys in cluster.yaml (and never render this directory outside
+# kustomize).
+configMapGenerator:
+  - name: tenzir-clickhouse-config
+    namespace: clickhouse
+    files:
+      - 00-storage-tiered.xml=config/00-storage-tiered.xml
+      - 10-startup-scripts.xml=config/10-startup-scripts.xml
+
+replacements:
+  # Copy each generated ConfigMap key into the matching CHI files entry.
+  # The CHI files keys are config.d/<file> drop-in paths; the brackets
+  # escape the dots and slashes in the map keys (the data.[authentik.tf]
+  # shape from the tenzir namespace stitch).
+  - source:
+      kind: ConfigMap
+      name: tenzir-clickhouse-config
+      fieldPath: data.[00-storage-tiered.xml]
+    targets:
+      - select:
+          kind: ClickHouseInstallation
+          name: tenzir
+        fieldPaths:
+          - spec.configuration.files.[config.d/00-storage-tiered.xml]
+  - source:
+      kind: ConfigMap
+      name: tenzir-clickhouse-config
+      fieldPath: data.[10-startup-scripts.xml]
+    targets:
+      - select:
+          kind: ClickHouseInstallation
+          name: tenzir
+        fieldPaths:
+          - spec.configuration.files.[config.d/10-startup-scripts.xml]

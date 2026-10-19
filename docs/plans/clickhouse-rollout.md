@@ -40,12 +40,12 @@ Read before implementing any slice. These carry the facts, not this plan:
 - Vendored Tenzir skills (landed on origin/main at 54e9be3a3, AFTER the
   prototype lap — fetch before reading; a local checkout may be a beat
   behind):
-  `flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir/`
+  `flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir/`
   (Tenzir product docs — TQL, operators, functions, integrations,
   deployment) and
   `.../tenzir/.agents/skills/tenzir-ocsf/` (OCSF schema reference, pruned
   to latest stable 1.9.0). Subtree router:
-  `flux/manifests/03-services/observability/tenzir/AGENTS.md`. **Any lap
+  `flux/manifests/04-apps/security/tenzir/AGENTS.md`. **Any lap
   that authors or changes Tenzir pipelines follows these skills** —
   operator arguments and pipeline conventions are cited to the vendored
   pages, not re-derived. Never edit the skill trees (generated upstream;
@@ -170,7 +170,7 @@ with an operator-confirmation gate for any discovered gap).
 
 ### D2 — Naming and placement
 
-App dir `flux/manifests/03-services/observability/clickhouse/`, namespace
+App dir `flux/manifests/03-services/clickhouse/`, namespace
 `clickhouse` (operator decision: no `-system` suffix unless required).
 The CHI CR is named `tenzir` (so the operator's CR-level Service comes out as
 `clickhouse-tenzir`) and the cluster inside it is `ocsf` - the `{cluster}`
@@ -391,7 +391,7 @@ plugin documents wins; creds arrive via `valuesFrom` from
   HelmRepository `https://helm.altinity.com` + registration in
   `repositories/kustomization.yaml` (**protected path touch** — flagged for
   operator review; nothing else in 01-bootstrap moves).
-- `flux/manifests/03-services/observability/clickhouse/`:
+- `flux/manifests/03-services/clickhouse/`:
   - `namespace.yaml` (`clickhouse`)
   - `operator.yaml` — `altinity-clickhouse-operator` 0.27.4 (CRDs via
     the chart's pre-install hook), `watchNamespaces: ["clickhouse"]`,
@@ -428,8 +428,8 @@ plugin documents wins; creds arrive via `valuesFrom` from
   NOT a resource of `observability/kustomization.yaml` (it left the
   `services-observability` kustomization — the dir is applied by its own
   two Flux Kustomizations instead); both
-  `03-services/observability/clickhouse/flux-kustomization.yaml` and
-  `03-services/observability/clickhouse/cluster/flux-kustomization.yaml`
+  `03-services/clickhouse/flux-kustomization.yaml` and
+  `04-apps/security/tenzir/clickhouse/flux-kustomization.yaml`
   register in `flux/manifests/kustomization.yaml` (parent-then-child,
   the tetragon/policies + chaos-mesh/experiments pattern).
 - `docs/plans/clickhouse-rollout.md` — this plan, amended in-place (this
@@ -544,7 +544,7 @@ No pipeline convention is re-derived from memory or scratch copies.
 
 **Scope / files:**
 
-- `flux/manifests/03-services/observability/tenzir/nodes/core/helmrelease.yaml`
+- `flux/manifests/04-apps/security/tenzir/nodes/core/helmrelease.yaml`
   and `.../tetragon/helmrelease.yaml` (coupled surface — one implementer):
   - compaction rule `ocsf-archive` pipeline becomes
     `fork { to_clickhouse ... } to_s3 ...` (D8; to_s3 leg unchanged —
@@ -582,7 +582,7 @@ columns stay sparse; catch-all absorbs).
 
 **Scope / files:**
 
-- `flux/manifests/03-services/observability/tenzir/grafana/ocsf-exploration.json`
+- `flux/manifests/04-apps/security/tenzir/grafana/ocsf-exploration.json`
   and `ocsf-findings.json`: every panel's datasource flips to uid
   `ocsf-clickhouse`; SQL translated per the validated table
   (`sql/40_queries.sql`): `time_bucket($__interval, time)` →

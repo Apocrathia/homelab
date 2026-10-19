@@ -18,7 +18,7 @@ fields, never values.
 
 Rollout plan MR-2 ([docs/plans/clickhouse-rollout.md](../../../../../../docs/plans/clickhouse-rollout.md)):
 Grafana queries the ClickHouse OCSF store deployed by the MR-1 lane
-([`clickhouse-tenzir` CR-level Service](../../clickhouse/)) through the
+([`clickhouse-tenzir` CR-level Service](../../../../04-apps/security/tenzir/clickhouse/)) through the
 first-party `grafana-clickhouse-datasource` plugin, pinned `4.20.0` via the
 kube-prometheus-stack `grafana.plugins:` chart value (the deployed grafana
 image does not bundle it). Connection uses the plugin's default native

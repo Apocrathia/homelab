@@ -15,4 +15,3 @@ resources:
   - prometheus
   - tailscale2otel
   - tempo
-  - tenzir

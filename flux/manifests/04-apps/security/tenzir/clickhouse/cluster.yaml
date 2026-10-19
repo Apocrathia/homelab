@@ -1,0 +1,215 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml
+# ClickHouse OCSF query store. Altinity operator shape (operator decision
+# 2026-10-17, supersedes the generic-app shape in the old plan draft):
+# 1 shard x 2 replicas of clickhouse-server behind a Keeper ensemble
+# (keeper.yaml) - ReplicatedMergeTree tables, replication for pod/PVC-loss
+# resilience, rolling updates orchestrated by the operator.
+#
+# In-cluster endpoints (operator-created Services; pattern prefixes are
+# fixed by the operator namer):
+#   clickhouse-tenzir.clickhouse.svc.cluster.local  - CR-level service,
+#     load-balanced across all hosts, HTTP 8123 + native 9000
+#   chi-tenzir-ocsf-<shard>-<replica>...                   - per-host services
+#   The {cluster} macro value is "ocsf" (the single cluster below).
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: tenzir
+  namespace: clickhouse
+spec:
+  configuration:
+    # Keeper reference: the operator resolves the per-replica endpoints of
+    # the ClickHouseKeeperInstallation named tenzir (keeper.yaml) and
+    # renders the zookeeper config itself; it also waits for keeper pods to
+    # be Running before reconciling this CHI.
+    zookeeper:
+      keeper:
+        name: tenzir
+
+    # ClickHouse users, rendered by the operator into users.d
+    # (chop-generated-users). Passwords arrive as env vars the operator
+    # injects from the clickhouse-secrets Secret (OnePasswordItem on the
+    # dedicated clickhouse-secrets vault item) - no secret values in git,
+    # ever.
+    # The operator also merges in localhost networks + a host_regexp for the
+    # CHI's own service FQDNs on every user; networks below add the cilium
+    # pod CIDR so in-cluster writers/readers connect from their pod IPs.
+    # grants are users.xml-level RBAC (ClickHouse <grants> config): with
+    # grants present, access is exactly what is granted.
+    users:
+      # Live writer + backfill user (Tenzir to_clickhouse, MR-3/MR-5).
+      # SELECT is required by to_clickhouse's table-description refresh
+      # (DESCRIBE) and the live-leg validation queries.
+      tenzir/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
+      tenzir/networks/ip:
+        - 10.42.0.0/16
+      tenzir/grants/query:
+        - GRANT INSERT, SELECT ON ocsf.*
+      # Grafana datasource user (MR-2), SELECT-only.
+      grafana/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-grafana-password
+      grafana/networks/ip:
+        - 10.42.0.0/16
+      grafana/grants/query:
+        - GRANT SELECT ON ocsf.*
+      # Investigations-plane users (tenzir/nodes/investigations/). The
+      # standing ingest pipeline writes with investigations-writer;
+      # API-launched from_clickhouse pipelines read with
+      # investigations-reader. Neither user can ALTER, TRUNCATE, or DROP
+      # anything - wipe is not a permitted operation on this database;
+      # the residual risk floor is append-only pollution (visible,
+      # attributed, recoverable), not destruction.
+      investigations-writer/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-writer-password
+      investigations-writer/networks/ip:
+        - 10.42.0.0/16
+      # INSERT-only is the design intent, but SELECT rides along for the
+      # same live-verified reason the tenzir user carries it above:
+      # to_clickhouse's table-description refresh runs DESCRIBE on the
+      # target table. The grant stays scoped to investigations.*, and no
+      # read pipeline ever runs with this user - the query lane is the
+      # reader.
+      investigations-writer/grants/query:
+        - GRANT INSERT, SELECT ON investigations.*
+      investigations-reader/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-investigations-reader-password
+      investigations-reader/networks/ip:
+        - 10.42.0.0/16
+      # The agent query lane: read the case store AND the lake tables
+      # (evidence hunts pivot into ocsf.*). GRANT-mode RBAC already yields
+      # read-only behavior (with grants present, access is exactly what is
+      # granted).
+      investigations-reader/grants/query:
+        - GRANT SELECT ON investigations.*
+        - GRANT SELECT ON ocsf.*
+
+    files:
+      # Placeholder keys, stitched at kustomize build time (the
+      # authentik.tf / chaos-mesh build-time stitch shape):
+      # kustomization.yaml's configMapGenerator packages the XML files
+      # in config/ and the replacements rules copy their bytes into
+      # these fields - config/00-storage-tiered.xml and
+      # config/10-startup-scripts.xml are the single sources of truth;
+      # never render this directory outside kustomize.
+      config.d/00-storage-tiered.xml: ""
+      config.d/10-startup-scripts.xml: ""
+
+    clusters:
+      - name: ocsf
+        layout:
+          shardsCount: 1
+          replicasCount: 2
+
+  defaults:
+    templates:
+      podTemplate: clickhouse-pod
+      dataVolumeClaimTemplate: data
+
+  templates:
+    podTemplates:
+      - name: clickhouse-pod
+        spec:
+          # Replication covers data safety, but two replicas on one host
+          # turn a single node crash into a 2-of-2 replica loss; require
+          # spread across hosts (2 replicas, 4 nodes).
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: clickhouse.altinity.com/app
+                        operator: In
+                        values:
+                          - chop
+                  topologyKey: kubernetes.io/hostname
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            fsGroup: 101
+          containers:
+            - name: clickhouse
+              # Official image (prototype-validated build: rustfs multipart,
+              # tiered storage, JSON types, startup_scripts all verified on
+              # 25.8.33.6). The operator's own default is the same repo at
+              # :latest - pin instead, renovate bumps.
+              # renovate: datasource=docker depName=clickhouse/clickhouse-server
+              image: clickhouse/clickhouse-server:25.8.33.6
+              ports:
+                - name: http
+                  containerPort: 8123
+                - name: client
+                  containerPort: 9000
+                # interserver HTTP: part fetches between replicas
+                - name: interserver
+                  containerPort: 9009
+              env:
+                # rustfs creds for the cold S3 disk (from_env in
+                # 00-storage-tiered.xml); tenzir-bucket-scoped keys from
+                # the tenzir-secrets item. The clickhouse namespace
+                # renders that item from secret.yaml in this directory -
+                # "one item, multiple OnePasswordItem CRs", the same
+                # pattern as the tenzir namespace's clickhouse-secrets
+                # render. The aws keys on clickhouse-secrets (the old
+                # clickhouse-bucket user) become unused - the operator
+                # removes them.
+                - name: CH_S3_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: tenzir-secrets
+                      key: aws-access-key-id
+                - name: CH_S3_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: tenzir-secrets
+                      key: aws-secret-access-key
+              resources:
+                # Strawman sizing (plan risk table): one Tenzir writer, LAN
+                # rustfs cold reads, dashboards. Watch the first week.
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  cpu: "2"
+                  memory: 6Gi
+              readinessProbe:
+                httpGet:
+                  path: /ping
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+              livenessProbe:
+                httpGet:
+                  path: /ping
+                  port: http
+                initialDelaySeconds: 30
+                periodSeconds: 20
+                timeoutSeconds: 5
+
+    volumeClaimTemplates:
+      - name: data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          storageClassName: longhorn
+          resources:
+            requests:
+              # Hot tier per replica (~90d): each replica holds a full copy
+              # of the data (replication), so the cluster reserves 2x this
+              # cap; Longhorn grows on demand, so this is a ceiling.
+              storage: 100Gi

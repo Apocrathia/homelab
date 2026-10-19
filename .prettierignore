@@ -19,23 +19,23 @@ flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webu
 # Vendored SigmaHQ rules: byte-identical copies from the third-party/sigmahq
 # submodule at the pinned gitlink — re-copy on rule updates, never reformat.
 # (Same rationale as the webui exemption above.)
-flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
+flux/manifests/04-apps/security/tenzir/detections/sigma/sigmahq/**
 
 # Vendored YARA rules: byte-identical copies from the third-party/yara-signature-base
 # submodule at the pinned gitlink — same re-copy discipline as the sigma rules.
-flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
+flux/manifests/04-apps/security/tenzir/detections/yara/signature-base/**
 
 # Vendored tenzir skills (.agents/skills/{tenzir,tenzir-ocsf}): byte-identical
 # copies from github.com/tenzir/skills at the pinned upstream commit — re-copy
 # on refresh, never reformat. Same discipline as the vendored trees above.
-flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir/**
-flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir-ocsf/**
+flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir/**
+flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir-ocsf/**
 # Vendored tenzir library `netflow` package (packages/netflow):
 # byte-identical copy from github.com/tenzir/library at the pinned upstream
 # commit — re-copy on refresh (rsync recipe in the package README), never
 # reformat. The hand-written packages/netflow/README.md rides along, same
 # as the vendored skills READMEs above.
-flux/manifests/03-services/observability/tenzir/packages/netflow/**
+flux/manifests/04-apps/security/tenzir/packages/netflow/**
 # Vendored gcx agent skills (grafana .agents/skills): byte-identical copies
 # from github.com/grafana/gcx at the pinned tag — re-copy on refresh, never
 # reformat. The hand-authored grafana-homelab skill and this tree's README

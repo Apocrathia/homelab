@@ -1,6 +1,6 @@
 # alloy-tetragon
 
-> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../tenzir/) | [Tetragon](../../../tetragon/)
+> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../../../04-apps/security/tenzir/) | [Tetragon](../../../tetragon/)
 
 Dedicated Grafana Alloy DaemonSet that tails the tetragon agents' JSON
 export files (`/var/run/cilium/tetragon/tetragon.log` on every node) and
@@ -44,9 +44,9 @@ node.
 
 The tenzir pipelines filter this stream on
 `resource.attributes["service.name"] == "tetragon-export"`
-([`homelab::tetragon::parse`](../../tenzir/packages/homelab/operators/tetragon/parse.tql))
+([`homelab::tetragon::parse`](../../../../04-apps/security/tenzir/packages/homelab/operators/tetragon/parse.tql))
 and map it to OCSF (Process / File / Network Activity) — see the
-[Tenzir README](../../tenzir/).
+[Tenzir README](../../../../04-apps/security/tenzir/).
 
 ## Troubleshooting
 

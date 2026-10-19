@@ -72,7 +72,7 @@ spec:
     # cluster and vault items. The containment stack on this node:
     #   - operator denylist + no-location-overrides (tenzir.config below)
     #   - INSERT/SELECT-scoped ClickHouse users, no ALTER/TRUNCATE/DROP
-    #     (the CHI users block, clickhouse/cluster/cluster.yaml)
+    #     (the CHI users block, clickhouse/cluster.yaml)
     #   - chart NetworkPolicy scoping ingress to the agent namespaces
     #   - append-only discipline: nothing ever updates or deletes a row
     #     of investigations.records (residual risk floor = visible,
@@ -313,7 +313,7 @@ spec:
     # ride the dedicated clickhouse-secrets item as NEW fields
     # (clickhouse-investigations-writer-password /
     # clickhouse-investigations-reader-password — the CHI users block in
-    # clickhouse/cluster/cluster.yaml renders the users from them). Env
+    # clickhouse/cluster.yaml renders the users from them). Env
     # vars map to config keys tenzir.secrets.* (same env-var shape as
     # the siblings' TENZIR_SECRETS__CLICKHOUSE_PASSWORD): the ingest
     # pipeline's to_clickhouse leg reads
