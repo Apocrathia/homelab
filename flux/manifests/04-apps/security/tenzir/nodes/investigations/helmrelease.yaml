@@ -191,6 +191,23 @@ spec:
           index:
             lazy-sketches: true
             load-concurrency: 4
+          # Chain state for the record_integrity attestation lane (the
+          # attest operator + ingest pipeline below): one lookup-table
+          # entry per case (key = metadata.correlation_uid) holding the
+          # case's current chain tail — the previous record's uid,
+          # type_uid, and fingerprint, which context_enrich turns into the
+          # next record's prev_event. Same shape as the siblings' context
+          # blocks (core's ocsf-osint; contexts are per-node, shared
+          # across this node's pipelines, and survive pipeline restarts).
+          # The table is memory: a NODE restart loses it, and every case
+          # chain then restarts at its next record with prev_event absent
+          # plus a WARNING diagnostic from attest (best-effort per node
+          # lifetime — the verify lane's per-record fingerprint recompute
+          # still catches post-hoc mutation across restarts; the semantics
+          # are documented in the datalake README).
+          contexts:
+            investigations-chains:
+              type: lookup-table
           start:
             # Start the web server (node REST API) — the guide's
             # mechanism (start-the-api: options ride the plugins.web
@@ -214,18 +231,42 @@ spec:
                 lifecycle as Incident Finding 2005, evidence pins as
                 Datastore Activity 6005 Query with the ai_operation agent
                 identity); ocsf_derive + ocsf_cast schema-validate; the
-                to_clickhouse leg INSERTs into investigations.records on
-                the OCSF query store with the INSERT/SELECT-scoped
-                investigations-writer user. The map call rides after the
-                listener braces like the core node's http-ingest pipeline
-                (not inside them): malformed POSTs drop with
-                assert-WARNINGS in the node diagnostics while the request
-                still completes with accept_http's default 200 — write
-                confirmation is the query-lane read-back, not the POST
-                response. No archive rule and no local import:
+                attest operator stamps the record_integrity attestation
+                over the stored shape — a SHA-256 fingerprint chained per
+                case via prev_event, chain state in the investigations-
+                chains context (the contexts block above; a node restart
+                restarts the chains with a WARNING, the documented gap in
+                the datalake README); the to_clickhouse leg INSERTs into
+                investigations.records on the OCSF query store with the
+                INSERT/SELECT-scoped investigations-writer user. The map
+                call rides after the listener braces like the core node's
+                http-ingest pipeline (not inside them): malformed POSTs
+                drop with assert-WARNINGS in the node diagnostics while
+                the request still completes with accept_http's default
+                200 — write confirmation is the query-lane read-back, not
+                the POST response. No archive rule and no local import:
                 ClickHouse is the only durable copy, and the node lake
                 stays empty by construction (the PVC carries node state,
                 not records).
+              definition: ""
+              restart-on-error: 1 minute
+            investigations-attest-verify:
+              name: investigations attestation verify
+              description: |
+                Verification half of the record_integrity lane: reads
+                every investigations.records row back via the catch-all
+                reconstruction, recomputes each attestation's fingerprint
+                over the canonical serialization, and walks the per-case
+                prev_event chains; a Detection Finding (2004) drops onto
+                stdout for every break (content tamper, chain-head
+                deletion, link break) — the package tests prove the walk
+                (homelab package: investigations-ocsf-verify-clean /
+                -tamper baselines). The verify pipeline file carries the
+                scheduling TODO: as wired, the node runs this walk once
+                at startup (bounded read-back, completes and exits); the
+                scheduled walk + Grafana contact-point alerting are the
+                issue's open items (docs/issues/
+                tenzir-record-integrity-attestations.md).
               definition: ""
               restart-on-error: 1 minute
             pipeline-metrics-to-mimir:
@@ -340,6 +381,12 @@ spec:
       - name: packages-homelab-investigations-map
         configMap:
           name: tenzir-packages-homelab-investigations-map
+      - name: packages-homelab-investigations-attest
+        configMap:
+          name: tenzir-packages-homelab-investigations-attest
+      - name: packages-homelab-investigations-verify
+        configMap:
+          name: tenzir-packages-homelab-investigations-verify
       # The web server's TLS pair, issued by the cert-manager
       # Certificate (certificate.yaml) via the self-signed ClusterIssuer.
       - name: web-tls
@@ -366,6 +413,18 @@ spec:
       - name: packages-homelab-investigations-map
         mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/map.tql
         subPath: map.tql
+        readOnly: true
+      # Same file-level subPath mounts as the map operator above: the
+      # attest operator (ingest lane) and the verify operator (the
+      # attest-verify pipeline below) are package siblings the map's
+      # ConfigMap does not carry.
+      - name: packages-homelab-investigations-attest
+        mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/attest.tql
+        subPath: attest.tql
+        readOnly: true
+      - name: packages-homelab-investigations-verify
+        mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/verify.tql
+        subPath: verify.tql
         readOnly: true
       # Web server TLS pair (plugins.web certfile/keyfile): directory
       # mount of the Certificate's Secret, no subPath. The web server

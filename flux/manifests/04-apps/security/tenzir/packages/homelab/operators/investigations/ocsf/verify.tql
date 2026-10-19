@@ -1,0 +1,134 @@
+---
+description: |
+  Verification half of the record_integrity lane: recomputes every stored
+  record's attestation fingerprint over the canonical serialization and
+  walks the prev_event chains per case (chain_uid = correlation_uid),
+  emitting a Detection Finding (2004) on any break. Input is the
+  stored-shape record (post-cast, attested) as read back from
+  investigations.records; the live lane reads it via from_clickhouse (the
+  node's investigations-attest-verify pipeline), the package tests feed
+  the same shape from fixtures. Records without an attestation predate
+  the chain epoch and are skipped (docs/issues/
+  tenzir-record-integrity-attestations.md: pre-stamping rows are out of
+  scope). A mid-chain record with prev_event absent is the documented
+  chain-restart case (the attest operator warned at write time when the
+  node lost its in-memory chain state) and is not a break: the
+  per-record fingerprint recompute still covers content tampering across
+  restarts.
+---
+
+// One pass in time order per chain: bounded read-back, so sort first and
+// the group's inner pipeline sees each key's events in that order
+// (reference/operators/lag.md — "The operator follows input order within
+// its pipeline").
+where attestation_list? != null
+sort time
+group metadata.correlation_uid {
+  // ---- the recompute (must see a clean record) -----------------------------
+  // Nothing has been written into the record yet — no walk state, no
+  // plumbing fields — so the spread below hashes the stored record with
+  // attestation_list[0] rebuilt exactly as the attest operator assembled
+  // it pre-fingerprint (OCSF rule, vendored objects/attestation.md: the
+  // hash covers the entire event including the attestation's own
+  // authority_uid, chain_uid, and prev_event, and excludes only the
+  // attestation's fingerprint and signatures). prev_event rides absent on
+  // genesis records: a null field would serialize differently from a
+  // missing one and break the recompute.
+  _recomputed = hash_sha256(print_json(({
+    ...this,
+    attestation_list: [{
+      authority_uid: attestation_list[0].authority_uid,
+      chain_uid: attestation_list[0].chain_uid,
+      prev_event: attestation_list[0].prev_event,
+    }] if attestation_list[0]?.prev_event? != null else [{
+      authority_uid: attestation_list[0].authority_uid,
+      chain_uid: attestation_list[0].chain_uid,
+    }],
+  }).sort()))
+
+  // ---- the walk state -------------------------------------------------------
+  // The predecessor's tail in this chain's time order — written AFTER the
+  // recompute so it never enters the hash input. Read-only walk state
+  // over complete records: no write, no ordering hazards.
+  lag value={
+    uid: metadata.uid,
+    type_uid: type_uid,
+    fp: attestation_list[0]?.fingerprint?.value?,
+  }, into=_prev
+
+  // ---- the checks -----------------------------------------------------------
+  _break = null
+  // Content mutation: the recomputed fingerprint differs from the stored
+  // one — the record (or its stored attestation) was altered after
+  // stamping. This is the check that survives chain restarts.
+  if _recomputed != attestation_list[0]?.fingerprint?.value? {
+    _break = "fingerprint_mismatch"
+  } else {
+    // The stored prev_event fingerprint for this record, null on genesis
+    // and on restart records.
+    _stored_prev_fp = attestation_list[0]?.prev_event?.fingerprint?.value?
+    // Chain head present in the store references a predecessor that the
+    // walk never saw: deletion of the chain's earlier records (a first
+    // record with prev_event can never have been stamped — its
+    // predecessor existed at stamp time).
+    if _stored_prev_fp? != null and _prev? == null {
+      _break = "chain_head_missing"
+    }
+    // Broken link: prev_event does not reference the immediately
+    // preceding record of this chain — deletion, reorder, or splice.
+    if _stored_prev_fp? != null and _prev? != null and _stored_prev_fp != _prev?.fp? {
+      _break = "chain_link_mismatch"
+    }
+    // A mid-chain record with prev_event absent is the documented
+    // restart case — the attest operator warned at write time — and no
+    // break.
+  }
+
+  // ---- findings out, intact records silent ----------------------------------
+  // where false drops the event (a bare drop is a field-list operator);
+  // the broken record's fields survive only inside the finding's unmapped
+  // evidence block. A chain-tail deletion (no successor references it)
+  // stays invisible to this walk — the honest limit of an unanchored
+  // hash chain, documented in the datalake README.
+  if _break == null {
+    where false
+  } else {
+    this = {
+      metadata: {
+        uid: f"attest-break-{metadata.correlation_uid}-{metadata.uid}",
+        version: "1.9.0",
+        correlation_uid: metadata.correlation_uid,
+        product: {
+          name: "homelab-investigations",
+          vendor_name: "apocrathia",
+          version: "0.1.0",
+        },
+      },
+      time: now(),
+      category_uid: 2,
+      class_uid: 2004,
+      activity_id: 1,
+      severity_id: 4,
+      status_id: 1,
+      type_uid: 200401,
+      finding_info_list: [{
+        uid: f"investigations-attest-{metadata.correlation_uid}",
+        title: "Investigations record chain break",
+        // The broken record's time, not now(): the finding is anchored to
+        // the evidence it describes.
+        created_time: time,
+        desc: f"{_break} on record {metadata.uid} of case {metadata.correlation_uid}",
+      }],
+      unmapped: {
+        break: _break,
+        chain_uid: metadata.correlation_uid,
+        record_uid: metadata.uid,
+        record_time: time,
+        stored_fingerprint: attestation_list[0]?.fingerprint?.value?,
+        computed_fingerprint: _recomputed,
+        prev_event_fingerprint: attestation_list[0]?.prev_event?.fingerprint?.value?,
+        predecessor_fingerprint: _prev?.fp? if _prev? != null else null,
+      },
+    }
+  }
+}

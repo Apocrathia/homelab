@@ -1,0 +1,27 @@
+// Verification half of the record_integrity lane: read every stored
+// record back, recompute each attestation fingerprint over the canonical
+// serialization, and walk the per-case prev_event chains; a Detection
+// Finding (2004) drops onto stdout for every break (fingerprint mismatch
+// = content tampered post-stamp, chain-head-missing / link-mismatch =
+// deletion or splice). The stored records come back through the
+// catch-all reconstruction: ClickHouse has re-sorted the JSON keys, and
+// the operator's sort()-canonicalized serialization is what makes the
+// recompute match what attest stamped.
+//
+// TODO (scheduling + alerting, tracked in
+// docs/issues/tenzir-record-integrity-attestations.md): as wired, this
+// pipeline is standing — the node runs it once at startup (a bounded
+// from_clickhouse read-back completes and exits), and restart-on-error
+// only retries failures. The issue's verification lane wants a scheduled
+// walk (a cron "<schedule>" { ... } wrapper, intel-node shape) feeding
+// the existing Grafana contact-point rails; both decisions are the
+// operator's. Until then, break findings are visible in the pod logs and
+// the node's pipeline diagnostics.
+from_clickhouse table="investigations.records",
+  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+  port=9000,
+  user="investigations-reader",
+  password=secret("investigations-reader-password"),
+  tls=false
+homelab::investigations::ocsf::verify
+to_stdout { write_json }

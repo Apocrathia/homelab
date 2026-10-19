@@ -10,7 +10,9 @@ description: |
   the pinned query text, its bounded snapshot, and the lake event
   links, with agent identity stamped per the ai_operation profile (the
   anthropic/openai library idiom). The ingest pipeline runs ocsf_derive
-  + ocsf_cast after this operator and INSERTs into the
+  + ocsf_cast after this operator, then the sibling attest operator
+  ([`attest.tql`](./attest.tql)) stamps the record_integrity attestation
+  over the stored shape, and the to_clickhouse leg INSERTs into the
   investigations.records table — append-only; nothing ever updates or
   deletes a row. Envelope contract and flow: the investigations node
   README.
@@ -163,28 +165,17 @@ match kind? {
 
 type_uid = (class_uid * 100) + activity_id
 
-// ---- record_integrity attestation (commented placeholder) -------------------
-// The record_integrity profile stamps attestation_list with a fingerprint
-// over a CANONICAL SERIALIZATION of the record — the implementation crux:
-// stable field ordering/normalization is defined neither in OCSF nor in
-// Tenzir and may need an upstream ask. Tracked in
-// docs/issues/tenzir-record-integrity-attestations.md (same profile, same
-// crux as the detection-plane issue; this platform's P-2 verification lane
-// shares the solution). Until it lands, no attestation_list is stamped and
-// record_integrity is not claimed in metadata.profiles — records stay
-// honest about what is and is not attested. The P-2 shape once the
-// canonical form is pinned:
-//
-//   metadata.profiles = [..., "record_integrity"]
-//   attestation_list = [{
-//     chain_uid: case_uid, // per-case chain; the verifier walks prev_event
-//                          // per chain_uid
-//     prev_event: null, // TODO(P-2): previous fingerprint in the case_uid
-//                       // chain — a read-side fetch of the chain tail at
-//                       // stamp time
-//     fingerprint: null, // hash_sha256 over the canonical serialization
-//     authority_uid: "tenzir-node-investigations",
-//   }]
+// ---- record_integrity attestation ------------------------------------------
+// The attestation is stamped by the sibling attest operator
+// ([`attest.tql`](./attest.tql)) AFTER this map and the pipeline's
+// ocsf_derive + ocsf_cast legs: the fingerprint covers the record exactly
+// as stored, so the verification lane
+// ([`verify.tql`](./verify.tql)) can recompute it from
+// investigations.records read-backs. The canonical serialization is
+// print_json over this.sort() — the record-shape work is done; the
+// chain (prev_event per case), the serialization comments, and the
+// restart semantics live in attest.tql. Tracked in
+// docs/issues/tenzir-record-integrity-attestations.md.
 
 // ---- cleanup: consume the envelope, keep the record OCSF-clean -------------
 // Envelope-only fields left in place would ride the record until ocsf_cast

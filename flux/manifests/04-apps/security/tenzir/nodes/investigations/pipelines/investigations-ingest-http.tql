@@ -1,9 +1,28 @@
+// Standing write lane: agents POST case/evidence envelopes; map + derive
+// + cast shape the OCSF record, the attest operator stamps the
+// record_integrity fingerprint chain, and to_clickhouse INSERTs. The
+// chain state rides the investigations-chains context (declared in the
+// HelmRelease values; contexts are per-node, in-memory, and survive
+// pipeline restarts but not node restarts — a node restart restarts the
+// chains with a WARNING diagnostic at the first non-open record, the
+// documented gap in the datalake README). context_enrich fetches the
+// case's current chain tail (keyed by correlation_uid) into prev_tail;
+// attest consumes it, drops it, and stamps the attestation; the fork's
+// context_update leg stores this record's tail for the next one (the
+// context_update operator emits no events, so it rides a fork branch
+// while the record flows on to ClickHouse).
 accept_http "0.0.0.0:8080" {
   read_json
 }
 homelab::investigations::ocsf::map
 ocsf_derive
 ocsf_cast
+context_enrich "investigations-chains", key=metadata.correlation_uid, into=prev_tail
+homelab::investigations::ocsf::attest
+fork {
+  context_update "investigations-chains", key=metadata.correlation_uid,
+    value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+}
 to_clickhouse table="investigations.records",
   host="clickhouse-tenzir.clickhouse.svc.cluster.local",
   port=9000,

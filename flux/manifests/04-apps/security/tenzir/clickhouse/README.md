@@ -79,15 +79,58 @@ lane needs `metadata.correlation_uid` (say) as a typed column, promote
 it with an operator-led live `ALTER` in the same lap as the DDL edit
 (the D3/D4 pairing gate below).
 
+### Attestations on every record
+
+Every record the write lane stores carries the OCSF `record_integrity`
+profile: `metadata.profiles` claims it, and
+`attestation_list[0]` holds a SHA-256 fingerprint over the record's
+canonical serialization — sorted-key strict JSON
+(`serialization: "tenzir-sorted-json"` in the fingerprint object) — with
+`chain_uid` = the case spine and `prev_event` referencing the case's
+previous record's fingerprint. The fingerprint covers the record
+exactly as stored (stamped after `ocsf_derive` + `ocsf_cast`, upstream
+of the INSERT), so a reader can recompute it from the row alone: the
+catch-all reconstruction re-infers the JSON values with their types,
+ClickHouse's key sorting is irrelevant because the serialization
+canonicalizes field order, and only the attestation's own fingerprint
+field is excluded from the hashed content (the OCSF rule). Rows written
+before the attestation lane shipped carry no `attestation_list` — they
+predate the chain epoch and are outside its guarantees; nothing in the
+table distinguishes them except the absent field.
+
+**Read contract.** A reader treating a record as evidence may check:
+(1) `attestation_list[0].fingerprint.value` equals the SHA-256 over the
+canonical serialization of the record with the fingerprint field
+removed; (2) `prev_event.fingerprint.value` equals the previous row's
+fingerprint for the same `metadata.correlation_uid` in time order.
+The investigations node's `investigations-attest-verify` pipeline does
+both on every stored row and emits a Detection Finding (2004) on any
+break.
+
+**The node-restart gap.** Chain linkage is stamped from per-node
+in-memory state (the `investigations-chains` context on the
+investigations node), so it is best-effort per node lifetime: a node
+restart loses the context, and every case's next record restarts its
+chain with `prev_event` absent (plus a write-time WARNING). The verify
+walk treats a mid-chain record without `prev_event` as that documented
+restart, not a break — post-hoc mutation is still caught across
+restarts by the per-record fingerprint check, but the linkage gap
+around a restart cannot be reconstructed. Two honest limits remain: a
+chain tail deletion (no successor references the newest record) is
+invisible to any unanchored hash chain, and rows predating the epoch
+have no attestation at all.
+
 ### Write path
 
 ```mermaid
 flowchart LR
     AG["agent (kagent / hermes-agent ns)"] -->|"POST case/evidence envelope :8080"| AH["investigations node<br/>accept_http"]
     AH -->|"homelab::investigations::ocsf::map<br/>validates + stamps OCSF spine"| MAP["ocsf_derive / ocsf_cast"]
-    MAP -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(2 replicas, ReplicatedMergeTree)"]
+    MAP -->|"attest: record_integrity fingerprint<br/>chain per case (node memory)"| AT["attest + context legs"]
+    AT -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(2 replicas, ReplicatedMergeTree)"]
     CH -->|"90d TTL TO VOLUME 'cold'<br/>(ocsf tables; records is TTL-free)"| COLD["cold tier: rustfs<br/>tenzir bucket, clickhouse prefix"]
     AG -.->|"query-lane read-back<br/>(reader user, SELECT)"| CH
+    CH -.->|"investigations-attest-verify walk<br/>(reader user, SELECT)"| VFY["Detection Finding 2004<br/>on any chain break"]
 ```
 
 The investigations README owns the envelope contract and the lane

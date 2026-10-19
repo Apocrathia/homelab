@@ -12,11 +12,23 @@ lanes, one blast radius:
   [`investigations-ingest-http`](./pipelines/investigations-ingest-http.tql)
   pipeline: agents POST thin JSON envelopes to `accept_http :8080`; the
   [`homelab::investigations::ocsf::map`](../../packages/homelab/operators/investigations/ocsf/README.md)
-  operator validates the envelope and stamps the OCSF spine, and the
-  `to_clickhouse` leg INSERTs into `investigations.records` with the
-  INSERT/SELECT-scoped `investigations-writer` user. No archive rule and
-  no local import: the node lake stays empty by construction and
-  ClickHouse is the only durable copy.
+  operator validates the envelope and stamps the OCSF spine, the
+  `attest` operator stamps the `record_integrity` fingerprint chain over
+  the stored shape (chain state in the node's `investigations-chains`
+  context), and the `to_clickhouse` leg INSERTs into
+  `investigations.records` with the INSERT/SELECT-scoped
+  `investigations-writer` user. No archive rule and no local import: the
+  node lake stays empty by construction and ClickHouse is the only
+  durable copy.
+- **Attestation verify lane** — the standing
+  [`investigations-attest-verify`](./pipelines/investigations-attest-verify.tql)
+  pipeline: reads every stored record back with the SELECT-scoped
+  `investigations-reader` user, recomputes each attestation's
+  fingerprint, and walks the per-case `prev_event` chains, emitting a
+  Detection Finding (2004) on any break. Scheduling and the Grafana
+  alerting rails are the open items tracked in
+  `docs/issues/tenzir-record-integrity-attestations.md`; until they
+  land, findings appear in the pod logs and pipeline diagnostics.
 - **Query lane** — the node REST API (web server `:5160`,
   `/api/v0/pipeline/launch` + `/api/v0/serve`, `X-Tenzir-Token` auth):
   agents launch bounded `from_clickhouse` pipelines over
@@ -61,7 +73,9 @@ is the caption sibling of `verdict_id` and is derived, not carried.
 ```mermaid
 flowchart LR
     AG["agent (kagent / hermes-agent ns)"] -->|"POST case/evidence envelopes :8080"| AH[accept_http]
-    AH -->|"homelab investigations map<br/>+ ocsf_derive/cast"| CH["ClickHouse investigations.records<br/>(writer user, INSERT/SELECT)"]
+    AH -->|"homelab investigations map<br/>+ ocsf_derive/cast"| AT["attest: record_integrity<br/>fingerprint chain per case"]
+    AT -->|"to_clickhouse (writer user)"| CH["ClickHouse investigations.records<br/>(writer user, INSERT/SELECT)"]
+    CH -.->|"attest-verify walk<br/>(reader user)"| VFY["Detection Finding 2004<br/>on chain breaks"]
     AG -->|"/api/v0 pipeline launch + serve :5160<br/>X-Tenzir-Token"| WS[web server]
     WS -->|"from_clickhouse (reader user)"| CH
     WS -.->|"evidence hunts pivot"| CH2["ClickHouse ocsf.* tables<br/>(the OCSF lake)"]
@@ -81,10 +95,11 @@ flowchart LR
 - Chart NetworkPolicy: ingress from the agent namespaces and
   same-namespace pods only.
 - Append-only records: the residual risk floor is visible, attributed,
-  easily-recoverable pollution — not destruction. The
-  `record_integrity` attestation placeholder and its P-2 verification
-  lane are tracked in
-  `docs/issues/tenzir-record-integrity-attestations.md`.
+  easily-recoverable pollution — not destruction. The `record_integrity`
+  attestation chain now stamps every stored record (the attest operator
+  in the write lane) and the `investigations-attest-verify` pipeline
+  walks the chains; the scheduled walk + Grafana alerting rails remain
+  tracked in `docs/issues/tenzir-record-integrity-attestations.md`.
 
 ## Bootstrap order
 
@@ -151,8 +166,15 @@ ever moves or deletes a part.
   in the CHI users block, a P-2 change); until then the store is
   reachable only via in-cluster reads with the `investigations-reader`
   user.
-- **Attestations are a placeholder** — see the containment section; the
-  P-2 verification lane owns the fingerprint chain.
+- **Attestation chain linkage is per-node-lifetime memory** — the
+  `investigations-chains` context lives on the node, so a node restart
+  restarts every case chain at its next record (`prev_event` absent,
+  write-time WARNING); the verify walk treats that as the documented
+  restart, not a break, and the per-record fingerprint check still
+  catches post-hoc mutation across restarts. A chain-tail deletion stays
+  invisible (no successor references the newest record); pre-attestation
+  rows carry no attestation at all. Scheduling for the verify walk is
+  still open (see the containment section).
 
 ## Troubleshooting
 
