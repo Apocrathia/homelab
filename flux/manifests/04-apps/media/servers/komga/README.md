@@ -38,7 +38,7 @@ See `helmrelease.yaml` for complete deployment configuration.
 
 ## Authentication
 
-Uses Authentik SSO (OIDC). The Authentik app/provider stack is module-rendered: `authentik.managedBy: terraform` in `helmrelease.yaml` renders the chart's provider-opentofu Workspace pulling `terraform/modules/authentik-app`.
+Uses Authentik SSO (OIDC). The Authentik app/provider stack is owned by the chart-rendered provider-opentofu Workspace (`komga-authentik`) with **chart-generated inline HCL** (the file-pair pattern, same shape as the gatus/immich/jetkvm exemplars): `authentik.managedBy: terraform` in `helmrelease.yaml` renders the OnePasswordItem + ProviderConfig + Workspace docs — `source: Inline`, no module refs, no varmap in git. The OIDC client_id rides the file lane (`authentik.oidc.clientIdFromSecret`): the ProviderConfig materializes the same `komga-secrets`/`oidc-client-id` key the app consumes as a tofu workdir file (`client_id = trimspace(file("oidc-client-id"))`). Adoption ids never enter git — the one-time W0 re-adopt gate (legacy state discard + fresh import) rides a gate-time varmap on the live Workspace, per the flip MR body.
 
 ## Troubleshooting
 

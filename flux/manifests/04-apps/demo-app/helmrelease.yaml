@@ -10,7 +10,10 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      # The inline tofu lane (chart-generated HCL, no module refs, no chart-tag
+      # pin) ships in 0.0.87 — the W0 flip bump; the helmrelease stays
+      # suspended until the W0 gate (plan §Waves).
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -63,16 +66,15 @@ spec:
       itemPath: "vaults/Secrets/items/demo-app-secrets"
 
     # Authentik stack: chart-rendered provider-opentofu docs (OnePasswordItem
-    # + ProviderConfig + Workspace) pulling the shared module
-    # terraform/modules/authentik-app at this chart's own git tag — values
-    # only, no per-app HCL (the crossplane.yaml/terraform.tf era is over).
-    # The chart composes the standard inputs from this block; no varmap
-    # needed. The migration to the module keeps the SAME tofu state: at
-    # the gate, tofu state mv renames the inline-era addresses to the
-    # module's addresses (workspace paused, Flux suspended) — no wipe,
-    # no import ids anywhere, uuids intact, nobody re-logs in.
-    # Live provider attrs match the composed surface: intercept_header_auth
-    # false (chart default), access_token_validity hours=1 (module proxy
+    # + ProviderConfig + Workspace) with CHART-GENERATED inline HCL — the
+    # file-pair pattern, same shape as gatus MINUS the outpost: the new
+    # proxy shape renders NO outpost, so demo-app's per-app outpost
+    # (ak-outpost-demo-app-outpost + its dual-parent route) becomes
+    # UNMANAGED — it stays live and serving until the W4 sweep retires it.
+    # Values only; no varmap in git (adoption ids ride the gate-time W0
+    # runbook, witness sheet under .scratch). Live provider attrs match
+    # the composed surface: internal_host = the composed default (unset
+    # internalHost), no skip paths, access_token_validity hours=1 (chart
     # default) — no per-app overrides needed.
     authentik:
       enabled: true
@@ -82,6 +84,10 @@ spec:
       displayName: "Demo Application"
       externalHost: "https://demo.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/demo-app/icon.png"
+      # Live-verbatim pin: header auth stays off on the proxy provider
+      # (the chart always sends intercept_header_auth; the TF default true
+      # must never silently PATCH the live row).
+      interceptHeaderAuth: false
 
     gatus:
       enabled: true
