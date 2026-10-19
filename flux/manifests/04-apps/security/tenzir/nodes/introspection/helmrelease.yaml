@@ -78,7 +78,7 @@ spec:
 
     # Registers into the same hosted Tenzir Platform workspace as the
     # sibling nodes; this node reads its own pre-provisioned token from
-    # the introspection-token field of the tenzir-secrets Secret (vault
+    # the introspection-node-token field of the tenzir-secrets Secret (vault
     # field added by the operator; the platform node is already
     # registered — workspace t-vrj4igpf). Platform tokens are per-node,
     # never shared.
@@ -96,7 +96,7 @@ spec:
       - name: introspection
         token:
           existingSecret: tenzir-secrets
-          key: introspection-token
+          key: introspection-node-token
 
     persistence:
       # 5Gi, investigations/enrichment parity: the node imports nothing,

@@ -78,7 +78,7 @@ spec:
 
     # Registers into the same hosted Tenzir Platform workspace as the
     # sibling nodes; this node reads its own pre-provisioned token from
-    # the enrichment-token field of the tenzir-secrets Secret (vault
+    # the enrichment-node-token field of the tenzir-secrets Secret (vault
     # field added by the operator; the platform node is already
     # registered). Platform tokens are per-node, never shared.
     #
@@ -97,7 +97,7 @@ spec:
       - name: enrichment
         token:
           existingSecret: tenzir-secrets
-          key: enrichment-token
+          key: enrichment-node-token
 
     persistence:
       # 5Gi, investigations parity: lap 1 imports nothing, so the lake

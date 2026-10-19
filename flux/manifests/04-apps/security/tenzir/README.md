@@ -87,8 +87,8 @@ and the rendered Secret keys match them:
   ([`crossplane.yaml`](./crossplane.yaml) +
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
-- `core-token` / `tetragon-token` / `netflow-token` / `investigations-token` /
-  `enrichment-token` / `introspection-token`: the pre-provisioned Tenzir
+- `core-node-token` / `tetragon-node-token` / `netflow-node-token` / `investigations-node-token` /
+  `enrichment-node-token` / `introspection-node-token`: the pre-provisioned Tenzir
   Platform node tokens, one per node
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`

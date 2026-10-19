@@ -88,7 +88,7 @@ flowchart LR
 
 ## Bootstrap order
 
-1. **Vault fields** on the `tenzir-secrets` item: `investigations-token`
+1. **Vault fields** on the `tenzir-secrets` item: `investigations-node-token`
    (platform node token, below) and, later in this sequence,
    `investigations-api-token`. On the `clickhouse-secrets` item:
    `clickhouse-investigations-writer-password` and
@@ -97,7 +97,7 @@ flowchart LR
    fields).
 2. **Platform node token**: provision a node in the app.tenzir.com
    workspace and copy its `tnz_...` token into the
-   `investigations-token` field — the HelmRelease reads it via
+   `investigations-node-token` field — the HelmRelease reads it via
    `nodes[].token`.
 3. **Apply**: cert-manager auto-issues the web server's TLS pair
    ([`certificate.yaml`](./certificate.yaml), self-signed ClusterIssuer),

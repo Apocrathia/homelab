@@ -78,12 +78,12 @@ spec:
     # Registers into the hosted Tenzir Platform workspace (app.tenzir.com):
     # the chart injects the TENZIR_TOKEN env from the tenzir-secrets Secret,
     # this node reading its own pre-provisioned node token from the
-    # core-token field. Platform tokens are per-node, never shared.
+    # core-node-token field. Platform tokens are per-node, never shared.
     nodes:
       - name: core
         token:
           existingSecret: tenzir-secrets
-          key: core-token
+          key: core-node-token
         # accept_otlp listeners: otlp-grpc 4317 + otlp-http 4318. The
         # kube-audit alloy and the shared alloy OTLP log fan-out push at
         # tenzir-node-core:4318 (the tetragon alloy moved to the tetragon

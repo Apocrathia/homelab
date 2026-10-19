@@ -93,7 +93,7 @@ factory pipelines land.
 
 Already done by the operator: the node is registered in the
 app.tenzir.com workspace and its `tnz_...` token copied into the
-`enrichment-token` field of the `tenzir-secrets` 1Password item
+`enrichment-node-token` field of the `tenzir-secrets` 1Password item
 (`../secret.yaml` materializes the Secret in this namespace). There is
 nothing else to provision — no API token to generate (no web server),
 no ClickHouse user needed until lap 2. The node comes up on apply.

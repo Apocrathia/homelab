@@ -181,15 +181,15 @@ ever matters.
    `helmrelease.yaml`, `README.md`.
 2. **Token**: provision a node in the app.tenzir.com workspace and add
    its `tnz_...` token as a field on the `tenzir-secrets` 1Password
-   item, labeled `<role>-token` (same convention as `core-token` /
-   `tetragon-token`). The hosted platform issues per-node tokens only;
+   item, labeled `<role>-node-token` (same convention as `core-node-token` /
+   `tetragon-node-token`). The hosted platform issues per-node tokens only;
    workspace tokens are Sovereign-only.
 3. **HelmRelease**: `metadata.name: tenzir-node-<role>`, chart
    `tenzir-node` from the `tenzir` HelmRepository, image pinned with the
    renovate comment, `nodes[0].name: <role>` (the entry name is the node
    name; every release takes `fullnameOverride: tenzir-node`),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
-   `nodes[0].token.key: <role>-token`, `extraPorts` for the node's
+   `nodes[0].token.key: <role>-node-token`, `extraPorts` for the node's
    listeners, `persistence.size` per sizing.
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
