@@ -284,6 +284,44 @@ spec:
             cpu: "250m"
             memory: "512Mi"
 
+      - name: alienvault
+        enabled: true
+        replicas: 1
+        image:
+          # Filigran publishes as opencti/connector-<name>. This connector
+          # does NOT ride the chart appVersion cadence (its tags are 1.0.0 /
+          # rolling); pinned to the version tag, renovate bumps it.
+          repository: opencti/connector-alienvault
+          tag: 1.0.0
+        env:
+          # Default PT30M. Info keeps the import runs visible.
+          CONNECTOR_LOG_LEVEL: info
+          # Default 2020-05-01 imports a massive historical pulse backlog
+          # (upstream README warns about it); pinned ~6 weeks back for a
+          # recent-intel feed. Move the date to re-scope.
+          ALIENVAULT_PULSE_START_TIMESTAMP: "2026-09-01T00:00:00Z"
+        envFromSecrets:
+          # Consolidated kebab field per the opencti-secrets style;
+          # envFromSecrets maps it onto the connector's ALIENVAULT_API_KEY.
+          ALIENVAULT_API_KEY:
+            name: opencti-secrets
+            key: otx-api-key
+          OPENCTI_TOKEN:
+            name: opencti-secrets
+            key: APP__ADMIN__TOKEN
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+
     # Single-node OpenSearch on Longhorn. vm.max_map_count is set at the
     # NODE level via talos/patches/unified-patch.yaml SysctlConfig - the
     # chart's privileged sysctl initContainer is disabled (it violates
