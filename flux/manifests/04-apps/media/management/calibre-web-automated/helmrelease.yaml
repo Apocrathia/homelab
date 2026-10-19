@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -125,6 +125,7 @@ spec:
       enabled: false # Web UI bootstrap; default admin credentials changed on first login
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: oidc
       displayName: "Calibre"
@@ -134,6 +135,11 @@ spec:
       metaDescription: "Automated Calibre library management and ebook organization"
       metaPublisher: "Calibre-Web Automated"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         subMode: "user_username"
         scopes:
           - "openid"

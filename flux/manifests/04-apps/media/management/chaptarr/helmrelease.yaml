@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -165,6 +165,7 @@ spec:
       owner: "chaptarr"
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "oidc"
       category: "Media"
@@ -172,6 +173,11 @@ spec:
       externalHost: "https://chaptarr.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/management/chaptarr/icon.svg"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         scopes:
           - "openid"
           - "email"
