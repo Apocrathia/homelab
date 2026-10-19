@@ -4,7 +4,7 @@ mr-change-summary:
   # Runs un-serialized; concurrency is bounded downstream by the substrate
   # WorkerPool (4) and gitlab-mcp replicas (3).
   # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-  image: public.ecr.aws/docker/library/python:3.14@sha256:b9767f56a1cc620aa72d38cc3557d26412e38a4597c92953476136b78894ccbd
+  image: public.ecr.aws/docker/library/python:3.14@sha256:12d187a59ecdeb95df0a78cd6107a84398455365a66cc2183db2be42b6067d33
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   variables:
