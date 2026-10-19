@@ -1,0 +1,21 @@
+// ocsf.fleet_assets -> fleet_assets lookup-table context (consumer half of
+// the lap-2 factory; the enrichment node's fleet-assets-pull writes the
+// table, this loader fills the node-local context — contexts are per-node,
+// so every consumer node needs its own loader). FINAL collapses each host
+// to its highest-last_seen row (the ReplacingMergeTree version column);
+// ORDER BY last_seen ASC makes context_update's last-write-wins land the
+// freshest host on any IP shared across hosts or DHCP reuse. Rows without
+// a primary_ip cannot join events and are skipped. every 1h fires at
+// pipeline start, then hourly; restart-on-error retries a missing table
+// (fresh cluster: the CHI startup script creates it before the node
+// settles, and events pass unenriched until the first successful load —
+// the geo-open-loader precedent).
+every 1h {
+  from_clickhouse sql="SELECT uuid, hostname, display_name, primary_ip, primary_mac, platform, os_version, osquery_version, hardware_serial, hardware_model, hardware_vendor, computer_name, status, last_seen FROM ocsf.fleet_assets FINAL WHERE primary_ip IS NOT NULL ORDER BY last_seen ASC",
+                host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false
+  context_update "fleet_assets", key=primary_ip
+}

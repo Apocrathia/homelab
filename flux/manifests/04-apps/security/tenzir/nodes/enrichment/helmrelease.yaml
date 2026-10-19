@@ -82,17 +82,11 @@ spec:
     # field added by the operator; the platform node is already
     # registered). Platform tokens are per-node, never shared.
     #
-    # Lap 1 ships ZERO pipelines: the node is a bare platform-registered
-    # puller with no listeners. No extraPorts (no ingest surface — the
-    # chart-rendered main Service on :5158 carries node RPC only), no
-    # web server (no certificate.yaml), no ClickHouse env wiring yet
-    # (the lap-2 factory pipelines add TENZIR_SECRETS__CLICKHOUSE_
-    # PASSWORD from clickhouse-secrets, same shape as netflow). The
-    # zero-pipeline shape is grounded: helm template against chart
-    # 0.1.0 with no pipelines values renders a tenzir.yaml without a
-    # pipelines key, and the node boots with zero pipelines — the
-    # config schema starts pipelines defined under tenzir.pipelines,
-    # of which an absent map defines none.
+    # Still no listeners: the node is a pure outbound puller — no
+    # extraPorts (the chart-rendered main Service on :5158 carries node
+    # RPC only), no web server (no certificate.yaml). Lap 2 (the
+    # fleet-assets-pull factory pipeline) added the first
+    # tenzir.pipelines entry plus the two secret env wirings below.
     nodes:
       - name: enrichment
         token:
@@ -123,26 +117,48 @@ spec:
           # tenzir-logs emptyDir (extraVolumes below) backs the path;
           # keep the key/mount pair together on any new node.
           file-verbosity: warning
-          # Zero pipelines: the tenzir.pipelines map is absent on
-          # purpose. Lap 2 adds it together with the first factory
-          # pipeline (pipelines/<id>.tql + the kustomization stitch,
-          # same generator/replacements shape as the siblings), so this
-          # release never carries a placeholder pipeline.
           # Catalog knobs, sibling shape: dormant on an empty lake, but
-          # kept so the lap-2 import lanes inherit the OOM lessons
+          # kept so future import lanes inherit the OOM lessons
           # (lazy-sketches defers Bloom-filter sketches to query time;
           # load-concurrency caps the boot synopsis loader at 4).
           index:
             lazy-sketches: true
             load-concurrency: 4
+          # Pipeline definitions live in pipelines/<id>.tql; this
+          # kustomization's replacements stitch them back into these
+          # empty definition fields at build time.
+          pipelines:
+            fleet-assets-pull:
+              name: fleet assets pull
+              description: |
+                Lap-2 factory pipeline: pulls the Fleet host inventory
+                (GET /api/v1/fleet/hosts, no pagination params = full
+                host list per Fleet's ListOptions per_page=0-means-
+                unlimited) every 1h — the first run fires at pipeline
+                start — with the fleetdm-token Bearer header, projects
+                each host to a stable asset row (uuid identity,
+                primary_ip, hostname, os, hardware, last_seen), and
+                appends into ocsf.fleet_assets on the ClickHouse query
+                store. Never-checked-in hosts (Fleet's Go zero-time
+                seen_time, e.g. MDM-only placeholders) drop before the
+                write — their timestamp would fall outside the
+                DateTime64(9) range. to_clickhouse mode="append" fails
+                loudly while the CHI startup-script DDL is missing (the
+                second net for the Keeper first-boot race); the
+                enrichment node is the SINGLE WRITER of that table (the
+                core node only reads it via its own
+                fleet-assets-loader). The pull pipeline writes nothing
+                to this node's lake — ClickHouse is the only sink.
+              definition: ""
+              restart-on-error: 1 minute
 
-    # Sized with the docs' size-a-node formula at lap-1 volume (zero):
-    # no sources, no destinations, no normalization — the formula's
-    # max(2, ·) floor pins 2 cores and the 2 GB RAM floor (catalog term
-    # ~0 at an empty lake; investigations parity at near-zero volume).
-    # Lap 2 revisits when the factory pipelines land (batch pullers:
-    # from_http/from_clickhouse + to_clickhouse legs). Requests stay
-    # small: limits are caps, not reservations.
+    # Sized with the docs' size-a-node formula. Lap 2 re-sized it with
+    # the factory pipeline live: one batch source (hourly from_http of a
+    # 5-host inventory) and one ClickHouse destination is far below the
+    # formula's max(2, ·) floor, so 2 cores / 2 Gi stand (the lap-1
+    # zero-volume shape unchanged; the lake still stays empty — the
+    # pull's only sink is ClickHouse). Requests stay small: limits are
+    # caps, not reservations.
     resources:
       requests:
         cpu: 100m
@@ -150,6 +166,34 @@ spec:
       limits:
         cpu: "2"
         memory: 2Gi
+
+    # Secrets (1Password items tenzir-secrets + clickhouse-secrets; env
+    # var names map to tenzir.secrets.* config keys, UPPER snake-case env
+    # to kebab config key, same convention as the siblings):
+    #   TENZIR_SECRETS__FLEETDM_TOKEN        -> secret("fleetdm-token")
+    #     The FleetDM API bearer token (fleet-assets-pull's Authorization
+    #     header). Operator action item: mint an API-only Fleet user
+    #     token and stage it as the fleetdm-token field on the
+    #     tenzir-secrets 1Password item — the field does NOT exist in
+    #     the vault yet (verified read-only via op, field-label list
+    #     only, 2026-10-19; neither fleet-token nor fleetdm-token was
+    #     present); git only names the field, same lap-1 pattern as the
+    #     node tokens.
+    #   TENZIR_SECRETS__CLICKHOUSE_PASSWORD  -> secret("clickhouse-password")
+    #     The `tenzir` ClickHouse writer user's password
+    #     (fleet-assets-pull's to_clickhouse leg; user grants INSERT,
+    #     SELECT ON ocsf.* in clickhouse/cluster.yaml).
+    extraEnv:
+      - name: TENZIR_SECRETS__FLEETDM_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: fleetdm-token
+      - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
 
     extraVolumes:
       # Writable target for the node's own file logger (file-verbosity

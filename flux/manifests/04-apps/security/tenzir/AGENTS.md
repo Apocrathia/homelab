@@ -4,14 +4,14 @@ Seven standalone Tenzir nodes in namespace `tenzir`; the core node is
 the detection plane, the tetragon node the flood isolate, the netflow
 node the NetFlow collector isolate, the investigations node the agent
 investigations plane, the enrichment node the internal-reference-data
-factory (its lap-2 rows will build the fleet-assets and baselines
-lookup tables into ClickHouse for the other nodes' loaders; no ingest,
-no pipelines yet), the introspection node the diagnostics observability
-plane (its poller ships every fleet node's pipeline diagnostics to
-Loki and Mimir), and the intel node the CTI factory plane (its
-opencti-taxii-factory pipeline pulls OpenCTI TAXII threat intel into
-the ClickHouse OCSF store on the rc engine; core's
-opencti-osint-loader is the consumer half). Narrative:
+factory (builds the fleet-assets and baselines lookup tables into
+ClickHouse for the other nodes' loaders; one pipeline so far — the
+hourly Fleet asset pull into `ocsf.fleet_assets`), the introspection
+node the diagnostics observability plane (its poller ships every fleet
+node's pipeline diagnostics to Loki and Mimir), and the intel node
+the CTI factory plane (its opencti-taxii-factory pipeline pulls
+OpenCTI TAXII threat intel into the ClickHouse OCSF store on the rc
+engine; core's opencti-osint-loader is the consumer half). Narrative:
 [`.agents/context/tenzir.md`](./.agents/context/tenzir.md); full story and
 manifest wiring: [`README.md`](./README.md).
 

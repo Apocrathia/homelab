@@ -4,6 +4,12 @@ ocsf_derive
 ocsf_cast
 fork_merge {
   where class_uid in [ocsf_class_uid("Authentication"), ocsf_class_uid("Account Change")]
+  context_enrich "fleet_assets", key=src_endpoint?.ip, into=src_endpoint.host
+  src_endpoint.hostname = src_endpoint.host?.hostname? if src_endpoint.host?.hostname? not in [null, ""] else null
+  src_endpoint.os = {
+    name: src_endpoint.host?.os_version?,
+  } if src_endpoint.host?.os_version? not in [null, ""] else null
+  drop src_endpoint.host
   context_enrich "geo-open", key=src_endpoint?.ip, into=src_endpoint.geo
   src_endpoint.location = {
     country: src_endpoint.geo?.country?.iso_code?,
