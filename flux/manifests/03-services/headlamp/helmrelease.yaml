@@ -43,7 +43,7 @@ spec:
         usePKCE: true
     image:
       # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
-      tag: v0.45.0
+      tag: v0.46.0
     pluginsManager:
       enabled: true
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
@@ -79,7 +79,7 @@ spec:
     initContainers:
       - name: user-plugins-init
         # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
-        image: ghcr.io/headlamp-k8s/headlamp:v0.45.0@sha256:db3f0e0fc58d358d41daa3fe7fc852437552c7ee873c3645470f7b86a8e0db49
+        image: ghcr.io/headlamp-k8s/headlamp:v0.46.0@sha256:8a0ef97527544baa2b35825940ddf4db6e2d09c30cd5aa31fd269ff604cc8b75
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -109,7 +109,7 @@ spec:
             mountPath: /headlamp/user-plugins
       - name: user-plugins-perms
         # renovate: datasource=docker depName=ghcr.io/headlamp-k8s/headlamp
-        image: ghcr.io/headlamp-k8s/headlamp:v0.45.0@sha256:db3f0e0fc58d358d41daa3fe7fc852437552c7ee873c3645470f7b86a8e0db49
+        image: ghcr.io/headlamp-k8s/headlamp:v0.46.0@sha256:8a0ef97527544baa2b35825940ddf4db6e2d09c30cd5aa31fd269ff604cc8b75
         command: ["/bin/sh", "-c"]
         args:
           - chown -R 100:101 /headlamp/user-plugins
