@@ -18,9 +18,12 @@ repos:
         # Vendored tenzir doc skills (.agents/skills) are upstream bytes
         # re-copied from the pinned upstream commit — decrypt_hpke.md ships
         # PEM-format prose (a literal private-key header as input-format
-        # documentation). Byte-identity wins over the hook; gitleaks still
-        # scans every vendored file.
-        exclude: ^flux/manifests/04-apps/security/tenzir/\.agents/skills/
+        # documentation). Same for the vendored library packages
+        # (packages/stix, packages/tenzir): their tests feed synthetic PEM
+        # fixtures (fake keys, e.g. credential_exposure.tql) to the
+        # credential-exposure detector. Byte-identity wins over the hook;
+        # gitleaks still scans every vendored file.
+        exclude: ^flux/manifests/04-apps/security/tenzir/(\.agents/skills/|packages/(stix|tenzir)/)
       # webui payload is byte-frozen (hash-verified syncs from scratch; the
       # vendored marked/purify pin upstream jsdelivr bytes that ship without
       # a trailing newline) — appending one breaks the sha pins in
@@ -28,8 +31,17 @@ repos:
       - id: end-of-file-fixer
         # Vendored doc skills (grafana/tenzir .agents/skills) are upstream bytes
         # re-copied from pinned upstream commits — appending a final newline
-        # breaks byte-identity. Same discipline as the detection-rule trees.
-        exclude: ^flux/manifests/(04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README)))
+        # breaks byte-identity. Same for the vendored tenzir library
+        # packages (packages/stix, packages/tenzir): upstream ships tenzir's
+        # package.yaml with a trailing blank line the hook would strip.
+        # Same discipline as the detection-rule trees.
+        exclude: |
+          (?x)^(
+            flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/detections/(sigma/sigmahq|yara/signature-base)/|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/packages/(stix|tenzir)/(?!README)|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/\.agents/skills/(?!grafana-homelab|README)
+          )
       - id: trailing-whitespace
         # Vendored detection rules are upstream bytes re-copied from pinned
         # submodules; reformatting breaks byte-identity with the gitlink.

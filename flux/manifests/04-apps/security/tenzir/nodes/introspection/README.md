@@ -34,9 +34,10 @@ which MR !5354 added mid-flight and this MR retires the same way.
   pod runs the `tenzir` CLI against each target's `:5158` and ships
   through the same `to_fluent_bit` / `to_prometheus` operators the
   native lanes used. Targets: core, tetragon, netflow, investigations,
-  enrichment — core/tetragon/netflow are the nodes whose lanes retired
-  in this slice; investigations' mid-flight pair (MR !5354) retires
-  here too; enrichment never had any.
+  enrichment, intel — core/tetragon/netflow are the nodes whose lanes
+  retired in this slice; investigations' mid-flight pair (MR !5354)
+  retires here too; enrichment never had any, and intel (new in this
+  MR) never had any either.
 
 ## Connectivity
 
@@ -45,7 +46,7 @@ flowchart LR
     INT["tenzir-node-introspection<br/>(local pair: node=introspection)"] -->|"to_fluent_bit (loki)"| LOKI["Loki<br/>(job=tenzir-diagnostics)"]
     INT -->|"to_prometheus"| MIM["Mimir<br/>(tenzir_pipeline_errors/warnings)"]
     INT -->|"outbound WebSocket"| PLAT["Tenzir Platform<br/>(app.tenzir.com)"]
-    POLL["introspection-diagnostics-poller<br/>(Deployment)"] -->|"tenzir CLI :5158<br/>(120s cycles, watermarked)"| NODES["core / tetragon / netflow /<br/>investigations / enrichment"]
+    POLL["introspection-diagnostics-poller<br/>(Deployment)"] -->|"tenzir CLI :5158<br/>(120s cycles, watermarked)"| NODES["core / tetragon / netflow /<br/>investigations / enrichment / intel"]
     POLL -->|"to_fluent_bit (loki)<br/>node=<target>"| LOKI
     POLL -->|"to_prometheus"| MIM
 ```

@@ -29,6 +29,7 @@ configMapGenerator:
       - fleet-ocsf.tql=pipelines/fleet-ocsf.tql
       - trivy-ocsf.tql=pipelines/trivy-ocsf.tql
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
+      - opencti-osint-loader.tql=pipelines/opencti-osint-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - sigma-metrics-to-mimir.tql=pipelines/sigma-metrics-to-mimir.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
@@ -134,6 +135,16 @@ replacements:
           name: tenzir-node-core
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.geo-open-loader.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-core-pipelines
+      fieldPath: data.[opencti-osint-loader.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-core
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.opencti-osint-loader.definition
   - source:
       kind: ConfigMap
       name: tenzir-core-pipelines

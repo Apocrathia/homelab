@@ -168,9 +168,17 @@ spec:
           # country+ASN MMDB (~80 MiB in node memory, headroom the 8Gi
           # limit absorbs); no GeoLite2/MaxMind route, so no
           # license-key secret rides this node (see geo-open-loader).
+          # The osint lookup table is the consumer half of the intel
+          # node's factory row: opencti-osint-loader applies the
+          # ocsf.OSINT_Inventory_Info table into it via
+          # tenzir::osint::update_context, entries expiring 30d after
+          # their last application (the operator's max_age); declared
+          # empty at boot, same pattern as geo-open.
           contexts:
             geo-open:
               type: geoip
+            ocsf-osint:
+              type: lookup-table
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
@@ -336,6 +344,34 @@ spec:
                 loader is decoupled from the detection plane: a slow or
                 failed MMDB fetch never stalls the sigma pass or the
                 bus (the context keeps serving the last good database).
+              definition: ""
+              restart-on-error: 1 minute
+            opencti-osint-loader:
+              name: opencti osint loader
+              description: |
+                Consumer half of the intel factory doctrine: reads the
+                enrichment node's ocsf.OSINT_Inventory_Info ClickHouse
+                table into this node's ocsf-osint lookup-table context
+                (declared in the contexts block) through the vendored
+                library `tenzir` package's update_context operator. The
+                factory appends the collection's current state on every
+                walk, so the loader sorts by event time — the indicator's
+                STIX modified time — before applying updates: per key the
+                newest version lands last, and a revoked row (status
+                Removed; STIX versioning bumps modified on revoke) erases
+                the key after older active copies re-applied it;
+                expired indicators erase regardless of order. The
+                catch-all round trip rebuilds the event fields but not
+                the schema name, so the pipeline stamps @name back —
+                update_context gates on it. max_age=30d is the upstream
+                default: entries unseen by a walk for 30d age out. every
+                24h fires at pipeline start (fresh node: context filled
+                seconds after boot, same shape as geo-open-loader), then
+                daily — the factory's own walk is daily, so the context
+                converges to the table state daily. In-stream enrichment
+                of live events with this context stays at the category-4
+                (Network Activity) ingress nodes per the doctrine; no
+                consumer of the context runs on this node yet.
               definition: ""
               restart-on-error: 1 minute
             pipeline-metrics-to-mimir:
@@ -533,6 +569,20 @@ spec:
       - name: sigma-sigmahq-kubernetes-audit
         configMap:
           name: tenzir-sigma-sigmahq-kubernetes-audit
+      # Vendored library `tenzir` utilities package: the OSINT pair the
+      # opencti-osint-loader pipeline calls (update_context) plus its
+      # enrich sibling (unconsumed until a category-4 ingress node wires
+      # in-stream enrichment). One ConfigMap per mounted file, generated
+      # at the root kustomization.
+      - name: packages-tenzir
+        configMap:
+          name: tenzir-packages-tenzir
+      - name: packages-tenzir-osint-update-context
+        configMap:
+          name: tenzir-packages-tenzir-osint-update-context
+      - name: packages-tenzir-osint-enrich
+        configMap:
+          name: tenzir-packages-tenzir-osint-enrich
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
       # readOnlyRootFilesystem made unwritable — the 2026-10-17
@@ -580,6 +630,18 @@ spec:
       - name: packages-homelab-trivy-map
         mountPath: /etc/tenzir/packages/homelab/operators/trivy/ocsf/map.tql
         subPath: map.tql
+        readOnly: true
+      - name: packages-tenzir
+        mountPath: /etc/tenzir/packages/tenzir/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-tenzir-osint-update-context
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/update_context.tql
+        subPath: update_context.tql
+        readOnly: true
+      - name: packages-tenzir-osint-enrich
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/enrich.tql
+        subPath: enrich.tql
         readOnly: true
       # Sigma stays directory-mounted to keep the 30s rule hot-reload.
       - name: sigma-homelab

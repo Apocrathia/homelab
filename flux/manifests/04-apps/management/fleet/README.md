@@ -83,7 +83,9 @@ Users authenticate with Authentik via SAML (`authentik-blueprint.yaml`). Do not 
 
 SSO settings live in `fleet/default.yml` under `org_settings.sso_settings` (applied by GitOps). IdP icon: `fleet/platforms/all/icons/authentik.svg`.
 
-With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true`).
+With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true`). JIT accounts default to Global Observer.
+
+Fleet syncs the SSO user's global role on **every** login from the SAML attribute `FLEET_JIT_USER_ROLE_GLOBAL` (accepted values: `admin`, `maintainer`, `observer`, `observer_plus`, `technician`). The blueprint's `Fleet DM Console Role` property mapping emits `admin` for members of the Authentik `admins` group; everyone else gets no attribute, so existing roles stay unchanged and new JIT accounts default to observer. Without this attribute, the first SSO login provisions a Global Observer account.
 
 Fleet blocks outbound fetches to private IPs by default (SSRF). This cluster’s
 gateway hostnames resolve to RFC1918, so the HelmRelease sets

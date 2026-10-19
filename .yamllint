@@ -28,6 +28,17 @@ rules:
   indentation:
     ignore: |
       helm/**/templates/*.yaml
+      # Vendored tenzir library `stix` and `tenzir` packages: upstream
+      # bytes; their package.yaml puts top-level sequence items at
+      # column 1, one level left of our style.
+      flux/manifests/04-apps/security/tenzir/packages/stix/**
+      flux/manifests/04-apps/security/tenzir/packages/tenzir/**
+
+  empty-lines:
+    ignore: |
+      # Vendored tenzir library `tenzir` package: upstream bytes; its
+      # package.yaml ships one trailing blank line at EOF.
+      flux/manifests/04-apps/security/tenzir/packages/tenzir/**
 
   # Adjust comments spacing rule to be compatible with prettier
   comments:
@@ -45,6 +56,11 @@ rules:
       # Vendored tenzir library `netflow` package: upstream bytes; its
       # package.yaml ships without a document marker.
       flux/manifests/04-apps/security/tenzir/packages/netflow/**
+      # Vendored tenzir library `stix` and `tenzir` packages: upstream
+      # bytes; their package.yaml / test.yaml files ship without a
+      # document marker.
+      flux/manifests/04-apps/security/tenzir/packages/stix/**
+      flux/manifests/04-apps/security/tenzir/packages/tenzir/**
   document-end: disable
   truthy:
     check-keys: false

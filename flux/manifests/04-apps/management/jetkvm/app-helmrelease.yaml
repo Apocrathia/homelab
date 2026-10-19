@@ -23,7 +23,7 @@ spec:
 
       # Nginx to serve static files
       # renovate: datasource=docker depName=nginx
-      image: nginx:alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
+      image: nginx:alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
 
       container:
         name: nginx
@@ -33,7 +33,7 @@ spec:
       initContainers:
         - name: build-frontend
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: node:24@sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0
+          image: node:24@sha256:14078204b6bb268c107ceff6d3c43f45a888105e5c2b18b14c32b3409d93a1b0
           command: ["/bin/bash", "-c"]
           args:
             - |

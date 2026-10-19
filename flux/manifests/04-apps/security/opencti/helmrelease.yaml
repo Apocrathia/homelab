@@ -10,7 +10,7 @@ spec:
     spec:
       chart: opencti
       # renovate: datasource=helm registryUrl=https://devops-ia.github.io/helm-opencti/ depName=opencti
-      version: "3.0.19"
+      version: "3.0.22"
       sourceRef:
         kind: HelmRepository
         name: devops-ia
@@ -59,6 +59,46 @@ spec:
       # Groups mapping: authentik 'admins' group -> OpenCTI built-in
       # 'Administrators' group; claims read from the access token (authentik
       # emits the groups claim via the profile scope mapping).
+      # The published 3.0.19 chart renders the server's exec health probe
+      # harsh (failureThreshold 3 / period 10s / timeout 1s = a 30s kill
+      # window with no startup gate). The platform's boot-to-health now
+      # takes longer than that at the current graph size (32k+ entities),
+      # so liveness killed it mid-boot (exit 137 ratchet, 4 restarts in
+      # 31m, 2026-10-19). The Custom probe objects take precedence over
+      # the chart render: a 200s startup gate + a 90s runtime tolerance.
+      # Same exec form as the chart default - the health key never lands
+      # in the pod spec.
+      livenessProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 6
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 10
+      readinessProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 6
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 10
+      startupProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 20
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 10
+
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_SCOPE: "groups"
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_PATH: '["groups"]'
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_MAPPING: '["admins:Administrators"]'
@@ -268,6 +308,46 @@ spec:
         envFromSecrets:
           # Same platform-token vault ref as the worker and MISP connector:
           # the chart only auto-derives OPENCTI_TOKEN from plaintext values.
+          OPENCTI_TOKEN:
+            name: opencti-secrets
+            key: APP__ADMIN__TOKEN
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
+
+      - name: alienvault
+        enabled: true
+        replicas: 1
+        image:
+          # Filigran publishes as opencti/connector-<name>. Tag rides the
+          # chart appVersion, same as the MISP/MITRE connectors: the image
+          # publishes the platform's date-based tags (7.261008.0, 7.261016.0,
+          # ... verified on Docker Hub — an early 1.0.0 pin read a truncated
+          # tag list and was wrong). No tag/renovate anchor needed: the chart
+          # version stays the single deliberate update knob.
+          repository: opencti/connector-alienvault
+        env:
+          # Default PT30M. Info keeps the import runs visible.
+          CONNECTOR_LOG_LEVEL: info
+          # Default 2020-05-01 imports a massive historical pulse backlog
+          # (upstream README warns about it); pinned ~6 weeks back for a
+          # recent-intel feed. Move the date to re-scope.
+          ALIENVAULT_PULSE_START_TIMESTAMP: "2026-09-01T00:00:00Z"
+        envFromSecrets:
+          # Consolidated kebab field per the opencti-secrets style;
+          # envFromSecrets maps it onto the connector's ALIENVAULT_API_KEY.
+          ALIENVAULT_API_KEY:
+            name: opencti-secrets
+            key: otx-api-key
           OPENCTI_TOKEN:
             name: opencti-secrets
             key: APP__ADMIN__TOKEN

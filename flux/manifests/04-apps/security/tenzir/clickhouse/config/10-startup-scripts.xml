@@ -274,5 +274,45 @@ ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
+        <!-- OSINT inventory lookup table (tenzir/nodes/intel +
+             nodes/core): the intel factory's first row. The
+             intel node's opencti-taxii-factory pipeline
+             appends the OpenCTI TAXII collection's current
+             state on every walk (daily full walk +
+             added_after polls; the node runs the 6.20-rc
+             engine for the vendored stix package's fetch
+             operator while the fleet stays on 6.19.1), so
+             the table accumulates per-walk snapshots
+             rather than unique rows; the core node's
+             opencti-osint-loader reads it back sorted by time
+             (the indicator's STIX modified time), newest state
+             per key last. `time` is the indicator's modified
+             time, not the insert time, so the standard TTL
+             caps history at 400 days of indicator age and the
+             day partitions drop whole (ttl_only_drop_parts).
+             Same engine/DDL shape as the event tables above; the
+             tenzir user's INSERT/SELECT grant covers it via the
+             existing GRANT ON ocsf.* wildcard. -->
+        <scripts>
+            <query>CREATE TABLE IF NOT EXISTS ocsf.OSINT_Inventory_Info
+(
+    `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+    `class_uid` Int32 DEFAULT 0,
+    `severity_id` Int8 DEFAULT 0,
+    `status_id` Nullable(Int8),
+    `osint.value` Nullable(String),
+    `osint.type_id` Nullable(UInt8),
+    `osint.risk_score` Nullable(Int32),
+    `osint.expiration_time` Nullable(DateTime64(9, 'UTC')),
+    `metadata.product.name` LowCardinality(Nullable(String)),
+    `unmapped` JSON CODEC(ZSTD(3)),
+    `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
+PARTITION BY toDate(`time`)
+ORDER BY (class_uid, `time`)
+TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
+        </scripts>
     </startup_scripts>
 </clickhouse>

@@ -39,7 +39,7 @@ spec:
               # keep the two in sync so dump client and server versions
               # match.
               # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
-              image: docker.io/bitnamilegacy/mariadb:10.11.9-debian-12-r3@sha256:0a897dbd27c6588fb5b3d421956b0874521a65a32d3ae6fa269ff195be93a6ff
+              image: docker.io/bitnamilegacy/mariadb:10.11.11-debian-12-r3@sha256:ab38eb8e04b1d286cd1fb268d08013bc7d25f9015a9c374594256bcd4a8d1556
               command:
                 - /bin/bash
                 - -c
@@ -90,7 +90,7 @@ spec:
               # Same pin as the substrate bucket-init precedent
               # (04-apps/artificial-intelligence/substrate).
               # renovate: datasource=docker depName=amazon/aws-cli
-              image: amazon/aws-cli:2.37.12@sha256:ce44b800602264c12298bbf3399055a4cefdb9ed4a098abe564afe26e7071bce
+              image: amazon/aws-cli:2.38.1@sha256:733d5be1015825e4038c6016f3fa9954868ddee1f611b73be795a9cc2e706bfd
               command:
                 - /bin/bash
                 - -c

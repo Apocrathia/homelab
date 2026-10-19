@@ -16,6 +16,7 @@ resources:
   - nodes/investigations
   - nodes/enrichment
   - nodes/introspection
+  - nodes/intel
   - grafana/
 
 generatorOptions:
@@ -98,6 +99,43 @@ configMapGenerator:
     namespace: tenzir
     files:
       - network_activity.tql=packages/netflow/operators/ocsf/events/network_activity.tql
+  # Vendored library `stix` package (packages/stix/): TAXII fetch + STIX
+  # Indicator -> OCSF OSINT Inventory Info mapping. Runtime content =
+  # package.yaml + operators/ (the intel node mounts all four files for
+  # its opencti-taxii-factory pipeline).
+  - name: tenzir-packages-stix
+    namespace: tenzir
+    files:
+      - package.yaml=packages/stix/package.yaml
+  - name: tenzir-packages-stix-taxii-fetch
+    namespace: tenzir
+    files:
+      - fetch.tql=packages/stix/operators/taxii/fetch.tql
+  - name: tenzir-packages-stix-ocsf-normalize
+    namespace: tenzir
+    files:
+      - normalize.tql=packages/stix/operators/ocsf/normalize.tql
+  - name: tenzir-packages-stix-ocsf-map
+    namespace: tenzir
+    files:
+      - map.tql=packages/stix/operators/ocsf/map.tql
+  # Vendored library `tenzir` utilities package (packages/tenzir/): this
+  # lane mounts its OSINT pair — update_context (the core node's
+  # opencti-osint-loader) and enrich (unconsumed until a category-4
+  # ingress node wires in-stream enrichment). The package's detect/ocsf
+  # operators stay repo-side only.
+  - name: tenzir-packages-tenzir
+    namespace: tenzir
+    files:
+      - package.yaml=packages/tenzir/package.yaml
+  - name: tenzir-packages-tenzir-osint-update-context
+    namespace: tenzir
+    files:
+      - update_context.tql=packages/tenzir/operators/osint/update_context.tql
+  - name: tenzir-packages-tenzir-osint-enrich
+    namespace: tenzir
+    files:
+      - enrich.tql=packages/tenzir/operators/osint/enrich.tql
   - name: tenzir-packages-homelab-investigations-map
     namespace: tenzir
     files:

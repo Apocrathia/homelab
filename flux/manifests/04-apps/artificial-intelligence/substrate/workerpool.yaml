@@ -10,7 +10,7 @@ metadata:
     # Owned by kagent platform capacity, hosted in ate-system for PSA privileged
     kagent.dev/worker-pool: kagent-default
 spec:
-  replicas: 2
+  replicas: 4
   # renovate: datasource=docker depName=ghcr.io/kagent-dev/substrate/ateom-gvisor
   # Held with substrate chart — see docs/issues/substrate-kagent-version-skew.md.
   ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.6

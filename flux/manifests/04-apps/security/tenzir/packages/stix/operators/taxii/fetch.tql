@@ -1,0 +1,61 @@
+---
+description: |
+  Fetches the objects of a TAXII 2.1 collection and emits one event per STIX
+  object.
+
+  The operator follows the `next` token until the server reports no more pages.
+  Servers without `next` tokens page by date added: the operator then requests
+  the objects added after the `X-TAXII-Date-Added-Last` response header.
+
+  ```tql
+  stix::taxii::fetch "https://taxii.example.com/api-root/collections/indicators/objects/",
+    params={added_after: "2026-10-01T00:00:00Z", "match[type]": "indicator"}
+  ```
+args:
+  positional:
+    - name: url
+      type: string
+      description: The objects endpoint of the collection, such as `https://taxii.example.com/api-root/collections/<id>/objects/`.
+  named:
+    - name: headers
+      default: {}
+      description: Additional request headers, such as `Authorization`.
+    - name: params
+      default: {}
+      description: |
+        Query parameters for every page, such as `added_after`, `limit`, or
+        `match[type]`. Values must be strings or numbers.
+    - name: paginate_delay
+      type: duration
+      default: 0s
+      description: The time to wait between pages, for servers with rate limits.
+---
+
+let $taxii_headers = {
+  Accept: "application/taxii+json;version=2.1",
+  ...$headers,
+}
+// Encode the parameters at runtime, where `entries` is available, because
+// TAXII filters such as `match[type]` take comma-separated values.
+from {params: $params}
+query = params.entries().map(x => f"{x.key.encode_url()}={string(x.value).encode_url()}").join("&")
+each {
+  from_http f"{$url}?{$this.query}",
+    headers=$taxii_headers,
+    paginate_delay=$paginate_delay,
+    paginate=(page => page.next_url) {
+    read_json
+    // Envelopes may carry custom properties, including one named `next_url`.
+    next_url = null
+    let $date_added_last = $response.headers.map_keys(x => x.to_lower())["x-taxii-date-added-last"]?
+    if more? and next? not in [null, ""] {
+      next_url = f"?{$this.query}&next={next.encode_url()}"
+    } else if more? and $date_added_last != null and objects?.length() > 0 {
+      // Without a `next` token, TAXII 2.1 pages by date added.
+      let $next_params = {...$this.params, added_after: $date_added_last}
+      next_url = "?" + $next_params.entries().map(x => f"{x.key.encode_url()}={string(x.value).encode_url()}").join("&")
+    }
+  }
+  unroll objects?
+  this = objects
+}

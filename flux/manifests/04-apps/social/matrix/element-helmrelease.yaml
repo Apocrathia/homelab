@@ -27,7 +27,7 @@ spec:
       # sample config.json for ours, so the copy ships this repo's
       # config.json to the served root on every boot.
       # renovate: datasource=docker depName=ghcr.io/element-hq/element-web
-      image: ghcr.io/element-hq/element-web:v1.12.30@sha256:3e7dbd4424de9e11c812bc740acf2725b2abe66ea0d0802023b56fd85d3fa09a
+      image: ghcr.io/element-hq/element-web:v1.12.32@sha256:f8700633d4336258af7a05b53865a4f479e0d628cf2d9ca83d28b5939314d4ce
       container:
         name: element
         # element-web docs/install.md v1.12.30 prescribes ELEMENT_WEB_PORT

@@ -149,7 +149,7 @@ spec:
                 loki-write, cluster-internal. live=true without retro: no
                 store-backlog replay on start, so restarts never re-ship
                 history (Loki has no dedup); the poller Deployment owns
-                the other five nodes' diagnostics.
+                the other six nodes' diagnostics.
               definition: ""
               restart-on-error: 1 minute
             error-diagnostics-to-mimir:
@@ -161,7 +161,7 @@ spec:
                 diagnostic, so the dashboard can count both severities
                 with sum_over_time. They otherwise live only in the
                 diagnostics stream, not in metrics. Sibling lanes' exact
-                shape; the poller Deployment ships the other five nodes'
+                shape; the poller Deployment ships the other six nodes'
                 samples.
               definition: ""
               restart-on-error: 1 minute

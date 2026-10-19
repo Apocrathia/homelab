@@ -1,0 +1,23 @@
+// Consumer half of the intel factory: read the intel node's
+// ocsf.OSINT_Inventory_Info lookup table into this node's ocsf-osint
+// context. The factory appends the collection's current state on every
+// walk, so the loader sorts by event time (the indicator's STIX modified
+// time) before applying updates: per key, the newest version lands last,
+// and a revoked row (status Removed; STIX versioning bumps modified on
+// revoke) erases the key after every older active copy re-applied it.
+// Expired indicators (osint.expiration_time in the past) erase the key
+// regardless of order.
+
+every 24h {
+  from_clickhouse table="ocsf.OSINT_Inventory_Info",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  sort time
+  // The catch-all round trip rebuilds the event fields but not the
+  // schema name; update_context gates on it, so stamp it back.
+  @name = "ocsf.osint_inventory_info"
+  tenzir::osint::update_context max_age=30d
+}

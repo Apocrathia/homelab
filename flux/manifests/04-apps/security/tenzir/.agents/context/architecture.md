@@ -10,13 +10,15 @@ Vendored docs for the general shapes: node
 
 ## Nodes
 
-Five standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
+Seven standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines ([core](../../nodes/core/README.md),
 [tetragon](../../nodes/tetragon/README.md),
 [netflow](../../nodes/netflow/README.md),
 [investigations](../../nodes/investigations/README.md),
-[enrichment](../../nodes/enrichment/README.md)). All register into one hosted
+[enrichment](../../nodes/enrichment/README.md),
+[introspection](../../nodes/introspection/README.md),
+[intel](../../nodes/intel/README.md)). All register into one hosted
 Tenzir Platform workspace (app.tenzir.com) over a single outbound
 WebSocket; pipelines run entirely on the nodes and events never route
 through the platform.
@@ -38,11 +40,18 @@ through the platform.
 - **Investigations node** — owns the agent investigations plane:
   case/evidence envelopes in, `investigations.records` on ClickHouse
   out — an isolated blast radius the detection plane never shares.
-- **Enrichment node** — the fleet's context factory, shipped idle in lap
-  1 (zero pipelines, no ingest); from lap 2 its factory pipelines
-  (first: `fleet_assets`) build curated lookup tables into ClickHouse
-  for the other nodes' loaders; live-event enrichment stays in-stream
-  at the ingress nodes.
+- **Enrichment node** — the internal-reference-data factory, shipped
+  idle in lap 1 (zero pipelines, no ingest); from lap 2 its factory
+  pipelines (first: `fleet_assets`) build the curated lookup tables —
+  fleet assets, baselines — into ClickHouse for the other nodes'
+  loaders; live-event enrichment stays in-stream at the ingress nodes.
+- **Intel node** — the CTI factory plane: its opencti-taxii-factory
+  pipeline pulls external threat intel from OpenCTI's TAXII 2.1
+  indicator collection, normalizes it to OCSF 5021, and appends it to
+  the ClickHouse OCSF store, from where the core node's
+  opencti-osint-loader pulls the table into its node-local
+  `ocsf-osint` context; the node alone runs the rc engine
+  (`v6.20.0-rc.3`, GA bump via renovate).
 
 ## Detection plane
 
