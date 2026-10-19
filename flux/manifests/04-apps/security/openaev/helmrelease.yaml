@@ -270,7 +270,7 @@ spec:
       category: "Security"
       displayName: "OpenAEV"
       externalHost: "https://openaev.gateway.services.apocrathia.com"
-      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/openaev/icon.svg"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/openaev/icon.png"
       oidc:
         # Confidential + PKCE — same pattern as other generic-app OIDC apps.
         # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
