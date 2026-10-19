@@ -1,0 +1,39 @@
+---
+description: Enriches OCSF network events with OSINT objects from a context.
+args:
+  named:
+    - name: context_name
+      type: string
+      default: ocsf-osint
+      description: Lookup-table context to query.
+---
+
+if category_uid == 4 {
+  if src_endpoint?.ip? != null {
+    context_enrich $context_name,
+      key=string(src_endpoint.ip),
+      into=osint,
+      mode="append"
+  }
+  if dst_endpoint?.ip? != null {
+    context_enrich $context_name,
+      key=string(dst_endpoint.ip),
+      into=osint,
+      mode="append"
+  }
+  if class_uid == 4003 and query?.hostname? != null {
+    context_enrich $context_name,
+      key=query.hostname,
+      into=osint,
+      mode="append"
+  }
+}
+
+// Feeds store indicator values as strings, hence the string keys above. A
+// stored indicator can outlive its own expiration until the next update.
+osint = osint?.where(x => x.expiration_time? == null or x.expiration_time > now())
+if osint?.length() > 0 {
+  metadata.profiles = metadata?.profiles?.add("osint")
+} else {
+  drop osint?
+}

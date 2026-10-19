@@ -1,0 +1,44 @@
+// The intel factory's first row: OpenCTI's TAXII 2.1 indicator collection
+// -> the ocsf.OSINT_Inventory_Info ClickHouse lookup table. Dual-schedule
+// per the upstream isMalicious doctrine: the daily full walk reconciles
+// the whole collection (bootstrap, revocation convergence, and the entry
+// refresh that keeps the core loader's 30d context max_age from aging
+// active indicators out), and the added_after polls pick up new and
+// revoked indicators between walks.
+
+// Daily full walk at 07:00 in the node's local time zone.
+cron "0 0 7 * * *" {
+  // The objects endpoint is pinned, never discovery-walked: the /taxii2/
+  // discovery document advertises the platform's base_url default
+  // (localhost:4000), which is unreachable from the cluster.
+  stix::taxii::fetch "http://opencti-server.opencti.svc.cluster.local:80/taxii2/root/collections/b1b65172-d4cd-445c-9590-7971808eb9e4/objects",
+    headers={Authorization: f"Bearer {secret("opencti-taxii-token")}"}
+  where type == "indicator"
+  stix::ocsf::normalize
+  to_clickhouse table="ocsf.OSINT_Inventory_Info",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false,
+    mode="append",
+    max_batch_rows=65536
+}
+
+// Polls between walks look back a full day, so a few failed polls lose
+// nothing: updates replace entries instead of duplicating them.
+cron "0 0 1,13,19 * * *" {
+  stix::taxii::fetch "http://opencti-server.opencti.svc.cluster.local:80/taxii2/root/collections/b1b65172-d4cd-445c-9590-7971808eb9e4/objects",
+    headers={Authorization: f"Bearer {secret("opencti-taxii-token")}"},
+    params={added_after: now() - 1d}
+  where type == "indicator"
+  stix::ocsf::normalize
+  to_clickhouse table="ocsf.OSINT_Inventory_Info",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false,
+    mode="append",
+    max_batch_rows=65536
+}

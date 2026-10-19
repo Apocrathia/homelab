@@ -7,13 +7,17 @@ is the subtree-local mirror, scoped to tenzir work only.
 
 ## What this is
 
-Five standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
+Seven standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The core node is the detection plane; the tetragon node owns
 the export flood; the netflow node owns the NetFlow collector; the
 investigations node owns the agent investigations plane; the enrichment
-node is the idle context factory (curated lookup tables into ClickHouse
-for the other nodes' loaders; no ingest, no pipelines yet). Telemetry
+node is the idle internal-reference-data factory (fleet-assets and
+baselines lookup tables into ClickHouse for the other nodes' loaders; no
+ingest, no pipelines yet); the introspection node is the fleet's
+diagnostics poller plane; and the intel node is the CTI factory plane
+(OpenCTI TAXII threat intel into ClickHouse; core's opencti-osint-loader
+is the consumer half). Telemetry
 normalizes onto one OCSF bus, sigma evaluates live, and everything
 archives to the ClickHouse OCSF query store (per-class `ocsf.*` tables)
 that Grafana queries over its ClickHouse datasource. Full topology and

@@ -25,13 +25,14 @@
 # 1104 hidden), so a shared filter would crater
 # sum_over_time(tenzir_pipeline_warnings[6h]) versus the native lanes.
 #
-# Targets: core, tetragon, netflow, investigations, enrichment —
-# the five non-introspection fleet nodes. Core, tetragon, and netflow
-# are the nodes whose per-node lanes retired in this slice;
-# investigations gained the same pair mid-flight via MR !5354 and
-# this MR retires it the same way for the central-poller
+# Targets: core, tetragon, netflow, investigations, enrichment,
+# intel — the six non-introspection fleet nodes. Core, tetragon,
+# and netflow are the nodes whose per-node lanes retired in this
+# slice; investigations gained the same pair mid-flight via MR !5354
+# and this MR retires it the same way for the central-poller
 # architecture; enrichment never had lanes (a zero-pipeline lap-1
-# node, it joined in this round after its own merge). The
+# node, it joined in this round after its own merge); intel never
+# had lanes either (this MR adds the node itself). The
 # introspection node itself keeps its LOCAL pair
 # (../helmrelease.yaml). Watermark semantics: the
 # per-target wall-clock window (candidate captured before each poll,
@@ -76,7 +77,7 @@ data:
     import time
     from datetime import datetime, timezone
 
-    TARGETS = ["core", "tetragon", "netflow", "investigations", "enrichment"]
+    TARGETS = ["core", "tetragon", "netflow", "investigations", "enrichment", "intel"]
     INTERVAL = 120  # seconds between cycles (draft-shipper precedent)
     POLL_TIMEOUT = 60  # seconds per target invocation (draft-shipper precedent)
 

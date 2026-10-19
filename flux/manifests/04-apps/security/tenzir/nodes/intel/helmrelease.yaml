@@ -1,0 +1,300 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tenzir-node-intel
+  namespace: tenzir
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: tenzir-node
+      # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
+      version: "0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: tenzir
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+    # Sibling parity: the fresh node boots an empty partition catalog,
+    # so the 10m timeout is headroom, not a race workaround.
+    timeout: 10m
+  upgrade:
+    remediation:
+      retries: 3
+    timeout: 10m
+  # Startup gate, grafted after render: tenzir-node 0.1.0 ships no
+  # startupProbe hook (a values key renders nothing — verified against the
+  # extracted chart), so the liveness probe alone owns boot and kills the
+  # pod at 120s (initialDelay 30 + 3x30) if registration or state load
+  # ever stalls. The kustomize postRenderer grafts a startupProbe onto
+  # the rendered StatefulSet instead: kubelet holds readiness/liveness
+  # gated until it passes, trading the 120s kill for a 10-minute boot
+  # budget (10s period x 60 failures) that matches the 10m install/upgrade
+  # timeouts above. When upstream ships a startupProbe values hook, this
+  # patch deletes and the block moves to values.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              group: apps
+              version: v1
+              kind: StatefulSet
+              name: tenzir-node-intel
+            patch: |-
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: tenzir-node-intel
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: tenzir-node
+                        startupProbe:
+                          tcpSocket:
+                            port: node
+                          periodSeconds: 10
+                          timeoutSeconds: 5
+                          failureThreshold: 60
+  values:
+    # Node naming: every node resource renders as <fullname>-<entry.name>,
+    # and fullname defaults to the release name while it contains
+    # "tenzir-node" — release tenzir-node-intel + entry intel would
+    # double to tenzir-node-intel-intel. The override pins fullname at
+    # tenzir-node so the entry renders tenzir-node-intel (pod, Service;
+    # verified by helm template against chart 0.1.0).
+    fullnameOverride: tenzir-node
+    image:
+      registry: docker.io
+      repository: tenzir/tenzir
+      # renovate: datasource=docker depName=docker.io/tenzir/tenzir
+      # The rc pin: this node ALONE runs the 6.20 release candidate — the
+      # vendored stix package's taxii fetch operator needs the 6.20 engine
+      # line (entries()), while the rest of the fleet stays on the 6.19.1
+      # GA train below this comment. The pin is the operator's choice (c):
+      # the factory row lands now instead of waiting for 6.20 GA, and the
+      # blast radius of an rc engine stays confined to this pure-puller
+      # node (no listeners, no detection feed). When 6.20 GA ships,
+      # renovate offers the v6.20.0 bump here — taking it is the whole
+      # transition; the fleet bumps on its own schedule via the same
+      # renovate comment, and this comment block then shrinks to the
+      # sibling wording.
+      tag: v6.20.0-rc.3
+
+    # Registers into the same hosted Tenzir Platform workspace as the
+    # sibling nodes; this node reads its own pre-provisioned token from
+    # the intel-token field of the tenzir-secrets Secret (vault field
+    # added by the operator; the platform node is already registered).
+    # Platform tokens are per-node, never shared.
+    #
+    # Pure puller: no extraPorts (no ingest surface — the chart-rendered
+    # main Service on :5158 carries node RPC only), no web server (no
+    # certificate.yaml) — all factory work is outbound: the OpenCTI
+    # TAXII pull plus ClickHouse writes via extraEnv below.
+    nodes:
+      - name: intel
+        token:
+          existingSecret: tenzir-secrets
+          key: intel-token
+
+    persistence:
+      # 5Gi, enrichment/investigations parity: the factory row streams
+      # TAXII pulls straight to ClickHouse with no lake import, so the
+      # lake stays near-empty and the PVC carries node state only
+      # (platform registration, diagnostics). The factory's output is
+      # the ClickHouse table, not this lake; there is no archive rule
+      # here to grow a transit buffer. Longhorn grows on demand anyway.
+      size: 5Gi
+
+    # Node configuration (renders to the tenzir-node-intel-config
+    # ConfigMap and rolls the pod on change). Nothing secret may live
+    # here: values land in a ConfigMap in plaintext. Secrets arrive via
+    # extraEnv below.
+    tenzir:
+      config:
+        tenzir:
+          package-dirs:
+            - /etc/tenzir/packages
+          # Server-log verbosity, same warning level as the siblings:
+          # the chart default (tenzir.file-verbosity: quiet) writes
+          # nothing to server.log, so factory-pipeline failures that
+          # point at the log for their diagnostics surface blind.
+          # server.log opens at /var/log/tenzir on every boot, which
+          # readOnlyRootFilesystem makes unwritable — the tenzir-logs
+          # emptyDir (extraVolumes below) backs the path; keep the
+          # key/mount pair together on any new node.
+          file-verbosity: warning
+          # Partition mint-rate control, same 60s as netflow: the
+          # factory is a low-volume collector — events arrive in cron
+          # bursts twice a day at most, and 60s caps the partition count
+          # the bursts mint; the async background merge consolidates
+          # undersized partitions. max-partition-size stays at its 4Mi
+          # default.
+          active-partition-timeout: 60s
+          # Catalog knobs, sibling shape: dormant on a near-empty lake,
+          # but kept for consistency with the fleet (lazy-sketches
+          # defers Bloom-filter sketches to query time; load-concurrency
+          # caps the boot synopsis loader at 4).
+          index:
+            lazy-sketches: true
+            load-concurrency: 4
+          # The factory pipeline block: the first row lands with its
+          # stix/tenzir package mounts (extraVolumes below) and the
+          # stitch in ../kustomization.yaml — pipeline definitions live
+          # in pipelines/<id>.tql, and the replacements copy them into
+          # these empty definition fields at kustomize build time.
+          pipelines:
+            opencti-taxii-factory:
+              name: opencti taxii factory
+              description: |
+                The intel factory's first row: pulls OpenCTI's TAXII 2.1
+                indicator collection (single-pane — all CTI reaches
+                tenzir via OpenCTI) through the vendored library `stix`
+                package and appends OCSF 1.9 OSINT Inventory Info rows
+                into the ClickHouse ocsf.OSINT_Inventory_Info lookup
+                table; the core node's opencti-osint-loader pipeline is
+                the consumer half. Dual-schedule per the upstream
+                isMalicious doctrine: a daily full walk at 07:00
+                reconciles the whole collection (bootstrap, revocation
+                convergence, and the entry refresh that keeps the
+                loader's 30d context max_age from aging active
+                indicators out), and added_after polls at 01/13/19 pick
+                up new and revoked indicators between walks — each poll
+                looks back a day, so a few failed polls lose nothing.
+                The objects endpoint is pinned in the pipeline (the
+                /taxii2/ discovery document advertises the platform's
+                localhost:4000 base_url default — a discovery walk would
+                fetch garbage); the bearer token rides the
+                opencti-taxii-token managed secret, and the
+                indicators-only filter drops the non-indicator STIX
+                objects the collection carries. Role caps and markings
+                are enforced server-side by OpenCTI; nothing to
+                configure here. from_http's built-in retry absorbs
+                429/5xx bursts, and to_clickhouse mode="append" fails
+                loudly if the DDL table is missing.
+              definition: ""
+              restart-on-error: 1 minute
+
+    # Sized with the docs' size-a-node formula: the factory row is a
+    # batch puller (one HTTP source + one ClickHouse destination + STIX
+    # normalization) at ~2k indicators/day, so the formula's max(2, ·)
+    # floor still pins 2 cores and the 2 GB RAM floor (catalog term ~0
+    # at a near-empty lake; enrichment parity at near-zero volume).
+    # Requests stay small: limits are caps, not reservations. Re-measure
+    # when a second factory lane lands or the collection grows past the
+    # MISP backlog.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
+    # Secrets (1Password item tenzir-secrets / clickhouse-secrets): vault
+    # field labels are kebab-case and the rendered Secret keys match them,
+    # so every secretKeyRef.key below is the kebab vault label; env var
+    # names stay UPPER. The TAXII bearer token rides `opencti-taxii-token`
+    # (written to the vault by the opencti lane; the pipeline reads it as
+    # secret("opencti-taxii-token")). The ClickHouse writer password rides
+    # the dedicated clickhouse-secrets item (this namespace materializes
+    # its own OnePasswordItem in ../secret.yaml): the env var maps to
+    # config key tenzir.secrets.clickhouse-password, so the factory's
+    # to_clickhouse leg reads it as secret("clickhouse-password") — kebab
+    # name, the same env-var shape as the sibling writers. No other
+    # secret rides this node: it runs no listener, no sigma pass, no
+    # authentik pull, no archive S3 leg.
+    extraEnv:
+      - name: TENZIR_SECRETS__OPENCTI_TAXII_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: tenzir-secrets
+            key: opencti-taxii-token
+      - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
+
+    extraVolumes:
+      # Vendored library packages this node's factory pipeline calls:
+      # the `stix` package in full (taxii fetch -> ocsf normalize -> ocsf
+      # map closure) plus the `tenzir` utilities package's OSINT pair.
+      # One ConfigMap per mounted file, generated at the root
+      # kustomization.
+      - name: packages-stix
+        configMap:
+          name: tenzir-packages-stix
+      - name: packages-stix-taxii-fetch
+        configMap:
+          name: tenzir-packages-stix-taxii-fetch
+      - name: packages-stix-ocsf-normalize
+        configMap:
+          name: tenzir-packages-stix-ocsf-normalize
+      - name: packages-stix-ocsf-map
+        configMap:
+          name: tenzir-packages-stix-ocsf-map
+      - name: packages-tenzir
+        configMap:
+          name: tenzir-packages-tenzir
+      - name: packages-tenzir-osint-update-context
+        configMap:
+          name: tenzir-packages-tenzir-osint-update-context
+      - name: packages-tenzir-osint-enrich
+        configMap:
+          name: tenzir-packages-tenzir-osint-enrich
+      # Writable target for the node's own file logger (file-verbosity
+      # above): server.log opens at /var/log/tenzir on every boot, which
+      # readOnlyRootFilesystem makes unwritable — the 2026-10-17
+      # crashloop on the warning-level siblings. emptyDir, same
+      # lifecycle as the tmp mount; the 10 MiB rotation cap bounds the
+      # disk cost.
+      - name: tenzir-logs
+        emptyDir: {}
+
+    extraVolumeMounts:
+      # Package files mount file-level: kubelet's atomic ConfigMap writer
+      # keeps ..data/..2026_* internals at every directory-mount root, and
+      # inside the walked package tree they fail Tenzir's operator-path
+      # segment check (SRE-20261010-001 crashloop). subPath binds the
+      # single projected file; kubelet auto-creates parent dirs, and the
+      # walked tree contains only the package files. subPath does not
+      # live-propagate ConfigMap updates — package changes need a pod
+      # roll. Generator entries stay at the root kustomization: the
+      # source files never move, only the mounts live here.
+      - name: packages-stix
+        mountPath: /etc/tenzir/packages/stix/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-stix-taxii-fetch
+        mountPath: /etc/tenzir/packages/stix/operators/taxii/fetch.tql
+        subPath: fetch.tql
+        readOnly: true
+      - name: packages-stix-ocsf-normalize
+        mountPath: /etc/tenzir/packages/stix/operators/ocsf/normalize.tql
+        subPath: normalize.tql
+        readOnly: true
+      - name: packages-stix-ocsf-map
+        mountPath: /etc/tenzir/packages/stix/operators/ocsf/map.tql
+        subPath: map.tql
+        readOnly: true
+      - name: packages-tenzir
+        mountPath: /etc/tenzir/packages/tenzir/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-tenzir-osint-update-context
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/update_context.tql
+        subPath: update_context.tql
+        readOnly: true
+      - name: packages-tenzir-osint-enrich
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/enrich.tql
+        subPath: enrich.tql
+        readOnly: true
+      # The file logger's home (tenzir-logs volume above).
+      - name: tenzir-logs
+        mountPath: /var/log/tenzir
