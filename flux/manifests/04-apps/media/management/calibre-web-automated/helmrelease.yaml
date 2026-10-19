@@ -122,7 +122,8 @@ spec:
             createSubDir: "true"
 
     secrets:
-      enabled: false # Web UI bootstrap; default admin credentials changed on first login
+      enabled: true
+      itemPath: "vaults/Secrets/items/calibre-web-automated-secrets" # Web UI bootstrap; default admin credentials changed on first login
 
     authentik:
       managedBy: terraform
