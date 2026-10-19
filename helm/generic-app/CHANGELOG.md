@@ -1,6 +1,55 @@
 # Changelog
 
-## Version 0.0.86 (Latest)
+## Version 0.0.87 (Latest)
+
+- **`authentik.managedBy: terraform` rewritten to the chart-generated
+  inline HCL lane — the Remote+varmap antipattern is dead**:
+  `templates/authentik-tofu-workspace.yaml` now renders the same
+  file-pair shape the merged exemplars use (gatus proxy MINUS the
+  outpost resource — the shared tofu-owned outposts own outposts now;
+  immich oidc + the `oidc-client-id` file lane; jetkvm tile), with the
+  CHART generating each app's HCL from the same values the blueprint
+  templates read. `source: Inline`, NO varmap key, NO module ref, NO
+  chart-tag pin (the create-chart-tag first-reconcile race is gone).
+  `managedBy: blueprint` (default) renders byte-identical blueprint
+  ConfigMaps — zero drift for un-flipped apps.
+- **Adoption machinery baked into the generated HCL**: the application
+  import stays UNGATED by slug literal; every generated id (provider pk,
+  binding uuids, custom-mapping pm_uuids) rides a
+  `for_each = var.adoption ? toset(["g"]) : toset([])` gated import —
+  plain variable-id imports are BANNED (the jetkvm blink: tofu silently
+  skips an empty-id import and plans a duplicate create). Two-way
+  plan-time validation fails loudly both directions. Witness ids remain
+  gate-time-only (recipe §8 born-with-varmap on the live Workspace,
+  cleared after the gate) — never in git.
+- **MISP rules embedded**: oidc `grant_types` pins the values list
+  live-verbatim (new `authentik.oidc.grantTypes` key, default
+  `[authorization_code, refresh_token]` — the blueprint shape); declared
+  2-value stays 2-value, a live default-set row reproduces the full
+  seven explicitly. `response_types` never written (not in the
+  goauthentik 2026.8.0 TF schema); `token_validity` never written (dead
+  attr).
+- **New values keys (additive, defaults match live rows)**:
+  `authentik.internalHost` (proxy compose), `authentik.accessTokenValidity`
+  (proxy provider attr, default `hours=1` — always sent; the TF default
+  minutes=10 would PATCH live rows),
+  `authentik.oidc.grantTypes`, `authentik.oidc.clientIdFromSecret`
+  (enabled/name/key — the file lane; mutually exclusive with
+  `oidc.clientId`, render fails on both/neither). Dead keys on the tofu
+  path documented in values.yaml (outpost shape → the shared stack;
+  `oidc.clientSecret`; `oidc.tokenValidity`).
+- **MERGE-TIME W0 IMPERATIVE**: komga + demo-app (the live legacy-lane
+  consumers) hot-switch to the new render on their next `helm upgrade`.
+  Suspend their helmreleases at merge and run the W0 retirement
+  same-window (`docs/plans/authentik-chart-tofu-lane.md` §Waves):
+  delete the workspace CRs (prune guard → orphan) + the module-era state
+  Secrets, restart the `upbound-provider-opentofu` pod (once), re-adopt
+  through the normal gate. After W0 no Remote residue exists anywhere.
+- **Plan**: `docs/plans/authentik-chart-tofu-lane.md` (the lane's living
+  plan, checked in with this change). Flip waves W1+ are values-only MRs
+  against this lane; blueprint template deletion rides W4 (D4).
+
+## Version 0.0.86
 
 - **`authentik.terraform.varmap` passthrough REMOVED — the values surface is
   compose-only**: the workspace varmap is built entirely from the
