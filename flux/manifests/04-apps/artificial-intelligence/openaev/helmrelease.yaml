@@ -1,0 +1,289 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openaev
+  namespace: openaev
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.86"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+
+  values:
+    app:
+      name: openaev
+      namespace: openaev
+      # Filigran's Adversarial Exposure Validation platform (formerly OpenBAS):
+      # Spring Boot monolith serving API + embedded React SPA + websockets on one
+      # port, plus headless Chromium for report rendering (world-readable
+      # /ms-playwright so arbitrary UIDs work). Upstream ships no chart — image only.
+      # renovate: datasource=docker depName=docker.io/openaev/platform
+      image: docker.io/openaev/platform:3.261016.0@sha256:2fbcb1a6773e33c19073d2b1bddb7147e939efebca3e98c38a08fe6a25ae2a63
+      # Single replica: Quartz jobs + queue consumers assume a single writer;
+      # upstream documents no multi-replica topology.
+      replicas: 1
+
+      container:
+        name: openaev
+        port: 8080
+        # Env names mirror the upstream docs/compose verbatim — the hyphens are
+        # correct (documented rule: uppercase, dots to underscores, keep hyphens,
+        # e.g. openaev.base-url -> OPENAEV_BASE-URL).
+        env:
+          # Admin bootstrap: seeded by InitAdminCommandLineRunner on every boot;
+          # boot fail-fasts without these. Token must be a UUIDv4.
+          - name: OPENAEV_ADMIN_EMAIL
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: admin-email
+          - name: OPENAEV_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: admin-password
+          - name: OPENAEV_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: admin-token
+          # 256-bit DB-encryption key derivation; missing values stop startup.
+          - name: OPENAEV_ADMIN_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: encryption-key
+          - name: OPENAEV_ADMIN_ENCRYPTION_SALT
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: encryption-salt
+          # Postgres: in-namespace CNPG cluster rendered by postgres.enabled below.
+          # username/password keys are the same fields the CNPG bootstrap consumes.
+          - name: SPRING_DATASOURCE_URL
+            value: "jdbc:postgresql://openaev-postgres-rw.openaev.svc.cluster.local:5432/openaev"
+          - name: SPRING_DATASOURCE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: username
+          - name: SPRING_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: password
+          # S3-compatible object storage: NAS RustFS instance (bucket `openaev`,
+          # operator-created scoped keys) — no in-cluster MinIO per house rule.
+          - name: MINIO_ENDPOINT
+            value: "storage.services.apocrathia.com"
+          - name: MINIO_PORT
+            value: "9009"
+          - name: MINIO_BUCKET
+            value: "openaev"
+          - name: MINIO_ACCESS-KEY
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rustfs-access-key
+          - name: MINIO_ACCESS-SECRET
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rustfs-secret-key
+          # Broker: openaev-rabbitmq release in this namespace (rabbitmq.yaml).
+          - name: OPENAEV_RABBITMQ_HOSTNAME
+            value: "openaev-rabbitmq"
+          - name: OPENAEV_RABBITMQ_USER
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rabbitmq-user
+          - name: OPENAEV_RABBITMQ_PASS
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: rabbitmq-pass
+          # Engine: single-node OpenSearch release in this namespace
+          # (opensearch.yaml), security plugin off per official compose parity —
+          # the openaev-opensearch-ingress CNP locks it to this pod.
+          - name: ENGINE_URL
+            value: "http://openaev-opensearch:9200"
+          - name: ENGINE_ENGINE-SELECTOR
+            value: "opensearch"
+          # External URL: used in emails, agent installers, SSO redirects.
+          - name: OPENAEV_BASE-URL
+            value: "https://openaev.gateway.services.apocrathia.com"
+          # Gateway terminates TLS; sessions ride the openaev_token cookie.
+          - name: OPENAEV_COOKIE-SECURE
+            value: "true"
+          # Protects /api/health; UUID. Referenced by the exec probes via the
+          # container env — the value never appears in a manifest.
+          - name: OPENAEV_HEALTHCHECK_KEY
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: healthcheck-key
+          # No JVM heap flags in the image CMD; cap the heap inside the 5Gi limit
+          # (headroom left for Chromium report renders).
+          - name: JAVA_TOOL_OPTIONS
+            value: "-Xmx3g"
+          # Decision #2 (locked egress): the hub connector catalog would call
+          # https://hub.filigran.io — unreachable and disabled by policy.
+          - name: OPENAEV_XTM_HUB_ENABLE
+            value: "false"
+          # Decision #1 (OIDC mode): native Spring Security OAuth2 client,
+          # registration id `authentik`. Local auth stays on (default) as the
+          # breakglass admin login.
+          - name: OPENAEV_AUTH-OPENID-ENABLE
+            value: "true"
+          - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_AUTHENTIK_ISSUER-URI
+            value: "https://auth.gateway.services.apocrathia.com/application/o/openaev/"
+          - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTHENTIK_CLIENT-ID
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: oidc-client-id
+          - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTHENTIK_CLIENT-SECRET
+            valueFrom:
+              secretKeyRef:
+                name: openaev-secrets
+                key: oidc-client-secret
+          - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTHENTIK_REDIRECT-URI
+            value: "https://openaev.gateway.services.apocrathia.com/login/oauth2/code/authentik"
+          - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_AUTHENTIK_SCOPE
+            value: "openid,profile,email"
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: "2"
+          memory: 5Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Platform pod is stateless (research §8): durable state lives in
+        # Postgres/RustFS/OpenSearch/RabbitMQ. Writable paths are the emptyDirs
+        # below (workdir is /, so ./logs -> /logs in the standard image).
+        readOnlyRootFilesystem: true
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+          - name: logs
+            mountPath: /logs
+
+      # Exec probes use the official compose healthcheck pattern (wget ships in
+      # the image): the key resolves from container env, never from a manifest
+      # path. /api/health returns 401 on key mismatch, 503 while a required
+      # dependency (DB/RabbitMQ/S3) is down — deps must be up to pass.
+      # Startup window is generous: Java boot + Flyway migrations on first run.
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - wget -qO- "http://localhost:8080/api/health?health_access_key=$OPENAEV_HEALTHCHECK_KEY"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          enabled: true
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - wget -qO- "http://localhost:8080/api/health?health_access_key=$OPENAEV_HEALTHCHECK_KEY"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          enabled: true
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - wget -qO- "http://localhost:8080/api/health?health_access_key=$OPENAEV_HEALTHCHECK_KEY"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 60
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/openaev-secrets"
+
+    postgres:
+      enabled: true
+      backup:
+        enabled: true
+      # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+      imageName: ghcr.io/cloudnative-pg/postgresql:17@sha256:70664ebcfa1100361b5bdc28bbf06fdbe08db2dc4ad7bd14de33c5e05fe8ea8e
+      instances: 1
+      database: openaev
+      owner: openaev
+      storage:
+        storageClass: longhorn
+        size: 10Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+    authentik:
+      enabled: true
+      mode: oidc
+      category: "Artificial Intelligence"
+      displayName: "OpenAEV"
+      externalHost: "https://openaev.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/artificial-intelligence/openaev/icon.png"
+      oidc:
+        # Confidential + PKCE — same pattern as other generic-app OIDC apps.
+        # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
+        redirectUris:
+          - url: "https://openaev.gateway.services.apocrathia.com/login/oauth2/code/authentik"
+            matchingMode: "strict"
+
+    gatus:
+      enabled: true
+      # SPA index returns 200 without auth — listener-level check only; the
+      # dependency-aware /api/health needs the secret-sourced key, which cannot
+      # ride a gatus annotation.
+      path: /
+    httproute:
+      enabled: true
+      hostname: "openaev.gateway.services.apocrathia.com"

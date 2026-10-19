@@ -18,6 +18,7 @@ resources:
   - llm-d
   - mcp-servers
   - mecatl
+  - openaev
   - openclaw
   - openhands
   - openwebui
