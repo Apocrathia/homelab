@@ -11,7 +11,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -271,6 +271,7 @@ spec:
           memory: 1Gi
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: oidc
       category: "Security"
@@ -278,6 +279,11 @@ spec:
       externalHost: "https://openaev.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/openaev/icon.png"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         # Confidential + PKCE — same pattern as other generic-app OIDC apps.
         # Copy Authentik Client ID / Secret into 1Password after blueprint apply.
         redirectUris:

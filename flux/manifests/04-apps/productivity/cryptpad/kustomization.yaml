@@ -9,7 +9,6 @@ resources:
   - namespace.yaml
   - onepassworditem.yaml
   - httproute-sandbox.yaml
-  - authentik-blueprint-cleanup.yaml
   - helmrelease.yaml
 
 configMapGenerator:
