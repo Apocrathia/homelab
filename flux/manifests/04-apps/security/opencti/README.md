@@ -47,7 +47,11 @@ Stack layout (all in the `opencti` namespace):
 - **MITRE ATT&CK connector**: `opencti-mitre-connector` Deployment (chart
   `connectors:` values) pulls the ATT&CK Enterprise/Mobile/ICS STIX bundles
   plus CAPEC from upstream (`mitre-attack/attack-stix-data`, `mitre/cti`) on
-  a 7-day interval. First run on deploy seeds ATT&CK into the graph — the
+  a 7-day interval.
+- **AlienVault OTX connector**: `opencti-alienvault-connector` Deployment
+  (chart `connectors:` values) pulls OTX Pulses on the default PT30M
+  cadence, pulse start pinned ~6 weeks back (2026-09-01) to avoid the
+  2020-default historical backlog; API key from `opencti-secrets`/`otx-api-key`. First run on deploy seeds ATT&CK into the graph — the
   platform version here has no built-in dataset-import UI anymore, so the
   connector is the seeding mechanism (2026-10-18 lap note).
 - **TAXII2 connector**: `opencti-taxii2-connector` Deployment (chart
@@ -88,6 +92,7 @@ Item `vaults/Secrets/items/opencti-secrets` (created in slice 1):
 | `OIDC_CLIENT_SECRET`              | Authentik OIDC provider client secret                                                                                                                                     |
 | `APP__ENTERPRISE_EDITION_LICENSE` | OpenCTI EE license (PEM); provider login (SSO) is EE-gated on 7.26 CE — wired as `APP__ENTERPRISE_EDITION_LICENSE` env which takes precedence over a UI-pasted DB license |
 | `misp-key`                        | MISP auth key (read) — consolidated from the former `opencti-misp-connector` item; feeds the connector's `MISP_KEY` env via `envFromSecrets`                              |
+| `otx-api-key`                     | AlienVault OTX API key (free registration) — feeds the connector's `ALIENVAULT_API_KEY` env via `envFromSecrets`                                                          |
 
 The former separate item `opencti-misp-connector` was consolidated into
 `opencti-secrets` (field `misp-key`, kebab-style; 2026-10-19) — the
