@@ -63,6 +63,26 @@ entries:
       property_mappings_group:
         - !Find [authentik_providers_scim.scimmapping, [managed, "goauthentik.io/providers/scim/group"]]
 
+  # Fleet JIT role sync (Fleet Premium): on every SSO login Fleet updates the
+  # user's global role from the FLEET_JIT_USER_ROLE_GLOBAL attribute
+  # (accepted values: admin, maintainer, observer, observer_plus, technician).
+  # admins group -> admin. Everyone else: expression returns None, authentik
+  # omits the attribute, Fleet leaves existing roles unchanged and defaults
+  # new JIT accounts to observer. Staff SSO only — not the MDM end-user
+  # provider (device users are not Fleet console users).
+  - model: authentik_providers_saml.samlpropertymapping
+    state: present
+    identifiers:
+      name: "Fleet DM Console Role"
+    attrs:
+      name: "Fleet DM Console Role"
+      saml_name: "FLEET_JIT_USER_ROLE_GLOBAL"
+      friendly_name: ""
+      expression: |
+        if ak_is_group_member(request.user, name="admins"):
+            return "admin"
+        return None
+
   - model: authentik_providers_saml.samlprovider
     state: present
     identifiers:
@@ -84,6 +104,7 @@ entries:
         - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/email"]]
         - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/name"]]
         - !Find [authentik_providers_saml.samlpropertymapping, [managed, "goauthentik.io/providers/saml/username"]]
+        - !Find [authentik_providers_saml.samlpropertymapping, [name, "Fleet DM Console Role"]]
 
   - model: authentik_core.application
     state: present
