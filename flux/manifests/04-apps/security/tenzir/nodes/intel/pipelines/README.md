@@ -6,7 +6,7 @@ factory's first lane — OpenCTI's TAXII 2.1 indicator collection pulled
 on a dual schedule (daily 07:00 full walk + 01/13/19 added_after polls)
 into the ClickHouse `ocsf.OSINT_Inventory_Info` lookup table, with the
 core node's
-[opencti-osint-loader](../core/pipelines/opencti-osint-loader.tql) as
+[opencti-osint-loader](../../core/pipelines/opencti-osint-loader.tql) as
 the consumer half.
 
 Each pipeline lives as one `.tql` file here (its `definition`, verbatim);

@@ -35,7 +35,13 @@ repos:
         # packages (packages/stix, packages/tenzir): upstream ships tenzir's
         # package.yaml with a trailing blank line the hook would strip.
         # Same discipline as the detection-rule trees.
-        exclude: ^flux/manifests/(04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README)|packages/(stix|tenzir)/(?!README)))
+        exclude: |
+          (?x)^(
+            flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/detections/(sigma/sigmahq|yara/signature-base)/|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/packages/(stix|tenzir)/(?!README)|
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/\.agents/skills/(?!grafana-homelab|README)
+          )
       - id: trailing-whitespace
         # Vendored detection rules are upstream bytes re-copied from pinned
         # submodules; reformatting breaks byte-identity with the gitlink.
