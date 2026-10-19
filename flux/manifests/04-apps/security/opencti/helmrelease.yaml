@@ -198,13 +198,17 @@ spec:
           capabilities:
             drop:
               - ALL
+        # Bumped from 512Mi: the 2026-10-18 epoch sweep (post state reset,
+        # MISP_IMPORT_FROM_DATE) OOMKilled the connector ~88x in a ratchet
+        # (exit 137); the batch processor holds tens of thousands of objects
+        # per in-flight window (observed 21.6k remaining_objects_count).
         resources:
           requests:
             cpu: "50m"
-            memory: "128Mi"
+            memory: "256Mi"
           limits:
-            cpu: "250m"
-            memory: "512Mi"
+            cpu: "500m"
+            memory: "1Gi"
       - name: mitre
         enabled: true
         replicas: 1
