@@ -59,6 +59,46 @@ spec:
       # Groups mapping: authentik 'admins' group -> OpenCTI built-in
       # 'Administrators' group; claims read from the access token (authentik
       # emits the groups claim via the profile scope mapping).
+      # The published 3.0.19 chart renders the server's exec health probe
+      # harsh (failureThreshold 3 / period 10s / timeout 1s = a 30s kill
+      # window with no startup gate). The platform's boot-to-health now
+      # takes longer than that at the current graph size (32k+ entities),
+      # so liveness killed it mid-boot (exit 137 ratchet, 4 restarts in
+      # 31m, 2026-10-19). The Custom probe objects take precedence over
+      # the chart render: a 200s startup gate + a 90s runtime tolerance.
+      # Same exec form as the chart default - the health key never lands
+      # in the pod spec.
+      livenessProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 6
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 10
+      readinessProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 6
+        periodSeconds: 15
+        successThreshold: 1
+        timeoutSeconds: 10
+      startupProbeCustom:
+        exec:
+          command:
+            - node
+            - -e
+            - require('http').get({host:'127.0.0.1',port:4000,path:'/health?health_access_key='+process.env.APP__HEALTH_ACCESS_KEY},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))
+        failureThreshold: 20
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 10
+
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_SCOPE: "groups"
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_PATH: '["groups"]'
       PROVIDERS__OPENID__CONFIG__GROUPS_MANAGEMENT__GROUPS_MAPPING: '["admins:Administrators"]'
