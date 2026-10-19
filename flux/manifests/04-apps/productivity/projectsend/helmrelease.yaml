@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -187,6 +187,7 @@ spec:
     # OIDC discovery. Friends signing in with no local account are
     # auto-provisioned as clients, never staff.
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "oidc"
       shared: true
@@ -198,6 +199,11 @@ spec:
       metaDescription: "Client file sharing with per-client portals"
       metaPublisher: "ProjectSend"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         redirectUris:
           - url: "https://projectsend.gateway.services.apocrathia.com/auth/oidc/callback"
             matchingMode: "strict"
