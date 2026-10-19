@@ -233,7 +233,7 @@ spec:
           # Pinned to the chart appVersion pairing (core v2.5.44 ships with
           # modules v3.0.9 upstream); bump with the chart tag.
           # renovate: datasource=docker depName=ghcr.io/misp/misp-docker/misp-core
-          tag: v2.5.50@sha256:37e236d9f39ffc61ee08e74ed35180990e533036a1ac106e8218532b79b21df4
+          tag: v2.5.44@sha256:0eaa4e423d5cd965b7b76aa5665e81d5c05a35bc46a4ffec2ca52e0cfe627e86
           pullPolicy: IfNotPresent
         # Sizing from research doc section 1.5 (web tier 2 vcpu / 4-16Gi
         # reference; single-instance homelab shape).
@@ -272,7 +272,7 @@ spec:
       mispModules:
         image:
           # renovate: datasource=docker depName=ghcr.io/misp/misp-docker/misp-modules
-          tag: v3.0.12@sha256:8fdd85e6589a265bbb6b555656d17b2fd41b32f2762035f1968caad2bcdf36c1
+          tag: v3.0.9@sha256:99572d207973f804e153861bfa9d7b0da0c69c8687babc8e5534a360e1156613
           pullPolicy: IfNotPresent
         resources:
           requests:
