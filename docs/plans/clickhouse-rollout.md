@@ -266,6 +266,13 @@ the changed columns). A text-only edit diverges live state and aborts the
 whole file at the next fresh replica (see
 `docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`).
 
+**Sink type-parity rule (2026-10-19):** hot columns for Tenzir sink tables
+are SIGNED types — the OCSF spine arrives as `int64`, so `class_uid` types
+as `Int32`/`Int64` (never `UInt32`), and signed-vs-unsigned in
+`to_clickhouse`'s append mapping is a hard type mismatch that drops the
+whole batch with a warning (see
+`docs/issues/investigations-ingest-lane-silent-drop.md`).
+
 ### D5 — ClickHouse users (CHI users config, from_env, no creds in git) — amended
 
 Users live in the CHI (`spec.configuration.users`); the operator renders
