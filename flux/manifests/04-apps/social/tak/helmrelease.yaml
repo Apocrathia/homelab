@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -407,6 +407,7 @@ spec:
       itemPath: "vaults/Secrets/items/opentakserver-secrets"
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "proxy"
       # WebUI is friends-tier: admins (order 10) + users (order 20) bindings.
