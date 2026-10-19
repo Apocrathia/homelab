@@ -60,6 +60,27 @@ Updates are deliberate: chart tag + the core/modules image pair bump together
 releases — accepted, research doc risk 1). Renovate drafts; Trivy/gitleaks
 gate.
 
+### Image pin hold — no core/modules bumps until the chart supports the distributed architecture
+
+The core/modules pins are load-bearing. core `v2.5.44` + modules `v3.0.9`
+are the pairing the chart is built for: the old misp-docker monolith, one
+core container running nginx + PHP-FPM + workers under supervisord and
+serving HTTP on :80 — the port the chart's startup probe and HTTPRoute
+expect.
+
+misp-core `>= v2.5.50` is upstream's distributed architecture: nginx was
+extracted into its own container, leaving the core image PHP-FPM-only
+(FastCGI on :9002, no HTTP listener). The chart renders no nginx container
+and still probes `:80 /users/heartbeat`, so a bumped pod boots cleanly —
+MISP logs it is live — binds nothing on :80, and the startup probe
+kill-loops it (~15 min per cycle). Renovate did exactly this on 2026-10-19;
+MR !5478 reverts to the pinned pair.
+
+**Directive: do not bump `misp-core` or `misp-modules` — Renovate or manual
+— until a chart release supporting the distributed architecture has been
+verified.** When one exists, move the chart git tag and the image pair
+together in one MR (pairing comment in `helmrelease.yaml`).
+
 ## Secrets
 
 1Password item `vaults/Secrets/items/misp-secrets` (slice 1). Fields and
