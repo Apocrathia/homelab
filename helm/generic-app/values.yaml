@@ -499,32 +499,39 @@ secrets:
 authentik:
   enabled: true
   # Provider mode: "proxy", "oidc", or "bookmark"
-  # - proxy: Creates proxy provider + outpost, Authentik handles auth before requests reach app
+  # - proxy: Creates proxy provider + outpost (blueprint lane); the tofu
+  #   lane renders the proxy provider only — outposts consolidate into the
+  #   shared tofu-owned outposts in the authentik tree
   # - oidc: Creates OAuth2 provider, app handles auth via OAuth flow (requires app OIDC support)
   # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
 
-  # Stack owner: "blueprint" (default/legacy) or "terraform" (fleet path).
+  # Stack owner: "blueprint" (default/legacy) or "terraform" (the tofu lane).
   # - blueprint: chart renders the authentik blueprint ConfigMaps (mode
-  #   proxy/oidc/bookmark) — unchanged behavior for every existing app.
+  #   proxy/oidc/bookmark) — unchanged behavior for every un-flipped app.
   # - terraform: chart renders the provider-opentofu docs (OnePasswordItem +
-  #   ProviderConfig + Workspace) pulling the shared module
-  #   terraform/modules/authentik-app at this chart's own git tag
-  #   (generic-app-<version>), and suppresses the blueprint ConfigMaps.
-  #   proxy and oidc modes; bookmarks stay blueprint. Values-only: no
-  #   per-app terraform.tf, no module ConfigMap, no valuesFrom, no
-  #   kustomization additions.
+  #   ProviderConfig + Workspace, source: Inline) with CHART-GENERATED
+  #   per-app HCL composed from the values below — all three modes
+  #   (bookmark = the tile shape: application + bindings, no provider).
+  #   Inline HCL only: NO module refs, NO chart-tag pins, NO varmap.
+  #   Suppresses the blueprint ConfigMaps.
   managedBy: "blueprint"
 
-  # managedBy: "terraform" composes EVERY module input from the values
-  # below (the same surface the blueprint templates read) - there is no
-  # values-side varmap (removed 0.0.86). Per-app config deltas become
-  # proper values keys the compose reads. Adoption ids never enter git:
-  # adopt apps get them via a gate-time LIVE merge-patch on the rendered
-  # Workspace spec.forProvider.varmap (the recorded OIDC adopt-gate recipe,
-  # .scratch/oidc-adopt-gate-recipe.md §1 step 4; kubectl patch, Flux
-  # suspended); the module's plan-time validation is the adoption guard.
-  # The full variable contract: terraform/modules/authentik-app/variables.tf.
+  # The tofu lane composes from the same values the blueprint templates
+  # read — every value lands INLINE in the generated HCL. There is no
+  # values-side varmap: the Workspace spec.forProvider.varmap is the
+  # GATE-TIME-ONLY adoption carrier (recipe §8 born-with-varmap: the
+  # witness ids — provider pk, binding uuids, custom-mapping pm_uuids —
+  # are patched onto the LIVE Workspace object once at the flip gate and
+  # cleared after; they NEVER enter git). Per-app config deltas become
+  # values keys here, never raw HCL edits.
+  #
+  # Dead keys on the tofu path (blueprint/outpost machinery the tofu lane
+  # never reads): authentikHostInsecure, serviceConnection, replicas,
+  # namespace, logLevel, gateway.* (the shared tofu-owned outposts own
+  # the outpost shape now), oidc.clientSecret (Sensitive — generated
+  # server-side, tofu must not manage it), oidc.tokenValidity (dead attr
+  # in authentik 2026.8).
 
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
@@ -553,11 +560,19 @@ authentik:
   # ============================================================
   # Proxy mode settings (only when mode: "proxy")
   # ============================================================
-  # Enable header-based authentication for reverse proxy auth
+  # In-cluster service URL the proxy forwards to; empty composes
+  # http://<app>.<namespace>.svc.cluster.local:<service.port>
+  internalHost: ""
+
+  # Enable header-based authentication for reverse proxy auth. The tofu
+  # lane ALWAYS sends this in the HCL (the TF resource default true must
+  # never silently PATCH a live row)
   interceptHeaderAuth: false
 
   # Unauthenticated paths configuration (regex patterns)
   # Paths matching these patterns will bypass authentik authentication
+  # The tofu lane joins the list into skip_path_regex with newlines,
+  # byte-verbatim, no trailing newline (the grafana 18-byte lesson)
   # Example:
   # skipPathRegex:
   #   - "^/$"
@@ -565,20 +580,31 @@ authentik:
   #   - "^/api/"
   skipPathRegex: []
 
+  # Proxy provider token validity — ALWAYS sent in the tofu HCL (the TF
+  # resource default minutes=10 would PATCH live rows sitting at the
+  # authentik model default hours=1)
+  accessTokenValidity: "hours=1"
+
   # Authentication flow (proxy mode only)
   authenticationFlow: "default-authentication-flow"
 
-  # Authentik server configuration (proxy mode only)
+  # Authentik server configuration. authentikHost is alive on both lanes
+  # (the tofu provider block reads it as its url); authentikHostInsecure +
+  # serviceConnection are blueprint-outpost machinery — dead on the tofu
+  # path (the shared tofu-owned outposts own the outpost shape now)
   authentikHost: "https://auth.gateway.services.apocrathia.com"
   authentikHostInsecure: true
   serviceConnection: "Local Kubernetes Cluster"
 
-  # Outpost configuration (proxy mode only)
+  # Outpost configuration (blueprint lane only — dead on the tofu path:
+  # no outpost resource renders; the shared tofu-owned outposts own
+  # outposts)
   replicas: 1
   namespace: authentik
   logLevel: info
 
-  # Gateway configuration (proxy mode only - outpost creates HTTPRoute)
+  # Gateway configuration (blueprint lane only - the outpost creates the
+  # HTTPRoute; dead on the tofu path)
   gateway:
     name: main-gateway
     namespace: cilium-system
@@ -635,18 +661,41 @@ authentik:
     # Signing key for JWT tokens
     signingKey: "authentik Self-signed Certificate"
 
-    # Token validity periods
+    # Token validity periods — all three are ALWAYS sent in the tofu HCL
+    # (a TF resource default must never silently PATCH a live row)
     accessCodeValidity: "minutes=1"
     accessTokenValidity: "minutes=5"
     refreshTokenValidity: "days=30"
-    # Token validity (some apps like Mealie/RomM need this separate from refreshTokenValidity)
-    # tokenValidity: "days=30"
+    # tokenValidity is DEAD in authentik 2026.8 (no column, not in the
+    # goauthentik 2026.8.0 TF schema) — the tofu lane never writes it
 
-    # Pre-defined client credentials (optional)
-    # If set, these values are used in the blueprint instead of auto-generated
-    # Useful for GitOps - store in 1Password and reference here
+    # Grant types, pinned live-verbatim (the MISP lesson): the tofu HCL
+    # ALWAYS sends grant_types explicitly — the authentik 2026.8 API no
+    # longer backfills it and an empty set rejects every authorize
+    # request. Default = the blueprint-era 2-value shape; a flip MR pins
+    # the app's LIVE row (a default-set row reproduces the full seven
+    # explicitly).
+    grantTypes:
+      - "authorization_code"
+      - "refresh_token"
+
+    # client_id lane 2 — static literal for fresh creates (misp/opencti
+    # style). Mutually exclusive with clientIdFromSecret.enabled:
     # clientId: ""
-    # clientSecret: ""
+    # clientSecret: never on the tofu path (Sensitive, generated
+    # server-side — tofu must not manage it)
+
+    # client_id lane 1 — the 1Password Secret file lane: the ProviderConfig
+    # materializes the SAME Secret key the app consumes as the
+    # oidc-client-id file, and the tofu HCL reads
+    # client_id = trimspace(file("oidc-client-id")) — the value never
+    # enters git. The render fails loudly on both lanes set or neither.
+    clientIdFromSecret:
+      enabled: false
+      # Secret name; empty = <app>-secrets (the chart OnePasswordItem)
+      name: ""
+      # Secret key holding the client id
+      key: "oidc-client-id"
 
 # HTTPRoute configuration
 # Use with OIDC mode or when not using Authentik proxy

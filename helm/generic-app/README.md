@@ -34,129 +34,133 @@ A generic Helm chart for deploying applications in the homelab environment with 
 
 All available configuration values for the chart:
 
-| Path                                           | Type   | Default                                           | Description                                                                             |
-| ---------------------------------------------- | ------ | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `app.name`                                     | string | `demo-app`                                        | Application name used for resource naming                                               |
-| `app.namespace`                                | string | `""`                                              | Namespace (defaults to app.name if not specified)                                       |
-| `app.image`                                    | string | `nginx:alpine`                                    | Container image (single value for renovate compatibility)                               |
-| `app.container.name`                           | string | `nginx`                                           | Container name                                                                          |
-| `app.container.port`                           | int    | `80`                                              | Main container port                                                                     |
-| `app.container.extraPorts`                     | array  | `[]`                                              | Additional container ports                                                              |
-| `app.container.env`                            | array  | `[]`                                              | Environment variables                                                                   |
-| `app.command`                                  | array  | `[]`                                              | Override default container command                                                      |
-| `app.args`                                     | array  | `[]`                                              | Override default container arguments                                                    |
-| `app.initContainers`                           | array  | `[]`                                              | Init container configurations                                                           |
-| `app.sidecars`                                 | array  | `[]`                                              | Sidecar container configurations                                                        |
-| `app.replicas`                                 | int    | `1`                                               | Number of pod replicas                                                                  |
-| `app.strategy`                                 | string | `Recreate`                                        | Deployment strategy (Recreate or RollingUpdate)                                         |
-| `app.strategy.rollingUpdate.maxSurge`          | string | `"25%"`                                           | Max surge for rolling update                                                            |
-| `app.strategy.rollingUpdate.maxUnavailable`    | string | `"25%"`                                           | Max unavailable for rolling update                                                      |
-| `app.podAntiAffinity.enabled`                  | bool   | `true`                                            | Enable pod anti-affinity                                                                |
-| `app.securityContext.runAsUser`                | int    | `1000`                                            | User ID to run container as                                                             |
-| `app.securityContext.runAsGroup`               | int    | `1000`                                            | Group ID to run container as                                                            |
-| `app.securityContext.fsGroup`                  | int    | `1000`                                            | File system group ID for volumes                                                        |
-| `app.securityContext.fsGroupChangePolicy`      | string | `OnRootMismatch`                                  | Volume ownership change policy                                                          |
-| `app.securityContext.runAsNonRoot`             | bool   | `true`                                            | Require non-root user                                                                   |
-| `app.securityContext.allowPrivilegeEscalation` | bool   | `false`                                           | Allow privilege escalation                                                              |
-| `app.securityContext.readOnlyRootFilesystem`   | bool   | `true`                                            | Mount root filesystem as read-only                                                      |
-| `app.securityContext.capabilities.add`         | array  | `[]`                                              | Capabilities to add                                                                     |
-| `app.securityContext.capabilities.drop`        | array  | `["ALL"]`                                         | Capabilities to drop                                                                    |
-| `app.dnsConfig.nameservers`                    | array  | `[]`                                              | DNS nameservers for the pod                                                             |
-| `app.dnsConfig.searches`                       | array  | `[]`                                              | DNS search domains                                                                      |
-| `app.dnsConfig.options`                        | array  | `[]`                                              | DNS resolver options (e.g., ndots)                                                      |
-| `app.resources.requests.cpu`                   | string | `50m`                                             | CPU request                                                                             |
-| `app.resources.requests.memory`                | string | `64Mi`                                            | Memory request                                                                          |
-| `app.resources.limits.cpu`                     | string | `100m`                                            | CPU limit                                                                               |
-| `app.resources.limits.memory`                  | string | `128Mi`                                           | Memory limit                                                                            |
-| `app.lifecycle`                                | object | `{}`                                              | Container lifecycle hooks (postStart, preStop)                                          |
-| `app.healthChecks.livenessProbe`               | object | `{}`                                              | Liveness probe configuration                                                            |
-| `app.healthChecks.readinessProbe`              | object | `{}`                                              | Readiness probe configuration                                                           |
-| `app.healthChecks.startupProbe`                | object | `{}`                                              | Startup probe configuration                                                             |
-| `app.service.type`                             | string | `ClusterIP`                                       | Service type                                                                            |
-| `app.service.port`                             | int    | `80`                                              | Service port                                                                            |
-| `app.service.targetPort`                       | int    | `80`                                              | Service target port                                                                     |
-| `app.service.portName`                         | string | `http`                                            | Service port name                                                                       |
-| `app.service.extraServicePorts`                | array  | `[]`                                              | Additional service ports                                                                |
-| `app.volumes.emptyDir`                         | array  | `[]`                                              | EmptyDir volumes                                                                        |
-| `app.volumes.configMap`                        | array  | `[]`                                              | ConfigMap volumes                                                                       |
-| `app.volumes.secret`                           | array  | `[]`                                              | Secret volumes                                                                          |
-| `app.volumeMounts`                             | array  | `[]`                                              | Volume mounts for pod-wide storage                                                      |
-| `storage.longhorn.enabled`                     | bool   | `false`                                           | Enable Longhorn storage                                                                 |
-| `storage.longhorn.numberOfReplicas`            | int    | `3`                                               | Number of replicas for Longhorn volumes                                                 |
-| `storage.longhorn.volumes`                     | array  | `[]`                                              | Longhorn volume configurations                                                          |
-| `storage.smb.enabled`                          | bool   | `false`                                           | Enable SMB storage                                                                      |
-| `storage.smb.volumes`                          | array  | `[]`                                              | SMB volume configurations                                                               |
-| `storage.emptyDir.enabled`                     | bool   | `false`                                           | Enable EmptyDir storage                                                                 |
-| `storage.emptyDir.volumes`                     | array  | `[]`                                              | EmptyDir volume configurations                                                          |
-| `secrets.enabled`                              | bool   | `true`                                            | Enable 1Password secrets integration                                                    |
-| `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`           | 1Password item path                                                                     |
-| `authentik.enabled`                            | bool   | `true`                                            | Enable Authentik SSO integration                                                        |
-| `authentik.managedBy`                          | string | `blueprint`                                       | Authentik stack owner: `blueprint` CMs (default) or `terraform` provider-opentofu docs  |
-| `authentik.displayName`                        | string | `Demo Application`                                | Display name in Authentik                                                               |
-| `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`    | External URL                                                                            |
-| `authentik.ssoLaunchUrl`                       | string | `""`                                              | Direct SSO entrypoint for the library tile; empty = the app's own URL                   |
-| `authentik.icon`                               | string | `https://i.imgur.com/0gNsvyk.png`                 | Icon URL                                                                                |
-| `authentik.openInNewTab`                       | bool   | `true`                                            | Open in new tab                                                                         |
-| `authentik.category`                           | string | `Applications`                                    | Category in Authentik dashboard                                                         |
-| `authentik.interceptHeaderAuth`                | bool   | `false`                                           | Enable header-based authentication                                                      |
-| `authentik.skipPathRegex`                      | array  | `[]`                                              | Regex patterns for paths that bypass authentik authentication                           |
-| `authentik.authorizationFlow`                  | string | `default-provider-authorization-implicit-consent` | Authorization flow                                                                      |
-| `authentik.invalidationFlow`                   | string | `default-invalidation-flow`                       | Invalidation flow                                                                       |
-| `authentik.authenticationFlow`                 | string | `default-authentication-flow`                     | Authentication flow                                                                     |
-| `authentik.authentikHost`                      | string | `https://auth.gateway.services.apocrathia.com`    | Authentik server URL                                                                    |
-| `authentik.authentikHostInsecure`              | bool   | `true`                                            | Allow insecure Authentik host                                                           |
-| `authentik.serviceConnection`                  | string | `Local Kubernetes Cluster`                        | Service connection name                                                                 |
-| `authentik.replicas`                           | int    | `1`                                               | Authentik outpost replicas                                                              |
-| `authentik.namespace`                          | string | `authentik`                                       | Namespace for outpost                                                                   |
-| `authentik.logLevel`                           | string | `info`                                            | Log level for outpost                                                                   |
-| `authentik.gateway.name`                       | string | `main-gateway`                                    | Gateway name                                                                            |
-| `authentik.gateway.namespace`                  | string | `cilium-system`                                   | Gateway namespace                                                                       |
-| `authentik.gateway.sectionName`                | string | `https`                                           | Gateway section name                                                                    |
-| `httproute.enabled`                            | bool   | `false`                                           | Enable HTTPRoute (only when Authentik disabled)                                         |
-| `httproute.hostname`                           | string | `demo.gateway.services.apocrathia.com`            | HTTPRoute hostname                                                                      |
-| `httproute.gateway.name`                       | string | `main-gateway`                                    | Gateway name                                                                            |
-| `httproute.gateway.namespace`                  | string | `cilium-system`                                   | Gateway namespace                                                                       |
-| `httproute.gateway.sectionName`                | string | `https`                                           | Gateway section name                                                                    |
-| `tailnet.enabled`                              | bool   | `false`                                           | Add a tailnet-gateway parentRef to the route (shared hostname over Tailscale split DNS) |
-| `authentik.shared`                             | bool   | `false`                                           | Add the users group binding (share with friends); requires `tailnet.enabled`            |
-| `tailnet.gateway.name`                         | string | `tailnet-gateway`                                 | Tailnet Gateway name                                                                    |
-| `tailnet.gateway.namespace`                    | string | `cilium-system`                                   | Tailnet Gateway namespace                                                               |
-| `tailnet.gateway.sectionName`                  | string | `https-gateway-services`                          | Tailnet Gateway section name                                                            |
-| `tcproute.enabled`                             | bool   | `false`                                           | Enable TCPRoute                                                                         |
-| `tcproute.routes`                              | array  | `[]`                                              | TCPRoute configurations                                                                 |
-| `udproute.enabled`                             | bool   | `false`                                           | Enable UDPRoute                                                                         |
-| `udproute.routes`                              | array  | `[]`                                              | UDPRoute configurations                                                                 |
-| `loadbalancer.enabled`                         | bool   | `false`                                           | Enable LoadBalancer service                                                             |
-| `loadbalancer.ip`                              | string | `""`                                              | Static IP for LoadBalancer                                                              |
-| `loadbalancer.ports`                           | array  | `[]`                                              | LoadBalancer ports                                                                      |
-| `loadbalancer.externalTrafficPolicy`           | string | `Local`                                           | External traffic policy (Local or Cluster)                                              |
-| `loadbalancer.labels`                          | object | `{}`                                              | Custom labels for LoadBalancer service (e.g., for Cilium IP pool selection)             |
-| `loadbalancer.cilium.interface`                | string | `eth0`                                            | Network interface for L2 announcements                                                  |
-| `loadbalancer.cilium.namespace`                | string | `cilium-system`                                   | Namespace for Cilium resources                                                          |
-| `gatus.enabled`                                | bool   | `false`                                           | Stamp gatus-sidecar annotations on the ClusterIP Service                                |
-| `gatus.group`                                  | string | `""`                                              | Endpoint group (defaults to `app.name`)                                                 |
-| `gatus.url`                                    | string | `""`                                              | Probe URL (defaults to in-cluster HTTP Service URL)                                     |
-| `gatus.path`                                   | string | `""`                                              | Optional path appended to `gatus.url`                                                   |
-| `gatus.interval`                               | string | `""`                                              | Optional check interval (sidecar default when empty)                                    |
-| `gatus.conditions`                             | array  | `["[STATUS] == 200"]`                             | Gatus endpoint conditions                                                               |
-| `gatus.endpoint`                               | object | `{}`                                              | Merge arbitrary keys into the endpoint annotation YAML                                  |
-| `postgres.enabled`                             | bool   | `false`                                           | Enable PostgreSQL database (CloudNativePG)                                              |
-| `postgres.imageName`                           | string | `ghcr.io/cloudnative-pg/postgresql:17`            | PostgreSQL image version                                                                |
-| `postgres.instances`                           | int    | `1`                                               | Number of PostgreSQL instances                                                          |
-| `postgres.storage.storageClass`                | string | `longhorn`                                        | Storage class for PostgreSQL data                                                       |
-| `postgres.storage.size`                        | string | `10Gi`                                            | Storage size for PostgreSQL data                                                        |
-| `postgres.resources.requests.memory`           | string | `""`                                              | Memory request for PostgreSQL pods                                                      |
-| `postgres.resources.requests.cpu`              | string | `""`                                              | CPU request for PostgreSQL pods                                                         |
-| `postgres.resources.limits.memory`             | string | `""`                                              | Memory limit for PostgreSQL pods                                                        |
-| `postgres.resources.limits.cpu`                | string | `""`                                              | CPU limit for PostgreSQL pods                                                           |
-| `postgres.postgresql.parameters`               | object | `{}`                                              | PostgreSQL configuration parameters                                                     |
-| `postgres.affinity.enablePodAntiAffinity`      | bool   | `true`                                            | Enable pod anti-affinity for PostgreSQL pods                                            |
-| `postgres.affinity.podAntiAffinityType`        | string | `preferred`                                       | Pod anti-affinity type                                                                  |
-| `postgres.affinity.topologyKey`                | string | `kubernetes.io/hostname`                          | Topology key for pod anti-affinity                                                      |
-| `postgres.monitoring.enabled`                  | bool   | `false`                                           | Enable PodMonitor for PostgreSQL metrics                                                |
-| `postgres.monitoring.interval`                 | string | `30s`                                             | Metrics scraping interval                                                               |
-| `postgres.database`                            | string | `""`                                              | Database name (defaults to app.name)                                                    |
-| `postgres.owner`                               | string | `""`                                              | Database owner (defaults to app.name)                                                   |
+| Path                                           | Type   | Default                                             | Description                                                                                                                          |
+| ---------------------------------------------- | ------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `app.name`                                     | string | `demo-app`                                          | Application name used for resource naming                                                                                            |
+| `app.namespace`                                | string | `""`                                                | Namespace (defaults to app.name if not specified)                                                                                    |
+| `app.image`                                    | string | `nginx:alpine`                                      | Container image (single value for renovate compatibility)                                                                            |
+| `app.container.name`                           | string | `nginx`                                             | Container name                                                                                                                       |
+| `app.container.port`                           | int    | `80`                                                | Main container port                                                                                                                  |
+| `app.container.extraPorts`                     | array  | `[]`                                                | Additional container ports                                                                                                           |
+| `app.container.env`                            | array  | `[]`                                                | Environment variables                                                                                                                |
+| `app.command`                                  | array  | `[]`                                                | Override default container command                                                                                                   |
+| `app.args`                                     | array  | `[]`                                                | Override default container arguments                                                                                                 |
+| `app.initContainers`                           | array  | `[]`                                                | Init container configurations                                                                                                        |
+| `app.sidecars`                                 | array  | `[]`                                                | Sidecar container configurations                                                                                                     |
+| `app.replicas`                                 | int    | `1`                                                 | Number of pod replicas                                                                                                               |
+| `app.strategy`                                 | string | `Recreate`                                          | Deployment strategy (Recreate or RollingUpdate)                                                                                      |
+| `app.strategy.rollingUpdate.maxSurge`          | string | `"25%"`                                             | Max surge for rolling update                                                                                                         |
+| `app.strategy.rollingUpdate.maxUnavailable`    | string | `"25%"`                                             | Max unavailable for rolling update                                                                                                   |
+| `app.podAntiAffinity.enabled`                  | bool   | `true`                                              | Enable pod anti-affinity                                                                                                             |
+| `app.securityContext.runAsUser`                | int    | `1000`                                              | User ID to run container as                                                                                                          |
+| `app.securityContext.runAsGroup`               | int    | `1000`                                              | Group ID to run container as                                                                                                         |
+| `app.securityContext.fsGroup`                  | int    | `1000`                                              | File system group ID for volumes                                                                                                     |
+| `app.securityContext.fsGroupChangePolicy`      | string | `OnRootMismatch`                                    | Volume ownership change policy                                                                                                       |
+| `app.securityContext.runAsNonRoot`             | bool   | `true`                                              | Require non-root user                                                                                                                |
+| `app.securityContext.allowPrivilegeEscalation` | bool   | `false`                                             | Allow privilege escalation                                                                                                           |
+| `app.securityContext.readOnlyRootFilesystem`   | bool   | `true`                                              | Mount root filesystem as read-only                                                                                                   |
+| `app.securityContext.capabilities.add`         | array  | `[]`                                                | Capabilities to add                                                                                                                  |
+| `app.securityContext.capabilities.drop`        | array  | `["ALL"]`                                           | Capabilities to drop                                                                                                                 |
+| `app.dnsConfig.nameservers`                    | array  | `[]`                                                | DNS nameservers for the pod                                                                                                          |
+| `app.dnsConfig.searches`                       | array  | `[]`                                                | DNS search domains                                                                                                                   |
+| `app.dnsConfig.options`                        | array  | `[]`                                                | DNS resolver options (e.g., ndots)                                                                                                   |
+| `app.resources.requests.cpu`                   | string | `50m`                                               | CPU request                                                                                                                          |
+| `app.resources.requests.memory`                | string | `64Mi`                                              | Memory request                                                                                                                       |
+| `app.resources.limits.cpu`                     | string | `100m`                                              | CPU limit                                                                                                                            |
+| `app.resources.limits.memory`                  | string | `128Mi`                                             | Memory limit                                                                                                                         |
+| `app.lifecycle`                                | object | `{}`                                                | Container lifecycle hooks (postStart, preStop)                                                                                       |
+| `app.healthChecks.livenessProbe`               | object | `{}`                                                | Liveness probe configuration                                                                                                         |
+| `app.healthChecks.readinessProbe`              | object | `{}`                                                | Readiness probe configuration                                                                                                        |
+| `app.healthChecks.startupProbe`                | object | `{}`                                                | Startup probe configuration                                                                                                          |
+| `app.service.type`                             | string | `ClusterIP`                                         | Service type                                                                                                                         |
+| `app.service.port`                             | int    | `80`                                                | Service port                                                                                                                         |
+| `app.service.targetPort`                       | int    | `80`                                                | Service target port                                                                                                                  |
+| `app.service.portName`                         | string | `http`                                              | Service port name                                                                                                                    |
+| `app.service.extraServicePorts`                | array  | `[]`                                                | Additional service ports                                                                                                             |
+| `app.volumes.emptyDir`                         | array  | `[]`                                                | EmptyDir volumes                                                                                                                     |
+| `app.volumes.configMap`                        | array  | `[]`                                                | ConfigMap volumes                                                                                                                    |
+| `app.volumes.secret`                           | array  | `[]`                                                | Secret volumes                                                                                                                       |
+| `app.volumeMounts`                             | array  | `[]`                                                | Volume mounts for pod-wide storage                                                                                                   |
+| `storage.longhorn.enabled`                     | bool   | `false`                                             | Enable Longhorn storage                                                                                                              |
+| `storage.longhorn.numberOfReplicas`            | int    | `3`                                                 | Number of replicas for Longhorn volumes                                                                                              |
+| `storage.longhorn.volumes`                     | array  | `[]`                                                | Longhorn volume configurations                                                                                                       |
+| `storage.smb.enabled`                          | bool   | `false`                                             | Enable SMB storage                                                                                                                   |
+| `storage.smb.volumes`                          | array  | `[]`                                                | SMB volume configurations                                                                                                            |
+| `storage.emptyDir.enabled`                     | bool   | `false`                                             | Enable EmptyDir storage                                                                                                              |
+| `storage.emptyDir.volumes`                     | array  | `[]`                                                | EmptyDir volume configurations                                                                                                       |
+| `secrets.enabled`                              | bool   | `true`                                              | Enable 1Password secrets integration                                                                                                 |
+| `secrets.itemPath`                             | string | `vaults/Secrets/items/demo-app-secrets`             | 1Password item path                                                                                                                  |
+| `authentik.enabled`                            | bool   | `true`                                              | Enable Authentik SSO integration                                                                                                     |
+| `authentik.managedBy`                          | string | `blueprint`                                         | Authentik stack owner: `blueprint` CMs (default) or `terraform` provider-opentofu docs                                               |
+| `authentik.displayName`                        | string | `Demo Application`                                  | Display name in Authentik                                                                                                            |
+| `authentik.externalHost`                       | string | `https://demo.gateway.services.apocrathia.com`      | External URL                                                                                                                         |
+| `authentik.ssoLaunchUrl`                       | string | `""`                                                | Direct SSO entrypoint for the library tile; empty = the app's own URL                                                                |
+| `authentik.icon`                               | string | `https://i.imgur.com/0gNsvyk.png`                   | Icon URL                                                                                                                             |
+| `authentik.openInNewTab`                       | bool   | `true`                                              | Open in new tab                                                                                                                      |
+| `authentik.category`                           | string | `Applications`                                      | Category in Authentik dashboard                                                                                                      |
+| `authentik.interceptHeaderAuth`                | bool   | `false`                                             | Enable header-based authentication                                                                                                   |
+| `authentik.internalHost`                       | string | `""`                                                | Explicit internal host for proxy mode (empty = the chart's app service pattern)                                                      |
+| `authentik.accessTokenValidity`                | string | `hours=1`                                           | Proxy access-token validity (tofu lane always sends explicit; authentik model default)                                               |
+| `authentik.oidc.grantTypes`                    | array  | `["authorization_code", "refresh_token"]`           | OIDC grant types, sent verbatim to parity-check live (apps whose live row carries authentik's full default set must spell out all 7) |
+| `authentik.oidc.clientIdFromSecret`            | object | `{enabled: false, name: "", key: "oidc-client-id"}` | The oidc client_id file lane: tofu ProviderConfig credentials entry reads the Secret; name empty = `<app>-secrets`                   |
+| `authentik.skipPathRegex`                      | array  | `[]`                                                | Regex patterns for paths that bypass authentik authentication                                                                        |
+| `authentik.authorizationFlow`                  | string | `default-provider-authorization-implicit-consent`   | Authorization flow                                                                                                                   |
+| `authentik.invalidationFlow`                   | string | `default-invalidation-flow`                         | Invalidation flow                                                                                                                    |
+| `authentik.authenticationFlow`                 | string | `default-authentication-flow`                       | Authentication flow                                                                                                                  |
+| `authentik.authentikHost`                      | string | `https://auth.gateway.services.apocrathia.com`      | Authentik server URL                                                                                                                 |
+| `authentik.authentikHostInsecure`              | bool   | `true`                                              | Allow insecure Authentik host                                                                                                        |
+| `authentik.serviceConnection`                  | string | `Local Kubernetes Cluster`                          | Service connection name                                                                                                              |
+| `authentik.replicas`                           | int    | `1`                                                 | Authentik outpost replicas                                                                                                           |
+| `authentik.namespace`                          | string | `authentik`                                         | Namespace for outpost                                                                                                                |
+| `authentik.logLevel`                           | string | `info`                                              | Log level for outpost                                                                                                                |
+| `authentik.gateway.name`                       | string | `main-gateway`                                      | Gateway name                                                                                                                         |
+| `authentik.gateway.namespace`                  | string | `cilium-system`                                     | Gateway namespace                                                                                                                    |
+| `authentik.gateway.sectionName`                | string | `https`                                             | Gateway section name                                                                                                                 |
+| `httproute.enabled`                            | bool   | `false`                                             | Enable HTTPRoute (only when Authentik disabled)                                                                                      |
+| `httproute.hostname`                           | string | `demo.gateway.services.apocrathia.com`              | HTTPRoute hostname                                                                                                                   |
+| `httproute.gateway.name`                       | string | `main-gateway`                                      | Gateway name                                                                                                                         |
+| `httproute.gateway.namespace`                  | string | `cilium-system`                                     | Gateway namespace                                                                                                                    |
+| `httproute.gateway.sectionName`                | string | `https`                                             | Gateway section name                                                                                                                 |
+| `tailnet.enabled`                              | bool   | `false`                                             | Add a tailnet-gateway parentRef to the route (shared hostname over Tailscale split DNS)                                              |
+| `authentik.shared`                             | bool   | `false`                                             | Add the users group binding (share with friends); requires `tailnet.enabled`                                                         |
+| `tailnet.gateway.name`                         | string | `tailnet-gateway`                                   | Tailnet Gateway name                                                                                                                 |
+| `tailnet.gateway.namespace`                    | string | `cilium-system`                                     | Tailnet Gateway namespace                                                                                                            |
+| `tailnet.gateway.sectionName`                  | string | `https-gateway-services`                            | Tailnet Gateway section name                                                                                                         |
+| `tcproute.enabled`                             | bool   | `false`                                             | Enable TCPRoute                                                                                                                      |
+| `tcproute.routes`                              | array  | `[]`                                                | TCPRoute configurations                                                                                                              |
+| `udproute.enabled`                             | bool   | `false`                                             | Enable UDPRoute                                                                                                                      |
+| `udproute.routes`                              | array  | `[]`                                                | UDPRoute configurations                                                                                                              |
+| `loadbalancer.enabled`                         | bool   | `false`                                             | Enable LoadBalancer service                                                                                                          |
+| `loadbalancer.ip`                              | string | `""`                                                | Static IP for LoadBalancer                                                                                                           |
+| `loadbalancer.ports`                           | array  | `[]`                                                | LoadBalancer ports                                                                                                                   |
+| `loadbalancer.externalTrafficPolicy`           | string | `Local`                                             | External traffic policy (Local or Cluster)                                                                                           |
+| `loadbalancer.labels`                          | object | `{}`                                                | Custom labels for LoadBalancer service (e.g., for Cilium IP pool selection)                                                          |
+| `loadbalancer.cilium.interface`                | string | `eth0`                                              | Network interface for L2 announcements                                                                                               |
+| `loadbalancer.cilium.namespace`                | string | `cilium-system`                                     | Namespace for Cilium resources                                                                                                       |
+| `gatus.enabled`                                | bool   | `false`                                             | Stamp gatus-sidecar annotations on the ClusterIP Service                                                                             |
+| `gatus.group`                                  | string | `""`                                                | Endpoint group (defaults to `app.name`)                                                                                              |
+| `gatus.url`                                    | string | `""`                                                | Probe URL (defaults to in-cluster HTTP Service URL)                                                                                  |
+| `gatus.path`                                   | string | `""`                                                | Optional path appended to `gatus.url`                                                                                                |
+| `gatus.interval`                               | string | `""`                                                | Optional check interval (sidecar default when empty)                                                                                 |
+| `gatus.conditions`                             | array  | `["[STATUS] == 200"]`                               | Gatus endpoint conditions                                                                                                            |
+| `gatus.endpoint`                               | object | `{}`                                                | Merge arbitrary keys into the endpoint annotation YAML                                                                               |
+| `postgres.enabled`                             | bool   | `false`                                             | Enable PostgreSQL database (CloudNativePG)                                                                                           |
+| `postgres.imageName`                           | string | `ghcr.io/cloudnative-pg/postgresql:17`              | PostgreSQL image version                                                                                                             |
+| `postgres.instances`                           | int    | `1`                                                 | Number of PostgreSQL instances                                                                                                       |
+| `postgres.storage.storageClass`                | string | `longhorn`                                          | Storage class for PostgreSQL data                                                                                                    |
+| `postgres.storage.size`                        | string | `10Gi`                                              | Storage size for PostgreSQL data                                                                                                     |
+| `postgres.resources.requests.memory`           | string | `""`                                                | Memory request for PostgreSQL pods                                                                                                   |
+| `postgres.resources.requests.cpu`              | string | `""`                                                | CPU request for PostgreSQL pods                                                                                                      |
+| `postgres.resources.limits.memory`             | string | `""`                                                | Memory limit for PostgreSQL pods                                                                                                     |
+| `postgres.resources.limits.cpu`                | string | `""`                                                | CPU limit for PostgreSQL pods                                                                                                        |
+| `postgres.postgresql.parameters`               | object | `{}`                                                | PostgreSQL configuration parameters                                                                                                  |
+| `postgres.affinity.enablePodAntiAffinity`      | bool   | `true`                                              | Enable pod anti-affinity for PostgreSQL pods                                                                                         |
+| `postgres.affinity.podAntiAffinityType`        | string | `preferred`                                         | Pod anti-affinity type                                                                                                               |
+| `postgres.affinity.topologyKey`                | string | `kubernetes.io/hostname`                            | Topology key for pod anti-affinity                                                                                                   |
+| `postgres.monitoring.enabled`                  | bool   | `false`                                             | Enable PodMonitor for PostgreSQL metrics                                                                                             |
+| `postgres.monitoring.interval`                 | string | `30s`                                               | Metrics scraping interval                                                                                                            |
+| `postgres.database`                            | string | `""`                                                | Database name (defaults to app.name)                                                                                                 |
+| `postgres.owner`                               | string | `""`                                                | Database owner (defaults to app.name)                                                                                                |
 
 ## Values Configuration
 
@@ -907,122 +911,109 @@ authentik:
 
 #### Authentik stack ownership: `managedBy`
 
-> **Deprecated antipattern (operator decision 2026-10-11).** The
-> `managedBy: terraform` lane — generic-app rendering Crossplane objects from
-> helm values — is the documented antipattern. Komga and demo-app still run
-> it; their retirement is planned, and the live workspaces must keep
-> rendering until then. Do not extend the lane or add consumers. The
-> replacement path is the per-app file pair (`crossplane.yaml` +
-> `authentik.tf`, single source of truth) in the consumer's app dir. The
-> mechanics below document the lane as it runs today.
-
 `authentik.managedBy` picks who owns the app's Authentik stack (0.0.84+):
 
-- **`blueprint` (default, legacy)**: the chart renders the blueprint ConfigMap
-  (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it. Unchanged
-  behavior for every existing app.
-- **`terraform` (fleet path, deprecated antipattern)**: the chart renders the provider-opentofu stack —
-  `OnePasswordItem` (workspace token) + `ProviderConfig` (token file +
-  per-app backend args) + `Workspace` — pulling the shared module
-  `terraform/modules/authentik-app`. Blueprint ConfigMaps are suppressed.
-  `proxy` and `oidc` modes; `bookmark` with `terraform` fails the render
-  loudly (bookmarks have no tofu resources — they stay `blueprint`).
+- **`blueprint` (default, legacy)**: the chart renders the blueprint
+  ConfigMap (mode `proxy`/`oidc`/`bookmark`) and Authentik imports it.
+  Unchanged behavior for every un-flipped app — the tofu lane changes
+  nothing on this path.
+- **`terraform` (the tofu lane)**: the chart renders the provider-opentofu
+  stack — `OnePasswordItem` (workspace token) + `ProviderConfig` (token
+  file, optional `oidc-client-id` file, per-app backend args) +
+  `Workspace` (`source: Inline`) — with **chart-generated per-app HCL**.
+  The Workspace carries NO varmap in git and NO module ref (the
+  Remote+chart-tag module-pull antipattern is retired): every value lands
+  inline in the generated HCL, composed from the same `authentik` values
+  the blueprint templates read. All three modes render tofu shapes
+  (`bookmark` = the tile shape: application + bindings, no provider).
 
-The contract is **values-only, compose-only**: no per-app `terraform.tf`, no
-module ConfigMap, no `valuesFrom`, no kustomization additions — and no values
-varmap (removed 0.0.86; the `authentik.terraform` block is gone). The chart
-composes **every** module input from the `authentik` values (the same inputs
-the blueprint templates read), so flipping an app is a `managedBy` change
-alone. A per-app config delta becomes a proper `authentik` values key the
-compose reads, never a raw varmap; the adopt tier's ids arrive via a gate-time
-live patch (below), never git.
+The generated HCL is shape-identical to the merged file-pair exemplars
+(`gatus`/`immich`/`jetkvm`):
 
-```yaml
-authentik:
-  enabled: true
-  managedBy: terraform # blueprint -> terraform: the flip
-  # ...the same values the blueprint templates read (composed into varmap)
-```
+- **ADOPTION machinery is baked in**: the application import is UNGATED
+  (authentik applications import by slug — a static literal); every
+  GENERATED id (provider pk, binding uuids, custom-mapping pm_uuids)
+  rides an import block gated by
+  `for_each = var.adoption ? toset(["g"]) : toset([])`, default off.
+  Plain variable-id imports are BANNED — tofu silently skips an empty-id
+  import and plans a duplicate create (the jetkvm blink). Two-way
+  plan-time validation fails loudly both ways: `adoption=true` with any
+  id empty; ids set with `adoption=false`.
+- **MISP rules**: oidc `grant_types` pins the values list live-verbatim
+  (always sent explicitly — authentik 2026.8 no longer backfills it);
+  `response_types` never written (not in the goauthentik 2026.8.0 TF
+  schema); `token_validity` never written (dead attr in 2026.8).
+- Render guards fail loudly on flip miswires: unknown mode, `shared`
+  without `tailnet.enabled`, oidc with both/neither client-id lanes,
+  provider keys on the wrong mode, empty `grantTypes`.
 
-**Module**: `terraform/modules/authentik-app` is the root config (import
-blocks are root-only) — the Workspace pulls it via `source: Remote` with
-`module:
-git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-{{ chart version }}`.
-The ref self-pins to this chart's own git tag: the create-chart-tag CI job
-pushes `generic-app-<version>` minutes after merge, so the chart and the
-module it deploys always move together.
+**Client-id lanes (oidc)** — exactly one per app, the render fails on
+both set or neither:
 
-**First-reconcile window**: the chart renders the new `?ref=` the moment Flux
-picks up the HelmRelease, but the tag lands minutes later via CI — the FIRST
-workspace reconcile after a chart bump fails with `pathspec
-'generic-app-<version>' did not match` (ReconcileError) and self-heals on the
-next reconcile once the tag exists. Expected, once per chart bump;
-`remotePullPolicy: IfNotPresent` (the admission default is `Always`) keeps
-later polls from re-cloning the repo every reconcile — a chart bump changes
-the ref and re-pulls exactly once.
+- `oidc.clientIdFromSecret.enabled: true` (the file lane): the
+  ProviderConfig materializes the SAME 1Password-backed Secret key the
+  app consumes as the `oidc-client-id` file, and the HCL reads
+  `client_id = trimspace(file("oidc-client-id"))` — the value never
+  enters git. Flip MRs also REMOVE the helmrelease
+  `valuesFrom → authentik.oidc.clientId` entry (flux merges valuesFrom
+  pre-render; the tofu lane must not see the client_id value). Defaults:
+  `name: ""` → `<app>-secrets`, `key: "oidc-client-id"`.
+- `oidc.clientId: "<literal>"` (the static lane, fresh creates —
+  misp/opencti style).
+- `oidc.clientSecret` never on the tofu path (Sensitive, generated
+  server-side — tofu must not manage it).
 
-**Two tiers**:
+**W0 imperative (merge-time)**: komga + demo-app run `managedBy:
+terraform` today on the retired Remote lane. This rewrite REPLACES their
+rendered Workspace (Remote+varmap → Inline) — their next `helm upgrade`
+hot-switches the workspace shape. At merge time: `flux suspend
+helmrelease komga demo-app` and run the W0 retirement same-window
+(`docs/plans/authentik-chart-tofu-lane.md` §Waves): delete each workspace
+CR (prune guard → orphan; live objects survive) + the module-era state
+Secret (`tfstate-komga-authentik-komga`,
+`tfstate-demo-app-authentik-demo-app`), restart the
+`upbound-provider-opentofu` pod (clears the Remote→Inline residue, once),
+then re-adopt each through the normal gate. After W0 no Remote residue
+exists anywhere.
 
-- **Adopt** (apps with live blueprint-era objects): the operator injects
-  the `adoption` flag + every live import id for the app's shape via a
-  gate-time live merge-patch on the WORKSPACE's `spec.forProvider.varmap`
-  (kubectl patch, Flux suspended — the recorded OIDC adopt-gate recipe, §1
-  step 4) — the ids NEVER enter values or git (the values varmap that
-  enabled the komga pilot's helmrelease-values injection is removed in
-  0.0.86; injections patch the live Workspace object only). tofu imports
-  the objects in place — no deletion window, uuids intact, nobody re-logs
-  in; after the first apply the imports go inert and the patch drops. OIDC
-  apps with custom scope mappings add `import_custom_scope_mapping_ids`
-  (mapping name → live pm_uuid) to the same patch — the module imports them
-  in place (0.0.85+). The module's plan-time variable validation fails
-  loudly on a missing id (an empty id makes tofu silently skip the import
-  and plan a duplicate create) — the chart keeps no adoption render gates.
-- **Blip** (fresh create, e.g. new apps): no injection at all — the
-  chart-composed inputs suffice; tofu creates the stack from scratch.
-  Chart-era blueprints for blip apps decommission separately.
+**Flip runbook (per app)** — recipe §8 adapted to chart apps; the full
+gate lives in `docs/plans/authentik-chart-tofu-lane.md` §The flip + gate
+runbook:
 
-**Private-repo hardening (recorded recipe, not active)**: the repo is public
-today, so the module pull needs zero auth. For the day it flips private, the
-proven recipe (provider-opentofu special-cases the filename) is one more
-credentials entry on the ProviderConfig:
-
-```yaml
-spec:
-  credentials:
-    - filename: authentik-token # existing
-      source: Secret
-      secretRef:
-        {
-          name: authentik-terraform-token,
-          namespace: <app>,
-          key: authentik-terraform-token,
-        }
-    - filename: .git-credentials # git module-pull auth
-      source: Secret
-      secretRef:
-        {
-          name: authentik-terraform-token,
-          namespace: <app>,
-          key: gitlab-module-pull-token,
-        }
-```
-
-The 1Password item `crossplane-terraform-secrets` gains a field
-`gitlab-module-pull-token` whose VALUE is the full git-store line
-`https://oauth2:<token>@gitlab.com` (operator pastes once; never in git). The
-per-app OnePasswordItem CR syncs every item field into the Secret, so the key
-appears in every app namespace with no per-app manifest changes. The provider
-writes the file to the workdir and points `GIT_CRED_DIR` at it (process-wide —
-every app namespace must use the same token content to keep the
-last-Connect-wins race benign). No `.netrc` needed.
+1. Witness pass (read-only psql, batched per wave): provider pk, binding
+   uuids, custom-mapping pm_uuids, grant_types + the full live-attrs
+   parity row per app.
+2. Flip MR (values-only): `managedBy: terraform` + per-app live-delta
+   keys from the parity table (deltas → values keys, never ids); remove
+   `valuesFrom` clientId entries; add `clientIdFromSecret.enabled: true`
+   where applicable; proxy apps' provider names join the shared-outpost
+   stack.
+3. Suspend the app's kustomization; merge.
+4. Render + patch + apply ONCE (born-with-varmap): `helm template` with
+   the merged values → the 3 tofu docs, module inline, NO varmap; patch
+   the rendered Workspace `spec.forProvider.varmap` with the reduced
+   witness key set (adoption: true + the app's ids — ONLY the keys the
+   HCL declares); stamp helm ownership on all 3 docs
+   (`app.kubernetes.io/managed-by: Helm`,
+   `helm.toolkit.fluxcd.io/name|namespace`,
+   `meta.helm.sh/release-name|namespace`) so the post-resume
+   `helm upgrade` (SSA) adopts the pre-stamped docs cleanly;
+   `kubectl apply`. First reconcile plans **"N to import, 0 to add, 0
+   to change, 0 to destroy"**.
+5. Confirm Synced/Ready + the state Secret serial bump + witness uuids
+   unchanged; clear the varmap (merge-patch adoption:false + empty ids);
+   resume the kustomization.
+6. Steady state: the blueprint CM prunes from the release
+   (`authentik-blueprint-<app>` disappears); login works; the next
+   reconcile reads No changes.
 
 Why `managementPolicies` (no `Delete`): crossplane v2 removed
 `spec.deletionPolicy` (the structural schema silently prunes it), so the
 Workspace renders `managementPolicies: [Observe, Create, Update]` — the
 v2-native orphan. A GitOps prune of the Workspace object can never run
-`tofu destroy` against the live Authentik stack. Deliberate decommission
-requires temporarily restoring `["*"]` (or a manual `tofu destroy`) — the
-guard is intentional.
+`tofu destroy` against the live Authentik stack. Deliberate
+decommission requires temporarily restoring `["*"]` (or a manual `tofu
+destroy`) — the guard is intentional.
 
 ### PostgreSQL Database
 

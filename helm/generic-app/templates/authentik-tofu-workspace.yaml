@@ -1,78 +1,104 @@
-{{/* DEPRECATED ANTIPATTERN (operator decision 2026-10-11): the generic-app-inside-crossplane lane - the chart rendering Crossplane objects from helm values, with chart-tag-pinned module refs inside Workspace specs. Replacement path: the per-app file pair (crossplane.yaml + authentik.tf, single source of truth) in the consumer's app dir. komga and demo-app still run this lane, retirement planned - do not extend it or add new consumers; keep it rendering for the live workspaces until they retire. Authentik tofu-native stack (provider-opentofu): OnePasswordItem + ProviderConfig + Workspace, rendered when authentik.managedBy=terraform. The Workspace pulls the shared module terraform/modules/authentik-app at the chart's own git tag (generic-app-<version>, pushed by the create-chart-tag CI job minutes after merge); the varmap carries the module's inputs. proxy and oidc modes; bookmarks stay managedBy: blueprint. */}}
+{{/*
+Authentik tofu-native stack (provider-opentofu): OnePasswordItem +
+ProviderConfig + Workspace, rendered when authentik.managedBy=terraform.
+The chart GENERATES the per-app HCL inline (source: Inline, NO varmap in
+git, NO module refs, NO chart-tag pins — the Remote+varmap antipattern is
+dead). The HCL is shape-identical to the merged file-pair exemplars
+(gatus/immich/jetkvm): values land inline in the HCL; ADOPTION rides the
+ungated slug-literal application import + for_each-gated generated-id
+imports (plain variable-id imports are BANNED — the jetkvm blink: tofu
+silently skips an empty-id import and plans a duplicate create); the
+two-way adoption validation fails loudly both ways (adoption=true with any
+id empty; ids set with adoption=false). Witness ids NEVER enter git: the
+gate-time varmap on the LIVE Workspace carries them once (recipe §8,
+born-with-varmap), then clears. managedBy: blueprint (default) keeps the
+blueprint ConfigMaps — zero behavior change for un-flipped apps.
+*/}}
 {{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") }}
-{{- $mode := default "proxy" .Values.authentik.mode }}
-{{- if and (ne $mode "proxy") (ne $mode "oidc") }}
-{{- fail (printf "authentik.managedBy=terraform supports modes \"proxy\" and \"oidc\" only, got %q - bookmarks have no tofu resources (use managedBy: blueprint)" $mode) }}
+{{- $a := .Values.authentik }}
+{{- $oidc := $a.oidc }}
+{{- $mode := default "proxy" $a.mode }}
+{{- $ns := .Values.app.namespace | default .Values.app.name }}
+{{- $slug := .Values.app.name }}
+{{- if and (ne $mode "proxy") (ne $mode "oidc") (ne $mode "bookmark") }}
+{{- fail (printf "authentik.managedBy=terraform supports modes \"proxy\", \"oidc\" and \"bookmark\", got %q - unknown mode" $mode) }}
 {{- end }}
-{{- if and .Values.authentik.shared (not .Values.tailnet.enabled) }}
+{{- if and $a.shared (not .Values.tailnet.enabled) }}
 {{- fail "authentik.shared: true requires tailnet.enabled: true - a users binding without tailnet exposure would be unreachable for friends" }}
 {{- end }}
-{{- $ns := .Values.app.namespace | default .Values.app.name }}
-{{- $oidc := .Values.authentik.oidc }}
-{{/*
-  The module-input varmap - COMPOSED-ONLY. The chart composes the entire
-  surface from the authentik values (the same inputs the blueprint templates
-  read) so a blip app is a managedBy flip alone; there is NO values-side
-  varmap (0.0.86 removed the passthrough - a documented varmap block invites
-  adoption ids into git). Per-app config deltas become proper values keys
-  this compose reads, never a raw varmap. Adoption ids never enter git: adopt
-  apps get them via a gate-time LIVE merge-patch on the Workspace
-  spec.forProvider.varmap (kubectl patch, Flux suspended - the recorded OIDC
-  adopt-gate recipe, .scratch/oidc-adopt-gate-recipe.md §1 step 4) on top of
-  the composed keys below; the module's plan-time variable validation is the
-  adoption guard. The variable contract is
-  terraform/modules/authentik-app/variables.tf. Native types
-  flow through the tfvars.json path: bools as bools, ids as quoted strings.
-  NEVER route this through a ConfigMap - all-string data breaks the typing.
-*/}}
-{{- $composed := dict
-      "app_name" .Values.app.name
+{{- $oidcKeys := list }}
+{{- $cidf := $oidc.clientIdFromSecret | default dict }}
+{{- if $oidc.clientId }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.clientId" }}{{ end }}
+{{- if $cidf.enabled }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.clientIdFromSecret.enabled" }}{{ end }}
+{{- if $oidc.redirectUris }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.redirectUris" }}{{ end }}
+{{- if $oidc.customScopeMappings }}{{ $oidcKeys = append $oidcKeys "authentik.oidc.customScopeMappings" }}{{ end }}
+{{- if and (eq $mode "proxy") $oidcKeys }}
+{{- fail (printf "authentik.managedBy=terraform mode %s renders no oauth2 provider - authentik.oidc keys set on a proxy app are a flip miswire: %s" $mode (join ", " $oidcKeys)) }}
+{{- end }}
+{{- $bkKeys := $oidcKeys }}
+{{- if $a.skipPathRegex }}{{ $bkKeys = append $bkKeys "authentik.skipPathRegex" }}{{ end }}
+{{- if and (eq $mode "bookmark") $bkKeys }}
+{{- fail (printf "authentik.managedBy=terraform mode %s renders no provider (tile shape: application + bindings only) - provider keys set on a bookmark app are a flip miswire: %s" $mode (join ", " $bkKeys)) }}
+{{- end }}
+{{- if and (eq $mode "oidc") $a.skipPathRegex }}
+{{- fail "authentik.skipPathRegex is a proxy-provider attribute - it does not compose into mode oidc" }}
+{{- end }}
+{{- $clientFile := false }}
+{{- $clientLiteral := "" }}
+{{- if eq $mode "oidc" }}
+{{- if and $oidc.clientId $cidf.enabled }}
+{{- fail "authentik.oidc.clientId and authentik.oidc.clientIdFromSecret.enabled are mutually exclusive client_id lanes - exactly one must be set (render fails on both)" }}
+{{- end }}
+{{- if and (not $oidc.clientId) (not $cidf.enabled) }}
+{{- fail "mode oidc on the tofu lane requires a client_id lane: authentik.oidc.clientId (static literal, fresh creates) or authentik.oidc.clientIdFromSecret.enabled (the file lane) - render fails on neither (client_id is REQUIRED by the goauthentik TF resource)" }}
+{{- end }}
+{{- if not ($oidc.grantTypes | default list) }}
+{{- fail "authentik.oidc.grantTypes must not be empty on the tofu path - the authentik 2026.8 API no longer backfills grant_types and an empty set rejects every authorize request (the MISP lesson); pin the app's live row verbatim" }}
+{{- end }}
+{{- $clientFile = $cidf.enabled }}
+{{- $clientLiteral = $oidc.clientId | default "" }}
+{{- end }}
+{{- $internalHost := $a.internalHost | default (printf "http://%s.%s.svc.cluster.local:%v" $slug $ns (.Values.app.service.port | default 80)) }}
+{{- $launchUrl := $a.ssoLaunchUrl | default $a.externalHost }}
+{{- $shadowed := list }}
+{{- range $oidc.customScopeMappings }}{{ $shadowed = append $shadowed .scopeName }}{{ end }}
+{{- $t := dict
       "mode" $mode
-      "display_name" .Values.authentik.displayName
-      "external_host" .Values.authentik.externalHost
-      "internal_host" (printf "http://%s.%s.svc.cluster.local:%v" .Values.app.name $ns (.Values.app.service.port | default 80))
-      "shared" .Values.authentik.shared
-      "tailnet" .Values.tailnet.enabled
-      "sso_launch_url" .Values.authentik.ssoLaunchUrl
-      "icon" .Values.authentik.icon
-      "open_in_new_tab" .Values.authentik.openInNewTab
-      "category" .Values.authentik.category
-      "authorization_flow" .Values.authentik.authorizationFlow
-      "invalidation_flow" .Values.authentik.invalidationFlow
-      "authentication_flow" .Values.authentik.authenticationFlow
-      "intercept_header_auth" .Values.authentik.interceptHeaderAuth
-      "skip_path_regex" .Values.authentik.skipPathRegex
-      "authentik_host" .Values.authentik.authentikHost
-      "authentik_host_insecure" .Values.authentik.authentikHostInsecure
-      "service_connection" .Values.authentik.serviceConnection
-      "log_level" .Values.authentik.logLevel
-      "kubernetes_replicas" .Values.authentik.replicas
-      "kubernetes_namespace" .Values.authentik.namespace
-      "client_type" $oidc.clientType
-      "sub_mode" $oidc.subMode
-      "include_claims_in_id_token" $oidc.includeClaimsInIdToken
-      "issuer_mode" $oidc.issuerMode
-      "signing_key" $oidc.signingKey
-      "access_code_validity" $oidc.accessCodeValidity
-      "refresh_token_validity" $oidc.refreshTokenValidity
-      "scopes" $oidc.scopes
+      "app" $slug
+      "ns" $ns
+      "displayName" $a.displayName
+      "category" ($a.category | default "Applications")
+      "launchUrl" $launchUrl
+      "icon" ($a.icon | default "")
+      "metaDescription" ($a.metaDescription | default "")
+      "metaPublisher" ($a.metaPublisher | default "")
+      "openInNewTab" ($a.openInNewTab | default true)
+      "shared" $a.shared
+      "authentikHost" $a.authentikHost
+      "authorizationFlow" $a.authorizationFlow
+      "invalidationFlow" $a.invalidationFlow
+      "authenticationFlow" $a.authenticationFlow
+      "internalHost" $internalHost
+      "externalHost" $a.externalHost
+      "interceptHeaderAuth" ($a.interceptHeaderAuth | default false)
+      "skipPathRegex" ($a.skipPathRegex | default list)
+      "accessTokenValidity" ($a.accessTokenValidity | default "hours=1")
+      "clientFile" $clientFile
+      "clientLiteral" $clientLiteral
+      "clientType" ($oidc.clientType | default "confidential")
+      "subMode" ($oidc.subMode | default "user_username")
+      "includeClaimsInIdToken" ($oidc.includeClaimsInIdToken | default true)
+      "issuerMode" ($oidc.issuerMode | default "per_provider")
+      "signingKey" ($oidc.signingKey | default "authentik Self-signed Certificate")
+      "accessCodeValidity" ($oidc.accessCodeValidity | default "minutes=1")
+      "oidcAccessTokenValidity" ($oidc.accessTokenValidity | default "minutes=5")
+      "refreshTokenValidity" ($oidc.refreshTokenValidity | default "days=30")
+      "grantTypes" ($oidc.grantTypes | default list)
+      "redirectUris" ($oidc.redirectUris | default list)
+      "scopes" ($oidc.scopes | default list)
+      "shadowed" $shadowed
+      "customScopeMappings" ($oidc.customScopeMappings | default list)
 }}
-{{- if .Values.authentik.metaDescription }}{{- $_ := set $composed "meta_description" .Values.authentik.metaDescription }}{{- end }}
-{{- if .Values.authentik.metaPublisher }}{{- $_ := set $composed "meta_publisher" .Values.authentik.metaPublisher }}{{- end }}
-{{- if eq $mode "oidc" }}{{- $_ := set $composed "access_token_validity" $oidc.accessTokenValidity }}{{- end }}
-{{- if $oidc.clientId }}{{- $_ := set $composed "oidc_client_id" $oidc.clientId }}{{- end }}
-{{- $rus := list }}
-{{- range $oidc.redirectUris }}
-{{- $rus = append $rus (dict "url" .url "matching_mode" (.matchingMode | default "strict")) }}
-{{- end }}
-{{- $_ := set $composed "redirect_uris" $rus }}
-{{- $csm := list }}
-{{- range $oidc.customScopeMappings }}
-{{- $m := dict "name" .name "scope_name" .scopeName "expression" .expression }}
-{{- if .description }}{{- $_ := set $m "description" .description }}{{- end }}
-{{- $csm = append $csm $m }}
-{{- end }}
-{{- if gt (len $csm) 0 }}{{- $_ := set $composed "custom_scope_mappings" $csm }}{{- end }}
 ---
 apiVersion: onepassword.com/v1
 kind: OnePasswordItem
@@ -84,19 +110,19 @@ spec:
   # the operator creates the 1Password item crossplane-terraform-secrets
   # (vault "Secrets", field authentik-terraform-token), and the OnePassword
   # Connect operator syncs it as the authentik-terraform-token Secret
-  # consumed by the ProviderConfig in this file. Same item as headlamp's and
-  # chaos-mesh's copies; the namespace differs.
+  # consumed by the ProviderConfig in this file. Same item as every other
+  # authentik-consumer copy; the namespace differs.
   itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
 ---
 apiVersion: opentofu.m.upbound.io/v1beta1
 kind: ProviderConfig
 metadata:
-  name: {{ .Values.app.name }}-authentik
+  name: {{ $slug }}-authentik
   namespace: {{ $ns }}
 spec:
   # Materializes the OnePasswordItem-backed Secret as a file in the tofu
-  # workdir; the module's provider block reads it with file("authentik-token").
-  # The token itself never appears in a manifest.
+  # workdir; the generated HCL's provider block reads it with
+  # file("authentik-token"). The token itself never appears in a manifest.
   credentials:
     - filename: authentik-token
       source: Secret
@@ -104,13 +130,27 @@ spec:
         name: authentik-terraform-token
         namespace: {{ $ns }}
         key: authentik-terraform-token
-  # Per-app state args for the module's PARTIAL kubernetes backend: the
-  # provider writes this as crossplane.remote.tfbackend and passes it via
-  # -backend-config at tofu init. Without it the backend init fails (the
-  # kubernetes backend requires secret_suffix/namespace/in_cluster_config).
-  # The state Secret is tfstate-default-<suffix> in the app namespace —
-  # deliberately separate from the CI tofu stack (terraform/, GitLab HTTP
-  # backend). Two stacks, two states.
+    {{- if $clientFile }}
+    # client_id file lane (oidc + clientIdFromSecret): the SAME
+    # 1Password-backed Secret key the app consumes materializes as the
+    # oidc-client-id file in the tofu workdir, so the generated HCL's
+    # client_id = trimspace(file("oidc-client-id")) reads the live
+    # blueprint-minted client_id — the value NEVER appears in git, and
+    # tofu and the app stay in lockstep on it.
+    - filename: oidc-client-id
+      source: Secret
+      secretRef:
+        name: {{ $cidf.name | default (printf "%s-secrets" $slug) }}
+        namespace: {{ $ns }}
+        key: {{ $cidf.key | default "oidc-client-id" }}
+    {{- end }}
+  # Per-app state args for the PARTIAL kubernetes backend in the generated
+  # HCL: the provider writes this as crossplane.remote.tfbackend and passes
+  # it via -backend-config at tofu init. Without it the backend init fails
+  # (the kubernetes backend requires secret_suffix/namespace/in_cluster_config).
+  # The state Secret is tfstate-{{ $slug }}-authentik-{{ $ns }} in this
+  # namespace — deliberately separate from the CI tofu stack (terraform/,
+  # GitLab HTTP backend). Two stacks, two states.
   backendFile: |
     secret_suffix     = "{{ $ns }}"
     namespace         = "{{ $ns }}"
@@ -119,7 +159,7 @@ spec:
 apiVersion: opentofu.m.upbound.io/v1beta1
 kind: Workspace
 metadata:
-  name: {{ .Values.app.name }}-authentik
+  name: {{ $slug }}-authentik
   namespace: {{ $ns }}
 spec:
   # Prune guard — crossplane v2 removed deletionPolicy; without the Delete
@@ -134,28 +174,483 @@ spec:
     - Update
   providerConfigRef:
     kind: ProviderConfig
-    name: {{ .Values.app.name }}-authentik
+    name: {{ $slug }}-authentik
   forProvider:
-    source: Remote
-    # The shared module is the root config (import blocks are root-only).
-    # The ref self-pins to this chart's own git tag: create-chart-tag CI
-    # pushes generic-app-<version> minutes after merge, so the FIRST
-    # reconcile after a chart bump fails (pathspec did not match) until the
-    # tag lands — one transient ReconcileError cycle, then self-heals.
-    module: "git::https://gitlab.com/Apocrathia/homelab.git//terraform/modules/authentik-app?ref=generic-app-{{ .Chart.Version }}"
-    # Pull once per URL; a chart bump changes the ref and re-pulls. The
-    # admission default (Always) would re-clone the repo on every poll.
-    remotePullPolicy: IfNotPresent
-    # Module inputs: the chart-composed surface ONLY - there is no
-    # values-side varmap (removed 0.0.86). Adoption ids ride the gate-time
-    # LIVE merge-patch on this Workspace's spec.forProvider.varmap, never
-    # values/git (the recorded OIDC adopt-gate recipe,
-    # .scratch/oidc-adopt-gate-recipe.md §1 step 4; kubectl patch, Flux
-    # suspended; quoted strings, shared/adoption as native booleans, the
-    # tfvars.json path carries types). The variable contract:
-    # terraform/modules/authentik-app/variables.tf. The module's plan-time
-    # variable validation is the adoption guard (adoption requires every
-    # shape id; ids without adoption fail).
-    varmap:
-{{ $composed | toYaml | indent 6 }}
+    # Inline module, CHART-GENERATED per app from the same values the
+    # blueprint templates read: every value lands inline in the HCL (no
+    # module refs, no chart-tag pins). NO varmap in git: the ADOPTION
+    # witness ids (provider pk, binding uuids, custom-mapping pm_uuids)
+    # ride GATED import blocks in the generated HCL that stay inert while
+    # their variables hold the defaults — plan reads No changes forever.
+    # The merge gate (recipe §8, born-with-varmap) patches the witness
+    # varmap ONTO THIS LIVE OBJECT once at the flip gate, confirms "N to
+    # import, 0 to add", then clears it; the ids NEVER appear in git. If
+    # the state Secret is ever lost, re-run the gate with fresh ids from
+    # the live DB.
+    source: Inline
+    module: |
+{{ include "generic-app.authentik.tofuModule" $t | indent 6 }}
 {{- end }}
+
+
+{{/* hclQuote: HCL-string a value — escapes ${, backslash, double-quote,
+     newline; wraps in double quotes. */}}
+{{- define "generic-app.authentik.hclQuote" -}}
+{{- $s := toString . -}}
+{{- $s = replace "${" "$${" $s -}}
+{{- $s = replace "\\" "\\\\" $s -}}
+{{- $s = replace "\"" "\\\"" $s -}}
+{{- $s = replace "\n" "\\n" $s -}}
+{{- printf "\"%s\"" $s -}}
+{{- end -}}
+
+{{/* Common header: required_providers + PARTIAL kubernetes backend (the
+     empty block MUST stay — without it -backend-config falls back to the
+     LOCAL backend and the adoption bar dies) + the authentik provider. */}}
+{{- define "generic-app.authentik.tofuHeader" -}}
+terraform {
+  required_providers {
+    authentik = {
+      source  = "goauthentik/authentik"
+      version = "2026.8.0"
+    }
+  }
+
+  # PARTIAL backend: the per-app args (secret_suffix/namespace/
+  # in_cluster_config) come from the ProviderConfig spec.backendFile — the
+  # provider writes them to crossplane.remote.tfbackend and passes them via
+  # -backend-config at tofu init. The empty block MUST stay: -backend-config
+  # without a backend block falls back to the LOCAL backend (warning only),
+  # which reads an EMPTY state and plans a full duplicate create set.
+  backend "kubernetes" {}
+}
+
+provider "authentik" {
+  url = {{ include "generic-app.authentik.hclQuote" .authentikHost }}
+
+  # Token file written by the ProviderConfig credentials array.
+  token = file("authentik-token")
+}
+{{- end -}}
+
+{{/* Data sources: flows (proxy + oidc; tile renders none) + the admins and
+     users group lookups (all modes — the users data source is declared
+     unconditionally for module-shape parity; unreferenced data sources are
+     fine). */}}
+{{- define "generic-app.authentik.tofuData" -}}
+{{- if ne .mode "bookmark" -}}
+# Blueprint !Find lookups become data sources. authentik ships these flows
+# with every install, so they pre-exist any apply. In oidc mode the
+# authentication flow stays unreferenced (module-shape parity keeps the
+# address set; unreferenced data sources are fine).
+data "authentik_flow" "provider-authorization" {
+  slug = {{ include "generic-app.authentik.hclQuote" .authorizationFlow }}
+}
+
+data "authentik_flow" "invalidation" {
+  slug = {{ include "generic-app.authentik.hclQuote" .invalidationFlow }}
+}
+
+data "authentik_flow" "authentication" {
+  slug = {{ include "generic-app.authentik.hclQuote" .authenticationFlow }}
+}
+
+{{ end -}}
+# Admins-group binding source, order-10 parity with the chart blueprint.
+# include_users=false keeps the group's member list out of the state Secret.
+data "authentik_group" "admins" {
+  name          = "admins"
+  include_users = false
+}
+
+# Users-group binding source — declared unconditionally (module-shape
+# parity); referenced only when shared adds the users binding.
+data "authentik_group" "users" {
+  name          = "users"
+  include_users = false
+}
+{{- end -}}
+
+{{/* Proxy provider (mode proxy): gatus exemplar MINUS the outpost — proxy
+     apps stop owning outposts (the shared tofu-owned outposts in the
+     authentik tree own them; the old per-app outpost keeps serving until
+     the wave sweep retires it — chart-flip apps NEVER adopt outposts). */}}
+{{- define "generic-app.authentik.tofuProxy" -}}
+# Proxy provider — chart-blueprint parity; every value composes from the
+# authentik values, so the flip gate plans zero drift.
+resource "authentik_provider_proxy" "app" {
+  name                = {{ include "generic-app.authentik.hclQuote" (printf "%s-proxy-provider" .app) }}
+  mode                = "proxy"
+  authorization_flow  = data.authentik_flow.provider-authorization.id
+  invalidation_flow   = data.authentik_flow.invalidation.id
+  authentication_flow = data.authentik_flow.authentication.id
+
+  internal_host = {{ include "generic-app.authentik.hclQuote" .internalHost }}
+  external_host = {{ include "generic-app.authentik.hclQuote" .externalHost }}
+
+  # Always sent explicitly so the live row never rides on a TF resource
+  # default (the TF default true would PATCH blueprint-era rows).
+  intercept_header_auth = {{ .interceptHeaderAuth }}
+{{- if .skipPathRegex }}
+
+  # skipPathRegex joined with newlines — byte-verbatim, no trailing
+  # newline (the grafana 18-byte lesson); [] = attribute omitted.
+  skip_path_regex = {{ include "generic-app.authentik.hclQuote" (join "\n" .skipPathRegex) }}
+{{- end }}
+
+  # Always sent: the TF resource default (minutes=10) would PATCH the live
+  # row at the authentik model default hours=1 on the first apply.
+  access_token_validity = {{ include "generic-app.authentik.hclQuote" .accessTokenValidity }}
+}
+{{- end -}}
+
+{{/* Custom scope mappings (mode oidc, when declared): for_each over the
+     declared names; expression verbatim. try(...) keeps description null
+     when a mapping does not set one (null = attribute omitted — the
+     config must not invent values). */}}
+{{- define "generic-app.authentik.tofuOidcCustom" -}}
+# Custom scope mappings — declared values verbatim; the resource
+# for_each-keys over the mapping names, so every mapping's import rides its
+# own keyed block below.
+locals {
+  custom_scope_mappings = {
+{{- range .customScopeMappings }}
+    {{ include "generic-app.authentik.hclQuote" .name }} = {
+      scope_name = {{ include "generic-app.authentik.hclQuote" .scopeName }}
+      {{- if .description }}
+      description = {{ include "generic-app.authentik.hclQuote" .description }}
+      {{- end }}
+      expression = <<-EOF
+{{ .expression | trimAll "\n" | indent 8 }}
+        EOF
+    }
+{{- end }}
+  }
+}
+
+resource "authentik_property_mapping_provider_scope" "custom" {
+  for_each = local.custom_scope_mappings
+
+  name       = each.key
+  scope_name = each.value.scope_name
+  description = try(each.value.description, null)
+  expression  = each.value.expression
+}
+{{- end -}}
+
+{{/* OIDC provider (mode oidc): immich exemplar shape — signing lookup,
+     standard scope lookups (custom shadowing), custom mappings when
+     declared, the oauth2 provider. */}}
+{{- define "generic-app.authentik.tofuOidc" -}}
+# JWT signing key lookup (oidc mode).
+data "authentik_certificate_key_pair" "signing" {
+  name = {{ include "generic-app.authentik.hclQuote" .signingKey }}
+}
+{{ range $s := .scopes }}
+{{- if not (has $s $.shadowed) }}
+data "authentik_property_mapping_provider_scope" "{{ $s }}" {
+  scope_name = {{ include "generic-app.authentik.hclQuote" $s }}
+}
+{{ end }}
+{{- end }}
+{{- if .customScopeMappings }}
+{{ include "generic-app.authentik.tofuOidcCustom" . }}
+
+{{ end }}
+# The OIDC provider — chart-blueprint parity. client_id comes from exactly
+# one lane (the render guard fails on both/neither): the file lane reads
+# the oidc-client-id file the ProviderConfig materializes from the SAME
+# 1Password-backed Secret key the app consumes (the value never enters
+# git), or the static-literal lane pins it inline (misp/opencti style,
+# fresh creates). client_secret is never set here (Sensitive, generated
+# server-side) — tofu must not manage it.
+resource "authentik_provider_oauth2" "app" {
+  name = {{ include "generic-app.authentik.hclQuote" (printf "%s-oidc-provider" .app) }}
+
+  # No authentication_flow — the chart blueprint omits it too (Optional,
+  # no TF default: null is never sent).
+  authorization_flow = data.authentik_flow.provider-authorization.id
+  invalidation_flow  = data.authentik_flow.invalidation.id
+
+{{ if .clientFile }}  # The client_id file lane — the ProviderConfig materializes the
+  # file; the value never appears in git.
+  client_id = trimspace(file("oidc-client-id"))
+{{ else }}  client_id = {{ include "generic-app.authentik.hclQuote" .clientLiteral }}
+{{ end }}
+  client_type                = {{ include "generic-app.authentik.hclQuote" .clientType }}
+  sub_mode                   = {{ include "generic-app.authentik.hclQuote" .subMode }}
+  include_claims_in_id_token = {{ .includeClaimsInIdToken }}
+  issuer_mode                = {{ include "generic-app.authentik.hclQuote" .issuerMode }}
+  signing_key                = data.authentik_certificate_key_pair.signing.id
+
+{{- if .customScopeMappings }}
+
+  # Standard (non-shadowed) scope lookups + the custom mappings — chart
+  # blueprint parity (a custom mapping with the same scope_name shadows the
+  # standard lookup).
+  property_mappings = concat(
+    [
+{{- range $s := .scopes }}
+{{- if not (has $s $.shadowed) }}
+      data.authentik_property_mapping_provider_scope.{{ $s }}.id,
+{{- end }}
+{{- end }}
+    ],
+    [for m in authentik_property_mapping_provider_scope.custom : m.id]
+  )
+{{- else }}
+
+  # Standard scope lookups — chart blueprint parity.
+  property_mappings = [
+{{- range $s := .scopes }}
+    data.authentik_property_mapping_provider_scope.{{ $s }}.id,
+{{- end }}
+  ]
+{{- end }}
+{{- if .redirectUris }}
+
+  allowed_redirect_uris = [
+{{- range .redirectUris }}
+    {
+      url           = {{ include "generic-app.authentik.hclQuote" .url }}
+      matching_mode = {{ include "generic-app.authentik.hclQuote" (.matchingMode | default "strict") }}
+    },
+{{- end }}
+  ]
+{{- end }}
+
+  # The three validity attrs are always sent explicitly — a TF resource
+  # default must never silently PATCH a live row.
+  access_code_validity   = {{ include "generic-app.authentik.hclQuote" .accessCodeValidity }}
+  access_token_validity  = {{ include "generic-app.authentik.hclQuote" .oidcAccessTokenValidity }}
+  refresh_token_validity = {{ include "generic-app.authentik.hclQuote" .refreshTokenValidity }}
+
+  # grant_types pinned live-verbatim (the MISP lesson): ALWAYS sent
+  # explicitly — the authentik 2026.8 API serializer no longer backfills
+  # it and an empty set rejects every authorize request. The values pin
+  # the app's live row: a declared 2-value list stays 2-value; a live
+  # default-set row reproduces the full seven explicitly in the flip MR.
+  # response_types is NOT in the goauthentik 2026.8.0 TF schema (never
+  # write it); token_validity is dead in authentik 2026.8 (never write it).
+  grant_types = [
+{{- range .grantTypes }}
+    {{ include "generic-app.authentik.hclQuote" . }},
+{{- end }}
+  ]
+}
+{{- end -}}
+
+{{/* Application (all modes): blueprint parity; protocol_provider replaces
+     the blueprint's provider FK; tile (bookmark) stays provider-less. */}}
+{{- define "generic-app.authentik.tofuApplication" -}}
+{{- if eq .mode "bookmark" -}}
+# Application — chart-blueprint parity. NO protocol_provider: the tile is
+# the dashboard launchpad shape (the authentik-bookmark-blueprint parity);
+# the provider-less application stays provider-less.
+{{- else -}}
+# Application — chart-blueprint parity; protocol_provider replaces the
+# blueprint's provider FK.
+{{- end }}
+resource "authentik_application" "app" {
+  name            = {{ include "generic-app.authentik.hclQuote" .displayName }}
+  slug            = {{ include "generic-app.authentik.hclQuote" .app }}
+  group           = {{ include "generic-app.authentik.hclQuote" .category }}
+  meta_launch_url = {{ include "generic-app.authentik.hclQuote" .launchUrl }}
+  open_in_new_tab = {{ .openInNewTab }}
+{{- if .icon }}
+
+  # Optional metadata: null = attribute omitted — the config must not
+  # invent values (live rows verified field-by-field at the flip gate).
+  meta_icon = {{ include "generic-app.authentik.hclQuote" .icon }}
+{{- end }}
+{{- if .metaDescription }}
+  meta_description = {{ include "generic-app.authentik.hclQuote" .metaDescription }}
+{{- end }}
+{{- if .metaPublisher }}
+  meta_publisher = {{ include "generic-app.authentik.hclQuote" .metaPublisher }}
+{{- end }}
+{{- if eq .mode "proxy" }}
+
+  protocol_provider = authentik_provider_proxy.app.id
+{{- else if eq .mode "oidc" }}
+
+  protocol_provider = authentik_provider_oauth2.app.id
+{{- end }}
+}
+{{- end -}}
+
+{{/* Policy bindings: admins (order 10, always) + users (order 20, shared). */}}
+{{- define "generic-app.authentik.tofuBindings" -}}
+# IMMEDIATELY after the application: an app without policies is open to ALL
+# authenticated users until this binding lands. Order-10 parity with the
+# chart blueprint. No count: the binding always exists, so its state
+# address carries no [0] index.
+resource "authentik_policy_binding" "admins" {
+  target = authentik_application.app.uuid
+  group  = data.authentik_group.admins.id
+  order  = 10
+}
+{{- if .shared }}
+
+# Order-20 parity: the users binding IS the shared tag — friends reach the
+# app through the tailnet door (the render guard requires
+# tailnet.enabled).
+resource "authentik_policy_binding" "users" {
+  target = authentik_application.app.uuid
+  group  = data.authentik_group.users.id
+  order  = 20
+}
+{{- end }}
+{{- end -}}
+
+{{/* Adoption variables + two-way plan-time validation. Per-shape id set:
+     tile: import_binding_admins_pk (+ users when shared); proxy/oidc:
+     import_provider_pk (number) + binding ids (+ users when shared);
+     oidc with custom mappings: import_custom_scope_mapping_ids
+     (map(string), one key per declared customScopeMappings entry). */}}
+{{- define "generic-app.authentik.tofuAdoption" -}}
+# ---------------------------------------------------------------------------
+# ADOPTION VARIABLES — the generated-id import gate. Defaults (adoption
+# false, ids empty) validate clean and leave the import blocks below
+# inert. The ONLY setter is the merge-gate varmap (recipe §8): injected
+# into the Workspace once, cleared after the adoption apply. The ids
+# themselves NEVER appear in git.
+# ---------------------------------------------------------------------------
+variable "adoption" {
+  description = "Merge-gate switch: adopt the live blueprint-created objects in place via the import blocks below (recipe §8; default off)."
+  type        = bool
+  default     = false
+
+  # Gate 1: adoption=true with any id empty is a miswire — tofu silently
+  # skips an empty-id import and plans a duplicate create, so fail loudly.
+  validation {
+    condition = !var.adoption || (
+{{- if ne .mode "bookmark" }}
+      var.import_provider_pk != 0 &&
+{{- end }}
+      var.import_binding_admins_pk != ""
+{{- if .shared }}
+      && var.import_binding_users_pk != ""
+{{- end }}
+{{- if and (eq .mode "oidc") .customScopeMappings }}
+      && alltrue([
+        for name in [
+{{- range .customScopeMappings }}
+          {{ include "generic-app.authentik.hclQuote" .name }},
+{{- end }}
+        ] : lookup(var.import_custom_scope_mapping_ids, name, "") != ""
+      ])
+{{- end }}
+    )
+    error_message = "ADOPTION GATE: adoption=true requires every generated import id for this app's shape. An empty id makes tofu silently skip the import and plan a duplicate create — the blip."
+  }
+
+  # Gate 2: ids set with adoption=false is a miswire — a stray varmap must
+  # never half-arm the imports; fail loudly.
+  validation {
+    condition = var.adoption || (
+{{- if ne .mode "bookmark" }}
+      var.import_provider_pk == 0 &&
+{{- end }}
+      var.import_binding_admins_pk == ""
+{{- if .shared }}
+      && var.import_binding_users_pk == ""
+{{- end }}
+{{- if and (eq .mode "oidc") .customScopeMappings }}
+      && length(var.import_custom_scope_mapping_ids) == 0
+{{- end }}
+    )
+    error_message = "ADOPTION GATE: import ids set with adoption=false is a miswire — clear the ids or set adoption=true."
+  }
+}
+{{- if ne .mode "bookmark" }}
+
+variable "import_provider_pk" {
+  description = "Live pk of the provider to adopt (proxy or oauth2, per mode). Gate-time varmap only — never in git. 0 = unset (steady state)."
+  type        = number
+  default     = 0
+}
+{{- end }}
+
+variable "import_binding_admins_pk" {
+  description = "Live authentik_policy_binding admins uuid for the gated import (bindings import by pk). Gate-time varmap only — never in git. Empty = unset (steady state)."
+  type        = string
+  default     = ""
+}
+{{- if .shared }}
+
+variable "import_binding_users_pk" {
+  description = "Live authentik_policy_binding users uuid for the gated import (bindings import by pk). Gate-time varmap only — never in git. Empty = unset (steady state)."
+  type        = string
+  default     = ""
+}
+{{- end }}
+{{- if and (eq .mode "oidc") .customScopeMappings }}
+
+variable "import_custom_scope_mapping_ids" {
+  description = "Live pm_uuids of the custom scope mappings to adopt, keyed by mapping name (one key per declared customScopeMappings entry). Gate-time varmap only — never in git; the empty map at steady state leaves the keyed imports at zero ids."
+  type        = map(string)
+  default     = {}
+}
+{{- end }}
+{{- end -}}
+
+{{/* Import blocks: the application import is UNGATED by design —
+     authentik_application imports BY SLUG and the slug is a static
+     literal. Every GENERATED id (provider pk, binding uuids, custom
+     mapping pm_uuids) rides a for_each-GATED block, default off: PLAIN
+     variable-id imports are BANNED (the jetkvm blink — an empty id is
+     silently skipped and a fresh create is planned). for_each is a pure
+     on/off gate (toset([\"g\"]) on, toset([]) off) with a STATIC to;
+     adoption=false at steady state yields zero import instances, and
+     after the gate the blocks are inert because state already holds the
+     targets. */}}
+{{- define "generic-app.authentik.tofuImports" -}}
+import {
+  to = authentik_application.app
+  id = {{ include "generic-app.authentik.hclQuote" .app }}
+}
+{{- if ne .mode "bookmark" }}
+
+import {
+  for_each = var.adoption ? toset(["g"]) : toset([])
+  to       = authentik_provider_{{ if eq .mode "oidc" }}oauth2{{ else }}proxy{{ end }}.app
+  id       = var.import_provider_pk != 0 ? tostring(var.import_provider_pk) : ""
+}
+{{- end }}
+
+import {
+  for_each = var.adoption ? toset(["g"]) : toset([])
+  to       = authentik_policy_binding.admins
+  id       = var.import_binding_admins_pk
+}
+{{- if .shared }}
+
+import {
+  for_each = var.adoption ? toset(["g"]) : toset([])
+  to       = authentik_policy_binding.users
+  id       = var.import_binding_users_pk
+}
+{{- end }}
+{{- range .customScopeMappings }}
+
+import {
+  for_each = var.adoption ? toset(["g"]) : toset([])
+  to       = authentik_property_mapping_provider_scope.custom[{{ include "generic-app.authentik.hclQuote" .name }}]
+  id       = var.import_custom_scope_mapping_ids[{{ include "generic-app.authentik.hclQuote" .name }}]
+}
+{{- end }}
+{{- end -}}
+
+{{/* Module assembly: header -> data sources -> provider resources ->
+     application -> bindings -> adoption vars -> imports. */}}
+{{- define "generic-app.authentik.tofuModule" -}}
+{{- $parts := list (include "generic-app.authentik.tofuHeader" .) (include "generic-app.authentik.tofuData" .) -}}
+{{- if eq .mode "proxy" }}{{ $parts = append $parts (include "generic-app.authentik.tofuProxy" .) }}{{ end -}}
+{{- if eq .mode "oidc" }}{{ $parts = append $parts (include "generic-app.authentik.tofuOidc" .) }}{{ end -}}
+{{- $parts = append $parts (include "generic-app.authentik.tofuApplication" .) -}}
+{{- $parts = append $parts (include "generic-app.authentik.tofuBindings" .) -}}
+{{- $parts = append $parts (include "generic-app.authentik.tofuAdoption" .) -}}
+{{- $parts = append $parts (include "generic-app.authentik.tofuImports" .) -}}
+{{- join "\n\n" $parts -}}
+{{- end -}}
