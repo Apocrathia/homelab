@@ -95,8 +95,12 @@ spec:
           failureThreshold: 3
         readinessProbe:
           enabled: true
+          # Probe a repo-root file, never a path a lane can restructure
+          # away: the tofu-tiles migration deleted blueprints/icons/ and
+          # 404'd the old probe file, unready-ing both pods -> gateway
+          # 503 -> every dashboard icon dead (2026-10-19 incident).
           httpGet:
-            path: /homelab/flux/manifests/03-services/authentik/blueprints/icons/gitlab.svg
+            path: /homelab/README.md
             port: 80
             scheme: HTTP
           initialDelaySeconds: 5
@@ -120,10 +124,11 @@ spec:
       enabled: false
 
     # In-cluster uptime probe doubles as a sync-chain canary: 200 on a real
-    # repo file proves clone -> serve end to end.
+    # repo file proves clone -> serve end to end. Repo-root file so lane
+    # restructures cannot orphan it (see readinessProbe note).
     gatus:
       enabled: true
-      path: /homelab/flux/manifests/03-services/authentik/blueprints/icons/gitlab.svg
+      path: /homelab/README.md
 
     # Unauthenticated LAN route via the wildcard cert + external-dns
     # (gateway defaults: main-gateway / cilium-system / https).
