@@ -38,7 +38,16 @@ alerts for the threat-intel pipeline.
 ### [OpenTAXII](./opentaxii/README.md)
 
 TAXII 2.1 server for STIX indicator exchange, backed by CloudNativePG, feeding
-the MISP/OpenCTI pipeline.
+the MISP/OpenCTI pipeline. It exists to feed OpenCTI a distinct, manageable
+feed: an on-ramp that turns any in-lab STIX producer (canary triage, MISP
+push, future scripts) into one authenticated TAXII 2.1 collection the existing
+taxii2 connector imports, keeping producers decoupled from OpenCTI's API and
+token. Why a separate hub: OpenCTI's embedded TAXII server is outbound-only
+(it serves the graph; it does not accept pushes), so inbound STIX otherwise
+means OpenCTI API scripts; there is no off-the-shelf OpenCanary connector in
+the OpenCTI catalog (180 external-import connectors checked); and OpenTAXII
+keeps TAXII 1.x and 2.1 storage disjoint, so the hub role is specifically the
+TAXII 2.1 side.
 
 ### [Prism](./prism/README.md)
 
