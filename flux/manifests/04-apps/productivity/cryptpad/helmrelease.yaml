@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -19,15 +19,6 @@ spec:
   # OIDC client credentials (Secret cryptpad-secrets, synced by the
   # OnePasswordItem in this kustomization) feed the Authentik provider
   # blueprint so the app and IdP share one credential source.
-  valuesFrom:
-    - kind: Secret
-      name: cryptpad-secrets
-      valuesKey: oidc-client-id
-      targetPath: authentik.oidc.clientId
-    - kind: Secret
-      name: cryptpad-secrets
-      valuesKey: oidc-client-secret
-      targetPath: authentik.oidc.clientSecret
   values:
     app:
       name: cryptpad
@@ -175,6 +166,7 @@ spec:
     # Native OIDC via the SSO plugin; Authentik provider + app come from the
     # chart blueprint, access from the admins + users group bindings.
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "oidc"
       shared: true
@@ -186,6 +178,11 @@ spec:
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/cryptpad/icon.svg"
       category: "Productivity"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         redirectUris:
           # Hard-coded by the plugin: httpUnsafeOrigin + /ssoauth
           - url: "https://cryptpad.gateway.services.apocrathia.com/ssoauth"

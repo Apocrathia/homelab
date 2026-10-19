@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -150,6 +150,7 @@ spec:
         size: 5Gi
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "oidc"
       displayName: "Endurain"
@@ -159,6 +160,11 @@ spec:
       metaDescription: "Self-hosted fitness tracking service"
       metaPublisher: "Endurain"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         # Slug 'authentik' must match the IdP slug set in Endurain's admin UI
         redirectUris:
           - url: "https://endurain.gateway.services.apocrathia.com/api/v1/public/idp/callback/authentik"

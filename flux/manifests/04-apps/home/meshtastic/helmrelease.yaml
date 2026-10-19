@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -151,6 +151,7 @@ spec:
       itemPath: "vaults/Secrets/items/meshtastic-secrets"
 
     authentik:
+      managedBy: terraform
       enabled: true
       mode: oidc
       displayName: "Meshtastic"
@@ -160,6 +161,11 @@ spec:
       metaDescription: "Web application for monitoring Meshtastic mesh networks"
       metaPublisher: "Meshtastic"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         redirectUris:
           - url: "https://meshtastic.gateway.services.apocrathia.com/api/auth/oidc/callback"
             matchingMode: "strict"

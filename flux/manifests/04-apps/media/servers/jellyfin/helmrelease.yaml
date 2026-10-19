@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.86"
+      version: "0.0.87"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -140,6 +140,7 @@ spec:
 
     # Authentik OIDC integration (creates OAuth2 provider via blueprint)
     authentik:
+      managedBy: terraform
       enabled: true
       mode: "oidc"
       shared: true
@@ -149,6 +150,11 @@ spec:
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/servers/jellyfin/icon.svg"
       category: "Media"
       oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
         redirectUris:
           - url: "https://jellyfin.gateway.services.apocrathia.com/sso/OID/redirect/Authentik"
             matchingMode: "strict"
