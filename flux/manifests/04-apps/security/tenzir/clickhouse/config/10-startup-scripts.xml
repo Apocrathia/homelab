@@ -314,5 +314,64 @@ ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
+        <!-- Fleet asset inventory (tenzir/nodes/enrichment/,
+             lap 2): the reference table the enrichment node's
+             fleet-assets-pull factory pipeline writes and the
+             core node's fleet-assets-loader reads. Deliberately
+             NOT a per-class ocsf.<Class_Name> table - it is
+             the tenzir-skill asset-inventory pattern (lookup
+             source material, not an archived OCSF event class),
+             so it takes the lowercase name. Engine grounding:
+             the pull re-inserts every host on each hourly run,
+             so a plain ReplicatedMergeTree would accumulate one
+             row per host per pull; ReplicatedReplacingMergeTree
+             keyed on the Fleet host uuid (the stable host
+             identity across hostname/IP churn) with last_seen as
+             the version column keeps exactly the newest row per
+             host at merge, and the loader's SELECT ... FINAL
+             collapses on read before a merge lands. Single-
+             writer convention: ONLY the enrichment node's
+             fleet-assets-pull INSERTs this table (core reads it;
+             both connect as the shared `tenzir` user, so the
+             convention is documentation, not RBAC). No
+             PARTITION BY: a current-state table, one row per
+             host - day partitions would fragment the replace
+             key across partitions. TTL mirrors the store's 400
+             DAY retention cap on last_seen so a host deleted
+             from Fleet ages out - but WITHOUT
+             ttl_only_drop_parts: that setting would only drop
+             fully-expired parts, and the hourly pulls create
+             mixed-age snapshot parts whose live rows would pin a
+             decommissioned host's stale rows forever; row-level
+             expiry on merge is the correct mode for an
+             unpartitioned state table (the event tables above
+             use ttl_only_drop_parts only because they ARE day-
+             partitioned). storage_policy rides for volume
+             consistency; no TO VOLUME clause ever fires (asset
+             rows are bytes; cold-tiering is pointless). -->
+        <scripts>
+            <query>CREATE TABLE IF NOT EXISTS ocsf.fleet_assets
+(
+    `uuid` String,
+    `hostname` LowCardinality(Nullable(String)),
+    `display_name` Nullable(String),
+    `primary_ip` Nullable(IPv6),
+    `primary_mac` Nullable(String),
+    `platform` LowCardinality(Nullable(String)),
+    `os_version` Nullable(String),
+    `osquery_version` Nullable(String),
+    `hardware_serial` Nullable(String),
+    `hardware_model` Nullable(String),
+    `hardware_vendor` Nullable(String),
+    `computer_name` Nullable(String),
+    `status` LowCardinality(Nullable(String)),
+    `last_seen` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
+    `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
+)
+ENGINE = ReplicatedReplacingMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}', last_seen)
+ORDER BY uuid
+TTL last_seen + INTERVAL 400 DAY DELETE
+SETTINGS storage_policy = 'tiered'</query>
+        </scripts>
     </startup_scripts>
 </clickhouse>

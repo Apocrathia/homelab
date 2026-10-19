@@ -1,0 +1,49 @@
+// Fleet host inventory -> ocsf.fleet_assets (factory pipeline, lap 2).
+// Pulls GET /api/v1/fleet/hosts (docs: https://fleetdm.com/docs/rest-api
+// #list-hosts — envelope {"hosts": [...]}, and with no pagination
+// params Fleet's ListOptions treat per_page=0 as unlimited, so one
+// request returns the full host list — verified against the Fleet
+// server source; if the fleet ever outgrows a single response, add a
+// paginate lambda on the `after` + `order_key=hostname` keyset params)
+// and writes the fused asset row into ClickHouse. The
+// ReplicatedReplacingMergeTree keyed on the Fleet host uuid replaces
+// each host's prior row at merge (last_seen version column);
+// mode="append" fails loudly if the MR DDL is missing.
+// every 1h fires at pipeline start, then hourly.
+every 1h {
+  from_http "https://fleet.gateway.services.apocrathia.com/api/v1/fleet/hosts",
+    headers={Authorization: f"Bearer {secret("fleetdm-token")}"} {
+    read_json
+  }
+  unroll hosts
+  this = hosts
+  // Fleet's Go zero time ("0001-01-01T00:00:00Z") would violate the
+  // DateTime64(9) floor; the string compare drops never-checked-in hosts
+  // (ADE placeholders) lexically, before time() ever sees them, and the
+  // base timestamp parse is left to time().
+  where seen_time? > "1970-01-01T00:00:01"
+  this = {
+    uuid: uuid,
+    hostname: hostname,
+    display_name: display_name?,
+    primary_ip: ip(primary_ip?) if primary_ip? not in [null, ""] else null,
+    primary_mac: primary_mac?,
+    platform: platform?,
+    os_version: os_version?,
+    osquery_version: osquery_version?,
+    hardware_serial: hardware_serial?,
+    hardware_model: hardware_model?,
+    hardware_vendor: hardware_vendor?,
+    computer_name: computer_name?,
+    status: status?,
+    last_seen: time(seen_time?),
+  }
+  to_clickhouse table="ocsf.fleet_assets",
+                host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}

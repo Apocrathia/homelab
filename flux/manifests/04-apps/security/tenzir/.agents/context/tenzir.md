@@ -26,10 +26,12 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   investigations plane (case/evidence envelopes in,
   `investigations.records` on ClickHouse out). The [enrichment
   node](../../nodes/enrichment/README.md) is the internal-reference-data
-  factory: from lap 2 it builds curated lookup tables — fleet assets,
-  baselines — into ClickHouse for the other nodes' loaders; it ships
-  idle for now — no ingest, no pipelines — and live-event enrichment
-  stays in-stream at the ingress nodes. The [introspection
+  factory: it builds curated lookup tables — fleet assets, baselines —
+  into ClickHouse for the other nodes' loaders; lap 2 shipped its
+  first lane, `fleet_assets` (hourly Fleet host inventory into
+  `ocsf.fleet_assets`; the core node's loader consumes it) — no
+  ingest, and live-event enrichment stays in-stream at the ingress
+  nodes. The [introspection
   node](../../nodes/introspection/README.md) is the fleet's diagnostics
   poller plane. The [intel
   node](../../nodes/intel/README.md) is the CTI factory plane: its
@@ -93,7 +95,8 @@ Code-level questions beyond the vendored docs:
 - [`nodes/investigations/README.md`](../../nodes/investigations/README.md) —
   agent investigations plane, isolated blast radius
 - [`nodes/enrichment/README.md`](../../nodes/enrichment/README.md) —
-  internal-reference-data factory, idle until its first factory pipeline
+  internal-reference-data factory; first factory lane (fleet_assets)
+  shipped in lap 2
 - [`nodes/intel/README.md`](../../nodes/intel/README.md) — CTI factory
   plane, OpenCTI TAXII threat intel into ClickHouse
 - [`detections/README.md`](../../detections/README.md) — bus semantics,
