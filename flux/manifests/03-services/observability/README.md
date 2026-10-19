@@ -81,7 +81,7 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
 - **goflow2 is gone** (SIEM lap C): flow records went to `/dev/null` and
   the dedicated Tenzir netflow node owns NetFlow natively via its
   `read_netflow` operator behind
-  [`tenzir-ingest-lb`](./tenzir/nodes/netflow/service-ingest.yaml)
+  [`tenzir-ingest-lb`](../../04-apps/security/tenzir/nodes/netflow/service-ingest.yaml)
   (`:2055/UDP` on the shared pool IP, Tenzir namespace); UniFi exporters
   keep their `:2055` target.
 
@@ -129,39 +129,13 @@ This directory contains the deployment configuration for the full LGTM (Loki, Gr
   audit file is root-only; the shared Alloy runs non-root)
 - **Details**: See [`alloy/kube-audit/README.md`](./alloy/kube-audit/README.md)
 
-### 13. **Tenzir** (`tenzir/`)
-
-- **Purpose**: SIEM detection plane — OCSF normalization of kube-apiserver
-  audit, tetragon, authentik, fleet, trivy, and NetFlow data, SigmaHQ +
-  homelab Sigma rules over the unified OCSF bus (`mapping="auto"`),
-  findings in the ClickHouse OCSF store after the 15-minute hot window;
-  Grafana owns alerting
-- **Deployment**: `tenzir-node` chart (OCI, ghcr.io/tenzir/charts),
-  three nodes in `tenzir`: `tenzir-node-core` (detection plane),
-  `tenzir-node-tetragon` (tetragon flood isolate), and
-  `tenzir-node-netflow` (NetFlow collector isolate)
-- **Details**: See [`tenzir/README.md`](./tenzir/README.md)
-
-### 14. **tetragon alloy** (`alloy/tetragon/`)
+### 13. **tetragon alloy** (`alloy/tetragon/`)
 
 - **Purpose**: Root DaemonSet that tails the tetragon agents' JSON export
   files (0600 root-owned, out of reach of the shared Alloy) and pushes them
   as OTLP/HTTP logs to the Tenzir tetragon node; no raw tetragon stream
   in Loki (export-stdout sidecar dropped)
 - **Details**: See [`alloy/tetragon/README.md`](./alloy/tetragon/README.md)
-
-### 15. **ClickHouse** (`clickhouse/`)
-
-- **Purpose**: OCSF query store for the Tenzir SIEM plane - Altinity
-  operator, 1 shard x 2 replicas behind a 3-node ClickHouse Keeper
-  ensemble, tiered storage (hot Longhorn PVCs, cold parts in the rustfs
-  `clickhouse` bucket), TTL with a retention-horizon DELETE cap
-- **Deployment**: Altinity `altinity-clickhouse-operator` Helm chart
-  (CRDs installed by the chart hook) + `ClickHouseKeeperInstallation` +
-  `ClickHouseInstallation` CRs in `clickhouse`
-- **Details**: See [`clickhouse/README.md`](./clickhouse/README.md); rollout
-  plan:
-  [`docs/plans/clickhouse-rollout.md`](../../../../docs/plans/clickhouse-rollout.md)
 
 ## Architecture
 

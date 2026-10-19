@@ -23,6 +23,7 @@ resources:
   - 03-services/cert-manager/flux-kustomization.yaml
   - 03-services/chaos-mesh/flux-kustomization.yaml
   - 03-services/chaos-mesh/experiments/flux-kustomization.yaml
+  - 03-services/clickhouse/flux-kustomization.yaml
   - 03-services/crossplane/flux-kustomization.yaml
   - 03-services/external-dns/flux-kustomization.yaml
   - 03-services/external-secrets/flux-kustomization.yaml
@@ -32,8 +33,6 @@ resources:
   - 03-services/housekeeping/flux-kustomization.yaml
   - 03-services/kyverno/flux-kustomization.yaml
   - 03-services/leaderworkerset/flux-kustomization.yaml
-  - 03-services/observability/clickhouse/flux-kustomization.yaml
-  - 03-services/observability/clickhouse/cluster/flux-kustomization.yaml
   - 03-services/observability/flux-kustomization.yaml
   - 03-services/observability/gatus/flux-kustomization.yaml
   - 03-services/postgresql/flux-kustomization.yaml
@@ -54,4 +53,5 @@ resources:
   - 04-apps/media/flux-kustomization.yaml
   - 04-apps/productivity/flux-kustomization.yaml
   - 04-apps/security/flux-kustomization.yaml
+  - 04-apps/security/tenzir/clickhouse/flux-kustomization.yaml
   - 04-apps/social/flux-kustomization.yaml

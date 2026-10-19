@@ -17,7 +17,7 @@ secrets/
 # Carve-out: vendored tenzir doc skills ship API reference pages under
 # .../secrets/ — upstream documentation bytes, not credentials. The
 # unanchored secrets/ rule above would otherwise eat them.
-!flux/manifests/03-services/observability/tenzir/.agents/skills/**/secrets/
+!flux/manifests/04-apps/security/tenzir/.agents/skills/**/secrets/
 credentials/
 talos/secrets.yaml
 talos/rendered/**

@@ -43,7 +43,7 @@ confirm the UXG actually emits IPFIX to the collector.
 
 Related in-repo: the dedicated Tenzir netflow node owns NetFlow via
 its `read_netflow` listener (lap-C part 2,
-`flux/manifests/03-services/observability/tenzir/`), keeping the
+`flux/manifests/04-apps/security/tenzir/`), keeping the
 `ingest.services.apocrathia.com:2055` / `10.100.1.96` pool IP for flow
 exporters. The old goflow2 collector and its Grafana dashboard were removed
 with it (SIEM lap C).

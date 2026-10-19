@@ -1,6 +1,6 @@
 # Tenzir
 
-> **Navigation**: [← Observability](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Security](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [ClickHouse datalake](./clickhouse/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 Six standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
@@ -73,9 +73,11 @@ renders the `tenzir-secrets` Secret. Vault field labels are kebab-case
 and the rendered Secret keys match them:
 
 - `aws-access-key-id` / `aws-secret-access-key`: rustfs bucket-scoped
-  user for the `tenzir` bucket; unused by the manifests since the parquet
-  lane retirement (MR-5) — the vault fields stay for the operator to
-  delete (see the [rustfs bucket/user creation
+  user for the `tenzir` bucket; the ClickHouse cold tier reads them as
+  `CH_S3_ACCESS_KEY_ID` / `CH_S3_SECRET_ACCESS_KEY` (the clickhouse
+  namespace renders the same item from
+  [`clickhouse/secret.yaml`](./clickhouse/secret.yaml); see the
+  [rustfs bucket/user creation
   doc](../../../../../docs/infrastructure/rustfs-bucket-user-creation.md)
   for the original provisioning)
 - `discord-webhook-url`: unused by the manifests; the vault field stays
@@ -104,6 +106,7 @@ the values.
 | Path                | Purpose                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `packages/homelab/` | TQL mapping package (`homelab`): OTLP parse, OCSF maps, the findings uid stamp, with tests                         |
+| `clickhouse/`       | The ClickHouse datalake: CHI + Keeper CRs, extracted server config, the single-JSON-column investigations store    |
 | `detections/sigma/` | Sigma rules evaluated over the bus: homelab starters (OCSF field paths) + vendored SigmaHQ kubernetes-audit corpus |
 | `detections/yara/`  | YARA scaffold: pinned signature-base submodule plus a vendored subset; no consumer pipeline yet                    |
 
@@ -116,7 +119,7 @@ need a pod restart.
 
 ```sh
 TENZIR_BINARY="uvx tenzir@6.19.1" \
-  uvx tenzir-test --root ./flux/manifests/03-services/observability/tenzir/packages
+  uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 
 Pin the runner to the deployed engine version (the node image lives in

@@ -32,7 +32,7 @@ output as tenzir-test baselines — `<name>.input` / `<name>.tql` /
 
 ```sh
 TENZIR_BINARY="uvx tenzir@6.19.1" \
-  uvx tenzir-test --root ./flux/manifests/03-services/observability/tenzir/packages
+  uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 
 Pin the runner to the deployed engine version (the node images live in

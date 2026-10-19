@@ -1,6 +1,6 @@
 # alloy-kube-audit
 
-> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../tenzir/)
+> **Navigation**: [← Observability](../../README.md) | [Tenzir](../../../../04-apps/security/tenzir/)
 
 Dedicated Grafana Alloy DaemonSet that tails
 `/var/log/audit/kube/kube-apiserver.log` on every control plane and dual-writes

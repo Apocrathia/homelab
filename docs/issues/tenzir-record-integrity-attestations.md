@@ -25,7 +25,7 @@ Integrity of the security record is high priority (operator, 2026-10-17). The
 detection plane normalizes sources onto the OCSF bus on the core node and
 archives every class to the ClickHouse OCSF query store, but nothing stamps
 OCSF `record_integrity` attestations on the events — verified by grep over
-`flux/manifests/03-services/observability/tenzir/` packages, detections, and
+`flux/manifests/04-apps/security/tenzir/` packages, detections, and
 nodes: zero `attestation`/`record_integrity`/`chain_uid` usage (the only
 "fingerprint" hits are the unrelated subject-fingerprint uid in
 `findings/stamp.tql`).

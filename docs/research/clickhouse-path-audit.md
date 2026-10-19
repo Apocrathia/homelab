@@ -19,7 +19,7 @@ area: observability
 Scout report, read-only. Date: 2026-10-18. Bar: every claim labeled
 **[vendor-doc]** (cited vendored Tenzir file + line), **[homelab]** (cited repo
 path/commit), or **[inference]** (my reasoning). Vendored docs root (VDR):
-`flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir/` —
+`flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir/` —
 all vendor citations are relative to VDR unless absolute.
 
 ---
@@ -129,7 +129,7 @@ per the managed-table path.
 Homelab context, all **[homelab]**: Altinity operator shape with 1 shard ×
 2 replicas + 3 Keeper, `ReplicatedMergeTree`, all DDL in one
 `config.d/10-startup-scripts.xml` with `throw_on_error=false`
-(`flux/manifests/03-services/observability/clickhouse/cluster/cluster.yaml`
+(`flux/manifests/04-apps/security/tenzir/clickhouse/cluster.yaml`
 l.142-168 schema-bootstrap comment, l.168); per-class `ocsf.*` tables +
 `investigations.records` CREATEs in that one file (l.170-385); write mode
 `append` everywhere (`nodes/investigations/pipelines/investigations-ingest-http.tql`
@@ -275,16 +275,14 @@ topology). [inference]
 
 ### Sources
 
-Vendored (VDR = `flux/manifests/03-services/observability/tenzir/.agents/skills/tenzir/`):
+Vendored (VDR = `flux/manifests/04-apps/security/tenzir/.agents/skills/tenzir/`):
 `reference/operators/to_clickhouse.md` (read in full), `reference/operators/from_clickhouse.md`
 (full), `tutorials/build-an-ocsf-lake-with-clickhouse.md` (full),
 `reference/optimizations/clickhouse.md` (full), `integrations/clickhouse.md`
 (full), `integrations/nano.md` (full); grep sweep of VDR `guides/` for
 clickhouse/startup-scripts/users.d/operator coverage.
 
-Homelab: `docs/plans/clickhouse-rollout.md` (full), `flux/manifests/03-services/
-observability/clickhouse/cluster/cluster.yaml` (full), `flux/manifests/03-services/
-observability/tenzir/.agents/context/architecture.md` (full), `tenzir/nodes/investigations/`
+Homelab: `docs/plans/clickhouse-rollout.md` (full), `flux/manifests/04-apps/security/tenzir/clickhouse/cluster.yaml` (full), `flux/manifests/04-apps/security/tenzir/.agents/context/architecture.md` (full), `tenzir/nodes/investigations/`
 (helmrelease, README, ingest TQL), git log of cluster.yaml (`45cd29202`,
 `cbb02987f`, `b659c98f5`, `9f5e1fbe5`).
 

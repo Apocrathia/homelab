@@ -77,7 +77,7 @@ alive if the agent dies (persistent enforcement) — off for now.
 - The tetragon→OCSF mapping package (Process Activity 1007 / File System
   Activity 1001 / Network Activity 4001 per the live schema) lives under the
   Tenzir node's homelab package
-  ([`../observability/tenzir/packages/homelab/operators/tetragon/`](../observability/tenzir/packages/homelab/operators/tetragon/))
+  ([`../../04-apps/security/tenzir/packages/homelab/operators/tetragon/`](../../04-apps/security/tenzir/packages/homelab/operators/tetragon/))
   with tests.
 - Transport to the Tenzir node: the
   [`tetragon alloy`](../observability/alloy/tetragon/) DaemonSet tails the

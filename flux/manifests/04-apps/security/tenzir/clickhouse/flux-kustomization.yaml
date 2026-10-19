@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./flux/manifests/03-services/observability/clickhouse/cluster
+  path: ./flux/manifests/04-apps/security/tenzir/clickhouse
   prune: true
   sourceRef:
     kind: GitRepository

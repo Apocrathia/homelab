@@ -20,7 +20,7 @@ repos:
         # PEM-format prose (a literal private-key header as input-format
         # documentation). Byte-identity wins over the hook; gitleaks still
         # scans every vendored file.
-        exclude: ^flux/manifests/03-services/observability/tenzir/\.agents/skills/
+        exclude: ^flux/manifests/04-apps/security/tenzir/\.agents/skills/
       # webui payload is byte-frozen (hash-verified syncs from scratch; the
       # vendored marked/purify pin upstream jsdelivr bytes that ship without
       # a trailing newline) — appending one breaks the sha pins in
@@ -29,12 +29,12 @@ repos:
         # Vendored doc skills (grafana/tenzir .agents/skills) are upstream bytes
         # re-copied from pinned upstream commits — appending a final newline
         # breaks byte-identity. Same discipline as the detection-rule trees.
-        exclude: ^flux/manifests/(04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|03-services/observability/(tenzir/detections/(sigma/sigmahq|yara/signature-base)/|(grafana|tenzir)/\.agents/skills/(?!grafana-homelab|README)))
+        exclude: ^flux/manifests/(04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README)))
       - id: trailing-whitespace
         # Vendored detection rules are upstream bytes re-copied from pinned
         # submodules; reformatting breaks byte-identity with the gitlink.
         # Same for the vendored doc skills (.agents/skills) in both trees.
-        exclude: ^flux/manifests/03-services/observability/(tenzir/detections/(sigma/sigmahq|yara/signature-base)/|(grafana|tenzir)/\.agents/skills/(?!grafana-homelab|README))
+        exclude: ^flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README))
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

@@ -5,7 +5,7 @@ tenzir-test baselines for every operator in
 
 ```sh
 TENZIR_BINARY="uvx tenzir@6.19.1" \
-  uvx tenzir-test --root ./flux/manifests/03-services/observability/tenzir/packages
+  uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 
 Pin the runner to the deployed engine version; all baselines stay

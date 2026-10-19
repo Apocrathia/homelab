@@ -1,0 +1,38 @@
+<clickhouse>
+    <!-- Tiered storage policy, prototype-validated (.scratch/
+         clickhouse-prototype/VERDICT.md): hot volume on the Longhorn-backed
+         data PVC, cold volume as an S3 disk writing CH-internal parts into
+         the tenzir rustfs bucket (the clickhouse prefix) with the
+         tenzir-bucket-scoped creds injected from_env. Each replica runs
+         this same disk config - each replica uploads its own copy of
+         every cold part (2x rustfs cold growth; see the rollout plan). -->
+    <storage_configuration>
+        <disks>
+            <hot>
+                <type>local</type>
+                <path>/var/lib/clickhouse/hot/</path>
+            </hot>
+            <cold>
+                <type>s3</type>
+                <endpoint>http://storage.services.apocrathia.com:9009/tenzir/clickhouse/</endpoint>
+                <access_key_id from_env="CH_S3_ACCESS_KEY_ID"/>
+                <secret_access_key from_env="CH_S3_SECRET_ACCESS_KEY"/>
+                <!-- files > 32 MiB upload multipart (rustfs multipart
+                     verified in the prototype); smaller ones PUT single -->
+                <max_single_part_upload_size>33554432</max_single_part_upload_size>
+            </cold>
+        </disks>
+        <policies>
+            <tiered>
+                <volumes>
+                    <hot>
+                        <disk>hot</disk>
+                    </hot>
+                    <cold>
+                        <disk>cold</disk>
+                    </cold>
+                </volumes>
+            </tiered>
+        </policies>
+    </storage_configuration>
+</clickhouse>

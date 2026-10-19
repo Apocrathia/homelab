@@ -17,8 +17,8 @@ rules:
       helm/**/templates/*.yaml
       # Vendored SigmaHQ rule files are upstream bytes; one rule's
       # description block exceeds the 256-char limit.
-      flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
-      flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
+      flux/manifests/04-apps/security/tenzir/detections/sigma/sigmahq/**
+      flux/manifests/04-apps/security/tenzir/detections/yara/signature-base/**
 
   braces:
     level: warning
@@ -40,11 +40,11 @@ rules:
     ignore: |
       helm/**/templates/*.yaml
       # Vendored SigmaHQ rule files are upstream bytes; no document marker.
-      flux/manifests/03-services/observability/tenzir/detections/sigma/sigmahq/**
-      flux/manifests/03-services/observability/tenzir/detections/yara/signature-base/**
+      flux/manifests/04-apps/security/tenzir/detections/sigma/sigmahq/**
+      flux/manifests/04-apps/security/tenzir/detections/yara/signature-base/**
       # Vendored tenzir library `netflow` package: upstream bytes; its
       # package.yaml ships without a document marker.
-      flux/manifests/03-services/observability/tenzir/packages/netflow/**
+      flux/manifests/04-apps/security/tenzir/packages/netflow/**
   document-end: disable
   truthy:
     check-keys: false

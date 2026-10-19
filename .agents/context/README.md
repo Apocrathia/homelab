@@ -38,7 +38,7 @@ far: the Grafana tooling module, the first folder-scoped module with a
 hand-authored skill
 ([`flux/manifests/03-services/observability/grafana/AGENTS.md`](../../flux/manifests/03-services/observability/grafana/AGENTS.md)),
 and the Tenzir stack, the first vendored upstream-skills instance
-([`flux/manifests/03-services/observability/tenzir/AGENTS.md`](../../flux/manifests/03-services/observability/tenzir/AGENTS.md)).
+([`flux/manifests/04-apps/security/tenzir/AGENTS.md`](../../flux/manifests/04-apps/security/tenzir/AGENTS.md)).
 
 ## How agents should behave here
 

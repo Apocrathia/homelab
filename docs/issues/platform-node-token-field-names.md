@@ -41,7 +41,7 @@ kind is self-describing.
 
 ## Feedback loop
 
-- kustomize build flux/manifests/03-services/observability/tenzir
+- kustomize build flux/manifests/04-apps/security/tenzir
 - Flux MCP read: HelmRelease/pod status per node after apply
 - grep: no `<role>-token` (old shape) refs left in the tenzir subtree
   (investigations-token included once it lands)

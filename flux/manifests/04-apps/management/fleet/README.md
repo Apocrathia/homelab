@@ -127,7 +127,7 @@ tee: `resultPlugin: webhook` POSTs
 `{timestamp, details: [<raw osquery rows>]}` batches to the Tenzir detection
 node's `http-ingest` listener (`FLEET_WEBHOOK_RESULT_URL`), where they are
 parsed, mapped to OCSF Base Events, and stored (see the
-[Tenzir README](../../../../03-services/observability/tenzir/)). The webhook
+[Tenzir README](../../security/tenzir/)). The webhook
 plugin only logs delivery errors, so Tenzir downtime never blocks Fleet
 (webhook-plugin semantics verified at fleet v4.92.3 and v4.93.0).
 
