@@ -50,7 +50,7 @@ spec:
               # Same ClickHouse tree as the server image in cluster.yaml; the
               # operator's default is clickhouse/clickhouse-keeper:latest.
               # renovate: datasource=docker depName=clickhouse/clickhouse-keeper
-              image: clickhouse/clickhouse-keeper:25.8.33.6
+              image: clickhouse/clickhouse-keeper:25.12.11.4@sha256:a33a660d6a354cfc09eff0936ff123970e03b916723e3ea05dadd174c2d5ca04
               resources:
                 requests:
                   cpu: 100m
