@@ -31,7 +31,7 @@ LB service anymore.
   enrichment context (decoupled from the detection plane — a failed
   fetch never stalls the sigma pass)
 - opencti-osint-loader: the intel factory's consumer half — reads the
-  enrichment node's ocsf.OSINT_Inventory_Info ClickHouse table into
+  intel node's ocsf.OSINT_Inventory_Info ClickHouse table into
   the node-local ocsf-osint lookup-table context (the vendored
   `tenzir` library package's update_context, entries aging out after
   30d); in-stream consumption of the context stays with the category-4
@@ -58,7 +58,7 @@ flowchart LR
     ATH --> MAP
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -.->|"every 24h<br/>geo-open-loader"| GEO["geo-open context"]
     GEO -->|"login-geo / API-caller<br/>src_endpoint enrichment"| MAP
-    CHOS["ClickHouse<br/>ocsf.OSINT_Inventory_Info<br/>(enrichment node factory)"] -.->|"every 24h<br/>opencti-osint-loader"| OCTX["ocsf-osint context"]
+    CHOS["ClickHouse<br/>ocsf.OSINT_Inventory_Info<br/>(intel node factory)"] -.->|"every 24h<br/>opencti-osint-loader"| OCTX["ocsf-osint context"]
     MAP --> BUS["ocsf topic (the bus)"]
     BUS --> SIG["sigma detection<br/>(mapping=auto)"]
     SIG -->|"Detection Findings, uid-stamped"| LAKE["node lake"]

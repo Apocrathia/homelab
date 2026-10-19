@@ -1,4 +1,4 @@
-// Consumer half of the intel factory: read the enrichment node's
+// Consumer half of the intel factory: read the intel node's
 // ocsf.OSINT_Inventory_Info lookup table into this node's ocsf-osint
 // context. The factory appends the collection's current state on every
 // walk, so the loader sorts by event time (the indicator's STIX modified

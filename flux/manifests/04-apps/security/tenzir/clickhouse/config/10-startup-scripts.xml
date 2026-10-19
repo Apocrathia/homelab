@@ -274,14 +274,15 @@ ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
-        <!-- OSINT inventory lookup table (tenzir/nodes/enrichment +
+        <!-- OSINT inventory lookup table (tenzir/nodes/intel +
              nodes/core): the intel factory's first row. The
-             enrichment node's factory pipeline appends the
-             OpenCTI TAXII collection's current state on every
-             walk (daily full walk + added_after polls); the
-             row is pending engine 6.20 GA (table + core
-             loader ship first), so the table accumulates
-             per-walk snapshots
+             intel node's opencti-taxii-factory pipeline
+             appends the OpenCTI TAXII collection's current
+             state on every walk (daily full walk +
+             added_after polls; the node runs the 6.20-rc
+             engine for the vendored stix package's fetch
+             operator while the fleet stays on 6.19.1), so
+             the table accumulates per-walk snapshots
              rather than unique rows; the core node's
              opencti-osint-loader reads it back sorted by time
              (the indicator's STIX modified time), newest state

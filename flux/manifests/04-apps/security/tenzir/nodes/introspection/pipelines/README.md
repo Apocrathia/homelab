@@ -18,5 +18,5 @@ Edit the `.tql` files, never the HelmRelease placeholders.
   (`tenzir_pipeline_errors` / `tenzir_pipeline_warnings`,
   `node="introspection"`).
 
-The other five nodes' diagnostics ship through the central poller
+The other six nodes' diagnostics ship through the central poller
 ([`../poller.yaml`](../poller.yaml)), not through this node's config.

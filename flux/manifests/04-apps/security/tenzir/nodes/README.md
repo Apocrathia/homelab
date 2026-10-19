@@ -11,15 +11,17 @@ connectivity chart, sizing math, and retention profile.
   exporters behind `tenzir-ingest-lb`)
 - [`investigations/`](./investigations/README.md): the agent investigations
   plane (case/evidence records, isolated blast radius)
-- [`enrichment/`](./enrichment/README.md): the fleet's context factory
-  (curated lookup tables — fleet assets, threat intel, baselines — into
-  ClickHouse; the first row — OpenCTI TAXII threat intel — has its
-  table and the core node's loader shipped, with the factory row
-  itself pending engine 6.20)
+- [`enrichment/`](./enrichment/README.md): the internal-reference-data
+  factory (curated lookup tables — fleet assets, baselines — into
+  ClickHouse; idle and empty until its first row)
 - [`introspection/`](./introspection/README.md): the diagnostics
   observability plane (the node's local diagnostics pair plus the
   central poller Deployment that ships every fleet node's diagnostics
   to Loki and Mimir)
+- [`intel/`](./intel/README.md): the CTI factory plane (OpenCTI TAXII
+  threat intel pulled into the `ocsf.OSINT_Inventory_Info` ClickHouse
+  table on the rc engine image; the core node's loader is the consumer
+  half)
 
 Adding a node is a recipe, not a design exercise: see
 [`core/README.md`](./core/README.md#adding-a-node).

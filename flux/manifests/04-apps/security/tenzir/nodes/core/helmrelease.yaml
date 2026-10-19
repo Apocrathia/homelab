@@ -168,8 +168,8 @@ spec:
           # country+ASN MMDB (~80 MiB in node memory, headroom the 8Gi
           # limit absorbs); no GeoLite2/MaxMind route, so no
           # license-key secret rides this node (see geo-open-loader).
-          # The osint lookup table is the consumer half of the enrichment
-          # node's intel factory: opencti-osint-loader applies the
+          # The osint lookup table is the consumer half of the intel
+          # node's factory row: opencti-osint-loader applies the
           # ocsf.OSINT_Inventory_Info table into it via
           # tenzir::osint::update_context, entries expiring 30d after
           # their last application (the operator's max_age); declared

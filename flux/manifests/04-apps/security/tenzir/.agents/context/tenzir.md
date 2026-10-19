@@ -13,7 +13,7 @@ lake and its own pipelines; there is no distributed mode.
 
 Synthesized from the subtree's READMEs (sources at the bottom):
 
-- Five standalone nodes in namespace `tenzir`: the
+- Seven standalone nodes in namespace `tenzir`: the
   [core node](../../nodes/core/README.md) is the detection plane — it
   normalizes kube-apiserver audit, authentik, fleet, and trivy feeds onto
   a unified OCSF bus, runs the one sigma pass over it, and owns the
@@ -24,18 +24,26 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   can starve detection. The [investigations
   node](../../nodes/investigations/README.md) owns the agent
   investigations plane (case/evidence envelopes in,
-  `investigations.records` on ClickHouse out), and the [enrichment
-  node](../../nodes/enrichment/README.md) is the fleet's context factory:
-  it builds curated lookup tables — fleet assets, threat intel, baselines
-  — into ClickHouse for the other nodes' loaders (lap 2 starts with
-  `fleet_assets`); it ships idle for now — no ingest, no pipelines — and
-  live-event enrichment stays in-stream at the ingress nodes.
+  `investigations.records` on ClickHouse out). The [enrichment
+  node](../../nodes/enrichment/README.md) is the internal-reference-data
+  factory: from lap 2 it builds curated lookup tables — fleet assets,
+  baselines — into ClickHouse for the other nodes' loaders; it ships
+  idle for now — no ingest, no pipelines — and live-event enrichment
+  stays in-stream at the ingress nodes. The [introspection
+  node](../../nodes/introspection/README.md) is the fleet's diagnostics
+  poller plane. The [intel
+  node](../../nodes/intel/README.md) is the CTI factory plane: its
+  opencti-taxii-factory pipeline pulls external threat intel from
+  OpenCTI's TAXII 2.1 indicator collection, normalizes it to OCSF 5021,
+  and appends it to the ClickHouse OCSF store, from where the core
+  node's opencti-osint-loader pulls it into its node-local
+  `ocsf-osint` context.
 - Three planes (detail in [`architecture.md`](./architecture.md)): live
   detection runs in-node; findings and events live in the ClickHouse OCSF
   query store (per-class `ocsf.<Class_Name>` tables — the record);
   querying and alerting run in Grafana over its ClickHouse datasource
   reading the `ocsf.*` tables directly.
-- All five nodes register into one hosted Tenzir Platform workspace
+- All seven nodes register into one hosted Tenzir Platform workspace
   (app.tenzir.com) over a single outbound WebSocket; pipelines run
   entirely on the nodes and never route events through the platform.
 - Content ships as ConfigMaps from this folder (the `homelab` TQL package
@@ -85,6 +93,8 @@ Code-level questions beyond the vendored docs:
 - [`nodes/investigations/README.md`](../../nodes/investigations/README.md) —
   agent investigations plane, isolated blast radius
 - [`nodes/enrichment/README.md`](../../nodes/enrichment/README.md) —
-  context-factory node, idle until its first factory pipeline
+  internal-reference-data factory, idle until its first factory pipeline
+- [`nodes/intel/README.md`](../../nodes/intel/README.md) — CTI factory
+  plane, OpenCTI TAXII threat intel into ClickHouse
 - [`detections/README.md`](../../detections/README.md) — bus semantics,
   sigma mapping, class taxonomy

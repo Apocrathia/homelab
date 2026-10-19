@@ -1,8 +1,8 @@
 # Tenzir
 
-> **Navigation**: [← Security](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [ClickHouse datalake](./clickhouse/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
+> **Navigation**: [← Security](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [Intel node](./nodes/intel/README.md) | [ClickHouse datalake](./clickhouse/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
-Six standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
+Seven standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
 distributed mode, so each node is a process with its own lake and its own
 pipelines. The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
@@ -15,20 +15,23 @@ detection. The [investigations node](./nodes/investigations/README.md)
 owns the agent investigations plane: case/evidence envelopes in,
 `investigations.records` on ClickHouse out — an isolated blast radius the
 detection plane never shares. The [enrichment
-node](./nodes/enrichment/README.md) is the fleet's context factory: it
-builds the curated lookup tables — fleet assets, threat intel, baselines —
-into ClickHouse for the other nodes to pull.
-The first row — OpenCTI TAXII threat intel — has its
-`ocsf.OSINT_Inventory_Info` table and the core node's
-[opencti-osint-loader](./nodes/core/pipelines/opencti-osint-loader.tql)
-shipped; the factory row itself lands with engine 6.20 (its vendored
-package requires it; see the enrichment node README).
+node](./nodes/enrichment/README.md) is the internal-reference-data
+factory: it will build the curated lookup tables — fleet assets,
+baselines — into ClickHouse for the other nodes to pull; it stays idle
+and empty until its first row.
 The [introspection
 node](./nodes/introspection/README.md) is the diagnostics observability
 plane: its central poller ships every fleet node's pipeline diagnostics
 to Loki and Mimir, superseding the per-node diagnostics lanes.
+The [intel node](./nodes/intel/README.md) is the CTI factory plane: its
+opencti-taxii-factory pipeline pulls OpenCTI's TAXII 2.1 indicator
+collection into the `ocsf.OSINT_Inventory_Info` ClickHouse table (single
+pane: all CTI reaches tenzir via OpenCTI) on the rc engine image, and
+the core node's
+[opencti-osint-loader](./nodes/core/pipelines/opencti-osint-loader.tql)
+is the consumer half.
 
-All six nodes register into one hosted Tenzir Platform workspace
+All seven nodes register into one hosted Tenzir Platform workspace
 (app.tenzir.com) over a single outbound WebSocket. Pipelines run entirely
 on the nodes; the events flowing through them never route through the
 platform.
@@ -94,13 +97,13 @@ and the rendered Secret keys match them:
   [`authentik.tf`](./authentik.tf)); the operator copies the key into the
   vault after the first apply
 - `core-token` / `tetragon-token` / `netflow-token` / `investigations-token` /
-  `enrichment-token` / `introspection-token`: the pre-provisioned Tenzir
-  Platform node tokens, one per node
+  `enrichment-token` / `introspection-token` / `intel-token`: the
+  pre-provisioned Tenzir Platform node tokens, one per node
 - `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
   by the opencti lane — its slice-7 handoff
-  ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md)).
-  The enrichment node reads it when the intel factory row lands with
-  engine 6.20; the field exists regardless
+  ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md));
+  the intel node's opencti-taxii-factory pipeline reads it
+  (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace
@@ -118,6 +121,7 @@ the values.
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `packages/homelab/` | TQL mapping package (`homelab`): OTLP parse, OCSF maps, the findings uid stamp, with tests                         |
 | `packages/netflow/` | Vendored library `netflow` package: NetFlow v5/v9/IPFIX → OCSF Network Activity (netflow node ingest)              |
+| `packages/stix/`    | Vendored library `stix` package: TAXII 2.1 fetch + STIX Indicator → OCSF OSINT Inventory Info (intel node factory) |
 | `packages/tenzir/`  | Vendored library `tenzir` utilities: the OSINT pair (`update_context` / `enrich`) this lane wires core-side        |
 | `clickhouse/`       | The ClickHouse datalake: CHI + Keeper CRs, extracted server config, the single-JSON-column investigations store    |
 | `detections/sigma/` | Sigma rules evaluated over the bus: homelab starters (OCSF field paths) + vendored SigmaHQ kubernetes-audit corpus |
