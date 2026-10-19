@@ -63,10 +63,14 @@ spec:
             subPath: rabbitmq.conf
             readOnly: true
             configMapName: openaev-rabbitmq-config
-
-      volumeMounts:
-        - name: data
-          mountPath: /var/lib/rabbitmq
+        emptyDir:
+          - name: data
+            mountPath: /var/lib/rabbitmq
+            # Broker state is pod-local: Khepri boots blank on hostname change
+            # (Deployment pod recreation) regardless of PVC, and a Longhorn PVC
+            # plus fsGroup re-chmods the erlang cookie group-readable on every
+            # restart (owner-only check fails -> crash loop). emptyDir matches the
+            # actual durability class: survives container restarts, not pod moves.
 
       healthChecks:
         livenessProbe:
@@ -94,11 +98,7 @@ spec:
 
     storage:
       longhorn:
-        enabled: true
-        numberOfReplicas: 1
-        volumes:
-          - name: data
-            capacity: 8Gi
+        enabled: false
       smb:
         enabled: false
 
