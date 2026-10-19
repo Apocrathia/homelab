@@ -1,10 +1,11 @@
 # OpenAEV
 
-OpenAEV (formerly OpenBAS) is Filigran's open-source Adversarial Exposure
-Validation platform: attack simulations and tabletop exercises with coverage
-measurement — the red-teaming sibling of Promptfoo and PyRIT.
+OpenAEV (Open Adversarial Exposure Validation, formerly OpenBAS) is Filigran's
+open-source exposure-validation platform: attack simulations and tabletop
+exercises with defense coverage measurement — the attack-side sibling of
+OpenCTI in the Filigran security suite.
 
-> **Navigation**: [← Back to Artificial Intelligence README](../README.md)
+> **Navigation**: [← Back to Security README](../README.md)
 
 ## Overview
 

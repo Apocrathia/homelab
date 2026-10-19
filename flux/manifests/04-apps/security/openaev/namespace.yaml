@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: openaev
     app.kubernetes.io/component: adversarial-exposure-validation
-    app.kubernetes.io/part-of: artificial-intelligence
+    app.kubernetes.io/part-of: security
     # openaev/platform + opensearchproject/opensearch live on docker.io;
     # Kyverno clones the docker.io pull secret into namespaces with this label.
     images/dockerhub: "true"

@@ -21,6 +21,15 @@ single-node OpenSearch, rabbitmq, and dragonfly run as subchart dependencies;
 object storage rides the NAS rustfs bucket `opencti-files`. Authentik SSO and
 the MISP import connector are included.
 
+### [OpenAEV](./openaev/README.md)
+
+OpenAEV (Open Adversarial Exposure Validation, formerly OpenBAS) is Filigran's
+open-source exposure-validation platform: attack simulation campaigns and
+tabletop exercises with defense coverage measurement — the attack-side sibling
+of OpenCTI. Runs as four generic-app workloads (platform, OpenSearch engine,
+RabbitMQ, CNPG PostgreSQL) with Authentik OIDC SSO and NAS rustfs object
+storage.
+
 ### [OpenCanary](./opencanary/README.md)
 
 Lightweight honeypot emulating HTTP and SSH services, generating attacker
