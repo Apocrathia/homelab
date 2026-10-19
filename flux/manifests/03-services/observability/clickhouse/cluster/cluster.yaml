@@ -207,7 +207,7 @@ spec:
                     <query>CREATE TABLE IF NOT EXISTS investigations.records
         (
             `time` DateTime64(9, 'UTC') CODEC(Delta, ZSTD),
-            `class_uid` UInt32 DEFAULT 0,
+            `class_uid` Int32 DEFAULT 0,
             `activity_id` Int8,
             `type_uid` Int32,
             `severity_id` Nullable(Int8),
