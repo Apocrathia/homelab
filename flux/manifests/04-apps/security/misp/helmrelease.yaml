@@ -237,13 +237,17 @@ spec:
           pullPolicy: IfNotPresent
         # Sizing from research doc section 1.5 (web tier 2 vcpu / 4-16Gi
         # reference; single-instance homelab shape).
+        # TEMPORARY (2026-10-18): limit raised 4Gi -> 8Gi for the one-time
+        # abuse.ch archive backfill (container OOMKilled 3x at 4Gi
+        # mid-fetch); trim candidate back to 4Gi once the backfill and the
+        # OpenCTI epoch sweep complete.
         resources:
           requests:
             cpu: 500m
             memory: 2Gi
           limits:
             cpu: "2"
-            memory: 4Gi
+            memory: 8Gi
       service:
         type: ClusterIP
         port: 80
