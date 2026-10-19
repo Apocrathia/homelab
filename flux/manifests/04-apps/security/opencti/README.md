@@ -87,14 +87,13 @@ Item `vaults/Secrets/items/opencti-secrets` (created in slice 1):
 | `MINIO__SECRET_KEY`               | rustfs `opencti-files` keypair                                                                                                                                            |
 | `OIDC_CLIENT_SECRET`              | Authentik OIDC provider client secret                                                                                                                                     |
 | `APP__ENTERPRISE_EDITION_LICENSE` | OpenCTI EE license (PEM); provider login (SSO) is EE-gated on 7.26 CE — wired as `APP__ENTERPRISE_EDITION_LICENSE` env which takes precedence over a UI-pasted DB license |
+| `misp-key`                        | MISP auth key (read) — consolidated from the former `opencti-misp-connector` item; feeds the connector's `MISP_KEY` env via `envFromSecrets`                              |
 
-Item `vaults/Secrets/items/opencti-misp-connector` (created post-merge in
-slice 6 — a running MISP must mint the key first; materialized by the
-OnePasswordItem in `secret.yaml`):
-
-| Field      | Used for                                                                |
-| ---------- | ----------------------------------------------------------------------- |
-| `MISP_KEY` | MISP auth key (read) for the external-import connector's `MISP_KEY` env |
+The former separate item `opencti-misp-connector` was consolidated into
+`opencti-secrets` (field `misp-key`, kebab-style; 2026-10-19) — the
+`envFromSecrets` indirection maps it to the connector's `MISP_KEY` env
+name, so only the vault field label changed. The standalone item and its
+`OnePasswordItem` CR are gone.
 
 Wiring notes (verified against the chart templates):
 

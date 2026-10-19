@@ -190,9 +190,12 @@ spec:
           # MISP auth key (read permission); vault item created by the
           # operator post-merge — see secret.yaml and the README slice-6
           # steps for the intended wait-on-Secret ordering.
+          # Consolidated into the opencti-secrets item (field `misp-key`,
+          # kebab per the tenzir-secrets style) — the envFromSecrets
+          # indirection maps it to the connector's MISP_KEY env name.
           MISP_KEY:
-            name: opencti-misp-connector
-            key: MISP_KEY
+            name: opencti-secrets
+            key: misp-key
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
