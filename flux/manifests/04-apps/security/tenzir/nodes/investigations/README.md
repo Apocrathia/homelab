@@ -161,11 +161,14 @@ ever moves or deletes a part.
 - **Static API token, no per-caller identity** — attribution is
   record-level (envelope fields + `ai_operation` stamping), not
   caller-level; per-caller tokens are the upgrade path.
-- **No Grafana surface yet** — the P-2 case dashboards need a one-line
-  extension of the `grafana` user's grants (SELECT on `investigations.*`
-  in the CHI users block, a P-2 change); until then the store is
-  reachable only via in-cluster reads with the `investigations-reader`
-  user.
+- **Grafana examine surface shipped (P-2)** — the `grafana` user's
+  grants now include SELECT on `investigations.*`
+  ([cluster.yaml](../../clickhouse/cluster.yaml)), and the case
+  dashboards
+  ([investigations-cases](../../grafana/investigations-cases.json),
+  [investigations-case-detail](../../grafana/investigations-case-detail.json))
+  read the store over the `ocsf-clickhouse` datasource. The agent query
+  lane keeps the `investigations-reader` user.
 - **Attestation chain linkage is per-node-lifetime memory** — the
   `investigations-chains` context lives on the node, so a node restart
   restarts every case chain at its next record (`prev_event` absent,

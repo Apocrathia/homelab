@@ -252,7 +252,7 @@ fields:
 | User                    | Password vault field                        | Grants                                  | Networks             |
 | ----------------------- | ------------------------------------------- | --------------------------------------- | -------------------- |
 | `tenzir`                | `clickhouse-password`                       | SELECT, INSERT on `ocsf.*`              | pod CIDR + localhost |
-| `grafana`               | `clickhouse-grafana-password`               | SELECT on `ocsf.*`                      | pod CIDR + localhost |
+| `grafana`               | `clickhouse-grafana-password`               | SELECT on `ocsf.*` + `investigations.*` | pod CIDR + localhost |
 | `investigations-writer` | `clickhouse-investigations-writer-password` | INSERT, SELECT on `investigations.*`    | pod CIDR + localhost |
 | `investigations-reader` | `clickhouse-investigations-reader-password` | SELECT on `investigations.*` + `ocsf.*` | pod CIDR + localhost |
 
