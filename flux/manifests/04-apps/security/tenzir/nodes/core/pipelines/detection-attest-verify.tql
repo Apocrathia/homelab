@@ -1,0 +1,90 @@
+// Verification half of the detection-plane record_integrity lane: read
+// the last 24h of every core-node ocsf class back, recompute each
+// record's attestation fingerprint over the canonical serialization,
+// and walk the per-node prev_event chain; a Detection Finding (2004)
+// drops onto stdout for every break (content tamper, deletion, splice).
+//
+// The read-back is windowed (24h) because the walk sorts the merged
+// stream in memory: a full-table walk over 22M+ archived rows would
+// buffer gigabytes against the node's 8Gi limit. The per-class
+// from_clickhouse reads are table mode (the vendor's catch-all
+// reconstruction — the per-class tables split each record across typed
+// columns + the event JSON, and only table mode reverses that split),
+// merged into ONE stream because the per-node chain crosses classes,
+// with the window filter inside each branch so ClickHouse evaluates it
+// (filters on the time column push down; the verify operator's
+// windowed mode tolerates the window edge — its first record's link
+// points outside the read and is skipped, its fingerprint recompute is
+// not). The stored records come back through the catch-all
+// reconstruction: ClickHouse re-sorted the JSON keys, and the
+// operators' sort()-canonicalized serialization is what makes the
+// recompute match what the archive leg stamped.
+//
+// TODO (scheduling + alerting, tracked in
+// docs/issues/tenzir-record-integrity-attestations.md): as wired, this
+// pipeline is standing — the node runs it once at startup (a bounded
+// 24h read-back completes and exits), and restart-on-error only
+// retries failures. The issue's verification lane wants a scheduled
+// walk (a cron "<schedule>" { ... } wrapper, intel-node shape) feeding
+// the existing Grafana contact-point rails; both decisions are the
+// operator's. Until then, break findings are visible in the pod logs
+// and the node's pipeline diagnostics.
+from_clickhouse table="ocsf.API_Activity",
+  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+  port=9000,
+  user="tenzir",
+  password=secret("clickhouse-password"),
+  tls=false
+where time > now() - 24h
+merge {
+  from_clickhouse table="ocsf.Authentication",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+}
+merge {
+  from_clickhouse table="ocsf.Account_Change",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+}
+merge {
+  from_clickhouse table="ocsf.Detection_Finding",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+}
+merge {
+  from_clickhouse table="ocsf.Vulnerability_Finding",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+}
+merge {
+  from_clickhouse table="ocsf.Base_Event",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
+to_stdout { write_json }

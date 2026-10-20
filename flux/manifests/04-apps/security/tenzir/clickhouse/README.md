@@ -81,44 +81,99 @@ it with an operator-led live `ALTER` in the same lap as the DDL edit
 
 ### Attestations on every record
 
-Every record the write lane stores carries the OCSF `record_integrity`
-profile: `metadata.profiles` claims it, and
-`attestation_list[0]` holds a SHA-256 fingerprint over the record's
-canonical serialization — sorted-key strict JSON
-(`serialization: "tenzir-sorted-json"` in the fingerprint object) — with
-`chain_uid` = the case spine and `prev_event` referencing the case's
-previous record's fingerprint. The fingerprint covers the record
-exactly as stored (stamped after `ocsf_derive` + `ocsf_cast`, upstream
-of the INSERT), so a reader can recompute it from the row alone: the
-catch-all reconstruction re-infers the JSON values with their types,
-ClickHouse's key sorting is irrelevant because the serialization
-canonicalizes field order, and only the attestation's own fingerprint
-field is excluded from the hashed content (the OCSF rule). Rows written
-before the attestation lane shipped carry no `attestation_list` — they
-predate the chain epoch and are outside its guarantees; nothing in the
-table distinguishes them except the absent field.
+Every record both write lanes store carries the OCSF `record_integrity`
+profile: `metadata.profiles` claims it, and `attestation_list[0]` holds
+a SHA-256 fingerprint over the record's canonical serialization —
+sorted-key strict JSON (`serialization: "tenzir-sorted-json"` in the
+fingerprint object). The fingerprint covers the record exactly as
+stored (stamped upstream of the INSERT — after `ocsf_derive` +
+`ocsf_cast` on the investigations ingest, before the `to_clickhouse`
+legs on the core node's archive rule), so a reader can recompute it
+from the row alone: the catch-all reconstruction re-infers the JSON
+values with their types, ClickHouse's key sorting is irrelevant
+because the serialization canonicalizes field order, and only the
+attestation's own fingerprint field is excluded from the hashed
+content (the OCSF rule). Rows written before a plane's attestation lane
+shipped carry no `attestation_list` — they predate the chain epoch and
+are outside its guarantees; nothing in the table distinguishes them
+except the absent field.
+
+**Two planes, two chain scopes, one lane.** The generalized operators
+live in the homelab package
+([`packages/homelab/operators/record_integrity/`](../packages/homelab/operators/record_integrity/README.md));
+the scope is the caller's. The investigations plane chains **per case**
+(`chain_uid` = `metadata.correlation_uid`, the case spine) with one
+attestation per record — `prev_event` inside its hash — and the caller
+(the ingest pipeline's context legs) supplies every record's tail,
+viable because the HTTP ingest paces one envelope at a time. The
+detection plane chains **per node** (`chain_uid` =
+`tenzir-node-core`, the chart-rendered identity — one chain across
+every class this node archives, in time order) and stamps at archive
+rate, which forced a different shape: the core node's archive rule
+receives whole batches every 5 minutes, and a live probe showed the
+context-read chain mis-linking every record of a fast batch (the reads
+run engine-batches ahead of the writes). The detection shape is the
+OCSF two-attestation form: `attestation_list[0]` is the record
+fingerprint (no `prev_event`, so the operator's internal lag carries
+it to the next record in (time, uid) order — probed, 99,999/99,999
+intra-batch links correct on a 100k batch), and `attestation_list[1]`
+is the chain link (`prev_event` referencing the predecessor's record
+fingerprint), carried **un-hashed** — fingerprint is a
+recommended-not-required attribute, the engine has no channel to hash
+it at the link's position, and its integrity is enforced by the verify
+walk's adjacency check instead. A deleted link attestation masquerades
+as a chain restart — the honest limit that buys batch-rate stamping.
+The per-node chain also mints `metadata.uid` on every archived record
+(the maps never set one; the verify walk's (time, uid) tie-break needs
+it to reproduce the stamp order for same-second stamps).
 
 **Read contract.** A reader treating a record as evidence may check:
-(1) `attestation_list[0].fingerprint.value` equals the SHA-256 over the
-canonical serialization of the record with the fingerprint field
-removed; (2) `prev_event.fingerprint.value` equals the previous row's
-fingerprint for the same `metadata.correlation_uid` in time order.
-The investigations node's `investigations-attest-verify` pipeline does
-both on every stored row and emits a Detection Finding (2004) on any
-break.
+(1) `attestation_list[0].fingerprint.value` equals the SHA-256 over
+the canonical serialization of the record with the attestation's
+fingerprint field removed (and, on the detection shape, the link
+attestation stripped); (2) `prev_event.fingerprint.value` equals the
+previous row's record fingerprint in time order per chain_uid. The
+investigations node's `investigations-attest-verify` pipeline and the
+core node's `detection-attest-verify` pipeline both do this on every
+stored row in scope and emit a Detection Finding (2004) on any break
+(content tamper, deletion, splice; the detection walk is a rolling
+24h window and tolerates its own edge — the first record's predecessor
+lives outside the read, and its link checks are skipped, its
+fingerprint recompute is not).
 
 **The node-restart gap.** Chain linkage is stamped from per-node
-in-memory state (the `investigations-chains` context on the
-investigations node), so it is best-effort per node lifetime: a node
-restart loses the context, and every case's next record restarts its
-chain with `prev_event` absent (plus a write-time WARNING). The verify
-walk treats a mid-chain record without `prev_event` as that documented
-restart, not a break — post-hoc mutation is still caught across
-restarts by the per-record fingerprint check, but the linkage gap
-around a restart cannot be reconstructed. Two honest limits remain: a
-chain tail deletion (no successor references the newest record) is
+in-memory state (the `investigations-chains` / `detection-chains`
+contexts), so it is best-effort per node lifetime: a node restart
+loses the context, and the next record restarts its chain with
+`prev_event` absent (plus a write-time WARNING — on the detection
+plane one per node boot, the chain's epoch marker). The verify walk
+treats a mid-chain record without a link as that documented restart,
+not a break — post-hoc mutation is still caught across restarts by
+the per-record fingerprint check, but the linkage gap around a
+restart cannot be reconstructed. Two honest limits remain: a chain
+tail deletion (no successor references the newest record) is
 invisible to any unanchored hash chain, and rows predating the epoch
-have no attestation at all.
+have no attestation at all. The detection plane adds a third: a
+record arriving more than one retention window late (ingestion lag
+beyond 15 minutes) zigzags the chain at its seam, and the walk flags
+the successor — a triage signal, not a break in the stored content.
+
+**The stamping cost, measured.** The detection plane's volume is the
+core node's: k8s-audit alone has 22M+ archived API Activity rows.
+Stamping runs on every one of them (per archive pass), so the cost is
+measured, not assumed: the homelab package's 100k-record harness
+(`detection-throughput`) times the archive leg end to end — ~3s for
+100k realistic API Activity records on an M-series laptop ≈ 33k
+records/s standalone, ~28k records/s against a live node with the
+context and fork legs, ~19µs/record marginal over the sort-only
+baseline. At the current audit rate the 5-minute pass has orders of
+magnitude of headroom; the throughput test's floor assert (100s for
+100k) fails loudly if the leg regresses past it. The class-scoped
+alternative (stamping only the low-volume classes and leaving
+API Activity unattested) stays out: the issue asks for the whole bus,
+and the numbers say the whole bus is affordable; if the operator later
+disagrees, the attest call in `ocsf-archive.tql` is one `where` away
+from any scope-down.
 
 ### Write path
 

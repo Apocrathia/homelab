@@ -387,6 +387,12 @@ spec:
       - name: packages-homelab-investigations-verify
         configMap:
           name: tenzir-packages-homelab-investigations-verify
+      - name: packages-homelab-record-integrity-attest
+        configMap:
+          name: tenzir-packages-homelab-record-integrity-attest
+      - name: packages-homelab-record-integrity-verify
+        configMap:
+          name: tenzir-packages-homelab-record-integrity-verify
       # The web server's TLS pair, issued by the cert-manager
       # Certificate (certificate.yaml) via the self-signed ClusterIssuer.
       - name: web-tls
@@ -424,6 +430,19 @@ spec:
         readOnly: true
       - name: packages-homelab-investigations-verify
         mountPath: /etc/tenzir/packages/homelab/operators/investigations/ocsf/verify.tql
+        subPath: verify.tql
+        readOnly: true # The shared record_integrity operators the investigations
+      # wrappers call: attest.tql/verify.tql above are thin scope
+      # bindings (chain_uid = the case spine, genesis = the case open,
+      # the investigations finding dressing) over the generalized
+      # homelab::record_integrity::attest/verify that own the stamping
+      # and walk mechanics.
+      - name: packages-homelab-record-integrity-attest
+        mountPath: /etc/tenzir/packages/homelab/operators/record_integrity/attest.tql
+        subPath: attest.tql
+        readOnly: true
+      - name: packages-homelab-record-integrity-verify
+        mountPath: /etc/tenzir/packages/homelab/operators/record_integrity/verify.tql
         subPath: verify.tql
         readOnly: true
       # Web server TLS pair (plugins.web certfile/keyfile): directory

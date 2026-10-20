@@ -1,0 +1,223 @@
+---
+description: |
+  Verification half of the record_integrity lane: recomputes every stored
+  record's attestation fingerprint over the canonical serialization and
+  walks the prev_event chains, emitting a Detection Finding (2004) on any
+  break. Input is the stored-shape record (post-cast, attested) as read
+  back from the query store; the live lanes read it via from_clickhouse,
+  the package tests feed the same shape from fixtures. Records without an
+  attestation predate the chain epoch and are skipped (docs/issues/
+  tenzir-record-integrity-attestations.md: pre-stamping rows are out of
+  scope). A mid-chain record whose chain link is absent is the documented
+  chain-restart case (the attest operator warned at write time when the
+  node lost its in-memory chain state) and is not a break: the
+  per-record fingerprint recompute still catches content tampering
+  across restarts.
+  Chains are walked per attestation_list[0].chain_uid — the OCSF chain
+  identifier (objects/attestation.md: "querying events whose
+  attestation.chain_uid matches retrieves the full chain") — which is
+  the case spine on the investigations plane and the node identity on
+  the detection plane. The finding's dressing — product, title, uid
+  prefix, and the scope word in the description — is the caller's plane
+  identity. `windowed` covers bounded read-backs (rolling-window
+  detection walks): the walk cannot see the predecessor of the first
+  record it visits, so that record's link checks are skipped — its
+  per-record fingerprint recompute still runs. `link` selects the chain
+  shape the attest operator stamped: "caller" (investigations — the
+  single attestation carries prev_event and its fingerprint covers it)
+  or "stream" (detection — attestation_list[0] is the record
+  fingerprint hashed without prev_event, the chain link rides
+  un-hashed in attestation_list[1]; the recompute rebuilds
+  attestation_list[0] with the link stripped from the input, and the
+  link integrity is enforced by the adjacency check itself).
+args:
+  named:
+    - name: product
+      type: string
+      description: The finding's metadata.product.name — the plane
+        identity (homelab-investigations / homelab-detection).
+    - name: title
+      type: string
+      description: The finding_info title ("Investigations record chain
+        break" / "Detection record chain break").
+    - name: uid_prefix
+      type: string
+      description: The finding_info uid prefix — the uid reads
+        prefix, literal -attest-, then the chain uid.
+    - name: scope_word
+      type: string
+      description: The chain descriptor in the finding description —
+        "case" (investigations) or "chain" (detection).
+    - name: windowed
+      type: bool
+      description: True for bounded read-backs — the first record of
+        each chain in the walk may reference a predecessor outside the
+        read window, so its link checks are skipped. False walks the
+        whole store (investigations) — a chain head referencing a
+        predecessor the walk never saw is a deletion.
+    - name: link
+      type: string
+      default: caller
+      description: caller — the investigations shape (attestation_list[0]
+        carries prev_event inside its hash). stream — the detection shape
+        (attestation_list[0] is the record fingerprint; the chain link
+        rides un-hashed in attestation_list[1]).
+---
+
+// One pass in time order per chain: bounded read-back, so sort first and
+// the group's inner pipeline sees each key's events in that order
+// (reference/operators/lag.md — "The operator follows input order within
+// its pipeline"). The metadata.uid tie-break makes the order a
+// deterministic total order: the detection plane mints a uid on every
+// archived record precisely so same-second stamps (k8s-audit volume)
+// sort reproducibly here — the stamp side sorts on the same key pair,
+// and a tie left to input order would differ between the archive pass
+// and the read-back walk (a false chain_link_mismatch).
+where attestation_list? != null
+sort time, metadata.uid
+group attestation_list[0].chain_uid {
+  // ---- the recompute (must see a clean record) -----------------------------
+  // Nothing has been written into the record yet — no walk state, no
+  // plumbing fields — so the spread below hashes the stored record with
+  // the attestation rebuilt exactly as the attest operator assembled it
+  // pre-fingerprint (OCSF rule, vendored objects/attestation.md: the
+  // hash covers the entire event including the attestation's own
+  // authority_uid, chain_uid, and prev_event, and excludes only the
+  // attestation's fingerprint and signatures). prev_event rides absent
+  // on genesis records: a null field would serialize differently from a
+  // missing one and break the recompute. Stream-mode records carry the
+  // un-hashed chain link in attestation_list[1]: it is stripped from the
+  // hash input because at stamp time attestation_list[0] was hashed over
+  // the record before the link existed.
+  _recomputed = hash_sha256(print_json(({
+    ...this,
+    attestation_list: [
+      {
+        authority_uid: attestation_list[0].authority_uid,
+        chain_uid: attestation_list[0].chain_uid,
+        prev_event: attestation_list[0].prev_event,
+      } if $link == "caller" and attestation_list[0]?.prev_event? != null else {
+        authority_uid: attestation_list[0].authority_uid,
+        chain_uid: attestation_list[0].chain_uid,
+      },
+    ],
+    // The stream stamp nulled the caller's prev_tail (the batch-seam
+    // field) in its hash input the same way — the stored record carries
+    // no prev_tail, so nulling it here reproduces the stamp-side input
+    // byte-for-byte. The caller shape never sees the field at all.
+    prev_tail: null,
+  }).sort())) if $link == "stream" else hash_sha256(print_json(({
+    ...this,
+    attestation_list: [
+      {
+        authority_uid: attestation_list[0].authority_uid,
+        chain_uid: attestation_list[0].chain_uid,
+        prev_event: attestation_list[0].prev_event,
+      } if attestation_list[0]?.prev_event? != null else {
+        authority_uid: attestation_list[0].authority_uid,
+        chain_uid: attestation_list[0].chain_uid,
+      },
+    ],
+  }).sort()))
+
+  // The chain link: the caller shape keeps it inside
+  // attestation_list[0]; the stream shape rides it un-hashed in
+  // attestation_list[1] (absent on genesis and restart records).
+  _link_att = attestation_list[0] if $link == "caller" else attestation_list[1]?
+
+  // ---- the walk state -------------------------------------------------------
+  // The predecessor's tail in this chain's time order — written AFTER the
+  // recompute so it never enters the hash input. Read-only walk state
+  // over complete records: no write, no ordering hazards. The fp is the
+  // record fingerprint (attestation_list[0]) in both link shapes — that
+  // is what the chain links reference.
+  lag value={
+    uid: metadata.uid,
+    type_uid: type_uid,
+    fp: attestation_list[0]?.fingerprint?.value?,
+  }, into=_prev
+
+  // ---- the checks -----------------------------------------------------------
+  _break = null
+  // Content mutation: the recomputed fingerprint differs from the stored
+  // one — the record (or its stored attestation) was altered after
+  // stamping. This is the check that survives chain restarts.
+  if _recomputed != attestation_list[0]?.fingerprint?.value? {
+    _break = "fingerprint_mismatch"
+  } else {
+    // The stored prev_event fingerprint for this record, null on genesis
+    // and on restart records.
+    _stored_prev_fp = _link_att?.prev_event?.fingerprint?.value?
+    if _prev? == null {
+      // The first record of this chain the walk sees. Unwindowed: a
+      // stored prev_event with no walked predecessor means the chain
+      // head references a record the walk never saw — deletion of the
+      // chain's earlier records (a first record with prev_event can
+      // never have been stamped — its predecessor existed at stamp
+      // time). Windowed: the predecessor may simply live outside the
+      // read window — not a break.
+      if _stored_prev_fp? != null and not $windowed {
+        _break = "chain_head_missing"
+      }
+    } else if _stored_prev_fp? != null and _stored_prev_fp != _prev?.fp? {
+      // Broken link: prev_event does not reference the immediately
+      // preceding record of this chain — deletion, reorder, or splice.
+      // In the stream shape this adjacency check is also the chain
+      // link's integrity check: the un-hashed link attestation carries
+      // no fingerprint of its own for a recompute, so this is where a
+      // tampered or spliced link surfaces.
+      _break = "chain_link_mismatch"
+    }
+    // A mid-chain record with no chain link is the documented
+    // restart case — the attest operator warned at write time — and no
+    // break.
+  }
+
+  // ---- findings out, intact records silent ----------------------------------
+  // where false drops the event (a bare drop is a field-list operator);
+  // the broken record's fields survive only inside the finding's unmapped
+  // evidence block. A chain-tail deletion (no successor references it)
+  // stays invisible to this walk — the honest limit of an unanchored
+  // hash chain, documented in the datalake README.
+  if _break == null {
+    where false
+  } else {
+    this = {
+      metadata: {
+        uid: f"attest-break-{attestation_list[0].chain_uid}-{metadata.uid}",
+        version: "1.9.0",
+        correlation_uid: attestation_list[0].chain_uid,
+        product: {
+          name: $product,
+          vendor_name: "apocrathia",
+          version: "0.1.0",
+        },
+      },
+      time: now(),
+      category_uid: 2,
+      class_uid: 2004,
+      activity_id: 1,
+      severity_id: 4,
+      status_id: 1,
+      type_uid: 200401,
+      finding_info_list: [{
+        uid: f"{$uid_prefix}-attest-{attestation_list[0].chain_uid}",
+        title: $title,
+        // The broken record's time, not now(): the finding is anchored to
+        // the evidence it describes.
+        created_time: time,
+        desc: f"{_break} on record {metadata.uid} of {$scope_word} {attestation_list[0].chain_uid}",
+      }],
+      unmapped: {
+        break: _break,
+        chain_uid: attestation_list[0].chain_uid,
+        record_uid: metadata.uid,
+        record_time: time,
+        stored_fingerprint: attestation_list[0]?.fingerprint?.value?,
+        computed_fingerprint: _recomputed,
+        prev_event_fingerprint: _link_att?.prev_event?.fingerprint?.value?,
+        predecessor_fingerprint: _prev?.fp? if _prev? != null else null,
+      },
+    }
+  }
+}
