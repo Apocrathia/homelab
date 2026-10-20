@@ -53,27 +53,30 @@ pipeline.
 
 ## Class taxonomy
 
-| Class                 | uid  | Source                                                                                                     |
-| --------------------- | ---- | ---------------------------------------------------------------------------------------------------------- |
-| API Activity          | 6003 | kube-apiserver audit (k8s map)                                                                             |
-| Authentication        | 3002 | authentik logins (authentik map)                                                                           |
-| Account Change        | 3001 | authentik account mutations (authentik map)                                                                |
-| Network Activity      | 4001 | netflow flows (tenzir/library map), tetragon kprobe connect attempts (tetragon map)                        |
-| Detection Finding     | 2004 | sigma matches, trivy ExposedSecretReport                                                                   |
-| Vulnerability Finding | 2002 | trivy VulnerabilityReport (homelab convention: Tenzir upstream documents no vulnerability-finding mapping) |
-| Process Activity      | 1007 | tetragon exec and exit (tetragon map)                                                                      |
-| File System Activity  | 1001 | tetragon secret-file-access kprobe (tetragon map)                                                          |
-| Base Event            | 0    | fleet rows, authentik non-IAM actions, unknown tetragon kinds: cannot name a class, not archived           |
+| Class                 | uid  | Source                                                                                                                                     |
+| --------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| API Activity          | 6003 | kube-apiserver audit (k8s map)                                                                                                             |
+| Authentication        | 3002 | authentik logins (authentik map)                                                                                                           |
+| Account Change        | 3001 | authentik account mutations (authentik map)                                                                                                |
+| Network Activity      | 4001 | netflow flows (tenzir/library map), tetragon kprobe connect attempts (tetragon map)                                                        |
+| Detection Finding     | 2004 | sigma matches, trivy ExposedSecretReport                                                                                                   |
+| Vulnerability Finding | 2002 | trivy VulnerabilityReport (homelab convention: Tenzir upstream documents no vulnerability-finding mapping)                                 |
+| Process Activity      | 1007 | tetragon exec and exit (tetragon map)                                                                                                      |
+| File System Activity  | 1001 | tetragon secret-file-access kprobe (tetragon map)                                                                                          |
+| Base Event            | 0    | fleet rows, authentik non-IAM actions, unknown tetragon kinds: cannot name a class — archived on core, deliberately unarchived on tetragon |
 
 Mappings resolve class ids with the lookup idiom instead of hard-coded
 numbers: `ocsf_class_uid("Network Activity")` reads better than
 `4001` and survives OCSF revisions. Write it that way in rules and
 mappers; the numbers exist for the reader.
 
-Classes that cannot map to OCSF (the Base Event fallback above) are not
-archived: they expire with the 15-minute local window on the
-weighted-age backstop. When a feed grows a real class mapping, it joins
-the archive automatically.
+Base Event handling is per node, not uniform: core's archive rule
+exports `ocsf.base_event` with the mappable classes (added 2026-10-17 —
+without a time rule those partitions accumulated locally and bloated the
+boot catalog load), while tetragon's rule deliberately excludes it:
+unknown export kinds cannot name a class and expire with the 15-minute
+local window on the weighted-age backstop. When a feed grows a real
+class mapping, it joins the archive through the node's rule types list.
 
 ## YARA scaffold
 

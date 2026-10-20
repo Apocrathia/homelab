@@ -28,10 +28,10 @@ secrets: the app folder's [`README.md`](../../README.md).
 
 | Path              | What lives there                                                            |
 | ----------------- | --------------------------------------------------------------------------- |
-| `nodes/`          | The five node HelmReleases + READMEs (pipelines, sizing, retention)         |
+| `nodes/`          | The seven node HelmReleases + READMEs (pipelines, sizing, retention)        |
 | `packages/`       | The `homelab` TQL package: parse / OCSF map / findings operators + tests    |
 | `detections/`     | Sigma rules (homelab + vendored SigmaHQ/YARA) and the bus semantics         |
-| `grafana/`        | The three Tenzir dashboards (OCSF panels query the ClickHouse store)        |
+| `grafana/`        | The five Tenzir dashboards (OCSF + investigations panels over ClickHouse)   |
 | `.agents/skills/` | Vendored tenzir + tenzir-ocsf doc skills (generated upstream, never edited) |
 
 ## Module map

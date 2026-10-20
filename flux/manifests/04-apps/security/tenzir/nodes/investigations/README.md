@@ -5,7 +5,7 @@
 One process (HelmRelease `tenzir-node-investigations`, rendering pod
 `tenzir-node-investigations`) that owns the investigations plane and
 nothing else: durable OCSF-modeled case and evidence records in
-ClickHouse, written by agents, read by the operator in Grafana. Two
+ClickHouse, written by agents, read by the operator in Grafana. Three
 lanes, one blast radius:
 
 - **Write lane** — the standing

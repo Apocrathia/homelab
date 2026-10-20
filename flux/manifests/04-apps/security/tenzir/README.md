@@ -16,9 +16,10 @@ owns the agent investigations plane: case/evidence envelopes in,
 `investigations.records` on ClickHouse out — an isolated blast radius the
 detection plane never shares. The [enrichment
 node](./nodes/enrichment/README.md) is the internal-reference-data
-factory: it will build the curated lookup tables — fleet assets,
-baselines — into ClickHouse for the other nodes to pull; it stays idle
-and empty until its first row.
+factory: it builds the curated lookup tables — fleet assets,
+baselines — into ClickHouse for the other nodes to pull; its first
+lane, the hourly Fleet host-inventory pull into `ocsf.fleet_assets`,
+shipped in lap 2 (the core node's loader is the consumer half).
 The [introspection
 node](./nodes/introspection/README.md) is the diagnostics observability
 plane: its central poller ships every fleet node's pipeline diagnostics
@@ -77,10 +78,10 @@ The chart is the whole topology for detection: feeders, the bus, sigma, the
 lake, the archive, and the Grafana query plane. The one agent-side consumer
 is the [investigator agent](../../artificial-intelligence/agents/investigator/README.md)
 (P-3): high-severity findings alert through Grafana with the `agent_invoke`
-label ([findings alert rule](../../03-services/observability/grafana/alerting/tenzir-findings.yaml))
+label ([findings alert rule](../../../03-services/observability/grafana/alerting/tenzir-findings.yaml))
 and reach it via the bridge → homelab-agent delegation, and it works cases
 against `investigations.records` + `ocsf.*` through the
-[investigations node](./nodes/investigations/README.md)'s two lanes.
+[investigations node](./nodes/investigations/README.md)'s write and query lanes.
 
 ## Secrets
 
@@ -116,9 +117,10 @@ and the rendered Secret keys match them:
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
 Secret in this namespace (MR-3; the same item the clickhouse namespace
 renders — one item, multiple OnePasswordItem CRs). Its `clickhouse-password`
-field is the ClickHouse `tenzir` writer password all three nodes read as
-`TENZIR_SECRETS__CLICKHOUSE_PASSWORD` for the `to_clickhouse` archive
-legs; its `clickhouse-investigations-{writer,reader}-password` fields carry the
+field is the ClickHouse `tenzir` writer password five nodes read as
+`TENZIR_SECRETS__CLICKHOUSE_PASSWORD` — the `to_clickhouse` archive legs
+on core, tetragon, and netflow, and the factory INSERT legs on
+enrichment and intel; its `clickhouse-investigations-{writer,reader}-password` fields carry the
 investigations node's two ClickHouse users (see
 [`secret.yaml`](./secret.yaml) and the node README). The operator adds
 the values.
@@ -153,9 +155,11 @@ All baselines must stay warning-free.
 
 ## Storage lifecycle
 
-The local lakes keep 15 minutes; every OCSF class that can name itself
-archives to the ClickHouse OCSF query store (per-class
-`ocsf.<Class_Name>` tables) and expires locally. The lake is a transit
+The local lakes keep 15 minutes; the mappable OCSF classes archive to
+the ClickHouse OCSF query store (per-class
+`ocsf.<Class_Name>` tables) and expire locally — on core the Base Event
+fallback archives with them, while tetragon's unknown export kinds stay
+unarchived and expire with the window. The lake is a transit
 buffer between ingest and the archive, not a query surface; ClickHouse is
 the record. The retired `s3://tenzir/ocsf/` parquet archive stays
 untouched in the rustfs bucket as frozen history (deleting it is a

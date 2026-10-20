@@ -69,7 +69,7 @@ import, so the lake carries node state only (the investigations and
 enrichment precedent); there is no archive rule and no transit buffer
 to protect. The factory's output is the ClickHouse table, not this
 lake. If a future lane imports into the lake, revisit the Longhorn
-recurring-job exclusion (netflow/tetragon ship a `storage.yaml` for
+recurring-job exclusion (core/netflow/tetragon ship a `storage.yaml` for
 exactly that case, and its spec must mirror the `persistence` values).
 
 ## Sizing
