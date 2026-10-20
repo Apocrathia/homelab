@@ -11,9 +11,6 @@ resources:
   - secret.yaml
   - modelconfig.yaml
   - agentharness.yaml
-# Rollback artifacts kept on disk (not active):
-# - helmrelease.yaml (former generic-app OpenClaw)
-# - openclaw.json (former ConfigMap payload)
 
 generatorOptions:
   disableNameSuffixHash: true

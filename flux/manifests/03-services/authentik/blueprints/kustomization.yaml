@@ -25,6 +25,10 @@ configMapGenerator:
     namespace: authentik
     files:
       - terraform-service-account.yaml
+  - name: authentik-blueprint-openclaw-cleanup
+    namespace: authentik
+    files:
+      - openclaw-cleanup.yaml
 
 labels:
   - includeSelectors: true

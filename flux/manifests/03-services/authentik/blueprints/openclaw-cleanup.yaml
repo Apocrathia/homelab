@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: openclaw-cleanup
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+context: {}
+entries:
+  # The generic-app HelmRelease retired; the bookmark tile's SSO rides the
+  # kagent proxy provider. Blueprints never garbage-collect, so removal is
+  # explicit state: absent entries (cryptpad-cleanup pattern). One-shot:
+  # the file hash gates re-import. Provider first, outpost second:
+  # deleting the outpost also removes its k8s objects (Deployment, Service,
+  # metrics Service, ak-outpost-openclaw-outpost HTTPRoute on the retired
+  # hostname). Survivors need a manual k8s sweep (mlflow/ombi/zilean
+  # precedent); see the openclaw README.
+  - model: authentik_providers_proxy.proxyprovider
+    state: absent
+    identifiers:
+      name: "openclaw-proxy-provider"
+  - model: authentik_outposts.outpost
+    state: absent
+    identifiers:
+      name: "openclaw-outpost"
