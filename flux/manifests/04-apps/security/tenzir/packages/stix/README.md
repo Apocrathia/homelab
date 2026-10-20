@@ -5,8 +5,8 @@ The official `stix` TQL package, vendored byte-for-byte from
 `c6bba5f894455ce113f47e923605460b1b720edc` (2026-10-13). It fetches STIX
 2.1 objects from TAXII 2.1 collections through `stix::taxii::fetch` and
 maps STIX Indicators to OCSF 1.9.0 OSINT Inventory Info through the
-`stix::ocsf::*` operators; the intel node's opencti-taxii-factory
-pipeline calls them
+`stix::ocsf::*` operators; the intel node's opencti-taxii-factory-walk
+and opencti-taxii-factory-poll pipelines call them
 ([wiring](../../nodes/intel/helmrelease.yaml)), the intel factory's
 first row. The upstream repo carries no license file; vendored as-is with
 provenance recorded here.

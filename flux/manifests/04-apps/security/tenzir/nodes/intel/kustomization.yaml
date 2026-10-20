@@ -18,16 +18,27 @@ configMapGenerator:
   - name: tenzir-intel-pipelines
     namespace: tenzir
     files:
-      - opencti-taxii-factory.tql=pipelines/opencti-taxii-factory.tql
+      - opencti-taxii-factory-walk.tql=pipelines/opencti-taxii-factory-walk.tql
+      - opencti-taxii-factory-poll.tql=pipelines/opencti-taxii-factory-poll.tql
 
 replacements:
   - source:
       kind: ConfigMap
       name: tenzir-intel-pipelines
-      fieldPath: data.[opencti-taxii-factory.tql]
+      fieldPath: data.[opencti-taxii-factory-walk.tql]
     targets:
       - select:
           kind: HelmRelease
           name: tenzir-node-intel
         fieldPaths:
-          - spec.values.tenzir.config.tenzir.pipelines.opencti-taxii-factory.definition
+          - spec.values.tenzir.config.tenzir.pipelines.opencti-taxii-factory-walk.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-intel-pipelines
+      fieldPath: data.[opencti-taxii-factory-poll.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-intel
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.opencti-taxii-factory-poll.definition

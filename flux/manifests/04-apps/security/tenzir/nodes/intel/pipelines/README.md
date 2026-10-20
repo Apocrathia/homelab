@@ -1,11 +1,13 @@
 # Pipelines (intel)
 
-The CTI factory plane's pipeline drop zone. One row ships:
-[opencti-taxii-factory.tql](./opencti-taxii-factory.tql), the intel
-factory's first lane — OpenCTI's TAXII 2.1 indicator collection pulled
-on a dual schedule (daily 07:00 full walk + 01/13/19 added_after polls)
-into the ClickHouse `ocsf.OSINT_Inventory_Info` lookup table, with the
-core node's
+The CTI factory plane's pipeline drop zone. One row ships as two
+pipelines:
+[opencti-taxii-factory-walk.tql](./opencti-taxii-factory-walk.tql) and
+[opencti-taxii-factory-poll.tql](./opencti-taxii-factory-poll.tql), the
+intel factory's first lane — OpenCTI's TAXII 2.1 indicator collection
+pulled on a dual schedule (daily 07:00 full walk + 01/13/19 added_after
+polls) into the ClickHouse `ocsf.OSINT_Inventory_Info` lookup table,
+with the core node's
 [opencti-osint-loader](../../core/pipelines/opencti-osint-loader.tql) as
 the consumer half.
 

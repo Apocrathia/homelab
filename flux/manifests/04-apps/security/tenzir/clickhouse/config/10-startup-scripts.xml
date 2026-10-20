@@ -276,7 +276,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <!-- OSINT inventory lookup table (tenzir/nodes/intel +
              nodes/core): the intel factory's first row. The
-             intel node's opencti-taxii-factory pipeline
+             intel node's opencti-taxii-factory-walk / -poll pair
              appends the OpenCTI TAXII collection's current
              state on every walk (daily full walk +
              added_after polls; the node runs the 6.20-rc

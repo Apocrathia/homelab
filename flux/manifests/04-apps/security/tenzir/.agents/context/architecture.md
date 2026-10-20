@@ -47,7 +47,7 @@ through the platform.
   later factory lanes build the curated lookup tables — fleet assets,
   baselines — into ClickHouse for the other nodes' loaders;
   live-event enrichment stays in-stream at the ingress nodes.
-- **Intel node** — the CTI factory plane: its opencti-taxii-factory
+- **Intel node** — the CTI factory plane: its opencti-taxii-factory-walk / -poll
   pipeline pulls external threat intel from OpenCTI's TAXII 2.1
   indicator collection, normalizes it to OCSF 5021, and appends it to
   the ClickHouse OCSF store, from where the core node's
