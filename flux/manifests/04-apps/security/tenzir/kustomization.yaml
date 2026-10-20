@@ -136,6 +136,20 @@ configMapGenerator:
     namespace: tenzir
     files:
       - enrich.tql=packages/tenzir/operators/osint/enrich.tql
+  # Shared record_integrity attest/verify operators (operators/
+  # record_integrity/): the generalized stamping + verification lane
+  # both planes ride — the investigations node's thin scope wrappers
+  # (attest.tql/verify.tql under operators/investigations/ocsf/) call
+  # them, and the core node's archive rule + verify pipeline call them
+  # directly.
+  - name: tenzir-packages-homelab-record-integrity-attest
+    namespace: tenzir
+    files:
+      - attest.tql=packages/homelab/operators/record_integrity/attest.tql
+  - name: tenzir-packages-homelab-record-integrity-verify
+    namespace: tenzir
+    files:
+      - verify.tql=packages/homelab/operators/record_integrity/verify.tql
   - name: tenzir-packages-homelab-investigations-map
     namespace: tenzir
     files:

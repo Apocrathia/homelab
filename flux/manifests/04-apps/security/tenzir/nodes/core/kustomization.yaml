@@ -34,6 +34,7 @@ configMapGenerator:
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - sigma-metrics-to-mimir.tql=pipelines/sigma-metrics-to-mimir.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
+      - detection-attest-verify.tql=pipelines/detection-attest-verify.tql
 
 replacements:
   - source:
@@ -186,3 +187,13 @@ replacements:
           name: tenzir-node-core
         fieldPaths:
           - spec.values.tenzir.config.plugins.compaction.time.rules.0.pipeline
+  - source:
+      kind: ConfigMap
+      name: tenzir-core-pipelines
+      fieldPath: data.[detection-attest-verify.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-core
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.detection-attest-verify.definition

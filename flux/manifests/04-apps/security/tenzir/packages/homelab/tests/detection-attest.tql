@@ -1,0 +1,112 @@
+---
+quiet: true
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+homelab::k8s::audit::ocsf::map
+ocsf_derive
+ocsf_cast
+// The same archive pass carries every bus class (the rule fires over all
+// stored ocsf types): the Authentication (3002) and Detection Finding
+// (2004) literals ride the batch like the authentik and sigma feeds do
+// live, proving the one chain links ACROSS classes per node.
+merge {
+  from {
+      class_uid: 3002,
+      category_uid: 3,
+      activity_id: 1,
+      type_uid: 300201,
+      severity_id: 1,
+      status_id: 1,
+      time: 2026-10-17T08:15:00Z,
+      metadata: {
+        version: "1.9.0",
+        product: {name: "authentik", vendor_name: "goauthentik"},
+      },
+      actor: {user: {name: "ian", uid: "5"}},
+      src_endpoint: {ip: 10.100.2.44},
+      unmapped: {event_pk: "5f1c2b30-0000-4000-8000-000000000001", action: "login"},
+  },
+  {
+      class_uid: 2004,
+      category_uid: 2,
+      activity_id: 1,
+      type_uid: 200401,
+      severity_id: 3,
+      status_id: 1,
+      time: 2026-10-17T09:10:00Z,
+      metadata: {
+        version: "1.9.0",
+        profiles: ["security_control"],
+        product: {name: "Tenzir", vendor_name: "Tenzir"},
+      },
+      finding_info: {
+        uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+        title: "Kubernetes CronJob/Job Modification",
+        analytic: {
+          type_id: 1,
+          type: "Rule",
+          uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+          name: "Kubernetes CronJob/Job Modification",
+        },
+      },
+      evidences: [
+        {
+          data: {
+            class_uid: 6003,
+            category_uid: 6,
+            activity_id: 3,
+            type_uid: 600303,
+            time: 2026-10-17T09:04:59Z,
+            metadata: {
+              version: "1.9.0",
+              product: {name: "audit", vendor_name: "kubernetes"},
+            },
+            api: {operation: "patch deployments/status"},
+          },
+        },
+    ],
+  }
+  ocsf_derive
+  ocsf_cast
+}
+// Pin the uids the archive leg mints with uuid() when absent: pinned
+// fixtures keep the baseline deterministic (the investigations-test
+// precedent), and the same-second audit pair arrives in REVERSE uid
+// order above so the sort proves the (time, metadata.uid) tie-break
+// that the 22M-row bus needs — input order must lose to uid order.
+if unmapped?.audit_id? == "det-0001" {
+  metadata.uid = "core-det-audit-a1"
+}
+if unmapped?.audit_id? == "det-0002" {
+  metadata.uid = "core-det-audit-a2"
+}
+if unmapped?.audit_id? == "det-0003" {
+  metadata.uid = "core-det-audit-b"
+}
+if class_uid? == 3002 and time == 2026-10-17T08:15:00Z {
+  metadata.uid = "core-det-auth"
+}
+if class_uid? == 2004 and time == 2026-10-17T09:10:00Z {
+  metadata.uid = "core-det-finding"
+}
+// The core node's archive-rule shape (nodes/core/pipelines/
+// ocsf-archive.tql): the (time, uid) sort, then the attest leg with the
+// intra-batch chain plumbing — the batch chains via lag (the fork's
+// context_update races a fast batch, so the tail rides the stream, not
+// the context; the context only stitches batch seams), and attest
+// consumes prev_tail either way. No context_enrich here — a node
+// context is not fixture-testable — so the first record rides as
+// genesis, exactly like a fresh node's first archive pass.
+sort time, metadata.uid
+// The archive leg's attest call, verbatim (nodes/core/pipelines/
+// ocsf-archive.tql): stream mode chains the batch internally in the
+// sorted order; no context tail here (a node context is not
+// fixture-testable), so the first record rides as genesis exactly like
+// a fresh node's first archive pass, and the rest chain via the
+// operator's own lag.
+homelab::record_integrity::attest authority_uid="tenzir-node-core",
+  chain_uid="tenzir-node-core",
+  genesis=false,
+  chain="stream"

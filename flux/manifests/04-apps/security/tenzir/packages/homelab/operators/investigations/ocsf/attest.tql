@@ -1,113 +1,20 @@
 ---
 description: |
-  Stamps the OCSF record_integrity profile on fully derived + cast
-  investigations records: attestation_list[0] with a SHA-256 fingerprint
-  over the canonical serialization of the stored shape, chained per case
-  via prev_event (chain_uid = metadata.correlation_uid, the case spine).
-  Runs AFTER ocsf_derive + ocsf_cast so the fingerprint covers the
-  record exactly as stored — the verification lane (verify.tql) then
-  recomputes it from investigations.records read-backs. The caller
-  supplies the chain tail for this record in `prev_tail` (uid, type_uid,
-  fingerprint of the case's previous record); the investigations node's
-  ingest pipeline does so via context_enrich on the in-memory
-  investigations-chains context (keyed by correlation_uid), and the
-  package tests bake it from fixtures. A null/absent prev_tail is chain
-  genesis; on a non-open record it is the documented node-restart case
-  (chain state is per-node-lifetime memory) and warns below.
-args:
-  named:
-    - name: authority_uid
-      type: string
-      default: tenzir-node-investigations
-      description: The attesting node identity (OCSF authority_uid; the
-        chart renders this node as tenzir-node-investigations — the same
-        identity the map stamps as src_endpoint.hostname).
+  Investigations-plane scope of the record_integrity stamp — the thin
+  binding over the shared operator
+  ([`../../record_integrity/attest.tql`](../../record_integrity/attest.tql)),
+  which owns the stamping mechanics and the OCSF rule quotes. Scope: one
+  chain per case — chain_uid = metadata.correlation_uid, the case spine;
+  genesis is the case open (class 2005, activity 1), so a new case
+  legitimately starts its chain; the attesting identity is
+  tenzir-node-investigations, the chart-rendered node name (the same
+  identity the map stamps as src_endpoint.hostname). The caller supplies
+  the chain tail in prev_tail via the investigations-chains context; a
+  null/absent tail on a non-open record is the documented node-restart
+  case. The whole-stamp narrative (genesis, restarts, the fingerprint
+  crux) lives in the shared operator and the ocsf README.
 ---
 
-// Idempotence guard: a record that already carries an attestation (e.g.
-// a read-back replayed through the ingest lane) passes through unstamped.
-if attestation_list? == null {
-  // ---- restart-gap diagnostic ----------------------------------------------
-  // A record with no chain tail that is not a case open (class 2005,
-  // activity 1) means the node lost its in-memory chain state — node
-  // restart — or an evidence pin landed before its case's first record.
-  // The chain restarts HERE with prev_event absent: tamper-evidence is
-  // best-effort per node lifetime (the verification lane's per-record
-  // fingerprint recompute still catches post-hoc mutation across
-  // restarts; only the pre-restart chain linkage is lost). The fork keeps
-  // the record flowing on the main branch: the assert drops only the
-  // branch copy with a WARNING diagnostic in the node's diagnostics
-  // stream. The discard sinks the branch (a fork branch must have one;
-  // the assert drops everything that reaches it).
-  fork {
-    where prev_tail? == null and not (class_uid? == 2005 and activity_id? == 1)
-    assert false, message="record_integrity chain restart: no chain tail for this record (node lost in-memory chain state); chain continues from here with prev_event absent"
-    discard
-  }
-
-  // ---- the attestation, pre-fingerprint ------------------------------------
-  // OCSF rule (vendored tenzir-ocsf/v1.9.0): objects/attestation.md —
-  // "The attestation is computed over a canonical serialization of the
-  // event: the entire event, including the attestation's own
-  // authority_uid, chain_uid, and prev_event attributes, and excluding
-  // only the attestation's fingerprint and signatures." So: assemble the
-  // attestation WITHOUT the fingerprint, hash that serialization, attach
-  // the fingerprint last. prev_event rides absent on genesis per
-  // objects/prev_event.md ("Absent on the first, or genesis, event of a
-  // chain") — a null field would serialize differently from a missing one
-  // and break read-back recomputation. chain_uid = the case spine per the
-  // record_integrity profile: objects/attestation.md — "Stable for the
-  // lifetime of the chain. For example, every attestation produced
-  // during a single agent session shares one chain_uid."
-  if prev_tail? != null {
-    attestation_list = [{
-      authority_uid: $authority_uid,
-      chain_uid: metadata.correlation_uid,
-      prev_event: prev_tail,
-    }]
-  } else {
-    attestation_list = [{
-      authority_uid: $authority_uid,
-      chain_uid: metadata.correlation_uid,
-    }]
-  }
-  // prev_tail is pipeline plumbing, not stored content: the verifier
-  // recomputes over the stored shape, so it must leave before the hash
-  // input is captured (prev_event above already carries the copy).
-  drop prev_tail?
-
-  // ---- the canonical serialization (the crux) -------------------------------
-  // print_json alone is NOT canonical: it preserves field insertion
-  // order, and the read-back lane cannot reproduce it (ClickHouse sorts
-  // the keys of JSON values; reference/operators/from_clickhouse.md —
-  // "fields from the catch-all keep neither their original order nor
-  // their position relative to other columns"). The sort() function is
-  // the canonicalizer: it recursively sorts record fields by name,
-  // including records inside lists (reference/functions/sort.md), so
-  // print_json(this.sort()) is a pure function of the record's content —
-  // proven by the package determinism test, not assumed. The round trip
-  // is byte-stable: print_json quotes temporal/ip values as strings
-  // (strict JSON), and read_json / the catch-all re-inference restore
-  // them to the same types, which print_json serializes identically.
-  //
-  // The claim that the record carries this profile rides BEFORE the hash
-  // input is captured, so the claim itself is covered by the fingerprint.
-  metadata.profiles = append(metadata?.profiles?, "record_integrity")
-  _hash_input = print_json(this.sort())
-  attestation_list = attestation_list.map(a => ({
-    ...a,
-    // The fingerprint object (vendored objects/fingerprint.md): the
-    // algorithm (3 = SHA-256), the value encoding (1 = Hex), and the
-    // serialization scheme (99 = Other, source-defined — NOT JCS: print_json
-    // pretty-prints with two-space indents, not the RFC 8785 minimal form;
-    // "In the case of Other, it is defined by the event source").
-    fingerprint: {
-      algorithm_id: 3,
-      encoding_id: 1,
-      serialization_id: 99,
-      serialization: "tenzir-sorted-json",
-      value: hash_sha256(_hash_input),
-    },
-  }))
-  drop _hash_input
-}
+homelab::record_integrity::attest authority_uid="tenzir-node-investigations",
+  chain_uid=metadata.correlation_uid,
+  genesis=class_uid? == 2005 and activity_id? == 1

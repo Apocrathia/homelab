@@ -1,0 +1,34 @@
+---
+quiet: true
+---
+let $t0 = now()
+// The throughput measurement harness for the detection-plane attest leg:
+// 100k realistic API Activity records (5 audit fixtures x repeat 20000,
+// mapped + derived + cast to the stored shape) through the archive
+// rule's exact stamping sequence — the uid mint, the (time, uid) sort,
+// the stream-mode attest (record fingerprint + chain link). The baseline
+// pins the COUNTS (100k records, 100k stamped); the assert at the end is
+// a throughput floor: this run measured ~4s wall for the pipeline on an
+// M-series laptop (100k records / ~4s ~= 25k records/s end to end, ~19us
+// per record marginal over the sort-only baseline — the honest numbers
+// live in the datalake README's attestation section), and the floor
+// leaves 25x headroom so CI load cannot flake it. A regression that
+// pushes the leg under 1k records/s fails the assert and the baseline
+// records the warning. Re-measure honestly with:
+//   TENZIR_INPUT=... uvx tenzir@6.19.1 -f <this file> # time it
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+homelab::k8s::audit::ocsf::map
+ocsf_derive
+ocsf_cast
+repeat 20000
+// The archive leg, verbatim (nodes/core/pipelines/ocsf-archive.tql).
+metadata.uid = uuid() if metadata.uid? == null
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-core",
+  chain_uid="tenzir-node-core",
+  genesis=false,
+  chain="stream"
+summarize records = count(), stamped = sum(1 if attestation_list[0]?.fingerprint?.value? != null else 0)
+assert (now() - $t0) < 100s, message="detection attest leg under throughput floor: 100k records took over 100s (re-measure and re-check the archive pass sizing math)"

@@ -1,3 +1,52 @@
+// The core node's archive rule: the compaction plugin hands this
+// pipeline every 15-minute-expired record of the stored ocsf types
+// (one batch per 5-minute pass), and this is the record_integrity
+// lane's stamping point — the attestation covers the record exactly as
+// archived, upstream of the INSERT (docs/issues/
+// tenzir-record-integrity-attestations.md; the sigma findings reach
+// this rule through the store like every other class, so they stamp
+// here too).
+//
+// The chain is PER NODE (chain_uid = tenzir-node-core, the chart-
+// rendered identity) and one-passed in (time, uid) order:
+//
+// - metadata.uid: the OCSF locator is absent from the raw feeds (the
+//   maps stamp product identity, not per-event uids; ocsf_cast does not
+//   mint one), and prev_event.uid needs it as the chain locator. The
+//   mint fills the gap for records that lack one; the same uid is the
+//   sort tie-break that makes same-second stamps (k8s-audit volume)
+//   order deterministically — the verify walk re-sorts on the same key
+//   pair, and a tie left to input order would differ between this pass
+//   and the read-back walk (a false chain_link_mismatch).
+//
+// - The attest call rides stream mode: the operator chains the batch
+//   itself via its internal lag (the only ordering the engine
+//   guarantees at batch rate — probed: context-read chains mis-link
+//   every record of a fast batch because the reads run engine-batches
+//   ahead of the writes), stamps the record fingerprint in
+//   attestation_list[0] and the un-hashed chain link in
+//   attestation_list[1]. genesis=false: the plane has no case-open
+//   shape, so a fresh node's first pass warns once at its first
+//   record (the chain's epoch marker) and every post-restart pass does
+//   the same — the documented restart gap.
+//
+// - The detection-chains context (the HelmRelease contexts block) is
+//   the SEAM channel only: the fork's per-record context_update lands
+//   last-write-wins (the async writes are harmless here — nothing
+//   intra-batch reads them), and the NEXT pass's first record reads
+//   the pre-pass state as its prev_event — linking the passes into one
+//   per-node chain in time order.
+metadata.uid = uuid() if metadata.uid? == null
+sort time, metadata.uid
+context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+homelab::record_integrity::attest authority_uid="tenzir-node-core",
+  chain_uid="tenzir-node-core",
+  genesis=false,
+  chain="stream"
+fork {
+  context_update "detection-chains", key="tenzir-node-core",
+    value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+}
 to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
               host="clickhouse-tenzir.clickhouse.svc.cluster.local",
               port=9000,

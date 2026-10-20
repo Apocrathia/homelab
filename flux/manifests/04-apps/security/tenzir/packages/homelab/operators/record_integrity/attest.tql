@@ -1,0 +1,240 @@
+---
+description: |
+  Stamps the OCSF record_integrity profile on fully derived + cast
+  records: attestation_list[0] with a SHA-256 fingerprint over the
+  canonical serialization of the stored shape, chained via prev_event.
+  Runs AFTER ocsf_derive + ocsf_cast so the fingerprint covers the
+  record exactly as stored — the verification lane (verify.tql) then
+  recomputes it from stored read-backs.
+  The chain scope is the caller's: `chain_uid` names the chain this
+  record joins, evaluated per record (OCSF objects/attestation.md —
+  chain_uid is "Stable for the lifetime of the chain. For example, every
+  attestation produced during a single agent session shares one
+  chain_uid"). The investigations wrapper pins it per case
+  (metadata.correlation_uid, the case spine); the detection plane pins
+  it per node (the node identity constant the chart renders), one chain
+  per node in time order per
+  docs/issues/tenzir-record-integrity-attestations.md.
+  The chain linkage mode is the caller's too, and the split is
+  load-bearing (live-probed on v6.19.1 against a 100k-record batch):
+  `chain="caller"` — the caller supplies EVERY record's tail in
+  `prev_tail` (uid, type_uid, fingerprint of the chain's previous
+  record). Works when the caller paces records one at a time (the
+  investigations HTTP ingest: the context write lands inside the
+  inter-request gap). Against a fast batch the context reads run
+  engine-batches ahead of the writes and every link goes stale — so the
+  batch lanes use `chain="stream"`: the operator chains the stream
+  itself in (time, uid) order via its internal lag, the OCSF-specified
+  two-attestation shape — attestation_list[0] is the record fingerprint
+  (no prev_event: computable per record with no cross-record state, so
+  the lag can carry it forward), attestation_list[1] is the chain link
+  (prev_event referencing the previous record's record fingerprint;
+  carried un-hashed, fingerprint being a recommended-not-required
+  attribute — the engine offers no channel to hash it at the link's
+  position without reintroducing the ordering wall, so its integrity is
+  enforced by the verify lane's adjacency check instead; link deletion
+  masquerades as a chain restart — the documented limit). The caller's
+  `prev_tail` in stream mode is the batch SEAM: the first record of the
+  pass links to the previous pass's last record through it (the
+  per-record context read is stale intra-batch, but the first read of a
+  pass always sees the pre-pass state — probed), records 2+ chain via
+  the lag and ignore it.
+  A record with no tail at all is chain genesis when the caller's
+  `genesis` expression says so; any other no-tail record is the
+  documented node-restart case (chain state is per-node-lifetime
+  memory) and warns below.
+args:
+  named:
+    - name: authority_uid
+      type: string
+      description: The attesting node identity (OCSF authority_uid; the
+        chart-rendered node name — tenzir-node-investigations,
+        tenzir-node-core).
+    - name: chain_uid
+      type: string
+      description: The chain this record joins, evaluated per record —
+        the case spine for the investigations plane, a per-node identity
+        constant for the detection plane.
+    - name: genesis
+      type: bool
+      description: Per-record expression — true when a missing chain
+        tail legitimately STARTS a new chain (the investigations case
+        open, class_uid? == 2005 and activity_id? == 1); false when
+        every no-tail record is a chain (re)start (the detection plane,
+        whose first record follows every node boot or restart).
+    - name: chain
+      type: string
+      default: caller
+      description: caller — the caller supplies every record's tail in
+        prev_tail (paced lanes, the investigations ingest). stream — the
+        operator chains the batch in (time, uid) order itself; prev_tail
+        is only the batch seam, the first record of the pass linking to
+        the previous pass's last record (fast batch lanes, the archive
+        rule).
+---
+
+// The attesting identity must name a party: a null authority_uid would
+// stamp integrity theater (an attestation that names nobody).
+assert $authority_uid != null, message="attest requires authority_uid: the attesting node identity"
+
+// Idempotence guard: a record that already carries an attestation (e.g.
+// a read-back replayed through the ingest lane) passes through unstamped.
+if attestation_list? == null {
+  if $chain == "stream" {
+    // ---- stream mode: the record fingerprint first --------------------------
+    // attestation_list[0] carries NO prev_event, so its fingerprint is a
+    // pure function of the record — no cross-record state, nothing for the
+    // batch-async context to get stale about. That is what makes the chain
+    // buildable inside one fast pass at all: the lag below can carry this
+    // fingerprint to the next record because it exists BEFORE the lag's
+    // position (the OCSF hash rule — objects/attestation.md, "the entire
+    // event, including the attestation's own authority_uid, chain_uid, and
+    // prev_event attributes, and excluding only the attestation's
+    // fingerprint and signatures" — is what forbids the simpler
+    // single-attestation shape here: prev_event rides INSIDE the hash, so
+    // a chained single attestation is strictly sequential and the engine
+    // has no cross-position state channel for that; probed live, the
+    // context version of this mis-links every record of a fast batch).
+    //
+    // The claim that the record carries this profile rides BEFORE the hash
+    // input is captured, so the claim itself is covered by the fingerprint.
+    metadata.profiles = append(metadata?.profiles?, "record_integrity")
+    // The caller's prev_tail (the batch seam — the previous pass's last
+    // record) rides the record into the operator, so the hash input NULLS
+    // it out explicitly: the verify recompute nulls the same field the
+    // same way (the stored record carries no prev_tail — attest drops it
+    // below), and print_json of a null field is byte-stable on both
+    // sides. A live probe of the naive shape (hashing the seam in)
+    // mismatched every fingerprint on read-back — the null-out is
+    // load-bearing, not cosmetic.
+    attestation_list = [{
+      authority_uid: $authority_uid,
+      chain_uid: $chain_uid,
+    }]
+    _hash_input = print_json(({
+      ...this,
+      prev_tail: null,
+    }).sort())
+    attestation_list = attestation_list.map(a => ({
+      ...a,
+      // The fingerprint object (vendored objects/fingerprint.md): the
+      // algorithm (3 = SHA-256), the value encoding (1 = Hex), and the
+      // serialization scheme (99 = Other, source-defined — NOT JCS:
+      // print_json pretty-prints with two-space indents, not the RFC 8785
+      // minimal form; "In the case of Other, it is defined by the event
+      // source").
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: hash_sha256(_hash_input),
+      },
+    }))
+    drop _hash_input
+
+    // ---- stream mode: the lag, then the chain-link attestation --------------
+    // lag follows input order within its pipeline (reference/operators/
+    // lag.md), and the caller sorts the batch on (time, metadata.uid) —
+    // the same order the verify walk re-sorts on — so the injected tail is
+    // the immediately preceding record of this batch. The value expression
+    // reads the record fingerprint, which the stage above already
+    // attached: born before the lag's position, the one ordering the
+    // engine actually guarantees in-stream.
+    lag value={
+      uid: metadata.uid,
+      type_uid: type_uid,
+      fingerprint: attestation_list[0].fingerprint,
+    }, into=_prev
+
+    // The effective tail: the lag tail (records 2+), the seam (record 1
+    // of the pass), or neither — chain genesis, or the documented
+    // restart case, warned below: the fork keeps the record flowing on
+    // the main branch; the assert drops only the branch copy with a
+    // WARNING diagnostic, and the discard sinks the branch (a fork
+    // branch must have one).
+    fork {
+      where _prev? == null and prev_tail? == null and not $genesis
+      assert false, message="record_integrity chain restart: no chain tail for this record (node lost in-memory chain state); chain continues from here with prev_event absent"
+      discard
+    }
+    if _prev? != null or prev_tail? != null {
+      // The chain-link attestation (attestation_list[1]): prev_event
+      // binds this record to its predecessor — prev_event rides absent
+      // on genesis per objects/prev_event.md ("Absent on the first, or
+      // genesis, event of a chain"). It carries no fingerprint of its
+      // own (recommended, not required — objects/attestation.md): the
+      // engine's only cross-position state channel is the lag above,
+      // which delivers the predecessor's fingerprint AFTER this
+      // record's record-fingerprint was hashed; hashing the link would
+      // need the link's own fingerprint in the NEXT record's input, the
+      // same ordering wall one level down. The verify lane enforces the
+      // link by adjacency instead; a deleted link attestation
+      // masquerades as a chain restart — the documented limit.
+      attestation_list = append(attestation_list, {
+        authority_uid: $authority_uid,
+        chain_uid: $chain_uid,
+        prev_event: _prev? if _prev? != null else prev_tail,
+      })
+    }
+    drop _prev?, prev_tail?
+  } else {
+    // ---- caller mode (the investigations shape) -------------------------------
+    // The caller supplies the chain tail for this record in prev_tail
+    // (uid, type_uid, fingerprint of the chain's previous record); a
+    // null/absent tail on a non-genesis record is the documented
+    // node-restart case. The fork keeps the record flowing on the main
+    // branch: the assert drops only the branch copy with a WARNING
+    // diagnostic in the node's diagnostics stream, and the discard
+    // sinks the branch (a fork branch must have one).
+    fork {
+      where prev_tail? == null and not $genesis
+      assert false, message="record_integrity chain restart: no chain tail for this record (node lost in-memory chain state); chain continues from here with prev_event absent"
+      discard
+    }
+
+    // The attestation, pre-fingerprint: OCSF rule (vendored
+    // tenzir-ocsf/v1.9.0, objects/attestation.md) — "The attestation is
+    // computed over a canonical serialization of the event: the entire
+    // event, including the attestation's own authority_uid, chain_uid,
+    // and prev_event attributes, and excluding only the attestation's
+    // fingerprint and signatures." So: assemble the attestation WITHOUT
+    // the fingerprint, hash that serialization, attach the fingerprint
+    // last. prev_event rides absent on genesis per objects/prev_event.md
+    // ("Absent on the first, or genesis, event of a chain") — a null
+    // field would serialize differently from a missing one and break
+    // read-back recomputation. chain_uid is the caller's chain scope.
+    if prev_tail? != null {
+      attestation_list = [{
+        authority_uid: $authority_uid,
+        chain_uid: $chain_uid,
+        prev_event: prev_tail,
+      }]
+    } else {
+      attestation_list = [{
+        authority_uid: $authority_uid,
+        chain_uid: $chain_uid,
+      }]
+    }
+    // prev_tail is pipeline plumbing, not stored content: the verifier
+    // recomputes over the stored shape, so it must leave before the hash
+    // input is captured (prev_event above already carries the copy).
+    drop prev_tail?
+
+    // The claim that the record carries this profile rides BEFORE the hash
+    // input is captured, so the claim itself is covered by the fingerprint.
+    metadata.profiles = append(metadata?.profiles?, "record_integrity")
+    _hash_input = print_json(this.sort())
+    attestation_list = attestation_list.map(a => ({
+      ...a,
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: hash_sha256(_hash_input),
+      },
+    }))
+    drop _hash_input
+  }
+}

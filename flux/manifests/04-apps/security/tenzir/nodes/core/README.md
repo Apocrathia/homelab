@@ -5,7 +5,7 @@
 The detection plane: one process (HelmRelease `tenzir-node-core`, rendering
 pod `tenzir-node-core`) that normalizes every feed except the tetragon
 flood and the netflow ingest to OCSF, publishes onto the unified
-`ocsf` bus, and runs the one sigma pass. Fourteen pipelines live in
+`ocsf` bus, and runs the one sigma pass. Fifteen pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time; the
 manifest stays the source of truth for tunables (sizes, limits,
@@ -50,6 +50,13 @@ LB service anymore.
   pair retired with the introspection lap: the central poller on the
   introspection node ships this node's diagnostics to Loki and Mimir
   now, so the lanes would have double-shipped every event)
+- detection-attest-verify: the record_integrity verification walk —
+  reads the last 24h of every ocsf class back from the ClickHouse
+  query store, recomputes each attestation fingerprint, and walks the
+  per-node prev_event chain; a Detection Finding (2004) drops per
+  break (the standing startup run is bounded; scheduling + Grafana
+  alerting are the issue's open items). The stamping half rides the
+  ocsf-archive rule itself (see below).
 
 ## Connectivity
 

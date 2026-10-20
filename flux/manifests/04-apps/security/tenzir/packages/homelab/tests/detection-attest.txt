@@ -1,0 +1,416 @@
+{
+  activity_id: 2,
+  activity_name: "Read",
+  actor: {
+    user: {
+      name: "system:kube-controller-manager",
+      uid: "kube-controller-manager",
+    },
+  },
+  api: {
+    operation: "get pods/log",
+    service: {
+      name: "kubernetes",
+    },
+    version: "v1",
+  },
+  category_name: "Application Activity",
+  category_uid: 6,
+  class_name: "API Activity",
+  class_uid: 6003,
+  http_request: {
+    user_agent: "kube-controller-manager/v1.31.0",
+  },
+  metadata: {
+    product: {
+      name: "audit",
+      vendor_name: "kubernetes",
+      version: "audit.k8s.io/v1",
+    },
+    version: "1.9.0",
+    uid: "core-det-audit-a1",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  src_endpoint: {
+    ip: 10.42.0.1,
+  },
+  time: 2026-10-17T08:00:00Z,
+  type_name: "API Activity: Read",
+  type_uid: 600302,
+  unmapped: {
+    audit_id: "det-0001",
+    request_uri: "/api/v1/namespaces/default/pods/nginx/log?container=nginx",
+    object_ref: {
+      resource: "pods",
+      namespace: "default",
+      name: "nginx",
+      subresource: "log",
+      apiVersion: "v1",
+    },
+    user_groups: [
+      "system:masters",
+    ],
+    response_code: 200,
+    request_object: {
+      kind: "PodLogOptions",
+      apiVersion: "v1",
+    },
+  },
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "8cb7ab50eae86b96bda7667932334c82ac6e995dcf808c72368bec517902df4b",
+      },
+    },
+  ],
+}
+{
+  activity_id: 1,
+  activity_name: "Create",
+  actor: {
+    user: {
+      name: "system:serviceaccount:kube-system:deployment-controller",
+      uid: "svc-deploy",
+    },
+  },
+  api: {
+    operation: "create pods/exec",
+    service: {
+      name: "kubernetes",
+    },
+    version: "v1",
+  },
+  category_name: "Application Activity",
+  category_uid: 6,
+  class_name: "API Activity",
+  class_uid: 6003,
+  http_request: {
+    user_agent: "deployment-controller/v1.31.0",
+  },
+  metadata: {
+    product: {
+      name: "audit",
+      vendor_name: "kubernetes",
+      version: "audit.k8s.io/v1",
+    },
+    version: "1.9.0",
+    uid: "core-det-audit-a2",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  src_endpoint: {
+    ip: 10.42.1.17,
+  },
+  time: 2026-10-17T08:00:00Z,
+  type_name: "API Activity: Create",
+  type_uid: 600301,
+  unmapped: {
+    audit_id: "det-0002",
+    request_uri: "/api/v1/namespaces/kube-system/pods/core-det/exec?command=sh",
+    object_ref: {
+      resource: "pods",
+      namespace: "kube-system",
+      name: "core-det",
+      subresource: "exec",
+      apiVersion: "v1",
+    },
+    user_groups: [
+      "system:serviceaccounts",
+    ],
+    response_code: 201,
+    request_object: {
+      kind: "PodExecOptions",
+      apiVersion: "v1",
+      command: [
+        "/bin/sh",
+      ],
+    },
+  },
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "e2c2484f0d62f0f1287ad2ebbb745e15d28d874450bf1c9ecfa9ffc78522255e",
+      },
+      prev_event: null,
+    },
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: null,
+      prev_event: {
+        uid: "core-det-audit-a1",
+        type_uid: 600302,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "8cb7ab50eae86b96bda7667932334c82ac6e995dcf808c72368bec517902df4b",
+        },
+      },
+    },
+  ],
+}
+{
+  activity_id: 1,
+  activity_name: "Logon",
+  actor: {
+    user: {
+      name: "ian",
+      uid: "5",
+    },
+  },
+  category_name: "Identity & Access Management",
+  category_uid: 3,
+  class_name: "Authentication",
+  class_uid: 3002,
+  metadata: {
+    product: {
+      name: "authentik",
+      vendor_name: "goauthentik",
+    },
+    version: "1.9.0",
+    uid: "core-det-auth",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  severity: "Informational",
+  severity_id: 1,
+  src_endpoint: {
+    ip: 10.100.2.44,
+  },
+  status: "Success",
+  status_id: 1,
+  time: 2026-10-17T08:15:00Z,
+  type_name: "Authentication: Logon",
+  type_uid: 300201,
+  unmapped: {
+    event_pk: "5f1c2b30-0000-4000-8000-000000000001",
+    action: "login",
+  },
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "c1761f6ead1a3793a04e2db22925b4f0671beb9df17ddb13d3aec807ff9ffc8e",
+      },
+      prev_event: null,
+    },
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: null,
+      prev_event: {
+        uid: "core-det-audit-a2",
+        type_uid: 600301,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "e2c2484f0d62f0f1287ad2ebbb745e15d28d874450bf1c9ecfa9ffc78522255e",
+        },
+      },
+    },
+  ],
+}
+{
+  activity_id: 3,
+  activity_name: "Update",
+  actor: {
+    user: {
+      name: "system:serviceaccount:kube-system:statefulset-controller",
+      uid: "svc-sts",
+    },
+  },
+  api: {
+    operation: "patch deployments/status",
+    service: {
+      name: "kubernetes",
+    },
+    version: "v1",
+  },
+  category_name: "Application Activity",
+  category_uid: 6,
+  class_name: "API Activity",
+  class_uid: 6003,
+  http_request: {
+    user_agent: "statefulset-controller/v1.31.0",
+  },
+  metadata: {
+    product: {
+      name: "audit",
+      vendor_name: "kubernetes",
+      version: "audit.k8s.io/v1",
+    },
+    version: "1.9.0",
+    uid: "core-det-audit-b",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  src_endpoint: {
+    ip: 10.42.2.9,
+  },
+  time: 2026-10-17T09:05:00Z,
+  type_name: "API Activity: Update",
+  type_uid: 600303,
+  unmapped: {
+    audit_id: "det-0003",
+    request_uri: "/apis/apps/v1/namespaces/tenzir/deployments/tenzir-node-core/status",
+    object_ref: {
+      resource: "deployments",
+      namespace: "tenzir",
+      name: "tenzir-node-core",
+      subresource: "status",
+      apiVersion: "v1",
+    },
+    user_groups: [
+      "system:serviceaccounts",
+    ],
+    response_code: 200,
+    request_object: {
+      kind: "Deployment",
+      apiVersion: "apps/v1",
+    },
+  },
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "d1850ba6e8e8b05a3e373cd79686316e0461d7037a9da4eac9b993920cb62aa9",
+      },
+      prev_event: null,
+    },
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: null,
+      prev_event: {
+        uid: "core-det-auth",
+        type_uid: 300201,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "c1761f6ead1a3793a04e2db22925b4f0671beb9df17ddb13d3aec807ff9ffc8e",
+        },
+      },
+    },
+  ],
+}
+{
+  activity_id: 1,
+  activity_name: "Create",
+  category_name: "Findings",
+  category_uid: 2,
+  class_name: "Detection Finding",
+  class_uid: 2004,
+  evidences: [
+    {
+      data: {
+        class_uid: 6003,
+        category_uid: 6,
+        activity_id: 3,
+        type_uid: 600303,
+        time: 2026-10-17T09:04:59Z,
+        metadata: {
+          version: "1.9.0",
+          product: {
+            name: "audit",
+            vendor_name: "kubernetes",
+          },
+        },
+        api: {
+          operation: "patch deployments/status",
+        },
+      },
+    },
+  ],
+  finding_info: {
+    analytic: {
+      name: "Kubernetes CronJob/Job Modification",
+      type: "Rule",
+      type_id: 1,
+      uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+    },
+    title: "Kubernetes CronJob/Job Modification",
+    uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+  },
+  metadata: {
+    product: {
+      name: "Tenzir",
+      vendor_name: "Tenzir",
+    },
+    profiles: [
+      "security_control",
+      "record_integrity",
+    ],
+    version: "1.9.0",
+    uid: "core-det-finding",
+  },
+  severity: "Medium",
+  severity_id: 3,
+  status: "New",
+  status_id: 1,
+  time: 2026-10-17T09:10:00Z,
+  type_name: "Detection Finding: Create",
+  type_uid: 200401,
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "da129171c339a5a6ea73121076c5b97f7bbb9f19de3f8513fb353a8a392b61f6",
+      },
+      prev_event: null,
+    },
+    {
+      authority_uid: "tenzir-node-core",
+      chain_uid: "tenzir-node-core",
+      fingerprint: null,
+      prev_event: {
+        uid: "core-det-audit-b",
+        type_uid: 600303,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "d1850ba6e8e8b05a3e373cd79686316e0461d7037a9da4eac9b993920cb62aa9",
+        },
+      },
+    },
+  ],
+}
