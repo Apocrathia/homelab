@@ -112,11 +112,6 @@ spec:
       # never render this directory outside kustomize.
       config.d/00-storage-tiered.xml: ""
       config.d/10-startup-scripts.xml: ""
-      # TEMPORARY (revert with the shells gone): the post-wipe broken-parts
-      # allowance - config/20-max-suspicious-broken-parts.xml holds the
-      # setting and the stitch copies it here; see that file's comment for
-      # the full rationale (authorized rustfs wipe residue).
-      config.d/20-max-suspicious-broken-parts.xml: ""
 
     clusters:
       - name: ocsf
