@@ -19,7 +19,13 @@ description: |
   the case spine on the investigations plane and the node identity on
   the detection plane. The finding's dressing — product, title, uid
   prefix, and the scope word in the description — is the caller's plane
-  identity. `windowed` covers bounded read-backs (rolling-window
+  identity. The record itself is schema-native class 2004: severity 4
+  (the Grafana findings gate) and finding_info (singular, required by
+  Detection Finding — the finding_info.title / finding_info.uid typed
+  columns and the alert rule's finding-label coalesce read it), so the
+  scheduled verify pipelines can ocsf_derive + ocsf_cast the finding
+  and write it into ocsf.Detection_Finding to ride the existing alert
+  rails. `windowed` covers bounded read-backs (rolling-window
   detection walks): the walk cannot see the predecessor of the first
   record it visits, so that record's link checks are skipped — its
   per-record fingerprint recompute still runs. `link` selects the chain
@@ -200,14 +206,18 @@ group attestation_list[0].chain_uid {
       severity_id: 4,
       status_id: 1,
       type_uid: 200401,
-      finding_info_list: [{
+      // finding_info (singular): class 2004 requires it, and the lake's
+      // finding_info.title / finding_info.uid typed columns plus the
+      // Grafana findings rule's finding-label coalesce read it — the
+      // verify findings ride the same rails the sigma findings do.
+      finding_info: {
         uid: f"{$uid_prefix}-attest-{attestation_list[0].chain_uid}",
         title: $title,
         // The broken record's time, not now(): the finding is anchored to
         // the evidence it describes.
         created_time: time,
         desc: f"{_break} on record {metadata.uid} of {$scope_word} {attestation_list[0].chain_uid}",
-      }],
+      },
       unmapped: {
         break: _break,
         chain_uid: attestation_list[0].chain_uid,

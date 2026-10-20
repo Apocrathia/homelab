@@ -141,6 +141,29 @@ stored row in scope and emit a Detection Finding (2004) on any break
 lives outside the read, and its link checks are skipped, its
 fingerprint recompute is not).
 
+**The scheduled walk + the rails closure.** Both verify lanes are
+`every 1h`-wrapped (the loader-pipeline shape: first walk at pipeline
+start, then hourly; the detection walk keeps its rolling 24h window,
+the investigations walk keeps the unwindowed whole-store read), and
+each break's finding rides two legs out: the raw record on the pod
+logs (unchanged) and an `ocsf_derive` + `ocsf_cast`-dressed INSERT
+into `ocsf.Detection_Finding` with the `tenzir` lake-writer user. The
+finding is class-2004 schema-native (singular `finding_info`,
+required by the class; severity 4), so it lands inside the unchanged
+Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
+through the agent_invoke bridge (homelab-agent -> the investigator)
+instead of waiting for a human to read pod logs
+([`../../../../03-services/observability/grafana/alerting/tenzir-findings.yaml`](../../../../03-services/observability/grafana/alerting/tenzir-findings.yaml);
+the `detection-verify-finding` package test pins the shape against
+that rule's SQL). While a break persists, each hourly walk re-emits
+its finding (append-only evidence — no update or delete path exists
+on either store) and the rule re-pages until the tamper is
+remediated. The written findings carry no attestation: the chains
+cover archive-rule writes (core) and `investigations.records`
+(investigations), and these rows bypass both stamping points — later
+walks read them back and skip them as unattested rows, the same
+pre-epoch path, so the lane never self-feeds.
+
 **The node-restart gap.** Chain linkage is stamped from per-node
 in-memory state (the `investigations-chains` / `detection-chains`
 contexts), so it is best-effort per node lifetime: a node restart
@@ -185,7 +208,9 @@ flowchart LR
     AT -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(2 replicas, ReplicatedMergeTree)"]
     CH -->|"90d TTL TO VOLUME 'cold'<br/>(ocsf tables; records is TTL-free)"| COLD["cold tier: rustfs<br/>tenzir bucket, clickhouse prefix"]
     AG -.->|"query-lane read-back<br/>(reader user, SELECT)"| CH
-    CH -.->|"investigations-attest-verify walk<br/>(reader user, SELECT)"| VFY["Detection Finding 2004<br/>on any chain break"]
+    CH -.->|"investigations-attest-verify walk<br/>every 1h (reader user, SELECT)"| VFY["Detection Finding 2004<br/>on any chain break"]
+    VFY -->|"ocsf_derive/cast + INSERT<br/>(tenzir user, ocsf.*)"| DF["ocsf.Detection_Finding"]
+    DF -->|"Grafana tenzir-findings rule<br/>(sev>=4, agent_invoke)"| AG
 ```
 
 The investigations README owns the envelope contract and the lane

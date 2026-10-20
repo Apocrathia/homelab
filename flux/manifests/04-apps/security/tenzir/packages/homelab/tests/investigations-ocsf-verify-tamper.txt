@@ -19,14 +19,12 @@
   severity_id: 4,
   status_id: 1,
   type_uid: 200401,
-  finding_info_list: [
-    {
-      uid: "investigations-attest-case-attest-1",
-      title: "Investigations record chain break",
-      created_time: 2026-10-17T09:00:00Z,
-      desc: "fingerprint_mismatch on record case-attest-1-open of case case-attest-1",
-    },
-  ],
+  finding_info: {
+    uid: "investigations-attest-case-attest-1",
+    title: "Investigations record chain break",
+    created_time: 2026-10-17T09:00:00Z,
+    desc: "fingerprint_mismatch on record case-attest-1-open of case case-attest-1",
+  },
   unmapped: {
     break: "fingerprint_mismatch",
     chain_uid: "case-attest-1",
@@ -56,14 +54,12 @@
   severity_id: 4,
   status_id: 1,
   type_uid: 200401,
-  finding_info_list: [
-    {
-      uid: "investigations-attest-case-attest-1",
-      title: "Investigations record chain break",
-      created_time: 2026-10-17T10:00:00Z,
-      desc: "chain_link_mismatch on record case-attest-1-close of case case-attest-1",
-    },
-  ],
+  finding_info: {
+    uid: "investigations-attest-case-attest-1",
+    title: "Investigations record chain break",
+    created_time: 2026-10-17T10:00:00Z,
+    desc: "chain_link_mismatch on record case-attest-1-close of case case-attest-1",
+  },
   unmapped: {
     break: "chain_link_mismatch",
     chain_uid: "case-attest-1",
@@ -93,14 +89,12 @@
   severity_id: 4,
   status_id: 1,
   type_uid: 200401,
-  finding_info_list: [
-    {
-      uid: "investigations-attest-case-attest-4",
-      title: "Investigations record chain break",
-      created_time: 2026-10-17T10:15:00Z,
-      desc: "chain_head_missing on record case-attest-4-close of case case-attest-4",
-    },
-  ],
+  finding_info: {
+    uid: "investigations-attest-case-attest-4",
+    title: "Investigations record chain break",
+    created_time: 2026-10-17T10:15:00Z,
+    desc: "chain_head_missing on record case-attest-4-close of case case-attest-4",
+  },
   unmapped: {
     break: "chain_head_missing",
     chain_uid: "case-attest-4",

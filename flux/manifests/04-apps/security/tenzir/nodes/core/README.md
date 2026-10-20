@@ -54,9 +54,12 @@ LB service anymore.
   reads the last 24h of every ocsf class back from the ClickHouse
   query store, recomputes each attestation fingerprint, and walks the
   per-node prev_event chain; a Detection Finding (2004) drops per
-  break (the standing startup run is bounded; scheduling + Grafana
-  alerting are the issue's open items). The stamping half rides the
-  ocsf-archive rule itself (see below).
+  break, hourly (the `every` wrapper): the finding lands on the pod
+  logs and INSERTs into `ocsf.Detection_Finding`, inside the Grafana
+  tenzir-findings rule's WHERE clauses — tamper evidence pages through
+  the agent_invoke bridge (landed;
+  docs/issues/tenzir-record-integrity-attestations.md). The stamping
+  half rides the ocsf-archive rule itself (see below).
 
 ## Connectivity
 

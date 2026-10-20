@@ -2,7 +2,36 @@
 // the last 24h of every core-node ocsf class back, recompute each
 // record's attestation fingerprint over the canonical serialization,
 // and walk the per-node prev_event chain; a Detection Finding (2004)
-// drops onto stdout for every break (content tamper, deletion, splice).
+// drops for every break (content tamper, deletion, splice).
+//
+// SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
+// (opencti-osint-loader / fleet-assets-loader): the first walk fires at
+// pipeline start (the previous startup-once behavior, preserved) and
+// every 1h re-walks the rolling 24h window. every waits for a running
+// walk before starting the next (no concurrent walks against the
+// store); restart-on-error still relaunches the pipeline on a hard
+// failure.
+//
+// TWO legs out per break (docs/issues/
+// tenzir-record-integrity-attestations.md, the scheduled-walk box):
+// - stdout: the raw finding as the operator mints it — pod-log
+//   visibility, unchanged.
+// - ocsf.Detection_Finding: the finding rides ocsf_derive + ocsf_cast
+//   into the lake's class shape and INSERTs with the tenzir user —
+//   the same table the Grafana tenzir-findings rule reads
+//   (03-services/observability/grafana/alerting/tenzir-findings.yaml):
+//   class_uid 2004 + severity 4 land inside the rule's WHERE clauses,
+//   so a break pages through the agent_invoke bridge (homelab-agent
+//   -> the investigator) instead of waiting for a human to read pod
+//   logs. The package test detection-verify-finding pins the shape
+//   against the rule's SQL. Tamper evidence is append-only: while a
+//   break persists, each hourly walk re-emits its finding and the rule
+//   re-fires — re-paging until the tamper is remediated, the honest
+//   loop for evidence nobody can "acknowledge away". The written
+//   findings carry no attestation (the chain covers archive-rule
+//   writes, and these rows bypass the archive rule); later walks read
+//   them back and skip them as pre-epoch rows — the lane never
+//   self-feeds.
 //
 // The read-back is windowed (24h) because the walk sorts the merged
 // stream in memory: a full-table walk over 22M+ archived rows would
@@ -19,72 +48,76 @@
 // reconstruction: ClickHouse re-sorted the JSON keys, and the
 // operators' sort()-canonicalized serialization is what makes the
 // recompute match what the archive leg stamped.
-//
-// TODO (scheduling + alerting, tracked in
-// docs/issues/tenzir-record-integrity-attestations.md): as wired, this
-// pipeline is standing — the node runs it once at startup (a bounded
-// 24h read-back completes and exits), and restart-on-error only
-// retries failures. The issue's verification lane wants a scheduled
-// walk (a cron "<schedule>" { ... } wrapper, intel-node shape) feeding
-// the existing Grafana contact-point rails; both decisions are the
-// operator's. Until then, break findings are visible in the pod logs
-// and the node's pipeline diagnostics.
-from_clickhouse table="ocsf.API_Activity",
-  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-  port=9000,
-  user="tenzir",
-  password=secret("clickhouse-password"),
-  tls=false
-where time > now() - 24h
-merge {
-  from_clickhouse table="ocsf.Authentication",
+every 1h {
+  from_clickhouse table="ocsf.API_Activity",
     host="clickhouse-tenzir.clickhouse.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
   where time > now() - 24h
-}
-merge {
-  from_clickhouse table="ocsf.Account_Change",
+  merge {
+    from_clickhouse table="ocsf.Authentication",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  merge {
+    from_clickhouse table="ocsf.Account_Change",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  merge {
+    from_clickhouse table="ocsf.Detection_Finding",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  merge {
+    from_clickhouse table="ocsf.Vulnerability_Finding",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  merge {
+    from_clickhouse table="ocsf.Base_Event",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  homelab::record_integrity::verify product="homelab-detection",
+    title="Detection record chain break",
+    uid_prefix="detection",
+    scope_word="chain",
+    windowed=true,
+    link="stream"
+  fork {
+    to_stdout { write_json }
+  }
+  ocsf_derive
+  ocsf_cast
+  to_clickhouse table="ocsf.Detection_Finding",
     host="clickhouse-tenzir.clickhouse.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
-    tls=false
-  where time > now() - 24h
+    tls=false,
+    mode="append",
+    max_batch_rows=65536
 }
-merge {
-  from_clickhouse table="ocsf.Detection_Finding",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-    port=9000,
-    user="tenzir",
-    password=secret("clickhouse-password"),
-    tls=false
-  where time > now() - 24h
-}
-merge {
-  from_clickhouse table="ocsf.Vulnerability_Finding",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-    port=9000,
-    user="tenzir",
-    password=secret("clickhouse-password"),
-    tls=false
-  where time > now() - 24h
-}
-merge {
-  from_clickhouse table="ocsf.Base_Event",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-    port=9000,
-    user="tenzir",
-    password=secret("clickhouse-password"),
-    tls=false
-  where time > now() - 24h
-}
-homelab::record_integrity::verify product="homelab-detection",
-  title="Detection record chain break",
-  uid_prefix="detection",
-  scope_word="chain",
-  windowed=true,
-  link="stream"
-to_stdout { write_json }
