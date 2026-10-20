@@ -1,0 +1,113 @@
+---
+# Tenzir findings trigger plane (investigations platform P-3): the FIRST alert
+# rule over the OCSF lake. Findings = Detection Finding (2004) in the
+# ocsf.Detection_Finding table + high-severity case opens (class 2005,
+# activity Create) in investigations.records — the severity gate is >= 4
+# (High). The agent_invoke label routes through the existing
+# alert-agent-invoke bridge (tasks/alert-agent-invoke) to homelab-agent,
+# which delegates security alerts to the investigator agent
+# (agents/investigator).
+#
+# Alert shape per Grafana's tabular-data contract: ONE numeric column (hits)
+# is the evaluated value; every other column becomes an alert-instance label,
+# so one instance fires per distinct (finding, subject) group and the bridge
+# prompt carries the labels as alert context. GROUP BY dedupes label sets —
+# Grafana fails a rule whose rows are not uniquely labeled. The case-open
+# branch re-triggers the agent on its own high-severity cases; the
+# investigator playbook's dedupe step (continue, never re-open) is the loop
+# guard.
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: tenzir-findings
+  namespace: prometheus-system
+spec:
+  name: Tenzir Findings
+  folderRef: security-alerts
+  interval: 5m
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: tenzir-findings-high-sev
+      title: High/Critical OCSF finding in the lake
+      condition: B
+      for: 0s
+      # eval error must NOT fire the alert (execErrState=Alerting reports
+      # every subject as compromised when the datasource breaks).
+      execErrState: Error
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: ocsf-clickhouse
+          model:
+            datasource:
+              type: grafana-clickhouse-datasource
+              uid: ocsf-clickhouse
+            editorMode: code
+            format: 0
+            intervalMs: 1000
+            maxDataPoints: 43200
+            rawQuery: true
+            rawSql: |
+              SELECT
+                coalesce(`finding_info.title`, `finding_info.uid`, `rule_id`, 'unattributed') AS finding,
+                coalesce(`subject_kind`, '') AS subject_kind,
+                coalesce(`subject_namespace`, '') AS subject_namespace,
+                coalesce(`subject_name`, '') AS subject_name,
+                count() AS hits
+              FROM ocsf.Detection_Finding
+              WHERE class_uid = 2004
+                AND severity_id >= 4
+                AND $__timeFilter(time)
+              GROUP BY finding, subject_kind, subject_namespace, subject_name
+              UNION ALL
+              SELECT
+                concat('case ', event.metadata.correlation_uid.:String) AS finding,
+                'investigations.case' AS subject_kind,
+                '' AS subject_namespace,
+                event.metadata.correlation_uid.:String AS subject_name,
+                count() AS hits
+              FROM investigations.records
+              WHERE event.class_uid.:Int64 = 2005
+                AND event.activity_id.:Int64 = 1
+                AND event.severity_id.:Int64 >= 4
+                AND $__timeFilter(time)
+              GROUP BY finding, subject_kind, subject_namespace, subject_name
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: A
+            refId: B
+            conditions:
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "High/Critical finding: {{ $labels.finding }}"
+        description: "Tenzir OCSF lake has {{ $values.B }} high-severity finding(s) for {{ $labels.finding }} ({{ $labels.subject_kind }} {{ $labels.subject_namespace }}/{{ $labels.subject_name }})"
+      labels:
+        severity: high
+        team: security
+        agent_invoke: "true"

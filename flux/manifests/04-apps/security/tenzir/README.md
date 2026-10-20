@@ -73,8 +73,14 @@ flowchart LR
     NODE -.-> PLAT["Tenzir Platform"]
 ```
 
-The chart is the whole topology: feeders, the bus, sigma, the lake, the
-archive, and the Grafana query plane. Nothing else consumes findings.
+The chart is the whole topology for detection: feeders, the bus, sigma, the
+lake, the archive, and the Grafana query plane. The one agent-side consumer
+is the [investigator agent](../../artificial-intelligence/agents/investigator/README.md)
+(P-3): high-severity findings alert through Grafana with the `agent_invoke`
+label ([findings alert rule](../../03-services/observability/grafana/alerting/tenzir-findings.yaml))
+and reach it via the bridge → homelab-agent delegation, and it works cases
+against `investigations.records` + `ocsf.*` through the
+[investigations node](./nodes/investigations/README.md)'s two lanes.
 
 ## Secrets
 

@@ -368,6 +368,11 @@ agents:
       name: "Infrastructure Agent"
       url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
       protocolVersion: "1.0"
+  - agent_name: "investigator-agent"
+    agent_card_params:
+      name: "Investigator Agent"
+      url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/investigator-agent"
+      protocolVersion: "1.0"
   - agent_name: "knowledge-agent"
     agent_card_params:
       name: "Knowledge Agent"

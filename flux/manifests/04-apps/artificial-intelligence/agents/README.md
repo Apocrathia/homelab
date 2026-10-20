@@ -6,7 +6,7 @@ Declarative AI agents orchestrated by kagent.
 
 ## Overview
 
-Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`.
+Custom agents usually run in a dedicated `agent-*` namespace (for example `agent-git`, `agent-media`). The kagent controller and **system agents** (`k8s-agent`, `helm-agent`, etc.) stay in the `kagent` namespace. **`homelab-agent`** is an exception: it lives in `kagent` so it can use system agents as tools without cross-namespace restrictions; only the Discord bridge runs in `agent-homelab`. **`investigator-agent`** also lives in `kagent` — the investigations node's NetworkPolicy admits ingress from `kagent`/`hermes-agent` only (the investigations design's in-cluster callers).
 
 **Custom Agents:**
 
@@ -17,6 +17,7 @@ Custom agents usually run in a dedicated `agent-*` namespace (for example `agent
 - **[infrastructure](./infrastructure/)** - `infrastructure-agent`: Proxmox, TrueNAS, UniFi management
 - **[media](./media/)** - `media-agent`: Servarr (Sonarr/Radarr) management
 - **[git](./git/)** - `git-agent`: GitHub and GitLab operations
+- **[investigator](./investigator/)** - `investigator-agent`: Security investigations against the Tenzir OCSF lake (cases, evidence pins, verdicts)
 
 **System Agents (managed by kagent helm chart):**
 
@@ -47,6 +48,7 @@ flowchart LR
     MEDIA[media-agent]
     INFRA[infrastructure-agent]
     GIT[git-agent]
+    INV[investigator-agent]
     HERMES[hermes-agent]
     CILIUM_POLICY[cilium-policy-agent]
     CILIUM_DEBUG[cilium-debug-agent]
@@ -59,6 +61,7 @@ flowchart LR
     H --> INFRA
     H --> GIT
     H --> KNOW
+    H --> INV
     H --> HERMES
 
     K8S --> HELM

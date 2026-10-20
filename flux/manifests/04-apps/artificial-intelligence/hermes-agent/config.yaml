@@ -111,6 +111,9 @@ a2a_agents:
   infrastructure-agent:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-infrastructure/infrastructure-agent"
     timeout: 120
+  investigator-agent:
+    url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/investigator-agent"
+    timeout: 120
   knowledge-agent:
     url: "http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/agent-knowledge/knowledge-agent"
     timeout: 120
