@@ -37,9 +37,13 @@ docs — nothing invented. Vendored debugging docs:
   idiom — `ocsf_class_uid("Network Activity")`, not hard-coded `4001`;
   the numbers exist for the reader.
   ([detections](../../detections/README.md))
-- **Unmappable classes are not archived.** Base Event fallback rows
-  cannot name a class and expire with the 15-minute window; when a feed
-  grows a real class mapping, it joins the archive automatically.
+- **Base Event archiving is per node, not uniform.** Core's archive
+  rule exports `ocsf.base_event` with the mappable classes (added
+  2026-10-17 — without a time rule those partitions accumulated locally
+  and bloated the boot catalog load); tetragon deliberately keeps its
+  unknown export kinds out — they cannot name a class and expire with
+  the 15-minute window on the weighted-age backstop. Check the node's
+  archive rule before assuming either way.
   ([detections](../../detections/README.md))
 - **Zero findings egress.** Grafana owns notifications and there is no
   other findings egress — the Discord doorbell and the Loki findings

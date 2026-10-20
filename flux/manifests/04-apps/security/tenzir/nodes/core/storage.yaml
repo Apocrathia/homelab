@@ -1,0 +1,54 @@
+---
+# Longhorn recurring-job exclusion for the core lake PVC.
+#
+# The lake is a 15-minute transit buffer between ingest and the
+# ClickHouse OCSF archive; the daily-backup RecurringJob (default group,
+# 02-infrastructure/longhorn/recurringjobs.yaml) would snapshot it to
+# rustfs daily — redundant with the record in the ClickHouse ocsf.*
+# tables, same exclusion as the tetragon and netflow lakes. The core
+# lake is the detection plane's, the largest of the three by stored
+# record set (six OCSF classes from four feeds, sizing in
+# nodes/core/README.md): the steady-state window peaks near 1 MB, and
+# the hard quota corridor on the 20Gi PVC (tenzir.start + compaction
+# disk budgets) bounds archive-rule failure windows —
+# the exclusion is belt-and-braces with it, not a cost call.
+#
+# Mechanism (verified against longhorn-manager v1.13.0 source):
+#   - recurring-job.longhorn.io/source: enabled makes this PVC the
+#     recurring-job label source for the Longhorn Volume; the volume
+#     controller syncs these labels onto the volume (replace semantics)
+#     on every volume reconcile.
+#   - recurring-job-group.longhorn.io/default: disabled opts the volume
+#     out of all default-group jobs, including the auto-add that normally
+#     labels volumes with the default group (FixupRecurringJob skips
+#     volumes that already carry any recurring-job label).
+#   - the per-job labels re-enable everything the default group runs
+#     EXCEPT daily-backup (group-matched only): weekly filesystem trim,
+#     snapshot cleanup, and snapshot delete keep running here.
+#
+# The PVC is created by the tenzir-node StatefulSet volumeClaimTemplate
+# (helmrelease.yaml); the StatefulSet controller never updates an
+# existing PVC's labels, so this manifest owns exactly the recurring-job
+# labels via server-side apply. The spec below mirrors the chart's
+# persistence values (storageClassName is the cluster's default SC) —
+# update it in the same MR as any persistence.size change, since PVC
+# storage is grow-only and a stale value makes the apply fight the
+# resize.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: state-tenzir-node-core-0
+  namespace: tenzir
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/default: disabled
+    recurring-job.longhorn.io/weekly-trim: enabled
+    recurring-job.longhorn.io/snapshot-cleanup: enabled
+    recurring-job.longhorn.io/snapshot-delete: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: longhorn

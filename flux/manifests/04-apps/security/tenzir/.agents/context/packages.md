@@ -1,7 +1,7 @@
 # The `homelab` TQL package
 
 Anatomy of [`packages/homelab/`](../../packages/homelab/README.md), the
-TQL package three of the five nodes mount read-only at
+TQL package three of the seven nodes mount read-only at
 `/etc/tenzir/packages`
 (rendered as ConfigMaps by the root
 [`kustomization.yaml`](../../kustomization.yaml)). Vendored docs:

@@ -13,7 +13,9 @@ connectivity chart, sizing math, and retention profile.
   plane (case/evidence records, isolated blast radius)
 - [`enrichment/`](./enrichment/README.md): the internal-reference-data
   factory (curated lookup tables — fleet assets, baselines — into
-  ClickHouse; idle and empty until its first row)
+  ClickHouse; its first lane, the hourly Fleet host-inventory pull
+  into `ocsf.fleet_assets`, shipped in lap 2 — the core node's
+  loader is the consumer half)
 - [`introspection/`](./introspection/README.md): the diagnostics
   observability plane (the node's local diagnostics pair plus the
   central poller Deployment that ships every fleet node's diagnostics

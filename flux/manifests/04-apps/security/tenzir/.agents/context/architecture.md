@@ -26,16 +26,19 @@ through the platform.
 - **Core node** — the detection plane. Normalizes every feed except the
   tetragon flood and the netflow ingest (kube-apiserver audit,
   authentik, fleet, trivy) onto the unified `ocsf` bus and runs the one
-  sigma pass. Fourteen pipelines live in its HelmRelease.
+  sigma pass. Fifteen pipelines live in its HelmRelease, plus the
+  archive rule's `ocsf-archive.tql` — sixteen `.tql` files under
+  `nodes/core/pipelines/`.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
-  memory behavior cannot starve the detection plane. Six pipelines (OTLP
-  ingest + OCSF map, the geo-open loader, and the three observability
-  arms), subprocess-isolated so a pipeline blowup dies alone.
+  memory behavior cannot starve the detection plane. Four pipelines (OTLP
+  ingest + OCSF map, the geo-open loader, the metrics arm) plus the
+  archive rule's `ocsf-archive.tql` — five `.tql` files —
+  subprocess-isolated so a pipeline blowup dies alone.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
-  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). One
-  collector pipeline (UDP accept + OCSF map via the vendored library
-  package) plus the pipeline-metrics, error-diagnostics, and
-  Loki-diagnostics shippers; its 4001 class feeds its own
+  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Three
+  pipelines (UDP accept + OCSF map via the vendored library package, the
+  geo-open loader, the metrics arm) plus the archive rule's
+  `ocsf-archive.tql` — four `.tql` files; its 4001 class feeds its own
   node-local archive rule, tetragon-style.
 - **Investigations node** — owns the agent investigations plane:
   case/evidence envelopes in, `investigations.records` on ClickHouse
@@ -48,7 +51,7 @@ through the platform.
   baselines — into ClickHouse for the other nodes' loaders;
   live-event enrichment stays in-stream at the ingress nodes.
 - **Intel node** — the CTI factory plane: its opencti-taxii-factory-walk / -poll
-  pipeline pulls external threat intel from OpenCTI's TAXII 2.1
+  pipelines pull external threat intel from OpenCTI's TAXII 2.1
   indicator collection, normalizes it to OCSF 5021, and appends it to
   the ClickHouse OCSF store, from where the core node's
   opencti-osint-loader pulls the table into its node-local
@@ -78,12 +81,15 @@ class exports to the ClickHouse OCSF query store (per-class
 `ocsf.<Class_Name>` tables) and expires locally; ClickHouse is the
 record. The retired `s3://tenzir/ocsf/` parquet archive stays untouched
 in the rustfs bucket as frozen history — deleting it is a separate
-operator call. Classes that cannot name themselves (the Base Event
-fallback) are not archived — they expire with the window. The compaction
-pass runs every 5 minutes on core, tetragon, and netflow, and the true
-window at pass boundaries is 15-20 minutes on all three: the 15-minute
-expiry plus the pass interval, with each node's 60-second partition
-flush adding almost nothing.
+operator call. Base Event handling is per node: core's rule archives
+`ocsf.base_event` with the mappable classes (added 2026-10-17 — without
+a time rule those partitions accumulated locally and bloated the boot
+catalog load), while tetragon's rule deliberately excludes its unknown
+export kinds — they expire with the window on the weighted-age backstop.
+The compaction pass runs every 5 minutes on core, tetragon, and netflow,
+and the true window at pass boundaries is 15-20 minutes on all three:
+the 15-minute expiry plus the pass interval, with each node's 60-second
+partition flush adding almost nothing.
 
 ## SQL plane (Grafana + ClickHouse)
 
@@ -92,31 +98,32 @@ datasource on the ClickHouse OCSF store, reading the per-class `ocsf.*`
 tables directly — the MotherDuck datasource and the duckdb/parquet lane
 retired with the MR-5 teardown. Grafana owns notifications; there is no
 other findings egress — the Discord doorbell and the Loki findings
-projection were cut with the zero-egress restructure. The three
+projection were cut with the zero-egress restructure. The five
 dashboards live in [`grafana/`](../../grafana/README.md).
 
-## Metrics plane (push-only)
+## Metrics plane
 
 The nodes push their own operational metrics; there is no scrape
-endpoint on them. All four pipeline-carrying nodes (core, tetragon,
-netflow, investigations) ship the same three arms.
-`pipeline-metrics-to-mimir` pushes the `tenzir_pipeline_*` ingress and
-egress series with a `node` and `internal` label each — the
-`pipeline_id` label is the bare pipeline id, so the `node` label keeps
-same-id pushers distinct, and `internal` separates bus-internal flow
-from external export. `error-diagnostics-to-mimir` pushes an error and
-a warning sample per live diagnostic (`tenzir_pipeline_errors` /
-`tenzir_pipeline_warnings`). `diagnostics-to-loki` ships every live,
-not-hidden pipeline diagnostic to Loki as `job=tenzir-diagnostics`
-log lines via `to_fluent_bit` (the ANSI `rendered` field dropped, the
-rest of the record verbatim, the node baked into the stream labels).
-Core adds `sigma-metrics-to-mimir` (`tenzir_sigma_*` — sigma runs only
-there). The enrichment node shipped its first pipeline in lap 2
-(fleet-assets-pull) but no metrics arms yet — it must gain the same
-set in a later lap so the dashboard shows the factory's own
-pipelines. The Grafana
-Node Pipelines dashboard reads the series in Mimir; the receiving stack
-is outside this subtree.
+endpoint on them. Four nodes (core, tetragon, netflow, investigations)
+ship the `pipeline-metrics-to-mimir` arm, which pushes the
+`tenzir_pipeline_*` ingress and egress series with a `node` and
+`internal` label each — the `pipeline_id` label is the bare pipeline id,
+so the `node` label keeps same-id pushers distinct, and `internal`
+separates bus-internal flow from external export. Core adds
+`sigma-metrics-to-mimir` (`tenzir_sigma_*` — sigma runs only there).
+Diagnostics moved off the nodes with the introspection lap: the
+per-node `error-diagnostics-to-mimir` / `diagnostics-to-loki` lanes
+retired fleet-wide, and the introspection node's central poller (the
+`introspection-diagnostics-poller` Deployment) now runs the tenzir CLI
+against each target's `:5158` (core, tetragon, netflow, investigations,
+enrichment, intel), pushing an error and a warning sample per live
+diagnostic (`tenzir_pipeline_errors` / `tenzir_pipeline_warnings`) to
+Mimir and every live, not-hidden diagnostic to Loki as
+`job=tenzir-diagnostics` log lines via `to_fluent_bit` — byte-parity
+with the retired lanes, the target node baked into the labels, so the
+dashboard reads the same series; the introspection node keeps a local
+pair covering its own pipelines. The Grafana Node Pipelines dashboard
+reads the series in Mimir; the receiving stack is outside this subtree.
 
 ## Sources
 

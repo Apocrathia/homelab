@@ -173,7 +173,7 @@ volume on demand and a smaller request buys nothing.
    (weighted-age space rules as the backstop, archive-then-expire time
    rules for every record type it stores), and a `storage.yaml` label
    overlay sitting the transit-lake PVC out of the daily-backup
-   RecurringJob (same shape as the tetragon and netflow nodes).
+   RecurringJob (same shape as the core, netflow, and tetragon nodes).
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).

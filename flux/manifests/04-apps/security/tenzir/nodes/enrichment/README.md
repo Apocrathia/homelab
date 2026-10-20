@@ -93,7 +93,7 @@ sibling. Lap 1 sized it like the investigations node for an idle node:
 `persistence.size: 5Gi`, no `storage.yaml`. That sizing still holds
 after lap 2 — the factory pipeline's only sink is ClickHouse, nothing
 imports into the lake, so the PVC still carries node state only and
-the Longhorn recurring-job exclusion (netflow/tetragon's
+the Longhorn recurring-job exclusion (core/netflow/tetragon's
 `storage.yaml`) stays unneeded: there is no archived transit buffer
 to protect here.
 

@@ -160,7 +160,10 @@ every class it stores to the per-class `ocsf.<Class_Name>` tables on
 the ClickHouse OCSF store and consumes the originals
 (archive-then-expire; `preserve-input` stays off). The compaction pass
 runs every 5 minutes, so the true window at pass boundaries is 15 to 20
-minutes.
+minutes. The Longhorn volume sits out the daily-backup RecurringJob
+([`storage.yaml`](./storage.yaml)): a daily chain of a 15-minute buffer
+is redundant with the ClickHouse record. Filesystem trim and snapshot
+hygiene still run on the volume.
 
 `to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
 its `fork` wrapper retired with the MR-5 teardown — a sink-only

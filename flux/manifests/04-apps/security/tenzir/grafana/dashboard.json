@@ -600,7 +600,7 @@
         "type": "prometheus",
         "uid": "${mimir}"
       },
-      "description": "Warning-severity pipeline diagnostics (value 1 per warning, pipeline labels), pushed by the same error-diagnostics-to-mimir arms as the errors stat; dark while no warnings fire.",
+      "description": "Warning-severity pipeline diagnostics (value 1 per warning, pipeline labels), shipped by the introspection node's central poller alongside the errors stat; dark while no warnings fire.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -681,7 +681,7 @@
         "type": "loki",
         "uid": "${loki}"
       },
-      "description": "Per-pipeline diagnostics from the tenzir node diagnostics stores. Live entries ship via each node's native diagnostics-to-loki pipeline (job=tenzir-diagnostics; labels: pipeline, severity, node \u2014 the referenced fields are consumed out of the shipped body, which keeps the rest of the record verbatim); pre-landing history stays visible from the scratch draft shipper (job=tenzir-diagnostics-draft; body: timestamp, pipeline_name, severity, message). Filter by node, then pipeline, then severity. Lines are JSON.",
+      "description": "Per-pipeline diagnostics from the tenzir node diagnostics stores. Live entries ship via the introspection node's central poller (job=tenzir-diagnostics; labels: pipeline, severity, node \u2014 the referenced fields are consumed out of the shipped body, which keeps the rest of the record verbatim); pre-landing history stays visible from the scratch draft shipper (job=tenzir-diagnostics-draft; body: timestamp, pipeline_name, severity, message). Filter by node, then pipeline, then severity. Lines are JSON.",
       "gridPos": {
         "h": 10,
         "w": 24,
