@@ -14,10 +14,23 @@ through the kagent UI.
   `ate-system/ate-api-server` resolve ActorTemplate env `secretKeyRef`s in this
   namespace (same grant kagent's chart installs in `kagent`)
 
-Rollback artifacts kept on disk but **not** in the active kustomization:
+Retired generic-app stack: the rollback artifacts (`helmrelease.yaml`,
+`openclaw.json`) are deleted. The authentik orphans (`openclaw-proxy-provider`,
+`openclaw-outpost`) go via the `openclaw-cleanup` companion blueprint
+(`flux/manifests/03-services/authentik/blueprints/openclaw-cleanup.yaml`) —
+`state: absent` entries; blueprints never garbage-collect.
 
-- `helmrelease.yaml` — former generic-app Deployment
-- `openclaw.json` — former ConfigMap payload
+Outpost k8s sweep follow-up: deleting the outpost should also remove its
+`ak-outpost-openclaw-outpost` Deployment, Service, and metrics Service plus
+the retired-hostname HTTPRoute from the authentik namespace, but survivors are
+possible (mlflow/ombi/zilean left k8s objects behind after their outpost
+deletions). Verify after the companion fires:
+
+```bash
+kubectl get deploy,svc,httproute -n authentik | grep openclaw
+```
+
+Any survivors need an explicit delete (operator cluster mutation).
 
 ## Secrets
 
