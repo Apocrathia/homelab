@@ -8,9 +8,10 @@ description: |
   — a chain head referencing a predecessor the walk never saw is a
   deletion), and findings dress as the investigations product over the
   per-case chains (chain_uid = metadata.correlation_uid). The
-  investigations-attest-verify pipeline calls this; scheduling + Grafana
-  alerting are the open items in
-  docs/issues/tenzir-record-integrity-attestations.md.
+  investigations-attest-verify pipeline calls this hourly (the every
+  wrapper) and writes break findings into ocsf.Detection_Finding to ride
+  the Grafana rails (docs/issues/
+  tenzir-record-integrity-attestations.md, landed).
 ---
 
 homelab::record_integrity::verify product="homelab-investigations",

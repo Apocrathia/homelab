@@ -67,7 +67,10 @@ spec:
     # plane design): agent query storms, malformed POSTs, and
     # experimental TQL die on a pod that owns no detection feed, no
     # archive rule, and no credentials beyond the two investigations
-    # ClickHouse users. The detection plane (core node) is untouched by
+    # ClickHouse users plus the tenzir lake writer (INSERT/SELECT on
+    # ocsf.* — the scheduled attest-verify findings leg; a deliberate
+    # blast-radius expansion the record-integrity rails lap made, see
+    # extraEnv). The detection plane (core node) is untouched by
     # anything that happens here; the planes share only the ClickHouse
     # cluster and vault items. The containment stack on this node:
     #   - operator denylist + no-location-overrides (tenzir.config below)
@@ -257,16 +260,21 @@ spec:
                 every investigations.records row back via the catch-all
                 reconstruction, recomputes each attestation's fingerprint
                 over the canonical serialization, and walks the per-case
-                prev_event chains; a Detection Finding (2004) drops onto
-                stdout for every break (content tamper, chain-head
-                deletion, link break) — the package tests prove the walk
+                prev_event chains. The walk is SCHEDULED hourly (the
+                every wrapper, the loader-pipeline shape): the first
+                walk fires at pipeline start, then every 1h re-walks the
+                store. Each break's finding rides two legs: stdout
+                (pod-log visibility) and, via ocsf_derive + ocsf_cast, an
+                INSERT into ocsf.Detection_Finding with the tenzir user
+                (INSERT/SELECT on ocsf.* — the same credential the core
+                node's archive legs read, wired below as
+                TENZIR_SECRETS__CLICKHOUSE_PASSWORD), landing inside the
+                Grafana tenzir-findings rule's WHERE clauses (class 2004,
+                severity 4), so case-store tamper evidence pages through
+                the agent_invoke bridge. The package tests prove the walk
                 (homelab package: investigations-ocsf-verify-clean /
-                -tamper baselines). The verify pipeline file carries the
-                scheduling TODO: as wired, the node runs this walk once
-                at startup (bounded read-back, completes and exits); the
-                scheduled walk + Grafana contact-point alerting are the
-                issue's open items (docs/issues/
-                tenzir-record-integrity-attestations.md).
+                -tamper baselines, plus the detection-verify-finding
+                shape proof both planes' findings share).
               definition: ""
               restart-on-error: 1 minute
             pipeline-metrics-to-mimir:
@@ -358,10 +366,17 @@ spec:
     # vars map to config keys tenzir.secrets.* (same env-var shape as
     # the siblings' TENZIR_SECRETS__CLICKHOUSE_PASSWORD): the ingest
     # pipeline's to_clickhouse leg reads
-    # secret("investigations-writer-password"), and API-launched
+    # secret("investigations-writer-password"), API-launched
     # from_clickhouse pipelines read
-    # secret("investigations-reader-password") node-side — agents never
-    # hold ClickHouse credentials, only the node API token.
+    # secret("investigations-reader-password") node-side, and the
+    # scheduled attest-verify pipeline's findings leg reads
+    # secret("clickhouse-password") — the tenzir user (INSERT/SELECT on
+    # ocsf.*, the shared lake writer; the findings INSERT into
+    # ocsf.Detection_Finding rides the Grafana rails), the same
+    # clickhouse-password field the core node's archive legs read,
+    # rendered from the same item by this namespace's OnePasswordItem
+    # (../secret.yaml). Agents never hold ClickHouse credentials, only
+    # the node API token.
     extraEnv:
       - name: TENZIR_SECRETS__INVESTIGATIONS_WRITER_PASSWORD
         valueFrom:
@@ -373,6 +388,11 @@ spec:
           secretKeyRef:
             name: clickhouse-secrets
             key: clickhouse-investigations-reader-password
+      - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secrets
+            key: clickhouse-password
 
     extraVolumes:
       - name: packages-homelab

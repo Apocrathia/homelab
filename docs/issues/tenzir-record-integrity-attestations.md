@@ -88,12 +88,28 @@ Desired state:
       and both break types; detection-throughput measures the stamping cost
       on a 100k-record batch; the investigations baselines pin the
       investigations scope byte-identical through the refactor).
-- [ ] The scheduled verification runs against the ClickHouse OCSF tables and
+- [x] The scheduled verification runs against the ClickHouse OCSF tables and
       alerts on chain breaks through the existing Grafana contact-point
-      rails — `detection-attest-verify` runs the walk once at node startup
-      (bounded 24h read-back, findings to stdout); the cron scheduling and
-      the Grafana wiring are the operator's open call, as on the
-      investigations node.
+      rails. Landed 2026-10-20 (feat/tenzir-verify-scheduling): both
+      verify lanes are `every 1h`-wrapped (the loader-pipeline shape;
+      first walk at pipeline start, then hourly — the detection walk keeps
+      its rolling 24h window, the investigations walk keeps the unwindowed
+      whole-store read), and each break's finding now rides two legs:
+      stdout (unchanged pod-log visibility) and an `ocsf_derive` +
+      `ocsf_cast`-dressed INSERT into `ocsf.Detection_Finding` — the
+      shared operator's finding is class-2004 schema-native (singular
+      `finding_info`, required by the class), so severity 4 + class 2004
+      land inside the unchanged tenzir-findings rule's WHERE clauses and
+      tamper evidence pages through the agent_invoke bridge (the
+      detection-verify-finding package test pins the shape against the
+      rule's SQL). Credentials: the core lane reads and writes with the
+      `tenzir` user; the investigations lane reads with
+      `investigations-reader` and its HelmRelease now wires
+      `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` (the `tenzir` lake writer,
+      INSERT/SELECT on `ocsf.*`) for the findings leg — the one deliberate
+      blast-radius expansion on that node. While a break persists the
+      hourly walk re-emits its finding (append-only evidence) and the rule
+      re-pages until remediation.
 - [x] Key custody: signing material in the node secret store; `authority_uid`
       pins the signing identity per node — landed as the SHA-256
       fingerprint chain (no key material to custody; signatures over the

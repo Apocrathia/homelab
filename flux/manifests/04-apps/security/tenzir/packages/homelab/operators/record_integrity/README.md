@@ -57,7 +57,12 @@ Detection Finding (2004) per break: content tamper
 (`fingerprint_mismatch`), deletion or splice (`chain_link_mismatch`,
 `chain_head_missing` in the unwindowed investigations walk). The
 finding's dressing (product, title, uid prefix, scope word) is the
-caller's plane identity; `windowed=true` covers bounded read-backs
+caller's plane identity; the record is schema-native class 2004
+(`finding_info` singular, required by the class; severity 4), so both
+planes' scheduled verify pipelines dress it through `ocsf_derive` +
+`ocsf_cast` and INSERT it into `ocsf.Detection_Finding`, riding the
+Grafana tenzir-findings alert rails; `windowed=true` covers bounded
+read-backs
 (the rolling-window detection walks: the walk's first record may
 reference a predecessor outside the window — its link checks are
 skipped, its fingerprint recompute is not); `link` selects the chain
@@ -68,8 +73,14 @@ Tests: the investigations baselines pin the caller shape byte-identical
 detection baselines pin the stream shape — the per-node cross-class
 chain, the (time, uid) tie-break, the window-edge tolerance, the
 restart shape, and both break types (`detection-attest`,
-`detection-verify-clean`, `detection-verify-tamper`); and the 100k
-throughput harness measures the stamping cost
+`detection-verify-clean`, `detection-verify-tamper`);
+`detection-verify-finding` pins the finding record's rails shape —
+class 2004 schema-native (`finding_info` singular), passing
+`ocsf_derive` + `ocsf_cast` clean, with severity 4 + class 2004 +
+`finding_info.title` landing inside the Grafana tenzir-findings rule's
+WHERE clauses (the scheduled verify pipelines write these findings
+into `ocsf.Detection_Finding` to ride the existing alert rails); and
+the 100k throughput harness measures the stamping cost
 (`detection-throughput`). The narrative, the honest limits, and the
 cost math live in the datalake README's attestation section
 ([`../../../clickhouse/README.md`](../../../clickhouse/README.md)).

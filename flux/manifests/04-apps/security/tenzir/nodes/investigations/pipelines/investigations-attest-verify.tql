@@ -1,27 +1,68 @@
-// Verification half of the record_integrity lane: read every stored
-// record back, recompute each attestation fingerprint over the canonical
+// Verification half of the investigations-plane record_integrity lane:
+// read every stored record back (the whole investigations.records store
+// — the unwindowed walk, per its current definition; a chain head
+// referencing a predecessor the walk never saw is a deletion),
+// recompute each attestation's fingerprint over the canonical
 // serialization, and walk the per-case prev_event chains; a Detection
-// Finding (2004) drops onto stdout for every break (fingerprint mismatch
-// = content tampered post-stamp, chain-head-missing / link-mismatch =
-// deletion or splice). The stored records come back through the
-// catch-all reconstruction: ClickHouse has re-sorted the JSON keys, and
-// the operator's sort()-canonicalized serialization is what makes the
+// Finding (2004) drops for every break (fingerprint mismatch = content
+// tampered post-stamp, chain-head-missing / link-mismatch = deletion or
+// splice). The stored records come back through the catch-all
+// reconstruction: ClickHouse has re-sorted the JSON keys, and the
+// operator's sort()-canonicalized serialization is what makes the
 // recompute match what attest stamped.
 //
-// TODO (scheduling + alerting, tracked in
-// docs/issues/tenzir-record-integrity-attestations.md): as wired, this
-// pipeline is standing — the node runs it once at startup (a bounded
-// from_clickhouse read-back completes and exits), and restart-on-error
-// only retries failures. The issue's verification lane wants a scheduled
-// walk (a cron "<schedule>" { ... } wrapper, intel-node shape) feeding
-// the existing Grafana contact-point rails; both decisions are the
-// operator's. Until then, break findings are visible in the pod logs and
-// the node's pipeline diagnostics.
-from_clickhouse table="investigations.records",
-  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-  port=9000,
-  user="investigations-reader",
-  password=secret("investigations-reader-password"),
-  tls=false
-homelab::investigations::ocsf::verify
-to_stdout { write_json }
+// SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
+// (the core node's opencti-osint-loader / fleet-assets-loader): the
+// first walk fires at pipeline start (the previous startup-once
+// behavior, preserved) and every 1h re-walks the store. every waits
+// for a running walk before starting the next (no concurrent walks);
+// restart-on-error still relaunches the pipeline on a hard failure. The
+// walk cost grows with the TTL-free case store — the documented
+// trade of the unwindowed definition; the cadence is the operator's
+// dial if that ever matters.
+//
+// TWO legs out per break (docs/issues/
+// tenzir-record-integrity-attestations.md, the scheduled-walk box):
+// - stdout: the raw finding as the operator mints it — pod-log
+//   visibility, unchanged.
+// - ocsf.Detection_Finding: the finding rides ocsf_derive + ocsf_cast
+//   into the lake's class shape and INSERTs with the tenzir user
+//   (INSERT/SELECT on ocsf.* — the OnePasswordItem-rendered
+//   clickhouse-secrets, the same credential the core node's archive
+//   legs read; this node's HelmRelease wires it as
+//   TENZIR_SECRETS__CLICKHOUSE_PASSWORD). The written rows land in the
+//   table the Grafana tenzir-findings rule reads
+//   (03-services/observability/grafana/alerting/tenzir-findings.yaml):
+//   class_uid 2004 + severity 4 sit inside the rule's WHERE clauses,
+//   so case-store tamper evidence pages through the agent_invoke
+//   bridge (homelab-agent -> the investigator) instead of waiting for
+//   a human to read pod logs. Tamper evidence is append-only: while a
+//   break persists, each hourly walk re-emits its finding and the rule
+//   re-fires — re-paging until the tamper is remediated. The written
+//   findings carry no attestation (the chains cover
+//   investigations.records; the findings live in the ocsf lake) and no
+//   row of the walked store is ever written here — the read is the
+//   SELECT-scoped investigations-reader, the write only ever INSERTs
+//   into the lake, append-only discipline intact.
+every 1h {
+  from_clickhouse table="investigations.records",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="investigations-reader",
+    password=secret("investigations-reader-password"),
+    tls=false
+  homelab::investigations::ocsf::verify
+  fork {
+    to_stdout { write_json }
+  }
+  ocsf_derive
+  ocsf_cast
+  to_clickhouse table="ocsf.Detection_Finding",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false,
+    mode="append",
+    max_batch_rows=65536
+}

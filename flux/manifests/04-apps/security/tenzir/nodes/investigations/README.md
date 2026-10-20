@@ -25,10 +25,14 @@ lanes, one blast radius:
   pipeline: reads every stored record back with the SELECT-scoped
   `investigations-reader` user, recomputes each attestation's
   fingerprint, and walks the per-case `prev_event` chains, emitting a
-  Detection Finding (2004) on any break. Scheduling and the Grafana
-  alerting rails are the open items tracked in
-  `docs/issues/tenzir-record-integrity-attestations.md`; until they
-  land, findings appear in the pod logs and pipeline diagnostics.
+  Detection Finding (2004) on any break. The walk is scheduled hourly
+  (the `every` wrapper — first walk at pipeline start, then hourly
+  re-walks): each finding drops onto the pod logs and INSERTs into
+  `ocsf.Detection_Finding` with the `tenzir` lake-writer user, landing
+  inside the Grafana tenzir-findings rule — a chain break pages through
+  the agent_invoke bridge (homelab-agent -> the investigator) instead
+  of waiting for a human to read pod logs (the scheduled-walk box in
+  `docs/issues/tenzir-record-integrity-attestations.md`, landed).
 - **Query lane** — the node REST API (web server `:5160`,
   `/api/v0/pipeline/launch` + `/api/v0/serve`, `X-Tenzir-Token` auth):
   agents launch bounded `from_clickhouse` pipelines over
@@ -98,8 +102,12 @@ flowchart LR
   easily-recoverable pollution — not destruction. The `record_integrity`
   attestation chain now stamps every stored record (the attest operator
   in the write lane) and the `investigations-attest-verify` pipeline
-  walks the chains; the scheduled walk + Grafana alerting rails remain
-  tracked in `docs/issues/tenzir-record-integrity-attestations.md`.
+  walks the chains hourly, writing break findings into the lake's
+  `ocsf.Detection_Finding` so the Grafana rails page on them
+  (`docs/issues/tenzir-record-integrity-attestations.md`, landed); the
+  one credential expansion beyond the two investigations users is the
+  `tenzir` lake writer (INSERT/SELECT on `ocsf.*`) the findings leg
+  holds.
 
 ## Bootstrap order
 
@@ -176,8 +184,9 @@ ever moves or deletes a part.
   restart, not a break, and the per-record fingerprint check still
   catches post-hoc mutation across restarts. A chain-tail deletion stays
   invisible (no successor references the newest record); pre-attestation
-  rows carry no attestation at all. Scheduling for the verify walk is
-  still open (see the containment section).
+  rows carry no attestation at all. The hourly walk re-emits a
+  persistent break's finding every pass (append-only evidence), so the
+  alert re-pages hourly until the tamper is remediated.
 
 ## Troubleshooting
 

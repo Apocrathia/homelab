@@ -478,14 +478,20 @@ spec:
                 (fingerprint_mismatch), deletion (chain_link_mismatch), or
                 splice — while the windowed walk tolerates its own edge
                 (the first record's predecessor lives outside the 24h
-                read). The package tests prove the walk (homelab package:
-                detection-verify-clean / -tamper baselines, and the 100k
-                throughput harness pins the stamping cost). The verify
-                pipeline file carries the scheduling TODO: as wired, the
-                node runs this walk once at startup (bounded 24h read-back,
-                completes and exits); the scheduled walk + Grafana
-                contact-point alerting are the issue's open items
-                (docs/issues/tenzir-record-integrity-attestations.md).
+                read). The walk is SCHEDULED hourly (the every wrapper,
+                the loader-pipeline shape): the first walk fires at
+                pipeline start, then every 1h re-walks the rolling 24h
+                window. Each break's finding rides two legs: stdout
+                (pod-log visibility) and, via ocsf_derive + ocsf_cast, an
+                INSERT into ocsf.Detection_Finding with the tenzir user —
+                landing inside the Grafana tenzir-findings rule's WHERE
+                clauses (class 2004, severity 4), so tamper evidence pages
+                through the agent_invoke bridge instead of waiting for a
+                human to read pod logs. The package tests prove the walk
+                and the finding shape (homelab package:
+                detection-verify-clean / -tamper / -finding baselines,
+                and the 100k throughput harness pins the stamping
+                cost).
               definition: ""
               restart-on-error: 1 minute
         plugins:
