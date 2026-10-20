@@ -7,10 +7,11 @@ One process (HelmRelease `tenzir-node-intel`, rendering pod
 operator choice (c) of the intel-lane rounds: the factory row lives here
 on the rc engine, not on the enrichment node. Its pipelines pull external
 threat intel and land it in ClickHouse; the first row is live:
-[opencti-taxii-factory](./pipelines/opencti-taxii-factory.tql) pulls
-OpenCTI's TAXII 2.1 indicator collection (single pane: all CTI reaches
-tenzir via OpenCTI), normalizes STIX Indicators to OCSF 5021 OSINT
-Inventory Info, and appends them to the ClickHouse
+[opencti-taxii-factory-walk](./pipelines/opencti-taxii-factory-walk.tql)
+and [opencti-taxii-factory-poll](./pipelines/opencti-taxii-factory-poll.tql)
+pull OpenCTI's TAXII 2.1 indicator collection (single pane: all CTI
+reaches tenzir via OpenCTI), normalize STIX Indicators to OCSF 5021
+OSINT Inventory Info, and append them to the ClickHouse
 `ocsf.OSINT_Inventory_Info` table, from where the core node's
 [opencti-osint-loader](../core/pipelines/opencti-osint-loader.tql)
 pulls the table into its node-local `ocsf-osint` context (the consumer
@@ -30,12 +31,13 @@ threat intel.
   rationale shrinks away; see
   [`helmrelease.yaml`](./helmrelease.yaml).
 - **One factory row, dual-schedule** — `tenzir.pipelines` carries
-  exactly the opencti-taxii-factory row: a daily full walk of the
-  TAXII collection at 07:00 plus `added_after` polls at 01/13/19 (the
-  upstream isMalicious dual-schedule doctrine), pulling through the
-  vendored library `stix` package and appending OCSF OSINT Inventory
-  Info rows to ClickHouse. The walk is the reconciliation path; the
-  polls keep the table fresh between walks.
+  exactly the opencti-taxii-factory-walk and opencti-taxii-factory-poll
+  pipelines: a daily full walk of the TAXII collection at 07:00 plus
+  `added_after` polls at 01/13/19 (the upstream isMalicious
+  dual-schedule doctrine), pulling through the vendored library `stix`
+  package and appending OCSF OSINT Inventory Info rows to ClickHouse.
+  The walk is the reconciliation path; the polls keep the table fresh
+  between walks.
 - **Deploys live** — this HelmRelease carries no `spec.suspend`: the
   factory row is this lap's deliverable and the rc pin only pays off
   running. (The fleet's storage-collector nodes are currently suspended

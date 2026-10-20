@@ -102,7 +102,7 @@ configMapGenerator:
   # Vendored library `stix` package (packages/stix/): TAXII fetch + STIX
   # Indicator -> OCSF OSINT Inventory Info mapping. Runtime content =
   # package.yaml + operators/ (the intel node mounts all four files for
-  # its opencti-taxii-factory pipeline).
+  # its opencti-taxii-factory-walk / -poll pipelines).
   - name: tenzir-packages-stix
     namespace: tenzir
     files:

@@ -149,8 +149,8 @@ spec:
           # in pipelines/<id>.tql, and the replacements copy them into
           # these empty definition fields at kustomize build time.
           pipelines:
-            opencti-taxii-factory:
-              name: opencti taxii factory
+            opencti-taxii-factory-walk:
+              name: opencti taxii factory walk
               description: |
                 The intel factory's first row: pulls OpenCTI's TAXII 2.1
                 indicator collection (single-pane — all CTI reaches
@@ -158,25 +158,41 @@ spec:
                 package and appends OCSF 1.9 OSINT Inventory Info rows
                 into the ClickHouse ocsf.OSINT_Inventory_Info lookup
                 table; the core node's opencti-osint-loader pipeline is
-                the consumer half. Dual-schedule per the upstream
-                isMalicious doctrine: a daily full walk at 07:00
-                reconciles the whole collection (bootstrap, revocation
-                convergence, and the entry refresh that keeps the
-                loader's 30d context max_age from aging active
-                indicators out), and added_after polls at 01/13/19 pick
-                up new and revoked indicators between walks — each poll
-                looks back a day, so a few failed polls lose nothing.
-                The objects endpoint is pinned in the pipeline (the
-                /taxii2/ discovery document advertises the platform's
-                localhost:4000 base_url default — a discovery walk would
-                fetch garbage); the bearer token rides the
-                opencti-taxii-token managed secret, and the
+                the consumer half. Per the upstream isMalicious doctrine,
+                a daily full walk at 07:00 reconciles the whole
+                collection (bootstrap, revocation convergence, and the
+                entry refresh that keeps the loader's 30d context max_age
+                from aging active indicators out). The objects endpoint
+                is pinned in the pipeline (the /taxii2/ discovery
+                document advertises the platform's localhost:4000
+                base_url default — a discovery walk would fetch garbage);
+                the bearer token rides the opencti-taxii-token managed
+                secret, and the indicators-only filter drops the
+                non-indicator STIX objects the collection carries. Role
+                caps and markings are enforced server-side by OpenCTI;
+                nothing to configure here. from_http's built-in retry
+                absorbs 429/5xx bursts, and to_clickhouse mode="append"
+                fails loudly if the DDL table is missing.
+              definition: ""
+              restart-on-error: 1 minute
+            opencti-taxii-factory-poll:
+              name: opencti taxii factory poll
+              description: |
+                The poll half of the intel factory's first row: per the
+                upstream isMalicious doctrine, added_after polls at
+                01/13/19 pick up new and revoked indicators between
+                walks — each poll looks back a day, so a few failed
+                polls lose nothing. The objects endpoint is pinned in
+                the pipeline (the /taxii2/ discovery document advertises
+                the platform's localhost:4000 base_url default — a
+                discovery walk would fetch garbage); the bearer token
+                rides the opencti-taxii-token managed secret, and the
                 indicators-only filter drops the non-indicator STIX
                 objects the collection carries. Role caps and markings
-                are enforced server-side by OpenCTI; nothing to
-                configure here. from_http's built-in retry absorbs
-                429/5xx bursts, and to_clickhouse mode="append" fails
-                loudly if the DDL table is missing.
+                are enforced server-side by OpenCTI; nothing to configure
+                here. from_http's built-in retry absorbs 429/5xx bursts,
+                and to_clickhouse mode="append" fails loudly if the DDL
+                table is missing.
               definition: ""
               restart-on-error: 1 minute
 

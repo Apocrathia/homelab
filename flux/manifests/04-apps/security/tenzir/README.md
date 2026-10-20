@@ -24,9 +24,10 @@ node](./nodes/introspection/README.md) is the diagnostics observability
 plane: its central poller ships every fleet node's pipeline diagnostics
 to Loki and Mimir, superseding the per-node diagnostics lanes.
 The [intel node](./nodes/intel/README.md) is the CTI factory plane: its
-opencti-taxii-factory pipeline pulls OpenCTI's TAXII 2.1 indicator
-collection into the `ocsf.OSINT_Inventory_Info` ClickHouse table (single
-pane: all CTI reaches tenzir via OpenCTI) on the rc engine image, and
+opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines
+pull OpenCTI's TAXII 2.1 indicator collection into the
+`ocsf.OSINT_Inventory_Info` ClickHouse table (single pane: all CTI
+reaches tenzir via OpenCTI) on the rc engine image, and
 the core node's
 [opencti-osint-loader](./nodes/core/pipelines/opencti-osint-loader.tql)
 is the consumer half.
@@ -102,7 +103,8 @@ and the rendered Secret keys match them:
 - `opencti-taxii-token`: the OpenCTI TAXII 2.1 bearer token, written
   by the opencti lane — its slice-7 handoff
   ([`docs/issues/opencti-deployment.md`](../../../../../docs/issues/opencti-deployment.md));
-  the intel node's opencti-taxii-factory pipeline reads it
+  the intel node's opencti-taxii-factory-walk and
+  opencti-taxii-factory-poll pipelines read it
   (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`

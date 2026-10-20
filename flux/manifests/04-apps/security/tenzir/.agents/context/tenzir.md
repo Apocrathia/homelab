@@ -35,7 +35,7 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   node](../../nodes/introspection/README.md) is the fleet's diagnostics
   poller plane. The [intel
   node](../../nodes/intel/README.md) is the CTI factory plane: its
-  opencti-taxii-factory pipeline pulls external threat intel from
+  opencti-taxii-factory-walk / -poll pipelines pull external threat intel from
   OpenCTI's TAXII 2.1 indicator collection, normalizes it to OCSF 5021,
   and appends it to the ClickHouse OCSF store, from where the core
   node's opencti-osint-loader pulls it into its node-local
