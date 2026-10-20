@@ -59,10 +59,13 @@ spec:
             - port: "9200"
               protocol: TCP
     # Object storage: NAS RustFS instance (S3-compatible, plain HTTP on the LAN
-    # segment). First locked-namespace consumer of the NAS via toFQDNs; tighten
-    # to toCIDR later if wanted.
-    - toFQDNs:
-        - matchName: storage.services.apocrathia.com
+    # segment). toCIDR, not toFQDNs: the NAS lives at 10.100.1.50 in the same
+    # LAN range as the gateway LB pool (10.100.1.x), and Cilium's FQDN identity
+    # never produced an allow for it - the platform pod's S3 connect timed out
+    # (verified: unlocked pods reach the NAS in ~4ms; the CNP-selected pod did
+    # not). The IP is static on the LAN.
+    - toCIDR:
+        - 10.100.1.50/32
       toPorts:
         - ports:
             - port: "9009"
