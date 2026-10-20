@@ -22,9 +22,15 @@ spec:
       name: openaev-rabbitmq
       namespace: openaev
       # Broker for exercise injects/notifications (firecrawl-rabbitmq pattern).
-      # ECR mirror of the docker library image, digest-pinned.
-      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/rabbitmq
-      image: public.ecr.aws/docker/library/rabbitmq:4.4.0-management-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
+      # docker.io library image, digest-pinned (multiarch manifest).
+      # Pin to docker.io, NOT the ECR mirror: renovate's docker datasource
+      # resolves digests against docker.io, and the ECR mirror serves its own
+      # manifest lists - a cross-registry pin is unpullable (the 4.4.0 bump
+      # shipped docker.io's eb37f586 against public.ecr.aws and
+      # ImagePullBackOff'd). The images/dockerhub namespace label makes the
+      # Kyverno-cloned pull secret cover docker.io pulls.
+      # renovate: datasource=docker depName=docker.io/library/rabbitmq
+      image: docker.io/library/rabbitmq:4.4.0-management-alpine@sha256:d5c8b200a061242868833c8bbdd0703534a4a06ffe654a853e33acd46c7ce258
       container:
         name: rabbitmq
         port: 5672
