@@ -24,7 +24,7 @@ spec:
       # Broker for exercise injects/notifications (firecrawl-rabbitmq pattern).
       # ECR mirror of the docker library image, digest-pinned.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/rabbitmq
-      image: public.ecr.aws/docker/library/rabbitmq:4.3.6-management-alpine@sha256:3505b6096cdbc083bcc363e74366f575ecd0c1a55be4dadcbc60fa08e34647e1
+      image: public.ecr.aws/docker/library/rabbitmq:4.4.0-management-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
       container:
         name: rabbitmq
         port: 5672
