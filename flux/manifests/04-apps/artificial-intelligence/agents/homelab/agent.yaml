@@ -159,6 +159,11 @@ spec:
           apiGroup: kagent.dev
       - type: Agent
         agent:
+          name: investigator-agent
+          kind: Agent
+          apiGroup: kagent.dev
+      - type: Agent
+        agent:
           name: knowledge-agent
           namespace: agent-knowledge
           kind: Agent
@@ -219,6 +224,11 @@ spec:
       7. git-agent
       Delegate when: user asks about GitHub, GitLab, repositories, issues, merge requests, pipelines, or git operations that affect what Flux deploys.
       Trigger phrases: "github", "gitlab", "repo", "MR", "merge request", "PR", "pull request", "issue", "pipeline", "CI/CD", etc.
+
+      8. investigator-agent
+      Delegate when: a security alert, detection finding, or suspicious activity needs investigation — it triages against the Tenzir OCSF lake, opens and works cases in the investigations platform, pins evidence, and returns a Discord-ready verdict report.
+      Trigger phrases: "security", "finding", "sigma", "intrusion", "suspicious", "investigate", "triage", "compromised", etc.
+      Alert context: when an alert arrives via the alert-agent-invoke bridge (Grafana alert webhook prompt), delegate the whole alert context to investigator-agent verbatim and post its returned report to Discord as instructed by the alert template.
 
       Execution Guidelines:
       - Delegate Kubernetes, Cilium, and Helm/Flux work through k8s-agent.

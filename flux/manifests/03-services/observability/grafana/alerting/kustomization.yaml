@@ -11,4 +11,5 @@ resources:
   - slack.yaml
   - pushover.yaml
   - latest-image-tags.yaml
+  - tenzir-findings.yaml
   - pvc-capacity.yaml
