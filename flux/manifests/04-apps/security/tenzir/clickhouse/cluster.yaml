@@ -50,7 +50,11 @@ spec:
         - 10.42.0.0/16
       tenzir/grants/query:
         - GRANT INSERT, SELECT ON ocsf.*
-      # Grafana datasource user (MR-2), SELECT-only.
+      # Grafana datasource user (MR-2), SELECT-only. ocsf.* serves the
+      # OCSF dashboards; investigations.* (2026-10-19, P-2) extends the
+      # operator's examine surface to the case store — the
+      # investigations-cases / investigations-case-detail dashboards over
+      # investigations.records. Read-only like everything this user holds.
       grafana/password:
         valueFrom:
           secretKeyRef:
@@ -60,6 +64,7 @@ spec:
         - 10.42.0.0/16
       grafana/grants/query:
         - GRANT SELECT ON ocsf.*
+        - GRANT SELECT ON investigations.*
       # Investigations-plane users (tenzir/nodes/investigations/). The
       # standing ingest pipeline writes with investigations-writer;
       # API-launched from_clickhouse pipelines read with

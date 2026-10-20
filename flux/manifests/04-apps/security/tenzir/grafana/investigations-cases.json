@@ -1,0 +1,89 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "The operator's case list over the investigations store: one row per case aggregated from the append-only Incident Finding (2005) lifecycle records in investigations.records through the ocsf-clickhouse datasource. Latest state (severity, status, verdict, assignee) comes from the newest case record per correlation_uid; the time window controls which cases appear. The case_uid cell links to the case detail dashboard. Panels are empty until agents open cases.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
+      },
+      "description": "One row per case (metadata.correlation_uid): latest severity/status/verdict/assignee via argMax over the case's 2005 lifecycle records, last activity, and case record count. The case_uid cell links to the case detail dashboard.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "case_uid"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Case detail",
+                    "url": "/d/tenzir-investigations-case-detail/investigations-case-detail?var-case_uid=${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "rawQuery": true,
+          "rawSql": "SELECT event.metadata.correlation_uid.:String AS case_uid,\n  max(nullIf(event.finding_info_list[].title.:String[1], '')) AS title,\n  argMax(CASE event.severity_id.:Int64\n    WHEN 6 THEN '6 Fatal' WHEN 5 THEN '5 Critical' WHEN 4 THEN '4 High' WHEN 3 THEN '3 Medium'\n    WHEN 2 THEN '2 Low' WHEN 1 THEN '1 Informational' ELSE '0 Unknown' END, time) AS severity,\n  argMax(CASE event.status_id.:Int64\n    WHEN 1 THEN '1 New' WHEN 2 THEN '2 In Progress' WHEN 3 THEN '3 On Hold' WHEN 4 THEN '4 Resolved'\n    WHEN 5 THEN '5 Closed' ELSE '0 Unknown' END, time) AS status,\n  argMaxIf(CASE event.verdict_id.:Int64\n    WHEN 1 THEN '1 False Positive' WHEN 2 THEN '2 True Positive' WHEN 3 THEN '3 Disregard' WHEN 4 THEN '4 Suspicious'\n    WHEN 5 THEN '5 Benign' WHEN 6 THEN '6 Test' WHEN 7 THEN '7 Insufficient Data' WHEN 8 THEN '8 Security Risk'\n    WHEN 9 THEN '9 Managed Externally' WHEN 10 THEN '10 Duplicate' ELSE '99 Other' END, time, event.verdict_id.:Int64 != 0) AS verdict,\n  argMax(event.assignee.name.:String, time) AS assignee,\n  max(time) AS last_activity,\n  count() AS records\nFROM investigations.records\nWHERE event.class_uid.:Int64 = 2005\n  AND $__timeFilter(time)\nGROUP BY case_uid\nORDER BY last_activity DESC",
+          "refId": "A"
+        }
+      ],
+      "title": "Cases",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["tenzir", "security", "investigations"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Tenzir Investigations Cases",
+  "uid": "tenzir-investigations-cases",
+  "version": 1
+}

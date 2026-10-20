@@ -1,0 +1,138 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "One case's full record chain in time order: the case lifecycle records (Incident Finding 2005: open/update/close) and the agent evidence pins (Datastore Activity 6005, Query) from investigations.records through the ocsf-clickhouse datasource. Every row carries the record_integrity attestation columns \u2014 the record's fingerprint and the prev_event fingerprint it references \u2014 so chain continuity is visible per record (chained / chain genesis / restart gap / pre-epoch; the investigations-attest-verify walk alerts on actual breaks). The time window bounds which records appear; case_uid picks the case.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
+      },
+      "description": "The case's records in time order: lifecycle records (class 2005) and evidence pins (class 6005) with the pinned query text and a snapshot excerpt. agent is the ai_operation stamp (ai_agent.name) with metadata.product.name as fallback. The chain column reads the attestation: chained rows reference the previous record's fingerprint; chain genesis / restart gap carry no prev_event (the documented restart semantics); rows predating the attestation epoch have no fingerprint at all.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "rawQuery": true,
+          "rawSql": "SELECT time,\n  event.class_uid.:Int64 AS class_uid,\n  event.activity_name.:String AS activity,\n  coalesce(event.query_info.query_string.:String, '') AS query,\n  coalesce(substring(arrayStringConcat(event.query_info.data[], ', '), 1, 256), '') AS snapshot,\n  coalesce(event.ai_agent.name.:String, event.metadata.product.name.:String) AS agent,\n  CASE event.severity_id.:Int64\n    WHEN 6 THEN '6 Fatal' WHEN 5 THEN '5 Critical' WHEN 4 THEN '4 High' WHEN 3 THEN '3 Medium'\n    WHEN 2 THEN '2 Low' WHEN 1 THEN '1 Informational' ELSE '0 Unknown' END AS severity,\n  CASE event.status_id.:Int64\n    WHEN 1 THEN '1 New' WHEN 2 THEN '2 In Progress' WHEN 3 THEN '3 On Hold' WHEN 4 THEN '4 Resolved'\n    WHEN 5 THEN '5 Closed' ELSE '' END AS status,\n  multiIf(\n    length(event.attestation_list[].fingerprint.value.:String) = 0, 'no attestation (pre-epoch)',\n    isNull(event.attestation_list[].prev_event.fingerprint.value.:String[1]),\n      if(event.class_uid.:Int64 = 2005 AND event.activity_id.:Int64 = 1, 'chain genesis', 'restart gap'),\n    'chained') AS chain,\n  event.attestation_list[].fingerprint.value.:String[1] AS fingerprint,\n  event.attestation_list[].prev_event.fingerprint.value.:String[1] AS prev_fingerprint\nFROM investigations.records\nWHERE event.metadata.correlation_uid.:String = ${case_uid:singlequote}\n  AND $__timeFilter(time)\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Record timeline",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "ocsf-clickhouse"
+      },
+      "description": "The observables riding the case's evidence pins (envelope observables, one row per entry): the OCSF observable path, its value, type_id, and the raw lake rows (event_uid links) the pinned snapshot came from.",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "ocsf-clickhouse"
+          },
+          "editorMode": "code",
+          "format": 1,
+          "rawQuery": true,
+          "rawSql": "SELECT time,\n  name AS observable,\n  value,\n  type_id,\n  lake_rows\nFROM investigations.records\nARRAY JOIN\n  event.observables[].name.:String AS name,\n  event.observables[].value.:String AS value,\n  event.observables[].type_id.:Int64 AS type_id,\n  event.observables[].event_uid.:String AS lake_rows\nWHERE event.metadata.correlation_uid.:String = ${case_uid:singlequote}\n  AND $__timeFilter(time)\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "Evidence observables",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["tenzir", "security", "investigations"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "ocsf-clickhouse"
+        },
+        "definition": "SELECT DISTINCT event.metadata.correlation_uid.:String AS case_uid FROM investigations.records ORDER BY 1",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Case uid",
+        "multi": false,
+        "name": "case_uid",
+        "options": [],
+        "query": {
+          "queryType": "sql",
+          "rawSql": "SELECT DISTINCT event.metadata.correlation_uid.:String AS case_uid FROM investigations.records ORDER BY 1",
+          "refId": "case_uid"
+        },
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Tenzir Investigations Case Detail",
+  "uid": "tenzir-investigations-case-detail",
+  "version": 1
+}

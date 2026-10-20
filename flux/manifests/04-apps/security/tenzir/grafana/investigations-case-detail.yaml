@@ -1,0 +1,23 @@
+---
+# Investigations case detail: the selected case's full record chain in
+# time order (case lifecycle records + evidence pins) over
+# investigations.records via the ocsf-clickhouse datasource, with the
+# record_integrity attestation columns per record and the evidence
+# observables of the pinned snapshots. case_uid rides as a dashboard
+# variable (linked from the case list dashboard). JSON rides in ConfigMap
+# tenzir-investigations-case-detail (generated from
+# investigations-case-detail.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: tenzir-investigations-case-detail
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: tenzir-investigations-case-detail
+    key: investigations-case-detail.json
+  folder: Security

@@ -9,6 +9,8 @@ resources:
   - grafana.yaml
   - ocsf-exploration.yaml
   - ocsf-findings.yaml
+  - investigations-cases.yaml
+  - investigations-case-detail.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -26,3 +28,11 @@ configMapGenerator:
     namespace: prometheus-system
     files:
       - ocsf-findings.json
+  - name: tenzir-investigations-cases
+    namespace: prometheus-system
+    files:
+      - investigations-cases.json
+  - name: tenzir-investigations-case-detail
+    namespace: prometheus-system
+    files:
+      - investigations-case-detail.json
