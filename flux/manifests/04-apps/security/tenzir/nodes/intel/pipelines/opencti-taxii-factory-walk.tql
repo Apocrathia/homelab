@@ -12,14 +12,14 @@ cron "0 0 7 * * *" {
   // (localhost:4000), which is unreachable from the cluster.
   stix::taxii::fetch "http://opencti-server.opencti.svc.cluster.local:80/taxii2/root/collections/b1b65172-d4cd-445c-9590-7971808eb9e4/objects",
     headers={Authorization: f"Bearer {secret("opencti-taxii-token")}"}
-  where type == "indicator"
-  stix::ocsf::normalize
-  to_clickhouse table="ocsf.OSINT_Inventory_Info",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
-    port=9000,
-    user="tenzir",
-    password=secret("clickhouse-password"),
-    tls=false,
-    mode="append",
-    max_batch_rows=65536
 }
+where type == "indicator"
+stix::ocsf::normalize
+to_clickhouse table="ocsf.OSINT_Inventory_Info",
+  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+  port=9000,
+  user="tenzir",
+  password=secret("clickhouse-password"),
+  tls=false,
+  mode="append",
+  max_batch_rows=65536
