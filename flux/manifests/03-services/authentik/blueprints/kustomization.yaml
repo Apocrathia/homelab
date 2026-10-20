@@ -13,14 +13,6 @@ configMapGenerator:
     namespace: authentik
     files:
       - okta.yaml
-  - name: authentik-blueprint-webauthn-mfa
-    namespace: authentik
-    files:
-      - webauthn-mfa.yaml
-  - name: authentik-blueprint-app-access
-    namespace: authentik
-    files:
-      - app-access.yaml
   - name: authentik-blueprint-terraform-service-account
     namespace: authentik
     files:
