@@ -38,18 +38,21 @@ directory. The Chaos Mesh install lives one level up
 
 ## Experiments
 
-| Schedule                  | Kind                 | Target                                | Effect                                                                                                                                                                                                                                    | Daily at (Denver) |
-| ------------------------- | -------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `demo-app-pod-kill`       | PodChaos `pod-kill`  | `app=demo-app` pod (mode `one`)       | Deletes one pod (grace 5s); Deployment recreates it. demo-app runs a single replica and gatus probes at 1m intervals, so a blip on `demo/demo-app` appears only if a probe lands inside the seconds-long outage — not guaranteed per run. | 03:10             |
-| `demo-app-cpu-stress`     | StressChaos CPU      | one `app=demo-app` pod                | One stress-ng CPU worker for 60s. The pod's 100m CPU limit caps the burn — throttling, not an outage.                                                                                                                                     | 03:25             |
-| `demo-app-dns-error`      | DNSChaos `error`     | all `app=demo-app` pods               | DNS lookups from the pod SERVFAIL for 60s. Mechanism test; nginx itself serves static files.                                                                                                                                              | 03:40             |
-| `openwebui-litellm-delay` | NetworkChaos `delay` | openwebui pods → litellm Service VIP  | +100ms latency on openwebui's egress to `litellm.litellm.svc.cluster.local:4000` for 60s. Mimics a slow LLM backend.                                                                                                                      | 04:15             |
-| `excalidraw-http-abort`   | HTTPChaos `abort`    | `app=excalidraw` pods, GET on port 80 | Resets inbound GET requests for 60s. The gatus probe fails during the window.                                                                                                                                                             | 04:35             |
+| Schedule                  | Kind                | Target                                          | Effect                                                                                                                                                                                                                                    | Daily at (Denver) |
+| ------------------------- | ------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `demo-app-pod-kill`       | PodChaos `pod-kill` | `app=demo-app` pod (mode `one`)                 | Deletes one pod (grace 5s); Deployment recreates it. demo-app runs a single replica and gatus probes at 1m intervals, so a blip on `demo/demo-app` appears only if a probe lands inside the seconds-long outage — not guaranteed per run. | 03:10             |
+| `demo-app-cpu-stress`     | StressChaos CPU     | one `app=demo-app` pod                          | One stress-ng CPU worker for 60s. The pod's 100m CPU limit caps the burn — throttling, not an outage.                                                                                                                                     | 03:25             |
+| `demo-app-dns-error`      | DNSChaos `error`    | all `app=demo-app` pods                         | DNS lookups from the pod SERVFAIL for 60s. Mechanism test; nginx itself serves static files.                                                                                                                                              | 03:40             |
+| `openwebui-litellm-delay` | HTTPChaos `delay`   | openwebui pods, egress requests to litellm:4000 | +100ms latency on openwebui's HTTP requests to the litellm proxy via tproxy injection (bridge-based, no iptables).                                                                                                                        | 04:15             |
+| `excalidraw-http-abort`   | HTTPChaos `abort`   | `app=excalidraw` pods, GET on port 80           | Resets inbound GET requests for 60s. The gatus probe fails during the window.                                                                                                                                                             | 04:35             |
 
-The litellm experiment targets the Service ClusterIP (`externalTargets`),
-not litellm pods: openwebui reaches litellm through the Service VIP, so a
-pod-IP filter would never match at the openwebui veth — and the `litellm`
-namespace hosts a CNPG cluster and stays out of the annotation set.
+The litellm experiment uses HTTPChaos rather than NetworkChaos: the chaos
+daemon programs legacy iptables in the target pod's netns, and with this
+cluster's Cilium eBPF datapath there is no iptables filter table there
+(`can't initialize iptables table 'filter': Table does not exist`), so
+NetworkChaos structurally cannot apply. HTTPChaos tproxy injection is
+bridge-based and verified working on this cluster (validated against
+demo-app).
 
 ## Abort switch
 
@@ -89,6 +92,12 @@ applied Schedules** — they keep firing daily. To actually stop chaos:
 - **Emergency (live):** `kubectl delete schedule <name> -n <namespace>` per
   experiment achieves the same cleanup immediately; Flux recreates the
   Schedule from git on the next reconcile while the file still exists.
+- **Wedged spawn recovery:** if a spawn wedges (its target pod dies mid-run,
+  the chaos object sticks on its `chaos-mesh/records` finalizer, and
+  `concurrencyPolicy: Forbid` then blocks all future spawns of that schedule),
+  clear it with `kubectl patch httpchaos -n <ns> <spawn-name> --type=json -p
+'[{"op":"remove","path":"/metadata/finalizers"}]'` and confirm the deletion
+  completes. Live-verified on `excalidraw-http-abort-c5wwr`.
 
 ## Post-ship validation loop
 
