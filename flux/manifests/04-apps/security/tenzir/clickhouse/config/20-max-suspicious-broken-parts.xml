@@ -1,0 +1,15 @@
+<clickhouse>
+    <merge_tree>
+        <!-- TEMPORARY post-wipe allowance (revert after both replicas attach
+             clean and the lake flow is verified): the authorized rustfs
+             bucket wipe (operator, 2026-10-20) removed the cold-tier
+             objects the tiered ocsf parts had moved to; the residual part
+             shells (230 on the API_Activity replica pair, 0.00 B, data
+             deleted by the wipe itself) exceed the default
+             max_suspicious_broken_parts (100) -> TOO_MANY_UNEXPECTED_DATA_PARTS
+             blocks the whole ocsf database load. Raise the global limit so
+             the attach drops the shells (the deletion IS the wipe's own
+             completion). One setting only. -->
+        <max_suspicious_broken_parts>500</max_suspicious_broken_parts>
+    </merge_tree>
+</clickhouse>

@@ -27,6 +27,7 @@ configMapGenerator:
     files:
       - 00-storage-tiered.xml=config/00-storage-tiered.xml
       - 10-startup-scripts.xml=config/10-startup-scripts.xml
+      - 20-max-suspicious-broken-parts.xml=config/20-max-suspicious-broken-parts.xml
 
 replacements:
   # Copy each generated ConfigMap key into the matching CHI files entry.
@@ -53,3 +54,13 @@ replacements:
           name: tenzir
         fieldPaths:
           - spec.configuration.files.[config.d/10-startup-scripts.xml]
+  - source:
+      kind: ConfigMap
+      name: tenzir-clickhouse-config
+      fieldPath: data.[20-max-suspicious-broken-parts.xml]
+    targets:
+      - select:
+          kind: ClickHouseInstallation
+          name: tenzir
+        fieldPaths:
+          - spec.configuration.files.[config.d/20-max-suspicious-broken-parts.xml]
