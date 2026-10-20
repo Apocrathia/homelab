@@ -28,6 +28,9 @@ witness ids never appear in git.
 
 ## Remaining blueprints
 
-`blueprints/` keeps the non-tile set (okta source, webauthn MFA,
-app-access groups, terraform service account); the kubernetes blueprint
-lives in `kube-auth/`, tak-ldap in `tak/`'s own dir.
+`blueprints/` keeps the error-and-secret lane only (okta source, terraform
+service account); the kubernetes blueprint lives in `kube-auth/`, the
+access-tier groups and webauthn MFA stages in `system/`, tak-ldap in
+`tak/`'s own dir. All four of the latter are tofu-adopted now — the
+tiles' `data.authentik_group` lookups bind the same live group rows the
+`system/app-access` workspace adopts.

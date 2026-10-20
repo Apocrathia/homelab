@@ -13,3 +13,4 @@ resources:
   - blueprints
   - kube-auth
   - tiles
+  - system

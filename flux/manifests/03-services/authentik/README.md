@@ -14,6 +14,8 @@ This deployment includes:
 - **Blueprints**: GitOps-driven configuration management via ConfigMaps
 - **Tiles**: Tofu-managed dashboard tiles (`tiles/`) — one workspace per
   tile, adopting the blueprint-created application rows
+- **System units**: Tofu-managed authentik-internal state (`system/` —
+  the access-tier groups, the default login flow's MFA stages)
 - **PostgreSQL**: Primary database for user data and configuration
 - **Longhorn**: Persistent storage for database
 
@@ -45,8 +47,8 @@ Okta OAuth source client id/secret are entered in the Authentik UI (Directory �
 
 ### Application access
 
-Group-level only. Groups live in `blueprints/app-access.yaml`; every app's own
-blueprint carries its admins binding:
+Group-level only. Groups are tofu-managed in `system/app-access/`; every
+app's own blueprint carries its admins binding:
 
 - **admins** — operator group; an admins binding in each application's own blueprint
 - **users** — friends group; sharing = a users binding in the app's own
@@ -55,6 +57,8 @@ blueprint carries its admins binding:
 - Chart-rendered apps get their admins binding automatically; the former
   jellyfin + demo-app guinea-pig access blueprints are retired
 - One-off user grants are made in the Authentik UI, not GitOps
+- Group membership is also UI-managed — the tofu module never touches it
+  (see the membership note in `system/app-access/authentik.tf`)
 
 Default-deny is enforced by the tenant flag `core_default_app_access` (operator-led; superusers get no bypass in 2026.8.2). The flag is a one-time toggle, not chart config — set it **after** joining the admins group in the UI.
 
