@@ -25,7 +25,7 @@ spec:
       # aborts at data-dictionary init. Major updates are disabled in
       # renovate.json until a deliberate 8.4 -> 9.x -> 26.x lap.
       # renovate: datasource=docker depName=mysql
-      image: mysql:8.4@sha256:24989179f58856db763f418010c1169fecc944e3ec1ea7e921572d83eb070f70
+      image: mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364
       container:
         name: mysql
         port: 3306
