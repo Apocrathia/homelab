@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.0.88
+
+- **authentik.managedBy default flips to `terraform`** — the blueprint lane is
+  retired. The three blueprint ConfigMap templates (proxy, oidc, bookmark) are
+  deleted from the chart; new apps deploy tofu-first. The tofu workspace
+  template (authentik-tofu-workspace.yaml) is the only authentik lane.
+  Zero-behavior-change for the 62 already-flipped apps (they rendered tofu
+  docs before this; they render the same docs after — the default only
+  catches apps that never declared managedBy). The two dead artifacts
+  (odysseus, huntarr2) are tree-commented-out and never deploy.
+
 ## Version 0.0.87 (Latest)
 
 - **`authentik.managedBy: terraform` rewritten to the chart-generated

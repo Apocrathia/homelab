@@ -514,8 +514,8 @@ authentik:
   #   per-app HCL composed from the values below — all three modes
   #   (bookmark = the tile shape: application + bindings, no provider).
   #   Inline HCL only: NO module refs, NO chart-tag pins, NO varmap.
-  #   Suppresses the blueprint ConfigMaps.
-  managedBy: "blueprint"
+  #   THE DEFAULT: new apps deploy tofu-first; the blueprint lane is retired.
+  managedBy: "terraform"
 
   # The tofu lane composes from the same values the blueprint templates
   # read — every value lands INLINE in the generated HCL. There is no
