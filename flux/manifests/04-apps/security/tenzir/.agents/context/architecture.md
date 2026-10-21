@@ -30,16 +30,23 @@ through the platform.
   archive rule's `ocsf-archive.tql` — sixteen `.tql` files under
   `nodes/core/pipelines/`.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
-  memory behavior cannot starve the detection plane. Four pipelines (OTLP
-  ingest + OCSF map, the geo-open loader, the metrics arm) plus the
-  archive rule's `ocsf-archive.tql` — five `.tql` files —
-  subprocess-isolated so a pipeline blowup dies alone.
+  memory behavior cannot starve the detection plane. Five pipelines (OTLP
+  ingest + OCSF map, the geo-open loader, the metrics arm, the hourly
+  attestation verify walk) plus the archive rule's `ocsf-archive.tql` —
+  six `.tql` files — subprocess-isolated so a pipeline blowup dies
+  alone. The archive rule stamps record_integrity attestations
+  (`tetragon-chains`, stream mode) before its `to_clickhouse` legs.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
-  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Three
+  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Four
   pipelines (UDP accept + OCSF map via the vendored library package, the
-  geo-open loader, the metrics arm) plus the archive rule's
-  `ocsf-archive.tql` — four `.tql` files; its 4001 class feeds its own
-  node-local archive rule, tetragon-style.
+  geo-open loader, the metrics arm, the hourly attestation verify walk)
+  plus the archive rule's `ocsf-archive.tql` — five `.tql` files; its
+  4001 class feeds its own node-local archive rule, tetragon-style, and
+  the archive rule stamps record_integrity attestations
+  (`netflow-chains`) like every other node. The verify walk is
+  chain_uid-scoped: `ocsf.Network_Activity` is shared with the
+  tetragon lane, whose cross-class chain would false-flag the
+  table-local predecessor walk.
 - **Investigations node** — owns the agent investigations plane:
   case/evidence envelopes in, `investigations.records` on ClickHouse
   out — an isolated blast radius the detection plane never shares.
