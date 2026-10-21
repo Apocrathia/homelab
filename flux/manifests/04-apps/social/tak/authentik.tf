@@ -252,11 +252,6 @@ resource "authentik_rbac_role" "search" {
   name = "tak-ldap-search"
 }
 
-resource "authentik_rbac_permission_role" "search_full_directory" {
-  role       = authentik_rbac_role.search.id
-  permission = "authentik_providers_ldap.search_full_directory"
-}
-
 # Bind service user for OTS's runtime group lookups (flask-ldap3-login's
 # get_user_groups() opens its own connection bound with these
 # credentials — direct bind covers only login). Member of `users` so the
@@ -323,7 +318,6 @@ variable "adoption" {
       var.import_provider_pk != 0 &&
       var.import_outpost_uuid != "" &&
       var.import_role_uuid != "" &&
-      var.import_permission_pk != 0 &&
       var.import_user_pk != 0 &&
       var.import_group_tak_admin_uuid != "" &&
       var.import_binding_admins_uuid != "" &&
@@ -342,7 +336,6 @@ variable "adoption" {
       var.import_provider_pk == 0 &&
       var.import_outpost_uuid == "" &&
       var.import_role_uuid == "" &&
-      var.import_permission_pk == 0 &&
       var.import_user_pk == 0 &&
       var.import_group_tak_admin_uuid == "" &&
       var.import_binding_admins_uuid == "" &&
@@ -386,12 +379,6 @@ variable "import_role_uuid" {
   description = "Live uuid of the tak-ldap-search rbac role (roles import by uuid)."
   type        = string
   default     = ""
-}
-
-variable "import_permission_pk" {
-  description = "Live guardian row pk of the role's search_full_directory permission assignment (rbac_permission_role imports by the assigned-permission row pk)."
-  type        = number
-  default     = 0
 }
 
 variable "import_user_pk" {
@@ -475,11 +462,6 @@ import {
   id       = var.import_role_uuid
 }
 
-import {
-  for_each = var.adoption ? toset(["search_full_directory"]) : toset([])
-  to       = authentik_rbac_permission_role.search_full_directory
-  id       = tostring(var.import_permission_pk)
-}
 
 import {
   for_each = var.adoption ? toset(["bind"]) : toset([])
