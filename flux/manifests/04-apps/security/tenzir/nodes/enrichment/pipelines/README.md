@@ -1,13 +1,19 @@
 # Pipelines (enrichment)
 
-The drop zone for the enrichment node's factory pipelines — one
-pipeline as of lap 2:
+The drop zone for the enrichment node's pipelines — the lap-2 factory
+pipeline plus the fleet-standard diagnostics pair:
 
 - [`fleet-assets-pull.tql`](./fleet-assets-pull.tql) — the hourly
   Fleet host-inventory pull (`GET /api/v1/fleet/hosts`, Bearer via
   the `fleetdm-token` secret) into `ocsf.fleet_assets` on the
   ClickHouse query store. The core node's loader pipeline is the
   consumer half.
+- [`diagnostics-to-loki.tql`](./diagnostics-to-loki.tql) /
+  [`error-diagnostics-to-mimir.tql`](./error-diagnostics-to-mimir.tql)
+  — the diagnostics pair every node ships since B1 (byte-identical to
+  the siblings' lanes modulo the node label): this node's own
+  diagnostics to Loki (`job=tenzir-diagnostics`, `node=enrichment`)
+  and error/warning samples to Mimir.
 
 The factory lanes on this node are internal reference data only (see
 [`../README.md`](../README.md) for the roadmap): `fleet-assets`

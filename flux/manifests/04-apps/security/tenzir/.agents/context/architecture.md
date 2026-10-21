@@ -118,19 +118,20 @@ ship the `pipeline-metrics-to-mimir` arm, which pushes the
 so the `node` label keeps same-id pushers distinct, and `internal`
 separates bus-internal flow from external export. Core adds
 `sigma-metrics-to-mimir` (`tenzir_sigma_*` — sigma runs only there).
-Diagnostics moved off the nodes with the introspection lap: the
-per-node `error-diagnostics-to-mimir` / `diagnostics-to-loki` lanes
-retired fleet-wide, and the introspection node's central poller (the
-`introspection-diagnostics-poller` Deployment) now runs the tenzir CLI
-against each target's `:5158` (core, tetragon, netflow, investigations,
-enrichment, intel), pushing an error and a warning sample per live
-diagnostic (`tenzir_pipeline_errors` / `tenzir_pipeline_warnings`) to
-Mimir and every live, not-hidden diagnostic to Loki as
-`job=tenzir-diagnostics` log lines via `to_fluent_bit` — byte-parity
-with the retired lanes, the target node baked into the labels, so the
-dashboard reads the same series; the introspection node keeps a local
-pair covering its own pipelines. The Grafana Node Pipelines dashboard
-reads the series in Mimir; the receiving stack is outside this subtree.
+Diagnostics are per-node again (B1): every node ships its own
+`error-diagnostics-to-mimir` / `diagnostics-to-loki` pair through its
+node config — the central poller Deployment that briefly shipped the
+fleet's diagnostics cross-node (v6.19.1 node-config TQL cannot pull a
+remote node's diagnostics, so it ran the tenzir CLI per target) is
+retired, closing its intel blind spot: a node-local lane ships
+regardless of the fleet's image line, no cross-version consumer. Each
+pair pushes an error and a warning sample per live diagnostic
+(`tenzir_pipeline_errors` / `tenzir_pipeline_warnings`) to Mimir and
+every live, not-hidden diagnostic to Loki as
+`job=tenzir-diagnostics` log lines via `to_fluent_bit`, the node baked
+into the labels, so the dashboard reads the same series it always has.
+The Grafana Node Pipelines dashboard reads the series in Mimir; the
+receiving stack is outside this subtree.
 
 ## Sources
 

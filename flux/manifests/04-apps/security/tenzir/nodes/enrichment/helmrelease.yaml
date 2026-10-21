@@ -151,6 +151,40 @@ spec:
                 to this node's lake — ClickHouse is the only sink.
               definition: ""
               restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors / tenzir_pipeline_warnings
+                sample (value 1, pipeline labels, node label = enrichment) to Mimir
+                for every live error / warning diagnostic, so the dashboard can
+                count both severities with sum_over_time. They otherwise live
+                only in the diagnostics stream, not in metrics. The per-node B1 shape
+                every node ships since the central poller's retirement; this
+                node never had a native pair.
+              definition: ""
+              restart-on-error: 1 minute
+            diagnostics-to-loki:
+              name: diagnostics to loki
+              description: |
+                Ships every live, not-hidden pipeline diagnostic to Loki as
+                job=tenzir-diagnostics entries (node label = enrichment) — the
+                factory lane's own diagnostics (a failed Fleet pull or a failed
+                ClickHouse write) become filterable log lines.
+                to_fluent_bit resolves $pipeline_name and $severity per event
+                and consumes both out of the shipped body (live-verified
+                2026-10-17 probe); drop discards the ANSI escape-coded
+                rendered field, so the line keeps the rest of the diagnostic
+                record — pipeline_id, hidden, run, timestamp, message, notes,
+                annotations — and the labels carry pipeline + severity. Hidden
+                entries (platform-UI pipeline deprecation noise) stay out.
+                Plain HTTP to loki-write, cluster-internal. live=true without
+                retro: no store-backlog replay on start, so restarts never
+                re-ship history (Loki has no dedup) — the per-node
+                B1 shape every node ships since the central poller's
+                retirement; this node never had a native pair (the poller
+                shipped its diagnostics until now).
+              definition: ""
+              restart-on-error: 1 minute
 
     # Sized with the docs' size-a-node formula. Lap 2 re-sized it with
     # the factory pipeline live: one batch source (hourly from_http of a

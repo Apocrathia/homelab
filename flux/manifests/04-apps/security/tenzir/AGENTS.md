@@ -7,8 +7,10 @@ investigations plane, the enrichment node the internal-reference-data
 factory (builds the fleet-assets and baselines lookup tables into
 ClickHouse for the other nodes' loaders; one pipeline so far — the
 hourly Fleet asset pull into `ocsf.fleet_assets`), the introspection
-node the diagnostics observability plane (its poller ships every fleet
-node's pipeline diagnostics to Loki and Mimir), and the intel node
+node the introspection plane (its local diagnostics lane pair ships its
+own pipelines' diagnostics — every node ships its own pair since B1
+and the central poller is retired; charter direction: scheduled inward
+detection passes over the `ocsf.*` tables), and the intel node
 the CTI factory plane (its opencti-taxii-factory-walk / -poll pipelines pull
 OpenCTI TAXII threat intel into the ClickHouse OCSF store on the rc
 engine; core's opencti-osint-loader is the consumer half). Narrative:

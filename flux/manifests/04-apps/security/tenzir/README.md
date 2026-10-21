@@ -21,9 +21,13 @@ baselines — into ClickHouse for the other nodes to pull; its first
 lane, the hourly Fleet host-inventory pull into `ocsf.fleet_assets`,
 shipped in lap 2 (the core node's loader is the consumer half).
 The [introspection
-node](./nodes/introspection/README.md) is the diagnostics observability
-plane: its central poller ships every fleet node's pipeline diagnostics
-to Loki and Mimir, superseding the per-node diagnostics lanes.
+node](./nodes/introspection/README.md) is the introspection plane:
+every node ships its own pipeline diagnostics to Loki and Mimir
+through its node-config lane pair (B1 — the introspection node's pair
+covers its own pipelines, and the central poller Deployment is
+retired), and the node's charter direction is inward detection —
+scheduled volume/freshness passes over the ocsf.\* tables landing
+operational findings.
 The [intel node](./nodes/intel/README.md) is the CTI factory plane: its
 opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines
 pull OpenCTI's TAXII 2.1 indicator collection into the

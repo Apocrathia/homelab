@@ -83,15 +83,13 @@ spec:
     # registered — workspace t-vrj4igpf). Platform tokens are per-node,
     # never shared.
     #
-    # Pure diagnostics puller: no extraPorts (no ingest surface — the
-    # chart-rendered main Service on :5158 carries node RPC only; the
-    # poller dials OUT to the siblings' :5158, nothing calls in). The
-    # central poller is NOT this StatefulSet: it is the sibling
-    # Deployment in poller.yaml — v6.19.1 node-config TQL cannot pull a
-    # remote node's diagnostics (remote{} is a no-op location marker in
-    # the new executor), so a separate pod runs the tenzir CLI against
-    # each target's :5158 and ships via the same to_fluent_bit /
-    # to_prometheus lanes these local pipelines use.
+    # No ingest surface: no extraPorts — the chart-rendered main
+    # Service on :5158 carries node RPC only; all work is outbound
+    # (platform WebSocket, plus this node's own lane pair dialing
+    # loki-write and the Mimir gateway). Since the B1 lap every node
+    # ships its own diagnostics pair through its node config (the two
+    # pipelines below cover this node), and the central poller
+    # Deployment is retired.
     nodes:
       - name: introspection
         token:
@@ -135,10 +133,10 @@ spec:
               name: diagnostics to loki
               description: |
                 Ships every live, not-hidden pipeline diagnostic to Loki as
-                job=tenzir-diagnostics entries (node label = introspection)
-                — the sibling lanes' exact shape, covering this node's own
-                two pipelines so the poller's host is not the one blind
-                spot. to_fluent_bit resolves $pipeline_name and $severity
+                job=tenzir-diagnostics entries (node label =
+                introspection) — the sibling lanes' exact shape, covering
+                this node's own two pipelines. to_fluent_bit resolves
+                $pipeline_name and $severity
                 per event and consumes both out of the shipped body
                 (live-verified 2026-10-17 probe); drop discards the ANSI
                 escape-coded rendered field, so the line keeps the rest of
@@ -148,8 +146,8 @@ spec:
                 pipeline deprecation noise) stay out. Plain HTTP to
                 loki-write, cluster-internal. live=true without retro: no
                 store-backlog replay on start, so restarts never re-ship
-                history (Loki has no dedup); the poller Deployment owns
-                the other six nodes' diagnostics.
+                history (Loki has no dedup) — since B1 every node ships
+                its own pair; this one covers this node's pipelines.
               definition: ""
               restart-on-error: 1 minute
             error-diagnostics-to-mimir:
@@ -161,8 +159,8 @@ spec:
                 diagnostic, so the dashboard can count both severities
                 with sum_over_time. They otherwise live only in the
                 diagnostics stream, not in metrics. Sibling lanes' exact
-                shape; the poller Deployment ships the other six nodes'
-                samples.
+                shape, byte-identical to every node's pair modulo the
+                node label (all seven pairs since B1).
               definition: ""
               restart-on-error: 1 minute
 

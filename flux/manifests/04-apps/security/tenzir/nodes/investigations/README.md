@@ -27,7 +27,11 @@ lanes, one blast radius:
   fingerprint, and walks the per-case `prev_event` chains, emitting a
   Detection Finding (2004) on any break. The walk is scheduled hourly
   (the `every` wrapper — first walk at pipeline start, then hourly
-  re-walks): each finding drops onto the pod logs and INSERTs into
+  re-walks), and the pipeline entry runs `unstoppable: true`: the
+  first roll's walker came up completed-terminal with zero walks ever
+  (query_log-proven), so a completed walk is a failed state and
+  `restart-on-error` relaunches it — completion -> failed -> relaunch.
+  Each finding drops onto the pod logs and INSERTs into
   `ocsf.Detection_Finding` with the `tenzir` lake-writer user, landing
   inside the Grafana tenzir-findings rule — a chain break pages through
   the agent_invoke bridge (homelab-agent -> the investigator) instead

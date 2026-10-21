@@ -32,8 +32,12 @@ Synthesized from the subtree's READMEs (sources at the bottom):
   `ocsf.fleet_assets`; the core node's loader consumes it) — no
   ingest, and live-event enrichment stays in-stream at the ingress
   nodes. The [introspection
-  node](../../nodes/introspection/README.md) is the fleet's diagnostics
-  poller plane. The [intel
+  node](../../nodes/introspection/README.md) is the introspection
+  plane: every node ships its own diagnostics lane pair (B1 — the
+  introspection node's pair covers its own pipelines, the central
+  poller retired), and the node's charter direction is scheduled
+  inward-detection passes over the `ocsf.*` tables (post-GA). The
+  [intel
   node](../../nodes/intel/README.md) is the CTI factory plane: its
   opencti-taxii-factory-walk / -poll pipelines pull external threat intel from
   OpenCTI's TAXII 2.1 indicator collection, normalizes it to OCSF 5021,

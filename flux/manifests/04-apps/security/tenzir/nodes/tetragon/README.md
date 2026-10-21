@@ -15,11 +15,10 @@ that enrichment), pipeline-metrics-to-mimir (the flood node's
 liveness arm — the same series shape the other metrics-shipping
 nodes (core, netflow, investigations) ship), and
 tetragon-attest-verify (the hourly record_integrity walk — the
-verification half of the attestation lane below). The former
-diagnostics pair (error-diagnostics-to-mimir, diagnostics-to-loki)
-retired with the introspection lap — the central poller on the
-introspection node ships this node's diagnostics to Loki and
-Mimir now. The split exists so the flood's CPU and memory
+verification half of the attestation lane below). The diagnostics
+pair (error-diagnostics-to-mimir, diagnostics-to-loki) ships from
+this node again — restored per-node with the B1 lap after the
+central poller's retirement. The split exists so the flood's CPU and memory
 behavior cannot starve the detection plane on the core node, and
 the loader is equally decoupled — a slow or failed MMDB fetch never
 stalls ingest (the context keeps serving the last good database).

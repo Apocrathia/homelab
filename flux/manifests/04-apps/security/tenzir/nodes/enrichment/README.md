@@ -13,8 +13,13 @@ choice (c)). Lap 2 shipped the first factory lane:
 [`fleet-assets-pull`](./pipelines/fleet-assets-pull.tql), the hourly
 Fleet host-inventory pull into `ocsf.fleet_assets` (the core node's
 [`fleet-assets-loader`](../core/pipelines/fleet-assets-loader.tql) is
-the consumer half). One pipeline, zero listeners, no lake writes —
-ClickHouse is the only sink.
+the consumer half). One factory pipeline, zero listeners, no
+lake writes — ClickHouse is the only sink — plus the
+fleet-standard diagnostics pair (`diagnostics-to-loki` /
+`error-diagnostics-to-mimir`) every node ships since the B1 lap:
+this node's own diagnostics ship from the node itself now that the
+central poller is retired (the node never had a native pair in the
+poller era).
 
 - **Pure puller, no ingest surface** — no `extraPorts`, no listener
   Service, no web server (and so no `certificate.yaml`): the chart

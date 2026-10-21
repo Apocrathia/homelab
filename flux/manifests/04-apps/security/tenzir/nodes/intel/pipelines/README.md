@@ -9,7 +9,12 @@ pulled on a dual schedule (daily 07:00 full walk + 01/13/19 added_after
 polls) into the ClickHouse `ocsf.OSINT_Inventory_Info` lookup table,
 with the core node's
 [opencti-osint-loader](../../core/pipelines/opencti-osint-loader.tql) as
-the consumer half.
+the consumer half. The folder also carries the fleet-standard
+diagnostics pair
+([diagnostics-to-loki.tql](./diagnostics-to-loki.tql) /
+[error-diagnostics-to-mimir.tql](./error-diagnostics-to-mimir.tql))
+every node ships since B1 — the lane runs on this node's own engine,
+so its diagnostics ship regardless of the fleet's image line.
 
 Each pipeline lives as one `.tql` file here (its `definition`, verbatim);
 the HelmRelease carries a `pipelines` entry with an empty `definition`
