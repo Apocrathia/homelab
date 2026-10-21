@@ -1,0 +1,105 @@
+---
+# Tenzir pipeline-metrics freshness plane: closes the detection gap from the
+# investigations arm stall (2026-10-20, 31h+ dead feed, zero alerts — the
+# dashboard only grays out). The four arm nodes (core, tetragon, netflow,
+# investigations) push tenzir_pipeline_* series to Mimir every 10s; a healthy
+# arm is never absent for 30 minutes. Each absent_over_time arm uses an EXACT
+# node matcher so (a) the node label survives into the alert instance — one
+# alert per dead node — and (b) a single dead node fires even while the other
+# three keep pushing. The fleet-regex shape the RCA sketched
+# ({node=~"core|tetragon|netflow|investigations"}) is fleet-aggregate: with any
+# node still pushing, absent_over_time returns nothing and the dead node is
+# missed (live-verified against Mimir 2026-10-21 — regex form empty, per-node
+# form returns {node="investigations"} 1).
+#
+# The healthy steady state is an EMPTY query result (all arms pushing), so
+# noDataState is OK; execErrState=Error keeps a Mimir/datasource outage from
+# paging all four nodes (same false-positive-averse convention as
+# tenzir-findings/pvc-capacity).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: tenzir-pipeline-freshness
+  namespace: prometheus-system
+spec:
+  name: Tenzir Pipeline Freshness
+  folderRef: security-alerts
+  interval: 5m
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  rules:
+    - uid: tenzir-pipeline-metrics-stale
+      title: Tenzir pipeline-metrics arm silent
+      condition: C
+      for: 0s
+      # eval error must NOT fire the alert: with execErrState=Alerting, a broken
+      # Mimir datasource would page all four nodes as "silent" while their arms
+      # are healthy (same false-positive storm rationale as pvc-capacity).
+      execErrState: Error
+      # healthy state IS "no data" (every absent_over_time arm empty), so an
+      # empty result must read OK, not alert.
+      noDataState: OK
+      data:
+        - refId: A
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: mimir
+          model:
+            datasource:
+              type: prometheus
+              uid: mimir
+            expr: |
+              absent_over_time(tenzir_pipeline_ingress_events{node="core"}[30m])
+              or absent_over_time(tenzir_pipeline_ingress_events{node="tetragon"}[30m])
+              or absent_over_time(tenzir_pipeline_ingress_events{node="netflow"}[30m])
+              or absent_over_time(tenzir_pipeline_ingress_events{node="investigations"}[30m])
+            intervalMs: 1000
+            maxDataPoints: 43200
+            refId: A
+        - refId: B
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: reduce
+            reducer: last
+            expression: A
+            refId: B
+        - refId: C
+          relativeTimeRange:
+            from: 1800
+            to: 0
+          datasourceUid: __expr__
+          model:
+            datasource:
+              type: __expr__
+              uid: __expr__
+            type: threshold
+            expression: B
+            refId: C
+            conditions:
+              - evaluator:
+                  type: gt
+                  params:
+                    - 0
+                operator:
+                  type: and
+                query:
+                  params: []
+                reducer:
+                  type: last
+                  params: []
+                type: query
+      annotations:
+        summary: "Tenzir pipeline-metrics arm silent on {{ $labels.node }}"
+        description: "No tenzir_pipeline_ingress_events from the {{ $labels.node }} arm in 30m (cadence 10s). Node down, or its metrics feed died silently — the arm pipeline reads 'running' while pushing nothing (investigations-arm-stall RCA)"
+      labels:
+        severity: warning
+        team: security
