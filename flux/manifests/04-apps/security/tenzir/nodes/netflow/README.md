@@ -4,14 +4,17 @@
 
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
-Four pipelines live in
+Five pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 netflow-ingest (the UDP
-listener + OCSF mapping + endpoint enrichment), geo-open-loader (the
-daily GeoIP context builder for that enrichment),
-pipeline-metrics-to-mimir (a dead UDP collector is a silent black
-hole, so this node keeps the core node's liveness series), and
+listener + OCSF mapping + endpoint and OSINT enrichment), geo-open-loader
+(the daily GeoIP context builder for that enrichment),
+opencti-osint-loader (the daily OSINT indicator loader — the consumer
+half of the intel node's factory, filling this node's ocsf-osint
+context for netflow-ingest's enrich call), pipeline-metrics-to-mimir
+(a dead UDP collector is a silent black hole, so this node keeps the
+core node's liveness series), and
 netflow-attest-verify (the hourly record_integrity walk — the
 verification half of the attestation lane below). The former
 diagnostics pushers (error-diagnostics-to-mimir, diagnostics-to-loki)
@@ -37,9 +40,11 @@ this pod.
 flowchart LR
     UE["UniFi exporters<br/>UXG-Pro manual NETFLOW section"] -->|"UDP :2055<br/>via tenzir-ingest-lb"| AU[accept_udp + read_netflow]
     AU -->|"flow records only<br/>(options dropped)"| NORM["netflow::ocsf::normalize<br/>(vendored library package)"]
-    NORM -->|"ocsf_derive + ocsf_cast"| ENR["endpoint enrichment<br/>(geo-open context + dns_lookup)"]
+    NORM -->|"ocsf_derive + ocsf_cast"| ENR["endpoint + OSINT enrichment<br/>(geo-open context + dns_lookup + ocsf-osint context)"]
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -->|"every 24h<br/>geo-open-loader"| ENR
-    ENR -->|"geo/ASN/hostname<br/>into OCSF endpoint fields"| BUS["node-local ocsf topic"]
+    INTEL["intel node factory<br/>ocsf.OSINT_Inventory_Info (ClickHouse)"] -->|"every 24h<br/>opencti-osint-loader"| OSINT["ocsf-osint context<br/>(indicators keyed by IP)"]
+    OSINT -->|"tenzir::osint::enrich<br/>matched indicators -> osint field<br/>+ metadata.profiles osint stamp"| ENR
+    ENR -->|"geo/ASN/hostname + osint indicators<br/>into the stored record"| BUS["node-local ocsf topic"]
     BUS --> LAKE["node lake"]
     LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
@@ -50,9 +55,14 @@ node's own archive rule, tetragon-style node-local: nothing about the
 flow stream rides the core detection node's bus. No sigma pass runs
 here — no homelab sigma rule targets netflow fields (the homelab rules
 are k8s-audit only), so the move loses no detection coverage; netflow
-events reach the archive and Grafana, not the sigma pass. The vendored
-package that does the mapping:
-[`packages/netflow/`](../../packages/netflow/README.md).
+events reach the archive and Grafana, not the sigma pass. The OSINT
+stamp changes nothing about that today: the `osint` field +
+`metadata.profiles "osint"` stamp ride the stored record so downstream
+sigma rules CAN target indicator matches on netflow flows (none exist
+yet; none added with the loader). The vendored packages doing the work:
+[`packages/netflow/`](../../packages/netflow/README.md) for the mapping,
+[`packages/tenzir/`](../../packages/tenzir/README.md) for the osint
+pair (update_context in the loader, enrich in netflow-ingest).
 
 ## Sizing
 
@@ -113,6 +123,14 @@ its `fork` wrapper retired with the MR-5 teardown — a sink-only
 pipeline keeps consume + export = archive-then-delete semantics):
 `mode="append"` fails loudly if the DDL is missing, and
 `max_batch_rows` bounds the insert buffers.
+
+The enrichment/attestation ordering is structural, not scheduled:
+netflow-ingest stamps geo/ASN/hostname AND the OSINT indicators before
+its store leg (`fork { import }`), the archive rule receives the stored
+record from the lake 15 minutes later, so the fingerprint chain covers
+the ENRICHED record — the attestation can never witness a record the
+OSINT loader later mutates, because enrichment finished before the
+lake ever saw the record.
 
 The archive rule also stamps the OCSF `record_integrity` attestation
 on every record BEFORE the INSERT ([`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql), the shared lane in

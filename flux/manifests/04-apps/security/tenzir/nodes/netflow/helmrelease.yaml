@@ -147,6 +147,15 @@ spec:
           contexts:
             geo-open:
               type: geoip
+            # The osint lookup table is the consumer half of the intel
+            # node's factory row: opencti-osint-loader applies the
+            # ocsf.OSINT_Inventory_Info ClickHouse table into it via
+            # tenzir::osint::update_context, entries expiring 30d after
+            # their last application (the operator's max_age); declared
+            # empty at boot, same pattern as geo-open. netflow-ingest's
+            # tenzir::osint::enrich call reads it per flow record.
+            ocsf-osint:
+              type: lookup-table
             # Chain state for this node's record_integrity lane (the
             # archive rule's attest leg + the netflow-attest-verify
             # pipeline): one lookup-table entry (key = the node identity
@@ -194,7 +203,13 @@ spec:
                 geo-open-loader) and a reverse-DNS hostname from
                 dns_lookup's TTL cache, mapped into OCSF fields
                 (endpoint location.country, autonomous_system,
-                hostname) rather than raw appends; private addresses
+                hostname) rather than raw appends; matched OSINT
+                indicators from the node-resident ocsf-osint context
+                (filled by opencti-osint-loader) append to the record's
+                osint field with a metadata.profiles "osint" stamp
+                (tenzir::osint::enrich, the vendored operator — same
+                enrich-before-store spot, so the archive rule's
+                attestation covers the indicators); private addresses
                 stay bare — Geo Open marks them not routed and the
                 pipeline filters those markers. Start ordering
                 matters: the collector must be up before v9/IPFIX
@@ -227,6 +242,45 @@ spec:
                 passes flows through unenriched with one warning, by
                 design). CIRCL publishes a fresh snapshot daily, so 24h
                 keeps lookups current without hammering the mirror.
+              definition: ""
+              restart-on-error: 1 minute
+            opencti-osint-loader:
+              name: opencti osint loader
+              description: |
+                Consumer half of the intel factory, the core node's
+                opencti-osint-loader row verbatim: reads the intel
+                node's ocsf.OSINT_Inventory_Info ClickHouse table into
+                this node's ocsf-osint lookup-table context (declared
+                in the contexts block) through the vendored library
+                `tenzir` package's update_context operator. The
+                factory appends the collection's current state on
+                every walk, so the loader applies updates in
+                event-time order — the indicator's STIX modified time,
+                ORDER BY server-side: per key the newest version lands
+                last, and a revoked row (status Removed; STIX
+                versioning bumps modified on revoke) erases the key
+                after older active copies re-applied it; expired
+                indicators erase regardless of order. The read rides
+                SQL-mode projection, not table mode (6.19.1 table mode
+                does not reconstruct catch-alls at all, and 6.20 table
+                mode re-types IP-shaped indicator values — the
+                vendored operators pin string keys): the projection
+                re-types the osint array back to record shape with
+                values coerced to strings, and rows without a joinable
+                indicator value (compound/yara patterns) drop before
+                the update. The round trip rebuilds the event fields
+                but not the schema name, so the pipeline stamps @name
+                back — update_context gates on it. max_age=30d is the upstream default: entries
+                unseen by a walk for 30d age out. every 24h fires at
+                pipeline start (fresh node: context filled seconds
+                after boot, same shape as geo-open-loader), then daily
+                — the factory's own walk is daily, so the context
+                converges to the table state daily. netflow-ingest's
+                tenzir::osint::enrich call reads this context per flow
+                record: src/dst IP matches append indicator objects to
+                the osint field and stamp metadata.profiles "osint", so
+                the archive rule's attestation covers the enriched
+                record.
               definition: ""
               restart-on-error: 1 minute
             # A dead UDP collector is a silent black hole: the Node
@@ -392,6 +446,19 @@ spec:
             key: clickhouse-password
 
     extraVolumes:
+      # The homelab package manifest: the package loader registers the
+      # `homelab` module from package.yaml alone — operator files
+      # mounted under a package dir do NOT register the package
+      # without it. This missing mount was the generation-3
+      # boot-breaker: the pending config mounted the record_integrity
+      # operator files but not this manifest, so boot failed lowering
+      # homelab::record_integrity::attest (module `homelab` not found)
+      # before :5158 bound and every upgrade wedged; tetragon mounts
+      # this manifest and upgraded clean — that was the whole
+      # netflow-specific delta.
+      - name: packages-homelab
+        configMap:
+          name: tenzir-packages-homelab
       - name: packages-netflow
         configMap:
           name: tenzir-packages-netflow
@@ -417,6 +484,20 @@ spec:
       - name: packages-homelab-record-integrity-verify
         configMap:
           name: tenzir-packages-homelab-record-integrity-verify
+      # Vendored library `tenzir` utilities package: the OSINT pair this
+      # node rides — update_context (the opencti-osint-loader
+      # pipeline) and enrich (netflow-ingest's indicator stamp). One
+      # ConfigMap per mounted file, generated at the root kustomization,
+      # same wiring as the core node.
+      - name: packages-tenzir
+        configMap:
+          name: tenzir-packages-tenzir
+      - name: packages-tenzir-osint-update-context
+        configMap:
+          name: tenzir-packages-tenzir-osint-update-context
+      - name: packages-tenzir-osint-enrich
+        configMap:
+          name: tenzir-packages-tenzir-osint-enrich
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
       # readOnlyRootFilesystem makes unwritable — the 2026-10-17
@@ -433,6 +514,10 @@ spec:
       # changes need a pod roll. Generator entries stay at the root
       # kustomization: the source files never move, only the mount side
       # moved here from the core node.
+      - name: packages-homelab
+        mountPath: /etc/tenzir/packages/homelab/package.yaml
+        subPath: package.yaml
+        readOnly: true
       - name: packages-netflow
         mountPath: /etc/tenzir/packages/netflow/package.yaml
         subPath: package.yaml
@@ -460,6 +545,18 @@ spec:
       - name: packages-homelab-record-integrity-verify
         mountPath: /etc/tenzir/packages/homelab/operators/record_integrity/verify.tql
         subPath: verify.tql
+        readOnly: true
+      - name: packages-tenzir
+        mountPath: /etc/tenzir/packages/tenzir/package.yaml
+        subPath: package.yaml
+        readOnly: true
+      - name: packages-tenzir-osint-update-context
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/update_context.tql
+        subPath: update_context.tql
+        readOnly: true
+      - name: packages-tenzir-osint-enrich
+        mountPath: /etc/tenzir/packages/tenzir/operators/osint/enrich.tql
+        subPath: enrich.tql
         readOnly: true
       # The file logger's home (tenzir-logs volume above).
       - name: tenzir-logs

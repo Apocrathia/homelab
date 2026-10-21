@@ -1,23 +1,43 @@
 // Consumer half of the intel factory: read the intel node's
 // ocsf.OSINT_Inventory_Info lookup table into this node's ocsf-osint
 // context. The factory appends the collection's current state on every
-// walk, so the loader sorts by event time (the indicator's STIX modified
-// time) before applying updates: per key, the newest version lands last,
-// and a revoked row (status Removed; STIX versioning bumps modified on
-// revoke) erases the key after every older active copy re-applied it.
-// Expired indicators (osint.expiration_time in the past) erase the key
-// regardless of order.
+// walk, so the loader applies updates in event-time order (the
+// indicator's STIX modified time, ORDER BY server-side): per key, the
+// newest version lands last, and a revoked row (status Removed; STIX
+// versioning bumps modified on revoke) erases the key after every older
+// active copy re-applied it. Expired indicators (osint.expiration_time
+// in the past) erase the key regardless of order.
+//
+// SHAPE CONTRACT (see the intel node README and the DDL comment in
+// ../../../clickhouse/config/10-startup-scripts.xml): the vendored
+// stix::ocsf::map emits `osint` as a one-element ARRAY, so the table's
+// original dotted typed columns could never bind it — all osint.* typed
+// columns sat NULL on every row while the whole array rode the
+// tenzir:catch_all `event` JSON. The DDL now stores exactly that shape,
+// and this loader reads via SQL-mode projection instead of table mode:
+// 6.19.1 table mode does not reconstruct catch-alls at all, and 6.20
+// table mode reconstructs but re-types IP-shaped indicator values,
+// breaking the string keys the vendored update_context/enrich pair pins.
 
 every 24h {
-  from_clickhouse table="ocsf.OSINT_Inventory_Info",
+  from_clickhouse sql="SELECT `time`, `status_id`, JSONExtractArrayRaw(toString(event), 'osint') AS osint, nullIf(JSONExtractString(toString(event), 'status'), '') AS status FROM ocsf.OSINT_Inventory_Info ORDER BY `time` ASC",
     host="clickhouse-tenzir.clickhouse.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  sort time
-  // The catch-all round trip rebuilds the event fields but not the
-  // schema name; update_context gates on it, so stamp it back.
+  // The projection hands back the array elements as JSON text; re-type
+  // them to the map's original record shape. parse_json's inference
+  // reproduces the map's time-typed fields; its one over-inference — IP-
+  // and subnet-shaped indicator values — is coerced back to the string
+  // keys the vendored operators pin.
+  osint = osint.map(x => parse_json(x)).map(x => merge(x, {value: string(x.value?)}))
+  // Compound or non-comparison patterns yield no indicator value: such
+  // entries can never join events, so drop them instead of storing
+  // null-key context entries.
+  where osint?[0]?.value? != null
+  // The round trip rebuilds the event fields but not the schema name;
+  // update_context gates on it, so stamp it back.
   @name = "ocsf.osint_inventory_info"
   tenzir::osint::update_context max_age=30d
 }

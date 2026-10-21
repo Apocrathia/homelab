@@ -23,6 +23,7 @@ configMapGenerator:
     files:
       - netflow-ingest.tql=pipelines/netflow-ingest.tql
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
+      - opencti-osint-loader.tql=pipelines/opencti-osint-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
       - netflow-attest-verify.tql=pipelines/netflow-attest-verify.tql
@@ -48,6 +49,16 @@ replacements:
           name: tenzir-node-netflow
         fieldPaths:
           - spec.values.tenzir.config.tenzir.pipelines.geo-open-loader.definition
+  - source:
+      kind: ConfigMap
+      name: tenzir-netflow-pipelines
+      fieldPath: data.[opencti-osint-loader.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-netflow
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.opencti-osint-loader.definition
   - source:
       kind: ConfigMap
       name: tenzir-netflow-pipelines
