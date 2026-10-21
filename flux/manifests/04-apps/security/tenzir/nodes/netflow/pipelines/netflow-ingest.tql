@@ -6,6 +6,13 @@ ocsf_derive
 ocsf_cast
 context_enrich "geo-open", key=src_endpoint?.ip, into=src_endpoint.geo
 context_enrich "geo-open", key=dst_endpoint?.ip, into=dst_endpoint.geo
+// OSINT indicator stamp from the ocsf-osint context (filled by
+// opencti-osint-loader): matched indicators append to the osint field
+// with a metadata.profiles "osint" stamp. Ordering is load-bearing:
+// this call rides before the store/publish legs below, so the lake —
+// and the archive rule's record_integrity attest upstream of the
+// ClickHouse INSERT — covers the ENRICHED record.
+tenzir::osint::enrich
 dns_lookup src_endpoint?.ip, result=src_endpoint.rdns
 dns_lookup dst_endpoint?.ip, result=dst_endpoint.rdns
 src_endpoint.location = {
