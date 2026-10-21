@@ -20,6 +20,12 @@ spec:
         - tenzir-node-investigations.tenzir.svc.cluster.local
   type: Declarative
   declarative:
+    # Python runtime (homelab-agent's shape): the investigator's only tool
+    # path is code execution (the sandboxed HTTP calls against the node API);
+    # without this field the controller defaults to the Go runtime, which
+    # IGNORES executeCodeBlocks (the UnsupportedFeatures condition observed
+    # live) and ships the golang-adk image instead of the python one.
+    runtime: python
     modelConfig: investigator-agent-model
     # Python code blocks in responses execute in the srt sandbox (read
     # filesystem unrestricted, writes limited to the session dir, egress per
