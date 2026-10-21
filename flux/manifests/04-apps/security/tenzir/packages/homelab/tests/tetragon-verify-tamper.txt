@@ -1,0 +1,85 @@
+{
+  "records_checked": 3
+}
+{
+  "activity_id": 1,
+  "activity_name": "Create",
+  "category_name": "Findings",
+  "category_uid": 2,
+  "class_name": "Detection Finding",
+  "class_uid": 2004,
+  "finding_info": {
+    "created_time": "2026-10-10T05:05:32.835907496Z",
+    "desc": "fingerprint_mismatch on record tet-attest-exit of chain tenzir-node-tetragon",
+    "title": "Detection record chain break",
+    "uid": "detection-attest-tenzir-node-tetragon"
+  },
+  "metadata": {
+    "correlation_uid": "tenzir-node-tetragon",
+    "product": {
+      "name": "homelab-detection",
+      "vendor_name": "apocrathia",
+      "version": "0.1.0"
+    },
+    "uid": "attest-break-tenzir-node-tetragon-tet-attest-exit",
+    "version": "1.9.0"
+  },
+  "severity": "High",
+  "severity_id": 4,
+  "status": "New",
+  "status_id": 1,
+  "time": "2026-10-10T06:10:00Z",
+  "type_name": "Detection Finding: Create",
+  "type_uid": 200401,
+  "unmapped": {
+    "break": "fingerprint_mismatch",
+    "chain_uid": "tenzir-node-tetragon",
+    "record_uid": "tet-attest-exit",
+    "record_time": "2026-10-10T05:05:32.835907496Z",
+    "stored_fingerprint": "c6220672a4fa9ced23bc5cd17bc23a746cac98497211d6faebb8f230144a74d2",
+    "computed_fingerprint": "61773077ef37166f8b1a8aab08f111503a61707d5047dc0aa749065e886a6815",
+    "prev_event_fingerprint": "e384a4ff711653336e8cb12f2ed2b1e6cc619ac4634397a725b49cc0c381d222",
+    "predecessor_fingerprint": null
+  }
+}
+{
+  "activity_id": 1,
+  "activity_name": "Create",
+  "category_name": "Findings",
+  "category_uid": 2,
+  "class_name": "Detection Finding",
+  "class_uid": 2004,
+  "finding_info": {
+    "created_time": "2026-10-10T05:05:37.401589830Z",
+    "desc": "chain_link_mismatch on record tet-attest-file of chain tenzir-node-tetragon",
+    "title": "Detection record chain break",
+    "uid": "detection-attest-tenzir-node-tetragon"
+  },
+  "metadata": {
+    "correlation_uid": "tenzir-node-tetragon",
+    "product": {
+      "name": "homelab-detection",
+      "vendor_name": "apocrathia",
+      "version": "0.1.0"
+    },
+    "uid": "attest-break-tenzir-node-tetragon-tet-attest-file",
+    "version": "1.9.0"
+  },
+  "severity": "High",
+  "severity_id": 4,
+  "status": "New",
+  "status_id": 1,
+  "time": "2026-10-10T06:10:00Z",
+  "type_name": "Detection Finding: Create",
+  "type_uid": 200401,
+  "unmapped": {
+    "break": "chain_link_mismatch",
+    "chain_uid": "tenzir-node-tetragon",
+    "record_uid": "tet-attest-file",
+    "record_time": "2026-10-10T05:05:37.401589830Z",
+    "stored_fingerprint": "18562cb418641eee9fd51dfeb9487bcf700fee87f0f16654ea5a03f1cb861b35",
+    "computed_fingerprint": "18562cb418641eee9fd51dfeb9487bcf700fee87f0f16654ea5a03f1cb861b35",
+    "prev_event_fingerprint": "48d24a175c562f7c6534e5f9fc5966f7cbe0ec5c6c7217c583b88dfa63230ceb",
+    "predecessor_fingerprint": "c6220672a4fa9ced23bc5cd17bc23a746cac98497211d6faebb8f230144a74d2"
+  }
+}

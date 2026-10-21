@@ -145,6 +145,28 @@ spec:
           contexts:
             geo-open:
               type: geoip
+            # Chain state for this node's record_integrity lane (the
+            # archive rule's attest leg + the tetragon-attest-verify
+            # pipeline): one lookup-table entry (key = the node
+            # identity constant tenzir-node-tetragon) holding the
+            # per-node chain's cross-pass tail — the previous archive
+            # pass's last record uid, type_uid, and fingerprint, which
+            # the next pass's first record links to as prev_event (the
+            # batch seam; the intra-batch links ride the attest
+            # operator's internal lag — probed: context reads run
+            # engine-batches ahead of the writes at batch rate, so the
+            # context is the seam channel only, never the intra-batch
+            # channel). Same shape as the core node's detection-chains
+            # and the investigations node's investigations-chains. The
+            # table is memory: a NODE restart loses it, and the next
+            # pass's first record restarts the chain with prev_event
+            # absent plus one WARNING diagnostic from attest (the epoch
+            # marker; best-effort per node lifetime — the verify lane's
+            # per-record fingerprint recompute still catches post-hoc
+            # mutation across restarts, only the linkage gap around a
+            # restart is lost, documented in the datalake README).
+            tetragon-chains:
+              type: lookup-table
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
@@ -242,6 +264,39 @@ spec:
                 same-timestamp handling eating roughly half of them).
               definition: ""
               restart-on-error: 1 minute
+            tetragon-attest-verify:
+              name: tetragon attestation verify
+              description: |
+                Verification half of this node's record_integrity lane:
+                reads the last 24h of every tetragon ocsf class back
+                (Process Activity, File System Activity, Network
+                Activity via table-mode from_clickhouse — the vendor
+                catch-all reconstruction — merged into one stream,
+                because the per-node chain crosses classes),
+                recomputes each attestation's fingerprint over the
+                canonical serialization, and walks the per-node
+                prev_event chain (chain_uid = tenzir-node-tetragon); a
+                Detection Finding (2004) drops for every break —
+                content tamper (fingerprint_mismatch), deletion
+                (chain_link_mismatch), or splice — while the windowed
+                walk tolerates its own edge (the first record's
+                predecessor lives outside the 24h read). The walk is
+                SCHEDULED hourly (the every wrapper, the loader-pipeline
+                shape): the first walk fires at pipeline start, then
+                every 1h re-walks the rolling 24h window. Each break's
+                finding rides two legs: stdout (pod-log visibility)
+                and, via ocsf_derive + ocsf_cast, an INSERT into
+                ocsf.Detection_Finding with the tenzir user — landing
+                inside the Grafana tenzir-findings rule's WHERE clauses
+                (class 2004, severity 4), so tamper evidence pages
+                through the agent_invoke bridge instead of waiting for
+                a human to read pod logs. The package tests prove the
+                walk and the finding shape (homelab package:
+                tetragon-attest / tetragon-verify-clean /
+                tetragon-verify-tamper baselines, and the 250k
+                throughput harness pins the flood-scale stamping cost).
+              definition: ""
+              restart-on-error: 1 minute
         plugins:
           compaction:
             # Budget backstop, same weighted-age path as the core node:
@@ -288,8 +343,19 @@ spec:
                 # archive-then-delete semantics are unchanged.
                 # mode="append" fails loudly when the MR-1 DDL is
                 # missing (the second net for the Keeper first-boot
-                # race), and max_batch_rows bounds the insert buffers on
-                # the flood classes.
+                # race), and max_batch_rows bounds the insert buffers
+                # on the flood classes. The rule's pipeline
+                # (pipelines/ocsf-archive.tql) stamps the
+                # record_integrity attestation on every archived record
+                # BEFORE the INSERT: a per-node SHA-256 fingerprint
+                # chain (chain_uid = tenzir-node-tetragon) covering the
+                # record exactly as stored — the detection plane's
+                # attestation lane (docs/issues/
+                # tenzir-record-integrity-attestations.md), measured at
+                # ~12k records/s end to end on the 250k peak-drain
+                # batch (the tetragon-throughput package test; the
+                # honest cost math is in the clickhouse README's
+                # attestation section).
                 - after: 15 minutes
                   name: ocsf-archive
                   field: time
@@ -351,6 +417,16 @@ spec:
       - name: packages-homelab-tetragon-kprobe
         configMap:
           name: tenzir-packages-homelab-tetragon-kprobe
+      # The shared record_integrity operators (generated at the root
+      # kustomization, the same ConfigMaps the core node mounts): the
+      # archive rule's attest leg and the tetragon-attest-verify
+      # pipeline call them directly.
+      - name: packages-homelab-record-integrity-attest
+        configMap:
+          name: tenzir-packages-homelab-record-integrity-attest
+      - name: packages-homelab-record-integrity-verify
+        configMap:
+          name: tenzir-packages-homelab-record-integrity-verify
       # Writable target for the node's own file logger (file-verbosity
       # above): server.log opens at /var/log/tenzir on every boot, which
       # readOnlyRootFilesystem made unwritable — the 2026-10-17
@@ -387,6 +463,14 @@ spec:
       - name: packages-homelab-tetragon-kprobe
         mountPath: /etc/tenzir/packages/homelab/operators/tetragon/ocsf/events/process_kprobe.tql
         subPath: process_kprobe.tql
+        readOnly: true
+      - name: packages-homelab-record-integrity-attest
+        mountPath: /etc/tenzir/packages/homelab/operators/record_integrity/attest.tql
+        subPath: attest.tql
+        readOnly: true
+      - name: packages-homelab-record-integrity-verify
+        mountPath: /etc/tenzir/packages/homelab/operators/record_integrity/verify.tql
+        subPath: verify.tql
         readOnly: true
       # The file logger's home (tenzir-logs volume above).
       - name: tenzir-logs

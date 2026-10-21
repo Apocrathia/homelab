@@ -106,11 +106,12 @@ the scope is the caller's. The investigations plane chains **per case**
 attestation per record — `prev_event` inside its hash — and the caller
 (the ingest pipeline's context legs) supplies every record's tail,
 viable because the HTTP ingest paces one envelope at a time. The
-detection plane chains **per node** (`chain_uid` =
-`tenzir-node-core`, the chart-rendered identity — one chain across
-every class this node archives, in time order) and stamps at archive
-rate, which forced a different shape: the core node's archive rule
-receives whole batches every 5 minutes, and a live probe showed the
+detection plane chains **per node** (`chain_uid` = the chart-rendered
+identity — `tenzir-node-core`, `tenzir-node-tetragon`,
+`tenzir-node-netflow`; one chain across every class the node
+archives, in time order) and stamps at archive
+rate, which forced a different shape: the archive rules
+receive whole batches every 5 minutes, and a live probe showed the
 context-read chain mis-linking every record of a fast batch (the reads
 run engine-batches ahead of the writes). The detection shape is the
 OCSF two-attestation form: `attestation_list[0]` is the record
@@ -134,17 +135,23 @@ fingerprint field removed (and, on the detection shape, the link
 attestation stripped); (2) `prev_event.fingerprint.value` equals the
 previous row's record fingerprint in time order per chain_uid. The
 investigations node's `investigations-attest-verify` pipeline and the
-core node's `detection-attest-verify` pipeline both do this on every
+three detection nodes' `*-attest-verify` pipelines (core, tetragon,
+netflow) all do this on every
 stored row in scope and emit a Detection Finding (2004) on any break
-(content tamper, deletion, splice; the detection walk is a rolling
-24h window and tolerates its own edge — the first record's predecessor
-lives outside the read, and its link checks are skipped, its
-fingerprint recompute is not).
+(content tamper, deletion, splice; the detection walks are rolling
+24h windows and tolerate their own edge — the first record's
+predecessor lives outside the read, and its link checks are skipped,
+its fingerprint recompute is not). `ocsf.Network_Activity` is the one
+table two nodes' archive rules write (tetragon's Network Activity arm
+and the whole netflow collector), so both nodes' walks read it and
+witness both per-node chains — the chain_uid groups inside the walk
+keep the findings scoped, double coverage at bounded cost.
 
-**The scheduled walk + the rails closure.** Both verify lanes are
+**The scheduled walk + the rails closure.** All four verify lanes are
 `every 1h`-wrapped (the loader-pipeline shape: first walk at pipeline
-start, then hourly; the detection walk keeps its rolling 24h window,
-the investigations walk keeps the unwindowed whole-store read), and
+start, then hourly; the detection walks keep their rolling 24h
+windows, the investigations walk keeps the unwindowed whole-store
+read), and
 each break's finding rides two legs out: the raw record on the pod
 logs (unchanged) and an `ocsf_derive` + `ocsf_cast`-dressed INSERT
 into `ocsf.Detection_Finding` with the `tenzir` lake-writer user. The
@@ -159,20 +166,33 @@ that rule's SQL). While a break persists, each hourly walk re-emits
 its finding (append-only evidence — no update or delete path exists
 on either store) and the rule re-pages until the tamper is
 remediated. The written findings carry no attestation: the chains
-cover archive-rule writes (core) and `investigations.records`
-(investigations), and these rows bypass both stamping points — later
-walks read them back and skip them as unattested rows, the same
-pre-epoch path, so the lane never self-feeds.
+cover archive-rule writes (the three detection nodes) and
+`investigations.records` (investigations), and these rows bypass
+every stamping point — the investigations and core walks read them
+back and skip them as unattested rows, the same pre-epoch path, and
+the tetragon/netflow walks never read `ocsf.Detection_Finding` at all
+(their scope is their own archive classes), so no lane ever
+self-feeds.
 
 **The node-restart gap.** Chain linkage is stamped from per-node
-in-memory state (the `investigations-chains` / `detection-chains`
-contexts), so it is best-effort per node lifetime: a node restart
-loses the context, and the next record restarts its chain with
-`prev_event` absent (plus a write-time WARNING — on the detection
-plane one per node boot, the chain's epoch marker). The verify walk
-treats a mid-chain record without a link as that documented restart,
-not a break — post-hoc mutation is still caught across restarts by
-the per-record fingerprint check, but the linkage gap around a
+in-memory state (the `investigations-chains` / `detection-chains` /
+`tetragon-chains` / `netflow-chains` contexts), so it is best-effort
+per node lifetime: a node restart loses the context, and the next
+record restarts its chain with `prev_event` absent (plus a write-time
+WARNING — on the detection plane one per node boot, the chain's epoch
+marker). The verify walk treats a mid-chain record without a link as
+that documented restart, not a break — and detecting that shape
+structurally (the attest stamping contract: two attestations on
+linked records, one on restarts) is load-bearing: on a homogeneous
+batch — one class table, the shape every node's verify lane reads —
+schema unification lets the siblings' element schema type the
+out-of-bounds link access, and the string-typed fingerprint path
+reads as the empty string instead of null, which flagged a false
+`chain_link_mismatch` on every post-restart record until the length
+guard landed (probed on the netflow node's fixture, v6.19.1; the
+`netflow-verify-tamper` baseline now pins the restart silence).
+Post-hoc mutation is still caught across restarts by the per-record
+fingerprint check, but the linkage gap around a
 restart cannot be reconstructed. Two honest limits remain: a chain
 tail deletion (no successor references the newest record) is
 invisible to any unanchored hash chain, and rows predating the epoch
@@ -181,22 +201,33 @@ record arriving more than one retention window late (ingestion lag
 beyond 15 minutes) zigzags the chain at its seam, and the walk flags
 the successor — a triage signal, not a break in the stored content.
 
-**The stamping cost, measured.** The detection plane's volume is the
-core node's: k8s-audit alone has 22M+ archived API Activity rows.
-Stamping runs on every one of them (per archive pass), so the cost is
-measured, not assumed: the homelab package's 100k-record harness
-(`detection-throughput`) times the archive leg end to end — ~3s for
-100k realistic API Activity records on an M-series laptop ≈ 33k
+**The stamping cost, measured.** The detection plane's volume splits
+across its nodes: k8s-audit alone has 22M+ archived API Activity rows
+(core), and the tetragon flood is the fleet's biggest-volume class
+(the 50,747-partition ENOSPC). Stamping runs on every one of them
+(per archive pass), so the cost is measured per shape, not assumed:
+the homelab package's 100k-record harnesses time each archive leg end
+to end. Core (`detection-throughput`, API Activity): ~3s for 100k
+realistic records on an M-series laptop ≈ 33k
 records/s standalone, ~28k records/s against a live node with the
 context and fork legs, ~19µs/record marginal over the sort-only
-baseline. At the current audit rate the 5-minute pass has orders of
-magnitude of headroom; the throughput test's floor assert (100s for
-100k) fails loudly if the leg regresses past it. The class-scoped
+baseline. Tetragon (`tetragon-throughput`, Process Activity — the
+fatter records): ~7s for 100k ≈ 14k records/s, ~11µs/record marginal,
+the sort dominating at flood scale; the one-off tetragon-scale probes
+pushed it to the pass arithmetic: 250k (the peak-drain 5-minute pass
+at 800 ev/s) in ~20s, and a full 15-minute window at the extreme
+(750k) in ~5.5-6 min — longer than the 5-minute pass interval, so a
+sustained extreme drain stacks archive passes until the drain relents
+(the honest pass-stacking trade; at the measured steady rate of ~74
+ev/s the pass stamps in ~2s). At the current rates every node has
+orders of magnitude of headroom; each throughput test's floor assert
+fails loudly if its leg regresses past it. The class-scoped
 alternative (stamping only the low-volume classes and leaving
-API Activity unattested) stays out: the issue asks for the whole bus,
+API Activity or the flood classes unattested) stays out: the issue
+asks for the whole bus,
 and the numbers say the whole bus is affordable; if the operator later
-disagrees, the attest call in `ocsf-archive.tql` is one `where` away
-from any scope-down.
+disagrees, the attest call in each `ocsf-archive.tql` is one `where`
+away from any scope-down.
 
 ### Write path
 

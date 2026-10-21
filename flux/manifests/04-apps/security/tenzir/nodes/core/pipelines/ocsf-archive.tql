@@ -36,7 +36,7 @@
 //   intra-batch reads them), and the NEXT pass's first record reads
 //   the pre-pass state as its prev_event — linking the passes into one
 //   per-node chain in time order.
-metadata.uid = uuid() if metadata.uid? == null
+metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
 sort time, metadata.uid
 context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
 homelab::record_integrity::attest authority_uid="tenzir-node-core",

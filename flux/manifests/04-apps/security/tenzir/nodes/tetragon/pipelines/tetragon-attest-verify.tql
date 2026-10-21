@@ -1,0 +1,87 @@
+// Verification half of the tetragon node's record_integrity lane:
+// read the last 24h of every tetragon ocsf class back (the three
+// per-class tables via table-mode from_clickhouse — the vendor
+// catch-all reconstruction — merged into one stream, because the
+// per-node chain crosses classes), recompute each record's
+// attestation fingerprint over the canonical serialization, and walk
+// the per-node prev_event chain (chain_uid = tenzir-node-tetragon); a
+// Detection Finding (2004) drops for every break — content tamper
+// (fingerprint_mismatch), deletion (chain_link_mismatch), or splice —
+// while the windowed walk tolerates its own edge (the first record's
+// predecessor lives outside the 24h read, its link checks are
+// skipped, its fingerprint recompute is not).
+//
+// SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
+// (the core node's detection-attest-verify): the first walk fires at
+// pipeline start and every 1h re-walks the rolling 24h window; every
+// waits for a running walk before starting the next (no concurrent
+// walks against the store); restart-on-error still relaunches the
+// pipeline on a hard failure.
+//
+// TWO legs out per break, the core lane's shape: stdout (pod-log
+// visibility) and an ocsf_derive + ocsf_cast-dressed INSERT into
+// ocsf.Detection_Finding with the tenzir user — the same table the
+// Grafana tenzir-findings rule reads, so class 2004 + severity 4 land
+// inside the rule's WHERE clauses and tamper evidence pages through
+// the agent_invoke bridge. The written findings carry no attestation
+// and no walked table ever reads ocsf.Detection_Finding back — this
+// walk covers only the three archive-rule classes — so the lane never
+// self-feeds. While a break persists, each hourly walk re-emits its
+// finding (append-only evidence) and the rule re-pages until the
+// tamper is remediated.
+//
+// The read-back is windowed (24h) because the walk sorts the merged
+// stream in memory, and this node's flood classes are the fleet's
+// biggest volume: the measured steady rate (~74 ev/s) puts a 24h walk
+// at a few million rows — inside the 12Gi limit; a sustained extreme
+// drain (800 ev/s for a full day) would overflow it. The window is
+// the operator's dial if that day comes. The stored records come back
+// through the catch-all reconstruction: ClickHouse re-sorted the JSON
+// keys, and the operators' sort()-canonicalized serialization is what
+// makes the recompute match what the archive leg stamped.
+every 1h {
+  from_clickhouse table="ocsf.Process_Activity",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false
+  where time > now() - 24h
+  merge {
+    from_clickhouse table="ocsf.File_System_Activity",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  merge {
+    from_clickhouse table="ocsf.Network_Activity",
+      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      port=9000,
+      user="tenzir",
+      password=secret("clickhouse-password"),
+      tls=false
+    where time > now() - 24h
+  }
+  homelab::record_integrity::verify product="homelab-detection",
+    title="Detection record chain break",
+    uid_prefix="detection",
+    scope_word="chain",
+    windowed=true,
+    link="stream"
+  fork {
+    to_stdout { write_json }
+  }
+  ocsf_derive
+  ocsf_cast
+  to_clickhouse table="ocsf.Detection_Finding",
+    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    port=9000,
+    user="tenzir",
+    password=secret("clickhouse-password"),
+    tls=false,
+    mode="append",
+    max_batch_rows=65536
+}

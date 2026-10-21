@@ -4,14 +4,16 @@
 
 One process (HelmRelease `tenzir-node-netflow`, rendering pod
 `tenzir-node-netflow`) that owns the NetFlow collector and nothing else.
-Three pipelines live in
+Four pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 netflow-ingest (the UDP
 listener + OCSF mapping + endpoint enrichment), geo-open-loader (the
-daily GeoIP context builder for that enrichment), and
+daily GeoIP context builder for that enrichment),
 pipeline-metrics-to-mimir (a dead UDP collector is a silent black
-hole, so this node keeps the core node's liveness series). The former
+hole, so this node keeps the core node's liveness series), and
+netflow-attest-verify (the hourly record_integrity walk — the
+verification half of the attestation lane below). The former
 diagnostics pushers (error-diagnostics-to-mimir, diagnostics-to-loki)
 retired with the introspection lap: the central poller on the
 introspection node ships this node's diagnostics to Loki and Mimir
@@ -111,6 +113,32 @@ its `fork` wrapper retired with the MR-5 teardown — a sink-only
 pipeline keeps consume + export = archive-then-delete semantics):
 `mode="append"` fails loudly if the DDL is missing, and
 `max_batch_rows` bounds the insert buffers.
+
+The archive rule also stamps the OCSF `record_integrity` attestation
+on every record BEFORE the INSERT ([`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql), the shared lane in
+[`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)):
+a per-node SHA-256 fingerprint chain (`chain_uid` =
+`tenzir-node-netflow`), one chain across the one archived class in
+(time, uid) order, covering the record exactly as stored — and the
+(time, uid) tie-break is load-bearing here: v5 exporters stamp whole
+datagrams of flows with one timestamp, so same-time ties are the
+NORM on this lane. `netflow-attest-verify` walks it hourly: the last
+24h of `ocsf.Network_Activity` read back, fingerprints recomputed,
+chain links checked; a Detection Finding (2004, severity 4) drops per
+break onto the pod logs AND into `ocsf.Detection_Finding`, inside the
+Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
+through the agent_invoke bridge like every other high-severity finding
+(docs/issues/tenzir-record-integrity-attestations.md). The shared
+table note: the tetragon node's archive rule writes its Network
+Activity rows into the same `ocsf.Network_Activity` table — its
+cross-class chain is walked by the tetragon lane; this lane reads and
+walks only THIS node's chain (the `chain_uid` filter in the verify
+pipeline) so a healthy cross-class tetragon record never trips the
+table-local predecessor walk. At today's
+probe-only flow volume the stamping cost is noise (the detection-plane
+numbers in the clickhouse README's attestation section); the netflow
+baselines in the homelab package tests pin the chain, the tie-break,
+and both break types.
 
 Horizon math:
 

@@ -120,11 +120,37 @@ Desired state:
       treatment first (MR !5333); this lap generalized that implementation —
       the investigations wrappers are now thin scope bindings over the
       shared record_integrity operators, baselines byte-identical.
-- [ ] The tetragon and netflow nodes' `ocsf-archive` rules stamp their own
+- [x] The tetragon and netflow nodes' `ocsf-archive` rules stamp their own
       per-node chains the same way (their archive rules share the core
       node's to_clickhouse shape; each needs its own detection-chains
       context declaration + operator mounts + the per-node identity in the
-      attest call).
+      attest call). Landed 2026-10-20 (feat/tenzir-netflow-tetragon-attest):
+      both rules now mint `metadata.uid`, sort the pass in (time, uid)
+      order, and call the shared `homelab::record_integrity::attest` in
+      stream mode with their chart-rendered identities — chain_uid =
+      `tenzir-node-tetragon` (the 1007→1001→4001 cross-class chain, the
+      fleet's biggest-volume classes) and `tenzir-node-netflow` (the
+      single-class 4001 chain, where v5 datagrams make same-timestamp
+      ties the norm and the uid tie-break load-bearing). Per-node
+      `tetragon-chains`/`netflow-chains` lookup-table contexts stitch the
+      batch seams, the HelmReleases mount the shared operators, and each
+      node runs its own hourly `*-attest-verify` walk (rolling 24h window
+      over its class tables, findings to stdout + `ocsf.Detection_Finding`
+      on the same alert rails; `ocsf.Network_Activity` is shared by both
+      archive rules; each lane walks only its own chain — the netflow
+      lane's read is chain_uid-scoped, because the tetragon chain is
+      cross-class and its 4001 rows in the shared table would
+      false-flag the table-local predecessor walk). Tetragon-scale
+      stamping measured honestly: 100k Process Activity ≈ 7s (~14k
+      records/s end to end, `tetragon-throughput`), the 250k peak-drain
+      pass ≈ 20s, the 750k full-window extreme ≈ 5.5-6 min — no
+      scope-down, the numbers and the pass-stacking trade live in the
+      clickhouse README. The netflow tamper baseline also exposed and
+      pinned a real verify-operator hole: schema unification on
+      homogeneous batches typed the stripped-link path as "" instead of
+      null, false-flagging every post-restart record as
+      `chain_link_mismatch` — fixed with a structural length guard
+      (existing baselines byte-identical).
 
 ## Feedback loop
 
@@ -154,3 +180,9 @@ the stored `attestation_list`.
   `packages/homelab/operators/investigations/ocsf/map.tql` and shares the
   canonical-form work; this issue covers the detection-plane bus as the
   separate task the operator asked for (2026-10-17).
+- The uid-mint lines in all three archive rules carried TQL's
+  implicit-null-else trap (`x = v if c` nulls on condition-false; a
+  pre-existing `metadata.uid` would be nulled). Latent only — no feed
+  stamps uids today — fixed to the explicit-else form
+  (`metadata.uid = metadata.uid? if metadata.uid? != null else uuid()`)
+  in the same lap.
