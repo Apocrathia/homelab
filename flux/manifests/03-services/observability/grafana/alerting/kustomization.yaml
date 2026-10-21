@@ -12,4 +12,5 @@ resources:
   - pushover.yaml
   - latest-image-tags.yaml
   - tenzir-findings.yaml
+  - tenzir-pipeline-freshness.yaml
   - pvc-capacity.yaml
