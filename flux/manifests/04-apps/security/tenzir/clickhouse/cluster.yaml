@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml
 # ClickHouse OCSF query store. Altinity operator shape (operator decision
 # 2026-10-17, supersedes the generic-app shape in the old plan draft):
-# 1 shard x 2 replicas of clickhouse-server behind a Keeper ensemble
+# 1 shard x 3 replicas of clickhouse-server behind a Keeper ensemble
 # (keeper.yaml) - ReplicatedMergeTree tables, replication for pod/PVC-loss
 # resilience, rolling updates orchestrated by the operator.
 #
@@ -117,7 +117,7 @@ spec:
       - name: ocsf
         layout:
           shardsCount: 1
-          replicasCount: 2
+          replicasCount: 3
 
   defaults:
     templates:
@@ -128,9 +128,9 @@ spec:
     podTemplates:
       - name: clickhouse-pod
         spec:
-          # Replication covers data safety, but two replicas on one host
-          # turn a single node crash into a 2-of-2 replica loss; require
-          # spread across hosts (2 replicas, 4 nodes).
+          # Replication covers data safety, but co-located replicas turn
+          # a single node crash into a multi-replica loss; require spread
+          # across hosts (3 replicas, 4 nodes).
           affinity:
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -222,6 +222,6 @@ spec:
           resources:
             requests:
               # Hot tier per replica (~90d): each replica holds a full copy
-              # of the data (replication), so the cluster reserves 2x this
+              # of the data (replication), so the cluster reserves 3x this
               # cap; Longhorn grows on demand, so this is a ceiling.
               storage: 100Gi
