@@ -183,14 +183,21 @@ spec:
                       name: tenzir-secrets
                       key: aws-secret-access-key
               resources:
-                # Strawman sizing (plan risk table): one Tenzir writer, LAN
-                # rustfs cold reads, dashboards. Watch the first week.
+                # 2026-10-20 rightsize (was 2Gi/6Gi MR-1 strawman): the big
+                # Process_Activity/API_Activity partition merges kept failing
+                # MEMORY_LIMIT_EXCEEDED at the 0.9-ratio server cap (5.4GiB of
+                # the old 6Gi limit), every ~35s, occasionally liveness-
+                # killing the pod. 12Gi limit => 10.8GiB server cap, 2x the
+                # failing cap; 4Gi requests cover the observed 1.4-1.9GiB
+                # steady usage. ClickHouse 25.12 has no merge-spill setting
+                # (external sort/group-by are query-level only), so the cap
+                # is the fix.
                 requests:
                   cpu: 500m
-                  memory: 2Gi
+                  memory: 4Gi
                 limits:
                   cpu: "2"
-                  memory: 6Gi
+                  memory: 12Gi
               readinessProbe:
                 httpGet:
                   path: /ping

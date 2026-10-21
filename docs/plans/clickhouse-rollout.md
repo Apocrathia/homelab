@@ -768,7 +768,7 @@ dashboards read ClickHouse would blank every OCSF panel (MR-5 needs 4).
 | Keeper quorum loss (2 keepers down)                               | Required hostname anti-affinity on keepers; reads keep working, replicated writes stall until quorum returns                                                                                         |
 | First-boot keeper race: startup_scripts run before Keeper serves  | README validation query after apply + MR-3 append fail-loud; restart CHI pods once if tables are missing                                                                                             |
 | 2x storage growth (2 Longhorn PVCs + 2x rustfs cold parts)        | Shape decision section; watch rustfs capacity + pvc-capacity alert first week                                                                                                                        |
-| ClickHouse resource sizing unknown (fresh workload class)         | MR-1 per-replica requests/limits strawman (500m/2Gi requests, 2/6Gi limits), operator watches first week + pvc-capacity alert                                                                        |
+| ClickHouse resource sizing unknown (fresh workload class)         | MR-1 strawman (500m/2Gi requests, 2/6Gi limits) right-sized 2026-10-20 to 4Gi/12Gi after large merges failed MEMORY_LIMIT_EXCEEDED at the 0.9-ratio 5.4GiB server cap; watch pvc-capacity alert      |
 
 ## Feedback loop (local, no cluster mutation)
 
