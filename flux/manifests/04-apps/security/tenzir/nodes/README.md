@@ -16,10 +16,11 @@ connectivity chart, sizing math, and retention profile.
   ClickHouse; its first lane, the hourly Fleet host-inventory pull
   into `ocsf.fleet_assets`, shipped in lap 2 — the core node's
   loader is the consumer half)
-- [`introspection/`](./introspection/README.md): the diagnostics
-  observability plane (the node's local diagnostics pair plus the
-  central poller Deployment that ships every fleet node's diagnostics
-  to Loki and Mimir)
+- [`introspection/`](./introspection/README.md): the introspection
+  plane (its local diagnostics lane pair ships its own pipelines'
+  diagnostics — every node ships its own pair since B1 and the
+  central poller is retired; charter direction: scheduled inward
+  detection passes over the ocsf.\* tables)
 - [`intel/`](./intel/README.md): the CTI factory plane (OpenCTI TAXII
   threat intel pulled into the `ocsf.OSINT_Inventory_Info` ClickHouse
   table on the rc engine image; the core node's loader is the consumer

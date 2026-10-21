@@ -15,8 +15,10 @@ investigations node owns the agent investigations plane; the enrichment
 node is the internal-reference-data factory (fleet-assets and baselines
 lookup tables into ClickHouse for the other nodes' loaders; its first
 lane, the hourly Fleet asset pull into `ocsf.fleet_assets`, shipped in
-lap 2 — no ingest); the introspection node is the fleet's diagnostics
-poller plane; and the intel node is the CTI factory plane (OpenCTI
+lap 2 — no ingest); the introspection node is the introspection plane
+(its local diagnostics pair covers its own pipelines — every node
+ships its own pair since B1 and the central poller is retired); and
+the intel node is the CTI factory plane (OpenCTI
 TAXII threat intel into ClickHouse; core's opencti-osint-loader is
 the consumer half). Telemetry
 normalizes onto one OCSF bus, sigma evaluates live, and everything

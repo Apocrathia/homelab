@@ -30,14 +30,19 @@ threat intel.
   renovate offers the bump (same datasource comment) and the pin
   rationale shrinks away; see
   [`helmrelease.yaml`](./helmrelease.yaml).
-- **One factory row, dual-schedule** — `tenzir.pipelines` carries
-  exactly the opencti-taxii-factory-walk and opencti-taxii-factory-poll
-  pipelines: a daily full walk of the TAXII collection at 07:00 plus
+- **One factory row, dual-schedule** — `tenzir.pipelines` carries the
+  opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines:
+  a daily full walk of the TAXII collection at 07:00 plus
   `added_after` polls at 01/13/19 (the upstream isMalicious
   dual-schedule doctrine), pulling through the vendored library `stix`
   package and appending OCSF OSINT Inventory Info rows to ClickHouse.
   The walk is the reconciliation path; the polls keep the table fresh
-  between walks.
+  between walks. `tenzir.pipelines` also carries the fleet-standard
+  diagnostics pair (`diagnostics-to-loki` /
+  `error-diagnostics-to-mimir`) every node ships since B1: the lane
+  runs on this node's own engine, so its diagnostics ship regardless
+  of the fleet's image line — the central poller's cross-version
+  export gap on this node dies with the poller.
 - **Deploys live** — this HelmRelease carries no `spec.suspend`: the
   factory row is this lap's deliverable and the rc pin only pays off
   running. (The fleet's storage-collector nodes are currently suspended

@@ -16,11 +16,10 @@ context for netflow-ingest's enrich call), pipeline-metrics-to-mimir
 (a dead UDP collector is a silent black hole, so this node keeps the
 core node's liveness series), and
 netflow-attest-verify (the hourly record_integrity walk — the
-verification half of the attestation lane below). The former
-diagnostics pushers (error-diagnostics-to-mimir, diagnostics-to-loki)
-retired with the introspection lap: the central poller on the
-introspection node ships this node's diagnostics to Loki and Mimir
-now. The split exists so the
+verification half of the attestation lane below). The diagnostics
+pushers (error-diagnostics-to-mimir, diagnostics-to-loki) ship from
+this node again — restored per-node with the B1 lap after the
+central poller's retirement. The split exists so the
 collector's lifecycle (listener restarts, pod rolls, future
 vendor-traffic surprises) cannot touch the detection plane, and so
 flow ingest has room to grow when the UniFi renderer fix lands; the

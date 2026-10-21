@@ -297,6 +297,38 @@ spec:
                 throughput harness pins the flood-scale stamping cost).
               definition: ""
               restart-on-error: 1 minute
+            error-diagnostics-to-mimir:
+              name: error diagnostics to mimir
+              description: |
+                Pushes a tenzir_pipeline_errors / tenzir_pipeline_warnings
+                sample (value 1, pipeline labels, node label = tetragon) to Mimir
+                for every live error / warning diagnostic, so the dashboard can
+                count both severities with sum_over_time. They otherwise live
+                only in the diagnostics stream, not in metrics. Restored per-node (B1)
+                with the central poller's retirement.
+              definition: ""
+              restart-on-error: 1 minute
+            diagnostics-to-loki:
+              name: diagnostics to loki
+              description: |
+                Ships every live, not-hidden pipeline diagnostic to Loki as
+                job=tenzir-diagnostics entries (node label = tetragon) — the
+                flood isolate's parse warnings (UNCLOSED_STRING and friends)
+                become filterable log lines.
+                to_fluent_bit resolves $pipeline_name and $severity per event
+                and consumes both out of the shipped body (live-verified
+                2026-10-17 probe); drop discards the ANSI escape-coded
+                rendered field, so the line keeps the rest of the diagnostic
+                record — pipeline_id, hidden, run, timestamp, message, notes,
+                annotations — and the labels carry pipeline + severity. Hidden
+                entries (platform-UI pipeline deprecation noise) stay out.
+                Plain HTTP to loki-write, cluster-internal. live=true without
+                retro: no store-backlog replay on start, so restarts never
+                re-ship history (Loki has no dedup) — restored per-node (B1)
+                with the central poller's retirement: every node ships its own
+                pair now, so no cross-node consumer can ever blind against it.
+              definition: ""
+              restart-on-error: 1 minute
         plugins:
           compaction:
             # Budget backstop, same weighted-age path as the core node:

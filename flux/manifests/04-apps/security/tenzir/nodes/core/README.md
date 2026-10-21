@@ -46,10 +46,10 @@ LB service anymore.
   stalls the maps, and events pass unenriched until the first
   successful load)
 - pipeline-metrics-to-mimir / sigma-metrics-to-mimir: the node's own
-  operational metrics (the diagnostics-to-loki / error-diagnostics-to-mimir
-  pair retired with the introspection lap: the central poller on the
-  introspection node ships this node's diagnostics to Loki and Mimir
-  now, so the lanes would have double-shipped every event)
+  operational metrics. The diagnostics-to-loki /
+  error-diagnostics-to-mimir pair ships from this node again —
+  restored per-node with the B1 lap after the central poller's
+  retirement, so the poller-era double-ship concern is moot
 - detection-attest-verify: the record_integrity verification walk —
   reads the last 24h of every ocsf class back from the ClickHouse
   query store, recomputes each attestation fingerprint, and walks the

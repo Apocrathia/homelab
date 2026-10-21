@@ -7,7 +7,6 @@ metadata:
 
 resources:
   - helmrelease.yaml
-  - poller.yaml
 
 # TQL definitions live as .tql files under pipelines/ (one per
 # pipeline); the generator below packages them and the replacements
