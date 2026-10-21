@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/helm/clickhouse-operator/crds/CustomResourceDefinition-clickhouseinstallations.clickhouse.altinity.com.yaml
 # ClickHouse OCSF query store. Altinity operator shape (operator decision
 # 2026-10-17, supersedes the generic-app shape in the old plan draft):
-# 1 shard x 2 replicas of clickhouse-server behind a Keeper ensemble
+# 1 shard x 3 replicas of clickhouse-server behind a Keeper ensemble
 # (keeper.yaml) - ReplicatedMergeTree tables, replication for pod/PVC-loss
 # resilience, rolling updates orchestrated by the operator.
 #
@@ -117,7 +117,7 @@ spec:
       - name: ocsf
         layout:
           shardsCount: 1
-          replicasCount: 2
+          replicasCount: 3
 
   defaults:
     templates:
@@ -128,9 +128,9 @@ spec:
     podTemplates:
       - name: clickhouse-pod
         spec:
-          # Replication covers data safety, but two replicas on one host
-          # turn a single node crash into a 2-of-2 replica loss; require
-          # spread across hosts (2 replicas, 4 nodes).
+          # Replication covers data safety, but co-located replicas turn
+          # a single node crash into a multi-replica loss; require spread
+          # across hosts (3 replicas, 4 nodes).
           affinity:
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -183,14 +183,21 @@ spec:
                       name: tenzir-secrets
                       key: aws-secret-access-key
               resources:
-                # Strawman sizing (plan risk table): one Tenzir writer, LAN
-                # rustfs cold reads, dashboards. Watch the first week.
+                # 2026-10-20 rightsize (was 2Gi/6Gi MR-1 strawman): the big
+                # Process_Activity/API_Activity partition merges kept failing
+                # MEMORY_LIMIT_EXCEEDED at the 0.9-ratio server cap (5.4GiB of
+                # the old 6Gi limit), every ~35s, occasionally liveness-
+                # killing the pod. 12Gi limit => 10.8GiB server cap, 2x the
+                # failing cap; 4Gi requests cover the observed 1.4-1.9GiB
+                # steady usage. ClickHouse 25.12 has no merge-spill setting
+                # (external sort/group-by are query-level only), so the cap
+                # is the fix.
                 requests:
                   cpu: 500m
-                  memory: 2Gi
+                  memory: 4Gi
                 limits:
                   cpu: "2"
-                  memory: 6Gi
+                  memory: 12Gi
               readinessProbe:
                 httpGet:
                   path: /ping
@@ -215,6 +222,6 @@ spec:
           resources:
             requests:
               # Hot tier per replica (~90d): each replica holds a full copy
-              # of the data (replication), so the cluster reserves 2x this
+              # of the data (replication), so the cluster reserves 3x this
               # cap; Longhorn grows on demand, so this is a ceiling.
               storage: 100Gi

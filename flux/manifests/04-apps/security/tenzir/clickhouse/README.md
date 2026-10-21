@@ -205,7 +205,7 @@ flowchart LR
     AG["agent (kagent / hermes-agent ns)"] -->|"POST case/evidence envelope :8080"| AH["investigations node<br/>accept_http"]
     AH -->|"homelab::investigations::ocsf::map<br/>validates + stamps OCSF spine"| MAP["ocsf_derive / ocsf_cast"]
     MAP -->|"attest: record_integrity fingerprint<br/>chain per case (node memory)"| AT["attest + context legs"]
-    AT -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(2 replicas, ReplicatedMergeTree)"]
+    AT -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(3 replicas, ReplicatedMergeTree)"]
     CH -->|"90d TTL TO VOLUME 'cold'<br/>(ocsf tables; records is TTL-free)"| COLD["cold tier: rustfs<br/>tenzir bucket, clickhouse prefix"]
     AG -.->|"query-lane read-back<br/>(reader user, SELECT)"| CH
     CH -.->|"investigations-attest-verify walk<br/>every 1h (reader user, SELECT)"| VFY["Detection Finding 2004<br/>on any chain break"]
@@ -246,6 +246,7 @@ flowchart LR
     subgraph HOT["hot tier (~90 days)"]
         PVC0["chi replica 0<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
         PVC1["chi replica 1<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
+        PVC2["chi replica 2<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
     end
     subgraph KEEP["Keeper quorum"]
         K["3-node ensemble<br/>Longhorn PVCs, 5Gi"]
@@ -255,8 +256,10 @@ flowchart LR
     end
     PVC0 -->|"part moves after 90d TTL<br/>(each replica uploads its own copy)"| S3
     PVC1 -->|"same"| S3
+    PVC2 -->|"same"| S3
     K -.->|"replication metadata"| PVC0
     K -.->|"replication metadata"| PVC1
+    K -.->|"replication metadata"| PVC2
 ```
 
 - **Bucket layout**: cold parts write to the `tenzir` rustfs bucket under
@@ -269,8 +272,8 @@ flowchart LR
   renders — one item, multiple OnePasswordItem CRs). The old
   clickhouse-bucket-user keys on `clickhouse-secrets` are unused now;
   the operator removes them.
-- **2x cold growth**: each replica runs the same tiered policy and
-  uploads its own copy of every cold part — the bucket grows ~2x the
+- **3x cold growth**: each replica runs the same tiered policy and
+  uploads its own copy of every cold part — the bucket grows ~3x the
   single-node shape.
 - **Retention** (ocsf tables): 90 days → `TO VOLUME 'cold'` (part
   moves), 400 days → `DELETE` (horizon cap, operator-tunable: change
@@ -280,10 +283,10 @@ flowchart LR
   `investigations.records` has NO TTL by design — a case record is a
   durable audit record.
 - **PVC-only metadata**: schema metadata (incl. S3 disk metadata under
-  `/var/lib/clickhouse/disks/`) lives on the PVC only — losing BOTH
-  PVCs orphans the S3 parts. Replication (2 copies) is the resilience
-  mechanism; there is no kopiur/snapshot wiring on these PVCs by
-  design.
+  `/var/lib/clickhouse/disks/`) lives on the PVC only — losing all
+  three PVCs orphans the S3 parts. Replication (3 copies) is the
+  resilience mechanism; there is no kopiur/snapshot wiring on these
+  PVCs by design.
 
 ## Schema bootstrap
 
