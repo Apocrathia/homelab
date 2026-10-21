@@ -1,0 +1,110 @@
+---
+# Nightly prune of the MISP MariaDB `audit_logs` table and the legacy
+# `logs` table (rows older than 30 days), plus a weekly Sunday OPTIMIZE
+# TABLE pass to hand the freed pages back to the filesystem. MISP 2.5.44
+# has no built-in audit-log retention (only the MISP.log_new_audit master
+# switch), and the audit rows are ~99% feed-pull machine noise that filled
+# the DB volume on 2026-10-20.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: misp-mariadb-prune
+  namespace: misp
+spec:
+  # 22:45 America/Denver = 04:45 UTC during DST: 15 min after the 22:30
+  # misp-mariadb-backup start (the dump's --single-transaction snapshot is
+  # unaffected by concurrent DELETEs), clear of the CNPG-style 05:00 UTC
+  # pocket.
+  schedule: "45 22 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: Never
+          # The prune client only talks to the mariadb Service; no
+          # ServiceAccount, no API access (the backup job trips Kyverno's
+          # audit-automount-sa-token rule; not repeated here).
+          automountServiceAccountToken: false
+          securityContext:
+            # 1001 = the bitnami mariadb UID
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: prune
+              # Same digest pin as mariadb.image.tag in helmrelease.yaml
+              # (and the backup dump init container) - keep in sync so the
+              # prune client and server versions match.
+              # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
+              image: docker.io/bitnamilegacy/mariadb:10.11.11-debian-12-r3@sha256:ab38eb8e04b1d286cd1fb268d08013bc7d25f9015a9c374594256bcd4a8d1556
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  db_opts=(
+                    --host="${MARIADB_HOST}"
+                    --user="${MARIADB_USER}"
+                    --password="${MARIADB_PASSWORD}"
+                    "${MARIADB_DATABASE}"
+                  )
+                  # ROW_COUNT() counts the statement immediately before
+                  # it, so each DELETE and its count SELECT share one -e
+                  # batch.
+                  audit_rows="$(mariadb "${db_opts[@]}" \
+                    -e "DELETE FROM audit_logs WHERE created < NOW() - INTERVAL 30 DAY; SELECT ROW_COUNT();" | tail -n 1)"
+                  echo "pruned ${audit_rows} audit_logs rows"
+                  log_rows="$(mariadb "${db_opts[@]}" \
+                    -e "DELETE FROM logs WHERE created < NOW() - INTERVAL 30 DAY; SELECT ROW_COUNT();" | tail -n 1)"
+                  echo "pruned ${log_rows} logs rows"
+                  # %u: 1=Mon..7=Sun on the container clock (TZ above =
+                  # Denver Sunday, matching the README). OPTIMIZE
+                  # TABLE is an in-place rebuild that reclaims the freed
+                  # pages; it needs ~table-size free space while it runs.
+                  if [ "$(date +%u)" -eq 7 ]; then
+                    mariadb "${db_opts[@]}" \
+                      -e "OPTIMIZE TABLE audit_logs; OPTIMIZE TABLE logs;"
+                  fi
+              env:
+                - name: MARIADB_HOST
+                  value: mariadb
+                - name: MARIADB_USER
+                  value: misp
+                - name: MARIADB_DATABASE
+                  value: misp
+                # Chart-managed Secret from the bitnami mariadb subchart
+                # (mariadb.auth.* in helmrelease.yaml valuesFrom); same
+                # store the backup job reads, so DB creds live in no
+                # second store.
+                - name: MARIADB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mariadb
+                      key: mariadb-password
+                # The Sunday OPTIMIZE gate below reads date +%u on the
+                # container clock; Denver-local so "Sunday" matches the
+                # CronJob timeZone instead of firing one evening early.
+                - name: TZ
+                  value: America/Denver
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi

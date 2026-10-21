@@ -275,6 +275,22 @@ admin login keeps working off the vault either way. Restoring the
 [backup service README](../../../03-services/backup/README.md)); the kopia
 web UI is read-only — restores go through kopiur `Restore` CRs.
 
+## Data retention
+
+MISP 2.5.44 has no built-in audit-log retention — the only lever is the
+`MISP.log_new_audit` master switch, and switching it off would lose the
+audit trail entirely, so the table is pruned instead. CronJob
+`misp-mariadb-prune` fires nightly at 22:45 America/Denver (15 min after
+the backup dump) and deletes `audit_logs` and legacy `logs` rows older
+than 30 days; the weekly Sunday run also OPTIMIZEs both tables so the
+freed pages return to the volume instead of lingering as InnoDB free
+space. The prune exists because the audit rows are overwhelmingly
+feed-pull machine noise (`add`/`tag` entries from scheduled pulls, ~99%
+of the table — 16.8M rows in 8 days), and they filled the DB volume on
+2026-10-20. The 14-day rustfs backup bucket ([Backups](#backups)) stays
+the deeper archive: pruned rows remain recoverable from the nightly
+dumps for up to two weeks after the prune.
+
 ## Known chart quirks (verified against chart v5.0.1 + misp-docker)
 
 - The chart's configmap emits env names the current misp-docker image does

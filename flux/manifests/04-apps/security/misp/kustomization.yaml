@@ -11,6 +11,7 @@ resources:
   - externalsecret.yaml
   - secret.yaml
   - backup-cronjob.yaml
+  - prune-cronjob.yaml
   - backup.yaml
   - helmrelease.yaml
   - crossplane.yaml
