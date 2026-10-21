@@ -36,10 +36,16 @@
 # introspection node itself keeps its LOCAL pair
 # (../helmrelease.yaml). Watermark semantics: the
 # per-target wall-clock window (candidate captured before each poll,
-# kept only on success) ships every event exactly once across cycles;
-# in-memory (draft-shipper parity) — a poller restart loses the
-# in-flight window, and the first cycle after start ships nothing (no
-# store-backlog replay, same no-dedup trade the native lanes made).
+# kept only on success) bounds the scan on both ends — events in
+# (watermark, candidate] ship exactly once across cycles, and events
+# created after the candidate wait for the next cycle: the upper
+# bound closes the double-ship race of the unbounded scan, where an
+# event created after the candidate was captured by cycle N's scan
+# and re-shipped by cycle N+1 (live-observed 4x in Loki,
+# 2026-10-20); in-memory (draft-shipper parity) — a poller restart
+# loses the in-flight window, and the first cycle after start ships
+# nothing (no store-backlog replay, same no-dedup trade the native
+# lanes made).
 #
 # Down targets are non-fatal: an unreachable or not-yet-deployed
 # target fails its poll with a logged warning (the CLI exits non-zero
@@ -60,16 +66,18 @@ data:
 
     Every cycle, per target: run the tenzir CLI against the target's
     :5158 node API with a retro scan of the diagnostics store, filtered
-    to events newer than the target's watermark, and ship them through
+    to the window (watermark, candidate], and ship them through
     the same to_fluent_bit / to_prometheus lanes the retired per-node
     pipelines used. Hidden-diagnostics parity is per arm: the Loki arm
     drops hidden entries (native diagnostics-to-loki filtered them);
     the Mimir error/warning arms count them (native
     error-diagnostics-to-mimir had no hidden filter). The window is
-    wall-clock: the candidate watermark is captured before the poll
-    runs and is kept only on success, so a failed or timed-out poll
-    retries the same window next cycle — events ship exactly once
-    across cycles, no event-store parsing.
+    wall-clock and closed above: the candidate watermark is captured
+    before the poll runs and bounds the scan from the top — events
+    created after the candidate wait for the next cycle — and is kept
+    only on success, so a failed or timed-out poll retries the same
+    window next cycle — events ship exactly once across cycles, no
+    event-store parsing.
     """
 
     import logging
@@ -83,6 +91,7 @@ data:
 
     PIPELINE = """diagnostics retro=true
     where timestamp > {watermark}
+    where timestamp <= {candidate}
     drop rendered
     fork {
       where not hidden
@@ -112,9 +121,9 @@ data:
         return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
-    def poll(target, watermark):
+    def poll(target, watermark, candidate):
         endpoint = "tenzir-node-{}.tenzir.svc:5158".format(target)
-        pipeline = PIPELINE.replace("{watermark}", watermark).replace("{node}", target)
+        pipeline = PIPELINE.replace("{watermark}", watermark).replace("{candidate}", candidate).replace("{node}", target)
         try:
             proc = subprocess.run(
                 ["tenzir", "-e", endpoint, pipeline],
@@ -128,7 +137,7 @@ data:
         if proc.returncode != 0:
             log.warning("target %s: poll failed rc=%s stderr=%s", target, proc.returncode, proc.stderr[-500:])
             return False
-        log.info("target %s: window > %s shipped", target, watermark)
+        log.info("target %s: window (%s, %s] shipped", target, watermark, candidate)
         return True
 
 
@@ -138,7 +147,7 @@ data:
         while True:
             for target in TARGETS:
                 candidate = now_iso()
-                if poll(target, watermarks[target]):
+                if poll(target, watermarks[target], candidate):
                     watermarks[target] = candidate
             time.sleep(INTERVAL)
 
