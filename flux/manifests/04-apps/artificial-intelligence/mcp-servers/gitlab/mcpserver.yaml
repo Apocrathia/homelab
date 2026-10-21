@@ -21,10 +21,18 @@ spec:
     # renovate: datasource=docker depName=zereight050/gitlab-mcp
     image: docker.io/zereight050/gitlab-mcp:2.2.1@sha256:652b68e65239b790d308563ea9f9c2a5db803e505f19dc5972681abca337e206
     port: 8080
+    cmd: /bin/sh
+    args:
+      - -c
+      - |
+        export OAUTH_STATELESS_SECRET="$(cat /var/run/secrets/gitlab-mcp/OAUTH_STATELESS_SECRET)"
+        exec node /app/build/index.js
     env:
       HOST: "0.0.0.0"
       PORT: "8080"
       STREAMABLE_HTTP: "true"
+      # Stateless multi-pod-safe session mode (see README).
+      OAUTH_STATELESS_MODE: "true"
       # Non-loopback /mcp Host allowlist (kagent cluster DNS).
       MCP_SERVER_URL: "http://gitlab.mcp-gitlab.svc.cluster.local:8080"
       # Callers (kagent RemoteMCPServer / LiteLLM) supply Private-Token per request.
@@ -49,3 +57,12 @@ spec:
       capabilities:
         drop:
           - ALL
+    volumes:
+      - name: gitlab-mcp-secrets
+        secret:
+          secretName: gitlab-mcp-secrets
+    volumeMounts:
+      - name: gitlab-mcp-secrets
+        mountPath: /var/run/secrets/gitlab-mcp/OAUTH_STATELESS_SECRET
+        subPath: OAUTH_STATELESS_SECRET
+        readOnly: true
