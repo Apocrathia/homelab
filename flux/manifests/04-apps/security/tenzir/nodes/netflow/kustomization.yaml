@@ -25,6 +25,7 @@ configMapGenerator:
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
+      - netflow-attest-verify.tql=pipelines/netflow-attest-verify.tql
 
 replacements:
   - source:
@@ -67,3 +68,13 @@ replacements:
           name: tenzir-node-netflow
         fieldPaths:
           - spec.values.tenzir.config.plugins.compaction.time.rules.0.pipeline
+  - source:
+      kind: ConfigMap
+      name: tenzir-netflow-pipelines
+      fieldPath: data.[netflow-attest-verify.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-netflow
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.netflow-attest-verify.definition

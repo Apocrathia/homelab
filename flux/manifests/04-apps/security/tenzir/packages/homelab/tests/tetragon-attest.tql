@@ -1,0 +1,52 @@
+---
+quiet: true
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+// The compaction rule's type scoping, verbatim: the archive rule fires
+// over the stored ocsf types it declares (process_activity,
+// file_system_activity, network_activity — nodes/tetragon/
+// helmrelease.yaml), so the Base Event fallback for unknown export
+// kinds never reaches the attest leg (it expires with the window on
+// the weighted-age backstop). The same pass carries every archivable
+// class, proving the one chain links ACROSS the tetragon classes per
+// node: Process Activity -> File System Activity -> Network Activity.
+where class_uid in [ocsf_class_uid("Process Activity"), ocsf_class_uid("File System Activity"), ocsf_class_uid("Network Activity")]
+// Pin the uids the archive leg mints with uuid() when absent: pinned
+// fixtures keep the baseline deterministic (the investigations-test
+// precedent). The file-kprobe record arrives THIRD but stamps LATER
+// in time than the process-kprobe record that arrives FOURTH — the
+// sort below reorders them, proving the (time, metadata.uid) order
+// the chain links follow is the stamped order, not the arrival order.
+if type_uid == 100701 {
+  metadata.uid = "tet-attest-exec"
+}
+if type_uid == 100702 {
+  metadata.uid = "tet-attest-exit"
+}
+if type_uid == 100700 {
+  metadata.uid = "tet-attest-kprobe"
+}
+if type_uid == 100102 {
+  metadata.uid = "tet-attest-file"
+}
+if type_uid == 400101 {
+  metadata.uid = "tet-attest-net"
+}
+// The tetragon node's archive-rule attest leg, verbatim
+// (nodes/tetragon/pipelines/ocsf-archive.tql): stream mode chains the
+// batch internally in the sorted order; no context tail here (a node
+// context is not fixture-testable), so the first record rides as
+// genesis exactly like a fresh node's first archive pass, and the
+// rest chain via the operator's own lag.
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-tetragon",
+  chain_uid="tenzir-node-tetragon",
+  genesis=false,
+  chain="stream"

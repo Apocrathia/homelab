@@ -4,16 +4,18 @@
 
 One process (HelmRelease `tenzir-node-tetragon`, rendering pod
 `tenzir-node-tetragon`) that owns the tetragon export flood and
-nothing else. Four pipelines live in
+nothing else. Five pipelines live in
 [`pipelines/`](./pipelines/), one `.tql` each, stitched back into
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 tetragon-ingest-http (the
 OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
 mapping into the lake, with endpoint enrichment on the Network
 Activity arm), geo-open-loader (the daily GeoIP context builder for
-that enrichment), and pipeline-metrics-to-mimir (the flood node's
+that enrichment), pipeline-metrics-to-mimir (the flood node's
 liveness arm — the same series shape the other metrics-shipping
-nodes (core, netflow, investigations) ship). The former
+nodes (core, netflow, investigations) ship), and
+tetragon-attest-verify (the hourly record_integrity walk — the
+verification half of the attestation lane below). The former
 diagnostics pair (error-diagnostics-to-mimir, diagnostics-to-loki)
 retired with the introspection lap — the central poller on the
 introspection node ships this node's diagnostics to Loki and
@@ -132,6 +134,30 @@ pipeline keeps consume + export = archive-then-delete semantics):
 `mode="append"` fails loudly if the DDL is
 missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
 the insert buffers on the flood classes.
+
+The archive rule also stamps the OCSF `record_integrity` attestation
+on every record BEFORE the INSERT ([`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql), the shared lane in
+[`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)):
+a per-node SHA-256 fingerprint chain (`chain_uid` =
+`tenzir-node-tetragon`), one chain across all three archived classes
+in (time, uid) order, covering the record exactly as stored.
+`tetragon-attest-verify` walks it hourly: the last 24h of the three
+per-class tables read back, fingerprints recomputed, chain links
+checked; a Detection Finding (2004, severity 4) drops per break onto
+the pod logs AND into `ocsf.Detection_Finding`, inside the Grafana
+tenzir-findings rule's WHERE clauses — tamper evidence pages through
+the agent_invoke bridge like every other high-severity finding
+(docs/issues/tenzir-record-integrity-attestations.md). The stamping
+cost is measured, not assumed: the 100k-record harness on this node's
+own class runs ~7s standalone (~14k records/s end to end; the sort
+dominates, the hashing marginal is ~11µs/record —
+`tetragon-throughput` in the homelab package tests), and the one-off
+tetragon-scale probes recorded 250k (the peak-drain 5-minute pass) in
+~20s and 750k (a full 15-minute window at the 800 ev/s extreme) in
+~5.5-6 min — the honest numbers and the pass-stacking trade at
+sustained extreme drain live in the clickhouse README's attestation
+section. No scope-down: the full flood stamps, the operator decides if
+that trade ever needs a dial.
 
 Horizon math (flood rate measured 2026-10-12; steady state assumed):
 

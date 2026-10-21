@@ -25,6 +25,7 @@ configMapGenerator:
       - geo-open-loader.tql=pipelines/geo-open-loader.tql
       - pipeline-metrics-to-mimir.tql=pipelines/pipeline-metrics-to-mimir.tql
       - ocsf-archive.tql=pipelines/ocsf-archive.tql
+      - tetragon-attest-verify.tql=pipelines/tetragon-attest-verify.tql
 
 replacements:
   - source:
@@ -77,3 +78,13 @@ replacements:
           name: tenzir-node-tetragon
         fieldPaths:
           - spec.values.tenzir.config.plugins.compaction.time.rules.0.pipeline
+  - source:
+      kind: ConfigMap
+      name: tenzir-tetragon-pipelines
+      fieldPath: data.[tetragon-attest-verify.tql]
+    targets:
+      - select:
+          kind: HelmRelease
+          name: tenzir-node-tetragon
+        fieldPaths:
+          - spec.values.tenzir.config.tenzir.pipelines.tetragon-attest-verify.definition

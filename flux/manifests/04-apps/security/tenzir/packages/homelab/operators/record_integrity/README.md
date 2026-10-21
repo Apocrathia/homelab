@@ -4,8 +4,9 @@
 generalized OCSF `record_integrity` lane both planes stamp — the shared
 engine behind the investigations plane's scope wrappers
 ([`../investigations/ocsf/`](../investigations/ocsf/README.md)) and the
-detection plane's direct calls (the core node's archive rule + verify
-pipeline). The mechanics live here once; the chain scope is the
+detection plane's direct calls (the core, tetragon, and netflow nodes'
+archive rules + verify pipelines — one chain per node, the chart-rendered
+identity each). The mechanics live here once; the chain scope is the
 caller's.
 
 [`attest.tql`](./attest.tql): stamps `attestation_list[0]` with a
@@ -81,6 +82,19 @@ class 2004 schema-native (`finding_info` singular), passing
 WHERE clauses (the scheduled verify pipelines write these findings
 into `ocsf.Detection_Finding` to ride the existing alert rails); and
 the 100k throughput harness measures the stamping cost
-(`detection-throughput`). The narrative, the honest limits, and the
-cost math live in the datalake README's attestation section
+(`detection-throughput`). The tetragon and netflow baselines pin the
+two remaining node lanes the same way —
+`tetragon-attest`/`-verify-clean`/`-verify-tamper` (the cross-class
+1007→1001→4001 chain at flood scale, with `tetragon-throughput` timing
+the 100k-record leg on the flood's own class) and
+`netflow-attest`/`-verify-clean`/`-verify-tamper` (the single-class
+chain with the same-timestamp v5 flow ties that make the (time, uid)
+tie-break the NORM on that lane). The netflow tamper fixture is the
+one that exposed the homogeneous-batch restart hole in the verify
+operator (schema unification typing the out-of-bounds link access as
+the empty string instead of null — a false `chain_link_mismatch` on
+every post-restart record; the structural length guard fixed it, and
+the tamper baseline now pins the restart silence). The narrative, the
+honest limits, and the cost math live in the datalake README's
+attestation section
 ([`../../../clickhouse/README.md`](../../../clickhouse/README.md)).

@@ -12,7 +12,15 @@ description: |
   chain-restart case (the attest operator warned at write time when the
   node lost its in-memory chain state) and is not a break: the
   per-record fingerprint recompute still catches content tampering
-  across restarts.
+  across restarts. Detecting the absent link structurally (the attest
+  stamping contract: two attestations on linked records, one on
+  restarts) is load-bearing on homogeneous batches — one class table,
+  every node's verify lane — where schema unification types the
+  out-of-bounds link access through the siblings' element schema and
+  the string-typed fingerprint path reads as the empty string instead
+  of null, which would flag a false chain_link_mismatch on every
+  post-restart record (probed on the netflow node's fixture,
+  v6.19.1).
   Chains are walked per attestation_list[0].chain_uid — the OCSF chain
   identifier (objects/attestation.md: "querying events whose
   attestation.chain_uid matches retrieves the full chain") — which is
@@ -128,8 +136,18 @@ group attestation_list[0].chain_uid {
 
   // The chain link: the caller shape keeps it inside
   // attestation_list[0]; the stream shape rides it un-hashed in
-  // attestation_list[1] (absent on genesis and restart records).
-  _link_att = attestation_list[0] if $link == "caller" else attestation_list[1]?
+  // attestation_list[1] (absent on genesis and restart records). The
+  // length guard on the stream shape is load-bearing: on a homogeneous
+  // batch — one class table, the shape every node's verify lane reads —
+  // schema unification lets the out-of-bounds attestation_list[1]? on
+  // a stripped-link record resolve through the linked siblings'
+  // element schema, and the string-typed prev_event fingerprint path
+  // then reads as "" (the typed-null string) instead of null, flagging
+  // a false chain_link_mismatch on the documented restart shape
+  // (probed on the netflow node's fixture, v6.19.1). length() is the
+  // structural truth the padding cannot touch: attest stamps exactly
+  // one attestation on genesis/restart records, two on linked ones.
+  _link_att = attestation_list[0] if $link == "caller" else (attestation_list[1]? if length(attestation_list) > 1 else null)
 
   // ---- the walk state -------------------------------------------------------
   // The predecessor's tail in this chain's time order — written AFTER the
@@ -144,6 +162,23 @@ group attestation_list[0].chain_uid {
   }, into=_prev
 
   // ---- the checks -----------------------------------------------------------
+  // The stored prev_event fingerprint for this record, null on genesis
+  // and on restart records. The stream-mode branch is a structural
+  // normalization, and it is load-bearing: attest stamps TWO
+  // attestations on linked records and exactly ONE on genesis/restart
+  // records, so a length-1 list is the documented no-link shape — and
+  // on a homogeneous batch (one class table, the shape every node's
+  // verify lane reads) schema unification lets the siblings' element
+  // schema type the out-of-bounds link access, so the string-typed
+  // fingerprint path would read as "" (the typed-null string) instead
+  // of null and flag a false chain_link_mismatch on every post-restart
+  // record (probed on the netflow node's fixture, v6.19.1). A
+  // kept-but-tampered link (length 2, the fingerprint edited to ""
+  // post-stamp) takes the else branch and still mismatches loudly.
+  // NB: the guard must be the explicit if-else form — a bare
+  // `x = null if c` is an if-expression with an implicit null else,
+  // and would null the stored fingerprint on EVERY record.
+  _stored_prev_fp = null if $link == "stream" and length(attestation_list) < 2 else _link_att?.prev_event?.fingerprint?.value?
   _break = null
   // Content mutation: the recomputed fingerprint differs from the stored
   // one — the record (or its stored attestation) was altered after
@@ -151,9 +186,6 @@ group attestation_list[0].chain_uid {
   if _recomputed != attestation_list[0]?.fingerprint?.value? {
     _break = "fingerprint_mismatch"
   } else {
-    // The stored prev_event fingerprint for this record, null on genesis
-    // and on restart records.
-    _stored_prev_fp = _link_att?.prev_event?.fingerprint?.value?
     if _prev? == null {
       // The first record of this chain the walk sees. Unwindowed: a
       // stored prev_event with no walked predecessor means the chain

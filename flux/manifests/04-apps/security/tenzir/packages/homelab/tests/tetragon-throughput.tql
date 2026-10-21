@@ -1,0 +1,53 @@
+---
+quiet: true
+timeout: 150
+---
+let $t0 = now()
+// The tetragon-scale throughput harness for the flood node's attest
+// leg (the detection-throughput precedent, on the flood's own class):
+// the archive rule sees the 5-minute compaction pass, and the flood's
+// measured peak drain is 800 ev/s — 240k records per worst-case pass,
+// 720k for a full 15-minute window. This harness keeps the permanent
+// probe at detection-throughput's 100k scale so the suite stays
+// load-stable (a 250k run took ~20s standalone and starved sibling
+// tests past their timeouts under the runner's parallel jobs); the
+// tetragon-scale probes were measured one-off and recorded honestly in
+// the clickhouse README's attestation section — 250k (the peak-drain
+// 5-minute pass) in ~20s standalone, 750k (the full 15-minute window)
+// in ~5.5-6 min. 100k tetragon records here (5 export fixtures x
+// repeat 20000, mapped + derived + cast to the stored shape) through
+// the archive rule's exact stamping sequence — the uid mint, the
+// (time, uid) sort, the stream-mode attest (record fingerprint +
+// chain link). The fixtures share 6 distinct timestamps, so the sort
+// sees tie buckets of ~20k records broken by uid alone — the
+// sort-adversarial shape, heavier than production (tetragon stamps
+// carry nanosecond-precision times; live ties are rare). The baseline
+// pins the COUNTS (100k records, 100k stamped); the assert at the end
+// is a throughput floor: this run measured ~7s wall for the pipeline
+// on an M-series laptop (100k records / ~7s ~= 14k records/s end to
+// end; the attest marginal is ~11us/record over the sort-only
+// baseline, the sort dominates at flood scale — the honest numbers
+// live in the clickhouse README's attestation section), and the floor
+// leaves 14x headroom so CI load cannot flake it. A regression that
+// pushes the leg under 1k records/s fails the assert and the baseline
+// records the warning. Re-measure honestly with:
+//   TENZIR_INPUT=... uvx tenzir@6.19.1 -f <this file> # time it
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+where class_uid in [ocsf_class_uid("Process Activity"), ocsf_class_uid("File System Activity"), ocsf_class_uid("Network Activity")]
+repeat 20000
+// The archive leg, verbatim (nodes/tetragon/pipelines/ocsf-archive.tql).
+metadata.uid = uuid() if metadata.uid? == null
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-tetragon",
+  chain_uid="tenzir-node-tetragon",
+  genesis=false,
+  chain="stream"
+summarize records = count(), stamped = sum(1 if attestation_list[0]?.fingerprint?.value? != null else 0)
+assert (now() - $t0) < 100s, message="tetragon attest leg under throughput floor: 100k records took over 100s (re-measure and re-check the archive pass sizing math)"
