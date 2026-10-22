@@ -54,8 +54,9 @@ flux/manifests/03-services/observability/grafana/.agents/skills/**
 
 # Vendored fleet-gitops agent skill (fleet/.agents/skills): references/ and
 # scripts/ are near-verbatim copies from github.com/fleetdm/fleet
-# (.claude/skills/fleet-gitops, fetched 2026-10-22); validate.py is
-# sha256-pinned (see the skills README) — re-fetch on refresh, never reformat.
+# (.claude/skills/fleet-gitops, fetched 2026-10-22 at pinned commit
+# 53b0c0e4 — full SHA in the skills README); validate.py is sha256-pinned —
+# re-fetch at a new pinned commit on refresh, never reformat.
 # The hand-adapted SKILL.md and the hand-authored READMEs stay prettier-clean
 # (re-included below the exclusion).
 fleet/.agents/skills/fleet-gitops/**

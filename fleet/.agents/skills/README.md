@@ -8,8 +8,9 @@ GitOps workflow and its validator travel with the `fleet/` tree. `scripts/` and
 ## Provenance
 
 - Upstream: `.claude/skills/fleet-gitops` in github.com/fleetdm/fleet
-- Fetched: 2026-10-22 from the `main` branch (no tag; upstream ships `.claude`
-  agents on `main`)
+- Pinned: upstream commit
+  [`53b0c0e41e414e9d2c5d83f97d909ef4a95917a0`](https://github.com/fleetdm/fleet/commit/53b0c0e41e414e9d2c5d83f97d909ef4a95917a0)
+  of `main` (2026-10-22; upstream ships `.claude` agents on `main`, no tag)
 - `scripts/validate.py` is a byte-identical upstream copy, sha256
   `d565557063d6225b9799474b4563de1cfd613786ebaad4ca8df51496e90ad4bd`
 - `references/` near-verbatim upstream, with exactly these adaptations:
@@ -27,7 +28,8 @@ Gitleaks and `detect-private-key` still scan every file.
 ## Refresh
 
 1. Re-fetch `fleet-gitops/` from upstream (github.com/fleetdm/fleet,
-   `.claude/skills/fleet-gitops`, `main` branch).
+   `.claude/skills/fleet-gitops`) at a new pinned `main` commit; record the
+   new SHA in Provenance.
 2. Re-apply the documented adaptations above (the `../lib/` →
    `../platforms/` path fixes in `profiles-apple.md` and
    `profiles-android.md`), and re-merge upstream `SKILL.md` changes into the
