@@ -13,10 +13,6 @@ configMapGenerator:
     namespace: authentik
     files:
       - okta.yaml
-  - name: authentik-blueprint-terraform-service-account
-    namespace: authentik
-    files:
-      - terraform-service-account.yaml
   - name: authentik-blueprint-openclaw-cleanup
     namespace: authentik
     files:

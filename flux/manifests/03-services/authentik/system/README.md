@@ -1,7 +1,8 @@
 # Authentik system units
 
 Tofu-managed authentik-internal state (not app tiles): the access-tier
-groups and the default login flow's MFA stages, migrated off the retired
+groups, the default login flow's MFA stages, the tofu tier's own service
+account, and the kube-apiserver's OIDC issuer — migrated off the retired
 `blueprints/` ConfigMaps onto the canonical file pair — one folder per
 unit, `crossplane.yaml` (ProviderConfig + Workspace, ns authentik) +
 `authentik.tf` (the module), stitched by each unit's `kustomization.yaml`.
@@ -19,5 +20,11 @@ tier's shared substrate and must outlive any single unit.
   binds against; adopt-only, membership stays UI-managed
 - `webauthn-mfa/` — the upstream WebAuthn/MFA/identification stages that
   gate the default login flow; adopt-only, deny-switch deliberately off
+- `terraform-service-account/` — the tofu tier's own role + service
+  account + API token; adopt-only (the token never rotates), the 60
+  live permission rows stay unmanaged (provider ID-space bug)
+- `kubernetes/` — the kube-apiserver's OIDC issuer (`kubernetes-oidc-provider`,
+  tier groups, scope mappings, hidden application, admins binding);
+  adopt-only, byte-parity with the live provider row
 
 > **Navigation**: [← Back to Authentik README](../README.md)

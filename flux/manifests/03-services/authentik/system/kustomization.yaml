@@ -8,3 +8,5 @@ metadata:
 resources:
   - app-access
   - webauthn-mfa
+  - terraform-service-account
+  - kubernetes
