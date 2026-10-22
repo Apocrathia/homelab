@@ -11,7 +11,7 @@ spec:
     spec:
       chart: tenzir-node
       # renovate: datasource=docker depName=ghcr.io/tenzir/charts/tenzir-node
-      version: "0.1.0"
+      version: "0.2.0"
       sourceRef:
         kind: HelmRepository
         name: tenzir
@@ -27,41 +27,6 @@ spec:
     remediation:
       retries: 3
     timeout: 10m
-  # Startup gate, grafted after render: tenzir-node 0.1.0 ships no
-  # startupProbe hook (a values key renders nothing — verified against the
-  # extracted chart), so the liveness probe alone owns boot and kills the
-  # pod at 120s (initialDelay 30 + 3x30) against the multi-minute
-  # partition-catalog load before :5158 accepts. The kustomize postRenderer
-  # grafts a startupProbe onto the rendered StatefulSet instead: kubelet
-  # holds readiness/liveness gated until it passes, trading the 120s kill
-  # for a 10-minute boot budget (10s period x 60 failures) that matches
-  # the 10m install/upgrade timeouts above. When upstream ships a
-  # startupProbe values hook, this patch deletes and the block moves to
-  # values.
-  postRenderers:
-    - kustomize:
-        patches:
-          - target:
-              group: apps
-              version: v1
-              kind: StatefulSet
-              name: tenzir-node-tetragon
-            patch: |-
-              apiVersion: apps/v1
-              kind: StatefulSet
-              metadata:
-                name: tenzir-node-tetragon
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: tenzir-node
-                        startupProbe:
-                          tcpSocket:
-                            port: node
-                          periodSeconds: 10
-                          timeoutSeconds: 5
-                          failureThreshold: 60
   values:
     # Node naming: every node resource renders as <fullname>-<entry.name>,
     # and fullname defaults to the release name while it contains
@@ -74,6 +39,16 @@ spec:
       repository: tenzir/tenzir
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
       tag: v6.19.1
+
+    # Startup gate for multi-minute partition-catalog loads (chart-native
+    # since tenzir-node 0.2.0): 10s x 60 = 10-minute boot budget, matching
+    # the install/upgrade timeouts above.
+    startupProbe:
+      enabled: true
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 60
 
     # Registers into the same hosted Tenzir Platform workspace as the core
     # node; this node reads its own pre-provisioned token from the
