@@ -1,0 +1,26 @@
+# Vendored agent-skill code (fleet/.agents/skills/fleet-gitops): upstream
+# bytes at the pinned commit (full SHA in the skill's skills/README.md) —
+# byte-identity wins over SAST, same discipline as .prettierignore. Gitleaks
+# and detect-private-key still scan every vendored file. This file replaces
+# semgrep's built-in default ignores, so the common defaults are reproduced
+# below.
+fleet/.agents/skills/fleet-gitops/**
+
+# --- semgrep built-in default ignores (reproduced) ---
+.git/
+.gitignore
+.gitmodules
+.gitattributes
+.tox/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.vscode/
+.idea/
+node_modules/
+vendor/
+dist/
+build/
+.venv/
+venv/
