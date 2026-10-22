@@ -22,11 +22,18 @@ GitLab API integration via Model Context Protocol (native streamable HTTP).
 `REMOTE_AUTHORIZATION=true`). Prefer this over stdio/agentgateway for
 concurrency; stdio session leaks under Renovate change-summary load.
 
+Sessions are multi-pod safe: with 3 replicas and upstream's default per-pod
+in-memory session state, a request landing on the wrong pod 404s its session
+(the mr-change-summary failures). `OAUTH_STATELESS_MODE=true` seals session
+identity into the `Mcp-Session-Id` header instead, so any replica can serve
+any session.
+
 ### Environment Variables
 
 | Variable                 | Value                                                   | Description                                            |
 | ------------------------ | ------------------------------------------------------- | ------------------------------------------------------ |
 | `STREAMABLE_HTTP`        | `true`                                                  | Enable streamable HTTP                                 |
+| `OAUTH_STATELESS_MODE`   | `true`                                                  | Stateless multi-pod-safe sessions                      |
 | `MCP_SERVER_URL`         | `http://gitlab.mcp-gitlab.svc.cluster.local:8080`       | Allowed `/mcp` Host (cluster DNS; DNS-rebinding guard) |
 | `REMOTE_AUTHORIZATION`   | `true`                                                  | Require per-request GitLab token                       |
 | `GITLAB_API_URL`         | `https://gitlab.com/api/v4`                             | GitLab API base                                        |
@@ -35,12 +42,14 @@ concurrency; stdio session leaks under Renovate change-summary load.
 
 ### Secrets
 
-The 1Password item `gitlab-mcp-secrets` still holds `gitlab-token` (PAT with
-`api`, `read_user`, `read_repository`). With remote authorization the MCP pod
-does not mount that secret — kagent's `RemoteMCPServer` injects it as
-`Private-Token` (see `agents/git/remotemcpserver.yaml` /
-`agents/git/secret.yaml`). LiteLLM forwards `Private-Token` /
-`Authorization` from the caller.
+The 1Password item `gitlab-mcp-secrets` holds `gitlab-token` (PAT with `api`,
+`read_user`, `read_repository`) and `OAUTH_STATELESS_SECRET` (base64url key
+that seals session headers). The pod mounts ONLY the `OAUTH_STATELESS_SECRET`
+field — a subPath file-mount in `mcpserver.yaml`, read by the `sh -c` wrapper
+— so `gitlab-token` is never exposed to the pod. With remote authorization,
+kagent's `RemoteMCPServer` injects the PAT as `Private-Token` (see
+`agents/git/remotemcpserver.yaml` / `agents/git/secret.yaml`). LiteLLM
+forwards `Private-Token` / `Authorization` from the caller.
 
 ### Security
 
