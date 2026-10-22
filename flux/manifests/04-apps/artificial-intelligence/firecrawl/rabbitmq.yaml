@@ -21,7 +21,7 @@ spec:
       name: firecrawl-rabbitmq
       namespace: firecrawl
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/rabbitmq
-      image: public.ecr.aws/docker/library/rabbitmq:4.4.0-management-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
+      image: public.ecr.aws/docker/library/rabbitmq:4.4.0-management-alpine@sha256:0452ee3fd3b9a74160b251e693338616b464f22df4d4ba43304c101bebdca292
       container:
         name: rabbitmq
         port: 5672
