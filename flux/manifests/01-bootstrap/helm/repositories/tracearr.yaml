@@ -9,5 +9,5 @@ spec:
   url: https://github.com/connorgallopo/tracearr
   ref:
     # renovate: datasource=git-tags depName=https://github.com/connorgallopo/tracearr
-    tag: v2.8.3
+    tag: v2.9.0
   timeout: 3m
