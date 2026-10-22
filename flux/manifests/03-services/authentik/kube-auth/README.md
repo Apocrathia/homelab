@@ -6,10 +6,15 @@ Enables OIDC-based authentication to the Kubernetes cluster using Authentik as t
 
 ## Components
 
-| Resource                   | Purpose                                                   |
-| -------------------------- | --------------------------------------------------------- |
-| `authentik-blueprint.yaml` | Authentik OIDC provider, groups, and application          |
-| `rbac.yaml`                | ClusterRoleBindings mapping Authentik groups to K8s roles |
+| Resource    | Purpose                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| `rbac.yaml` | ClusterRoleBindings mapping Authentik groups to K8s roles                                              |
+| `icon.svg`  | The application icon served through the CDN (referenced by the tofu-managed application's `meta_icon`) |
+
+The Authentik OIDC objects (provider, groups, scope mappings,
+application, admins binding) are tofu-managed in `../system/kubernetes/`;
+the retired blueprint ConfigMap pruned away and the live objects were
+adopted by that Workspace.
 
 ## Authentik Groups
 
