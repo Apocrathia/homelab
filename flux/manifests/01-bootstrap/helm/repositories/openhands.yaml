@@ -9,5 +9,5 @@ spec:
   url: https://github.com/OpenHands/OpenHands.git
   ref:
     # renovate: datasource=git-tags depName=https://github.com/OpenHands/OpenHands.git
-    tag: v1.27.1
+    tag: v1.33.0
   timeout: 3m
