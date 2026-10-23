@@ -1,12 +1,12 @@
 # dependency-merge-sweep
 
-Second stage of the dependency-review pipeline. Runs at :50, 30 minutes
-behind the [:20 review sweep](../dependency-review) (`git-agent`), and acts
+Second stage of the dependency-review pipeline. Runs at :47 every 6 hours (hours 1, 7, 13, 19 UTC), 24 minutes
+behind the [:23 review sweep](../dependency-review) (`git-agent`), and acts
 on its output:
 
 ```text
-:20  dependency-review-sweep  (git-agent)     verdicts, labels, approvals
-:50  dependency-merge-sweep    (homelab-agent) merge green, triage the rest
+:23  dependency-review-sweep  (git-agent)     verdicts, labels, approvals
+:47  dependency-merge-sweep    (homelab-agent) merge green, triage the rest
 ```
 
 ## Phase A — merge what the review passed

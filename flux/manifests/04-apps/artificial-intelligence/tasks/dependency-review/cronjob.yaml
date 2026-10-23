@@ -7,8 +7,8 @@ metadata:
   annotations:
     ignore-check.kube-linter.io/non-existent-service-account: "ServiceAccount is defined in separate serviceaccount.yaml file"
 spec:
-  # :23 minutes past the hour
-  schedule: "23 * * * *"
+  # :23 minutes past the hour, every 6 hours
+  schedule: "23 */6 * * *"
   suspend: false
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1

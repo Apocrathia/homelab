@@ -9,7 +9,7 @@ Kubernetes operator that runs Renovate as per-project Jobs driven by `RenovateJo
 This deployment includes:
 
 - The mogenius renovate-operator and its `RenovateJob` CRD
-- The `RenovateJob` (`homelab`) that discovers `Apocrathia/*` on GitLab hourly
+- The `RenovateJob` (`homelab`) that discovers `Apocrathia/*` on GitLab every 4 hours
   and runs one executor Job per project
 - Web UI exposed via Gateway with Authentik OIDC authentication
 - 1Password-managed platform and OIDC credentials via `renovate-operator-secret`

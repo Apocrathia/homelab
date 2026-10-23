@@ -19,8 +19,9 @@ spec:
   providerRef:
     name: gitlab-commit-status
   eventSources:
+    # Kustomization events only — one per app subtree, they already carry
+    # deployment status. HelmRelease events were removed entirely: they posted
+    # redundant per-object statuses (pure gitlab.com API noise) and a curated
+    # namespace allow-list would rot. No HelmRelease sources to maintain.
     - kind: Kustomization
       name: "*"
-    - kind: HelmRelease
-      name: "*"
-      namespace: "*"
