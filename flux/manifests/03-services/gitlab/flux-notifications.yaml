@@ -19,69 +19,9 @@ spec:
   providerRef:
     name: gitlab-commit-status
   eventSources:
+    # Kustomization events only — one per app subtree, they already carry
+    # deployment status. HelmRelease events were removed entirely: they posted
+    # redundant per-object statuses (pure gitlab.com API noise) and a curated
+    # namespace allow-list would rot. No HelmRelease sources to maintain.
     - kind: Kustomization
       name: "*"
-    # Commit-status volume guard: app HelmRelease events post redundant statuses —
-    # each app's Kustomization already posts deployment status, so app HelmRelease
-    # churn was pure API noise on gitlab.com. HelmRelease events are limited to
-    # cluster-critical infra namespaces.
-    - kind: HelmRelease
-      name: "*"
-      namespace: flux-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: kube-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: cilium-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: cert-manager
-    - kind: HelmRelease
-      name: "*"
-      namespace: longhorn-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: external-secrets-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: onepassword-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: postgres-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: gitlab-runner
-    - kind: HelmRelease
-      name: "*"
-      namespace: gitlab-agent
-    - kind: HelmRelease
-      name: "*"
-      namespace: renovate-operator
-    - kind: HelmRelease
-      name: "*"
-      namespace: authentik
-    - kind: HelmRelease
-      name: "*"
-      namespace: kagent
-    - kind: HelmRelease
-      name: "*"
-      namespace: hermes-agent
-    - kind: HelmRelease
-      name: "*"
-      namespace: litellm
-    - kind: HelmRelease
-      name: "*"
-      namespace: prime-agent
-    - kind: HelmRelease
-      name: "*"
-      namespace: prometheus-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: grafana-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: loki-system
-    - kind: HelmRelease
-      name: "*"
-      namespace: trivy-system
