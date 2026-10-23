@@ -68,6 +68,11 @@ proposal.
 - [ ] 5. Pass → brief Evidence report; Fail after stop-loss/5 → Blockers
 ```
 
+Classify a blocking failure **before** touching code (step 3): **stale
+assertion** — the test lags the intended behavior → fix the test; **real
+bug** — the product actually regressed → fix the product. State which class
+in the report.
+
 ## Checks (run what applies)
 
 | When                                         | Check                                                                                                 |

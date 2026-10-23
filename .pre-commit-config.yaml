@@ -34,19 +34,23 @@ repos:
         # breaks byte-identity. Same for the vendored tenzir library
         # packages (packages/stix, packages/tenzir): upstream ships tenzir's
         # package.yaml with a trailing blank line the hook would strip.
-        # Same discipline as the detection-rule trees.
+        # Same discipline as the detection-rule trees. Same for the vendored
+        # fleet-gitops skill (fleet/.agents/skills/fleet-gitops): references/
+        # and scripts/ are upstream bytes; SKILL.md and READMEs stay checked.
         exclude: |
           (?x)^(
             flux/manifests/04-apps/artificial-intelligence/prime-agent/agent/extensions/webui/|
             flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/detections/(sigma/sigmahq|yara/signature-base)/|
             flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/packages/(stix|tenzir)/(?!README)|
-            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/\.agents/skills/(?!grafana-homelab|README)
+            flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/\.agents/skills/(?!grafana-homelab|README)|
+            fleet/\.agents/skills/fleet-gitops/(?!SKILL\.md|README)
           )
       - id: trailing-whitespace
         # Vendored detection rules are upstream bytes re-copied from pinned
         # submodules; reformatting breaks byte-identity with the gitlink.
-        # Same for the vendored doc skills (.agents/skills) in both trees.
-        exclude: ^flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README))
+        # Same for the vendored doc skills (.agents/skills) in both trees and
+        # the vendored fleet-gitops skill (references/ + scripts/ only).
+        exclude: ^flux/manifests/(03-services/observability/grafana|04-apps/security/tenzir)/(detections/(sigma/sigmahq|yara/signature-base)/|\.agents/skills/(?!grafana-homelab|README))|^fleet/\.agents/skills/fleet-gitops/(?!SKILL\.md|README)
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

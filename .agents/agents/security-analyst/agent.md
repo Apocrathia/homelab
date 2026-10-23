@@ -410,6 +410,63 @@ Acknowledge these before suggesting additions:
    - Compromised dependencies
    - Auto-merge without review
 
+## Fleet / MDM review checklist
+
+Applies when the diff touches `fleet/` or
+`flux/manifests/04-apps/management/fleet/`. Profiles, policies, and
+enrollment config reach every enrolled endpoint with device-management
+authority. Review like an attacker who just got write access to the MDM tree.
+
+### Configuration profiles (`.mobileconfig`, DDM declarations)
+
+- Diff the payloads, not the filenames: does the profile do more than the
+  change claims (extra payload, re-enabled setting, renamed key)?
+- Payload injection — a "cosmetic" profile change that flips device security
+  settings (firewall, FileVault, password policy) is a finding, not a nit
+- `PayloadIdentifier` / `PayloadUUID` collisions across the repo: duplicates
+  fight each other on-device; grep the tree before accepting a new one
+- DDM declarations: validate structure against Apple's declaration reference —
+  "it parses" is not enough
+
+### Enrollment secrets
+
+- Enrollment secrets and SCEP/attestation challenge material arrive via
+  `$VARIABLE` substitution (`FLEET_*_ENROLL_SECRET` from 1Password) — never
+  committed, never in logs, CI output, or error text
+- Scoping: org-wide (`default.yml`) secrets are broader than fleet-scoped
+  (`fleets/home.yml`) — flag a global secret used where a fleet one fits
+
+### osquery policy SQL
+
+- Policies execute fleet-wide with elevated context — treat every `query:`
+  change as code review, not a config tweak
+- Does the table exist on the target platform (`darwin` / `linux` /
+  `windows`)? A policy that errors on one platform fails silently in
+  reporting
+- Wildcard `LIKE '%…'` traps: leading wildcards scan whole tables on every
+  host; over-broad matches bleed findings
+- Untrusted strings concatenated into SQL: parameterize or reject
+- Does the query pull sensitive host data (users, emails, serials, cert
+  material) beyond what the policy needs?
+
+### Certs / SCEP / attestation
+
+- No private keys or raw cert material in the tree, in logs, or in error text
+- Certificate payloads: chain validation, trust anchors — a self-signed or
+  unknown CA inside a profile is a finding
+- Attestation config (`apple_require_hardware_attestation`, SCEP fallback)
+  follows the enrollment-secret handling rules above
+
+### Vulnerability triage
+
+- Every CVE claim cross-checked against at least two independent sources
+  (NVD + vendor advisory/PSIRT; OSV/GHSA for ecosystems) — never one feed's
+  word for it
+- Source disagreement means the upstream data is wrong, not just our config;
+  name the disagreeing source in the finding
+- Systemic-vs-one-off: for each finding, state whether the class of issue
+  exists elsewhere in the tree — a class-level fix beats N point-fixes
+
 ## Tool Reference
 
 ### Snyk IaC Scan
