@@ -19,7 +19,7 @@ spec:
     # OnePasswordItem flux-operator-secrets (identity + known_hosts).
     # Do not use the bootstrap-created Secret named flux-system.
     pullSecret: "flux-operator-secrets"
-    interval: 1m
+    interval: 10m
   kustomize:
     patches:
       # Keep root sync orphan-safe (same contract as pre-cutover soften).

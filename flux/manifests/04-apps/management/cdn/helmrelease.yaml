@@ -56,7 +56,7 @@ spec:
             - --depth=1
             - --root=/git
             - --link=homelab
-            - --period=180s
+            - --period=600s
             # v4.7.1 default 0 exits on ANY sync failure; -1 retries
             # forever at --period, so a gitlab 429 storm degrades to
             # staleness instead of crash-looping the sidecar (nginx keeps
