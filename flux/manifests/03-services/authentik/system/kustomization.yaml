@@ -10,3 +10,4 @@ resources:
   - webauthn-mfa
   - terraform-service-account
   - kubernetes
+  - fleetdm

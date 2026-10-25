@@ -26,5 +26,8 @@ tier's shared substrate and must outlive any single unit.
 - `kubernetes/` — the kube-apiserver's OIDC issuer (`kubernetes-oidc-provider`,
   tier groups, scope mappings, hidden application, admins binding);
   adopt-only, byte-parity with the live provider row
+- `fleetdm/` — Fleet DM's SAML + SCIM stack (staff + MDM SAML providers,
+  SCIM backchannel + custom user mapping, both applications, admins
+  bindings); adopt-only, byte-parity with the live rows
 
 > **Navigation**: [← Back to Authentik README](../README.md)
