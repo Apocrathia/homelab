@@ -11,17 +11,9 @@ resources:
   - helmrelease.yaml
   - httproute.yaml
   - grafana/
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: authentik-blueprint-fleetdm
-    namespace: authentik
-    files:
-      - fleetdm.yaml=authentik-blueprint.yaml
-
-labels:
-  - includeSelectors: true
-    pairs:
-      authentik_blueprint: "true"
+# The Fleet DM authentik objects (both SAML providers, the SCIM
+# backchannel + custom mapping, both applications, admins bindings) are
+# tofu-managed now — the pair lives in
+# 03-services/authentik/system/fleetdm/ (the retired
+# authentik-blueprint-fleetdm CM stopped rendering with this migration
+# and the live objects survive for that Workspace to adopt).

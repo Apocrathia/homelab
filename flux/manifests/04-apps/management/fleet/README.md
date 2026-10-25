@@ -79,13 +79,13 @@ start; `fleet/default.yml` applies it via `$FLEET_GLOBAL_ENROLL_SECRET` in CI.
 
 ## Authentication
 
-Users authenticate with Authentik via SAML (`authentik-blueprint.yaml`). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
+Users authenticate with Authentik via SAML (tofu-managed in [`03-services/authentik/system/fleetdm/`](../../../03-services/authentik/system/fleetdm/)). Do not put Authentik proxy in front of Fleet — osquery/MDM agents must reach the API without an outpost.
 
 SSO settings live in `fleet/default.yml` under `org_settings.sso_settings` (applied by GitOps). IdP icon: `fleet/platforms/all/icons/authentik.svg`.
 
 With Premium, JIT user provisioning creates accounts on first SSO login (`enable_jit_provisioning: true`). JIT accounts default to Global Observer.
 
-Fleet syncs the SSO user's global role on **every** login from the SAML attribute `FLEET_JIT_USER_ROLE_GLOBAL` (accepted values: `admin`, `maintainer`, `observer`, `observer_plus`, `technician`). The blueprint's `Fleet DM Console Role` property mapping emits `admin` for members of the Authentik `admins` group; everyone else gets no attribute, so existing roles stay unchanged and new JIT accounts default to observer. Without this attribute, the first SSO login provisions a Global Observer account.
+Fleet syncs the SSO user's global role on **every** login from the SAML attribute `FLEET_JIT_USER_ROLE_GLOBAL` (accepted values: `admin`, `maintainer`, `observer`, `observer_plus`, `technician`). The tofu-managed `Fleet DM Console Role` property mapping emits `admin` for members of the Authentik `admins` group; everyone else gets no attribute, so existing roles stay unchanged and new JIT accounts default to observer. Without this attribute, the first SSO login provisions a Global Observer account.
 
 Fleet blocks outbound fetches to private IPs by default (SSRF). This cluster’s
 gateway hostnames resolve to RFC1918, so the HelmRelease sets
@@ -100,19 +100,19 @@ Optional: enable UI GitOps mode under **Settings → Integrations → Change man
 
 ### End-user authentication (device users)
 
-Device users authenticate with Authentik during setup (macOS Setup Assistant via ADE, Windows MDM, Linux Orbit enrollment). Fleet treats this as a **second SAML connection** with its own ACS URL (`/api/v1/fleet/mdm/sso/callback`); authentik allows one ACS URL per provider, so the blueprint defines a second SAML provider + application (`fleetdm-mdm`).
+Device users authenticate with Authentik during setup (macOS Setup Assistant via ADE, Windows MDM, Linux Orbit enrollment). Fleet treats this as a **second SAML connection** with its own ACS URL (`/api/v1/fleet/mdm/sso/callback`); authentik allows one ACS URL per provider, so the tofu unit defines a second SAML provider + application (`fleetdm-mdm`).
 
 - IdP settings: `fleet/default.yml` → `org_settings.mdm.end_user_authentication` (all-fleets, GitOps-applied)
 - Enable per fleet: `fleet/fleets/home.yml` → `controls.setup_experience.enable_end_user_authentication`
 - NameID (email) matches the SCIM `userName` mapping, so setup maps to SCIM users; the SAML `name` attribute feeds the local account's full name (`AccountConfiguration`)
 - Fleet pushes the updated enrollment profile (`configuration_web_url`) to Apple on the DEP sync (~1/min). Takes effect for devices that enroll **after** enabling — already-enrolled hosts are unaffected
-- The blueprint and this config land in the same MR. Fleet validates the GitOps YAML syntax only at apply time and fetches the IdP metadata when a device starts the setup flow — a missing Authentik app surfaces at device setup, not at apply
+- The tofu unit and this config land in the same MR. Fleet validates the GitOps YAML syntax only at apply time and fetches the IdP metadata when a device starts the setup flow — a missing Authentik app surfaces at device setup, not at apply
 
 ### SCIM (IdP vitals on hosts)
 
 Premium feature. Authentik pushes users/groups to Fleet over SCIM so hosts can show IdP full name, groups, and department ([Fleet guide](https://fleetdm.com/guides/foreign-vitals-map-idp-users-to-hosts#other-idps)). This is separate from SAML SSO — keep both.
 
-The blueprint creates `fleetdm-scim-provider` as a **backchannel** on the Fleet DM application, plus a trimmed user property mapping (Fleet's SCIM schema rejects Authentik's default extra attributes). Token is **not** in the blueprint.
+The tofu unit creates `fleetdm-scim-provider` as a **backchannel** on the Fleet DM application, plus a trimmed user property mapping (Fleet's SCIM schema rejects Authentik's default extra attributes). Token is **not** in the repo or tofu state — authentik's serializer keeps it write-only, so it stays UI-held.
 
 1. In Fleet, create an [API-only user](https://fleetdm.com/docs/using-fleet/fleetctl-cli#create-api-only-user) with **Maintainer** (access to `/scim/*`). Copy its API token.
 2. In Authentik: **Applications → Providers → fleetdm-scim-provider → Edit**. Paste the token into **Token**, save.
@@ -200,8 +200,8 @@ matches — Loki renames the line field to `component_extracted`.
 kubectl get pods -n fleet
 kubectl logs -n fleet deploy/fleet -f
 kubectl get secret -n fleet fleetdm-secrets
-kubectl get configmap -n authentik -l authentik_blueprint=true | grep fleetdm
-kubectl logs -n authentik deploy/authentik-server -c sidecar-blueprints --tail=50
+kubectl -n authentik get workspace fleetdm-authentik -o jsonpath='{.status.conditions}'
+kubectl logs -n crossplane-system -l pkg.crossplane.io/provider=upbound-provider-opentofu --tail=100 | grep fleetdm
 ```
 
 Health check path: `/healthz` (also used by the chart probes).
