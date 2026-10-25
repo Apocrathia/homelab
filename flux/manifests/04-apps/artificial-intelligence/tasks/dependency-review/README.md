@@ -1,6 +1,6 @@
 # dependency-review-sweep
 
-Agent sweep over open Renovate MRs every 6 hours (at :23 of hours 1, 7, 13, 19 UTC). Replaces manual triage:
+Agent sweep over open Renovate MRs every 6 hours (at :23 of hours 0, 6, 12, 18 UTC). Replaces manual triage:
 
 - deterministic runner (`src/facts.py`) collects upstream facts: release age
   (GitHub releases → tags → PyPI → Docker Hub/ghcr config dates), superseded

@@ -1,6 +1,6 @@
 # dependency-merge-sweep
 
-Second stage of the dependency-review pipeline. Runs at :47 every 6 hours (hours 1, 7, 13, 19 UTC), 24 minutes
+Second stage of the dependency-review pipeline. Runs at :47 every 6 hours (hours 0, 6, 12, 18 UTC), 24 minutes
 behind the [:23 review sweep](../dependency-review) (`git-agent`), and acts
 on its output:
 
