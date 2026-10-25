@@ -11,3 +11,4 @@ resources:
   - terraform-service-account
   - kubernetes
   - fleetdm
+  - authentik-brand

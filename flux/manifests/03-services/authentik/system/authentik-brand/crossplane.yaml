@@ -1,0 +1,43 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: authentik
+spec:
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: authentik-brand-authentik
+  namespace: authentik
+spec:
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: authentik
+        key: authentik-terraform-token
+  backendFile: |
+    secret_suffix     = "authentik-brand"
+    namespace         = "authentik"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: authentik-brand-authentik
+  namespace: authentik
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: authentik-brand-authentik
+  forProvider:
+    source: Inline
+    module: ""
