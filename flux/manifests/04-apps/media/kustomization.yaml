@@ -39,5 +39,6 @@ resources:
   - servers/jellyfin
   - servers/jellyfin-ai-upscaler
   - servers/komga
+  - servers/materialious
   - servers/restreamer
   - servers/tunarr

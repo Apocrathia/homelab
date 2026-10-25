@@ -1,0 +1,150 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: materialious
+  namespace: materialious
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.88"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: materialious
+      # renovate: datasource=docker depName=docker.io/wardpearce/materialious-full
+      image: docker.io/wardpearce/materialious-full:1.18.10@sha256:300a1194a1b6c1059bc5ededac502d77b7e69ff50dc2180de72621dff30ae05e
+      container:
+        name: materialious
+        port: 3000
+        env:
+          # Signs the built-in account system's cookies (min 16 chars)
+          - name: COOKIE_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: materialious-secrets
+                key: cookie-secret
+          # SQLite on the data PVC - no external database for this footprint
+          - name: DATABASE_CONNECTION_URI
+            value: "sqlite:///materialious-data/materialious.db"
+          # Built-in account system: users, subscriptions, history, settings
+          - name: PUBLIC_INTERNAL_AUTH
+            value: "true"
+          # Data/proxy endpoints require a logged-in session
+          - name: PUBLIC_REQUIRE_AUTH
+            value: "true"
+          # Bootstrap value: register the operator account, then flip to
+          # "false" so only existing users can log in
+          - name: PUBLIC_REGISTRATION_ALLOWED
+            value: "true"
+          # In-cluster Invidious service. Materialious fetches video data
+          # server-side through its built-in proxy; the public Invidious host
+          # is behind Authentik and would answer with a login page, not API
+          # JSON. Stream URLs inside the API responses stay absolute on the
+          # public Invidious domain (Invidious builds them from its domain
+          # config with local: true), so browser playback still transits
+          # https://invidious.gateway.services.apocrathia.com with the SSO
+          # session. Companion needs no public_url here: Invidious proxies
+          # video traffic itself (builtin_proxy).
+          - name: PUBLIC_DEFAULT_INVIDIOUS_INSTANCE
+            value: "http://invidious.invidious.svc.cluster.local"
+
+      replicas: 1
+
+      podAntiAffinity:
+        enabled: false # Single replica configuration
+
+      volumes:
+        emptyDir:
+          - name: tmp
+            mountPath: /tmp
+
+      volumeMounts:
+        - name: data
+          mountPath: /materialious-data
+
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 3000
+        portName: http
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 5Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/materialious-secrets"
+
+    authentik:
+      # No SSO: Materialious ships its own account system
+      # (PUBLIC_INTERNAL_AUTH); a proxy provider would double-auth users.
+      enabled: false
+
+    httproute:
+      enabled: true
+      hostname: materialious.gateway.services.apocrathia.com
+
+    # Gatus probe: "/" serves the app shell without a login redirect
+    gatus:
+      enabled: true
+      path: /
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
