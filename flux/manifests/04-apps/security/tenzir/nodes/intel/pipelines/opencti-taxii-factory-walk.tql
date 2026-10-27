@@ -16,7 +16,7 @@ cron "0 0 7 * * *" {
 where type == "indicator"
 stix::ocsf::normalize
 to_clickhouse table="ocsf.OSINT_Inventory_Info",
-  host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+  host="clickhouse-tenzir.tenzir.svc.cluster.local",
   port=9000,
   user="tenzir",
   password=secret("clickhouse-password"),

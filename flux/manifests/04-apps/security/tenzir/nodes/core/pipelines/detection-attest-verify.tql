@@ -50,7 +50,7 @@
 // recompute match what the archive leg stamped.
 every 1h {
   from_clickhouse table="ocsf.API_Activity",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
@@ -58,7 +58,7 @@ every 1h {
   where time > now() - 24h
   merge {
     from_clickhouse table="ocsf.Authentication",
-      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -67,7 +67,7 @@ every 1h {
   }
   merge {
     from_clickhouse table="ocsf.Account_Change",
-      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -76,7 +76,7 @@ every 1h {
   }
   merge {
     from_clickhouse table="ocsf.Detection_Finding",
-      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -85,7 +85,7 @@ every 1h {
   }
   merge {
     from_clickhouse table="ocsf.Vulnerability_Finding",
-      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -94,7 +94,7 @@ every 1h {
   }
   merge {
     from_clickhouse table="ocsf.Base_Event",
-      host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+      host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -113,7 +113,7 @@ every 1h {
   ocsf_derive
   ocsf_cast
   to_clickhouse table="ocsf.Detection_Finding",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),

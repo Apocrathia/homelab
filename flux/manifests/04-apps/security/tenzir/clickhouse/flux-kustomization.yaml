@@ -17,7 +17,12 @@ spec:
   # / services-chaos-mesh-experiments / services-renovate-operator-config).
   dependsOn:
     - name: services-clickhouse
-    # OnePasswordItem CRD + operator (secret.yaml).
-    - name: bootstrap-1password
+    # The CRs live in the tenzir namespace; apps-security owns the
+    # namespace and renders the clickhouse-secrets / tenzir-secrets
+    # OnePasswordItems the CHI consumes (tenzir/secret.yaml - the CR
+    # layer's own secret.yaml is gone since the store relocated; one
+    # render per item). apps-security gates on bootstrap-1password
+    # itself.
+    - name: apps-security
     # Both CRs provision Longhorn PVCs.
     - name: infrastructure-longhorn

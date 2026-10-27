@@ -4,10 +4,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
   name: clickhouse-cluster
-  namespace: clickhouse
+  namespace: tenzir
 
 resources:
-  - secret.yaml
   - keeper.yaml
   - cluster.yaml
 
@@ -23,7 +22,7 @@ generatorOptions:
 # kustomize).
 configMapGenerator:
   - name: tenzir-clickhouse-config
-    namespace: clickhouse
+    namespace: tenzir
     files:
       - 00-storage-tiered.xml=config/00-storage-tiered.xml
       - 10-startup-scripts.xml=config/10-startup-scripts.xml

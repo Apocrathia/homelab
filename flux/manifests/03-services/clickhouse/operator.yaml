@@ -28,9 +28,15 @@ spec:
     # ClickHouseKeeperInstallation (keeper.yaml) CRs. watchNamespaces feeds
     # the operator's config.yaml watch.namespaces.include; empty would also
     # watch the operator's own namespace, but the explicit list documents
-    # the blast radius: this operator manages clickhouse only.
+    # the blast radius. tenzir: the CHI/CKI store relocated there from the
+    # clickhouse namespace (2026-10-27). clickhouse stays: it is the
+    # operator's own namespace and the finalizer path for the old CRs
+    # pruned out of it by the relocation - the operator only finalizes
+    # deletions in namespaces it watches (verified against chart 0.27.4:
+    # namespaced include-list watch, cluster-wide RBAC by default).
     watchNamespaces:
       - clickhouse
+      - tenzir
 
     # CRDs (ClickHouseInstallation, ClickHouseInstallationTemplate,
     # ClickHouseOperatorConfiguration, ClickHouseKeeperInstallation) are

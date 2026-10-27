@@ -2,7 +2,7 @@
 # ClickHouse OCSF query store datasource (rollout plan MR-2,
 # docs/plans/clickhouse-rollout.md). Talks to the Altinity operator
 # service `clickhouse-tenzir` (CR-level Service, load-balanced across the
-# 1x3 replica cluster in clickhouse) through the
+# 1x3 replica cluster in tenzir) through the
 # grafana-clickhouse-datasource plugin's default native protocol.
 # Provisioning schema verified against the pinned plugin tag v4.20.0
 # (docs/sources/configure.md + pkg/plugin/settings.go): jsonData
@@ -29,9 +29,9 @@ spec:
   # grafana-secrets 1Password item (vaults/Secrets/items/grafana-secrets)
   # via the operator valuesFrom mechanism - git holds only the ${...}
   # field-name placeholders, never values. The password value must match
-  # the `clickhouse-grafana-password` field on the tenzir-secrets item
-  # (chi.yaml grafana user in clickhouse); the username is the
-  # same `grafana` user chi.yaml defines.
+  # the `clickhouse-grafana-password` field on the clickhouse-secrets item
+  # (the cluster.yaml grafana user in tenzir); the username is the
+  # same `grafana` user cluster.yaml defines.
   valuesFrom:
     - targetPath: "jsonData.username"
       valueFrom:
@@ -51,7 +51,7 @@ spec:
     jsonData:
       # Native TCP 9000 is the plugin default (http/8123 is the plugin's
       # alternative; the CR-level service exposes both).
-      host: clickhouse-tenzir.clickhouse.svc.cluster.local
+      host: clickhouse-tenzir.tenzir.svc.cluster.local
       port: 9000
       protocol: native
       username: "${clickhouse-grafana-user}"

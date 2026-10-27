@@ -21,7 +21,10 @@
              README in this directory).
 
              TTL (operator-tunable):
-               - 90 DAY TO VOLUME 'cold': move parts to the rustfs tier
+               - 7 DAY TO VOLUME 'cold': move parts to the rustfs tier
+                 (was 90 DAY until 2026-10-27; the relocation wipe
+                 re-created every table with the 7-day window - no
+                 live ALTERs needed for that cutover)
                - 400 DAY DELETE: retention horizon cap (change it here,
                  then ALTER per-table server-side for already-created
                  tables).
@@ -96,7 +99,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -115,7 +118,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -134,7 +137,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -153,7 +156,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -171,7 +174,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -195,7 +198,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -212,7 +215,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -231,7 +234,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -250,7 +253,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -271,7 +274,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <!-- OSINT inventory lookup table (tenzir/nodes/intel +
@@ -336,7 +339,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
 PARTITION BY toDate(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 90 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <!-- Fleet asset inventory (tenzir/nodes/enrichment/,

@@ -47,7 +47,7 @@ every 1h {
     last_seen: time(seen_time?),
   }
   to_clickhouse table="ocsf.fleet_assets",
-                host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
                 port=9000,
                 user="tenzir",
                 password=secret("clickhouse-password"),

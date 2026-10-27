@@ -46,7 +46,7 @@
 //   into the lake, append-only discipline intact.
 every 1h {
   from_clickhouse table="investigations.records",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="investigations-reader",
     password=secret("investigations-reader-password"),
@@ -58,7 +58,7 @@ every 1h {
   ocsf_derive
   ocsf_cast
   to_clickhouse table="ocsf.Detection_Finding",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
