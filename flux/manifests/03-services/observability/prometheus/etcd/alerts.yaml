@@ -56,15 +56,6 @@ spec:
             summary: "etcd high memory usage"
             description: "etcd memory usage is {{ $value | humanizePercentage }} of quota limit"
 
-        - alert: EtcdTooManyOpenConnections
-          expr: etcd_network_peer_sent_bytes_total > 1000000000
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "etcd high network traffic"
-            description: "etcd network traffic is {{ $value | humanize }} bytes/s"
-
     - name: etcd.availability
       rules:
         - alert: EtcdClusterDown

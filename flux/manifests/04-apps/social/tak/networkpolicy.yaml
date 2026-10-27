@@ -43,6 +43,17 @@ spec:
               protocol: TCP
             - port: "9300"
               protocol: TCP
+    # Prometheus scrapes the authentik-managed outpost metrics Service
+    # (ak-outpost-tak-ldap-outpost-metrics :9300). Scoped to the prometheus
+    # statefulset pods only; the LDAP ports above stay tak-namespace-only.
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: prometheus-system
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "9300"
+              protocol: TCP
 ---
 # App pod ingress: the WebUI (nginx :80) is reachable from the authentik
 # proxy outpost (dials the ClusterIP Service directly), gatus (/health
