@@ -101,12 +101,14 @@ variable "import_binding_admins_pk" {
 
 # Application — retired-blueprint parity; every attribute matches the
 # live authentik_core_application row (field-by-field in the witness
-# sheet).
+# sheet) EXCEPT meta_launch_url: repointed 2026-10-26 from the retired
+# controller (unifi.apocrathia.com) to the production UOS Server on the
+# unifi-os NUC.
 resource "authentik_application" "app" {
   name            = "UniFi Network"
   slug            = "unifi-network"
   group           = "Infrastructure"
-  meta_launch_url = "https://unifi.apocrathia.com/network"
+  meta_launch_url = "https://unifi-os.management.apocrathia.com/"
   open_in_new_tab = true
 
   # Optional metadata: null = attribute omitted — the config must not

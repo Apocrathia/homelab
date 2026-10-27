@@ -34,7 +34,7 @@ spec:
           tag: "0.10.13"
         env:
           - name: UNIFI_HOST
-            value: "https://unifi.apocrathia.com"
+            value: "https://unifi-os.management.apocrathia.com"
           - name: UNIFI_API_KEY
             valueFrom:
               secretKeyRef:

@@ -37,7 +37,7 @@ spec:
           - name: UP_UNIFI_DYNAMIC
             value: "false"
           - name: UP_UNIFI_DEFAULT_URL
-            value: "https://unifi.apocrathia.com"
+            value: "https://unifi-os.management.apocrathia.com"
           - name: UP_UNIFI_DEFAULT_USER
             valueFrom:
               secretKeyRef:

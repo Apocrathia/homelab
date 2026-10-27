@@ -76,7 +76,7 @@ spec:
                 - name: PYTHONPATH
                   value: "/deps"
                 - name: UNIFI_URL
-                  value: "https://unifi.apocrathia.com"
+                  value: "https://unifi-os.management.apocrathia.com"
                 - name: UNIFI_SITE
                   value: "default"
                 - name: UNIFI_VERIFY_SSL
