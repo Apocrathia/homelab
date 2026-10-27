@@ -89,8 +89,8 @@ spec:
     # Strict posture: read-only tool calls allowed, mutating calls need
     # pre-configured permission. Headless deployment - no interactive
     # approvals, so mutating calls are denied until explicitly granted.
-    # mecak8s 0.0.38 has no posture value (schema rejects it) and hard-codes
-    # --posture=auto in the template; extraArgs renders after the modeled
-    # flags, so --posture=strict overrides it.
-    extraArgs:
-      - --posture=strict
+    # mecak8s 0.0.50 owns the permission mode: it renders
+    # --permission-mode=<permissionMode> and hard-fails any extraArgs entry
+    # that sets --posture. The chart's migration maps --posture=strict to
+    # permissionMode: default.
+    permissionMode: default
