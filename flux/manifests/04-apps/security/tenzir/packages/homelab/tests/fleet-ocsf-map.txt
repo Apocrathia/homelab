@@ -1,14 +1,11 @@
 {
-  activity_id: 0,
-  activity_name: "Unknown",
-  category_name: "Uncategorized",
-  category_uid: 0,
-  class_name: "Base Event",
-  class_uid: 0,
+  severity_id: 1,
+  time: 2025-10-09T09:00:00Z,
   device: {
     hostname: "F2C1B0A1-1111-2222-3333-444455556666",
   },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "fleet",
       vendor_name: "fleetdm",
@@ -16,12 +13,10 @@
     profiles: [
       "host",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
-  severity_id: 1,
-  time: 2025-10-09T09:00:00Z,
-  type_name: "Base Event: Unknown",
+  category_uid: 0,
+  class_uid: 0,
+  activity_id: 0,
   type_uid: 0,
   unmapped: {
     query: "siem result-path validation",
@@ -36,18 +31,20 @@
     ],
     calendar_time: null,
   },
-}
-{
-  activity_id: 0,
   activity_name: "Unknown",
   category_name: "Uncategorized",
-  category_uid: 0,
   class_name: "Base Event",
-  class_uid: 0,
+  severity: "Informational",
+  type_name: "Base Event: Unknown",
+}
+{
+  severity_id: 1,
+  time: 2025-10-09T08:54:00Z,
   device: {
     hostname: "F2C1B0A1-1111-2222-3333-444455556666",
   },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "fleet",
       vendor_name: "fleetdm",
@@ -55,12 +52,10 @@
     profiles: [
       "host",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
-  severity_id: 1,
-  time: 2025-10-09T08:54:00Z,
-  type_name: "Base Event: Unknown",
+  category_uid: 0,
+  class_uid: 0,
+  activity_id: 0,
   type_uid: 0,
   unmapped: {
     query: "listening-ports",
@@ -73,4 +68,9 @@
     snapshot: null,
     calendar_time: "Fri Oct 10 16:00:40 2026 UTC",
   },
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  class_name: "Base Event",
+  severity: "Informational",
+  type_name: "Base Event: Unknown",
 }

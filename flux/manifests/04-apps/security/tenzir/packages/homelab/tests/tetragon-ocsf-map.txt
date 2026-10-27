@@ -1,126 +1,93 @@
 {
-  activity_id: 1,
-  activity_name: "Launch",
-  category_name: "System Activity",
-  category_uid: 1,
-  class_name: "Process Activity",
-  class_uid: 1007,
-  device: {
-    hostname: "talos-01",
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
     },
-    version: "1.9.0",
   },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 1,
   process: {
-    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
-    created_time: 2026-10-10T05:05:32.825311267Z,
-    file: {
-      path: "/usr/bin/runc",
-    },
-    parent_process: {
-      cmd_line: "/usr/bin/containerd-shim-runc-v2 -namespace k8s.io -id 1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205 -address /run/containerd/containerd.sock",
-      path: "/usr/bin/containerd-shim-runc-v2",
-      pid: 112991,
-    },
-    path: "/usr/bin/runc",
     pid: 13053,
     tid: 13053,
     uid: "0",
+    path: "/usr/bin/runc",
+    file: {
+      path: "/usr/bin/runc",
+    },
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
     working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+    created_time: 2026-10-10T05:05:32.825311267Z,
+    parent_process: {
+      pid: 112991,
+      path: "/usr/bin/containerd-shim-runc-v2",
+      cmd_line: "/usr/bin/containerd-shim-runc-v2 -namespace k8s.io -id 1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205 -address /run/containerd/containerd.sock",
+    },
   },
-  severity: "Informational",
-  severity_id: 1,
   time: 2026-10-10T05:05:32.825311158Z,
-  type_name: "Process Activity: Launch",
+  device: {
+    hostname: "talos-01",
+  },
   type_uid: 100701,
   unmapped: {
     pod: {},
   },
+  activity_name: "Launch",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Launch",
 }
 {
-  activity_id: 2,
-  activity_name: "Terminate",
-  category_name: "System Activity",
-  category_uid: 1,
-  class_name: "Process Activity",
-  class_uid: 1007,
-  device: {
-    hostname: "talos-01",
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
     },
-    version: "1.9.0",
   },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 2,
   process: {
-    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
-    created_time: 2026-10-10T05:05:32.835863804Z,
+    pid: 13062,
+    tid: 13062,
+    uid: "0",
+    path: "/usr/bin/runc",
     file: {
       path: "/usr/bin/runc",
     },
-    parent_process: {
-      cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
-      path: "/usr/bin/runc",
-      pid: 13053,
-    },
-    path: "/usr/bin/runc",
-    pid: 13062,
-    terminated_time: 2026-10-10T05:05:32.835907827Z,
-    tid: 13062,
-    uid: "0",
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
     working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+    created_time: 2026-10-10T05:05:32.835863804Z,
+    terminated_time: 2026-10-10T05:05:32.835907827Z,
+    parent_process: {
+      pid: 13053,
+      path: "/usr/bin/runc",
+      cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    },
   },
-  severity: "Informational",
-  severity_id: 1,
   time: 2026-10-10T05:05:32.835907496Z,
-  type_name: "Process Activity: Terminate",
+  device: {
+    hostname: "talos-01",
+  },
   type_uid: 100702,
   unmapped: {
     pod: {},
   },
+  activity_name: "Terminate",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Terminate",
 }
 {
-  activity_id: 2,
-  activity_name: "Read",
-  actor: {
-    process: {
-      cmd_line: "/usr/bin/pg_isready /usr/bin/pg_isready -U postgres",
-      container: {
-        image: {
-          name: "sha256:5a3c572cc9438c721c851f37447c662d56da8064af92069120554581134802c0",
-          uid: "ghcr.io/firecrawl/nuq-postgres@sha256:a582bc385702f3a93cafe2d8c749d55b6676e7c2761e94923113badf7af4b54f",
-        },
-        name: "postgres",
-        uid: "2606b2c72f5cd153fe1e23c3143a2ea8544049f5197142a491b4402c88197ec3",
-      },
-      parent_process: {
-        path: "/usr/bin/containerd-shim-runc-v2",
-        pid: 107169,
-      },
-      path: "/usr/bin/pg_isready",
-      pid: 13560,
-    },
-  },
-  category_name: "System Activity",
-  category_uid: 1,
-  class_name: "File System Activity",
-  class_uid: 1001,
-  device: {
-    hostname: "talos-01",
-  },
-  file: {
-    path: "/etc/shadow",
-    xattributes: {
-      permission: "-rw-r-----",
-    },
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
@@ -128,12 +95,40 @@
     profiles: [
       "container",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
   severity_id: 1,
+  category_uid: 1,
+  class_uid: 1001,
+  activity_id: 2,
+  file: {
+    path: "/etc/shadow",
+    xattributes: {
+      permission: "-rw-r-----",
+    },
+  },
+  actor: {
+    process: {
+      pid: 13560,
+      path: "/usr/bin/pg_isready",
+      cmd_line: "/usr/bin/pg_isready /usr/bin/pg_isready -U postgres",
+      parent_process: {
+        pid: 107169,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "2606b2c72f5cd153fe1e23c3143a2ea8544049f5197142a491b4402c88197ec3",
+        name: "postgres",
+        image: {
+          uid: "ghcr.io/firecrawl/nuq-postgres@sha256:a582bc385702f3a93cafe2d8c749d55b6676e7c2761e94923113badf7af4b54f",
+          name: "sha256:5a3c572cc9438c721c851f37447c662d56da8064af92069120554581134802c0",
+        },
+      },
+    },
+  },
   time: 2026-10-10T05:05:37.401589830Z,
-  type_name: "File System Activity: Read",
+  device: {
+    hostname: "talos-01",
+  },
   type_uid: 100102,
   unmapped: {
     pod: {
@@ -142,37 +137,15 @@
     },
     policy_name: "secret-file-access",
   },
+  activity_name: "Read",
+  category_name: "System Activity",
+  class_name: "File System Activity",
+  severity: "Informational",
+  type_name: "File System Activity: Read",
 }
 {
-  activity_id: 0,
-  activity_name: "Unknown",
-  actor: {
-    process: {
-      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
-      container: {
-        image: {
-          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
-          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
-        },
-        name: "longhorn-manager",
-        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
-      },
-      parent_process: {
-        path: "/usr/bin/containerd-shim-runc-v2",
-        pid: 111600,
-      },
-      path: "/usr/local/sbin/longhorn-manager",
-      pid: 113625,
-    },
-  },
-  category_name: "System Activity",
-  category_uid: 1,
-  class_name: "Process Activity",
-  class_uid: 1007,
-  device: {
-    hostname: "talos-01",
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
@@ -180,12 +153,34 @@
     profiles: [
       "container",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
   severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 0,
+  actor: {
+    process: {
+      pid: 113625,
+      path: "/usr/local/sbin/longhorn-manager",
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      parent_process: {
+        pid: 111600,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+        name: "longhorn-manager",
+        image: {
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+        },
+      },
+    },
+  },
   time: 2026-10-10T05:05:34.891317436Z,
-  type_name: "Process Activity: Unknown",
+  device: {
+    hostname: "talos-01",
+  },
   type_uid: 100700,
   unmapped: {
     pod: {
@@ -194,41 +189,15 @@
     },
     policy_name: "container-escape-namespace-access",
   },
+  activity_name: "Unknown",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Unknown",
 }
 {
-  activity_id: 1,
-  activity_name: "Open",
-  actor: {
-    process: {
-      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
-      container: {
-        image: {
-          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
-          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
-        },
-        name: "longhorn-manager",
-        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
-      },
-      parent_process: {
-        path: "/usr/bin/containerd-shim-runc-v2",
-        pid: 111600,
-      },
-      path: "/usr/local/sbin/longhorn-manager",
-      pid: 113625,
-    },
-  },
-  category_name: "Network Activity",
-  category_uid: 4,
-  class_name: "Network Activity",
-  class_uid: 4001,
-  device: {
-    hostname: "talos-03",
-  },
-  dst_endpoint: {
-    ip: 8.8.8.8,
-    port: 443,
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
@@ -237,16 +206,42 @@
       "host",
       "container",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
   severity_id: 1,
+  category_uid: 4,
+  class_uid: 4001,
+  activity_id: 1,
   src_endpoint: {
     ip: 10.42.2.15,
     port: 40123,
   },
+  dst_endpoint: {
+    ip: 8.8.8.8,
+    port: 443,
+  },
+  actor: {
+    process: {
+      pid: 113625,
+      path: "/usr/local/sbin/longhorn-manager",
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      parent_process: {
+        pid: 111600,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+        name: "longhorn-manager",
+        image: {
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+        },
+      },
+    },
+  },
   time: 2026-10-10T05:05:40.825311158Z,
-  type_name: "Network Activity: Open",
+  device: {
+    hostname: "talos-03",
+  },
   type_uid: 400101,
   unmapped: {
     pod: {
@@ -255,18 +250,15 @@
     },
     policy_name: "monitor-network-activity-outside-cluster-cidr-range",
   },
+  activity_name: "Open",
+  category_name: "Network Activity",
+  class_name: "Network Activity",
+  severity: "Informational",
+  type_name: "Network Activity: Open",
 }
 {
-  activity_id: 0,
-  activity_name: "Unknown",
-  category_name: "Uncategorized",
-  category_uid: 0,
-  class_name: "Base Event",
-  class_uid: 0,
-  device: {
-    hostname: "talos-04",
-  },
   metadata: {
+    version: "1.9.0",
     product: {
       name: "tetragon",
       vendor_name: "cilium",
@@ -274,14 +266,22 @@
     profiles: [
       "host",
     ],
-    version: "1.9.0",
   },
-  severity: "Informational",
   severity_id: 1,
+  category_uid: 0,
+  class_uid: 0,
+  activity_id: 0,
   time: 2026-10-10T05:05:41.825311158Z,
-  type_name: "Base Event: Unknown",
+  device: {
+    hostname: "talos-04",
+  },
   type_uid: 0,
   unmapped: {
     pod: {},
   },
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  class_name: "Base Event",
+  severity: "Informational",
+  type_name: "Base Event: Unknown",
 }

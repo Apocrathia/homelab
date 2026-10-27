@@ -62,8 +62,9 @@ through the platform.
   indicator collection, normalizes it to OCSF 5021, and appends it to
   the ClickHouse OCSF store, from where the core node's
   opencti-osint-loader pulls the table into its node-local
-  `ocsf-osint` context; the node alone runs the rc engine
-  (`v6.20.0-rc.3`, GA bump via renovate).
+  `ocsf-osint` context; the node ran the rc engine
+  (`v6.20.0-rc.3`) ahead of GA to land the factory row early — the
+  whole fleet runs `v6.20.0` since the 2026-10-26 GA bump.
 
 ## Detection plane
 

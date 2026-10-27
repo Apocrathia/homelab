@@ -149,7 +149,7 @@ need a pod restart.
 ### Running the package tests
 
 ```sh
-TENZIR_BINARY="uvx tenzir@6.19.1" \
+TENZIR_BINARY="uvx tenzir@6.20.0" \
   uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 

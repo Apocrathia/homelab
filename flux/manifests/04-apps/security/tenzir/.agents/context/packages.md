@@ -31,7 +31,7 @@ output as tenzir-test baselines — `<name>.input` / `<name>.tql` /
 `<name>.txt` triplets. Run from the repo root:
 
 ```sh
-TENZIR_BINARY="uvx tenzir@6.19.1" \
+TENZIR_BINARY="uvx tenzir@6.20.0" \
   uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 

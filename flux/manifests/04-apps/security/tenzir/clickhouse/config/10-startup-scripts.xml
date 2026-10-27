@@ -279,9 +279,9 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              intel node's opencti-taxii-factory-walk / -poll pair
              appends the OpenCTI TAXII collection's current
              state on every walk (daily full walk +
-             added_after polls; the node runs the 6.20-rc
-             engine for the vendored stix package's fetch
-             operator while the fleet stays on 6.19.1), so
+             added_after polls; the vendored stix package's
+             fetch operator needs the 6.20 engine line the
+             whole fleet runs since the GA bump), so
              the table accumulates per-walk snapshots
              rather than unique rows; the loader reads them
              back sorted by time (the indicator's STIX

@@ -1,33 +1,27 @@
 {
-  "activity_id": 1,
-  "activity_name": "Create",
-  "category_name": "Findings",
-  "category_uid": 2,
-  "class_name": "Detection Finding",
-  "class_uid": 2004,
-  "finding_info": {
-    "created_time": "2026-10-17T08:00:00Z",
-    "desc": "fingerprint_mismatch on record core-det-audit-a2 of chain tenzir-node-core",
-    "title": "Detection record chain break",
-    "uid": "detection-attest-tenzir-node-core"
-  },
   "metadata": {
+    "uid": "attest-break-tenzir-node-core-core-det-audit-a2",
+    "version": "1.9.0",
     "correlation_uid": "tenzir-node-core",
     "product": {
       "name": "homelab-detection",
       "vendor_name": "apocrathia",
       "version": "0.1.0"
-    },
-    "uid": "attest-break-tenzir-node-core-core-det-audit-a2",
-    "version": "1.9.0"
+    }
   },
-  "severity": "High",
-  "severity_id": 4,
-  "status": "New",
-  "status_id": 1,
   "time": "2026-10-17T11:30:00Z",
-  "type_name": "Detection Finding: Create",
+  "category_uid": 2,
+  "class_uid": 2004,
+  "activity_id": 1,
+  "severity_id": 4,
+  "status_id": 1,
   "type_uid": 200401,
+  "finding_info": {
+    "uid": "detection-attest-tenzir-node-core",
+    "title": "Detection record chain break",
+    "created_time": "2026-10-17T08:00:00Z",
+    "desc": "fingerprint_mismatch on record core-det-audit-a2 of chain tenzir-node-core"
+  },
   "unmapped": {
     "break": "fingerprint_mismatch",
     "chain_uid": "tenzir-node-core",
@@ -37,38 +31,38 @@
     "computed_fingerprint": "622aade286899c5cbe572de56a438b9202541e37bd5e003d12719f45e19a7f3f",
     "prev_event_fingerprint": "8cb7ab50eae86b96bda7667932334c82ac6e995dcf808c72368bec517902df4b",
     "predecessor_fingerprint": null
-  }
-}
-{
-  "activity_id": 1,
+  },
   "activity_name": "Create",
   "category_name": "Findings",
-  "category_uid": 2,
   "class_name": "Detection Finding",
-  "class_uid": 2004,
-  "finding_info": {
-    "created_time": "2026-10-17T09:05:00Z",
-    "desc": "chain_link_mismatch on record core-det-audit-b of chain tenzir-node-core",
-    "title": "Detection record chain break",
-    "uid": "detection-attest-tenzir-node-core"
-  },
+  "severity": "High",
+  "status": "New",
+  "type_name": "Detection Finding: Create"
+}
+{
   "metadata": {
+    "uid": "attest-break-tenzir-node-core-core-det-audit-b",
+    "version": "1.9.0",
     "correlation_uid": "tenzir-node-core",
     "product": {
       "name": "homelab-detection",
       "vendor_name": "apocrathia",
       "version": "0.1.0"
-    },
-    "uid": "attest-break-tenzir-node-core-core-det-audit-b",
-    "version": "1.9.0"
+    }
   },
-  "severity": "High",
-  "severity_id": 4,
-  "status": "New",
-  "status_id": 1,
   "time": "2026-10-17T11:30:00Z",
-  "type_name": "Detection Finding: Create",
+  "category_uid": 2,
+  "class_uid": 2004,
+  "activity_id": 1,
+  "severity_id": 4,
+  "status_id": 1,
   "type_uid": 200401,
+  "finding_info": {
+    "uid": "detection-attest-tenzir-node-core",
+    "title": "Detection record chain break",
+    "created_time": "2026-10-17T09:05:00Z",
+    "desc": "chain_link_mismatch on record core-det-audit-b of chain tenzir-node-core"
+  },
   "unmapped": {
     "break": "chain_link_mismatch",
     "chain_uid": "tenzir-node-core",
@@ -78,5 +72,11 @@
     "computed_fingerprint": "d1850ba6e8e8b05a3e373cd79686316e0461d7037a9da4eac9b993920cb62aa9",
     "prev_event_fingerprint": "c1761f6ead1a3793a04e2db22925b4f0671beb9df17ddb13d3aec807ff9ffc8e",
     "predecessor_fingerprint": "e2c2484f0d62f0f1287ad2ebbb745e15d28d874450bf1c9ecfa9ffc78522255e"
-  }
+  },
+  "activity_name": "Create",
+  "category_name": "Findings",
+  "class_name": "Detection Finding",
+  "severity": "High",
+  "status": "New",
+  "type_name": "Detection Finding: Create"
 }

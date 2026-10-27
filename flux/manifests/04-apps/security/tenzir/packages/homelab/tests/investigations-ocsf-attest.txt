@@ -1,23 +1,13 @@
 {
-  activity_id: 1,
-  activity_name: "Create",
+  desc: "case lifecycle with pinned identity for chain-walk fixtures",
+  severity_id: 3,
   assignee: {
     name: "hermes-agent",
   },
-  category_name: "Findings",
-  category_uid: 2,
-  class_name: "Incident Finding",
-  class_uid: 2005,
-  desc: "case lifecycle with pinned identity for chain-walk fixtures",
-  finding_info_list: [
-    {
-      created_time: 2026-10-17T09:00:00Z,
-      related_events: null,
-      title: "Attest chain probe",
-      uid: "case-attest-1",
-    },
-  ],
+  time: 2026-10-17T09:00:00Z,
   metadata: {
+    uid: "case-attest-1-open",
+    version: "1.9.0",
     correlation_uid: "case-attest-1",
     product: {
       name: "homelab-investigations",
@@ -28,16 +18,26 @@
       "incident",
       "record_integrity",
     ],
-    uid: "case-attest-1-open",
-    version: "1.9.0",
   },
-  severity: "Medium",
-  severity_id: 3,
-  status: "New",
+  category_uid: 2,
+  class_uid: 2005,
+  activity_id: 1,
   status_id: 1,
-  time: 2026-10-17T09:00:00Z,
-  type_name: "Incident Finding: Create",
+  finding_info_list: [
+    {
+      uid: "case-attest-1",
+      title: "Attest chain probe",
+      created_time: 2026-10-17T09:00:00Z,
+      related_events: null,
+    },
+  ],
   type_uid: 200501,
+  activity_name: "Create",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Medium",
+  status: "New",
+  type_name: "Incident Finding: Create",
   attestation_list: [
     {
       authority_uid: "tenzir-node-investigations",
@@ -53,125 +53,235 @@
   ],
 }
 {
-  activity_id: 4,
-  activity_name: "Query",
-  actor: {
-    application: {
-      name: "homelab-investigations",
-    },
-  },
-  ai_agent: {
-    ai_model: {
-      name: "claude-sonnet-4-5",
-    },
-    instance_uid: "run-20261017-9",
+  desc: "same content, different envelope key order",
+  severity_id: 2,
+  assignee: {
     name: "hermes-agent",
-    type: "Native",
-    type_id: 1,
-    uid: "hermes-agent",
   },
-  category_name: "Application Activity",
-  category_uid: 6,
-  class_name: "Datastore Activity",
-  class_uid: 6005,
-  database: {
-    name: "ocsf",
-  },
-  delegation: {
-    uid: "del-operator-hermes",
-  },
-  message_context: {
-    ai_role: "Tool",
-    ai_role_id: 3,
-    name: "case-attest-1 pin",
-    prompt_text: "pin the auth history for svc-backup around 08:50Z",
-  },
+  time: 2026-10-17T09:00:00Z,
   metadata: {
-    correlation_uid: "case-attest-1",
+    uid: "case-attest-2-open",
+    version: "1.9.0",
+    correlation_uid: "case-attest-2",
     product: {
       name: "homelab-investigations",
       vendor_name: "apocrathia",
       version: "0.1.0",
     },
     profiles: [
-      "ai_operation",
+      "incident",
       "record_integrity",
     ],
-    uid: "case-attest-1-evidence",
-    version: "1.9.0",
   },
-  observables: [
+  category_uid: 2,
+  class_uid: 2005,
+  activity_id: 1,
+  status_id: 1,
+  finding_info_list: [
     {
-      event_uid: "ev-lake-77c1",
-      name: "src_endpoint.ip",
-      type: "IP Address",
-      type_id: 2,
-      value: "203.0.113.9",
+      uid: "case-attest-2",
+      title: "Determinism probe",
+      created_time: 2026-10-17T09:00:00Z,
+      related_events: null,
     },
   ],
-  query_info: {
-    data: [
-      {
-        time: 2026-10-17T08:51:23Z,
-        "src_endpoint.ip": 203.0.113.9,
-        status_id: 2,
-      },
-    ],
-    query_string: "SELECT time, src_endpoint.ip, status_id FROM ocsf.Authentication WHERE actor.user.name = 'svc-backup' AND time > now() - INTERVAL 2 DAY ORDER BY time LIMIT 100",
-  },
-  severity: "Informational",
-  severity_id: 1,
-  src_endpoint: {
-    hostname: "tenzir-node-investigations",
-  },
-  table: {
-    name: "Authentication",
-  },
-  time: 2026-10-17T09:05:00Z,
-  type_name: "Datastore Activity: Query",
-  type_uid: 600504,
+  type_uid: 200501,
+  activity_name: "Create",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Low",
+  status: "New",
+  type_name: "Incident Finding: Create",
   attestation_list: [
     {
       authority_uid: "tenzir-node-investigations",
-      chain_uid: "case-attest-1",
-      prev_event: {
-        uid: "case-attest-1-open",
-        type_uid: 200501,
-        fingerprint: {
-          algorithm_id: 3,
-          encoding_id: 1,
-          serialization_id: 99,
-          serialization: "tenzir-sorted-json",
-          value: "b5cacf1b0a02224a8833d850138f621ad04a68513fd74866329733787112d7b6",
-        },
-      },
+      chain_uid: "case-attest-2",
       fingerprint: {
         algorithm_id: 3,
         encoding_id: 1,
         serialization_id: 99,
         serialization: "tenzir-sorted-json",
-        value: "459aa99b6aea30f55826de64447d40cec34cf57e972a1bfef6073073ad8dce41",
+        value: "3dc0f7b0c34631b6c9ab8bde1a360557f3263dcf8ae7ad19bd40c64a00ae7f71",
       },
     },
   ],
 }
 {
-  activity_id: 3,
-  activity_name: "Close",
+  time: 2026-10-17T09:00:00Z,
   assignee: {
     name: "hermes-agent",
   },
-  category_name: "Findings",
+  severity_id: 2,
+  desc: "same content, different envelope key order",
+  metadata: {
+    uid: "case-attest-2-open",
+    version: "1.9.0",
+    correlation_uid: "case-attest-2",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+      "record_integrity",
+    ],
+  },
   category_uid: 2,
-  class_name: "Incident Finding",
   class_uid: 2005,
-  desc: "True Positive: fixture close of the attestation chain case",
+  activity_id: 1,
+  status_id: 1,
   finding_info_list: [
     {
-      uid: "case-attest-1",
+      uid: "case-attest-2",
+      title: "Determinism probe",
+      created_time: 2026-10-17T09:00:00Z,
+      related_events: null,
     },
   ],
+  type_uid: 200501,
+  activity_name: "Create",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Low",
+  status: "New",
+  type_name: "Incident Finding: Create",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-investigations",
+      chain_uid: "case-attest-2",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "3dc0f7b0c34631b6c9ab8bde1a360557f3263dcf8ae7ad19bd40c64a00ae7f71",
+      },
+    },
+  ],
+}
+{
+  desc: "chain-head-missing coverage for the tamper test",
+  severity_id: 3,
+  assignee: {
+    name: "hermes-agent",
+  },
+  time: 2026-10-17T09:45:00Z,
   metadata: {
+    uid: "case-attest-4-open",
+    version: "1.9.0",
+    correlation_uid: "case-attest-4",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+      "record_integrity",
+    ],
+  },
+  category_uid: 2,
+  class_uid: 2005,
+  activity_id: 1,
+  status_id: 1,
+  finding_info_list: [
+    {
+      uid: "case-attest-4",
+      title: "Head-deletion probe",
+      created_time: 2026-10-17T09:45:00Z,
+      related_events: null,
+    },
+  ],
+  type_uid: 200501,
+  activity_name: "Create",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Medium",
+  status: "New",
+  type_name: "Incident Finding: Create",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-investigations",
+      chain_uid: "case-attest-4",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "f702baa3409285a31e4c364a2a1303f8e43f15989e58a0aaefbb54cf38c9c15b",
+      },
+    },
+  ],
+}
+{
+  status_id: 2,
+  severity_id: 3,
+  assignee: {
+    name: "hermes-agent",
+  },
+  notes: [
+    {
+      comment: "restart-gap fixture: no chain tail in the context",
+      owner: {
+        name: "hermes-agent",
+      },
+    },
+  ],
+  time: 2026-10-17T09:30:00Z,
+  metadata: {
+    uid: "case-attest-3-update",
+    version: "1.9.0",
+    correlation_uid: "case-attest-3",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "incident",
+      "record_integrity",
+    ],
+  },
+  category_uid: 2,
+  class_uid: 2005,
+  activity_id: 2,
+  finding_info_list: [
+    {
+      uid: "case-attest-3",
+    },
+  ],
+  type_uid: 200502,
+  activity_name: "Update",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Medium",
+  status: "In Progress",
+  type_name: "Incident Finding: Update",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-investigations",
+      chain_uid: "case-attest-3",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "11cc829423ab11a04fa45f7561e78ae09f21ee0ce08ada559eec8384dd38add5",
+      },
+    },
+  ],
+}
+{
+  verdict_id: 2,
+  severity_id: 3,
+  assignee: {
+    name: "hermes-agent",
+  },
+  time: 2026-10-17T10:00:00Z,
+  metadata: {
+    uid: "case-attest-1-close",
+    version: "1.9.0",
     correlation_uid: "case-attest-1",
     product: {
       name: "homelab-investigations",
@@ -182,18 +292,25 @@
       "incident",
       "record_integrity",
     ],
-    uid: "case-attest-1-close",
-    version: "1.9.0",
   },
-  severity: "Medium",
-  severity_id: 3,
-  status: "Closed",
+  category_uid: 2,
+  class_uid: 2005,
+  activity_id: 3,
   status_id: 5,
-  time: 2026-10-17T10:00:00Z,
-  type_name: "Incident Finding: Close",
+  desc: "True Positive: fixture close of the attestation chain case",
+  finding_info_list: [
+    {
+      uid: "case-attest-1",
+    },
+  ],
   type_uid: 200503,
+  activity_name: "Close",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Medium",
+  status: "Closed",
+  type_name: "Incident Finding: Close",
   verdict: "True Positive",
-  verdict_id: 2,
   attestation_list: [
     {
       authority_uid: "tenzir-node-investigations",
@@ -220,191 +337,15 @@
   ],
 }
 {
-  activity_id: 1,
-  activity_name: "Create",
-  assignee: {
-    name: "hermes-agent",
-  },
-  category_name: "Findings",
-  category_uid: 2,
-  class_name: "Incident Finding",
-  class_uid: 2005,
-  desc: "same content, different envelope key order",
-  finding_info_list: [
-    {
-      created_time: 2026-10-17T09:00:00Z,
-      related_events: null,
-      title: "Determinism probe",
-      uid: "case-attest-2",
-    },
-  ],
-  metadata: {
-    correlation_uid: "case-attest-2",
-    product: {
-      name: "homelab-investigations",
-      vendor_name: "apocrathia",
-      version: "0.1.0",
-    },
-    profiles: [
-      "incident",
-      "record_integrity",
-    ],
-    uid: "case-attest-2-open",
-    version: "1.9.0",
-  },
-  severity: "Low",
-  severity_id: 2,
-  status: "New",
-  status_id: 1,
-  time: 2026-10-17T09:00:00Z,
-  type_name: "Incident Finding: Create",
-  type_uid: 200501,
-  attestation_list: [
-    {
-      authority_uid: "tenzir-node-investigations",
-      chain_uid: "case-attest-2",
-      fingerprint: {
-        algorithm_id: 3,
-        encoding_id: 1,
-        serialization_id: 99,
-        serialization: "tenzir-sorted-json",
-        value: "3dc0f7b0c34631b6c9ab8bde1a360557f3263dcf8ae7ad19bd40c64a00ae7f71",
-      },
-    },
-  ],
-}
-{
-  activity_id: 1,
-  activity_name: "Create",
-  assignee: {
-    name: "hermes-agent",
-  },
-  category_name: "Findings",
-  category_uid: 2,
-  class_name: "Incident Finding",
-  class_uid: 2005,
-  desc: "same content, different envelope key order",
-  finding_info_list: [
-    {
-      created_time: 2026-10-17T09:00:00Z,
-      related_events: null,
-      title: "Determinism probe",
-      uid: "case-attest-2",
-    },
-  ],
-  metadata: {
-    correlation_uid: "case-attest-2",
-    product: {
-      name: "homelab-investigations",
-      vendor_name: "apocrathia",
-      version: "0.1.0",
-    },
-    profiles: [
-      "incident",
-      "record_integrity",
-    ],
-    uid: "case-attest-2-open",
-    version: "1.9.0",
-  },
-  severity: "Low",
-  severity_id: 2,
-  status: "New",
-  status_id: 1,
-  time: 2026-10-17T09:00:00Z,
-  type_name: "Incident Finding: Create",
-  type_uid: 200501,
-  attestation_list: [
-    {
-      authority_uid: "tenzir-node-investigations",
-      chain_uid: "case-attest-2",
-      fingerprint: {
-        algorithm_id: 3,
-        encoding_id: 1,
-        serialization_id: 99,
-        serialization: "tenzir-sorted-json",
-        value: "3dc0f7b0c34631b6c9ab8bde1a360557f3263dcf8ae7ad19bd40c64a00ae7f71",
-      },
-    },
-  ],
-}
-{
-  activity_id: 2,
-  activity_name: "Update",
-  assignee: {
-    name: "hermes-agent",
-  },
-  category_name: "Findings",
-  category_uid: 2,
-  class_name: "Incident Finding",
-  class_uid: 2005,
-  finding_info_list: [
-    {
-      uid: "case-attest-3",
-    },
-  ],
-  metadata: {
-    correlation_uid: "case-attest-3",
-    product: {
-      name: "homelab-investigations",
-      vendor_name: "apocrathia",
-      version: "0.1.0",
-    },
-    profiles: [
-      "incident",
-      "record_integrity",
-    ],
-    uid: "case-attest-3-update",
-    version: "1.9.0",
-  },
-  notes: [
-    {
-      comment: "restart-gap fixture: no chain tail in the context",
-      owner: {
-        name: "hermes-agent",
-      },
-    },
-  ],
-  severity: "Medium",
+  verdict_id: 2,
   severity_id: 3,
-  status: "In Progress",
-  status_id: 2,
-  time: 2026-10-17T09:30:00Z,
-  type_name: "Incident Finding: Update",
-  type_uid: 200502,
-  attestation_list: [
-    {
-      authority_uid: "tenzir-node-investigations",
-      chain_uid: "case-attest-3",
-      fingerprint: {
-        algorithm_id: 3,
-        encoding_id: 1,
-        serialization_id: 99,
-        serialization: "tenzir-sorted-json",
-        value: "11cc829423ab11a04fa45f7561e78ae09f21ee0ce08ada559eec8384dd38add5",
-      },
-    },
-  ],
-}
-{
-  activity_id: 1,
-  activity_name: "Create",
   assignee: {
     name: "hermes-agent",
   },
-  category_name: "Findings",
-  category_uid: 2,
-  class_name: "Incident Finding",
-  class_uid: 2005,
-  desc: "chain-head-missing coverage for the tamper test",
-  finding_info_list: [
-    {
-      created_time: 2026-10-17T09:45:00Z,
-      related_events: null,
-      title: "Head-deletion probe",
-      uid: "case-attest-4",
-    },
-  ],
+  time: 2026-10-17T10:15:00Z,
   metadata: {
+    uid: "case-attest-4-close",
+    version: "1.9.0",
     correlation_uid: "case-attest-4",
     product: {
       name: "homelab-investigations",
@@ -415,69 +356,25 @@
       "incident",
       "record_integrity",
     ],
-    uid: "case-attest-4-open",
-    version: "1.9.0",
   },
-  severity: "Medium",
-  severity_id: 3,
-  status: "New",
-  status_id: 1,
-  time: 2026-10-17T09:45:00Z,
-  type_name: "Incident Finding: Create",
-  type_uid: 200501,
-  attestation_list: [
-    {
-      authority_uid: "tenzir-node-investigations",
-      chain_uid: "case-attest-4",
-      fingerprint: {
-        algorithm_id: 3,
-        encoding_id: 1,
-        serialization_id: 99,
-        serialization: "tenzir-sorted-json",
-        value: "f702baa3409285a31e4c364a2a1303f8e43f15989e58a0aaefbb54cf38c9c15b",
-      },
-    },
-  ],
-}
-{
-  activity_id: 3,
-  activity_name: "Close",
-  assignee: {
-    name: "hermes-agent",
-  },
-  category_name: "Findings",
   category_uid: 2,
-  class_name: "Incident Finding",
   class_uid: 2005,
+  activity_id: 3,
+  status_id: 5,
   desc: "True Positive: fixture close of the head-deletion case",
   finding_info_list: [
     {
       uid: "case-attest-4",
     },
   ],
-  metadata: {
-    correlation_uid: "case-attest-4",
-    product: {
-      name: "homelab-investigations",
-      vendor_name: "apocrathia",
-      version: "0.1.0",
-    },
-    profiles: [
-      "incident",
-      "record_integrity",
-    ],
-    uid: "case-attest-4-close",
-    version: "1.9.0",
-  },
-  severity: "Medium",
-  severity_id: 3,
-  status: "Closed",
-  status_id: 5,
-  time: 2026-10-17T10:15:00Z,
-  type_name: "Incident Finding: Close",
   type_uid: 200503,
+  activity_name: "Close",
+  category_name: "Findings",
+  class_name: "Incident Finding",
+  severity: "Medium",
+  status: "Closed",
+  type_name: "Incident Finding: Close",
   verdict: "True Positive",
-  verdict_id: 2,
   attestation_list: [
     {
       authority_uid: "tenzir-node-investigations",
@@ -499,6 +396,109 @@
         serialization_id: 99,
         serialization: "tenzir-sorted-json",
         value: "d81ab49f0826e9dc7d0834d8a04208f0692a33b03c6f550c92fa440a4582cd03",
+      },
+    },
+  ],
+}
+{
+  observables: [
+    {
+      name: "src_endpoint.ip",
+      type_id: 2,
+      value: "203.0.113.9",
+      event_uid: "ev-lake-77c1",
+      type: "IP Address",
+    },
+  ],
+  database: {
+    name: "ocsf",
+  },
+  table: {
+    name: "Authentication",
+  },
+  time: 2026-10-17T09:05:00Z,
+  metadata: {
+    uid: "case-attest-1-evidence",
+    version: "1.9.0",
+    correlation_uid: "case-attest-1",
+    product: {
+      name: "homelab-investigations",
+      vendor_name: "apocrathia",
+      version: "0.1.0",
+    },
+    profiles: [
+      "ai_operation",
+      "record_integrity",
+    ],
+  },
+  category_uid: 6,
+  class_uid: 6005,
+  activity_id: 4,
+  severity_id: 1,
+  query_info: {
+    query_string: "SELECT time, src_endpoint.ip, status_id FROM ocsf.Authentication WHERE actor.user.name = 'svc-backup' AND time > now() - INTERVAL 2 DAY ORDER BY time LIMIT 100",
+    data: [
+      {
+        time: 2026-10-17T08:51:23Z,
+        "src_endpoint.ip": 203.0.113.9,
+        status_id: 2,
+      },
+    ],
+  },
+  src_endpoint: {
+    hostname: "tenzir-node-investigations",
+  },
+  actor: {
+    application: {
+      name: "homelab-investigations",
+    },
+  },
+  ai_agent: {
+    uid: "hermes-agent",
+    instance_uid: "run-20261017-9",
+    name: "hermes-agent",
+    type_id: 1,
+    ai_model: {
+      name: "claude-sonnet-4-5",
+    },
+    type: "Native",
+  },
+  delegation: {
+    uid: "del-operator-hermes",
+  },
+  message_context: {
+    name: "case-attest-1 pin",
+    ai_role_id: 3,
+    prompt_text: "pin the auth history for svc-backup around 08:50Z",
+    ai_role: "Tool",
+  },
+  type_uid: 600504,
+  activity_name: "Query",
+  category_name: "Application Activity",
+  class_name: "Datastore Activity",
+  severity: "Informational",
+  type_name: "Datastore Activity: Query",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-investigations",
+      chain_uid: "case-attest-1",
+      prev_event: {
+        uid: "case-attest-1-open",
+        type_uid: 200501,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "b5cacf1b0a02224a8833d850138f621ad04a68513fd74866329733787112d7b6",
+        },
+      },
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "459aa99b6aea30f55826de64447d40cec34cf57e972a1bfef6073073ad8dce41",
       },
     },
   ],

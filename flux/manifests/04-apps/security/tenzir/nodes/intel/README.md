@@ -4,8 +4,8 @@
 
 One process (HelmRelease `tenzir-node-intel`, rendering pod
 `tenzir-node-intel`) reserved as the fleet's **CTI factory plane** —
-operator choice (c) of the intel-lane rounds: the factory row lives here
-on the rc engine, not on the enrichment node. Its pipelines pull external
+operator choice (c) of the intel-lane rounds: the factory row lives here,
+not on the enrichment node. Its pipelines pull external
 threat intel and land it in ClickHouse; the first row is live:
 [opencti-taxii-factory-walk](./pipelines/opencti-taxii-factory-walk.tql)
 and [opencti-taxii-factory-poll](./pipelines/opencti-taxii-factory-poll.tql)
@@ -24,12 +24,11 @@ threat intel.
   route: the chart renders only the main `tenzir-node-intel` Service
   on `:5158` for node RPC. All factory work is outbound: the platform
   WebSocket, the OpenCTI TAXII pull, and ClickHouse writes.
-- **Runs the rc engine, alone** — image pinned to `v6.20.0-rc.3` while
-  the fleet stays on `v6.19.1` GA: the vendored `stix` package's taxii
-  fetch operator needs the 6.20 engine line. When 6.20 GA ships,
-  renovate offers the bump (same datasource comment) and the pin
-  rationale shrinks away; see
-  [`helmrelease.yaml`](./helmrelease.yaml).
+- **Engine line** — the factory's vendored `stix` package's taxii fetch
+  operator needs the 6.20 engine line (entries()): this node ran the
+  `v6.20.0-rc` ahead of GA to land the row early, and the rc pin retired
+  with the fleet-wide `v6.20.0` bump when 6.20 GA shipped (2026-10-26);
+  see [`helmrelease.yaml`](./helmrelease.yaml).
 - **One factory row, dual-schedule** — `tenzir.pipelines` carries the
   opencti-taxii-factory-walk and opencti-taxii-factory-poll pipelines:
   a daily full walk of the TAXII collection at 07:00 plus
@@ -44,8 +43,8 @@ threat intel.
   of the fleet's image line — the central poller's cross-version
   export gap on this node dies with the poller.
 - **Deploys live** — this HelmRelease carries no `spec.suspend`: the
-  factory row is this lap's deliverable and the rc pin only pays off
-  running. (The fleet's storage-collector nodes are currently suspended
+  factory row is this lap's deliverable. (The fleet's
+  storage-collector nodes are currently suspended
   cluster-side, out of band; the enrichment and introspection nodes
   share the no-suspend exception.)
 
@@ -187,7 +186,7 @@ kubectl get helmrelease -n tenzir tenzir-node-intel
 
 A failed walk self-heals: `restart-on-error` retries every minute and
 the next scheduled cron re-runs the lane regardless; the daily walk
-reconciles anything the polls missed. First boot after the rc pin:
+reconciles anything the polls missed. First boot after an engine bump:
 if the pod crash-loops, read `server.log` via the `tenzir-logs`
 mount before anything else — the file logger is the diagnostics
 surface the warning verbosity exists for.

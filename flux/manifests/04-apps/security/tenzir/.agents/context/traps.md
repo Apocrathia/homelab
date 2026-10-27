@@ -5,7 +5,7 @@ docs — nothing invented. Vendored debugging docs:
 [troubleshooting guides](../skills/tenzir/guides/troubleshooting/).
 
 - **Engine-version test pinning.** The tenzir-test runner must match the
-  deployed engine version (currently `uvx tenzir@6.19.1`); the runner
+  deployed engine version (currently `uvx tenzir@6.20.0`); the runner
   banner confirms the pin on every run, and all baselines must stay
   warning-free.
   ([tests](../../packages/homelab/tests/README.md),
