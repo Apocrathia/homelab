@@ -3,8 +3,8 @@
 context-links:
   stage: test
   image:
-    # renovate: datasource=docker depName=python
-    name: python:3.15-alpine@sha256:2699b90f4d562a22e2dd076c82f964032f64814204bff36d271a54ba4cc2c7e2
+    # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
+    name: public.ecr.aws/docker/library/python:3.15-alpine@sha256:2699b90f4d562a22e2dd076c82f964032f64814204bff36d271a54ba4cc2c7e2
     entrypoint: [""]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

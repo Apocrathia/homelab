@@ -31,7 +31,7 @@ This deployment includes:
   repository at `/opt/data/repos/homelab`, fast-forward pulled on
   every pod start (never `reset --hard` — agents work in this clone and
   their local state survives boots); git installs rootless via conda-forge
-  (`node:24-bookworm-slim` ships no git and the pod runs as uid 1000, so
+  (`node:24-slim` ships no git and the pod runs as uid 1000, so
   apt is not an option)
 - PVC layout (operator, 2026-09-14): `/opt/data/repos/` carries the
   associated repos (homelab clone, prime-agent source snapshot);
