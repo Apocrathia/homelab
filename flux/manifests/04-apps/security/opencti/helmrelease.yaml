@@ -168,6 +168,12 @@ spec:
     # The chart only derives OPENCTI_TOKEN from plaintext values, so wire the
     # vault field explicitly here.
     worker:
+      # Second replica (operator call 2026-10-27): parallel bundle
+      # ingestion while the MISP abuse.ch backlog (~7.9M attributes
+      # queued behind the connector cursor) drains; workers are
+      # RabbitMQ consumers, so replicas are the supported horizontal
+      # surface.
+      replicaCount: 2
       envFromSecrets:
         OPENCTI_TOKEN:
           name: opencti-secrets
@@ -241,17 +247,21 @@ spec:
           capabilities:
             drop:
               - ALL
-        # Bumped from 512Mi: the 2026-10-18 epoch sweep (post state reset,
-        # MISP_IMPORT_FROM_DATE) OOMKilled the connector ~88x in a ratchet
-        # (exit 137); the batch processor holds tens of thousands of objects
-        # per in-flight window (observed 21.6k remaining_objects_count).
+        # Ratcheted 512Mi -> 1Gi (2026-10-18 epoch sweep: OOMKilled ~88x
+        # exit 137; batch window held tens of thousands of objects, observed
+        # 21.6k remaining_objects_count) -> 2Gi (2026-10-27: deterministic
+        # OOM loop on MISP event 3765 "URLhaus IOCs for 2022-03-14", 76,756
+        # attrs / 158.5MB JSON, 383x exit 137; observed working ceiling at
+        # 1Gi is ~41k attrs (~26KB/attr), so 2Gi is at the linear-model edge
+        # for this event. Accepted risk: 17 queued giants, max 140,736 attrs
+        # (~3.7Gi est), can still OOM and strand below the cursor).
         resources:
           requests:
             cpu: "50m"
             memory: "256Mi"
           limits:
             cpu: "500m"
-            memory: "1Gi"
+            memory: "2Gi"
       - name: mitre
         enabled: true
         replicas: 1
