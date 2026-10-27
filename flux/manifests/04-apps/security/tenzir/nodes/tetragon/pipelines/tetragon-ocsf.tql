@@ -1,4 +1,24 @@
-// parallelism: 4
+// The tetragon OCSF pipeline, CH-direct (phase 2, lap 2a-1): the
+// fork { import } lake leg is gone, and the record_integrity
+// attestation that lived in the compaction rule's archive pipeline
+// (ocsf-archive.tql — retired on the write path by this change, its
+// rule stays declared until lap 2a-2 deletes it after server-side
+// verification) now stamps IN-STREAM, upstream of the direct
+// to_clickhouse INSERT. ClickHouse is the record; the lake rides
+// along empty until its teardown.
+//
+// PARALLELISM: the // parallelism: 4 directive this pipeline carried
+// is GONE. The windowed attest leg below is order-sensitive (the
+// engine's parallel lanes reorder batches arbitrarily — the docs'
+// "Keep parallelism disabled when the input order carries meaning"),
+// and a live sort/window/lag chain split across lanes would fork the
+// per-node chain into lane-local fragments that false-flag
+// chain_link_mismatch on every walk. The single-lane cost is
+// measured, not assumed: the tetragon-throughput harness runs the
+// full map + sort + attest chain at ~14k records/s single-core, 17x
+// the 800 ev/s peak-drain flood; the tetragon-ingest-http pipeline
+// KEEPS its directive (per-event, no order sensitivity — and its
+// lane-merge skew rides inside the window tolerance below).
 subscribe "tetragon.raw"
 this = {tetragon: this}
 homelab::tetragon::ocsf::map tetragon, ocsf
@@ -32,5 +52,95 @@ fork_merge {
 }, {
   where class_uid != ocsf_class_uid("Network Activity")
 }
-fork { import }
+// The direct CH leg (replaces `fork { import }`): the class gate is
+// the compaction rule's types-scoping, carried in-stream — only the
+// three archived classes reach the attest + INSERT. The unmapped Base
+// Event fallback (class_uid = 0, unknown export kinds) drops here
+// and never reaches CH, exactly as it never reached the rule; this
+// also keeps to_clickhouse's table f-string away from null
+// class_name — the archive rule's f-string rendered `ocsf.null` for
+// null class_name records and to_clickhouse created the table on
+// write (27,987 rows pre-bump, the GA rollout field note; the
+// f-string shape carries to the direct leg verbatim, so the GATE is
+// the leak's kill).
+fork {
+  where class_uid in [ocsf_class_uid("Process Activity"), ocsf_class_uid("File System Activity"), ocsf_class_uid("Network Activity")]
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  // THE ORDERING LANDMINE (lap 2a-1's central risk): the archive rule
+  // sorted each bounded 15-minute compaction pass on (time,
+  // metadata.uid) before stamping — that is what makes the chain
+  // reconstructable on the verify walk's same-key re-sort. A sort on
+  // the unbounded flood stream buffers unbounded (the same OOM class
+  // that killed the walker at 24h windows), so the direct leg BOUNDS
+  // the sort with a 60s event-time tumbling window: the window's
+  // boundaries partition EVENT time (the exact axis the walk re-sorts
+  // on), the in-window sort orders each batch, and the per-window
+  // chain segments link through the tetragon-chains context (stream
+  // mode treats prev_tail as the BATCH seam — the archive rule used
+  // compaction passes, this uses windows; the seam semantics are
+  // identical, attest.tql). Probed by the tetragon-direct-attest /
+  // tetragon-direct-verify-clean package pair: same-second ties
+  // (flood bursts) tie-break on uid, out-of-order arrivals within
+  // tolerance join their window and stamp in (time, uid) order, and
+  // the walk re-sorts the whole chain clean — zero findings.
+  //
+  // Sizing: 60s window + 30s tolerance. The tolerance is the
+  // guaranteed lateness budget for the OTLP exporter's batch
+  // behavior (the alloy flushes every few seconds; ~90s worst-case
+  // absorb: a record survives if its window has not closed when its
+  // batch lands, and closure waits for the event-time clock to pass
+  // the window end + 30s). The in-window sort bound at flood scale:
+  // 800 ev/s x 60s ~ 48k records ~ 48 MB in flight — noise against
+  // the 12Gi limit (the old 250k-record peak-drain pass sorted in
+  // ~20s standalone; 48k stamps in ~3s at the measured ~14k/s).
+  // idle_timeout=120s closes the tail window when the flood goes
+  // quiet, so an ingest stall never strands the last records
+  // unstamped in an open window.
+  //
+  // RESIDUAL RISKS, stated honestly:
+  // - Straggler drop: a record whose batch lands AFTER its window
+  //   closed (event time more than ~tolerance behind the clock) is
+  //   dropped with a warning and never reaches CH — visible in the
+  //   B1 diagnostics lanes (window-late warnings), a coverage gap,
+  //   not a chain break. The old lake path survived 15-minute
+  //   stalls; this leg survives ~90s ones. Watch the warning lane;
+  //   the dial is the tolerance (and the window).
+  // - Seam race under concurrent closures: adjacent windows close
+  //   >= 60s of event time apart on a live stream, so the tail
+  //   writes of window N land long before window N+1's first record
+  //   reads them (the archive rule's probed pass-to-pass semantics,
+  //   at a narrower cadence). The one hole: an exporter stall
+  //   >= the window size followed by a catch-up burst spanning
+  //   multiple window ends closes them back-to-back — concurrent
+  //   subpipelines can then race the tail write against the next
+  //   window's seam read (a stale read false-flags
+  //   chain_link_mismatch on the next walk). No fixture can exercise
+  //   live batch cadence; the lap-2a-2 server-side verification
+  //   watches the first windows for exactly this.
+  // - Insert batch sizing (the design risk note): the rule's
+  //   mode="append" + max_batch_rows=65536 shape carries verbatim;
+  //   the window emits ~48k stamped records per flood minute in
+  //   total, so the sink batches per window close — watch the first
+  //   window's insert profile on ship (lap 2a-2).
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "tetragon-chains", key="tenzir-node-tetragon", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-tetragon",
+      chain_uid="tenzir-node-tetragon",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "tetragon-chains", key="tenzir-node-tetragon",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}
 publish "ocsf"

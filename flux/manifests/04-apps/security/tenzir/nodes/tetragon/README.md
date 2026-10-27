@@ -25,14 +25,20 @@ stalls ingest (the context keeps serving the last good database).
 
 The chart runs the pipelines in subprocesses (`pipeline-subprocesses`):
 a pipeline blowup dies alone instead of taking the node process down,
-and the `accept_otlp` listener stays in-process by design. Both
-flood pipelines carry `// parallelism: 4`, matching the node's 4-core limit;
-the parse and OCSF-map chains replicate across cores while the listener
-and `import` stay single-instance regardless of the directive. Parallel
-instances emit in arbitrary order, which is harmless while both
-pipelines stay per-event. If windowed or sequence detections land here
-later, drop the directive on the affected pipeline or scope it with
-`parallel N { ... }` and keep the order-sensitive part outside it.
+and the `accept_otlp` listener stays in-process by design.
+`tetragon-ingest-http` keeps its `// parallelism: 4`, matching the
+node's 4-core limit: the parse chain replicates across cores while the
+listener stays single-instance regardless of the directive, the
+pipeline stays per-event (arbitrary lane order harmless), and its
+lane-merge skew rides inside the OCSF pipeline's window tolerance.
+`tetragon-ocsf` dropped its directive with the phase-2 direct-write
+lap: its attest leg is a windowed, order-sensitive chain (the
+documented "drop the directive on the affected pipeline" case), and a
+windowed chain split across parallel lanes would fork the per-node
+chain into lane-local fragments that false-flag chain_link_mismatch on
+every walk. The single-lane cost is measured, not assumed: the
+tetragon-throughput harness runs the full map + sort + attest chain at
+~14k records/s on one core, 17x the 800 ev/s peak drain.
 
 ## Connectivity
 
@@ -42,8 +48,8 @@ flowchart LR
     AO -->|"tetragon parse"| TR["tetragon raw"]
     TR -->|"OCSF map, ~125 schema variants"| ENR["network-activity enrichment<br/>(geo-open context + dns_lookup)"]
     CIRCL["CIRCL Geo Open MMDB<br/>(country + ASN)"] -->|"every 24h<br/>geo-open-loader"| ENR
-    ENR -->|"geo/ASN/hostname into OCSF<br/>endpoint fields"| LAKE["node lake: ocsf topic"]
-    LAKE -->|"15m archive rule"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
+    ENR -->|"geo/ASN/hostname into OCSF<br/>endpoint fields"| WIN["60s event-time window:<br/>sort + record_integrity attest"]
+    WIN -->|"direct to_clickhouse INSERT<br/>(lap 2a-1)"| CH["ClickHouse<br/>ocsf.* per-class tables (the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse"]
 ```
 
@@ -59,8 +65,8 @@ still writes its into-field, so mixed-class streams cannot run the
 operators unconditionally). Private addresses stay bare — Geo Open
 marks them not routed and the gated assignments filter those
 markers. The enrichment sits after `ocsf_cast` and before the
-store/publish legs, so the lake, the archive, and the node-local
-ocsf bus all carry the enriched record.
+direct/publish legs, so ClickHouse and the node-local
+ocsf bus both carry the enriched record.
 
 The unmapped residue on every mapped event is a selected projection (pod
 identity, kprobe policy name), not the full raw record: re-storing the
@@ -107,18 +113,25 @@ floods.
 
 ## Retention
 
-Same 15-minute horizon as the core node, same archive: the tetragon OCSF
-classes (Process Activity 1007, File System Activity 1001, Network
-Activity 4001) export to the per-class `ocsf.<Class_Name>` tables on
-the ClickHouse OCSF store at `after: 15 minutes` and then expire
-locally (archive-then-expire; `preserve-input` off). The Base Event
-fallback
-for unknown export kinds cannot name a class and is not archived: it
-expires with the window on the weighted-age backstop. The lake is a
-transit buffer between ingest and the archive, not a query surface.
-ClickHouse is the OCSF record past the window; the compaction pass
-runs every 5 minutes, so the true window at pass boundaries is 15-20
-minutes. The Longhorn volume sits out the daily-backup RecurringJob
+CH-DIRECT (phase 2, lap 2a-1): the tetragon OCSF classes (Process
+Activity 1007, File System Activity 1001, Network Activity 4001) ride
+`tetragon-ocsf`'s in-stream leg straight to the per-class
+`ocsf.<Class_Name>` tables — a bounded 60s event-time window sorts
+each batch on (time, uid), stamps the record_integrity attestation,
+and hands the stream to `to_clickhouse`. The 15-minute lake +
+archive rule that used to mediate this is superseded on the write
+path: nothing imports into the lake, the compaction rule fires on an
+empty store, and both stay declared only until lap 2a-2 deletes them
+after server-side verification of the direct leg (ship counts,
+query_log, the first windows' seam and insert profiles). The Base
+Event fallback for unknown export kinds cannot name a class and never
+reached CH via the rule's types-scoping; the direct leg carries that
+gate in-stream (`where class_uid in [...]`), which also keeps the
+`to_clickhouse` table f-string away from null class_name — the
+archive-era `ocsf.null` f-string leak (27,987 rows pre-bump, the GA
+rollout field note) cannot ride into the direct path. ClickHouse is
+the OCSF record; the lake rides along empty until its teardown. The
+Longhorn volume sits out the daily-backup RecurringJob
 ([`storage.yaml`](./storage.yaml)): a daily chain of
 a 15-minute buffer is redundant with the ClickHouse record. Filesystem
 trim and snapshot hygiene still run on the volume. No raw tetragon JSON
@@ -127,25 +140,36 @@ ClickHouse OCSF store is the record), and the retired
 `s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
 bucket as frozen history; deleting it is a separate operator call.
 
-`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
-its `fork` wrapper retired with the MR-5 teardown — a sink-only
-pipeline keeps consume + export = archive-then-delete semantics):
-`mode="append"` fails loudly if the DDL is
-missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
-the insert buffers on the flood classes.
+`to_clickhouse` carries the archive rule's insert shape verbatim
+(the lap's design risk note — watch the first window's insert batch
+sizing on ship): `mode="append"` fails loudly if the DDL is missing,
+and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds the
+insert buffers on the flood classes — the 60s window emits ~48k
+stamped records per flood minute in total, so the sink batches at
+window close.
 
-The archive rule also stamps the OCSF `record_integrity` attestation
-on every record BEFORE the INSERT ([`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql), the shared lane in
+The direct leg also stamps the OCSF `record_integrity` attestation
+on every record BEFORE the INSERT (the shared lane in
 [`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)):
 a per-node SHA-256 fingerprint chain (`chain_uid` =
 `tenzir-node-tetragon`), one chain across all three archived classes
-in (time, uid) order, covering the record exactly as stored.
-`tetragon-attest-verify` walks it hourly: the last 24h of the three
-per-class tables read back, fingerprints recomputed, chain links
-checked; a Detection Finding (2004, severity 4) drops per break onto
-the pod logs AND into `ocsf.Detection_Finding`, inside the Grafana
-tenzir-findings rule's WHERE clauses — tamper evidence pages through
-the agent_invoke bridge like every other high-severity finding
+in (time, uid) order, covering the record exactly as stored. The
+ordering is the lap's central risk — the verify walk re-sorts on the
+same (time, uid) pair, so the windowed sort must match it exactly —
+and it is probe-pinned, not assumed: the tetragon-direct-attest /
+tetragon-direct-verify-clean package pair proves same-second ties
+break on uid, out-of-order arrivals within the tolerance join their
+window and stamp in (time, uid) order, and the walk re-sorts the
+whole chain with zero findings. The residual risks are stated in the
+pipeline comment (straggler drops past the window tolerance; the seam
+race under concurrent closures on a stalled-exporter catch-up burst)
+and are the lap-2a-2 server-side watch items.
+`tetragon-attest-verify` walks the chain hourly: the last 90 minutes
+of the three per-class tables read back, fingerprints recomputed,
+chain links checked; a Detection Finding (2004, severity 4) drops per
+break onto the pod logs AND into `ocsf.Detection_Finding`, inside the
+Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
+through the agent_invoke bridge like every other high-severity finding
 (docs/issues/tenzir-record-integrity-attestations.md). The stamping
 cost is measured, not assumed: the 100k-record harness on this node's
 own class runs ~7s standalone (~14k records/s end to end; the sort
