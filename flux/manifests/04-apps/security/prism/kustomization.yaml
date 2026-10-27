@@ -11,8 +11,4 @@ metadata:
 resources:
   - namespace.yaml
   - secret.yaml
-  # 2026-10-27: release commented out to remove prism from the cluster — the
-  # pinned image ghcr.io/novacode37/prism-platform:2.12.1@sha256:1e71520... is
-  # unpullable (403 denied) and the app has been down since Oct 20. Manifest
-  # stays in-repo for a future re-pin once upstream access is resolved.
-  # - helmrelease.yaml
+  - helmrelease.yaml
