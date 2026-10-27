@@ -52,7 +52,7 @@ poller era).
    table, and the authentik and k8s-audit maps stamp
    `src_endpoint.hostname` + `src_endpoint.os` from it. The
    ClickHouse writer env wiring (`TENZIR_SECRETS__CLICKHOUSE_PASSWORD`
-   from `clickhouse-secrets`, same shape as netflow) and the Fleet
+   from `tenzir-secrets`, same shape as netflow) and the Fleet
    bearer token (`TENZIR_SECRETS__FLEETDM_TOKEN` from `tenzir-secrets`,
    the operator-staged `fleetdm-token` field) ride this node now.
 2. **Baselines** once the post-6.20 GA baseline capability lands.

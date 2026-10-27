@@ -28,7 +28,7 @@
 // - ocsf.Detection_Finding: the finding rides ocsf_derive + ocsf_cast
 //   into the lake's class shape and INSERTs with the tenzir user
 //   (INSERT/SELECT on ocsf.* — the OnePasswordItem-rendered
-//   clickhouse-secrets, the same credential the core node's archive
+//   tenzir-secrets, the same credential the core node's archive
 //   legs read; this node's HelmRelease wires it as
 //   TENZIR_SECRETS__CLICKHOUSE_PASSWORD). The written rows land in the
 //   table the Grafana tenzir-findings rule reads

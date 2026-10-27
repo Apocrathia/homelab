@@ -214,14 +214,14 @@ spec:
         cpu: "2"
         memory: 2Gi
 
-    # Secrets (1Password item tenzir-secrets / clickhouse-secrets): vault
+    # Secrets (1Password item tenzir-secrets): vault
     # field labels are kebab-case and the rendered Secret keys match them,
     # so every secretKeyRef.key below is the kebab vault label; env var
     # names stay UPPER. The TAXII bearer token rides `opencti-taxii-token`
     # (written to the vault by the opencti lane; the pipeline reads it as
     # secret("opencti-taxii-token")). The ClickHouse writer password rides
-    # the dedicated clickhouse-secrets item (this namespace materializes
-    # its own OnePasswordItem in ../secret.yaml): the env var maps to
+    # the same tenzir-secrets item (this namespace materializes
+    # its OnePasswordItem in ../secret.yaml): the env var maps to
     # config key tenzir.secrets.clickhouse-password, so the factory's
     # to_clickhouse leg reads it as secret("clickhouse-password") — kebab
     # name, the same env-var shape as the sibling writers. No other
@@ -236,7 +236,7 @@ spec:
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
 
     extraVolumes:

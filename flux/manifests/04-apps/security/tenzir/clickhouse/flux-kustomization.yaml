@@ -18,11 +18,10 @@ spec:
   dependsOn:
     - name: services-clickhouse
     # The CRs live in the tenzir namespace; apps-security owns the
-    # namespace and renders the clickhouse-secrets / tenzir-secrets
-    # OnePasswordItems the CHI consumes (tenzir/secret.yaml - the CR
-    # layer's own secret.yaml is gone since the store relocated; one
-    # render per item). apps-security gates on bootstrap-1password
-    # itself.
+    # namespace and renders the tenzir-secrets OnePasswordItem the CHI
+    # consumes (tenzir/secret.yaml - the CR layer's own secret.yaml is
+    # gone since the store relocated; one render per item).
+    # apps-security gates on bootstrap-1password itself.
     - name: apps-security
     # Both CRs provision Longhorn PVCs.
     - name: infrastructure-longhorn

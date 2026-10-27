@@ -43,8 +43,8 @@ with "no matches for kind". `services-clickhouse-cluster` applies only
 after its gates clear:
 
 - `services-clickhouse` - the Altinity operator itself (installs both CRDs).
-- `apps-security` - the tenzir namespace plus the `clickhouse-secrets` /
-  `tenzir-secrets` OnePasswordItem renders in
+- `apps-security` - the tenzir namespace plus the `tenzir-secrets`
+  OnePasswordItem render in
   [`../secret.yaml`](../secret.yaml) that the CHI consumes (one render per
   item since the store relocated into the tenzir namespace; this layer's
   own `secret.yaml` is gone).
@@ -307,9 +307,7 @@ flowchart LR
   `aws-secret-access-key`, rendered by
   [`../secret.yaml`](../secret.yaml) — the same single render the Tenzir
   nodes read; the store's old clickhouse-namespace duplicate render went
-  away with the relocation). The old
-  clickhouse-bucket-user keys on `clickhouse-secrets` are unused now;
-  the operator removes them.
+  away with the relocation).
 - **3x cold growth**: each replica runs the same tiered policy and
   uploads its own copy of every cold part — the bucket grows ~3x the
   single-node shape.
@@ -370,7 +368,7 @@ kubectl exec -n tenzir chi-tenzir-ocsf-0-0-0 -- \
 ## Users (all in `cluster.yaml`, `spec.configuration.users`)
 
 The operator renders these into `users.d` and injects the passwords as
-env vars from the `clickhouse-secrets` Secret; git only ever names
+env vars from the `tenzir-secrets` Secret; git only ever names
 fields:
 
 | User                    | Password vault field                        | Grants                                  | Networks             |

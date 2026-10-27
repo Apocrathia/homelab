@@ -117,7 +117,7 @@ flowchart LR
 
 1. **Vault fields** on the `tenzir-secrets` item: `investigations-node-token`
    (platform node token, below) and, later in this sequence,
-   `investigations-api-token`. On the `clickhouse-secrets` item:
+   `investigations-api-token`, plus
    `clickhouse-investigations-writer-password` and
    `clickhouse-investigations-reader-password` (values for the CHI users
    block in [`../../clickhouse/cluster.yaml`](../../clickhouse/cluster.yaml); git only names the

@@ -436,8 +436,8 @@ spec:
         cpu: "2"
         memory: 4Gi
 
-    # The ClickHouse writer password rides the dedicated clickhouse-secrets
-    # item (this namespace materializes its own OnePasswordItem in
+    # The ClickHouse writer password rides the tenzir-secrets item
+    # (this namespace materializes its OnePasswordItem in
     # ../secret.yaml): the env var maps to config key
     # tenzir.secrets.clickhouse-password, so the to_clickhouse archive leg
     # reads it as secret("clickhouse-password") — same env-var shape as the
@@ -449,7 +449,7 @@ spec:
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
 
     extraVolumes:
