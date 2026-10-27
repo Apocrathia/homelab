@@ -81,7 +81,7 @@ spec:
       containers:
         - name: vuln-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-          image: docker.io/tenzir/tenzir:v6.19.1@sha256:6e96f962bc0a957d94d5149f840f7603c47a7b11d995e0f1fc167c141db7c06f
+          image: docker.io/tenzir/tenzir:v6.20.0@sha256:dd5b5a5a7032f4c45503a05b11129c77dda0f76951527bbdfeee0b921a1f5cac
           # tenzir takes exactly one pipeline argument: -f loads it from the
           # file. Other tokens are not app options and crash the argv parse
           # (live: "expected exactly one argument, but got 3").
@@ -114,7 +114,7 @@ spec:
               readOnly: true
         - name: secret-reports
           # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-          image: docker.io/tenzir/tenzir:v6.19.1@sha256:6e96f962bc0a957d94d5149f840f7603c47a7b11d995e0f1fc167c141db7c06f
+          image: docker.io/tenzir/tenzir:v6.20.0@sha256:dd5b5a5a7032f4c45503a05b11129c77dda0f76951527bbdfeee0b921a1f5cac
           # tenzir takes exactly one pipeline argument: -f loads it from the
           # file. Other tokens are not app options and crash the argv parse
           # (live: "expected exactly one argument, but got 3").

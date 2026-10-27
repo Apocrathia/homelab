@@ -1,27 +1,60 @@
 {
-  activity_id: 2,
-  activity_name: "Update",
-  category_name: "Findings",
+  time: 2026-10-10T22:32:58Z,
+  severity_id: 1,
   category_uid: 2,
-  class_name: "Vulnerability Finding",
   class_uid: 2002,
+  activity_id: 2,
   finding_info: {
-    title: "trivy: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
     uid: "statefulset-55c7d87c7d",
+    title: "trivy: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
   },
+  vulnerabilities: [
+    {
+      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via crafted messages",
+      desc: null,
+      severity: "UNKNOWN",
+      references: [],
+      first_seen_time: 2026-09-02T20:17:36Z,
+      last_seen_time: 2026-09-04T16:34:56Z,
+      cve: {
+        uid: "CVE-2026-56855",
+      },
+      affected_packages: [
+        {
+          name: "golang.org/x/crypto",
+          version: "v0.55.0",
+          fixed_in_version: "0.56.0",
+        },
+      ],
+    },
+    {
+      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via channel request flooding",
+      desc: null,
+      severity: "UNKNOWN",
+      references: [],
+      first_seen_time: 2026-09-02T20:17:37Z,
+      last_seen_time: 2026-09-04T16:33:34Z,
+      cve: {
+        uid: "CVE-2026-78662",
+      },
+      affected_packages: [
+        {
+          name: "golang.org/x/crypto",
+          version: "v0.55.0",
+          fixed_in_version: "0.56.0",
+        },
+      ],
+    },
+  ],
+  type_uid: 200202,
   metadata: {
+    version: "1.9.0",
     product: {
       name: "trivy",
       vendor_name: "aqua",
       version: "0.75.0",
     },
-    version: "1.9.0",
   },
-  severity: "Informational",
-  severity_id: 1,
-  time: 2026-10-10T22:32:58Z,
-  type_name: "Vulnerability Finding: Update",
-  type_uid: 200202,
   unmapped: {
     report_kind: "vulnerability_report",
     workload: {
@@ -51,69 +84,31 @@
       family: "",
     },
   },
-  vulnerabilities: [
-    {
-      affected_packages: [
-        {
-          fixed_in_version: "0.56.0",
-          name: "golang.org/x/crypto",
-          version: "v0.55.0",
-        },
-      ],
-      cve: {
-        uid: "CVE-2026-56855",
-      },
-      desc: null,
-      first_seen_time: 2026-09-02T20:17:36Z,
-      last_seen_time: 2026-09-04T16:34:56Z,
-      references: [],
-      severity: "UNKNOWN",
-      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via crafted messages",
-    },
-    {
-      affected_packages: [
-        {
-          fixed_in_version: "0.56.0",
-          name: "golang.org/x/crypto",
-          version: "v0.55.0",
-        },
-      ],
-      cve: {
-        uid: "CVE-2026-78662",
-      },
-      desc: null,
-      first_seen_time: 2026-09-02T20:17:37Z,
-      last_seen_time: 2026-09-04T16:33:34Z,
-      references: [],
-      severity: "UNKNOWN",
-      title: "golang.org/x/crypto/ssh: golang.org/x/crypto/ssh: Denial of Service via channel request flooding",
-    },
-  ],
+  activity_name: "Update",
+  category_name: "Findings",
+  class_name: "Vulnerability Finding",
+  severity: "Informational",
+  type_name: "Vulnerability Finding: Update",
 }
 {
-  activity_id: 1,
-  activity_name: "Create",
-  category_name: "Findings",
+  time: 2026-10-10T22:32:58Z,
+  severity_id: 1,
   category_uid: 2,
-  class_name: "Detection Finding",
   class_uid: 2004,
+  activity_id: 1,
   finding_info: {
-    title: "trivy secrets: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
     uid: "statefulset-55c7d87c7d",
+    title: "trivy secrets: StatefulSet/prometheus-kube-prometheus-stack-prometheus",
   },
+  type_uid: 200401,
   metadata: {
+    version: "1.9.0",
     product: {
       name: "trivy",
       vendor_name: "aqua",
       version: "0.75.0",
     },
-    version: "1.9.0",
   },
-  severity: "Informational",
-  severity_id: 1,
-  time: 2026-10-10T22:32:58Z,
-  type_name: "Detection Finding: Create",
-  type_uid: 200401,
   unmapped: {
     report_kind: "secret_report",
     workload: {
@@ -158,27 +153,27 @@
     ],
     os: null,
   },
+  activity_name: "Create",
+  category_name: "Findings",
+  class_name: "Detection Finding",
+  severity: "Informational",
+  type_name: "Detection Finding: Create",
 }
 {
-  activity_id: 0,
-  activity_name: "Unknown",
-  category_name: "Uncategorized",
+  time: 2026-10-10T22:32:58Z,
+  severity_id: 1,
   category_uid: 0,
-  class_name: "Base Event",
   class_uid: 0,
+  activity_id: 0,
+  type_uid: 0,
   metadata: {
+    version: "1.9.0",
     product: {
       name: "trivy",
       vendor_name: "aqua",
       version: null,
     },
-    version: "1.9.0",
   },
-  severity: "Informational",
-  severity_id: 1,
-  time: 2026-10-10T22:32:58Z,
-  type_name: "Base Event: Unknown",
-  type_uid: 0,
   unmapped: {
     report_kind: null,
     workload: {
@@ -193,4 +188,9 @@
     secrets: null,
     os: null,
   },
+  activity_name: "Unknown",
+  category_name: "Uncategorized",
+  class_name: "Base Event",
+  severity: "Informational",
+  type_name: "Base Event: Unknown",
 }

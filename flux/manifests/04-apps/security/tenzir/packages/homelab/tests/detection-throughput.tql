@@ -15,7 +15,7 @@ let $t0 = now()
 // leaves 25x headroom so CI load cannot flake it. A regression that
 // pushes the leg under 1k records/s fails the assert and the baseline
 // records the warning. Re-measure honestly with:
-//   TENZIR_INPUT=... uvx tenzir@6.19.1 -f <this file> # time it
+//   TENZIR_INPUT=... uvx tenzir@6.20.0 -f <this file> # time it
 from_file env("TENZIR_INPUT") {
   read_json
 }
