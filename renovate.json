@@ -12,6 +12,9 @@
   "pre-commit": {
     "enabled": true
   },
+  "gitlabci": {
+    "enabled": false
+  },
   "flux": {
     "enabled": true
   },
@@ -31,6 +34,16 @@
       "description": "One MR per digest pin/refresh — override default Pin Dependencies grouping",
       "matchUpdateTypes": ["pin", "pinDigest", "digest"],
       "groupName": null
+    },
+    {
+      "description": "Base images share one rotation — combine ongoing digest refreshes into one MR",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "/^(public\\.ecr\\.aws/)?docker/library/(node|python|alpine|busybox|redis|rabbitmq|ubuntu)$/",
+        "/^(node|python|alpine|busybox|redis|rabbitmq|ubuntu)$/"
+      ],
+      "matchUpdateTypes": ["digest"],
+      "groupName": "base image digests"
     },
     {
       "description": "No digest pins for version/tag/imageTag/helper_image fields (nowhere to attach @sha256) or crossplane provider packages (tag@digest unverified in crossplane)",
@@ -68,7 +81,9 @@
       "description": "Renovate comment + image ref (bare, tag, digest, or tag@digest)",
       "managerFilePatterns": [
         "/^flux/manifests/.*\\.ya?ml$/",
-        "/^\\.gitlab/.*\\.ya?ml$/"
+        "/^\\.gitlab/.*\\.ya?ml$/",
+        "/^fleet/\\.gitlab-ci\\.yml$/",
+        "/^ansible/\\.gitlab-ci\\.yml$/"
       ],
       "depTypeTemplate": "image",
       "currentValueTemplate": "{{#if currentValue}}{{{currentValue}}}{{else}}latest{{/if}}",

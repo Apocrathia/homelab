@@ -21,8 +21,8 @@ spec:
     app:
       name: prime-agent
       namespace: prime-agent
-      # renovate: datasource=docker depName=node
-      image: node:24-bookworm-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
+      # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+      image: public.ecr.aws/docker/library/node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
 
       # No upstream OCI image exists: install the pinned npm tarball into the
       # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
@@ -94,7 +94,7 @@ spec:
           # 2026-09-14): /opt/data/repos carries the associated repos
           # (homelab clone, prime-agent source snapshot);
           # /opt/data/workspace stays the agents' default cwd — scratch
-          # space, never a clone target. node:24-bookworm-slim ships no git binary, and
+          # space, never a clone target. node:24-slim ships no git binary, and
           # apt needs root — the pod runs as uid 1000 (runAsNonRoot;
           # apt-get is Permission denied there, verified) — so git
           # installs rootless like uv/fd: a pinned micromamba (static
