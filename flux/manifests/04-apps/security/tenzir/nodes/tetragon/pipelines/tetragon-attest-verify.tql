@@ -1,6 +1,6 @@
 // Verification half of the tetragon node's record_integrity lane:
-// read the last 24h of every tetragon ocsf class back (the three
-// per-class tables via table-mode from_clickhouse — the vendor
+// read the last 90 minutes of every tetragon ocsf class back (the
+// three per-class tables via table-mode from_clickhouse — the vendor
 // catch-all reconstruction — merged into one stream, because the
 // per-node chain crosses classes), recompute each record's
 // attestation fingerprint over the canonical serialization, and walk
@@ -8,12 +8,12 @@
 // Detection Finding (2004) drops for every break — content tamper
 // (fingerprint_mismatch), deletion (chain_link_mismatch), or splice —
 // while the windowed walk tolerates its own edge (the first record's
-// predecessor lives outside the 24h read, its link checks are
+// predecessor lives outside the 90m read, its link checks are
 // skipped, its fingerprint recompute is not).
 //
 // SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
 // (the core node's detection-attest-verify): the first walk fires at
-// pipeline start and every 1h re-walks the rolling 24h window; every
+// pipeline start and every 1h re-walks the rolling 90m window; every
 // waits for a running walk before starting the next (no concurrent
 // walks against the store); restart-on-error still relaunches the
 // pipeline on a hard failure.
@@ -25,20 +25,37 @@
 // inside the rule's WHERE clauses and tamper evidence pages through
 // the agent_invoke bridge. The written findings carry no attestation
 // and no walked table ever reads ocsf.Detection_Finding back — this
-// walk covers only the three archive-rule classes — so the lane never
+// walk covers only the three archived classes — so the lane never
 // self-feeds. While a break persists, each hourly walk re-emits its
 // finding (append-only evidence) and the rule re-pages until the
 // tamper is remediated.
 //
-// The read-back is windowed (24h) because the walk sorts the merged
+// The read-back is windowed (90m) because the walk sorts the merged
 // stream in memory, and this node's flood classes are the fleet's
-// biggest volume: the measured steady rate (~74 ev/s) puts a 24h walk
-// at a few million rows — inside the 12Gi limit; a sustained extreme
-// drain (800 ev/s for a full day) would overflow it. The window is
-// the operator's dial if that day comes. The stored records come back
-// through the catch-all reconstruction: ClickHouse re-sorted the JSON
-// keys, and the operators' sort()-canonicalized serialization is what
-// makes the recompute match what the archive leg stamped.
+// biggest volume: the 24h window was sized at the measured ~74 ev/s
+// steady rate (a few million rows, inside the 12Gi limit), but the
+// 6.20 GA bump's live measurement is ~770 ev/s — 24h there is
+// ~66.5M rows x ~1KB/row catch-all round-trip, ~5.5x OVER the 12Gi
+// limit, and the walker OOM-churned on it (exit 137, four restarts
+// in the first post-bump hour, 14 at last check; the in-flight SELECT
+// dies mid-walk, so the churn never even reaches query_log). The
+// shrink math: 770 ev/s x 5400s = ~4.2M rows x ~1KB/row ~ 4.2GB
+// working set against the 12Gi limit — ~3x headroom at the brief's
+// 1KB/row figure (~1.5x even at a 2x engine overhead). 90m, not
+// 60m: the window must OVERLAP the 1h walk cadence, not tile with
+// it. At exactly 60m == cadence each event time is read by exactly
+// ONE walk, and the stamping leg can land a record up to ~90s
+// after that walk's SELECT snapshot (window end + 30s tolerance +
+// insert latency) — its event time <= the boundary then excludes
+// it from every later walk, a permanent ~90s-per-hour band where
+// in-place content tamper is never caught (deletion in the band
+// still falls to adjacency). The 30m overlap (90m - 1h) gives every
+// record 1-2 covering walks and swallows that ~90s late-write
+// budget with ~20x margin. The
+// stored records come back through the catch-all reconstruction:
+// ClickHouse re-sorted the JSON keys, and the operators'
+// sort()-canonicalized serialization is what makes the recompute
+// match what the stamping leg stamped.
 every 1h {
   from_clickhouse table="ocsf.Process_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
@@ -46,7 +63,7 @@ every 1h {
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 24h
+  where time > now() - 90m
   merge {
     from_clickhouse table="ocsf.File_System_Activity",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
@@ -54,7 +71,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   merge {
     from_clickhouse table="ocsf.Network_Activity",
@@ -63,7 +80,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   homelab::record_integrity::verify product="homelab-detection",
     title="Detection record chain break",

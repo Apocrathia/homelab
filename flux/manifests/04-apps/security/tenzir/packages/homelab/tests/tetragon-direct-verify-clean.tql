@@ -1,0 +1,38 @@
+---
+pre-compare: sort
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+// The stored-shape records exactly as the live lane reads them back:
+// the tetragon-direct-attest probe's output as strict JSON — what the
+// per-class ocsf catch-all columns hold, minus the schema-unification
+// null paddings (att[0].prev_event / att[1].fingerprint), which the
+// ClickHouse JSON-column write drops anyway — the tetragon-verify-
+// clean discipline, on the DIRECT leg's chain. The probe's arrival
+// order was adversarial: a same-second tie pair (exec/exit) arriving
+// in reverse uid order, two out-of-order arrivals riding the window
+// tolerance, and a late record arriving 36s behind the max observed
+// clock yet stamped in its correct (time, uid) chain position. Two
+// 60s windows: W1 = exec (restart head) -> exit -> kprobe -> late,
+// W2 = file (restart head) -> net — the window heads carry no
+// prev_event exactly like the live leg's first record after a node
+// restart (the node context is not fixture-testable; the LIVE
+// cross-window seam rides the tetragon-chains context and is the
+// lap-2a-2 server-side item). THIS is the false-flag proof the lap
+// exists for: the verify walk re-sorts the merged stream on the same
+// (time, metadata.uid) pair the windowed stamp sorted on, recomputes
+// every fingerprint, and checks chain adjacency — a stamping order
+// that deviated from the walk's re-sort anywhere would flag
+// chain_link_mismatch here. Expected: the summary line alone, zero
+// findings.
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"

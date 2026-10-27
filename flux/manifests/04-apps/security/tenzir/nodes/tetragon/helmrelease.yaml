@@ -121,22 +121,25 @@ spec:
             geo-open:
               type: geoip
             # Chain state for this node's record_integrity lane (the
-            # archive rule's attest leg + the tetragon-attest-verify
-            # pipeline): one lookup-table entry (key = the node
-            # identity constant tenzir-node-tetragon) holding the
-            # per-node chain's cross-pass tail — the previous archive
-            # pass's last record uid, type_uid, and fingerprint, which
-            # the next pass's first record links to as prev_event (the
-            # batch seam; the intra-batch links ride the attest
-            # operator's internal lag — probed: context reads run
-            # engine-batches ahead of the writes at batch rate, so the
-            # context is the seam channel only, never the intra-batch
-            # channel). Same shape as the core node's detection-chains
-            # and the investigations node's investigations-chains. The
-            # table is memory: a NODE restart loses it, and the next
-            # pass's first record restarts the chain with prev_event
-            # absent plus one WARNING diagnostic from attest (the epoch
-            # marker; best-effort per node lifetime — the verify lane's
+            # tetragon-ocsf direct leg's windowed attest + the
+            # tetragon-attest-verify pipeline): one lookup-table entry
+            # (key = the node identity constant tenzir-node-tetragon)
+            # holding the per-node chain's cross-window tail — the
+            # previous 60s window's last record uid, type_uid, and
+            # fingerprint, which the next window's first record links
+            # to as prev_event (the batch seam; the intra-window links
+            # ride the attest operator's internal lag — probed: context
+            # reads run engine-batches ahead of the writes at batch
+            # rate, so the context is the seam channel only, never the
+            # intra-batch channel; the archive rule used compaction
+            # passes as its seam, the direct leg uses windows, the
+            # semantics are identical). Same shape as the core node's
+            # detection-chains and the investigations node's
+            # investigations-chains. The table is memory: a NODE
+            # restart loses it, and the next window's first record
+            # restarts the chain with prev_event absent plus one
+            # WARNING diagnostic from attest (the epoch marker;
+            # best-effort per node lifetime — the verify lane's
             # per-record fingerprint recompute still catches post-hoc
             # mutation across restarts, only the linkage gap around a
             # restart is lost, documented in the datalake README).
@@ -159,9 +162,16 @@ spec:
               description: |
                 tetragon export events -> OCSF (Process/File/Network
                 Activity per event kind), then derive + schema-validate and
-                store in the node. Enrichment runs after the cast and
-                before the store/publish legs, so the lake, the archive,
-                and the node-local ocsf bus all see the enriched record:
+                write to ClickHouse directly (phase 2, lap 2a-1: the
+                lake-mediated fork { import } leg is gone; the
+                record_integrity attestation that lived in the archive
+                rule now stamps in-stream inside a bounded 60s
+                event-time window, upstream of the INSERT — the
+                compaction rule stays declared but unfeeded until lap
+                2a-2 deletes it after server-side verification).
+                Enrichment runs after the cast and before the
+                direct/publish legs, so ClickHouse and the node-local
+                ocsf bus both see the enriched record:
                 Network Activity — the only class whose events carry IP
                 endpoints (the process/file arms map process identity and
                 file paths, no IPs; grounded in the tetragon map) — gains
@@ -243,8 +253,8 @@ spec:
               name: tetragon attestation verify
               description: |
                 Verification half of this node's record_integrity lane:
-                reads the last 24h of every tetragon ocsf class back
-                (Process Activity, File System Activity, Network
+                reads the last 90 minutes of every tetragon ocsf class
+                back (Process Activity, File System Activity, Network
                 Activity via table-mode from_clickhouse — the vendor
                 catch-all reconstruction — merged into one stream,
                 because the per-node chain crosses classes),
@@ -255,20 +265,32 @@ spec:
                 content tamper (fingerprint_mismatch), deletion
                 (chain_link_mismatch), or splice — while the windowed
                 walk tolerates its own edge (the first record's
-                predecessor lives outside the 24h read). The walk is
-                SCHEDULED hourly (the every wrapper, the loader-pipeline
-                shape): the first walk fires at pipeline start, then
-                every 1h re-walks the rolling 24h window. Each break's
-                finding rides two legs: stdout (pod-log visibility)
-                and, via ocsf_derive + ocsf_cast, an INSERT into
-                ocsf.Detection_Finding with the tenzir user — landing
-                inside the Grafana tenzir-findings rule's WHERE clauses
-                (class 2004, severity 4), so tamper evidence pages
-                through the agent_invoke bridge instead of waiting for
-                a human to read pod logs. The package tests prove the
-                walk and the finding shape (homelab package:
-                tetragon-attest / tetragon-verify-clean /
-                tetragon-verify-tamper baselines, and the 250k
+                predecessor lives outside the 90m read). The 24h ->
+                90m shrink (lap 2a-1): the walk sorts in memory, the
+                GA-bump live rate is ~770 ev/s (the 24h window was
+                sized at ~74), and 24h at 770 ev/s is ~66.5M rows of
+                ~1KB/row catch-all round-trip — 5.5x over the 12Gi
+                limit, the walker's exit-137 OOM churn; 90m is ~4.2M
+                rows ~ 4.2GB, ~3x headroom, and overlaps the 1h walk
+                cadence by 30m so every record gets 1-2 covering
+                walks — an exact-cadence 60m window would tile with
+                zero overlap and permanently strand the ~90s of
+                post-snapshot late writes at each boundary. The
+                walk is SCHEDULED hourly (the every wrapper, the
+                loader-pipeline shape): the first walk fires at
+                pipeline start, then every 1h re-walks the rolling 90m
+                window. Each break's finding rides two legs: stdout
+                (pod-log visibility) and, via ocsf_derive + ocsf_cast,
+                an INSERT into ocsf.Detection_Finding with the tenzir
+                user — landing inside the Grafana tenzir-findings
+                rule's WHERE clauses (class 2004, severity 4), so
+                tamper evidence pages through the agent_invoke bridge
+                instead of waiting for a human to read pod logs. The
+                package tests prove the walk and the finding shape
+                (homelab package: tetragon-attest /
+                tetragon-verify-clean / tetragon-verify-tamper
+                baselines, the tetragon-direct attest/verify pair pins
+                the windowed direct leg's ordering, and the 250k
                 throughput harness pins the flood-scale stamping cost).
               definition: ""
               restart-on-error: 1 minute
@@ -318,6 +340,14 @@ spec:
               interval: 30 minutes
               disk-budget-high: 6GiB
               disk-budget-low: 4GiB
+            # SUPERSEDED ON THE WRITE PATH (phase 2, lap 2a-1): the
+            # tetragon-ocsf pipeline now writes + stamps its records
+            # directly to ClickHouse in-stream, so nothing imports into
+            # the lake and this rule fires on an empty store. It stays
+            # declared until lap 2a-2 deletes it — gated on the direct
+            # leg's server-side verification (ship counts, query_log,
+            # the first windows' seam + insert profiles).
+            #
             # 15-minute local lake, same horizon as the core node, same
             # archive: the tetragon OCSF classes export to the ClickHouse
             # OCSF query store's per-class ocsf.<Class_Name> tables, then
@@ -426,8 +456,8 @@ spec:
           name: tenzir-packages-homelab-tetragon-kprobe
       # The shared record_integrity operators (generated at the root
       # kustomization, the same ConfigMaps the core node mounts): the
-      # archive rule's attest leg and the tetragon-attest-verify
-      # pipeline call them directly.
+      # tetragon-ocsf direct leg's windowed attest and the
+      # tetragon-attest-verify pipeline call them directly.
       - name: packages-homelab-record-integrity-attest
         configMap:
           name: tenzir-packages-homelab-record-integrity-attest

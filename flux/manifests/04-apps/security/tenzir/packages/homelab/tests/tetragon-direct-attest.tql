@@ -1,0 +1,97 @@
+---
+quiet: true
+---
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+this = {tetragon: this}
+homelab::tetragon::ocsf::map tetragon, ocsf
+this = move ocsf
+ocsf_derive
+ocsf_cast
+// The direct leg's class gate, verbatim (nodes/tetragon/pipelines/
+// tetragon-ocsf.tql): only the three archived classes reach the
+// attest + to_clickhouse leg. The unmapped Base Event fallback
+// (class_uid = 0 — the process_signal line) drops here and never
+// reaches CH — the archive rule's types-scoping semantics carried
+// in-stream, and the shape that keeps the to_clickhouse f-string's
+// class_name non-null (the ocsf.null leak's kill, 27,987 rows
+// pre-bump).
+where class_uid in [ocsf_class_uid("Process Activity"), ocsf_class_uid("File System Activity"), ocsf_class_uid("Network Activity")]
+// Pin the uids the direct leg mints with uuid() when absent: pinned
+// fixtures keep the baseline deterministic (the investigations-test
+// precedent). The arrival order below is deliberately ADVERSARIAL to
+// the stamp order — this probe pins the windowed leg's ordering
+// hypothesis (phase-2 launch brief, lap 2a-1):
+//
+//   arrival:  kprobe(05:05:34.89) file(05:06:05.00) exit(05:05:32.82)
+//             exec(05:05:32.82) net(05:06:35.00) kprobe(05:05:59.00)
+//             [unmapped signal]
+//
+// - exec and exit share ONE timestamp exactly (the same-second flood
+//   burst shape): the (time, metadata.uid) sort must tie-break on uid
+//   (exec < exit) even though exit ARRIVED first — the verify walk
+//   re-sorts on the same pair, so a tie left to arrival order flags a
+//   false chain_link_mismatch on the walk.
+// - file and net arrive BETWEEN the W1 records (clock jumps to
+//   05:06:05, then 05:06:35): exec/exit are out-of-order arrivals
+//   (their window ends 05:06:00, within tolerance=30s of the clock)
+//   and must still join W1 and stamp in time order.
+// - the 05:06:35 arrival closes W1 (window end 05:06:00 + tolerance
+//   30s): W1 stamps exec -> exit -> kprobe in one batch, W2 stamps
+//   file -> net in the next — the cross-window seam this fixture can
+//   pin is the chain-restart shape (a node context is not
+//   fixture-testable, the tetragon-attest precedent: W2's first
+//   record rides with no prev_event exactly like a fresh node's
+//   first window); the LIVE seam (tetragon-chains context write ->
+//   read landing across 60s-apart closures) carries the archive
+//   rule's probed pass-to-pass semantics and is the lap-2a-2
+//   server-side verification item.
+if type_uid == 100701 {
+  metadata.uid = "tet-direct-exec"
+}
+if type_uid == 100702 {
+  metadata.uid = "tet-direct-exit"
+}
+if type_uid == 100700 and device.hostname == "talos-01" {
+  metadata.uid = "tet-direct-kprobe"
+}
+if type_uid == 100700 and device.hostname == "talos-04" {
+  metadata.uid = "tet-direct-late"
+}
+if type_uid == 100102 {
+  metadata.uid = "tet-direct-file"
+}
+if type_uid == 400101 {
+  metadata.uid = "tet-direct-net"
+}
+// The late kprobe (05:05:59, W1's range) arrives 36s behind the
+// max observed clock (net, 05:06:35 — beyond tolerance=30s): in the
+// LIVE stream the window operator drops such stragglers with a
+// warning once their window has closed (reference/operators/
+// window.md). A bounded fixture cannot reproduce that boundary —
+// probed: window closures fire at input end on bounded reads (even
+// with per-event batch separation), so the straggler joins W1 and
+// the baseline must show it stamped in its CORRECT (time, uid) chain
+// position (exec -> exit -> kprobe -> late-kprobe): the in-flight
+// lateness the tolerance budget exists to absorb. The drop itself is
+// live-stream behavior — the stated residual on the direct leg, and
+// the lap-2a-2 server-side watch item.
+// The direct leg's windowed attest shape, verbatim minus the node
+// context lines (context_enrich / context_update — not fixture-
+// testable, same omission as tetragon-attest) and the to_clickhouse
+// sink (the baseline pins the stamped stream; the write leg is a
+// sink and produces no output): the 60s event-time tumbling window
+// bounds the sort (the archive rule sorted whole compaction passes;
+// a sort on the unbounded flood stream is the walker's OOM class),
+// and stream-mode attest chains the window's records in the sorted
+// order via its internal lag. The per-window first record reads the
+// pre-window chain tail in the live pipeline (the batch seam); here
+// it rides the documented restart shape instead.
+window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+  sort time, metadata.uid
+  homelab::record_integrity::attest authority_uid="tenzir-node-tetragon",
+    chain_uid="tenzir-node-tetragon",
+    genesis=false,
+    chain="stream"
+}

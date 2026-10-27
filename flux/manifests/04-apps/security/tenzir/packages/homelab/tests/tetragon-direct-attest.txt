@@ -1,0 +1,472 @@
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    uid: "tet-direct-exit",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 2,
+  process: {
+    pid: 13062,
+    tid: 13062,
+    uid: "0",
+    path: "/usr/bin/runc",
+    file: {
+      path: "/usr/bin/runc",
+    },
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+    created_time: 2026-10-10T05:05:32.835863804Z,
+    terminated_time: 2026-10-10T05:05:32.835907827Z,
+    parent_process: {
+      pid: 13053,
+      path: "/usr/bin/runc",
+      cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    },
+  },
+  time: 2026-10-10T05:05:32.825311158Z,
+  device: {
+    hostname: "talos-01",
+  },
+  type_uid: 100702,
+  unmapped: {
+    pod: {
+      name: null,
+      namespace: null,
+    },
+    policy_name: null,
+  },
+  activity_name: "Terminate",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Terminate",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "c553a37c9aa3e92a69a8b3b8404cdad08d79603661db03a934dc46290bd791f4",
+      },
+    },
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      prev_event: {
+        uid: "tet-direct-exec",
+        type_uid: 100701,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "9d66f72188483c6a0410f668506799b199f1ace0aa807c91185bfb6cc79facf5",
+        },
+      },
+    },
+  ],
+}
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "container",
+      "record_integrity",
+    ],
+    uid: "tet-direct-kprobe",
+  },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 0,
+  actor: {
+    process: {
+      pid: 113625,
+      path: "/usr/local/sbin/longhorn-manager",
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      parent_process: {
+        pid: 111600,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+        name: "longhorn-manager",
+        image: {
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+        },
+      },
+    },
+  },
+  time: 2026-10-10T05:05:34.891317436Z,
+  device: {
+    hostname: "talos-01",
+  },
+  type_uid: 100700,
+  unmapped: {
+    pod: {
+      name: "longhorn-manager-7fqvg",
+      namespace: "longhorn-system",
+    },
+    policy_name: "container-escape-namespace-access",
+  },
+  activity_name: "Unknown",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Unknown",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "3e7edc5c77fd14b1cc186ff235832a4ea53e16faf9dd4d4460115cb549bbe08f",
+      },
+    },
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      prev_event: {
+        uid: "tet-direct-exit",
+        type_uid: 100702,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "c553a37c9aa3e92a69a8b3b8404cdad08d79603661db03a934dc46290bd791f4",
+        },
+      },
+    },
+  ],
+}
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "container",
+      "record_integrity",
+    ],
+    uid: "tet-direct-late",
+  },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 0,
+  actor: {
+    process: {
+      pid: 113625,
+      path: "/usr/local/sbin/longhorn-manager",
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      parent_process: {
+        pid: 111600,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+        name: "longhorn-manager",
+        image: {
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+        },
+      },
+    },
+  },
+  time: 2026-10-10T05:05:59Z,
+  device: {
+    hostname: "talos-04",
+  },
+  type_uid: 100700,
+  unmapped: {
+    pod: {
+      name: "longhorn-manager-7fqvg",
+      namespace: "longhorn-system",
+    },
+    policy_name: "container-escape-namespace-access",
+  },
+  activity_name: "Unknown",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Unknown",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "1221bb964310dc0176d022d27a794cfe8300f5d3a8c92b416cbab68522f70104",
+      },
+    },
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      prev_event: {
+        uid: "tet-direct-kprobe",
+        type_uid: 100700,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "3e7edc5c77fd14b1cc186ff235832a4ea53e16faf9dd4d4460115cb549bbe08f",
+        },
+      },
+    },
+  ],
+}
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    uid: "tet-direct-exec",
+    profiles: [
+      "record_integrity",
+    ],
+  },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1007,
+  activity_id: 1,
+  process: {
+    pid: 13053,
+    tid: 13053,
+    uid: "0",
+    path: "/usr/bin/runc",
+    file: {
+      path: "/usr/bin/runc",
+    },
+    cmd_line: "/usr/bin/runc --root /run/containerd/runc/k8s.io --log /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/log.json --log-format json exec --process /run/runc-process1942642318 --detach --pid-file /run/containerd/io.containerd.runtime.v2.task/k8s.io/346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b/3bfcfeef8d7bfda8f6f6440a385dee03ff4a7b6c36eb106060851db3bfe1d5d5.pid 346fa7cd6ede36144d1ccf3803b0779e129fbf66901de06d04d22fd42a16791b",
+    working_directory: "/run/containerd/io.containerd.runtime.v2.task/k8s.io/1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205",
+    created_time: 2026-10-10T05:05:32.825311267Z,
+    parent_process: {
+      pid: 112991,
+      path: "/usr/bin/containerd-shim-runc-v2",
+      cmd_line: "/usr/bin/containerd-shim-runc-v2 -namespace k8s.io -id 1d7b857551cb672b35618fe9fc7126720f904323282f79d172a9f2a3f593b205 -address /run/containerd/containerd.sock",
+    },
+  },
+  time: 2026-10-10T05:05:32.825311158Z,
+  device: {
+    hostname: "talos-01",
+  },
+  type_uid: 100701,
+  unmapped: {
+    pod: {
+      name: null,
+      namespace: null,
+    },
+    policy_name: null,
+  },
+  activity_name: "Launch",
+  category_name: "System Activity",
+  class_name: "Process Activity",
+  severity: "Informational",
+  type_name: "Process Activity: Launch",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "9d66f72188483c6a0410f668506799b199f1ace0aa807c91185bfb6cc79facf5",
+      },
+    },
+  ],
+}
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "host",
+      "container",
+      "record_integrity",
+    ],
+    uid: "tet-direct-net",
+  },
+  severity_id: 1,
+  category_uid: 4,
+  class_uid: 4001,
+  activity_id: 1,
+  src_endpoint: {
+    ip: 10.42.2.15,
+    port: 40123,
+  },
+  dst_endpoint: {
+    ip: 8.8.8.8,
+    port: 443,
+  },
+  actor: {
+    process: {
+      pid: 113625,
+      path: "/usr/local/sbin/longhorn-manager",
+      cmd_line: "/usr/local/sbin/longhorn-manager -d daemon --engine-image docker.io/longhornio/longhorn-engine:v1.13.0 --instance-manager-image docker.io/longhornio/longhorn-instance-manager:v1.13.0 --share-manager-image docker.io/longhornio/longhorn-share-manager:v1.13.0 --backing-image-manager-image docker.io/longhornio/backing-image-manager:v1.13.0 --support-bundle-manager-image docker.io/longhornio/support-bundle-kit:v0.0.98 --manager-image docker.io/longhornio/longhorn-manager:v1.13.0 --service-account longhorn-service-account --upgrade-version-check",
+      parent_process: {
+        pid: 111600,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "5bf9470aa7b3e40701e4a1f9ed234a9c8da882e012d2ee6544ef67df89c943e8",
+        name: "longhorn-manager",
+        image: {
+          uid: "docker.io/longhornio/longhorn-manager@sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+          name: "docker.io/longhornio/longhorn-manager:v1.13.0",
+        },
+      },
+    },
+  },
+  time: 2026-10-10T05:06:35Z,
+  device: {
+    hostname: "talos-03",
+  },
+  type_uid: 400101,
+  unmapped: {
+    pod: {
+      name: "longhorn-manager-7fqvg",
+      namespace: "longhorn-system",
+    },
+    policy_name: "monitor-network-activity-outside-cluster-cidr-range",
+  },
+  activity_name: "Open",
+  category_name: "Network Activity",
+  class_name: "Network Activity",
+  severity: "Informational",
+  type_name: "Network Activity: Open",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "1af2775ee7d0f333c9c3a1df641e6d5d19c5c26e92ee0af00190aad9afbcee28",
+      },
+    },
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      prev_event: {
+        uid: "tet-direct-file",
+        type_uid: 100102,
+        fingerprint: {
+          algorithm_id: 3,
+          encoding_id: 1,
+          serialization_id: 99,
+          serialization: "tenzir-sorted-json",
+          value: "b30c7eca1a1d3c7f1ea823ee074e87ba6862423af035cffa9599d2ac2e88dc5a",
+        },
+      },
+    },
+  ],
+}
+{
+  metadata: {
+    version: "1.9.0",
+    product: {
+      name: "tetragon",
+      vendor_name: "cilium",
+    },
+    profiles: [
+      "container",
+      "record_integrity",
+    ],
+    uid: "tet-direct-file",
+  },
+  severity_id: 1,
+  category_uid: 1,
+  class_uid: 1001,
+  activity_id: 2,
+  file: {
+    path: "/etc/shadow",
+    xattributes: {
+      permission: "-rw-r-----",
+    },
+  },
+  actor: {
+    process: {
+      pid: 13560,
+      path: "/usr/bin/pg_isready",
+      cmd_line: "/usr/bin/pg_isready /usr/bin/pg_isready -U postgres",
+      parent_process: {
+        pid: 107169,
+        path: "/usr/bin/containerd-shim-runc-v2",
+      },
+      container: {
+        uid: "2606b2c72f5cd153fe1e23c3143a2ea8544049f5197142a491b4402c88197ec3",
+        name: "postgres",
+        image: {
+          uid: "ghcr.io/firecrawl/nuq-postgres@sha256:a582bc385702f3a93cafe2d8c749d55b6676e7c2761e94923113badf7af4b54f",
+          name: "sha256:5a3c572cc9438c721c851f37447c662d56da8064af92069120554581134802c0",
+        },
+      },
+    },
+  },
+  time: 2026-10-10T05:06:05Z,
+  device: {
+    hostname: "talos-01",
+  },
+  type_uid: 100102,
+  unmapped: {
+    pod: {
+      name: "firecrawl-postgres-54f8cb6599-668kf",
+      namespace: "firecrawl",
+    },
+    policy_name: "secret-file-access",
+  },
+  activity_name: "Read",
+  category_name: "System Activity",
+  class_name: "File System Activity",
+  severity: "Informational",
+  type_name: "File System Activity: Read",
+  attestation_list: [
+    {
+      authority_uid: "tenzir-node-tetragon",
+      chain_uid: "tenzir-node-tetragon",
+      fingerprint: {
+        algorithm_id: 3,
+        encoding_id: 1,
+        serialization_id: 99,
+        serialization: "tenzir-sorted-json",
+        value: "b30c7eca1a1d3c7f1ea823ee074e87ba6862423af035cffa9599d2ac2e88dc5a",
+      },
+    },
+  ],
+}
