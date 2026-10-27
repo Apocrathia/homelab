@@ -19,7 +19,11 @@ spec:
     path: /mcp
   deployment:
     # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-    image: public.ecr.aws/docker/library/python:3.15-slim@sha256:533b0b2f9b5d46fd097091cf826f27902f1d6c3bca714b6dc74551356aa97a51
+    # Pinned back to 3.14: mcp-server-motherduck's duckdb dependency ships no
+    # cp315 wheels, so pip-at-boot built from sdist and the container
+    # crashlooped (2026-10-27). Re-bump to 3.15 only after duckdb publishes
+    # cp315 wheels for the version motherduck pins.
+    image: public.ecr.aws/docker/library/python:3.14-slim@sha256:82abc9f53600280b0757126f83c5a7d47088592d2acb6b4c0b9e97f76865508c
     port: 8080
     cmd: /bin/sh
     args:
