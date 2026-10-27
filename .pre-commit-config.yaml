@@ -91,7 +91,7 @@ repos:
       - id: shellcheck
         files: \.(sh|bash)$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.0
+    rev: v0.17.3
     hooks:
       - id: ruff
         args: [--fix]
