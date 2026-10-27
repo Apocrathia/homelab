@@ -80,6 +80,7 @@ class SyncResult:
     renamed_count: int = 0
     codec_candidates: int = 0
     service_error: str | None = None
+    aborted: bool = False
 
     @property
     def failure_count(self) -> int:
@@ -93,6 +94,11 @@ class SyncResult:
 
 
 CODEC_STALE_PATTERN = re.compile(r"h264|x264|H\.264", re.IGNORECASE)
+
+# Per-service failure budget: once a service accumulates this many failed
+# items, its remaining items are skipped (run marked aborted) and the whole
+# job exits 1. Sub-threshold item failures are tolerated (exit 0).
+FAILURE_THRESHOLD = int(os.environ.get("ARRSYNC_FAILURE_THRESHOLD", "10"))
 
 
 class ArrClient(ABC):
@@ -321,7 +327,9 @@ class ArrClient(ABC):
         The operation continues on failure - if any item fails to refresh or rename,
         the failure is logged and processing continues with the next item. This ensures
         the entire library is processed even when individual items have issues (e.g.,
-        database/filesystem mismatches in Lidarr).
+        database/filesystem mismatches in Lidarr). Once a service's failure count
+        reaches FAILURE_THRESHOLD, its remaining items are skipped and the
+        run is marked aborted.
 
         Returns:
             Counts and failures for the completed service run
@@ -332,6 +340,13 @@ class ArrClient(ABC):
         result = SyncResult(service=self.config.name, total_items=len(items))
 
         for item in items:
+            if result.failure_count >= FAILURE_THRESHOLD:
+                logger.error(
+                    f"[{self.config.name}] Failure threshold ({FAILURE_THRESHOLD}) reached; "
+                    f"aborting the remaining items"
+                )
+                result.aborted = True
+                break
             item_id = item["id"]
             item_name = self._get_item_name(item)
             logger.info(f"[{self.config.name}] Processing: {item_name} (ID: {item_id})")
@@ -718,6 +733,8 @@ def print_summary(results: list[SyncResult]) -> None:
             logger.warning(f"[{result.service}] Failed rename items: {', '.join(result.failed_rename)}")
         if result.service_error:
             logger.error(f"[{result.service}] Service failure: {result.service_error}")
+        if result.aborted:
+            logger.error(f"[{result.service}] Aborted: failure threshold ({FAILURE_THRESHOLD}) exceeded")
 
 
 def main() -> int:
@@ -748,6 +765,7 @@ Environment Variables:
     RADARR_API_KEY   Radarr API key (required for radarr/all)
     LIDARR_URL       Lidarr base URL (default: http://lidarr.example.com)
     LIDARR_API_KEY   Lidarr API key (required for lidarr/all)
+    ARRSYNC_FAILURE_THRESHOLD  Per-service failure budget before the run aborts (default: 10)
         """,
     )
     parser.add_argument(
@@ -794,9 +812,13 @@ Environment Variables:
             results.append(SyncResult(service=name.title(), service_error=str(e)))
 
     print_summary(results)
-    if any(not result.succeeded for result in results):
+    total_failures = sum(result.failure_count for result in results)
+    hard_fail = any(result.service_error or result.aborted for result in results)
+    if hard_fail or total_failures > FAILURE_THRESHOLD:
         logger.error("Sync completed with failures")
         return 1
+    if total_failures:
+        logger.info(f"Tolerating {total_failures} item failures (threshold: {FAILURE_THRESHOLD})")
 
     logger.info("Sync completed successfully")
     return 0

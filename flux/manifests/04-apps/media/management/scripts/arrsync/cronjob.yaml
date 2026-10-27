@@ -92,6 +92,10 @@ spec:
                     secretKeyRef:
                       name: arrsync-secrets
                       key: lidarr-api-key
+                # Per-service item-failure budget: abort the run (exit 1) once a
+                # service hits this many failed items; fewer are tolerated.
+                - name: ARRSYNC_FAILURE_THRESHOLD
+                  value: "10"
               resources:
                 requests:
                   cpu: 100m

@@ -50,7 +50,7 @@ The dry run queries each service's rename preview without issuing rename command
 - any `Failed refresh items`, `Failed rename items`, or `Service failure` lines
 - `Codec rename candidate` lines for existing paths containing `h264`, `x264`, or `H.264`; the proposed path should use the configured HEVC naming
 
-The command exits non-zero after printing the summary if any service or item fails.
+The command exits non-zero after printing the summary if any service fails, a service aborts (its failed items reached `ARRSYNC_FAILURE_THRESHOLD`, default 10), or total item failures exceed the threshold. Sub-threshold item failures are tolerated (exit 0).
 
 ### Code Formatting
 
