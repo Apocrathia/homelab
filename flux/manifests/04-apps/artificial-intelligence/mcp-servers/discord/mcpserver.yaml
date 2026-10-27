@@ -14,7 +14,7 @@ spec:
     path: /mcp
   deployment:
     # renovate: datasource=docker registryUrl=https://docker.io depName=saseq/discord-mcp
-    image: docker.io/saseq/discord-mcp@sha256:df6ae03da020c4ba3ab3ad9a13eb65d5747a0c2a56ead4a868037529a1ce0c28
+    image: docker.io/saseq/discord-mcp@sha256:4fc93fd6dbd0e991a33cb23d44e9433609b6e96ca7fadc17bf170e6477cc33a7
     port: 8080
     cmd: /bin/sh
     args:
