@@ -56,12 +56,6 @@ spec:
             summary: "etcd high memory usage"
             description: "etcd memory usage is {{ $value | humanizePercentage }} of quota limit"
 
-    # EtcdTooManyOpenConnections removed 2026-10-27: the expr compared the
-    # raw cumulative counter etcd_network_peer_sent_bytes_total against
-    # 1e9 (no rate(), wrong units) so it fired permanently on every member
-    # and refired after each etcd restart. The stock kube-prometheus-stack
-    # etcd rules (EtcdHighNumberOfLeaderChanges, EtcdInsufficientMembers,
-    # etc.) already cover etcd health.
     - name: etcd.availability
       rules:
         - alert: EtcdClusterDown
