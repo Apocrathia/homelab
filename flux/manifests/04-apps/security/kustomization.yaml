@@ -11,8 +11,4 @@ resources:
   - opencanary
   - opencti
   - opentaxii
-  # 2026-10-27: whole app removed from the cluster — upstream image
-  # ghcr.io/novacode37/prism-platform unpullable (403 denied). Folder kept
-  # in-repo for a future re-pin.
-  # - prism
   - tenzir
