@@ -177,6 +177,20 @@ spec:
       # Annotations to add to the service account
       annotations: {}
 
+    # Chart >=1.12 renders internal NetworkPolicies by default
+    # (restrictInternalTraffic: true). That default flipped on with the
+    # 1.12.1 upgrade (2026-08-15) and dropped Prometheus scrapes to
+    # longhorn-manager:9500 (TargetDown since). Narrow peer: prometheus
+    # statefulset pods in prometheus-system only.
+    networkPolicies:
+      metricsScrapeSources:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: prometheus-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+
     metrics:
       serviceMonitor:
         enabled: true
