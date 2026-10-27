@@ -8,7 +8,7 @@
 #
 # In-cluster endpoints (operator-created Services; pattern prefixes are
 # fixed by the operator namer):
-#   clickhouse-tenzir.clickhouse.svc.cluster.local  - CR-level service,
+#   clickhouse-tenzir.tenzir.svc.cluster.local  - CR-level service,
 #     load-balanced across all hosts, HTTP 8123 + native 9000
 #   chi-tenzir-ocsf-<shard>-<replica>...                   - per-host services
 #   The {cluster} macro value is "ocsf" (the single cluster below).
@@ -16,7 +16,7 @@ apiVersion: clickhouse.altinity.com/v1
 kind: ClickHouseInstallation
 metadata:
   name: tenzir
-  namespace: clickhouse
+  namespace: tenzir
 spec:
   configuration:
     # Keeper reference: the operator resolves the per-replica endpoints of
@@ -165,11 +165,12 @@ spec:
               env:
                 # rustfs creds for the cold S3 disk (from_env in
                 # 00-storage-tiered.xml); tenzir-bucket-scoped keys from
-                # the tenzir-secrets item. The clickhouse namespace
-                # renders that item from secret.yaml in this directory -
-                # "one item, multiple OnePasswordItem CRs", the same
-                # pattern as the tenzir namespace's clickhouse-secrets
-                # render. The aws keys on clickhouse-secrets (the old
+                # the tenzir-secrets item, rendered in this (tenzir)
+                # namespace by ../secret.yaml - the same render the
+                # Tenzir nodes read (the CHI moved into the tenzir
+                # namespace 2026-10-27; its old clickhouse-namespace
+                # render of the item is gone - one render per item now).
+                # The aws keys on clickhouse-secrets (the old
                 # clickhouse-bucket user) become unused - the operator
                 # removes them.
                 - name: CH_S3_ACCESS_KEY_ID
@@ -221,7 +222,10 @@ spec:
           storageClassName: longhorn
           resources:
             requests:
-              # Hot tier per replica (~90d): each replica holds a full copy
+              # Hot tier per replica (~7d): each replica holds a full copy
               # of the data (replication), so the cluster reserves 3x this
               # cap; Longhorn grows on demand, so this is a ceiling.
+              # Steady state at the observed ~9.4 GiB/day per replica
+              # (read live 2026-10-27) is ~66 GiB per 7d hot window -
+              # fits on 100Gi with headroom. No resize.
               storage: 100Gi

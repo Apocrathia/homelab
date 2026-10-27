@@ -22,7 +22,7 @@
 
 every 24h {
   from_clickhouse sql="SELECT `time`, `status_id`, JSONExtractArrayRaw(toString(event), 'osint') AS osint, nullIf(JSONExtractString(toString(event), 'status'), '') AS status FROM ocsf.OSINT_Inventory_Info ORDER BY `time` ASC",
-    host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+    host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),

@@ -2,11 +2,20 @@
 title: "ClickHouse rollout — tiered OCSF store, Grafana ClickHouse datasource, DuckDB lane retirement"
 status: active
 found_at: 2026-10-17
-updated_at: 2026-10-17
+updated_at: 2026-10-27
 area: observability
 ---
 
 # ClickHouse rollout
+
+> **Placement superseded (2026-10-27):** the CHI/CKI store relocated from
+> the `clickhouse` namespace to the `tenzir` namespace (the CR-level
+> service DNS is now `clickhouse-tenzir.tenzir.svc.cluster.local`, and the
+> hot-tier TTL moved from 90 days to 7 days). This plan's D2/D8
+> `clickhouse-tenzir.clickhouse.svc.cluster.local` strings and the
+> placement decisions below are the historical record of the original
+> rollout, not the current shape; see
+> `flux/manifests/04-apps/security/tenzir/clickhouse/README.md`.
 
 ## Goal
 

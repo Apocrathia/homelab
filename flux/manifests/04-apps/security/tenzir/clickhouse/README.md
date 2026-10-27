@@ -2,7 +2,10 @@
 
 The custom resources behind the `ocsf` query store and the investigations
 `records` table: the ClickHouseInstallation (CHI) `tenzir`, its Keeper
-ensemble, the credentials renders, and the extracted server config. The
+ensemble, and the extracted server config (the CHI and its Keeper run in
+the `tenzir` namespace — relocated from `clickhouse` 2026-10-27; the
+credential renders they consume live one level up in
+[`../secret.yaml`](../secret.yaml)). The
 cluster is nested under the tenzir tree because its dedication is
 structural — it exists to be this stack's datalake, and nothing else
 writes here. The Altinity operator itself stays at the services root
@@ -16,7 +19,6 @@ gated on it.
 
 | File                            | What it is                                                                                                                                          |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `secret.yaml`                   | OnePasswordItem renders in this namespace: `clickhouse-secrets` (user passwords) + `tenzir-secrets` (S3 cold-tier creds)                            |
 | `keeper.yaml`                   | ClickHouseKeeperInstallation `tenzir` - 3-node Keeper ensemble                                                                                      |
 | `cluster.yaml`                  | ClickHouseInstallation `tenzir` - thin CHI: users, keeper ref, cluster layout, pod template; `files:` holds placeholder keys stitched at build time |
 | `config/00-storage-tiered.xml`  | Tiered-storage policy: hot Longhorn PVC + cold S3 disk (the stitched source of truth)                                                               |
@@ -41,7 +43,11 @@ with "no matches for kind". `services-clickhouse-cluster` applies only
 after its gates clear:
 
 - `services-clickhouse` - the Altinity operator itself (installs both CRDs).
-- `bootstrap-1password` - OnePasswordItem CRD + operator (renders `secret.yaml`).
+- `apps-security` - the tenzir namespace plus the `clickhouse-secrets` /
+  `tenzir-secrets` OnePasswordItem renders in
+  [`../secret.yaml`](../secret.yaml) that the CHI consumes (one render per
+  item since the store relocated into the tenzir namespace; this layer's
+  own `secret.yaml` is gone).
 - `infrastructure-longhorn` - both CRs provision Longhorn PVCs.
 
 This is the house pattern (services-tetragon-policies /
@@ -237,7 +243,7 @@ flowchart LR
     AH -->|"homelab::investigations::ocsf::map<br/>validates + stamps OCSF spine"| MAP["ocsf_derive / ocsf_cast"]
     MAP -->|"attest: record_integrity fingerprint<br/>chain per case (node memory)"| AT["attest + context legs"]
     AT -->|"to_clickhouse (writer user,<br/>INSERT + SELECT)"| CH["ClickHouse investigations.records<br/>(3 replicas, ReplicatedMergeTree)"]
-    CH -->|"90d TTL TO VOLUME 'cold'<br/>(ocsf tables; records is TTL-free)"| COLD["cold tier: rustfs<br/>tenzir bucket, clickhouse prefix"]
+    CH -->|"7d TTL TO VOLUME 'cold'<br/>(ocsf tables; records is TTL-free)"| COLD["cold tier: rustfs<br/>tenzir bucket, clickhouse prefix"]
     AG -.->|"query-lane read-back<br/>(reader user, SELECT)"| CH
     CH -.->|"investigations-attest-verify walk<br/>every 1h (reader user, SELECT)"| VFY["Detection Finding 2004<br/>on any chain break"]
     VFY -->|"ocsf_derive/cast + INSERT<br/>(tenzir user, ocsf.*)"| DF["ocsf.Detection_Finding"]
@@ -274,7 +280,7 @@ DDL/live convergence story is tracked in the issue above.
 
 ```mermaid
 flowchart LR
-    subgraph HOT["hot tier (~90 days)"]
+    subgraph HOT["hot tier (~7 days)"]
         PVC0["chi replica 0<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
         PVC1["chi replica 1<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
         PVC2["chi replica 2<br/>Longhorn PVC 100Gi<br/>/var/lib/clickhouse/hot/"]
@@ -285,7 +291,7 @@ flowchart LR
     subgraph RUSTFS["rustfs (NAS)"]
         S3["tenzir bucket<br/>clickhouse/ prefix<br/>storage.services.apocrathia.com:9009"]
     end
-    PVC0 -->|"part moves after 90d TTL<br/>(each replica uploads its own copy)"| S3
+    PVC0 -->|"part moves after 7d TTL<br/>(each replica uploads its own copy)"| S3
     PVC1 -->|"same"| S3
     PVC2 -->|"same"| S3
     K -.->|"replication metadata"| PVC0
@@ -298,18 +304,22 @@ flowchart LR
   (`http://storage.services.apocrathia.com:9009/tenzir/clickhouse/`) —
   the ClickHouse data lake lives in the tenzir app's bucket, creds from
   the `tenzir-secrets` item (`aws-access-key-id` /
-  `aws-secret-access-key`, rendered in this namespace by
-  [`secret.yaml`](./secret.yaml); the same item the tenzir namespace
-  renders — one item, multiple OnePasswordItem CRs). The old
+  `aws-secret-access-key`, rendered by
+  [`../secret.yaml`](../secret.yaml) — the same single render the Tenzir
+  nodes read; the store's old clickhouse-namespace duplicate render went
+  away with the relocation). The old
   clickhouse-bucket-user keys on `clickhouse-secrets` are unused now;
   the operator removes them.
 - **3x cold growth**: each replica runs the same tiered policy and
   uploads its own copy of every cold part — the bucket grows ~3x the
   single-node shape.
-- **Retention** (ocsf tables): 90 days → `TO VOLUME 'cold'` (part
-  moves), 400 days → `DELETE` (horizon cap, operator-tunable: change
-  `INTERVAL 400 DAY` in `config/10-startup-scripts.xml` for new
-  installs; `ALTER TABLE ... MODIFY TTL` server-side for live tables).
+- **Retention** (ocsf tables): 7 days → `TO VOLUME 'cold'` (part
+  moves; was 90 days until 2026-10-27 — the observed ~9.4 GiB/day per
+  replica put the 90-day window at ~850 GiB, past the 100Gi hot PVC;
+  7 days ≈ ~66 GiB steady on 100Gi), 400 days → `DELETE` (horizon cap,
+  operator-tunable: change `INTERVAL 400 DAY` in
+  `config/10-startup-scripts.xml` for new installs; `ALTER TABLE ...
+MODIFY TTL` server-side for live tables).
   `ttl_only_drop_parts = 1` keeps the delete a cheap partition drop.
   `investigations.records` has NO TTL by design — a case record is a
   durable audit record.
@@ -341,7 +351,7 @@ re-syncs from its siblings.
   after any apply:
 
 ```bash
-kubectl exec -n clickhouse chi-tenzir-ocsf-0-0-0 -- \
+kubectl exec -n tenzir chi-tenzir-ocsf-0-0-0 -- \
   clickhouse-client --query "SHOW TABLES FROM ocsf"
 ```
 
@@ -380,7 +390,7 @@ own service FQDNs by the operator's `host_regexp` default.
 
 The operator creates the Services; name prefixes are fixed by its namer:
 
-- `clickhouse-tenzir.clickhouse.svc.cluster.local` - CR-level service,
+- `clickhouse-tenzir.tenzir.svc.cluster.local` - CR-level service,
   load-balanced over both replicas. HTTP 8123 (Grafana datasource),
   native TCP 9000 (Tenzir `to_clickhouse`).
 - `chi-tenzir-ocsf-<shard>-<replica>` services - per-host (e.g.

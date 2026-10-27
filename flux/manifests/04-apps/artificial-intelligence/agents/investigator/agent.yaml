@@ -276,7 +276,7 @@ spec:
           "FROM investigations.records "
           "WHERE event.metadata.correlation_uid.:String = '%s' "
           'ORDER BY time LIMIT 100", '
-          'host="clickhouse-tenzir.clickhouse.svc.cluster.local", port=9000, '
+          'host="clickhouse-tenzir.tenzir.svc.cluster.local", port=9000, '
           'user="investigations-reader", password=secret("investigations-reader-password"), '
           'tls=false | head 100' % uid)
       launch(definition, f"{uid}-readback", "readback")
@@ -292,7 +292,7 @@ spec:
           "`finding_info.uid` AS uid, `event.metadata.uid.:String AS metadata_uid "
           "FROM ocsf.Detection_Finding WHERE `subject_name` = 'svc-backup' "
           "AND time > now() - INTERVAL 1 DAY ORDER BY time DESC LIMIT 50\", "
-          'host="clickhouse-tenzir.clickhouse.svc.cluster.local", port=9000, '
+          'host="clickhouse-tenzir.tenzir.svc.cluster.local", port=9000, '
           'user="investigations-reader", password=secret("investigations-reader-password"), '
           "tls=false | head 50")
       launch(definition, "finding-hunt", "finding-hunt")

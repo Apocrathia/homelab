@@ -119,8 +119,10 @@ and the rendered Secret keys match them:
   (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
 
 A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
-Secret in this namespace (MR-3; the same item the clickhouse namespace
-renders — one item, multiple OnePasswordItem CRs). Its `clickhouse-password`
+Secret in this namespace (MR-3; since the ClickHouse store relocated
+into this namespace 2026-10-27, this is the item's only render — the
+CHI in [`clickhouse/`](./clickhouse/) reads it too, for its users block).
+Its `clickhouse-password`
 field is the ClickHouse `tenzir` writer password five nodes read as
 `TENZIR_SECRETS__CLICKHOUSE_PASSWORD` — the `to_clickhouse` archive legs
 on core, tetragon, and netflow, and the factory INSERT legs on

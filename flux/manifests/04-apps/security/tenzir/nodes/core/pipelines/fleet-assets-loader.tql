@@ -12,7 +12,7 @@
 // the geo-open-loader precedent).
 every 1h {
   from_clickhouse sql="SELECT uuid, hostname, display_name, primary_ip, primary_mac, platform, os_version, osquery_version, hardware_serial, hardware_model, hardware_vendor, computer_name, status, last_seen FROM ocsf.fleet_assets FINAL WHERE primary_ip IS NOT NULL ORDER BY last_seen ASC",
-                host="clickhouse-tenzir.clickhouse.svc.cluster.local",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
                 port=9000,
                 user="tenzir",
                 password=secret("clickhouse-password"),
