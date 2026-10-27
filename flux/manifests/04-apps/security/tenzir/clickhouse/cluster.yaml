@@ -29,8 +29,8 @@ spec:
 
     # ClickHouse users, rendered by the operator into users.d
     # (chop-generated-users). Passwords arrive as env vars the operator
-    # injects from the clickhouse-secrets Secret (OnePasswordItem on the
-    # dedicated clickhouse-secrets vault item) - no secret values in git,
+    # injects from the tenzir-secrets Secret (the same OnePasswordItem
+    # the S3 env and the Tenzir nodes read) - no secret values in git,
     # ever.
     # The operator also merges in localhost networks + a host_regexp for the
     # CHI's own service FQDNs on every user; networks below add the cilium
@@ -44,7 +44,7 @@ spec:
       tenzir/password:
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
       tenzir/networks/ip:
         - 10.42.0.0/16
@@ -58,7 +58,7 @@ spec:
       grafana/password:
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-grafana-password
       grafana/networks/ip:
         - 10.42.0.0/16
@@ -75,7 +75,7 @@ spec:
       investigations-writer/password:
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-investigations-writer-password
       investigations-writer/networks/ip:
         - 10.42.0.0/16
@@ -90,7 +90,7 @@ spec:
       investigations-reader/password:
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-investigations-reader-password
       investigations-reader/networks/ip:
         - 10.42.0.0/16
@@ -170,9 +170,6 @@ spec:
                 # Tenzir nodes read (the CHI moved into the tenzir
                 # namespace 2026-10-27; its old clickhouse-namespace
                 # render of the item is gone - one render per item now).
-                # The aws keys on clickhouse-secrets (the old
-                # clickhouse-bucket user) become unused - the operator
-                # removes them.
                 - name: CH_S3_ACCESS_KEY_ID
                   valueFrom:
                     secretKeyRef:

@@ -27,5 +27,5 @@ protocol on port 9000; the service also exposes HTTP 8123. Auth is the
 `ocsf.*`), substituted from `grafana-secrets` fields
 `clickhouse-grafana-user` and `clickhouse-grafana-password` — the
 password value must match the `clickhouse-grafana-password` field on the
-`clickhouse-secrets` item that materializes the CHI's
-`clickhouse-secrets` Secret in `tenzir`.
+`tenzir-secrets` item that materializes the CHI's
+`tenzir-secrets` Secret in `tenzir`.

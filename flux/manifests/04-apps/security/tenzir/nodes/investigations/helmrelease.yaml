@@ -369,10 +369,9 @@ spec:
         cpu: "2"
         memory: 2Gi
 
-    # Secrets (vault items already materialized in this namespace by
-    # ../secret.yaml — the tenzir-secrets and clickhouse-secrets
-    # OnePasswordItems): the investigations ClickHouse users' passwords
-    # ride the dedicated clickhouse-secrets item as NEW fields
+    # Secrets (the tenzir-secrets vault item, already materialized in
+    # this namespace by ../secret.yaml): the investigations ClickHouse
+    # users' passwords ride it as fields
     # (clickhouse-investigations-writer-password /
     # clickhouse-investigations-reader-password — the CHI users block in
     # clickhouse/cluster.yaml renders the users from them). Env
@@ -394,17 +393,17 @@ spec:
       - name: TENZIR_SECRETS__INVESTIGATIONS_WRITER_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-investigations-writer-password
       - name: TENZIR_SECRETS__INVESTIGATIONS_READER_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-investigations-reader-password
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
 
     extraVolumes:

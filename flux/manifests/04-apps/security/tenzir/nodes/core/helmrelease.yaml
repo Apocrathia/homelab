@@ -620,8 +620,8 @@ spec:
     # `authentik-events-token` (TENZIR_SECRETS__ map; tofu mints the
     # token, the operator copies the key into the vault once). The
     # ClickHouse writer password rides the
-    # dedicated clickhouse-secrets item (this namespace materializes its
-    # own OnePasswordItem in secret.yaml): the env var maps to config key
+    # same tenzir-secrets item (this namespace materializes its
+    # OnePasswordItem in secret.yaml): the env var maps to config key
     # tenzir.secrets.clickhouse-password, so the to_clickhouse archive
     # legs read it as secret("clickhouse-password") — kebab name, the
     # same env-var shape as the authentik token. The retired to_s3 tail's
@@ -637,7 +637,7 @@ spec:
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
 
     # Detection content: the homelab TQL mapping package (IaC-installed at

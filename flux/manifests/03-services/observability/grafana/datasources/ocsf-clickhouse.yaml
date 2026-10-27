@@ -29,7 +29,7 @@ spec:
   # grafana-secrets 1Password item (vaults/Secrets/items/grafana-secrets)
   # via the operator valuesFrom mechanism - git holds only the ${...}
   # field-name placeholders, never values. The password value must match
-  # the `clickhouse-grafana-password` field on the clickhouse-secrets item
+  # the `clickhouse-grafana-password` field on the tenzir-secrets item
   # (the cluster.yaml grafana user in tenzir); the username is the
   # same `grafana` user cluster.yaml defines.
   valuesFrom:

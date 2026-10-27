@@ -95,9 +95,8 @@ and the rendered Secret keys match them:
 
 - `aws-access-key-id` / `aws-secret-access-key`: rustfs bucket-scoped
   user for the `tenzir` bucket; the ClickHouse cold tier reads them as
-  `CH_S3_ACCESS_KEY_ID` / `CH_S3_SECRET_ACCESS_KEY` (the clickhouse
-  namespace renders the same item from
-  [`clickhouse/secret.yaml`](./clickhouse/secret.yaml); see the
+  `CH_S3_ACCESS_KEY_ID` / `CH_S3_SECRET_ACCESS_KEY` (the relocated store
+  in [`clickhouse/`](./clickhouse/) reads them from this render; see the
   [rustfs bucket/user creation
   doc](../../../../../docs/infrastructure/rustfs-bucket-user-creation.md)
   for the original provisioning)
@@ -118,18 +117,18 @@ and the rendered Secret keys match them:
   opencti-taxii-factory-poll pipelines read it
   (`TENZIR_SECRETS__OPENCTI_TAXII_TOKEN` on tenzir-node-intel)
 
-A second item, `clickhouse-secrets`, renders the `clickhouse-secrets`
-Secret in this namespace (MR-3; since the ClickHouse store relocated
-into this namespace 2026-10-27, this is the item's only render — the
-CHI in [`clickhouse/`](./clickhouse/) reads it too, for its users block).
-Its `clickhouse-password`
-field is the ClickHouse `tenzir` writer password five nodes read as
-`TENZIR_SECRETS__CLICKHOUSE_PASSWORD` — the `to_clickhouse` archive legs
-on core, tetragon, and netflow, and the factory INSERT legs on
-enrichment and intel; its `clickhouse-investigations-{writer,reader}-password` fields carry the
+The same item carries the ClickHouse credentials (the store's
+`clickhouse-*` fields were consolidated onto this item 2026-10-27):
+`clickhouse-password` is the ClickHouse `tenzir` writer password five
+nodes read as `TENZIR_SECRETS__CLICKHOUSE_PASSWORD`
+— the `to_clickhouse` archive legs on core, tetragon, and netflow, and
+the factory INSERT legs on enrichment and intel —
+`clickhouse-grafana-password` is the CHI `grafana` user's password, and
+`clickhouse-investigations-{writer,reader}-password` carry the
 investigations node's two ClickHouse users (see
-[`secret.yaml`](./secret.yaml) and the node README). The operator adds
-the values.
+[`secret.yaml`](./secret.yaml), the [`clickhouse/`](./clickhouse/)
+users block, and the node README). The operator stages the values on
+the vault item.
 
 ## Content
 

@@ -177,7 +177,7 @@ spec:
         cpu: "2"
         memory: 2Gi
 
-    # Secrets (1Password items tenzir-secrets + clickhouse-secrets; env
+    # Secrets (1Password item tenzir-secrets; env
     # var names map to tenzir.secrets.* config keys, UPPER snake-case env
     # to kebab config key, same convention as the siblings):
     #   TENZIR_SECRETS__FLEETDM_TOKEN        -> secret("fleetdm-token")
@@ -202,7 +202,7 @@ spec:
       - name: TENZIR_SECRETS__CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secrets
+            name: tenzir-secrets
             key: clickhouse-password
 
     extraVolumes:
