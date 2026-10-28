@@ -26,7 +26,7 @@
 ---
 .ansible-base:
   # renovate: datasource=docker registryUrl=https://mcr.microsoft.com depName=devcontainers/python
-  image: mcr.microsoft.com/devcontainers/python:3.12@sha256:729bc20302313ef1159ec1e670ca53a2969ed8c720e023fc2bdda95f1644a8e0
+  image: mcr.microsoft.com/devcontainers/python:3.12@sha256:79a80515d78783e761af1db255e92767c4e887a2d56dbeb85e7753da8c12dc16
   needs: []
   variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
