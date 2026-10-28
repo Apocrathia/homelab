@@ -72,12 +72,9 @@ spec:
           existingSecret: tenzir-secrets
           key: introspection-node-token
 
-    persistence:
-      # 5Gi, investigations/enrichment parity: the node imports nothing,
-      # so the lake stays empty and the PVC carries node state only
-      # (platform registration, diagnostics store). Longhorn grows on
-      # demand anyway.
-      size: 5Gi
+    # Stateless: the introspection node imports nothing, runs no
+    # archive rule — its only pipelines are diagnostics-to-loki and
+    # error-diagnostics-to-mimir. No lake, no persistence. No PVC.
 
     # Node configuration (renders to the tenzir-node-introspection-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
@@ -94,13 +91,6 @@ spec:
           # emptyDir (extraVolumes below) backs the path; keep the
           # key/mount pair together on any new node.
           file-verbosity: warning
-          # Catalog knobs, sibling shape: dormant on an empty lake, but
-          # kept so a future import lane inherits the OOM lessons
-          # (lazy-sketches defers Bloom-filter sketches to query time;
-          # load-concurrency caps the boot synopsis loader at 4).
-          index:
-            lazy-sketches: true
-            load-concurrency: 4
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
