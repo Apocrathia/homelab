@@ -20,7 +20,7 @@ spec:
     app:
       name: materialious
       # renovate: datasource=docker depName=docker.io/wardpearce/materialious-full
-      image: docker.io/wardpearce/materialious-full:1.18.10@sha256:300a1194a1b6c1059bc5ededac502d77b7e69ff50dc2180de72621dff30ae05e
+      image: docker.io/wardpearce/materialious-full:1.18.11@sha256:b8e4ef9549ae3e92122e7c2be1b85a25fe5f613995735adadcd05d5161e8fd58
       container:
         name: materialious
         port: 3000
