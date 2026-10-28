@@ -66,14 +66,10 @@ spec:
             containerPort: 2055
             protocol: UDP
 
-    persistence:
-      # Stateless (phase 2): the direct leg writes to ClickHouse with
-      # in-stream attestation — no lake import, no archive rule. The 1Gi
-      # PVC carries node state only: platform registration, context
-      # tables (geo-open, ocsf-osint, netflow-chains — all memory). Drop
-      # from 20Gi since the empty lake needs no headroom; Longhorn grows
-      # on demand anyway.
-      size: 1Gi
+    # Stateless: the direct leg writes to ClickHouse with in-stream
+    # attestation — no lake import, no archive rule. No PVC. Context
+    # tables (geo-open, ocsf-osint, netflow-chains) are all memory;
+    # platform registration is via the Secret.
 
     # Node configuration (renders to the tenzir-node-netflow-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land
