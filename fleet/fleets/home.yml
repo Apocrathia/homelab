@@ -63,8 +63,6 @@ software:
       self_service: true
     - slug: spotify/darwin
       self_service: true
-    - slug: steam/darwin
-      self_service: true
     - slug: syncthing-app/darwin
       self_service: true
     - slug: tailscale-app/darwin
