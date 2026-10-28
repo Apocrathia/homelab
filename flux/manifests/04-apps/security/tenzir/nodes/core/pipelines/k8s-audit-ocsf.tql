@@ -1,3 +1,11 @@
+// k8s audit → OCSF API Activity (6003), CH-direct (phase 2, stateless):
+// the fork { import } lake leg is gone. In-stream record_integrity
+// attestation stamps records inside a 60s event-time window, upstream of
+// the direct to_clickhouse INSERT. ClickHouse is the record; the lake
+// rides empty until its teardown.
+//
+// fork_merge: one leg publishes to the ocsf bus (sigma pass + Grafana
+// live view), the other leg is the durable CH path with attestation.
 subscribe "k8s-audit.raw"
 homelab::k8s::audit::ocsf::map
 ocsf_derive
@@ -18,5 +26,28 @@ src_endpoint.autonomous_system = {
 } if src_endpoint.geo?.country?.AutonomousSystemNumber? not in [null, "0"] else null
 drop src_endpoint.geo
 drop_null_fields src_endpoint
-fork { import }
-publish "ocsf"
+fork_merge {
+  publish "ocsf"
+}, {
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-core",
+      chain_uid="tenzir-node-core",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "detection-chains", key="tenzir-node-core",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table="ocsf.API_Activity",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}
