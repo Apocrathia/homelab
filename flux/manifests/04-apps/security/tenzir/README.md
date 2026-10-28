@@ -3,8 +3,10 @@
 > **Navigation**: [← Security](../README.md) | [Core node](./nodes/core/README.md) | [Tetragon node](./nodes/tetragon/README.md) | [Netflow node](./nodes/netflow/README.md) | [Investigations node](./nodes/investigations/README.md) | [Enrichment node](./nodes/enrichment/README.md) | [Introspection node](./nodes/introspection/README.md) | [Intel node](./nodes/intel/README.md) | [ClickHouse datalake](./clickhouse/README.md) | [Detections](./detections/README.md) | [.agents](./.agents/README.md) | [Upstream docs](https://tenzir.com/docs/)
 
 Seven standalone Tenzir nodes in namespace `tenzir`; Tenzir has no
-distributed mode, so each node is a process with its own lake and its own
-pipelines. The [core node](./nodes/core/README.md) is the detection plane:
+distributed mode, so each node is a process with its own pipelines and
+no node-local storage — every write attests and INSERTs to ClickHouse
+in-stream ([stateless migration
+plan](../../../../../docs/plans/tenzir-stateless-migration.md)). The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
 a unified OCSF bus, runs one sigma pass over it, and owns the
 archive. The [tetragon node](./nodes/tetragon/README.md) owns only the
@@ -69,17 +71,18 @@ flowchart LR
         PARSE --> OCSF["normalize to OCSF"]
         OCSF --> BUS["ocsf topic (the bus)"]
         BUS --> SIGMA["sigma detection"]
-        SIGMA -->|"findings"| LAKE["node lake (15-minute hot window)"]
-        OCSF --> LAKE
+        OCSF --> WRITE["in-stream attest + INSERT"]
+        SIGMA --> WRITE
     end
 
-    LAKE -->|"after 15 min"| CH["ClickHouse ocsf.* tables<br/>(OCSF query store, the record)"]
+    WRITE --> CH["ClickHouse ocsf.* tables<br/>(OCSF query store, the record)"]
     CH -.->|"queries"| GRAF["Grafana over ClickHouse<br/>(querying + alerting)"]
     NODE -.-> PLAT["Tenzir Platform"]
 ```
 
-The chart is the whole topology for detection: feeders, the bus, sigma, the
-lake, the archive, and the Grafana query plane. The one agent-side consumer
+The chart is the whole topology for detection: feeders, the bus,
+sigma, the in-stream attest + INSERT write path, and the Grafana query
+plane — no node storage anywhere. The one agent-side consumer
 is the [investigator agent](../../artificial-intelligence/agents/investigator/README.md)
 (P-3): high-severity findings alert through Grafana with the `agent_invoke`
 label ([findings alert rule](../../../03-services/observability/grafana/alerting/tenzir-findings.yaml))
@@ -160,14 +163,18 @@ All baselines must stay warning-free.
 
 ## Storage lifecycle
 
-The local lakes keep 15 minutes; the mappable OCSF classes archive to
-the ClickHouse OCSF query store (per-class
-`ocsf.<Class_Name>` tables) and expire locally — on core the Base Event
-fallback archives with them, while tetragon's unknown export kinds stay
-unarchived and expire with the window. The lake is a transit
-buffer between ingest and the archive, not a query surface; ClickHouse is
-the record. The retired `s3://tenzir/ocsf/` parquet archive stays
-untouched in the rustfs bucket as frozen history (deleting it is a
-separate operator call).
+There is no node storage. Every mappable OCSF class attests and INSERTs
+to the ClickHouse OCSF query store (per-class `ocsf.<Class_Name>`
+tables) directly from the source pipeline; ClickHouse is the record.
+The only in-flight state is in-memory: the 60s event-time sort window
+that orders the attestation chain (batch ordering, not a storage tier)
+and the node-local contexts. Core's Base Event fallback INSERTs with
+the mappable classes; unmapped kinds never reach ClickHouse — the
+source pipelines drop them at the class gate. The retired
+`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs bucket
+as frozen history (deleting it is a separate operator call). The
+per-node lake PVCs, the `ocsf-archive` compaction rules, and the
+15-minute transit window they served are gone with the
+[stateless migration](../../../../../docs/plans/tenzir-stateless-migration.md).
 
 Detail lives in the node READMEs.

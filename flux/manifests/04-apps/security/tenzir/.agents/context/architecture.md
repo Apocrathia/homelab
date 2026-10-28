@@ -11,8 +11,11 @@ Vendored docs for the general shapes: node
 ## Nodes
 
 Seven standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
-distributed mode, so each node is a process with its own lake and its own
-pipelines ([core](../../nodes/core/README.md),
+distributed mode, so each node is a process with its own pipelines and
+no node-local storage — every write attests and INSERTs to ClickHouse
+in-stream ([stateless migration
+plan](../../../../../../../docs/plans/tenzir-stateless-migration.md))
+([core](../../nodes/core/README.md),
 [tetragon](../../nodes/tetragon/README.md),
 [netflow](../../nodes/netflow/README.md),
 [investigations](../../nodes/investigations/README.md),
@@ -32,10 +35,12 @@ through the platform.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
   memory behavior cannot starve the detection plane. Five pipelines (OTLP
   ingest + OCSF map, the geo-open loader, the metrics arm, the hourly
-  attestation verify walk) plus the archive rule's `ocsf-archive.tql` —
-  six `.tql` files — subprocess-isolated so a pipeline blowup dies
-  alone. The archive rule stamps record_integrity attestations
-  (`tetragon-chains`, stream mode) before its `to_clickhouse` legs.
+  attestation verify walk) plus the still-mounted-but-idle archive
+  rule's `ocsf-archive.tql` — six `.tql` files — subprocess-isolated so
+  a pipeline blowup dies alone. `tetragon-ocsf` stamps record_integrity
+  attestations (`tetragon-chains`, stream mode) in-stream over a bounded
+  event-time sort window before its direct `to_clickhouse` INSERT — the
+  lap 2a-1 shape every node now shares.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
   behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Four
   pipelines (UDP accept + OCSF map via the vendored library package, the
@@ -83,21 +88,23 @@ OCSF projection, and stays parked. Bus semantics and the class taxonomy:
 
 ## Storage plane
 
-15-minute local lake on each node — a transit buffer between ingest and
-the archive, not a query surface. Archive-then-expire: every mappable
-class exports to the ClickHouse OCSF query store (per-class
-`ocsf.<Class_Name>` tables) and expires locally; ClickHouse is the
-record. The retired `s3://tenzir/ocsf/` parquet archive stays untouched
-in the rustfs bucket as frozen history — deleting it is a separate
-operator call. Base Event handling is per node: core's rule archives
-`ocsf.base_event` with the mappable classes (added 2026-10-17 — without
-a time rule those partitions accumulated locally and bloated the boot
-catalog load), while tetragon's rule deliberately excludes its unknown
-export kinds — they expire with the window on the weighted-age backstop.
-The compaction pass runs every 5 minutes on core, tetragon, and netflow,
-and the true window at pass boundaries is 15-20 minutes on all three:
-the 15-minute expiry plus the pass interval, with each node's 60-second
-partition flush adding almost nothing.
+The write path to the ClickHouse OCSF query store (per-class
+`ocsf.<Class_Name>` tables) is mid-migration to CH-only stateless
+([plan](../../../../../../../docs/plans/tenzir-stateless-migration.md)):
+tetragon attests and INSERTs in-stream (lap 2a-1), while core and
+netflow still archive through their 15-minute local lake — a transit
+buffer between ingest and the archive, not a query surface — with the
+`ocsf-archive` compaction rule (5-minute passes; true window 15-20
+minutes at pass boundaries) expiring records locally after export.
+ClickHouse is the record. Tetragon's lake receives nothing and its rule
+idles until its teardown lap. Base Event handling is core's: its rule
+archives `ocsf.base_event` with the mappable classes (added 2026-10-17 —
+without a time rule those partitions accumulated locally and bloated the
+boot catalog load); unmapped kinds never reach ClickHouse — tetragon's
+direct leg drops them at the class gate, the same set its old rule
+excluded. The retired `s3://tenzir/ocsf/` parquet archive stays
+untouched in the rustfs bucket as frozen history — deleting it is a
+separate operator call.
 
 ## SQL plane (Grafana + ClickHouse)
 
