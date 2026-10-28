@@ -70,6 +70,13 @@ spec:
     # attestation — no lake import, no archive rule. No PVC. Context
     # tables (geo-open, ocsf-osint, netflow-chains) are all memory;
     # platform registration is via the Secret.
+    persistence:
+      # enabled false is load-bearing: the chart defaults to a 10Gi PVC
+      # when the key is absent, and that default is what the
+      # vct-immutable upgrade failures were. False renders the state
+      # volume as an emptyDir; platform registration rides the
+      # 1Password token at boot.
+      enabled: false
 
     # Node configuration (renders to the tenzir-node-netflow-config ConfigMap
     # and rolls the pod on change). Nothing secret may live here: values land

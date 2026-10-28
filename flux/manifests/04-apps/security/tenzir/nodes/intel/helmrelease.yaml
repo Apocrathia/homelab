@@ -70,7 +70,14 @@ spec:
     # Stateless: the intel node's factory pipelines write directly to
     # ClickHouse with no lake import — the factory's output is the
     # ocsf.OSINT_Inventory_Info table, not a local lake. No archive
-    # rule, no persistence. No PVC.
+    # rule. No PVC.
+    persistence:
+      # enabled false is load-bearing: the chart defaults to a 10Gi PVC
+      # when the key is absent, and that default is what the
+      # vct-immutable upgrade failures were. False renders the state
+      # volume as an emptyDir; platform registration rides the
+      # 1Password token at boot.
+      enabled: false
 
     # Node configuration (renders to the tenzir-node-intel-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
