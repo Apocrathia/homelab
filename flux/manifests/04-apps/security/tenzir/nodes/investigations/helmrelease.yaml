@@ -102,14 +102,13 @@ spec:
           - name: web-api
             containerPort: 5160
 
-    persistence:
-      # Minimal by design: the node never imports a record — the local
-      # lake stays empty by construction (no import in the ingest
-      # pipeline, no archive rule), and the PVC carries node state only
-      # (platform registration, web-token state, diagnostics). The
-      # siblings' 20Gi buys headroom for archive-failure windows this
-      # node does not have. Longhorn grows on demand anyway.
-      size: 5Gi
+    # Stateless: the node never imports a record (no import in the
+    # ingest pipeline, no archive rule), so the lake stays empty by
+    # construction. No PVC — the web server's 128-byte signing key
+    # (plugins/web/authenticator.svs) is regenerated on pod deletion,
+    # and the API token in tenzir-secrets is the durable credential.
+    # An emptyDir at /var/lib/tenzir/plugins handles the state path
+    # across container restarts (extraVolumes below).
 
     # Node configuration (renders to the tenzir-node-investigations-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
@@ -161,14 +160,6 @@ spec:
           # subprocesses on for flood crash-isolation; here the node IS
           # the isolation boundary, the volume is tiny, and in-process
           # keeps the API-launched query pipelines cheap.
-          # Catalog knobs, sibling parity (tetragon shape): dormant on an
-          # empty lake — nothing is imported, no partitions mint — but
-          # kept so a future import lane inherits the OOM lessons
-          # (lazy-sketches defers Bloom-filter sketches to query time;
-          # load-concurrency caps the boot synopsis loader at 4).
-          index:
-            lazy-sketches: true
-            load-concurrency: 4
           # Chain state for the record_integrity attestation lane (the
           # attest operator + ingest pipeline below): one lookup-table
           # entry per case (key = metadata.correlation_uid) holding the
@@ -438,6 +429,14 @@ spec:
       # rotation cap bounds the disk cost.
       - name: tenzir-logs
         emptyDir: {}
+      # Writable state directory for node plugins (replaces the PVC):
+      # the web server writes its 128-byte signing key to
+      # /var/lib/tenzir/plugins/web/authenticator.svs on bootstrap.
+      # emptyDir survives container restarts (OOM, crash) but dies on
+      # pod deletion — the API token in tenzir-secrets is the durable
+      # credential; the signing key regenerates on the next pod start.
+      - name: tenzir-state
+        emptyDir: {}
 
     extraVolumeMounts:
       # Same file-level subPath mounts as the sibling nodes (kubelet
@@ -488,6 +487,10 @@ spec:
       # The file logger's home (tenzir-logs volume above).
       - name: tenzir-logs
         mountPath: /var/log/tenzir
+      # The plugins state directory (replaces the PVC mount):
+      # /var/lib/tenzir/plugins/ is the web server's state path.
+      - name: tenzir-state
+        mountPath: /var/lib/tenzir/plugins
 
     # Containment stack, part 4: chart NetworkPolicy. Ingress only (the
     # chart policy has no egress hook — open item: decide whether a
