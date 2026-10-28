@@ -67,14 +67,10 @@ spec:
           existingSecret: tenzir-secrets
           key: intel-node-token
 
-    persistence:
-      # 5Gi, enrichment/investigations parity: the factory row streams
-      # TAXII pulls straight to ClickHouse with no lake import, so the
-      # lake stays near-empty and the PVC carries node state only
-      # (platform registration, diagnostics). The factory's output is
-      # the ClickHouse table, not this lake; there is no archive rule
-      # here to grow a transit buffer. Longhorn grows on demand anyway.
-      size: 5Gi
+    # Stateless: the intel node's factory pipelines write directly to
+    # ClickHouse with no lake import — the factory's output is the
+    # ocsf.OSINT_Inventory_Info table, not a local lake. No archive
+    # rule, no persistence. No PVC.
 
     # Node configuration (renders to the tenzir-node-intel-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
@@ -94,20 +90,6 @@ spec:
           # emptyDir (extraVolumes below) backs the path; keep the
           # key/mount pair together on any new node.
           file-verbosity: warning
-          # Partition mint-rate control, same 60s as netflow: the
-          # factory is a low-volume collector — events arrive in cron
-          # bursts twice a day at most, and 60s caps the partition count
-          # the bursts mint; the async background merge consolidates
-          # undersized partitions. max-partition-size stays at its 4Mi
-          # default.
-          active-partition-timeout: 60s
-          # Catalog knobs, sibling shape: dormant on a near-empty lake,
-          # but kept for consistency with the fleet (lazy-sketches
-          # defers Bloom-filter sketches to query time; load-concurrency
-          # caps the boot synopsis loader at 4).
-          index:
-            lazy-sketches: true
-            load-concurrency: 4
           # The factory pipeline block: the first row lands with its
           # stix/tenzir package mounts (extraVolumes below) and the
           # stitch in ../kustomization.yaml — pipeline definitions live
