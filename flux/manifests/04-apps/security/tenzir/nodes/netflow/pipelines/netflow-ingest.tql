@@ -1,3 +1,27 @@
+// The netflow ingest pipeline, CH-direct (phase 2, stateless netflow):
+// the fork { import } lake leg is gone, and the record_integrity
+// attestation that lived in the compaction rule's archive pipeline
+// (ocsf-archive.tql — retired on the write path by this change, its
+// rule stays declared until lap 2 deletes it after server-side
+// verification) now stamps IN-STREAM, upstream of the direct
+// to_clickhouse INSERT. ClickHouse is the record; the lake rides
+// along empty until its teardown.
+//
+// Single class (Network Activity 4001) — simpler than tetragon's
+// three-class fork_merge. One windowed sort + attest + INSERT leg.
+//
+// Sizing: at today's probe-only flow volume (~0.15 GB/day raw,
+// ~150 KB on disk at the 15-minute window), a 60s window is ~42
+// records (probe avg) — noise against 4Gi. The same window dials
+// up trivially if the UniFi vendor renderer fix lands.
+//
+// RESIDUAL RISKS, same shape as tetragon's direct leg:
+// - Straggler drop: a record whose batch lands AFTER its window
+//   closed is dropped with a warning and never reaches CH.
+// - Seam race under concurrent closures: same window semantics,
+//   same netflow-chains context pattern.
+// - Insert batch sizing: the window emits trivial batches at probe
+//   volume; watch the window's insert profile on ship.
 accept_udp "0.0.0.0:2055", binary=true
 read_netflow
 where netflow.record_type == "flow"
@@ -9,9 +33,9 @@ context_enrich "geo-open", key=dst_endpoint?.ip, into=dst_endpoint.geo
 // OSINT indicator stamp from the ocsf-osint context (filled by
 // opencti-osint-loader): matched indicators append to the osint field
 // with a metadata.profiles "osint" stamp. Ordering is load-bearing:
-// this call rides before the store/publish legs below, so the lake —
-// and the archive rule's record_integrity attest upstream of the
-// ClickHouse INSERT — covers the ENRICHED record.
+// this call rides before the direct CH leg below, so the record that
+// lands in ClickHouse — with its in-stream attestation covering the
+// ENRICHED shape — carries the indicators.
 tenzir::osint::enrich
 dns_lookup src_endpoint?.ip, result=src_endpoint.rdns
 dns_lookup dst_endpoint?.ip, result=dst_endpoint.rdns
@@ -33,5 +57,50 @@ dst_endpoint.autonomous_system = {
 dst_endpoint.hostname = dst_endpoint.rdns?.hostname?
 drop src_endpoint.geo, dst_endpoint.geo, src_endpoint.rdns, dst_endpoint.rdns
 drop_null_fields src_endpoint, dst_endpoint
-fork { import }
+// The direct CH leg (replaces `fork { import }`): in-stream
+// attestation stamps the record_integrity chain BEFORE the INSERT —
+// the same stamping point as the retired ocsf-archive pipeline, now
+// upstream of the sink instead of in a separate compaction pass.
+// The windowed sort is order-deterministic (same key pair the verify
+// walk re-sorts on) so the chain reconstructs clean without the lake
+// as the ordering buffer. The chain is per-node (chain_uid =
+// tenzir-node-netflow).
+//
+// Only one class reaches this fork (Network Activity — the
+// read_netflow dispatch drops options records, and the netflow OCSF
+// map produces only 4001), so no class_uid gate is needed (the
+// tetragon leg gates three classes out of four; netflow has one).
+fork {
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  // THE ORDERING LANDMINE (same risk as the tetragon direct leg):
+  // the archive rule sorted each bounded 15-minute compaction pass
+  // on (time, metadata.uid) before stamping. A sort on the unbounded
+  // stream buffers unbounded, so the direct leg BOUNDS the sort
+  // with a 60s event-time tumbling window. The window boundaries
+  // partition EVENT time (the axis the walk re-sorts on), the
+  // in-window sort orders each batch, and the per-window chain
+  // segments link through the netflow-chains context (stream mode
+  // treats prev_tail as the BATCH seam). Sizing at probe volume:
+  // ~42 records/window — noise.
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "netflow-chains", key="tenzir-node-netflow", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-netflow",
+      chain_uid="tenzir-node-netflow",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "netflow-chains", key="tenzir-node-netflow",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table="ocsf.Network_Activity",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}
 publish "ocsf"

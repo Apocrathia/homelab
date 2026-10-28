@@ -1,5 +1,5 @@
 // Verification half of the netflow node's record_integrity lane: read
-// the last 24h of this node's one archived class back (table-mode
+// the last 90 minutes of this node's one archived class back (table-mode
 // from_clickhouse — the vendor catch-all reconstruction), recompute
 // each record's attestation fingerprint over the canonical
 // serialization, and walk the per-node prev_event chain (chain_uid =
@@ -7,15 +7,19 @@
 // break — content tamper (fingerprint_mismatch), deletion
 // (chain_link_mismatch), or splice — while the windowed walk
 // tolerates its own edge (the first record's predecessor lives
-// outside the 24h read, its link checks are skipped, its fingerprint
+// outside the 90m read, its link checks are skipped, its fingerprint
 // recompute is not).
 //
 // SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
 // (the core node's detection-attest-verify): the first walk fires at
-// pipeline start and every 1h re-walks the rolling 24h window; every
+// pipeline start and every 1h re-walks the rolling 90m window; every
 // waits for a running walk before starting the next (no concurrent
 // walks against the store); restart-on-error still relaunches the
-// pipeline on a hard failure.
+// pipeline on a hard failure. Window dropped from 24h to 90m
+// (tetragon parity, phase 2 stateless: the shorter window is the
+// direct leg's traffic-light — if a chain breaks at 90m, the leg's
+// straggler drop has been eating records for an hour; find the gap
+// and the leak is contained).
 //
 // TWO legs out per break, the core lane's shape: stdout (pod-log
 // visibility) and an ocsf_derive + ocsf_cast-dressed INSERT into
@@ -40,10 +44,10 @@
 // duplicate-page bug.
 //
 // SCOPE: this lane reads only this node's chain (the chain_uid filter
-// above); the tetragon lane's cross-class 4001 rows in this shared
-// table are walked by the tetragon lane, not here. At today's probe-only flow volume the shared
-// read is negligible; if the UniFi exporter fix ever floods the
-// class, the window is the operator's dial.
+// below); the tetragon lane's cross-class 4001 rows in this shared
+// table are walked by the tetragon lane, not here. At probe flow
+// volume the shared read is negligible; if the UniFi exporter fix
+// ever floods the class, the window is the operator's dial.
 every 1h {
   from_clickhouse table="ocsf.Network_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
@@ -51,8 +55,8 @@ every 1h {
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 24h
-  // Scope to THIS node's chain: ocsf.Network_Activity is shared - the
+  where time > now() - 90m
+  // Scope to THIS node's chain: ocsf.Network_Activity is shared — the
   // tetragon chain is cross-class (1007/1001/4001) and its 4001 rows
   // live here too; reading them back alongside this node's chain
   // breaks the table-local predecessor walk on healthy records (the
