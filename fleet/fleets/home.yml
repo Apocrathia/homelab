@@ -63,6 +63,11 @@ software:
       self_service: true
     - slug: spotify/darwin
       self_service: true
+    # PENDING: Restored after drop in !5632. Fleet's FMA download path
+    # parses filepath.Ext on Steam's content-addressed CDN filenames
+    # (appdmg_osx.zip.<sha>), producing a 40-char extension that exceeds
+    # VARCHAR(32). Re-drop if gitops fails again; re-evaluate after
+    # upstream Fleet fix or Steam FMA manifest gains a SHA256 hash.
     - slug: steam/darwin
       self_service: true
     - slug: syncthing-app/darwin
