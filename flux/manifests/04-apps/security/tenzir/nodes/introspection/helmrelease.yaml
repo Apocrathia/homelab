@@ -74,7 +74,14 @@ spec:
 
     # Stateless: the introspection node imports nothing, runs no
     # archive rule — its only pipelines are diagnostics-to-loki and
-    # error-diagnostics-to-mimir. No lake, no persistence. No PVC.
+    # error-diagnostics-to-mimir. No lake. No PVC.
+    persistence:
+      # enabled false is load-bearing: the chart defaults to a 10Gi PVC
+      # when the key is absent, and that default is what the
+      # vct-immutable upgrade failures were. False renders the state
+      # volume as an emptyDir; platform registration rides the
+      # 1Password token at boot.
+      enabled: false
 
     # Node configuration (renders to the tenzir-node-introspection-config
     # ConfigMap and rolls the pod on change). Nothing secret may live

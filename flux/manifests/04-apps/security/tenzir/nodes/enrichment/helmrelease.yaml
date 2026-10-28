@@ -71,9 +71,16 @@ spec:
 
     # Stateless: the enrichment node is a pure outbound puller — every
     # pipeline writes directly to ClickHouse, no local lake, no archive
-    # rule, no persistence. The fleet-assets-pull factory pipeline's only
+    # rule. The fleet-assets-pull factory pipeline's only
     # sink is to_clickhouse (ocsf.fleet_assets); the node lake stays
     # empty by construction. No PVC.
+    persistence:
+      # enabled false is load-bearing: the chart defaults to a 10Gi PVC
+      # when the key is absent, and that default is what the
+      # vct-immutable upgrade failures were. False renders the state
+      # volume as an emptyDir; platform registration rides the
+      # 1Password token at boot.
+      enabled: false
 
     # Node configuration (renders to the tenzir-node-enrichment-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
