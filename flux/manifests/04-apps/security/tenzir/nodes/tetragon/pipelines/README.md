@@ -1,10 +1,10 @@
 # Pipelines (tetragon)
 
 One `.tql` file per Tenzir pipeline that `tenzir` runs, plus
-`ocsf-archive.tql` (the compaction time rule's `pipeline` — superseded
-on the write path by the direct leg, deleted in lap 2a-2) and
 `tetragon-attest-verify.tql` (the record_integrity read-back walk).
-Each file is the pipeline's `definition`, verbatim.
+Each file is the pipeline's `definition`, verbatim. The
+`ocsf-archive.tql` compaction-rule entry died with the lake in lap
+2a-2 (the direct leg is the only write path).
 
 `tetragon-ocsf.tql` is the record_integrity lane's stamping point
 (phase 2, lap 2a-1): the direct CH leg mints the per-record

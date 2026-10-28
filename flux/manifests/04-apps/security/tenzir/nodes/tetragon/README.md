@@ -9,7 +9,7 @@ nothing else. Five pipelines live in
 [`helmrelease.yaml`](./helmrelease.yaml) at kustomize build time:
 tetragon-ingest-http (the
 OTLP listener for the tetragon alloy), tetragon-ocsf (the OCSF
-mapping into the lake, with endpoint enrichment on the Network
+mapping with endpoint enrichment on the Network
 Activity arm), geo-open-loader (the daily GeoIP context builder for
 that enrichment), pipeline-metrics-to-mimir (the flood node's
 liveness arm — the same series shape the other metrics-shipping
@@ -119,22 +119,21 @@ Activity 1007, File System Activity 1001, Network Activity 4001) ride
 `ocsf.<Class_Name>` tables — a bounded 60s event-time window sorts
 each batch on (time, uid), stamps the record_integrity attestation,
 and hands the stream to `to_clickhouse`. The 15-minute lake +
-archive rule that used to mediate this is superseded on the write
-path: nothing imports into the lake, the compaction rule fires on an
-empty store, and both stay declared only until lap 2a-2 deletes them
-after server-side verification of the direct leg (ship counts,
-query_log, the first windows' seam and insert profiles). The Base
+archive rule that used to mediate this died with lap 2a-2 — the
+direct leg is production-proven (20h zero-restart at flood rate,
+100% attest coverage, zero tamper findings; ship counts and
+query_log verified live). The Base
 Event fallback for unknown export kinds cannot name a class and never
 reached CH via the rule's types-scoping; the direct leg carries that
 gate in-stream (`where class_uid in [...]`), which also keeps the
 `to_clickhouse` table f-string away from null class_name — the
 archive-era `ocsf.null` f-string leak (27,987 rows pre-bump, the GA
 rollout field note) cannot ride into the direct path. ClickHouse is
-the OCSF record; the lake rides along empty until its teardown. The
-Longhorn volume sits out the daily-backup RecurringJob
-([`storage.yaml`](./storage.yaml)): a daily chain of
-a 15-minute buffer is redundant with the ClickHouse record. Filesystem
-trim and snapshot hygiene still run on the volume. No raw tetragon JSON
+the OCSF record. There is no node storage (lap 2a-2): the state
+volume renders as an emptyDir, platform registration rides the
+1Password token at boot, and the lake PVC with its
+[`storage.yaml`](../core/storage.yaml)-style backup exclusion died
+with the lake. No raw tetragon JSON
 is kept anywhere past the window (the export-stdout sidecar is gone; the
 ClickHouse OCSF store is the record), and the retired
 `s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
@@ -190,9 +189,9 @@ Tetragon flood (measured on-disk rate):
   ~ 7.8 GiB / 2 days ~ 3.9 GiB/day total   # full-volume rate implied by the 80% share (measured)
   3.9 GiB/day / 96 ~ 42 MiB              # 15-minute flood window: ~0.7% of the 6 GiB budget
 
-Tetragon worst case (transit-buffer bound, operator-measured drain):
-  253 GB/day / 96 ~ 2.6 GB raw           # the lake holds one window at worst-case flood rate:
-                                         # a 15-minute buffer a 12Gi node can never OOM on again
+Tetragon worst case (measured drain): 253 GB/day raw rides the in-memory
+60s window at ~2.6 GB per window worst case — the 12Gi limit carries it
+with the 20h production window as evidence.
 
 Tetragon steady state (assumed):
   3.9 GiB/day / 96 ~ 42 MiB              # steady-state 15-minute peak footprint
@@ -200,16 +199,9 @@ Tetragon steady state (assumed):
                                          # drop is gone, Network Activity 4001 archives too
 ```
 
-The disk budgets (6 GiB high / 4 GiB low) are the backstop for
-archive-rule failure windows; the time rule is the front door. The old
-18/16 corridor was sized for a 24-hour horizon and left the eraser
-effectively unreachable on a 20Gi PVC; at the 15-minute reality:
-
-```python
-  6 GiB high  = 30% of the 20Gi PVC                  # single-digit, reachable, leaves the PVC as the second backstop
-  4 GiB low    = the erase target                     # a 2 GiB corridor so one eraser pass reclaims real space
-  worst stall  ~ 2.6 GB / 15 min (extreme drain)      # the corridor tolerates several stalled windows before erasing
-```
+Lap 2a-2 retired the lake-era storage math with the lake: no PVC, no
+compaction corridor, no disk budgets — the emptyDir state volume and
+the in-memory window are the only node-local footprint.
 
 ## Known detection noise
 
@@ -241,18 +233,18 @@ classes starts from that baseline, not from zero.
    rename a release into either concat trap),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
    `nodes[0].token.key: <role>-node-token`, `extraPorts` for the node's
-   listeners, `persistence.size` per sizing.
+   listeners, `persistence.enabled: false` (stateless).
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
-5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
-   (weighted-age space rules as the backstop, archive-then-expire time
-   rules for every record type it stores).
+5. **Retention**: none on the node — the direct legs write
+   ClickHouse, unmapped kinds drop at the class gate, and the state
+   volume is an emptyDir.
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).
 7. **Archive**: the node writes into the shared ClickHouse OCSF
    tables; no per-node prefix. Detections run
-   on the core node only; this node owns its feeds and its lake.
+   on the core node only; this node owns its feeds.
 8. **Content**: if the node mounts package or sigma files, add the
    `configMapGenerator` entries at the root kustomization (files stay in
    the shared `packages/` tree) plus subPath `extraVolumeMounts` in the
