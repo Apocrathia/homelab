@@ -1,6 +1,39 @@
+// sigma detect over the unified OCSF bus, CH-direct (phase 2, stateless):
+// the detect+stamp pipeline runs exactly as before, but instead of
+// `import` (writing findings to the lake for the archive rule to pick
+// up), it now writes DIRECT to ClickHouse with in-stream attestation.
+// The sigma pass subscribes to the ocsf bus (every core OCSF pipeline
+// publish_merge leg feeds it live), stamps the discovering pipeline's
+// uid, then forks: one leg publishes back to the bus (so Grafana's live
+// view sees the finding), the other leg stamps the record_integrity
+// attestation and INSERTs direct to ocsf.Detection_Finding.
 subscribe "ocsf"
 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],
       mapping="auto",
       refresh_interval=30s
 homelab::findings::stamp
-import
+fork_merge {
+  publish "ocsf"
+}, {
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-core",
+      chain_uid="tenzir-node-core",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "detection-chains", key="tenzir-node-core",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table="ocsf.Detection_Finding",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}

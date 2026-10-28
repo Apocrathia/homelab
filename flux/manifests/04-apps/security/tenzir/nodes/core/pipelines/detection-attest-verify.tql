@@ -1,53 +1,19 @@
 // Verification half of the detection-plane record_integrity lane: read
-// the last 24h of every core-node ocsf class back, recompute each
-// record's attestation fingerprint over the canonical serialization,
-// and walk the per-node prev_event chain; a Detection Finding (2004)
-// drops for every break (content tamper, deletion, splice).
+// the last 90 minutes of every core-node ocsf class back (phase 2,
+// tetragon parity: the direct leg's 60s window + 30s tolerance means a
+// straggler is ~90s gone — at 90m the gap is a 1h silent outage, found
+// fast), recompute each record's attestation fingerprint over the
+// canonical serialization, and walk the per-node prev_event chain; a
+// Detection Finding (2004) drops for every break.
 //
-// SCHEDULED, hourly — the every wrapper, the loader-pipeline shape
-// (opencti-osint-loader / fleet-assets-loader): the first walk fires at
-// pipeline start (the previous startup-once behavior, preserved) and
-// every 1h re-walks the rolling 24h window. every waits for a running
-// walk before starting the next (no concurrent walks against the
-// store); restart-on-error still relaunches the pipeline on a hard
-// failure.
+// SCHEDULED, hourly. Window dropped from 24h to 90m (tetragon parity):
+// the shorter window is the direct leg's traffic-light — if a chain
+// breaks at 90m, the leg's straggler drop has been eating records for
+// an hour; find the gap and the leak is contained.
 //
-// TWO legs out per break (docs/issues/
-// tenzir-record-integrity-attestations.md, the scheduled-walk box):
-// - stdout: the raw finding as the operator mints it — pod-log
-//   visibility, unchanged.
-// - ocsf.Detection_Finding: the finding rides ocsf_derive + ocsf_cast
-//   into the lake's class shape and INSERTs with the tenzir user —
-//   the same table the Grafana tenzir-findings rule reads
-//   (03-services/observability/grafana/alerting/tenzir-findings.yaml):
-//   class_uid 2004 + severity 4 land inside the rule's WHERE clauses,
-//   so a break pages through the agent_invoke bridge (homelab-agent
-//   -> the investigator) instead of waiting for a human to read pod
-//   logs. The package test detection-verify-finding pins the shape
-//   against the rule's SQL. Tamper evidence is append-only: while a
-//   break persists, each hourly walk re-emits its finding and the rule
-//   re-fires — re-paging until the tamper is remediated, the honest
-//   loop for evidence nobody can "acknowledge away". The written
-//   findings carry no attestation (the chain covers archive-rule
-//   writes, and these rows bypass the archive rule); later walks read
-//   them back and skip them as pre-epoch rows — the lane never
-//   self-feeds.
-//
-// The read-back is windowed (24h) because the walk sorts the merged
-// stream in memory: a full-table walk over 22M+ archived rows would
-// buffer gigabytes against the node's 8Gi limit. The per-class
-// from_clickhouse reads are table mode (the vendor's catch-all
-// reconstruction — the per-class tables split each record across typed
-// columns + the event JSON, and only table mode reverses that split),
-// merged into ONE stream because the per-node chain crosses classes,
-// with the window filter inside each branch so ClickHouse evaluates it
-// (filters on the time column push down; the verify operator's
-// windowed mode tolerates the window edge — its first record's link
-// points outside the read and is skipped, its fingerprint recompute is
-// not). The stored records come back through the catch-all
-// reconstruction: ClickHouse re-sorted the JSON keys, and the
-// operators' sort()-canonicalized serialization is what makes the
-// recompute match what the archive leg stamped.
+// TWO legs out per break: stdout (pod-log visibility) and
+// ocsf.Detection_Finding via ocsf_derive + ocsf_cast → the Grafana
+// tenzir-findings rule pages through the agent_invoke bridge.
 every 1h {
   from_clickhouse table="ocsf.API_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
@@ -55,7 +21,7 @@ every 1h {
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 24h
+  where time > now() - 90m
   merge {
     from_clickhouse table="ocsf.Authentication",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
@@ -63,7 +29,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   merge {
     from_clickhouse table="ocsf.Account_Change",
@@ -72,7 +38,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   merge {
     from_clickhouse table="ocsf.Detection_Finding",
@@ -81,7 +47,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   merge {
     from_clickhouse table="ocsf.Vulnerability_Finding",
@@ -90,7 +56,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   merge {
     from_clickhouse table="ocsf.Base_Event",
@@ -99,7 +65,7 @@ every 1h {
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 24h
+    where time > now() - 90m
   }
   homelab::record_integrity::verify product="homelab-detection",
     title="Detection record chain break",

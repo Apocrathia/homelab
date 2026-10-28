@@ -1,7 +1,36 @@
+// trivy reports → OCSF, CH-direct (phase 2, stateless):
+// the fork { import } lake leg is gone. In-stream attestation stamps
+// records inside a 60s window, upstream of direct to_clickhouse INSERT.
+// Both Vulnerability Finding (2002) and Detection Finding (2004) legs
+// stamp with the attest operator — the findings::stamp operator (uid
+// stable per finding) runs before the windowed attest.
 subscribe "trivy.raw"
 homelab::trivy::ocsf::map
 ocsf_derive
 ocsf_cast
 homelab::findings::stamp
-fork { import }
-publish "ocsf"
+fork_merge {
+  publish "ocsf"
+}, {
+  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+    sort time, metadata.uid
+    context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+    homelab::record_integrity::attest authority_uid="tenzir-node-core",
+      chain_uid="tenzir-node-core",
+      genesis=false,
+      chain="stream"
+    fork {
+      context_update "detection-chains", key="tenzir-node-core",
+        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
+    }
+  }
+  to_clickhouse table=f"ocsf.{class_name.replace(\" \", \"_\")}",
+                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                port=9000,
+                user="tenzir",
+                password=secret("clickhouse-password"),
+                tls=false,
+                mode="append",
+                max_batch_rows=65536
+}
