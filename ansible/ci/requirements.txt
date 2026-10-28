@@ -2,4 +2,4 @@
 # Used by ansible/.gitlab-ci.yml (.ansible-base and .ansible-ssh-setup).
 ansible-core==2.21.5
 ansible-lint==26.10.1
-onepasswordconnectsdk==2.1.0
+onepasswordconnectsdk==2.1.1
