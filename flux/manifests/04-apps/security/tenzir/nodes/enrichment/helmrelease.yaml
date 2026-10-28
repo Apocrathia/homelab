@@ -69,14 +69,11 @@ spec:
           existingSecret: tenzir-secrets
           key: enrichment-node-token
 
-    persistence:
-      # 5Gi, investigations parity: lap 1 imports nothing, so the lake
-      # stays empty and the PVC carries node state only (platform
-      # registration, diagnostics). The lap-2+ factory pipelines pull
-      # external data and write lookup tables to ClickHouse — the lake
-      # stays a small transit buffer, not a query surface. Longhorn
-      # grows on demand anyway.
-      size: 5Gi
+    # Stateless: the enrichment node is a pure outbound puller — every
+    # pipeline writes directly to ClickHouse, no local lake, no archive
+    # rule, no persistence. The fleet-assets-pull factory pipeline's only
+    # sink is to_clickhouse (ocsf.fleet_assets); the node lake stays
+    # empty by construction. No PVC.
 
     # Node configuration (renders to the tenzir-node-enrichment-config
     # ConfigMap and rolls the pod on change). Nothing secret may live
@@ -93,13 +90,6 @@ spec:
           # tenzir-logs emptyDir (extraVolumes below) backs the path;
           # keep the key/mount pair together on any new node.
           file-verbosity: warning
-          # Catalog knobs, sibling shape: dormant on an empty lake, but
-          # kept so future import lanes inherit the OOM lessons
-          # (lazy-sketches defers Bloom-filter sketches to query time;
-          # load-concurrency caps the boot synopsis loader at 4).
-          index:
-            lazy-sketches: true
-            load-concurrency: 4
           # Pipeline definitions live in pipelines/<id>.tql; this
           # kustomization's replacements stitch them back into these
           # empty definition fields at build time.
