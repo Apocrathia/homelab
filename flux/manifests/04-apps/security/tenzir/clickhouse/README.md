@@ -361,12 +361,16 @@ the cutover runs
 ([`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
 tracks the general divergence class).
 
-The diagram is the structure — every table, every typed column, in
-one picture. Attribute names underscore the OCSF field paths (the
-exact dotted paths are in the per-class reference below); `time` is
-the partition and sort spine on every table. Who writes and reads
-each table lives in the reference table and the node READMEs — the
-plumbing is deliberately not drawn here.
+The diagrams are the structure — every table, every typed
+column, split into four small renders so each box stays
+readable (one monster ER diagram renders too small to read).
+Attribute names underscore the OCSF field paths (the exact
+dotted paths are in the per-class reference below); `time` is
+the partition and sort spine on every table. Who writes and
+reads each table lives in the reference list and the node
+READMEs — the plumbing is deliberately not drawn here.
+
+**Identity and API classes (core feeds)**
 
 ```mermaid
 erDiagram
@@ -413,6 +417,12 @@ erDiagram
         JSON unmapped
         JSON event
     }
+```
+
+**Findings (sigma, trivy, the verify walks)**
+
+```mermaid
+erDiagram
     ocsf_Detection_Finding {
         DateTime64 time PK
         Int32 class_uid "2004"
@@ -438,6 +448,12 @@ erDiagram
         JSON unmapped
         JSON event
     }
+```
+
+**Endpoint telemetry (tetragon, netflow, intel)**
+
+```mermaid
+erDiagram
     ocsf_Network_Activity {
         DateTime64 time PK "DELETE horizon 90d, not 400d"
         Int32 class_uid "4001"
@@ -482,6 +498,12 @@ erDiagram
         JSON unmapped
         JSON event
     }
+```
+
+**The non-class tables**
+
+```mermaid
+erDiagram
     ocsf_fleet_assets {
         String uuid PK "ORDER BY uuid"
         String hostname
