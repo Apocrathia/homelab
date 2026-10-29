@@ -34,6 +34,14 @@ spec:
     # double to tenzir-node-tetragon-tetragon. The override pins fullname
     # at tenzir-node so the entry renders tenzir-node-tetragon.
     fullnameOverride: tenzir-node
+    # No Kubernetes API access from the node: its entire surface is
+    # user-space I/O (OTLP/UDP/HTTP ingest, outbound dials to
+    # ClickHouse/Loki/Mimir/the pull sources, the platform WebSocket),
+    # so the ServiceAccount token stays unmounted (the chart's
+    # serviceAccount.automount knob; the kyverno
+    # audit-automount-sa-token policy rows this workload).
+    serviceAccount:
+      automount: false
     image:
       registry: docker.io
       repository: tenzir/tenzir
