@@ -25,11 +25,15 @@
                  (was 90 DAY until 2026-10-27; the relocation wipe
                  re-created every table with the 7-day window - no
                  live ALTERs needed for that cutover)
-               - 400 DAY DELETE: retention horizon cap (change it here,
-                 then ALTER per-table server-side for already-created
-                 tables).
+               - DELETE horizon cap (change it here, then ALTER
+                 per-table server-side for already-created tables):
+                 400 DAY, 90 DAY for ocsf.Network_Activity (operator
+                 decision 2026-10-29).
              SETTINGS ttl_only_drop_parts keeps the DELETE cap a cheap
-             partition drop (day partitions). -->
+             partition drop. Class tables partition monthly, PARTITION
+             BY toYYYYMM(`time`) - changed from daily toDate(`time`)
+             2026-10-29 for part-count pressure (see
+             docs/issues/ocsf-monthly-partition-cutover.md). -->
         <!--
           ORDERING IS LOAD-BEARING: startup_scripts executes sequentially
           and aborts at the FIRST failing query (one try/catch wraps the
@@ -97,7 +101,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -116,7 +120,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -135,7 +139,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -154,7 +158,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -172,7 +176,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -196,7 +200,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -213,7 +217,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -232,9 +236,9 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
-TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
+TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 90 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
         </scripts>
         <scripts>
@@ -251,7 +255,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -272,7 +276,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -292,7 +296,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              `time` is the indicator's modified time, not
              the insert time, so the standard TTL caps
              history at 400 days of indicator age and the
-             day partitions drop whole (ttl_only_drop_parts).
+             monthly partitions drop whole (ttl_only_drop_parts).
              SHAPE CONTRACT: the vendored stix::ocsf::map emits
              `osint` as a ONE-ELEMENT ARRAY, so the dotted
              typed columns this table originally declared
@@ -337,7 +341,7 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
     `event` JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))
 )
 ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/{database}/{table}', '{replica}')
-PARTITION BY toDate(`time`)
+PARTITION BY toYYYYMM(`time`)
 ORDER BY (class_uid, `time`)
 TTL `time` + INTERVAL 7 DAY TO VOLUME 'cold', `time` + INTERVAL 400 DAY DELETE
 SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
@@ -363,9 +367,9 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              both connect as the shared `tenzir` user, so the
              convention is documentation, not RBAC). No
              PARTITION BY: a current-state table, one row per
-             host - day partitions would fragment the replace
-             key across partitions. TTL mirrors the store's 400
-             DAY retention cap on last_seen so a host deleted
+             host - time partitions would fragment the replace
+             key across partitions. TTL mirrors the store's default
+             400 DAY retention cap on last_seen so a host deleted
              from Fleet ages out - but WITHOUT
              ttl_only_drop_parts: that setting would only drop
              fully-expired parts, and the hourly pulls create
@@ -373,8 +377,8 @@ SETTINGS storage_policy = 'tiered', ttl_only_drop_parts = 1</query>
              decommissioned host's stale rows forever; row-level
              expiry on merge is the correct mode for an
              unpartitioned state table (the event tables above
-             use ttl_only_drop_parts only because they ARE day-
-             partitioned). storage_policy rides for volume
+             use ttl_only_drop_parts only because they ARE
+             monthly-partitioned). storage_policy rides for volume
              consistency; no TO VOLUME clause ever fires (asset
              rows are bytes; cold-tiering is pointless). -->
         <scripts>

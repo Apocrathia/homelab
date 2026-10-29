@@ -314,13 +314,30 @@ flowchart LR
 - **Retention** (ocsf tables): 7 days → `TO VOLUME 'cold'` (part
   moves; was 90 days until 2026-10-27 — the observed ~9.4 GiB/day per
   replica put the 90-day window at ~850 GiB, past the 100Gi hot PVC;
-  7 days ≈ ~66 GiB steady on 100Gi), 400 days → `DELETE` (horizon cap,
-  operator-tunable: change `INTERVAL 400 DAY` in
-  `config/10-startup-scripts.xml` for new installs; `ALTER TABLE ...
-MODIFY TTL` server-side for live tables).
-  `ttl_only_drop_parts = 1` keeps the delete a cheap partition drop.
+  7 days ≈ ~66 GiB steady on 100Gi), then per-table `DELETE` horizons
+  (operator decision 2026-10-29; operator-tunable: change the
+  `INTERVAL ... DAY DELETE` in `config/10-startup-scripts.xml` for new
+  installs, `ALTER TABLE ... MODIFY TTL` server-side for live tables) —
+  400 days on every class table, 90 days on `ocsf.Network_Activity`
+  alone (netflow + tetragon flows). `ttl_only_drop_parts = 1` keeps
+  the delete a cheap partition drop.
   `investigations.records` has NO TTL by design — a case record is a
   durable audit record.
+- **Partition layout** (ocsf class tables): `PARTITION BY
+toYYYYMM(time)` — monthly, changed from daily `toDate(time)` on
+  2026-10-29. Reason: part-count pressure — daily meant up to ~400
+  partitions per table at the 400-day horizon, the tetragon node's
+  50,747-partition ENOSPC (2026-10-12) is the fleet's measured lesson
+  in what partition bloat costs, and the vendor tutorial's guidance is
+  keep partitions in the hundreds
+  ([tutorial](../.agents/skills/tenzir/tutorials/build-an-ocsf-lake-with-clickhouse.md));
+  monthly is a handful of partitions per table in steady state. Sort
+  keys are unchanged. Two consequences to know: with monthly parts and
+  `ttl_only_drop_parts` a `DELETE` horizon lands whole-month late at
+  most (rows can wait up to a month past their age for their part to
+  drop), and partition keys have no live `ALTER` — the live cutover
+  runbook is
+  [`docs/issues/ocsf-monthly-partition-cutover.md`](../../../../../../docs/issues/ocsf-monthly-partition-cutover.md).
 - **PVC-only metadata**: schema metadata (incl. S3 disk metadata under
   `/var/lib/clickhouse/disks/`) lives on the PVC only — losing all
   three PVCs orphans the S3 parts. Replication (3 copies) is the
@@ -356,7 +373,10 @@ kubectl exec -n tenzir chi-tenzir-ocsf-0-0-0 -- \
 ### Adding a class (ocsf tables only)
 
 1. Add a `CREATE TABLE IF NOT EXISTS ocsf.<Class_Name>` block to
-   `config/10-startup-scripts.xml` — never to `cluster.yaml`.
+   `config/10-startup-scripts.xml` — never to `cluster.yaml`. Use the
+   house shape: `PARTITION BY toYYYYMM(time)` (monthly, since
+   2026-10-29); the `DELETE` horizon is a per-table choice now —
+   400 days by default, 90 on `ocsf.Network_Activity`.
 2. `kubectl exec` the `ALTER` on existing replicas if the class is not
    new (CREATE only runs on fresh data dirs otherwise).
 3. Point the Tenzir pipeline at it (per-class table naming:
