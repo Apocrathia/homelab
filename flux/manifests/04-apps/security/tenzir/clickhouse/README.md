@@ -336,13 +336,143 @@ toYYYYMM(time)` — monthly, changed from daily `toDate(time)` on
   `ttl_only_drop_parts` a `DELETE` horizon lands whole-month late at
   most (rows can wait up to a month past their age for their part to
   drop), and partition keys have no live `ALTER` — the live cutover
-  runbook is
-  [`docs/issues/ocsf-monthly-partition-cutover.md`](../../../../../../docs/issues/ocsf-monthly-partition-cutover.md).
+  plan is
+  [`docs/plans/ocsf-monthly-partition-cutover.md`](../../../../../../docs/plans/ocsf-monthly-partition-cutover.md)
+  (tracked as
+  [`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md)).
 - **PVC-only metadata**: schema metadata (incl. S3 disk metadata under
   `/var/lib/clickhouse/disks/`) lives on the PVC only — losing all
   three PVCs orphans the S3 parts. Replication (3 copies) is the
   resilience mechanism; there is no kopiur/snapshot wiring on these
   PVCs by design.
+
+## Schema at a glance
+
+Canonical definition: `config/10-startup-scripts.xml`. This section
+describes the shape this MR lands (monthly partitions, per-class
+`DELETE` horizons). Live tables created before the change drift until
+the cutover runs
+([`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
+tracks the general divergence class).
+
+```mermaid
+flowchart LR
+    subgraph W["Writers — Tenzir nodes, CH-direct stateless legs"]
+        direction TB
+        W1["core k8s-audit-ocsf"]
+        W2["core authentik-ocsf"]
+        W3["core trivy-ocsf"]
+        W4["core sigma-detect"]
+        W5["tetragon tetragon-ocsf"]
+        W6["netflow netflow-ingest"]
+        W7["intel opencti-taxii-factory"]
+        W8["enrichment fleet-assets-pull"]
+        W9["investigations ingest-http"]
+        WV["attest-verify walks x4 — chain breaks"]
+    end
+    subgraph S["ocsf store — ReplicatedMergeTree x3 replicas<br/>PARTITION BY toYYYYMM, ORDER BY class_uid, time<br/>7d hot → rustfs cold, then per-class DELETE"]
+        direction TB
+        T_API["ocsf.API_Activity — 6003"]
+        T_AUTH["ocsf.Authentication — 3002"]
+        T_ACCT["ocsf.Account_Change — 3001"]
+        T_BE["ocsf.Base_Event — 0"]
+        T_DF["ocsf.Detection_Finding — 2004"]
+        T_VF["ocsf.Vulnerability_Finding — 2002"]
+        T_NA["ocsf.Network_Activity — 4001 — 90d"]
+        T_PA["ocsf.Process_Activity — 1007"]
+        T_FSA["ocsf.File_System_Activity — 1001"]
+        T_OI["ocsf.OSINT_Inventory_Info — 5021"]
+        T_FA["ocsf.fleet_assets — Replacing, keyed uuid"]
+        T_IR["investigations.records — no TTL"]
+    end
+    subgraph R["Readers"]
+        direction TB
+        R1["Grafana SQL — the 5 dashboards"]
+        R2["attest-verify walks — from_clickhouse"]
+        R3["core fleet-assets-loader"]
+        R4["opencti-osint-loader — core + netflow"]
+        R5["agent query lane"]
+    end
+    W1 --> T_API
+    W2 --> T_AUTH
+    W2 --> T_ACCT
+    W2 --> T_BE
+    W3 --> T_VF
+    W3 --> T_DF
+    W4 --> T_DF
+    WV --> T_DF
+    W5 --> T_PA
+    W5 --> T_FSA
+    W5 --> T_NA
+    W6 --> T_NA
+    W7 --> T_OI
+    W8 --> T_FA
+    W9 --> T_IR
+    S --> R1
+    S --> R2
+    T_FA --> R3
+    T_OI --> R4
+    T_IR --> R5
+```
+
+### The common class-table shape
+
+Every `ocsf.<Class_Name>` table is the same skeleton plus the class's
+query-hot typed columns:
+
+- `time DateTime64(9, 'UTC') CODEC(Delta, ZSTD)` — the partition and
+  sort spine
+- `class_uid Int32 DEFAULT 0` and `severity_id Int8 DEFAULT 0`
+- the class's typed hot columns (the table below)
+- `unmapped JSON CODEC(ZSTD(3))` — source residue without an OCSF
+  home
+- `event JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))` — everything
+  else
+- `ReplicatedMergeTree`, `PARTITION BY toYYYYMM(time)`,
+  `ORDER BY (class_uid, time)`, TTL `time + 7 DAY TO VOLUME 'cold'`
+  then `DELETE` at the table's horizon (400 days; Network Activity 90),
+  `storage_policy = 'tiered'`, `ttl_only_drop_parts = 1`
+
+### Per-class reference
+
+| Table                        | uid  | DELETE  | Typed hot columns (beyond the common core)                                                                                                            | Writers                                                              |
+| ---------------------------- | ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `ocsf.API_Activity`          | 6003 | 400d    | `actor.user.name`, `api.operation`, `src_endpoint.ip`, `metadata.product.name`                                                                        | core k8s-audit-ocsf                                                  |
+| `ocsf.Authentication`        | 3002 | 400d    | `status_id`, `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`                                                                            | core authentik-ocsf                                                  |
+| `ocsf.Account_Change`        | 3001 | 400d    | `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`                                                                                         | core authentik-ocsf                                                  |
+| `ocsf.Base_Event`            | 0    | 400d    | `class_name`, `activity_id`, `metadata.product.name`, `device.hostname`                                                                               | core authentik-ocsf, core fleet-ocsf                                 |
+| `ocsf.Detection_Finding`     | 2004 | 400d    | `status_id`, `uid`, `rule_id`, `subject_kind`, `subject_name`, `subject_namespace`, `finding_info.title`, `finding_info.uid`, `metadata.product.name` | core trivy-ocsf + sigma-detect, all four verify walks (chain breaks) |
+| `ocsf.Vulnerability_Finding` | 2002 | 400d    | `finding_info.title`, `metadata.product.name`                                                                                                         | core trivy-ocsf                                                      |
+| `ocsf.Network_Activity`      | 4001 | **90d** | `src_endpoint.ip`, `dst_endpoint.ip`, `traffic.bytes`, `metadata.product.name`                                                                        | netflow netflow-ingest, tetragon tetragon-ocsf                       |
+| `ocsf.Process_Activity`      | 1007 | 400d    | `activity_id`, `process.path`, `device.hostname`, `metadata.product.name`                                                                             | tetragon tetragon-ocsf                                               |
+| `ocsf.File_System_Activity`  | 1001 | 400d    | `file.path`, `file.xattributes.permission`, `actor.process.path`, `actor.process.container.name`, `device.hostname`, `metadata.product.name`          | tetragon tetragon-ocsf                                               |
+| `ocsf.OSINT_Inventory_Info`  | 5021 | 400d    | `status_id`, `metadata.product.name`                                                                                                                  | intel opencti-taxii-factory-walk / -poll                             |
+
+Readers are uniform across the class tables — Grafana reads all of them
+via the `ocsf-clickhouse` datasource, and each node's attest-verify
+walk reads its own archived classes — plus the two loader lanes:
+`fleet-assets-loader` (core) consumes `ocsf.fleet_assets` with
+`FINAL`, and `opencti-osint-loader` (core + netflow) consumes
+`ocsf.OSINT_Inventory_Info`.
+
+### The two non-class tables
+
+- **`ocsf.fleet_assets`** — the enrichment factory's output, not an
+  event table: `ReplicatedReplacingMergeTree(last_seen)`,
+  `ORDER BY uuid`, `TTL last_seen + INTERVAL 400 DAY DELETE`. One row
+  per Fleet host, hourly refresh; consumers read `FINAL`.
+- **`investigations.records`** — the case/evidence record:
+  `time` plus the `event` catch-all and nothing else typed,
+  `PARTITION BY toYYYYMM(time)`, `ORDER BY (time)`, **no TTL** (a case
+  record is a durable audit record).
+
+### The stray
+
+`ocsf.\`null\``is not a lane:`to_clickhouse`created it when
+records reached a write leg with a null`class_name` (the tetragon
+pipeline now guards its table f-string against exactly that). It stays
+in the bootstrap file and on the cluster until its disposition is
+decided; no pipeline writes it today.
 
 ## Schema bootstrap
 
