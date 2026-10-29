@@ -34,7 +34,7 @@ spec:
       # Full (non-slim) image carries unixodbc + libgl1 that pyrit's pyodbc and
       # av base deps need at import time.
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.14@sha256:12d187a59ecdeb95df0a78cd6107a84398455365a66cc2183db2be42b6067d33
+      image: public.ecr.aws/docker/library/python:3.14@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
       replicas: 1
 
       command: ["/opt/venv/bin/pyrit_backend"]
@@ -85,7 +85,7 @@ spec:
       initContainers:
         - name: install
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.14@sha256:12d187a59ecdeb95df0a78cd6107a84398455365a66cc2183db2be42b6067d33
+          image: public.ecr.aws/docker/library/python:3.14@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
           command: ["/bin/bash", "-c"]
           env:
             # pyrit/common/path.py does DB_DATA_PATH.mkdir(...) at module import
