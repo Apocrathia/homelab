@@ -30,9 +30,7 @@ fork_merge {
   where class_uid not in [ocsf_class_uid("Authentication"), ocsf_class_uid("Account Change")]
 }
 // Split: bus leg (sigma + Grafana) and the direct CH leg with attestation.
-fork_merge {
-  publish "ocsf"
-}, {
+fork {
   metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
   window size=60s, on=time, tolerance=30s, idle_timeout=120s {
     sort time, metadata.uid
@@ -55,3 +53,4 @@ fork_merge {
                 mode="append",
                 max_batch_rows=65536
 }
+publish "ocsf"

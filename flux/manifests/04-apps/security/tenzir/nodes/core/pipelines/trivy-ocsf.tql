@@ -9,9 +9,7 @@ homelab::trivy::ocsf::map
 ocsf_derive
 ocsf_cast
 homelab::findings::stamp
-fork_merge {
-  publish "ocsf"
-}, {
+fork {
   metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
   window size=60s, on=time, tolerance=30s, idle_timeout=120s {
     sort time, metadata.uid
@@ -34,3 +32,4 @@ fork_merge {
                 mode="append",
                 max_batch_rows=65536
 }
+publish "ocsf"
