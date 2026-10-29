@@ -355,64 +355,148 @@ the cutover runs
 ([`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
 tracks the general divergence class).
 
+The diagram is the structure — every table, every typed column, in
+one picture. Attribute names underscore the OCSF field paths (the
+exact dotted paths are in the per-class reference below); `time` is
+the partition and sort spine on every table. Who writes and reads
+each table lives in the reference table and the node READMEs — the
+plumbing is deliberately not drawn here.
+
 ```mermaid
-flowchart LR
-    subgraph W["Writers — Tenzir nodes, CH-direct stateless legs"]
-        direction TB
-        W1["core k8s-audit-ocsf"]
-        W2["core authentik-ocsf"]
-        W3["core trivy-ocsf"]
-        W4["core sigma-detect"]
-        W5["tetragon tetragon-ocsf"]
-        W6["netflow netflow-ingest"]
-        W7["intel opencti-taxii-factory"]
-        W8["enrichment fleet-assets-pull"]
-        W9["investigations ingest-http"]
-        WV["attest-verify walks x4 — chain breaks"]
-    end
-    subgraph S["ocsf store — ReplicatedMergeTree x3 replicas<br/>PARTITION BY toYYYYMM, ORDER BY class_uid, time<br/>7d hot → rustfs cold, then per-class DELETE"]
-        direction TB
-        T_API["ocsf.API_Activity — 6003"]
-        T_AUTH["ocsf.Authentication — 3002"]
-        T_ACCT["ocsf.Account_Change — 3001"]
-        T_BE["ocsf.Base_Event — 0"]
-        T_DF["ocsf.Detection_Finding — 2004"]
-        T_VF["ocsf.Vulnerability_Finding — 2002"]
-        T_NA["ocsf.Network_Activity — 4001 — 90d"]
-        T_PA["ocsf.Process_Activity — 1007"]
-        T_FSA["ocsf.File_System_Activity — 1001"]
-        T_OI["ocsf.OSINT_Inventory_Info — 5021"]
-        T_FA["ocsf.fleet_assets — Replacing, keyed uuid"]
-        T_IR["investigations.records — no TTL"]
-    end
-    subgraph R["Readers"]
-        direction TB
-        R1["Grafana SQL — the 5 dashboards"]
-        R2["attest-verify walks — from_clickhouse"]
-        R3["core fleet-assets-loader"]
-        R4["opencti-osint-loader — core + netflow"]
-        R5["agent query lane"]
-    end
-    W1 --> T_API
-    W2 --> T_AUTH
-    W2 --> T_ACCT
-    W2 --> T_BE
-    W3 --> T_VF
-    W3 --> T_DF
-    W4 --> T_DF
-    WV --> T_DF
-    W5 --> T_PA
-    W5 --> T_FSA
-    W5 --> T_NA
-    W6 --> T_NA
-    W7 --> T_OI
-    W8 --> T_FA
-    W9 --> T_IR
-    S --> R1
-    S --> R2
-    T_FA --> R3
-    T_OI --> R4
-    T_IR --> R5
+erDiagram
+    ocsf_API_Activity {
+        DateTime64 time PK "partition + sort spine"
+        Int32 class_uid "6003"
+        Int8 severity_id
+        String actor_user_name "actor.user.name"
+        String api_operation "api.operation"
+        String metadata_product_name
+        IPv6 src_endpoint_ip "src_endpoint.ip"
+        JSON unmapped "source residue"
+        JSON event "tenzir catch-all"
+    }
+    ocsf_Authentication {
+        DateTime64 time PK
+        Int32 class_uid "3002"
+        Int8 severity_id
+        Int8 status_id
+        String actor_user_name
+        IPv6 src_endpoint_ip
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Account_Change {
+        DateTime64 time PK
+        Int32 class_uid "3001"
+        Int8 severity_id
+        String actor_user_name
+        IPv6 src_endpoint_ip
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Base_Event {
+        DateTime64 time PK
+        Int32 class_uid "0"
+        String class_name
+        Int8 activity_id
+        Int8 severity_id
+        String metadata_product_name
+        String device_hostname
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Detection_Finding {
+        DateTime64 time PK
+        Int32 class_uid "2004"
+        Int8 severity_id
+        Int8 status_id
+        String uid
+        String rule_id
+        String subject_kind
+        String subject_name
+        String subject_namespace
+        String finding_info_title
+        String finding_info_uid
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Vulnerability_Finding {
+        DateTime64 time PK
+        Int32 class_uid "2002"
+        Int8 severity_id
+        String finding_info_title
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Network_Activity {
+        DateTime64 time PK "DELETE horizon 90d, not 400d"
+        Int32 class_uid "4001"
+        Int8 severity_id
+        IPv6 src_endpoint_ip
+        IPv6 dst_endpoint_ip
+        Int64 traffic_bytes "traffic.bytes"
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Process_Activity {
+        DateTime64 time PK
+        Int32 class_uid "1007"
+        Int8 activity_id
+        Int8 severity_id
+        String process_path "process.path"
+        String device_hostname
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_File_System_Activity {
+        DateTime64 time PK
+        Int32 class_uid "1001"
+        Int8 severity_id
+        String file_path
+        String file_xattributes_permission
+        String actor_process_path
+        String actor_process_container_name
+        String device_hostname
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_OSINT_Inventory_Info {
+        DateTime64 time PK
+        Int32 class_uid "5021"
+        Int8 severity_id
+        Int8 status_id
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_fleet_assets {
+        String uuid PK "ORDER BY uuid"
+        String hostname
+        String display_name
+        IPv6 primary_ip
+        String primary_mac
+        String platform
+        String os_version
+        String osquery_version
+        String hardware_serial
+        String hardware_model
+        String hardware_vendor
+        String computer_name
+        String status
+        DateTime64 last_seen "ReplacingMergeTree version, TTL 400d"
+        JSON event
+    }
+    investigations_records {
+        DateTime64 time PK "partition + sort spine"
+        JSON event "tenzir catch-all — the only data column"
+    }
 ```
 
 ### The common class-table shape
