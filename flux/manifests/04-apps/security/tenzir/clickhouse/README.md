@@ -13,18 +13,24 @@ writes here. The Altinity operator itself stays at the services root
 this layer is its own Flux Kustomization (`services-clickhouse-cluster`)
 gated on it.
 
-> **Navigation**: [← Tenzir](../README.md) | [Investigations node](../nodes/investigations/README.md) | [Operator layer](../../../../03-services/clickhouse/README.md)
+> **Navigation**: [← Tenzir](../README.md) |
+> [Investigations node](../nodes/investigations/README.md) |
+> [Operator layer](../../../../03-services/clickhouse/README.md)
 
 ## Objects
 
-| File                            | What it is                                                                                                                                          |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `keeper.yaml`                   | ClickHouseKeeperInstallation `tenzir` - 3-node Keeper ensemble                                                                                      |
-| `cluster.yaml`                  | ClickHouseInstallation `tenzir` - thin CHI: users, keeper ref, cluster layout, pod template; `files:` holds placeholder keys stitched at build time |
-| `config/00-storage-tiered.xml`  | Tiered-storage policy: hot Longhorn PVC + cold S3 disk (the stitched source of truth)                                                               |
-| `config/10-startup-scripts.xml` | Schema bootstrap: investigations DDL first, then the ocsf tables (the stitched source of truth)                                                     |
-| `flux-kustomization.yaml`       | Flux Kustomization `services-clickhouse-cluster` (this layer's gate)                                                                                |
-| `kustomization.yaml`            | kustomize assembly: configMapGenerator + replacements stitch for the two config files                                                               |
+- `keeper.yaml` — ClickHouseKeeperInstallation `tenzir`: the 3-node
+  Keeper ensemble
+- `cluster.yaml` — thin CHI: users, keeper ref, cluster layout, pod
+  template; `files:` holds placeholder keys stitched at build time
+- `config/00-storage-tiered.xml` — tiered-storage policy: hot Longhorn
+  PVC + cold S3 disk (the stitched source of truth)
+- `config/10-startup-scripts.xml` — schema bootstrap: investigations
+  DDL first, then the ocsf tables (the stitched source of truth)
+- `flux-kustomization.yaml` — Flux Kustomization
+  `services-clickhouse-cluster` (this layer's gate)
+- `kustomization.yaml` — kustomize assembly: configMapGenerator +
+  replacements stitch for the two config files
 
 The stitch is the authentik.tf / chaos-mesh build-time shape:
 `kustomization.yaml` packages `config/` into a ConfigMap
@@ -314,18 +320,286 @@ flowchart LR
 - **Retention** (ocsf tables): 7 days → `TO VOLUME 'cold'` (part
   moves; was 90 days until 2026-10-27 — the observed ~9.4 GiB/day per
   replica put the 90-day window at ~850 GiB, past the 100Gi hot PVC;
-  7 days ≈ ~66 GiB steady on 100Gi), 400 days → `DELETE` (horizon cap,
-  operator-tunable: change `INTERVAL 400 DAY` in
-  `config/10-startup-scripts.xml` for new installs; `ALTER TABLE ...
-MODIFY TTL` server-side for live tables).
-  `ttl_only_drop_parts = 1` keeps the delete a cheap partition drop.
+  7 days ≈ ~66 GiB steady on 100Gi), then per-table `DELETE` horizons
+  (operator decision 2026-10-29; operator-tunable: change the
+  `INTERVAL ... DAY DELETE` in `config/10-startup-scripts.xml` for new
+  installs, `ALTER TABLE ... MODIFY TTL` server-side for live tables) —
+  400 days on every class table, 90 days on `ocsf.Network_Activity`
+  alone (netflow + tetragon flows). `ttl_only_drop_parts = 1` keeps
+  the delete a cheap partition drop.
   `investigations.records` has NO TTL by design — a case record is a
   durable audit record.
+- **Partition layout** (ocsf class tables): `PARTITION BY
+toYYYYMM(time)` — monthly, changed from daily `toDate(time)` on
+  2026-10-29. Reason: part-count pressure — daily meant up to ~400
+  partitions per table at the 400-day horizon, the tetragon node's
+  50,747-partition ENOSPC (2026-10-12) is the fleet's measured lesson
+  in what partition bloat costs, and the vendor tutorial's guidance is
+  keep partitions in the hundreds
+  ([tutorial](../.agents/skills/tenzir/tutorials/build-an-ocsf-lake-with-clickhouse.md));
+  monthly is a handful of partitions per table in steady state. Sort
+  keys are unchanged. Two consequences to know: with monthly parts and
+  `ttl_only_drop_parts` a `DELETE` horizon lands whole-month late at
+  most (rows can wait up to a month past their age for their part to
+  drop), and partition keys have no live `ALTER` — the live cutover
+  plan is
+  [`docs/plans/ocsf-monthly-partition-cutover.md`](../../../../../../docs/plans/ocsf-monthly-partition-cutover.md)
+  (tracked as
+  [`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md)).
 - **PVC-only metadata**: schema metadata (incl. S3 disk metadata under
   `/var/lib/clickhouse/disks/`) lives on the PVC only — losing all
   three PVCs orphans the S3 parts. Replication (3 copies) is the
   resilience mechanism; there is no kopiur/snapshot wiring on these
   PVCs by design.
+
+## Schema at a glance
+
+Canonical definition: `config/10-startup-scripts.xml`. This section
+describes the shape this MR lands (monthly partitions, per-class
+`DELETE` horizons). Live tables created before the change drift until
+the cutover runs
+([`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
+tracks the general divergence class).
+
+The diagrams are the structure — every table, every typed
+column, split into four small renders so each box stays
+readable (one monster ER diagram renders too small to read).
+Attribute names underscore the OCSF field paths (the exact
+dotted paths are in the per-class reference below); `time` is
+the partition and sort spine on every table. Who writes and
+reads each table lives in the reference list and the node
+READMEs — the plumbing is deliberately not drawn here.
+
+**Identity and API classes (core feeds)**
+
+```mermaid
+erDiagram
+    ocsf_API_Activity {
+        DateTime64 time PK "partition + sort spine"
+        Int32 class_uid "6003"
+        Int8 severity_id
+        String actor_user_name "actor.user.name"
+        String api_operation "api.operation"
+        String metadata_product_name
+        IPv6 src_endpoint_ip "src_endpoint.ip"
+        JSON unmapped "source residue"
+        JSON event "tenzir catch-all"
+    }
+    ocsf_Authentication {
+        DateTime64 time PK
+        Int32 class_uid "3002"
+        Int8 severity_id
+        Int8 status_id
+        String actor_user_name
+        IPv6 src_endpoint_ip
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Account_Change {
+        DateTime64 time PK
+        Int32 class_uid "3001"
+        Int8 severity_id
+        String actor_user_name
+        IPv6 src_endpoint_ip
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Base_Event {
+        DateTime64 time PK
+        Int32 class_uid "0"
+        String class_name
+        Int8 activity_id
+        Int8 severity_id
+        String metadata_product_name
+        String device_hostname
+        JSON unmapped
+        JSON event
+    }
+```
+
+**Findings (sigma, trivy, the verify walks)**
+
+```mermaid
+erDiagram
+    ocsf_Detection_Finding {
+        DateTime64 time PK
+        Int32 class_uid "2004"
+        Int8 severity_id
+        Int8 status_id
+        String uid
+        String rule_id
+        String subject_kind
+        String subject_name
+        String subject_namespace
+        String finding_info_title
+        String finding_info_uid
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Vulnerability_Finding {
+        DateTime64 time PK
+        Int32 class_uid "2002"
+        Int8 severity_id
+        String finding_info_title
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+```
+
+**Endpoint telemetry (tetragon, netflow, intel)**
+
+```mermaid
+erDiagram
+    ocsf_Network_Activity {
+        DateTime64 time PK "DELETE horizon 90d, not 400d"
+        Int32 class_uid "4001"
+        Int8 severity_id
+        IPv6 src_endpoint_ip
+        IPv6 dst_endpoint_ip
+        Int64 traffic_bytes "traffic.bytes"
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_Process_Activity {
+        DateTime64 time PK
+        Int32 class_uid "1007"
+        Int8 activity_id
+        Int8 severity_id
+        String process_path "process.path"
+        String device_hostname
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_File_System_Activity {
+        DateTime64 time PK
+        Int32 class_uid "1001"
+        Int8 severity_id
+        String file_path
+        String file_xattributes_permission
+        String actor_process_path
+        String actor_process_container_name
+        String device_hostname
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+    ocsf_OSINT_Inventory_Info {
+        DateTime64 time PK
+        Int32 class_uid "5021"
+        Int8 severity_id
+        Int8 status_id
+        String metadata_product_name
+        JSON unmapped
+        JSON event
+    }
+```
+
+**The non-class tables**
+
+```mermaid
+erDiagram
+    ocsf_fleet_assets {
+        String uuid PK "ORDER BY uuid"
+        String hostname
+        String display_name
+        IPv6 primary_ip
+        String primary_mac
+        String platform
+        String os_version
+        String osquery_version
+        String hardware_serial
+        String hardware_model
+        String hardware_vendor
+        String computer_name
+        String status
+        DateTime64 last_seen "ReplacingMergeTree version, TTL 400d"
+        JSON event
+    }
+    investigations_records {
+        DateTime64 time PK "partition + sort spine"
+        JSON event "tenzir catch-all — the only data column"
+    }
+```
+
+### The common class-table shape
+
+Every `ocsf.<Class_Name>` table is the same skeleton plus the class's
+query-hot typed columns:
+
+- `time DateTime64(9, 'UTC') CODEC(Delta, ZSTD)` — the partition and
+  sort spine
+- `class_uid Int32 DEFAULT 0` and `severity_id Int8 DEFAULT 0`
+- the class's typed hot columns (the table below)
+- `unmapped JSON CODEC(ZSTD(3))` — source residue without an OCSF
+  home
+- `event JSON COMMENT 'tenzir:catch_all' CODEC(ZSTD(3))` — everything
+  else
+- `ReplicatedMergeTree`, `PARTITION BY toYYYYMM(time)`,
+  `ORDER BY (class_uid, time)`, TTL `time + 7 DAY TO VOLUME 'cold'`
+  then `DELETE` at the table's horizon (400 days; Network Activity 90),
+  `storage_policy = 'tiered'`, `ttl_only_drop_parts = 1`
+
+### Per-class reference
+
+- **`ocsf.API_Activity`** (6003, 400d) — columns: `actor.user.name`,
+  `api.operation`, `src_endpoint.ip`, `metadata.product.name`; writer:
+  core `k8s-audit-ocsf`.
+- **`ocsf.Authentication`** (3002, 400d) — columns: `status_id`,
+  `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`;
+  writer: core `authentik-ocsf`.
+- **`ocsf.Account_Change`** (3001, 400d) — columns:
+  `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`;
+  writer: core `authentik-ocsf`.
+- **`ocsf.Base_Event`** (0, 400d) — columns: `class_name`,
+  `activity_id`, `metadata.product.name`, `device.hostname`; writers:
+  core `authentik-ocsf`, core `fleet-ocsf`.
+- **`ocsf.Detection_Finding`** (2004, 400d) — columns: `status_id`,
+  `uid`, `rule_id`, `subject_kind`, `subject_name`,
+  `subject_namespace`, `finding_info.title`, `finding_info.uid`,
+  `metadata.product.name`; writers: core `trivy-ocsf` +
+  `sigma-detect`, plus the four attest-verify walks on chain breaks.
+- **`ocsf.Vulnerability_Finding`** (2002, 400d) — columns:
+  `finding_info.title`, `metadata.product.name`; writer: core
+  `trivy-ocsf`.
+- **`ocsf.Network_Activity`** (4001, **90d**) — columns:
+  `src_endpoint.ip`, `dst_endpoint.ip`, `traffic.bytes`,
+  `metadata.product.name`; writers: netflow `netflow-ingest`, tetragon
+  `tetragon-ocsf`.
+- **`ocsf.Process_Activity`** (1007, 400d) — columns: `activity_id`,
+  `process.path`, `device.hostname`, `metadata.product.name`; writer:
+  tetragon `tetragon-ocsf`.
+- **`ocsf.File_System_Activity`** (1001, 400d) — columns:
+  `file.path`, `file.xattributes.permission`, `actor.process.path`,
+  `actor.process.container.name`, `device.hostname`,
+  `metadata.product.name`; writer: tetragon `tetragon-ocsf`.
+- **`ocsf.OSINT_Inventory_Info`** (5021, 400d) — columns:
+  `status_id`, `metadata.product.name`; writers: intel
+  `opencti-taxii-factory-walk` / `-poll`.
+
+### The two non-class tables
+
+- **`ocsf.fleet_assets`** — the enrichment factory's output, not an
+  event table: `ReplicatedReplacingMergeTree(last_seen)`,
+  `ORDER BY uuid`, `TTL last_seen + INTERVAL 400 DAY DELETE`. One row
+  per Fleet host, hourly refresh; consumers read `FINAL`.
+- **`investigations.records`** — the case/evidence record:
+  `time` plus the `event` catch-all and nothing else typed,
+  `PARTITION BY toYYYYMM(time)`, `ORDER BY (time)`, **no TTL** (a case
+  record is a durable audit record).
+
+### The stray
+
+`ocsf.\`null\``is not a lane:`to_clickhouse`created it when
+records reached a write leg with a null`class_name` (the tetragon
+pipeline now guards its table f-string against exactly that). It stays
+in the bootstrap file and on the cluster until its disposition is
+decided; no pipeline writes it today.
 
 ## Schema bootstrap
 
@@ -356,7 +630,10 @@ kubectl exec -n tenzir chi-tenzir-ocsf-0-0-0 -- \
 ### Adding a class (ocsf tables only)
 
 1. Add a `CREATE TABLE IF NOT EXISTS ocsf.<Class_Name>` block to
-   `config/10-startup-scripts.xml` — never to `cluster.yaml`.
+   `config/10-startup-scripts.xml` — never to `cluster.yaml`. Use the
+   house shape: `PARTITION BY toYYYYMM(time)` (monthly, since
+   2026-10-29); the `DELETE` horizon is a per-table choice now —
+   400 days by default, 90 on `ocsf.Network_Activity`.
 2. `kubectl exec` the `ALTER` on existing replicas if the class is not
    new (CREATE only runs on fresh data dirs otherwise).
 3. Point the Tenzir pipeline at it (per-class table naming:
@@ -371,12 +648,15 @@ The operator renders these into `users.d` and injects the passwords as
 env vars from the `tenzir-secrets` Secret; git only ever names
 fields:
 
-| User                    | Password vault field                        | Grants                                  | Networks             |
-| ----------------------- | ------------------------------------------- | --------------------------------------- | -------------------- |
-| `tenzir`                | `clickhouse-password`                       | SELECT, INSERT on `ocsf.*`              | pod CIDR + localhost |
-| `grafana`               | `clickhouse-grafana-password`               | SELECT on `ocsf.*` + `investigations.*` | pod CIDR + localhost |
-| `investigations-writer` | `clickhouse-investigations-writer-password` | INSERT, SELECT on `investigations.*`    | pod CIDR + localhost |
-| `investigations-reader` | `clickhouse-investigations-reader-password` | SELECT on `investigations.*` + `ocsf.*` | pod CIDR + localhost |
+- `tenzir` (`clickhouse-password`) — SELECT, INSERT on `ocsf.*`
+- `grafana` (`clickhouse-grafana-password`) — SELECT on `ocsf.*` +
+  `investigations.*`
+- `investigations-writer` (`clickhouse-investigations-writer-password`)
+  — INSERT, SELECT on `investigations.*`
+- `investigations-reader` (`clickhouse-investigations-reader-password`)
+  — SELECT on `investigations.*` + `ocsf.*`
+
+All four are pod CIDR + localhost only.
 
 With a `grants` block present, access is exactly what is granted
 (ClickHouse `<grants>` users.xml semantics); neither investigations
