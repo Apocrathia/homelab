@@ -32,8 +32,8 @@
              SETTINGS ttl_only_drop_parts keeps the DELETE cap a cheap
              partition drop. Class tables partition monthly, PARTITION
              BY toYYYYMM(`time`) - changed from daily toDate(`time`)
-             2026-10-29 for part-count pressure (see
-             docs/issues/ocsf-monthly-partition-cutover.md). -->
+             2026-10-29 for part-count pressure (live convergence plan:
+             docs/plans/ocsf-monthly-partition-cutover.md). -->
         <!--
           ORDERING IS LOAD-BEARING: startup_scripts executes sequentially
           and aborts at the FIRST failing query (one try/catch wraps the
