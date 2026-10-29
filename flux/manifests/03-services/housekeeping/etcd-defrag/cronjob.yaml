@@ -28,7 +28,7 @@ spec:
           containers:
             - name: talos-01
               # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
-              image: ghcr.io/siderolabs/talosctl:v1.14.4@sha256:b3233234327350f20ed194f3fad83d90a64344c1940f839c7b0c0abef50c8c33
+              image: ghcr.io/siderolabs/talosctl:v1.14.5@sha256:0b852e35c1f513ee5eacc22183d6193486012420569fde39fcd5260c51938443
               args:
                 - etcd
                 - defrag
@@ -59,7 +59,7 @@ spec:
                   readOnly: true
             - name: talos-02
               # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
-              image: ghcr.io/siderolabs/talosctl:v1.14.4@sha256:b3233234327350f20ed194f3fad83d90a64344c1940f839c7b0c0abef50c8c33
+              image: ghcr.io/siderolabs/talosctl:v1.14.5@sha256:0b852e35c1f513ee5eacc22183d6193486012420569fde39fcd5260c51938443
               args:
                 - etcd
                 - defrag
@@ -90,7 +90,7 @@ spec:
                   readOnly: true
             - name: talos-03
               # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
-              image: ghcr.io/siderolabs/talosctl:v1.14.4@sha256:b3233234327350f20ed194f3fad83d90a64344c1940f839c7b0c0abef50c8c33
+              image: ghcr.io/siderolabs/talosctl:v1.14.5@sha256:0b852e35c1f513ee5eacc22183d6193486012420569fde39fcd5260c51938443
               args:
                 - etcd
                 - defrag
@@ -121,7 +121,7 @@ spec:
                   readOnly: true
             - name: talos-04
               # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
-              image: ghcr.io/siderolabs/talosctl:v1.14.4@sha256:b3233234327350f20ed194f3fad83d90a64344c1940f839c7b0c0abef50c8c33
+              image: ghcr.io/siderolabs/talosctl:v1.14.5@sha256:0b852e35c1f513ee5eacc22183d6193486012420569fde39fcd5260c51938443
               args:
                 - etcd
                 - defrag
