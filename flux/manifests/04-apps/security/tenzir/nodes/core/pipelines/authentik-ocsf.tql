@@ -46,7 +46,7 @@ fork_merge {
         value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
     }
   }
-  to_clickhouse table=f"ocsf.{class_name.replace(\" \", \"_\")}",
+  to_clickhouse table=f"ocsf.{class_name.replace(" ", "_")}",
                 host="clickhouse-tenzir.tenzir.svc.cluster.local",
                 port=9000,
                 user="tenzir",
