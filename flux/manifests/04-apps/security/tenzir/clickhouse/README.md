@@ -13,18 +13,24 @@ writes here. The Altinity operator itself stays at the services root
 this layer is its own Flux Kustomization (`services-clickhouse-cluster`)
 gated on it.
 
-> **Navigation**: [← Tenzir](../README.md) | [Investigations node](../nodes/investigations/README.md) | [Operator layer](../../../../03-services/clickhouse/README.md)
+> **Navigation**: [← Tenzir](../README.md) |
+> [Investigations node](../nodes/investigations/README.md) |
+> [Operator layer](../../../../03-services/clickhouse/README.md)
 
 ## Objects
 
-| File                            | What it is                                                                                                                                          |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `keeper.yaml`                   | ClickHouseKeeperInstallation `tenzir` - 3-node Keeper ensemble                                                                                      |
-| `cluster.yaml`                  | ClickHouseInstallation `tenzir` - thin CHI: users, keeper ref, cluster layout, pod template; `files:` holds placeholder keys stitched at build time |
-| `config/00-storage-tiered.xml`  | Tiered-storage policy: hot Longhorn PVC + cold S3 disk (the stitched source of truth)                                                               |
-| `config/10-startup-scripts.xml` | Schema bootstrap: investigations DDL first, then the ocsf tables (the stitched source of truth)                                                     |
-| `flux-kustomization.yaml`       | Flux Kustomization `services-clickhouse-cluster` (this layer's gate)                                                                                |
-| `kustomization.yaml`            | kustomize assembly: configMapGenerator + replacements stitch for the two config files                                                               |
+- `keeper.yaml` — ClickHouseKeeperInstallation `tenzir`: the 3-node
+  Keeper ensemble
+- `cluster.yaml` — thin CHI: users, keeper ref, cluster layout, pod
+  template; `files:` holds placeholder keys stitched at build time
+- `config/00-storage-tiered.xml` — tiered-storage policy: hot Longhorn
+  PVC + cold S3 disk (the stitched source of truth)
+- `config/10-startup-scripts.xml` — schema bootstrap: investigations
+  DDL first, then the ocsf tables (the stitched source of truth)
+- `flux-kustomization.yaml` — Flux Kustomization
+  `services-clickhouse-cluster` (this layer's gate)
+- `kustomization.yaml` — kustomize assembly: configMapGenerator +
+  replacements stitch for the two config files
 
 The stitch is the authentik.tf / chaos-mesh build-time shape:
 `kustomization.yaml` packages `config/` into a ConfigMap
@@ -519,25 +525,40 @@ query-hot typed columns:
 
 ### Per-class reference
 
-| Table                        | uid  | DELETE  | Typed hot columns (beyond the common core)                                                                                                            | Writers                                                              |
-| ---------------------------- | ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `ocsf.API_Activity`          | 6003 | 400d    | `actor.user.name`, `api.operation`, `src_endpoint.ip`, `metadata.product.name`                                                                        | core k8s-audit-ocsf                                                  |
-| `ocsf.Authentication`        | 3002 | 400d    | `status_id`, `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`                                                                            | core authentik-ocsf                                                  |
-| `ocsf.Account_Change`        | 3001 | 400d    | `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`                                                                                         | core authentik-ocsf                                                  |
-| `ocsf.Base_Event`            | 0    | 400d    | `class_name`, `activity_id`, `metadata.product.name`, `device.hostname`                                                                               | core authentik-ocsf, core fleet-ocsf                                 |
-| `ocsf.Detection_Finding`     | 2004 | 400d    | `status_id`, `uid`, `rule_id`, `subject_kind`, `subject_name`, `subject_namespace`, `finding_info.title`, `finding_info.uid`, `metadata.product.name` | core trivy-ocsf + sigma-detect, all four verify walks (chain breaks) |
-| `ocsf.Vulnerability_Finding` | 2002 | 400d    | `finding_info.title`, `metadata.product.name`                                                                                                         | core trivy-ocsf                                                      |
-| `ocsf.Network_Activity`      | 4001 | **90d** | `src_endpoint.ip`, `dst_endpoint.ip`, `traffic.bytes`, `metadata.product.name`                                                                        | netflow netflow-ingest, tetragon tetragon-ocsf                       |
-| `ocsf.Process_Activity`      | 1007 | 400d    | `activity_id`, `process.path`, `device.hostname`, `metadata.product.name`                                                                             | tetragon tetragon-ocsf                                               |
-| `ocsf.File_System_Activity`  | 1001 | 400d    | `file.path`, `file.xattributes.permission`, `actor.process.path`, `actor.process.container.name`, `device.hostname`, `metadata.product.name`          | tetragon tetragon-ocsf                                               |
-| `ocsf.OSINT_Inventory_Info`  | 5021 | 400d    | `status_id`, `metadata.product.name`                                                                                                                  | intel opencti-taxii-factory-walk / -poll                             |
-
-Readers are uniform across the class tables — Grafana reads all of them
-via the `ocsf-clickhouse` datasource, and each node's attest-verify
-walk reads its own archived classes — plus the two loader lanes:
-`fleet-assets-loader` (core) consumes `ocsf.fleet_assets` with
-`FINAL`, and `opencti-osint-loader` (core + netflow) consumes
-`ocsf.OSINT_Inventory_Info`.
+- **`ocsf.API_Activity`** (6003, 400d) — columns: `actor.user.name`,
+  `api.operation`, `src_endpoint.ip`, `metadata.product.name`; writer:
+  core `k8s-audit-ocsf`.
+- **`ocsf.Authentication`** (3002, 400d) — columns: `status_id`,
+  `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`;
+  writer: core `authentik-ocsf`.
+- **`ocsf.Account_Change`** (3001, 400d) — columns:
+  `actor.user.name`, `src_endpoint.ip`, `metadata.product.name`;
+  writer: core `authentik-ocsf`.
+- **`ocsf.Base_Event`** (0, 400d) — columns: `class_name`,
+  `activity_id`, `metadata.product.name`, `device.hostname`; writers:
+  core `authentik-ocsf`, core `fleet-ocsf`.
+- **`ocsf.Detection_Finding`** (2004, 400d) — columns: `status_id`,
+  `uid`, `rule_id`, `subject_kind`, `subject_name`,
+  `subject_namespace`, `finding_info.title`, `finding_info.uid`,
+  `metadata.product.name`; writers: core `trivy-ocsf` +
+  `sigma-detect`, plus the four attest-verify walks on chain breaks.
+- **`ocsf.Vulnerability_Finding`** (2002, 400d) — columns:
+  `finding_info.title`, `metadata.product.name`; writer: core
+  `trivy-ocsf`.
+- **`ocsf.Network_Activity`** (4001, **90d**) — columns:
+  `src_endpoint.ip`, `dst_endpoint.ip`, `traffic.bytes`,
+  `metadata.product.name`; writers: netflow `netflow-ingest`, tetragon
+  `tetragon-ocsf`.
+- **`ocsf.Process_Activity`** (1007, 400d) — columns: `activity_id`,
+  `process.path`, `device.hostname`, `metadata.product.name`; writer:
+  tetragon `tetragon-ocsf`.
+- **`ocsf.File_System_Activity`** (1001, 400d) — columns:
+  `file.path`, `file.xattributes.permission`, `actor.process.path`,
+  `actor.process.container.name`, `device.hostname`,
+  `metadata.product.name`; writer: tetragon `tetragon-ocsf`.
+- **`ocsf.OSINT_Inventory_Info`** (5021, 400d) — columns:
+  `status_id`, `metadata.product.name`; writers: intel
+  `opencti-taxii-factory-walk` / `-poll`.
 
 ### The two non-class tables
 
@@ -605,12 +626,15 @@ The operator renders these into `users.d` and injects the passwords as
 env vars from the `tenzir-secrets` Secret; git only ever names
 fields:
 
-| User                    | Password vault field                        | Grants                                  | Networks             |
-| ----------------------- | ------------------------------------------- | --------------------------------------- | -------------------- |
-| `tenzir`                | `clickhouse-password`                       | SELECT, INSERT on `ocsf.*`              | pod CIDR + localhost |
-| `grafana`               | `clickhouse-grafana-password`               | SELECT on `ocsf.*` + `investigations.*` | pod CIDR + localhost |
-| `investigations-writer` | `clickhouse-investigations-writer-password` | INSERT, SELECT on `investigations.*`    | pod CIDR + localhost |
-| `investigations-reader` | `clickhouse-investigations-reader-password` | SELECT on `investigations.*` + `ocsf.*` | pod CIDR + localhost |
+- `tenzir` (`clickhouse-password`) — SELECT, INSERT on `ocsf.*`
+- `grafana` (`clickhouse-grafana-password`) — SELECT on `ocsf.*` +
+  `investigations.*`
+- `investigations-writer` (`clickhouse-investigations-writer-password`)
+  — INSERT, SELECT on `investigations.*`
+- `investigations-reader` (`clickhouse-investigations-reader-password`)
+  — SELECT on `investigations.*` + `ocsf.*`
+
+All four are pod CIDR + localhost only.
 
 With a `grants` block present, access is exactly what is granted
 (ClickHouse `<grants>` users.xml semantics); neither investigations
