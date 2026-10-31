@@ -20,7 +20,7 @@ spec:
       name: changedetection-io
       namespace: changedetection-io
       # renovate: datasource=docker depName=lscr.io/linuxserver/changedetection.io versioning=semver-coerced
-      image: lscr.io/linuxserver/changedetection.io:0.60.9@sha256:902d7df0205f5c92b6f18b3f56a99e24d451ec5803cd2b231bb292b77e074424
+      image: lscr.io/linuxserver/changedetection.io:0.60.10@sha256:93eb232bd7828ebe4efac81765d108f9f54ef67918ff03eb85524f847c54bc1e
       container:
         name: changedetection-io
         port: 5000
