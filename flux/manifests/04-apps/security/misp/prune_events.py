@@ -30,21 +30,21 @@ cutoff = (date.today() - timedelta(days=90)).isoformat()
 # id). The REST branch returns the bare event array with no
 # result cap (verified against the MISP 2.5.44
 # EventsController source).
-# nosemgrep scans the urllib calls below as dynamic-urllib-use-detected
-# (audit rule: non-literal urlopen args). The URL is the manifest-fixed
-# MISP_URL (scheme-validated above) plus an int-cast event id; no
-# user-controlled data reaches urllib, so the audit closes here.
+# semgrep flags the urllib calls below as
+# python.lang.security.audit.dynamic-urllib-use-detected (audit rule: any
+# non-literal urlopen arg; it matches by pattern and has no sanitizer).
+# The URL is the manifest-fixed MISP_URL (scheme-validated above) plus an
+# int-cast event id; no user-controlled data reaches urllib, so the audit
+# closes here and the findings are suppressed inline.
 index_req = urllib.request.Request(
     f"{misp_url}/events/index",
     data=json.dumps({"dateuntil": cutoff, "minimal": True}).encode(),
     headers={**headers, "Content-Type": "application/json"},
     method="POST",
 )
-with (
-    urllib.request.urlopen(  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
-        index_req, timeout=120
-    ) as resp
-):
+with urllib.request.urlopen(  # nosemgrep
+    index_req, timeout=120
+) as resp:
     events = json.load(resp)
 ids = [int(event["id"]) for event in events]
 del events
@@ -58,11 +58,9 @@ for event_id in ids:
         f"{misp_url}/events/{event_id}", headers=headers, method="DELETE"
     )
     try:
-        with (
-            urllib.request.urlopen(  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
-                delete_req, timeout=60
-            ) as resp
-        ):
+        with urllib.request.urlopen(  # nosemgrep
+            delete_req, timeout=60
+        ) as resp:
             resp.read()
         deleted += 1
     except urllib.error.HTTPError as err:
