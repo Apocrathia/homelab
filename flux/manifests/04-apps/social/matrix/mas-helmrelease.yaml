@@ -25,7 +25,7 @@ spec:
       # shell in the image - no render step, config ships secret-free and
       # every credential is a *_file path into the matrix-secrets mount.
       # renovate: datasource=docker depName=ghcr.io/element-hq/matrix-authentication-service
-      image: ghcr.io/element-hq/matrix-authentication-service:1.27.0@sha256:085e37263957b3b79be85de9cfda1980b97e9653f284fba0c902445e06c200b8
+      image: ghcr.io/element-hq/matrix-authentication-service:1.28.0@sha256:494c67f08ee8344368f4ed336611dea02b26c4e058bf37a212d090d50b612659
       args: ["server"]
       container:
         name: mas
