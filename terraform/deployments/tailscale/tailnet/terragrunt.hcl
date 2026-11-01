@@ -51,7 +51,8 @@ inputs = {
   # The IP is stable across restarts (operator-persisted proxy state), so
   # this is one-time. Admin-console equivalent: DNS -> Add nameserver ->
   # Custom -> one entry per zone (services.apocrathia.com,
-  # access.apocrathia.com, game.apocrathia.com) + device IP.
+  # access.apocrathia.com, game.apocrathia.com, matrix.apocrathia.com)
+  # + device IP.
   dns_split_dns = {
     # Access VLAN zone: same resolver device; CoreDNS forwards the zone to
     # that VLAN's own resolver (10.100.0.1; hosts live under
@@ -66,6 +67,12 @@ inputs = {
     # alias of game.services.apocrathia.com in the domain zone
     # (flux/manifests/03-services/tailnet-dns/coredns.yaml).
     "game.apocrathia.com" = ["100.76.213.107"]
+    # Synapse server_name: same resolver device; the split zone
+    # delegates the bare-zone name here so tailnet members resolve it
+    # (CoreDNS serves it as a static record in the domain zone,
+    # flux/manifests/03-services/tailnet-dns/coredns.yaml). Deliberately
+    # no public DNS record.
+    "matrix.apocrathia.com" = ["100.76.213.107"]
   }
 
   acls_externally_managed_on = true
