@@ -12,10 +12,18 @@
 # (synapse/config/mas.py check_config_conflicts).
 server_name: "matrix.apocrathia.com"
 public_baseurl: "https://matrix.apocrathia.com/"
-# Tailnet-only: serve_server_wellknown is omitted on purpose - with no
-# federation, no remote server will ever fetch /.well-known/matrix/server.
-# public_baseurl makes Synapse serve /.well-known/matrix/client with the
-# MSC2965 MAS issuer block (OIDC discovery for Element X et al.)
+# Federation is on: remote servers fetch /.well-known/matrix/server on
+# 443 (routed to Synapse by the existing HTTPRoute) and send federation
+# traffic to matrix.apocrathia.com:443 on the tailnet-gateway door. The
+# host resolves for tailnet members via the tailnet split-DNS zone.
+# Synapse also serves /.well-known/matrix/client with the MSC2965 MAS
+# issuer block (OIDC discovery for Element X et al.)
+serve_server_wellknown: true
+# Deny-by-default: only the peer below may federate, both directions.
+# Peer server_name verified live 2026-11-01: well-known self-delegates
+# to :443, Synapse 1.164.1, public A 136.53.195.27.
+federation_domain_whitelist:
+  - matrix.ninefoot3.com
 pid_file: /data/homeserver.pid
 signing_key_path: /data/matrix.apocrathia.com.signing.key
 
@@ -55,7 +63,4 @@ matrix_authentication_service:
 max_upload_size: 50M
 media_store_path: /data/media_store
 report_stats: false
-# Tailnet-only: keep the signing key out of matrix.org's key server
-# publication (only meaningful the day federation turns on)
-suppress_key_publication: true
 log_config: "/data/matrix.apocrathia.com.log.config"
