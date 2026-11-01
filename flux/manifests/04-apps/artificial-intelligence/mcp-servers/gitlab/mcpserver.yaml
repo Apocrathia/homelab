@@ -19,7 +19,7 @@ spec:
   deployment:
     replicas: 3
     # renovate: datasource=docker depName=zereight050/gitlab-mcp
-    image: docker.io/zereight050/gitlab-mcp:2.3.8@sha256:520f305a3f56a9eafddb61543c04b017477d74043bb202e5843f4b43f01c99bf
+    image: docker.io/zereight050/gitlab-mcp:2.3.19@sha256:4fa95eb44c2c3b199355cd7a9bc669fcc9ef294e5fa003b2deed39c19f90599f
     port: 8080
     cmd: /bin/sh
     args:
