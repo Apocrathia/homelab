@@ -17,9 +17,13 @@
                 <endpoint>http://storage.services.apocrathia.com:9009/tenzir/clickhouse/</endpoint>
                 <access_key_id from_env="CH_S3_ACCESS_KEY_ID"/>
                 <secret_access_key from_env="CH_S3_SECRET_ACCESS_KEY"/>
-                <!-- files > 32 MiB upload multipart (rustfs multipart
-                     verified in the prototype); smaller ones PUT single -->
-                <max_single_part_upload_size>33554432</max_single_part_upload_size>
+                <!-- ClickHouse 26 removed the max_single_part_upload_size
+                     disk option and made the config strict (the 25 line
+                     accepted it) — the boot-time check dies on it. The
+                     default multipart threshold is fine for rustfs (the
+                     prototype verified multipart uploads work); the knob
+                     went with the 26 pin (MRs !5440/!5441). -->
+
             </cold>
         </disks>
         <policies>
