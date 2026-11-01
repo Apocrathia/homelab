@@ -307,6 +307,39 @@ stream.
   in Overview for why the platform default (2M entries) was too fat for this
   Dragonfly's maxmemory.
 
+### Why the window is safe (decision defense)
+
+The window sits on **observation time, not birth date** — that is the whole
+argument:
+
+- **Feeds timestamp sightings.** abuse.ch/OTX/CIRCL entries carry the date
+  something was _seen in the wild_, and the MISP prune cuts on that date. A
+  five-year-old campaign that still generates live telemetry keeps producing
+  fresh entries — old tooling, new sightings, stays in the window. Only
+  intel _unobserved for 90 days_ drops.
+- **What drops was already inert.** Retired infrastructure (sinkholed
+  domains, dead C2) has no traffic left to match. Dormant APT infrastructure
+  sleeps, wakes, gets re-observed — re-entering the window within
+  hours-to-days of the re-wake. The accepted gap is the first hours of a
+  re-wake before feeds re-report it.
+- **Stale IOCs rot into harm.** IPs get reassigned by cloud providers and
+  expired domains get re-registered by innocent parties; an old
+  malicious-IP entry carries real false-positive risk and near-zero hit
+  value. The 2022-era revoked indicators the abandoned abuse.ch drain kept
+  re-importing were exactly this class.
+- **The durable layer is not pruned.** The retention rule excludes MITRE
+  ATT&CK entities — TTPs do not rot the way observables do, so the
+  detection model keeps its long-lived half.
+- **Detection already runs on a shorter clock.** The Tenzir intel lane
+  walks the TAXII collection daily and the core loader's context is a
+  30-day max_age — 90 days of retention is generous relative to how
+  indicators are actually consumed here.
+- **Known cost, accepted deliberately.** Retro-forensics / analyst research
+  older than the window is out-of-platform. Escape hatches: the 14-day
+  nightly MISP dump bucket, and re-runnable upstream re-pulls (the CIRCL
+  archive import). If retro research becomes a real need, the revisit lever
+  is making MISP the permanent archive and keeping only OpenCTI tight.
+
 ## Export surfaces (slice 7 — Tenzir/SIEM handoff)
 
 Documentation only — no infrastructure lands in this slice. OpenCTI ships
