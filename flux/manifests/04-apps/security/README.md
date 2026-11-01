@@ -6,6 +6,13 @@ Threat-intelligence and detection platforms for the homelab.
 
 ## Applications
 
+### [CyberChef](./cyberchef/README.md)
+
+GCHQ's browser-based "cyber Swiss Army knife": encode, decode, hash, parse,
+and analyse data without it leaving the tab. Client-side-only static build
+(nginx-unprivileged, uid 101); no backend, no database, nothing persisted.
+Authentik proxy for admins plus the friends tier over the tailnet.
+
 ### [MISP](./misp/README.md)
 
 MISP threat-intelligence sharing platform (open source): curated feeds, event
