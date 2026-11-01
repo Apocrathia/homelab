@@ -23,7 +23,7 @@ spec:
     app:
       name: cryptpad
       # renovate: datasource=docker depName=cryptpad/cryptpad versioning=regex:^version-(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)$
-      image: cryptpad/cryptpad:version-2026.5.1@sha256:1f89dcdd28c1375f675e47b1d0cf07a51f3e9a07a79dc93c8cddb3295b98a34d
+      image: cryptpad/cryptpad:version-2026.10.0@sha256:61a12565a532a046996e47b3180a8ac9855d86c262dc98a1bb8d1107557bfe3a
       container:
         name: cryptpad
         port: 3000
