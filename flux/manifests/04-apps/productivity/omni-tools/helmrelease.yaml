@@ -1,0 +1,103 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: omni-tools
+  namespace: omni-tools
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.89"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+  values:
+    app:
+      name: omni-tools
+      namespace: omni-tools
+      # renovate: datasource=docker depName=iib0011/omni-tools
+      image: iib0011/omni-tools:0.7.0@sha256:85f0e052a97326396c753e39de0ef74631c0783999ccca81ebc36262903ec9fa
+      container:
+        name: omni-tools
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 80
+        portName: http
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /var/run
+
+    storage:
+      longhorn:
+        enabled: false
+      smb:
+        enabled: false
+
+    secrets:
+      enabled: false
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      mode: "proxy"
+      shared: true
+      category: "Productivity"
+      displayName: "OmniTools"
+      externalHost: "https://omni-tools.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/omni-tools/icon.svg"
+      metaDescription: "Free client-side web tools — image, PDF, text and data utilities; nothing leaves the browser"
+      metaPublisher: "OmniTools"
+
+    httproute:
+      enabled: false
+
+    # Tailnet sharing via chart values
+    tailnet:
+      enabled: true
+
+    gatus:
+      enabled: true
+      group: productivity
+      path: /
