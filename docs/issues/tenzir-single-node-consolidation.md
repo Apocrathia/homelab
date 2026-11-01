@@ -7,7 +7,6 @@ source: agent
 found_at: 2026-11-01
 area: security
 slice: hitl
-plan: docs/plans/tenzir-single-node-consolidation.md
 ---
 
 # Tenzir single-node consolidation (pipelines-only model)
@@ -48,7 +47,7 @@ or vendor confirmation via the Slack Connect channel.
 - record_integrity attest/verify walkers green across merged lanes
   (per-lane chain scoping; no finding-feedback loops).
 - Sigma findings-rate within baseline for core feeds; deliberate,
-  verified handling of netflow/tetragon inputs per plan waves.
+  verified handling of netflow/tetragon inputs.
 - Diagnostics lanes RUNNING on the merged node; Grafana re-planned
   for the `node`-label collapse.
 - 59/59 package tests; CH row continuity across every moved pipeline.
@@ -63,11 +62,10 @@ or vendor confirmation via the Slack Connect channel.
 
 ## Implementation hint
 
-Plan:
-[tenzir-single-node-consolidation](../plans/tenzir-single-node-consolidation.md)
-holds the wave structure (fold pull planes into core → netflow →
-tetragon behind Gate A → investigations behind Gate B), sizing
-evidence, and per-move validation mechanics.
+Design (wave structure, gates, merged-node sizing) is intentionally
+deferred to unblock time — the distributed model may change the how
+entirely. Prior analysis: gitignored session artifacts under
+`.scratch/tenzir-consolidation/` (2026-11-01).
 
 ## Notes
 
