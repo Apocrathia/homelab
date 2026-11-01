@@ -150,7 +150,7 @@ resource "authentik_application" "app" {
   name            = "Matrix"
   slug            = "matrix"
   group           = "Social"
-  meta_launch_url = "https://matrix.gateway.services.apocrathia.com/"
+  meta_launch_url = "https://element.gateway.services.apocrathia.com/"
   open_in_new_tab = true
 
   # Optional metadata: null = attribute omitted — the config must not
