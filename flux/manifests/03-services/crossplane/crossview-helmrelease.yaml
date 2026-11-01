@@ -40,7 +40,7 @@ spec:
     image:
       repository: ghcr.io/crossplane-contrib/crossview
       # renovate: datasource=docker depName=ghcr.io/crossplane-contrib/crossview
-      tag: "v4.6.0"
+      tag: "v4.7.0"
       pullPolicy: IfNotPresent
     # Gateway API only — chart-rendered HTTPRoute on the main gateway
     gatewayAPI:
