@@ -27,7 +27,7 @@ spec:
       # port, plus headless Chromium for report rendering (world-readable
       # /ms-playwright so arbitrary UIDs work). Upstream ships no chart — image only.
       # renovate: datasource=docker depName=docker.io/openaev/platform
-      image: docker.io/openaev/platform:3.261016.0@sha256:2fbcb1a6773e33c19073d2b1bddb7147e939efebca3e98c38a08fe6a25ae2a63
+      image: docker.io/openaev/platform:3.261029.0@sha256:ee79b6715a4165c30e0c86b4adab726db86366252f6f73ff9f2861df47ce6e60
       # Single replica: Quartz jobs + queue consumers assume a single writer;
       # upstream documents no multi-replica topology.
       replicas: 1
