@@ -40,6 +40,15 @@ spec:
       ELASTICSEARCH__SSL__REJECT_UNAUTHORIZED: "false"
       RABBITMQ__HOSTNAME: "opencti-rabbitmq"
       REDIS__HOSTNAME: "opencti-redis"
+      # Cap on stream.opencti (redis.trimming, platform default 2000000 per
+      # the platform config default.json / research doc sizing note).
+      # 2026-10-29 incident: the MISP abuse.ch backlog ingest filled
+      # Dragonfly's 819MiB maxmemory (noeviction) with ~281k fat live-feed
+      # events (~3KB each) before the default trim point ever engaged, so
+      # the server's platform_init_lock SET was rejected at boot
+      # (LOCK_ERROR CrashLoopBackOff). 50000 entries bounds the stream at
+      # ~150MB worst case at the observed ~3KB/event.
+      REDIS__TRIMMING: "50000"
       # File storage: NAS rustfs bucket (slice 1), HTTP on the LAN segment.
       MINIO__ENDPOINT: "storage.services.apocrathia.com"
       MINIO__PORT: "9009"
@@ -219,13 +228,16 @@ spec:
           MISP_CREATE_REPORTS: true
           MISP_CREATE_INDICATORS: true
           MISP_CREATE_OBSERVABLES: true
-          # MISP `timestamp` is the source event's last-modified, NOT the local
-          # creation time: the CIRCL archive import bulk-touched events to
-          # 2026-10-16 00:59:xx and feed-imported events (abuse.ch backfill)
-          # carry historical timestamps, so a live timestamp cursor strands
-          # them below the watermark. import_from_date is the initial cursor
-          # when the connector state resets — the documented re-import
-          # mechanism for the 2026-10 backlog strand (see README).
+          # MISP `timestamp` is the source event's last-modified, NOT the
+          # local creation time, so a live timestamp cursor strands untouched
+          # or feed-imported events below the watermark - the connector
+          # bootstraps from a floor date instead. Under the 90-day intel
+          # window (operator doctrine, 2026-11-01) the epoch floor just means
+          # "import whatever MISP holds": MISP prunes events older than 90
+          # days at source (misp/prune-events-cronjob.yaml), so even a full
+          # connector-state reset re-imports a bounded <= 90-day set. The
+          # old 2026-10 backlog re-import objective is retired with the
+          # abandoned drain (see README).
           MISP_IMPORT_FROM_DATE: "2000-01-01T00:00:00Z"
         envFromSecrets:
           # Same platform-token vault ref as the worker: the chart only
@@ -441,7 +453,8 @@ spec:
 
     # Dragonfly (redis-compatible). Password from the vault. cache_mode dropped
     # (chart default --cache_mode=true): LRU eviction would silently drop
-    # OpenCTI stream/task state; rely on REDIS__TRIMMING + memory limit instead.
+    # OpenCTI stream/task state; rely on the REDIS__TRIMMING stream cap (set
+    # in the platform env block above) + memory limit instead.
     redis:
       extraArgs: []
       passwordFromSecret:

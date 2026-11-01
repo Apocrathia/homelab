@@ -38,7 +38,14 @@ Stack layout (all in the `opencti` namespace):
   the OpenCTI docker stack's `rabbitmq.conf`.
 - **Dragonfly** (redis): password-gated; the chart's default
   `--cache_mode=true` is dropped — LRU eviction would silently drop stream /
-  task state.
+  task state — and the platform caps `stream.opencti` at 50k entries via
+  `REDIS__TRIMMING` (`helmrelease.yaml`). Incident note (2026-10-29): without
+  the cap, the MISP abuse.ch backlog ingest filled Dragonfly's 819MiB
+  maxmemory (`noeviction`) with ~281k fat live-feed events (~3KB each) — the
+  platform default trim point (2M events) was still far away — so the
+  server's `platform_init_lock` SET was rejected at boot and the platform
+  hard-crashed in a `LOCK_ERROR` CrashLoopBackOff until the stream was
+  hand-flushed.
 - **S3**: NAS rustfs bucket `opencti-files` (slice 1 keypair). No in-cluster
   S3 subchart.
 - **MISP connector** (slice 6): `opencti-misp-connector` Deployment (chart
@@ -153,7 +160,7 @@ Wiring notes (verified against the chart templates):
 - **Logout**: local by default (`logout_remote` unset) — the OpenCTI session
   ends, the authentik session persists.
 
-### MISP connector watermark + backlog imports
+### MISP connector watermark
 
 The connector's cursor (`last_event_date`, platform-side state) tracks MISP's
 `timestamp` field — the **source event's last-modified time**, not local
@@ -165,11 +172,19 @@ creation. Two consequences (live-verified 2026-10-18):
 - Feed-imported events (abuse.ch backfill) carry historical `timestamp`s and
   always land below the cursor.
 
-Re-import mechanism: `MISP_IMPORT_FROM_DATE` (pinned to epoch in
-`helmrelease.yaml`) becomes the initial cursor when the connector state
-resets. Reset the state (UI: Data → Ingestion → Connectors → MISP → state
-reset) **after** any bulk backfill completes — the next PT5M run re-imports
-everything with `timestamp` above 2000-01-01.
+That stranding is why the connector bootstraps from a floor date:
+`MISP_IMPORT_FROM_DATE` (epoch in `helmrelease.yaml`) becomes the initial
+cursor when the connector state resets (UI: Data → Ingestion → Connectors →
+MISP → state reset). Under the 90-day intel window (operator doctrine,
+2026-11-01) the epoch floor just means "import whatever MISP holds": MISP
+prunes events older than 90 days at source (the misp `misp-event-prune`
+CronJob — see [Intel retention](#intel-retention-90-day-window)), so a state
+reset re-imports a bounded ≤ 90-day set on the next PT5M run. The former
+backlog re-import objective — sweeping the 2026-10 abuse.ch strand — is
+retired: the drain is abandoned under the doctrine, and the expired
+2022-era indicators it kept re-surfacing are dead IOCs the operator does not
+want (their re-import via the fat stream is what took the platform down —
+see the Dragonfly note in Overview).
 
 ### MISP → OpenCTI connector (slice 6)
 
@@ -258,6 +273,39 @@ Lucene translog replay recovers the index on restore — and restoring the
 platform means PVC restore with up to ~24 h of graph loss accepted. Anything
 the MISP connector imported is replayable from MISP (which has its own
 backups); analyst-created work beyond the last kopia snapshot is not.
+
+## Intel retention (90-day window)
+
+Doctrine (operator call, 2026-11-01): only ~90 days of threat intel lives
+anywhere. MISP is the retention authority — it prunes at source — and OpenCTI
+keeps only active intel via its native retention policy plus a bounded Redis
+stream.
+
+- **MISP prunes at source.** The misp namespace's `misp-event-prune` CronJob
+  deletes MISP events older than 90 days daily (23:30 America/Denver), by the
+  event `date` field — mechanism, delete-capable `prune-key`, and first-run
+  expectations: [MISP README, Data retention](../misp/README.md#data-retention).
+  Whatever OpenCTI imports is therefore already bounded.
+- **OpenCTI native retention policy (runbook — UI-configured, not GitOps).**
+  Settings → Customization → Retention policies: a **Knowledge**-scope rule,
+  maximum retention 90 days, **filter-scoped to the imported TI surfaces
+  only** — Indicator + Observable + the MISP-generated Report containers, so
+  containers do not outlive their contents — and excluding MITRE ATT&CK
+  entities. The scoping is load-bearing: a blanket Knowledge rule deletes
+  ATT&CK techniques after 90 quiet days (the MITRE connector seeds them once
+  and they rarely update). Platform semantics: deletion is permanent —
+  deleted objects do **not** go to the trash — and objects are eligible once
+  they have **not been updated** within the window. Use the rule's **Verify**
+  button to preview how many objects match before flipping it Active.
+  Retention policies are available in CE (verified against 7.261008.0: the
+  settings menu and the GraphQL mutations carry no EE gate); the EE license
+  is already wired from the vault as `APP__ENTERPRISE_EDITION_LICENSE` (see
+  the secrets table) for the SSO provider, independent of this rule. Only
+  the rule creation is left to the operator.
+- **Bounded Redis stream.** `stream.opencti` is capped at 50k entries by
+  `REDIS__TRIMMING` in `helmrelease.yaml` — see the Dragonfly incident note
+  in Overview for why the platform default (2M entries) was too fat for this
+  Dragonfly's maxmemory.
 
 ## Export surfaces (slice 7 — Tenzir/SIEM handoff)
 
