@@ -36,14 +36,14 @@ Stack layout (all in the `opencti` namespace):
   Talos patch).
 - **RabbitMQ**: `max_message_size=536870912`, `consumer_timeout=86400000` per
   the OpenCTI docker stack's `rabbitmq.conf`.
-- **Dragonfly** (redis): password-gated; the chart's default
-  `--cache_mode=true` is dropped — LRU eviction would silently drop stream /
-  task state — and the platform caps `stream.opencti` at 50k entries via
-  `REDIS__TRIMMING` (`helmrelease.yaml`). Incident note (2026-10-29): without
-  the cap, the MISP abuse.ch backlog ingest filled Dragonfly's 819MiB
-  maxmemory (`noeviction`) with ~281k fat live-feed events (~3KB each) — the
-  platform default trim point (2M events) was still far away — so the
-  server's `platform_init_lock` SET was rejected at boot and the platform
+- **Dragonfly** (redis): password-gated. The chart's default
+  `--cache_mode=true` is dropped, because LRU eviction would silently drop
+  stream and task state. The platform caps `stream.opencti` at 50k entries
+  via `REDIS__TRIMMING` (`helmrelease.yaml`). Incident note (2026-10-29):
+  without the cap, the MISP abuse.ch backlog ingest filled Dragonfly's 819MiB
+  maxmemory (`noeviction`) with ~281k fat live-feed events (~3KB each). The
+  platform default trim point (2M events) was still far away. The server's
+  `platform_init_lock` SET was rejected at boot, and the platform
   hard-crashed in a `LOCK_ERROR` CrashLoopBackOff until the stream was
   hand-flushed.
 - **S3**: NAS rustfs bucket `opencti-files` (slice 1 keypair). No in-cluster
@@ -163,8 +163,8 @@ Wiring notes (verified against the chart templates):
 ### MISP connector watermark
 
 The connector's cursor (`last_event_date`, platform-side state) tracks MISP's
-`timestamp` field — the **source event's last-modified time**, not local
-creation. Two consequences (live-verified 2026-10-18):
+`timestamp` field. That is the **source event's last-modified time**, not
+local creation. Two consequences (live-verified 2026-10-18):
 
 - The 2026-10-16 CIRCL archive import bulk-touched the maltrail events, so the
   connector's first boot (10-day lookback default) imported only the touched
@@ -176,15 +176,15 @@ That stranding is why the connector bootstraps from a floor date:
 `MISP_IMPORT_FROM_DATE` (epoch in `helmrelease.yaml`) becomes the initial
 cursor when the connector state resets (UI: Data → Ingestion → Connectors →
 MISP → state reset). Under the 90-day intel window (operator doctrine,
-2026-11-01) the epoch floor just means "import whatever MISP holds": MISP
+2026-11-01) the epoch floor just means "import whatever MISP holds". MISP
 prunes events older than 90 days at source (the misp `misp-event-prune`
-CronJob — see [Intel retention](#intel-retention-90-day-window)), so a state
+CronJob; see [Intel retention](#intel-retention-90-day-window)), so a state
 reset re-imports a bounded ≤ 90-day set on the next PT5M run. The former
-backlog re-import objective — sweeping the 2026-10 abuse.ch strand — is
-retired: the drain is abandoned under the doctrine, and the expired
-2022-era indicators it kept re-surfacing are dead IOCs the operator does not
-want (their re-import via the fat stream is what took the platform down —
-see the Dragonfly note in Overview).
+backlog re-import objective, sweeping the 2026-10 abuse.ch strand, is
+retired: the drain is abandoned under the doctrine. The expired 2022-era
+indicators it kept re-surfacing are dead IOCs the operator does not want.
+Their re-import via the fat stream is what took the platform down; see the
+Dragonfly note in Overview.
 
 ### MISP → OpenCTI connector (slice 6)
 
@@ -277,68 +277,69 @@ backups); analyst-created work beyond the last kopia snapshot is not.
 ## Intel retention (90-day window)
 
 Doctrine (operator call, 2026-11-01): only ~90 days of threat intel lives
-anywhere. MISP is the retention authority — it prunes at source — and OpenCTI
+anywhere. MISP is the retention authority and prunes at source. OpenCTI
 keeps only active intel via its native retention policy plus a bounded Redis
 stream.
 
 - **MISP prunes at source.** The misp namespace's `misp-event-prune` CronJob
-  deletes MISP events older than 90 days daily (23:30 America/Denver), by the
-  event `date` field — mechanism, delete-capable `prune-key`, and first-run
-  expectations: [MISP README, Data retention](../misp/README.md#data-retention).
-  Whatever OpenCTI imports is therefore already bounded.
-- **OpenCTI native retention policy (runbook — UI-configured, not GitOps).**
-  Settings → Customization → Retention policies: a **Knowledge**-scope rule,
-  maximum retention 90 days, **filter-scoped to the imported TI surfaces
-  only** — Indicator + Observable + the MISP-generated Report containers, so
-  containers do not outlive their contents — and excluding MITRE ATT&CK
-  entities. The scoping is load-bearing: a blanket Knowledge rule deletes
-  ATT&CK techniques after 90 quiet days (the MITRE connector seeds them once
-  and they rarely update). Platform semantics: deletion is permanent —
-  deleted objects do **not** go to the trash — and objects are eligible once
-  they have **not been updated** within the window. Use the rule's **Verify**
-  button to preview how many objects match before flipping it Active.
-  Retention policies are available in CE (verified against 7.261008.0: the
-  settings menu and the GraphQL mutations carry no EE gate); the EE license
-  is already wired from the vault as `APP__ENTERPRISE_EDITION_LICENSE` (see
-  the secrets table) for the SSO provider, independent of this rule. Only
-  the rule creation is left to the operator.
-- **Bounded Redis stream.** `stream.opencti` is capped at 50k entries by
-  `REDIS__TRIMMING` in `helmrelease.yaml` — see the Dragonfly incident note
-  in Overview for why the platform default (2M entries) was too fat for this
+  deletes MISP events older than 90 days, daily at 23:30 America/Denver, by
+  the event `date` field. Mechanism, delete-capable `prune-key`, and
+  first-run expectations: [MISP README, Data
+  retention](../misp/README.md#data-retention). Whatever OpenCTI imports is
+  already bounded.
+- **OpenCTI native retention policy** (runbook: UI-configured, not GitOps).
+  Settings → Customization → Retention policies. Create a **Knowledge**-scope
+  rule, maximum retention 90 days, and scope the filters to the imported TI
+  surfaces only: Indicator + Observable + the MISP-generated Report
+  containers, so containers do not outlive their contents. Exclude MITRE
+  ATT&CK entities. The scoping is load-bearing: a blanket Knowledge rule
+  deletes ATT&CK techniques after 90 quiet days, because the MITRE connector
+  seeds them once and they rarely update. Two platform semantics to know
+  before flipping it Active: deletion is permanent (no trash), and an object
+  is eligible once it has **not been updated** within the window. Use the
+  rule's **Verify** button to preview the match count first. Retention
+  policies are available in CE (verified against 7.261008.0: no EE gate on
+  the settings menu or the GraphQL mutations). The EE license stays wired
+  from the vault as `APP__ENTERPRISE_EDITION_LICENSE` (see the secrets
+  table) for the SSO provider, independent of this rule. Creating the rule is
+  the only operator step left.
+- **Bounded Redis stream.** `REDIS__TRIMMING` in `helmrelease.yaml` caps
+  `stream.opencti` at 50k entries. The Dragonfly incident note in Overview
+  explains why the platform default (2M entries) was too fat for this
   Dragonfly's maxmemory.
 
 ### Why the window is safe (decision defense)
 
-The window sits on **observation time, not birth date** — that is the whole
-argument:
+The window sits on observation time, not birth date. That is the whole
+argument.
 
 - **Feeds timestamp sightings.** abuse.ch/OTX/CIRCL entries carry the date
   something was _seen in the wild_, and the MISP prune cuts on that date. A
   five-year-old campaign that still generates live telemetry keeps producing
-  fresh entries — old tooling, new sightings, stays in the window. Only
-  intel _unobserved for 90 days_ drops.
+  fresh entries: old tooling, new sighting, still in the window. Only intel
+  _unobserved for 90 days_ drops.
 - **What drops was already inert.** Retired infrastructure (sinkholed
   domains, dead C2) has no traffic left to match. Dormant APT infrastructure
-  sleeps, wakes, gets re-observed — re-entering the window within
-  hours-to-days of the re-wake. The accepted gap is the first hours of a
-  re-wake before feeds re-report it.
-- **Stale IOCs rot into harm.** IPs get reassigned by cloud providers and
-  expired domains get re-registered by innocent parties; an old
-  malicious-IP entry carries real false-positive risk and near-zero hit
-  value. The 2022-era revoked indicators the abandoned abuse.ch drain kept
-  re-importing were exactly this class.
+  sleeps, wakes, and gets re-observed. It re-enters the window within hours
+  to days of the re-wake. The accepted gap is the first hours of a re-wake,
+  before feeds re-report it.
+- **Stale IOCs rot into harm.** Cloud providers reassign IPs, and expired
+  domains get re-registered by innocent parties. An old malicious-IP entry
+  carries real false-positive risk and near-zero hit value. The 2022-era
+  revoked indicators the abandoned abuse.ch drain kept re-importing were
+  exactly this class.
 - **The durable layer is not pruned.** The retention rule excludes MITRE
-  ATT&CK entities — TTPs do not rot the way observables do, so the
-  detection model keeps its long-lived half.
-- **Detection already runs on a shorter clock.** The Tenzir intel lane
-  walks the TAXII collection daily and the core loader's context is a
-  30-day max_age — 90 days of retention is generous relative to how
-  indicators are actually consumed here.
-- **Known cost, accepted deliberately.** Retro-forensics / analyst research
-  older than the window is out-of-platform. Escape hatches: the 14-day
-  nightly MISP dump bucket, and re-runnable upstream re-pulls (the CIRCL
-  archive import). If retro research becomes a real need, the revisit lever
-  is making MISP the permanent archive and keeping only OpenCTI tight.
+  ATT&CK entities. TTPs do not rot the way observables do, so the detection
+  model keeps its long-lived half.
+- **Detection already runs on a shorter clock.** The Tenzir intel lane walks
+  the TAXII collection daily and the core loader's context is a 30-day
+  max_age. 90 days of retention is generous relative to how indicators are
+  actually consumed here.
+- **Known cost, accepted deliberately.** Retro-forensics and analyst
+  research older than the window is out-of-platform. Two escape hatches: the
+  14-day nightly MISP dump bucket, and re-runnable upstream re-pulls (the
+  CIRCL archive import). If retro research becomes a real need, the revisit
+  lever is making MISP the permanent archive and keeping only OpenCTI tight.
 
 ## Export surfaces (slice 7 — Tenzir/SIEM handoff)
 
