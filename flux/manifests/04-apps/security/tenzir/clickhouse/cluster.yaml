@@ -125,6 +125,13 @@ spec:
     templates:
       podTemplate: clickhouse-pod
       dataVolumeClaimTemplate: data
+      # The CR-level service renders from the chi-service template
+      # below — without this reference the template exists but nothing
+      # selects it and the operator never renders it (found live
+      # 2026-10-29: the service stayed headless until the reference
+      # landed, then rendered a real ClusterIP with the operator's
+      # ready-gated selector within a minute).
+      serviceTemplate: chi-service
 
   templates:
     # The CR-level service (clickhouse-tenzir) is the fleet's
