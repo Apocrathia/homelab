@@ -4,8 +4,8 @@ ProviderConfig + Workspace, rendered when authentik.managedBy=terraform.
 The chart GENERATES the per-app HCL inline (source: Inline, NO varmap in
 git, NO module refs, NO chart-tag pins — the Remote+varmap antipattern is
 dead). The HCL is shape-identical to the merged file-pair exemplars
-(gatus/immich/jetkvm): values land inline in the HCL; ADOPTION rides the
-ungated slug-literal application import + for_each-gated generated-id
+(gatus/immich/jetkvm): values land inline in the HCL; ADOPTION rides for_each-gated
+imports — the slug-literal application import + the generated-id
 imports (plain variable-id imports are BANNED — the jetkvm blink: tofu
 silently skips an empty-id import and plans a duplicate create); the
 two-way adoption validation fails loudly both ways (adoption=true with any
@@ -595,10 +595,13 @@ variable "import_custom_scope_mapping_ids" {
 {{- end }}
 {{- end -}}
 
-{{/* Import blocks: the application import is UNGATED by design —
-     authentik_application imports BY SLUG and the slug is a static
-     literal. Every GENERATED id (provider pk, binding uuids, custom
-     mapping pm_uuids) rides a for_each-GATED block, default off: PLAIN
+{{/* Import blocks: EVERY import rides the for_each ADOPTION gate,
+     default off — the application included: it imports BY SLUG (a static
+     literal), but a born-tofu app has no application yet and an
+     ungated import wedges tofu on "Cannot import non-existent remote
+     object" (nothing can create what the import demands at plan time).
+     Every GENERATED id (provider pk, binding uuids, custom
+     mapping pm_uuids) rides the same gate: PLAIN
      variable-id imports are BANNED (the jetkvm blink — an empty id is
      silently skipped and a fresh create is planned). for_each is a pure
      on/off gate (toset([\"g\"]) on, toset([]) off) with a STATIC to;
@@ -607,8 +610,9 @@ variable "import_custom_scope_mapping_ids" {
      targets. */}}
 {{- define "generic-app.authentik.tofuImports" -}}
 import {
-  to = authentik_application.app
-  id = {{ include "generic-app.authentik.hclQuote" .app }}
+  for_each = var.adoption ? toset(["g"]) : toset([])
+  to       = authentik_application.app
+  id       = {{ include "generic-app.authentik.hclQuote" .app }}
 }
 {{- if ne .mode "bookmark" }}
 
