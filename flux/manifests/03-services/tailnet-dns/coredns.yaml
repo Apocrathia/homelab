@@ -1,10 +1,11 @@
 ---
 # Corefile for the tailnet DNS resolver. Two server blocks: the homelab
-# domain zone apocrathia.com (etcd app zone gateway.services, static game
-# host records, forward of LAN-only names to the services VLAN resolver
-# at 10.100.1.1) and the access.apocrathia.com zone (forwarded to the
-# access VLAN resolver at 10.100.0.1). Queries for any other zone are
-# refused - this instance is not a general resolver.
+# domain zone apocrathia.com (etcd app zone gateway.services, static
+# game host and matrix server_name records, forward of LAN-only names
+# to the services VLAN resolver at 10.100.1.1) and the
+# access.apocrathia.com zone (forwarded to the access VLAN resolver at
+# 10.100.0.1). Queries for any other zone are refused - this instance is
+# not a general resolver.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,8 +19,11 @@ data:
     # Homelab domain zone, one block for everything under apocrathia.com
     # except the access VLAN (own block below, different upstream). Chain:
     # hosts -> etcd -> forward.
-    # - hosts: static records for the bare game host - one tailnet
-    #   address, both names (alias). fallthrough passes the rest on.
+    # - hosts: static records for the bare game host (one tailnet
+    #   address, both names - alias) and for matrix.apocrathia.com, the
+    #   Synapse server_name host at the tailnet-gateway operator-proxy
+    #   device IP - the federation/client door. fallthrough passes the
+    #   rest on.
     # - etcd: the app zone gateway.services.apocrathia.com (records
     #   written by the external-dns-tailnet release in this namespace).
     # - forward: LAN-only names (e.g. storage.services.apocrathia.com,
@@ -35,6 +39,7 @@ data:
         ready :8181
         hosts {
             100.108.85.40 game.services.apocrathia.com game.apocrathia.com
+            100.120.155.113 matrix.apocrathia.com
             ttl 60
             fallthrough
         }
@@ -67,8 +72,9 @@ data:
 # DNATs all traffic to the proxy's tailnet IP to this Service's ClusterIP,
 # and only Service-declared ports are reachable through the ClusterIP, so
 # exactly TCP/UDP 53 is exposed. The device IP for the split-DNS
-# nameserver shows up in this Service's status (`kubectl get svc -n
-# tailnet-dns tailnet-dns` EXTERNAL-IP) once the proxy authenticates.
+# nameserver is read from the proxy, a StatefulSet pod in tailscale-system -
+# `kubectl -n tailscale-system exec sts/<ts-tailnet-dns-*> -- tailscale ip -4`
+# (IP stable across restarts, operator-persisted proxy state).
 apiVersion: v1
 kind: Service
 metadata:
