@@ -1,16 +1,16 @@
 # Matrix (Synapse + MAS)
 
-Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully delegated to Matrix Authentication Service (MAS, 1.26.0), which upstreams to Authentik OIDC; Element Web (1.12.30) is the web client, a public OIDC client of MAS. Tailnet-only: no federation, user IDs are `@user:matrix.apocrathia.com`, and the first login JIT-provisions the Matrix account from the Authentik claims.
+Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully delegated to Matrix Authentication Service (MAS, 1.26.0), which upstreams to Authentik OIDC; Element Web (1.12.30) is the web client, a public OIDC client of MAS. Federation is on, scoped by a deny-by-default whitelist to `matrix.ninefoot3.com`; user IDs are `@user:matrix.apocrathia.com`, and the first login JIT-provisions the Matrix account from the Authentik claims.
 
 > **Navigation**: [← Back to Social README](../README.md)
 
 ## Access
 
-| Hostname                                  | Serves                                                                                      | Route                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `matrix.apocrathia.com`                   | server_name host: client API, `/.well-known/matrix/client` (MAS discovery block), `/health` | `httproute.yaml` (compat paths split to MAS, rest to Synapse) |
-| `matrix.gateway.services.apocrathia.com`  | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                | `httproute.yaml` (dual parentRefs, litellm pattern)           |
-| `element.gateway.services.apocrathia.com` | Element Web SPA (public OIDC client of MAS)                                                 | `httproute.yaml` (wildcard doors, litellm pattern)            |
+| Hostname                                  | Serves                                                                                                                                                                                          | Route                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `matrix.apocrathia.com`                   | server_name host: client API, `/.well-known/matrix/client` (MAS discovery block), `/.well-known/matrix/server` (federation well-known), `/_matrix/federation/*` (federation traffic), `/health` | `httproute.yaml` (compat paths split to MAS, rest to Synapse) |
+| `matrix.gateway.services.apocrathia.com`  | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                                                                                                                    | `httproute.yaml` (dual parentRefs, litellm pattern)           |
+| `element.gateway.services.apocrathia.com` | Element Web SPA (public OIDC client of MAS)                                                                                                                                                     | `httproute.yaml` (wildcard doors, litellm pattern)            |
 
 ## Stack
 
@@ -33,7 +33,7 @@ Four pods: `synapse`, `mas`, `element`, `matrix-postgres-1`. MAS is stateless (P
 
 Element Web walks the same OIDC chain one hop downstream of Element X: it fetches `/_matrix/client/v1/auth_metadata` (Synapse proxies MAS discovery), then fronts MAS itself as the statically registered public client from `mas-config.yaml` (`client_auth_method: none`) — `oidc_static_clients` in `config/element-config.json` carries the matching client id, so no dynamic client registration happens. Its registered redirect URI is the app root plus `?no_universal_links=true` (Element Web builds its callback URL itself; see `BasePlatform.getOAuthCallbackUrl`), and the authorization code returns in the URL fragment. Element Web's token grant and refresh hit the MAS OAuth host, not Authentik — Authentik only sees the MAS session.
 
-The `matrix` Authentik application (admins-only binding — the Matrix access gate; friends arrive via federation later, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack — OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create — no prior tfstate: the first workspace sync builds the whole Authentik stack.
+The `matrix` Authentik application (admins-only binding — the Matrix access gate; friends arrive via federation, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack — OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create — no prior tfstate: the first workspace sync builds the whole Authentik stack.
 
 ## Required 1Password item
 
@@ -59,7 +59,7 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
    docker run --rm ghcr.io/element-hq/synapse:v1.162.0 generate
    # → take /data/matrix.apocrathia.com.signing.key (signing-key)
    ```
-2. **DNS**: add a Cloudflare A record `matrix.apocrathia.com` → tailnet gateway IP (the door clients use; `matrix.gateway.services.apocrathia.com` already resolves via the existing split DNS). The `https-matrix` listeners on both gateways ship in this MR (`03-services/gateway/gateway.yaml` + `03-services/tailscale/tailnet-gateway.yaml`; `certificate.yaml` issues the secret, `referencegrant.yaml` admits the Gateways), so this A record is the only shared-infra step left. The A record is public — it publishes the hostname and the tailnet gateway's IP in public DNS; informational only, the tailnet IP is WAN-unreachable by design.
+2. **DNS**: nothing to add — `matrix.apocrathia.com` deliberately has no public DNS record, and no per-deploy DNS step remains. The name resolves for tailnet members via the tailnet split-DNS zone plus the CoreDNS static record in `03-services/tailnet-dns` (both shipped in the repo by the sibling MR), and `matrix.gateway.services.apocrathia.com` keeps resolving via the existing split DNS.
 3. **Apply** and wait: CNPG bootstrap, both HelmReleases, workspace sync (creates the `matrix` Authentik application + OAuth2 provider, client id `matrix`).
 4. **Client secret**: copy the OAuth2 client secret from the Authentik UI (`matrix` provider) into the `oidc-client-secret` field, then restart the `mas` deployment.
 5. **First login = JIT provision**. Promote yourself:
@@ -102,9 +102,9 @@ kubectl exec -n matrix deployment/mas -c mas -- /usr/local/bin/mas-cli doctor
 kubectl exec -n matrix deployment/element -c element -- cat /tmp/element-web-config/config.json
 ```
 
-## Federation later (phase 2, recipe §5)
+## Federation
 
-Currently tailnet-only: `serve_server_wellknown` omitted, `suppress_key_publication: true`. To federate: add public DNS for `matrix.apocrathia.com`, set `serve_server_wellknown: true` in `config/homeserver.yaml` (remote servers then send federation to the same 443 route), and drop `suppress_key_publication`. Do not change `server_name` after accounts exist — it is baked into every room membership.
+Federation is on: `serve_server_wellknown: true` in `config/homeserver.yaml` — remote servers fetch `/.well-known/matrix/server` on 443 (routed to Synapse by the existing HTTPRoute) and send federation traffic to `matrix.apocrathia.com:443` on the tailnet-gateway door. `federation_domain_whitelist` is deny-by-default: only `matrix.ninefoot3.com` may federate, in both directions. The host resolves for tailnet members via the tailnet split-DNS zone (CoreDNS static record) — deliberately no public DNS record. Do not change `server_name` after accounts exist — it is baked into every room membership.
 
 ## References
 
