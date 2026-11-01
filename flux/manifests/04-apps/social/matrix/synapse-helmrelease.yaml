@@ -24,7 +24,7 @@ spec:
       # and drops to uid 991 via gosu when run as root - the pod starts
       # as 991 directly, so the drop is skipped.
       # renovate: datasource=docker depName=ghcr.io/element-hq/synapse
-      image: ghcr.io/element-hq/synapse:v1.163.0@sha256:e98ab72138d90fa8b8876c6421fe78a9fdb181c0d7cc690ad740e5173e0c65e6
+      image: ghcr.io/element-hq/synapse:v1.164.1@sha256:fa4aa980f279bcf26d4e7ecc2a2c9a701c73f2ebe8841da9bdcf3b2fdf693d75
       container:
         name: synapse
         # client + federation resources on one listener; /health rides the
@@ -69,7 +69,7 @@ spec:
           # Same image as the main container (no extra pull); entrypoint
           # overridden to a sed render
           # renovate: datasource=docker depName=ghcr.io/element-hq/synapse
-          image: ghcr.io/element-hq/synapse:v1.163.0@sha256:e98ab72138d90fa8b8876c6421fe78a9fdb181c0d7cc690ad740e5173e0c65e6
+          image: ghcr.io/element-hq/synapse:v1.164.1@sha256:fa4aa980f279bcf26d4e7ecc2a2c9a701c73f2ebe8841da9bdcf3b2fdf693d75
           command: ["sh", "-c"]
           args:
             - |
