@@ -30,6 +30,10 @@ Offline Wikipedia and content library server with automated ZIM updates.
 
 Workflow automation platform for connecting services and APIs.
 
+### [OmniTools](./omni-tools/README.md)
+
+100+ client-side web tools: image, PDF, text, and data utilities that run entirely in the browser.
+
 ### [ProjectSend](./projectsend/README.md)
 
 ### [rclone](./rclone/README.md)

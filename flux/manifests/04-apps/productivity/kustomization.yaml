@@ -12,6 +12,7 @@ resources:
   - cryptpad
   - excalidraw
   - kiwix
+  - omni-tools
   - projectsend
   - rclone
   - searxng
