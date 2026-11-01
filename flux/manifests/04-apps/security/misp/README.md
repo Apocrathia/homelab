@@ -94,6 +94,7 @@ consumers:
 | `ADMIN_EMAIL`           | valuesFrom → `env.mispEmail`; postRenderers → `ADMIN_EMAIL` env                                                                                                                                              |
 | `ADMIN_PASSWORD`        | postRenderers → `ADMIN_PASSWORD` env (entrypoint resets admin user 1 password on every container start — vault is desired state)                                                                             |
 | `username` / `password` | OIDC client credentials read directly from the `misp-secrets` Secret: `username` = pinned client_id `misp`, `password` = authentik-generated client secret, copied by the operator post-merge (step 1 below) |
+| `prune-key`             | event-prune CronJob → `MISP_KEY` env. Delete-capable auth key for the 90-day event prune (operator-created post-merge; see [Data retention](#data-retention))                                                |
 
 How the chart expects credentials:
 
@@ -277,19 +278,71 @@ web UI is read-only — restores go through kopiur `Restore` CRs.
 
 ## Data retention
 
-MISP 2.5.44 has no built-in audit-log retention — the only lever is the
-`MISP.log_new_audit` master switch, and switching it off would lose the
-audit trail entirely, so the table is pruned instead. CronJob
-`misp-mariadb-prune` fires nightly at 22:45 America/Denver (15 min after
-the backup dump) and deletes `audit_logs` and legacy `logs` rows older
-than 30 days; the weekly Sunday run also OPTIMIZEs both tables so the
-freed pages return to the volume instead of lingering as InnoDB free
-space. The prune exists because the audit rows are overwhelmingly
-feed-pull machine noise (`add`/`tag` entries from scheduled pulls, ~99%
-of the table — 16.8M rows in 8 days), and they filled the DB volume on
-2026-10-20. The 14-day rustfs backup bucket ([Backups](#backups)) stays
-the deeper archive: pruned rows remain recoverable from the nightly
-dumps for up to two weeks after the prune.
+MISP is the retention authority of the 90-day threat-intel window
+(operator doctrine, 2026-11-01): only ~90 days of threat intel lives
+anywhere, and MISP prunes at source. Two prunes keep it bounded:
+
+**Events (90 days, `misp-event-prune`)**: CronJob
+`misp-event-prune` (`prune-events-cronjob.yaml`) fires nightly at 23:30
+America/Denver and deletes events whose **`date` field** is older than 90
+days. The `date` field is the event's content date and the semantic
+"intel age". The `timestamp` field is the last-modified time and is
+deliberately not the prune key: the abuse.ch backfill events carry
+historical dates with recent timestamps, so a timestamp-based prune would
+keep the 2022-era junk forever. MISP has no native age-based event
+expiry, so the REST API is the mechanism (verified against the MISP
+2.5.44 EventsController source): `POST /events/index` with a `dateuntil`
+filter returns the expired set, then one `DELETE /events/<id>` per event.
+The key (`prune-key` on `misp-secrets`) belongs to a dedicated
+delete-capable user, not the OpenCTI connector's read-only key.
+
+First-run expectations: the accumulated backfill-era events sweep out in
+one long job. Single-event DELETEs across the full backlog can take
+hours; nightly runs after that are a day's worth of events crossing the
+90-day line. The job logs matched/deleted/failed counts and exits
+non-zero if any event failed the delete (permission or not-found). Check
+the job logs if the CronJob shows failed jobs. Until the first sweep
+completes, MISP still holds events older than the window, and the OpenCTI
+MISP connector imports whatever MISP holds (the [OpenCTI README](../opencti/README.md)
+retention runbook pairs with this).
+
+Operator post-merge steps (same vault-field pattern as `misp-key`: the
+field rides the existing `misp-secrets` item, no new 1PasswordItem CR):
+
+1. Create a dedicated MISP user (org `Apocrathia`) with a minimal role:
+   `perm_auth` + `perm_add` + `perm_modify_org`, no admin flags. Per the
+   MISP 2.5.44 source: `perm_auth` is the gate for any auth-key REST call
+   (AppController `_checkAuthUser`), the `events/delete`
+   route requires `perm_add` (ACLComponent route map), and the event
+   delete itself passes for `perm_modify_org` over a same-org event
+   (ACLComponent `canModifyEvent`). This caps a leaked key at
+   org-scoped event modify/delete instead of full MISP takeover. Reach
+   for site admin only if events owned by other orgs must be pruned.
+   Foreign-org deletes return 403, the job counts them and exits
+   non-zero, so the 403 signal is the tell.
+2. Mint an auth key on that user and copy it into the
+   `vaults/Secrets/items/misp-secrets` field `prune-key`.
+
+Until the field syncs, fired `misp-event-prune` pods wait on the missing
+key (`CreateContainerConfigError`). That is the intended step-0 ordering.
+
+**Audit logs (30 days, `misp-mariadb-prune`)** — MISP 2.5.44 has no
+built-in audit-log retention — the only lever is the `MISP.log_new_audit`
+master switch, and switching it off would lose the audit trail entirely,
+so the table is pruned instead. CronJob `misp-mariadb-prune` fires
+nightly at 22:45 America/Denver (15 min after the backup dump) and
+deletes `audit_logs` and legacy `logs` rows older than 30 days; the
+weekly Sunday run also OPTIMIZEs both tables so the freed pages return to
+the volume instead of lingering as InnoDB free space. The prune exists
+because the audit rows are overwhelmingly feed-pull machine noise
+(`add`/`tag` entries from scheduled pulls, ~99% of the table — 16.8M
+rows in 8 days), and they filled the DB volume on 2026-10-20.
+
+The 14-day rustfs backup bucket ([Backups](#backups)) stays the deeper
+archive for both prunes: pruned rows/events remain recoverable from the
+nightly dumps for up to two weeks after the prune (the 23:30 event prune
+runs a full hour after the 22:30 dump starts, so each night's dump
+captures the pre-prune state).
 
 ## Known chart quirks (verified against chart v5.0.1 + misp-docker)
 
@@ -359,6 +412,14 @@ misp-mariadb-backup-drill`), confirm the object lands in the
     a restored dump must reproduce a working MISP login. Kopia: `kubectl -n
 misp get snapshotpolicy,snapshotschedule` and the first `Snapshot` after
     the 02:00 UTC window (mover UID caveats per policy comments).
+11. **Event prune key** (90-day window): create the dedicated delete-capable
+    MISP user + auth key and copy it into the `misp-secrets` item field
+    `prune-key` (see [Data retention](#data-retention)); until it syncs the
+    `misp-event-prune` CronJob pods wait on the missing key. Then trigger a
+    manual run
+    (`kubectl -n misp create job --from=cronjob/misp-event-prune misp-event-prune-first`)
+    and watch the sweep of the expired backfill. First run can take hours;
+    the job logs matched/deleted/failed counts.
 
 ## Troubleshooting
 

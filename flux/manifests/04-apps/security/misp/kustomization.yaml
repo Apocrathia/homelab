@@ -12,6 +12,7 @@ resources:
   - secret.yaml
   - backup-cronjob.yaml
   - prune-cronjob.yaml
+  - prune-events-cronjob.yaml
   - backup.yaml
   - helmrelease.yaml
   - crossplane.yaml
@@ -30,6 +31,13 @@ configMapGenerator:
     namespace: misp
     files:
       - authentik.tf
+  # Raw .py file (not inline in the CronJob) so the repo's ruff/pre-commit
+  # hooks format and lint the prune script; mounted at /app by the
+  # misp-event-prune CronJob.
+  - name: misp-event-prune-script
+    namespace: misp
+    files:
+      - prune_events.py
 
 replacements:
   # Build-time stitch, house pattern from gitlab/runner: copy the generated

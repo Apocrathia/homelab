@@ -236,18 +236,19 @@ spec:
           tag: v2.5.44@sha256:0eaa4e423d5cd965b7b76aa5665e81d5c05a35bc46a4ffec2ca52e0cfe627e86
           pullPolicy: IfNotPresent
         # Sizing from research doc section 1.5 (web tier 2 vcpu / 4-16Gi
-        # reference; single-instance homelab shape).
-        # TEMPORARY (2026-10-18): limit raised 4Gi -> 8Gi for the one-time
-        # abuse.ch archive backfill (container OOMKilled 3x at 4Gi
-        # mid-fetch); trim candidate back to 4Gi once the backfill and the
-        # OpenCTI epoch sweep complete.
+        # reference; single-instance homelab shape). The 2026-10-18 raise
+        # to 8Gi covered the one-time abuse.ch archive backfill (container
+        # OOMKilled 3x at 4Gi mid-fetch); that backfill drain is abandoned
+        # under the 90-day intel window (operator call, 2026-11-01), so the
+        # limit returns to the researched 4Gi now. Revisit only if live
+        # feed pulls OOMKill the 4Gi limit again.
         resources:
           requests:
             cpu: 500m
             memory: 2Gi
           limits:
             cpu: "2"
-            memory: 8Gi
+            memory: 4Gi
       service:
         type: ClusterIP
         port: 80

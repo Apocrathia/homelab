@@ -1,0 +1,98 @@
+---
+# Daily prune of MISP events older than 90 days, by the event `date` field -
+# the retention authority of the 90-day threat-intel window (operator doctrine
+# 2026-11-01). MISP has no native age-based event expiry, so this CronJob is
+# the mechanism: REST query for events dated before the cutoff, then delete
+# each one. The event `date` (content date) is the semantic "intel age":
+# abuse.ch backfill events carry historical dates with recent timestamps, so
+# a timestamp-based prune would keep the 2022-era junk forever. OpenCTI keeps
+# only what MISP holds (see the opencti README retention runbook).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: misp-event-prune
+  namespace: misp
+spec:
+  # 23:30 America/Denver = 05:30 UTC during DST (06:30 UTC in winter): an
+  # hour after the 22:30 misp-mariadb-backup start so the nightly dump
+  # captures the pre-prune state (pruned events stay recoverable from the
+  # 14-day bucket life, same as the audit-log prune), 45 min clear of the
+  # 22:45 misp-mariadb-prune run, and clear of the CNPG-style 05:00 UTC
+  # backup wave. First run can take hours (one DELETE per expired event);
+  # Forbid keeps nightly runs from overlapping it.
+  schedule: "30 23 * * *"
+  timeZone: "America/Denver"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: Never
+          # The prune client only talks to the MISP Service; no
+          # ServiceAccount, no API access.
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: prune
+              # The prune script (source: prune_events.py) is mounted at
+              # /app from the misp-event-prune-script ConfigMap, generated
+              # by the configMapGenerator in kustomization.yaml; as a raw
+              # .py file it rides the repo's ruff pre-commit hooks. The
+              # bitnami mariadb image the sibling cronjobs use ships no
+              # python, hence the python image for the stdlib-only REST
+              # client.
+              # renovate: datasource=docker depName=docker.io/library/python
+              image: docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
+              command: ["python", "/app/prune_events.py"]
+              env:
+                # In-cluster Service, same direct-to-Service path as the
+                # mariadb sibling cronjobs - no gateway hairpin, no TLS
+                # needed. The auth key header rides the pod network.
+                - name: MISP_URL
+                  value: http://misp.misp.svc.cluster.local:80
+                # Delete-capable MISP auth key (dedicated user, org
+                # Apocrathia) - the opencti connector's misp-key is
+                # read-only. The operator mints the key and adds the
+                # `prune-key` field to the `misp-secrets` 1Password item
+                # post-merge (README); until it syncs, fired jobs wait on
+                # the missing key (CreateContainerConfigError), the same
+                # intended step-0 ordering as the misp-key pattern.
+                - name: MISP_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: misp-secrets
+                      key: prune-key
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                # The index response for a big first run (hundreds of
+                # thousands of minimal events, ~170 bytes each) is parsed
+                # in-memory before the ids are extracted; 512Mi holds the
+                # peak. Steady-state nightly runs are tiny.
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: misp-event-prune-script
