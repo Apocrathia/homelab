@@ -29,25 +29,23 @@ through the platform.
 - **Core node** — the detection plane. Normalizes every feed except the
   tetragon flood and the netflow ingest (kube-apiserver audit,
   authentik, fleet, trivy) onto the unified `ocsf` bus and runs the one
-  sigma pass. Fifteen pipelines live in its HelmRelease, plus the
-  archive rule's `ocsf-archive.tql` — sixteen `.tql` files under
-  `nodes/core/pipelines/`.
+  sigma pass. Seventeen pipelines live in its HelmRelease — seventeen
+  `.tql` files under `nodes/core/pipelines/`, no archive rule since the
+  stateless completion.
 - **Tetragon node** — owns only the tetragon export flood so its CPU and
-  memory behavior cannot starve the detection plane. Five pipelines (OTLP
+  memory behavior cannot starve the detection plane. Seven pipelines (OTLP
   ingest + OCSF map, the geo-open loader, the metrics arm, the hourly
-  attestation verify walk) plus the still-mounted-but-idle archive
-  rule's `ocsf-archive.tql` — six `.tql` files — subprocess-isolated so
-  a pipeline blowup dies alone. `tetragon-ocsf` stamps record_integrity
+  attestation verify walk, the diagnostics pair) — seven `.tql` files —
+  subprocess-isolated so a pipeline blowup dies alone. `tetragon-ocsf` stamps record_integrity
   attestations (`tetragon-chains`, stream mode) in-stream over a bounded
   event-time sort window before its direct `to_clickhouse` INSERT — the
   lap 2a-1 shape every node now shares.
 - **Netflow node** — owns only the NetFlow collector (UniFi exporters
-  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Four
+  behind `tenzir-ingest-lb`, moved off the core node 2026-10-17). Seven
   pipelines (UDP accept + OCSF map via the vendored library package, the
-  geo-open loader, the metrics arm, the hourly attestation verify walk)
-  plus the archive rule's `ocsf-archive.tql` — five `.tql` files; its
-  4001 class feeds its own node-local archive rule, tetragon-style, and
-  the archive rule stamps record_integrity attestations
+  geo-open loader, the OSINT context loader, the metrics arm, the hourly
+  attestation verify walk, the diagnostics pair) — seven `.tql` files;
+  the in-stream leg stamps record_integrity attestations
   (`netflow-chains`) like every other node. The verify walk is
   chain_uid-scoped: `ocsf.Network_Activity` is shared with the
   tetragon lane, whose cross-class chain would false-flag the
@@ -69,7 +67,8 @@ through the platform.
   opencti-osint-loader pulls the table into its node-local
   `ocsf-osint` context; the node ran the rc engine
   (`v6.20.0-rc.3`) ahead of GA to land the factory row early — the
-  whole fleet runs `v6.20.0` since the 2026-10-26 GA bump.
+  whole fleet runs the GA engine line (the node HelmRelease image tags
+  are the source of truth; Renovate bumps them).
 
 ## Detection plane
 
@@ -80,8 +79,8 @@ resolve for a schema is skipped with one warning per revision, never
 weakened. Detection Findings (2004) are stamped with a stable uid (rule
 id + subject fingerprint) by
 [`findings/stamp.tql`](../../packages/homelab/operators/findings/README.md)
-and imported into the lake; trivy's ExposedSecretReport findings ride the
-same stamp. Homelab sigma rules are written against OCSF field paths; the
+and INSERTed to ClickHouse by sigma's own direct leg; trivy's
+ExposedSecretReport findings ride the same stamp. Homelab sigma rules are written against OCSF field paths; the
 vendored SigmaHQ kubernetes-audit corpus names raw audit fields, has no
 OCSF projection, and stays parked. Bus semantics and the class taxonomy:
 [`detections/README.md`](../../detections/README.md).
@@ -89,22 +88,20 @@ OCSF projection, and stays parked. Bus semantics and the class taxonomy:
 ## Storage plane
 
 The write path to the ClickHouse OCSF query store (per-class
-`ocsf.<Class_Name>` tables) is mid-migration to CH-only stateless
+`ocsf.<Class_Name>` tables) is CH-only stateless, landed
 ([plan](../../../../../../../docs/plans/tenzir-stateless-migration.md)):
-tetragon attests and INSERTs in-stream (lap 2a-1), while core and
-netflow still archive through their 15-minute local lake — a transit
-buffer between ingest and the archive, not a query surface — with the
-`ocsf-archive` compaction rule (5-minute passes; true window 15-20
-minutes at pass boundaries) expiring records locally after export.
-ClickHouse is the record. Tetragon's lake receives nothing and its rule
-idles until its teardown lap. Base Event handling is core's: its rule
-archives `ocsf.base_event` with the mappable classes (added 2026-10-17 —
-without a time rule those partitions accumulated locally and bloated the
-boot catalog load); unmapped kinds never reach ClickHouse — tetragon's
-direct leg drops them at the class gate, the same set its old rule
-excluded. The retired `s3://tenzir/ocsf/` parquet archive stays
-untouched in the rustfs bucket as frozen history — deleting it is a
-separate operator call.
+every source pipeline attests in-stream and INSERTs directly with
+`to_clickhouse` — no node-local lake, no `ocsf-archive` compaction
+rules, no PVCs. The only in-flight state is in-memory: the 60-second
+event-time sort window that orders the attestation chain. ClickHouse is
+the record. Unmapped kinds never reach it — the source pipelines drop
+them at the class gate; fleet osquery rows map to Base Event
+deliberately and INSERT as `ocsf.Base_Event`. Retention lives in
+ClickHouse: class tables partition monthly, a 7-day hot-to-cold tier
+move, and a DELETE horizon of 400 days (90 for `ocsf.Network_Activity`).
+The retired `s3://tenzir/ocsf/` parquet archive stays untouched in the
+rustfs bucket as frozen history — deleting it is a separate operator
+call.
 
 ## SQL plane (Grafana + ClickHouse)
 
@@ -145,9 +142,9 @@ receiving stack is outside this subtree.
 
 - [`README.md`](../../README.md) — topology, three-plane model
 - [`nodes/core/README.md`](../../nodes/core/README.md) — detection plane
-  pipelines, sizing, retention
+  pipelines, sizing
 - [`nodes/tetragon/README.md`](../../nodes/tetragon/README.md) — flood
-  node, subprocess isolation
+  node, subprocess isolation, direct write path
 - [`detections/README.md`](../../detections/README.md) — bus, sigma
   semantics, class taxonomy
 - [`grafana/README.md`](../../grafana/README.md) — dashboards, ClickHouse

@@ -88,13 +88,11 @@ ocsf.Detection_Finding`), the enrichment node's
   source material in ClickHouse, this node loads it into its own
   context).
 
-## Lake and storage
+## Storage
 
-The chart's StatefulSet `volumeClaimTemplate` provisions the node lake
-as the `state-tenzir-node-introspection-0` PVC (Longhorn via the
-cluster default storage class). Investigations/enrichment shape: the
-node imports nothing, the lake stays empty, and the PVC carries node
-state only — no `storage.yaml` recurring-job exclusion needed.
+Stateless (lap 2e): `persistence.enabled: false` — the chart renders
+the state volume as an emptyDir, no PVC. The node imports nothing and
+nothing of value rides it.
 
 ## Sizing
 

@@ -8,8 +8,9 @@ is the subtree-local mirror, scoped to tenzir work only.
 ## What this is
 
 Seven standalone Tenzir nodes in namespace `tenzir` — Tenzir has no
-distributed mode, so each node is a process with its own lake and its own
-pipelines. The core node is the detection plane; the tetragon node owns
+distributed mode, so each node is a process with its own pipelines —
+stateless here: no node-local storage, every write attests and INSERTs to
+ClickHouse in-stream. The core node is the detection plane; the tetragon node owns
 the export flood; the netflow node owns the NetFlow collector; the
 investigations node owns the agent investigations plane; the enrichment
 node is the internal-reference-data factory (fleet-assets and baselines
@@ -22,7 +23,7 @@ the intel node is the CTI factory plane (OpenCTI
 TAXII threat intel into ClickHouse; core's opencti-osint-loader is
 the consumer half). Telemetry
 normalizes onto one OCSF bus, sigma evaluates live, and everything
-archives to the ClickHouse OCSF query store (per-class `ocsf.*` tables)
+INSERTs to the ClickHouse OCSF query store (per-class `ocsf.*` tables)
 that Grafana queries over its ClickHouse datasource. Full topology and
 secrets: the app folder's [`README.md`](../../README.md).
 
@@ -30,7 +31,7 @@ secrets: the app folder's [`README.md`](../../README.md).
 
 | Path              | What lives there                                                            |
 | ----------------- | --------------------------------------------------------------------------- |
-| `nodes/`          | The seven node HelmReleases + READMEs (pipelines, sizing, retention)        |
+| `nodes/`          | The seven node HelmReleases + READMEs (pipelines, sizing, stateless shape)  |
 | `packages/`       | The `homelab` TQL package: parse / OCSF map / findings operators + tests    |
 | `detections/`     | Sigma rules (homelab + vendored SigmaHQ/YARA) and the bus semantics         |
 | `grafana/`        | The five Tenzir dashboards (OCSF + investigations panels over ClickHouse)   |
@@ -38,9 +39,9 @@ secrets: the app folder's [`README.md`](../../README.md).
 
 ## Module map
 
-| Module                                 | Open when…                                                        |
-| -------------------------------------- | ----------------------------------------------------------------- |
-| [`tenzir.md`](./tenzir.md)             | You need what Tenzir the product is, or what runs in this homelab |
-| [`architecture.md`](./architecture.md) | You touch the detection/landing planes, bus, archive, or metrics  |
-| [`packages.md`](./packages.md)         | You add or edit a TQL operator, OCSF map, or package test         |
-| [`traps.md`](./traps.md)               | Before trusting a pipeline, test, or detection result             |
+| Module                                 | Open when…                                                          |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| [`tenzir.md`](./tenzir.md)             | You need what Tenzir the product is, or what runs in this homelab   |
+| [`architecture.md`](./architecture.md) | You touch the detection/landing planes, bus, write path, or metrics |
+| [`packages.md`](./packages.md)         | You add or edit a TQL operator, OCSF map, or package test           |
+| [`traps.md`](./traps.md)               | Before trusting a pipeline, test, or detection result               |

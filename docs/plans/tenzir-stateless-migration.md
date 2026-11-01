@@ -1,8 +1,8 @@
 ---
 title: Tenzir CH-only stateless migration
-status: active
+status: complete
 found_at: 2026-10-21
-updated_at: 2026-10-28
+updated_at: 2026-10-29
 area: security
 ---
 
@@ -44,26 +44,36 @@ durable record).
   24h -> 90m, `ocsf.null` leak killed, `parallelism` dropped. Probe
   fixtures: `packages/homelab/tests/tetragon-direct-{attest,verify-clean}`.
 - **Lap 2e — pull-plane stateless** (MRs !5622-!5625, 2026-10-28):
-  manifest-side DONE for enrichment, intel, introspection,
-  investigations (emptyDir state; investigations' web signing key to
-  emptyDir). **Cluster-side NOT landed**: the live StatefulSets still
-  carry `volumeClaimTemplates` (immutable), so the helm upgrades for
-  intel/investigations failed server-side-apply and
-  enrichment/introspection rolled back — all four still run the old
-  PVC-mounted spec. Needs the sts delete/recreate dance + orphaned
-  PVC deletion.
-- **Lap 2b — netflow direct legs** (MR !5626): UP — direct leg +
-  in-stream attestation + 90m verify window + compaction-rule removal;
-  CI-fixed 2026-10-28. Same vct-dance requirement on merge.
-- **Lap 2d — core direct legs** (MR !5627): UP — all 5 import legs ->
-  direct attest + INSERT, sigma's own CH leg, 90m verify window (the
-  walker-OOM fix), compaction-rule removal, no PVC. This MR also ends
-  the 2026-10-28 core crash-loop (24h window OOM + corrupted lake
-  catalog from repeated unclean kills). Same vct-dance + PVC wipe
-  requirement on merge.
-- **Lap 2a-2 — tetragon teardown**: NOT QUEUED. Tetragon still carries
-  its idle compaction rule, `ocsf-archive.tql`, `storage.yaml`, and the
-  20Gi PVC (node state only — the write path went direct in 2a-1).
+  DONE, cluster-side included. Found the first of three shipped-broken
+  classes: the MRs deleted the `persistence` key instead of setting
+  `enabled: false` — the chart default rendered a 10Gi PVC, and the
+  fleet-wide "field is immutable" upgrade failures were 10Gi-vs-5Gi vct
+  size conflicts, not the removal trap. Fixed by MR !5629.
+- **Lap 2b — netflow direct legs** (MR !5626 + fixes): DONE
+  (2026-10-29). Direct leg + in-stream attestation + 90m verify
+  window + compaction-rule removal; landed stateless via the sts
+  dance. Carried the same persistence-key bug class.
+- **Lap 2d — core direct legs** (MR !5627 + fixes): DONE (2026-10-29).
+  All 5 import legs -> direct attest + INSERT, sigma's own CH leg, 90m
+  verify window (the walker-OOM fix that ended the 2026-10-28 core
+  crash-loop), compaction-rule removal, no PVC. Two more shipped-broken
+  classes surfaced at boot: escaped quotes in the table f-string
+  (MR !5654) and `fork_merge` arms around the sink-only to_clickhouse
+  legs (MR !5665) — three parse-error classes shipped through green CI
+  because node-pipeline TQL is only parsed at pod boot.
+- **Lap 2a-2 — tetragon teardown** (MR !5630): DONE (2026-10-29).
+  The compaction plugin, `ocsf-archive.tql`, `storage.yaml`, and the
+  20Gi PVC all deleted; the sts dance landed the stateless spec.
+
+**Closeout (2026-10-29): the migration is complete.** All seven
+nodes stateless (emptyDir, zero PVCs), every write an in-stream
+attest + INSERT, all HelmReleases True, data flowing at full rate,
+zero tamper findings. The final verification: core's feeds back at
+140k rows/15m after its 29h outage; attest coverage 100% on the
+direct legs; the CH load spread across replicas by the
+operator-native `serviceTemplates` ClusterIP front door
+(MR !5712, chi-0-0-0 had carried the walks at ~1270m).
+
 - **Phase 3 — introspection charter**: CH wiring + scheduled
   volume/freshness passes over `ocsf.*`; baseline-abnormality gated
   on the upstream baseline capability.
