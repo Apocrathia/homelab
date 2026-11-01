@@ -42,69 +42,16 @@ spec:
               type: RuntimeDefault
           containers:
             - name: prune
-              # Stdlib-only REST client (urllib): the bitnami mariadb
-              # image the sibling cronjobs use ships no python, and the call
-              # shapes (POST /events/index with dateuntil + minimal, bare
-              # JSON array back; DELETE /events/<id>) are verified against
-              # the MISP 2.5.44 EventsController source and the automation
-              # guide - no REST client dependency needed.
+              # The prune script (source: prune_events.py) is mounted at
+              # /app from the misp-event-prune-script ConfigMap, generated
+              # by the configMapGenerator in kustomization.yaml; as a raw
+              # .py file it rides the repo's ruff pre-commit hooks. The
+              # bitnami mariadb image the sibling cronjobs use ships no
+              # python, hence the python image for the stdlib-only REST
+              # client.
               # renovate: datasource=docker depName=docker.io/library/python
               image: docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
-              command:
-                - python
-                - -c
-                - |
-                  import json
-                  import os
-                  import sys
-                  import urllib.error
-                  import urllib.request
-                  from datetime import date, timedelta
-
-                  # Cutoff computed on the UTC container clock; one day of skew vs the Denver
-                  # calendar is immaterial for a rolling 90-day window.
-                  misp_url = os.environ["MISP_URL"].rstrip("/")
-                  headers = {"Authorization": os.environ["MISP_KEY"], "Accept": "application/json"}
-                  cutoff = (date.today() - timedelta(days=90)).isoformat()
-
-                  # POST /events/index, body filter dateuntil = "Event.date <= cutoff"
-                  # (MISP automation guide: searchDateuntil, "anything older than the given
-                  # date"); minimal trims each event to a few small fields
-                  # (id/uuid/timestamp/published/…; this script reads only the
-                  # id). The REST branch returns the bare event array with no
-                  # result cap (verified against the MISP 2.5.44
-                  # EventsController source).
-                  index_req = urllib.request.Request(
-                      f"{misp_url}/events/index",
-                      data=json.dumps({"dateuntil": cutoff, "minimal": True}).encode(),
-                      headers={**headers, "Content-Type": "application/json"},
-                      method="POST",
-                  )
-                  with urllib.request.urlopen(index_req, timeout=120) as resp:
-                      events = json.load(resp)
-                  ids = [int(event["id"]) for event in events]
-                  del events
-                  print(f"events with date <= {cutoff} (90-day window): {len(ids)}")
-
-                  deleted = failed = 0
-                  for event_id in ids:
-                      # DELETE /events/<id> (automation guide); MISP 403s both
-                      # permission failures and not-found, so count it and keep sweeping.
-                      delete_req = urllib.request.Request(
-                          f"{misp_url}/events/{event_id}", headers=headers, method="DELETE"
-                      )
-                      try:
-                          with urllib.request.urlopen(delete_req, timeout=60) as resp:
-                              resp.read()
-                          deleted += 1
-                      except urllib.error.HTTPError as err:
-                          failed += 1
-                          print(f"delete failed for event {event_id}: HTTP {err.code}", file=sys.stderr)
-                      if deleted and deleted % 1000 == 0:
-                          print(f"deleted {deleted} events")
-                  print(f"deleted {deleted} events, {failed} delete failures")
-                  sys.exit(1 if failed else 0)
-
+              command: ["python", "/app/prune_events.py"]
               env:
                 # In-cluster Service, same direct-to-Service path as the
                 # mariadb sibling cronjobs - no gateway hairpin, no TLS
@@ -141,3 +88,11 @@ spec:
                 # peak. Steady-state nightly runs are tiny.
                 limits:
                   memory: 512Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: misp-event-prune-script
