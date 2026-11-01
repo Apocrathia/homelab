@@ -9,7 +9,9 @@
 # In-cluster endpoints (operator-created Services; pattern prefixes are
 # fixed by the operator namer):
 #   clickhouse-tenzir.tenzir.svc.cluster.local  - CR-level service,
-#     load-balanced across all hosts, HTTP 8123 + native 9000
+#     load-balanced across all hosts (real ClusterIP via the CHI-level
+#     serviceTemplate below: kube-proxy per-connection spread),
+#     HTTP 8123 + native 9000
 #   chi-tenzir-ocsf-<shard>-<replica>...                   - per-host services
 #   The {cluster} macro value is "ocsf" (the single cluster below).
 apiVersion: clickhouse.altinity.com/v1
@@ -125,6 +127,28 @@ spec:
       dataVolumeClaimTemplate: data
 
   templates:
+    # The CR-level service (clickhouse-tenzir) is the fleet's
+    # load-balanced front door: the operator renders it from this
+    # template as a real ClusterIP, so kube-proxy spreads every
+    # connection across the replicas (per-connection random) instead of
+    # the headless-DNS per-resolution latching that piled the hourly
+    # record_integrity walks onto one replica (~1270m of its 2000m CPU
+    # while the siblings idled). A dead replica drops out of the
+    # endpoint list on its own. Operator-native shape:
+    # .spec.templates.serviceTemplates (custom_resource_explained.md);
+    # generateName keeps the rendered name the pipelines already dial.
+    # NOTE (operator docs): serviceTemplates[].spec is NOT merged with
+    # operator defaults - the ports must be stated.
+    serviceTemplates:
+      - name: chi-service
+        generateName: "clickhouse-{chi}"
+        spec:
+          ports:
+            - name: http
+              port: 8123
+            - name: client
+              port: 9000
+          type: ClusterIP
     podTemplates:
       - name: clickhouse-pod
         spec:

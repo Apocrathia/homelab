@@ -22,7 +22,8 @@ gated on it.
 - `keeper.yaml` — ClickHouseKeeperInstallation `tenzir`: the 3-node
   Keeper ensemble
 - `cluster.yaml` — thin CHI: users, keeper ref, cluster layout, pod
-  template; `files:` holds placeholder keys stitched at build time
+  template, and the CR-level service template (below); `files:` holds
+  placeholder keys stitched at build time
 - `config/00-storage-tiered.xml` — tiered-storage policy: hot Longhorn
   PVC + cold S3 disk (the stitched source of truth)
 - `config/10-startup-scripts.xml` — schema bootstrap: investigations
@@ -39,6 +40,39 @@ rules byte-copy each key into the CHI's `spec.configuration.files`
 entries. `config/` is the single source of truth — never edit the
 placeholder keys in `cluster.yaml`, never render this directory outside
 kustomize.
+
+## Front door: the load-balanced service
+
+Everything in-cluster dials `clickhouse-tenzir.tenzir.svc.cluster.local`
+(HTTP 8123 / native 9000) — the CR-level Service the operator renders
+from the `serviceTemplates` block in
+[`cluster.yaml`](./cluster.yaml). The template pins it to a **real
+ClusterIP**: kube-proxy spreads every connection across the three
+replicas (per-connection random), and a dead replica drops out of the
+endpoint list on its own. Before the template existed, the operator
+rendered the service headless — DNS returned all three pod IPs, native
+drivers latched per-resolution, and the hourly record_integrity walks
+piled onto `chi-tenzir-ocsf-0-0-0` (sustained ~1270m CPU while the
+siblings idled at ~150m; found 2026-10-29 with a live walk query in
+`system.processes`).
+
+The operator's own maintenance contract rides this too: replica pods
+carry `clickhouse.altinity.com/ready: yes|no`, maintained on healthy
+replicas and flipped off on paused/failed ones — the documented
+mechanism for external load balancers to exclude unhealthy replicas
+(operator
+[CHANGELOG](https://github.com/Altinity/clickhouse-operator/blob/master/CHANGELOG.md)).
+The per-replica services (`chi-tenzir-ocsf-<shard>-<replica>`) stay
+headless — the operator's own rendering, used for per-replica
+addressing when a specific replica is wanted.
+
+Operator docs: service templates are specified in
+[`custom_resource_explained.md`](https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md)
+(`.spec.templates.serviceTemplates` — note the warning there: the
+template `spec` is not merged with operator defaults, so ports must be
+stated), and the operator-created services pattern (CHI-level
+load-balanced + per-replica) is shown in
+[`quick_start.md`](https://github.com/Altinity/clickhouse-operator/blob/master/docs/quick_start.md).
 
 ## Apply order
 
@@ -669,8 +703,9 @@ own service FQDNs by the operator's `host_regexp` default.
 The operator creates the Services; name prefixes are fixed by its namer:
 
 - `clickhouse-tenzir.tenzir.svc.cluster.local` - CR-level service,
-  load-balanced over both replicas. HTTP 8123 (Grafana datasource),
-  native TCP 9000 (Tenzir `to_clickhouse`).
+  load-balanced across the three replicas (the front door — see above).
+  HTTP 8123 + native TCP 9000 (Grafana's datasource plugin and the
+  Tenzir nodes' `to_clickhouse`/`from_clickhouse` legs both dial it).
 - `chi-tenzir-ocsf-<shard>-<replica>` services - per-host (e.g.
   `chi-tenzir-ocsf-0-0`); ad-hoc `clickhouse-client` targets when you
   need a specific replica.
