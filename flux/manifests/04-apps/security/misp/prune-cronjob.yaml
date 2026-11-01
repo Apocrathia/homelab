@@ -44,7 +44,7 @@ spec:
               # (and the backup dump init container) - keep in sync so the
               # prune client and server versions match.
               # renovate: datasource=docker depName=docker.io/bitnamilegacy/mariadb
-              image: docker.io/bitnamilegacy/mariadb:10.11.11-debian-12-r3@sha256:ab38eb8e04b1d286cd1fb268d08013bc7d25f9015a9c374594256bcd4a8d1556
+              image: docker.io/bitnamilegacy/mariadb:11.8.2-debian-12-r3@sha256:2cd074dbfcdcfb3ad99955d1c35c7be51fdadc8c6bfa2d997b66251b271c1e7c
               command:
                 - /bin/bash
                 - -c
