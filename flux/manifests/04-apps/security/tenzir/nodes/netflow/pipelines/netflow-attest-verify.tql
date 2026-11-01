@@ -50,7 +50,7 @@
 // ever floods the class, the window is the operator's dial.
 every 1h {
   from_clickhouse table="ocsf.Network_Activity",
-    host="clickhouse-tenzir.tenzir.svc.cluster.local",
+    host="chi-tenzir-ocsf-0-2.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
@@ -75,7 +75,7 @@ every 1h {
   ocsf_derive
   ocsf_cast
   to_clickhouse table="ocsf.Detection_Finding",
-    host="clickhouse-tenzir.tenzir.svc.cluster.local",
+    host="chi-tenzir-ocsf-0-2.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),

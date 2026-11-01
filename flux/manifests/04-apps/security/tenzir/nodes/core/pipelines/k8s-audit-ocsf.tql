@@ -43,7 +43,7 @@ fork {
     }
   }
   to_clickhouse table="ocsf.API_Activity",
-                host="clickhouse-tenzir.tenzir.svc.cluster.local",
+                host="chi-tenzir-ocsf-0-1.tenzir.svc.cluster.local",
                 port=9000,
                 user="tenzir",
                 password=secret("clickhouse-password"),

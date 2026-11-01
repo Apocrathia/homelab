@@ -58,7 +58,7 @@
 // match what the stamping leg stamped.
 every 1h {
   from_clickhouse table="ocsf.Process_Activity",
-    host="clickhouse-tenzir.tenzir.svc.cluster.local",
+    host="chi-tenzir-ocsf-0-0.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
@@ -66,7 +66,7 @@ every 1h {
   where time > now() - 90m
   merge {
     from_clickhouse table="ocsf.File_System_Activity",
-      host="clickhouse-tenzir.tenzir.svc.cluster.local",
+      host="chi-tenzir-ocsf-0-0.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -75,7 +75,7 @@ every 1h {
   }
   merge {
     from_clickhouse table="ocsf.Network_Activity",
-      host="clickhouse-tenzir.tenzir.svc.cluster.local",
+      host="chi-tenzir-ocsf-0-0.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
@@ -94,7 +94,7 @@ every 1h {
   ocsf_derive
   ocsf_cast
   to_clickhouse table="ocsf.Detection_Finding",
-    host="clickhouse-tenzir.tenzir.svc.cluster.local",
+    host="chi-tenzir-ocsf-0-0.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
