@@ -47,7 +47,7 @@ spec:
       registry: docker.io
       repository: tenzir/tenzir
       # renovate: datasource=docker depName=docker.io/tenzir/tenzir
-      tag: v6.20.0
+      tag: v6.20.1
 
     # Startup gate for multi-minute partition-catalog loads (chart-native
     # since tenzir-node 0.2.0): 10s x 60 = 10-minute boot budget, matching
