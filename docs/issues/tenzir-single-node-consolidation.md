@@ -64,8 +64,7 @@ or vendor confirmation via the Slack Connect channel.
 
 Design (wave structure, gates, merged-node sizing) is intentionally
 deferred to unblock time — the distributed model may change the how
-entirely. Prior analysis: gitignored session artifacts under
-`.scratch/tenzir-consolidation/` (2026-11-01).
+entirely.
 
 ## Notes
 
@@ -74,6 +73,3 @@ entirely. Prior analysis: gitignored session artifacts under
   fleet peak 16.91Gi / 4.54 CPU over 14d; workers 4 × 16 CPU / 64Gi.
 - Operator 2026-11-01: no changes now; park as blocked and do one
   topology churn when the distributed model is ready.
-- Session artifacts (gitignored): `.scratch/tenzir-consolidation/` —
-  decision brief plus transcript-mining, repo-survey, and
-  upstream-research reports.
