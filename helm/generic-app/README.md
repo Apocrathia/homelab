@@ -930,12 +930,14 @@ authentik:
 The generated HCL is shape-identical to the merged file-pair exemplars
 (`gatus`/`immich`/`jetkvm`):
 
-- **ADOPTION machinery is baked in**: the application import is UNGATED
-  (authentik applications import by slug — a static literal); every
-  GENERATED id (provider pk, binding uuids, custom-mapping pm_uuids)
-  rides an import block gated by
-  `for_each = var.adoption ? toset(["g"]) : toset([])`, default off.
-  Plain variable-id imports are BANNED — tofu silently skips an empty-id
+- **ADOPTION machinery is baked in**: every import — the application
+  INCLUDED — rides the `for_each = var.adoption ? toset(["g"]) : toset([])`
+  adoption gate, default off: born-tofu apps CREATE (not import) the
+  application (an ungated import wedges tofu on "Cannot import
+  non-existent remote object" — nothing can create what the import
+  demands at plan time), and flips arm its slug import at the gate
+  (authentik applications import by slug — a static literal). Plain
+  variable-id imports are BANNED — tofu silently skips an empty-id
   import and plans a duplicate create (the jetkvm blink). Two-way
   plan-time validation fails loudly both ways: `adoption=true` with any
   id empty; ids set with `adoption=false`.

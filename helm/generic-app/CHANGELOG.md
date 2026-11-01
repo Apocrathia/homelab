@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.0.89
+
+- **The chart-generated authentik tofu module now gates the application
+  import like every other import** — it rides the same
+  `for_each = var.adoption ? toset(["g"]) : toset([])` adoption gate
+  (0.0.87 shipped it UNGATED). A born-tofu app has no authentik
+  application yet, so the ungated import wedged tofu on "Cannot import
+  non-existent remote object" forever — nothing could create an
+  application that the import itself demanded at plan time (cyberchef
+  was the first net-new app to hit it). With the gate, born-tofu apps
+  plan a plain CREATE for the application and the chicken-and-egg is
+  broken. Flips are unaffected: steady-state flipped apps already hold
+  the application in tofu state (a gated import is inert and plans zero
+  drift), and at the flip gate `adoption=true` arms the slug import
+  exactly as before.
+
 ## Version 0.0.88
 
 - **authentik.managedBy default flips to `terraform`** — the blueprint lane is

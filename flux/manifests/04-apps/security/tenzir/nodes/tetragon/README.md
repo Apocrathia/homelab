@@ -131,9 +131,8 @@ archive-era `ocsf.null` f-string leak (27,987 rows pre-bump, the GA
 rollout field note) cannot ride into the direct path. ClickHouse is
 the OCSF record. There is no node storage (lap 2a-2): the state
 volume renders as an emptyDir, platform registration rides the
-1Password token at boot, and the lake PVC with its
-[`storage.yaml`](../core/storage.yaml)-style backup exclusion died
-with the lake. No raw tetragon JSON
+1Password token at boot, and the lake PVC with its backup-exclusion
+manifest died with the lake. No raw tetragon JSON
 is kept anywhere past the window (the export-stdout sidecar is gone; the
 ClickHouse OCSF store is the record), and the retired
 `s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs

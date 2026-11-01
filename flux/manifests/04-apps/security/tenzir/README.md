@@ -8,8 +8,8 @@ no node-local storage — every write attests and INSERTs to ClickHouse
 in-stream ([stateless migration
 plan](../../../../../docs/plans/tenzir-stateless-migration.md)). The [core node](./nodes/core/README.md) is the detection plane:
 it normalizes kube-apiserver audit, authentik, fleet, and trivy feeds to
-a unified OCSF bus, runs one sigma pass over it, and owns the
-archive. The [tetragon node](./nodes/tetragon/README.md) owns only the
+a unified OCSF bus, runs one sigma pass over it, and INSERTs every
+write to ClickHouse in-stream. The [tetragon node](./nodes/tetragon/README.md) owns only the
 tetragon export flood, and the [netflow node](./nodes/netflow/README.md)
 owns only the NetFlow collector (UniFi exporters behind
 `tenzir-ingest-lb`), so neither feed's lifecycle can starve or disturb
@@ -56,7 +56,8 @@ egress. The class taxonomy and the bus semantics live in
 
 The parquet lane is retired (rollout MR-5 teardown, plan
 [`docs/plans/clickhouse-rollout.md`](../../../../../docs/plans/clickhouse-rollout.md)):
-the nodes' `ocsf-archive` rules write ClickHouse alone, and the existing
+the nodes write ClickHouse alone — in-stream attest + INSERT, no
+archive rules — and the existing
 `s3://tenzir/ocsf/` archive stays untouched in the rustfs bucket as
 frozen, unqueried history — deleting it is a separate operator call. No
 backfill replays it into ClickHouse (operator decision 2026-10-17: the
@@ -122,10 +123,11 @@ and the rendered Secret keys match them:
 
 The same item carries the ClickHouse credentials (the store's
 `clickhouse-*` fields were consolidated onto this item 2026-10-27):
-`clickhouse-password` is the ClickHouse `tenzir` writer password five
+`clickhouse-password` is the ClickHouse `tenzir` writer password six
 nodes read as `TENZIR_SECRETS__CLICKHOUSE_PASSWORD`
-— the `to_clickhouse` archive legs on core, tetragon, and netflow, and
-the factory INSERT legs on enrichment and intel —
+— the direct `to_clickhouse` INSERT legs on core, tetragon, and
+netflow, the factory INSERT legs on enrichment and intel, and
+investigations' attest-verify findings leg —
 `clickhouse-grafana-password` is the CHI `grafana` user's password, and
 `clickhouse-investigations-{writer,reader}-password` carry the
 investigations node's two ClickHouse users (see
@@ -153,7 +155,7 @@ need a pod restart.
 ### Running the package tests
 
 ```sh
-TENZIR_BINARY="uvx tenzir@6.20.0" \
+TENZIR_BINARY="uvx tenzir@6.20.1" \
   uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 

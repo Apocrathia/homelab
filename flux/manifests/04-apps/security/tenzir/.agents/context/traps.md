@@ -5,9 +5,10 @@ docs — nothing invented. Vendored debugging docs:
 [troubleshooting guides](../skills/tenzir/guides/troubleshooting/).
 
 - **Engine-version test pinning.** The tenzir-test runner must match the
-  deployed engine version (currently `uvx tenzir@6.20.0`); the runner
-  banner confirms the pin on every run, and all baselines must stay
-  warning-free.
+  deployed engine version — read the tag from the node HelmRelease
+  image (the node images live in the node HelmReleases; no version is
+  cited here, it rots) — the runner banner confirms the pin on every
+  run, and all baselines must stay warning-free.
   ([tests](../../packages/homelab/tests/README.md),
   [app README](../../README.md))
 - **Sigma skip warnings are expected.** One per rule revision from the
@@ -37,13 +38,12 @@ docs — nothing invented. Vendored debugging docs:
   idiom — `ocsf_class_uid("Network Activity")`, not hard-coded `4001`;
   the numbers exist for the reader.
   ([detections](../../detections/README.md))
-- **Base Event archiving is per node, not uniform.** Core's archive
-  rule exports `ocsf.base_event` with the mappable classes (added
-  2026-10-17 — without a time rule those partitions accumulated locally
-  and bloated the boot catalog load); tetragon deliberately keeps its
-  unknown export kinds out — they cannot name a class and expire with
-  the 15-minute window on the weighted-age backstop. Check the node's
-  archive rule before assuming either way.
+- **Unmapped kinds never reach ClickHouse.** The source pipelines drop
+  the Base Event fallback (class_uid 0, unknown export kinds) at the
+  class gate; fleet osquery rows map to Base Event deliberately and
+  INSERT as `ocsf.Base_Event`. Don't expect unknown classes in the
+  store, and don't reach for a per-node archive rule to get them there
+  — those are gone with the stateless migration.
   ([detections](../../detections/README.md))
 - **Zero findings egress.** Grafana owns notifications and there is no
   other findings egress — the Discord doorbell and the Loki findings
@@ -57,7 +57,7 @@ docs — nothing invented. Vendored debugging docs:
 - [`nodes/tetragon/README.md`](../../nodes/tetragon/README.md) — noise
   baselines, parallelism, residue, naming trap
 - [`detections/README.md`](../../detections/README.md) — class idioms,
-  archive rules, egress model
+  class-gate drop, egress model
 - [`packages/homelab/tests/README.md`](../../packages/homelab/tests/README.md)
   — runner pinning
 - [`README.md`](../../README.md) — baseline discipline

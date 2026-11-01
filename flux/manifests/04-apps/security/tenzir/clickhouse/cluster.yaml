@@ -9,7 +9,9 @@
 # In-cluster endpoints (operator-created Services; pattern prefixes are
 # fixed by the operator namer):
 #   clickhouse-tenzir.tenzir.svc.cluster.local  - CR-level service,
-#     load-balanced across all hosts, HTTP 8123 + native 9000
+#     load-balanced across all hosts (real ClusterIP via the CHI-level
+#     serviceTemplate below: kube-proxy per-connection spread),
+#     HTTP 8123 + native 9000
 #   chi-tenzir-ocsf-<shard>-<replica>...                   - per-host services
 #   The {cluster} macro value is "ocsf" (the single cluster below).
 apiVersion: clickhouse.altinity.com/v1
@@ -123,8 +125,37 @@ spec:
     templates:
       podTemplate: clickhouse-pod
       dataVolumeClaimTemplate: data
+      # The CR-level service renders from the chi-service template
+      # below — without this reference the template exists but nothing
+      # selects it and the operator never renders it (found live
+      # 2026-10-29: the service stayed headless until the reference
+      # landed, then rendered a real ClusterIP with the operator's
+      # ready-gated selector within a minute).
+      serviceTemplate: chi-service
 
   templates:
+    # The CR-level service (clickhouse-tenzir) is the fleet's
+    # load-balanced front door: the operator renders it from this
+    # template as a real ClusterIP, so kube-proxy spreads every
+    # connection across the replicas (per-connection random) instead of
+    # the headless-DNS per-resolution latching that piled the hourly
+    # record_integrity walks onto one replica (~1270m of its 2000m CPU
+    # while the siblings idled). A dead replica drops out of the
+    # endpoint list on its own. Operator-native shape:
+    # .spec.templates.serviceTemplates (custom_resource_explained.md);
+    # generateName keeps the rendered name the pipelines already dial.
+    # NOTE (operator docs): serviceTemplates[].spec is NOT merged with
+    # operator defaults - the ports must be stated.
+    serviceTemplates:
+      - name: chi-service
+        generateName: "clickhouse-{chi}"
+        spec:
+          ports:
+            - name: http
+              port: 8123
+            - name: client
+              port: 9000
+          type: ClusterIP
     podTemplates:
       - name: clickhouse-pod
         spec:
@@ -153,7 +184,7 @@ spec:
               # 25.8.33.6). The operator's own default is the same repo at
               # :latest - pin instead, renovate bumps.
               # renovate: datasource=docker depName=clickhouse/clickhouse-server
-              image: clickhouse/clickhouse-server:25.12.11.4@sha256:8a790dd3468db22b1d4e7b18a176f378ff5ff6053b9c48dd4ea1fa71a24c5ba6
+              image: clickhouse/clickhouse-server:26.10.3.7@sha256:739e099abd1157390960a59e4532d21781d8fde57e6e4151cb920ea02c30b1ce
               ports:
                 - name: http
                   containerPort: 8123
