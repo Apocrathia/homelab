@@ -124,18 +124,13 @@ nothing dials in and no Gateway HTTPRoute exists for it. The dashed lane
 is the consumer half on the core node — the table, not this node, is
 the handoff.
 
-## Lake and storage
+## Storage
 
-The chart's StatefulSet `volumeClaimTemplate` provisions the node lake
-as the `state-tenzir-node-intel-0` PVC (Longhorn via the cluster
-default storage class). `persistence.size: 5Gi`, no `storage.yaml`:
-the factory row streams its pulls straight to ClickHouse with no lake
-import, so the lake carries node state only (the investigations and
-enrichment precedent); there is no archive rule and no transit buffer
-to protect. The factory's output is the ClickHouse table, not this
-lake. If a future lane imports into the lake, revisit the Longhorn
-recurring-job exclusion (core/netflow/tetragon ship a `storage.yaml` for
-exactly that case, and its spec must mirror the `persistence` values).
+Stateless (lap 2e): `persistence.enabled: false` — the chart renders
+the state volume as an emptyDir, no PVC. The factory row streams its
+pulls straight to ClickHouse with no lake import; there is no archive
+rule, no transit buffer, and nothing of value on the node. The
+factory's output is the ClickHouse table.
 
 ## Sizing
 

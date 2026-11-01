@@ -51,15 +51,15 @@ LB service anymore.
   restored per-node with the B1 lap after the central poller's
   retirement, so the poller-era double-ship concern is moot
 - detection-attest-verify: the record_integrity verification walk —
-  reads the last 24h of every ocsf class back from the ClickHouse
-  query store, recomputes each attestation fingerprint, and walks the
+  reads the last 90 minutes of every ocsf class back from the
+  ClickHouse query store, recomputes each attestation fingerprint, and walks the
   per-node prev_event chain; a Detection Finding (2004) drops per
   break, hourly (the `every` wrapper): the finding lands on the pod
   logs and INSERTs into `ocsf.Detection_Finding`, inside the Grafana
   tenzir-findings rule's WHERE clauses — tamper evidence pages through
   the agent_invoke bridge (landed;
   docs/issues/tenzir-record-integrity-attestations.md). The stamping
-  half rides the ocsf-archive rule itself (see below).
+  half rides each source pipeline's in-stream attest + INSERT leg.
 
 ## Connectivity
 
@@ -156,62 +156,23 @@ are low-volume and the formula's source term already carries them.
 
 ## Retention
 
-15-minute local horizon; the ClickHouse OCSF store is the record. One
-rule in [`helmrelease.yaml`](./helmrelease.yaml) — TQL in
-[`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql) — exports
-every class it stores to the per-class `ocsf.<Class_Name>` tables on
-the ClickHouse OCSF store and consumes the originals
-(archive-then-expire; `preserve-input` stays off). The compaction pass
-runs every 5 minutes, so the true window at pass boundaries is 15 to 20
-minutes. The Longhorn volume sits out the daily-backup RecurringJob
-([`storage.yaml`](./storage.yaml)): a daily chain of a 15-minute buffer
-is redundant with the ClickHouse record. Filesystem trim and snapshot
-hygiene still run on the volume.
+No node-local retention: every source pipeline attests in-stream and
+INSERTs directly to the per-class `ocsf.<Class_Name>` tables on the
+ClickHouse OCSF store — no lake, no compaction rule, no PVC (the
+stateless completion; the lake-era rules and their 15-minute horizon
+died with it, history in the plan doc). ClickHouse is the record and
+the queryable history. The retired `s3://tenzir/ocsf/` parquet archive
+stays untouched in the rustfs bucket as frozen history; deleting it is
+a separate operator call.
 
-`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
-its `fork` wrapper retired with the MR-5 teardown — a sink-only
-pipeline keeps consume + export = archive-then-delete semantics):
-`mode="append"` fails loudly if the DDL is
-missing, and `max_batch_rows=65536` (default 1s `batch_timeout`) bounds
-the insert buffers per table.
+The Base Event fallback for fleet rows and authentik's non-IAM arm
+INSERTs with the mappable classes (`ocsf.Base_Event`); unknown classes
+drop at each pipeline's class gate and never reach the store.
 
-The lake is a transit buffer between ingest and the archive, not a query
-surface: it is sized to hold one window at worst-case flood rate, and
-ClickHouse is the queryable history. The retired
-`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs bucket
-as frozen history; deleting it is a separate operator call. The Base
-Event
-fallback for fleet rows and authentik's non-IAM arm archives with the
-mappable classes (added 2026-10-17): without a time rule those
-partitions accumulated locally instead.
-
-Horizon math, same inputs as the sizing block:
-
-```python
-Core (assumed ~1 GB/day raw ingest):
-  1 GB/day raw / 10                # Zstd ~10x reduction (docs default)
-  ~ 100 MB/day on disk             # on-disk rate after the reduction above
-  100 MB/day / 96                  # 15-minute horizon (96 windows per day)
-  ~ 1 MB peak local footprint      # vs the 6 GiB disk budget: never binds
-```
-
-The disk-budget corridor (6 GiB high / 4 GiB low, both the
-`tenzir.start` quota and the compaction space budgets) is the backstop
-for archive-rule failure windows, not the front door; the time rule is
-the front door. The old 18/16 corridor was sized for a 24-hour horizon
-and left the eraser unreachable on a 20Gi PVC:
-
-```python
-  6 GiB high  = 30% of the 20Gi PVC  # single-digit, reachable, leaves the PVC itself as the second backstop
-  4 GiB low   = the erase target     # a 2 GiB corridor so one eraser pass reclaims real space
-  6 GiB headroom at the worst stall  # core grows ~100 MB/day: the corridor never binds in practice
-```
-
-Naming note: the entry rename (`default` -> `core`) orphans the live
-`state-tenzir-node-default-0` PVC at rollout and the lake re-wipes
-fresh; accepted, ClickHouse is the record, and
-`persistence.existingClaim` can adopt the old PVC if the lost hot window
-ever matters.
+Retention lives in ClickHouse: monthly partitions, a 7-day hot-to-cold
+tier move, and a DELETE horizon of 400 days (90 for
+`ocsf.Network_Activity`) — the startup scripts are the source
+([`../clickhouse/config/10-startup-scripts.xml`](../clickhouse/config/10-startup-scripts.xml)).
 
 ## Adding a node
 
@@ -228,7 +189,7 @@ ever matters.
    name; every release takes `fullnameOverride: tenzir-node`),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
    `nodes[0].token.key: <role>-node-token`, `extraPorts` for the node's
-   listeners, `persistence.size` per sizing.
+   listeners, `persistence.enabled: false` (stateless).
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
 5. **Retention**: disk budgets on its PVC plus `plugins.compaction`

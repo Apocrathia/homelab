@@ -89,18 +89,12 @@ the ingress nodes pull their own copies (core ships its loader as
 part of this lap; netflow/tetragon follow when their sources want
 host identity).
 
-## Lake and storage
+## Storage
 
-The chart's StatefulSet `volumeClaimTemplate` provisions the node lake
-as the `state-tenzir-node-enrichment-0` PVC (Longhorn via the cluster
-default storage class) — the chart's own mechanism, same as every
-sibling. Lap 1 sized it like the investigations node for an idle node:
-`persistence.size: 5Gi`, no `storage.yaml`. That sizing still holds
-after lap 2 — the factory pipeline's only sink is ClickHouse, nothing
-imports into the lake, so the PVC still carries node state only and
-the Longhorn recurring-job exclusion (core/netflow/tetragon's
-`storage.yaml`) stays unneeded: there is no archived transit buffer
-to protect here.
+Stateless (lap 2e): `persistence.enabled: false` — the chart renders
+the state volume as an emptyDir, no PVC. The factory pipeline's only
+sink is ClickHouse and nothing imports into a lake, so nothing of
+value rides the node.
 
 ## Sizing
 

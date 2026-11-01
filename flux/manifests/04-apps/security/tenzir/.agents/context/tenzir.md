@@ -6,8 +6,10 @@ guidance lives.
 ## The product
 
 Tenzir is a security data pipeline platform: TQL pipelines turn telemetry
-into normalized events. Nodes are standalone processes — each with its own
-lake and its own pipelines; there is no distributed mode.
+into normalized events. Nodes are standalone processes — each with its
+own pipelines; there is no distributed mode. (The product gives each node
+a local lake; this homelab runs them stateless — no node-local storage,
+every write INSERTs to ClickHouse in-stream.)
 
 ## This homelab
 
@@ -16,8 +18,8 @@ Synthesized from the subtree's READMEs (sources at the bottom):
 - Seven standalone nodes in namespace `tenzir`: the
   [core node](../../nodes/core/README.md) is the detection plane — it
   normalizes kube-apiserver audit, authentik, fleet, and trivy feeds onto
-  a unified OCSF bus, runs the one sigma pass over it, and owns the
-  archive. The [tetragon node](../../nodes/tetragon/README.md) owns only
+  a unified OCSF bus, runs the one sigma pass over it, and INSERTs every
+  write to ClickHouse in-stream. The [tetragon node](../../nodes/tetragon/README.md) owns only
   the tetragon export flood, and the [netflow
   node](../../nodes/netflow/README.md) owns only the NetFlow collector
   (UniFi exporters behind `tenzir-ingest-lb`), so neither feed's behavior

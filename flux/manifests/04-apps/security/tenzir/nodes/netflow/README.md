@@ -100,77 +100,44 @@ working set; a fresh tiny lake carries neither. The node is sized for
 today's probe-only traffic with room for the exporter fix
 ([issue](../../../../../../../docs/issues/unifi-uxg-ipfix-ck-plus-hosting.md)).
 
-## Retention
+## Write path and retention
 
-Same 15-minute horizon as the siblings, same archive: the one OCSF
-class this node stores (Network Activity 4001) exports to the
-per-class `ocsf.<Class_Name>` tables on the ClickHouse OCSF store at
-`after: 15 minutes` and then expires locally (archive-then-expire;
-`preserve-input` off). The lake is a transit buffer between ingest and
-the archive, not a query surface. ClickHouse is the OCSF record past
-the window; the compaction pass runs every 5 minutes, so the true
-window at pass boundaries is 15-20 minutes. The Longhorn volume sits
-out the daily-backup RecurringJob
-([`storage.yaml`](./storage.yaml)): a daily chain of a 15-minute
-buffer is redundant with the ClickHouse record. Filesystem trim and
-snapshot hygiene still run on the volume. The retired
-`s3://tenzir/ocsf/` parquet archive stays untouched in the rustfs
-bucket as frozen history; deleting it is a separate operator call.
-
-`to_clickhouse` is the rule's sole, terminal sink (the `to_s3` tail and
-its `fork` wrapper retired with the MR-5 teardown — a sink-only
-pipeline keeps consume + export = archive-then-delete semantics):
-`mode="append"` fails loudly if the DDL is missing, and
-`max_batch_rows` bounds the insert buffers.
+No node-local retention: `netflow-ingest` stamps the OCSF
+`record_integrity` attestation in-stream — the shared lane in
+[`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)
+— and INSERTs the one OCSF class this node stores (Network Activity 4001) directly to the per-class `ocsf.<Class_Name>` tables on the
+ClickHouse OCSF store. No lake, no compaction rule, no PVC (the
+stateless completion; history in the plan doc). ClickHouse is the
+OCSF record. The retired `s3://tenzir/ocsf/` parquet archive stays
+untouched in the rustfs bucket as frozen history; deleting it is a
+separate operator call.
 
 The enrichment/attestation ordering is structural, not scheduled:
 netflow-ingest stamps geo/ASN/hostname AND the OSINT indicators before
-its store leg (`fork { import }`), the archive rule receives the stored
-record from the lake 15 minutes later, so the fingerprint chain covers
-the ENRICHED record — the attestation can never witness a record the
-OSINT loader later mutates, because enrichment finished before the
-lake ever saw the record.
+its attest + INSERT leg, so the fingerprint chain covers the ENRICHED
+record — the attestation can never witness a record the OSINT loader
+later mutates, because enrichment finished upstream of the stamp.
 
-The archive rule also stamps the OCSF `record_integrity` attestation
-on every record BEFORE the INSERT ([`pipelines/ocsf-archive.tql`](./pipelines/ocsf-archive.tql), the shared lane in
-[`packages/homelab/operators/record_integrity/`](../../packages/homelab/operators/record_integrity/README.md)):
-a per-node SHA-256 fingerprint chain (`chain_uid` =
-`tenzir-node-netflow`), one chain across the one archived class in
-(time, uid) order, covering the record exactly as stored — and the
-(time, uid) tie-break is load-bearing here: v5 exporters stamp whole
-datagrams of flows with one timestamp, so same-time ties are the
-NORM on this lane. `netflow-attest-verify` walks it hourly: the last
-24h of `ocsf.Network_Activity` read back, fingerprints recomputed,
-chain links checked; a Detection Finding (2004, severity 4) drops per
-break onto the pod logs AND into `ocsf.Detection_Finding`, inside the
+The chain (`chain_uid` = `tenzir-node-netflow`) covers the one stored
+class in (time, uid) order — and the (time, uid) tie-break is
+load-bearing here: v5 exporters stamp whole datagrams of flows with one
+timestamp, so same-time ties are the NORM on this lane.
+`netflow-attest-verify` walks it hourly: the last 90 minutes of
+`ocsf.Network_Activity` read back, fingerprints recomputed, chain
+links checked; a Detection Finding (2004, severity 4) drops per break
+onto the pod logs AND into `ocsf.Detection_Finding`, inside the
 Grafana tenzir-findings rule's WHERE clauses — tamper evidence pages
 through the agent_invoke bridge like every other high-severity finding
 (docs/issues/tenzir-record-integrity-attestations.md). The shared
-table note: the tetragon node's archive rule writes its Network
-Activity rows into the same `ocsf.Network_Activity` table — its
-cross-class chain is walked by the tetragon lane; this lane reads and
-walks only THIS node's chain (the `chain_uid` filter in the verify
-pipeline) so a healthy cross-class tetragon record never trips the
-table-local predecessor walk. At today's
-probe-only flow volume the stamping cost is noise (the detection-plane
-numbers in the clickhouse README's attestation section); the netflow
-baselines in the homelab package tests pin the chain, the tie-break,
-and both break types.
-
-Horizon math:
-
-```python
-Netflow (measured 0.15 GB/day raw):
-  0.15 GB/day / 10                # Zstd ~10x reduction (docs default)
-  ~ 15 MB/day on disk             # on-disk rate after the reduction
-  15 MB/day / 96                  # 15-minute horizon (96 windows per day)
-  ~ 150 KB peak local footprint   # vs the 6 GiB disk budget: never binds
-```
-
-The disk-budget corridor (6 GiB high / 4 GiB low) is the backstop for
-archive-rule failure windows on the 20Gi PVC; the time rule is the
-front door, and both overprovisioned on purpose — Longhorn grows the
-volume on demand and a smaller request buys nothing.
+table note: the tetragon node's direct leg writes its Network Activity
+rows into the same `ocsf.Network_Activity` table — its cross-class
+chain is walked by the tetragon lane; this lane reads and walks only
+THIS node's chain (the `chain_uid` filter in the verify pipeline) so a
+healthy cross-class tetragon record never trips the table-local
+predecessor walk. At today's probe-only flow volume the stamping cost
+is noise (the detection-plane numbers in the clickhouse README's
+attestation section); the netflow baselines in the homelab package
+tests pin the chain, the tie-break, and both break types.
 
 ## Collector quirks
 
@@ -211,14 +178,12 @@ volume on demand and a smaller request buys nothing.
    rename a release into either concat trap),
    `nodes[0].token.existingSecret: tenzir-secrets` plus
    `nodes[0].token.key: <role>-node-token`, `extraPorts` for the node's
-   listeners, `persistence.size` per sizing.
+   listeners, `persistence.enabled: false` (stateless).
 4. **Size it** with the size-a-node formula using measured ingest;
    requests small, limits justified.
-5. **Retention**: disk budgets on its PVC plus `plugins.compaction`
-   (weighted-age space rules as the backstop, archive-then-expire time
-   rules for every record type it stores), and a `storage.yaml` label
-   overlay sitting the transit-lake PVC out of the daily-backup
-   RecurringJob (same shape as the core, netflow, and tetragon nodes).
+5. **Retention**: none on the node — the direct leg INSERTs
+   ClickHouse, unmapped kinds drop at the class gate, and the state
+   volume is an emptyDir.
 6. **Catalog knobs**: the `tenzir.index` block from
    [`helmrelease.yaml`](./helmrelease.yaml) (lazy-sketches, load
    concurrency 4).

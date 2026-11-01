@@ -21,7 +21,7 @@ a self-contained pipeline stage:
 - `parse.tql` — raw payload → structured record
 - `ocsf/map.tql` — structured record → OCSF event
 - `findings/stamp.tql` — Detection Finding (2004) post-processing: the
-  stable uid (rule id + subject fingerprint) the archive dedup and the
+  stable uid (rule id + subject fingerprint) the ClickHouse dedup and the
   triage lifecycle joins use
 
 ## Tests
@@ -31,7 +31,7 @@ output as tenzir-test baselines — `<name>.input` / `<name>.tql` /
 `<name>.txt` triplets. Run from the repo root:
 
 ```sh
-TENZIR_BINARY="uvx tenzir@6.20.0" \
+TENZIR_BINARY="uvx tenzir@6.20.1" \
   uvx tenzir-test --root ./flux/manifests/04-apps/security/tenzir/packages
 ```
 
