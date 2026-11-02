@@ -10,7 +10,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.89"
+      version: "0.0.90"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -408,6 +408,7 @@ spec:
 
     authentik:
       managedBy: terraform
+      outpostAdopt: true
       enabled: true
       mode: "proxy"
       # WebUI is friends-tier: admins (order 10) + users (order 20) bindings.
