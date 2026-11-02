@@ -55,6 +55,10 @@ spec:
             - --ref=main
             - --depth=1
             - --root=/git
+            # v4.8.0 dropped the blanket safe.directory=* (PR #993); the
+            # kubelet-made emptyDir mount root is uid 0 while git-sync
+            # runs uid 1000, so explicitly trust only our clone root.
+            - --git-config=safe.directory:/git
             - --link=homelab
             - --period=600s
             # v4.7.1 default 0 exits on ANY sync failure; -1 retries
