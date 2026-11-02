@@ -11,7 +11,7 @@ spec:
     spec:
       chart: crossview
       # renovate: datasource=helm registryUrl=https://crossplane-contrib.github.io/crossview/ depName=crossview
-      version: "4.6.0"
+      version: "4.7.0"
       sourceRef:
         kind: HelmRepository
         name: crossview
