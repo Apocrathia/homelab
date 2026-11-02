@@ -1,26 +1,24 @@
-// CryptPad configuration for Kubernetes deployment
+// CryptPad configuration for Kubernetes deployment.
+// 2026.10.0: origins, bind address, and ports moved to infra.js (topology
+// config loaded by lib/load-config.js); only app-level keys live here.
 module.exports = {
-  // Main domain for privileged content (authentication, keys)
-  httpUnsafeOrigin: "https://cryptpad.gateway.services.apocrathia.com",
-
-  // Sandbox domain for UI content (XSS protection)
-  httpSafeOrigin: "https://cryptpad-sandbox.gateway.services.apocrathia.com",
-
-  // Listen on all interfaces
-  httpAddress: "0.0.0.0",
-
-  // HTTP port
-  httpPort: 3000,
-
-  // WebSocket port
-  websocketPort: 3003,
-
   // Installation method
   installMethod: "docker",
 
-  // Cap HTTP workers (default: one per CPU = 16 on these nodes; 16 x 2026.5.1
-  // workers OOM-kills the 1Gi pod). Upstream example value.
-  maxWorkers: 4,
+  // Cap worker processes per node pool. 2026.10.0 splits the server into
+  // http/front/core/storage processes, each spawning a worker pool; the old
+  // flat number is ignored and the 2-per-pool example default totals ~12
+  // node processes, which re-creates the OOM that once killed this pod
+  // (16 per-CPU workers at 2026.5.1). 1 per pool keeps ~8 processes in the
+  // 1Gi limit. cryptpad-server reads "storage-http" for the storage blob
+  // server; upstream's config.example.js spells it "http-storage", which
+  // the code ignores (falls back to 2).
+  maxWorkers: {
+    core: 1,
+    storage: 1,
+    http: 1,
+    "storage-http": 1,
+  },
 
   // Logging
   logToStdout: true,

@@ -1,4 +1,4 @@
-// CryptPad SSO plugin config (cryptpad/sso 0.6.0, loaded from lib/plugins/sso).
+// CryptPad SSO plugin config (cryptpad/sso 1.0.0, loaded from lib/plugins/sso).
 // Credentials are injected via OIDC_CLIENT_ID / OIDC_CLIENT_SECRET env vars
 // from the cryptpad-secrets Secret; never put them in this file.
 // Admin panel SSO settings, if used, are stored as decrees and override this.
