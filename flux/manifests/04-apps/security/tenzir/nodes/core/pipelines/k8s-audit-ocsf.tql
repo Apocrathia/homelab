@@ -6,8 +6,11 @@
 //
 // fork: the durable CH leg (attest + INSERT) rides a fork branch —
 // sink-only, so a fork_merge arm would be a parse error — and the
-// main flow publishes to the ocsf bus after it (sigma pass + Grafana
-// live view).
+// main flow publishes to the ocsf bus after it: sigma's subscription
+// is this publish's ONLY consumer (Grafana reads ClickHouse), so this
+// publish is load-bearing and must stay — the bus dies with its
+// publisher intact only on sigma's side of the loop (see
+// sigma-detect.tql for why sigma never publishes back).
 subscribe "k8s-audit.raw"
 homelab::k8s::audit::ocsf::map
 ocsf_derive
