@@ -116,7 +116,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       mode: "proxy"
       category: "Media"

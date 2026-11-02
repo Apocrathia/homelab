@@ -550,7 +550,6 @@ spec:
     authentik:
       enabled: true
       managedBy: terraform
-      outpostAdopt: true
       mode: "proxy"
       displayName: "Prime Agent"
       category: "Artificial Intelligence"

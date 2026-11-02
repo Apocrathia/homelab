@@ -120,7 +120,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       shared: true
       category: "Productivity"

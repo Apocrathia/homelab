@@ -11,8 +11,8 @@ spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
       # The inline tofu lane (chart-generated HCL, no module refs, no chart-tag
-      # pin) ships in 0.0.87 — the W0 flip bump; the helmrelease stays
-      # suspended until the W0 gate (plan §Waves).
+      # pin) shipped in 0.0.87 - the W0 flip bump; the W0 gate ran and the
+      # release is long unsuspended (plan §Waves).
       version: "0.0.90"
       sourceRef:
         kind: GitRepository
@@ -79,7 +79,6 @@ spec:
     authentik:
       enabled: true
       managedBy: terraform
-      outpostAdopt: true
       shared: true
       category: "Platform"
       displayName: "Demo Application"
