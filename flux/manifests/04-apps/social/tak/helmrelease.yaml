@@ -408,7 +408,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       mode: "proxy"
       # WebUI is friends-tier: admins (order 10) + users (order 20) bindings.

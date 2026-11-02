@@ -101,7 +101,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       category: "Home"
       displayName: "Bitfocus Companion"

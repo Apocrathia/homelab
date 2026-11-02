@@ -183,7 +183,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       category: "Productivity"
       displayName: "Change Detection"

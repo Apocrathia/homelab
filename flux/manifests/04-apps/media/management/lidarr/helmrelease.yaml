@@ -113,7 +113,6 @@ spec:
 
     authentik:
       managedBy: terraform
-      outpostAdopt: true
       enabled: true
       category: "Media"
       displayName: "Lidarr"
