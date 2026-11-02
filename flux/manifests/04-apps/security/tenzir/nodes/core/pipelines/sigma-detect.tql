@@ -3,10 +3,16 @@
 // `import` (writing findings to the lake for the archive rule to pick
 // up), it now writes DIRECT to ClickHouse with in-stream attestation.
 // The sigma pass subscribes to the ocsf bus (every core OCSF pipeline
-// publish_merge leg feeds it live), stamps the discovering pipeline's
-// uid, then forks: one leg publishes back to the bus (so Grafana's live
-// view sees the finding), the other leg stamps the record_integrity
-// attestation and INSERTs direct to ocsf.Detection_Finding.
+// publish leg feeds it live), stamps the discovering pipeline's uid,
+// and the fork's attest + INSERT leg is the sole output — findings do
+// NOT publish back onto the bus. A publish here is a self-feedback
+// loop: sigma re-evaluates its own Detection Findings, drowns, stops
+// consuming the bus, and every core publisher blocks on publish while
+// its fork branch starves mid-INSERT — the 2026-11-02 post-wipe
+// write-stall cascade (chi's 30s read timeout, runs in the hundreds,
+// core dark while tetragon/netflow — no bus subscriber — flowed).
+// Grafana reads ClickHouse, not the bus; the finding's durable home is
+// ocsf.Detection_Finding via the INSERT.
 subscribe "ocsf"
 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],
       mapping="auto",
@@ -35,4 +41,3 @@ fork {
                 mode="append",
                 max_batch_rows=65536
 }
-publish "ocsf"
