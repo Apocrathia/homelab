@@ -18,13 +18,17 @@ CryptPad requires two domains for its security model - the main domain handles a
 
 Guest pads are reachable without an account on both doors.
 
+## Architecture (2026.10.0)
+
+2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1 — a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
+
 ## Authentication
 
 Native OIDC SSO via the official [cryptpad/sso](https://github.com/cryptpad/sso) plugin (pinned release, fetched by an initContainer into `/cryptpad/lib/plugins/sso`) with Authentik as the IdP. The chart's blueprint creates the OAuth2 provider and application; access is bound to the `admins` and `users` Authentik groups. The dashboard tile deep-links to `/login`, which auto-redirects to Authentik (single provider + enforced SSO; the legacy password form lives at `/login#standard-login`).
 
-Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking). Account names come from the IdP `name` claim (full display name); identity is keyed on `sub`, so claim tweaks never orphan accounts. Config edits in `sso.js`/`config.js` need a pod restart (no checksum rollouts in the chart).
+Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local accounts can still log in until deleted. First SSO login creates a new CryptPad account (SSO identity is separate; there is no account linking). Account names come from the IdP `name` claim (full display name); identity is keyed on `sub`, so claim tweaks never orphan accounts. Config edits in `config.js`/`infra.js`/`sso.js` need a pod restart (no checksum rollouts in the chart).
 
-The SSO plugin version must pair with the CryptPad image tag (currently plugin 0.6.0 ↔ image 2026.5.1); check the plugin releases before bumping either.
+The SSO plugin version must pair with the CryptPad image tag (currently plugin 1.0.0 ↔ image 2026.10.0); check the plugin releases before bumping either.
 
 ## Storage
 
@@ -56,7 +60,7 @@ kubectl exec -n cryptpad deployment/cryptpad -- ls /cryptpad/lib/plugins/sso
 ```
 
 - **SSO button missing**: plugin files missing - check the `install-sso-plugin` initContainer logs (`INVALID_SERVER_CONFIG` in app logs means the OIDC env vars are empty, i.e. the Secret is not synced).
-- **Stale UI after config edits**: config.js/sso.js edits need `kubectl -n cryptpad rollout restart deployment/cryptpad` (no checksum-based rollouts in the chart), then flush the HTTP cache from the admin panel.
+- **Stale UI after config edits**: config.js/infra.js/sso.js edits need `kubectl -n cryptpad rollout restart deployment/cryptpad` (no checksum-based rollouts in the chart), then flush the HTTP cache from the admin panel.
 - **Plugin/CryptPad version drift**: the plugin has hard version pairing with the image - `OPENID_CLIENT_ERROR` on login usually means the pairing broke after an image bump.
 
 ## References

@@ -28,11 +28,15 @@ spec:
         name: cryptpad
         port: 3000
         extraPorts:
-          - name: websocket
-            containerPort: 3003
+          # 2026.10.0: httpSafePort sandbox server (unexposed; both gateway
+          # hostnames keep hitting 3000). Old websocketPort 3003 is gone -
+          # the front node (infra.js) now serves websockets on loopback.
+          - name: sandbox
+            containerPort: 3001
             protocol: TCP
         env:
-          - name: CPAD_CONF
+          # 2026.10.0 env var read by lib/load-config.js (CPAD_CONF is gone)
+          - name: CRYPTPAD_CONFIG
             value: "/cryptpad/config/config.js"
           # SSO plugin reads these at require time (config/sso.js)
           - name: OIDC_CLIENT_ID
@@ -49,8 +53,8 @@ spec:
       podAntiAffinity:
         enabled: false
       # Official SSO plugin (github.com/cryptpad/sso) — version must pair with
-      # the CryptPad image tag (0.6.0 <-> 2026.5.1); fetched into an emptyDir
-      # the entrypoint's npm build picks up on every start.
+      # the CryptPad image tag (1.0.0 <-> 2026.10.0 scalable server); fetched
+      # into an emptyDir the entrypoint's npm build picks up on every start.
       initContainers:
         - name: install-sso-plugin
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
@@ -134,6 +138,12 @@ spec:
           - name: config
             mountPath: /cryptpad/config/config.js
             subPath: config.js
+            configMapName: cryptpad-config
+          # 2026.10.0 topology config; its presence skips the entrypoint's
+          # root-unwritable fallback copy (the crashloop root cause)
+          - name: infra-config
+            mountPath: /cryptpad/config/infra.js
+            subPath: infra.js
             configMapName: cryptpad-config
           - name: sso-config
             mountPath: /cryptpad/config/sso.js
