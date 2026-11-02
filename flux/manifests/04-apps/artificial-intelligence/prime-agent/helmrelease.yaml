@@ -11,7 +11,7 @@ spec:
     spec:
       chart: ./helm/generic-app
       # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
-      version: "0.0.89"
+      version: "0.0.90"
       sourceRef:
         kind: GitRepository
         name: homelab
@@ -550,6 +550,7 @@ spec:
     authentik:
       enabled: true
       managedBy: terraform
+      outpostAdopt: true
       mode: "proxy"
       displayName: "Prime Agent"
       category: "Artificial Intelligence"
