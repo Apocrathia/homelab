@@ -1,5 +1,33 @@
 # Changelog
 
+## Version 0.0.90
+
+- **Outpost parity restored for proxy apps on the tofu lane** — the
+  chart-generated authentik tofu module now declares the per-app
+  outpost (service-connection lookup + `authentik_outpost` with the full
+  retired-blueprint config: parentRefs main-gateway always, tailnet when
+  `tailnet.enabled`; the outpost provisions its own HTTPRoute, and
+  ExternalDNS reads the route hostname for DNS). 0.0.88 dropped the
+  outpost when it retired the blueprint lane, so born-tofu apps
+  (cyberchef, omni-tools) were unreachable: no outpost -> no
+  auto-created HTTPRoute -> no DNS record -> hostnames NXDOMAIN. The
+  flipped apps' live blueprint-era outposts are untouched by this
+  release (their tofu state simply gains an outpost resource that
+  plans a CREATE — adopt it with `authentik.outpostAdopt` first, see
+  below).
+- **New values key `authentik.outpostAdopt`** (proxy mode only, default
+  false) — a transient wave key, deliberately separate from the
+  varmap-era `var.adoption` machinery (no varmap key, no uuid in git,
+  two-way validation untouched): true renders the generated module's
+  outpost import ARMED so the next crossplane apply imports the app's
+  live blueprint-era outpost into tofu state (an armed render resolves
+  the baked outpost name through a `data "authentik_outpost"` lookup —
+  outposts import by UUID, never by name); false renders the import
+  inert and the outpost resource plans a plain CREATE. The W3 wave MR
+  sets it true per flipped app; the cleanup MR flips it back once the
+  imports land. The render fails loudly when the key is set on an
+  oidc/bookmark app.
+
 ## Version 0.0.89
 
 - **The chart-generated authentik tofu module now gates the application

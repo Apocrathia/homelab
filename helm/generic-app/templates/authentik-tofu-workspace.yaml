@@ -4,15 +4,21 @@ ProviderConfig + Workspace, rendered when authentik.managedBy=terraform.
 The chart GENERATES the per-app HCL inline (source: Inline, NO varmap in
 git, NO module refs, NO chart-tag pins — the Remote+varmap antipattern is
 dead). The HCL is shape-identical to the merged file-pair exemplars
-(gatus/immich/jetkvm): values land inline in the HCL; ADOPTION rides for_each-gated
-imports — the slug-literal application import + the generated-id
-imports (plain variable-id imports are BANNED — the jetkvm blink: tofu
-silently skips an empty-id import and plans a duplicate create); the
-two-way adoption validation fails loudly both ways (adoption=true with any
-id empty; ids set with adoption=false). Witness ids NEVER enter git: the
-gate-time varmap on the LIVE Workspace carries them once (recipe §8,
-born-with-varmap), then clears. managedBy: blueprint (default) keeps the
-blueprint ConfigMaps — zero behavior change for un-flipped apps.
+(gatus/immich/jetkvm): values land inline in the HCL; proxy mode renders
+the per-app OUTPOST (gatus parity — retired-blueprint config parity, the
+outpost provisions its own HTTPRoute so the app fronts a hostname);
+ADOPTION rides for_each-gated imports — the slug-literal application
+import + the generated-id imports (plain variable-id imports are
+BANNED — the jetkvm blink: tofu silently skips an empty-id import and
+plans a duplicate create); the two-way adoption validation fails loudly
+both ways (adoption=true with any id empty; ids set with
+adoption=false). Witness ids NEVER enter git: the gate-time varmap on
+the LIVE Workspace carries them once (recipe §8, born-with-varmap),
+then clears. OUTPOST adoption is the separate render-time
+authentik.outpostAdopt wave key (proxy mode only): no varmap key, no
+uuid in git — an armed import resolves the baked outpost NAME through a
+data-source lookup. managedBy: blueprint is the retired lane (no
+authentik docs render); the values default is terraform.
 */}}
 {{- if and .Values.authentik.enabled (eq (default "blueprint" .Values.authentik.managedBy) "terraform") }}
 {{- $a := .Values.authentik }}
@@ -25,6 +31,9 @@ blueprint ConfigMaps — zero behavior change for un-flipped apps.
 {{- end }}
 {{- if and $a.shared (not .Values.tailnet.enabled) }}
 {{- fail "authentik.shared: true requires tailnet.enabled: true - a users binding without tailnet exposure would be unreachable for friends" }}
+{{- end }}
+{{- if and ($a.outpostAdopt | default false) (ne $mode "proxy") }}
+{{- fail (printf "authentik.outpostAdopt is a proxy-mode-only outpost adoption key - mode %q renders no outpost, so there is nothing to adopt; unset it" $mode) }}
 {{- end }}
 {{- $oidcKeys := list }}
 {{- $cidf := $oidc.clientIdFromSecret | default dict }}
@@ -62,6 +71,8 @@ blueprint ConfigMaps — zero behavior change for un-flipped apps.
 {{- $launchUrl := $a.ssoLaunchUrl | default $a.externalHost }}
 {{- $shadowed := list }}
 {{- range $oidc.customScopeMappings }}{{ $shadowed = append $shadowed .scopeName }}{{ end }}
+{{- $outpostParentRefs := list (dict "name" $a.gateway.name "namespace" $a.gateway.namespace "sectionName" $a.gateway.sectionName) }}
+{{- if .Values.tailnet.enabled }}{{ $outpostParentRefs = append $outpostParentRefs (dict "name" .Values.tailnet.gateway.name "namespace" .Values.tailnet.gateway.namespace "sectionName" .Values.tailnet.gateway.sectionName) }}{{ end }}
 {{- $t := dict
       "mode" $mode
       "app" $slug
@@ -75,6 +86,13 @@ blueprint ConfigMaps — zero behavior change for un-flipped apps.
       "openInNewTab" ($a.openInNewTab | default true)
       "shared" $a.shared
       "authentikHost" $a.authentikHost
+      "serviceConnection" $a.serviceConnection
+      "authentikHostInsecure" ($a.authentikHostInsecure | default true)
+      "outpostAdopt" ($a.outpostAdopt | default false)
+      "outpostLogLevel" ($a.logLevel | default "info")
+      "outpostReplicas" ($a.replicas | default 1)
+      "outpostNamespace" ($a.namespace | default "authentik")
+      "outpostParentRefs" $outpostParentRefs
       "authorizationFlow" $a.authorizationFlow
       "invalidationFlow" $a.invalidationFlow
       "authenticationFlow" $a.authenticationFlow
@@ -271,10 +289,11 @@ data "authentik_group" "users" {
 }
 {{- end -}}
 
-{{/* Proxy provider (mode proxy): gatus exemplar MINUS the outpost — proxy
-     apps stop owning outposts (the shared tofu-owned outposts in the
-     authentik tree own them; the old per-app outpost keeps serving until
-     the wave sweep retires it — chart-flip apps NEVER adopt outposts). */}}
+{{/* Proxy provider (mode proxy): gatus exemplar shape — provider plus the
+     per-app outpost in the tofuOutpost define below (blueprint parity
+     restored at 0.0.90: the 0.0.88 tofu lane dropped the outpost and
+     born-tofu apps rendered frontless — no outpost -> no auto-created
+     HTTPRoute -> no DNS). */}}
 {{- define "generic-app.authentik.tofuProxy" -}}
 # Proxy provider — chart-blueprint parity; every value composes from the
 # authentik values, so the flip gate plans zero drift.
@@ -301,6 +320,60 @@ resource "authentik_provider_proxy" "app" {
   # Always sent: the TF resource default (minutes=10) would PATCH the live
   # row at the authentik model default hours=1 on the first apply.
   access_token_validity = {{ include "generic-app.authentik.hclQuote" .accessTokenValidity }}
+}
+{{- end -}}
+
+{{/* Outpost (mode proxy): retired-blueprint config parity — every key the
+     blueprint set, values from the same authentik values. The outpost
+     provisions its own HTTPRoute from kubernetes_httproute_parent_refs
+     (main-gateway always; tailnet-gateway when tailnet.enabled — the
+     shared shape), so ExternalDNS reads the route hostname for DNS and
+     proxy apps render no route of their own. */}}
+{{- define "generic-app.authentik.tofuOutpost" -}}
+# The service connection the outpost runs through — the one authentik
+# creates on install (the retired blueprint's !Find on the same name).
+data "authentik_service_connection_kubernetes" "local" {
+  name = {{ include "generic-app.authentik.hclQuote" .serviceConnection }}
+}
+
+# Outpost — retired-blueprint config parity (0.0.88 dropped it and
+# born-tofu apps rendered frontless: no outpost -> no auto-created
+# HTTPRoute -> no DNS). The outpost provisions its own HTTPRoute from
+# kubernetes_httproute_parent_refs — ExternalDNS reads the route
+# hostname for DNS; proxy apps render no route of their own.
+resource "authentik_outpost" "app" {
+  name               = {{ include "generic-app.authentik.hclQuote" (printf "%s-outpost" .app) }}
+  type               = "proxy"
+  service_connection = data.authentik_service_connection_kubernetes.local.id
+  protocol_providers = [authentik_provider_proxy.app.id]
+
+  config = jsonencode({
+    authentik_host          = {{ include "generic-app.authentik.hclQuote" .authentikHost }}
+    authentik_host_insecure = {{ .authentikHostInsecure }}
+    authentik_host_browser  = ""
+    log_level               = {{ include "generic-app.authentik.hclQuote" .outpostLogLevel }}
+    object_naming_template  = "ak-outpost-%(name)s"
+    kubernetes_replicas     = {{ .outpostReplicas }}
+    kubernetes_namespace    = {{ include "generic-app.authentik.hclQuote" .outpostNamespace }}
+    kubernetes_httproute_parent_refs = [
+{{- range .outpostParentRefs }}
+      {
+        name        = {{ include "generic-app.authentik.hclQuote" .name }}
+        namespace   = {{ include "generic-app.authentik.hclQuote" .namespace }}
+        sectionName = {{ include "generic-app.authentik.hclQuote" .sectionName }}
+      },
+{{- end }}
+    ]
+    kubernetes_json_patches = {
+      deployment = [
+        {
+          op    = "add"
+          path  = "/spec/template/spec/automountServiceAccountToken"
+          value = false
+        }
+      ]
+    }
+  })
 }
 {{- end -}}
 
@@ -595,19 +668,20 @@ variable "import_custom_scope_mapping_ids" {
 {{- end }}
 {{- end -}}
 
-{{/* Import blocks: EVERY import rides the for_each ADOPTION gate,
-     default off — the application included: it imports BY SLUG (a static
-     literal), but a born-tofu app has no application yet and an
-     ungated import wedges tofu on "Cannot import non-existent remote
-     object" (nothing can create what the import demands at plan time).
-     Every GENERATED id (provider pk, binding uuids, custom
-     mapping pm_uuids) rides the same gate: PLAIN
-     variable-id imports are BANNED (the jetkvm blink — an empty id is
-     silently skipped and a fresh create is planned). for_each is a pure
-     on/off gate (toset([\"g\"]) on, toset([]) off) with a STATIC to;
-     adoption=false at steady state yields zero import instances, and
-     after the gate the blocks are inert because state already holds the
-     targets. */}}
+{{/* Import blocks: EVERY import rides a for_each gate, default off — the
+     application included: it imports BY SLUG (a static literal), but a
+     born-tofu app has no application yet and an ungated import wedges
+     tofu on "Cannot import non-existent remote object" (nothing can
+     create what the import demands at plan time). Every GENERATED id
+     (provider pk, binding uuids, custom mapping pm_uuids) rides the
+     varmap-era ADOPTION gate: PLAIN variable-id imports are BANNED (the
+     jetkvm blink — an empty id is silently skipped and a fresh create is
+     planned). for_each is a pure on/off gate (toset([\"g\"]) on,
+     toset([]) off) with a STATIC to; adoption=false at steady state
+     yields zero import instances, and after the gate the blocks are
+     inert because state already holds the targets. The outpost import
+     rides its OWN render-time gate (outpostAdopt) instead — a values-key
+     wave, not a varmap switch. */}}
 {{- define "generic-app.authentik.tofuImports" -}}
 import {
   for_each = var.adoption ? toset(["g"]) : toset([])
@@ -644,16 +718,39 @@ import {
   id       = var.import_custom_scope_mapping_ids[{{ include "generic-app.authentik.hclQuote" .name }}]
 }
 {{- end }}
+{{- if eq .mode "proxy" }}
+{{- if .outpostAdopt }}
+
+# The live-outpost lookup for the outpostAdopt wave: outposts import by
+# UUID (the authentik outpost pk IS a uuid and the provider retrieves by
+# pk — a name id cannot resolve), so the armed import resolves the baked
+# name literal through this lookup at plan time. Rendered ONLY while
+# outpostAdopt is true — a born-tofu app has no live outpost and this
+# lookup would fail its plan.
+data "authentik_outpost" "adopt" {
+  name = {{ include "generic-app.authentik.hclQuote" (printf "%s-outpost" .app) }}
+}
+
+{{- end }}
+
+import {
+  for_each = {{ if .outpostAdopt }}toset(["g"]){{ else }}toset([]){{ end }}
+  to       = authentik_outpost.app
+  id       = {{ if .outpostAdopt }}data.authentik_outpost.adopt.id{{ else }}{{ include "generic-app.authentik.hclQuote" (printf "%s-outpost" .app) }}{{ end }}
+}
+{{- end }}
 {{- end -}}
 
 {{/* Module assembly: header -> data sources -> provider resources ->
-     application -> bindings -> adoption vars -> imports. */}}
+     application -> bindings -> outpost (proxy) -> adoption vars ->
+     imports. */}}
 {{- define "generic-app.authentik.tofuModule" -}}
 {{- $parts := list (include "generic-app.authentik.tofuHeader" .) (include "generic-app.authentik.tofuData" .) -}}
 {{- if eq .mode "proxy" }}{{ $parts = append $parts (include "generic-app.authentik.tofuProxy" .) }}{{ end -}}
 {{- if eq .mode "oidc" }}{{ $parts = append $parts (include "generic-app.authentik.tofuOidc" .) }}{{ end -}}
 {{- $parts = append $parts (include "generic-app.authentik.tofuApplication" .) -}}
 {{- $parts = append $parts (include "generic-app.authentik.tofuBindings" .) -}}
+{{- if eq .mode "proxy" }}{{ $parts = append $parts (include "generic-app.authentik.tofuOutpost" .) }}{{ end -}}
 {{- $parts = append $parts (include "generic-app.authentik.tofuAdoption" .) -}}
 {{- $parts = append $parts (include "generic-app.authentik.tofuImports" .) -}}
 {{- join "\n\n" $parts -}}

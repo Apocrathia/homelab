@@ -499,9 +499,8 @@ secrets:
 authentik:
   enabled: true
   # Provider mode: "proxy", "oidc", or "bookmark"
-  # - proxy: Creates proxy provider + outpost (blueprint lane); the tofu
-  #   lane renders the proxy provider only — outposts consolidate into the
-  #   shared tofu-owned outposts in the authentik tree
+  # - proxy: Proxy provider + per-app outpost — both lanes render the
+  #   outpost (the tofu lane restored blueprint parity at 0.0.90)
   # - oidc: Creates OAuth2 provider, app handles auth via OAuth flow (requires app OIDC support)
   # - bookmark: Creates a dashboard-only entry in Authentik (no auth provider or outpost)
   mode: "proxy"
@@ -526,12 +525,12 @@ authentik:
   # cleared after; they NEVER enter git). Per-app config deltas become
   # values keys here, never raw HCL edits.
   #
-  # Dead keys on the tofu path (blueprint/outpost machinery the tofu lane
-  # never reads): authentikHostInsecure, serviceConnection, replicas,
-  # namespace, logLevel, gateway.* (the shared tofu-owned outposts own
-  # the outpost shape now), oidc.clientSecret (Sensitive — generated
+  # Dead keys on the tofu path: oidc.clientSecret (Sensitive — generated
   # server-side, tofu must not manage it), oidc.tokenValidity (dead attr
-  # in authentik 2026.8).
+  # in authentik 2026.8). The outpost keys (authentikHostInsecure,
+  # serviceConnection, replicas, namespace, logLevel, gateway.*) are
+  # ALIVE on the tofu path since 0.0.90 — the per-app outpost consumes
+  # them (blueprint parity restored).
 
   # Share this app with the users tier / friends; adds the users group binding.
   # Requires tailnet.enabled - friends reach apps over the tailnet, so a users
@@ -588,23 +587,35 @@ authentik:
   # Authentication flow (proxy mode only)
   authenticationFlow: "default-authentication-flow"
 
+  # Transient adoption wave key (proxy mode only). true renders the tofu
+  # module's outpost import ARMED so the next crossplane apply imports
+  # the app's live blueprint-era outpost into tofu state instead of
+  # colliding with it; false (steady state) renders the import inert and
+  # the outpost resource plans a plain CREATE. Set true only in the W3
+  # wave MR for the flipped apps; the cleanup MR flips it back to false
+  # once the imports land (an armed import whose target is already in
+  # state is inert). Born-tofu apps NEVER set it — they have no live
+  # outpost to adopt. Deliberately separate from the varmap-era
+  # adoption machinery: no varmap key, no uuid in git.
+  outpostAdopt: false
+
   # Authentik server configuration. authentikHost is alive on both lanes
   # (the tofu provider block reads it as its url); authentikHostInsecure +
-  # serviceConnection are blueprint-outpost machinery — dead on the tofu
-  # path (the shared tofu-owned outposts own the outpost shape now)
+  # serviceConnection feed the outpost config on both lanes (the tofu
+  # outpost jsonencodes them; the retired blueprint set the same attrs)
   authentikHost: "https://auth.gateway.services.apocrathia.com"
   authentikHostInsecure: true
   serviceConnection: "Local Kubernetes Cluster"
 
-  # Outpost configuration (blueprint lane only — dead on the tofu path:
-  # no outpost resource renders; the shared tofu-owned outposts own
-  # outposts)
+  # Outpost configuration (both lanes — the tofu outpost jsonencodes
+  # replicas/namespace/logLevel; blueprint parity)
   replicas: 1
   namespace: authentik
   logLevel: info
 
-  # Gateway configuration (blueprint lane only - the outpost creates the
-  # HTTPRoute; dead on the tofu path)
+  # Gateway configuration (both lanes — the outpost's
+  # kubernetes_httproute_parent_refs; the outpost provisions its own
+  # HTTPRoute and ExternalDNS reads the route hostname for DNS)
   gateway:
     name: main-gateway
     namespace: cilium-system
