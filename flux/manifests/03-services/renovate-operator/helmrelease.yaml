@@ -9,7 +9,7 @@ spec:
     spec:
       chart: renovate-operator
       # renovate: datasource=helm registryUrl=https://helm.mogenius.com/public depName=renovate-operator
-      version: 6.5.1
+      version: 6.7.0
       sourceRef:
         kind: HelmRepository
         name: renovate-operator
@@ -36,8 +36,6 @@ spec:
     image:
       registry: ghcr.io
       repository: mogenius/renovate-operator
-      # renovate: datasource=docker depName=ghcr.io/mogenius/renovate-operator
-      tag: "6.7.0"
       pullPolicy: IfNotPresent
 
     # CRDs installed via the chart's hook job (kubectl apply of the bundled CRD)
