@@ -21,7 +21,7 @@ spec:
       name: duckdb
       namespace: duckdb
       # renovate: datasource=docker depName=duckdb/duckdb
-      image: duckdb/duckdb:1.5.6@sha256:6f42e04517e2445b525d105dcfd12ef774c30d29f7e124c72daaf655fcffc0bb
+      image: duckdb/duckdb:2.0.0@sha256:453caf4f1c445ee8363acaa6cd383751396d2eae0d02f362ada64d87267a4221
 
       # The official duckdb image is the CLI binary in a distroless container.
       # We start it with the UI extension loaded and start_ui_server() called.
