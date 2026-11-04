@@ -406,7 +406,7 @@ spec:
             value: "/opt/data/workspace"
           # renovate: datasource=github-releases depName=sharkdp/fd versioning=semver
           - name: FD_VERSION
-            value: "10.5.0"
+            value: "10.5.1"
           # renovate: datasource=github-releases depName=mamba-org/micromamba-releases
           - name: MICROMAMBA_VERSION
             value: "2.9.0-0"
