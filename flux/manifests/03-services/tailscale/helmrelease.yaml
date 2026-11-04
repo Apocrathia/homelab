@@ -10,8 +10,13 @@ spec:
   chart:
     spec:
       chart: tailscale-operator
+      # Pull race: upstream published chart 1.104.4 before the v1.104.4 image
+      # (ghcr.io/tailscale/k8s-operator) existed. Rollout hit ImagePullBackOff,
+      # helm rolled back, and the HR parked Stalled. Revert clears the stall;
+      # re-land the bump only after Ready and a 200 pre-check on the ghcr
+      # image tag — upstream has shipped releases ahead of images before.
       # renovate: datasource=helm registryUrl=https://pkgs.tailscale.com/helmcharts depName=tailscale-operator
-      version: "1.104.4"
+      version: "1.104.2"
       sourceRef:
         kind: HelmRepository
         name: tailscale
