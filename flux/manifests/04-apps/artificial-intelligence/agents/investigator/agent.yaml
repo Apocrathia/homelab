@@ -87,6 +87,18 @@ spec:
     # code's environment, while sandbox filesystem reads are unrestricted, so
     # the mounted file is the channel executed code can actually read.
     deployment:
+      # PSA workaround (kagent #1997): with executeCodeBlocks set, the 0.10.x
+      # controller renders this container privileged:true, which the
+      # cluster-wide baseline PodSecurity rejects. An explicit
+      # allowPrivilegeEscalation:false trips the controller's
+      # allowPrivilegeEscalationExplicitlyFalse guard, so the rendered
+      # securityContext is exactly this — dropping the in-pod code-exec
+      # sandbox, which likely never ran anyway (adk-python #3921 marks
+      # executeCodeBlocks "ignored for now"). 0.10.x-only: deployment-backed
+      # agents were removed upstream (0.10 went straight to v1.0.0-rc1) —
+      # revisit on any bump past 0.10.x.
+      securityContext:
+        allowPrivilegeEscalation: false
       volumes:
         - name: tenzir-token
           secret:
