@@ -75,19 +75,24 @@ in the report.
 
 ## Checks (run what applies)
 
-| When                                         | Check                                                                                                 |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Touched formatted sources (md/yml/…)         | Prettier / project formatters (`prettier -w` on changed files; then `--check`)                        |
-| Touched YAML                                 | yamllint on touched YAML                                                                              |
-| Touched `AGENTS.md` / `.agents/` / discovery | `python3 .agents/skills/reconcile-context/scripts/check_links.py` + `check_discovery.py`              |
-| Touched Helm / Flux / Kustomize manifests    | `helm template` and/or `kustomize build` (or `kubectl kustomize`) into `.scratch/`                    |
-| Touched manifests or package deps            | Trivy (or project scanner) on **changed paths** — fix only scanner-desired versions for _this_ change |
+| When                                           | Check                                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Touched formatted sources (md/yml/…)           | Prettier / project formatters (`prettier -w` on changed files; then `--check`)                               |
+| Touched YAML                                   | yamllint on touched YAML                                                                                     |
+| Touched `AGENTS.md` / `.agents/` / discovery   | `python3 .agents/skills/reconcile-context/scripts/check_links.py` + `check_discovery.py`                     |
+| Touched Helm / Flux / Kustomize manifests      | `helm template` and/or `kustomize build` (or `kubectl kustomize`) into `.scratch/`                           |
+| Touched manifests or package deps              | Trivy (or project scanner) on **changed paths** — fix only scanner-desired versions for _this_ change        |
+| Touched a module with a `REGRESSION.md` ledger | Run that module's acceptance commands from the ledger ([`module-regression`](../module-regression/SKILL.md)) |
 
 Skip rows that do not match the diff. Tool missing / unavailable → note skip;
 do not invent green.
 
 Put bulky render output under [`.scratch/`](../../../.scratch/README.md), not
 in chat.
+
+Optionally run [`change-impact`](../change-impact/SKILL.md)'s
+post-implementation alignment (declared vs touched vs
+untouched-in-blast-radius) with the checks and fold any drift into the report.
 
 For a heavier manifest pass (multi-chart, unclear breakage), invoke
 `manifest-verifier` instead of re-deriving its process here.

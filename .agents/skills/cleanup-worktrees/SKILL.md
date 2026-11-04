@@ -57,22 +57,73 @@ git branch -vv
 git branch --merged "$base"
 ```
 
-Optional: check open MRs for each branch name (`glab mr list` / GitLab MCP, or
-`gh pr list` / GitHub MCP when the host is GitHub) before deleting anything that
-still has an open MR/PR head. Homelab defaults to **MR** / GitLab.
+Before deleting anything, check whether each candidate branch still heads an
+open MR/PR (`glab mr list` / GitLab MCP, or `gh pr list` / GitHub MCP when the
+host is GitHub); the classification table keeps those branches. Homelab
+defaults to **MR** / GitLab. When no MR/PR lookup is available, keep or ask
+rather than relying on the merged/content-equivalent checks alone.
 
 ### 3. Classify each non-main worktree / local branch
 
-For each candidate branch `B` (skip `main` and the primary checkout):
+For each candidate branch `B` (skip `main`, the primary checkout, and any
+worktree registered outside `$repo_root/.worktrees/` — an external checkout
+belongs to its owner's workflow, so keep or ask rather than classify it here):
 
-| Check              | How                                                                                                                   | Outcome                                                                        |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                                           | Safe (if clean or force-ok below)                                              |
-| Content-equivalent | Unique patch already on `$base` (same file hunk under a different SHA — cherry-pick / recommit)                       | Treat as safe; tip need not be an ancestor                                     |
-| Unique WIP         | `git log --oneline "$base..$B"` has commits whose **tree/diff** is not on `$base`                                     | **Keep** or ask                                                                |
-| Dirty worktree     | `git -C <path> status --porcelain`                                                                                    | See force rules                                                                |
-| Open MR/PR         | MR (or PR) still open for that head                                                                                   | **Keep** unless operator says abandon                                          |
-| Live lease         | `.scratch/worktree-leases/<branch>.lock` mtime < 24h (see [`worktrees.md`](../../rules/worktrees.md#worktree-leases)) | **Keep**; report holder — merged + clean is NOT enough under parallel sessions |
+| Check              | How                                                                                                                                                                 | Outcome                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Active session     | Newest of branch reflog (`git reflog show "$B" -1 --date=unix`) and worktree HEAD reflog (`git -C <path> reflog show HEAD -1 --date=unix`) is newer than 60 min ago | **Keep** — a live session may own it                                           |
+| Live lease         | `.scratch/worktree-leases/<branch>.lock` mtime < 24h (see [`worktrees.md`](../../rules/worktrees.md#worktree-leases))                                               | **Keep**; report holder — merged + clean is NOT enough under parallel sessions |
+| Fully merged       | `git merge-base --is-ancestor "$B" "$base"`                                                                                                                         | Safe (clean or force-ok below) only outside the active/lease window            |
+| Content-equivalent | Cherry-equivalent **or** squash-equivalent (see below)                                                                                                              | Treat as safe; tip need not be an ancestor                                     |
+| Unique WIP         | Not fully merged and not content-equivalent                                                                                                                         | **Keep** or ask                                                                |
+| Dirty worktree     | `git -C <path> status --porcelain --ignored`                                                                                                                        | See force rules                                                                |
+| Open MR/PR         | MR (or PR) still open for that head                                                                                                                                 | **Keep** unless operator says abandon                                          |
+
+**Content-equivalent** (either path is enough):
+
+1. **Cherry-equivalent:** `git cherry "$base" "$B"` prints no `+` lines
+   (every commit is `-` — same patch already on `$base` under a different SHA)
+   **and** `git merge-tree --write-tree "$base" "$B"` equals `"$base^{tree}"`.
+2. **Squash-equivalent:** the combined patch from the merge-base to `$B`
+   matches some single commit already on `$base` (squash merges) **and**
+   `git diff --quiet "$c" "$B"` against that matched commit. Per-commit
+   `git cherry` misses this — a squash commit's patch-id does not equal the
+   individual pre-squash commits.
+
+```bash
+# Cherry-equivalent (patch-id via cherry + exact tree containment)
+if ! git cherry "$base" "$B" | grep -q '^+'; then
+  tree=$(git merge-tree --write-tree "$base" "$B") &&
+    [ "$tree" = "$(git rev-parse "$base^{tree}")" ] &&
+    echo content-equivalent
+fi
+# Squash-equivalent (combined patch-id + exact tip-tree match)
+mb=$(git merge-base "$base" "$B")
+pid=$(git diff "$mb" "$B" | git patch-id --stable | awk '{print $1}')
+while read -r c; do
+  cpid=$(git diff-tree -p "$c" | git patch-id --stable | awk '{print $1}')
+  [ -n "$pid" ] && [ "$cpid" = "$pid" ] && git diff --quiet "$c" "$B" && echo content-equivalent && break
+done < <(git rev-list "$mb".."$base")
+```
+
+The tree guards above are mandatory before delete: patch equivalence ignores
+whitespace, and whitespace is semantic in YAML/Python. Keep or ask when a
+guard fails.
+
+Run the active-session check first. A freshly created worktree points at the
+base with no unique commits, so the merged/content-equivalent checks alone
+classify it as safe while its owning session is still working. Check both
+reflogs: a session working from a worktree moves its HEAD reflog (commits,
+checkouts) without necessarily moving the branch ref, so the branch reflog
+alone undercounts live sessions. Reflogs still miss a session that only reads,
+so treat a barely-expired window, any sign of life, or any live lease as
+keep-or-ask; the checks prove abandonment, never activity.
+
+The dirty check must include ignored entries (`--ignored`): plain porcelain
+output hides them, and even non-force `git worktree remove` discards ignored
+files. Ignored build outputs are disposable; ignored worktree-local state such
+as `config/state/`, `secrets.local.yaml`, logs, or `.scratch/` means keep or
+ask.
 
 **Force remove (`git worktree remove --force`) only when:**
 
@@ -90,11 +141,18 @@ Order matters: remove the worktree first, then delete the branch.
 ```bash
 # Prefer without --force; add --force only per rules above
 git worktree remove [.worktrees/<type>/<slug> | --force ...]
+# Revalidate the tip immediately before deleting: a resumed session can commit
+# between classification and removal (TOCTOU). `git branch -d` tests
+# mergedness into the *current checkout*, not $base, so re-run
+# `git merge-base --is-ancestor <type>/<slug> "$base"` (fully merged) or both
+# content-equivalent checks with their tree guards against the current tip.
+# Delete only when the re-check still passes; keep the branch otherwise.
 git branch -D <type>/<slug>
 ```
 
-Orphan local branches (no worktree) that are fully merged / content-equivalent:
-`git branch -D <name>` only.
+Orphan local branches (no worktree) get the same tip revalidation against
+`$base` before delete, then `git branch -D <name>` only when the re-check still
+holds.
 
 ### 6. Prune
 

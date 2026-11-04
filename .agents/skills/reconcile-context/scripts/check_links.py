@@ -432,12 +432,18 @@ def is_indented_code_line(content):
     return n >= 4
 
 
-def update_fence(fence, line):
+def update_fence(fence, line, allow_close=True):
     """Advance CommonMark fence state. Return ``(new_fence, is_delimiter)``.
 
     *fence* is ``None`` or ``(char, min_len)``. A closing fence must use the
     same character, be at least as long as the opener, and have no info
     string. Nested ````` inside a ```` fence stays content.
+
+    When a fence is open and the line is closer-shaped, *allow_close*
+    decides whether it closes. Callers that know the raw container prefix
+    pass False for lines CommonMark treats as fence content (a
+    ``> ``` ``-shaped line inside a document fence, a deeper quote run
+    inside a blockquote fence, a sibling list marker under a list fence).
     """
     m = _FENCE.match(line.rstrip("\n"))
     if not m:
@@ -449,8 +455,279 @@ def update_fence(fence, line):
             return fence, False
         return (ch, n), True
     if ch == fence[0] and n >= fence[1] and rest.strip() == "":
+        if not allow_close:
+            return fence, False
         return None, True
     return fence, False
+
+
+_LIST_MARKER = re.compile(r"(?:[*+-]|\d{1,9}[.)])[ \t]+")
+
+
+def _container_scan(line):
+    """Parse a raw line's leading container prefix: ``>`` blockquote
+    markers and list markers at any depth, each behind up to three indent
+    characters, with one optional space swallowed after a ``>``.
+
+    Deterministic and linear: the space after a ``>`` is consumed in one
+    place only, and depth is bounded by line length, not a fixed count.
+    Returns ``(quote_depth, list_depth, fence_offset)``.
+    """
+    quote = lists = 0
+    pos = 0
+    n = len(line)
+    while True:
+        start = pos
+        while pos < n and line[pos] in " \t" and pos - start < 3:
+            pos += 1
+        if pos < n and line[pos] == ">":
+            quote += 1
+            pos += 1
+            if pos < n and line[pos] in " \t":
+                pos += 1
+            continue
+        marker = _LIST_MARKER.match(line, pos)
+        if marker is None:
+            break
+        lists += 1
+        pos = marker.end()
+    return quote, lists, pos
+
+
+def _after_quotes(line):
+    """Offset past leading ``>`` markers and the optional space after each.
+
+    Indent not followed by ``>`` stays in place so sibling-fence detection
+    measures a container-relative margin: raw ``lstrip`` margin is always
+    zero on a ``>``-prefixed line, which hid indented continuation and made
+    the marker check read the quote character instead of the list marker.
+    """
+    pos = 0
+    n = len(line)
+    while True:
+        start = pos
+        look = pos
+        while look < n and line[look] in " \t" and look - start < 3:
+            look += 1
+        if look < n and line[look] == ">":
+            pos = look + 1
+            if pos < n and line[pos] in " \t":
+                pos += 1
+            continue
+        return pos
+
+
+def _content_margin(line):
+    """Indent after quote prefixes, and the offset where that indent starts."""
+    at = _after_quotes(line)
+    rest = line[at:]
+    return at, len(rest) - len(rest.lstrip())
+
+
+def _quote_marker_indent(line, depth):
+    """Raw indent before the ``(depth + 1)``-th ``>`` marker, or None.
+
+    Walks with the same rules as ``_container_scan``: up to three indent
+    characters before a marker, one optional space after it. Returns the
+    indent measured from after the *depth*-th marker, or ``None`` when
+    the line has no deeper quote marker.
+    """
+    pos = 0
+    n = len(line)
+    for _ in range(depth):
+        start = pos
+        while pos < n and line[pos] in " \t" and pos - start < 3:
+            pos += 1
+        if pos >= n or line[pos] != ">":
+            return None
+        pos += 1
+        if pos < n and line[pos] in " \t":
+            pos += 1
+    start = pos
+    look = pos
+    while look < n and line[look] in " \t" and look - start < 3:
+        look += 1
+    if look >= n or line[look] != ">":
+        return None
+    return look - pos
+
+
+def _pending_parts(pending):
+    """``(indent, quote_only)`` from ``container_content`` state."""
+    if isinstance(pending, tuple):
+        return pending[0], bool(pending[1])
+    return pending or 0, False
+
+
+def _continuation_column(raw_line, pending):
+    """Content column when *raw_line* continues a list item, else None.
+
+    *pending* is the container state from the previous line. A fence under
+    a list item is indented to that item's content column and usually has
+    no list marker of its own. The returned column is relative to the
+    line's blockquote prefix, which is the same measure ``_fence_closer_ok``
+    uses for a marker-line list fence.
+    """
+    indent, quote_only = _pending_parts(pending)
+    if quote_only or indent <= 0:
+        return None
+    qpos = _after_quotes(raw_line)
+    rel = indent - qpos
+    if rel <= 0:
+        return None
+    cols = 0
+    for ch in raw_line[qpos:]:
+        if ch == " ":
+            cols += 1
+        elif ch == "\t":
+            cols = (cols // 4 + 1) * 4
+        else:
+            break
+        if cols >= rel:
+            return rel
+    return None
+
+
+def _rel_marker_column(line):
+    """Indent of the first list marker after quote prefixes, or None."""
+    pos = _after_quotes(line)
+    n = len(line)
+    look = pos
+    while look < n and line[look] in " \t" and look - pos < 3:
+        look += 1
+    if look < n and _LIST_MARKER.match(line, look):
+        return look - pos
+    return None
+
+
+def _fence_context(raw_line, pending=0):
+    """Opener context for a fence: kind, quote depth, prefix, margin.
+
+    Returns ``[kind, quote_depth, prefix, margin, saw_indented]`` where
+    kind is ``"doc"``, ``"quote"``, or ``"container"`` (list markers).
+    *prefix* is the raw container prefix up to the fence run, *margin* the
+    content indent measured after quote prefixes, and *saw_indented* a
+    mutable flag set once a body line is indented past the opener margin.
+
+    A fence opened by indent under a list item has no marker on the opener
+    line. It is still a container fence: *prefix* is empty and *margin* is
+    the item's content column, so a later sibling or interrupt closer is
+    not judged with document or quote rules.
+    """
+    quote, lists, at = _container_scan(raw_line)
+    if lists:
+        _, margin = _content_margin(raw_line)
+        # Keep the opener's quote depth. An indented continuation closer
+        # repeats those ``>`` markers and omits the list marker, so a
+        # container fence cannot match it on the raw prefix alone.
+        return ["container", quote, raw_line[:at], margin, False]
+    column = _continuation_column(raw_line, pending)
+    if column is not None:
+        return ["container", quote, "", column, False]
+    if quote:
+        return ["quote", quote, "", 0, False]
+    return ["doc", 0, "", 0, False]
+
+
+def _continuation_fence_closer_ok(raw_line, ctx):
+    """Closer rules for a fence opened on a list-item continuation line.
+
+    ``ctx[3]`` is the item's content column relative to ``ctx[1]`` quote
+    markers. A list or blockquote marker before that column ends the item,
+    so a closer-shaped line there closes the fence. A marker at the column
+    is inside the item and stays fence content. An indented closer, a
+    parent-blockquote leftover, and a shallower quote run close too.
+    """
+    quote, lists, _at = _container_scan(raw_line)
+    column = ctx[3]
+    if quote > ctx[1]:
+        indent = _quote_marker_indent(raw_line, ctx[1])
+        return indent is not None and indent < column
+    if lists:
+        if quote < ctx[1]:
+            return True
+        marker_col = _rel_marker_column(raw_line)
+        return marker_col is not None and marker_col < column
+    return True
+
+
+def _fence_closer_ok(raw_line, fence, ctx):
+    """True when a closer-shaped raw line may close the open fence.
+
+    The closer's container prefix must match the opener's kind: a
+    document-level fence closes only at document level; a blockquote fence
+    closes at the opener's quote depth or any shallower depth (the optional
+    space after ``>`` may vary per line). A shallower ``>`` run ends the
+    inner blockquote, so the leftover closer still closes the fence; a
+    deeper run is content left after CommonMark strips the parent markers.
+    A list fence closes on an exact replay of the opener's raw prefix,
+    at document level, on an indented continuation that keeps the
+    opener's blockquote markers and omits the list marker, on a
+    parent-blockquote leftover that ends the list item, or on a deeper
+    quote marker that interrupts the item. A sibling
+    list marker after indented continuation opens a sibling item instead.
+    A continuation fence (empty prefix) uses the item content column
+    instead of that prefix replay.
+    """
+    quote, lists, at = _container_scan(raw_line)
+    kind = ctx[0]
+    if kind == "doc":
+        return quote == 0 and lists == 0
+    if kind == "quote":
+        # Fewer ``>`` markers than the opener end the inner blockquote,
+        # including a raw line with none. A closer-shaped line at that
+        # depth still closes the fence; a deeper run is fence content.
+        # A list marker still inside that quote is content. A list marker
+        # outside it (shallower depth, including none) ends the quote, so
+        # the fence closes there too.
+        if lists and quote >= ctx[1]:
+            return False
+        return quote <= ctx[1]
+    if not ctx[2]:
+        return _continuation_fence_closer_ok(raw_line, ctx)
+    if quote == 0 and lists == 0:
+        return True
+    if lists and raw_line.startswith(ctx[2]):
+        run_ch, run_len = fence[0], fence[1]
+        body = raw_line[len(ctx[2]) :]
+        if not re.match(rf"{re.escape(run_ch)}{{{run_len},}}[ \t]*$", body):
+            return False
+        content_at, margin = _content_margin(raw_line)
+        if (
+            ctx[4]
+            and margin <= ctx[3]
+            and _LIST_MARKER.match(raw_line, content_at + margin)
+        ):
+            return False
+        return True
+    # Quoted-list continuation, or the parent blockquote left once the
+    # list item ends. The usual closer keeps the opener's ``>`` markers
+    # and reaches the fence by indent, so it has no list marker to replay;
+    # at most three spaces past the item's content column still count.
+    # A smaller margin is not inside the item: the ``>`` run is a leftover
+    # of the parent quote and the closer-shaped remainder closes the fence.
+    # A shallower ``>`` run ends the inner blockquote the same way.
+    if not lists and quote and quote <= ctx[1]:
+        if quote < ctx[1]:
+            return True
+        _, margin = _content_margin(raw_line)
+        column = len(ctx[2]) - _after_quotes(ctx[2])
+        if margin <= column + 3:
+            return True
+    # A deeper ``>`` run than the opener's quote depth interrupts the list
+    # item: CommonMark starts a nested blockquote there, and the item (and
+    # the fence inside it) ends. That holds only while the marker sits at
+    # the opener's own quote level — indented to the item's content column
+    # it opens a quote inside the item, where the fence reads it as
+    # content. This is the reverse of the quote-fence case above: a quote
+    # fence closes on a list marker that ends its blockquote, and a list
+    # fence closes on a quote marker that ends its item.
+    if not lists and quote > ctx[1]:
+        indent = _quote_marker_indent(raw_line, ctx[1])
+        column = len(ctx[2]) - _after_quotes(ctx[2])
+        if indent is not None and indent < column:
+            return True
+    return False
 
 
 def is_markdown_target(path: str) -> bool:
@@ -846,7 +1123,21 @@ def folded_path_key(path):
 
 
 def tracked_markdown_lookup(path, exact, folded):
-    return exact.get(exact_path_key(path)) or folded.get(folded_path_key(path))
+    hit = exact.get(exact_path_key(path))
+    if hit is not None:
+        return hit
+    candidate = folded.get(folded_path_key(path))
+    # A case-folded match is only real when the filesystem itself folds
+    # case: the link path and the tracked file must denote the same file
+    # on disk. On a case-sensitive filesystem an untracked case variant is
+    # a different file (or missing), and the link is broken.
+    if candidate is not None:
+        try:
+            if os.path.samefile(path, candidate):
+                return candidate
+        except OSError:
+            return None
+    return None
 
 
 def within_root(path):
@@ -908,6 +1199,7 @@ def anchor_map(md_files):
         anchors = set()
         refs = _collect_ref_map(text)
         fence = None
+        fence_ctx = None
         para = []
         pending = 0
         in_comment = False
@@ -924,7 +1216,21 @@ def anchor_map(md_files):
             if prev_indent and not new_indent:
                 para = []
                 after_para = False
-            fence, delim = update_fence(fence, content)
+            opened = fence is None
+            if fence is not None and fence_ctx is not None:
+                if _content_margin(line)[1] > fence_ctx[3]:
+                    fence_ctx[4] = True
+            fence, delim = update_fence(
+                fence,
+                content,
+                allow_close=(
+                    True if fence is None else _fence_closer_ok(line, fence, fence_ctx)
+                ),
+            )
+            if opened and fence is not None:
+                fence_ctx = _fence_context(line, prev)
+            elif fence is None:
+                fence_ctx = None
             if delim or fence is not None:
                 para = []
                 span_run = 0
@@ -1508,11 +1814,41 @@ def _ref_def_title_pending(content):
     return dest is not None and _title_pending_state(after)
 
 
+def _unreachable_closes(text):
+    """For each offset, True when a bare-paren destination scan from there
+    can never reach its closing paren.
+
+    Each unclosed ``](`` candidate rescans the suffix once, which is
+    quadratic on pathological input (``[](x`` soup pins a CI runner for
+    minutes on a one-megabyte file). A right-to-left suffix minimum of the
+    paren balance answers "can this scan ever close" in linear total
+    time. The answer is exact only for suffixes without quote or backslash
+    characters (a quoted or escaped ``)`` is invisible to the balance but
+    visible to the real scan), so those positions keep the slow path.
+    """
+    n = len(text)
+    out = bytearray(n + 1)
+    out[n] = 1
+    minbal = 0
+    plain = True
+    for k in range(n - 1, -1, -1):
+        ch = text[k]
+        if ch in "\"'\\":
+            plain = False
+        if ch == "(":
+            minbal = min(minbal + 1, 0)
+        elif ch == ")":
+            minbal -= 1
+        out[k] = 1 if (plain and minbal >= 0) else 0
+    return out
+
+
 def extract_link_dests(text):
     """Yield inline-link destinations, including <> and balanced parentheses."""
     i = 0
     n = len(text)
     opens = []
+    unreachable = None
     while i < n:
         if text[i] == "\\" and i + 1 < n:
             i += 2
@@ -1556,6 +1892,11 @@ def extract_link_dests(text):
                     break
                 p += 1
             i = end
+            continue
+        if unreachable is None:
+            unreachable = _unreachable_closes(text)
+        if unreachable[k]:
+            i = k
             continue
         depth = 1
         p = k
@@ -1603,6 +1944,7 @@ def extract_link_dests(text):
 def _collect_ref_map(text):
     refs = {}
     fence = None
+    fence_ctx = None
     pending = 0
     in_comment = False
     after_para = False
@@ -1612,10 +1954,25 @@ def _collect_ref_map(text):
     pending_title = False
     pending_label = None
     for line in text.splitlines():
+        prev_pending = pending
         pending, content = container_content(
             line, pending, allow_list_interrupt=not after_para
         )
-        fence, delim = update_fence(fence, content)
+        opened = fence is None
+        if fence is not None and fence_ctx is not None:
+            if _content_margin(line)[1] > fence_ctx[3]:
+                fence_ctx[4] = True
+        fence, delim = update_fence(
+            fence,
+            content,
+            allow_close=(
+                True if fence is None else _fence_closer_ok(line, fence, fence_ctx)
+            ),
+        )
+        if opened and fence is not None:
+            fence_ctx = _fence_context(line, prev_pending)
+        elif fence is None:
+            fence_ctx = None
         if delim or fence is not None:
             if not content.strip():
                 after_para = False
@@ -1707,6 +2064,7 @@ def link_targets(text):
     refs = _collect_ref_map(text)
     lines = text.splitlines()
     fence = None
+    fence_ctx = None
     pending = 0
     in_comment = False
     after_para = False
@@ -1735,10 +2093,25 @@ def link_targets(text):
 
     pending_label = None
     for line in lines:
+        prev_pending = pending
         pending, content = container_content(
             line, pending, allow_list_interrupt=not after_para
         )
-        fence, delim = update_fence(fence, content)
+        opened = fence is None
+        if fence is not None and fence_ctx is not None:
+            if _content_margin(line)[1] > fence_ctx[3]:
+                fence_ctx[4] = True
+        fence, delim = update_fence(
+            fence,
+            content,
+            allow_close=(
+                True if fence is None else _fence_closer_ok(line, fence, fence_ctx)
+            ),
+        )
+        if opened and fence is not None:
+            fence_ctx = _fence_context(line, prev_pending)
+        elif fence is None:
+            fence_ctx = None
         if delim or fence is not None:
             yield from flush_para()
             pending_ref_emit = False
@@ -1865,16 +2238,22 @@ def main():
     surface_set = set(surface_files)
     bad = [entry for entry in read_bad if entry[0] in surface_set]
     already_bad = {f for f, _, _ in bad}
+    origins = []
     for f in surface_files:
-        # Resolve relative links from the real file, not a discovery symlink
-        # path (.cursor/agents/foo.md → .agents/agents/foo/agent.md). Otherwise
-        # ../../context/constraints.md looks for repo-root context/ and fails.
-        base = os.path.dirname(os.path.realpath(f))
         text, why = read_markdown(f)
         if text is None:
             if f not in already_bad:
                 bad.append((f, os.path.relpath(f, ROOT), why))
             continue
+        origins.append((f, text))
+    # Resolve relative links from the real file, not a discovery symlink
+    # path (.cursor/agents/foo.md → .agents/agents/foo/agent.md). Otherwise
+    # ../../context/constraints.md looks for repo-root context/ and fails.
+    # Upstream instead rescans tracked symlink aliases with the alias path as
+    # base in --all mode; realpath resolution from the target covers the same
+    # alias content here without the consumer-layout false positives.
+    for f, text in origins:
+        base = os.path.dirname(os.path.realpath(f))
         for target in link_targets(text):
             parts = urlsplit(target)
             path = unquote(parts.path)

@@ -38,6 +38,15 @@ fifth block.
 
 **Gaps/concerns:** Only if real. Omit when empty; don't write "none".
 
+## One decision per turn
+
+**One decision per turn**: ask, wait for the operator's answer, then ask the
+next. Batching several questions into one turn is for **independent factual
+gaps** only. Dependent design decisions, including every
+[`alignment`](../skills/alignment/SKILL.md) turn, get one question per turn.
+Presenting options for that one decision is fine; stacking questions bewilders
+instead of aligning.
+
 ## Strawman drafts
 
 For open-ended asks (a definition, design, plan, or name), don't just ask the

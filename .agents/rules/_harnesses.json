@@ -26,14 +26,18 @@
       "context-management",
       "general",
       "ground-before-asking",
+      "merge-authorization",
+      "ontology-framework",
       "ponytail",
       "protected-paths",
       "question-format",
+      "research-before-code",
       "response-shape",
       "security",
       "stop-loss",
       "subagents",
       "surgical-edits",
+      "untrusted-content",
       "worktrees"
     ],
     "always_on": [
@@ -42,14 +46,18 @@
       "context-management",
       "general",
       "ground-before-asking",
+      "merge-authorization",
+      "ontology-framework",
       "ponytail",
       "protected-paths",
       "question-format",
+      "research-before-code",
       "response-shape",
       "security",
       "stop-loss",
       "subagents",
       "surgical-edits",
+      "untrusted-content",
       "worktrees"
     ]
   }

@@ -36,6 +36,7 @@ true and thin. Stale context text is confidently wrong.
 python3 .agents/skills/reconcile-context/scripts/check_links.py
 python3 .agents/skills/reconcile-context/scripts/check_discovery.py
 python3 .agents/skills/reconcile-context/scripts/sync_surfaces.py --check
+python3 .agents/skills/reconcile-context/scripts/check_frontmatter.py
 ```
 
 Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
@@ -52,6 +53,12 @@ intentional always-on rule change, regenerate with `--write` — never hand-edit
 
 Hook-safe: no side effects, nonzero exit on broken links, discovery drift, or
 surface drift.
+
+`check_frontmatter.py` validates the shape of every `SKILL.md` frontmatter
+block: `name` matches the directory, `description` is present and not a
+literal block scalar (which breaks flat-table renderers), body non-empty.
+Findings warn by default so an adopting repo isn't failed on day one; pass
+`--all` to include rules and agent templates, `--strict` to fail on findings.
 
 ### 2. Structural drift
 

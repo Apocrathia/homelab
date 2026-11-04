@@ -96,8 +96,12 @@ Prefer **GitLab MCP / `glab`** when available; else `git log`. Do not assume
 `gh` / GitHub.
 
 ```bash
+# Fetch latest main so history checks see external merges, not just the
+# session worktree's branch.
+git fetch origin main
+
 # Since last session: commits that touched context surfaces
-git log --oneline --since="<last session date or tag>" -- \
+git log --oneline origin/main --since="<last session date or tag>" -- \
   AGENTS.md CLAUDE.md .agents/ docs/
 
 # Recent merged MRs (GitLab) — adapt to glab / GitLab MCP filters available
@@ -106,7 +110,7 @@ glab mr list --merged --limit 20
 # and description when the title or path set looks context-relevant.
 
 # If glab / GitLab MCP unavailable, use the commit log
-git log --oneline --merges --since="<last session date>" -- \
+git log --oneline --merges origin/main --since="<last session date>" -- \
   AGENTS.md CLAUDE.md .agents/ docs/
 ```
 
@@ -198,6 +202,8 @@ Propose writes to [`.agents/memories/`](../../memories/README.md):
 - File convention: `.agents/memories/<topic>.md`
 - Sections: **Context**, **Lesson**, **References**
 - Keep it short — one page max per topic
+- Commit memory files to a follow-up commit or MR on `main` before `clock-out`
+  removes the worktree; untracked worktree files are lost on cleanup
 
 If a lesson is always-on policy, it belongs in a rule or
 [`constraints.md`](../../context/constraints.md), not memories.

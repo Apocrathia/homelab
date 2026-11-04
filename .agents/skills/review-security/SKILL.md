@@ -71,6 +71,52 @@ code, with what input, and what data or privileges are at stake.
 - Crypto: weak algorithms, static IVs, homegrown schemes, key material handling
 - Least privilege: new permissions, broad IAM, or cross-tenant data access
 
+## Noise control
+
+A clean review is a valid review. `result: pass` with zero findings is the
+correct output for a diff with no reachable security defect — do not
+manufacture findings to justify the run. Theoretical hardening noise drowns the
+signal real findings need.
+
+- **Report above ~80% confidence.** Drop what you cannot ground in a reachable
+  path.
+- **Consolidate.** One finding per vulnerability class across the diff, not
+  one per endpoint.
+- **Pre-report gate.** Answer all four before filing; any "no" or "unsure"
+  demotes or drops the finding:
+  1. Can I cite the exact line? Vague findings ("the auth layer looks weak")
+     are dropped.
+  2. Can I name the concrete attack — who triggers it, with what input, and
+     what data or privilege is at stake? A CVE label is not an attack.
+  3. Have I traced the trust boundary? Check who reaches the code, what
+     validates the input upstream, and what already stops the attack.
+  4. Is the severity defensible? A missing header is never `critical`; a
+     theoretical injection behind an authenticated admin surface is not
+     `high`. Severity inflation erodes trust faster than missed findings.
+- **Proof for `critical` and `high`.** Each carries the exact snippet and line,
+  the attack scenario (actor, input, reachable path, blast radius), and why
+  existing controls (validation, authz, framework defaults) do not stop it.
+  Cannot produce all three → demote or drop.
+
+### False-positive catalog
+
+Skip these unless the evidence is specific to this code:
+
+- Randomness flags in non-cryptographic contexts (jitter, sampling, UI
+  shuffles)
+- Dynamic-code flags on intentional, documented code-loading surfaces (plugin
+  systems, templates the project already trusts)
+- Authn/authz/CSRF flags on internal-only surfaces with no untrusted input
+  path — trace reachability before flagging
+- Placeholder secrets in tests, fixtures, and examples (obviously fake keys,
+  example domains)
+- Universal "missing rate limit / header / CSP" findings raised with no
+  exposure path
+- Validation flags on inputs already constrained at the trust boundary
+  (schema at the edge, typed internal callers)
+- Injection theory on paths already using the project's parameterization or
+  escaping helpers
+
 ## Task prompt (when parent spawns)
 
 Use the contract in [`.agents/rules/subagents.md`](../../rules/subagents.md):

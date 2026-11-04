@@ -48,23 +48,35 @@ def _agent_sot_ids(parent: str) -> list[str]:
     """Agent ids from directories (<name>/agent.md) or flat .md files (<name>.md).
 
     Raises ValueError if the same id appears in both layouts (e.g. foo/agent.md
-    and foo.md), which would silently shadow one source.
+    and foo.md), which would silently shadow one source, or if a directory
+    layout persona is missing its <name>/agent.md (the id would otherwise
+    drop out of link validation while the directory still masks orphan
+    detection).
     """
     if not os.path.isdir(parent):
         return []
     dir_ids: set[str] = set()
     flat_ids: set[str] = set()
+    malformed_dirs: list[str] = []
     for name in os.listdir(parent):
         full = os.path.join(parent, name)
-        if os.path.isdir(full) and os.path.isfile(os.path.join(full, "agent.md")):
-            dir_ids.add(name)
+        if os.path.isdir(full):
+            if os.path.isfile(os.path.join(full, "agent.md")):
+                dir_ids.add(name)
+            else:
+                malformed_dirs.append(name)
         elif name.endswith(".md") and name != "README.md" and os.path.isfile(full):
             flat_ids.add(name[:-3])
     duplicates = dir_ids & flat_ids
     if duplicates:
         raise ValueError(
-            f"duplicate agent ids in {parent}: both directory and flat-file "
-            f"layouts exist for {sorted(duplicates)}"
+            f"DUPLICATE_ID: duplicate agent ids in {parent}: both directory "
+            f"and flat-file layouts exist for {sorted(duplicates)}"
+        )
+    if malformed_dirs:
+        raise ValueError(
+            f"MISSING_AGENT_MD: agent directories in {parent} missing "
+            f"agent.md: {sorted(malformed_dirs)}"
         )
     return sorted(dir_ids | flat_ids)
 
@@ -172,33 +184,8 @@ def main() -> int:
         failures.append(("MISSING", "agents-sot", _rel(agents_sot), None))
     if not os.path.isdir(skills_sot):
         failures.append(("MISSING", "skills-sot", _rel(skills_sot), None))
-    try:
-        agent_ids = _agent_sot_ids(agents_sot)
-    except ValueError as exc:
-        print(f"DUPLICATE_ID [agent-sot] {exc}")
-        print("\n1 discovery parity failure(s).")
-        return 1
     skill_ids = _sot_ids(skills_sot)
-    agent_id_set = set(agent_ids)
-    skill_id_set = set(skill_ids)
-
-    for agent_id in agent_ids:
-        expected = _agent_expected(agents_sot, agent_id)
-        _check_symlink(
-            os.path.join(ROOT, ".cursor", "agents", f"{agent_id}.md"),
-            expected,
-            "agent-cursor",
-            failures,
-        )
-        _check_symlink(
-            os.path.join(ROOT, ".claude", "agents", f"{agent_id}.md"),
-            expected,
-            "agent-claude",
-            failures,
-        )
-
     for skill_id in skill_ids:
-        expected = os.path.join(skills_sot, skill_id)
         # The SKILL.md entrypoint is what Cursor/Claude actually load; the
         # containing directory alone can resolve while the entrypoint is
         # deleted, replaced by a directory, or symlinked outside .agents/.
@@ -215,19 +202,90 @@ def main() -> int:
             failures.append(("MISSING", "skill-md-sot", _rel(expected_skill_md), None))
         else:
             _check_regular_file(expected_skill_md, "skill-md-sot", failures)
-        _check_symlink(
-            os.path.join(ROOT, ".cursor", "skills", skill_id),
-            expected,
-            "skill-cursor",
-            failures,
-        )
+    try:
+        agent_ids = _agent_sot_ids(agents_sot)
+    except ValueError as exc:
+        # Skill SoT / SKILL.md checks already ran; emit those before
+        # returning so a malformed agent directory does not hide them.
+        for code, kind, rel, expected in failures:
+            if expected is None:
+                print(f"{code} [{kind}] {rel}")
+            else:
+                print(f"{code} [{kind}] {rel} -> {expected}")
+        print(f"[agent-sot] {exc}")
+        print(f"\n{len(failures) + 1} discovery parity failure(s).")
+        return 1
+    agent_id_set = set(agent_ids)
+    skill_id_set = set(skill_ids)
 
+    # --- Agent discovery ---
+    # Two valid layouts:
+    #   1. Directory-level symlink: .cursor/agents -> ../.agents/agents
+    #   2. Per-file symlinks: .cursor/agents/<id>.md -> ../../.agents/agents/<id>.md
+    for harness in ("cursor", "claude"):
+        disc_dir = os.path.join(ROOT, f".{harness}", "agents")
+        if os.path.islink(disc_dir):
+            if not os.path.exists(disc_dir):
+                failures.append(
+                    ("BROKEN", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
+                )
+                continue
+            if os.path.realpath(disc_dir) == os.path.realpath(agents_sot):
+                continue  # directory-level symlink is sufficient
+            failures.append(
+                ("WRONG_TARGET", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
+            )
+            continue
+        if not os.path.isdir(disc_dir):
+            failures.append(
+                ("MISSING", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
+            )
+            continue
+        # Per-file layout: check each agent file.
+        for agent_id in agent_ids:
+            expected = _agent_expected(agents_sot, agent_id)
+            _check_symlink(
+                os.path.join(disc_dir, f"{agent_id}.md"),
+                expected,
+                f"agent-{harness}",
+                failures,
+            )
+
+    # --- Skill discovery ---
+    # Claude: .claude/skills -> ../.agents/skills (directory-level symlink).
     _check_symlink(
         os.path.join(ROOT, ".claude", "skills"),
         skills_sot,
         "skills-claude",
         failures,
     )
+    # Cursor: per-skill symlinks, or a directory-level mirror is sufficient.
+    cursor_skills_dir = os.path.join(ROOT, ".cursor", "skills")
+    if os.path.islink(cursor_skills_dir):
+        if not os.path.exists(cursor_skills_dir):
+            failures.append(
+                ("BROKEN", "skills-cursor", _rel(cursor_skills_dir), _rel(skills_sot))
+            )
+        elif os.path.realpath(cursor_skills_dir) == os.path.realpath(skills_sot):
+            pass  # directory-level symlink is sufficient
+        else:
+            failures.append(
+                (
+                    "WRONG_TARGET",
+                    "skills-cursor",
+                    _rel(cursor_skills_dir),
+                    _rel(skills_sot),
+                )
+            )
+    else:
+        for skill_id in skill_ids:
+            _check_symlink(
+                os.path.join(cursor_skills_dir, skill_id),
+                os.path.join(skills_sot, skill_id),
+                "skill-cursor",
+                failures,
+            )
+
     _check_symlink(
         os.path.join(ROOT, "CLAUDE.md"),
         os.path.join(ROOT, "AGENTS.md"),
@@ -235,27 +293,28 @@ def main() -> int:
         failures,
     )
 
-    _orphan_entries(
-        os.path.join(ROOT, ".cursor", "agents"),
-        agent_id_set,
-        "agent-cursor",
-        md_only=True,
-        failures=failures,
-    )
-    _orphan_entries(
-        os.path.join(ROOT, ".claude", "agents"),
-        agent_id_set,
-        "agent-claude",
-        md_only=True,
-        failures=failures,
-    )
-    _orphan_entries(
-        os.path.join(ROOT, ".cursor", "skills"),
-        skill_id_set,
-        "skill-cursor",
-        md_only=False,
-        failures=failures,
-    )
+    # --- Orphan detection ---
+    # A directory-level symlink mirrors the SoT exactly, so only real
+    # directories can hold orphans.
+    for harness in ("cursor", "claude"):
+        disc_dir = os.path.join(ROOT, f".{harness}", "agents")
+        if os.path.islink(disc_dir):
+            continue
+        _orphan_entries(
+            disc_dir,
+            agent_id_set,
+            f"agent-{harness}",
+            md_only=True,
+            failures=failures,
+        )
+    if os.path.isdir(cursor_skills_dir) and not os.path.islink(cursor_skills_dir):
+        _orphan_entries(
+            cursor_skills_dir,
+            skill_id_set,
+            "skill-cursor",
+            md_only=False,
+            failures=failures,
+        )
 
     for code, kind, rel, expected in failures:
         if expected is None:

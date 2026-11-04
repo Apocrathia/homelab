@@ -16,7 +16,8 @@ fixes.
 
 **Upstream:** [`review-loop`](../review-loop/SKILL.md) should report **clean**
 before you commit, unless the operator explicitly overrides. **Downstream:**
-after merge, run [`clock-out`](../clock-out/SKILL.md).
+after merge, run [`retrospective`](../retrospective/SKILL.md), then
+[`clock-out`](../clock-out/SKILL.md).
 
 For MR-only maintenance (branch already pushed, MR open, no new commits to
 author), [`watch-mr`](../watch-mr/SKILL.md) alone is enough. Prefer this skill

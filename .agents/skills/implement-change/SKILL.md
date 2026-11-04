@@ -128,7 +128,9 @@ whether reviewer / security-analyst / documentation-reviewer / SRE should run.
 ```
 
 A single known file with an obvious edit may skip planner and run in the
-parent — protected paths still need confirm.
+parent — protected paths still need confirm. For non-trivial changes, run
+[`change-impact`](../change-impact/SKILL.md) first (read-only, optional) and
+feed its blast radius into the plan.
 
 ### 5. Review and verify
 

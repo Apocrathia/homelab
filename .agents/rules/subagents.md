@@ -23,6 +23,23 @@ spawning implementers (or editing files in the parent), open or create a git
 worktree on a dedicated branch under `.worktrees/`. Do not edit in the workspace
 root checkout. See [`worktrees.md`](./worktrees.md).
 
+## Pick a persona as soon as the work is identified
+
+The persona table below is a routing surface, not a menu to browse after you
+have started. The moment you can name the work, route it; do not work the task
+yourself while a matching skill or persona exists.
+
+- Work a skill's trigger covers → run the skill; its fan-out delegates to
+  these personas per its own gates.
+- Named work type → that persona, before you touch the work.
+- Broad, multi-slice work when the parent must stay context-lean → the
+  orchestrator persona, when the project defines one (needs nested spawning).
+- No matching row and no applicable built-in Task type → an unnamed Task
+  with the always-on prompt contract.
+- Work you cannot name yet → scout first, then re-match.
+
+The "When to stay in the parent" exceptions below still apply.
+
 When a task clearly matches a persona under [`.agents/agents/`](../agents/),
 adopt it (or delegate) instead of freelancing a weaker process.
 
