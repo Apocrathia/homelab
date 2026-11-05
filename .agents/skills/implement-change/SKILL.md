@@ -76,8 +76,7 @@ Also invoke by path when the surface matches:
 | Domain restore       | matching restore skill                                                         |
 | Incident / Flux      | [`site-reliability-engineer`](../../agents/site-reliability-engineer/agent.md) |
 
-Interactive IDE drafts may still land under `.cursor/plans/`; durable
-executable plans for the lap live under `docs/plans/`.
+Durable executable plans for the lap live under `docs/plans/`.
 
 ## Workflow
 

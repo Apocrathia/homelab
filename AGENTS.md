@@ -157,20 +157,18 @@ rows, read each.
 | Plain-language / ADHD-shaped output                                    | [`eli5`](./.agents/skills/eli5/SKILL.md), [`i-have-adhd`](./.agents/skills/i-have-adhd/SKILL.md)                                                                                           |
 | Reconciling agent context drift                                        | [`reconcile-context`](./.agents/skills/reconcile-context/SKILL.md)                                                                                                                         |
 | Agent rules (behavioral + domain)                                      | [`.agents/rules/`](./.agents/rules/README.md)                                                                                                                                              |
-| Cursor-only rules / hooks / commands                                   | [`.cursor/README.md`](./.cursor/README.md)                                                                                                                                                 |
 | Claude Code adapter                                                    | [`.claude/README.md`](./.claude/README.md)                                                                                                                                                 |
 
 ## Where things live
 
-| Path                                                | Role                                                   |
-| --------------------------------------------------- | ------------------------------------------------------ |
-| [`.agents/context/`](./.agents/context/README.md)   | Living context (hub + modules)                         |
-| [`.agents/skills/`](./.agents/README.md)            | Procedural skills (source of truth)                    |
-| [`.agents/agents/`](./.agents/README.md)            | Personas (source of truth)                             |
-| [`.agents/rules/`](./.agents/rules/README.md)       | All agent rules (Cursor discovers via `.mdc` symlinks) |
-| [`.agents/memories/`](./.agents/memories/README.md) | Cross-session lessons                                  |
-| [`.cursor/`](./.cursor/README.md)                   | Cursor adapter (hooks, commands, discovery symlinks)   |
-| [`.claude/`](./.claude/README.md)                   | Claude Code adapter (discovery symlinks)               |
-| [`CLAUDE.md`](./CLAUDE.md)                          | Symlink → [`AGENTS.md`](./AGENTS.md)                   |
+| Path                                                | Role                                       |
+| --------------------------------------------------- | ------------------------------------------ |
+| [`.agents/context/`](./.agents/context/README.md)   | Living context (hub + modules)             |
+| [`.agents/skills/`](./.agents/README.md)            | Procedural skills (source of truth)        |
+| [`.agents/agents/`](./.agents/README.md)            | Personas (source of truth)                 |
+| [`.agents/rules/`](./.agents/rules/README.md)       | All agent rules (Markdown source of truth) |
+| [`.agents/memories/`](./.agents/memories/README.md) | Cross-session lessons                      |
+| [`.claude/`](./.claude/README.md)                   | Claude Code adapter (discovery symlinks)   |
+| [`CLAUDE.md`](./CLAUDE.md)                          | Symlink → [`AGENTS.md`](./AGENTS.md)       |
 
 Portable tree map: [`.agents/README.md`](./.agents/README.md).

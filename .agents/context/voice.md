@@ -50,5 +50,5 @@ edges when it helps. Not a press release.
   lack that context and get confused.
 - Duplicate tunable config (limits, versions, sizes) that belongs in manifests.
 - Ship AI-slop patterns (significance inflation, fake challenges sections,
-  emoji header spam). Cursor loads `humanizer.mdc` / `docs.mdc` for the
-  checklist; same bar applies for other harnesses.
+  emoji header spam). The `humanizer` and `docs` rules carry the checklist;
+  same bar applies for every harness.

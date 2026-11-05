@@ -11,7 +11,7 @@ Lap routing (`find-work` → implement → ship) lives in
 [`self-improve`](../skills/self-improve/SKILL.md). This file is only
 need → A2A agent → MCP fallback.
 
-Client usage (Cursor, Claude, Prime): [`a2a` skill](../skills/a2a/SKILL.md).
+Client usage (Claude, Prime): [`a2a` skill](../skills/a2a/SKILL.md).
 
 ## A2A base URL
 
@@ -68,7 +68,7 @@ is down or unregistered, use those aliases through LiteLLM.
 
 ## Hermes / self-improve
 
-- Orchestrator (Hermes, Cursor parent, etc.) owns the
+- Orchestrator (Hermes, agent parent, etc.) owns the
   [`self-improve`](../skills/self-improve/SKILL.md) /
   [`development-loop.md`](./development-loop.md) graph.
 - Delegate domain work to the A2A agent in the table when registered; otherwise

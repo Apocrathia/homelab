@@ -1,11 +1,6 @@
 {
-  "note": "symlink-owned vs script-owned: Cursor discovery is per-file .mdc symlinks into .agents/rules/; Claude reads CLAUDE.md -> AGENTS.md. Script-owned output is append_system at .prime/agent/APPEND_SYSTEM.md. always_on is SoT for Cursor alwaysApply:true (humanizer stays glob-only). rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force omits general and links context/voice.md instead (intentional).",
+  "note": "symlink-owned vs script-owned: Claude reads CLAUDE.md -> AGENTS.md. Script-owned output is append_system at .prime/agent/APPEND_SYSTEM.md. always_on is SoT for alwaysApply:true frontmatter (humanizer stays glob-only). rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force omits general and links context/voice.md instead (intentional).",
   "mirrors": {
-    "cursor": {
-      "enabled": false,
-      "path": ".cursor/rules",
-      "reason": "symlink owns discovery"
-    },
     "claude": {
       "enabled": false,
       "reason": "no Claude rules mirror; CLAUDE.md -> AGENTS.md"
@@ -19,7 +14,7 @@
   "append_system": {
     "enabled": true,
     "path": ".prime/agent/APPEND_SYSTEM.md",
-    "note": "always_on is SoT for Cursor alwaysApply:true. rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force may omit general and link context/voice.md instead (intentional).",
+    "note": "always_on is SoT for alwaysApply:true frontmatter. rules matches always_on as a set; order in rules is concat order. AGENTS.md Always in force may omit general and link context/voice.md instead (intentional).",
     "rules": [
       "ambiguity-goes-back-to-source",
       "clarify-dont-guess",

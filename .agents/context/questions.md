@@ -20,7 +20,7 @@ Independent discrete choices may share **one** structured-question turn when
 the tool allows multiple items. If an answer **gates** the next ask, ask one,
 wait, then continue.
 
-Harness adapters may name the concrete tool and UI quirks (e.g. Cursor:
+Harness adapters may name the concrete tool and UI quirks (see
 [`.agents/rules/question-format.md`](../rules/question-format.md)).
 This file stays harness-neutral.
 

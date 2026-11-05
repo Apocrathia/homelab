@@ -18,4 +18,3 @@ description: MCP tools usage — when to prefer MCP over CLI, tool selection, pe
   (`forceAt`); do not use `flux reconcile … --force` or `kubectl annotate`
   unless MCP fails or cannot express the action.
 - **Use Kubernetes-native methods for retrieving resource lists** rather than custom scripts or workarounds.
-- **Cursor can only use OAuth for SSE and HTTP connections** — direct header-based authentication won't work.

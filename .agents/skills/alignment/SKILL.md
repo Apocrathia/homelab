@@ -22,8 +22,8 @@ structured-question turn. Explore the tree when that answers the question; do
 not ask the operator to repeat what the repo already shows.
 
 Question channel: [`.agents/context/questions.md`](../../context/questions.md).
-Harness adapters name the concrete tool (Cursor: `question-format.mdc` /
-[`.agents/rules/question-format.md`](../../rules/question-format.md)).
+Harness adapters name the concrete tool
+([`.agents/rules/question-format.md`](../../rules/question-format.md)).
 
 ## When to run (default: early)
 
@@ -70,7 +70,7 @@ Suggested fork:
 | Implement a clear Launch brief | [`implement-change`](../implement-change/SKILL.md)                                          |
 | Docs-only under `docs/`        | docs worktree + documentation persona / reconcile-docs as applicable                        |
 | Restore / deploy domain work   | matching skill (`helm-deployment`, restore skills, …)                                       |
-| Cursor / `.agents/` / hooks    | `chore/*` worktree; protected paths per [`protected-paths`](../../rules/protected-paths.md) |
+| `.agents/` / hooks             | `chore/*` worktree; protected paths per [`protected-paths`](../../rules/protected-paths.md) |
 | Still fuzzy                    | more alignment (or stop if unattended)                                                      |
 
 After proceed, ship via the hybrid model

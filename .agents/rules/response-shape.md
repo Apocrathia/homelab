@@ -29,10 +29,10 @@ Match depth to complexity. A one-line fix does not need five paragraphs of conte
 
 - **Lead with the answer** in 1–3 sentences. No throat-clearing.
 - **Prefer bullets** over paragraphs. Cut restating the task or the prompt.
-- **Half-screen rule:** longer than that → file under `.cursor/plans/` or
-  `.scratch/` and link. Chat stays the index.
+- **Half-screen rule:** longer than that → file under `.scratch/` and link.
+  Chat stays the index.
 - **Questions:** [`.agents/context/questions.md`](../context/questions.md)
-  / `question-format.mdc`. No multi-Ask markdown dumps.
+  / `question-format.md`. No multi-Ask markdown dumps.
 - **Subagents:** summarize; never paste the full child output.
 - **Structured output** (JSON/YAML/fixed schema): emit the payload only — no
   prose prepend unless the schema asks for it.

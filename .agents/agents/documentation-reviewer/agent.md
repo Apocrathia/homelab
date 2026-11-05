@@ -20,7 +20,6 @@ This is a Kubernetes homelab repository with documentation spread across multipl
 - `flux/manifests/*/` - Application and service READMEs alongside manifests
 - `helm/*/` - Helm chart documentation
 - `talos/` - Cluster bootstrap and management guides
-- `.cursor/` - Agent context (rules, agents, skills, commands, memories)
 - `scripts/*/` - Script documentation
 
 **Key Reference Documents:**

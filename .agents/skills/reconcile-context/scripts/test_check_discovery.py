@@ -38,24 +38,12 @@ class CheckDiscoveryTest(unittest.TestCase):
         self._write(os.path.join(skill_dir, "SKILL.md"), "# Demo\n")
         self._write(os.path.join(root, "AGENTS.md"), "# Agents\n")
 
-        cursor_agents = os.path.join(root, ".cursor", "agents")
         claude_agents = os.path.join(root, ".claude", "agents")
-        cursor_skills = os.path.join(root, ".cursor", "skills")
-        os.makedirs(cursor_agents, exist_ok=True)
         os.makedirs(claude_agents, exist_ok=True)
-        os.makedirs(cursor_skills, exist_ok=True)
 
         os.symlink(
             os.path.join("..", "..", ".agents", "agents", "example", "agent.md"),
-            os.path.join(cursor_agents, "example.md"),
-        )
-        os.symlink(
-            os.path.join("..", "..", ".agents", "agents", "example", "agent.md"),
             os.path.join(claude_agents, "example.md"),
-        )
-        os.symlink(
-            os.path.join("..", "..", ".agents", "skills", "demo"),
-            os.path.join(cursor_skills, "demo"),
         )
         os.symlink(
             os.path.join("..", ".agents", "skills"),
@@ -72,17 +60,6 @@ class CheckDiscoveryTest(unittest.TestCase):
             self.assertEqual(0, status, output)
             self.assertIn("Discovery parity OK.", output)
 
-    def test_missing_cursor_agent_link(self):
-        with tempfile.TemporaryDirectory() as root:
-            self._happy_tree(root)
-            os.unlink(os.path.join(root, ".cursor", "agents", "example.md"))
-
-            status, output = self.run_checker(root)
-
-            self.assertEqual(1, status)
-            self.assertIn("MISSING [agent-cursor] .cursor/agents/example.md", output)
-            self.assertIn("discovery parity failure(s).", output)
-
     def test_claude_md_regular_file_is_not_symlink(self):
         with tempfile.TemporaryDirectory() as root:
             self._happy_tree(root)
@@ -95,19 +72,6 @@ class CheckDiscoveryTest(unittest.TestCase):
 
             self.assertEqual(1, status)
             self.assertIn("NOT_SYMLINK [claude-md] CLAUDE.md", output)
-
-    def test_orphan_cursor_skill(self):
-        with tempfile.TemporaryDirectory() as root:
-            self._happy_tree(root)
-            os.symlink(
-                os.path.join("..", "..", ".agents", "skills", "missing"),
-                os.path.join(root, ".cursor", "skills", "ghost"),
-            )
-
-            status, output = self.run_checker(root)
-
-            self.assertEqual(1, status)
-            self.assertIn("ORPHAN [skill-cursor] .cursor/skills/ghost", output)
 
     def test_wrong_target_claude_agent(self):
         with tempfile.TemporaryDirectory() as root:
@@ -138,24 +102,12 @@ class CheckDiscoveryTest(unittest.TestCase):
         self._write(os.path.join(skill_dir, "SKILL.md"), "# Demo\n")
         self._write(os.path.join(root, "AGENTS.md"), "# Agents\n")
 
-        cursor_agents = os.path.join(root, ".cursor", "agents")
         claude_agents = os.path.join(root, ".claude", "agents")
-        cursor_skills = os.path.join(root, ".cursor", "skills")
-        os.makedirs(cursor_agents, exist_ok=True)
         os.makedirs(claude_agents, exist_ok=True)
-        os.makedirs(cursor_skills, exist_ok=True)
 
         os.symlink(
             os.path.join("..", "..", ".agents", "agents", "example.md"),
-            os.path.join(cursor_agents, "example.md"),
-        )
-        os.symlink(
-            os.path.join("..", "..", ".agents", "agents", "example.md"),
             os.path.join(claude_agents, "example.md"),
-        )
-        os.symlink(
-            os.path.join("..", "..", ".agents", "skills", "demo"),
-            os.path.join(cursor_skills, "demo"),
         )
         os.symlink(
             os.path.join("..", ".agents", "skills"),
@@ -171,16 +123,6 @@ class CheckDiscoveryTest(unittest.TestCase):
 
             self.assertEqual(0, status, output)
             self.assertIn("Discovery parity OK.", output)
-
-    def test_missing_flat_file_cursor_agent_link(self):
-        with tempfile.TemporaryDirectory() as root:
-            self._flat_file_tree(root)
-            os.unlink(os.path.join(root, ".cursor", "agents", "example.md"))
-
-            status, output = self.run_checker(root)
-
-            self.assertEqual(1, status)
-            self.assertIn("MISSING [agent-cursor] .cursor/agents/example.md", output)
 
     def test_duplicate_dir_and_flat_agent_ids(self):
         with tempfile.TemporaryDirectory() as root:
@@ -202,7 +144,6 @@ class CheckDiscoveryTest(unittest.TestCase):
             # Deleting the agents source of truth (with its discovery mirrors)
             # must fail loudly, not enumerate as empty and report parity OK.
             shutil.rmtree(os.path.join(root, ".agents", "agents"))
-            shutil.rmtree(os.path.join(root, ".cursor", "agents"))
             shutil.rmtree(os.path.join(root, ".claude", "agents"))
 
             status, output = self.run_checker(root)
@@ -216,7 +157,6 @@ class CheckDiscoveryTest(unittest.TestCase):
             # Deleting the skills source of truth (with its discovery mirrors)
             # must fail loudly, not enumerate as empty and report parity OK.
             shutil.rmtree(os.path.join(root, ".agents", "skills"))
-            shutil.rmtree(os.path.join(root, ".cursor", "skills"))
             os.unlink(os.path.join(root, ".claude", "skills"))
 
             status, output = self.run_checker(root)
@@ -243,7 +183,7 @@ class CheckDiscoveryTest(unittest.TestCase):
     def test_skill_md_symlinked_outside_agents(self):
         with tempfile.TemporaryDirectory() as root:
             self._happy_tree(root)
-            # Cursor and Claude still resolve the skill directory; the
+            # Claude still resolves the skill directory; the
             # entrypoint itself redirects outside .agents/ and must be caught.
             self._write(os.path.join(root, "outside", "SKILL.md"), "# Evil\n")
             skill_md = os.path.join(root, ".agents", "skills", "demo", "SKILL.md")
@@ -269,8 +209,8 @@ class CheckDiscoveryTest(unittest.TestCase):
             self.assertIn("MISSING [skill-md-sot] .agents/skills/demo/SKILL.md", output)
 
     def test_directory_level_agent_symlinks(self):
-        """Repo layout where .cursor/agents and .claude/agents are
-        directory-level symlinks onto the source of truth."""
+        """Repo layout where .claude/agents is a directory-level symlink
+        onto the source of truth."""
         with tempfile.TemporaryDirectory() as root:
             agent_md = os.path.join(root, ".agents", "agents", "example", "agent.md")
             skill_dir = os.path.join(root, ".agents", "skills", "demo")
@@ -279,20 +219,10 @@ class CheckDiscoveryTest(unittest.TestCase):
             self._write(os.path.join(root, "AGENTS.md"), "# Agents\n")
             os.symlink("AGENTS.md", os.path.join(root, "CLAUDE.md"))
 
-            os.makedirs(os.path.join(root, ".cursor"), exist_ok=True)
-            os.symlink(
-                os.path.join("..", ".agents", "agents"),
-                os.path.join(root, ".cursor", "agents"),
-            )
             os.makedirs(os.path.join(root, ".claude"), exist_ok=True)
             os.symlink(
                 os.path.join("..", ".agents", "agents"),
                 os.path.join(root, ".claude", "agents"),
-            )
-            os.makedirs(os.path.join(root, ".cursor", "skills"), exist_ok=True)
-            os.symlink(
-                os.path.join("..", "..", ".agents", "skills", "demo"),
-                os.path.join(root, ".cursor", "skills", "demo"),
             )
             os.symlink(
                 os.path.join("..", ".agents", "skills"),
@@ -315,20 +245,10 @@ class CheckDiscoveryTest(unittest.TestCase):
             self._write(os.path.join(root, "AGENTS.md"), "# Agents\n")
             os.symlink("AGENTS.md", os.path.join(root, "CLAUDE.md"))
 
-            os.makedirs(os.path.join(root, ".cursor"), exist_ok=True)
-            os.symlink(
-                os.path.join("..", ".agents", "agents"),
-                os.path.join(root, ".cursor", "agents"),
-            )
             os.makedirs(os.path.join(root, ".claude"), exist_ok=True)
             os.symlink(
                 os.path.join("..", ".agents", "agents"),
                 os.path.join(root, ".claude", "agents"),
-            )
-            os.makedirs(os.path.join(root, ".cursor", "skills"), exist_ok=True)
-            os.symlink(
-                os.path.join("..", "..", ".agents", "skills", "demo"),
-                os.path.join(root, ".cursor", "skills", "demo"),
             )
             os.symlink(
                 os.path.join("..", ".agents", "skills"),
@@ -342,38 +262,22 @@ class CheckDiscoveryTest(unittest.TestCase):
 
     def test_wrong_target_agent_directory_symlinks(self):
         """A directory-level symlink pointing anywhere other than the
-        source of truth must fail for both harnesses."""
-        for harness in ("cursor", "claude"):
-            with self.subTest(harness=harness), tempfile.TemporaryDirectory() as root:
-                self._happy_tree(root)
-                agents = os.path.join(root, f".{harness}", "agents")
-                os.unlink(os.path.join(agents, "example.md"))
-                os.rmdir(agents)
-                os.symlink(os.path.join("..", ".agents", "skills"), agents)
-
-                status, output = self.run_checker(root)
-
-                self.assertEqual(1, status)
-                self.assertIn(
-                    f"WRONG_TARGET [agents-{harness}] .{harness}/agents"
-                    " -> .agents/agents",
-                    output,
-                )
-
-    def test_directory_level_cursor_skills_symlink(self):
-        """Cursor skill discovery may be one directory-level symlink
-        instead of per-skill symlinks."""
+        source of truth must fail."""
         with tempfile.TemporaryDirectory() as root:
             self._happy_tree(root)
-            cursor_skills = os.path.join(root, ".cursor", "skills")
-            os.unlink(os.path.join(cursor_skills, "demo"))
-            os.rmdir(cursor_skills)
-            os.symlink(os.path.join("..", ".agents", "skills"), cursor_skills)
+            agents = os.path.join(root, ".claude", "agents")
+            os.unlink(os.path.join(agents, "example.md"))
+            os.rmdir(agents)
+            os.symlink(os.path.join("..", ".agents", "skills"), agents)
 
             status, output = self.run_checker(root)
 
-            self.assertEqual(0, status, output)
-            self.assertIn("Discovery parity OK.", output)
+            self.assertEqual(1, status)
+            self.assertIn(
+                "WRONG_TARGET [agents-claude] .claude/agents"
+                " -> .agents/agents",
+                output,
+            )
 
     def test_directory_agent_missing_agent_md(self):
         """Directory persona that lost its agent.md must fail, not drop out

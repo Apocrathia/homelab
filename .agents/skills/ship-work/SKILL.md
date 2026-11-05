@@ -35,27 +35,26 @@ commit/push steps. Soft ship language ("ship it", "LGTM", "looks good", "go
 ahead") or explicit `commit` / `push` / `/ship-work` / `/self-improve` authorizes
 this lap. Never merge or approve the MR unless the operator names that action.
 
-## Non-Cursor agents
+## Agents without subagents
 
-This skill assumes Cursor's subagent system (`shell`, fix subagents).
-Agents without that layer run git and GitLab tools directly from the shell.
+This skill assumes a subagent layer (`shell`, fix subagents). Agents without
+that layer run git and GitLab tools directly from the shell.
 
 - **Step 0:** resolve MR via GitLab MCP (`user-gitlab`) or `glab mr view` on the
   host. Prefer MCP.
 - **Step 1** (uncommitted re-review): run
   [`review-loop`](../review-loop/SKILL.md) with uncommitted scope (local gates;
   add the review lens skills when deeper review is wanted).
-- **Step 3** (`watch-mr`): same Bugbot skip outside Cursor.
 
 ## Roles
 
-| Job                        | Subagent                             | Parent does                                                                                                                                                                                                         |
-| -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commit message draft       | parent                               | Read diff; follow Conventional Commits ([`.cursor/rules/conventional-commit-messages.mdc`](../../../.cursor/rules/conventional-commit-messages.mdc)) and [`draft-commit`](../draft-commit/SKILL.md) message quality |
-| Push / open MR             | `shell` (local system with git auth) | Spawn with worktree **absolute path**; prefer GitLab MCP for MR create                                                                                                                                              |
-| Local re-review (optional) | `review-loop` (local gates + lenses) | After substantial watch-mr fixes                                                                                                                                                                                    |
-| GitLab thread triage       | `shell` + fix subagents              | Same rules as `watch-mr`                                                                                                                                                                                            |
-| MR watch loop              | parent or `shell`                    | [`watch-mr`](../watch-mr/SKILL.md) until merged or dismissed                                                                                                                                                        |
+| Job                        | Subagent                             | Parent does                                                                                                                                                                                                       |
+| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commit message draft       | parent                               | Read diff; follow Conventional Commits ([`.agents/rules/conventional-commit-messages.md`](../../../.agents/rules/conventional-commit-messages.md)) and [`draft-commit`](../draft-commit/SKILL.md) message quality |
+| Push / open MR             | `shell` (local system with git auth) | Spawn with worktree **absolute path**; prefer GitLab MCP for MR create                                                                                                                                            |
+| Local re-review (optional) | `review-loop` (local gates + lenses) | After substantial watch-mr fixes                                                                                                                                                                                  |
+| GitLab thread triage       | `shell` + fix subagents              | Same rules as `watch-mr`                                                                                                                                                                                          |
+| MR watch loop              | parent or `shell`                    | [`watch-mr`](../watch-mr/SKILL.md) until merged or dismissed                                                                                                                                                      |
 
 ## Prerequisites
 
@@ -107,8 +106,7 @@ anything changed since the last clean loop.
 
 Commit with Conventional Commits (imperative subject, body covering why /
 non-obvious choices). Use a HEREDOC. Do not `--no-verify` unless the operator
-asks. Soft attribution: prefer
-`Co-authored-by: Composer <composer@cursor.com>`.
+asks.
 
 Hard stops even when authorized: secrets, force-push to `main`, amending
 someone else's or already-pushed commit, staging unrelated WIP — see

@@ -29,17 +29,14 @@ Slug is `kebab-case` and names the work, not the date
 (e.g. `migrate-immich-to-cnpg.md`). Skip `README.md` and `_template.md` when
 enumerating plans (same rule as issues).
 
-## Dual surface
+## Surface
 
-| Surface          | Role                                                                               |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| `docs/plans/`    | Durable / agent-loop SoT — prefer for find-work, multi-session, and GitOps handoff |
-| `.cursor/plans/` | Cursor IDE interactive planning — fine for IDE-only sessions                       |
+| Surface       | Role                                                                               |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `docs/plans/` | Durable / agent-loop SoT — prefer for find-work, multi-session, and GitOps handoff |
 
 Prefer [`docs/plans/`](./) when the plan must survive chats and feed the
-development loop. [`.cursor/plans/`](../../.cursor/plans/README.md) remains
-valid for Cursor-native planning UI sessions. When ambiguous, ask the operator
-which surface to use.
+development loop. When ambiguous, ask the operator.
 
 Authoring persona:
 [project-planner](../../.agents/agents/project-planner/agent.md).
@@ -61,7 +58,7 @@ file. Do not keep a `closed/` tree. Git history is the archive.
 | Situation                            | Action                                                                                   |
 | ------------------------------------ | ---------------------------------------------------------------------------------------- |
 | Light / obvious change               | Skip the plan doc; chat checklist is enough                                              |
-| Multi-step or multi-session how-work | Copy `_template.md` → `docs/plans/<slug>.md` (or `.cursor/plans/` for IDE-only)          |
+| Multi-step or multi-session how-work | Copy `_template.md` → `docs/plans/<slug>.md`                                             |
 | Related issue exists                 | Set optional `related_issue:` to that path; keep what/how split                          |
 | Duplicate of an existing plan        | Update the existing file; do not create a second                                         |
 | Scope fuzzy / multiple approaches    | Run [alignment](../../.agents/skills/alignment/SKILL.md) first; plan after shared intent |
@@ -119,5 +116,4 @@ Copy from [`_template.md`](./_template.md):
 - [project-planner](../../.agents/agents/project-planner/agent.md) — plan authoring persona
 - [docs/issues/](../issues/README.md) — what / desired state
 - [docs/research/](../research/README.md) — findings (persist; not delete-on-ship)
-- [`.cursor/plans/`](../../.cursor/plans/README.md) — Cursor IDE interactive surface
 - [development-loop](../../.agents/context/development-loop.md) — find → plan → ship

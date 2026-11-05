@@ -39,7 +39,6 @@ def _disabled_sidecar(**extra):
     data = {
         "note": "test fixture",
         "mirrors": {
-            "cursor": {"enabled": False},
             "claude": {"enabled": False},
             "codex": {"enabled": False},
             "prime-agent": {"enabled": False},
@@ -258,15 +257,15 @@ class SyncSurfacesTest(_ScriptMixin, unittest.TestCase):
     def test_enabled_mirror_without_generator_fails_closed(self):
         with tempfile.TemporaryDirectory() as root:
             rules = _disabled_sidecar()
-            rules["mirrors"]["cursor"] = {
+            rules["mirrors"]["codex"] = {
                 "enabled": True,
-                "path": ".cursor/rules",
+                "path": ".codex/rules",
                 "note": "would own .md generation in Phase C",
             }
             _write_sidecars(root, rules=rules)
             status, output = self.run_script(root, "--check")
             self.assertEqual(1, status)
-            self.assertIn("UNIMPLEMENTED rules.mirrors.cursor", output)
+            self.assertIn("UNIMPLEMENTED rules.mirrors.codex", output)
             self.assertIn("not implemented", output)
 
     def test_plan_transforms_empty_when_all_disabled(self):
@@ -307,11 +306,11 @@ class SyncSurfacesTest(_ScriptMixin, unittest.TestCase):
     def test_non_object_mirror_entry_fails_closed(self):
         with tempfile.TemporaryDirectory() as root:
             rules = _disabled_sidecar()
-            rules["mirrors"]["cursor"] = True
+            rules["mirrors"]["codex"] = True
             _write_sidecars(root, rules=rules)
             status, output = self.run_script(root, "--check")
             self.assertEqual(1, status)
-            self.assertIn("INVALID rules.mirrors.cursor", output)
+            self.assertIn("INVALID rules.mirrors.codex", output)
             self.assertIn("JSON object", output)
 
 
@@ -352,106 +351,6 @@ class AppendSystemTransformTest(_ScriptMixin, unittest.TestCase):
             raw, ".agents/rules", ".prime/agent"
         )
         self.assertTrue(processed.startswith("# Body\n"), processed)
-
-    def test_strip_cursor_only_regions(self):
-        raw = (
-            "# Keep\n\n"
-            f"{sync_surfaces.CURSOR_ONLY_START}\n"
-            "ci-investigator and .cursor/hooks.json leak bait\n"
-            f"{sync_surfaces.CURSOR_ONLY_END}\n"
-            "\n# After\n"
-        )
-        out = sync_surfaces.strip_cursor_only(raw)
-        self.assertIn("# Keep", out)
-        self.assertIn("# After", out)
-        self.assertNotIn("ci-investigator", out)
-        self.assertNotIn(".cursor/hooks.json", out)
-        self.assertNotIn(sync_surfaces.CURSOR_ONLY_START, out)
-        self.assertNotIn(sync_surfaces.CURSOR_ONLY_END, out)
-
-    def test_unclosed_cursor_only_fails_closed(self):
-        raw = (
-            "# Keep\n\n"
-            f"{sync_surfaces.CURSOR_ONLY_START}\n"
-            "portable text that must not be silently dropped\n"
-        )
-        with self.assertRaises(SystemExit) as ctx:
-            sync_surfaces.strip_cursor_only(raw, rule_stem="subagents")
-        self.assertEqual(1, ctx.exception.code)
-        # Through build_append_system / --write: nonzero and no truncated file.
-        with tempfile.TemporaryDirectory() as root:
-            _write_rule(root, "subagents", "---\nalwaysApply: true\n---\n\n" + raw)
-            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
-                fh.write(_agents_md_for(["subagents"]))
-            rules = _disabled_sidecar(
-                append_system=_append_cfg(rules=["subagents"], always_on=["subagents"])
-            )
-            _write_sidecars(root, rules=rules)
-            status, output = self.run_script(root, "--write")
-            self.assertEqual(1, status)
-            self.assertIn("unclosed", output)
-            self.assertIn("subagents.md", output)
-            out = os.path.join(root, ".prime", "agent", "APPEND_SYSTEM.md")
-            self.assertFalse(
-                os.path.isfile(out), "must not write truncated APPEND_SYSTEM"
-            )
-
-    def test_unmatched_cursor_only_end_fails_closed(self):
-        raw = (
-            "# Keep\n\n"
-            "ci-investigator leak bait\n"
-            f"{sync_surfaces.CURSOR_ONLY_END}\n"
-            "\n# After\n"
-        )
-        with self.assertRaises(SystemExit) as ctx:
-            sync_surfaces.strip_cursor_only(raw, rule_stem="subagents")
-        self.assertEqual(1, ctx.exception.code)
-        with tempfile.TemporaryDirectory() as root:
-            _write_rule(root, "subagents", "---\nalwaysApply: true\n---\n\n" + raw)
-            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
-                fh.write(_agents_md_for(["subagents"]))
-            rules = _disabled_sidecar(
-                append_system=_append_cfg(rules=["subagents"], always_on=["subagents"])
-            )
-            _write_sidecars(root, rules=rules)
-            status, output = self.run_script(root, "--write")
-            self.assertEqual(1, status)
-            self.assertIn("unmatched", output)
-            self.assertIn("subagents.md", output)
-            out = os.path.join(root, ".prime", "agent", "APPEND_SYSTEM.md")
-            self.assertFalse(os.path.isfile(out))
-
-    def test_unmarked_cursor_lines_would_leak_without_audit(self):
-        """Document that unmarked Cursor-only prose appears unless wrapped."""
-        unmarked = (
-            "# Subagents\n\n"
-            "| One failing PR check | `ci-investigator` |\n"
-            "- `.cursor/hooks.json`, `.cursor/hooks/**`\n"
-        )
-        processed = sync_surfaces.process_rule_body(
-            "---\nalwaysApply: true\n---\n\n" + unmarked,
-            ".agents/rules",
-            ".prime/agent",
-        )
-        self.assertIn("ci-investigator", processed)
-        self.assertIn(".cursor/hooks.json", processed)
-
-        marked = (
-            "# Subagents\n\n"
-            f"{sync_surfaces.CURSOR_ONLY_START}\n"
-            "| One failing PR check | `ci-investigator` |\n"
-            "- `.cursor/hooks.json`, `.cursor/hooks/**`\n"
-            f"{sync_surfaces.CURSOR_ONLY_END}\n"
-            "\nportable text\n"
-        )
-        cleaned = sync_surfaces.process_rule_body(
-            "---\nalwaysApply: true\n---\n\n" + marked,
-            ".agents/rules",
-            ".prime/agent",
-        )
-        self.assertNotIn("ci-investigator", cleaned)
-        self.assertNotIn(".cursor/hooks.json", cleaned)
-        self.assertIn("portable text", cleaned)
 
     def test_destination_aware_relative_link_rewrite(self):
         body = (
@@ -780,31 +679,6 @@ class AppendSystemTransformTest(_ScriptMixin, unittest.TestCase):
             status, output = self.run_script(root, "--write")
             self.assertEqual(1, status)
             self.assertIn("must be under .prime/agent/", output)
-
-
-class CursorOnlyNestedTest(_ScriptMixin, unittest.TestCase):
-    def test_nested_cursor_only_start_fails_closed(self):
-        """A second start marker inside a cursor-only region must be rejected."""
-        with tempfile.TemporaryDirectory() as root:
-            stems = ["alpha"]
-            _write_rule(
-                root,
-                "alpha",
-                "# alpha\n\nbody\n\n<!-- cursor-only start -->\n"
-                "secret\n<!-- cursor-only start -->\nmore\n"
-                "<!-- cursor-only end -->\n",
-            )
-            _write_sidecars(
-                root,
-                rules=_disabled_sidecar(
-                    append_system=_append_cfg(rules=stems, always_on=stems)
-                ),
-            )
-            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
-                fh.write(_agents_md_for(stems))
-            status, output = self.run_script(root, "--check")
-            self.assertEqual(1, status)
-            self.assertIn("nested", output)
 
 
 class ReferenceLinkRewriteTest(unittest.TestCase):

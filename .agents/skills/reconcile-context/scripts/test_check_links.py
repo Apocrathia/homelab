@@ -2203,10 +2203,10 @@ class CheckLinksTest(unittest.TestCase):
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             agent_dir = os.path.join(root, ".agents", "agents", "example")
             ctx = os.path.join(root, ".agents", "context")
-            cursor_agents = os.path.join(root, ".cursor", "agents")
+            claude_agents = os.path.join(root, ".claude", "agents")
             os.makedirs(agent_dir)
             os.makedirs(ctx)
-            os.makedirs(cursor_agents)
+            os.makedirs(claude_agents)
             with open(os.path.join(agent_dir, "agent.md"), "w", encoding="utf-8") as fh:
                 fh.write("[Constraints](../../context/constraints.md)\n")
             with open(os.path.join(ctx, "constraints.md"), "w", encoding="utf-8") as fh:
@@ -2215,7 +2215,7 @@ class CheckLinksTest(unittest.TestCase):
                 fh.write("# Agents\n")
             os.symlink(
                 os.path.join("..", "..", ".agents", "agents", "example", "agent.md"),
-                os.path.join(cursor_agents, "example.md"),
+                os.path.join(claude_agents, "example.md"),
             )
             subprocess.run(
                 [
@@ -2224,7 +2224,7 @@ class CheckLinksTest(unittest.TestCase):
                     "AGENTS.md",
                     ".agents/agents/example/agent.md",
                     ".agents/context/constraints.md",
-                    ".cursor/agents/example.md",
+                    ".claude/agents/example.md",
                 ],
                 cwd=root,
                 check=True,

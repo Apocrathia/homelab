@@ -13,7 +13,7 @@ only if needed.
 - **Body:** Prefer bullets / compact tables over prose. Cut anything that does
   not change the operator’s next action.
 - **Ceiling:** If a reply needs more than ~half a screen of explanation, put the
-  bulk in `.cursor/plans/` or `.scratch/` and link it. Chat is the index.
+  bulk in `.scratch/` and link it. Chat is the index.
 - **Questions:** Follow [`questions.md`](./questions.md). Do not interview in a
   wall of markdown.
 
@@ -32,7 +32,7 @@ context.
 
 ## Route bulk out of chat
 
-- Plans → plan doc under `.cursor/plans/` or `.scratch/`, not a wall in the thread
+- Plans → plan doc under `docs/plans/` or `.scratch/`, not a wall in the thread
 - Large reviews → numbered findings; detail per finding, not upfront
 - Data-heavy output → canvas or a file when the product supports it
 

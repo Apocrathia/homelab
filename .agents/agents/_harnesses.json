@@ -1,11 +1,6 @@
 {
-  "note": "symlink-owned vs script-owned: Cursor and Claude persona discovery are per-file symlinks into .agents/agents/; keep mirrors.enabled false. Prime Agent delegates via rlm() sub-agent tasks, not a persona directory.",
+  "note": "symlink-owned vs script-owned: Claude persona discovery is per-file symlinks into .agents/agents/; keep mirrors.enabled false. Prime Agent delegates via rlm() sub-agent tasks, not a persona directory.",
   "mirrors": {
-    "cursor": {
-      "enabled": false,
-      "path": ".cursor/agents",
-      "reason": "symlink owns discovery"
-    },
     "claude": {
       "enabled": false,
       "path": ".claude/agents",

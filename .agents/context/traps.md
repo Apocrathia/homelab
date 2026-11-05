@@ -39,8 +39,8 @@ non-trivial work.
 
 ## Agent context
 
-- Skills and personas live under `.agents/`. `.cursor/` and `.claude/` hold
-  discovery symlinks for those harnesses; edit the `.agents/` copy.
+- Skills and personas live under `.agents/`. `.claude/` holds discovery
+  symlinks; edit the `.agents/` copy.
 - Leave `<!-- drift: … -->` notes if you spot stale context links and cannot fix them now.
 
 ## Worktrees / parallel agents

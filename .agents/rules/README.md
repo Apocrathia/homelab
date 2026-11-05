@@ -1,10 +1,7 @@
 # `.agents/rules/`
 
-Source of truth for **all** agent rules (Markdown). Cursor discovers every rule
-via a per-file `.mdc` symlink under
-[`.cursor/rules/`](../../.cursor/rules/README.md) (SoT is `.md` here; discovery
-name stays `.mdc`). Cursor frontmatter (`alwaysApply`, `globs`, `description`)
-lives inside each `.md` and is read through the symlink.
+Source of truth for **all** agent rules (Markdown). Frontmatter (`alwaysApply`,
+`globs`, `description`) lives inside each `.md`.
 
 ## Always-on
 
@@ -54,7 +51,4 @@ lives inside each `.md` and is read through the symlink.
 | `deepwiki.md`                     | DeepWiki MCP usage patterns for repository research and antipattern detection |
 | `conventional-commit-messages.md` | Conventional Commits specification for commit messages                        |
 
-Edit files here, not the `.cursor/rules/` symlinks. After adding a rule, add
-`<name>.mdc` → `../../.agents/rules/<name>.md` under `.cursor/rules/` and
-update both this README and
-[`.cursor/rules/README.md`](../../.cursor/rules/README.md).
+Edit files here. After adding a rule, update this README.

@@ -1,1 +1,0 @@
-../../.agents/agents/documentation-reviewer/agent.md

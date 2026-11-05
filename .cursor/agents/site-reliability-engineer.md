@@ -1,1 +1,0 @@
-../../.agents/agents/site-reliability-engineer/agent.md

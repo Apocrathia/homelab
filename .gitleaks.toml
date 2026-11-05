@@ -3,9 +3,7 @@ title = "gitleaks config"
 
 [allowlist]
 description = "Allowlist false positives in documentation"
-paths = [
-  '''\.cursor/rules/python\.mdc''',
-]
+paths = []
 
 regexes = [
   '''Passwords: Argon2/bcrypt''',

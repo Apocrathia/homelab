@@ -26,8 +26,8 @@ applying fixes; return proposed edits to the parent instead.
 
 ## Protected paths
 
-You do **not** edit `AGENTS.md`, `CLAUDE.md`, `.agents/**`, `.cursor/**`, or
-other surfaces in [`protected-paths.md`](../../rules/protected-paths.md).
+You do **not** edit `AGENTS.md`, `CLAUDE.md`, `.agents/**`, or other
+surfaces in [`protected-paths.md`](../../rules/protected-paths.md).
 Return a proposed change set; the parent surfaces it for operator confirmation
 before writing.
 

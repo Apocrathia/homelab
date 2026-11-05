@@ -24,7 +24,6 @@ manual chores. Not a fake enterprise platform.
 | `docs/`           | Human docs + agent ledgers (`issues/`, `plans/`, `research/`); no tunable limits/versions here |
 | `.gitlab/`        | GitLab CI/CD pipelines and related config                                                      |
 | `.agents/`        | Portable agent config (this tree)                                                              |
-| `.cursor/`        | Cursor adapter: rules, hooks, slash commands, discovery symlinks                               |
 | `.claude/`        | Claude Code adapter: discovery symlinks                                                        |
 | `.scratch/`       | Throwaway renders and dumps (gitignored)                                                       |
 | `.worktrees/`     | Linked git worktrees for agent edits (gitignored; see [`worktrees.md`](../rules/worktrees.md)) |
@@ -45,8 +44,8 @@ and the Tenzir stack, the first vendored upstream-skills instance
 Permissions and hard stops: root [`AGENTS.md`](../../AGENTS.md) and
 [`constraints.md`](./constraints.md). Tone (yes, including profanity):
 [`voice.md`](./voice.md). Domain detail is in [`../rules/`](../rules/README.md)
-(Flux, Helm, Talos, secrets) — Cursor glob-loads it via `.mdc` symlinks; other
-agents should still follow the constraints and the skill they invoked.
+(Flux, Helm, Talos, secrets); other agents should still follow the constraints
+and the skill they invoked.
 
 ## Modules
 

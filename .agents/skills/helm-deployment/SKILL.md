@@ -26,8 +26,8 @@ Your task is to install [LINK] helm chart for the homelab environment in [DIRECT
 - Now, pull the chart and/or repository into `.scratch/` (see [`.scratch/README.md`](../../../.scratch/README.md); not `/tmp`).
 - Next, you will thoroughly review the chart and/or repository to understand the deployment structure and values.
   - Leverage DeepWiki whenever possible to further understand the chart and/or repository.
-  - **Run DeepWiki antipattern checks** per `.cursor/rules/deepwiki.mdc` — probe for privacy, security, and general fuckery before writing any manifests.
-  - **Use Context7** per `.cursor/rules/context7.mdc` to pull current documentation for the chart and its dependencies — verify values schema, default config, and API surface before writing any manifests.
+  - **Run DeepWiki antipattern checks** per `.agents/rules/deepwiki.md` — probe for privacy, security, and general fuckery before writing any manifests.
+  - **Use Context7** per `.agents/rules/context7.md` to pull current documentation for the chart and its dependencies — verify values schema, default config, and API surface before writing any manifests.
   - Understand required vs optional components and their purposes.
   - Identify authentication mechanisms supported by the application.
 - Determine the application's configuration method:

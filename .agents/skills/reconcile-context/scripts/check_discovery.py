@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check Cursor/Claude discovery symlinks against the .agents/ source of truth.
+"""Check Claude Code discovery symlinks against the .agents/ source of truth.
 
 Exit 0 if parity holds, 1 if any discovery path is missing, broken, wrong,
 not a symlink, or orphaned. Stdlib only; safe for hooks.
@@ -178,15 +178,15 @@ def main() -> int:
     agents_sot = os.path.join(ROOT, ".agents", "agents")
     skills_sot = os.path.join(ROOT, ".agents", "skills")
     # Missing source-of-truth collections must fail loudly rather than
-    # enumerate as empty: a deleted .agents/skills/ (with .cursor/skills/)
-    # would otherwise yield no skills, no orphans, and a false parity OK.
+    # enumerate as empty: a deleted .agents/skills/ would otherwise yield
+    # no skills, no orphans, and a false parity OK.
     if not os.path.isdir(agents_sot):
         failures.append(("MISSING", "agents-sot", _rel(agents_sot), None))
     if not os.path.isdir(skills_sot):
         failures.append(("MISSING", "skills-sot", _rel(skills_sot), None))
     skill_ids = _sot_ids(skills_sot)
     for skill_id in skill_ids:
-        # The SKILL.md entrypoint is what Cursor/Claude actually load; the
+        # The SKILL.md entrypoint is what the harness actually loads; the
         # containing directory alone can resolve while the entrypoint is
         # deleted, replaced by a directory, or symlinked outside .agents/.
         # A deleted entrypoint must fail explicitly: the discovery symlinks
@@ -216,38 +216,35 @@ def main() -> int:
         print(f"\n{len(failures) + 1} discovery parity failure(s).")
         return 1
     agent_id_set = set(agent_ids)
-    skill_id_set = set(skill_ids)
 
     # --- Agent discovery ---
     # Two valid layouts:
-    #   1. Directory-level symlink: .cursor/agents -> ../.agents/agents
-    #   2. Per-file symlinks: .cursor/agents/<id>.md -> ../../.agents/agents/<id>.md
-    for harness in ("cursor", "claude"):
-        disc_dir = os.path.join(ROOT, f".{harness}", "agents")
-        if os.path.islink(disc_dir):
-            if not os.path.exists(disc_dir):
-                failures.append(
-                    ("BROKEN", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
-                )
-                continue
-            if os.path.realpath(disc_dir) == os.path.realpath(agents_sot):
-                continue  # directory-level symlink is sufficient
+    #   1. Directory-level symlink: .claude/agents -> ../.agents/agents
+    #   2. Per-file symlinks: .claude/agents/<id>.md -> ../../.agents/agents/<id>.md
+    disc_dir = os.path.join(ROOT, ".claude", "agents")
+    if os.path.islink(disc_dir):
+        if not os.path.exists(disc_dir):
             failures.append(
-                ("WRONG_TARGET", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
+                ("BROKEN", "agents-claude", _rel(disc_dir), _rel(agents_sot))
             )
-            continue
-        if not os.path.isdir(disc_dir):
+        elif os.path.realpath(disc_dir) == os.path.realpath(agents_sot):
+            pass  # directory-level symlink is sufficient
+        else:
             failures.append(
-                ("MISSING", f"agents-{harness}", _rel(disc_dir), _rel(agents_sot))
+                ("WRONG_TARGET", "agents-claude", _rel(disc_dir), _rel(agents_sot))
             )
-            continue
+    elif not os.path.isdir(disc_dir):
+        failures.append(
+            ("MISSING", "agents-claude", _rel(disc_dir), _rel(agents_sot))
+        )
+    else:
         # Per-file layout: check each agent file.
         for agent_id in agent_ids:
             expected = _agent_expected(agents_sot, agent_id)
             _check_symlink(
                 os.path.join(disc_dir, f"{agent_id}.md"),
                 expected,
-                f"agent-{harness}",
+                "agent-claude",
                 failures,
             )
 
@@ -259,32 +256,6 @@ def main() -> int:
         "skills-claude",
         failures,
     )
-    # Cursor: per-skill symlinks, or a directory-level mirror is sufficient.
-    cursor_skills_dir = os.path.join(ROOT, ".cursor", "skills")
-    if os.path.islink(cursor_skills_dir):
-        if not os.path.exists(cursor_skills_dir):
-            failures.append(
-                ("BROKEN", "skills-cursor", _rel(cursor_skills_dir), _rel(skills_sot))
-            )
-        elif os.path.realpath(cursor_skills_dir) == os.path.realpath(skills_sot):
-            pass  # directory-level symlink is sufficient
-        else:
-            failures.append(
-                (
-                    "WRONG_TARGET",
-                    "skills-cursor",
-                    _rel(cursor_skills_dir),
-                    _rel(skills_sot),
-                )
-            )
-    else:
-        for skill_id in skill_ids:
-            _check_symlink(
-                os.path.join(cursor_skills_dir, skill_id),
-                os.path.join(skills_sot, skill_id),
-                "skill-cursor",
-                failures,
-            )
 
     _check_symlink(
         os.path.join(ROOT, "CLAUDE.md"),
@@ -296,23 +267,12 @@ def main() -> int:
     # --- Orphan detection ---
     # A directory-level symlink mirrors the SoT exactly, so only real
     # directories can hold orphans.
-    for harness in ("cursor", "claude"):
-        disc_dir = os.path.join(ROOT, f".{harness}", "agents")
-        if os.path.islink(disc_dir):
-            continue
+    if not os.path.islink(disc_dir):
         _orphan_entries(
             disc_dir,
             agent_id_set,
-            f"agent-{harness}",
+            "agent-claude",
             md_only=True,
-            failures=failures,
-        )
-    if os.path.isdir(cursor_skills_dir) and not os.path.islink(cursor_skills_dir):
-        _orphan_entries(
-            cursor_skills_dir,
-            skill_id_set,
-            "skill-cursor",
-            md_only=False,
             failures=failures,
         )
 

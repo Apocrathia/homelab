@@ -24,9 +24,8 @@ Slug is `kebab-case` and names the gap, not the date
 | `docs/issues/` | **What** — problem / desired state, acceptance, feedback loop |
 | `docs/plans/`  | **How** — steps, checkboxes, implementation detail            |
 
-Plans live under [`docs/plans/`](../plans/README.md) (durable / agent loop);
-[`.cursor/plans/`](../../.cursor/plans/README.md) is fine for Cursor IDE-only
-sessions. Author via
+Plans live under [`docs/plans/`](../plans/README.md) (durable / agent loop).
+Author via
 [project-planner](../../.agents/agents/project-planner/agent.md). Do not bury a
 full plan inside an issue — link it via optional `plan:` frontmatter when you
 have one.
@@ -91,7 +90,7 @@ Optional:
 | `found_by`  | Agent or human id                                                                                               |
 | `area`      | `flux` \| `helm` \| `talos` \| `observability` \| `security` \| `apps` \| `networking` \| `storage` \| `agents` |
 | `slice`     | `afk` (unattended-safe) \| `hitl` (needs human)                                                                 |
-| `plan`      | Path to living plan (`docs/plans/…` preferred; `.cursor/plans/…` for IDE-only)                                  |
+| `plan`      | Path to living plan (`docs/plans/…` preferred)                                                                  |
 | `gitlab`    | URL when promoted                                                                                               |
 | `branch`    | Work branch when `in-flight`                                                                                    |
 | `closed_by` | MR / commit while still on disk                                                                                 |
