@@ -20,7 +20,7 @@ spec:
     app:
       name: moonlight-web
       # renovate: datasource=docker depName=mrcreativ3001/moonlight-web-stream
-      image: docker.io/mrcreativ3001/moonlight-web-stream:v2.10.0@sha256:4ee561ec4043526e93b0b3dba4926031c86ee3c9dab0333475a6b3c7117c701a
+      image: docker.io/mrcreativ3001/moonlight-web-stream:v3.0.1@sha256:30c5b954d1ee0abdf24493b8dcf8c89ed759fe57d17f5dc2a8e8fe485e64191f
       container:
         name: moonlight-web
         port: 8080
