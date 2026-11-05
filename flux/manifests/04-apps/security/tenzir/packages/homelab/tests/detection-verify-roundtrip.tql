@@ -1,0 +1,162 @@
+---
+quiet: true
+---
+// Bar B parity proof for the detection lane: stamp the fixture the
+// attest test stamps (the archive leg verbatim), then apply the
+// ClickHouse round-trip transforms the ocsf store applies at write and
+// read-back, and verify — ZERO findings is the pass. This is the exact
+// chain the core node's walk runs post-fix
+// (homelab::record_integrity::ocsf::read feeds verify the same shape
+// the transform + strip legs below produce):
+//
+//   write side — to_clickhouse lifts the typed columns out of the
+//   catch-all and Tenzir's serializer omits null-valued keys
+//   (drop_null_fields below; the serializer omits them recursively — the
+//   operator cannot reach inside lists, which these fixture shapes do
+//   not need). An ABSENT field lifts into its column as NULL/default:
+//   the k8s-audit map never writes severity_id, so every API Activity
+//   row's Int8 DEFAULT 0 column reads back as severity_id: 0 (the
+//   artifact that broke EVERY core-chain record's recompute — the
+//   3.5M-fingerprint_mismatch flood, 4,197,949 landed rows all reading
+//   severity_id 0, live count 2026-11-05).
+//
+//   read side — from_clickhouse's catch-all reconstruction merges the
+//   columns back (lab-verified byte-identical through
+//   record_integrity::ocsf::read's sql-mode rebuild), and
+//   record_integrity::ocsf::strip inverts the artifact injections the
+//   reconstruction adds for fields the pre-INSERT record lacked.
+//
+// The finding literal carries evidences[0].data.unmapped.object_ref so
+// findings::stamp extracts a REAL subject (the sigma lane's live shape —
+// the stamp writes uid/rule_id/subject_* on every finding, and those
+// fields are the Detection_Finding table's typed columns: they lift at
+// write and merge back at read, nulls included, with no artifact —
+// Detection Finding has NO strip arm on purpose, and this test pins
+// that: rule_id and the subject fields ride the round trip as real
+// values, not as artifacts).
+from_file env("TENZIR_INPUT") {
+  read_json
+}
+homelab::k8s::audit::ocsf::map
+ocsf_derive
+ocsf_cast
+// The same batch carries every bus class (the rule fires over all
+// stored ocsf types): the Authentication (3002) and Detection Finding
+// (2004) literals ride the batch like the authentik and sigma feeds do
+// live, proving the one chain links ACROSS classes per node.
+merge {
+  from {
+      class_uid: 3002,
+      category_uid: 3,
+      activity_id: 1,
+      type_uid: 300201,
+      severity_id: 1,
+      status_id: 1,
+      time: 2026-10-17T08:15:00Z,
+      metadata: {
+        version: "1.9.0",
+        product: {name: "authentik", vendor_name: "goauthentik"},
+      },
+      actor: {user: {name: "ian", uid: "5"}},
+      src_endpoint: {ip: 10.100.2.44},
+      unmapped: {event_pk: "5f1c2b30-0000-4000-8000-000000000001", action: "login"},
+  },
+  {
+      class_uid: 2004,
+      category_uid: 2,
+      activity_id: 1,
+      type_uid: 200401,
+      severity_id: 3,
+      status_id: 1,
+      time: 2026-10-17T09:10:00Z,
+      metadata: {
+        version: "1.9.0",
+        profiles: ["security_control"],
+        product: {name: "Tenzir", vendor_name: "Tenzir"},
+      },
+      finding_info: {
+        uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+        title: "Kubernetes CronJob/Job Modification",
+        analytic: {
+          type_id: 1,
+          type: "Rule",
+          uid: "0c9b3bda-41a6-4442-9345-356ae86343dc",
+          name: "Kubernetes CronJob/Job Modification",
+        },
+      },
+      evidences: [
+        {
+          data: {
+            class_uid: 6003,
+            category_uid: 6,
+            activity_id: 3,
+            type_uid: 600303,
+            time: 2026-10-17T09:04:59Z,
+            metadata: {
+              version: "1.9.0",
+              product: {name: "audit", vendor_name: "kubernetes"},
+            },
+            api: {operation: "patch deployments/status"},
+            unmapped: {
+              object_ref: {
+                resource: "deployments",
+                namespace: "kube-system",
+                name: "core-det",
+              },
+            },
+          },
+        },
+    ],
+  }
+  homelab::findings::stamp
+  ocsf_derive
+  ocsf_cast
+}
+// Pin the uids the archive leg mints with uuid() when absent: pinned
+// fixtures keep the baseline deterministic (the investigations-test
+// precedent), and the same-second audit pair arrives in REVERSE uid
+// order above so the sort proves the (time, metadata.uid) tie-break.
+if unmapped?.audit_id? == "det-0001" {
+  metadata.uid = "core-det-audit-a1"
+}
+if unmapped?.audit_id? == "det-0002" {
+  metadata.uid = "core-det-audit-a2"
+}
+if unmapped?.audit_id? == "det-0003" {
+  metadata.uid = "core-det-audit-b"
+}
+if class_uid? == 3002 and time == 2026-10-17T08:15:00Z {
+  metadata.uid = "core-det-auth"
+}
+if class_uid? == 2004 and time == 2026-10-17T09:10:00Z {
+  metadata.uid = "core-det-finding"
+}
+sort time, metadata.uid
+homelab::record_integrity::attest authority_uid="tenzir-node-core",
+  chain_uid="tenzir-node-core",
+  genesis=false,
+  chain="stream"
+
+// ==== the ClickHouse round trip, as the ocsf store applies it ====
+// write side: Tenzir's serializer omits null-valued keys.
+drop_null_fields
+// write side: the k8s-audit records' absent severity_id lifts into the
+// API_Activity column as its Int8 DEFAULT 0 — the artifact every
+// core-chain recompute died on.
+if class_uid? == 6003 {
+  severity_id = 0
+}
+// read side: the catch-all reconstruction's artifact strip
+// (record_integrity::ocsf::read's last leg, exercised here without a
+// live ClickHouse).
+homelab::record_integrity::ocsf::strip
+fork {
+  summarize records_checked = count()
+  to_stdout { write_json }
+}
+homelab::record_integrity::verify product="homelab-detection",
+  title="Detection record chain break",
+  uid_prefix="detection",
+  scope_word="chain",
+  windowed=true,
+  link="stream"
