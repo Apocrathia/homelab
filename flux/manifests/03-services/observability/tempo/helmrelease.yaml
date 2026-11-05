@@ -146,10 +146,6 @@ spec:
       # Multi-tenancy disabled for homelab
       multitenancyEnabled: false
 
-    # Disable internal MinIO - using external RustFS
-    minio:
-      enabled: false
-
     # Disable memcached caches for homelab (reduces memory usage)
     memcached:
       enabled: false
