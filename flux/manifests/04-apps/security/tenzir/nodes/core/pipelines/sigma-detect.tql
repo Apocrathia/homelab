@@ -4,7 +4,7 @@
 // up), it now writes DIRECT to ClickHouse with in-stream attestation.
 // The sigma pass subscribes to the ocsf bus (every core OCSF pipeline
 // publish leg feeds it live), stamps the discovering pipeline's uid,
-// and the fork's attest + INSERT leg is the sole output — findings do
+// and the attest + INSERT leg is the sole output — findings do
 // NOT publish back onto the bus. A publish here is a self-feedback
 // loop: sigma re-evaluates its own Detection Findings, drowns, stops
 // consuming the bus, and every core publisher blocks on publish while
@@ -13,31 +13,38 @@
 // core dark while tetragon/netflow — no bus subscriber — flowed).
 // Grafana reads ClickHouse, not the bus; the finding's durable home is
 // ocsf.Detection_Finding via the INSERT.
+// Shape: v6.20.1 validates at boot that the top-level pipeline ends in
+// a sink, and a trailing `fork` is not one — its forwarded copy lost
+// its only consumer when the publish went away (the 2026-11-05
+// crashloop exit-1'd on exactly that). So the attest window feeds the
+// INSERT directly and to_clickhouse is the terminal operator; the only
+// fork left is the window body's context_update leg, whose copy sinks
+// into detection-chains while its forwarded attested events flow out
+// of the window into the INSERT — the same attest shape the four
+// source pipelines ride on their fork branches.
 subscribe "ocsf"
 sigma path=["/etc/tenzir/sigma/sigmahq/kubernetes-audit", "/etc/tenzir/sigma/homelab"],
       mapping="auto",
       refresh_interval=30s
 homelab::findings::stamp
-fork {
-  metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
-  window size=60s, on=time, tolerance=30s, idle_timeout=120s {
-    sort time, metadata.uid
-    context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
-    homelab::record_integrity::attest authority_uid="tenzir-node-core",
-      chain_uid="tenzir-node-core",
-      genesis=false,
-      chain="stream"
-    fork {
-      context_update "detection-chains", key="tenzir-node-core",
-        value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
-    }
+metadata.uid = metadata.uid? if metadata.uid? != null else uuid()
+window size=60s, on=time, tolerance=30s, idle_timeout=120s {
+  sort time, metadata.uid
+  context_enrich "detection-chains", key="tenzir-node-core", into=prev_tail
+  homelab::record_integrity::attest authority_uid="tenzir-node-core",
+    chain_uid="tenzir-node-core",
+    genesis=false,
+    chain="stream"
+  fork {
+    context_update "detection-chains", key="tenzir-node-core",
+      value={uid: metadata.uid, type_uid: type_uid, fingerprint: attestation_list[0].fingerprint}
   }
-  to_clickhouse table="ocsf.Detection_Finding",
-                host="clickhouse-tenzir.tenzir.svc.cluster.local",
-                port=9000,
-                user="tenzir",
-                password=secret("clickhouse-password"),
-                tls=false,
-                mode="append",
-                max_batch_rows=65536
 }
+to_clickhouse table="ocsf.Detection_Finding",
+              host="clickhouse-tenzir.tenzir.svc.cluster.local",
+              port=9000,
+              user="tenzir",
+              password=secret("clickhouse-password"),
+              tls=false,
+              mode="append",
+              max_batch_rows=65536
