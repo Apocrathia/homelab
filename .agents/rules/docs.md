@@ -16,6 +16,15 @@ description: "Documentation standards: style, formatting, prettier workflow, no 
 - Make writeups straightforward and context-independent.
 - **Do not describe problems that were fixed or improvements made** — this confuses future developers and AI agents.
 
+## Folder READMEs
+
+- **Every folder in the repo gets a README — no exceptions**: subfolders,
+  vendored content dirs, and rule dirs included.
+- For vendored content, the README sits **alongside** the content and never
+  edits it (e.g. `detections/sigma/sigmahq/` gets our README next to the
+  vendored SigmaHQ rules).
+- When a lap touches a tree, gap-check sibling folders for missing READMEs.
+
 ## Avoid duplicating tunable configuration
 
 - **Resource limits, volume sizes, replica counts, image versions** belong in manifests only — they get tuned and will drift.
