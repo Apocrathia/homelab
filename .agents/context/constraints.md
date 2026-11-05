@@ -50,6 +50,9 @@ Non-negotiables for every harness.
 - **Gateway API only.** No traditional Ingress resources.
 - **1Password Item CRs** for secrets, not bare Kubernetes `Secret` manifests as
   the managed source.
+- **Secret sync between Kubernetes and 1Password: plain ESO PushSecret
+  manifests** — never custom script-in-ConfigMap CronJob glue
+  ([`secrets.md`](../rules/secrets.md) for the canonical shapes).
 - Prefer Prettier + yamllint conventions for YAML/markdown the project already uses.
 
 ## Protected paths

@@ -52,7 +52,7 @@ flux/
    - Reference base component directories in the overlay rather than duplicating files
    - Override only values that differ from the base
    - Use Kustomize patches only when necessary
-   - Document overlay-specific changes in comments or a local README if needed
+   - Document overlay-specific changes in a local README if needed
    - **When adding new manifests, use a single kustomize overlay** that references existing resource directories
 
 3. Common practices:

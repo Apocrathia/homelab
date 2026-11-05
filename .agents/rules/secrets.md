@@ -55,6 +55,12 @@ The following patterns should be flagged as potential secrets:
 5. Use 1Password Item CRs for cluster configuration instead of native Kubernetes secrets
 6. Reference secrets in manifests using Flux's fromValues function, never include the actual values
 7. **Never embed secrets as base64-encoded values** in source code - remove any secret handling that does so
+8. **Secret sync between Kubernetes and 1Password uses plain ESO PushSecret
+   manifests only** — never custom script-in-ConfigMap CronJob glue, not even
+   diff-gated variants. Canonical shapes: kuber-ios, chaos-mesh, and the
+   Grafana pair (`push-secret-mcp.yaml` / `push-secret-gcx.yaml`) under
+   `flux/manifests/`. Tune sync behavior via `refreshInterval`, not scripting
+   layers.
 
 ## Enforcement
 
