@@ -1,6 +1,7 @@
 ---
 globs: **/*.py
 alwaysApply: false
+description: Python toolchain and style rules (uv, ruff, Python 3.12+)
 ---
 
 # Python Rules
