@@ -21,6 +21,7 @@ secrets/
 credentials/
 talos/secrets.yaml
 talos/rendered/**
+.kube
 
 # Build and dependency directories
 node_modules/
