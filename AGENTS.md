@@ -61,6 +61,8 @@ terse, humor OK, **profanity encouraged**).
 - Answer first; keep chat the index
   ([`response-shape.md`](./.agents/rules/response-shape.md),
   [`output.md`](./.agents/context/output.md))
+- ADHD-shaped output, always on — action first, numbered steps, no walls of
+  text ([`i-have-adhd.md`](./.agents/rules/i-have-adhd.md))
 - Keep the context window thin; compact early, hand off as files
   ([`context-management.md`](./.agents/rules/context-management.md),
   [`context/context-management.md`](./.agents/context/context-management.md))
