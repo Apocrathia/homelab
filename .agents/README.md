@@ -6,7 +6,6 @@ Portable agent configuration for this repo, aligned with the
 is the router ([`CLAUDE.md`](../CLAUDE.md) is a symlink to it). Harness
 adapters:
 
-- [`.cursor/`](../.cursor/README.md) — Cursor rules discovery, hooks, commands
 - [`.claude/`](../.claude/README.md) — Claude Code discovery symlinks
 - [`.prime/agent/`](../.prime/agent/) — Prime Agent prompt surface: generated
   `APPEND_SYSTEM.md` (always-on rules) via
@@ -18,18 +17,16 @@ adapters:
 | Path                                | Role                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------ |
 | [`context/`](./context/README.md)   | Project context modules; read via the routing table, not by dumping the folder |
-| [`skills/`](./skills/)              | Procedural skills (`SKILL.md` per skill; Anthropic/Cursor skill filename)      |
+| [`skills/`](./skills/)              | Procedural skills (`SKILL.md` per skill; Anthropic skill filename)             |
 | [`agents/`](./agents/)              | Sub-agent personas (`<id>/agent.md` per the protocol)                          |
-| [`rules/`](./rules/README.md)       | All agent rules — behavioral + domain (Cursor discovers via `.mdc` symlinks)   |
+| [`rules/`](./rules/README.md)       | All agent rules — behavioral + domain (Markdown source of truth)               |
 | [`memories/`](./memories/README.md) | Durable lessons across sessions                                                |
 
-Do not invent parallel trees under vendor dirs. Harness adapters
-(`.cursor/`, `.claude/`) are **discovery-only** — edit bodies here, never copy
-them into the adapters. When adding a skill or persona, wire the Cursor
-symlinks (and Claude per-persona agent links); Claude skills auto-discover via
-the `.claude/skills` directory symlink. All rules — behavioral and domain
-(Flux, Helm, Talos, …) — live under `rules/` here, with `.mdc` symlinks in
-`.cursor/rules/`.
+Do not invent parallel trees under vendor dirs. The `.claude/` adapter is
+**discovery-only** — edit bodies here, never copy them into the adapter. When
+adding a persona, wire the Claude per-persona agent link; Claude skills
+auto-discover via the `.claude/skills` directory symlink. All rules —
+behavioral and domain (Flux, Helm, Talos, …) — live under `rules/` here.
 
 Discovery parity:
 [`skills/reconcile-context/scripts/check_discovery.py`](./skills/reconcile-context/scripts/check_discovery.py);

@@ -45,5 +45,4 @@ refactors; editing `helm/generic-app` or bootstrap without explicit confirmation
 - Never mutate the live cluster unless the operator explicitly approved it for
   this change.
 - Gateway API only; 1Password Items for secrets.
-- Treat `.agents/`, `.cursor/`, `talos/`, `helm/generic-app/`, and bootstrap as
-  protected.
+- Treat `.agents/`, `talos/`, `helm/generic-app/`, and bootstrap as protected.

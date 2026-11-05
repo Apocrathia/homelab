@@ -18,7 +18,7 @@ Deeper evidence when manifests are non-trivial: hand off to
 Loop context:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
 
-## Non-Cursor / optional reviewers
+## Optional reviewers
 
 Homelab SoT for this skill is the **local GitOps gate table** below (Prettier,
 yamllint, helm/kustomize → `.scratch/`, Trivy, context checks). That is enough
@@ -30,11 +30,11 @@ For a deeper read-only review after local gates are green, run the lens skills
 [`review-fit`](../review-fit/SKILL.md) in parallel (fresh context each), then
 triage findings per [`subagents.md`](../../rules/subagents.md).
 
-If Macroscope, Codex CLI, or Cursor Bugbot are available, you may run them as
-**extra** reviewers after local gates are green. They are optional. Without them,
-do not invent a Macroscope/Bugbot/Codex loop — hand off to
-[`draft-commit`](../draft-commit/SKILL.md). Non-Cursor harnesses run the local
-checks directly in the shell (no Task orchestration required).
+If Macroscope or Codex CLI are available, you may run them as **extra**
+reviewers after local gates are green. They are optional. Without them, do not
+invent a Macroscope/Codex loop — hand off to
+[`draft-commit`](../draft-commit/SKILL.md). Harnesses without subagent
+orchestration run the local checks directly in the shell.
 
 ## Hard rules
 

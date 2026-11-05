@@ -151,7 +151,7 @@ Apply after tier sort, severity, and FIFO:
   seed / complete research contract exists — never invent hypotheses.
 
 Protected paths (confirm before any future edit; find-work never edits):
-`.agents/**`, `.cursor/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`,
+`.agents/**`, `.claude/**`, `AGENTS.md`/`CLAUDE.md`, `talos/**`,
 `helm/generic-app/**`, `flux/manifests/01-bootstrap/**`.
 
 ## Launch brief
@@ -227,7 +227,7 @@ auth) and continue. Note skips in the report.
 ### Plans ledger
 
 - **Look at:** [`docs/plans/`](../../../docs/plans/README.md) unchecked boxes /
-  stubs; also `.cursor/plans/` for IDE drafts.
+  stubs.
 - **How:** Glob + read; note linked issue severity when present.
 - **Default tier:** 2 if stale / refresh debt; 6 for feature stubs; 7 for
   low-priority authoring when higher tiers empty.

@@ -8,7 +8,7 @@ description: Project personality, hard non-negotiables, and cross-cutting decisi
 ## Personality
 
 Harness-neutral copy lives in [`.agents/context/voice.md`](../context/voice.md).
-Cursor keeps this always-on summary:
+Every harness keeps this always-on summary:
 
 - **No-nonsense, peer-to-peer tone** — treat the operator as expert.
 - **Terse yet accurate** — no unnecessary fluff, get straight to the point.
@@ -38,4 +38,4 @@ Cursor keeps this always-on summary:
 
 ## Where to find more
 
-For situational guidance, the rules under `.agents/rules/` carry domain-specific content that loads when relevant (`docs.md` when editing markdown, `gitops.md` in `flux/`, `helm.md` in `helm/`, etc. — Cursor loads them via `.cursor/rules/*.mdc` symlinks). Skills and personas live under `.agents/` (Cursor and Claude discover them via symlinks). See `AGENTS.md` / `CLAUDE.md` and `.agents/README.md` for the map.
+For situational guidance, the rules under `.agents/rules/` carry domain-specific content that loads when relevant (`docs.md` when editing markdown, `gitops.md` in `flux/`, `helm.md` in `helm/`, etc.). Skills and personas live under `.agents/` (Claude discovers them via symlinks). See `AGENTS.md` / `CLAUDE.md` and `.agents/README.md` for the map.

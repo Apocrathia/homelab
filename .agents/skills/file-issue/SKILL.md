@@ -10,8 +10,7 @@ disable-model-invocation: true
 
 Record a problem or desired state under [`docs/issues/`](../../../docs/issues/).
 Issues define **what**; plans define **how**. Plans live under
-[`docs/plans/`](../../../docs/plans/) (and optionally
-[`.cursor/plans/`](../../../.cursor/plans/) for IDE-only sessions) via
+[`docs/plans/`](../../../docs/plans/) via
 [`project-planner`](../../agents/project-planner/agent.md). Do not invent a
 plan in the issue body.
 
@@ -61,7 +60,7 @@ Match [`docs/issues/_template.md`](../../../docs/issues/_template.md):
 | `found_by` | Optional                                                                                                             |
 | `area`     | e.g. `flux` \| `helm` \| `talos` \| `observability` \| `security` \| `apps` \| `networking` \| `storage` \| `agents` |
 | `slice`    | Optional: `afk` \| `hitl`                                                                                            |
-| `plan`     | Optional path (`docs/plans/…` preferred; `.cursor/plans/…` for IDE-only)                                             |
+| `plan`     | Optional path (`docs/plans/…` preferred)                                                                             |
 | `gitlab`   | Optional URL when operator-promoted                                                                                  |
 | `branch`   | Optional when `in-flight`                                                                                            |
 

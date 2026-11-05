@@ -15,9 +15,8 @@ both exist, the hook is the enforcement and the rule is the explanation.
 | Mechanism            | What it prevents / checks                       | Where                                                             |
 | -------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
 | `check_links.py`     | Broken links on context surfaces                | Pre-commit + CI (`context-links`)                                 |
-| `check_discovery.py` | Cursor/Claude symlink drift vs `.agents/`       | Pre-commit + CI                                                   |
+| `check_discovery.py` | Claude symlink drift vs `.agents/`              | Manual / via the `reconcile-context` skill                        |
 | Protected paths rule | Editing high blast-radius paths without confirm | [`.agents/rules/protected-paths.md`](../rules/protected-paths.md) |
-| Cursor hooks         | Shell/MCP guardrails, session context           | [`.cursor/hooks/`](../../.cursor/hooks/)                          |
 | Pre-commit           | Formatting, context checks, secret hygiene      | `.pre-commit-config.yaml`                                         |
 | GitLab CI            | Lint, Trivy, context-links, tofu, …             | `.gitlab/`                                                        |
 | Commit hard stops    | Secrets, force-push to main, bad amends         | [`constraints.md`](./constraints.md) + hooks                      |

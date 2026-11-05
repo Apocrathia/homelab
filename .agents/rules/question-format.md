@@ -9,10 +9,10 @@ Canonical contract: [`.agents/context/questions.md`](../context/questions.md).
 
 ## Prefer structured-question tool when present
 
-When the tool list includes a structured-question / interview tool (in Cursor
-this is often **`AskQuestion`**) and the decision has 2–4 discrete options,
-**call it**. Do not replace it with numbered option lists or multiple prose Ask
-blocks. Do not hard-require a specific tool name — if it is absent, fall back.
+When the tool list includes a structured-question / interview tool (often
+**`AskQuestion`**) and the decision has 2–4 discrete options, **call it**. Do
+not replace it with numbered option lists or multiple prose Ask blocks. Do not
+hard-require a specific tool name — if it is absent, fall back.
 
 Independent discrete choices may share **one** structured-question turn. If an
 answer gates later asks, ask one, wait, continue.

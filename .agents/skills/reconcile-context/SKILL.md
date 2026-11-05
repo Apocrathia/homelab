@@ -41,12 +41,12 @@ python3 .agents/skills/reconcile-context/scripts/check_frontmatter.py
 
 Pass `--all` to check every tracked markdown file. Fix or drop broken targets.
 
-`check_discovery.py` verifies Cursor/Claude discovery symlinks against the
+`check_discovery.py` verifies Claude discovery symlinks against the
 `.agents/` source of truth (agent/skill links, `.claude/skills`, `CLAUDE.md`).
 
 `sync_surfaces.py --check` fails when a generated harness surface
 (`.prime/agent/APPEND_SYSTEM.md`) drifts from the `rules/_harnesses.json`
-sidecar, or when the sidecar's `always_on` list, Cursor `alwaysApply: true`
+sidecar, or when the sidecar's `always_on` list, rule `alwaysApply: true`
 frontmatter, and AGENTS.md Always-in-force rule links disagree. After an
 intentional always-on rule change, regenerate with `--write` — never hand-edit
 `.prime/agent/`.
@@ -66,8 +66,8 @@ Findings warn by default so an adopting repo isn't failed on day one; pass
 - **Routing table** in `AGENTS.md`: every row target exists; every context module
   except `README.md` appears in a routing or loading row.
 - **loading.md** surfaces still exist.
-- **Skill / persona indexes**: `.agents` README and Cursor README tables match
-  directories on disk, and `check_discovery.py` must pass.
+- **Skill / persona indexes**: `.agents` README tables match directories on
+  disk, and `check_discovery.py` must pass.
 
 ### 3. Reality drift
 
@@ -77,7 +77,7 @@ Check thin claims against the repo (do not invent new modules):
   still match GitOps non-negotiables (Gateway API, 1Password Items, manifests as
   SoT) — if the product model changed, update context in the same lap.
 - New always-on portable rules or skills on disk missing from `AGENTS.md`
-  routing / rules README / Cursor discovery (step 2 usually catches this).
+  routing / rules README (step 2 usually catches this).
 - Do **not** replace local `check_*.py` with upstream copies blindly — homelab
   scripts allow discovery symlinks and untracked ledger paths; upstream may
   regress that. Diff first; keep local when ahead.
@@ -95,8 +95,8 @@ the format spec, not a real note — skip it.
 ### 5. Fixes
 
 Keep modules thin. Link to `docs/` and skills; do not paste tunable config.
-`.agents/**`, `.cursor/**`, and `AGENTS.md` are protected; summarize and get
-confirmation unless the operator already ordered this reconcile. For a
+`.agents/**` and `AGENTS.md` are protected; summarize and get confirmation
+unless the operator already ordered this reconcile. For a
 readonly detect-only pass, prefer the [`context-steward`](../../agents/context-steward/agent.md)
 persona (propose edits; do not write).
 

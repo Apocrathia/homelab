@@ -107,8 +107,8 @@ pages:
       def main():
           dest_dir = sys.argv[1] if len(sys.argv) > 1 else 'docs'
 
-          # Find all markdown files, excluding docs/, .git/, .cursor/
-          exclude_dirs = {'docs', '.git', '.cursor', 'node_modules', 'public'}
+          # Find all markdown files, excluding docs/, .git/
+          exclude_dirs = {'docs', '.git', 'node_modules', 'public'}
 
           for root, dirs, files in os.walk('.'):
               # Filter out excluded directories

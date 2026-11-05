@@ -20,10 +20,8 @@ Loop contract:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
 
 Message style SoT for this skill:
-[`.cursor/rules/conventional-commit-messages.mdc`](../../../.cursor/rules/conventional-commit-messages.mdc)
-plus the quality bar below (same bar as
-[`.cursor/commands/commit-message.md`](../../../.cursor/commands/commit-message.md)
-for staged-diff quick drafts).
+[`.agents/rules/conventional-commit-messages.md`](../../../.agents/rules/conventional-commit-messages.md)
+plus the quality bar below.
 
 ## CRITICAL — draft by default, ship only when authorized
 
@@ -48,8 +46,7 @@ Hard stops even when authorized (full list in
 [`constraints.md#commit-and-ship`](../../context/constraints.md#commit-and-ship)):
 secrets / credential-looking files, force-push to `main`/`master`, amending
 someone else's or an already-pushed commit, staging unrelated WIP. Hooks
-always run — never `--no-verify`. Attribution (soft, not a hard stop): prefer
-`Co-authored-by: Composer <composer@cursor.com>` on agent-shipped commits.
+always run — never `--no-verify`.
 
 ### Diverged-main recipe (attended)
 
@@ -131,7 +128,7 @@ to **this lap**. Unrelated dirty paths → exclude + warn.
 ### 3. Conventional Commit draft
 
 Follow Conventional Commits
-([`.cursor/rules/conventional-commit-messages.mdc`](../../../.cursor/rules/conventional-commit-messages.mdc))
+([`.agents/rules/conventional-commit-messages.md`](../../../.agents/rules/conventional-commit-messages.md))
 and recent `git log` style.
 
 **Message quality (from `/commit-message`):**

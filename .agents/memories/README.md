@@ -11,7 +11,7 @@ footgun. This path matches the [.agents Protocol](https://dotagentsprotocol.com/
 - A workaround exists that someone might "fix" without understanding why.
 - A decision should stick, with the reasoning attached.
 
-If the lesson is always-on policy, put it in a rule (Cursor `.mdc`) or
+If the lesson is always-on policy, put it in a rule or
 [`context/constraints.md`](../context/constraints.md) instead.
 
 ## File convention

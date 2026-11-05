@@ -16,8 +16,7 @@ Loop context:
 [`.agents/context/development-loop.md`](../../context/development-loop.md).
 
 Issues: [`docs/issues/README.md`](../../../docs/issues/README.md).
-Plans: [`docs/plans/README.md`](../../../docs/plans/README.md) (when present);
-living plans may still live under [`.cursor/plans/`](../../../.cursor/plans/).
+Plans: [`docs/plans/README.md`](../../../docs/plans/README.md) (when present).
 
 ## Not this skill
 
@@ -59,7 +58,7 @@ Do not fold context work into this skill.
 - [ ] 1. Identify touched behavior (diff / Launch brief / linked issue+plan)
 - [ ] 2. Update behavior docs that the change made wrong (READMEs, runbooks)
 - [ ] 3. Check acceptance on linked docs/issues/<slug>.md
-- [ ] 4. Check acceptance on linked docs/plans/<slug>.md and/or .cursor/plans/
+- [ ] 4. Check acceptance on linked docs/plans/<slug>.md
 - [ ] 5. If met → delete those files; if not → keep and list remaining gaps
 - [ ] 6. Fix backlinks (other docs, plans, issues that pointed at deleted paths)
 - [ ] 7. Repo-wide link check (`check_links.py --all`)
@@ -93,13 +92,10 @@ list if it grows.
   closure.
 - Skip `README.md`, `_template.md`.
 
-### Plans (`docs/plans/` and `.cursor/plans/`)
+### Plans (`docs/plans/`)
 
 - Satisfied plan for this lap → **delete** `docs/plans/<slug>.md` when that
   ledger is in use.
-- If the living plan lived under `.cursor/plans/`, delete (or clear) that plan
-  file the same way and **note** in the report that `.cursor/plans/` was the
-  plan surface.
 - Partial plans: do not delete; uncheck nothing retroactively to fake done —
   surface leftover checkboxes.
 
@@ -130,7 +126,7 @@ pass. Hand agent-tree drift to [`reconcile-context`](../reconcile-context/SKILL.
 **Deleted (acceptance met):**
 
 - docs/issues/<slug>.md
-- docs/plans/<slug>.md # and/or .cursor/plans/…
+- docs/plans/<slug>.md
 
 **Kept (acceptance not met):**
 

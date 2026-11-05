@@ -111,10 +111,8 @@ contract. Related modules that _do_ exist:
    | `<persona-name>` | <when to delegate to it> |
    ```
 
-7. **Wire discovery.** For Cursor, add a symlink under `.cursor/agents/` (or
-   the adapter path this repo uses for personas) pointing at the new
-   `agent.md`. Claude discovers via `.claude/` adapter links. Run discovery
-   checks after wiring.
+7. **Wire discovery.** Add a symlink under `.claude/agents/` pointing at
+   the new `agent.md`. Run discovery checks after wiring.
 
 8. **Validate.** Stage the new persona first (`git add -N <path>`) so
    `check_links.py`, which enumerates tracked files via `git ls-files`,
@@ -190,5 +188,5 @@ Lead with the persona name and one-sentence description. Then:
 
 - **File** — path created (`.agents/agents/<name>/agent.md`)
 - **Routing** — confirm the `subagents` rule (and `AGENTS.md` if needed) was updated
-- **Discovery** — confirm Cursor/Claude adapter links
+- **Discovery** — confirm Claude adapter links
 - **Next** — suggest the first delegation to test the persona

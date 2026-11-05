@@ -102,10 +102,8 @@ principles** section below. Related modules that _do_ exist:
 5. **Update routing.** If the skill should be discoverable via `AGENTS.md`,
    add a routing table row pointing at the skill.
 
-6. **Wire discovery.** For Cursor, add
-   `.cursor/skills/<name>` → `../../.agents/skills/<name>`. Claude skills
-   discover via the `.claude/skills` directory symlink. Update
-   `.cursor/skills/README.md` (and related indexes) as needed.
+6. **Wire discovery.** Claude skills discover via the `.claude/skills`
+   directory symlink. Update related indexes as needed.
 
 7. **Validate.** Stage the new skill first (`git add -N <path>`) so
    `check_links.py`, which enumerates tracked files via `git ls-files`,
@@ -127,5 +125,5 @@ Lead with the skill name and one-sentence description. Then:
 
 - **File** — path created
 - **Routing** — whether `AGENTS.md` was updated (and the row added)
-- **Discovery** — Cursor symlink / Claude discovery status
+- **Discovery** — Claude discovery status
 - **Next** — suggest a first invocation to test the skill

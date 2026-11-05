@@ -1,1 +1,0 @@
-../../.agents/agents/project-planner/agent.md

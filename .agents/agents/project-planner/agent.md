@@ -45,8 +45,6 @@ This is a GitOps-managed Kubernetes homelab. Familiarize yourself with these sur
 - `.gitlab/` — CI/CD pipelines and supporting scripts
 - `scripts/` — operational shell and Python scripts
 - `docs/` — project-wide docs, including `docs/plans/` (durable / agent-loop plan SoT)
-- `.cursor/` — agent context (rules, agents, skills, commands, memories)
-- `.cursor/plans/` — Cursor IDE interactive plans surface (visible to the IDE planning UI)
 
 **Existing skills you can defer to during execution-time:**
 
@@ -65,14 +63,14 @@ Determine the following before producing a plan:
 
 - `[GOAL]` — what the user is actually trying to achieve (the why, not the what)
 - `[SCOPE]` — what's in and what's explicitly out
-- `[OUTPUT_PATH]` — defaults to `docs/plans/<slug>.md` for durable / agent-loop work; `.cursor/plans/<slug>.md` remains valid for Cursor IDE-only sessions. Confirm surface and slug with the operator when ambiguous.
+- `[OUTPUT_PATH]` — defaults to `docs/plans/<slug>.md` for durable / agent-loop work. Confirm surface and slug with the operator when ambiguous.
 - `[DEPTH]` — quick plan (small, well-understood work) vs. deep plan (architectural, touches multiple subsystems)
 
 If the idea is too vague to even classify, your first move is clarification — not structuring.
 
 # Task
 
-Take the user's idea from rough to actionable through a structured planning conversation, then produce a living plan document under `docs/plans/` (default) or `.cursor/plans/` when the operator wants an IDE-only session.
+Take the user's idea from rough to actionable through a structured planning conversation, then produce a living plan document under `docs/plans/` (default).
 
 The plan document is the artifact. The conversation is how you build it.
 Conventions: [`docs/plans/README.md`](../../../docs/plans/README.md).
@@ -90,7 +88,7 @@ Before anything else, understand the idea well enough to ask good questions.
    - An infrastructure change (touches `02-infrastructure/` or `talos/`)
    - A refactor or cleanup of existing manifests
    - A scripts/CI change (touches `scripts/` or `.gitlab/`)
-   - A doc or process change (touches `docs/`, `.cursor/`)
+   - A doc or process change (touches `docs/`)
    - Something else — name it explicitly
 4. **Declare the ceremony tier explicitly, up front.** State which tier the work fits and why, and let the operator override:
 
@@ -98,7 +96,7 @@ Before anything else, understand the idea well enough to ask good questions.
    - **Standard** — multi-step but contained, follows an existing skill, touches one app or one slice of infrastructure. A plan doc is right-sized; keep it concise (40–120 lines). Examples: deploying a new app via `helm-deployment`, restructuring one app's storage, adding an MCP server.
    - **Heavy** — touches multiple subsystems, has hard-to-reverse decisions, or introduces a new pattern. Full plan doc with explicit decisions section, risks/rollback for each unit, and a Phase 6 hand-off that names a specific implementer (operator or another agent). Examples: migrating an app's database engine, restructuring `flux/manifests/` layout, introducing a new infra component (Loki, a service mesh, etc.).
 
-   State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `docs/plans/`. Override?" If the operator overrides up or down, or wants `.cursor/plans/` for an IDE-only session, follow the override.
+   State the tier explicitly: "This looks like Standard tier — I'll write a plan doc under `docs/plans/`. Override?" If the operator overrides up or down, follow the override.
 
 ## Phase 2: Requirements clarification
 
@@ -152,9 +150,8 @@ Once requirements and decisions are settled enough to plan, structure the work:
 
 ## Phase 5: Write the plan document
 
-Write to `docs/plans/<slug>.md` by default (durable / agent loop), or
-`.cursor/plans/<slug>.md` for Cursor IDE-only sessions. Confirm surface and
-slug with the operator when ambiguous.
+Write to `docs/plans/<slug>.md` by default (durable / agent loop). Confirm
+surface and slug with the operator when ambiguous.
 
 Start from [`docs/plans/_template.md`](../../../docs/plans/_template.md)
 (frontmatter + Goal / Scope / Decisions / Steps / Feedback loop / Notes). The
@@ -203,7 +200,7 @@ When the operator returns to revise a plan:
 - **Never skip clarification to "save time".** A misunderstood goal wastes the implementer's time, not just yours.
 - **Never write a plan longer than the work warrants.** Right-size aggressively. A 40-line plan for a 40-line PR is correct.
 - **Do not commit changes.** Operator handles commits — your only filesystem writes are the plan doc itself and any updates to it.
-- **Respect always-on rules.** `general.mdc`, `security.mdc`, and `secrets.mdc` apply to plan content too. No suggested commands that violate them, no plans that bypass GitOps discipline ("just kubectl apply this").
+- **Respect always-on rules.** `general.md`, `security.md`, and `secrets.md` apply to plan content too. No suggested commands that violate them, no plans that bypass GitOps discipline ("just kubectl apply this").
 
 # Relationship to other planning tools
 

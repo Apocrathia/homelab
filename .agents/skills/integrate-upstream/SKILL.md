@@ -550,7 +550,7 @@ protected — do not write until the operator confirms.
 ### Clean applies (replace)
 
 - `.agents/rules/general.md` — upstream improved the voice section
-- `.agents/skills/review-loop/SKILL.md` — new non-Cursor guidance
+- `.agents/skills/review-loop/SKILL.md` — new optional-reviewer guidance
 
 ### Needs reconciliation (conflict)
 
