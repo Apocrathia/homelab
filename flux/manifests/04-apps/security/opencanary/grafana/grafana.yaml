@@ -1,0 +1,17 @@
+---
+# Custom OpenCanary dashboard (Alloy → Loki: {namespace="opencanary",container="opencanary"}).
+# JSON lives in ConfigMap opencanary-alerts-dashboard (generated from dashboard.json).
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: opencanary-alerts
+  namespace: prometheus-system
+spec:
+  instanceSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: kube-prometheus-stack
+  configMapRef:
+    name: opencanary-alerts-dashboard
+    key: dashboard.json
+  folder: Security
