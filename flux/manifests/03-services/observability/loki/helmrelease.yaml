@@ -89,10 +89,6 @@ spec:
         reject_old_samples: false
         retention_period: 1440h # 60 days
 
-    # MinIO subchart disabled - using external RustFS
-    minio:
-      enabled: false
-
     # Write component configuration
     write:
       replicas: 2
@@ -139,34 +135,14 @@ spec:
           cpu: 100m
           memory: 128Mi
 
-    # Resources for Loki components (fallback for components not explicitly configured)
-    resources:
-      limits:
-        cpu: 1000m
-        memory: 1Gi
-      requests:
-        cpu: 200m
-        memory: 512Mi
-
     # Monitoring configuration
-    serviceMonitor:
-      enabled: true
-      interval: 30s
-      scrapeTimeout: 10s
-      additionalLabels:
-        release: prometheus
-
-    # Security context
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 10001
-      fsGroup: 10001
-
-    # Pod security context
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 10001
-      fsGroup: 10001
+    monitoring:
+      serviceMonitor:
+        enabled: true
+        interval: 30s
+        scrapeTimeout: 10s
+        labels:
+          release: prometheus
 
     # Disable memcached caches for homelab (reduces memory usage)
     chunksCache:
