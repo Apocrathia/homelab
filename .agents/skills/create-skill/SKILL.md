@@ -65,8 +65,8 @@ principles** section below. Related modules that _do_ exist:
 ## Procedure
 
 1. **Name the skill.** Use a verb phrase or noun describing the workflow:
-   `find-work`, `review-loop`, `ship-work`. Check `.agents/skills/` for
-   collisions.
+   `find-work`, `review-loop`, `ship-work`. Check `.agents/skills/` **and**
+   `.agents/agents/` for collisions — both surface as `/<name>`.
 
 2. **Create the directory:**
 
@@ -107,7 +107,9 @@ principles** section below. Related modules that _do_ exist:
    discover via the `.claude/skills` directory symlink. Update
    `.cursor/skills/README.md` (and related indexes) as needed.
 
-7. **Validate:**
+7. **Validate.** Stage the new skill first (`git add -N <path>`) so
+   `check_links.py`, which enumerates tracked files via `git ls-files`,
+   includes it. Then:
 
    ```bash
    python3 .agents/skills/reconcile-context/scripts/check_links.py

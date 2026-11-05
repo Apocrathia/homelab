@@ -62,7 +62,8 @@ contract. Related modules that _do_ exist:
 
 1. **Name the persona.** Use a role noun, not a verb phrase: `debugger`, not
    `debug-issues`. One word or kebab role name when possible. Check
-   `.agents/agents/` for name collisions.
+   `.agents/agents/` **and** `.agents/skills/` for name collisions — both
+   surface as `/<name>`.
 
 2. **Create the directory and file:**
 
@@ -75,11 +76,15 @@ contract. Related modules that _do_ exist:
    ```yaml
    ---
    name: <persona-name>
-   description: <what it does; include trigger phrases the parent matches on>
+   description: "<what it does; include trigger phrases the parent matches on>"
    model: inherit # or "fast" for cheap read-only scouts
    readonly: true # if the persona should not edit files
    ---
    ```
+
+   Quote the description: a `: ` sequence inside an unquoted plain scalar
+   makes the frontmatter invalid YAML and the persona unloadable, and the
+   link and discovery checks do not parse frontmatter.
 
 4. **Write the body.** Structure every persona the same way:
 
@@ -111,8 +116,10 @@ contract. Related modules that _do_ exist:
    `agent.md`. Claude discovers via `.claude/` adapter links. Run discovery
    checks after wiring.
 
-8. **Validate.** Run `check_links.py` (and `check_discovery.py` if discovery
-   changed):
+8. **Validate.** Stage the new persona first (`git add -N <path>`) so
+   `check_links.py`, which enumerates tracked files via `git ls-files`,
+   includes it. Then run `check_links.py` (and `check_discovery.py` if
+   discovery changed):
 
    ```bash
    python3 .agents/skills/reconcile-context/scripts/check_links.py
@@ -129,7 +136,7 @@ get confirmation before writing
 ```markdown
 ---
 name: <persona-name>
-description: <what it does; include trigger phrases>
+description: "<what it does; include trigger phrases>"
 model: inherit
 readonly: true
 ---

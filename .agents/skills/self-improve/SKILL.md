@@ -42,7 +42,8 @@ flowchart TD
   setup -->|yes| researchShip["/autoresearch owns review,<br/>reconcile, and ship"]
   researchShip -->|"blocked"| researchBlocked["report blocker<br/>keep worktrees; stop"]
   researchShip -->|"merge-ready"| researchMerge["human merge"]
-  researchMerge --> researchCleanup["/autoresearch cleanup"]
+  researchMerge --> researchRetro["retrospective<br/>(outcome + git history)"]
+  researchRetro --> researchCleanup["/autoresearch cleanup"]
   setup -->|no| invoke["Invoke skill from brief<br/>/alignment · /project-planner · /implement-change<br/>/watch-mr · /reconcile-context"]
   invoke --> worktree[Open worktree per brief]
   worktree --> build["Execute skill + subagents<br/>implementer↔reviewer → verifier"]
@@ -52,12 +53,12 @@ flowchart TD
   review --> reconcileDocs["/reconcile-docs<br/>docs, plans, issues"]
   reconcileDocs --> reconcileCtx["/reconcile-context<br/>AGENTS.md, .agents/context/"]
   reconcileCtx --> ship["/ship-work<br/>includes watch-mr"]
-  ship --> retro["retrospective<br/>(outcome + git history)"]
-  mergeReady --> retro
+  ship -->|"merge"| retro["retrospective<br/>(outcome + git history)"]
+  mergeReady -->|"after human merge"| retro
   retro --> clockOut["/clock-out after merge"]
 ```
 
-Each lap is one path through the DAG. The graph repeats — that's the loop.
+Each lap traverses its DAG. Laps repeat — that's the loop.
 
 **Context-only brief:** context-only laps (find-work ranks drift):
 `reconcile-context` → `review-loop` → `ship-work` (skip `reconcile-docs`

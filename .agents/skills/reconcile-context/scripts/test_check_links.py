@@ -89,7 +89,7 @@ class CheckLinksTest(unittest.TestCase):
             self.assertEqual(0, status, output)
             self.assertIn("All context links and anchors resolve.", output)
 
-    def test_tracked_markdown_target_allows_case_insensitive_path_match(self):
+    def test_tracked_markdown_target_case_match_follows_filesystem(self):
         with tempfile.TemporaryDirectory() as root:
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             os.makedirs(os.path.join(root, "docs"), exist_ok=True)
@@ -105,8 +105,47 @@ class CheckLinksTest(unittest.TestCase):
 
             status, output = self.run_checker(root)
 
-            self.assertEqual(0, status, output)
-            self.assertIn("All context links and anchors resolve.", output)
+            if os.path.exists(os.path.join(root, "docs", "real.md")):
+                # Case-insensitive filesystem: ./docs/real.md IS
+                # docs/Real.md.
+                self.assertEqual(0, status, output)
+                self.assertIn("All context links and anchors resolve.", output)
+            else:
+                # Case-sensitive filesystem: the case variant is a
+                # different (here missing) file, so the link is broken.
+                self.assertEqual(1, status, output)
+                self.assertIn(
+                    "BROKEN [missing file] AGENTS.md -> ./docs/real.md#real",
+                    output,
+                )
+
+    def test_folded_match_requires_the_same_file_on_disk(self):
+        """The folded fallback must reflect the real filesystem, not a
+        blanket casefold: on a case-sensitive filesystem an untracked case
+        variant is a different file, and a link to it is broken."""
+        exact = {check_links.exact_path_key("/repo/docs/Real.md"): "/repo/docs/Real.md"}
+        folded = {
+            check_links.folded_path_key("/repo/docs/Real.md"): "/repo/docs/Real.md"
+        }
+        with mock.patch.object(
+            check_links.os.path, "samefile", return_value=False
+        ) as same_file:
+            self.assertIsNone(
+                check_links.tracked_markdown_lookup("/repo/docs/real.md", exact, folded)
+            )
+            same_file.assert_called_once()
+        with mock.patch.object(check_links.os.path, "samefile", return_value=True):
+            self.assertEqual(
+                "/repo/docs/Real.md",
+                check_links.tracked_markdown_lookup(
+                    "/repo/docs/real.md", exact, folded
+                ),
+            )
+        # An exact tracked-path hit never needs the folded fallback.
+        self.assertEqual(
+            "/repo/docs/Real.md",
+            check_links.tracked_markdown_lookup("/repo/docs/Real.md", exact, folded),
+        )
 
     def test_anchor_link_to_oversized_tracked_target_reports_read_failure(self):
         with tempfile.TemporaryDirectory() as root:
@@ -2236,6 +2275,620 @@ class CheckLinksTest(unittest.TestCase):
                 "BROKEN [missing file] .agents/context/new.md -> ./gone.md",
                 output,
             )
+
+    def test_all_mode_symlink_alias_resolves_from_realpath_target(self):
+        """The graft resolves a symlink origin's relative links from the
+        real file's directory, so a link valid from the target stays clean
+        through the alias. Upstream rescans the alias with the alias path
+        as base instead (consumer-layout false positives the graft drops);
+        this test pins the local behavior: target-directory resolution."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            os.makedirs(os.path.join(root, ".agents", "context"))
+            os.makedirs(os.path.join(root, "docs"))
+            with open(
+                os.path.join(root, "docs", "real.md"), "w", encoding="utf-8"
+            ) as fh:
+                fh.write("# Real\n[Peer](peer.md)\n")
+            with open(
+                os.path.join(root, "docs", "peer.md"), "w", encoding="utf-8"
+            ) as fh:
+                fh.write("# Peer\n")
+            os.symlink(
+                os.path.join("..", "..", "docs", "real.md"),
+                os.path.join(root, ".agents", "context", "alias.md"),
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "add",
+                    "docs/real.md",
+                    "docs/peer.md",
+                    ".agents/context/alias.md",
+                ],
+                cwd=root,
+                check=True,
+            )
+
+            status, output = self.run_checker(root, "--all")
+
+            self.assertEqual(0, status, output)
+            self.assertIn("All context links and anchors resolve.", output)
+
+    def test_doc_fence_does_not_close_on_container_content_line(self):
+        """A ``> ``` ``-shaped line inside an ordinary fence is content:
+        the fence must close on its real closer, so the heading after it
+        still resolves. Closing on the container-stripped content line
+        made the real closer open a new fence and hid every anchor after
+        it."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("[Real](./doc.md#real)\n")
+            with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+                fh.write("```text\n> ```\n```\n\n## Real\n")
+            subprocess.run(["git", "add", "AGENTS.md", "doc.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertIn("All context links and anchors resolve.", output)
+
+    def test_quote_fence_bare_closer_line_reopens_through_eof(self):
+        """A bare closer-shaped line inside a blockquote fence ends the
+        blockquote and opens a new document-level fence that runs through
+        EOF, so the heading after it does not render and a link to it is
+        broken. (The consumer wave asserted the opposite outcome; the
+        CommonMark reference implementations agree with this one, so the
+        core keeps the reference behavior.)"""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("[Real](./doc.md#real)\n")
+            with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+                fh.write("> ```text\n```\n> ```\n\n## Real\n")
+            subprocess.run(["git", "add", "AGENTS.md", "doc.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing anchor] AGENTS.md -> ./doc.md#real", output)
+
+    def test_blockquote_fence_closer_prefix_may_vary(self):
+        """CommonMark lets the optional space after a ``>`` differ between
+        the opener and closer lines; a valid ``>``` `` closer must not run
+        the fence through EOF."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("[Real](./doc.md#real)\n")
+            with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+                fh.write("> ```\n> code\n>```\n\n## Real\n")
+            subprocess.run(["git", "add", "AGENTS.md", "doc.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertIn("All context links and anchors resolve.", output)
+
+    def test_blockquote_fence_closer_keeps_opener_quote_depth(self):
+        """CommonMark strips the parent ``>`` markers first; leftover ``>``
+        on a nested line is fence content, not a closer. Closing on the
+        deeper ``>> ``` `` line harvested a phantom anchor from the fence
+        body and hid the real anchor after the fence."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("[Real](./doc.md#real)\n[Still](./doc.md#still)\n")
+            with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+                fh.write("> ```\n> ## Inside\n>> ```\n> ## Still\n> ```\n\n## Real\n")
+            subprocess.run(["git", "add", "AGENTS.md", "doc.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            # The real anchor after the fence resolves; the phantom inside
+            # the fence body does not.
+            self.assertEqual(1, status, output)
+            self.assertEqual(1, output.count("BROKEN"))
+            self.assertIn("BROKEN [missing anchor] AGENTS.md -> ./doc.md#still", output)
+            self.assertNotIn("./doc.md#real", output)
+
+    def test_blockquote_fence_closer_at_shallower_quote_depth(self):
+        """A closer-shaped line with fewer ``>`` markers than the opener
+        ends the inner blockquote. The fence must close there, so the
+        heading after it resolves and a broken link after it is reported.
+        A link inside the fence body stays masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    ">>> ```\n"
+                    ">>> [Ghost](./ghost.md)\n"
+                    "> ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_fence_closer_rejects_sibling_list_item(self):
+        """After indented item content, a same-margin list marker opens a
+        sibling item whose fence body must stay masked; only an indented
+        continuation line may close the fence."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("- ```\n  x\n- ```\n   [Ghost](./ghost.md)\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertNotIn("BROKEN", output)
+
+    def test_list_fence_closer_rejects_quoted_sibling_list_item(self):
+        """A blockquote list fence has raw margin zero on every line;
+        sibling detection must measure indent and list markers after the
+        ``>`` prefix or the next item's opener closes the preceding fence
+        and a link in that item is falsely checked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("> - ```\n>   x\n> - ```\n>    [Ghost](./ghost.md)\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertNotIn("BROKEN", output)
+
+    def test_quoted_list_fence_closes_on_indented_closer(self):
+        """A fence opened on a blockquote list marker closes on the
+        indented continuation that keeps the ``>`` markers and omits the
+        list marker. The heading and link after that closer are checked;
+        a link inside the fence stays masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> - ```\n"
+                    ">   [Ghost](./ghost.md)\n"
+                    ">   ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_quote_fence_closes_on_list_marker_that_ends_blockquote(self):
+        """A list marker with no ``>`` ends the blockquote, so a fence
+        opened by ``> ``` `` closes on ``- ``` ``. The heading and link
+        after that line are checked; a link inside the fence stays masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> ```\n"
+                    "> [Ghost](./ghost.md)\n"
+                    "- ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_fence_closes_on_blockquote_closer(self):
+        """A quote marker at document level interrupts the list item, so a
+        fence opened inside the item closes on ``> ``` ``. The heading and
+        link after that closer are checked; a link inside the fence stays
+        masked. The reverse of the quote-fence case: quote fences close on
+        list markers that end their blockquote, list fences close on quote
+        markers that interrupt their item."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "- ```\n"
+                    "  [Ghost](./ghost.md)\n"
+                    "> ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_fence_keeps_indented_blockquote_closer_as_content(self):
+        """A quote marker indented to the item's content column opens a
+        quote inside the item, not outside it: the closer-shaped line is
+        fence content and the fence stays open. The deeper ``>`` guard
+        must measure indent relative to the opener's quote level, or this
+        line closes the fence and a later link is falsely checked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("- ```\n  x\n  > ```\n  [Ghost](./ghost.md)\n\n## Real\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertNotIn("BROKEN", output)
+
+    def test_quoted_list_fence_closes_on_deeper_blockquote_closer(self):
+        """``> > ``` `` after ``> - ``` `` starts a quote deeper than the
+        opener's level, so the list item inside the outer quote ends and
+        the fence closes there. The heading and link after it are checked;
+        a link inside the fence stays masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> - ```\n"
+                    ">   [Ghost](./ghost.md)\n"
+                    "> > ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_quoted_list_fence_closes_on_parent_blockquote_leftover(self):
+        """``> ``` `` after ``> - ``` `` drops the list marker and ends the
+        item. The fence closes on that parent-quote leftover, so the heading
+        and link after it are checked and a link inside the item stays
+        masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> - ```\n"
+                    ">   [Ghost](./ghost.md)\n"
+                    "> ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_fence_closer_requires_exact_prefix_replay(self):
+        """The container closer must not skip extra spaces after the
+        opener's prefix: a later list-marker line with one to three extra
+        spaces is a sibling item with its own fence, and its body must stay
+        masked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("- ```\n  x\n-  ```\n   [Ghost](./ghost.md)\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertNotIn("BROKEN", output)
+
+    def test_list_fence_closes_on_exact_prefix_replay(self):
+        """An exact replay of the opener's raw prefix closes the fence when
+        no indented continuation line was seen, so links after it are
+        checked."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("- ```\n- ```\n[Checked](./checked.md)\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./checked.md", output)
+
+    def test_list_continuation_fence_closes_on_sibling_marker(self):
+        """A fence indented under a list item has no marker on its opener.
+
+        A later sibling ``- ``` `` ends that item. Classifying the opener as
+        a document fence kept the fence open through the heading and link
+        after the sibling."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "- item\n"
+                    "    ```\n"
+                    "        [Ghost](./ghost.md)\n"
+                    "- ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_continuation_fence_closes_on_other_bullet(self):
+        """The sibling that ends the item need not repeat the opener's bullet."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "- item\n"
+                    "    ```\n"
+                    "    [Ghost](./ghost.md)\n"
+                    "* ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_continuation_fence_closes_on_blockquote_interrupt(self):
+        """A ``> ``` `` at column 0 ends the list item, so the continuation
+        fence closes there and the heading after it stays visible."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "- item\n"
+                    "    ```\n"
+                    "    [Ghost](./ghost.md)\n"
+                    "> ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_quoted_list_continuation_fence_closes_on_sibling(self):
+        """A quoted-list continuation still carries a ``>``, so the opener
+        looks like a blockquote fence. A same-depth ``> - ``` `` ends the
+        item; quote rules would treat that marker as content and hide the
+        link after it."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> - item\n"
+                    ">   ```\n"
+                    ">   [Ghost](./ghost.md)\n"
+                    "> - ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_quoted_list_continuation_fence_closes_on_deeper_quote(self):
+        """``> > ``` `` is deeper than the list's quote and interrupts the
+        item. The continuation fence must close there."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "[Real](#real)\n"
+                    "> - item\n"
+                    ">   ```\n"
+                    ">   [Ghost](./ghost.md)\n"
+                    "> > ```\n"
+                    "\n"
+                    "## Real\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertNotIn("#real", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_list_continuation_fence_keeps_indented_marker_as_content(self):
+        """A quote or list marker at the item's content column is inside
+        the fence. Closing on it would check a link that CommonMark still
+        masks, and the real indented closer would open a new fence."""
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "- item\n"
+                    "    ```\n"
+                    "    x\n"
+                    "  > ```\n"
+                    "    [Ghost](./ghost.md)\n"
+                    "    ```\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    "- item\n"
+                    "    ```\n"
+                    "    x\n"
+                    "  - ```\n"
+                    "    [Ghost](./ghost.md)\n"
+                    "    ```\n"
+                    "[Gone](./gone.md)\n"
+                )
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(1, status, output)
+            self.assertIn("BROKEN [missing file] AGENTS.md -> ./gone.md", output)
+            self.assertNotIn("ghost.md", output)
+            self.assertEqual(1, output.count("BROKEN"))
+
+    def test_fence_container_depth_is_bounded_by_line_length(self):
+        """CommonMark caps list nesting only by line length; a fixed
+        container bound was a semantic limit. An unclosed fence opened
+        under nine list markers masked nothing, and a broken link to its
+        body passed."""
+        deep = "- " * 9
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            # The link sits at the list's content indent, still inside the
+            # unclosed fence body, so it must not be checked.
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write(deep + "```\n" + " " * len(deep) + "[Ghost](./ghost.md)\n")
+            subprocess.run(["git", "add", "AGENTS.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root, "--all")
+
+            self.assertEqual(0, status, output)
+            self.assertNotIn("BROKEN", output)
+
+        with tempfile.TemporaryDirectory() as root:
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            with open(os.path.join(root, "AGENTS.md"), "w", encoding="utf-8") as fh:
+                fh.write("[After](./doc.md#after)\n")
+            with open(os.path.join(root, "doc.md"), "w", encoding="utf-8") as fh:
+                fh.write(deep + "```\n## In\n" + deep + "```\n## After\n")
+            subprocess.run(["git", "add", "AGENTS.md", "doc.md"], cwd=root, check=True)
+
+            status, output = self.run_checker(root)
+
+            self.assertEqual(0, status, output)
+            self.assertIn("All context links and anchors resolve.", output)
+
+    def test_container_prefix_scan_is_linear_at_any_depth(self):
+        """The per-line container prefix scan must stay deterministic and
+        linear whatever the nesting depth: an ambiguous split backtracked
+        over exponentially many whitespace partitions, minutes of CPU for
+        a short line in any tracked Markdown file."""
+        import time
+
+        for line in ("> " * 100 + "x", "-  " * 100 + "x"):
+            with self.subTest(prefix=line[:3]):
+                start = time.monotonic()
+                list(check_links.link_targets(line))
+                self.assertLess(time.monotonic() - start, 1.0)
+
+    def test_link_target_extraction_is_linear_on_unmatched_brackets(self):
+        """Each unclosed ``](`` candidate rescanned the whole suffix, so a
+        pathological one-megabyte line pinned a CI runner for minutes.
+        Extraction must finish near-linearly on bracket soup."""
+        import time
+
+        for text in ("](" * 100_000, "[](x" * 100_000):
+            with self.subTest(text=text[:4]):
+                start = time.monotonic()
+                list(check_links.extract_link_dests(text))
+                self.assertLess(time.monotonic() - start, 1.0)
+
+    def test_link_target_extraction_is_linear_on_matched_brackets(self):
+        """Each successful match must reuse position state instead of
+        rescanning, so a line of many short destinations stays linear."""
+        import time
+
+        start = time.monotonic()
+        dests = list(check_links.extract_link_dests("[](x)" * 100_000))
+        self.assertEqual(100_000, len(dests))
+        self.assertLess(time.monotonic() - start, 1.0)
+
+    def test_unmatched_link_opener_yields_no_destination(self):
+        # No closing paren, so the text is not a link destination and
+        # nothing is extracted from the rest of the line.
+        self.assertEqual(
+            [], list(check_links.extract_link_dests(']( <a id="unclosed"></a>\n'))
+        )
+
 
 
 if __name__ == "__main__":

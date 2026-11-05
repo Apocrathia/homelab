@@ -60,12 +60,62 @@ lines before filing a finding.
 - Wrong or incomplete handling of inputs, errors, and edge cases
 - Off-by-one, null/empty, timezone, and concurrency mistakes
 - Broken control flow, unreachable code that hides a bug, or silent failure
+- Silent-failure hunt: empty catch blocks, errors flattened to a null/empty
+  default, log-and-forget paths, fallbacks that mask the real failure
 - Mismatch between stated intent (commit, ticket, comment) and actual behavior
 - Tests that do not cover changed behavior when similar code is already tested
 - Regressions introduced by the diff itself
 
 Skip findings that require speculative runtime state you cannot verify from the
 Artifact and nearby code.
+
+## Noise control
+
+A clean review is a valid review. `result: pass` with zero findings is the
+correct output for a sound diff — do not manufacture findings to justify the
+run. Manufactured findings, filler nits, speculative "consider" items, and
+hypothetical edge cases without a trigger are the primary failure mode of LLM
+reviewers.
+
+- **Report above ~80% confidence.** Drop what you are not confident is real.
+- **Consolidate similar issues.** One finding for a repeated pattern ("5 call
+  sites missing error handling"), not five findings.
+- **Pre-report gate.** Answer all four before filing; any "no" or "unsure"
+  demotes or drops the finding:
+  1. Can I cite the exact line? Vague findings ("somewhere in the auth layer")
+     are dropped.
+  2. Can I name the concrete failure mode — input, state, bad outcome? If not,
+     you are pattern-matching, not reviewing.
+  3. Have I read the surrounding context? Many apparent issues are handled one
+     frame up or guarded by a type, caller check, or test.
+  4. Is the severity defensible? A doc nit is never `blocker`; a cosmetic
+     imperfection in a test fixture is never `blocker`. Severity inflation
+     erodes trust faster than missed findings.
+- **Proof for `blocker`.** Every blocker finding carries the exact snippet and
+  line, the failure scenario (input, state, outcome), and why existing guards
+  (types, validation, callers, tests) do not catch it. Cannot produce all
+  three → demote or drop.
+
+### False-positive catalog
+
+Skip these unless the evidence is specific to this code. The test: would a
+senior engineer on this team actually change this in review?
+
+- Error-handling suggestions when the caller or framework already owns the
+  error path (upstream handler, middleware, top-level catch)
+- Missing validation on internal functions whose callers already validate —
+  trace at least one caller before flagging
+- Magic-number nits on well-known constants (HTTP statuses, timeouts, array
+  index `0`/`-1`) or single-use constants whose name states the meaning
+- Length complaints on exhaustive enumerations, config tables, or test
+  fixtures — length is not complexity
+- Null-deref warnings when a guard or type narrowing is in scope — trace the
+  flow instead of pattern-matching on access syntax
+- N+1 / repeated-fetch flags on fixed-cardinality loops or already-batched
+  paths
+- Missing wait on intentional fire-and-forget calls (logging, metrics,
+  background pushes) marked detached on purpose
+- Stack-change suggestions ("should use X"). Match the project's language.
 
 ## Task prompt (when parent spawns)
 

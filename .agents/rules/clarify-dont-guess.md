@@ -27,7 +27,7 @@ If you ask a permission question — "Want me to…?", "Should I…?", "Do you w
 
 ## Extended ambiguity
 
-When ambiguity spans several **dependent** decisions (not one clarify question or several independent facts), use [`alignment`](../skills/alignment/SKILL.md) instead of ad-hoc back-and-forth. For several independent gaps, use one structured-question turn (or one prose Ask) covering them. Alignment is read-only until the operator asks to proceed.
+When ambiguity spans several **dependent** decisions (not one clarify question or several independent facts), use [`alignment`](../skills/alignment/SKILL.md) instead of ad-hoc back-and-forth. Alignment resolves dependent decisions **one at a time**: one question per turn, then wait for the answer before asking the next. For several **independent** gaps, use one structured-question turn (or one prose Ask) covering them. Alignment is read-only until the operator asks to proceed.
 
 ## Not ambiguity
 
