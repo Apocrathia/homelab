@@ -296,8 +296,9 @@ containment ([nodes/investigations](../nodes/investigations/README.md)).
 ## The typed-column trap (the failure class the shape kills)
 
 The shape is not minimalism for its own sake — it is the direct product
-of the 2026-10-18 boot-abort incident
-([docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)):
+of the 2026-10-18 boot-abort incident (the live DDL convergence and
+monthly-partition cutover have since run; live parity with the
+canonical DDL verified 2026-11-05):
 
 - `startup_scripts` executes sequentially and aborts at the FIRST
   failing query. Every typed column is a place where the DDL in git and
@@ -389,11 +390,12 @@ toYYYYMM(time)` — monthly, changed from daily `toDate(time)` on
 ## Schema at a glance
 
 Canonical definition: `config/10-startup-scripts.xml`. This section
-describes the shape this MR lands (monthly partitions, per-class
-`DELETE` horizons). Live tables created before the change drift until
-the cutover runs
-([`docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md`](../../../../../../docs/issues/ocsf-clickhouse-ddl-convergence-and-broken-parts.md)
-tracks the general divergence class).
+describes the shipped shape (monthly partitions, per-class `DELETE`
+horizons). Live tables created before the change drifted until the
+cutover ran — the live store now matches this DDL (engine, TTL, and
+column parity verified 2026-11-05); the remaining cutover residue is
+tracked in
+[`docs/issues/ocsf-live-monthly-cutover.md`](../../../../../../docs/issues/ocsf-live-monthly-cutover.md).
 
 The diagrams are the structure — every table, every typed
 column, split into four small renders so each box stays
