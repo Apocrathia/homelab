@@ -1,21 +1,11 @@
-# Slack: install when missing, then keep Fleet-maintained version current.
-# Requires slack/darwin under software.fleet_maintained_apps on the same fleet.
+# Slack: keep the Fleet-maintained version current — update only, never
+# install. Requires slack/darwin under software.fleet_maintained_apps on the
+# same fleet.
 # Do not use built-in labels (e.g. macOS) — fleetctl gitops rejects them.
 #
-# Patch policies only fail when the app is installed and outdated — missing
-# hosts pass. The install policy covers first-time install.
+# The patch policy only fails when the app is installed and outdated — missing
+# hosts pass, so Fleet never installs it.
 ---
-- name: macOS - Slack installed
-  description: >
-    Fails when Slack is not installed.
-  resolution: >
-    Fleet installs Slack (slack/darwin). Prefer Fleet over Homebrew for this
-    app so installs and uninstalls stay consistent.
-  platform: darwin
-  query: "SELECT 1 FROM apps WHERE bundle_identifier = 'com.tinyspeck.slackmacgap'"
-  install_software:
-    fleet_maintained_app_slug: slack/darwin
-  critical: false
 - name: macOS - Slack up to date
   description: >
     Fails when Slack is installed but behind the Fleet-maintained app metadata.

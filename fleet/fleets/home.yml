@@ -24,17 +24,18 @@ controls:
 software:
   fleet_maintained_apps:
     # Install + patch via policies (also listed in My Device).
-    - slug: 1password/darwin
-      self_service: true
     - slug: ableton-live-suite/darwin
-      self_service: true
-    - slug: claude/darwin
-      self_service: true
-    - slug: cursor/darwin
       self_service: true
     - slug: fleet-desktop/darwin
       self_service: true
     - slug: ghostty/darwin
+      self_service: true
+    # Patch via policies — auto-update when installed; never auto-install.
+    - slug: 1password/darwin
+      self_service: true
+    - slug: claude/darwin
+      self_service: true
+    - slug: cursor/darwin
       self_service: true
     - slug: moonlight/darwin
       self_service: true
