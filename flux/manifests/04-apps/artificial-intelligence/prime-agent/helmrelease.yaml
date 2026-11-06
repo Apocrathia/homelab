@@ -22,7 +22,7 @@ spec:
       name: prime-agent
       namespace: prime-agent
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-      image: public.ecr.aws/docker/library/node:24-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c
+      image: public.ecr.aws/docker/library/node:24-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
 
       # No upstream OCI image exists: install the pinned npm tarball into the
       # Longhorn-backed HOME on boot, then idle. The daemon supervisor and
