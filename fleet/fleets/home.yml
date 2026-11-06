@@ -30,6 +30,8 @@ software:
       self_service: true
     - slug: ghostty/darwin
       self_service: true
+    - slug: homebrew-app/darwin
+      self_service: true
     # Patch via policies — auto-update when installed; never auto-install.
     - slug: 1password/darwin
       self_service: true
