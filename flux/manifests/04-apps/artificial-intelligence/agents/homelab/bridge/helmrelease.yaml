@@ -24,7 +24,7 @@ spec:
       podAnnotations:
         instrumentation.opentelemetry.io/inject-python: "otel-system/python"
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-      image: public.ecr.aws/docker/library/python:3.15-slim@sha256:8c13a3f37a6a5b71498228e902c4b9f51c1f7900d49fabf71f9a650c6120e0d0
+      image: public.ecr.aws/docker/library/python:3.15-slim@sha256:e97b88e416c3c01eb427b21fd8cd3ebf006e6ee38afcfcc3cae1c54ee2ab0a75
 
       command: ["python"]
       args: ["/app/main.py"]
@@ -61,7 +61,7 @@ spec:
         - name: install
           # Using full Python image (not slim) to include build tools for native extensions
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-          image: public.ecr.aws/docker/library/python:3.15@sha256:f17ec845ebdd4f3347431579e1c22eaeec82913f039f2a54b937c7ff870bacdb
+          image: public.ecr.aws/docker/library/python:3.15@sha256:8c9a3bf2d6dea60d60a2ae2a07c2b2fb1e7d8daed64b146b6792c74ae0d62ac4
           command: ["/bin/bash", "-c"]
           args:
             - |
