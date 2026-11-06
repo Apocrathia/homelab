@@ -85,6 +85,16 @@ Bootstrap performed (2026-10-18, live state):
 
 The OpenCTI taxii2 import connector consumes discovery at `http://opentaxii.opentaxii.svc.cluster.local:9000/taxii2/` with collections defaulting to `*.*` (polls the single api root/collection), so no per-collection env is needed.
 
+## Dashboard
+
+`grafana/dashboard.json` ships "OpenTAXII Workload" — a Grafana dashboard in the **Security** folder, managed by grafana-operator:
+
+- Pod CPU and memory (working set) for the deployment
+- Container restarts stat
+- gunicorn/opentaxii JSON log volume by level (Loki)
+
+The image runs gunicorn with access logging off, so there is no per-request log stream; gatus probes `/management/health` for availability.
+
 ## Troubleshooting
 
 ```bash

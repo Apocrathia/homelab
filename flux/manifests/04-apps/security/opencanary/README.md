@@ -43,7 +43,7 @@ Alerts are single-line JSON objects on stdout (PyLogger console handler), ingest
 kubectl -n opencanary logs deployment/opencanary -f
 ```
 
-There is no dashboard UI; query Loki/Grafana for `namespace=opencanary`.
+The [Dashboard](#dashboard) section renders these alerts in Grafana; for ad-hoc queries use the Loki selector `namespace=opencanary`.
 
 ### Future: MISP/OpenCTI feed
 
@@ -55,6 +55,16 @@ OpenCanary ships `WebhookHandler`, `SlackHandler`, `TeamsHandler`, SMTP, socket,
 - **No probes and no gatus**: any self-traffic hitting a honeypot port generates synthetic attacker noise. Health = container process running.
 - **Hardened container**: read-only root filesystem, capabilities limited to `SETUID`/`SETGID` (needed only for the in-process drop to `nobody`), `/var/run` as an emptyDir for the twistd pidfile.
 - **No secrets**: the honeypot holds no credentials. Any password submitted by an attacker is logged, never validated.
+
+## Dashboard
+
+`grafana/dashboard.json` ships "OpenCanary Alerts" — a Grafana dashboard in the **Security** folder, managed by grafana-operator:
+
+- Alerts (24h) stat + alert rate by logtype
+- Top attacker source IPs (7d) bar gauge
+- Raw alert JSON, newest first
+
+Queries filter `logtype >= 2000`, so only attacker events count (3000-3003 HTTP, 4000-4002 SSH); 1000-series daemon/boot lines are excluded.
 
 ## Troubleshooting
 
