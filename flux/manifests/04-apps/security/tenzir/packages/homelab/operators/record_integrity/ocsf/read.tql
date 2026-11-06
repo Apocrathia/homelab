@@ -1,0 +1,230 @@
+---
+description: |
+  The bounded, round-trip-inverting read-back for the ocsf class
+  tables: the leg every attest-verify walk reads its window through.
+
+  WHY THIS OPERATOR EXISTS (2026-11-05 detection-plane write outage,
+  .scratch/ocsf-ddl-audit/laps/sre-core-crash-report.md): the walks'
+  old shape — `from_clickhouse table=...` plus a TQL-side
+  `where time > now() - 90m` — never reached the server. The
+  from_clickhouse pushdown only forwards filters ClickHouse can
+  evaluate exactly like Tenzir, and time bounds qualify only as
+  comparisons against foldable literals (the vendored optimization
+  reference: "Expressions that consist of literals only ... are
+  computed ahead of time"; now() is not one) — so every walk's every
+  retry ran `SELECT * FROM ocsf.<class> WHERE
+  event.attestation_list IS NOT NULL ...` as an UNBOUNDED full-table
+  scan (system.query_log, live evidence: Process_Activity = 86.4M
+  rows / 12.9 GiB per attempt; three concurrent scans on one replica
+  at 21:34Z). The replica saturation then 30s-timeout'd every write
+  pipeline in the fleet. Reading through `sql` mode instead pins the
+  window into the executed query itself (the sql mode contract:
+  "Tenzir sends the query as is and does not rewrite it"), and the
+  prefilter keeps the attested-rows-only scan shape the walk needs.
+
+  WHY THE RECONSTRUCTION: sql mode returns the raw columns — the
+  catch-all reconstruction is table mode's ("The sql mode and tables
+  without a catch-all column return the columns as they are"), and
+  verify needs records, not rows. Each arm below rebuilds the event
+  exactly as table mode would: the catch-all parsed back (the
+  reference: "Tenzir infers the types of JSON values like parse_json
+  does"), every typed column re-merged at its path (the column wins
+  over the catch-all, shallow per parent — TQL merge is a shallow
+  second-wins spread), null nullable columns as null fields, JSON
+  columns as records. Lab-verified byte-identical to table mode on
+  every walked class shape (2026-11-05, engine v6.20.1 against
+  ClickHouse 26.10.3.7 with the production DDL), so verify's input
+  contract — the stored-shape record — is unchanged from the table-mode
+  era.
+
+  THE STRIP: the last leg calls
+  homelab::record_integrity::ocsf::strip, which inverts the column
+  artifacts the catch-all reconstruction injects for fields the
+  pre-INSERT record lacked (severity_id's DEFAULT 0, null nullable
+  columns, the emptied parents), so the records verify.tql receives
+  reconstruct the stamp-side hash input. That inversion is a separate
+  operator so the package test harness can drive it with fixtures —
+  this operator needs a live ClickHouse and is proven by the lap's
+  lab evidence instead.
+
+  The json_type_escape_dots_in_keys setting is required in sql mode:
+  the catch-all write escapes literal dotted keys, and table mode
+  re-enables the setting on read — "With sql, add SETTINGS
+  json_type_escape_dots_in_keys=1 to your query. Otherwise,
+  ClickHouse returns escaped keys such as 'a%2Eb'" (from_clickhouse
+  reference). k8s-audit annotations and similar residue keys keep
+  their dots on the way back through this leg.
+args:
+  named:
+    - name: table
+      type: string
+      description: The ocsf class table to read, e.g. "ocsf.API_Activity".
+    - name: window
+      type: int
+      default: 90
+      description: |
+        The rolling read-back window in MINUTES. Must stay wider than
+        the walk cadence (90 vs the hourly walk: the 30-minute overlap
+        gives every record 1-2 covering walks and swallows the ~90s
+        late-write budget of the stamping windows).
+    - name: host
+      type: string
+      default: "clickhouse-tenzir.tenzir.svc.cluster.local"
+    - name: port
+      type: int
+      default: 9000
+    - name: user
+      type: string
+      default: "tenzir"
+    - name: password
+      type: secret
+    - name: tls
+      type: bool
+      default: false
+---
+
+from_clickhouse sql=f"SELECT * FROM {$table} WHERE event.attestation_list IS NOT NULL AND time > now() - INTERVAL {$window} MINUTE SETTINGS json_type_escape_dots_in_keys=1",
+  host=$host,
+  port=$port,
+  user=$user,
+  password=$password,
+  tls=$tls
+
+// The raw row: typed columns at top level (dotted names as literal
+// fields), event/unmapped as one-line JSON text. Rebuild per table,
+// mirroring the store's hand-DDL column set (config/10-startup-scripts
+// .xml) — a new typed column pairs with its arm here, same lap, or the
+// read-back silently drops the field from verify's hash input.
+_ev = parse_json(event)
+_unmapped_raw = unmapped
+_time_col = time
+_cuid_col = class_uid
+_sev_col = severity_id
+match $table {
+  "ocsf.API_Activity" => {
+    this = {
+      ..._ev,
+      actor: merge(_ev.actor?, {user: merge(_ev.actor?.user?, {name: this["actor.user.name"]})}),
+      api: merge(_ev.api?, {operation: this["api.operation"]}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      src_endpoint: merge(_ev.src_endpoint?, {ip: this["src_endpoint.ip"]}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Authentication" => {
+    this = {
+      ..._ev,
+      actor: merge(_ev.actor?, {user: merge(_ev.actor?.user?, {name: this["actor.user.name"]})}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      src_endpoint: merge(_ev.src_endpoint?, {ip: this["src_endpoint.ip"]}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      status_id: this["status_id"],
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Account_Change" => {
+    this = {
+      ..._ev,
+      actor: merge(_ev.actor?, {user: merge(_ev.actor?.user?, {name: this["actor.user.name"]})}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      src_endpoint: merge(_ev.src_endpoint?, {ip: this["src_endpoint.ip"]}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Detection_Finding" => {
+    this = {
+      ..._ev,
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      finding_info: merge(_ev.finding_info?, {title: this["finding_info.title"], uid: this["finding_info.uid"]}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      status_id: this["status_id"],
+      uid: this["uid"],
+      rule_id: this["rule_id"],
+      subject_kind: this["subject_kind"],
+      subject_name: this["subject_name"],
+      subject_namespace: this["subject_namespace"],
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Vulnerability_Finding" => {
+    this = {
+      ..._ev,
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      finding_info: merge(_ev.finding_info?, {title: this["finding_info.title"]}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Base_Event" => {
+    this = {
+      ..._ev,
+      device: merge(_ev.device?, {hostname: this["device.hostname"]}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      class_name: this["class_name"],
+      activity_id: this["activity_id"],
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Process_Activity" => {
+    this = {
+      ..._ev,
+      process: merge(_ev.process?, {path: this["process.path"]}),
+      device: merge(_ev.device?, {hostname: this["device.hostname"]}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      activity_id: this["activity_id"],
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.File_System_Activity" => {
+    this = {
+      ..._ev,
+      file: merge(_ev.file?, {path: this["file.path"], xattributes: merge(_ev.file?.xattributes?, {permission: this["file.xattributes.permission"]})}),
+      actor: merge(_ev.actor?, {process: merge(_ev.actor?.process?, {path: this["actor.process.path"], container: merge(_ev.actor?.process?.container?, {name: this["actor.process.container.name"]})})}),
+      device: merge(_ev.device?, {hostname: this["device.hostname"]}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  "ocsf.Network_Activity" => {
+    this = {
+      ..._ev,
+      src_endpoint: merge(_ev.src_endpoint?, {ip: this["src_endpoint.ip"]}),
+      dst_endpoint: merge(_ev.dst_endpoint?, {ip: this["dst_endpoint.ip"]}),
+      traffic: merge(_ev.traffic?, {bytes: this["traffic.bytes"]}),
+      metadata: merge(_ev.metadata?, {product: merge(_ev.metadata?.product?, {name: this["metadata.product.name"]})}),
+      time: _time_col,
+      class_uid: _cuid_col,
+      severity_id: _sev_col,
+      unmapped: parse_json(_unmapped_raw),
+    }
+  }
+  _ => {
+    // An unmapped table would mean the walked class set drifted from
+    // this operator's arm set; fail loud rather than verify against a
+    // broken reconstruction.
+    assert false, message=f"record_integrity::ocsf::read: no reconstruction arm for table {$table}"
+  }
+}
+
+homelab::record_integrity::ocsf::strip

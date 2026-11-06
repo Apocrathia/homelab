@@ -1,8 +1,8 @@
 // Verification half of the tetragon node's record_integrity lane:
 // read the last 90 minutes of every tetragon ocsf class back (the
-// three per-class tables via table-mode from_clickhouse — the vendor
-// catch-all reconstruction — merged into one stream, because the
-// per-node chain crosses classes), recompute each record's
+// the three per-class tables via record_integrity::ocsf::read —
+// the bounded sql-mode read + catch-all rebuild + artifact strip —
+// merged into one stream, because the per-node chain crosses classes), recompute each record's
 // attestation fingerprint over the canonical serialization, and walk
 // the per-node prev_event chain (chain_uid = tenzir-node-tetragon); a
 // Detection Finding (2004) drops for every break — content tamper
@@ -52,35 +52,40 @@
 // still falls to adjacency). The 30m overlap (90m - 1h) gives every
 // record 1-2 covering walks and swallows that ~90s late-write
 // budget with ~20x margin. The
-// stored records come back through the catch-all reconstruction:
-// ClickHouse re-sorted the JSON keys, and the operators'
-// sort()-canonicalized serialization is what makes the recompute
-// match what the stamping leg stamped.
+// stored records come back through the catch-all reconstruction
+// (homelab::record_integrity::ocsf::read's sql-mode bound + rebuild +
+// strip, the 2026-11-05 write-outage fix: the old client-side
+// `where time > now() - 90m` never reached the server, so every walk
+// was an unbounded full-table scan). The operators'
+// sort()-canonicalized serialization plus the strip's artifact
+// inversion is what makes the recompute match what the stamping leg
+// stamped — for the records whose JSON carries no null-valued keys
+// (Tenzir's serializer omits those at write, irrecoverably; the
+// tetragon maps write unmapped nulls, so null-carrying records keep
+// flagging until the stamp side hashes a round-trip-stable shape —
+// the design fork pinned by tetragon-verify-roundtrip-fork).
 every 1h {
-  from_clickhouse table="ocsf.Process_Activity",
+  homelab::record_integrity::ocsf::read table="ocsf.Process_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 90m
   merge {
-    from_clickhouse table="ocsf.File_System_Activity",
+    homelab::record_integrity::ocsf::read table="ocsf.File_System_Activity",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   merge {
-    from_clickhouse table="ocsf.Network_Activity",
+    homelab::record_integrity::ocsf::read table="ocsf.Network_Activity",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   homelab::record_integrity::verify product="homelab-detection",
     title="Detection record chain break",

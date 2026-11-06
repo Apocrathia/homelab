@@ -14,58 +14,63 @@
 // TWO legs out per break: stdout (pod-log visibility) and
 // ocsf.Detection_Finding via ocsf_derive + ocsf_cast → the Grafana
 // tenzir-findings rule pages through the agent_invoke bridge.
+//
+// READ PATH (2026-11-05 write-outage fix): each class leg reads through
+// homelab::record_integrity::ocsf::read — sql mode pins the 90-minute
+// bound and the attestation prefilter INTO the executed query (the old
+// table-mode + client-side `where time > now() - 90m` shape never
+// reached the server: the pushdown only forwards foldable-literal
+// comparisons, so every walk retried as an unbounded full-table scan
+// and the replica saturation 30s-timeout'd the fleet's write plane),
+// then rebuilds the catch-all record exactly as table mode would and
+// strips the round-trip column artifacts — the records verify sees
+// are the pre-INSERT shapes its recompute needs.
 every 1h {
-  from_clickhouse table="ocsf.API_Activity",
+  homelab::record_integrity::ocsf::read table="ocsf.API_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 90m
   merge {
-    from_clickhouse table="ocsf.Authentication",
+    homelab::record_integrity::ocsf::read table="ocsf.Authentication",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   merge {
-    from_clickhouse table="ocsf.Account_Change",
+    homelab::record_integrity::ocsf::read table="ocsf.Account_Change",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   merge {
-    from_clickhouse table="ocsf.Detection_Finding",
+    homelab::record_integrity::ocsf::read table="ocsf.Detection_Finding",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   merge {
-    from_clickhouse table="ocsf.Vulnerability_Finding",
+    homelab::record_integrity::ocsf::read table="ocsf.Vulnerability_Finding",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   merge {
-    from_clickhouse table="ocsf.Base_Event",
+    homelab::record_integrity::ocsf::read table="ocsf.Base_Event",
       host="clickhouse-tenzir.tenzir.svc.cluster.local",
       port=9000,
       user="tenzir",
       password=secret("clickhouse-password"),
       tls=false
-    where time > now() - 90m
   }
   homelab::record_integrity::verify product="homelab-detection",
     title="Detection record chain break",

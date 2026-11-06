@@ -69,12 +69,58 @@ reference a predecessor outside the window — its link checks are
 skipped, its fingerprint recompute is not); `link` selects the chain
 shape attest stamped (`caller`/`stream`).
 
+## The ocsf round trip (2026-11-05 write-outage lap)
+
+The detection walks read the ocsf class tables back through
+[`ocsf/read.tql`](./ocsf/read.tql) — the bounded sql-mode read (the
+window and the attestation prefilter ride INSIDE the executed query;
+the old table-mode + client-side `where time > now() - 90m` shape
+never reached the server, and every walk retried as an unbounded
+full-table scan that 30s-timeout'd the fleet's write plane) — plus
+the per-table catch-all rebuild (lab-verified byte-identical to table
+mode) and the artifact strip
+([`ocsf/strip.tql`](./ocsf/strip.tql)), which inverts the column
+artifacts the reconstruction injects for fields the pre-INSERT record
+lacked (severity_id's DEFAULT 0 on API Activity, the null nullable
+columns, the emptied parents) so verify's recompute sees the shape
+the stamp hashed. The strip's per-class matrix is evidence-anchored to
+the landed lanes and pairs with the store's hand-DDL: a new typed
+column or a new lane re-audits its arm.
+
+**The design fork, pinned by `tetragon-verify-roundtrip-fork`:**
+Tenzir's own serializer, not ClickHouse, omits null object fields and
+null list elements recursively when writing JSON columns and the
+catch-all (the vendored
+[`integrations/clickhouse.md`](../../../../.agents/skills/tenzir/integrations/clickhouse.md):
+"Tenzir omits null object fields and null list elements recursively
+when serializing records"), irrecoverably — a pre-INSERT record with
+JSON-borne null fields (the tetragon maps' unmapped literals, the
+netflow vendor map's fields, the trivy vulnerability lists,
+findings/stamp's subject nulls where they do not lift to columns)
+leaves no trace in the row, so no read-side inversion can reproduce
+its hash input. Null-free records verify
+clean through the full round trip (`detection-verify-roundtrip` pins
+the zero-mismatch proof on the k8s-audit mass — the flood driver);
+null-carrying records keep flagging `fingerprint_mismatch` until the
+stamp side hashes a round-trip-stable canonical form (e.g.
+`drop_null_fields` before the hash input capture, versioned in the
+fingerprint's `serialization` string). That is a fingerprint-contract
+change that orphans the already-stamped rows — an operator decision,
+tracked with the write-outage lap's report.
+
 Tests: the investigations baselines pin the caller shape byte-identical
 (`investigations-ocsf-attest*`, `investigations-ocsf-verify-*`); the
 detection baselines pin the stream shape — the per-node cross-class
 chain, the (time, uid) tie-break, the window-edge tolerance, the
 restart shape, and both break types (`detection-attest`,
 `detection-verify-clean`, `detection-verify-tamper`);
+`detection-verify-roundtrip` pins the round-trip parity proof — stamp
+the attest fixture, apply the store's write transforms (the JSON
+null-drop, the severity_id DEFAULT-0 artifact injection), strip, and
+verify to ZERO findings, the k8s-audit mass's exact chain;
+`tetragon-verify-roundtrip-fork` pins the design fork's honest
+outcome on the same chain — the null-carrying records fail, the
+null-free kprobe records ride the same round trip clean;
 `detection-verify-finding` pins the finding record's rails shape —
 class 2004 schema-native (`finding_info` singular), passing
 `ocsf_derive` + `ocsf_cast` clean, with severity 4 + class 2004 +

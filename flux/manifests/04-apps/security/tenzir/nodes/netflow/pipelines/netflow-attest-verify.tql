@@ -1,6 +1,8 @@
 // Verification half of the netflow node's record_integrity lane: read
-// the last 90 minutes of this node's one archived class back (table-mode
-// from_clickhouse — the vendor catch-all reconstruction), recompute
+// the last 90 minutes of this node's one archived class back
+// (record_integrity::ocsf::read — the bounded sql-mode read +
+// catch-all rebuild + artifact strip, the 2026-11-05 write-outage
+// fix), recompute
 // each record's attestation fingerprint over the canonical
 // serialization, and walk the per-node prev_event chain (chain_uid =
 // tenzir-node-netflow); a Detection Finding (2004) drops for every
@@ -49,13 +51,12 @@
 // volume the shared read is negligible; if the UniFi exporter fix
 // ever floods the class, the window is the operator's dial.
 every 1h {
-  from_clickhouse table="ocsf.Network_Activity",
+  homelab::record_integrity::ocsf::read table="ocsf.Network_Activity",
     host="clickhouse-tenzir.tenzir.svc.cluster.local",
     port=9000,
     user="tenzir",
     password=secret("clickhouse-password"),
     tls=false
-  where time > now() - 90m
   // Scope to THIS node's chain: ocsf.Network_Activity is shared — the
   // tetragon chain is cross-class (1007/1001/4001) and its 4001 rows
   // live here too; reading them back alongside this node's chain
