@@ -39,7 +39,11 @@ software:
       self_service: true
     - slug: moonlight/darwin
       self_service: true
+    - slug: rectangle/darwin
+      self_service: true
     - slug: slack/darwin
+      self_service: true
+    - slug: syncthing-app/darwin
       self_service: true
     # Self-service only (My Device; no auto-install policies).
     - slug: blender/darwin
@@ -60,11 +64,7 @@ software:
       self_service: true
     - slug: podman-desktop/darwin
       self_service: true
-    - slug: rectangle/darwin
-      self_service: true
     - slug: spotify/darwin
-      self_service: true
-    - slug: syncthing-app/darwin
       self_service: true
     - slug: tailscale-app/darwin
       self_service: true
