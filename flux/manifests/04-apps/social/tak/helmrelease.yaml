@@ -180,7 +180,7 @@ spec:
         # TCP CoT streaming (ATAK persistent connections, plain TCP)
         - name: eud-handler
           # renovate: datasource=docker depName=ghcr.io/brian7704/ots_eud_handler
-          image: ghcr.io/brian7704/ots_eud_handler:1.7.13@sha256:8019ca904d0dcee478149a61821165e88f04fcc376d0b1c03b4cc103f36803dc
+          image: ghcr.io/brian7704/ots_eud_handler:1.8.1@sha256:40faa1f4abca8781758213b0c827d18f7095ba750ab1c8e68ad62d78aca16ec7
           ports:
             - containerPort: 8088
               name: cot
