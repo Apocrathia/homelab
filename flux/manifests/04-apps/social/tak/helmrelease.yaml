@@ -26,7 +26,7 @@ spec:
       # configs): opentakserver, /app/venv/bin/cot_parser,
       # /app/venv/bin/eud_handler --no-ssl / --ssl. No command overrides.
       # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver
-      image: ghcr.io/brian7704/opentakserver:1.7.14@sha256:f3c90c55770adcb37804b0dc8faae8eac93689c1568e356e3a693529e82348c1
+      image: ghcr.io/brian7704/opentakserver:1.8.1@sha256:43296cadd46d08ae48325dff007652f19757f3cda8ceee4ad8d6872da3382ef9
       container:
         name: tak-api
         # Loopback HTTP API port; the webui sidecar proxies to it
@@ -88,7 +88,7 @@ spec:
           # Same image as the main container (no extra pull); entrypoint
           # overridden to a sed render
           # renovate: datasource=docker depName=ghcr.io/brian7704/opentakserver
-          image: ghcr.io/brian7704/opentakserver:1.7.14@sha256:f3c90c55770adcb37804b0dc8faae8eac93689c1568e356e3a693529e82348c1
+          image: ghcr.io/brian7704/opentakserver:1.8.1@sha256:43296cadd46d08ae48325dff007652f19757f3cda8ceee4ad8d6872da3382ef9
           command: ["sh", "-c"]
           args:
             - |
