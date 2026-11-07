@@ -1,0 +1,28 @@
+# Homebrew: install when missing, then keep Fleet-maintained version current.
+# Requires homebrew-app/darwin under software.fleet_maintained_apps on the
+# same fleet.
+#
+# Patch policies only fail when the app is installed and outdated — missing
+# hosts pass. The install policy covers first-time install.
+---
+- name: macOS - Homebrew installed
+  description: >
+    Fails when Homebrew is not installed.
+  resolution: >
+    Fleet installs Homebrew (homebrew-app/darwin).
+  platform: darwin
+  query: "SELECT 1 FROM apps WHERE bundle_identifier = 'sh.brew.app'"
+  install_software:
+    fleet_maintained_app_slug: homebrew-app/darwin
+  critical: false
+- name: macOS - Homebrew up to date
+  description: >
+    Fails when Homebrew is installed but behind the Fleet-maintained app
+    metadata.
+  resolution: >
+    Fleet updates Homebrew (homebrew-app/darwin).
+  type: patch
+  fleet_maintained_app_slug: homebrew-app/darwin
+  install_software: true
+  platform: darwin
+  critical: false
