@@ -41,6 +41,8 @@ software:
       self_service: true
     - slug: moonlight/darwin
       self_service: true
+    - slug: obs/darwin
+      self_service: true
     - slug: rectangle/darwin
       self_service: true
     - slug: slack/darwin
@@ -59,8 +61,6 @@ software:
     - slug: github/darwin
       self_service: true
     - slug: handbrake-app/darwin
-      self_service: true
-    - slug: obs/darwin
       self_service: true
     - slug: obsidian/darwin
       self_service: true
