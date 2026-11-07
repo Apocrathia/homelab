@@ -224,7 +224,7 @@ spec:
         # SSL CoT streaming (ATAK client certificates from the OTS CA)
         - name: eud-handler-ssl
           # renovate: datasource=docker depName=ghcr.io/brian7704/ots_eud_handler_ssl
-          image: ghcr.io/brian7704/ots_eud_handler_ssl:1.7.13@sha256:a78c6c6beb281d7e7f6725d88225e37fa92c2c4a0f48bd528edbc744e22269c0
+          image: ghcr.io/brian7704/ots_eud_handler_ssl:1.8.1@sha256:3164608441035b085ab2deef8f045a684316e40865aaec9282c60f9b8321c0ce
           ports:
             - containerPort: 8089
               name: ssl-cot
