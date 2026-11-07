@@ -1,0 +1,18 @@
+# Zed: keep the Fleet-maintained version current — update only, never
+# install. Requires zed/darwin under software.fleet_maintained_apps on the
+# same fleet.
+#
+# The patch policy only fails when the app is installed and outdated — missing
+# hosts pass, so Fleet never installs it.
+---
+- name: macOS - Zed up to date
+  description: >
+    Fails when Zed is installed but behind the Fleet-maintained app
+    metadata.
+  resolution: >
+    Fleet updates Zed (zed/darwin).
+  type: patch
+  fleet_maintained_app_slug: zed/darwin
+  install_software: true
+  platform: darwin
+  critical: false
