@@ -8,8 +8,7 @@ Self-hosted platform that synchronizes ebooks and audiobooks into synced read-al
 
 This deployment includes:
 
-- Read-along alignment between ebook (epub) and audiobook (m4b) versions of the same title
-- Built-in web reader for synced reading and listening
+- Read-along alignment between ebook (epub) and audiobook (m4b) versions of the same title, with a built-in web reader for synced reading and listening
 - Whisper.cpp transcription during alignment (bursty CPU work) with SQLite storage under `/data`
 - Authentik OIDC integration
 
@@ -19,13 +18,22 @@ This deployment includes:
 
 ## Configuration
 
-Storyteller configures through the web UI. The helmrelease sets the required environment (`STORYTELLER_SECRET_KEY`, `AUTH_URL`) plus `TZ`/`PUID`/`PGID`.
-
-See `helmrelease.yaml` for complete deployment configuration.
+Storyteller configures through the web UI; the helmrelease sets the required environment (`STORYTELLER_SECRET_KEY`, `AUTH_URL`) plus `TZ`/`PUID`/`PGID`.
 
 ### Storage
 
 - **Data**: Longhorn volume for the SQLite database, uploaded books, and alignment output
+
+### Library mounts
+
+Read-only mounts for import-from-server and watch folders: Storyteller writes
+metadata edits back into imported files, so the CWA/chaptarr trees stay safe;
+metadata edits made in the Storyteller UI fail instead.
+
+| Mount                 | Source                                                          |
+| --------------------- | --------------------------------------------------------------- |
+| `/library/ebooks`     | `//storage.services.apocrathia.com/Library` (subDir `Books`)    |
+| `/library/audiobooks` | `//storage.services.apocrathia.com/Audio` (subDir `Audiobooks`) |
 
 ## Authentication
 

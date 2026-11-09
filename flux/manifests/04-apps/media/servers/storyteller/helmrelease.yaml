@@ -77,6 +77,13 @@ spec:
       volumeMounts:
         - name: data
           mountPath: /data
+        # Source libraries, read-only: Storyteller writes metadata edits back
+        # into import-from-server files, so the originals stay protected —
+        # the calibre tree belongs to CWA and the audiobook tree to chaptarr.
+        - name: ebooks
+          mountPath: /library/ebooks
+        - name: audiobooks
+          mountPath: /library/audiobooks
       healthChecks:
         livenessProbe:
           enabled: true
@@ -104,6 +111,20 @@ spec:
         volumes:
           - name: data
             capacity: 20Gi
+      # Read-only source libraries for import-from-server / watch folders
+      smb:
+        enabled: true
+        volumes:
+          - name: ebooks
+            source: "//storage.services.apocrathia.com/Library"
+            subDir: "Books"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
+          - name: audiobooks
+            source: "//storage.services.apocrathia.com/Audio"
+            subDir: "Audiobooks"
+            credentialsPath: "vaults/Secrets/items/smb-credentials"
+            readOnly: true
 
     secrets:
       enabled: true
