@@ -41,4 +41,5 @@ resources:
   - servers/komga
   - servers/materialious
   - servers/restreamer
+  - servers/storyteller
   - servers/tunarr

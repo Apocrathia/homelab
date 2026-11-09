@@ -21,6 +21,7 @@ Media applications are organized into three categories:
 - **[Komga](./servers/komga/README.md)** - Media server for comics, manga, magazines, and eBooks with OPDS support
 - **[Materialious](./servers/materialious/README.md)** - Material-design YouTube frontend with built-in accounts, wired to the Invidious deployment
 - **[Restreamer](./servers/restreamer/README.md)** - Self-hosted video streaming server with restreaming to external services
+- **[Storyteller](./servers/storyteller/README.md)** - Ebook and audiobook read-along alignment platform with Authentik OIDC
 - **[Tunarr](./servers/tunarr/README.md)** - Virtual TV channel creator with HDHomeRun emulation for Plex/Jellyfin
 
 ## Management

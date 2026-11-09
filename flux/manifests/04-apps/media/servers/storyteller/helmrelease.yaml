@@ -1,0 +1,136 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: storyteller
+  namespace: storyteller
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: storyteller
+      # renovate: datasource=docker depName=registry.gitlab.com/storyteller-platform/storyteller
+      image: registry.gitlab.com/storyteller-platform/storyteller:web-v2.14.23@sha256:1ae16005572519f56abac2d65ab879d20115cd257fde7e89cf739ea82aed4de3
+      container:
+        name: storyteller
+        port: 8001
+        env:
+          - name: TZ
+            value: "America/Denver"
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          # Auth token signing key; also the Auth.js (NextAuth) secret
+          - name: STORYTELLER_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: storyteller-secrets
+                key: storyteller-secret-key
+          # OAuth base path (NextAuth basePath is /api/v2/auth); the Authentik
+          # callback resolves to /api/v2/auth/callback/authentik
+          - name: AUTH_URL
+            value: "https://storyteller.gateway.services.apocrathia.com/api/v2/auth"
+      replicas: 1
+      podAntiAffinity:
+        enabled: false # Single replica, no need for anti-affinity
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+      securityContext:
+        # Upstream entrypoint starts as root, fixes /data ownership, then
+        # drops to the internal storyteller user (uid/gid 1000); non-root
+        # start is unsupported. SETUID/SETGID/CHOWN: the drop needs the
+        # transition caps and init chowns /data.
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 1000
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          add:
+            - SETUID
+            - SETGID
+            - CHOWN
+          drop:
+            - ALL
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8001
+        portName: http
+      volumeMounts:
+        - name: data
+          mountPath: /data
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8001
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          tcpSocket:
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 20Gi
+
+    secrets:
+      enabled: true
+      itemPath: "vaults/Secrets/items/storyteller-secrets"
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      mode: "oidc"
+      category: "Media"
+      displayName: "Storyteller"
+      externalHost: "https://storyteller.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/servers/storyteller/icon.svg"
+      oidc:
+        grantTypes:
+          - "authorization_code"
+          - "refresh_token"
+        clientIdFromSecret:
+          enabled: true
+        scopes:
+          - "openid"
+          - "email"
+          - "profile"
+        redirectUris:
+          - url: "https://storyteller.gateway.services.apocrathia.com/api/v2/auth/callback/authentik"
+            matchingMode: "strict"
+
+    httproute:
+      enabled: true
+      hostname: "storyteller.gateway.services.apocrathia.com"
