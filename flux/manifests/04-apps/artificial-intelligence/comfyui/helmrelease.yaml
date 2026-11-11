@@ -9,14 +9,14 @@ spec:
   interval: 15m
   # First boot downloads ComfyUI + CPU PyTorch into the Longhorn PVC; cold
   # start can exceed Flux's 5m default.
-  timeout: 15m
+  timeout: 20m
   install:
     timeout: 15m
     remediation:
       retries: 3
   upgrade:
-    timeout: 15m
-    cleanupOnFail: true
+    timeout: 20m
+    cleanupOnFail: false
     remediation:
       retries: 3
   chart:
@@ -86,6 +86,7 @@ spec:
               if [ -f "$APP/.installed" ] \
                 && [ "$(cat "$APP/.installed")" = "$COMFYUI_VERSION" ] \
                 && [ -f "$VENV/bin/python" ] \
+                && "$VENV/bin/python" -c "import torch" 2>/dev/null \
                 && [ -f "$REPO/main.py" ]; then
                 echo "==> ComfyUI ${COMFYUI_VERSION} already installed, skipping bootstrap."
               else
