@@ -139,7 +139,7 @@ spec:
         # Consumes CoT messages from RabbitMQ and writes to the database
         - name: cot-parser
           # renovate: datasource=docker depName=ghcr.io/brian7704/ots_cot_parser
-          image: ghcr.io/brian7704/ots_cot_parser:1.7.13@sha256:28a2dde23f9ffa940d70e2a0b725d9f7b90b4dcffbef888efe63c08d7f9f6700
+          image: ghcr.io/brian7704/ots_cot_parser:1.8.3@sha256:cfe9e9dffd101faa3089f7ee791919abdc6e6377b008943695699c3b68c0b877
           env:
             - name: SECRET_KEY
               valueFrom:
