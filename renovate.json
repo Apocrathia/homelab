@@ -73,6 +73,15 @@
       "description": "Strict semver only — registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
+    },
+    {
+      "description": "promptfoo init bootstraps modelaudit, whose Requires-Python is <3.15 — pin the base python image to 3.14 or lower so Renovate can't re-drift it past the dep's ceiling",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["docker/library/python"],
+      "matchFiles": [
+        "flux/manifests/04-apps/artificial-intelligence/promptfoo/helmrelease.yaml"
+      ],
+      "allowedVersions": "<=3.14"
     }
   ],
   "customManagers": [
