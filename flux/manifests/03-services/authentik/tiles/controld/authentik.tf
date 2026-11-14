@@ -58,7 +58,7 @@ resource "authentik_application" "app" {
   meta_launch_url = "https://controld.com/dashboard"
   open_in_new_tab = true
 
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/tiles/controld/icon.png"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/authentik/tiles/controld/icon.svg"
   meta_description = "Control D DNS dashboard"
   meta_publisher   = "Control D"
 }
