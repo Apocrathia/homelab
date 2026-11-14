@@ -79,9 +79,9 @@ through a terragrunt dependency on `okta/network-zone`.
 
 ### Managed GitLab
 
-| Deployment       | Module           | Notes                                                                  |
-| ---------------- | ---------------- | ---------------------------------------------------------------------- |
-| `gitlab/homelab` | `gitlab-project` | Pattern spike: 1Password ephemeral → GitLab token; project label later |
+| Deployment       | Module           | Notes                                                          |
+| ---------------- | ---------------- | -------------------------------------------------------------- |
+| `gitlab/homelab` | `gitlab-project` | Project adoption, label, branch protection, GitHub push mirror |
 
 Auth for this stack: **1Password Connect** (no `op` CLI). Set
 `OP_CONNECT_HOST` (CI default:
@@ -92,6 +92,11 @@ API Credential item **credential** field and set
 `onepassword_gitlab_pat_item_title` in the deployment `terragrunt.hcl`. Do not
 export `GITLAB_TOKEN`. See
 [`docs/plans/tofu-1password-provider.md`](../docs/plans/tofu-1password-provider.md).
+
+The GitHub push mirror (GitLab → `github.com/Apocrathia/homelab`) is managed by
+the same module. Its URL embeds the GitHub credentials, so the PAT is read from
+the masked CI variable `GITHUB_MIRROR_TOKEN` (synced from `.env` when present)
+at apply time — never committed.
 
 ```bash
 # From a pod/runner on the cluster (same as CI). Local: port-forward first.
@@ -404,7 +409,7 @@ Sync from `terraform/.env` (values piped to glab; not echoed):
 ./scripts/terraform/sync-gitlab-ci-variables.sh -y          # write
 ```
 
-The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). Provider tokens (`PROXMOX_VE_*`, `CLOUDFLARE_API_TOKEN`, `OKTA_API_TOKEN`, GitLab PAT) are **not** synced — those stacks use Connect ephemeral.
+The script upserts these keys with **Protected** and scope `*`. Values that meet GitLab standard masking rules are masked; tokens are **hidden** on first create when standard masking applies. `TOFU_MR_TOKEN` in `.env` maps to `TOFU_TOKEN` in GitLab. `TOFU_DRIFT_WEBHOOK_URL` is synced when present in `.env` (Discord webhook for scheduled drift alerts). `GITHUB_MIRROR_TOKEN` (GitHub push-mirror PAT) is synced when present in `.env`. Provider tokens (`PROXMOX_VE_*`, `CLOUDFLARE_API_TOKEN`, `OKTA_API_TOKEN`, GitLab PAT) are **not** synced — those stacks use Connect ephemeral.
 
 | Variable                 | Type     | Protected | Masked |
 | ------------------------ | -------- | --------- | ------ |
@@ -413,6 +418,7 @@ The script upserts these keys with **Protected** and scope `*`. Values that meet
 | `TF_HTTP_PASSWORD`       | Variable | Yes       | Yes    |
 | `TOFU_TOKEN`             | Variable | Yes       | Yes    |
 | `TOFU_DRIFT_WEBHOOK_URL` | Variable | Yes       | Yes    |
+| `GITHUB_MIRROR_TOKEN`    | Variable | Yes       | Yes    |
 | `OP_CONNECT_TOKEN`       | Variable | Yes       | Yes    |
 
 Manual setup: GitLab → Settings → CI/CD → Variables.

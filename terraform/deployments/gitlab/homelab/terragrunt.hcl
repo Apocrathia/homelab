@@ -11,6 +11,9 @@
 # Do NOT export GITLAB_TOKEN. Do NOT commit vault UUIDs.
 # Set onepassword_gitlab_pat_item_title to the item title in vault Secrets.
 # Start with manage_terraform_label = false; flip true for the label apply.
+#
+# GitHub push mirror (env):
+#   GITHUB_MIRROR_TOKEN — GitHub PAT (repo scope); masked CI variable
 
 include "root" {
   path = find_in_parent_folders("root.hcl")
@@ -28,8 +31,8 @@ inputs = {
   onepassword_vault_name            = "Secrets"
   onepassword_gitlab_pat_item_title = "gitlab-terraform-secrets"
 
-  project_path                = "Apocrathia/homelab"
-  manage_terraform_label      = false
+  project_path           = "Apocrathia/homelab"
+  manage_terraform_label = false
 
   # Branch protection: adopt the existing rule on main (import block in the
   # module), then enforce no direct pushes — everything through MRs.
@@ -39,10 +42,18 @@ inputs = {
   # Adopt the project itself and mark it with the managed-by-terraform topic.
   # description / resolve_outdated_diff_discussions are pinned because provider
   # v19 resets optional-only attributes to null when unset.
-  manage_project                      = true
-  project_description                 = "GitOps-managed Kubernetes homelab cluster on Talos Linux with Flux CD, 1Password secrets management, and production-like infrastructure for home services."
-  resolve_outdated_diff_discussions   = true
-  terraform_label_name        = "managed-by-terraform"
-  terraform_label_color       = "#428BCA"
-  terraform_label_description = "Owned by OpenTofu under terraform/deployments/gitlab"
+  manage_project                    = true
+  project_description               = "GitOps-managed Kubernetes homelab cluster on Talos Linux with Flux CD, 1Password secrets management, and production-like infrastructure for home services."
+  resolve_outdated_diff_discussions = true
+  terraform_label_name              = "managed-by-terraform"
+  terraform_label_color             = "#428BCA"
+  terraform_label_description       = "Owned by OpenTofu under terraform/deployments/gitlab"
+
+  # GitHub push mirror (existing mirror adopted via import; url token from env).
+  manage_push_mirror                    = true
+  github_mirror_username                = "Apocrathia"
+  github_mirror_token                   = get_env("GITHUB_MIRROR_TOKEN", "")
+  github_mirror_repo                    = "Apocrathia/homelab"
+  github_mirror_only_protected_branches = false
+  github_mirror_keep_divergent_refs     = false
 }

@@ -101,3 +101,42 @@ variable "terraform_topic_name" {
   description = "Topic marking the project as Terraform-managed"
   default     = "managed-by-terraform"
 }
+
+# -- GitHub push mirror ------------------------------------------------------
+
+variable "manage_push_mirror" {
+  type        = bool
+  description = "When true, adopt/manage the GitHub push mirror for this project"
+  default     = false
+}
+
+variable "github_mirror_username" {
+  type        = string
+  description = "GitHub username or account for the push mirror URL. Required when manage_push_mirror is true."
+  default     = null
+}
+
+variable "github_mirror_token" {
+  type        = string
+  description = "GitHub PAT with repo scope for the push mirror. Required when manage_push_mirror is true."
+  default     = null
+  sensitive   = true
+}
+
+variable "github_mirror_repo" {
+  type        = string
+  description = "GitHub owner/repo to push-mirror to (e.g. Apocrathia/homelab). Required when manage_push_mirror is true."
+  default     = null
+}
+
+variable "github_mirror_only_protected_branches" {
+  type        = bool
+  description = "When true, only push protected branches to GitHub"
+  default     = false
+}
+
+variable "github_mirror_keep_divergent_refs" {
+  type        = bool
+  description = "When true, keep branches on GitHub that don't exist in GitLab (non-destructive). When false, delete them (exact mirror). GitLab provider default is true; set explicitly to match intent."
+  default     = false
+}

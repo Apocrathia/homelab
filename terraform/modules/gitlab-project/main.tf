@@ -87,3 +87,25 @@ import {
   to = gitlab_branch_protection.main[0]
   id = "67295640:main"
 }
+
+# GitHub push mirror: codifies the existing GitLab → GitHub mirror.
+# Token comes from an env-provided variable (masked CI var) because the
+# push mirror resource embeds credentials in the url and Terragrunt cannot
+# pass ephemeral resource values into module inputs.
+resource "gitlab_project_push_mirror" "github" {
+  count = var.manage_push_mirror ? 1 : 0
+
+  project                 = local.project_id
+  url                     = "https://${var.github_mirror_username}:${var.github_mirror_token}@github.com/${var.github_mirror_repo}.git"
+  only_protected_branches = var.github_mirror_only_protected_branches
+  keep_divergent_refs     = var.github_mirror_keep_divergent_refs
+}
+
+# One-time adoption of the existing push mirror (id 2972203 on project 67295640).
+# Only valid while manage_push_mirror = true; delete this block after the first
+# successful apply.  Note: the provider cannot round-trip url-embedded credentials,
+# so this import forces a replace (new mirror_id, same destination).
+import {
+  to = gitlab_project_push_mirror.github[0]
+  id = "67295640:2972203"
+}

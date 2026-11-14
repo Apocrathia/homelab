@@ -220,6 +220,9 @@ echo "Note:   PROXMOX_VE_* / CLOUDFLARE_API_TOKEN / OKTA_API_TOKEN are not synce
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   echo "Optional: TOFU_DRIFT_WEBHOOK_URL (will sync)"
 fi
+if [[ -n "${GITHUB_MIRROR_TOKEN:-}" ]]; then
+  echo "Optional: GITHUB_MIRROR_TOKEN (will sync)"
+fi
 echo
 
 if ! $ASSUME_YES && ! $DRY_RUN; then
@@ -236,6 +239,9 @@ upsert_variable TF_HTTP_PASSWORD "$TF_HTTP_PASSWORD" true
 upsert_variable TOFU_TOKEN "$TOFU_TOKEN" true
 if [[ -n "${TOFU_DRIFT_WEBHOOK_URL:-}" ]]; then
   upsert_variable TOFU_DRIFT_WEBHOOK_URL "$TOFU_DRIFT_WEBHOOK_URL" true
+fi
+if [[ -n "${GITHUB_MIRROR_TOKEN:-}" ]]; then
+  upsert_variable GITHUB_MIRROR_TOKEN "$GITHUB_MIRROR_TOKEN" true
 fi
 
 echo

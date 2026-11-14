@@ -17,3 +17,8 @@ output "protected_branch_id" {
   description = "Branch protection id when manage_branch_protection is true; null otherwise"
   value       = try(gitlab_branch_protection.main[0].id, null)
 }
+
+output "push_mirror_id" {
+  description = "Push mirror id when manage_push_mirror is true; null otherwise"
+  value       = try(gitlab_project_push_mirror.github[0].id, null)
+}
