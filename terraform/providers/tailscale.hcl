@@ -11,9 +11,8 @@
 # Do not commit vault UUIDs — only vault name + item title (non-secret).
 #
 # Item: tailscale-terraform-secrets (API Credential)
-#   username               = OAuth client ID
-#   credential             = OAuth client secret
-#   section dns:nextdns-id = NextDNS profile ID (derives the global resolver)
+#   username   = OAuth client ID
+#   credential = OAuth client secret
 # Client scopes: policy_file, dns, networking_settings, tailnets:read,
 # feature_settings, auth_keys, users:read, log_streaming,
 # logs:configuration:read, devices:core, devices:core:read,

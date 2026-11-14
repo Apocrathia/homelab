@@ -9,9 +9,10 @@
 #   TF_HTTP_*        — state backend
 #
 # Item: tailscale-terraform-secrets (API Credential: username = OAuth client
-# ID, credential = client secret; section "dns" field "nextdns-id" = NextDNS
-# profile ID, used to derive the tailnet's global resolver). Do NOT commit
-# vault UUIDs.
+# ID, credential = client secret). Do NOT commit vault UUIDs.
+#
+# Global DNS resolver: ControlD legacy resolvers (premium profile, source-IP
+# authorized via DDNS) — hardcoded in modules/tailscale-tailnet/main.tf.
 #
 # policy.hujson is imported verbatim from the live tailnet policy; keep it
 # byte-identical to intent — tailscale_acl overwrites the WHOLE policy file.
