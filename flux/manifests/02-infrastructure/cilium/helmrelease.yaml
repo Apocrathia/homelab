@@ -119,13 +119,13 @@ spec:
           serviceMonitor:
             enabled: true
 
-    # Enable built-in DNS proxy with NextDNS
+    # Enable built-in DNS proxy with ControlD
     dnsProxy:
       enabled: true
-      # NextDNS upstream servers
+      # ControlD legacy resolver IPs (premium profile, source-IP authorized)
       upstream:
-        - 45.90.28.214
-        - 45.90.30.214
+        - 76.76.2.111
+        - 76.76.10.111
 
     # Enable IPv4 and disable IPv6 for homelab setup
     ipv4:

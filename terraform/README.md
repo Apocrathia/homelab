@@ -114,9 +114,9 @@ console's policy editor once applied (live since 2026-08-25). The tailnet's
 custom domain (`tailnet.apocrathia.com`) is console-managed (no provider/API
 support). Auth is **1Password Connect** → ephemeral item
 `tailscale-terraform-secrets` (API Credential: **username** = OAuth client ID,
-**credential** = client secret; section **dns** field **nextdns-id** = NextDNS
-profile ID). The global DNS resolver is the NextDNS linked-IPv6 address,
-derived in-module from that ID so the profile ID never lands in public git.
+**credential** = client secret). The global DNS resolver is ControlD's legacy
+resolvers (premium profile, source-IP authorized via DDNS), hardcoded
+in-module — the resolver IPs are non-secret.
 Client scopes: `policy_file`, `dns`, `networking_settings`, `tailnets:read`,
 `feature_settings`, `auth_keys`, `users:read`, `log_streaming`,
 `logs:configuration:read`, `devices:core`, `devices:core:read`,
