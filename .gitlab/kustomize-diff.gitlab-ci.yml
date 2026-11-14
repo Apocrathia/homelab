@@ -3,7 +3,7 @@ kustomize-diff:
   stage: verify
   image:
     # renovate: datasource=docker depName=alpine/k8s
-    name: alpine/k8s:1.37.2@sha256:dcb7185e112a453aa72f426754849a97357727ef8f40168fb208c8cf59952042
+    name: alpine/k8s:1.37.2@sha256:7a82aeefea3d554a43a8676b137f2b88bae6c1fe11c13862b191b3a086cc28c0
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
