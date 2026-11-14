@@ -178,6 +178,7 @@
     }
   ],
   "timezone": "America/Denver",
+  "minimumReleaseAge": "1 day",
   "prHourlyLimit": 30,
   "prConcurrentLimit": 30,
   "dependencyDashboard": true,
