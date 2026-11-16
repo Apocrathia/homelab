@@ -27,6 +27,16 @@ spec:
         env:
           - name: TZ
             value: "America/Denver"
+      healthChecks:
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /health
+            port: 8096
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       replicas: 1
       podAntiAffinity:
         enabled: false # Single replica, no need for anti-affinity
