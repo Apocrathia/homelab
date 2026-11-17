@@ -116,7 +116,7 @@ spec:
       category: "Design"
       displayName: "Klecks"
       externalHost: "https://klecks.gateway.services.apocrathia.com"
-      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/klecks/icon.png"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/klecks/icon.svg"
       interceptHeaderAuth: false
 
     httproute:
