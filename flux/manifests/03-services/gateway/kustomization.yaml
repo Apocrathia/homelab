@@ -8,4 +8,3 @@ metadata:
 resources:
   - gateway-cert.yaml
   - gateway.yaml
-  - envoy-gateway

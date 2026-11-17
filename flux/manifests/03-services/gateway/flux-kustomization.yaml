@@ -12,5 +12,5 @@ spec:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: infrastructure-cilium
+    - name: services-gateway-envoy
     - name: services-cert-manager
