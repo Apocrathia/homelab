@@ -15,6 +15,7 @@ resources:
   - synapse-helmrelease.yaml
   - mas-helmrelease.yaml
   - element-helmrelease.yaml
+  - sable-helmrelease.yaml
   - httproute.yaml
   - reload-mas-on-configmap-change.yaml
   - crossplane.yaml
@@ -57,6 +58,15 @@ configMapGenerator:
     namespace: matrix
     files:
       - authentik.tf
+
+  # Sable config.json: homeserver pinned to matrix.apocrathia.com,
+  # password fields hidden, SSO auto-redirect on the single OIDC
+  # provider (MAS -> Authentik upstream). Mounted at /app/config.json
+  # in the sable-helmrelease.yaml.
+  - name: matrix-sable-config
+    namespace: matrix
+    files:
+      - config.json=config/sable-config.json
 
 replacements:
   # Build-time stitch, house pattern from gitlab/runner: copy the generated

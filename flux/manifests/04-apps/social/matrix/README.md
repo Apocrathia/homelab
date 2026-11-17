@@ -14,15 +14,19 @@ Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully dele
 
 ## Stack
 
-```
-Element Web ─┐
-Element X ───┴─> gateway (TLS) ──> synapse:8008 ──> matrix-postgres (CNPG, synapse + mas DBs)
-                 │                  ▲  └─ shared-secret ▶
-                 └─ login/refresh ──┤
-                                    └──> mas:8080 ──> Authentik OIDC (upstream provider)
+```mermaid
+flowchart LR
+    Element[Element Web] --> GW[Cilium Gateway]
+    Sable[Sable] --> GW
+    ElementX[Element X] --> GW
+    GW -->|client API + federation| Synapse[synapse:8008]
+    Synapse --> PG[(matrix-postgres<br/>synapse + mas DBs)]
+    GW -->|login/refresh| MAS[mas:8080]
+    MAS --> Auth[Authentik OIDC<br/>upstream provider]
+    Synapse <-. shared-secret .-> MAS
 ```
 
-Four pods: `synapse`, `mas`, `element`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
+Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
 
 ## SSO flow
 

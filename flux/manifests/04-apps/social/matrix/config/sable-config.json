@@ -1,0 +1,11 @@
+{
+  "$schema": "./config.schema.json",
+  "homeserverList": ["matrix.apocrathia.com"],
+  "defaultHomeserver": 0,
+  "allowCustomHomeservers": true,
+  "hideUsernamePasswordFields": true,
+  "auth": {
+    "ssoRedirect": "immediate",
+    "disableRegistration": true
+  }
+}

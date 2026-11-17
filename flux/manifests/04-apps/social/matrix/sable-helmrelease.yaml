@@ -1,0 +1,79 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sable
+  namespace: matrix
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: sable
+      namespace: matrix
+      # Sable v26.11.1 - native OIDC/SSO Matrix client (Rust + Svelte).
+      # Published image: git.sable.moe/sableclient/sable-next:latest
+      # (Caddy, uid nobody=65534, port 8080). Config mounted at
+      # /app/config.json via subPath from matrix-sable-config ConfigMap.
+      # renovate: datasource=docker depName=git.sable.moe/sableclient/sable-next
+      image: git.sable.moe/sableclient/sable-next:latest@sha256:f09b213c581aaeaf31fd63932082049ae31b84eab89064f0ba382b885a84c747
+      container:
+        name: sable
+        port: 8080
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 256Mi
+      securityContext:
+        # Caddy base image runs as uid/gid 65534 (nobody)
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        # Caddy writes runtime state to /data and /config, both chowned to
+        # nobody in the upstream Dockerfile. readOnlyRootFilesystem false
+        # matches the upstream image (no tmpfs needed — Caddy only writes to
+        # those two directories).
+        readOnlyRootFilesystem: false
+      volumes:
+        configMap:
+          - name: sable-config
+            mountPath: /app/config.json
+            subPath: config.json
+            configMapName: matrix-sable-config
+            readOnly: true
+      service:
+        type: ClusterIP
+        port: 80
+        targetPort: 8080
+        portName: http
+
+    secrets:
+      enabled: false
+
+    authentik:
+      enabled: false
+
+    gatus:
+      enabled: true
+      path: /
+
+    httproute:
+      enabled: false
+
+    postgres:
+      enabled: false
