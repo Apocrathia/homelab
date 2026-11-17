@@ -1,0 +1,51 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: coraza-playground
+  namespace: coraza-playground
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: generic-app
+      version: ">=0.1.0"
+      sourceRef:
+        kind: HelmRepository
+        name: rknightion
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    app:
+      name: coraza-playground
+      image: registry.gitlab.com/apocrathia/homelab/coraza-playground:main
+      container:
+        name: nginx
+        port: 80
+      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+    authentik:
+      enabled: true
+      mode: proxy
+      displayName: Coraza Playground
+      externalHost: https://coraza-playground.gateway.services.apocrathia.com
+      icon: https://raw.githubusercontent.com/corazawaf/coraza/main/logo/coraza-icon.svg
+      category: Security
+      metaDescription: Browser-based WAF testing tool for Coraza — write SecLang rules and test them against HTTP requests
+      authentikHostInsecure: true
+    httproute:
+      enabled: true
+      hostname: coraza-playground.gateway.services.apocrathia.com

@@ -1,5 +1,6 @@
 ---
 stages:
+  - build
   - test
   - verify
   - deploy
@@ -21,3 +22,4 @@ include:
   - local: .gitlab/semgrep.gitlab-ci.yml
   - local: .gitlab/pre-commit.gitlab-ci.yml
   - local: .gitlab/context-links.gitlab-ci.yml
+  - local: .gitlab/coraza-playground.gitlab-ci.yml

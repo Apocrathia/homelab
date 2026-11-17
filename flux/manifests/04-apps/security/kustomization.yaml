@@ -12,4 +12,5 @@ resources:
   - opencanary
   - opencti
   - opentaxii
+  - coraza-playground
   - tenzir
