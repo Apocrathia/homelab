@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: matrix-sable
+
+resources:
+  - sable-helmrelease.yaml
+  - httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # Sable config.json: homeserver pinned to matrix.apocrathia.com,
+  # password fields hidden, SSO auto-redirect on the single OIDC
+  # provider (MAS -> Authentik upstream). Mounted at /app/config.json
+  # in the sable-helmrelease.yaml.
+  - name: matrix-sable-config
+    namespace: matrix
+    files:
+      - config.json=config/sable-config.json
