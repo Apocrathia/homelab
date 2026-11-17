@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: coraza
+  labels:
+    app.kubernetes.io/name: coraza

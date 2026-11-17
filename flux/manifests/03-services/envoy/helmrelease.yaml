@@ -1,0 +1,43 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-gateway
+  namespace: envoy-gateway-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gateway-helm
+      # renovate: datasource=docker depName=envoyproxy/gateway-helm
+      version: ">=1.10.0 <1.11.0"
+      sourceRef:
+        kind: OCIRepository
+        name: envoy-gateway
+        namespace: flux-system
+      interval: 30m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    crds:
+      enabled: true
+    config:
+      envoyGateway:
+        admin:
+          address:
+            host: "0.0.0.0"
+            port: 19000
+    deployment:
+      envoyGateway:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
