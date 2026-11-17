@@ -16,8 +16,21 @@ spec:
     spec:
       serviceAccountName: tenzir-v7-core
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: tenzir-engine
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           image: ghcr.io/tenzir/tenzir:v7.0.0-rc.4-slim
           command:
             - /opt/tenzir/libexec/tenzir-engine
