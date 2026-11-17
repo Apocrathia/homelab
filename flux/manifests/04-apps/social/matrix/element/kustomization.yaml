@@ -6,7 +6,7 @@ metadata:
   name: matrix-element
 
 resources:
-  - element-helmrelease.yaml
+  - helmrelease.yaml
   - httproute.yaml
 
 generatorOptions:

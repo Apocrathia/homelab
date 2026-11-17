@@ -6,7 +6,7 @@ metadata:
   name: matrix-sable
 
 resources:
-  - sable-helmrelease.yaml
+  - helmrelease.yaml
   - httproute.yaml
 
 generatorOptions:
