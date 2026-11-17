@@ -12,5 +12,5 @@ spec:
     kind: GitRepository
     name: homelab
   dependsOn:
-    - name: services-gateway-envoy
+    - name: services-envoy
     - name: services-cert-manager
