@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/gridcraft/releases/download/v${GRIDCRAFT_VERSION}/gridcraft-web-v${GRIDCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/gridcraft/releases/download/v${GRIDCRAFT_VERSION}/gridcraft-web-${GRIDCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/gridcraft.zip "$url"
               unzip -q -o /tmp/gridcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

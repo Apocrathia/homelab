@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/vectorcraft/releases/download/v${VECTORCRAFT_VERSION}/vectorcraft-web-v${VECTORCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/vectorcraft/releases/download/v${VECTORCRAFT_VERSION}/vectorcraft-web-${VECTORCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/vectorcraft.zip "$url"
               unzip -q -o /tmp/vectorcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

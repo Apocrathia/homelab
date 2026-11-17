@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/designcraft/releases/download/v${DESIGNCRAFT_VERSION}/designcraft-web-v${DESIGNCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/designcraft/releases/download/v${DESIGNCRAFT_VERSION}/designcraft-web-${DESIGNCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/designcraft.zip "$url"
               unzip -q -o /tmp/designcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

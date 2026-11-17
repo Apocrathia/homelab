@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/wordcraft/releases/download/v${WORDCRAFT_VERSION}/wordcraft-web-v${WORDCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/wordcraft/releases/download/v${WORDCRAFT_VERSION}/wordcraft-web-${WORDCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/wordcraft.zip "$url"
               unzip -q -o /tmp/wordcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

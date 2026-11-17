@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/filmcraft/releases/download/v${FILMCRAFT_VERSION}/filmcraft-web-v${FILMCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/filmcraft/releases/download/v${FILMCRAFT_VERSION}/filmcraft-web-${FILMCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/filmcraft.zip "$url"
               unzip -q -o /tmp/filmcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
