@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/craft-anything/releases/download/v${CRAFT_ANYTHING_VERSION}/craft-anything-web-v${CRAFT_ANYTHING_VERSION}.zip"
+              url="https://github.com/storytold/craft-anything/releases/download/v${CRAFT_ANYTHING_VERSION}/craft-anything-web-${CRAFT_ANYTHING_VERSION}.zip"
               curl -fsSL -o /tmp/craft-anything.zip "$url"
               unzip -q -o /tmp/craft-anything.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

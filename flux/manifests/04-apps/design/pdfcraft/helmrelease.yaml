@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/pdfcraft/releases/download/v${PDFCRAFT_VERSION}/pdfcraft-web-v${PDFCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/pdfcraft/releases/download/v${PDFCRAFT_VERSION}/pdfcraft-web-${PDFCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/pdfcraft.zip "$url"
               unzip -q -o /tmp/pdfcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

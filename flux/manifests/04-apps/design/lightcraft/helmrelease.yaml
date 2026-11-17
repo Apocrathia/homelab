@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/lightcraft/releases/download/v${LIGHTCRAFT_VERSION}/lightcraft-web-v${LIGHTCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/lightcraft/releases/download/v${LIGHTCRAFT_VERSION}/lightcraft-web-${LIGHTCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/lightcraft.zip "$url"
               unzip -q -o /tmp/lightcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

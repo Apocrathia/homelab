@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/effectcraft/releases/download/v${EFFECTCRAFT_VERSION}/effectcraft-web-v${EFFECTCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/effectcraft/releases/download/v${EFFECTCRAFT_VERSION}/effectcraft-web-${EFFECTCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/effectcraft.zip "$url"
               unzip -q -o /tmp/effectcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

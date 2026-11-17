@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/figcraft/releases/download/v${FIGCRAFT_VERSION}/figcraft-web-v${FIGCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/figcraft/releases/download/v${FIGCRAFT_VERSION}/figcraft-web-${FIGCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/figcraft.zip "$url"
               unzip -q -o /tmp/figcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/materialcraft/releases/download/v${MATERIALCRAFT_VERSION}/materialcraft-web-v${MATERIALCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/materialcraft/releases/download/v${MATERIALCRAFT_VERSION}/materialcraft-web-${MATERIALCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/materialcraft.zip "$url"
               unzip -q -o /tmp/materialcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

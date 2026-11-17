@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/deckcraft/releases/download/v${DECKCRAFT_VERSION}/deckcraft-web-v${DECKCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/deckcraft/releases/download/v${DECKCRAFT_VERSION}/deckcraft-web-${DECKCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/deckcraft.zip "$url"
               unzip -q -o /tmp/deckcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

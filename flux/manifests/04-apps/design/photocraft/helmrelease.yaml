@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/photocraft/releases/download/v${PHOTOCRAFT_VERSION}/photocraft-web-v${PHOTOCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/photocraft/releases/download/v${PHOTOCRAFT_VERSION}/photocraft-web-${PHOTOCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/photocraft.zip "$url"
               unzip -q -o /tmp/photocraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

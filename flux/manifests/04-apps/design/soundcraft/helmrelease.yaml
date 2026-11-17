@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/soundcraft/releases/download/v${SOUNDCRAFT_VERSION}/soundcraft-web-v${SOUNDCRAFT_VERSION}.zip"
+              url="https://github.com/storytold/soundcraft/releases/download/v${SOUNDCRAFT_VERSION}/soundcraft-web-${SOUNDCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/soundcraft.zip "$url"
               unzip -q -o /tmp/soundcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*

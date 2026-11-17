@@ -36,7 +36,7 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/texturecraft/releases/download/v${TEXTURECRAFT_VERSION}/texturecraft-web-v${TEXTURECRAFT_VERSION}.zip"
+              url="https://github.com/storytold/texturecraft/releases/download/v${TEXTURECRAFT_VERSION}/texturecraft-web-${TEXTURECRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/texturecraft.zip "$url"
               unzip -q -o /tmp/texturecraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
