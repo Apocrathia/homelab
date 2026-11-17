@@ -33,7 +33,10 @@ spec:
                 - ALL
           image: ghcr.io/tenzir/tenzir:v7.0.0-rc.4-slim
           command:
-            - /opt/tenzir/libexec/tenzir-engine
+            - /bin/sh
+            - -c
+            - exec -a tenzir-up /opt/tenzir/libexec/tenzir-engine "$@"
+            - tenzir-up
           args:
             - --platform
             - https://platform.tenzir.com
