@@ -1,0 +1,41 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: envoy-gateway
+  namespace: envoy-gateway-system
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: gateway-helm
+      # renovate: datasource=docker depName=envoyproxy/gateway-helm
+      version: ">=1.10.0 <1.11.0"
+      sourceRef:
+        kind: OCIRepository
+        name: envoy-gateway
+        namespace: flux-system
+      interval: 30m
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    crds:
+      # Envoy Gateway manages Gateway API CRDs. The bootstrap CRD layer
+      # (01-bootstrap/crds) owns them via a raw URL kustomize remote;
+      # letting Envoy Gateway manage them through its Helm chart keeps
+      # the Gateway API version lockstep with the controller.
+      enabled: true
+    deployment:
+      envoyGateway:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
