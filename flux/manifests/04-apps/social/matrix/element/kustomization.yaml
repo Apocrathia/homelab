@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: matrix-element
+
+resources:
+  - helmrelease.yaml
+  - httproute.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # Element Web config.json: default homeserver + oidc_static_clients
+  # (public client id must byte-match the clients entry in
+  # mas-config.yaml). Mounted over the image's sample config.json; the
+  # image entrypoint copies it to the served config dir on every boot.
+  - name: matrix-element-config
+    namespace: matrix
+    files:
+      - config.json=config/element-config.json
