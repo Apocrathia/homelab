@@ -59,6 +59,8 @@ spec:
                 secretKeyRef:
                   name: tenzir-secrets
                   key: aws-secret-access-key
+            - name: AWS_S3_ADDRESSING_STYLE
+              value: "path"
             - name: AWS_REGION
               value: "us-east-1"
           volumeMounts:
