@@ -1,0 +1,126 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gridcraft
+  namespace: gridcraft
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: gridcraft
+      # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
+      container:
+        name: nginx
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: fetch-gridcraft
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+          image: public.ecr.aws/docker/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              apk add --no-cache curl unzip
+              url="https://github.com/storytold/gridcraft/releases/download/v${GRIDCRAFT}_VERSION/gridcraft-web-v${GRIDCRAFT}_VERSION.zip"
+              curl -fsSL -o /tmp/gridcraft.zip "$url"
+              unzip -q -o /tmp/gridcraft.zip -d /tmp/extract
+              rm -rf /usr/share/nginx/html/*
+              cp -R "/tmp/extract/gridcraft-web-${GRIDCRAFT}_VERSION/." /usr/share/nginx/html/
+              rm -rf /tmp/gridcraft.zip /tmp/extract
+          env:
+            # renovate: datasource=github-releases depName=storytold/gridcraft versioning=semver
+            - name: GRIDCRAFT_VERSION
+              value: "0.19.1"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: "128Mi"
+
+    secrets:
+      enabled: false
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      category: "Productivity"
+      displayName: "GridCraft"
+      externalHost: "https://gridcraft.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/gridcraft/icon.png"
+      interceptHeaderAuth: false
+
+    httproute:
+      enabled: false

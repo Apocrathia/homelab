@@ -2,8 +2,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: solidcraft
-  namespace: solidcraft
+  name: craft-anything
+  namespace: craft-anything
 spec:
   interval: 15m
   chart:
@@ -18,7 +18,7 @@ spec:
       interval: 5m
   values:
     app:
-      name: solidcraft
+      name: craft-anything
       # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
       image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
       container:
@@ -28,7 +28,7 @@ spec:
       podAntiAffinity:
         enabled: false
       initContainers:
-        - name: fetch-solidcraft
+        - name: fetch-craft-anything
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
           image: public.ecr.aws/docker/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
           command: ["sh", "-c"]
@@ -36,16 +36,16 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/tangency-labs/solidcraft/releases/download/v${SOLIDCRAFT_VERSION}/solidcraft-web-${SOLIDCRAFT_VERSION}.zip"
-              curl -fsSL -o /tmp/solidcraft.zip "$url"
-              unzip -q -o /tmp/solidcraft.zip -d /tmp/extract
+              url="https://github.com/storytold/craft-anything/releases/download/v${CRAFT_ANYTHING}_VERSION/craft-anything-web-v${CRAFT_ANYTHING}_VERSION.zip"
+              curl -fsSL -o /tmp/craft-anything.zip "$url"
+              unzip -q -o /tmp/craft-anything.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/solidcraft-web-${SOLIDCRAFT_VERSION}/." /usr/share/nginx/html/
-              rm -rf /tmp/solidcraft.zip /tmp/extract
+              cp -R "/tmp/extract/craft-anything-web-${CRAFT_ANYTHING}_VERSION/." /usr/share/nginx/html/
+              rm -rf /tmp/craft-anything.zip /tmp/extract
           env:
-            # renovate: datasource=github-releases depName=tangency-labs/solidcraft versioning=semver
-            - name: SOLIDCRAFT_VERSION
-              value: "0.43.0"
+            # renovate: datasource=github-releases depName=storytold/craft-anything versioning=semver
+            - name: CRAFT_ANYTHING_VERSION
+              value: "0.6.1"
           volumeMounts:
             - name: data
               mountPath: /usr/share/nginx/html
@@ -108,7 +108,7 @@ spec:
         numberOfReplicas: 1
         volumes:
           - name: data
-            capacity: 1Gi
+            capacity: "64Mi"
 
     secrets:
       enabled: false
@@ -116,10 +116,10 @@ spec:
     authentik:
       managedBy: terraform
       enabled: true
-      category: "Productivity"
-      displayName: "SolidCraft"
-      externalHost: "https://solidcraft.gateway.services.apocrathia.com"
-      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/solidcraft/icon.png"
+      category: "Design"
+      displayName: "Craft Anything"
+      externalHost: "https://craft-anything.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/craft-anything/icon.png"
       interceptHeaderAuth: false
 
     httproute:

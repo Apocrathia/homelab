@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: photocraft
+  labels:
+    app.kubernetes.io/name: photocraft
