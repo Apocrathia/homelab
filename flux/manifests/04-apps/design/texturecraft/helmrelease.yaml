@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/texturecraft/releases/download/v${TEXTURECRAFT}_VERSION/texturecraft-web-v${TEXTURECRAFT}_VERSION.zip"
+              url="https://github.com/storytold/texturecraft/releases/download/v${TEXTURECRAFT_VERSION}/texturecraft-web-v${TEXTURECRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/texturecraft.zip "$url"
               unzip -q -o /tmp/texturecraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/texturecraft-web-${TEXTURECRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/texturecraft-web-${TEXTURECRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/texturecraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/texturecraft versioning=semver

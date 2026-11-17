@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/effectcraft/releases/download/v${EFFECTCRAFT}_VERSION/effectcraft-web-v${EFFECTCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/effectcraft/releases/download/v${EFFECTCRAFT_VERSION}/effectcraft-web-v${EFFECTCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/effectcraft.zip "$url"
               unzip -q -o /tmp/effectcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/effectcraft-web-${EFFECTCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/effectcraft-web-${EFFECTCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/effectcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/effectcraft versioning=semver

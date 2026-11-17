@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/cadcraft/releases/download/v${CADCRAFT}_VERSION/cadcraft-web-v${CADCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/cadcraft/releases/download/v${CADCRAFT_VERSION}/cadcraft-web-v${CADCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/cadcraft.zip "$url"
               unzip -q -o /tmp/cadcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/cadcraft-web-${CADCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/cadcraft-web-${CADCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/cadcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/cadcraft versioning=semver

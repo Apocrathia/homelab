@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/photocraft/releases/download/v${PHOTOCRAFT}_VERSION/photocraft-web-v${PHOTOCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/photocraft/releases/download/v${PHOTOCRAFT_VERSION}/photocraft-web-v${PHOTOCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/photocraft.zip "$url"
               unzip -q -o /tmp/photocraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/photocraft-web-${PHOTOCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/photocraft-web-${PHOTOCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/photocraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/photocraft versioning=semver

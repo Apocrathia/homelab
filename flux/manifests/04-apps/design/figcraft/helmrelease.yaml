@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/figcraft/releases/download/v${FIGCRAFT}_VERSION/figcraft-web-v${FIGCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/figcraft/releases/download/v${FIGCRAFT_VERSION}/figcraft-web-v${FIGCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/figcraft.zip "$url"
               unzip -q -o /tmp/figcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/figcraft-web-${FIGCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/figcraft-web-${FIGCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/figcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/figcraft versioning=semver
