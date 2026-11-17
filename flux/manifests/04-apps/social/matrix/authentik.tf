@@ -144,49 +144,31 @@ resource "authentik_provider_oauth2" "app" {
   # POST covers the authentik 2026.5+ empty-grant-types trap.
 }
 
-# Element tile — the primary web client. Open in the same tab
-# (the browser handles the OIDC redirect chain inside Element Web's
-# callback URL). Shares the matrix OIDC provider.
-resource "authentik_application" "element" {
-  name            = "Element"
-  slug            = "element-matrix"
+# Application — one tile on the dashboard linking to Element Web.
+# (Authentik binds one application per OAuth2 provider; a second
+# client would need a separate provider and corresponding MAS
+# upstream_oauth2 entry. For now, the single tile covers the whole
+# homeserver.)
+resource "authentik_application" "app" {
+  name            = "Matrix"
+  slug            = "matrix"
   group           = "Social"
   meta_launch_url = "https://element.gateway.services.apocrathia.com/"
   open_in_new_tab = false
 
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/element-icon.svg"
-  meta_description = "Element Web — Matrix client (OIDC via MAS)"
-  meta_publisher   = "Element"
+  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/icon.svg"
+  meta_description = "Matrix homeserver (Synapse + MAS) — Element Web / Sable"
+  meta_publisher   = "Matrix"
 
   protocol_provider = authentik_provider_oauth2.app.id
 }
 
-# Sable tile — the Discord-like client. Same OIDC provider, different
-# launch URL and icon.
-resource "authentik_application" "sable" {
-  name            = "Sable"
-  slug            = "sable-matrix"
-  group           = "Social"
-  meta_launch_url = "https://sable.gateway.services.apocrathia.com/"
-  open_in_new_tab = false
-
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/sable-icon.svg"
-  meta_description = "Sable — Discord-like Matrix client (OIDC via MAS)"
-  meta_publisher   = "Sable"
-
-  protocol_provider = authentik_provider_oauth2.app.id
-}
-
-# Admins-only binding for both tiles. Each application gets its own
-# binding (a binding targets one application UUID).
-resource "authentik_policy_binding" "element_admins" {
-  target = authentik_application.element.uuid
-  group  = data.authentik_group.admins.id
-  order  = 10
-}
-
-resource "authentik_policy_binding" "sable_admins" {
-  target = authentik_application.sable.uuid
+# IMMEDIATELY after the application: an application without policies is
+# open to ALL authenticated users until this binding lands. Order-10
+# parity with the chart blueprint. No count: the binding always exists,
+# so its state address carries no [0] index.
+resource "authentik_policy_binding" "admins" {
+  target = authentik_application.app.uuid
   group  = data.authentik_group.admins.id
   order  = 10
 }
