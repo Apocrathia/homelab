@@ -25,11 +25,13 @@ spec:
       retries: 3
   values:
     crds:
-      # Envoy Gateway manages Gateway API CRDs. The bootstrap CRD layer
-      # (01-bootstrap/crds) owns them via a raw URL kustomize remote;
-      # letting Envoy Gateway manage them through its Helm chart keeps
-      # the Gateway API version lockstep with the controller.
       enabled: true
+    config:
+      envoyGateway:
+        admin:
+          address:
+            host: "0.0.0.0"
+            port: 19000
     deployment:
       envoyGateway:
         resources:

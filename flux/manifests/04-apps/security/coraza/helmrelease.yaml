@@ -84,7 +84,7 @@ spec:
       mode: proxy
       displayName: Coraza Playground
       externalHost: https://coraza.gateway.services.apocrathia.com
-      icon: https://raw.githubusercontent.com/corazawaf/coraza/main/logo/coraza-icon.svg
+      icon: https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/coraza/icon.png
       category: Security
       metaDescription: Browser-based WAF testing tool — write SecLang rules and test them against HTTP requests
     httproute:

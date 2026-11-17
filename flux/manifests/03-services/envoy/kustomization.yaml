@@ -11,3 +11,26 @@ resources:
   - gatewayclass.yaml
   - envoyproxy.yaml
   - envoyextensionpolicy.yaml
+  - crossplane.yaml
+  - admin-service.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: envoy-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: envoy-admin-authentik
+        fieldPaths:
+          - spec.forProvider.module
+
+configMapGenerator:
+  - name: envoy-authentik-module
+    namespace: envoy-gateway-system
+    files:
+      - authentik.tf
