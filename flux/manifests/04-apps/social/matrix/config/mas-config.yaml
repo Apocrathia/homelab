@@ -80,7 +80,7 @@ secrets:
 upstream_oauth2:
   providers:
     - id: 01M4M3KRKC5A5BWMTGAXXRGYEP
-      human_name: Authentik
+      human_name: Element
       # Must match the issuer in authentik discovery byte-for-byte
       # (per-provider issuer mode: /application/o/matrix/)
       issuer: https://auth.gateway.services.apocrathia.com/application/o/matrix/
@@ -91,6 +91,25 @@ upstream_oauth2:
       claims_imports:
         localpart:
           # preferred_username is the authentik username (profile scope)
+          action: require
+          template: "{{ user.preferred_username }}"
+        displayname:
+          action: suggest
+          template: "{{ user.name }}"
+        email:
+          action: suggest
+          template: "{{ user.email }}"
+        account_name:
+          template: "@{{ user.preferred_username }}"
+    - id: 01M4R9B3XS8NQ4WJ5PZ7XUFKGV
+      human_name: Sable
+      issuer: https://auth.gateway.services.apocrathia.com/application/o/sable/
+      client_id: sable
+      client_secret_file: /run/secrets/matrix-secrets/sable-oidc-client-secret
+      token_endpoint_auth_method: client_secret_basic
+      scope: openid profile email
+      claims_imports:
+        localpart:
           action: require
           template: "{{ user.preferred_username }}"
         displayname:
