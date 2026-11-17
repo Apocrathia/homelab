@@ -46,7 +46,7 @@ spec:
         # Seed LLM profile via the in-cluster LiteLLM proxy.
         # Adjust or replace post-deploy in Settings > LLM.
         - name: LLM_MODEL
-          value: litellm_proxy/claude-sonnet-4-5
+          value: litellm_proxy/glm-5.3-prime
         - name: LLM_API_KEY
           valueFrom:
             secretKeyRef:
