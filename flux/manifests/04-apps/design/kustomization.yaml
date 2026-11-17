@@ -8,6 +8,7 @@ metadata:
 resources:
   - benchup
   - cadcraft
+  - klecks
   - craft-anything
   - designcraft
   - effectcraft

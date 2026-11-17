@@ -33,14 +33,34 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/ruffle-rs/ruffle/releases/download/${RUFFLE_VERSION}/ruffle-${RUFFLE_VERSION}-web-selfhosted.zip"
+              url="https://github.com/ruffle-rs/ruffle/releases/download/v${RUFFLE_VERSION}/ruffle-${RUFFLE_VERSION}-web-selfhosted.zip"
               curl -fsSL -o /tmp/ruffle.zip "$url"
               unzip -q -o /tmp/ruffle.zip -d /usr/share/nginx/html/
               rm /tmp/ruffle.zip
+              cat > /usr/share/nginx/html/index.html << "HTMLEOF"
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Ruffle</title>
+                <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh}</style>
+              </head>
+              <body>
+                <div id="ruffle"></div>
+                <script src="ruffle.js"></script>
+                <script>
+                  const ruffle = window.RufflePlayer.newest();
+                  const player = ruffle.createPlayer();
+                  document.getElementById("ruffle").appendChild(player);
+                </script>
+              </body>
+              </html>
+              HTMLEOF
           env:
             # renovate: datasource=github-releases depName=ruffle-rs/ruffle versioning=semver
             - name: RUFFLE_VERSION
-              value: "v0.7.1"
+              value: "0.7.1"
           volumeMounts:
             - name: data
               mountPath: /usr/share/nginx/html

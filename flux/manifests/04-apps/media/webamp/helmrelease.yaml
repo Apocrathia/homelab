@@ -43,8 +43,8 @@ spec:
               </head>
               <body>
                 <div id="app"></div>
-                <script type="module">
-                  import Webamp from "https://cdn.jsdelivr.net/npm/webamp@2.3.1/built/webamp.bundle.min.js";
+                <script src="https://unpkg.com/webamp@2.3.1/built/webamp.bundle.min.js"></script>
+                <script>
                   new Webamp({
                     initialTracks: [{
                       metaData: { artist: "DJ Mike Llama", title: "Llama Whippin' Intro" },

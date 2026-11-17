@@ -38,6 +38,10 @@ Nonlinear video editor in the browser.
 
 Spreadsheet in the browser.
 
+### [Klecks](./klecks/README.md)
+
+Web-based painting tool powering Kleki.com.
+
 ### [LightCraft](./lightcraft/README.md)
 
 Non-destructive photo editor in the browser.
