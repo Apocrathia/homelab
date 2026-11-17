@@ -48,6 +48,10 @@ Privacy-respecting metasearch engine aggregating multiple providers.
 
 Browser-based markdown notes on a folder of plain files, including nested paths.
 
+### [SolidCraft](./solidcraft/README.md)
+
+Open-source parametric 3D CAD in the browser via WebAssembly.
+
 ### [Wakapi](./wakapi/README.md)
 
 Coding time tracking compatible with WakaTime.

@@ -17,4 +17,5 @@ resources:
   - rclone
   - searxng
   - silverbullet
+  - solidcraft
   - wakapi
