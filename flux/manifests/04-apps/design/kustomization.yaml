@@ -6,6 +6,7 @@ metadata:
   name: design
 
 resources:
+  - benchup
   - cadcraft
   - craft-anything
   - designcraft
