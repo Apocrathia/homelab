@@ -54,6 +54,6 @@ inputs = {
   github_mirror_username                = "Apocrathia"
   github_mirror_token                   = get_env("GITHUB_MIRROR_TOKEN", "")
   github_mirror_repo                    = "Apocrathia/homelab"
-  github_mirror_only_protected_branches = false
+  github_mirror_only_protected_branches = true
   github_mirror_keep_divergent_refs     = false
 }
