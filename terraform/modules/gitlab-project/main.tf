@@ -92,7 +92,7 @@ resource "gitlab_branch_protection" "all_branches" {
   allow_force_push = false
 
   allowed_to_push = [{
-    access_level = "no one"
+    access_level = "developer"
   }]
 
   allowed_to_merge = [{
