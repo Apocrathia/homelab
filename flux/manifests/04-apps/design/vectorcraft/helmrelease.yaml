@@ -108,7 +108,7 @@ spec:
         numberOfReplicas: 1
         volumes:
           - name: data
-            capacity: "384Mi"
+            capacity: "768Mi"
 
     secrets:
       enabled: false
