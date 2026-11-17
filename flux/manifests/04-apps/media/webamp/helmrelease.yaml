@@ -1,0 +1,132 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: webamp
+  namespace: webamp
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: webamp
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
+      container:
+        name: nginx
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: fetch-webamp
+          image: public.ecr.aws/docker/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              cat > /usr/share/nginx/html/index.html << "HTMLEOF"
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Webamp</title>
+                <style>body{margin:0;background:#000}#app{height:100vh;position:relative}</style>
+              </head>
+              <body>
+                <div id="app"></div>
+                <script type="module">
+                  import Webamp from "https://cdn.jsdelivr.net/npm/webamp@2.3.1/built/webamp.bundle.min.js";
+                  new Webamp({
+                    initialTracks: [{
+                      metaData: { artist: "DJ Mike Llama", title: "Llama Whippin' Intro" },
+                      url: "https://cdn.jsdelivr.net/gh/captbaritone/webamp@43434d82/mp3/llama-2.91.mp3",
+                      duration: 5.322286,
+                    }],
+                  }).renderInto(document.getElementById("app"));
+                </script>
+              </body>
+              </html>
+              HTMLEOF
+          env:
+            # renovate: datasource=github-releases depName=captbaritone/webamp versioning=semver
+            - name: WEBAMP_VERSION
+              value: "2.3.1"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      category: "Media"
+      displayName: "Webamp"
+      externalHost: "https://webamp.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/webamp/icon.png"
+      interceptHeaderAuth: false
+
+    httproute:
+      enabled: false

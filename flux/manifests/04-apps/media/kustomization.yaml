@@ -34,6 +34,7 @@ resources:
   - management/tdarr
   - management/whisparr
   - management/scripts
+  - ruffle
   - servers/halcyon
   - servers/invidious
   - servers/jellyfin
@@ -43,3 +44,4 @@ resources:
   - servers/restreamer
   - servers/storyteller
   - servers/tunarr
+  - webamp
