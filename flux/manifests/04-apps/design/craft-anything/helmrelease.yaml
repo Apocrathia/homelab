@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/craft-anything/releases/download/v${CRAFT_ANYTHING}_VERSION/craft-anything-web-v${CRAFT_ANYTHING}_VERSION.zip"
+              url="https://github.com/storytold/craft-anything/releases/download/v${CRAFT_ANYTHING_VERSION}/craft-anything-web-v${CRAFT_ANYTHING_VERSION}.zip"
               curl -fsSL -o /tmp/craft-anything.zip "$url"
               unzip -q -o /tmp/craft-anything.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/craft-anything-web-${CRAFT_ANYTHING}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/craft-anything-web-${CRAFT_ANYTHING_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/craft-anything.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/craft-anything versioning=semver

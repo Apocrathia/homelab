@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/designcraft/releases/download/v${DESIGNCRAFT}_VERSION/designcraft-web-v${DESIGNCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/designcraft/releases/download/v${DESIGNCRAFT_VERSION}/designcraft-web-v${DESIGNCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/designcraft.zip "$url"
               unzip -q -o /tmp/designcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/designcraft-web-${DESIGNCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/designcraft-web-${DESIGNCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/designcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/designcraft versioning=semver

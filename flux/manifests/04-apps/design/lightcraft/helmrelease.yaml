@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/lightcraft/releases/download/v${LIGHTCRAFT}_VERSION/lightcraft-web-v${LIGHTCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/lightcraft/releases/download/v${LIGHTCRAFT_VERSION}/lightcraft-web-v${LIGHTCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/lightcraft.zip "$url"
               unzip -q -o /tmp/lightcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/lightcraft-web-${LIGHTCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/lightcraft-web-${LIGHTCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/lightcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/lightcraft versioning=semver

@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/materialcraft/releases/download/v${MATERIALCRAFT}_VERSION/materialcraft-web-v${MATERIALCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/materialcraft/releases/download/v${MATERIALCRAFT_VERSION}/materialcraft-web-v${MATERIALCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/materialcraft.zip "$url"
               unzip -q -o /tmp/materialcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/materialcraft-web-${MATERIALCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/materialcraft-web-${MATERIALCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/materialcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/materialcraft versioning=semver

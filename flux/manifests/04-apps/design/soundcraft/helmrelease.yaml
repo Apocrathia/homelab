@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/soundcraft/releases/download/v${SOUNDCRAFT}_VERSION/soundcraft-web-v${SOUNDCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/soundcraft/releases/download/v${SOUNDCRAFT_VERSION}/soundcraft-web-v${SOUNDCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/soundcraft.zip "$url"
               unzip -q -o /tmp/soundcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/soundcraft-web-${SOUNDCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/soundcraft-web-${SOUNDCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/soundcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/soundcraft versioning=semver

@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/pdfcraft/releases/download/v${PDFCRAFT}_VERSION/pdfcraft-web-v${PDFCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/pdfcraft/releases/download/v${PDFCRAFT_VERSION}/pdfcraft-web-v${PDFCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/pdfcraft.zip "$url"
               unzip -q -o /tmp/pdfcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/pdfcraft-web-${PDFCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/pdfcraft-web-${PDFCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/pdfcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/pdfcraft versioning=semver

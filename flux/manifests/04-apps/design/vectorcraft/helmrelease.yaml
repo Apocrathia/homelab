@@ -36,11 +36,11 @@ spec:
             - |
               set -eu
               apk add --no-cache curl unzip
-              url="https://github.com/storytold/vectorcraft/releases/download/v${VECTORCRAFT}_VERSION/vectorcraft-web-v${VECTORCRAFT}_VERSION.zip"
+              url="https://github.com/storytold/vectorcraft/releases/download/v${VECTORCRAFT_VERSION}/vectorcraft-web-v${VECTORCRAFT_VERSION}.zip"
               curl -fsSL -o /tmp/vectorcraft.zip "$url"
               unzip -q -o /tmp/vectorcraft.zip -d /tmp/extract
               rm -rf /usr/share/nginx/html/*
-              cp -R "/tmp/extract/vectorcraft-web-${VECTORCRAFT}_VERSION/." /usr/share/nginx/html/
+              cp -R "/tmp/extract/vectorcraft-web-${VECTORCRAFT_VERSION}/." /usr/share/nginx/html/
               rm -rf /tmp/vectorcraft.zip /tmp/extract
           env:
             # renovate: datasource=github-releases depName=storytold/vectorcraft versioning=semver
