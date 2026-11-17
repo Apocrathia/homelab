@@ -26,6 +26,7 @@ resources:
   - 03-services/clickhouse/flux-kustomization.yaml
   - 03-services/crossplane/flux-kustomization.yaml
   - 03-services/external-dns/flux-kustomization.yaml
+  - 03-services/envoy/flux-kustomization.yaml
   - 03-services/external-secrets/flux-kustomization.yaml
   - 03-services/gateway/flux-kustomization.yaml
   - 03-services/gitlab/flux-kustomization.yaml
