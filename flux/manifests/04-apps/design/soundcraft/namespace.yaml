@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: soundcraft
+  labels:
+    app.kubernetes.io/name: soundcraft

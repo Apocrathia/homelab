@@ -17,5 +17,7 @@ resources:
   - rclone
   - searxng
   - silverbullet
-  - solidcraft
+  - deckcraft
+  - gridcraft
+  - wordcraft
   - wakapi

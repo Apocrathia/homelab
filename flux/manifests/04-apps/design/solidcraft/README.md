@@ -1,6 +1,6 @@
 # SolidCraft
 
-[← Productivity Apps](../README.md)
+[← Design Apps](../README.md)
 
 ## Links
 
