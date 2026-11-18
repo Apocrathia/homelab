@@ -30,8 +30,8 @@ from facts import Dep, parse_dep
 
 LOG = logging.getLogger("dependency-review")
 
-DEFAULT_COOLDOWN_H = 24.0
-DEFAULT_INFRA_COOLDOWN_H = 72.0
+DEFAULT_COOLDOWN_H = 0.0
+DEFAULT_INFRA_COOLDOWN_H = 0.0
 # Packages where even patch bumps get a second operator glance (or 72h on majors).
 # Infra bumps are operator-only: never auto-merged, always in the triage digest.
 # siderolabs covers the installer/kubelet images that reimage nodes (a merged
@@ -231,11 +231,17 @@ def apply_pin(v: dict, pin: dict, prior_reason: str) -> dict:
 
 
 def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) -> dict:
-    """Gates the agent may not upgrade past. Returns verdict dict."""
+    """Gates the agent may not upgrade past. Returns verdict dict.
+
+    The age-based cooldown gate is removed — Renovate's minimumReleaseAge
+    (now 1 day) enforces release staleness before the MR even opens.
+    cooldown_h / infra_cooldown_h are kept as zero-valued function params
+    for call-site compatibility only.
+    """
     verdict, reason, flags = "pass", "", []
     is_infra = _is_infra(dep.pkg or "", dep.title, dep.branch)
     if dep.update_type == "digest":
-        reason = "Digest refresh (same tag, rebuilt image) - CVE-rebuild class, no cooldown."
+        reason = "Digest refresh (same tag, rebuilt image) - CVE-rebuild class."
         flags.append("agent-review:phase2-trivy")
     elif f.get("superseded"):
         verdict, reason = (
@@ -247,22 +253,16 @@ def hard_verdict(f: dict, dep: Dep, cooldown_h: float, infra_cooldown_h: float) 
         reason = f"OSV lists {f['osv_new']['count']} vuln(s) for the new version: {f['osv_new'].get('ids')}"
     elif f.get("release_at") is None:
         verdict, reason = "hold", "Could not determine upstream release age - human look needed."
+    elif dep.update_type == "major":
+        verdict = "hold"
+        reason = "Major bump - breaking-change/DB-migration risk, human review required."
+        flags.append("agent-review:major")
     else:
-        age_h = f["age_h"]
-        gate_h = infra_cooldown_h if (is_infra and dep.update_type == "major") else cooldown_h
-        if age_h < gate_h:
-            verdict = "hold"
-            ready = _dt(f["release_at"]) + timedelta(hours=gate_h)
-            reason = f"Cooldown: {age_h:.1f}h old, gate is {gate_h:g}h (eligible ~{ready:%Y-%m-%d %H:%M}Z)."
-        elif dep.update_type == "major":
-            verdict = "hold"
-            reason = "Major bump - breaking-change/DB-migration risk, human review required."
-            flags.append("agent-review:major")
-        else:
-            reason = (
-                f"release age {age_h:.1f}h cleared the {gate_h:g}h gate; no superseder; "
-                f"OSV {f.get('osv_new', {}).get('count', 'n/a')} hits."
-            )
+        age_h = f.get("age_h", 0)
+        reason = (
+            f"release age {age_h:.1f}h; no superseder; "
+            f"OSV {f.get('osv_new', {}).get('count', 'n/a')} hits."
+        )
     if is_infra:
         flags.append("agent-review:infra")
     return {"iid": dep.iid, "verdict": verdict, "reason": reason, "flags": flags}
@@ -509,8 +509,8 @@ async def main() -> int:
 
     # No freshness skip on updated_at: the old check was self-defeating (the
     # sweep's own note/label writes ARE the MR activity), and periodic
-    # re-review is required anyway (cooldown holds must flip to pass at the
-    # gate; superseded/OSV/bug-storm signals appear over time). The single
+    # re-review is required anyway (superseded/OSV/bug-storm signals appear
+    # over time). The single
     # updated-in-place review note is the idempotency now.
     if not mrs:
         return 0
@@ -608,7 +608,7 @@ async def main() -> int:
             continue
         av = agent_verdicts.get(dep.iid)
         if not av:
-            # judgment unavailable: keep prior agent holds (see protect_prior_agent_hold)
+            # judgment unavailable: keep prior agent pins (see protect_prior_agent_hold)
             verdicts[dep.iid] = v = protect_prior_agent_hold(v, dep.labels)
         if av:
             # agent may only downgrade a pass; hard gates always win
@@ -617,13 +617,12 @@ async def main() -> int:
                 v["flags"].append(AGENT_HELD_LABEL)
                 stamped[dep.iid] = (av["verdict"], sha_by_iid[dep.iid])  # fresh pin at this sha
             # agent may resolve unknown release dates (helm chart sources, dead repos);
-            # cooldown is then re-checked deterministically against that date
+            # release-at correction from the agent improves fact-sheet accuracy
             if v["verdict"] == "hold" and av.get("release_at_corrected") and dep.update_type != "major":
                 try:
-                    age_h = round((datetime.now(UTC) - _dt(str(av["release_at_corrected"]))).total_seconds() / 3600, 1)
-                    if age_h >= cooldown_h and not fs.get(dep.iid, {}).get("superseded"):
+                    if not fs.get(dep.iid, {}).get("superseded"):
                         fs[dep.iid]["release_at"] = str(av["release_at_corrected"])
-                        fs[dep.iid]["age_h"] = age_h
+                        fs[dep.iid]["age_h"] = round((datetime.now(UTC) - _dt(str(av["release_at_corrected"]))).total_seconds() / 3600, 1)
                         v = verdicts[dep.iid] = hard_verdict(fs[dep.iid], dep, cooldown_h, infra_cooldown_h)
                 except (ValueError, TypeError):
                     LOG.warning("bad release_at_corrected for !%s", dep.iid)
