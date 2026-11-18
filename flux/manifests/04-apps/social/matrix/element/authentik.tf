@@ -72,6 +72,14 @@ data "authentik_property_mapping_provider_scope" "profile" {
 resource "authentik_provider_oauth2" "app" {
   name = "element-oidc-provider"
 
+  # client_id is required by the TF resource (the blueprint
+  # auto-generated it when unset); fresh create uses the deterministic
+  # house convention (the app name). client_secret is never set here
+  # (Sensitive) — authentik generates it server-side; the operator pulls
+  # it from the Authentik API/UI into the matrix-secrets 1Password item
+  # (element-oidc-client-secret) after the first sync.
+  client_id = "element"
+
   authorization_flow = data.authentik_flow.provider-authorization.id
   invalidation_flow  = data.authentik_flow.invalidation.id
 
@@ -89,7 +97,7 @@ resource "authentik_provider_oauth2" "app" {
 
   allowed_redirect_uris = [
     {
-      url           = "https://matrix.gateway.services.apocrathia.com/upstream/callback/01M4R8X9QZ7KP2VH3NY6WTDJFE"
+      url           = "https://matrix.gateway.services.apocrathia.com/upstream/callback/01M4M3KRKC5A5BWMTGAXXRGYEP"
       matching_mode = "strict"
     }
   ]
@@ -102,7 +110,7 @@ resource "authentik_provider_oauth2" "app" {
 # Element tile on the Authentik dashboard.
 resource "authentik_application" "app" {
   name            = "Element"
-  slug            = "element-matrix"
+  slug            = "element"
   group           = "Social"
   meta_launch_url = "https://element.gateway.services.apocrathia.com/"
   open_in_new_tab = false
