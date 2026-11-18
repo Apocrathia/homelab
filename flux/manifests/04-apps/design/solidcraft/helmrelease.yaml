@@ -45,7 +45,7 @@ spec:
           env:
             # renovate: datasource=github-releases depName=tangency-labs/solidcraft versioning=semver
             - name: SOLIDCRAFT_VERSION
-              value: "0.43.0"
+              value: "0.44.1"
           volumeMounts:
             - name: data
               mountPath: /usr/share/nginx/html
