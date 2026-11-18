@@ -1,0 +1,40 @@
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: sable-authentik
+  namespace: matrix
+spec:
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: matrix
+        key: authentik-terraform-token
+  backendFile: |
+    secret_suffix     = "matrix"
+    namespace         = "matrix"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: sable-authentik
+  namespace: matrix
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: sable-authentik
+  forProvider:
+    # Inline module stitched at kustomize build time via the
+    # configMapGenerator + replacements rule in kustomization.yaml.
+    # The HCL file (authentik.tf) is the single source of truth.
+    # FRESH CREATE: no live tfstate — first sync creates the
+    # entire Sable OIDC provider + application + binding.
+    source: Inline
+    module: ""
