@@ -5,6 +5,15 @@
 # nodeenv Prettier ships (musl cannot relocate the glibc Node binary).
 pre-commit:
   stage: test
+  # Bound runaway hooks (default 1h). Normal runtime ~4m; 15m leaves cold-cache
+  # headroom while still failing fast on a stuck hook instead of blocking the
+  # whole test stage.
+  timeout: 15m
+  retry:
+    max: 1
+    when:
+      - stuck_or_timeout_failure
+      - job_execution_timeout
   image:
     # renovate: datasource=docker depName=python
     name: python:3.15-bookworm@sha256:589def1896e0bb0f4d73278a020391b4f91c16cccc3736631f6ab53a3d6c5acc
