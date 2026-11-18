@@ -8,7 +8,7 @@ metadata:
   namespace: flux-system
 spec:
   distribution:
-    # Track current flux2 minor; operator reconciles patch releases.
+    # renovate: datasource=github-releases depName=fluxcd/flux2
     version: "2.9.x"
     registry: "ghcr.io/fluxcd"
   sync:
