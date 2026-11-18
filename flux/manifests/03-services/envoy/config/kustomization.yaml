@@ -3,7 +3,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:
-  name: gateway-envoy-config
+  name: envoy-config
 
 resources:
   - envoyproxy.yaml
@@ -27,6 +27,6 @@ replacements:
 
 configMapGenerator:
   - name: envoy-authentik-module
-    namespace: envoy-gateway-system
+    namespace: envoy-system
     files:
       - authentik.tf
