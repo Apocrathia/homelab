@@ -9,6 +9,8 @@ spec:
   provider:
     type: Kubernetes
     kubernetes:
+      # One proxy per node, matching Cilium's per-node Envoy DaemonSet.
+      envoyDaemonSet: {}
       envoyService:
         type: LoadBalancer
         # Cluster (not Local): TAK TCPRoute listeners are plain L4 — the
