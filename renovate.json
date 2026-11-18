@@ -161,6 +161,7 @@
         "# renovate: datasource=docker depName=(?<depName>\\S+)\\s*\\n\\s*image = [\"'](?:[^:]+):(?<currentValue>[^@\"'\\s]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']"
       ]
     },
+
     {
       "customType": "regex",
       "description": "Crossplane provider package refs (OCI tags)",
@@ -174,17 +175,6 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)package:[ \\t]*[\"']?(?:[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?"
       ]
-    },
-    {
-      "customType": "regex",
-      "description": "FluxInstance distribution version",
-      "managerFilePatterns": ["/^flux/manifests/.*\\.ya?ml$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*version:\\s*\"(?<currentValue>.*?)\""
-      ],
-      "datasourceTemplate": "{{{datasource}}}",
-      "depNameTemplate": "{{{depName}}}",
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}loose{{/if}}"
     }
   ],
   "timezone": "America/Denver",
