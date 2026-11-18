@@ -47,14 +47,14 @@ resource "authentik_provider_proxy" "envoy-admin" {
 }
 
 resource "authentik_application" "envoy-admin" {
-  name             = "Envoy Gateway"
-  slug             = "envoy-admin"
-  group            = "Platform"
-  provider         = authentik_provider_proxy.envoy-admin.id
-  meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/envoy/icon.svg"
-  meta_description = "Envoy Gateway control plane — dashboard, config dump, stats, profiling"
-  meta_publisher   = "Envoy Proxy"
-  open_in_new_tab  = true
+  name              = "Envoy Gateway"
+  slug              = "envoy-admin"
+  group             = "Platform"
+  protocol_provider = authentik_provider_proxy.envoy-admin.id
+  meta_icon         = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/03-services/envoy/icon.svg"
+  meta_description  = "Envoy Gateway control plane — dashboard, config dump, stats, profiling"
+  meta_publisher    = "Envoy Proxy"
+  open_in_new_tab   = true
 }
 
 resource "authentik_policy_binding" "envoy-admin-admins" {
