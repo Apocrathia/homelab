@@ -8,11 +8,10 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: gateway-helm
-      version: ">=1.10.0 <1.11.0"
+      chart: ./charts/gateway-helm
       sourceRef:
-        kind: HelmRepository
-        name: envoy-gateway
+        kind: GitRepository
+        name: homelab
         namespace: flux-system
       interval: 30m
   install:
