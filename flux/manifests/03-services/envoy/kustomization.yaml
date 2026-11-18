@@ -9,10 +9,10 @@ resources:
   - ocirepository.yaml
   - helmrelease.yaml
   - gatewayclass.yaml
+  - admin-service.yaml
   - envoyproxy.yaml
   - envoyextensionpolicy.yaml
   - crossplane.yaml
-  - admin-service.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
