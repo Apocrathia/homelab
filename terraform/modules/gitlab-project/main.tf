@@ -80,41 +80,6 @@ resource "gitlab_branch_protection" "main" {
   }
 }
 
-
-# Branch protection on "*" (all branches): prevents force push globally.
-# Pushes to any branch go through MRs only. First apply imports the
-# existing wildcard protection from the GitLab API.
-resource "gitlab_branch_protection" "all_branches" {
-  count = var.manage_branch_protection ? 1 : 0
-
-  project          = local.project_id
-  branch           = "*"
-  allow_force_push = false
-
-  allowed_to_push = [{
-    access_level = "developer"
-  }]
-
-  allowed_to_merge = [{
-    access_level = "maintainer"
-  }]
-
-  allowed_to_unprotect = [{
-    access_level = "maintainer"
-  }]
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-# One-time adoption of the existing wildcard protection (project 67295640).
-# Only valid while manage_branch_protection = true; delete after first apply.
-import {
-  to = gitlab_branch_protection.all_branches[0]
-  id = "67295640:*"
-}
-
 # One-time adoption of the existing protection on main (project id 67295640).
 # Only valid while manage_branch_protection = true; delete this block after
 # the first successful apply.
