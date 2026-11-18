@@ -79,6 +79,10 @@ spec:
         emptyDir:
           - name: data
             mountPath: /usr/share/nginx/html
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
     authentik:
       enabled: true
       mode: proxy
