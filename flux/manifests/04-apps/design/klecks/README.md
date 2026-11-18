@@ -15,7 +15,7 @@ Web-based painting tool powering Kleki.com. Layers, brushes, filters — built a
 
 ## How it works
 
-Built on every deploy: an init container clones the repo, runs `npm ci + npm run build`, and copies the output to a PVC. The runtime container serves `dist/` via `npx serve`.
+Built on every deploy: an init container clones the repo, runs `npm ci + npm run build`, and copies the output to a PVC. nginx serves the static `dist/` output.
 
 ## Authentication
 

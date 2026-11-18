@@ -19,20 +19,18 @@ spec:
   values:
     app:
       name: klecks
-      # renovate: datasource=docker depName=public.ecr.aws/docker/library/node
-      image: public.ecr.aws/docker/library/node:22-alpine
+      # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
       container:
-        name: node
-        # renovate: datasource=npm depName=serve
-        command: ["npx", "serve", "dist"]
-        port: 3000
+        name: nginx
+        port: 80
       replicas: 1
       podAntiAffinity:
         enabled: false
       initContainers:
         - name: build-klecks
           # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
-          image: public.ecr.aws/docker/library/node:22-alpine
+          image: public.ecr.aws/docker/library/node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
           command: ["sh", "-c"]
           args:
             - |
@@ -44,15 +42,15 @@ spec:
               npm run icon:build
               npm run lang:build
               npm run build
-              cp -a dist/. /app/
+              cp -a dist/. /usr/share/nginx/html/
               rm -rf /tmp/klecks
           env:
-            # renovate: datasource=git-refs depName=bitbof/klecks
+            # renovate: datasource=github-tags depName=bitbof/klecks
             - name: KLECKS_VERSION
               value: "main"
           volumeMounts:
             - name: data
-              mountPath: /app
+              mountPath: /usr/share/nginx/html
           volumes:
             emptyDir:
               - name: tmp
@@ -71,34 +69,34 @@ spec:
           enabled: true
           httpGet:
             path: /
-            port: 3000
+            port: 80
             scheme: HTTP
-          initialDelaySeconds: 30
-          periodSeconds: 30
+          initialDelaySeconds: 10
+          periodSeconds: 10
         readinessProbe:
           enabled: true
           httpGet:
             path: /
-            port: 3000
+            port: 80
             scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
+          initialDelaySeconds: 5
+          periodSeconds: 5
       volumeMounts:
         - name: data
-          mountPath: /app
+          mountPath: /usr/share/nginx/html
       volumes:
         emptyDir:
           - name: nginx-cache
             mountPath: /var/cache/nginx
           - name: nginx-run
-            mountPath: /var/run
+            mountPath: /run
       resources:
         requests:
-          cpu: 250m
-          memory: 512Mi
+          cpu: 50m
+          memory: 64Mi
         limits:
-          cpu: "2"
-          memory: 2Gi
+          cpu: 200m
+          memory: 128Mi
 
     storage:
       longhorn:
