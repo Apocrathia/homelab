@@ -10,3 +10,5 @@ spec:
   type: oci
   # renovate: datasource=docker depName=envoyproxy/gateway-helm
   url: oci://docker.io/envoyproxy/gateway-helm
+  secretRef:
+    name: docker-io-imagepullsecret

@@ -5,3 +5,4 @@ metadata:
   name: envoy-system
   labels:
     app.kubernetes.io/name: envoy-gateway
+    images/dockerhub: "true"
