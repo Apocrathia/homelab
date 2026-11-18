@@ -6,6 +6,7 @@ metadata:
   name: gateway-envoy
 
 resources:
+  - namespace.yaml
   - ocirepository.yaml
   - helmrelease.yaml
   - gatewayclass.yaml
