@@ -5,29 +5,15 @@
 # first apply and keep the deployment's policy.hujson as the single source of
 # truth. Do not mix tailscale_dns_configuration with the legacy dns_* resources.
 #
-# Global DNS resolver: NextDNS linked address, derived from the profile ID
-# stored in section "dns" of the auth item (kept out of public git).
-
-data "onepassword_vault" "this" {
-  name = var.onepassword_vault_name
-}
-
-data "onepassword_item" "tailscale_secrets" {
-  vault = data.onepassword_vault.this.uuid
-  title = var.onepassword_tailscale_token_item_title
-
-  section_map = {
-    dns = {}
-  }
-}
+# Global DNS resolver: ControlD legacy resolvers (premium profile, source-IP
+# authorized via DDNS — the resolver IPs are non-secret and safe to commit).
 
 locals {
-  nextdns_id = data.onepassword_item.tailscale_secrets.section_map["dns"].field_map["nextdns-id"].value
-
-  # NextDNS linked-IPv6 encoding: 2a07:a8c0::<first 2 hex>:<last 4 hex> of the
-  # profile ID. Reproduces the resolver already configured on the tailnet.
-  nextdns_nameservers = [
-    format("2a07:a8c0::%s:%s", substr(local.nextdns_id, 0, 2), substr(local.nextdns_id, 2, 4)),
+  controld_nameservers = [
+    "76.76.2.111",
+    "76.76.10.111",
+    "2606:1a40:0:8:2cff:59b4:ad7b:0",
+    "2606:1a40:1:8:2cff:59b4:ad7b:0",
   ]
 }
 
@@ -41,7 +27,7 @@ resource "tailscale_dns_configuration" "this" {
   search_paths       = var.dns_search_paths
 
   dynamic "nameservers" {
-    for_each = local.nextdns_nameservers
+    for_each = local.controld_nameservers
     content {
       address = nameservers.value
     }

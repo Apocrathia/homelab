@@ -1,0 +1,128 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: klecks
+  namespace: klecks
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: klecks
+      # renovate: datasource=docker depName=public.ecr.aws/docker/library/node
+      image: public.ecr.aws/docker/library/node:22-alpine
+      container:
+        name: node
+        # renovate: datasource=npm depName=serve
+        command: ["npx", "serve", "dist"]
+        port: 3000
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: build-klecks
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/node
+          image: public.ecr.aws/docker/library/node:22-alpine
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              apk add --no-cache git
+              git clone --depth 1 --branch "${KLECKS_VERSION}" https://github.com/bitbof/klecks.git /tmp/klecks
+              cd /tmp/klecks
+              npm ci
+              npm run icon:build
+              npm run lang:build
+              npm run build
+              cp -a dist/. /app/
+              rm -rf /tmp/klecks
+          env:
+            # renovate: datasource=git-refs depName=bitbof/klecks
+            - name: KLECKS_VERSION
+              value: "main"
+          volumeMounts:
+            - name: data
+              mountPath: /app
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumeMounts:
+        - name: data
+          mountPath: /app
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /var/run
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      category: "Design"
+      displayName: "Klecks"
+      externalHost: "https://klecks.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/klecks/icon.png"
+      interceptHeaderAuth: false
+      shared: true
+
+    httproute:
+      enabled: false
+
+    tailnet:
+      enabled: true

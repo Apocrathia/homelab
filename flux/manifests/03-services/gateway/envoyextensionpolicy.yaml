@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/generated/gateway.envoyproxy.io_envoyextensionpolicies.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: coraza-waf
+  namespace: envoy-system
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
+      namespace: cilium-system
+  wasm:
+    - name: coraza-waf
+      rootID: coraza-waf
+      code:
+        type: Image
+        image:
+          # renovate: datasource=docker depName=ghcr.io/corazawaf/coraza-proxy-wasm
+          url: ghcr.io/corazawaf/coraza-proxy-wasm:0.6.0
+      # CRS v4 rules are embedded in the WASM binary.
+      # DetectionOnly — log WAF hits but don't block. Flip to On after tuning.
+      config:
+        {
+          "default_directives": "recommended",
+          "directives_map":
+            {
+              "recommended":
+                [
+                  "Include @recommended-conf",
+                  "SecRuleEngine DetectionOnly",
+                  "SecRequestBodyAccess On",
+                  "SecResponseBodyAccess Off",
+                  "Include @crs-setup.conf",
+                  "Include @owasp_crs/*.conf",
+                ],
+            },
+        }
+      failOpen: true

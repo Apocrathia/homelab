@@ -18,6 +18,10 @@ Lemmy UI frontend for the lemmy.ml instance.
 
 Matrix homeserver (Synapse) with SSO delegated to Matrix Authentication Service, upstreamed to Authentik OIDC.
 
+### [Sable](./matrix/README.md)
+
+Sable — Discord-like OIDC-native Matrix client (Rust + Svelte). Deployed alongside Element in the matrix namespace.
+
 ### [Mumble](./mumble/README.md)
 
 Open-source VoIP server for low-latency voice chat.

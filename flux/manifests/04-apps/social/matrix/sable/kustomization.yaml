@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization.json
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: matrix-sable
+
+resources:
+  - helmrelease.yaml
+  - httproute.yaml
+  - crossplane.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  # Sable config.json: homeserver pinned to matrix.apocrathia.com,
+  # password fields hidden, SSO auto-redirect on the single OIDC
+  # provider (MAS -> Authentik upstream). Mounted at /app/config.json
+  # in the helmrelease.
+  - name: matrix-sable-config
+    namespace: matrix
+    files:
+      - config.json=config/sable-config.json
+  # Crossplane stitch: packages authentik.tf (the Workspace's HCL
+  # module) so the replacements rule below can copy it into the
+  # Workspace at build time. Data key is the literal filename
+  # (authentik.tf); the replacements fieldPath bracket-escapes it:
+  # data.[authentik.tf].
+  - name: sable-authentik-module
+    namespace: matrix
+    files:
+      - authentik.tf
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: sable-authentik-module
+      fieldPath: data.[authentik.tf]
+    targets:
+      - select:
+          kind: Workspace
+          name: sable-authentik
+        fieldPaths:
+          - spec.forProvider.module

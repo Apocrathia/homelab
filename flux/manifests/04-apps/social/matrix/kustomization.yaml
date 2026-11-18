@@ -14,10 +14,13 @@ resources:
   - postgres.yaml
   - synapse-helmrelease.yaml
   - mas-helmrelease.yaml
-  - element-helmrelease.yaml
   - httproute.yaml
   - reload-mas-on-configmap-change.yaml
   - crossplane.yaml
+  # Client apps, each in its own subdirectory with its own
+  # kustomization, helmrelease, route, config, and Authentik workspace.
+  - element
+  - sable
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -39,45 +42,3 @@ configMapGenerator:
     namespace: matrix
     files:
       - mas-config.yaml=config/mas-config.yaml
-  # Element Web config.json: default homeserver + oidc_static_clients
-  # (public client id must byte-match the clients entry in
-  # mas-config.yaml). Mounted over the image's sample config.json; the
-  # image entrypoint copies it to the served config dir on every boot.
-  - name: matrix-element-config
-    namespace: matrix
-    files:
-      - config.json=config/element-config.json
-  # Crossplane stitch: packages authentik.tf (the Workspace's HCL module)
-  # so the replacements rule below can copy it into the Workspace at build
-  # time. Data key is the literal filename (authentik.tf); the replacements
-  # fieldPath bracket-escapes it: data.[authentik.tf]. Intentionally NOT
-  # labeled authentik_blueprint: authentik ignores this ConfigMap as a
-  # blueprint source.
-  - name: matrix-authentik-module
-    namespace: matrix
-    files:
-      - authentik.tf
-
-replacements:
-  # Build-time stitch, house pattern from gitlab/runner: copy the generated
-  # ConfigMap's authentik.tf data into the Workspace's module field.
-  # authentik.tf stays the single source of truth for the HCL; the rendered
-  # module must stay byte-identical to it.
-  #
-  # The intermediate ConfigMap cannot be dropped from the render: kustomize
-  # applies patches and transformers before replacements, so a $patch:
-  # delete would remove the source before this rule consumes it (verified on
-  # kustomize v5.8.1; no deletions-transformer builtin exists). The
-  # ConfigMap is harmless in-cluster (no authentik_blueprint label) and
-  # keeps a stable name (disableNameSuffixHash), so authentik.tf edits
-  # update it in place.
-  - source:
-      kind: ConfigMap
-      name: matrix-authentik-module
-      fieldPath: data.[authentik.tf]
-    targets:
-      - select:
-          kind: Workspace
-          name: matrix-authentik
-        fieldPaths:
-          - spec.forProvider.module

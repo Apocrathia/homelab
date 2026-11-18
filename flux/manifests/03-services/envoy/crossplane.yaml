@@ -1,0 +1,43 @@
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: authentik-terraform-token
+  namespace: envoy-system
+spec:
+  itemPath: "vaults/Secrets/items/crossplane-terraform-secrets"
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: envoy-admin-authentik
+  namespace: envoy-system
+spec:
+  credentials:
+    - filename: authentik-token
+      source: Secret
+      secretRef:
+        name: authentik-terraform-token
+        namespace: envoy-system
+        key: authentik-terraform-token
+  backendFile: |
+    secret_suffix     = "envoy-admin"
+    namespace         = "envoy-system"
+    in_cluster_config = true
+---
+apiVersion: opentofu.m.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: envoy-admin-authentik
+  namespace: envoy-system
+spec:
+  managementPolicies:
+    - Observe
+    - Create
+    - Update
+  providerConfigRef:
+    kind: ProviderConfig
+    name: envoy-admin-authentik
+  forProvider:
+    source: Inline
+    module: ""

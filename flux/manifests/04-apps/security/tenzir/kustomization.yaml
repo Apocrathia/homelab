@@ -10,6 +10,7 @@ resources:
   - namespace.yaml
   - secret.yaml
   - crossplane.yaml
+  - deployments/
   - nodes/core
   - nodes/tetragon
   - nodes/netflow

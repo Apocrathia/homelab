@@ -9,6 +9,7 @@ User-facing applications and workloads deployed in the cluster.
 Applications are organized by functional category:
 
 - **Artificial Intelligence**: LLM interfaces, agents, MCP servers
+- **Design**: Open-source creative design and CAD tools
 - **Games**: Steam automation, ROM management
 - **Home**: Home automation utilities and monitoring
 - **Management**: Administrative tools and dashboards
@@ -22,6 +23,10 @@ Applications are organized by functional category:
 ### [Demo App](demo-app/README.md)
 
 Baseline template demonstrating Authentik SSO, Gateway API routing, and SMB storage using the `generic-app` Helm chart.
+
+### [Design](design/README.md)
+
+PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, TextureCraft, MaterialCraft, SoundCraft, CADCraft, Craft Anything, and SolidCraft — thirteen ArtCraft creative tools plus one independent CAD app, all in the browser.
 
 ### [Artificial Intelligence](artificial-intelligence/README.md)
 

@@ -1,0 +1,139 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ruffle
+  namespace: ruffle
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: ruffle
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
+      container:
+        name: nginx
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: fetch-ruffle
+          image: public.ecr.aws/docker/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              apk add --no-cache curl unzip
+              url="https://github.com/ruffle-rs/ruffle/releases/download/v${RUFFLE_VERSION}/ruffle-${RUFFLE_VERSION}-web-selfhosted.zip"
+              curl -fsSL -o /tmp/ruffle.zip "$url"
+              unzip -q -o /tmp/ruffle.zip -d /usr/share/nginx/html/
+              rm /tmp/ruffle.zip
+              cat > /usr/share/nginx/html/index.html << "HTMLEOF"
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Ruffle</title>
+                <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh}</style>
+              </head>
+              <body>
+                <div id="ruffle"></div>
+                <script src="ruffle.js"></script>
+                <script>
+                  const ruffle = window.RufflePlayer.newest();
+                  const player = ruffle.createPlayer();
+                  document.getElementById("ruffle").appendChild(player);
+                </script>
+              </body>
+              </html>
+              HTMLEOF
+          env:
+            # renovate: datasource=github-releases depName=ruffle-rs/ruffle versioning=semver
+            - name: RUFFLE_VERSION
+              value: "0.7.1"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          volumes:
+            emptyDir:
+              - name: tmp
+                mountPath: /tmp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /README.md
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          enabled: true
+          httpGet:
+            path: /README.md
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html
+      volumes:
+        emptyDir:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /run
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+    storage:
+      longhorn:
+        enabled: true
+        numberOfReplicas: 1
+        volumes:
+          - name: data
+            capacity: 1Gi
+
+    secrets:
+      enabled: false
+
+    authentik:
+      managedBy: terraform
+      enabled: true
+      category: "Media"
+      displayName: "Ruffle"
+      externalHost: "https://ruffle.gateway.services.apocrathia.com"
+      icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/ruffle/icon.png"
+      interceptHeaderAuth: false
+      shared: true
+
+    httproute:
+      enabled: false
+
+    tailnet:
+      enabled: true

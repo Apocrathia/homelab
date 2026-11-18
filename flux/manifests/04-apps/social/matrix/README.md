@@ -14,15 +14,19 @@ Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully dele
 
 ## Stack
 
-```
-Element Web ─┐
-Element X ───┴─> gateway (TLS) ──> synapse:8008 ──> matrix-postgres (CNPG, synapse + mas DBs)
-                 │                  ▲  └─ shared-secret ▶
-                 └─ login/refresh ──┤
-                                    └──> mas:8080 ──> Authentik OIDC (upstream provider)
+```mermaid
+flowchart LR
+    Element[Element Web] --> GW[Cilium Gateway]
+    Sable[Sable] --> GW
+    ElementX[Element X] --> GW
+    GW -->|client API + federation| Synapse[synapse:8008]
+    Synapse --> PG[(matrix-postgres<br/>synapse + mas DBs)]
+    GW -->|login/refresh| MAS[mas:8080]
+    MAS --> Auth[Authentik OIDC<br/>upstream provider]
+    Synapse <-. shared-secret .-> MAS
 ```
 
-Four pods: `synapse`, `mas`, `element`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
+Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
 
 ## SSO flow
 
@@ -39,16 +43,17 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
 
 `vaults/Secrets/items/matrix-secrets` (see `secret.yaml`) with fields:
 
-| Field                | Used for                                                                                             |
-| -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `password`           | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                  |
-| `mas-db-password`    | Postgres `mas` role password (MAS `database.password_file`)                                          |
-| `init-mas.sql`       | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit) |
-| `shared-secret`      | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                         |
-| `encryption`         | 32-byte hex (64 chars) for MAS cookie/db field encryption — never change after first start           |
-| `rsa-key.pem`        | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                          |
-| `oidc-client-secret` | Authentik OAuth2 client secret — copied from Authentik after first workspace sync                    |
-| `signing-key`        | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot       |
+| Field                      | Used for                                                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `password`                 | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                      |
+| `mas-db-password`          | Postgres `mas` role password (MAS `database.password_file`)                                              |
+| `init-mas.sql`             | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit)     |
+| `shared-secret`            | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                             |
+| `encryption`               | 32-byte hex (64 chars) for MAS cookie/db field encryption — never change after first start               |
+| `rsa-key.pem`              | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                              |
+| `oidc-client-secret`       | Authentik OAuth2 client secret — copied from Authentik after first workspace sync                        |
+| `sable-oidc-client-secret` | Authentik OAuth2 client secret for the Sable provider — copied from Authentik after first workspace sync |
+| `signing-key`              | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot           |
 
 ## Initial setup (operator prep)
 

@@ -9,6 +9,7 @@ resources:
   - authentik-terraform-token.yaml
   - 1password
   - amp
+  - controld
   - gitlab
   - home-assistant
   - proxmox

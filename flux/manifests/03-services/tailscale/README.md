@@ -142,14 +142,14 @@ kubectl get onepassworditem -n tailscale-system tailscale-secrets
 kubectl get secret -n tailscale-system tailscale-secrets
 ```
 
-### NextDNS blocks the control plane
+### ControlD blocks the control plane
 
-If logs show `dial tcp 0.0.0.0:443: connect: connection refused` when calling `controlplane.tailscale.com`, DNS is returning a sinkhole address instead of Tailscale IPs. Privacy blocklists in NextDNS often block `controlplane.tailscale.com` and `api.tailscale.com`.
+If logs show `dial tcp 0.0.0.0:443: connect: connection refused` when calling `controlplane.tailscale.com`, DNS is returning a sinkhole address instead of Tailscale IPs. Privacy blocklists in ControlD often block `controlplane.tailscale.com` and `api.tailscale.com`.
 
-Allow those hostnames in the NextDNS allowlist, then flush stale answers:
+Allow those hostnames in the ControlD allowlist, then flush stale answers:
 
 ```bash
-dig +short controlplane.tailscale.com @45.90.28.214   # should be 192.200.0.x, not 0.0.0.0
+dig +short controlplane.tailscale.com @76.76.2.111   # should be 192.200.0.x, not 0.0.0.0
 kubectl rollout restart deployment/coredns -n kube-system
 kubectl delete pod -n tailscale-system -l app=operator
 ```

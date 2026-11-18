@@ -8,3 +8,5 @@ metadata:
 resources:
   - gateway-cert.yaml
   - gateway.yaml
+  - envoyproxy.yaml
+  - envoyextensionpolicy.yaml

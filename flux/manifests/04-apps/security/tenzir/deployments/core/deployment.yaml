@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenzir-v7-core
+  namespace: tenzir
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tenzir-v7-core
+  template:
+    metadata:
+      labels:
+        app: tenzir-v7-core
+    spec:
+      serviceAccountName: tenzir-v7-core
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: tenzir-engine
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          image: ghcr.io/tenzir/tenzir:v7.0.0-rc.4-slim
+          command:
+            - /bin/sh
+            - -c
+            - exec -a tenzir-up /opt/tenzir/libexec/tenzir-engine "$@"
+            - tenzir-up
+          args:
+            - --platform
+            - https://platform.tenzir.com
+            - --id
+            - 01a1ea1b-223e-7003-b440-f8acfcf11951
+            - --key-file
+            - /etc/tenzir/deployment.key
+            - --store
+            - s3://deployments/core
+          env:
+            - name: AWS_ENDPOINT_URL
+              value: "http://storage.services.apocrathia.com:9009/tenzir"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: tenzir-secrets
+                  key: aws-access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tenzir-secrets
+                  key: aws-secret-access-key
+            - name: AWS_S3_ADDRESSING_STYLE
+              value: "path"
+            - name: AWS_REGION
+              value: "us-east-1"
+          volumeMounts:
+            - name: deployment-key
+              mountPath: /etc/tenzir
+              readOnly: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "3"
+              memory: 8Gi
+      volumes:
+        - name: deployment-key
+          secret:
+            secretName: tenzir-secrets
+            items:
+              - key: core-deployment-key
+                path: deployment.key

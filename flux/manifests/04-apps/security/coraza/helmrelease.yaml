@@ -1,0 +1,92 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: coraza
+  namespace: coraza
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: ./helm/generic-app
+      # renovate: datasource=git-tags depName=https://gitlab.com/Apocrathia/homelab.git
+      version: "0.0.90"
+      sourceRef:
+        kind: GitRepository
+        name: homelab
+        namespace: flux-system
+      interval: 5m
+  values:
+    app:
+      name: coraza
+      # renovate: datasource=docker depName=public.ecr.aws/nginx/nginx
+      image: public.ecr.aws/nginx/nginx:alpine@sha256:de2281d0074656735b2ba1bea6ab7a29ef1ecc6e05e4a86db9d1062994d83c86
+      container:
+        name: nginx
+        port: 80
+      replicas: 1
+      podAntiAffinity:
+        enabled: false
+      initContainers:
+        - name: fetch-coraza
+          # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/alpine
+          image: public.ecr.aws/docker/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -eu
+              apk add --no-cache curl grep
+
+              BASE="https://playground.coraza.io"
+              DST="/usr/share/nginx/html"
+
+              # Fetch the index page
+              curl -fsSL -o "$DST/index.html" "$BASE/"
+
+              # Parse asset URLs from the HTML and fetch them
+              grep -oP '(?<=src=")[^"]+|(?<=href=")[^"]+' "$DST/index.html" | grep -E '^/(assets/|wasm_exec\.js|main\.)' | sort -u | while read -r path; do
+                dir=$(dirname "$DST$path")
+                mkdir -p "$dir"
+                curl -fsSL -o "$DST$path" "$BASE$path"
+              done
+
+              # Also fetch any favicon or other root-level assets
+              curl -fsSL -o "$DST/favicon.ico" "$BASE/favicon.ico" || true
+              curl -fsSL -o "$DST/favicon.png" "$BASE/favicon.png" || true
+          env: []
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/nginx/html
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      healthChecks:
+        livenessProbe:
+          enabled: true
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+      volumes:
+        emptyDir:
+          - name: data
+            mountPath: /usr/share/nginx/html
+    authentik:
+      enabled: true
+      mode: proxy
+      displayName: Coraza Playground
+      externalHost: https://coraza.gateway.services.apocrathia.com
+      icon: https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/security/coraza/icon.png
+      category: Security
+      metaDescription: Browser-based WAF testing tool — write SecLang rules and test them against HTTP requests
+    httproute:
+      enabled: true
+      hostname: coraza.gateway.services.apocrathia.com
