@@ -37,7 +37,7 @@ data "authentik_service_connection_kubernetes" "local" {
 resource "authentik_provider_proxy" "envoy-admin" {
   name                = "envoy-admin"
   external_host       = "https://envoy.gateway.services.apocrathia.com"
-  internal_host       = "http://envoy-gateway-admin.envoy-gateway-system.svc.cluster.local:19000"
+  internal_host       = "http://envoy-gateway-admin.envoy-system.svc.cluster.local:19000"
   authorization_flow  = data.authentik_flow.provider-authorization.id
   invalidation_flow   = data.authentik_flow.invalidation.id
   authentication_flow = data.authentik_flow.authentication.id
@@ -74,8 +74,8 @@ resource "authentik_outpost" "envoy-admin" {
     kubernetes_httproute_parent_refs = [
       {
         name         = "main-gateway"
-        namespace    = "cilium-system"
-        section_name = "https"
+        namespace    = "envoy-system"
+        sectionName  = "https"
       }
     ]
     kubernetes_namespace             = "authentik"

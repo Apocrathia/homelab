@@ -177,7 +177,7 @@ resource "authentik_outpost" "app" {
     kubernetes_httproute_parent_refs = [
       {
         name        = "main-gateway"
-        namespace   = "cilium-system"
+        namespace   = "envoy-system"
         sectionName = "https"
       }
     ]
