@@ -10,4 +10,4 @@ spec:
     group: gateway.envoyproxy.io
     kind: EnvoyProxy
     name: gateway-proxy-config
-    namespace: envoy-gateway-system
+    namespace: envoy-system
