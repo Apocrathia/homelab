@@ -93,10 +93,6 @@ spec:
                   value: https://gitlab.com/api/v4
                 - name: GITLAB_PROJECT
                   value: Apocrathia/homelab
-                - name: COOLDOWN_HOURS
-                  value: "24"
-                - name: INFRA_COOLDOWN_HOURS
-                  value: "72"
                 - name: APPROVE_ON_PASS
                   value: "true"
                 - name: GITLAB_TOKEN

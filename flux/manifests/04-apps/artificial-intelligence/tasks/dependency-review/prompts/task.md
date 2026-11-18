@@ -64,4 +64,5 @@ Rules:
 - `release_at_corrected` and `flags` optional (omit or null when unused).
 - Never invent issue numbers, dates, or vuln IDs — cite only what the fact
   sheet or your tool lookups show.
-- The operator still holds the merge button; your verdict gates it.
+- Renovate's `minimumReleaseAge` (1 day) already enforces release staleness
+  before the MR opens; your verdict gates the merge.
