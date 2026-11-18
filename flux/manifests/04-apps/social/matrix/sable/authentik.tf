@@ -90,7 +90,7 @@ resource "authentik_provider_oauth2" "app" {
 
   allowed_redirect_uris = [
     {
-      url           = "https://matrix.gateway.services.apocrathia.com/upstream/callback/01M4R9B3XS8NQ4WJ5PZ7XUFKGV"
+      url           = "https://matrix.gateway.services.apocrathia.com/upstream/callback/01M7RCQE1T2H12PRWK54QX47AF"
       matching_mode = "strict"
     }
   ]
