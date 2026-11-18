@@ -45,7 +45,11 @@ spec:
             - --key-file
             - /etc/tenzir/deployment.key
             - --store
-            - s3://tenzir/deployments/core?endpoint_override=storage.services.apocrathia.com:9009&scheme=http&region=us-east-1
+            - s3://tenzir/deployments/core
+            - --s3-endpoint
+            - http://storage.services.apocrathia.com:9009
+            - --s3-region
+            - us-east-1
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
