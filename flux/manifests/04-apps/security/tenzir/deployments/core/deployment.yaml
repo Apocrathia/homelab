@@ -45,10 +45,8 @@ spec:
             - --key-file
             - /etc/tenzir/deployment.key
             - --store
-            - s3://deployments/core
+            - s3://tenzir/deployments/core?endpoint_override=storage.services.apocrathia.com:9009&scheme=http&region=us-east-1
           env:
-            - name: AWS_ENDPOINT_URL
-              value: "http://storage.services.apocrathia.com:9009/tenzir"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -59,8 +57,6 @@ spec:
                 secretKeyRef:
                   name: tenzir-secrets
                   key: aws-secret-access-key
-            - name: AWS_S3_ADDRESSING_STYLE
-              value: "path"
             - name: AWS_REGION
               value: "us-east-1"
           volumeMounts:
