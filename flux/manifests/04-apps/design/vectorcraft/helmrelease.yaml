@@ -121,6 +121,10 @@ spec:
       externalHost: "https://vectorcraft.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/vectorcraft/icon.png"
       interceptHeaderAuth: false
+      shared: true
 
     httproute:
       enabled: false
+
+    tailnet:
+      enabled: true

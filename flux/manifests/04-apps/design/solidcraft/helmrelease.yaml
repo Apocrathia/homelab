@@ -121,6 +121,10 @@ spec:
       externalHost: "https://solidcraft.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/design/solidcraft/icon.png"
       interceptHeaderAuth: false
+      shared: true
 
     httproute:
       enabled: false
+
+    tailnet:
+      enabled: true

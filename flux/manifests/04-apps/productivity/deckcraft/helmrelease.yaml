@@ -121,6 +121,10 @@ spec:
       externalHost: "https://deckcraft.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/productivity/deckcraft/icon.png"
       interceptHeaderAuth: false
+      shared: true
 
     httproute:
       enabled: false
+
+    tailnet:
+      enabled: true
