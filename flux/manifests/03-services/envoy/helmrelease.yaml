@@ -9,10 +9,9 @@ spec:
   chart:
     spec:
       chart: gateway-helm
-      # renovate: datasource=docker depName=envoyproxy/gateway-helm
       version: ">=1.10.0 <1.11.0"
       sourceRef:
-        kind: OCIRepository
+        kind: HelmRepository
         name: envoy-gateway
         namespace: flux-system
       interval: 30m
