@@ -11,3 +11,4 @@ resources:
   - helmrelease.yaml
   - gatewayclass.yaml
   - admin-service.yaml
+  - crossplane.yaml
