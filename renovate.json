@@ -64,13 +64,6 @@
       "platformAutomerge": true
     },
     {
-      "description": "Suppress flux manager for envoy gateway-helm — the customManager handles the pinned version",
-      "matchManagers": ["flux"],
-      "matchDepNames": ["gateway-helm"],
-      "matchPaths": ["flux/manifests/03-services/envoy/**"],
-      "enabled": false
-    },
-    {
       "description": "MySQL stays on the 8.4 LTS lineage — 26.x needs the 9.x LTS stepping stone (lineage rule) and aborts on an 8.4 datadir",
       "matchPackageNames": ["mysql"],
       "matchUpdateTypes": ["major"],
