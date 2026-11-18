@@ -9,7 +9,7 @@ metadata:
 spec:
   distribution:
     # Track current flux2 minor; operator reconciles patch releases.
-    version: "2.9.x"
+    version: "2.10.x"
     registry: "ghcr.io/fluxcd"
   sync:
     kind: GitRepository
