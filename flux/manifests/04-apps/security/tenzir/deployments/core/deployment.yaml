@@ -45,10 +45,10 @@ spec:
             - --key-file
             - /etc/tenzir/deployment.key
             - --store
-            - s3://tenzir/deployments/core
+            - s3://deployments/core
           env:
             - name: AWS_ENDPOINT_URL
-              value: "http://storage.services.apocrathia.com:9009"
+              value: "http://storage.services.apocrathia.com:9009/tenzir"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
