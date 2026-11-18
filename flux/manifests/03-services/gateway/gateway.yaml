@@ -58,7 +58,7 @@ spec:
     # cert - the https listener's wildcard covers only
     # *.gateway.services.apocrathia.com, and the exact hostname matches
     # before the hostname-less fallback listener.
-    # matrix/referencegrant.yaml admits envoy-system + cilium-system Gateways to the
+    # matrix/referencegrant.yaml admits envoy-system Gateways to the
     # matrix-namespace secret.
     - name: https-matrix
       protocol: HTTPS
@@ -131,9 +131,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       namespace: envoy-system
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: cilium-system
   to:
     - group: ""
       kind: Secret

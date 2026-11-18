@@ -730,7 +730,7 @@ tailnet:
   enabled: false
   gateway:
     name: tailnet-gateway
-    namespace: cilium-system
+    namespace: envoy-system
     sectionName: https-gateway-services
 
 # TCPRoute configuration for additional ports

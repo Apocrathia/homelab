@@ -12,7 +12,7 @@ spec:
     # Sandbox origin serves the pad iframes; friends on the tailnet need it
     # alongside the main hostname or pads render blank.
     - name: tailnet-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-gateway-services
   hostnames:
     - "cryptpad-sandbox.gateway.services.apocrathia.com"

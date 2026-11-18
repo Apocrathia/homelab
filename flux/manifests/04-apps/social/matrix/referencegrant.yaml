@@ -1,5 +1,5 @@
 ---
-# Lets Gateways in envoy-system (main-gateway) and cilium-system (tailnet-gateway)
+# Lets Gateways in envoy-system (main-gateway / tailnet-gateway)
 # reference the matrix TLS secret in this namespace, so the in-tree
 # https-matrix listeners on those gateways (gateway.yaml /
 # tailnet-gateway.yaml) can present certificate.yaml for the
@@ -14,9 +14,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       namespace: envoy-system
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: cilium-system
   to:
     - group: ""
       kind: Secret

@@ -10,7 +10,7 @@ spec:
       namespace: envoy-system
       sectionName: https
     - name: tailnet-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-gateway-services
   hostnames:
     - "ai.gateway.services.apocrathia.com"
