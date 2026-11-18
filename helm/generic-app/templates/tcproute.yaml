@@ -10,7 +10,7 @@ metadata:
 spec:
   parentRefs:
     - name: {{ if .gateway }}{{ .gateway.name }}{{ else }}"main-gateway"{{ end }}
-      namespace: {{ if .gateway }}{{ .gateway.namespace }}{{ else }}"cilium-system"{{ end }}
+      namespace: {{ if .gateway }}{{ .gateway.namespace }}{{ else }}"envoy-system"{{ end }}
       sectionName: {{ if .gateway }}{{ .gateway.sectionName }}{{ else }}{{ printf "%s-%s" $.Values.app.name .name }}{{ end }}
   rules:
     - backendRefs:

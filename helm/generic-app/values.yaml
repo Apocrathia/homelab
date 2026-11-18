@@ -618,7 +618,7 @@ authentik:
   # HTTPRoute and ExternalDNS reads the route hostname for DNS)
   gateway:
     name: main-gateway
-    namespace: cilium-system
+    namespace: envoy-system
     sectionName: https
 
   # ============================================================
@@ -719,7 +719,7 @@ httproute:
   hostname: demo.gateway.services.apocrathia.com
   gateway:
     name: main-gateway
-    namespace: cilium-system
+    namespace: envoy-system
     sectionName: https
 
 # Tailnet sharing (friends/admins over Tailscale split DNS): adds a
@@ -730,7 +730,7 @@ tailnet:
   enabled: false
   gateway:
     name: tailnet-gateway
-    namespace: cilium-system
+    namespace: envoy-system
     sectionName: https-gateway-services
 
 # TCPRoute configuration for additional ports

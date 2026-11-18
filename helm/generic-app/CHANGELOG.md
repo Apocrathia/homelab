@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.0.91
+
+- **main-gateway and tailnet-gateway move to envoy-system** — all-in on
+  Envoy Gateway; the Cilium gateway controller is retired. Chart defaults
+  follow: `authentik.gateway.namespace`, `httproute.gateway.namespace`,
+  and `tailnet.gateway.namespace` now default to envoy-system, and the
+  tcproute/udproute template fallback namespace flips from cilium-system
+  to envoy-system.
+
 ## Version 0.0.90
 
 - **Outpost parity restored for proxy apps on the tofu lane** — the

@@ -5,7 +5,7 @@
 # https-matrix listeners on main-gateway and tailnet-gateway
 # (gateway.yaml / tailnet-gateway.yaml), consumed by the
 # matrix-apocrathia-com HTTPRoute via sectionName https-matrix.
-# referencegrant.yaml admits cilium-system Gateways to the secret.
+# referencegrant.yaml admits envoy-system Gateways to the secret.
 # DNS-01 via the Cloudflare-backed
 # letsencrypt-prod ClusterIssuer, same flow as mumble-tls.
 apiVersion: cert-manager.io/v1

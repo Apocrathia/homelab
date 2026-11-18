@@ -7,7 +7,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
   hostnames:
     - hubble.gateway.services.apocrathia.com

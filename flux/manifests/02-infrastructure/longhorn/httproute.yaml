@@ -8,7 +8,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
   hostnames:
     - longhorn.gateway.services.apocrathia.com

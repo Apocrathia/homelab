@@ -18,10 +18,10 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-matrix
     - name: tailnet-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-matrix
   hostnames:
     - "matrix.apocrathia.com"
@@ -78,10 +78,10 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
     - name: tailnet-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-gateway-services
   hostnames:
     - "matrix.gateway.services.apocrathia.com"

@@ -81,7 +81,7 @@ spec:
         - renovate.gateway.services.apocrathia.com
       parentRefs:
         - name: main-gateway
-          namespace: cilium-system
+          namespace: envoy-system
           sectionName: https
     # Webhook server stays off (schedule-only), no session store, telemetry off.
     webhook:

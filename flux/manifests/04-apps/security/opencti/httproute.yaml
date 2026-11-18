@@ -9,7 +9,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
   hostnames:
     - "opencti.gateway.services.apocrathia.com"

@@ -13,10 +13,10 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
     - name: tailnet-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-gateway-services
   hostnames:
     - "element.gateway.services.apocrathia.com"

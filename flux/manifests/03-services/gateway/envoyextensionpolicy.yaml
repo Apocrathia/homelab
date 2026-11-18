@@ -10,7 +10,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: main-gateway
-      namespace: cilium-system
   wasm:
     - name: coraza-waf
       rootID: coraza-waf

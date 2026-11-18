@@ -135,7 +135,7 @@ spec:
       path: /homelab/README.md
 
     # Unauthenticated LAN route via the wildcard cert + external-dns
-    # (gateway defaults: main-gateway / cilium-system / https).
+    # (gateway defaults: main-gateway / envoy-system / https).
     httproute:
       enabled: true
       hostname: cdn.gateway.services.apocrathia.com
