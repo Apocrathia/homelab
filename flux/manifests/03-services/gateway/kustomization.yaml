@@ -10,3 +10,4 @@ resources:
   - gateway.yaml
   - envoyproxy.yaml
   - envoyextensionpolicy.yaml
+  - backendtrafficpolicy.yaml

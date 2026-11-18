@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/generated/gateway.envoyproxy.io_backendtrafficpolicies.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: request-timeout
+  namespace: envoy-system
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: tailnet-gateway
+  timeout:
+    http:
+      # Envoy Gateway defaults to 15s, which 504s slow LLM completions
+      # (Cilium's gateway had no cap). 1h is a hung-request backstop;
+      # Envoy's 5m stream idle timeout still reaps silent streams.
+      requestTimeout: 3600s
