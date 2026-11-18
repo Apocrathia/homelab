@@ -9,5 +9,3 @@ spec:
   interval: 1h
   type: oci
   url: oci://docker.io/envoyproxy
-  secretRef:
-    name: docker-io-imagepullsecret

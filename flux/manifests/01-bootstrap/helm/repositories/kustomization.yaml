@@ -16,6 +16,7 @@ resources:
   - cilium.yaml
   - cnpg.yaml
   - csi-driver-smb.yaml
+  - envoy-gateway.yaml
   - gitlab.yaml
   - grafana.yaml
   - headlamp.yaml
