@@ -127,6 +127,10 @@ spec:
       externalHost: "https://webamp.gateway.services.apocrathia.com"
       icon: "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/media/webamp/icon.png"
       interceptHeaderAuth: false
+      shared: true
 
     httproute:
       enabled: false
+
+    tailnet:
+      enabled: true
