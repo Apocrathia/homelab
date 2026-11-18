@@ -113,7 +113,7 @@ resource "authentik_application" "app" {
   slug            = "element"
   group           = "Social"
   meta_launch_url = "https://element.gateway.services.apocrathia.com/"
-  open_in_new_tab = false
+  open_in_new_tab = true
 
   meta_icon        = "https://cdn.gateway.services.apocrathia.com/homelab/flux/manifests/04-apps/social/matrix/element/icon.svg"
   meta_description = "Element Web — Matrix client (OIDC via MAS)"
