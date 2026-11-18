@@ -28,12 +28,14 @@
 # clears it. Witness ids are GATE-TIME ONLY — NEVER in git; if the state
 # Secret is ever lost, re-run the gate with fresh ids from the live DB.
 #
-# OIDC mode: oauth2 provider + application + admins binding. NOT shared:
-# no users binding resource (the users data source stays declared —
-# module-shape parity). Standard openid/email/profile scopes only — no
-# custom mappings. NO outpost (oidc apps run none). The litellm-config
-# ConfigMap (litellm.yml) is unrelated to Authentik and stays untouched
-# by this migration (witness sheet, litellm anomaly note).
+# OIDC mode: oauth2 provider + application + admins + users bindings.
+# SHARED tier: the order-20 users binding is the shared tag — friends
+# reach the app over the tailnet door (the litellm HTTPRoute already
+# carries both gateway parentRefs). Standard openid/email/profile scopes
+# only — no custom mappings. NO outpost (oidc apps run none). The
+# litellm-config ConfigMap (litellm.yml) is unrelated to Authentik and
+# stays untouched by this migration (witness sheet, litellm anomaly
+# note).
 
 terraform {
   required_providers {
@@ -88,10 +90,9 @@ data "authentik_group" "admins" {
   include_users = false
 }
 
-# Users-group binding source — module-shape parity: the module declares
-# this data source ungated. litellm is NOT shared (no users binding
-# resource); unreferenced data sources are fine — tofu still reads and
-# stores them.
+# Users-group binding source — the order-20 users binding is the shared
+# tag; friends reach the app over the tailnet door.
+# include_users=false keeps the member list out of the state Secret.
 data "authentik_group" "users" {
   name          = "users"
   include_users = false
@@ -250,6 +251,16 @@ resource "authentik_policy_binding" "admins" {
   target = authentik_application.app.uuid
   group  = data.authentik_group.admins.id
   order  = 10
+}
+
+# Order-20: the users binding IS the shared tag — friends reach the app
+# over the tailnet door. A NEW create, not an adoption: no blueprint-era
+# live row exists, so there is no import block and the first plan reads
+# one to add.
+resource "authentik_policy_binding" "users" {
+  target = authentik_application.app.uuid
+  group  = data.authentik_group.users.id
+  order  = 20
 }
 
 # ---------------------------------------------------------------------------
