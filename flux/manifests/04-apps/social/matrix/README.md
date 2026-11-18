@@ -43,17 +43,17 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
 
 `vaults/Secrets/items/matrix-secrets` (see `secret.yaml`) with fields:
 
-| Field                      | Used for                                                                                                 |
-| -------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `password`                 | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                      |
-| `mas-db-password`          | Postgres `mas` role password (MAS `database.password_file`)                                              |
-| `init-mas.sql`             | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit)     |
-| `shared-secret`            | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                             |
-| `encryption`               | 32-byte hex (64 chars) for MAS cookie/db field encryption — never change after first start               |
-| `rsa-key.pem`              | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                              |
-| `oidc-client-secret`       | Authentik OAuth2 client secret — copied from Authentik after first workspace sync                        |
-| `sable-oidc-client-secret` | Authentik OAuth2 client secret for the Sable provider — copied from Authentik after first workspace sync |
-| `signing-key`              | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot           |
+| Field                        | Used for                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `password`                   | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                        |
+| `mas-db-password`            | Postgres `mas` role password (MAS `database.password_file`)                                                |
+| `init-mas.sql`               | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit)       |
+| `shared-secret`              | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                               |
+| `encryption`                 | 32-byte hex (64 chars) for MAS cookie/db field encryption — never change after first start                 |
+| `rsa-key.pem`                | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                                |
+| `element-oidc-client-secret` | Authentik OAuth2 client secret for the Element provider — copied from Authentik after first workspace sync |
+| `sable-oidc-client-secret`   | Authentik OAuth2 client secret for the Sable provider — copied from Authentik after first workspace sync   |
+| `signing-key`                | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot             |
 
 ## Initial setup (operator prep)
 
@@ -66,7 +66,7 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
    ```
 2. **DNS**: nothing to add — `matrix.apocrathia.com` deliberately has no public DNS record, and no per-deploy DNS step remains. The name resolves for tailnet members via the tailnet split-DNS zone plus the CoreDNS static record in `03-services/tailnet-dns` (both shipped in the repo by the sibling MR), and `matrix.gateway.services.apocrathia.com` keeps resolving via the existing split DNS.
 3. **Apply** and wait: CNPG bootstrap, both HelmReleases, workspace sync (creates the `matrix` Authentik application + OAuth2 provider, client id `matrix`).
-4. **Client secret**: copy the OAuth2 client secret from the Authentik UI (`matrix` provider) into the `oidc-client-secret` field, then restart the `mas` deployment.
+4. **Client secrets**: copy the OAuth2 client secrets from the Authentik UI (`element-oidc-provider` and `sable-oidc-provider`) into the `element-oidc-client-secret` and `sable-oidc-client-secret` fields, then restart the `mas` deployment.
 5. **First login = JIT provision**. Promote yourself:
    ```bash
    kubectl exec -n matrix deployment/mas -c mas -- /usr/local/bin/mas-cli manage promote-admin <localpart>

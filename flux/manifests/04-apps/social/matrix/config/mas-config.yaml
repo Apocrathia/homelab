@@ -82,10 +82,11 @@ upstream_oauth2:
     - id: 01M4M3KRKC5A5BWMTGAXXRGYEP
       human_name: Element
       # Must match the issuer in authentik discovery byte-for-byte
-      # (per-provider issuer mode: /application/o/matrix/)
-      issuer: https://auth.gateway.services.apocrathia.com/application/o/matrix/
-      client_id: matrix
-      client_secret_file: /run/secrets/matrix-secrets/oidc-client-secret
+      # (per-provider issuer mode: /application/o/<app-slug>/; the
+      # element-authentik workspace creates the app with slug "element")
+      issuer: https://auth.gateway.services.apocrathia.com/application/o/element/
+      client_id: element
+      client_secret_file: /run/secrets/matrix-secrets/element-oidc-client-secret
       token_endpoint_auth_method: client_secret_basic
       scope: openid profile email
       claims_imports:
