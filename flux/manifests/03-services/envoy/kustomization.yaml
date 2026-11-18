@@ -7,7 +7,6 @@ metadata:
 
 resources:
   - namespace.yaml
-  - ocirepository.yaml
   - helmrelease.yaml
   - gatewayclass.yaml
   - admin-service.yaml
