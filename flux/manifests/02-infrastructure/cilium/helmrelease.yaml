@@ -292,7 +292,7 @@ spec:
 
     # Gateway API configuration
     gatewayAPI:
-      enabled: true
+      enabled: false
       hostNetwork:
         enabled: false
       secretsNamespace:
