@@ -112,7 +112,7 @@ spec:
     image:
       repository: ghcr.io/controlplaneio-fluxcd/flux-operator
       # renovate: datasource=docker depName=ghcr.io/controlplaneio-fluxcd/flux-operator
-      tag: "v0.57.0@sha256:7baa2697d3c4d81007c02302c55a8601f02ad2052df5952b95f8a6708c7be131"
+      tag: "v0.62.1"
       pullSecrets: []
       imagePullPolicy: IfNotPresent
 
