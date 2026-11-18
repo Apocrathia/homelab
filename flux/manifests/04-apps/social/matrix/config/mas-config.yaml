@@ -102,7 +102,7 @@ upstream_oauth2:
           template: "{{ user.email }}"
         account_name:
           template: "@{{ user.preferred_username }}"
-    - id: 01M4R9B3XS8NQ4WJ5PZ7XUFKGV
+    - id: 01M7RCQE1T2H12PRWK54QX47AF
       human_name: Sable
       issuer: https://auth.gateway.services.apocrathia.com/application/o/sable/
       client_id: sable
