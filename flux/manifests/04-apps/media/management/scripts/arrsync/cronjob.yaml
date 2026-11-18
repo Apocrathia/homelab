@@ -29,7 +29,7 @@ spec:
           initContainers:
             - name: install-deps
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.15@sha256:8c9a3bf2d6dea60d60a2ae2a07c2b2fb1e7d8daed64b146b6792c74ae0d62ac4
+              image: public.ecr.aws/docker/library/python:3.15@sha256:df3f05ff4d74833f52146edd195c8f7913581b57796a820fb7e373457ace9bad
               command:
                 - pip
                 - install
@@ -63,7 +63,7 @@ spec:
           containers:
             - name: arrsync
               # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/python
-              image: public.ecr.aws/docker/library/python:3.15@sha256:8c9a3bf2d6dea60d60a2ae2a07c2b2fb1e7d8daed64b146b6792c74ae0d62ac4
+              image: public.ecr.aws/docker/library/python:3.15@sha256:df3f05ff4d74833f52146edd195c8f7913581b57796a820fb7e373457ace9bad
               command:
                 - python
                 - /scripts/arrsync.py

@@ -21,7 +21,7 @@ spec:
       name: firecrawl-redis
       namespace: firecrawl
       # renovate: datasource=docker registryUrl=https://public.ecr.aws depName=docker/library/redis
-      image: public.ecr.aws/docker/library/redis:8.4.8-alpine3.22@sha256:44b295aedd412d52a9846f51573e906e0a9c7d83ba431f4134b1b338d45ba732
+      image: public.ecr.aws/docker/library/redis:8.4.8-alpine3.22@sha256:ff72f74e4f471df79ed920aa8bbc35efe72ff8a1f8acdc50aad5dbb9b14a4034
       args:
         - redis-server
         - --bind
