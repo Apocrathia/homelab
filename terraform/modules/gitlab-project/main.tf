@@ -80,34 +80,6 @@ resource "gitlab_branch_protection" "main" {
   }
 }
 
-# Orphaned "*" rule from !5963 (reverted but never destroyed). Imported here
-# so the next change can delete it; attributes mirror live.
-resource "gitlab_branch_protection" "wildcard_orphan" {
-  count = var.manage_branch_protection ? 1 : 0
-
-  project          = local.project_id
-  branch           = "*"
-  allow_force_push = false
-
-  allowed_to_push = [
-    { access_level = "no one" },
-    { access_level = "developer" },
-  ]
-
-  allowed_to_merge = [{
-    access_level = "developer"
-  }]
-
-  allowed_to_unprotect = [{
-    access_level = "maintainer"
-  }]
-}
-
-import {
-  to = gitlab_branch_protection.wildcard_orphan[0]
-  id = "67295640:*"
-}
-
 # One-time adoption of the existing protection on main (project id 67295640).
 # Only valid while manage_branch_protection = true; delete this block after
 # the first successful apply.
