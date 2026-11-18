@@ -38,6 +38,11 @@ spec:
         secretKeyRef:
           name: renovate-operator-secret
           key: github-token
+    - name: GITHUB_COM_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: renovate-operator-secret
+          key: GITHUB_COM_TOKEN
   parallelism: 1
   renovateConfig:
     inline: |

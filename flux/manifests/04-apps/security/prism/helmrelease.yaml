@@ -19,7 +19,6 @@ spec:
     app:
       name: prism
       namespace: prism
-      # renovate: datasource=docker depName=ghcr.io/novacode37/prism-platform
       image: ghcr.io/novacode37/prism-platform:2.12.1@sha256:1e7152095e989440ebf1101b2c306eeab7c034e978106844361162f2310e79e8
       container:
         name: prism
