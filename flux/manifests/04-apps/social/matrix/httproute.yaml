@@ -18,7 +18,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https-matrix
     - name: tailnet-gateway
       namespace: cilium-system
@@ -78,7 +78,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
     - name: tailnet-gateway
       namespace: cilium-system

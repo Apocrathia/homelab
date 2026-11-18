@@ -29,7 +29,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: main-gateway
-  namespace: cilium-system
+  namespace: envoy-system
 spec:
   gatewayClassName: envoy
   addresses:
@@ -58,7 +58,7 @@ spec:
     # cert - the https listener's wildcard covers only
     # *.gateway.services.apocrathia.com, and the exact hostname matches
     # before the hostname-less fallback listener.
-    # matrix/referencegrant.yaml admits cilium-system Gateways to the
+    # matrix/referencegrant.yaml admits envoy-system + cilium-system Gateways to the
     # matrix-namespace secret.
     - name: https-matrix
       protocol: HTTPS
@@ -130,6 +130,9 @@ spec:
   from:
     - group: gateway.networking.k8s.io
       kind: Gateway
+      namespace: envoy-system
+    - group: gateway.networking.k8s.io
+      kind: Gateway
       namespace: cilium-system
   to:
     - group: ""
@@ -141,11 +144,11 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: http-redirect
-  namespace: cilium-system
+  namespace: envoy-system
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: http
   rules:
     - filters:

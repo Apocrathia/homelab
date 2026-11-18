@@ -130,7 +130,7 @@ spec:
       enabled: true
       parentRefs:
         - name: main-gateway
-          namespace: cilium-system
+          namespace: envoy-system
           sectionName: https
       hostnames:
         - headlamp.gateway.services.apocrathia.com

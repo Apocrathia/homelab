@@ -48,7 +48,7 @@ spec:
       httpRoute:
         parentRefs:
           - name: main-gateway
-            namespace: cilium-system
+            namespace: envoy-system
             sectionName: https
         hostnames:
           - crossplane.gateway.services.apocrathia.com

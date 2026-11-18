@@ -127,5 +127,5 @@ spec:
       hostname: home-agent.gateway.services.apocrathia.com
       gateway:
         name: main-gateway
-        namespace: cilium-system
+        namespace: envoy-system
         sectionName: https

@@ -7,7 +7,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: https
     # Sandbox origin serves the pad iframes; friends on the tailnet need it
     # alongside the main hostname or pads render blank.

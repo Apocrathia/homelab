@@ -12,7 +12,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: tak-8088
     - name: tailnet-gateway
       namespace: cilium-system
@@ -30,7 +30,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: tak-8089
     - name: tailnet-gateway
       namespace: cilium-system
@@ -48,7 +48,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: tak-8443
     - name: tailnet-gateway
       namespace: cilium-system
@@ -70,7 +70,7 @@ metadata:
 spec:
   parentRefs:
     - name: main-gateway
-      namespace: cilium-system
+      namespace: envoy-system
       sectionName: tak-8446
     - name: tailnet-gateway
       namespace: cilium-system
