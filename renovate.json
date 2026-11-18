@@ -31,12 +31,12 @@
       "enabled": true
     },
     {
-      "description": "One MR per digest pin/refresh \u2014 override default Pin Dependencies grouping",
+      "description": "One MR per digest pin/refresh — override default Pin Dependencies grouping",
       "matchUpdateTypes": ["pin", "pinDigest", "digest"],
       "groupName": null
     },
     {
-      "description": "Base images share one rotation \u2014 combine ongoing digest refreshes into one MR",
+      "description": "Base images share one rotation — combine ongoing digest refreshes into one MR",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
         "/^(public\\.ecr\\.aws/)?docker/library/(node|python|alpine|busybox|redis|rabbitmq|ubuntu)$/",
@@ -51,7 +51,7 @@
       "pinDigests": false
     },
     {
-      "description": "One MR for all generic-app chart version pins \u2014 each new generic-app-* tag touches ~88 HelmReleases",
+      "description": "One MR for all generic-app chart version pins — each new generic-app-* tag touches ~88 HelmReleases",
       "matchDatasources": ["git-tags"],
       "matchDepNames": ["https://gitlab.com/Apocrathia/homelab.git"],
       "groupName": "generic-app chart"
@@ -64,18 +64,18 @@
       "platformAutomerge": true
     },
     {
-      "description": "MySQL stays on the 8.4 LTS lineage \u2014 26.x needs the 9.x LTS stepping stone (lineage rule) and aborts on an 8.4 datadir",
+      "description": "MySQL stays on the 8.4 LTS lineage — 26.x needs the 9.x LTS stepping stone (lineage rule) and aborts on an 8.4 datadir",
       "matchPackageNames": ["mysql"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
-      "description": "Strict semver only \u2014 registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
+      "description": "Strict semver only — registry floods non-semver tags (main-*, sha-*, litellm_* branch builds, latest); default docker versioning would chase them",
       "matchPackageNames": ["ghcr.io/berriai/litellm-database"],
       "versioning": "semver"
     },
     {
-      "description": "promptfoo init bootstraps modelaudit, whose Requires-Python is <3.15 \u2014 pin the base python image to 3.14 or lower so Renovate can't re-drift it past the dep's ceiling",
+      "description": "promptfoo init bootstraps modelaudit, whose Requires-Python is <3.15 — pin the base python image to 3.14 or lower so Renovate can't re-drift it past the dep's ceiling",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["docker/library/python"],
       "matchFiles": [
@@ -174,6 +174,17 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?(?: depName=(?<depName>\\S+))?(?: packageName=(?<packageName>\\S+))?(?: versioning=(?<versioning>\\S+))?\\s*\\n(?<indentation>[ \\t]*)package:[ \\t]*[\"']?(?:[^\\s\"'@:]+(?:/[^\\s\"'@:]+)*)(?::(?<currentValue>[^\\s\"'@/]+))?(?:@(?<currentDigest>sha256:[0-9a-f]+))?[\"']?"
       ]
+    },
+    {
+      "customType": "regex",
+      "description": "FluxInstance distribution version",
+      "managerFilePatterns": ["/^flux/manifests/.*\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*version:\\s*\"(?<currentValue>.*?)\""
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "depNameTemplate": "{{{depName}}}",
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}loose{{/if}}"
     }
   ],
   "timezone": "America/Denver",
@@ -181,23 +192,11 @@
   "prHourlyLimit": 30,
   "prConcurrentLimit": 30,
   "dependencyDashboard": true,
-  "dependencyDashboardTitle": "Dependencies Dashboard \ud83e\udd16",
+  "dependencyDashboardTitle": "Dependencies Dashboard 🤖",
   "rangeStrategy": "replace",
   "semanticCommits": "enabled",
   "commitMessagePrefix": "chore(deps):",
   "rebaseWhen": "conflicted",
   "platformAutomerge": true,
-  "automergeType": "pr",
-  "regexManagers": [
-    {
-      "description": "Bump Flux distribution version in FluxInstance resources",
-      "fileMatch": [
-        "^flux/manifests/01-bootstrap/flux-system/flux-instance\\.yaml$"
-      ],
-      "matchStrings": ["version:\\s*\"(?<currentValue>[0-9]+\\.[0-9]+)\\.x\""],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "fluxcd/flux2",
-      "versioningTemplate": "loose"
-    }
-  ]
+  "automergeType": "pr"
 }
