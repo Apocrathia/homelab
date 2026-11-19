@@ -1,7 +1,7 @@
 ---
 description: Remove signs of AI-generated writing from text.
 globs: **/*.md
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Humanizer
