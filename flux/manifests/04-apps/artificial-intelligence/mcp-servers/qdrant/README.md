@@ -8,7 +8,7 @@ MCP server for knowledge storage and semantic search via Qdrant vector database.
 
 ## Overview
 
-Provides semantic memory and knowledge retrieval capabilities:
+Semantic memory and knowledge retrieval:
 
 - Store information with automatic embedding generation
 - Semantic search across stored knowledge
@@ -47,13 +47,13 @@ The MCPServer mounts the existing Secret read-only and exports the `api-key` fil
 
 ### Store Knowledge
 
-```
+```text
 Store this information: "Kubernetes uses etcd as its backing store for all cluster data"
 ```
 
 ### Query Knowledge
 
-```
+```text
 Find information about Kubernetes storage
 ```
 

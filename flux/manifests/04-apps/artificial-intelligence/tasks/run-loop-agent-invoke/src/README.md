@@ -4,6 +4,8 @@ Multi-turn kagent A2A using `a2a-sdk` streaming: reads `prompts/task.md` for
 turn 1, then `prompts/continuation.md` for follow-ups, carrying `contextId`
 between turns (same model as `scheduled-agent-invoke`).
 
+> **Navigation**: [← Back to run-loop-agent-invoke README](../README.md)
+
 Prompts are scout-only (`find-work` + `run-loop` mode=`scout`). The runner does
 not interpret mode — guardrails live in the prompt text.
 

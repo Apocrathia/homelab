@@ -4,12 +4,12 @@
 
 ## Overview
 
-This deployment includes SABnzbd Usenet client with integrated VPN routing for secure downloads:
+SABnzbd Usenet client with VPN routing:
 
 - SABnzbd for Usenet downloads with web-based management interface
 - Gluetun VPN container for encrypted traffic routing
 - Init container pattern with persistent VPN connection
-- Authentik SSO integration for secure web access
+- Authentik SSO integration
 - Longhorn persistent storage for configuration and downloads
 
 ## Architecture
@@ -26,7 +26,7 @@ This deployment uses an **init container pattern** where:
 - **Firewall rules**: Gluetun blocks non-VPN traffic with built-in kill switch
 - **Web UI access**: Only the web interface (port 8080) is accessible locally
 - **Network policies**: Kubernetes network policies restrict traffic flow
-- **Authentik integration**: SSO authentication for web access
+- **Authentik**: SSO for the web UI
 
 ## Configuration
 

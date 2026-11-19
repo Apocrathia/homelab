@@ -36,4 +36,4 @@ Scheduled jobs and helpers under `scripts/` (e.g. [UniFi](./scripts/unifi/README
 
 ## References
 
-- **[Generic-App Chart](../../../helm/generic-app/README.md)** - Application deployment template
+- **[Generic-App Chart](../../../../helm/generic-app/README.md)** - Application deployment template

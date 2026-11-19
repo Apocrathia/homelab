@@ -1,6 +1,6 @@
 # UniFi Network MCP Server
 
-The UniFi Network MCP server provides network management capabilities through the Model Context Protocol.
+UniFi network management over the Model Context Protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -62,7 +62,7 @@ Upstream defaults to **`lazy`**: `tools/list` exposes only the **meta-tools** (`
 
 ## Available MCP Tools
 
-The UniFi Network MCP server provides tools for managing network resources:
+Tools:
 
 1. **Client Management** - Query and manage UniFi clients
 2. **Device Management** - Monitor and configure network devices

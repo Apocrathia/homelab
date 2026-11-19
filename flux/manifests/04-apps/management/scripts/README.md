@@ -2,6 +2,8 @@
 
 Small automation that runs in-cluster (typically `CronJob`) and supports day-two operations for the management app bundle.
 
+> **Navigation**: [← Back to Management README](../README.md)
+
 ## Contents
 
 | Directory                  | Purpose                                                                    |

@@ -1,8 +1,10 @@
 # GitHub MCP Server
 
-Self-hosted GitHub MCP server for repository and issue management.
-
 > **Navigation**: [← Back to MCP Servers README](../README.md)
+
+## Overview
+
+Self-hosted GitHub MCP server for repository and issue management.
 
 **Endpoint:** `http://github.mcp-github.svc.cluster.local:8080/mcp`
 
@@ -28,7 +30,7 @@ Internal only via LiteLLM gateway - no external HTTPRoute.
 
 ## Available Tools
 
-The server provides tools for:
+Tools:
 
 - **Repository management**: Create, fork, search repositories
 - **Branch operations**: Create branches, push files

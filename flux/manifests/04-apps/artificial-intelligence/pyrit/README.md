@@ -40,10 +40,10 @@ Without this field populated, the `pyrit-secrets` K8s Secret will be missing the
 
 ## Initial Setup
 
-1. Mint a LiteLLM virtual key (LiteLLM UI → New Key, scoped to `qwen3.5-abliterated-medium` at minimum, plus any other models you want PyRIT to be able to attack).
+1. Mint a LiteLLM virtual key (LiteLLM UI → New Key, scoped to the default attack model at minimum — see `OPENAI_CHAT_MODEL` in `helmrelease.yaml` — plus any other models you want PyRIT to be able to attack).
 2. Create the 1Password item at `vaults/Secrets/items/pyrit-secrets` with field `openai-chat-key` = that virtual key.
 3. Apply the manifests (or let Flux reconcile). The 1Password operator materializes the K8s Secret; the deployment picks up the env vars on next pod start.
-4. Hit `https://pyrit.gateway.services.apocrathia.com`, authenticate via Authentik, land in CoPyRIT. The `target` and `scorer` initializers will have pre-registered `OpenAIChatTarget` against `qwen3.5-abliterated-medium` so you can fire attacks immediately.
+4. Hit `https://pyrit.gateway.services.apocrathia.com`, authenticate via Authentik, land in CoPyRIT. The `target` and `scorer` initializers will have pre-registered `OpenAIChatTarget` against the default model (`OPENAI_CHAT_MODEL` in `helmrelease.yaml`) so you can fire attacks immediately.
 5. To attack a different model, add another `OpenAIChatTarget` in the UI's Target Configuration page — endpoint `http://litellm.litellm.svc.cluster.local:4000`, model whatever you want, key blank (falls back to env) or pasted inline.
 
 ## Storage

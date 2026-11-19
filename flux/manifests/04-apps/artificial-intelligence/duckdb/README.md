@@ -15,6 +15,13 @@ This deployment runs the upstream `duckdb/duckdb` distroless CLI image and start
 
 For an agent-callable DuckDB instance, see [`mcp-servers/duckdb`](../mcp-servers/duckdb/) — separate process, separate `.duckdb` file, same `/shared` SMB mount.
 
+## Configuration
+
+Data sharing with agents runs through the SMB mount (Parquet/CSV, not the
+locked `.duckdb` file) — see
+[Sharing data with the MCP server](#sharing-data-with-the-mcp-server). See
+`helmrelease.yaml` for complete deployment configuration.
+
 ## Sharing data with the MCP server
 
 DuckDB's single-writer file lock prevents two pods from opening the same `.duckdb` file. Shared state lives in the SMB mount instead, as Parquet (or CSV/JSON):

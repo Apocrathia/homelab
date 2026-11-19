@@ -14,12 +14,12 @@
 ## Access
 
 - **External URL**: `https://omni-tools.gateway.services.apocrathia.com`
-- **Tailnet**: same URL via split DNS — the door friends use
+- **Tailnet**: same URL via split DNS; the door friends use
 - **Internal Service**: `http://omni-tools.omni-tools.svc.cluster.local:80`
 
 ## Configuration
 
-Nothing to configure. No environment variables, no config file — the image is
+Nothing to configure. No environment variables, no config file, the image is
 a static build of the app. Tool state lives in the browser and is not
 persisted anywhere.
 

@@ -1,6 +1,6 @@
 # LiteLLM
 
-Unified interface for 100+ LLMs with OpenAI proxy compatibility, allowing seamless integration with various AI models through a single API.
+Unified proxy for 100+ LLM providers behind a single OpenAI-compatible API.
 
 > **Navigation**: [← Back to AI Applications README](../README.md)
 
@@ -12,7 +12,7 @@ This deployment includes:
 - PostgreSQL database for model configurations and usage tracking
 - Valkey for exact response caching (Redis protocol; `REDIS_HOST=litellm-valkey`)
 - Master key-based API access control
-- Chart-native HPA autoscaling (CPU-based; min 3 / max 6 / 60% target)
+- Chart-native HPA autoscaling (CPU-based; bounds set in `helmrelease.yaml`)
 
 ## Configuration
 
@@ -20,7 +20,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### litellm-secrets (`vaults/Secrets/items/litellm-secrets`)
+**litellm-secrets** (`vaults/Secrets/items/litellm-secrets`)
 
 - `master-key`: Master key for API access control
 - `username`: Database and UI username (shared)

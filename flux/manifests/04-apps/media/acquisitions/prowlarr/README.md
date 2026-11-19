@@ -1,8 +1,10 @@
 # Prowlarr
 
-Indexer manager/proxy for \*arr applications with centralized indexer configuration for torrent trackers and Usenet indexers.
-
 > **Navigation**: [← Back to Media README](../../README.md)
+
+## Overview
+
+Indexer manager/proxy for \*arr applications: one place to configure torrent trackers and Usenet indexers.
 
 ## Configuration
 
@@ -14,8 +16,7 @@ This deployment uses the LinuxServer.io Prowlarr image with the standard LinuxSe
 - **Persistent storage**: Configuration stored on Longhorn volumes
 - **Indexer management**: Centralized indexer configuration for all \*arr applications
 - **Flaresolverr integration**: Built-in CloudFlare proxy bypass via sidecar container
-- **Authentik integration**: SSO authentication through Authentik
-- **Gateway access**: Available at `https://prowlarr.gateway.services.apocrathia.com`
+- **Authentik**: SSO for the web UI
 
 ### Security Configuration
 
@@ -52,16 +53,13 @@ Prowlarr is accessible through:
 
 ### LinuxServer.io Standard Configuration
 
-This deployment uses the standard LinuxServer.io configuration pattern, which:
-
-1. **Starts as root**: Allows s6-overlay to initialize user/group mappings and directories
-2. **Switches to PUID/PGID**: After initialization, runs as user 1000:1000
-3. **Full compatibility**: Supports Docker Mods, custom services, and all LinuxServer.io features
-4. **Automatic permissions**: Handles volume ownership and permissions automatically
+The s6-overlay init starts as root to set up user/group mappings and volume
+ownership, then drops to PUID/PGID (1000:1000). That keeps Docker Mods, custom
+services, and other LinuxServer.io features working.
 
 ### Integration
 
-Prowlarr serves as the central indexer manager for:
+Prowlarr is the central indexer manager for:
 
 - **Sonarr**: TV show indexer management
 - **Radarr**: Movie indexer management
@@ -69,12 +67,8 @@ Prowlarr serves as the central indexer manager for:
 - **Download clients**: Centralized indexer configuration
 - **Indexer providers**: Unified management of torrent trackers and usenet indexers
 
-### Benefits
-
-- **Centralized management**: Single location to configure all indexers
-- **Automatic synchronization**: Indexers automatically sync to \*arr applications
-- **Simplified setup**: No need to configure indexers in each \*arr application
-- **Statistics and monitoring**: Track indexer performance and health
+Indexers sync automatically to the \*arr applications — configure them once
+here, not per app. Indexer health and stats show in the web UI.
 
 ## Troubleshooting
 

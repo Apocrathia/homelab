@@ -5,6 +5,8 @@ operator's Discord — gated to designated guilds, channels, and users —
 so it can be reached where the operator already lives instead of
 through a terminal session.
 
+> **Navigation**: [← Back to Prime Agent README](../../../README.md)
+
 Zero dependencies: Node stdlib only (native WebSocket + fetch,
 Node >= 22). No npm install, no `package.json` — the cluster mirror
 is 3–4 flat ConfigMap keys (`index.ts`, `server.mjs`,
@@ -59,9 +61,7 @@ is ever logged — audit lines carry only the token's SOURCE.
 
 ## Audit logging & inbound hardening
 
-The 2026-09-23 invisible-`/send` mystery (the operator's webui composer
-messages landed with zero trace on any hop) was invisible because `/send`
-logged nothing anywhere. Every inbound control request now leaves one line.
+Every inbound control request leaves one audit line.
 
 **The line.** Both control servers audit to stderr — the bot via
 `log()` into `server.log`, the beacon via `console.error` into the daemon

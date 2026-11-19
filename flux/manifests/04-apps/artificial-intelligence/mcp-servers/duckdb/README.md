@@ -1,6 +1,6 @@
 # DuckDB MCP Server
 
-The [`mcp-server-motherduck`](https://github.com/motherduckdb/mcp-server-motherduck) MCP server pointed at a local DuckDB file on a Longhorn volume. Gives agents the ability to query, transform, and persist data via SQL without touching the human-facing UI.
+The [`mcp-server-motherduck`](https://github.com/motherduckdb/mcp-server-motherduck) MCP server pointed at a local DuckDB file on a Longhorn volume. Lets agents query, transform, and persist data via SQL without touching the human-facing UI.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -9,7 +9,7 @@ The [`mcp-server-motherduck`](https://github.com/motherduckdb/mcp-server-motherd
 This deployment includes:
 
 - `mcp-server-motherduck` installed from PyPI at pod startup
-- Backing DuckDB file at `/data/duckdb.db` on a 10Gi Longhorn RWO volume
+- Backing DuckDB file at `/data/duckdb.db` on a Longhorn RWO volume
 - Shared SMB mount at `/shared` (`//storage.services.apocrathia.com/Library/Databases/DuckDB`) for cross-process Parquet/CSV/JSON exchange with the UI deployment
 - kmcp (`kagent.dev/v1alpha1` MCPServer) with `transportType: http` — `mcp-server-motherduck` runs its native streamable-http transport as one long-running process on port 8080, fronted by agentgateway as a plain reverse proxy
 - Read-write enabled against `/data/duckdb.db`; concurrency is handled by ephemeral connections (see _Concurrency_ below)
@@ -47,6 +47,19 @@ Per `mcp-server-motherduck`, agents get tools for executing arbitrary SQL querie
 ## Notes
 
 The process downloads `mcp-server-motherduck` from PyPI at pod startup (wheel cache lives in `/tmp`, an emptyDir, so every restart re-downloads). Pod startup is slower than a baked image. If startup time becomes painful, switch to a wrapper image with the package pre-installed.
+
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev duckdb -n mcp-duckdb
+
+# Pod status
+kubectl get pods -n mcp-duckdb
+
+# Server logs
+kubectl logs -n mcp-duckdb -l app.kubernetes.io/name=duckdb --tail=50
+```
 
 ## References
 

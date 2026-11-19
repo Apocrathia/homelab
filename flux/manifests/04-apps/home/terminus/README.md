@@ -1,6 +1,6 @@
 # Terminus
 
-Self-hosted TRMNL BYOS server for managing e-ink devices, playlists, screens, and firmware on your own infrastructure.
+Self-hosted TRMNL BYOS server for e-ink devices: playlists, screens, firmware.
 
 > **Navigation**: [← Back to Home README](../README.md)
 
@@ -73,4 +73,4 @@ If images are not generating, check Sidekiq logs. If devices cannot connect, con
 
 - **[Terminus repository](https://github.com/usetrmnl/terminus)** — source, Docker, and Kubernetes docs
 - **[TRMNL](https://trmnl.com)** — hardware and hosted service
-- **[Generic-App Chart](../../../../helm/generic-app/README.md)** — deployment template
+- **[Generic-App Chart](../../../../../helm/generic-app/README.md)** — deployment template

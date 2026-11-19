@@ -1,5 +1,9 @@
 # alert-agent-invoke
 
+> **Navigation**: [← Back to Agent Tasks README](../README.md)
+
+## Overview
+
 Webhook bridge that receives Grafana alert notifications and invokes kagent via A2A.
 
 ## How it works
@@ -16,7 +20,7 @@ Webhook bridge that receives Grafana alert notifications and invokes kagent via 
 | --------------------------- | -------------------------------------------------------------------- |
 | `deployment.yaml`           | Python webhook server (Starlette + uvicorn)                          |
 | `service.yaml`              | ClusterIP service on port 8080                                       |
-| `contact-point.yaml`        | `GrafanaContactPoint` (webhook type) targeting the service           |
+| `grafana.yaml`              | `GrafanaContactPoint` (webhook type) targeting the service           |
 | `prompts/alert-template.md` | Prompt template with `{alert_name}`, `{severity}`, etc. placeholders |
 | `src/server.py`             | Webhook handler and A2A client                                       |
 
@@ -46,6 +50,13 @@ Alternatively, add the label `agent_invoke: "true"` to any `GrafanaAlertRuleGrou
 | `MAX_TURNS`            | `4`                          | Maximum A2A turns per invocation |
 | `HTTP_TIMEOUT_S`       | `300`                        | HTTP timeout for A2A calls       |
 | `PORT`                 | `8080`                       | Server listen port               |
+
+## Troubleshooting
+
+```bash
+kubectl get pods -n agent-tasks -l app.kubernetes.io/name=alert-agent-invoke
+kubectl logs -n agent-tasks -l app.kubernetes.io/name=alert-agent-invoke --tail=50
+```
 
 ## Python (`src/`)
 

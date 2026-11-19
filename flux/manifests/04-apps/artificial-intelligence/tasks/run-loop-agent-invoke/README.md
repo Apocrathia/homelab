@@ -4,7 +4,9 @@ Constant-loop Cron host. Each schedule tick is one `run-loop` invocation
 (`.agents/skills/run-loop/`) against `homelab-agent` via kagent A2A. The agent
 **keeps going** by the Cron firing again — not by spinning inside a single Job.
 
-## Purpose
+> **Navigation**: [← Back to Agent Tasks README](../README.md)
+
+## Overview
 
 - Heartbeat for the development loop: find → rank → (file/propose) → stop.
 - Post a Discord `#notifications` summary each tick.
@@ -44,3 +46,11 @@ directory is the loop heartbeat, not a second health check.
 `http://kagent-controller.kagent.svc.cluster.local:8083/api/a2a/kagent/homelab-agent/`
 
 See `src/README.md` for local-dev env vars.
+
+## Troubleshooting
+
+```bash
+kubectl get cronjob homelab-agent-run-loop -n agent-tasks
+kubectl get jobs -n agent-tasks
+kubectl logs -n agent-tasks job/<job-name>
+```

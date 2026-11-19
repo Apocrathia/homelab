@@ -11,9 +11,9 @@ This deployment includes:
 - Browse-only web store (in-browser 3D) for Jellyfin/Plex libraries
 - Server-side Jellyseerr + RomM integration: first-time visitors land in a stocked store with requests and the games department already wired; API keys stay on the server (host-side proxy attaches them, never inlined into the bundle)
 - Authentik proxy authentication
-- 1Gi Longhorn volume for the Remote Play seed (shared-mirror mode survives restarts)
+- Longhorn volume for the Remote Play seed (shared-mirror mode survives restarts)
 
-**Not enabled:** Remote Play _private instances_ (server-rendered WebRTC streams per viewer). That needs a GPU device (`/dev/dri`) and host networking, which generic-app does not support and no workload here uses. The shared-mirror mode (Settings → Connection → Remote Play) still works — it renders on a machine with a display.
+**Not enabled:** Remote Play _private instances_ (server-rendered WebRTC streams per viewer). That needs a GPU device (`/dev/dri`) and host networking, which generic-app does not support and no workload here uses. The shared-mirror mode (Settings → Connection → Remote Play) still works, it renders on a machine with a display.
 
 ## Access
 
@@ -28,12 +28,12 @@ This deployment includes:
 
 1Password item `vaults/Secrets/items/halcyon-secrets` (created by the chart as `OnePasswordItem/halcyon-secrets`) with fields:
 
-- `seerr-api-key` — Seerr API key
-- `romm-api-key` — RomM credentials as `user:password`
+- `seerr-api-key`: Seerr API key
+- `romm-api-key`: RomM credentials as `user:password`
 
 ## Authentication
 
-Uses an Authentik proxy provider (tunarr pattern). No HTTPRoute — the outpost handles routing. Anyone reaching the URL logs in via Authentik first; media-server credentials are separate and entered in-app.
+Uses an Authentik proxy provider (tunarr pattern). No HTTPRoute: the outpost handles routing. Anyone reaching the URL logs in via Authentik first; media-server credentials are separate and entered in-app.
 
 ## Initial Setup
 

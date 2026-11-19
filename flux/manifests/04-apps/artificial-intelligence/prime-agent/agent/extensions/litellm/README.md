@@ -4,6 +4,8 @@
 discovers the live model catalog from it at startup (no local copy;
 `/litellm-refresh` re-polls).
 
+> **Navigation**: [← Back to Prime Agent README](../../../README.md)
+
 ## Configuration
 
 - `LITELLM_BASE_URL` — OpenAI-compatible base URL including `/v1`.

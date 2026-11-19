@@ -1,6 +1,6 @@
 # Proxmox MCP Plus Server
 
-The Proxmox MCP Plus server provides Proxmox virtualization management through the Model Context Protocol.
+Proxmox virtualization management over the Model Context Protocol.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
@@ -35,7 +35,7 @@ This deployment includes:
 
 ### Secrets
 
-Create a Kubernetes secret `proxmox-mcp-secrets` in the `mcp-proxmox` namespace with:
+The `OnePasswordItem` `proxmox-mcp-secrets` in the `mcp-proxmox` namespace supplies:
 
 - `proxmox-host`: Proxmox server hostname or IP
 - `proxmox-user`: Proxmox username (e.g., `admin@pve`)
@@ -51,10 +51,10 @@ The Secret is mounted at `/var/run/secrets/mcp` and maps the four `proxmox-*` ke
 
 ## Available MCP Tools
 
-The Proxmox MCP Plus server provides tools for virtualization management:
+Tools:
 
 1. **VM Lifecycle Management** - Create, start, stop, reset, shutdown, delete VMs
-2. **Power Management** - Enhanced control over VM power states
+2. **Power Management** - Control VM power states
 3. **Container Support** - Manage LXC containers (list, start, stop, restart, update)
 4. **Storage Management** - Monitor storage pools and volumes
 5. **Cluster Health** - Check cluster status and health

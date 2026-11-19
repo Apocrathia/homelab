@@ -1,8 +1,15 @@
 # Git Agent
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
+## Overview
+
 Git platform agent for GitHub and GitLab repository management.
 
-> **Navigation**: [← Back to Agents README](../README.md)
+## Configuration
+
+The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
+`modelconfig.yaml`; MCP tools via `remotemcpserver.yaml`.
 
 ## Tools
 
@@ -54,5 +61,5 @@ kubectl logs --namespace agent-git -l app.kubernetes.io/name=git-agent -f
 
 ## References
 
-- **[GitHub MCP Server](../../../mcp-servers/github/README.md)** - GitHub integration
-- **[GitLab MCP Server](../../../mcp-servers/gitlab/README.md)** - GitLab integration
+- **[GitHub MCP Server](../../mcp-servers/github/README.md)** - GitHub integration
+- **[GitLab MCP Server](../../mcp-servers/gitlab/README.md)** - GitLab integration

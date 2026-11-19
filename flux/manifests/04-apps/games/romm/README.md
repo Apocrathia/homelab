@@ -1,6 +1,6 @@
 # ROMM - ROM Manager
 
-Self-hosted ROM management platform for organizing, scanning, and playing retro games with metadata enrichment and web-based emulation.
+Self-hosted ROM manager for retro games, with metadata scraping and browser emulation.
 
 > **Navigation**: [← Back to Games README](../README.md)
 
@@ -12,7 +12,7 @@ This deployment includes:
 - Vue.js 3 frontend with Vuetify + Pinia
 - Web-based emulation with EmulatorJS, Ruffle, DOSBox Pure
 - Metadata enrichment from IGDB, ScreenScraper, MobyGames, SteamGridDB
-- Authentik OIDC integration for secure access
+- Authentik OIDC integration
 
 ## Configuration
 
@@ -25,7 +25,7 @@ in the overlay.
 
 Create a 1Password item:
 
-#### romm-secrets (`vaults/Secrets/items/romm-secrets`)
+**romm-secrets** (`vaults/Secrets/items/romm-secrets`)
 
 - `username`: PostgreSQL username (e.g., romm)
 - `password`: PostgreSQL password
@@ -98,18 +98,15 @@ kubectl exec -i -n romm deploy/romm -c romm -- env CAP=1200 \
 
 ## Authentication
 
-Authentication is handled through Authentik OIDC:
-
-1. **OIDC Provider**: Authentik OIDC provider configured
-2. **Client Credentials**: Automatically generated and stored in 1Password
-3. **Clean Setup**: Works with Authentik from day one
+Authentik OIDC. Client credentials are generated automatically and stored in
+1Password.
 
 ## Security Considerations
 
-- **OIDC Integration**: Complete authentication through Authentik
+- **OIDC Integration**: Authentication through Authentik
 - **Database Security**: PostgreSQL credentials managed via 1Password
 - **Read-only ROM Access**: ROM library mounted as read-only
-- **API Key Security**: External API keys stored securely in 1Password
+- **API Key Security**: External API keys in 1Password
 
 ## Troubleshooting
 

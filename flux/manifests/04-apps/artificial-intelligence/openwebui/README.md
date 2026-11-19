@@ -21,6 +21,15 @@ Chat UI for quick inference against LiteLLM.
 key come from `OPENAI_API_BASE_URLS` / `OPENAI_API_KEYS` (key in
 `openwebui-secrets`).
 
+## Configuration
+
+Environment-driven: `WEBUI_URL` (OAuth redirects) and
+`OPENAI_API_BASE_URLS` / `OPENAI_API_KEYS` (LiteLLM backend; key in the
+`openwebui-secrets` 1Password item). SSO trusted-header names are set in the
+HelmRelease `sso.trustedHeader` section.
+
+See `helmrelease.yaml` for complete deployment configuration.
+
 ## Authentication
 
 1. User hits `https://chat.gateway.services.apocrathia.com`

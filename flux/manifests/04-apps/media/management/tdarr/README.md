@@ -7,7 +7,7 @@
 This deployment includes Tdarr, a distributed transcoding system for audio and video libraries:
 
 - Server-node architecture for distributed media processing across the cluster
-- Rules-based transcoding with comprehensive plugin system
+- Rules-based transcoding with a plugin system
 - Direct access to media libraries via SMB mounts
 - Authentik SSO integration for secure web access
 - Longhorn persistent storage for configuration and cache

@@ -49,7 +49,7 @@ This server is accessible only through the LiteLLM proxy. See the [main README](
 
 ## Available MCP Tools
 
-The Flux MCP server provides these capabilities:
+Tools by category:
 
 ### Resource Management
 
@@ -70,6 +70,19 @@ The Flux MCP server provides these capabilities:
 - Generate dependency diagrams
 
 For the complete list of tools, see the [official documentation](https://fluxcd.control-plane.io/mcp/tools/).
+
+## Troubleshooting
+
+```bash
+# MCPServer resource status
+kubectl get mcpserver.kagent.dev flux -n mcp-flux
+
+# Pod status
+kubectl get pods -n mcp-flux
+
+# Server logs
+kubectl logs -n mcp-flux -l app.kubernetes.io/name=flux --tail=50
+```
 
 ## References
 

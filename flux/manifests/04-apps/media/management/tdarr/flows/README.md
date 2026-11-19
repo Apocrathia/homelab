@@ -1,5 +1,7 @@
 # Tdarr custom flows
 
+> **Navigation**: [← Tdarr](../README.md)
+
 Custom flow set for CPU-only HEVC transcoding across Movies, TV, and Anime libraries. Four flows handle the full pipeline from input validation through notification.
 
 ## Flow architecture
@@ -17,7 +19,7 @@ All files pass through every flow. Flow 1 sets a `needs_transcode` variable that
 
 ### Flow 1: Input and validation
 
-Entry point. Determines whether the file needs video transcoding, sets the `needs_transcode` flow variable, and routes to the audio flow. All files proceed through the full pipeline regardless of codec — the variable controls whether Flow 3 performs a video transcode or skips straight to output.
+Entry point. Determines whether the file needs video transcoding, sets the `needs_transcode` flow variable, and routes to the audio flow. All files proceed through the full pipeline regardless of codec, the variable controls whether Flow 3 performs a video transcode or skips straight to output.
 
 ```mermaid
 flowchart TD
@@ -99,14 +101,14 @@ flowchart TD
 
 `-preset` is a top-level ffmpeg option, NOT inside `-x265-params`. `lookahead` goes inside `-x265-params`.
 
-Size verify is **2%–101%** (sanity floor + allow tiny remux wiggle, block real
+Size verify is **2%-101%** (sanity floor + allow tiny remux wiggle, block real
 growth). `forceConform` on MKV drops
 containers/subs that cannot mux (e.g. `mov_text`). Embedded cover/image streams
-(`mjpeg` / `png` / `gif`) are removed before encode — sidecars cover artwork.
+(`mjpeg` / `png` / `gif`) are removed before encode, sidecars cover artwork.
 
 ### Flow 4: Output and notification
 
-File replacement and service notifications. Handles cross-device file moves (EXDEV) with a fallback path. Each notification node handles "not found" gracefully — Radarr ignores TV shows, Sonarr ignores movies, and the flow continues regardless. The Jellyfin refresh uses the native `Send Web Request` (`webRequest`) flow plugin to call Jellyfin's `POST /Library/Refresh` API, which rescans all libraries in one call.
+File replacement and service notifications. Handles cross-device file moves (EXDEV) with a fallback path. Each notification node handles "not found" gracefully, Radarr ignores TV shows, Sonarr ignores movies, and the flow continues regardless. The Jellyfin refresh uses the native `Send Web Request` (`webRequest`) flow plugin to call Jellyfin's `POST /Library/Refresh` API, which rescans all libraries in one call.
 
 ```mermaid
 flowchart TD
@@ -347,3 +349,7 @@ If the database becomes corrupted (e.g., from concurrent writes), Tdarr will rec
 4. **Flow not executing**: Confirm libraries are set to use flows (not plugins)
 5. **goToFlow errors**: Flow IDs are pre-wired in the JSON files. If Tdarr reassigns IDs on import, update the goToFlow nodes to match
 6. **CPU encoding failures**: Verify the ffmpeg command has `-preset` as a top-level argument, not inside `-x265-params`
+
+## References
+
+- [Tdarr documentation](https://docs.tdarr.io/): flows, plugins, and node setup

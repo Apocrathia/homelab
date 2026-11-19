@@ -4,11 +4,11 @@ Self-hosted, browser-based markdown notes app. Space is a folder of plain `.md` 
 
 > **Navigation**: [← Back to Productivity](../README.md)
 
-## Links
+## Overview
 
-- [Official site](https://silverbullet.md/)
-- [Configuration](https://silverbullet.md/Install/Configuration)
-- [GitHub](https://github.com/silverbulletmd/silverbullet)
+Single-container SilverBullet serving a space of plain markdown files
+from the NAS `Library/Notes` SMB share; the Authentik proxy is the only
+access door. Obsidian and sync metadata stay ignored via `SB_SPACE_IGNORE`.
 
 ## Access
 
@@ -44,5 +44,8 @@ kubectl exec -n silverbullet deployment/silverbullet -- wget -qO- http://127.0.0
 
 ## References
 
-- [Docker install](https://silverbullet.md/Install/Docker)
-- [Generic-App Chart](../../../../helm/generic-app/README.md)
+- **[Official site](https://silverbullet.md/)** - Project website
+- **[Configuration](https://silverbullet.md/Install/Configuration)** - Configuration reference
+- **[Docker install](https://silverbullet.md/Install/Docker)** - Container install guide
+- **[GitHub](https://github.com/silverbulletmd/silverbullet)** - Source code and issues
+- **[Generic-App Chart](../../../../../helm/generic-app/README.md)** - Application deployment template

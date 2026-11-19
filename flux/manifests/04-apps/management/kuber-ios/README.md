@@ -17,7 +17,7 @@ RBAC details live in `rbac.yaml`; do not duplicate verb lists here.
 1. Ensure the 1Password item exists (PushSecret will create/update it).
 2. Copy the token from 1Password into Kuber or Kubenav (token auth) along with your API server URL and CA as required.
 
-## Manual token (debug)
+## Troubleshooting
 
 ```bash
 kubectl create token kuber-ios -n kuber-ios --duration=1h

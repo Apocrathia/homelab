@@ -50,7 +50,7 @@ sequenceDiagram
 
 Create a 1Password item:
 
-#### homelab-agent-secrets (`vaults/Secrets/items/homelab-agent-secrets`)
+**homelab-agent-secrets** (`vaults/Secrets/items/homelab-agent-secrets`)
 
 - `discord-token`: Discord bot token for authentication
 - `litellm-api-key`: API key for LiteLLM access

@@ -21,8 +21,8 @@ This deployment includes:
 
 Server config is declarative. Edit `config.js` in this directory and apply; the file is mounted into the pod via a ConfigMap. Key settings for this deployment:
 
-- `reverseProxy: true` — honors `X-Forwarded-For` from Authentik
-- `host: "127.0.0.1"` — bind locally; traffic goes through the proxy
+- `reverseProxy: true`: honors `X-Forwarded-For` from Authentik
+- `host: "127.0.0.1"`: bind locally; traffic goes through the proxy
 
 Restart the deployment after changing config (ConfigMap updates do not hot-reload):
 

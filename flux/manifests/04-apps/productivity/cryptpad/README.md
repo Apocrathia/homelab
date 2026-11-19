@@ -4,11 +4,6 @@ End-to-end encrypted collaboration suite with real-time document editing.
 
 > **Navigation**: [← Back to Productivity](../README.md)
 
-## Links
-
-- [Official Documentation](https://docs.cryptpad.org/)
-- [GitHub Repository](https://github.com/cryptpad/cryptpad)
-
 ## Access
 
 - **Main URL**: <https://cryptpad.gateway.services.apocrathia.com>
@@ -18,9 +13,9 @@ CryptPad requires two domains for its security model - the main domain handles a
 
 Guest pads are reachable without an account on both doors.
 
-## Architecture (2026.10.0)
+## Overview
 
-2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1 — a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
+2026.10.0 splits the server into http/front/core/storage node processes under one container, described by `infra.js` (topology and public origins; the infra-level keys moved out of `config.js`). This pod runs a single-node topology: all nodes on loopback, so `app.replicas` must stay at 1, a second replica would start a separate mesh cluster against the same data. Browser websockets hit port 3000 and are proxied to the front node internally; `app.container.extraPorts` documents the sandbox server on 3001 (both gateway hostnames keep routing to 3000, matching upstream's example nginx).
 
 ## Authentication
 
@@ -30,7 +25,9 @@ Registration is SSO-only (`enforced: true` in `sso.js`); existing pre-SSO local 
 
 The SSO plugin version must pair with the CryptPad image tag (currently plugin 1.0.0 ↔ image 2026.10.0); check the plugin releases before bumping either.
 
-## Storage
+## Configuration
+
+### Storage
 
 All data stored on NAS via SMB at `Library/CryptPad`. CryptPad uses file-based storage (no database) with subdirectories for documents, uploads, user blocks, and logs. SSO user mappings live under `/data/sso_user` and `/data/sso_block`.
 
@@ -65,6 +62,6 @@ kubectl exec -n cryptpad deployment/cryptpad -- ls /cryptpad/lib/plugins/sso
 
 ## References
 
-- [CryptPad Admin Guide](https://docs.cryptpad.org/en/admin_guide/)
-- [Configuration Reference](https://docs.cryptpad.org/en/admin_guide/customization.html)
-- [SSO Plugin](https://github.com/cryptpad/sso)
+- **[Official Documentation](https://docs.cryptpad.org/)** - Admin and configuration guides
+- **[CryptPad GitHub](https://github.com/cryptpad/cryptpad)** - Source code and issues
+- **[SSO Plugin](https://github.com/cryptpad/sso)** - OIDC authentication plugin

@@ -19,7 +19,7 @@ OpenTAKServer (OTS) is an open-source TAK server: it serves the Team Awareness K
 
 All five ports are exposed by the `tak` Service; the TCP ports (8088/8089/8443/8446) are routed by `tcproutes.yaml` on **both** `main-gateway` (LAN) and `tailnet-gateway` (tailnet).
 
-## Pod layout
+## Overview
 
 One pod, six containers (trimmed from the upstream compose; MediaMTX skipped day one):
 
@@ -44,7 +44,9 @@ Postgres is a standalone CNPG Cluster (`tak-postgres`, `postgres.yaml`) on the p
 - **LDAP bind mode**: direct bind for authentication - users bind with their own Authentik username/password as `cn=<username>,ou=users,<base_dn>` (flask-ldap3-login direct-bind path), and their groups are read over their own bound connection at login. OTS's runtime group lookups (`/api/groups/all`, fired on every page) open a separate connection bound as the `tak-ldap-bind` service account, which the tofu pair adopts (password operator-set, never in git). Known limitation: those runtime lookups search groups with `member=<username>`, but authentik stores full DNs in `member` - the webui group dropdowns therefore stay empty in LDAP mode even with the bind user configured; login-time role assignment (channels, `tak_admin`) is unaffected.
 - **Channel groups**: create Authentik groups per channel trio: `tak_<name>`, `tak_<name>_read`, `tak_<name>_write`. Membership in `tak_<name>` maps to that ATAK channel role; `tak_admin` grants the OTS administrator role.
 
-## Required 1Password item
+## Configuration
+
+### Required 1Password item
 
 `vaults/Secrets/items/opentakserver-secrets` with fields:
 

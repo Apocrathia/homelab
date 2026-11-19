@@ -43,7 +43,7 @@ asks for the session API key on first browser use — paste it once. The key is
 not baked into served HTML; that mode stays off, and the app must never sit on
 a bare route.
 
-## LLM configuration
+## Configuration
 
 The default profile is seeded toward the in-cluster LiteLLM proxy
 (`http://litellm.litellm.svc.cluster.local:4000`), e.g. a model like
@@ -64,7 +64,7 @@ kubectl logs -n openhands statefulset/openhands-agent-canvas -f
 kubectl logs -n crossplane-system -l pkg.crossplane.io/provider=upbound-provider-opentofu --tail=100
 
 # Render the chart locally at the deployed tag
-git clone --depth 1 --branch v1.26.0 https://github.com/OpenHands/OpenHands /tmp/oh && helm template openhands /tmp/oh/helm/agent-canvas -n openhands
+git clone --depth 1 --branch <deployed-tag> https://github.com/OpenHands/OpenHands /tmp/oh && helm template openhands /tmp/oh/helm/agent-canvas -n openhands
 
 # Check the PVC bound
 kubectl get pvc -n openhands

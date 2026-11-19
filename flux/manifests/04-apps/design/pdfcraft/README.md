@@ -1,19 +1,14 @@
 # PdfCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/pdfcraft)
-- [ArtCraft](https://getartcraft.com/apps/pdfcraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 PdfCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://pdfcraft.gateway.services.apocrathia.com>
+**URL:** `https://pdfcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n pdfcraft -l app.kubernetes.io/name=pdfcraft -c fetch-pdfcraft
 kubectl logs -n pdfcraft -l app.kubernetes.io/name=pdfcraft
 kubectl describe deployment -n pdfcraft pdfcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/pdfcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/pdfcraft)** - ArtCraft app listing

@@ -1,12 +1,12 @@
 # Grafana MCP Server
 
-MCP server enabling AI assistants to interact with Grafana instances through a standardized protocol.
+MCP server that gives AI assistants tool access to Grafana.
 
 > **Navigation**: [← Back to MCP Servers README](../README.md)
 
 ## Overview
 
-The Grafana MCP server provides a bridge between AI assistants and Grafana's ecosystem, allowing for:
+It exposes:
 
 - Dashboard management and retrieval
 - Data source configuration and querying
@@ -15,7 +15,6 @@ The Grafana MCP server provides a bridge between AI assistants and Grafana's eco
 - Incident management
 - OnCall schedule management
 - Alert rule management
-- And much more
 
 ## Architecture
 
@@ -55,8 +54,6 @@ The `mcp-server` service account is provisioned via a `GrafanaServiceAccount` CR
 
 ## Deployment
 
-The deployment is managed by Flux and will be automatically applied when committed to the repository.
-
 ### Manual Deployment (if needed)
 
 ```bash
@@ -75,7 +72,7 @@ The server is accessible only through LiteLLM proxy:
 
 ### Available Tools
 
-The MCP server provides access to these tool categories:
+Tool categories:
 
 - **Search**: Find dashboards and resources
 - **Dashboard**: Retrieve, create, and update dashboards
@@ -106,7 +103,7 @@ kubectl logs -n mcp-grafana deployment/grafana -f
 
 ### Metrics
 
-The server exposes Prometheus metrics on the `/metrics` endpoint for monitoring.
+The server exposes Prometheus metrics on `/metrics`.
 
 ## Security
 

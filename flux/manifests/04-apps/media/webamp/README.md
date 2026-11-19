@@ -1,15 +1,10 @@
 # Webamp
 
-[← Media Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/captbaritone/webamp)
-- [Website](https://webamp.org)
+> **Navigation**: [← Media Apps](../README.md)
 
 ## Overview
 
-Winamp 2.9 reimplemented in the browser. Skins, visualizer, equalizer, playlist — all in HTML/JS.
+Winamp 2.9 reimplemented in the browser. Skins, visualizer, equalizer, playlist. All in HTML/JS.
 
 **URL:** <https://webamp.gateway.services.apocrathia.com>
 
@@ -23,3 +18,8 @@ Authentik proxy.
 kubectl get pods -n webamp
 kubectl logs -n webamp -l app.kubernetes.io/name=webamp -c fetch-webamp
 ```
+
+## References
+
+- **[GitHub](https://github.com/captbaritone/webamp)** - Source code and issues
+- **[Website](https://webamp.org)** - Project website

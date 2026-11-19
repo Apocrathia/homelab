@@ -12,7 +12,7 @@ Self-hosted Matrix homeserver: Synapse (v1.162.0) with authentication fully dele
 | `matrix.gateway.services.apocrathia.com`  | MAS OAuth host: login UI, OIDC endpoints, Authentik callback                                                                                                                                    | `httproute.yaml` (dual parentRefs, litellm pattern)           |
 | `element.gateway.services.apocrathia.com` | Element Web SPA (public OIDC client of MAS)                                                                                                                                                     | `httproute.yaml` (wildcard doors, litellm pattern)            |
 
-## Stack
+## Overview
 
 ```mermaid
 flowchart LR
@@ -26,34 +26,34 @@ flowchart LR
     Synapse <-. shared-secret .-> MAS
 ```
 
-Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a 10Gi Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
+Five pods: `synapse`, `mas`, `element`, `sable`, `matrix-postgres-1`. MAS is stateless (Postgres holds everything). Synapse `/data` is a Longhorn PVC (kopia nightly); Postgres holds rooms/accounts in `synapse` + `mas` databases of the hand-rolled CNPG Cluster (`postgres.yaml`).
 
-## SSO flow
+## Authentication
 
 1. Client fetches `https://matrix.apocrathia.com/.well-known/matrix/client` → MSC2965 block points at the MAS issuer.
 2. Client follows to `matrix.gateway.services.apocrathia.com`, MAS redirects to the Authentik provider (`.../application/o/matrix/`).
 3. Authentik returns `preferred_username` / `name` / `email` claims; MAS provisions the account (localpart = authentik username) and issues Matrix tokens.
-4. Synapse introspects MAS tokens via its own shared-secret channel — `password_config` and registration stay off; Synapse enforces the SSO-only lockdown at startup.
+4. Synapse introspects MAS tokens via its own shared-secret channel, `password_config` and registration stay off; Synapse enforces the SSO-only lockdown at startup.
 
-Element Web walks the same OIDC chain one hop downstream of Element X: it fetches `/_matrix/client/v1/auth_metadata` (Synapse proxies MAS discovery), then fronts MAS itself as the statically registered public client from `mas-config.yaml` (`client_auth_method: none`) — `oidc_static_clients` in `config/element-config.json` carries the matching client id, so no dynamic client registration happens. Its registered redirect URI is the app root plus `?no_universal_links=true` (Element Web builds its callback URL itself; see `BasePlatform.getOAuthCallbackUrl`), and the authorization code returns in the URL fragment. Element Web's token grant and refresh hit the MAS OAuth host, not Authentik — Authentik only sees the MAS session.
+Element Web walks the same OIDC chain one hop downstream of Element X: it fetches `/_matrix/client/v1/auth_metadata` (Synapse proxies MAS discovery), then fronts MAS itself as the statically registered public client from `mas-config.yaml` (`client_auth_method: none`), `oidc_static_clients` in `config/element-config.json` carries the matching client id, so no dynamic client registration happens. Its registered redirect URI is the app root plus `?no_universal_links=true` (Element Web builds its callback URL itself; see `BasePlatform.getOAuthCallbackUrl`), and the authorization code returns in the URL fragment. Element Web's token grant and refresh hit the MAS OAuth host, not Authentik; Authentik only sees the MAS session.
 
-The `matrix` Authentik application (admins-only binding — the Matrix access gate; friends arrive via federation, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack — OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create — no prior tfstate: the first workspace sync builds the whole Authentik stack.
+The `matrix` Authentik application (admins-only binding, the Matrix access gate; friends arrive via federation, not tailnet SSO) is created by the tofu Workspace from the canonical file pair: `crossplane.yaml` (OnePasswordItem + ProviderConfig + Workspace) and `authentik.tf` (the HCL stack, OAuth2 provider, application, admins binding). `kustomization.yaml` stitches them at kustomize build time: the `matrix-authentik-module` ConfigMap carries the `authentik.tf` bytes and a replacements rule copies them into the Workspace's inline module, byte-identical to the file. Fresh create, no prior tfstate: the first workspace sync builds the whole Authentik stack.
 
 ## Required 1Password item
 
 `vaults/Secrets/items/matrix-secrets` (see `secret.yaml`) with fields:
 
-| Field                        | Used for                                                                                                   |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `password`                   | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                        |
-| `mas-db-password`            | Postgres `mas` role password (MAS `database.password_file`)                                                |
-| `init-mas.sql`               | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit)       |
-| `shared-secret`              | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                               |
-| `encryption`                 | 32-byte hex (64 chars) for MAS cookie/db field encryption — never change after first start                 |
-| `rsa-key.pem`                | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                                |
-| `element-oidc-client-secret` | Authentik OAuth2 client secret for the Element provider — copied from Authentik after first workspace sync |
-| `sable-oidc-client-secret`   | Authentik OAuth2 client secret for the Sable provider — copied from Authentik after first workspace sync   |
-| `signing-key`                | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot             |
+| Field                        | Used for                                                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `password`                   | Postgres `synapse` owner password (CNPG initdb + homeserver DB URI)                                       |
+| `mas-db-password`            | Postgres `mas` role password (MAS `database.password_file`)                                               |
+| `init-mas.sql`               | `CREATE ROLE mas LOGIN PASSWORD '<mas-db-password>'; CREATE DATABASE mas OWNER mas;` (CNPG postInit)      |
+| `shared-secret`              | MAS ↔ Synapse API secret (MAS `matrix.secret_file` + Synapse `secret_path`)                              |
+| `encryption`                 | 32-byte hex (64 chars) for MAS cookie/db field encryption, never change after first start                 |
+| `rsa-key.pem`                | MAS OIDC RS256 signing key (from `mas-cli config generate`)                                               |
+| `element-oidc-client-secret` | Authentik OAuth2 client secret for the Element provider, copied from Authentik after first workspace sync |
+| `sable-oidc-client-secret`   | Authentik OAuth2 client secret for the Sable provider, copied from Authentik after first workspace sync   |
+| `signing-key`                | Synapse ed25519 signing key (PEM), copied to `/data/matrix.apocrathia.com.signing.key` at boot            |
 
 ## Initial setup (operator prep)
 
@@ -64,7 +64,7 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
    docker run --rm ghcr.io/element-hq/synapse:v1.162.0 generate
    # → take /data/matrix.apocrathia.com.signing.key (signing-key)
    ```
-2. **DNS**: nothing to add — `matrix.apocrathia.com` deliberately has no public DNS record, and no per-deploy DNS step remains. The name resolves for tailnet members via the tailnet split-DNS zone plus the CoreDNS static record in `03-services/tailnet-dns` (both shipped in the repo by the sibling MR), and `matrix.gateway.services.apocrathia.com` keeps resolving via the existing split DNS.
+2. **DNS**: nothing to add, `matrix.apocrathia.com` deliberately has no public DNS record, and no per-deploy DNS step remains. The name resolves for tailnet members via the tailnet split-DNS zone plus the CoreDNS static record in `03-services/tailnet-dns` (both shipped in the repo by the sibling MR), and `matrix.gateway.services.apocrathia.com` keeps resolving via the existing split DNS.
 3. **Apply** and wait: CNPG bootstrap, both HelmReleases, workspace sync (creates the `matrix` Authentik application + OAuth2 provider, client id `matrix`).
 4. **Client secrets**: copy the OAuth2 client secrets from the Authentik UI (`element-oidc-provider` and `sable-oidc-provider`) into the `element-oidc-client-secret` and `sable-oidc-client-secret` fields, then restart the `mas` deployment.
 5. **First login = JIT provision**. Promote yourself:
@@ -74,7 +74,7 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
 
 ## Post-deploy validation
 
-- Pods: `matrix-postgres-1`, `deployment/synapse`, `deployment/mas` all Running (synapse stays in Init:ContainersNotReady until the 1Password item exists — that is the fail-fast signal, not a bug).
+- Pods: `matrix-postgres-1`, `deployment/synapse`, `deployment/mas` all Running (synapse stays in Init:ContainersNotReady until the 1Password item exists; that is the fail-fast signal, not a bug).
 - Routes: both `httproute` objects `Accepted=True` on every parentRef that exists.
 - Cert: `kubectl get certificate -n matrix matrix-apocrathia-com-tls` → `Ready=True`.
 - Workspace: `kubectl get workspace -n matrix matrix-authentik` → `Synced=True`, and the `matrix` application appears in Authentik (admins binding only).
@@ -84,8 +84,8 @@ The `matrix` Authentik application (admins-only binding — the Matrix access ga
 
 - **Postgres has no barman/kopia backup in this slice** (recipe scope): the CNPG cluster ships no `barmanObjectStore` block and the kopia policy only covers the synapse Longhorn volume. Rooms/accounts live in the cluster PVC only. Add a `backup:` block + `scheduled-backup` (tak pattern) before trusting it with real data.
 - Element Web is registered in `mas-config.yaml` as a static public client: MAS syncs the clients list into its database on startup, and entries are only removed by `mas-cli config sync --prune` (deleting the entry from the file alone does not remove it).
-- Element Web listens on container port 8080 via `ELEMENT_WEB_PORT` — containerd denies the unprivileged uid-101 bind on port 80 — while its Service stays on port 80, so the route backendRef is untouched.
-- MAS config edits (`config/mas-config.yaml` → `matrix-mas-config` ConfigMap) roll the `mas` deployment automatically via the `reload-mas-on-configmap-change` kyverno policy — no manual restart after `mas-cli config sync`.
+- Element Web listens on container port 8080 via `ELEMENT_WEB_PORT`: containerd denies the unprivileged uid-101 bind on port 80, while its Service stays on port 80, so the route backendRef is untouched.
+- MAS config edits (`config/mas-config.yaml` → `matrix-mas-config` ConfigMap) roll the `mas` deployment automatically via the `reload-mas-on-configmap-change` kyverno policy, no manual restart after `mas-cli config sync`.
 
 ## Troubleshooting
 
@@ -109,7 +109,7 @@ kubectl exec -n matrix deployment/element -c element -- cat /tmp/element-web-con
 
 ## Federation
 
-Federation is on: `serve_server_wellknown: true` in `config/homeserver.yaml` — remote servers fetch `/.well-known/matrix/server` on 443 (routed to Synapse by the existing HTTPRoute) and send federation traffic to `matrix.apocrathia.com:443` on the tailnet-gateway door. `federation_domain_whitelist` is deny-by-default: only `matrix.ninefoot3.com` may federate, in both directions. The host resolves for tailnet members via the tailnet split-DNS zone (CoreDNS static record) — deliberately no public DNS record. Do not change `server_name` after accounts exist — it is baked into every room membership.
+Federation is on: `serve_server_wellknown: true` in `config/homeserver.yaml`, remote servers fetch `/.well-known/matrix/server` on 443 (routed to Synapse by the existing HTTPRoute) and send federation traffic to `matrix.apocrathia.com:443` on the tailnet-gateway door. `federation_domain_whitelist` is deny-by-default: only `matrix.ninefoot3.com` may federate, in both directions. The host resolves for tailnet members via the tailnet split-DNS zone (CoreDNS static record), deliberately no public DNS record. Do not change `server_name` after accounts exist, it is baked into every room membership.
 
 ## References
 

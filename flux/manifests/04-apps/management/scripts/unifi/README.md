@@ -2,6 +2,8 @@
 
 Scheduled jobs and one-off tools that talk to UniFi Network (API session flow, firewall objects, etc.).
 
+> **Navigation**: [← Back to Management Scripts README](../README.md)
+
 ## Layout
 
 Namespace **`unifi-scripts`** is defined in [`namespace.yaml`](./namespace.yaml) at this level; per-job manifests target that namespace.

@@ -1,8 +1,15 @@
 # Media Agent
 
+> **Navigation**: [← Back to Agents README](../README.md)
+
+## Overview
+
 Media management agent for Servarr (Sonarr/Radarr) integration.
 
-> **Navigation**: [← Back to Agents README](../README.md)
+## Configuration
+
+The agent is defined by the `Agent` CR in `agent.yaml`; model wiring in
+`modelconfig.yaml`; MCP tools via `remotemcpserver.yaml`.
 
 ## Tools
 
@@ -35,4 +42,4 @@ kubectl logs --namespace agent-media -l app.kubernetes.io/name=media-agent -f
 
 ## References
 
-- **[Servarr MCP Server](../../../mcp-servers/servarr/README.md)** - Sonarr/Radarr integration
+- **[Servarr MCP Server](../../mcp-servers/servarr/README.md)** - Sonarr/Radarr integration

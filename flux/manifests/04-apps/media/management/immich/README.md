@@ -1,6 +1,6 @@
 # Immich
 
-Self-hosted photo and video backup solution with powerful machine learning features for face recognition, object detection, and smart search.
+Self-hosted photo and video backup with machine learning for face recognition, object detection, and smart search.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -20,7 +20,7 @@ This deployment includes:
 
 Create a 1Password item:
 
-#### immich-secrets (`vaults/Secrets/items/immich-secrets`)
+**immich-secrets** (`vaults/Secrets/items/immich-secrets`)
 
 - `username`: PostgreSQL database username (e.g., `immich`)
 - `password`: PostgreSQL database password

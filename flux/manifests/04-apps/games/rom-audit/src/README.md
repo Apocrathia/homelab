@@ -4,6 +4,8 @@ Pure-Python package that compares ROM files on disk against No-Intro DATs and
 reports `matched` / `wrong_name` / `unknown` for every file. Report only — it
 never renames or deletes anything.
 
+> **Navigation**: [← Back to rom-audit README](../README.md)
+
 See the [app README](../README.md) for what gets deployed, the share layout,
 and `systems.yaml`.
 
@@ -48,3 +50,7 @@ ROM files, no committed binaries). `test_dat.py` covers DAT parsing;
 
 Run `uv lock` in this directory after changing `dependencies` in
 `pyproject.toml`, then re-run the format/lint/test commands above.
+
+## References
+
+- **[uv](https://docs.astral.sh/uv/)** - Python package and project manager documentation

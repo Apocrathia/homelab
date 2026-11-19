@@ -8,7 +8,7 @@ AI and ML applications for the homelab.
 
 External clients interact with the AI proxy through the Gateway API. The proxy routes requests to the appropriate LLM provider, agent, or tool service. LiteLLM is the proxy.
 
-Direct communication between agents and tools is not favored but has valid use cases. When sensitive data flows between components, even within the trusted cluster boundary, leaks are possible if not properly secured. Egress traffic from agents and tools is proxied through LiteLLM for observability and control.
+Direct agent-to-tool links are allowed but unusual. Sensitive data can leak between components even inside the trusted cluster boundary. Agent and tool egress is proxied through LiteLLM for observability and control.
 
 ```mermaid
 flowchart TB
@@ -87,6 +87,7 @@ flowchart TB
 - **[Agents](./agents/README.md)** - Declarative agents orchestrated by kagent
 - **[MCP Servers](./mcp-servers/README.md)** - Model Context Protocol servers for tool integration
 - **[OpenHands](./openhands/README.md)** - AI software-engineering agent platform (Agent Canvas) backed by LiteLLM
+- **[Mecatl](./mecatl/README.md)** - Headless agentic coding harness on storage-free pods, backed by LiteLLM
 
 ### Data & Analytics
 

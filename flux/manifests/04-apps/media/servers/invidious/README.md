@@ -20,7 +20,7 @@ This deployment includes:
 The 2025-12 deployment set `public_url` on `invidious_companion` in
 `INVIDIOUS_CONFIG`. When `public_url` is set, Invidious sets
 `builtin_proxy = false` and hands browsers **direct** video URLs pointing at
-`public_url` — which requires a reverse proxy with separate routes for
+`public_url`, which requires a reverse proxy with separate routes for
 `/companion/*`. Authentik's proxy provider is single-backend: everything
 forwards to Invidious, nothing serves `/companion`. Result: the frontend,
 search, and thumbnails worked, but every video stream 404'd.
@@ -36,7 +36,7 @@ iv-org/invidious for the load-time logic.
 
 Create a 1Password item:
 
-#### invidious-secrets (`vaults/Secrets/items/invidious-secrets`)
+**invidious-secrets** (`vaults/Secrets/items/invidious-secrets`)
 
 - `database-url`: Full PostgreSQL connection URL
   - Format: `postgres://invidious:<password>@invidious-postgres-rw.invidious.svc.cluster.local:5432/invidious`
@@ -50,7 +50,7 @@ Companion runs as a pod sidecar. The image is pinned by tag and
 manifest-list digest in `helmrelease.yaml` (Renovate bumps
 `quay.io/invidious/invidious-companion`; companion publishes date-versioned
 tags like `2026.09.05-6386b18`). Digests here are the **multi-arch manifest
-list** digests, resolved via the quay.io registry API — arch-neutral, so no
+list** digests, resolved via the quay.io registry API, arch-neutral, so no
 Apple Silicon arm64 pitfall. PO token refresh runs hourly via
 `JOBS_YOUTUBE_SESSION_FREQUENCY`. If YouTube blocks cluster egress, set
 sidecar env `PROXY` per [companion networking config](https://github.com/iv-org/invidious-companion/blob/master/config/config.example.toml).
@@ -66,7 +66,7 @@ acceptable.
 
 ### Storage
 
-- **PostgreSQL**: 10GB Longhorn persistent volume for database storage
+- **PostgreSQL**: Longhorn persistent volume for database storage
 - **No application storage**: Invidious caches data in PostgreSQL
 
 ### Access

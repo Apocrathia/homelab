@@ -1,19 +1,14 @@
 # FigCraft
 
-[← Design Apps](../README.md)
-
-## Links
-
-- [GitHub](https://github.com/storytold/figcraft)
-- [ArtCraft](https://getartcraft.com/apps/figcraft)
+> **Navigation**: [← Design Apps](../README.md)
 
 ## Overview
 
 FigCraft — open-source creative tool built in pure Rust by ArtCraft. Runs in the browser via WebAssembly.
 
-**URL:** <https://figcraft.gateway.services.apocrathia.com>
+**URL:** `https://figcraft.gateway.services.apocrathia.com`
 
-## How it works
+## Configuration
 
 Static client-side WASM app. The prebuilt web release is downloaded by an init container into a Longhorn PVC and served by nginx. No backend, no database.
 
@@ -35,3 +30,8 @@ kubectl logs -n figcraft -l app.kubernetes.io/name=figcraft -c fetch-figcraft
 kubectl logs -n figcraft -l app.kubernetes.io/name=figcraft
 kubectl describe deployment -n figcraft figcraft
 ```
+
+## References
+
+- **[GitHub](https://github.com/storytold/figcraft)** - Source code and issues
+- **[ArtCraft](https://getartcraft.com/apps/figcraft)** - ArtCraft app listing

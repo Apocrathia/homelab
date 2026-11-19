@@ -1,6 +1,6 @@
 # ArchiveTeam Warrior
 
-Virtual archiving appliance that helps with Archive Team archiving efforts by downloading and uploading sites to the archive.
+Archive Team's volunteer archiving appliance: downloads sites and uploads them to the archive.
 
 > **Navigation**: [← Back to Media README](../../README.md)
 
@@ -9,15 +9,13 @@ Virtual archiving appliance that helps with Archive Team archiving efforts by do
 This deployment includes:
 
 - ArchiveTeam Warrior container with web interface
-- Authentik integration for secure access
+- Authentik integration
 - Automatic project selection and execution
 
 ## Usage
 
-1. **Access**: Navigate to `https://archiveteam-warrior.gateway.services.apocrathia.com`
-2. **Authentication**: Login via Authentik SSO
-3. **Project Selection**: Choose an active project from the Warrior interface
-4. **Monitoring**: View progress and statistics in the web UI
+1. Open `https://archiveteam-warrior.gateway.services.apocrathia.com` and log in via Authentik SSO
+2. Pick an active project in the Warrior interface
 
 ## Configuration
 
@@ -44,5 +42,5 @@ kubectl get pods -n authentik | grep archiveteam
 ## References
 
 - **[ArchiveTeam Warrior Wiki](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior)** - Official documentation
-- **[Docker Usage Guide](<https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_(container_only)>)** - Container deployment
+- **[Docker Usage Guide](https://wiki.archiveteam.org/index.php?title=ArchiveTeam_Warrior#Advanced_usage_%28container_only%29)** - Container deployment
 - **[Active Projects](https://wiki.archiveteam.org/index.php?title=Warrior_projects)** - Current archiving projects
