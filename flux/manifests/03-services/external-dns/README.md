@@ -1,4 +1,4 @@
-# ExternalDNS - UniFi DNS Record Management
+# ExternalDNS
 
 Automated DNS record management for the UniFi controller via ExternalDNS and a webhook provider.
 
@@ -25,18 +25,18 @@ lives in [../tailnet-dns](../tailnet-dns/README.md) and writes the same
 hostnames for `tailnet-gateway` into the tailnet-internal resolver. The two
 instances MUST keep disjoint `--gateway-name` filters: dual-parentRef routes
 (Authentik, demo-app) attach to both gateways, and ExternalDNS combines
-targets from every matching parent Gateway - without the filters this
+targets from every matching parent Gateway. Without the filters this
 instance would write the tailnet-gateway CGNAT address into the UDM, which
 LAN clients cannot route.
 
 ## Architecture
 
-| Component  | Implementation                                               |
-| ---------- | ------------------------------------------------------------ |
-| Controller | `external-dns` chart `1.21.1` (kubernetes-sigs)              |
-| Provider   | `ghcr.io/home-operations/external-dns-unifi-webhook:0.10.12` |
-| Upstream   | UniFi Network Integration API at `https://10.100.1.1` (UDM)  |
-| Secrets    | 1Password item `unifi-dns-secrets` via `OnePasswordItem`     |
+| Component  | Implementation                                                       |
+| ---------- | -------------------------------------------------------------------- |
+| Controller | `external-dns` chart (kubernetes-sigs, pinned in `helmrelease.yaml`) |
+| Provider   | `ghcr.io/home-operations/external-dns-unifi-webhook:0.10.12`         |
+| Upstream   | UniFi Network Integration API at `https://10.100.1.1` (UDM)          |
+| Secrets    | 1Password item `unifi-dns-secrets` via `OnePasswordItem`             |
 
 Records point at the Gateway's status address (`10.100.1.99`), so every
 HTTPRoute hostname on `main-gateway` resolves on the LAN automatically.
@@ -72,9 +72,9 @@ Set in `helmrelease.yaml`:
 
 Inherited from UniFi dnsmasq (see webhook README):
 
-- **No wildcards** — `*.example.com` records fail; do not add wildcard
+- **No wildcards**: `*.example.com` records fail; do not add wildcard
   hostnames to `main-gateway`.
-- **One CNAME per name** — additional targets are dropped with a warning.
+- **One CNAME per name**: additional targets are dropped with a warning.
 
 ## Troubleshooting
 
@@ -90,7 +90,7 @@ kubectl -n external-dns logs deploy/external-dns -c external-dns | grep -i "desi
 - **Records not appearing**: check the webhook `/readyz` probe (it probes the
   UniFi API); a bad API key shows up there first.
 
-## Related Documentation
+## Related documentation
 
 - [Webhook provider](https://github.com/home-operations/external-dns-unifi-webhook)
 - [ExternalDNS chart](https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns)

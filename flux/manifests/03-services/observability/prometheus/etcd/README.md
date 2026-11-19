@@ -2,11 +2,11 @@
 
 This directory contains the monitoring configuration for etcd running on Talos control plane nodes.
 
-> **Navigation**: [← Back to kube-prometheus-stack README](../README.md)
+> **Navigation**: [← Back to Observability README](../../README.md)
 
 ## Overview
 
-etcd is the distributed key-value store that serves as the backbone of Kubernetes. Monitoring etcd performance is critical for cluster stability, especially for detecting leader changes, slow requests, and memory pressure issues.
+etcd is the distributed key-value store behind Kubernetes state. Watching it catches leader changes, slow requests, and memory pressure before they destabilize the cluster.
 
 ## Components
 
@@ -14,17 +14,17 @@ etcd is the distributed key-value store that serves as the backbone of Kubernete
 
 Configures Prometheus to scrape etcd metrics directly from Talos nodes:
 
-- **Static targets** pointing to node IPs: `10.100.1.80-83:2381`
-- **Job label**: `etcd-metrics` for proper identification
-- **Scrape interval**: 30 seconds
-- **Metrics path**: `/metrics`
-- **Direct access** without Kubernetes service abstraction
+- Static targets pointing to node IPs: `10.100.1.80-83:2381`
+- Job label: `etcd-metrics`
+- Scrape interval: 30 seconds
+- Metrics path: `/metrics`
+- Direct access without Kubernetes service abstraction
 
 ### Alerting Rules (`alerts.yaml`)
 
 Monitors etcd performance and availability:
 
-#### Performance Alerts
+**Performance Alerts**
 
 - **EtcdSlowRequests**: WAL fsync taking > 0.5s (warning)
 - **EtcdHighRequestLatency**: Request latency > 0.1s (warning)
@@ -32,7 +32,7 @@ Monitors etcd performance and availability:
 - **EtcdHighMemoryUsage**: Memory usage > 80% of quota limit (warning)
 - **EtcdTooManyOpenConnections**: High network traffic (warning)
 
-#### Availability Alerts
+**Availability Alerts**
 
 - **EtcdLeaderChanges**: > 2 leader changes per hour (critical)
 - **EtcdClusterDown**: etcd cluster unavailable (critical)
@@ -91,20 +91,20 @@ increase(etcd_server_read_indexes_failed_total[5m])
 
 ## Troubleshooting
 
-### Metrics Not Appearing
+### Metrics not appearing
 
 1. Verify etcd metrics are enabled in Talos config
 2. Check if etcd is listening on port 2381: `curl http://10.100.1.80:2381/metrics`
 3. Verify ScrapeConfig is created: `kubectl get scrapeconfig -n prometheus-system`
 4. Check Prometheus targets: Access Prometheus UI and check `/targets`
 
-### High Alert Volume
+### High alert volume
 
 - Adjust alert thresholds in `alerts.yaml` based on your environment
 - Consider increasing scrape intervals if needed
 - Review etcd performance tuning in Talos configuration
 
-### Network Issues
+### Network issues
 
 - Ensure Prometheus pods can reach Talos nodes on port 2381
 - Verify direct IP access to node IPs (10.100.1.80-83)
@@ -113,10 +113,10 @@ increase(etcd_server_read_indexes_failed_total[5m])
 ## References
 
 - **[etcd Documentation](https://etcd.io/docs/)** - Primary documentation source
-- **[Talos etcd Guide](https://www.talos.dev/v1.9/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
+- **[Talos etcd Guide](https://www.talos.dev/talos-guides/configuration/editing-machine-configuration/)** - etcd configuration on Talos
 
-## Related Configuration
+## Related configuration
 
 - **Talos etcd tuning**: See `talos/patches/unified-patch.yaml`
-- **Prometheus configuration**: See parent directory `helmrelease.yaml`
+- **Prometheus configuration**: See `02-infrastructure/kube-prometheus-stack/helmrelease.yaml`
 - **Alertmanager routing**: Configured in main kube-prometheus-stack

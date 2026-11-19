@@ -2,7 +2,9 @@
 
 MIB files go here. The generator turns them into `snmp.yml`.
 
-```
+> **Navigation**: [← Back to SNMP README](../README.md)
+
+```text
 mibs/
 ├── generate.sh       # runs the generator
 ├── generator.yml     # defines modules and which OIDs to walk

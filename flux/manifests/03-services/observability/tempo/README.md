@@ -1,6 +1,6 @@
-# Grafana Tempo - Distributed Tracing
+# Grafana Tempo: distributed tracing
 
-This directory contains the deployment configuration for Grafana Tempo, providing distributed tracing capabilities for the cluster.
+Flux manifests for Grafana Tempo, distributed tracing for the cluster.
 
 > **Navigation**: [← Back to Observability README](../README.md)
 
@@ -8,22 +8,22 @@ This directory contains the deployment configuration for Grafana Tempo, providin
 
 Tempo is deployed in distributed mode with the following components:
 
-- **Distributor**: Receives traces via OTLP and distributes to ingesters
-- **Ingester**: Batches and writes traces to storage
-- **Compactor**: Compacts trace blocks for efficient storage
-- **Querier**: Queries traces from storage
-- **Query Frontend**: Provides query API and caching
-- **Metrics Generator**: Generates metrics from trace data
-- **Gateway**: Nginx-based gateway for unified API access
+- Distributor: receives traces via OTLP and distributes to ingesters
+- Ingester: batches and writes traces to storage
+- Compactor: compacts trace blocks for efficient storage
+- Querier: queries traces from storage
+- Query frontend: provides query API and caching
+- Metrics generator: generates metrics from trace data
+- Gateway: nginx-based gateway for unified API access
 
-## Storage Configuration
+## Storage configuration
 
 Tempo uses external RustFS for object storage:
 
 - **Bucket**: `tempo`
 - **Endpoint**: `storage.services.apocrathia.com:9009`
 
-## RustFS Setup
+## RustFS setup
 
 Before deploying Tempo, create the `tempo` bucket, the `tempo-storage` user, and
 its bucket-scoped access policy on RustFS. Bucket, user, and policy creation is
@@ -41,30 +41,30 @@ Create a new item called `tempo-secrets` in your 1Password vault with these fiel
 
 The 1Password Connect Operator will automatically create a Kubernetes secret, and Flux will inject these values into the HelmRelease at deployment time.
 
-## Trace Ingestion
+## Trace ingestion
 
 Traces are collected via Grafana Alloy acting as an OTLP collector:
 
-- **OTLP gRPC**: `alloy.alloy-system.svc:4317`
-- **OTLP HTTP**: `alloy.alloy-system.svc:4318`
+- OTLP gRPC: `alloy.alloy-system.svc:4317`
+- OTLP HTTP: `alloy.alloy-system.svc:4318`
 
 Applications send traces to Alloy, which forwards them to Tempo.
 
-## Grafana Integration
+## Grafana integration
 
 The Tempo datasource is automatically configured in Grafana with:
 
-- **Trace-to-Logs**: Links traces to Loki logs
-- **Trace-to-Metrics**: Links traces to Prometheus metrics
-- **Service Graph**: Visualizes service dependencies
-- **Node Graph**: Shows trace topology
+- Trace-to-logs: links traces to Loki logs
+- Trace-to-metrics: links traces to Prometheus metrics
+- Service graph: visualizes service dependencies
+- Node graph: shows trace topology
 
-## Metrics Generation
+## Metrics generation
 
 Tempo generates metrics from trace data and sends them to Mimir:
 
-- **Endpoint**: `http://mimir-gateway.mimir-system.svc:80/api/v1/push`
-- **Labels**: `source=tempo`, `cluster=kubernetes`
+- Endpoint: `http://mimir-gateway.mimir-system.svc:80/api/v1/push`
+- Labels: `source=tempo`, `cluster=kubernetes`
 
 This enables service graph visualization and span metrics in Grafana.
 
@@ -73,11 +73,11 @@ This enables service graph visualization and span metrics in Grafana.
 - **Traces API**: `http://tempo-gateway.tempo-system.svc:80`
 - **Distributor (OTLP)**: `tempo-distributor.tempo-system.svc:4317`
 
-## Instrumented Applications
+## Instrumented applications
 
 - **LiteLLM**: OpenTelemetry traces for LLM API calls
 
-## Security Notes
+## Security notes
 
 - RustFS credentials are stored in 1Password and referenced via 1Password Connect
 - Flux `valuesFrom` automatically injects credentials into the HelmRelease

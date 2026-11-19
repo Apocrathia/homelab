@@ -1,61 +1,60 @@
 # Services
 
-Platform services that provide core functionality to the homelab cluster.
+Platform services for the homelab cluster.
 
 > **Navigation**: [← Back to Flux README](../../README.md)
 
 ## Components
 
-### Core Services
+### Core services
 
-- [**Gateway**](gateway/README.md) - Gateway API implementation for traffic management
+- [**Gateway**](gateway/README.md) - `main-gateway` edge listener and its policies (Cilium LB IPAM + L2)
+- [**Envoy Gateway**](envoy/) - Gateway API controller serving the `envoy` GatewayClass
 - [**Tailscale**](tailscale/README.md) - Kubernetes operator for Tailscale ingress, egress, and subnet routing
 - [**Authentik**](authentik/README.md) - Identity and access management with SSO
 - [**Cert Manager**](cert-manager/README.md) - Automated certificate management
 - [**ExternalDNS**](external-dns/README.md) - UniFi DNS record management for Gateway API routes and services
 - [**Tailnet DNS**](tailnet-dns/README.md) - Split-DNS resolver serving the app zone to Tailscale users
 
-### Monitoring and Observability
+### Monitoring and observability
 
-- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir)
-  - [**Loki**](observability/loki/README.md) - Log aggregation and storage
-  - [**Mimir**](observability/mimir/README.md) - Long-term metrics storage
-  - [**Alloy**](observability/alloy/) - Log and metrics collection
+- [**Observability Stack**](observability/README.md) - LGTM stack (Loki, Grafana, Tempo, Mimir), Alloy collectors, OTel operator, Gatus, and Prometheus extras. See its README for the full component index
 
-### Security and Compliance
+### Security and compliance
 
 - [**Kyverno**](kyverno/README.md) - Policy management and enforcement
 - [**Tetragon**](tetragon/README.md) - eBPF runtime security (kernel-level detection)
 - [**Trivy**](trivy/README.md) - Security scanning and vulnerability management
 - [**External Secrets Operator**](external-secrets/README.md) - Integration with external secret management systems
+- [**Chaos Mesh**](chaos-mesh/README.md) - Chaos engineering platform (namespace-gated experiments)
 
-### Data Services
+### Data services
 
-- [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL management with enterprise features
+- [**PostgreSQL Operator**](postgresql/README.md) - CloudNativePG operator for Kubernetes-native PostgreSQL
+- [**ClickHouse Operator**](clickhouse/README.md) - Altinity operator (clusters live with the Tenzir stack)
 - [**Backup**](backup/README.md) - Kopia backup plane (kopiur ClusterRepository + workload policies)
 
-### Development and Operations
+### Development and operations
 
 - [**Headlamp**](headlamp/README.md) - Kubernetes web UI
-- [**GitLab Integration**](gitlab/) - GitLab Agent and Runner
+- **GitLab Integration** - GitLab Agent and Runner
   - [**Agent**](gitlab/agent/README.md) - Kubernetes cluster agent
   - [**Runner**](gitlab/runner/README.md) - CI/CD runner
 - [**Housekeeping**](housekeeping/README.md) - Cluster maintenance automation
 - [**Renovate Operator**](renovate-operator/README.md) - mogenius Renovate operator for automated dependency updates
 - [**Tuppr**](tuppr/README.md) - Automated Talos Linux and Kubernetes upgrade controller
 - [**Crossplane**](crossplane/README.md) - Control plane for Kubernetes-native management of external resources, with the Crossview web dashboard
+- [**LeaderWorkerSet**](leaderworkerset/README.md) - Leader/worker workload API used by `llm-d` inference
 
 ## Architecture
 
-The services layer provides:
-
-- **Identity Management**: SSO and authentication through Authentik
-- **Traffic Management**: Gateway API for external access and routing
-- **Security**: Runtime monitoring, policy enforcement, scanning, and compliance
-- **Monitoring**: Comprehensive observability and alerting
-- **Data Services**: PostgreSQL operator for database management
-- **Development Tools**: CI/CD integration and development workflows
-- **Operations**: Automated maintenance, housekeeping, and upgrade orchestration
+- SSO and authentication through Authentik
+- Gateway API for external access and routing
+- Runtime monitoring, policy enforcement, scanning, and compliance
+- Observability and alerting
+- PostgreSQL operator for database management
+- CI/CD integration and development workflows
+- Automated maintenance, housekeeping, and upgrade orchestration
 
 ## Dependencies
 
@@ -67,11 +66,11 @@ The services layer provides:
 
 All services implement:
 
-- **RBAC**: Role-based access control
-- **Network Policies**: Traffic isolation and control
-- **Secret Management**: 1Password integration and External Secrets Operator for sensitive data
-- **Audit Logging**: Comprehensive audit trails
-- **TLS Encryption**: End-to-end encryption for all communications
+- Role-based access control
+- Network policies for traffic isolation
+- Secrets through 1Password integration and External Secrets Operator
+- Audit logging
+- TLS encryption for service communications
 
 ## References
 

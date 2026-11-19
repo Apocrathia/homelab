@@ -1,4 +1,4 @@
-# Housekeeping - Cluster Maintenance Automation
+# Housekeeping
 
 Automated maintenance tasks for cluster health and organization.
 
@@ -16,14 +16,13 @@ Housekeeping provides automated maintenance tasks via CronJobs.
 
 Prevents etcd database bloat by periodically defragmenting when fragmentation exceeds threshold.
 
-- **Schedule**: Weekly (Sunday 4 AM)
+- **Schedule and fragmentation threshold**: configured in `etcd-defrag/cronjob.yaml`
 - **Namespace**: `housekeeping`
-- **Threshold**: Defragments when fragmentation exceeds 50%
 - **Talos API**: Uses `kubernetesTalosAPIAccess` feature
 
 ## Troubleshooting
 
-### etcd Defrag Issues
+### etcd defrag issues
 
 ```bash
 # Check cronjob status
@@ -42,7 +41,7 @@ talosctl etcd status -n 10.100.1.80
 ## References
 
 - **[Kubernetes CronJob Documentation](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)** - Scheduled jobs
-- **[Talos etcd Management](https://www.talos.dev/v1.12/talos-guides/configuration/etcd-maintenance/)** - etcd operations
+- **[Talos etcd Management](https://www.talos.dev/talos-guides/configuration/etcd-maintenance/)** - etcd operations
 
 ## Prerequisites
 

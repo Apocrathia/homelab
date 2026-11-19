@@ -1,4 +1,4 @@
-# Gatus — in-cluster uptime monitoring
+# Gatus: in-cluster uptime monitoring
 
 GitOps-defined synthetic checks for workloads **inside** the cluster. Complements
 Uptime Kuma (LAN/network) and Uptime Robot (external inbound). Uses
@@ -29,7 +29,7 @@ Gatus is a **separate** Flux Kustomization (`services-gatus`), not part of
 
 Base Gatus settings (storage, metrics, web port) live in `configmap.yaml`.
 Endpoint definitions come from Kubernetes Service annotations watched by the
-sidecar — not from the ConfigMap.
+sidecar, not from the ConfigMap.
 
 ### Opt in a Service
 
@@ -65,7 +65,7 @@ Without an explicit `url:`, the sidecar emits `tcp://<svc>.<ns>.svc:<port>`
 from the Service port protocol. Override with `http://` / `https://` when you
 want status/body conditions. Probes stay in-cluster and bypass Authentik.
 Do not use hostname/HTTPRoute discovery for Authentik-fronted apps without
-`guarded` / path conditions — login pages return HTTP 200.
+`guarded` / path conditions: login pages return HTTP 200.
 
 ### Secrets
 
@@ -80,7 +80,7 @@ CNPG bootstrap and the Gatus container both consume this Secret.
 
 ## Authentication
 
-Authentik proxy outpost (Platform group) — owned by the `crossplane.yaml` +
+Authentik proxy outpost (Platform group), owned by the `crossplane.yaml` +
 `authentik.tf` file pair in this directory (the retired blueprint's objects,
 adopted in place). Chart `httpRoute` / `ingress` stay off; the outpost owns
 the Gateway API route.
@@ -89,7 +89,7 @@ the Gateway API route.
 
 ServiceMonitor label `release: kube-prometheus-stack`. Sample series:
 
-- `gatus_results_endpoint_success{group,name,type}` — `1` healthy / `0` failing
+- `gatus_results_endpoint_success{group,name,type}`: `1` healthy / `0` failing
 
 ### Alerts
 
@@ -117,6 +117,6 @@ kubectl get pods -n authentik | grep gatus
 
 ## References
 
-- **[Gatus](https://github.com/TwiN/gatus)** — health dashboard
-- **[gatus-sidecar](https://github.com/home-operations/gatus-sidecar)** — K8s discovery sidecar
-- **[Plan](../../../../../docs/plans/gatus-cluster-uptime.md)** — design decisions
+- **[Gatus](https://github.com/TwiN/gatus)**: health dashboard
+- **[gatus-sidecar](https://github.com/home-operations/gatus-sidecar)**: K8s discovery sidecar
+- **[Plan](../../../../../docs/plans/gatus-cluster-uptime.md)**: design decisions

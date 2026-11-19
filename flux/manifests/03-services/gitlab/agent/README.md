@@ -1,8 +1,8 @@
 # GitLab Agent for Kubernetes Setup Guide
 
-This guide explains how to set up the GitLab Agent for Kubernetes (KAS) in your cluster.
+How to set up the GitLab Agent for Kubernetes (KAS) in your cluster.
 
-> **Navigation**: [← Back to GitLab README](../README.md)
+> **Navigation**: [← Back to Services README](../../README.md)
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This guide explains how to set up the GitLab Agent for Kubernetes (KAS) in your 
 - Access to your 1Password account to store the agent token
 - Flux CD installed in your cluster
 
-## Setup Steps
+## Setup steps
 
 ### 1. Create the Agent in GitLab
 
@@ -19,7 +19,7 @@ This guide explains how to set up the GitLab Agent for Kubernetes (KAS) in your 
 3. Select **Connect using the GitLab agent**
 4. Enter a name for your agent (e.g., `homelab`)
 5. Click **Create agent**
-6. Copy the generated token - you'll need this for the next step
+6. Copy the generated token: you'll need it for the next step
 
 ### 2. Store the Token in 1Password
 
@@ -42,9 +42,9 @@ ci_access:
 
 Commit and push this file to your repository.
 
-### 4. Verify the Installation
+### 4. Verify the installation
 
-Once the agent is deployed, you can verify it's working by:
+Once the agent is deployed, verify it's working:
 
 1. In GitLab, go to **Infrastructure > Kubernetes clusters**
 2. You should see your agent listed with a "Connected" status
