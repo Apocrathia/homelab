@@ -36,6 +36,11 @@ inputs = {
   manage_branch_protection = true
   protected_branch         = "main"
 
+  # Chart OCI registry (generic-app): on, members-only. Publishes via CI
+  # (job token); Flux and Renovate pull via the gitlab-registry-deploy-token
+  # 1Password item. Chart artifacts are immutable per version tag.
+  container_registry_access_level = "private"
+
   # Adopt the project itself and mark it with the managed-by-terraform topic.
   # description / resolve_outdated_diff_discussions are pinned because provider
   # v19 resets optional-only attributes to null when unset.

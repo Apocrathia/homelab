@@ -19,6 +19,7 @@ resource "gitlab_project" "this" {
   name        = basename(var.project_path)
   description = var.project_description
 
+  container_registry_access_level   = var.container_registry_access_level
   resolve_outdated_diff_discussions = var.resolve_outdated_diff_discussions
 
   # Marker topic on every managed repo. topics is owned as a full set: topics
