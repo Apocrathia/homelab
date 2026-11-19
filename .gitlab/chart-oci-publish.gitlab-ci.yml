@@ -1,0 +1,67 @@
+---
+# Publish the generic-app chart to the project container registry as an OCI
+# artifact (oci://registry.gitlab.com/apocrathia/homelab/generic-app). The
+# registry is enabled private by the gitlab-project tofu stack; the push uses
+# the pipeline's built-in registry credentials (gitlab-ci-token).
+#
+# Chart edits are immutable per version: an edit without a Chart.yaml version
+# bump does NOT reach the cluster (same contract as the generic-app-* git
+# tags). Runs on every default-branch pipeline and exits 0 when the version
+# tag already exists — idempotent, self-heals missed pushes.
+publish-generic-app-chart:
+  stage: deploy
+  # renovate: datasource=docker depName=alpine/helm
+  image: alpine/helm:3.22.1@sha256:8191701ad1f82ee3695c87211fcbfe6d7b1bb7df92ac1c8de9ccdb0995a6a2c1
+  # tofu-apply enables the registry (container_registry_access_level) on this
+  # stack's first landing; optional so later Chart-only pipelines skip it.
+  needs:
+    - job: tofu-apply
+      optional: true
+  before_script:
+    - helm registry login "${CI_REGISTRY}" -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}"
+  script:
+    - |
+      set -eu
+      if [ ! -f "helm/generic-app/Chart.yaml" ]; then
+        echo "ERROR: helm/generic-app/Chart.yaml not found"
+        exit 1
+      fi
+
+      CHART_VERSION=$(grep '^version:' helm/generic-app/Chart.yaml | awk '{print $2}' | tr -d '"')
+      if [[ ! $CHART_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "ERROR: Invalid version format: ${CHART_VERSION} (expected x.y.z)"
+        exit 1
+      fi
+
+      CHART_REF="oci://${CI_REGISTRY_IMAGE}/generic-app"
+      echo "Chart version: ${CHART_VERSION}"
+
+      if helm pull "${CHART_REF}" --version "${CHART_VERSION}" --destination /tmp > /dev/null 2>&1; then
+        echo "SKIP: ${CHART_REF}:${CHART_VERSION} already published"
+        exit 0
+      fi
+
+      echo "Publishing ${CHART_REF}:${CHART_VERSION}"
+      helm package helm/generic-app --destination /tmp
+
+      # Registry-readiness retries: needs orders this job after tofu-apply on
+      # the landing pipeline, but GitLab-side enablement can lag the apply, and
+      # a failed apply leaves the registry off while this job keeps running on
+      # every default-branch pipeline. Bounded retry, then fail loudly with the
+      # likely cause instead of a bare push error.
+      for attempt in 1 2 3 4 5; do
+        if helm push "/tmp/generic-app-${CHART_VERSION}.tgz" "${CHART_REF}"; then
+          exit 0
+        fi
+        echo "push failed (attempt ${attempt}/5) — registry may still be enabling; retrying in 30s"
+        [ "${attempt}" -lt 5 ] && sleep 30
+      done
+      echo "ERROR: could not push ${CHART_REF}:${CHART_VERSION}."
+      echo "Is the container registry enabled? Check tofu-apply for the"
+      echo "gitlab/homelab stack (container_registry_access_level = private)"
+      echo "— a failed apply leaves the registry off until it succeeds."
+      exit 1
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"

@@ -72,6 +72,17 @@ variable "branch_protection_allow_force_push" {
   default     = false
 }
 
+variable "container_registry_access_level" {
+  type        = string
+  description = "Container registry visibility: enabled (on, public read), private (on, members only), disabled (off). Optional-only in provider v19 — pin explicitly so applies don't null it."
+  default     = "disabled"
+
+  validation {
+    condition     = contains(["enabled", "private", "disabled"], var.container_registry_access_level)
+    error_message = "container_registry_access_level must be one of: enabled, private, disabled."
+  }
+}
+
 variable "manage_project" {
   type        = bool
   description = "When true, adopt and manage the project itself (required for topics)"

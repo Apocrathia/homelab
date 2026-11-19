@@ -6,6 +6,7 @@ stages:
 
 include:
   - local: .gitlab/chart-tag.gitlab-ci.yml
+  - local: .gitlab/chart-oci-publish.gitlab-ci.yml
   - local: .gitlab/kustomize-diff.gitlab-ci.yml
   - local: .gitlab/mr-change-summary.gitlab-ci.yml
   - local: .gitlab/scorecard.gitlab-ci.yml
